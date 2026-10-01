@@ -1,0 +1,41 @@
+# Calls team 37's AWS collectors on a timer. EventBridge schedules are denied to the team's AWS role, so the timer
+# lives here and each Lambda is reached through API Gateway (see aws/setup.py).
+# CPCB (needs a browser) and police (Node.js) are not here: they run on the PC and are sent with aws/push.py.
+#
+# One-time setup: GitHub repo -> Settings -> Secrets and variables -> Actions -> New repository secret
+#   name: AWS_REFRESH_KEY   value: REFRESH_API_KEY from chennai-grievance-portal-main/.env
+# GitHub runs scheduled workflows only from the default branch (main).
+name: AWS collector refresh
+
+on:
+  schedule:
+    - cron: "15 * * * *"     # hourly at :15 (UTC): weather, floods, PWD, hospitals
+    - cron: "45 */3 * * *"   # every 3 hours at :45: news (a run takes ~9 minutes, so it starts in the background)
+  workflow_dispatch: {}       # "Run workflow" button runs everything
+
+jobs:
+  hourly:
+    if: github.event.schedule != '45 */3 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        source: [imd, cfm, pwd, hospital]
+    steps:
+      - name: ${{ matrix.source }}
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "x-refresh-key: ${{ secrets.AWS_REFRESH_KEY }}" \
+            https://i6q6oi20lb.execute-api.ap-south-1.amazonaws.com/refresh/${{ matrix.source }}
+
+  news:
+    if: github.event.schedule != '15 * * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: news (returns 202 at once)
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "x-refresh-key: ${{ secrets.AWS_REFRESH_KEY }}" \
+            https://i6q6oi20lb.execute-api.ap-south-1.amazonaws.com/refresh/news

@@ -10,3 +10,7 @@ if exist "..\chennai_news_pipeline\.venv\Scripts\python.exe" (
 )
 set PYTHONIOENCODING=utf-8
 %PY% run_pipeline.py refresh >> output\refresh.log 2>&1
+REM AWS copy (team 37): the curated store to S3, and the two sources that cannot run in Lambda
+REM (CPCB needs a browser, police is Node.js). Each sends only what changed; no AWS keys needed.
+%PY% ..\aws\export_intel.py >> output\aws.log 2>&1
+%PY% ..\aws\push.py cpcb police >> output\aws.log 2>&1

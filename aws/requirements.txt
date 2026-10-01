@@ -1,0 +1,5 @@
+# setup.py (deploying) needs all three; push.py and export_intel.py (the scheduled job) need no boto3
+# (export_intel.py also uses district_intel's own requirements: pandas, numpy)
+boto3>=1.35
+python-dotenv>=1.0
+truststore>=0.9      # this PC's antivirus / proxy re-signs HTTPS; use the Windows certificate store

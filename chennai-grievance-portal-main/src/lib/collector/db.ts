@@ -1,5 +1,6 @@
 import mysql, { Pool } from "mysql2/promise";
 import { connectionSettings } from "@/lib/db";
+import { awsPool } from "@/lib/aws/store";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -34,7 +35,9 @@ function createPool(): Pool {
   });
 }
 
-const intelPool: Pool = global.__intelPool || createPool();
+// DATA_BACKEND=aws: no MySQL server; the store is the district_intel build from S3, held in memory (lib/aws/store.ts)
+const intelPool: Pool =
+  global.__intelPool || (process.env.DATA_BACKEND === "aws" ? (awsPool() as Pool) : createPool());
 if (process.env.NODE_ENV !== "production") {
   global.__intelPool = intelPool;
 }

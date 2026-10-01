@@ -20,3 +20,7 @@ __pycache__/
 *.log
 .DS_Store
 Thumbs.db
+
+# AWS store: local cache of S3 tables, parity outputs
+chennai-grievance-portal-main/data/aws-cache/
+chennai-grievance-portal-main/tmp/
