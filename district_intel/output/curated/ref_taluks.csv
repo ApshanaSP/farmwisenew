@@ -1,0 +1,19 @@
+﻿taluk_code,name,name_ta,police_code,pwd_code,in_district,lat,lon,aliases,note
+TLK-ALD,Alandur,ஆலந்தூர்,TLK-ALD,TLK01,1,12.9975,80.2006,Alandur,
+TLK-AMB,Ambattur,அம்பத்தூர்,TLK-AMB,TLK02,1,13.11,80.165,Ambattur,
+TLK-AMJ,Aminjikarai,அமைந்தகரை,TLK-AMJ,TLK03,1,13.078,80.218,Aminjakarai|Aminjikarai|Aminjikkarai,
+TLK-AYN,Ayanavaram,அயனாவரம்,TLK-AYN,TLK04,1,13.103,80.227,Ayanavaram,
+TLK-EGM,Egmore,எழும்பூர்,TLK-EGM,TLK05,1,13.078,80.264,Egmore,
+TLK-GND,Guindy,கிண்டி,TLK-GND,TLK06,1,13.015,80.22,Guindy,
+TLK-KLT,Kolathur,கொளத்தூர்,,,1,13.1231,80.2121,Kolathur|Kolattur,Official taluk; the police and PWD sources do not code it
+TLK-MDV,Madhavaram,மாதவரம்,TLK-MDV,TLK07,1,13.1488,80.2306,Madavaram|Madhavaram|Madhvaram,
+TLK-MDR,Maduravoyal,மதுரவாயல்,TLK-MDR,TLK08,1,13.055,80.17,Madhuravoyal|Maduravoyal,
+TLK-MBM,Mambalam,மாம்பலம்,TLK-MBM,TLK09,1,13.042,80.22,Mambalam,
+TLK-MYL,Mylapore,மயிலாப்பூர்,TLK-MYL,TLK10,1,13.04,80.265,Mylapore,
+TLK-PRB,Perambur,பெரம்பூர்,TLK-PRB,TLK11,1,13.12,80.245,Perambur,
+TLK-PSW,Purasawalkam,புரசைவாக்கம்,TLK-PSW,TLK12,1,13.088,80.253,Purasaivakkam|Purasaiwakkam|Purasaiwalkam|Purasaiwalkkam|Purasawakkam|Purasawalkam,
+TLK-SHN,Sholinganallur,சோழிங்கநல்லூர்,TLK-SHN,TLK13,1,12.91,80.23,Sholinganallore|Sholinganallur|Sholinganalur,
+TLK-TVT,Thiruvottiyur,திருவொற்றியூர்,TLK-TVT,TLK14,1,13.18,80.3,Thiruvotriyur|Thiruvottiyur|Thiruvottriyur|Tiruvotriyur|Tiruvottiyur,
+TLK-TDP,Tondiarpet,தண்டையார்பேட்டை,TLK-TDP,TLK15,1,13.115,80.287,Tondairpet|Tondiarpet|Tondiarpettai,
+TLK-VLC,Velachery,வேளச்சேரி,TLK-VLC,TLK16,1,12.985,80.23,Velacheri|Velachery,
+TLK-TBM,Tambaram,தாம்பரம்,,,0,12.9249,80.1,Tambaram,Chengalpattu district; appears in hospital data only

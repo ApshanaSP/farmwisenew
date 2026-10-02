@@ -1,0 +1,76 @@
+n,incident,district,confidence,note
+1,1,1,high,service failure: electricity helpline down during outages
+2,1,?,high,fatal road accident; place given only as near Chennai
+3,1,?,high,ammonia leak at brewery; two workers affected
+4,1,0,high,stray dogs poisoned; Madambakkam is in Chengalpattu district
+5,1,1,high,custodial death at Puzhal prison; assault alleged
+6,0,1,high,announcement: new bus terminus
+7,1,1,high,disease trend: rise in fever cases
+8,1,1,high,power line snapped; three injured
+9,0,1,high,scheduled power cut list
+10,0,1,high,commissioner inspects desilting works
+11,1,1,high,murder in Tiruvottiyur
+12,0,1,high,festival idol immersion
+13,0,1,low,security checks around protests; no incident reported
+14,0,1,high,scheduled power cut list
+15,1,1,high,road blockade demanding drinking water on ECR
+16,0,1,high,politics and investigation of a minister
+17,0,1,high,arrest of cyber-fraud accused; enforcement only
+18,1,1,low,water supply restored after repair; resolution update of a disruption
+19,1,1,low,transplanted trees dead at Raman Thangal lake; neglected civic asset
+20,1,1,high,fatal bike collision in Tondiarpet
+21,1,?,high,fatal road accident near Chennai
+22,0,1,high,scheduled power cut list
+23,0,0,high,feature on a nearby town
+24,0,1,high,gold price
+25,0,1,high,pre-monsoon desilting work begins
+26,0,1,high,commissioner inspects drain works
+27,1,1,high,road accident in Guindy
+28,0,1,high,market prices
+29,0,1,low,passenger collapsed at airport; medical death, no civic action
+30,1,?,high,highway accident with 12 injured and traffic impact
+31,1,1,high,knife-point robbery in T. Nagar
+32,0,1,low,advisory about a theft gang
+33,0,1,high,training course
+34,1,1,high,migrant worker beaten to death in Nolambur
+35,0,1,high,scheduled power cut list
+36,1,1,high,electrocution death; officials questioned
+37,1,1,high,sexual harassment by a traffic inspector
+38,0,1,high,routine clean-up after immersion
+39,0,0,high,scheduled power cut; Poonamallee
+40,0,?,low,audit report on railway water quality; no specific Chennai event
+41,0,1,high,flood preparedness: pumps ready
+42,1,?,high,fatal road accident near Chennai (same story as 2)
+43,0,1,high,drug seizure at airport; enforcement only
+44,1,1,high,party official hacked to death on road
+45,0,1,high,election petition in court
+46,0,1,high,foot-overbridge work begins
+47,1,1,high,electrocution death; officials probed (same story as 36)
+48,1,1,high,inmate killed at Institute of Mental Health
+49,1,1,high,jewellery fraud complaint in Ambattur
+50,0,1,high,election petition verdict reserved
+51,0,0,high,technology project in Mumbai
+52,0,1,high,opinion
+53,1,1,high,dengue spread; student death; 614 cases in 18 days
+54,0,1,high,university campus agreement
+55,1,1,high,fire from CNG pipeline leak
+56,1,1,high,man killed after objecting to harassment
+57,0,1,low,arrests in an earlier murder case; follow-up
+58,1,0,high,school bus fire; Kundrathur is in Kancheepuram district
+59,1,?,high,fatal bus-bike accident; place unclear
+60,0,1,high,scheduled power cut list
+61,0,1,high,scheduled power cut list
+62,1,0,high,landslide in Kottayam, Kerala
+63,0,1,high,prize distribution
+64,0,1,low,police deployment for immersion; preventive
+65,0,1,high,officer transfer
+66,0,1,high,gold price
+67,0,1,high,announcement: Olympic city plans
+68,0,1,high,vaccination programme
+69,1,?,high,accident victim dies in hospital; place of accident unclear
+70,0,1,high,clinic feature
+71,0,1,high,inauguration of MLA office
+72,0,1,high,port project
+73,0,1,high,opinion
+74,1,?,high,dowry-related suicide near Chennai; RDO inquiry
+75,0,0,high,arrest in Manipur for an old murder; follow-up

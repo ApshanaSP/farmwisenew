@@ -1,0 +1,7 @@
+﻿agent,trigger,as_of,duration_s,tools,llm_calls,outputs,notes
+action_planner,new_or_open_high_incidents,2026-10-02T12:32:00+05:30,1.51,list_incidents|read_playbooks,0,incidents=636; draft_actions=3502,
+gap_finder,daily_after_briefing,2026-10-02T12:32:00+05:30,1.1,list_incidents,0,media_only_incidents=196; two_plus_outlets=0,
+linker,gray_band_pairs,2026-10-02T12:32:00+05:30,1.1,get_pair_evidence,0,review_items=302,
+watchdog,hourly,2026-10-02T12:32:00+05:30,0.89,anomalies|warnings|metric_signals|list_incidents,0,alerts=64,
+data_steward,after_load,2026-10-02T12:32:00+05:30,0.86,read_run_logs|run_contract|category_drift|crosswalk_proposals,0,sources=8; not_ok=2; checks=20; failing_checks=6; quarantined=0; proposals=23,
+briefing,scheduled 06:30 / on demand,2026-10-02T12:32:00+05:30,0.37,query_metrics,0,briefings=4; unverified_numbers=0,

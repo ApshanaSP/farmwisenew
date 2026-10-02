@@ -1,0 +1,28 @@
+﻿code,name,org,head,route,action_owner,source_names
+GCC-SWD,Storm Water Drain,Greater Chennai Corporation,Superintending Engineer (SWD),AE → EE → SE → Chief Engineer,True,Storm Water Drain Department
+GCC-SWM,Solid Waste Management,Greater Chennai Corporation,Zonal Officer (SWM),Sanitary Inspector → Zonal Officer → Deputy Commissioner,True,Solid Waste Management Department
+GCC-ENG,Roads & Building Permissions,Greater Chennai Corporation,Superintending Engineer,AE → AEE → EE → SE,True,Engineering Department (Town Planning & Building Permissions)
+GCC-ELE,Street Lighting & Electrical,Greater Chennai Corporation,Executive Engineer (Electrical),AE → EE → SE,True,Electrical Department
+GCC-HLT,Public Health (GCC),Greater Chennai Corporation,City Health Officer,Sanitary Officer → Zonal Health Officer → City Health Officer,True,Health Department
+GCC-PRK,Parks & Play Fields,Greater Chennai Corporation,Executive Engineer (Parks),AE → EE,True,Parks & Play Fields Department
+GCC-REV,Revenue (Tax & Licence),Greater Chennai Corporation,Assistant Commissioner (Revenue),Assessor → AC → DC (Revenue),True,Revenue Department
+GCC-GAD,General Administration,Greater Chennai Corporation,Deputy Commissioner (General),Zonal Officer → Deputy Commissioner,True,General Administration
+GCC-BRG,Bridges,Greater Chennai Corporation,Executive Engineer (Bridges),AE → EE → SE,True,Bridges Department
+GCC-EDU,Education,Greater Chennai Corporation,Education Officer,Headmaster → Zonal Education Officer → Education Officer,True,Education Department
+GCC-BLD,Buildings (GCC),Greater Chennai Corporation,Executive Engineer (Buildings),AE → EE,True,Buildings Department
+GCC-MEC,Mechanical Engineering,Greater Chennai Corporation,Executive Engineer (Mechanical),AE → EE,True,Mechanical Engineering Department
+GCC-LND,Land & Estate,Greater Chennai Corporation,Assistant Commissioner (Estate),AC → DC,True,Land & Estate Department
+GCC-FMU,Financial Management Unit,Greater Chennai Corporation,Financial Advisor,Accounts Officer → Financial Advisor,True,Financial Management Unit
+GCC-CNL,Council,Greater Chennai Corporation,Council Secretary,Secretary → Mayor's Office,True,Council Department
+GCC-FWD,Family Welfare,Greater Chennai Corporation,Family Welfare Officer,Medical Officer → Family Welfare Officer,True,Family Welfare Department
+POL-GCP,Greater Chennai Police,Tamil Nadu Police,Deputy Commissioner of Police,SHO → ACP → DC → Commissioner,True,Police
+PWD-WRD,PWD Water Resources,Public Works Department,Superintending Engineer (WRD),AEE → EE → SE → Chief Engineer,True,Water Resources
+PWD-BLD,PWD Buildings,Public Works Department,Superintending Engineer (Buildings),AEE → EE → SE → Chief Engineer,True,Buildings
+HLT-DMS,Government Hospitals,Health & Family Welfare Department,Director of Medical Services,Medical Superintendent → Dean → DMS,True,Health Services
+CMWSSB,Chennai Metrowater,CMWSSB,Superintending Engineer,AE → EE → SE → Managing Director,True,
+TANGEDCO,Electricity Distribution,TANGEDCO,Superintending Engineer,AE → AEE → EE → SE,True,
+TNPCB,Pollution Control Board,TNPCB,District Environmental Engineer,AEE → DEE → JCEE,True,
+DIST-DM,District Disaster Management,Collectorate,District Revenue Officer (Disaster),Tahsildar → RDO → DRO → Collector,True,
+DIST-REV,District Revenue,Collectorate,District Revenue Officer,VAO → Tahsildar → RDO → DRO,True,
+IMD,India Meteorological Department,Government of India,-,-,False,
+WRD-CFM,Chennai Flood Monitoring (WRD),Water Resources Department,-,-,False,

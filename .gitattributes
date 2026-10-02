@@ -1,0 +1,4 @@
+district_intel/output/*.db filter=lfs diff=lfs merge=lfs -text
+chennai-grievance-portal-main/.cache/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+chennai_news_pipeline/data/raw/*.json filter=lfs diff=lfs merge=lfs -text
+chennai_news_pipeline/data/raw/*.csv filter=lfs diff=lfs merge=lfs -text

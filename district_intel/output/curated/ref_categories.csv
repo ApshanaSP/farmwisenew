@@ -1,0 +1,33 @@
+﻿category_code,label,family,lead_dept,support_depts,base_severity,rain_sensitive,sla_severe_h,sla_high_h,sla_medium_h,sla_low_h,link_window_h,link_radius_m,playbook,sla_basis
+FLOOD_WATERLOGGING,Flooding & waterlogging,FLOOD,GCC-SWD,POL-GCP|DIST-DM,45,1,6,24,72,120,72,600,Deploy pumps and clear standing water|Clear drain inlets and silt|Divert traffic and barricade|Check low-lying homes for evacuation|Submit completion report with photo,resolution
+FLOOD_RELIEF,Flood relief needs,FLOOD,DIST-DM,GCC-HLT|GCC-SWD,55,1,4,12,24,48,72,1500,Contact affected households|Arrange food and drinking water|Arrange medical support|Shift to relief centre if needed|Close with report,resolution
+WATERBODY_INFRA,"Lakes, bunds & sluices",FLOOD,PWD-WRD,DIST-DM,50,1,6,24,72,168,72,1500,Inspect the structure|Warn downstream residents|Carry out repair|Monitor water level for 48 h|Submit report,resolution
+FLOOD_RISK_SIGNAL,Weather & flood warnings,FLOOD,DIST-DM,PWD-WRD|GCC-SWD,40,1,6,12,24,48,48,30000,Alert zonal teams|Pre-position pumps and crews|Check drains in low-lying wards|Issue public advisory|Review after the event,resolution
+DRAINAGE_SEWAGE,Drainage & sewage,DRAINAGE,GCC-SWD,CMWSSB,30,1,24,72,168,240,72,300,Inspect the drain|Desilt or clear the blockage|Repair cover or pipe|Disinfect the area|Submit completion report,resolution
+DRAIN_WORKS_SAFETY,Drain works site safety,DRAINAGE,GCC-SWD,POL-GCP,35,0,12,48,120,168,48,200,Inspect the worksite|Install barricades and signage|Instruct the contractor|Re-inspect|Close with photo,resolution
+ROAD_DAMAGE,"Roads, footpaths & bridges",ROADS_TRAFFIC,GCC-ENG,POL-GCP,25,1,24,72,168,336,72,200,Inspect and barricade|Patch with cold mix|Schedule relaying|Quality check|Close with photo,resolution
+ROAD_ACCIDENT,Road accident,ROADS_TRAFFIC,POL-GCP,GCC-ENG|HLT-DMS,40,0,2,6,24,48,6,300,Send patrol and ambulance|Clear the carriageway|Register the case|Check road defects at the spot|Close with report,response
+TRAFFIC_OBSTRUCTION,Traffic obstruction & parking,ROADS_TRAFFIC,POL-GCP,GCC-ENG,20,1,2,6,24,72,12,400,Deploy traffic police|Clear the obstruction|Tow illegal parking|Review signal timing|Close,resolution
+ENCROACHMENT,Encroachment & unauthorised construction,STRUCTURES_LAND,GCC-ENG,DIST-REV|PWD-WRD,15,0,72,168,336,720,168,150,Survey the site|Serve notice|Remove the encroachment|Fence or mark the land|Close,resolution
+BUILDING_SAFETY,Unsafe buildings & walls,STRUCTURES_LAND,PWD-BLD,GCC-ENG|DIST-DM,45,1,6,24,72,168,72,100,Inspect the structure|Cordon off the area|Shift occupants if unsafe|Repair or demolish|Close with report,resolution
+SOLID_WASTE,Garbage & solid waste,WASTE_SANITATION,GCC-SWM,GCC-HLT,20,0,12,24,48,72,48,250,Dispatch a compactor|Clear the waste|Disinfect the spot|Increase pickup frequency|Close with photo,resolution
+SANITATION_TOILETS,Public toilets & open defecation,WASTE_SANITATION,GCC-HLT,GCC-SWM,20,0,24,48,96,168,72,200,Inspect|Clean and restore water and power|Repair fixtures|Schedule monitoring|Close,resolution
+STREETLIGHT_ELECTRICAL,Street lights & electrical hazards,ELECTRICAL,GCC-ELE,TANGEDCO,25,1,4,24,48,96,72,300,Inspect the feeder pillar|Isolate live parts|Replace fittings|Restore supply|Close,resolution
+DARK_SPOT_SAFETY,Dark spots & public safety,PUBLIC_SAFETY,GCC-ELE,POL-GCP,35,0,24,48,96,168,168,300,Add lighting|Increase patrols|Install CCTV if needed|Collect community feedback|Close,resolution
+VECTOR_DISEASE,Vector- & water-borne disease,HEALTH,GCC-HLT,HLT-DMS|GCC-SWD,40,1,12,24,72,120,336,1500,Source reduction and fogging|Door-to-door fever survey|Hold a fever camp|Clear stagnant water|Send daily situation report,resolution
+FOOD_SAFETY,Food safety & meat hygiene,HEALTH,GCC-HLT,,20,0,24,72,168,240,72,200,Inspect the premises|Collect samples|Issue notice|Re-inspect|Close,resolution
+STRAY_ANIMALS,Stray animals,HEALTH,GCC-HLT,,15,0,24,72,168,240,72,500,Send the catching team|Vaccinate and sterilise|Remove carcasses|Follow up|Close,resolution
+HEALTH_SERVICES,Health services & hospital capacity,HEALTH,HLT-DMS,GCC-HLT,35,0,6,24,72,168,48,2000,Check bed and staff capacity|Redeploy staff or beds|Arrange medicines or ambulance|Report to DMS|Close,resolution
+AIR_POLLUTION,Air pollution,ENVIRONMENT,TNPCB,GCC-HLT,25,0,24,48,120,240,72,3000,Check station readings|Inspect nearby sources|Issue a health advisory|Enforce against polluters|Close,resolution
+TREES_PARKS,"Trees, parks & playgrounds",GREEN,GCC-PRK,POL-GCP,15,1,6,48,120,240,48,200,Clear the fallen tree|Prune trees|Repair equipment|Clean the park|Close,resolution
+CRIME_PROPERTY,"Theft, snatching & fraud",CRIME,POL-GCP,,25,0,6,24,72,168,6,500,Register the case|Patrol the hotspot|Review CCTV|Recover property|Close,response
+CRIME_VIOLENT,Violent crime & crimes against women,CRIME,POL-GCP,,55,0,2,6,24,48,6,300,Respond immediately|Register the case|Protect the victim|Arrest the accused|Close,response
+MISSING_PERSON,Missing person,CRIME,POL-GCP,,40,0,2,12,24,48,24,2000,Register the complaint|Circulate details|Search|Trace|Close,response
+DRUGS_LIQUOR,Drugs & illicit liquor,CRIME,POL-GCP,,30,0,12,24,72,168,24,500,Conduct a raid|Seize material|Register the case|Follow up|Close,response
+PUBLIC_ORDER,Protests & public nuisance,PUBLIC_ORDER,POL-GCP,DIST-REV,20,0,2,6,24,48,12,500,Deploy personnel|Manage crowd and traffic|Engage organisers|Document the event|Close,response
+POLICE_OTHER,Other police matters,PUBLIC_ORDER,POL-GCP,,15,0,6,24,72,168,24,500,Assess|Act|Close,response
+PUBLIC_WORKS,Public works quality & worksites,WORKS,GCC-ENG,,15,0,48,120,240,480,168,300,Inspect the work|Instruct the contractor|Fix deficiencies|Quality check|Close,resolution
+WATER_SUPPLY,Drinking water supply,DRAINAGE,CMWSSB,GCC-SWD,30,0,12,24,72,120,72,1000,Check the supply line|Arrange tanker supply|Repair leak or valve|Test water quality|Close,resolution
+CIVIC_FACILITIES,Civic buildings & facilities,WORKS,GCC-GAD,GCC-BLD,15,0,48,120,240,480,168,300,Inspect|Repair|Follow up|Close,resolution
+ADMIN_SERVICES,"Tax, certificates & electoral services",ADMIN,GCC-REV,GCC-GAD,5,0,72,168,336,720,168,5000,Review the application|Resolve|Inform the citizen|Close,resolution
+OTHER,Other / unclassified,OTHER,GCC-GAD,,10,0,72,168,336,720,72,300,Triage|Route to the right department|Close,resolution

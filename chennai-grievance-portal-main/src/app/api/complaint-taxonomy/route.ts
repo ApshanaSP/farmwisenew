@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 
+// Reads the database on every request; never prerender at build time
+export const dynamic = "force-dynamic";
+
 /**
  * The GCC complaint-type structure that drives the selection UI:
  * a "Frequently Filed Complaint Types" list plus one dropdown per category,

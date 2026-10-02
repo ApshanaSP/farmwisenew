@@ -156,6 +156,8 @@ def load(settings: Settings, ref: Reference) -> dict[str, pd.DataFrame]:
                                                                zip(gauges["warning_stage"], gauges["danger_stage"], why)]}))
     bul = pd.concat([_read(d / "cfm_dss_alerts_chennai.csv"), _read(d / "cfm_dss_alerts_chennai_archive.csv")], ignore_index=True)
     if len(bul):
+        # the collector can re-fetch a bulletin with a corrected date; keep its latest fetch only
+        bul = bul.sort_values("fetched_at").drop_duplicates("alert_id", keep="last")
         bul["published_at"] = mixed_to_ist(bul["issued_at"])
         docs.append(pd.DataFrame({"doc_id": "CFM-" + bul["alert_id"].astype(str), "title": bul["alert_text"], "summary": bul["alert_text"],
                                   "body": bul["alert_text"], "body_status": "title_only", "published_at": bul["published_at"],

@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-09-24T16:10:27.812Z",
+  "seed": 42,
+  "days": 90,
+  "perDay": 90,
+  "startDate": "2026-06-27",
+  "endDate": "2026-09-24",
+  "snapshotIst": "2026-09-24 21:40",
+  "rainDays": [
+    "2026-08-10",
+    "2026-08-25",
+    "2026-08-29",
+    "2026-09-03",
+    "2026-09-16"
+  ],
+  "mode": "database",
+  "syntheticComplaints": 8110
+}

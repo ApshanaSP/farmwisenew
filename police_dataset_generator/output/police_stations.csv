@@ -1,0 +1,61 @@
+station_code,station_name,taluk_code,latitude,longitude
+PS-ALD-01,Alandur Police Station,TLK-ALD,13.002000,80.200500
+PS-ALD-02,St. Thomas Mount Police Station,TLK-ALD,12.996000,80.196000
+PS-ALD-03,Adambakkam Police Station,TLK-ALD,12.989500,80.205500
+PS-ALD-04,Pazhavanthangal Police Station,TLK-ALD,12.985000,80.187500
+PS-AMB-01,Ambattur Police Station,TLK-AMB,13.115000,80.156000
+PS-AMB-02,Ambattur Estate Police Station,TLK-AMB,13.100000,80.164000
+PS-AMB-03,Mogappair Police Station,TLK-AMB,13.084500,80.176000
+PS-AMB-04,Korattur Police Station,TLK-AMB,13.108500,80.184000
+PS-AMJ-01,Aminjikarai Police Station,TLK-AMJ,13.073500,80.223500
+PS-AMJ-02,Anna Nagar Police Station,TLK-AMJ,13.086000,80.211000
+PS-AMJ-03,Thirumangalam Police Station,TLK-AMJ,13.085500,80.202000
+PS-AYN-01,Ayanavaram Police Station,TLK-AYN,13.099000,80.232000
+PS-AYN-02,Villivakkam Police Station,TLK-AYN,13.107500,80.209000
+PS-AYN-03,Kolathur Police Station,TLK-AYN,13.123000,80.213000
+PS-AYN-04,ICF Police Station,TLK-AYN,13.094000,80.217000
+PS-EGM-01,Egmore Police Station,TLK-EGM,13.074000,80.260000
+PS-EGM-02,Periamet Police Station,TLK-EGM,13.083500,80.268000
+PS-EGM-03,Vepery Police Station,TLK-EGM,13.085500,80.259000
+PS-EGM-04,Chintadripet Police Station,TLK-EGM,13.073500,80.271000
+PS-GND-01,Guindy Police Station,TLK-GND,13.008000,80.220000
+PS-GND-02,Saidapet Police Station,TLK-GND,13.022000,80.224000
+PS-GND-03,Kotturpuram Police Station,TLK-GND,13.018500,80.241000
+PS-MDV-01,Madhavaram Police Station,TLK-MDV,13.148000,80.230000
+PS-MDV-02,Puzhal Police Station,TLK-MDV,13.158500,80.205000
+PS-MDV-03,Madhavaram Milk Colony Police Station,TLK-MDV,13.151500,80.241000
+PS-MDR-01,Maduravoyal Police Station,TLK-MDR,13.066500,80.166000
+PS-MDR-02,Valasaravakkam Police Station,TLK-MDR,13.040500,80.173000
+PS-MDR-03,Porur Police Station,TLK-MDR,13.036000,80.159000
+PS-MDR-04,Koyambedu Police Station,TLK-MDR,13.069500,80.194000
+PS-MBM-01,Pondy Bazaar Police Station,TLK-MBM,13.041000,80.234500
+PS-MBM-02,Mambalam Police Station,TLK-MBM,13.038500,80.223000
+PS-MBM-03,K.K. Nagar Police Station,TLK-MBM,13.039500,80.200000
+PS-MBM-04,Vadapalani Police Station,TLK-MBM,13.050500,80.213000
+PS-MYL-01,Mylapore Police Station,TLK-MYL,13.034500,80.267000
+PS-MYL-02,Royapettah Police Station,TLK-MYL,13.054500,80.263000
+PS-MYL-03,Triplicane Police Station,TLK-MYL,13.058500,80.276000
+PS-MYL-04,Teynampet Police Station,TLK-MYL,13.040500,80.249500
+PS-PRB-01,Sembiam Police Station,TLK-PRB,13.117500,80.239500
+PS-PRB-02,Vyasarpadi Police Station,TLK-PRB,13.115500,80.251000
+PS-PRB-03,Kodungaiyur Police Station,TLK-PRB,13.132500,80.249000
+PS-PRB-04,M.K.B. Nagar Police Station,TLK-PRB,13.124500,80.257000
+PS-PSW-01,Kilpauk Police Station,TLK-PSW,13.083000,80.241000
+PS-PSW-02,Pulianthope Police Station,TLK-PSW,13.095500,80.263000
+PS-PSW-03,Chetpet Police Station,TLK-PSW,13.073500,80.244500
+PS-SHN-01,Semmancheri Police Station,TLK-SHN,12.849000,80.225000
+PS-SHN-02,Thoraipakkam Police Station,TLK-SHN,12.938500,80.233000
+PS-SHN-03,Neelankarai Police Station,TLK-SHN,12.949500,80.254000
+PS-SHN-04,Kannagi Nagar Police Station,TLK-SHN,12.933500,80.232000
+PS-TVT-01,Thiruvottiyur Police Station,TLK-TVT,13.164500,80.299000
+PS-TVT-02,Ennore Police Station,TLK-TVT,13.212000,80.321000
+PS-TVT-03,Manali Police Station,TLK-TVT,13.167500,80.262000
+PS-TVT-04,Sathangadu Police Station,TLK-TVT,13.156000,80.290000
+PS-TDP-01,Tondiarpet Police Station,TLK-TDP,13.125500,80.287500
+PS-TDP-02,Royapuram Police Station,TLK-TDP,13.113500,80.293000
+PS-TDP-03,Flower Bazaar Police Station,TLK-TDP,13.094000,80.285000
+PS-TDP-04,Kasimedu Fishing Harbour Police Station,TLK-TDP,13.124500,80.297000
+PS-VLC-01,Velachery Police Station,TLK-VLC,12.982000,80.219000
+PS-VLC-02,Adyar Police Station,TLK-VLC,13.002000,80.255500
+PS-VLC-03,Thiruvanmiyur Police Station,TLK-VLC,12.983500,80.263000
+PS-VLC-04,Pallikaranai Police Station,TLK-VLC,12.939000,80.206000

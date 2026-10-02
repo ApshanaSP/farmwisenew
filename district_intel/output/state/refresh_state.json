@@ -1,0 +1,74 @@
+{
+  "_last_build_fingerprint": "cfdbc08604db40ca1dec067d5bb8f80fb7b1f1bd",
+  "imd": {
+    "last_run": 1790924519.8720174,
+    "ok": true,
+    "last_ok": 1790924519.8720174,
+    "attempts": 1,
+    "tail": "mwisenew\\imd_weather_collector\\data\\imd_weather_forecasts_chennai.csv  rows=159  range=2026-09-25T10:01:36+05:30 .. 2026-10-02T09:49:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_warnings_chennai.csv  rows=54  range=2026-09-25T12:12:21+05:30 .. 2026-10-02T11:24:03+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_run_log.csv\n"
+  },
+  "news": {
+    "last_run": 1790924497.9936163,
+    "ok": true,
+    "last_ok": 1790924497.9936163,
+    "attempts": 1,
+    "tail": "     4    0.4%\n  Parks & Play Fields Department                                  4    0.4%\n  Buildings Department                                            4    0.4%\n  Land & Estate Department                                        4    0.4%\nDepartment method: {'keyword': 351, 'fallback': 557}\nComplaints: 41 of 908 (4.5%)\nMySQL: not configured\n12:31:37 | INFO    | === Run finished in 0:07:58 ===\n"
+  },
+  "cpcb": {
+    "last_run": 1790925204.3019855,
+    "ok": true,
+    "last_ok": 1790925204.3019855,
+    "attempts": 2,
+    "tail": "..2026-09-24, 2026-09-26\n  Velachery Res. Area, Chennai - CPCB      84/90 missing: 2026-07-05..2026-09-24, 2026-09-26, 2026-09-30\nstale / failed sources: data.gov.in CPCB real-time air quality (3b01bcb8) [no-api-key]; CPCB CCR historical (advance search / repository) [captcha-gated]; app.cpcbccr.com AQI_India [200 rejected: US-AQI scale]\nrows by fetch_method: requests=0, playwright=55, download=0\n"
+  },
+  "cfm": {
+    "last_run": 1790925231.7608016,
+    "ok": true,
+    "last_ok": 1790925231.7608016,
+    "attempts": 1,
+    "tail": " : coordinates: not published by any accessible endpoint (latitude/longitude left empty)\nlimitation     : gates_open_count: not published for any site\nlimitation     : gate discharge (spillway) is only in the live daily record; history has inflow only\nlimitation     : alert validity: no valid_from/valid_to published\nfailed calls   : none\nfetch methods  : requests 0, playwright 10 successful calls\n0-02\n2026-10-02 12:43:27 INFO HTTP 403 via requests on /Master/GetCsectionAndWaterLevel; switching to Playwright\n2026-10-02 12:43:42 INFO /Master/GetCsectionAndWaterLevel: skipped 9 readings with no verifiable observation time\n2026-10-02 12:43:42 INFO /Master/GetCsectionAndWaterLevel: dropped 2 out-of-scope records\n2026-10-02 12:43:45 INFO /Master/GetTankDataByDate: dropped 3 out-of-scope records\n"
+  },
+  "hospital": {
+    "last_run": 1790925232.7115922,
+    "ok": true,
+    "last_ok": 1790925232.7115922,
+    "attempts": 1,
+    "tail": "        500           378              75.60              834             134 Gastrointestinal Disorders           102                84.96             Available          116         256                 Yes      Normal                                None\n\nDataset: 2026-04-06 to 2026-10-02 | 180 days | 1620 records\nCSV location: D:\\farmwisenew\\chennai_hospital_data\\chennai_hospital_health_data.csv\n"
+  },
+  "pwd": {
+    "last_run": 1790925233.8855522,
+    "ok": true,
+    "last_ok": 1790925233.8855522,
+    "attempts": 1,
+    "tail": "747  2026-04-09T10:34:54+05:30  control_room      13.03190,80.26015  Parapet wall of Thiru. Vi. Ka. Bridge, Adyar damaged, Adyar. Dangerous for \n  PWD-INC-049748  2026-04-09T10:47:04+05:30  field_staff       13.02877,80.26047  Thiru. Vi. Ka. Bridge, Adyar \u0b87\u0ba3\u0bc8\u0baa\u0bcd\u0baa\u0bc1 \u0b9a\u0bbe\u0bb2\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0b85\u0bb0\u0bbf\u0baa\u0bcd\u0baa\u0bc1, \u0bb5\u0bbe\u0b95\u0ba9 \u0b93\u0b9f\u0bcd\u0b9f\u0bbf\u0b95\u0bb3\u0bcd \u0b85\u0b9a\u0bcd\u0b9a\u0bae\u0bcd\n\nVALIDATION PASSED: window, NOW-bound, FKs, timestamp order, storage<=capacity, schema, statuses\n"
+  },
+  "grievance": {
+    "last_run": 1790925252.445914,
+    "ok": true,
+    "last_ok": 1790925252.445914,
+    "attempts": 1,
+    "tail": "hennai-grievance-portal-main\\data\\datasets\\grievances.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\grievance_status_history.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\_truth\\duplicate_truth.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\GENERATION_REPORT.md\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\generation_meta.json\n"
+  },
+  "police": {
+    "last_run": 1790925259.4018562,
+    "ok": true,
+    "last_ok": 1790925259.4018562,
+    "attempts": 1,
+    "tail": "406-0006' \u2502 '2026-04-06 02:58:00' \u2502 'TLK-AMJ' \u2502 'Shenoy Nagar'               \u2502 'THEFT_BURGLARY'      \u2502 'Burglary reported at residence in Shenoy Nagar'   \u2502 'CONTROL_ROOM_112'  \u2502 'CLOSED' \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
+  },
+  "_mysql_exported_mtime": 1790932224.4174306,
+  "_last_collection": {
+    "at": 1790924015.3610513,
+    "ran": [
+      "news",
+      "imd",
+      "cpcb",
+      "cfm",
+      "hospital",
+      "pwd",
+      "grievance",
+      "police"
+    ],
+    "failed": []
+  }
+}

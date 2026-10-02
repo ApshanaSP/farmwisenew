@@ -4,6 +4,7 @@ TNCH-07-T0726,Chembarambakkam Tank,gate_site,,,,upstream,,district 'Kancheepuram
 CFM-100,Tirumeermalai Bridge,river_gauge,Adyar,,,upstream,,district 'Chengalpattu' from CFM-DSS sensor AWLR0044 (Thiruneermalai Bridge); Adyar outfalls to the sea within Chennai
 CFM-103,Saidapet Bridge,river_gauge,Adyar,,,inside_chennai,,district 'Chennai' from CFM-DSS sensor AWLR0042 (Saidapet Bridge); inside Chennai district
 CFM-104,TVK Bridge,river_gauge,Adyar,,,inside_chennai,,district 'Chennai' from CFM-DSS sensor AWLR0043 (Thiru Vi ka Bridge); inside Chennai district
+CFM-106,Basin Bridge,river_gauge,Cooum,,,upstream,,district not published by CFM-DSS; Cooum outfalls to the sea within Chennai
 CFM-107,Captain Cotton Bridge,river_gauge,Cooum,,,inside_chennai,,"district 'Chennai' from CFM-DSS sensor AWLR0029 (T.V.K. Link Road bridge, Captain Cotton Canal); inside Chennai district"
 CFM-111,Aminjikarai Bridge,river_gauge,Cooum,,,inside_chennai,,district 'Chennai' from CFM-DSS sensor AWLR0032 (Aminjikarai bridge); inside Chennai district
 CFM-112,Napier Bridge,river_gauge,Cooum,,,inside_chennai,,district 'Chennai' from CFM-DSS sensor AWLR0034 (Napier Bridge); inside Chennai district

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 
+// Reads the database on every request; never prerender at build time
+export const dynamic = "force-dynamic";
+
 /** Verified GCC areas (adminBndry1 on the GCC PGR site). */
 export async function GET() {
   const [rows] = await pool.query<RowDataPacket[]>(

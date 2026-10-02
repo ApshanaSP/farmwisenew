@@ -1,0 +1,76 @@
+n,incident,district,confidence,note
+151,0,1,low,hashtag post about two arrests; no event details
+152,1,1,high,sewage mixing with drinking water at Semmancheri tenements
+153,0,1,high,announcement: traffic system project
+154,0,1,high,announcement: water supply plan
+155,1,1,high,dengue spike; 614 cases in 18 days
+156,0,1,high,scheme launch
+157,0,1,low,daily news round-up
+158,1,0,high,damaged Tambaram-Somangalam road; outside district
+159,0,1,high,rain warning; forecast only
+160,0,1,low,re-arrest of accused who escaped custody; follow-up
+161,0,1,high,scheduled power cut list
+162,0,1,high,onion arrivals
+163,0,1,high,crematorium maintenance notice
+164,0,1,high,illegal motors seized; enforcement
+165,1,1,high,undertrial assaulted and killed at IMH (same story as 48)
+166,0,1,high,feature
+167,1,1,high,balcony collapse kills migrant youth
+168,1,1,high,attempted murder at a bank
+169,0,1,high,market prices
+170,1,1,high,party functionary hacked to death (same story as 44)
+171,1,1,high,cement mixer lorry kills woman
+172,0,1,low,cut in free bus services; policy change
+173,1,1,high,protest over sewage mixing in drinking water in Taramani
+174,0,1,low,arrest of phone snatcher; enforcement
+175,0,1,high,flood channel work progress
+176,0,1,high,monsoon preparedness explainer
+177,0,1,high,political visit
+178,1,1,high,student protest against NEET
+179,1,1,low,bank employees' strike rally in Chennai
+180,1,1,high,fever cases rise; dengue surveillance
+181,1,1,high,dentist and mother murdered over property
+182,0,1,high,deadline for road cuts
+183,0,1,high,heritage proposal
+184,1,1,high,dengue rise; larvae found in 3300 houses
+185,0,?,high,political demand to protect the marsh
+186,0,1,high,ganja seizure; enforcement
+187,0,1,high,rain forecast
+188,0,1,high,exam news
+189,0,1,high,sports event
+190,0,1,high,official inspection
+191,0,1,high,flyover opening plan
+192,0,1,high,official inspection
+193,1,1,high,unenforced demolition notices behind a fatal collapse
+194,0,?,high,opinion
+195,0,1,high,vaccination programme
+196,0,1,high,official inspection
+197,0,1,high,scheduled power cut list
+198,0,1,high,sports event
+199,0,1,high,loan approval
+200,0,1,high,weather blogger post
+201,1,1,high,hospital bed waits as flu and dengue surge
+202,0,1,low,domestic fire accident; no public action
+203,0,0,high,political visit
+204,0,1,high,market prices
+205,1,1,high,sinkhole on GNT Road near Puzhal; traffic chaos
+206,1,?,high,sewage entering Chembarambakkam lake; Chennai supply affected
+207,1,1,high,dengue rise; Chennai worst affected
+208,0,1,high,feature
+209,0,1,high,politician in hospital
+210,0,1,high,scheduled power cut list
+211,0,1,high,arrest drive
+212,0,1,high,desilting works
+213,1,1,high,dengue control stepped up; 650 cases
+214,0,1,low,explainer on a sanitation workers' protest
+215,1,1,high,knife attack on the beach at Tiruvottiyur
+216,0,0,high,rain forecast for other districts
+217,1,1,high,migrant worker killed
+218,1,1,low,bank manager slapped; case booked
+219,0,1,high,announcement: double-decker buses
+220,1,?,high,student dies after bike crash
+221,0,1,high,scheduled power cut list
+222,0,1,high,court revives a case
+223,0,1,high,sports carnival
+224,0,1,high,street lights repaired; works report
+225,1,1,low,dowry-related suicide
