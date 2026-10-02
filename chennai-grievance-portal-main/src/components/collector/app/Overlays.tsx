@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
-import { OfficerCard } from "./Overview";
+import { OfficerCard, StoryLink } from "./Overview";
 import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, rel, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
 
@@ -273,6 +273,21 @@ export function ExportBody({ c }: { c: Console }) {
 }
 
 export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
+  if (d.allNews) {
+    if (!d.allNews.length) return <Empty>No news in this period.</Empty>;
+    return (
+      <div className="ngrid">
+        {d.allNews.map((i) => (
+          <button key={i.id} className="ncard" onClick={() => (i.incident ? c.openInc(i.incident) : i.url && window.open(i.url, "_blank", "noopener"))}>
+            <div className="nout">{(i.outletNames.length ? i.outletNames : ["News"]).map((n) => <span key={n}>{n}</span>)}</div>
+            <h4>{i.title}</h4>
+            <div className="nmeta"><span>{i.loc ?? "Chennai"}</span><span>{rel(i.t, d.now)}</span>{i.sev && <SevChip s={i.sev} />}</div>
+            <StoryLink i={i} />
+          </button>
+        ))}
+      </div>
+    );
+  }
   if (!d.news.length) return <Empty>No news reports in this period.</Empty>;
   return (
     <div className="ngrid">

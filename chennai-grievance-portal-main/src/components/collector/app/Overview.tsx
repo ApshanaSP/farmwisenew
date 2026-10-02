@@ -6,7 +6,7 @@ import { I, type IconName } from "./icons";
 import SatMap, { type MapStation } from "./SatMap";
 import {
   Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, Spark, deptIcon, fmtDate, fmtTime, fullTitle,
-  fmtShort, ms, rel, sevTone, sum, type Row
+  fmtShort, ms, plural, rel, sevTone, sum, type Row
 } from "./lib";
 import type { Console } from "./CollectorApp";
 import type { Insights } from "@/lib/collector/insights";
@@ -365,7 +365,7 @@ const shortInit = (s: string) => String(s ?? "").split(/\s+/).filter(Boolean).sl
 /** Today's Briefing: news the monitor linked to incidents, or items from sources the Collector added. */
 function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
   const [tab, setTab] = useState<"news" | "added">("news");
-  const when = c.period === "daily" ? "today" : `last ${d.added.days} days`;
+  const when = c.period === "daily" ? "last 24 hours" : `last ${d.added.days} days`;
   return (
     <>
       <div className="ch"><I n="news" /><h3>Today&apos;s Briefing</h3>
@@ -373,15 +373,17 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
         <button role="tab" aria-selected={tab === "news"} className={tab === "news" ? "on" : ""} onClick={() => setTab("news")}>
-          News</button>
+          News{d.allNews && <> <b className="tab-n">{d.allNews.length}</b></>}</button>
         <button role="tab" aria-selected={tab === "added"} className={tab === "added" ? "on" : ""} onClick={() => setTab("added")}
           title={`Items from sources you added, ${when}`}>From added sources <b className="tab-n">{d.added.count}</b></button>
       </div>
-      <div className="fitlist">
+      <div className={tab === "news" && d.allNews ? "fitlist scroll" : "fitlist"}>
         {tab === "news"
-          ? d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "today" : "in this period"}.</Empty>
+          ? d.allNews
+            ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
+            : d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
           : d.added.items.length ? d.added.items.slice(0, 10).map((i: Row) => <AddedRow key={i.item_id} i={i} now={d.now} c={c} />)
-            : <Empty>Nothing from added sources {when === "today" ? "today" : `in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a source</button></Empty>}
+            : <Empty>Nothing from added sources {`in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a source</button></Empty>}
       </div>
     </>
   );
@@ -394,6 +396,34 @@ function uniqueNews(rows: Row[]) {
     const k = fullTitle(r).toLowerCase().replace(/\s+/g, " ").trim();
     return seen.has(k) ? false : (seen.add(k), true);
   });
+}
+
+export type Story = NonNullable<OverviewData["allNews"]>[number];
+
+/**
+ * One news story (every outlet's article merged). A story in our records opens its incident, where
+ * "How it unfolded" shows the articles and the citizen grievances together; news alone opens the article.
+ */
+export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) {
+  const open = () => (i.incident ? c.openInc(i.incident) : i.url && window.open(i.url, "_blank", "noopener"));
+  return (
+    <button className="brief" onClick={open} title={i.incident ? "Open the incident: the news and the grievances together" : "News only: open the article"}>
+      <span className={`bic ${i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b>{i.title}</b>
+        <span className="loc">{i.outletNames.length ? i.outletNames.join(", ") : "News"} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
+        <StoryLink i={i} />
+      </span>
+    </button>
+  );
+}
+
+/** Whether a news story is also in our records: citizen grievances, an incident, or news only. */
+export function StoryLink({ i }: { i: Story }) {
+  if (i.grievances > 0) return <span className="routed"><I n="user" />Also a grievance · {plural(i.grievances, "citizen complaint")}</span>;
+  if (i.incident) return <span className="routed" title="Linked to an incident in our records; no citizen has complained about it yet">
+    <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
+  return <span className="routed dim"><I n="news" />News only · no grievance yet</span>;
 }
 
 export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Console; showDept?: boolean }) {

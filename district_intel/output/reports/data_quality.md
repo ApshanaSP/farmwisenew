@@ -8,7 +8,7 @@ _As of 02 Oct 2026 12:32 IST_
 | cpcb | degraded | 2026-10-02 12:38:14+05:30 | 2026-10-02 12:00:00+05:30 | 55 | data.gov.in CPCB real-time air quality (3b01bcb8): no-api-key; CPCB CCR live city map: 200; CPCB CCR historical (advance search / repository): captcha-gated; ap |
 | cfm | ok | 2026-10-02 12:43:26+05:30 | 2026-10-02 06:00:00+05:30 | 208 | 24 gauge readings marked suspect (stage inversion or datum); current gauge feed returned 14 rows |
 | news | ok | 2026-10-02 12:31:37.638570309+05:30 | 2026-10-02 10:26:39+05:30 | 21416 | State: last_run_at=2026-10-02T12:23:39+05:30, last_mode=daily, last_run_items=1853, backfill_completed=True |
-| grievance | ok | 2026-10-02 12:43:59.712049961+05:30 | 2026-10-02 12:32:00+05:30 | 16201 |  |
+| grievance | ok | 2026-10-02 15:36:59.992372990+05:30 | 2026-10-02 12:32:00+05:30 | 16201 |  |
 | police | ok | 2026-10-02 12:44:19.243196487+05:30 | 2026-10-02 12:26:00+05:30 | 12268 |  |
 | pwd | ok | 2026-10-02 12:43:53.825512886+05:30 | 2026-10-02 11:32:35+05:30 | 2142 |  |
 | hospital | ok | 2026-10-02 12:43:52.611550808+05:30 | 2026-10-02 00:00:00+05:30 | 83 |  |

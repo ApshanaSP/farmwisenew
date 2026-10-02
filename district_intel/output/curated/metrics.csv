@@ -12,4 +12,4 @@ flood_day_correlation_after_overlay,"{""daily_spearman"": {""grievance~police"":
 dedup,"{""grievance_dedup"": {""precision"": 0.9921, ""recall"": 1.0, ""f1"": 0.996, ""n"": 16201}, ""police_dedup"": {""precision"": 0.9914, ""recall"": 1.0, ""f1"": 0.9957, ""n"": 12268}, ""officer_duplicate_decisions_used"": 569}"
 linking,"{""candidate_pairs"": 7674, ""linkable_events"": 30087, ""scorer"": ""logistic_regression"", ""scorer_coefficients"": {""dist_norm"": -4.081, ""dt_norm"": -5.797, ""text_sim"": 3.974, ""same_cat"": 2.687, ""same_ward"": 1.169, ""coarse"": -1.152, ""has_news"": 0.761}, ""train_pairs"": 1265, ""train_positive_pairs"": 423, ""merge_threshold"": 0.55, ""review_threshold"": 0.3, ""eval_cross_source_pairs"": {""precision"": 0.968, ""recall"": 0.761, ""f1"": 0.852, ""true_pairs"": 723}, ""eval_world_events_fully_joined"": ""74/110"", ""linked_pairs"": 1007, ""review_pairs"": 302, ""multi_source_incidents"": 261}"
 briefing_unverified_numbers,0
-runtime_s,247.7
+runtime_s,217.8

@@ -1,18 +1,18 @@
 {
-  "_last_build_fingerprint": "cfdbc08604db40ca1dec067d5bb8f80fb7b1f1bd",
+  "_last_build_fingerprint": "8ac68597e7cfc1ce3cc01e15a70250a850a80946",
   "imd": {
-    "last_run": 1790924519.8720174,
+    "last_run": 1790944415.8908875,
     "ok": true,
-    "last_ok": 1790924519.8720174,
+    "last_ok": 1790944415.8908875,
     "attempts": 1,
-    "tail": "mwisenew\\imd_weather_collector\\data\\imd_weather_forecasts_chennai.csv  rows=159  range=2026-09-25T10:01:36+05:30 .. 2026-10-02T09:49:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_warnings_chennai.csv  rows=54  range=2026-09-25T12:12:21+05:30 .. 2026-10-02T11:24:03+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_run_log.csv\n"
+    "tail": "mwisenew\\imd_weather_collector\\data\\imd_weather_forecasts_chennai.csv  rows=159  range=2026-09-25T10:01:36+05:30 .. 2026-10-02T09:49:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_warnings_chennai.csv  rows=60  range=2026-09-25T12:12:21+05:30 .. 2026-10-02T20:14:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_run_log.csv\n"
   },
   "news": {
-    "last_run": 1790924497.9936163,
+    "last_run": 1790944392.7587445,
     "ok": true,
-    "last_ok": 1790924497.9936163,
+    "last_ok": 1790944392.7587445,
     "attempts": 1,
-    "tail": "     4    0.4%\n  Parks & Play Fields Department                                  4    0.4%\n  Buildings Department                                            4    0.4%\n  Land & Estate Department                                        4    0.4%\nDepartment method: {'keyword': 351, 'fallback': 557}\nComplaints: 41 of 908 (4.5%)\nMySQL: not configured\n12:31:37 | INFO    | === Run finished in 0:07:58 ===\n"
+    "tail": "     5    0.5%\n  Financial Management Unit                                       4    0.4%\n  Parks & Play Fields Department                                  4    0.4%\n  Bridges Department                                              2    0.2%\nDepartment method: {'keyword': 366, 'fallback': 546}\nComplaints: 43 of 912 (4.7%)\nMySQL: not configured\n18:03:12 | INFO    | === Run finished in 0:08:32 ===\n"
   },
   "cpcb": {
     "last_run": 1790925204.3019855,
@@ -56,7 +56,7 @@
     "attempts": 1,
     "tail": "406-0006' \u2502 '2026-04-06 02:58:00' \u2502 'TLK-AMJ' \u2502 'Shenoy Nagar'               \u2502 'THEFT_BURGLARY'      \u2502 'Burglary reported at residence in Shenoy Nagar'   \u2502 'CONTROL_ROOM_112'  \u2502 'CLOSED' \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
   },
-  "_mysql_exported_mtime": 1790932224.4174306,
+  "_mysql_exported_mtime": 1790937238.720048,
   "_last_collection": {
     "at": 1790924015.3610513,
     "ran": [

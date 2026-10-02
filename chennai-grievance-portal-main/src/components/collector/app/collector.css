@@ -138,6 +138,7 @@
 /* show only the items that fit whole; the rest wrap into a hidden column */
 .dic .fitlist{flex:1;min-height:0;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;overflow:hidden;padding:0 14px 12px;column-gap:40px}
 .dic .fitlist>*{width:100%;flex:none}
+.dic .fitlist.scroll{flex-wrap:nowrap;overflow-y:auto}
 .dic .sel{height:34px;border-radius:9px;border:1px solid var(--line);background-color:#fff;padding:0 28px 0 10px;font-size:13px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px;background-repeat:no-repeat;max-width:100%}
 .dic .p1{flex:1;min-height:0;display:grid;gap:12px;grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,1.08fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"map snap snap snap" "map brief sev tasks"}
 .dic .a-map{grid-area:map}.dic .a-sev{grid-area:sev}.dic .a-snap{grid-area:snap}.dic .a-brief{grid-area:brief}.dic .a-tasks{grid-area:tasks}
@@ -662,6 +663,7 @@
 /* ---- round 4: added sources, developing stories, market-wise mandi prices ---- */
 .dic .tab-n{font:700 11px var(--dic-mono),monospace;margin-left:3px;opacity:.85}
 .dic .routed.added{color:var(--violet);background:var(--violet-soft)}
+.dic .routed.dim{color:var(--text-3);background:transparent;padding-left:0;font-weight:600}
 .dic .map-leg i.dia{border-radius:2px;transform:rotate(45deg) scale(.85)}
 .dic .madd{width:14px;height:14px;margin:1px;transform:rotate(45deg);border-radius:3px;background:#8B5CF6;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s}
 .dic .madd.gen{background:#B9A6F7}

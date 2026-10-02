@@ -90,40 +90,41 @@ llm:
 # generator's --rainfall-csv input, so all synthetic sources keep the same rain days.
 # The hospital and PWD generators keep 180 days through their HISTORY_DAYS / WINDOW_DAYS
 # constants; police keeps 180 days through --days 180.
-# Collection day starts at this hour (local time): every source is collected once a day, on the first
-# check after it (the scheduled task checks hourly and at sign-in, so a sleeping laptop catches up on waking).
+# Every source is collected hourly (every_minutes: 60): the scheduled task runs hourly and at sign-in, so
+# a PC that was off overnight collects everything on its first run in the morning. A job with
+# every_minutes >= 1440 would instead run once a day, on the first check after refresh_hour (local time).
 refresh_hour: 6
 refresh:
   - name: news
-    every_minutes: 1440
+    every_minutes: 60
     cwd: chennai_news_pipeline
     cmd: [python, run_pipeline.py, --no-db]
   - name: imd
-    every_minutes: 1440
+    every_minutes: 60
     cwd: imd_weather_collector
     cmd: [python, imd_weather_collector.py, --backfill-days, "2"]
   - name: cpcb
-    every_minutes: 1440
+    every_minutes: 60
     cwd: cpcb_air_quality_collector
     cmd: [python, cpcb_air_quality_collector.py]
   - name: cfm
-    every_minutes: 1440
+    every_minutes: 60
     cwd: cfm_dss_collector
     cmd: [python, cfm_dss_collector.py, --backfill-days, "3"]
   - name: hospital
-    every_minutes: 1440
+    every_minutes: 60
     cwd: chennai_hospital_data
     cmd: [python, chennai_hospital_data_generator.py]
   - name: pwd
-    every_minutes: 1440
+    every_minutes: 60
     cwd: pwd_dataset_generator
     cmd: [python, generate_pwd_data.py, --rainfall-csv, ../district_intel/output/state/pwd_rainfall.csv]
   - name: grievance
-    every_minutes: 1440
+    every_minutes: 60
     cwd: chennai-grievance-portal-main
     # CSV-only: reads real complaints from MySQL, never writes to it; {grievance_rain_days} comes from the shared calendar
     cmd: [node, scripts/generate-synthetic-grievances.js, --days, "180", --seed, "42", --csv-only, --rain-days, "{grievance_rain_days}"]
   - name: police
-    every_minutes: 1440
+    every_minutes: 60
     cwd: police_dataset_generator
     cmd: [npm.cmd, run, generate, "--", --refresh, --days, "180", --seed, "42", --mode=csv]

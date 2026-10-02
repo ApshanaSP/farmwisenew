@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { loginSchema } from "@/lib/validators";
 import { signToken } from "@/lib/jwt";
-import { setAuthCookie } from "@/lib/auth";
+import { migrateLegacyCookie, setAuthCookie } from "@/lib/auth";
+import { roleToPortal } from "@/lib/session-cookies";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
@@ -66,8 +67,16 @@ export async function POST(req: NextRequest) {
     else if (user.role === "department_officer") redirectTo = "/officer";
     else if (user.role === "collector") redirectTo = "/collector";
 
+    const portal = roleToPortal(user.role);
+    if (!portal) {
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+    }
+
+    // Each role signs in to its own cookie, so this login leaves any other
+    // portal's session in this browser signed in.
     const res = NextResponse.json({ message: "Login successful", redirectTo, role: user.role });
-    setAuthCookie(res, token);
+    await migrateLegacyCookie(res);
+    setAuthCookie(res, token, portal);
     return res;
   } catch (err) {
     console.error("[api/auth/login]", err);

@@ -18,7 +18,7 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
 interface Scope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }
 
 function where(s: Scope, now: string, opts: { hours?: number; offset?: number; noCat?: boolean } = {}) {
-  // the period window (daily = today from midnight) unless a fixed number of hours is asked for
+  // the period window (daily = the last 24 hours) unless a fixed number of hours is asked for
   const win = periodWindow(s.period, now, "i.first_reported_at", opts.offset ?? 0, opts.hours);
   const parts = [win.sql];
   const params: unknown[] = [...win.params];

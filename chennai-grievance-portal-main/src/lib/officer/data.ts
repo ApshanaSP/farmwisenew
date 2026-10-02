@@ -9,7 +9,7 @@
  *   collector_decisions  the Collector's verify / return (reopen) / resolve / reject
  *
  * The latest of those wins; without either, the pipeline's status decides the stage.
- * Every panel follows the period (the Collector's windows: Daily = today from midnight,
+ * Every panel follows the period (the Collector's windows: Daily = the last 24 hours,
  * Weekly .. Quarterly = the last 7, 30, 90 days of reports) and the zone / taluk filter.
  * "Now" is the pipeline's as-of time, so the windows line up with the data. The data
  * itself is only what the pipeline's daily collection loads; nothing here fetches it.

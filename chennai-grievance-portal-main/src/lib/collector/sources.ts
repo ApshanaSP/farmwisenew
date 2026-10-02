@@ -389,7 +389,7 @@ export interface ItemScope { now: string; days: number; /** period start; overri
  */
 export async function addedItems(s: ItemScope, limit = 40) {
   void replaceStale();
-  // `since` (the period start, e.g. today from midnight) wins over `days`
+  // `since` (the period start, e.g. 24 hours ago) wins over `days`
   const where = [`s.kind IN ('rss', 'html', 'json', 'ocr')`,
     s.since ? `COALESCE(i.published_at, i.fetched_at) >= ?` : `COALESCE(i.published_at, i.fetched_at) > (? - INTERVAL ? DAY)`,
     `COALESCE(i.published_at, i.fetched_at) <= ? + INTERVAL 1 DAY`];

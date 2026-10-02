@@ -47,7 +47,7 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
             </span></span>
           </span>
         </button>
-        <Kpi k="resolved" icon="checkc" tone="t-low" label={daily ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
+        <Kpi k="resolved" icon="checkc" tone="t-low" label={daily ? "Resolved in 24 h" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
           p={d.kpi.prev.resolved} series={d.kpi.series.resolved} prevLabel={P.prev} style={iv()}
           onClick={() => c.openList(null, "Verified by the Collector", undefined, { tab: "verified" })}
           tip="Your department's incidents reported in the period that are resolved." />
@@ -243,7 +243,7 @@ function NewsCard({ c, openNews }: { c: Ctx; openNews: () => void }) {
               <span className="loc">{(i.outletNames as string[] | undefined)?.length ? (i.outletNames as string[]).join(", ") : "News"} · {i.zone_name ?? "Chennai"} · {rel(i.t, c.now)}</span>
             </span>
           </button>
-        )) : <Empty>No news about {c.dept.short} {c.ov.period === "daily" ? "today" : "in this period"}.</Empty>}
+        )) : <Empty>No news about {c.dept.short} {c.ov.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>}
       </div>
     </>
   );

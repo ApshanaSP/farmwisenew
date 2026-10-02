@@ -52,6 +52,11 @@ export function IncidentView({ id, c }: { id: string; c: Console }) {
   const zoneContact = i.zone != null ? (data.contacts as Row[]).find((x) => x.zone_no != null && x.zone_no === i.zone) : undefined;
   const overdue = open && i.sla_due && ms(i.sla_due) < ms(c.now);
   const why = i.why as Plain;
+  // the incident in the news and in citizen grievances; "How it unfolded" lists both in time order
+  const newsOutlets = [...new Set(reports.filter((r) => r.source === "news" && r.publisher).map((r) => String(r.publisher)))];
+  const inNews = reports.some((r) => r.source === "news");
+  const grievances = reports.filter((r) => r.source === "grievance").length;
+  const newsReports = reports.filter((r) => r.source === "news").length;
 
   // group the linked reports by day
   const days: { day: string; items: Row[] }[] = [];
@@ -73,7 +78,8 @@ export function IncidentView({ id, c }: { id: string; c: Console }) {
           <span className="tg">{i.status}</span>
           {dec?.decision === "verify" && <span className="tg"><I n="check" />Verified by you {rel(dec.t, c.now)}</span>}
           {data.assigned && <span className="tg"><I n="send" />Sent to {data.assigned.officer_designation ?? i.dept_name}</span>}
-          <span className="tg" style={{ opacity: .8 }}>{i.id}</span>
+          {inNews && <span className="tg" title={newsOutlets.join(", ")}><I n="news" />In the news · {newsOutlets.length ? plural(newsOutlets.length, "outlet") : "reported"}</span>}
+          {grievances > 0 && <span className="tg"><I n="user" />{plural(grievances, "citizen grievance")}</span>}
         </div>
         <h2>{fullTitle(i)}</h2>
         <div className="iv-where">
@@ -115,7 +121,9 @@ export function IncidentView({ id, c }: { id: string; c: Console }) {
         </section>
 
         <section className="iv-col">
-          <div className="iv-t"><I n="clock" />How it unfolded<span>{plural(reports.length, "report")} from {plural(srcs.length, "source")}, merged into one incident</span></div>
+          <div className="iv-t"><I n="clock" />How it unfolded<span>{inNews && grievances > 0
+            ? `${plural(grievances, "grievance")} and ${plural(newsReports, "news report")}${srcs.length > 2 ? " with other records" : ""}, in time order`
+            : `${plural(reports.length, "report")} from ${plural(srcs.length, "source")}, merged into one incident`}</span></div>
           <ul className="tl">
             {days.map((g) => (
               <li key={g.day} style={{ listStyle: "none" }}>

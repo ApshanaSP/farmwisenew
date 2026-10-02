@@ -27,7 +27,7 @@ const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { s
 const PERIOD_KEYS: Period[] = ["daily", "weekly", "monthly", "quarterly"];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 const PERIOD_HINT: Record<Period, string> = {
-  daily: "Daily: only today, from midnight", weekly: "Weekly: incidents reported in the last 7 days",
+  daily: "Daily: the last 24 hours, up to now", weekly: "Weekly: incidents reported in the last 7 days",
   monthly: "Monthly: incidents reported in the last 30 days", quarterly: "Quarterly: incidents reported in the last 90 days"
 };
 const FIT_W = 1366;

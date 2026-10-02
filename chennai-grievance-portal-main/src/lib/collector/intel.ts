@@ -21,7 +21,7 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
 }
 
 export const PERIODS = {
-  daily: { hours: 24, buckets: 12, unit: "Day", prev: "yesterday", label: "Today", word: "Daily" },
+  daily: { hours: 24, buckets: 12, unit: "Day", prev: "yesterday", label: "Last 24 hours", word: "Daily" },
   weekly: { hours: 168, buckets: 7, unit: "Week", prev: "prev. week", label: "Last 7 days", word: "Weekly" },
   monthly: { hours: 720, buckets: 30, unit: "Month", prev: "prev. month", label: "Last 30 days", word: "Monthly" },
   quarterly: { hours: 2160, buckets: 13, unit: "Quarter", prev: "prev. quarter", label: "Last 90 days", word: "Quarterly" }
@@ -56,12 +56,17 @@ export const OPEN_STATUSES = ["Open", "Under review", "Assigned", "In progress",
 
 let asOfCache: { at: number; value: string } | null = null;
 
-/** Pipeline as-of time as an IST wall-clock string "YYYY-MM-DD HH:MM:SS". */
+/**
+ * The console's "now" as an IST wall-clock string "YYYY-MM-DD HH:MM:SS": the time the page is
+ * opened, so every period window ends at the current moment (Daily at 5:30 PM covers yesterday
+ * 5:30 PM to now), not at the pipeline's last refresh. A later pipeline as-of wins (clock skew).
+ */
 export async function asOf(): Promise<string> {
   if (asOfCache && Date.now() - asOfCache.at < 30_000) return asOfCache.value;
   const [r] = await q(`SELECT JSON_UNQUOTE(value) AS v FROM metrics WHERE metric = 'as_of'`);
   const v = r?.v ? String(r.v).slice(0, 19).replace("T", " ") : "";
-  const value = v || (await q(`SELECT DATE_FORMAT(MAX(first_reported_at), '%Y-%m-%d %H:%i:%s') AS v FROM incidents`))[0].v;
+  const clock = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const value = v > clock ? v : clock;
   asOfCache = { at: Date.now(), value };
   return value;
 }
@@ -83,23 +88,17 @@ export interface Scope {
 }
 
 /**
- * The time window of a period over a timestamp column. Daily is today: the calendar day of
- * the as-of time, from midnight (offset 1 = yesterday), so nothing from earlier days shows.
- * Weekly, monthly and quarterly are the last 7, 30 and 90 days. `hours` forces a rolling window.
+ * The time window of a period over a timestamp column, rolling back from `now`: Daily is the
+ * last 24 hours (opened at 5:30 PM, it covers yesterday 5:30 PM to now; offset 1 = the 24 hours
+ * before that). Weekly, monthly and quarterly are the last 7, 30 and 90 days. `hours` overrides.
  */
 export function periodWindow(period: Period, now: string, col = "i.first_reported_at", off = 0, hours?: number): { sql: string; params: unknown[] } {
-  if (period === "daily" && hours == null) {
-    return off === 0
-      ? { sql: `${col} >= DATE(?) AND ${col} <= ?`, params: [now, now] }
-      : { sql: `${col} >= DATE(?) - INTERVAL ? DAY AND ${col} < DATE(?) - INTERVAL ? DAY`, params: [now, off, now, off - 1] };
-  }
   const h = hours ?? PERIODS[period].hours;
   return { sql: `${col} > (? - INTERVAL ? HOUR) AND ${col} <= (? - INTERVAL ? HOUR)`, params: [now, h * (off + 1), now, h * off] };
 }
 
 /** Start of the period as an IST wall-clock string ("YYYY-MM-DD HH:MM:SS"). */
 export function periodSince(period: Period, now: string): string {
-  if (period === "daily") return `${now.slice(0, 10)} 00:00:00`;
   const t = new Date(now.replace(" ", "T") + "Z").getTime() - PERIODS[period].hours * 3600_000;
   return new Date(t).toISOString().slice(0, 19).replace("T", " ");
 }
@@ -216,6 +215,62 @@ const ROW = `i.incident_id AS id, i.title, i.category_label AS type, i.category_
   i.sla_breached AS breached, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
   i.media_only, i.awaiting_collector, i.police_reports, DATE_FORMAT(i.last_update_at, '%Y-%m-%d %H:%i:%s') AS updated`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
+
+/** News outlets the Collector reads: established and regional papers and official pages, not social posts or aggregators. */
+const NEWS_TIERS = "('established', 'regional', 'official')";
+/** Daily round-ups ("Chennai Latest News Today…") list many unrelated items, so they are not one story. */
+const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|#gallery/i;
+
+/**
+ * News stories in the period that matter to the Collector, newest first: from a real news outlet,
+ * and either linked to an incident in our records or about a category the district handles
+ * (drains, dengue, power, crime, encroachment…). One row per story, every outlet that covered it
+ * merged. `incident` is the linked incident; `complaints`/`grievances` say whether citizens
+ * also raised it, so the card can tell news that is also a grievance from news alone.
+ */
+async function newsStories(period: Period, now: string) {
+  const w = periodWindow(period, now, "d.published_at");
+  const docs = (await q(
+    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.url, d.publisher, d.place_text, d.category_code,
+            d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
+     FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS}
+       AND (d.linked_incident_id IS NOT NULL OR (d.category_code IS NOT NULL AND d.category_code <> 'OTHER'
+            AND COALESCE(d.report_type, '') NOT IN ('entertainment_sport', 'business')))
+       AND ${w.sql}
+     ORDER BY d.published_at DESC LIMIT 1500`,
+    w.params
+  )).filter((r) => !ROUNDUP.test(String(r.title)));
+  const by = new Map<string, Row[]>();
+  for (const r of docs) {
+    const k = String(r.story_id ?? r.doc_id);
+    (by.get(k) ?? by.set(k, []).get(k)!).push(r);
+  }
+  const groups = [...by.values()];
+  const ids = [...new Set(groups.map((g) => g.find((r) => r.linked_incident_id)?.linked_incident_id).filter(Boolean))] as string[];
+  const [src, inc] = await Promise.all([
+    sourcesFor(ids),
+    ids.length ? q(`SELECT ${ROW} ${FROM} WHERE i.incident_id IN (?)`, [ids]) : Promise.resolve([] as Row[])
+  ]);
+  const incOf = new Map(inc.map((r) => [r.id, r]));
+  return groups.map((g) => {
+    const lead = g.find((r) => r.story_role === "first_report") ?? g[g.length - 1];
+    const incident = (g.find((r) => r.linked_incident_id)?.linked_incident_id as string | undefined) ?? null;
+    const i = incident ? incOf.get(incident) : undefined;
+    return {
+      id: String(lead.doc_id),
+      title: String(lead.title),
+      url: lead.url ?? null,
+      loc: i?.zone_name ?? g.find((r) => r.place_text)?.place_text ?? null,
+      t: g[0].t, // newest article of the story
+      incident,
+      sev: i?.sev ?? null,
+      /** citizen grievances merged into the linked incident */
+      grievances: incident ? Number(src[incident]?.grievance ?? 0) : 0,
+      complaints: i ? Number(i.complaints ?? 0) : 0,
+      outletNames: [...new Set(g.map((r) => r.publisher).filter(Boolean))] as string[]
+    };
+  });
+}
 
 /** Latest Collector decision per incident, to overlay on pipeline status. */
 async function decisionsFor(ids: string[]): Promise<Record<string, Row>> {
@@ -523,7 +578,7 @@ async function kpiBlock(s: Scope, now: string) {
   const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
     SUM(i.is_open) AS ongoing, SUM(i.is_open = 0 AND i.status_std = 'Resolved') AS resolved`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
-  const since = periodSince(s.period, now); // daily: buckets of 2 hours from midnight
+  const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
   const [c, pv, series] = await Promise.all([
     q(`SELECT ${cols} FROM incidents i WHERE ${cur.sql}`, cur.params),
     q(`SELECT ${cols} FROM incidents i WHERE ${prev.sql}`, prev.params),
@@ -575,7 +630,7 @@ export async function overview(period: Period, zone: number | null, dept: string
   const sevWhere = `${w.sql} AND i.is_open = 1 AND NOT ${ROUTED}`;
 
   const [kpi, meta, zoneTable, pins, layerCounts, news, tasks, taskCount, sevRows, sevCounts, byDept, byZone,
-    feeds, bell, deptNav, snap, backlog, env, stories, sevAll, added] = await Promise.all([
+    feeds, bell, deptNav, snap, backlog, env, stories, sevAll, added, allNews] = await Promise.all([
     kpiBlock(s, now),
     exportMeta(),
     // Every zone, even with no incidents in this scope (the zone picker lists them all).
@@ -664,7 +719,10 @@ export async function overview(period: Period, zone: number | null, dept: string
     // Severity mix of everything reported in the period (open and closed), for page 2.
     q(`SELECT i.severity_level AS sev, COUNT(*) AS n, SUM(i.is_open) AS open FROM incidents i WHERE ${w.sql} GROUP BY i.severity_level`, w.params),
     // Items from sources the Collector added: at least the last 7 days, so a quiet day still shows them.
-    addedItems({ now, days: Math.max(1, Math.round(p.hours / 24)), since: periodSince(period, now), zone, dept, cat, taluk })
+    addedItems({ now, days: Math.max(1, Math.round(p.hours / 24)), since: periodSince(period, now), zone, dept, cat, taluk }),
+    // News stories relevant to the Collector (see newsStories); articles carry no zone or department,
+    // so a filtered view keeps to the news linked to incidents in scope (`news`).
+    zone || dept || cat || taluk ? Promise.resolve(null) : newsStories(period, now)
   ]);
 
   const [taskRows, newsRows, sevList, bellRows] = await Promise.all([
@@ -723,6 +781,7 @@ export async function overview(period: Period, zone: number | null, dept: string
     }),
     stories,
     added,
+    allNews,
     bottom: {
       /** by department (no department filter) or by category (a department is selected) */
       byDept: byDept.map((r) => ({ code: (r.code as string | undefined) ?? null, l: String(r.l ?? r.code ?? "Other"), v: Number(r.v) })),

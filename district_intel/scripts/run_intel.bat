@@ -1,6 +1,6 @@
 @echo off
 REM District Intelligence: refresh the sources that are due, then rebuild the curated store.
-REM Every source is collected once a day. Schedule with Task Scheduler at 6:00 AM:
+REM Every source is collected hourly (config.yaml every_minutes). Task Scheduler runs this hourly and at sign-in:
 REM   schtasks /Create /TN "DistrictIntel" /SC DAILY /ST 06:00 /TR "\"D:\farmwisenew\district_intel\scripts\run_intel.bat\"" /RL LIMITED /F
 cd /d "%~dp0.."
 if exist "..\chennai_news_pipeline\.venv\Scripts\python.exe" (
