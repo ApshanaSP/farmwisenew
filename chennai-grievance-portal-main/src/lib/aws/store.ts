@@ -15,6 +15,7 @@
  * when the server starts. It is kept in a SQLite file (data/aws-cache/durable.sqlite) attached to every build, so
  * the same queries read and write it. Triggers note each changed row in _changes; after every write (or COMMIT) the
  * changed rows go to POST /store/write before the query returns. A failed send stays in _changes and is retried.
+ * Only the PC with AWS_STORE_SAVE=1 sends; any other copy reloads the store every few minutes and keeps its own changes.
  * Writes run one at a time (a transaction holds the write lock until COMMIT / ROLLBACK), like a single MySQL writer.
  */
 import fs from "fs";
@@ -46,8 +47,8 @@ interface Manifest {
 }
 interface Snapshot { table: string; columns: [string, Kind][]; rows: unknown[][] }
 
-interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number }
-interface Durable { conn: DB; keys: Record<string, string[]> }
+interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number; durableFile: string }
+interface Durable { conn: DB; keys: Record<string, string[]>; file: string; loadedAt: number }
 
 /** One holder at a time; acquire() resolves to the release function. */
 class Lock {
@@ -66,6 +67,7 @@ declare global {
   var __awsStore: {
     state: State | null; loading: Promise<State> | null; checking: boolean;
     durable: Durable | null; durableLoading: Promise<Durable> | null; lock: Lock; flushing: Promise<void>;
+    reloading?: boolean; reference?: { id: string; doc: Doc };
   } | undefined;
 }
 const g = (global.__awsStore ??= {
@@ -112,11 +114,11 @@ const SQL_TYPE: Record<Kind, string> = { text: "TEXT COLLATE NOCASE", int: "INTE
 /** A fresh in-memory database holding one complete build. */
 async function build(m: Manifest): Promise<State> {
   setDatabaseNames(DB_NAMES());
-  await durable();
+  const durableFile = (await durable()).file;
   const db = new (sqlite().DatabaseSync)(":memory:");
   registerFunctions(db);
   db.exec("PRAGMA busy_timeout = 5000");
-  db.prepare("ATTACH DATABASE ? AS durable").run(DURABLE_FILE);
+  db.prepare("ATTACH DATABASE ? AS durable").run(durableFile);
   const names = Object.keys(m.tables);
   const snaps = await Promise.all(names.map((n) => table(n, m.tables[n])));
   db.exec("BEGIN");
@@ -140,7 +142,16 @@ async function build(m: Manifest): Promise<State> {
   db.exec("COMMIT");
   db.exec("ANALYZE");
   catalog(db);
-  return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now() };
+  return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now(), durableFile };
+}
+
+/** Points a build at another durable file (after a reload). Call with the write lock held: no transaction is open. */
+function attach(s: State, file: string): void {
+  if (s.durableFile === file) return;
+  s.db.exec("DETACH DATABASE durable");
+  s.db.prepare("ATTACH DATABASE ? AS durable").run(file);
+  s.durableFile = file;
+  catalog(s.db);
 }
 
 /**
@@ -179,6 +190,11 @@ const RETRY_MS = 60_000;    // a failed send is retried this often (and after th
 // server) keeps them in its own durable.sqlite until it restarts: two saving copies would give new rows the same ids
 // and overwrite each other's rows in DynamoDB. AWS_STORE_DRY_RUN=1 turns saving off even with AWS_STORE_SAVE=1.
 const DRY_RUN = process.env.AWS_STORE_SAVE !== "1" || process.env.AWS_STORE_DRY_RUN === "1";
+// Such a copy loads the durable store again this often while it is used (AWS_STORE_RELOAD_MINUTES), so it shows what
+// the saving PC saved, and keeps its own changes over each reload ...
+const RELOAD_MS = Math.max(1, Number(process.env.AWS_STORE_RELOAD_MINUTES) || 5) * 60_000;
+// ... numbering its own new rows from here, so they never take the id of a row the saving PC adds later
+const LOCAL_IDS = 1_000_000_000;
 
 type Doc = { schema: Record<string, { ddl: string[]; key: string[] }>; rows: Record<string, Record<string, unknown>[]> };
 
@@ -229,7 +245,7 @@ function fill(db: DB, doc: Doc, track: boolean): void {
 }
 
 /** Sends the noted changes to DynamoDB: each changed key as its current row, or as a delete when the row is gone. */
-async function send(d: Durable): Promise<void> {
+async function send(d: Pick<Durable, "conn" | "keys">): Promise<void> {
   for (;;) {
     const changes = d.conn.prepare("SELECT id, t, k FROM _changes ORDER BY id LIMIT ?").all(BATCH) as { id: number; t: string; k: string }[];
     if (!changes.length) return;
@@ -256,18 +272,121 @@ async function send(d: Durable): Promise<void> {
 
 /** Sends whatever is waiting, one send at a time. Never throws: a failure stays in _changes for the retry. */
 function flush(): Promise<void> {
+  if (DRY_RUN) return g.flushing; // a copy that does not save keeps its changes noted, to carry them over each reload
   g.flushing = g.flushing
     .then(() => (g.durable ? send(g.durable) : undefined))
     .catch((e) => console.warn(`[aws-store] saving to AWS failed, will retry: ${e.message}`));
   return g.flushing;
 }
 
+/** The reference tables do not change between loads: a copy that reloads keeps them in memory. */
+async function reference(url: string): Promise<Doc> {
+  const id = new URL(url).pathname;
+  if (g.reference?.id === id) return g.reference.doc;
+  const doc = await gzJson<Doc>(url);
+  if (DRY_RUN) g.reference = { id, doc };
+  return doc;
+}
+
+type Loaded = Durable & { tables: number; rows: number; refTables: number };
+
+/** A new durable file from AWS: every durable row (POST /store/load) and the read-only reference tables. */
+async function fetchDurable(file: string): Promise<Loaded> {
+  const m = await api("/store/load", {});
+  const [rows, ref] = await Promise.all([gzJson<Doc>(m.rows), m.reference ? reference(m.reference) : null]);
+  for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(file + f, { force: true });
+  const conn = new (sqlite().DatabaseSync)(file);
+  conn.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000");
+  conn.exec("BEGIN");
+  conn.exec("CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)");
+  conn.exec("CREATE TABLE _keys (t TEXT PRIMARY KEY, key TEXT NOT NULL)");
+  if (ref) fill(conn, ref, false);
+  fill(conn, rows, true);
+  const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
+  const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
+  for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
+  if (DRY_RUN)
+    conn.exec(`UPDATE sqlite_sequence SET seq = ${LOCAL_IDS} WHERE seq < ${LOCAL_IDS} AND name <> '_changes';
+               INSERT INTO sqlite_sequence (name, seq) SELECT name, ${LOCAL_IDS} FROM sqlite_master
+               WHERE type = 'table' AND sql LIKE '%AUTOINCREMENT%' AND name <> '_changes' AND name NOT IN (SELECT name FROM sqlite_sequence);`);
+  conn.exec("COMMIT");
+  return { conn, keys, file, loadedAt: Date.now(), tables: m.tables, rows: m.row_count, refTables: ref ? Object.keys(ref.schema).length : 0 };
+}
+
+/** Copies this copy's own changes (noted in _changes) into a newly loaded store. Returns how many it kept. */
+function overlay(from: Durable, to: Durable): number {
+  const changed = from.conn.prepare("SELECT DISTINCT t, k FROM _changes").all() as { t: string; k: string }[];
+  let kept = 0;
+  to.conn.exec("BEGIN");
+  try {
+    for (const { t, k } of changed) {
+      const key = from.keys[t];
+      if (!key || !to.keys[t]) continue;
+      const vals = JSON.parse(k) as any[];
+      const where = key.map((c) => (c === "rowid" ? "rowid IS ?" : `${q(c)} IS ?`)).join(" AND ");
+      const row = from.conn.prepare(`SELECT ${key.includes("rowid") ? "rowid AS rowid, " : ""}* FROM ${q(t)} WHERE ${where}`)
+        .get(...vals) as Record<string, unknown> | undefined;
+      to.conn.exec("SAVEPOINT kept");
+      try {
+        to.conn.prepare(`DELETE FROM ${q(t)} WHERE ${where}`).run(...vals);
+        if (row) {
+          const cols = Object.keys(row);
+          to.conn.prepare(`INSERT INTO ${q(t)} (${cols.map((c) => (c === "rowid" ? "rowid" : q(c))).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`)
+            .run(...(cols.map((c) => row[c]) as any[]));
+        }
+        to.conn.exec("RELEASE kept");
+        kept++;
+      } catch {
+        to.conn.exec("ROLLBACK TO kept; RELEASE kept"); // clashes with a row saved meanwhile (a unique value): that row wins
+      }
+    }
+    to.conn.exec("COMMIT");
+  } catch (e) {
+    to.conn.exec("ROLLBACK");
+    throw e;
+  }
+  return kept;
+}
+
+/** Deletes durable files nothing uses any more; one still open (by a build about to close) goes at the next sweep. */
+function sweep(keep: string): void {
+  for (const f of fs.readdirSync(CACHE_DIR))
+    if (/^durable(-\d+)?\.sqlite(-wal|-shm|-journal)?$/.test(f) && !f.startsWith(path.basename(keep)))
+      try { fs.rmSync(path.join(CACHE_DIR, f), { force: true }); } catch { /* still open */ }
+}
+
+/** A copy that does not save: loads the durable store again, into a new file, and swaps it in with its own changes. */
+async function reloadDurable(): Promise<void> {
+  const fresh = await fetchDurable(path.join(CACHE_DIR, `durable-${Date.now()}.sqlite`));
+  const release = await g.lock.acquire(); // no transaction is open while the files are swapped
+  const old = g.durable;
+  let kept = 0;
+  try {
+    if (old) kept = overlay(old, fresh);
+    if (g.state) attach(g.state, fresh.file);
+    g.durable = fresh;
+  } catch (e) {
+    fresh.conn.close();
+    throw e;
+  } finally {
+    release();
+  }
+  try { old?.conn.close(); } catch { /* already closed */ }
+  sweep(fresh.file);
+  console.log(`[aws-store] complaints and accounts reloaded from AWS: ${fresh.rows} rows${kept ? `, ${kept} local changes kept` : ""}`);
+}
+
 /**
- * The durable store, loaded from AWS once per server start. Changes a previous run could not send (a file left
- * by a crash or a network outage) are sent first, so the fresh copy includes them.
+ * The durable store, loaded from AWS at server start (and again every RELOAD_MS by a copy that does not save).
+ * Changes a previous run could not send (a file left by a crash or a network outage) are sent first, so the fresh
+ * copy includes them.
  */
 async function durable(): Promise<Durable> {
-  if (g.durable) return g.durable;
+  if (g.durable) {
+    g.durable.file ??= DURABLE_FILE; // loaded by an older version of this module (dev hot reload)
+    g.durable.loadedAt ??= Date.now();
+    return g.durable;
+  }
   g.durableLoading ??= (async () => {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
     if (fs.existsSync(DURABLE_FILE)) {
@@ -281,24 +400,13 @@ async function durable(): Promise<Durable> {
         old.close();
       }
     }
-    const m = await api("/store/load", {});
-    const [rows, ref] = await Promise.all([gzJson<Doc>(m.rows), m.reference ? gzJson<Doc>(m.reference) : null]);
-    for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(DURABLE_FILE + f, { force: true });
-    const conn = new (sqlite().DatabaseSync)(DURABLE_FILE);
-    conn.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000");
-    conn.exec("BEGIN");
-    conn.exec("CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)");
-    conn.exec("CREATE TABLE _keys (t TEXT PRIMARY KEY, key TEXT NOT NULL)");
-    if (ref) fill(conn, ref, false);
-    fill(conn, rows, true);
-    const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
-    const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
-    for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
-    conn.exec("COMMIT");
-    const d = { conn, keys };
+    const d = await fetchDurable(DURABLE_FILE);
     g.durable = d;
+    sweep(d.file);
     setInterval(() => void flush(), RETRY_MS).unref();
-    console.log(`[aws-store] durable store loaded: ${m.tables} tables, ${m.row_count} rows${ref ? ` + ${Object.keys(ref.schema).length} reference tables` : ""}${DRY_RUN ? " (local only: changes are not saved to AWS; the one PC that saves has AWS_STORE_SAVE=1)" : ", saving changes to AWS"}`);
+    console.log(`[aws-store] durable store loaded: ${d.tables} tables, ${d.rows} rows${d.refTables ? ` + ${d.refTables} reference tables` : ""}${DRY_RUN
+      ? ` (local only: changes are not saved to AWS, and the data is reloaded from AWS every ${RELOAD_MS / 60_000} min; the one PC that saves has AWS_STORE_SAVE=1)`
+      : ", saving changes to AWS"}`);
     return d;
   })().finally(() => { g.durableLoading = null; });
   return g.durableLoading;
@@ -310,6 +418,12 @@ async function current(): Promise<State> {
     g.loading ??= manifest().then(build).then((s) => { g.state = s; return s; }).finally(() => { g.loading = null; });
     return g.loading;
   }
+  if (DRY_RUN && g.durable && Date.now() - (g.durable.loadedAt ?? 0) > RELOAD_MS && !g.reloading) {
+    g.reloading = true;
+    reloadDurable()
+      .catch((e) => console.warn(`[aws-store] reload from AWS failed, keeping the loaded data: ${e.message}`))
+      .finally(() => { g.reloading = false; if (g.durable) g.durable.loadedAt = Date.now(); });
+  }
   if (Date.now() - g.state.checkedAt > CHECK_MS && !g.checking) {
     g.checking = true;
     g.state.checkedAt = Date.now();
@@ -317,8 +431,14 @@ async function current(): Promise<State> {
       .then(async (m) => {
         if (m.build_id === g.state?.buildId) return;
         const fresh = await build(m);
+        const release = await g.lock.acquire();
         const old = g.state;
-        g.state = fresh; // swapped whole
+        try {
+          if (g.durable) attach(fresh, g.durable.file); // a reload may have swapped the durable file meanwhile
+          g.state = fresh; // swapped whole
+        } finally {
+          release();
+        }
         console.log(`[aws-store] build ${fresh.buildId} loaded (was ${old?.buildId})`);
         setTimeout(() => { try { old?.db.close(); } catch { /* already closed */ } }, 60_000);
       })

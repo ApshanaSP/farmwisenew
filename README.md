@@ -43,10 +43,13 @@ No MySQL and no Python: the data comes from the team's AWS account and is refres
    Open http://localhost:3000. The first start takes about a minute while the data downloads.
 5. Log in with the team's usual accounts (they are stored in AWS).
 
-**Saving.** Your copy shows the real data, but what you do on it (filing complaints, approving tasks ...) is **not saved
-to AWS** and is gone when you restart. Only one PC, the project owner's, saves (`AWS_STORE_SAVE=1` in its `.env`):
-two saving PCs would give new complaints the same numbers and overwrite each other. Restart `npm run dev` to see
-complaints others saved since you started; the district data updates by itself every few minutes.
+**Staying up to date.** While you use the site it picks up new data from AWS by itself: the district data and the
+complaints, accounts and Collector/officer work saved by the team every 5 minutes. No restart needed.
+
+**Saving.** What you do on your copy (filing complaints, approving tasks ...) stays on your PC and is **not saved to
+AWS**; it is gone when you restart. Only one PC, the project owner's, saves (`AWS_STORE_SAVE=1` in its `.env`): two
+saving PCs would give new complaints the same numbers and overwrite each other. Photos are kept on the PC they were
+uploaded to, so photos from the owner's PC do not show on yours.
 
 **Problems.** `fetch failed` or `unable to get local issuer certificate`: your antivirus checks HTTPS traffic; set
 `NODE_EXTRA_CA_CERTS` to its root certificate file before `npm run dev`. `REFRESH_API_KEY is not set`: `.env` is
