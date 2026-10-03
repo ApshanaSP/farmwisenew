@@ -21,17 +21,18 @@ No MySQL and no Python: the data comes from the team's AWS account and is refres
    Windows PowerShell:
    ```powershell
    $env:GIT_LFS_SKIP_SMUDGE = "1"
-   git clone --depth 1 https://github.com/ApshanaSP/farmwisenew.git
+   git clone -c core.longpaths=true --depth 1 https://github.com/ApshanaSP/farmwisenew.git
    cd farmwisenew/chennai-grievance-portal-main
    Remove-Item -Recurse -Force .cache
    ```
    Mac, Linux or Git Bash:
    ```bash
-   GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/ApshanaSP/farmwisenew.git
+   GIT_LFS_SKIP_SMUDGE=1 git clone -c core.longpaths=true --depth 1 https://github.com/ApshanaSP/farmwisenew.git
    cd farmwisenew/chennai-grievance-portal-main
    rm -rf .cache
    ```
-   (`.cache` then holds only placeholders; the AI search model downloads itself, about 280 MB, the first time it is used.)
+   (`core.longpaths` is for Windows: some collector files have very long names, and without it the download fails
+   with "Filename too long" and leaves an empty folder. `.cache` then holds only placeholders; the AI search model downloads itself, about 280 MB, the first time it is used.)
 3. Copy `.env.aws.example` to `.env` and fill in the two team secrets (`REFRESH_API_KEY`, `AADHAAR_ENCRYPTION_KEY`).
    Ask the project owner for them: they are never in this repo.
 4. Start it:
