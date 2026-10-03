@@ -9,17 +9,24 @@
  * - Every CHECK_MS a query triggers a background check for a newer build; a new build is loaded into a fresh
  *   database and swapped in whole, so a page never sees half of one build and half of another.
  * - The interface is the slice of mysql2's Pool the code uses: query / execute / getConnection.
+ *
+ * The website's own data (complaints, users, Collector and officer work, assistant chats ...) is the durable store:
+ * DynamoDB holds it, and POST /store/load hands it over (with the read-only reference tables: streets, wards ...)
+ * when the server starts. It is kept in a SQLite file (data/aws-cache/durable.sqlite) attached to every build, so
+ * the same queries read and write it. Triggers note each changed row in _changes; after every write (or COMMIT) the
+ * changed rows go to POST /store/write before the query returns. A failed send stays in _changes and is retried.
+ * Writes run one at a time (a transaction holds the write lock until COMMIT / ROLLBACK), like a single MySQL writer.
  */
 import fs from "fs";
-import { createRequire } from "module";
 import path from "path";
 import zlib from "zlib";
 import type { DatabaseSync as DB } from "node:sqlite";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
 
 // node:sqlite is loaded at run time, and only when this store is used: Next.js 14's bundler does not know the
-// node:sqlite scheme, and the MySQL backend never needs it
-const sqlite = () => createRequire(path.join(process.cwd(), "package.json"))("node:sqlite") as typeof import("node:sqlite");
+// node:sqlite scheme (and rewrites createRequire), and the MySQL backend never needs it
+const sqlite = () =>
+  (process as unknown as { getBuiltinModule(id: string): unknown }).getBuiltinModule("node:sqlite") as typeof import("node:sqlite");
 
 const API_URL = (process.env.AWS_API_URL || "https://i6q6oi20lb.execute-api.ap-south-1.amazonaws.com").replace(/\/$/, "");
 const CACHE_DIR = path.join(process.cwd(), "data", "aws-cache");
@@ -40,12 +47,33 @@ interface Manifest {
 interface Snapshot { table: string; columns: [string, Kind][]; rows: unknown[][] }
 
 interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number }
+interface Durable { conn: DB; keys: Record<string, string[]> }
+
+/** One holder at a time; acquire() resolves to the release function. */
+class Lock {
+  private tail: Promise<void> = Promise.resolve();
+  acquire(): Promise<() => void> {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    const before = this.tail;
+    this.tail = before.then(() => held);
+    return before.then(() => release);
+  }
+}
 
 declare global {
   // eslint-disable-next-line no-var
-  var __awsStore: { state: State | null; loading: Promise<State> | null; checking: boolean } | undefined;
+  var __awsStore: {
+    state: State | null; loading: Promise<State> | null; checking: boolean;
+    durable: Durable | null; durableLoading: Promise<Durable> | null; lock: Lock; flushing: Promise<void>;
+  } | undefined;
 }
-const g = (global.__awsStore ??= { state: null, loading: null, checking: false });
+const g = (global.__awsStore ??= {
+  state: null, loading: null, checking: false, durable: null, durableLoading: null, lock: new Lock(), flushing: Promise.resolve()
+});
+const DB_NAMES = () => [
+  process.env.INTEL_DB_NAME || "district_intel", process.env.INTEL_OPS_DB_NAME || "district_intel_ops", process.env.DB_NAME || "district_collector_dashboard"
+];
 
 function apiKey(): string {
   const k = (process.env.REFRESH_API_KEY || "").trim();
@@ -83,9 +111,12 @@ const SQL_TYPE: Record<Kind, string> = { text: "TEXT COLLATE NOCASE", int: "INTE
 
 /** A fresh in-memory database holding one complete build. */
 async function build(m: Manifest): Promise<State> {
-  setDatabaseNames([process.env.INTEL_DB_NAME || "district_intel", process.env.INTEL_OPS_DB_NAME || "district_intel_ops"]);
+  setDatabaseNames(DB_NAMES());
+  await durable();
   const db = new (sqlite().DatabaseSync)(":memory:");
   registerFunctions(db);
+  db.exec("PRAGMA busy_timeout = 5000");
+  db.prepare("ATTACH DATABASE ? AS durable").run(DURABLE_FILE);
   const names = Object.keys(m.tables);
   const snaps = await Promise.all(names.map((n) => table(n, m.tables[n])));
   db.exec("BEGIN");
@@ -113,26 +144,164 @@ async function build(m: Manifest): Promise<State> {
 }
 
 /**
- * information_schema.tables and .columns, which the code reads to see whether optional tables exist. Both MySQL
- * databases live in this one store, so every table is listed under both names. Rebuilt after any CREATE / DROP.
+ * information_schema.tables and .columns, which the code reads to see whether optional tables exist. All three MySQL
+ * databases live in this one store (the build and the attached durable file), so every table is listed under each
+ * name. Rebuilt after any CREATE / DROP.
  */
 function catalog(db: DB): void {
-  const schemas = [process.env.INTEL_DB_NAME || "district_intel", process.env.INTEL_OPS_DB_NAME || "district_intel_ops"];
+  const schemas = DB_NAMES();
   if (!db.prepare("SELECT 1 FROM pragma_database_list WHERE name = 'information_schema'").get())
     db.exec("ATTACH DATABASE ':memory:' AS information_schema");
   db.exec(`DROP TABLE IF EXISTS information_schema.tables; DROP TABLE IF EXISTS information_schema.columns;
            CREATE TABLE information_schema.tables (table_schema TEXT COLLATE NOCASE, table_name TEXT COLLATE NOCASE, table_type TEXT, table_rows INTEGER);
            CREATE TABLE information_schema.columns (table_schema TEXT COLLATE NOCASE, table_name TEXT COLLATE NOCASE, column_name TEXT COLLATE NOCASE, ordinal_position INTEGER, data_type TEXT);`);
-  const objs = db.prepare("SELECT name, type FROM main.sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'").all() as { name: string; type: string }[];
+  const objs = db.prepare(`SELECT name, type, 'main' AS db FROM main.sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
+                           UNION ALL SELECT name, type, 'durable' FROM durable.sqlite_master
+                           WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' AND name <> '_changes'`)
+    .all() as { name: string; type: string; db: string }[];
   const t = db.prepare("INSERT INTO information_schema.tables VALUES (?, ?, ?, NULL)");
   const c = db.prepare("INSERT INTO information_schema.columns VALUES (?, ?, ?, ?, ?)");
   for (const o of objs) {
-    const cols = db.prepare(`SELECT name, type, cid FROM pragma_table_info(?)`).all(o.name) as { name: string; type: string; cid: number }[];
+    const cols = db.prepare(`SELECT name, type, cid FROM pragma_table_info(?, ?)`).all(o.name, o.db) as { name: string; type: string; cid: number }[];
     for (const s of schemas) {
       t.run(s, o.name, o.type === "view" ? "VIEW" : "BASE TABLE");
       for (const col of cols) c.run(s, o.name, col.name, col.cid + 1, (col.type || "text").split(" ")[0].toLowerCase());
     }
   }
+}
+
+// ------------------------------------------------------------ durable store --
+
+const DURABLE_FILE = path.join(CACHE_DIR, "durable.sqlite");
+const BATCH = 400;          // changed rows per POST /store/write
+const RETRY_MS = 60_000;    // a failed send is retried this often (and after the next write)
+// Only the one PC whose .env says AWS_STORE_SAVE=1 sends changes to AWS. Every other copy (a teammate's clone, a test
+// server) keeps them in its own durable.sqlite until it restarts: two saving copies would give new rows the same ids
+// and overwrite each other's rows in DynamoDB. AWS_STORE_DRY_RUN=1 turns saving off even with AWS_STORE_SAVE=1.
+const DRY_RUN = process.env.AWS_STORE_SAVE !== "1" || process.env.AWS_STORE_DRY_RUN === "1";
+
+type Doc = { schema: Record<string, { ddl: string[]; key: string[] }>; rows: Record<string, Record<string, unknown>[]> };
+
+async function api(route: string, body: unknown): Promise<any> {
+  const r = await fetch(`${API_URL}${route}`, {
+    method: "POST", headers: { "x-refresh-key": apiKey(), "content-type": "application/json" }, body: JSON.stringify(body), cache: "no-store"
+  });
+  if (!r.ok) throw new Error(`AWS ${route}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+  return r.json();
+}
+
+async function gzJson<T>(url: string): Promise<T> {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`AWS download: HTTP ${r.status}`);
+  return JSON.parse(zlib.gunzipSync(Buffer.from(await r.arrayBuffer())).toString("utf8")) as T;
+}
+
+// Row values as DynamoDB keeps them (aws/migrate_mysql.py): binary as {"$b64": ...}, everything else as JSON
+const toSql = (v: unknown) =>
+  v && typeof v === "object" && "$b64" in v ? new Uint8Array(Buffer.from(String((v as { $b64: string }).$b64), "base64"))
+    : typeof v === "boolean" ? Number(v) : v === undefined ? null : v;
+const fromSql = (v: unknown) =>
+  v instanceof Uint8Array ? { $b64: Buffer.from(v).toString("base64") } : typeof v === "bigint" ? Number(v) : v;
+const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
+// The DynamoDB sort key: the key columns as a compact JSON array, as the migration wrote it
+const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k) => `${row}.${k === "rowid" ? "rowid" : q(k)}`).join(", ")})`;
+
+/** Creates the tables of `doc` with their rows; `track` adds the triggers that note every change in _changes. */
+function fill(db: DB, doc: Doc, track: boolean): void {
+  const inserts = new Map<string, ReturnType<DB["prepare"]>>();
+  for (const [t, s] of Object.entries(doc.schema)) {
+    for (const ddl of s.ddl) db.exec(ddl);
+    for (const row of doc.rows[t] ?? []) {
+      const cols = Object.keys(row);
+      const sig = `${t}\u0000${cols.join("\u0000")}`;
+      if (!inserts.has(sig)) inserts.set(sig, db.prepare(`INSERT INTO ${q(t)} (${cols.map(q).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`));
+      inserts.get(sig)!.run(...(cols.map((c) => toSql(row[c])) as any[]));
+    }
+    if (!track) continue;
+    const name = (op: string) => q(`_changes_${t}_${op}`);
+    db.exec(`CREATE TRIGGER ${name("ins")} AFTER INSERT ON ${q(t)} BEGIN
+               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("NEW", s.key)}); END;
+             CREATE TRIGGER ${name("upd")} AFTER UPDATE ON ${q(t)} BEGIN
+               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", s.key)}), (${lit(t)}, ${keyJson("NEW", s.key)}); END;
+             CREATE TRIGGER ${name("del")} AFTER DELETE ON ${q(t)} BEGIN
+               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", s.key)}); END;`);
+  }
+}
+
+/** Sends the noted changes to DynamoDB: each changed key as its current row, or as a delete when the row is gone. */
+async function send(d: Durable): Promise<void> {
+  for (;;) {
+    const changes = d.conn.prepare("SELECT id, t, k FROM _changes ORDER BY id LIMIT ?").all(BATCH) as { id: number; t: string; k: string }[];
+    if (!changes.length) return;
+    const unique = new Map(changes.map((c) => [`${c.t}\u0000${c.k}`, c]));
+    const put: { t: string; k: string; row: Record<string, unknown> }[] = [], del: { t: string; k: string }[] = [];
+    for (const { t, k } of unique.values()) {
+      const key = d.keys[t];
+      if (!key) continue;
+      const where = key.map((c) => (c === "rowid" ? "rowid IS ?" : `${q(c)} IS ?`)).join(" AND ");
+      const row = d.conn.prepare(`SELECT ${key.includes("rowid") ? "rowid AS rowid, " : ""}* FROM ${q(t)} WHERE ${where}`)
+        .get(...(JSON.parse(k) as any[])) as Record<string, unknown> | undefined;
+      if (row) put.push({ t, k, row: Object.fromEntries(Object.entries(row).map(([c, v]) => [c, fromSql(v)])) });
+      else del.push({ t, k });
+    }
+    if (!DRY_RUN) await api("/store/write", { gz: zlib.gzipSync(JSON.stringify({ put, del })).toString("base64") });
+    const release = await g.lock.acquire();
+    try {
+      d.conn.prepare("DELETE FROM _changes WHERE id <= ?").run(changes[changes.length - 1].id);
+    } finally {
+      release();
+    }
+  }
+}
+
+/** Sends whatever is waiting, one send at a time. Never throws: a failure stays in _changes for the retry. */
+function flush(): Promise<void> {
+  g.flushing = g.flushing
+    .then(() => (g.durable ? send(g.durable) : undefined))
+    .catch((e) => console.warn(`[aws-store] saving to AWS failed, will retry: ${e.message}`));
+  return g.flushing;
+}
+
+/**
+ * The durable store, loaded from AWS once per server start. Changes a previous run could not send (a file left
+ * by a crash or a network outage) are sent first, so the fresh copy includes them.
+ */
+async function durable(): Promise<Durable> {
+  if (g.durable) return g.durable;
+  g.durableLoading ??= (async () => {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    if (fs.existsSync(DURABLE_FILE)) {
+      const old = new (sqlite().DatabaseSync)(DURABLE_FILE);
+      try {
+        const keys = Object.fromEntries((old.prepare("SELECT t, key FROM _keys").all() as { t: string; key: string }[]).map((r) => [r.t, JSON.parse(r.key)]));
+        await send({ conn: old, keys });
+      } catch (e: any) {
+        console.warn(`[aws-store] could not send the previous run's unsaved changes: ${e.message}`);
+      } finally {
+        old.close();
+      }
+    }
+    const m = await api("/store/load", {});
+    const [rows, ref] = await Promise.all([gzJson<Doc>(m.rows), m.reference ? gzJson<Doc>(m.reference) : null]);
+    for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(DURABLE_FILE + f, { force: true });
+    const conn = new (sqlite().DatabaseSync)(DURABLE_FILE);
+    conn.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000");
+    conn.exec("BEGIN");
+    conn.exec("CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)");
+    conn.exec("CREATE TABLE _keys (t TEXT PRIMARY KEY, key TEXT NOT NULL)");
+    if (ref) fill(conn, ref, false);
+    fill(conn, rows, true);
+    const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
+    const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
+    for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
+    conn.exec("COMMIT");
+    const d = { conn, keys };
+    g.durable = d;
+    setInterval(() => void flush(), RETRY_MS).unref();
+    console.log(`[aws-store] durable store loaded: ${m.tables} tables, ${m.row_count} rows${ref ? ` + ${Object.keys(ref.schema).length} reference tables` : ""}${DRY_RUN ? " (local only: changes are not saved to AWS; the one PC that saves has AWS_STORE_SAVE=1)" : ", saving changes to AWS"}`);
+    return d;
+  })().finally(() => { g.durableLoading = null; });
+  return g.durableLoading;
 }
 
 /** The current database: loads the first build (once), and checks for a newer one in the background. */
@@ -195,22 +364,75 @@ function run(db: DB, sql: string | { sql: string; values?: unknown[] }, params?:
   }
 }
 
+const OK = [{ affectedRows: 0, insertId: 0, changedRows: 0 }, undefined];
+const BEGIN = /^\s*(START\s+TRANSACTION|BEGIN)\s*;?\s*$/i;
+const END = /^\s*(COMMIT|ROLLBACK)\s*;?\s*$/i;
+
+/**
+ * mysql2's connection over the store. A transaction holds the write lock from BEGIN to COMMIT / ROLLBACK; a write
+ * outside one takes the lock for that statement. Either way the changed rows are sent to AWS before it returns.
+ */
 function connection(db: () => Promise<DB>) {
-  const c = {
-    query: async (sql: any, params?: unknown[]) => run(await db(), sql, params),
-    execute: async (sql: any, params?: unknown[]) => run(await db(), sql, params),
-    beginTransaction: async () => { (await db()).exec("BEGIN"); },
-    commit: async () => { (await db()).exec("COMMIT"); },
-    rollback: async () => { try { (await db()).exec("ROLLBACK"); } catch { /* no transaction open */ } },
-    release: () => undefined,
+  let unlock: (() => void) | null = null; // set while this connection's transaction is open
+  const begin = async () => {
+    if (unlock) return;
+    unlock = await g.lock.acquire();
+    try {
+      (await db()).exec("BEGIN");
+    } catch (e) {
+      unlock();
+      unlock = null;
+      throw e;
+    }
+  };
+  const end = async (how: "COMMIT" | "ROLLBACK") => {
+    if (!unlock) return;
+    try {
+      (await db()).exec(how);
+    } catch (e) {
+      if (how === "ROLLBACK") return; // nothing left open
+      try { (await db()).exec("ROLLBACK"); } catch { /* already closed */ }
+      throw e;
+    } finally {
+      unlock?.();
+      unlock = null;
+    }
+    if (how === "COMMIT") await flush();
+  };
+  const exec = async (sql: any, params?: unknown[]) => {
+    const text: string = typeof sql === "string" ? sql : sql.sql;
+    if (BEGIN.test(text)) return (await begin(), OK);
+    const m = END.exec(text);
+    if (m) return (await end(m[1].toUpperCase() as "COMMIT" | "ROLLBACK"), OK);
+    if (unlock || READ.test(text) || NOOP.test(text)) return run(await db(), sql, params);
+    const release = await g.lock.acquire();
+    let out;
+    try {
+      out = run(await db(), sql, params);
+    } finally {
+      release();
+    }
+    await flush();
+    return out;
+  };
+  return {
+    query: exec,
+    execute: exec,
+    beginTransaction: begin,
+    commit: () => end("COMMIT"),
+    rollback: () => end("ROLLBACK"),
+    release: () => { if (unlock) void end("ROLLBACK"); }, // a connection given back mid-transaction is rolled back, as in mysql2
     end: async () => undefined
   };
-  return c;
 }
 
-/** A stand-in for a mysql2 Pool over the AWS-backed store. */
+/** A stand-in for a mysql2 Pool over the AWS-backed store (the build plus the durable store). */
 export function awsPool(): any {
   const db = async () => (await current()).db;
-  const c = connection(db);
-  return { ...c, getConnection: async () => connection(db), end: async () => undefined };
+  return {
+    ...connection(db),
+    // a connection stays on the build it started with, so a transaction never spans two builds
+    getConnection: async () => { const d = await db(); return connection(async () => d); },
+    end: async () => undefined
+  };
 }

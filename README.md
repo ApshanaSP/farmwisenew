@@ -7,10 +7,51 @@ district_intel store, generated datasets and the docs.
 |---|---|
 | `chennai-grievance-portal-main/` | Next.js web app: citizen portal, Collector console, `/officer` department consoles, Ask District IQ |
 | `district_intel/` | Python pipeline that builds the curated store (`output/district_intel.db`) the dashboard reads |
-| `aws/` | AWS backend (S3 / DynamoDB / Lambda / API Gateway) setup and push scripts |
 | `imd_weather_collector/`, `cpcb_air_quality_collector/`, `cfm_dss_collector/`, `chennai_hospital_data/`, `chennai_news_pipeline/` | Data collectors with their collected data |
 | `pwd_dataset_generator/`, `police_dataset_generator/` | Synthetic dataset generators with their output |
 | `docs/` | Project report, demo script, slides |
+
+## Quick start: the website on your PC with the team's AWS data
+
+No MySQL and no Python: the data comes from the team's AWS account and is refreshed every hour.
+
+1. Install **Node.js 22** (22.13 or newer) and **Git**.
+2. Download the code **without** the large files (about 1 GB the website does not need).
+
+   Windows PowerShell:
+   ```powershell
+   $env:GIT_LFS_SKIP_SMUDGE = "1"
+   git clone --depth 1 https://github.com/ApshanaSP/farmwisenew.git
+   cd farmwisenew/chennai-grievance-portal-main
+   Remove-Item -Recurse -Force .cache
+   ```
+   Mac, Linux or Git Bash:
+   ```bash
+   GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/ApshanaSP/farmwisenew.git
+   cd farmwisenew/chennai-grievance-portal-main
+   rm -rf .cache
+   ```
+   (`.cache` then holds only placeholders; the AI search model downloads itself, about 280 MB, the first time it is used.)
+3. Copy `.env.aws.example` to `.env` and fill in the two team secrets (`REFRESH_API_KEY`, `AADHAAR_ENCRYPTION_KEY`).
+   Ask the project owner for them: they are never in this repo.
+4. Start it:
+   ```bash
+   npm install
+   npm run dev
+   ```
+   Open http://localhost:3000. The first start takes about a minute while the data downloads.
+5. Log in with the team's usual accounts (they are stored in AWS).
+
+**Saving.** Your copy shows the real data, but what you do on it (filing complaints, approving tasks ...) is **not saved
+to AWS** and is gone when you restart. Only one PC, the project owner's, saves (`AWS_STORE_SAVE=1` in its `.env`):
+two saving PCs would give new complaints the same numbers and overwrite each other. Restart `npm run dev` to see
+complaints others saved since you started; the district data updates by itself every few minutes.
+
+**Problems.** `fetch failed` or `unable to get local issuer certificate`: your antivirus checks HTTPS traffic; set
+`NODE_EXTRA_CA_CERTS` to its root certificate file before `npm run dev`. `REFRESH_API_KEY is not set`: `.env` is
+missing or not in `chennai-grievance-portal-main/`.
+
+The sections below are the full setup with your own MySQL database instead (`DATA_BACKEND=mysql`).
 
 ## 1. Download
 

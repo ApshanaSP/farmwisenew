@@ -25,3 +25,6 @@ Thumbs.db
 # Secrets: never commit. Copy .env.example to .env and fill in.
 **/.env
 officer-accounts.local.csv
+
+# Website AWS cache: durable.sqlite holds every user account and complaint (repos are public)
+chennai-grievance-portal-main/data/aws-cache/
