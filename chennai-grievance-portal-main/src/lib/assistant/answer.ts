@@ -109,6 +109,90 @@ export interface AnswerSources {
 
 export type Display = "chart" | "kpi" | "table" | "text" | "map";
 
+// ------------------------------------------------------- structured answers --
+// Incident and news answers carry their records, so the dialog draws incident cards, an incident's story and news
+// stories instead of a generic summary. Every field comes from the store (the "what happened" line is the pipeline's
+// number-checked AI text when it exists, else the rule-based summary); nothing here is written by the chat model.
+
+export interface EvidenceItem {
+  kind: string;
+  /** "News report", "Police record", "Citizen complaint"... */
+  label: string;
+  title: string | null;
+  publisher?: string | null;
+  url: string | null;
+  t: string | null;
+}
+
+export interface IncidentItem {
+  incidentId: string;
+  title: string;
+  /** what happened, 1-2 sentences */
+  summary: string;
+  /** true when the summary is the pipeline's AI text (written from the incident's facts, numbers checked) */
+  aiWritten: boolean;
+  category: string;
+  location: string | null;
+  ward: number | null;
+  zone: string | null;
+  taluk: string | null;
+  occurredAt: string | null;
+  severity: string;
+  priorityScore: number | null;
+  priorityReasons: string[];
+  status: string;
+  department: string | null;
+  sourceCount: number;
+  newsOutletCount: number;
+  citizenComplaintCount: number;
+  dead: number;
+  injured: number;
+  lat: number | null;
+  lon: number | null;
+  evidence: EvidenceItem[];
+}
+
+export interface TimelineStep { t: string; step: string; actor: string | null; note: string | null }
+
+export interface IncidentDetail extends IncidentItem {
+  /** 2-4 sentences from the linked records */
+  whatHappened: string;
+  /** short facts: injured, people affected, road blocked... */
+  facts: string[];
+  /** why it needs the Collector's attention (the pipeline's reasons; empty when it does not) */
+  attention: string[];
+  timeline: TimelineStep[];
+  deadline: string | null;
+  deadlineMissed: boolean;
+  closedAt: string | null;
+  officials: { name: string; designation: string | null; office: string | null }[];
+  /** the part the question asked about ("where did it happen?") */
+  focus: "all" | "where" | "when" | "status" | "who";
+}
+
+export interface NewsStory {
+  storyId: string;
+  headline: string;
+  /** 2-3 sentences */
+  summary: string;
+  aiSummary: boolean;
+  publishedAt: string | null;
+  location: string | null;
+  category: string | null;
+  department: string | null;
+  /** independent outlets that carried the story */
+  sourceCount: number;
+  sources: { publisher: string | null; title: string; url: string | null; t: string | null }[];
+  matchedIncidentId: string | null;
+  departmentRecordFound: boolean;
+  whyRelevant: string[];
+}
+
+export interface ActionItem { text: string; owner: string | null; due: string | null; from: string }
+export interface ActionGroup { incidentId: string | null; title: string; items: ActionItem[] }
+
+export type ResponseType = "incident_list" | "incident_detail" | "news_list" | "news_detail" | "kpi" | "category_ranking" | "actions" | "chart" | "map" | "table" | "text";
+
 export interface AnswerCard {
   id: string;
   kind: "answer" | "refusal" | "clarify" | "error" | "action";
@@ -145,6 +229,16 @@ export interface AnswerCard {
   /** a download the answer offers, e.g. a capped CSV export */
   download?: { label: string; href: string } | null;
   offline?: boolean;
+  /** which response component draws the answer (absent on answers saved before structured answers: the generic card) */
+  responseType?: ResponseType;
+  /** the explicit intent the question was read as (intent.ts) */
+  intent?: string;
+  incidents?: IncidentItem[];
+  incident?: IncidentDetail | null;
+  stories?: NewsStory[];
+  actions?: ActionGroup[];
+  /** the conversation state after this answer, read back for the next question's follow-ups */
+  context?: import("@/lib/assistant/context").ConversationContext;
 }
 
 export const emptySources = (): AnswerSources => ({

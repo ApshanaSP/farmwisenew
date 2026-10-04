@@ -21,17 +21,24 @@ def action_planner(inc: pd.DataFrame, actions: pd.DataFrame, events: pd.DataFram
     run.tool("read_playbooks")
     rows = []
     for r in target.itertuples():
-        steps = ref.cat.get(r.category_code, ref.cat["OTHER"]).get("playbook") or ["Assess", "Act", "Close"]
+        cat = ref.cat.get(r.category_code, ref.cat["OTHER"])
+        steps = cat.get("playbook") or ["Assess", "Act", "Close"]
         due_total = r.sla_hours
-        owner = _owner(r, offices, heads)
+        # the playbook is the work of the department that fixes this kind of problem, not of whoever reported it
+        # (flooding called in to police 112: Storm Water Drain deploys the pumps, police support)
+        dept = cat.get("lead") or r.lead_dept
+        owner = _owner(r, offices, heads, dept)
         for k, step in enumerate(steps):
             due = r.first_reported_at + pd.Timedelta(hours=due_total * (k + 1) / len(steps))
             rows.append({"action_id": stable_id("ACT", r.incident_id, k), "event_id": None, "incident_id": r.incident_id,
-                         "dept_code": r.lead_dept, "office_id": None, "owner": owner if k < len(steps) - 1 else heads.get(r.lead_dept, owner),
+                         "dept_code": dept, "office_id": None, "owner": owner if k < len(steps) - 1 else heads.get(dept, owner),
                          "text": step, "sop_step": k + 1, "assigned_at": None, "due_at": due, "status": "Draft",
                          "created_by": "agent:action_planner", "origin": "playbook", "completed_at": None, "verified_at": None, "evidence": None})
-        for d in str(r.support_depts).split("|"):
-            if d and d != r.lead_dept:
+        support = [d for d in str(r.support_depts).split("|") if d]
+        if r.lead_dept != dept and r.lead_dept not in support:
+            support.append(r.lead_dept)  # the reporting department stays involved
+        for d in support:
+            if d and d != dept:
                 rows.append({"action_id": stable_id("ACT", r.incident_id, d), "event_id": None, "incident_id": r.incident_id,
                              "dept_code": d, "owner": heads.get(d, d), "text": f"Support {ref.cat.get(r.category_code, ref.cat['OTHER'])['label'].lower()} response",
                              "sop_step": None, "due_at": r.first_reported_at + pd.Timedelta(hours=due_total / 2), "status": "Draft",
@@ -40,19 +47,20 @@ def action_planner(inc: pd.DataFrame, actions: pd.DataFrame, events: pd.DataFram
     return pd.DataFrame(rows), run
 
 
-def _owner(r, offices: pd.DataFrame, heads: dict) -> str:
-    if r.lead_dept in ("PWD-WRD", "PWD-BLD") and isinstance(r.taluk_code, str):
-        wing = "Buildings" if r.lead_dept == "PWD-BLD" else "Water Resources"
+def _owner(r, offices: pd.DataFrame, heads: dict, dept: str) -> str:
+    if dept in ("PWD-WRD", "PWD-BLD") and isinstance(r.taluk_code, str):
+        wing = "Buildings" if dept == "PWD-BLD" else "Water Resources"
         o = offices[(offices["wing"] == wing) & offices["taluks"].str.contains(r.taluk_code, regex=False)]
         o = o.sort_values("designation", key=lambda s: s.map({"Assistant Executive Engineer": 0, "Executive Engineer": 1}).fillna(2))
         if len(o):
             x = o.iloc[0]
             return f"{x['designation']}, {x['office_name']} ({x['officer_name']})"
-    if r.lead_dept == "POL-GCP" and isinstance(r.officer, str):
+    # the record's officer only when it belongs to the department doing the work
+    if dept == "POL-GCP" and r.lead_dept == "POL-GCP" and isinstance(r.officer, str):
         return r.officer
-    if str(r.lead_dept).startswith("GCC") and pd.notna(r.ward_no):
+    if str(dept).startswith("GCC") and pd.notna(r.ward_no):
         return f"Assistant Engineer, Ward {int(r.ward_no)}" + (f" ({r.zone_name} zone)" if isinstance(r.zone_name, str) else "")
-    return heads.get(r.lead_dept, str(r.lead_dept))
+    return heads.get(dept, str(dept))
 
 
 # --------------------------------------------------------------- Gap Finder --

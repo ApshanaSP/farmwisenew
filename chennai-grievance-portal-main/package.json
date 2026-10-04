@@ -29,6 +29,7 @@
     "setup:officer": "node scripts/setup-officer-ops.js",
     "seed:officers": "node scripts/seed-officers.js",
     "embed:build": "node scripts/build-embeddings.cjs",
+    "eval:assistant": "node scripts/eval-assistant.cjs",
     "ai:key": "node scripts/set-ai-key.js",
     "ai:check": "node scripts/set-ai-key.js --check"
   },

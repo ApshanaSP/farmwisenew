@@ -1,79 +1,30 @@
-/** Line icons from the design reference (24x24, stroke). Static strings, never user data. */
+/**
+ * District IQ icons: one family (Lucide), one stroke language. Screens ask for an icon by its role ("pin", "news"),
+ * so the set can change in one place. Decorative only (aria-hidden); text carries the meaning.
+ */
+import {
+  Activity, ArrowDown, ArrowRight, ArrowUp, Bell, Bookmark, Check, ChevronDown, ChevronLeft, ChevronRight, CircleCheckBig, Clock3, Construction,
+  ChartBarBig, ChartLine, ChartNoAxesCombined, ChartPie, CloudRain, Copy, CornerUpRight, Download, Droplets, Ellipsis, ExternalLink, FileText,
+  GitCompareArrows, HeartPulse, House, Image, Info, Landmark, Layers, LayoutGrid, Leaf, Lightbulb, ListChecks, Map, MapPin, Maximize2, Menu,
+  MessageSquareText, Mic, Newspaper, Phone, Play, Plus, RadioTower, Radar, RefreshCw, ScrollText, Search, SendHorizontal, Shield, SlidersHorizontal,
+  Smartphone, Square, Table2, Target, ThumbsDown, ThumbsUp, Timer, Trash, TriangleAlert, Tv, User, Users, Volume2, Wind, X, Zap, Sun, Moon, type LucideIcon
+} from "lucide-react";
+
 const ICONS = {
-  home: "<path d=\"M3 11l9-7 9 7\"/><path d=\"M5 10v10h14V10\"/><path d=\"M10 20v-5h4v5\"/>",
-  gov: "<path d=\"M3 21h18M4 10h16M12 3l9 5H3z\"/><path d=\"M6 10v8M10 10v8M14 10v8M18 10v8\"/>",
-  bell: "<path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8\"/><path d=\"M10 20a2 2 0 0 0 4 0\"/>",
-  chat: "<path d=\"M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.2A8 8 0 1 1 21 12z\"/><path d=\"M8 11h.01M12 11h.01M16 11h.01\"/>",
-  doc: "<path d=\"M14 3H6v18h12V7z\"/><path d=\"M14 3v4h4M9 12h6M9 16h6\"/>",
-  check: "<path d=\"M20 6L9 17l-5-5\"/>",
-  checkc: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12l3 3 5-6\"/>",
-  map: "<path d=\"M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z\"/><path d=\"M9 4v14M15 6v14\"/>",
-  search: "<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M20 20l-4-4\"/>",
-  download: "<path d=\"M12 3v12M7 10l5 5 5-5M4 21h16\"/>",
-  pin: "<path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>",
-  alert: "<path d=\"M12 3l10 18H2z\"/><path d=\"M12 10v5M12 18h.01\"/>",
-  clock: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>",
-  user: "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21a8 8 0 0 1 16 0\"/>",
-  drop: "<path d=\"M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z\"/>",
-  bulb: "<path d=\"M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z\"/>",
-  trash: "<path d=\"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14\"/>",
-  health: "<path d=\"M12 20s-8-4.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6.5-8 11-8 11z\"/><path d=\"M8 12h2l1-2 2 4 1-2h2\"/>",
-  shield: "<path d=\"M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z\"/><path d=\"M9 12l2 2 4-4\"/>",
-  leaf: "<path d=\"M5 19c0-9 6-14 15-14 0 9-5 15-14 15\"/><path d=\"M5 19c3-4 6-6 10-8\"/>",
-  scroll: "<path d=\"M7 3h11v14a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-1h11\"/><path d=\"M7 3a2 2 0 0 0-2 2v11M10 8h5M10 12h5\"/>",
-  cone: "<path d=\"M9 4h6l4 16H5z\"/><path d=\"M7.5 10h9M6.5 15h11M3 20h18\"/>",
-  chevr: "<path d=\"M9 6l6 6-6 6\"/>",
-  chevd: "<path d=\"M6 9l6 6 6-6\"/>",
-  chevl: "<path d=\"M15 6l-6 6 6 6\"/>",
-  x: "<path d=\"M6 6l12 12M18 6L6 18\"/>",
-  up: "<path d=\"M12 19V5M6 11l6-6 6 6\"/>",
-  down: "<path d=\"M12 5v14M6 13l6 6 6-6\"/>",
-  right: "<path d=\"M5 12h14M13 6l6 6-6 6\"/>",
-  dots: "<circle cx=\"12\" cy=\"5\" r=\"1.2\"/><circle cx=\"12\" cy=\"12\" r=\"1.2\"/><circle cx=\"12\" cy=\"19\" r=\"1.2\"/>",
-  cloud: "<path d=\"M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z\"/><path d=\"M8 21l1-2M12 21l1-2M16 21l1-2\"/>",
-  wind: "<path d=\"M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7\"/>",
-  chart: "<path d=\"M4 20V10M10 20V4M16 20v-7M22 20H2\"/>",
-  tasks: "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M8 12l3 3 5-6\"/>",
-  phone: "<path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2\"/>",
-  menu: "<path d=\"M4 6h16M4 12h16M4 18h16\"/>",
-  ext: "<path d=\"M14 4h6v6M20 4l-9 9M18 14v6H4V6h6\"/>",
-  photo: "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><circle cx=\"9\" cy=\"10\" r=\"2\"/><path d=\"M21 16l-5-5-9 8\"/>",
-  news: "<path d=\"M4 5h13v14H6a2 2 0 0 1-2-2z\"/><path d=\"M17 9h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5\"/>",
-  tv: "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 3l4 3 4-3\"/>",
-  sensor: "<path d=\"M5 12a7 7 0 0 1 14 0M8 12a4 4 0 0 1 8 0\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/><path d=\"M12 13v8\"/>",
-  social: "<circle cx=\"18\" cy=\"5\" r=\"2.5\"/><circle cx=\"6\" cy=\"12\" r=\"2.5\"/><circle cx=\"18\" cy=\"19\" r=\"2.5\"/><path d=\"M8.2 11l7.6-4.5M8.2 13l7.6 4.5\"/>",
-  app: "<rect x=\"7\" y=\"2\" width=\"10\" height=\"20\" rx=\"2\"/><path d=\"M11 18h2\"/>",
-  esc: "<path d=\"M12 19V5M5 12l7-7 7 7\"/><path d=\"M5 21h14\"/>",
-  copy: "<rect x=\"8\" y=\"8\" width=\"12\" height=\"12\" rx=\"2\"/><path d=\"M16 8V4H4v12h4\"/>",
-  refresh: "<path d=\"M20 11a8 8 0 1 0-2.3 5.7\"/><path d=\"M20 4v7h-7\"/>",
-  plus: "<path d=\"M12 5v14M5 12h14\"/>",
-  send: "<path d=\"M4 12l16-8-6 16-3-7z\"/>",
-  spark: "<path d=\"M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z\"/>",
-  layers: "<path d=\"M12 3l9 5-9 5-9-5z\"/><path d=\"M3 13l9 5 9-5\"/>",
-  bolt: "<path d=\"M13 2L4 14h7l-1 8 9-12h-7z\"/>",
-  expand: "<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>",
-  timer: "<circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2 2M9 2h6\"/>",
-  sliders: "<path d=\"M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0\"/><circle cx=\"16\" cy=\"6\" r=\"2\"/><circle cx=\"10\" cy=\"12\" r=\"2\"/><circle cx=\"18\" cy=\"18\" r=\"2\"/>",
-  target: "<circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3\"/>",
-  // Ask District IQ
-  thumbUp: "<path d=\"M7 11v9H4v-9z\"/><path d=\"M7 11l4-8a2 2 0 0 1 3 2l-1 5h5.5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.3 20H7\"/>",
-  thumbDown: "<path d=\"M7 13V4H4v9z\"/><path d=\"M7 13l4 8a2 2 0 0 0 3-2l-1-5h5.5a2 2 0 0 0 2-2.3l-1.2-6A2 2 0 0 0 17.3 4H7\"/>",
-  table: "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18M3 14h18M9 9v11\"/>",
-  donut: "<circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"M12 4v4.5M19.5 14.5l-4.2-1.4\"/>",
-  line: "<path d=\"M3 20h18\"/><path d=\"M4 16l5-6 4 3 7-8\"/>",
-  barH: "<path d=\"M4 4v16\"/><path d=\"M4 7h11M4 12h15M4 17h7\"/>",
-  stop: "<rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/>",
-  info: "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v6M12 7.5h.01\"/>",
-  grid: "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/>",
-  compare: "<circle cx=\"6\" cy=\"8\" r=\"2.2\"/><circle cx=\"17\" cy=\"8\" r=\"2.2\"/><path d=\"M8.2 8h6.6\"/><circle cx=\"9\" cy=\"16\" r=\"2.2\"/><circle cx=\"19\" cy=\"16\" r=\"2.2\"/><path d=\"M11.2 16h5.6\"/>",
-  play: "<path d=\"M7 4v16l13-8z\"/>",
-  bookmark: "<path d=\"M6 3h12v18l-6-4-6 4z\"/>",
-  mic: "<rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6\"/>",
-  volume: "<path d=\"M4 9v6h4l5 4V5L8 9z\"/><path d=\"M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12\"/>"
-} as const;
+  home: House, gov: Landmark, bell: Bell, chat: MessageSquareText, doc: FileText, check: Check, checkc: CircleCheckBig, map: Map, search: Search,
+  download: Download, pin: MapPin, alert: TriangleAlert, clock: Clock3, user: User, drop: Droplets, bulb: Lightbulb, trash: Trash, health: HeartPulse,
+  shield: Shield, leaf: Leaf, scroll: ScrollText, cone: Construction, chevr: ChevronRight, chevd: ChevronDown, chevl: ChevronLeft, x: X, up: ArrowUp,
+  down: ArrowDown, right: ArrowRight, dots: Ellipsis, cloud: CloudRain, wind: Wind, chart: ChartNoAxesCombined, tasks: ListChecks, phone: Phone,
+  menu: Menu, ext: ExternalLink, photo: Image, news: Newspaper, tv: Tv, sensor: RadioTower, social: Users, app: Smartphone, esc: CornerUpRight,
+  copy: Copy, refresh: RefreshCw, plus: Plus, send: SendHorizontal, spark: Radar, layers: Layers, bolt: Zap, expand: Maximize2, timer: Timer,
+  sliders: SlidersHorizontal, target: Target, thumbUp: ThumbsUp, thumbDown: ThumbsDown, table: Table2, donut: ChartPie, line: ChartLine,
+  barH: ChartBarBig, stop: Square, info: Info, grid: LayoutGrid, compare: GitCompareArrows, play: Play, bookmark: Bookmark, mic: Mic, volume: Volume2,
+  pulse: Activity, sun: Sun, moon: Moon
+} satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
 
 export function I({ n, className = "" }: { n: IconName; className?: string }) {
-  return <svg className={`ic ${className}`} viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICONS[n] }} />;
+  const C = ICONS[n] ?? Info;
+  return <C className={`ic ${className}`} aria-hidden="true" focusable="false" strokeWidth={1.75} absoluteStrokeWidth={false} />;
 }

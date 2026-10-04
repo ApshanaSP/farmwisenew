@@ -9,9 +9,9 @@ import { CAT_COL, type Row } from "./lib";
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
 
 export const STATION_STYLE: Record<MapStation["kind"], { color: string; letter: string; title: string }> = {
-  aqi: { color: "#12925F", letter: "A", title: "Air quality station" },
-  rain: { color: "#1560E8", letter: "R", title: "Rain gauge" },
-  lake: { color: "#0891B2", letter: "L", title: "Lake / reservoir" }
+  aqi: { color: "#35C28C", letter: "A", title: "Air quality station" },
+  rain: { color: "#4C8DFF", letter: "R", title: "Rain gauge" },
+  lake: { color: "#2BC7D9", letter: "L", title: "Lake / reservoir" }
 };
 
 interface Props {
@@ -41,13 +41,13 @@ interface Props {
 
 const HEAT = [
   { c: "#000000", o: 0 },
-  { c: "#FFD666", o: 0.16 },
-  { c: "#FFB020", o: 0.24 },
-  { c: "#F2542D", o: 0.32 },
-  { c: "#C0122C", o: 0.42 }
+  { c: "#4C8DFF", o: 0.12 },
+  { c: "#E8B84A", o: 0.16 },
+  { c: "#F7893B", o: 0.24 },
+  { c: "#F2555A", o: 0.32 }
 ];
 const TALUK_COL = ["#4D8DFF", "#FFB020", "#22C55E", "#E879F9", "#F97316", "#14B8A6", "#A78BFA", "#F43F5E", "#84CC16",
-  "#06B6D4", "#EAB308", "#8B5CF6", "#EF4444", "#10B981", "#3B82F6", "#F59E0B", "#EC4899", "#64748B"];
+  "#06B6D4", "#EAB308", "#A28EFA", "#EF4444", "#10B981", "#3B82F6", "#F59E0B", "#EC4899", "#64748B"];
 
 interface State {
   L: typeof Leaflet;
@@ -102,7 +102,7 @@ export default function SatMap(props: Props) {
       const grow = <K,>(m: Map<K, Leaflet.LatLngBounds>, k: K, b: Leaflet.LatLngBounds) =>
         m.set(k, m.get(k)?.extend(b) ?? L.latLngBounds(b.getSouthWest(), b.getNorthEast()));
       const wards = geo.wards.map((w) => {
-        const poly = L.polygon(w.rings, { color: "#FFFFFF", weight: 0.7, opacity: 0.55, fillOpacity: 0 })
+        const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.6, opacity: 0.35, fillOpacity: 0 })
           .on("click", () => {
             if (cb.current.mode === "taluks") { if (w.taluk) cb.current.onTaluk(w.taluk); }
             else cb.current.onZone(w.zone);
@@ -117,7 +117,7 @@ export default function SatMap(props: Props) {
         if (w.taluk) grow(talukBounds, w.taluk, b);
         return { zone: w.zone, taluk: w.taluk, poly };
       });
-      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: "#FFFFFF", weight: 2.2, opacity: 0.95, interactive: false }).addTo(map));
+      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: "#C9D7F2", weight: 1.4, opacity: 0.75, interactive: false }).addTo(map));
       const zoneLabels = new Map<number, Leaflet.Marker>();
       for (const z of geo.zones) {
         zoneLabels.set(z.zone, L.marker([z.lat, z.lon], {
@@ -169,16 +169,16 @@ export default function SatMap(props: Props) {
     for (const w of s.wards) {
       if (mode === "taluks") {
         const col = TALUK_COL[(talukIx.get(w.taluk ?? "") ?? 17) % TALUK_COL.length];
-        if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.5, opacity: 0.2, color: "#FFFFFF", weight: 0.6 });
-        else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.12 : 0.34, opacity: 0.35, color: "#FFFFFF", weight: 0.5 });
-      } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.5, opacity: 0.25 });
-      else if (zone) w.poly.setStyle({ fillColor: "#FFE08A", fillOpacity: 0.06, opacity: 0.7 });
+        if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.15, color: "#9FB4D9", weight: 0.5 });
+        else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.1 : 0.26, opacity: 0.3, color: "#9FB4D9", weight: 0.5 });
+      } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.18 });
+      else if (zone) w.poly.setStyle({ fillColor: "#4C8DFF", fillOpacity: 0.08, opacity: 0.55 });
       else {
         const h = HEAT[level(w.zone)];
-        w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.55 });
+        w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.35 });
       }
     }
-    for (const o of s.outlines) o.setStyle({ opacity: mode === "taluks" ? 0.35 : 0.95, weight: mode === "taluks" ? 1.2 : 2.2 });
+    for (const o of s.outlines) o.setStyle({ opacity: mode === "taluks" ? 0.3 : 0.75, weight: mode === "taluks" ? 1 : 1.4 });
     s.zoneLabels.forEach((m, z) => {
       if (mode === "zones") {
         m.addTo(s.map);
@@ -204,7 +204,7 @@ export default function SatMap(props: Props) {
     if (mode === "taluks" && taluk) target = s.talukBounds.get(taluk);
     else if (zone) {
       const g = geo.zones.find((z) => z.zone === zone);
-      if (g) s.L.polyline(g.lines, { color: "#FFD24A", weight: 4, opacity: 1, interactive: false }).addTo(s.sel);
+      if (g) s.L.polyline(g.lines, { color: "#2BD4E6", weight: 2.6, opacity: 1, interactive: false }).addTo(s.sel);
       target = s.zoneBounds.get(zone);
     }
     if (!cb.current.focus) s.map.flyToBounds(target ?? s.district, { padding: target ? [24, 24] : [8, 8], duration: 0.6 });
@@ -218,9 +218,9 @@ export default function SatMap(props: Props) {
     const shown = pins.filter((p) => p.lat != null && layers[p.cat]).slice(0, 150).reverse();
     for (const p of shown) {
       const open = Number(p.open) === 1;
-      const size = p.sev === "Severe" ? 18 : 13;
+      const size = p.sev === "Severe" ? 14 : 10;
       const color = cb.current.pinColor?.(p) ?? CAT_COL[p.cat];
-      const html = `<div class="mpin${open ? "" : " faded"}${open && p.sev === "Severe" ? " pulse" : ""}" style="width:${size}px;height:${size}px;background:${color}"></div>`;
+      const html = `<div class="mpin${open ? "" : " faded"}${open && p.sev === "Severe" ? " pulse" : ""}" style="width:${size}px;height:${size}px;background:${color};--mc:${color}"></div>`;
       s.L.marker([Number(p.lat), Number(p.lon)], {
         icon: s.L.divIcon({ className: "", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
         zIndexOffset: p.sev === "Severe" ? 500 : 0
@@ -294,7 +294,7 @@ export default function SatMap(props: Props) {
   return (
     <>
       <div ref={el} style={{ position: "absolute", inset: 0 }} aria-label="Satellite map of Chennai district. Click a zone or taluk to filter, a pin to open the incident." />
-      {!geo && <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#DCE6FA" }}>Loading the map…</div>}
+      {!geo && <div className="empty" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--text-3)" }}>Loading the map…</div>}
       <div className="map-tools">
         <button onClick={() => m()?.zoomIn()} title="Zoom in" aria-label="Zoom in">+</button>
         <button onClick={() => m()?.zoomOut()} title="Zoom out" aria-label="Zoom out">−</button>

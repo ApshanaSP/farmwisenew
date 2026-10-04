@@ -1,5 +1,5 @@
 /* Shared helpers for the Collector console: time formatting, chips, tones and charts. */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { I, type IconName } from "./icons";
 
 export type Row = Record<string, any>;
@@ -38,9 +38,10 @@ export const plural = (n: number, one: string, many = one + "s") => `${n.toLocal
 // ------------------------------------------------------ severity, status --
 
 export const SEVS = ["Severe", "High", "Medium", "Low"] as const;
-export const SEV_HEX: Record<string, string> = { Severe: "#D92D35", High: "#E0730D", Medium: "#B98A00", Low: "#12925F" };
-export const CAT_COL: Record<string, string> = { severe: "#E5484D", complaint: "#FFA114", other: "#4D8DFF" };
-export const sevTone = (s: string) => ({ Severe: "t-sev", High: "t-high", Medium: "t-med", Low: "t-low" })[s] ?? "t-info";
+/** Severity colours on the dark surfaces (mirror of tokens.css: --sev, --high, --med, --cool). */
+export const SEV_HEX: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#E8B84A", Low: "#4DB3E8" };
+export const CAT_COL: Record<string, string> = { severe: "#F2555A", complaint: "#F7893B", other: "#4C8DFF" };
+export const sevTone = (s: string) => ({ Severe: "t-sev", High: "t-high", Medium: "t-med", Low: "t-cool" })[s] ?? "t-info";
 
 export function SevChip({ s }: { s: string }) {
   return (
@@ -190,7 +191,7 @@ const uid = (p: string) => `${p}${++gid}`;
 
 export function Spark({ vals }: { vals: number[] }) {
   const W = 74, H = 38, n = vals.length;
-  const id = useRef(uid("s")).current;
+  const id = `s${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   if (n < 2) return null;
   const mx = Math.max(...vals, 1), mn = Math.min(...vals, 0);
   const x = (i: number) => 2 + (i * (W - 6)) / (n - 1);
@@ -200,13 +201,13 @@ export function Spark({ vals }: { vals: number[] }) {
     <svg className="spk" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#1560E8" stopOpacity=".25" />
-          <stop offset="1" stopColor="#1560E8" stopOpacity="0" />
+          <stop offset="0" stopColor="#4C8DFF" stopOpacity=".32" />
+          <stop offset="1" stopColor="#4C8DFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill={`url(#${id})`} />
-      <path className="ln-d" d={d} fill="none" stroke="#1560E8" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={x(n - 1)} cy={y(vals[n - 1])} r="3" fill="#1560E8" stroke="#fff" strokeWidth="1.5" />
+      <path className="ln-d" d={d} fill="none" stroke="#6FA3FF" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={x(n - 1)} cy={y(vals[n - 1])} r="2.6" fill="#8DB6FF" stroke="#0B1426" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -218,13 +219,13 @@ function ticks(n: number, room: number) {
 }
 
 /** Bar or line chart drawn at the container's pixel size, with value labels on hover and the last value marked. */
-export function Chart({ kind, vals, labels, color = "#1560E8", fmt, band }: {
+export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
   kind: "bar" | "line"; vals: number[]; labels: string[]; color?: string; fmt: (v: number) => string;
   /** optional shaded threshold, e.g. the AQI "satisfactory" ceiling */
   band?: { at: number; label: string };
 }) {
   const [ref, { w: W, h: H0 }] = useSize<HTMLDivElement>();
-  const id = useRef(uid("c")).current;
+  const id = `c${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const n = vals.length;
   const H = Math.max(40, H0 - 18), L = 36, R = 8, T = 8;
   const body = () => {
@@ -241,7 +242,7 @@ export function Chart({ kind, vals, labels, color = "#1560E8", fmt, band }: {
       <svg width={W} height={H + 18} className="mini" role="img" aria-label="Chart">
         <defs>
           <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor={color} stopOpacity=".28" />
+            <stop offset="0" stopColor={color} stopOpacity=".3" />
             <stop offset="1" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -253,8 +254,8 @@ export function Chart({ kind, vals, labels, color = "#1560E8", fmt, band }: {
         ))}
         {band && band.at > bot && band.at < top && (
           <g>
-            <line x1={L} x2={W - R} y1={y(band.at)} y2={y(band.at)} stroke="#E0730D" strokeDasharray="5 4" strokeWidth="1.3" />
-            <text x={W - R} y={y(band.at) - 4} textAnchor="end" style={{ font: "600 11px var(--dic-sans)", fill: "#E0730D" }}>{band.label}</text>
+            <line x1={L} x2={W - R} y1={y(band.at)} y2={y(band.at)} stroke="#E8B84A" strokeDasharray="4 4" strokeWidth="1.2" />
+            <text x={W - R} y={y(band.at) - 4} textAnchor="end" style={{ font: "600 10.5px var(--dic-sans)", fill: "#E8B84A" }}>{band.label}</text>
           </g>
         )}
         {kind === "bar"
@@ -273,9 +274,9 @@ export function Chart({ kind, vals, labels, color = "#1560E8", fmt, band }: {
               return (
                 <>
                   <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill={`url(#${id})`} />
-                  <path className="ln-d" d={d} fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+                  <path className="ln-d" d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                   {vals.map((v, i) => (
-                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 5 : n <= 31 ? 2.4 : 0} fill={i === n - 1 ? color : "#fff"} stroke={color} strokeWidth="1.6">
+                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 4 : n <= 31 ? 2.2 : 0} fill={i === n - 1 ? color : "#0B1426"} stroke={color} strokeWidth="1.5">
                       <title>{`${labels[i]}: ${fmt(v)}`}</title>
                     </circle>
                   ))}
@@ -293,7 +294,7 @@ export function Chart({ kind, vals, labels, color = "#1560E8", fmt, band }: {
   return <div ref={ref} className="env-chart">{body()}</div>;
 }
 
-const BLUES = ["#1560E8", "#3B7CF0", "#6699F5", "#8FB5F8", "#B7CFFA"];
+const BLUES = ["#4C8DFF", "#4483EE", "#3C78DC", "#3570CB", "#2F66B8"];
 export function HBars({ rows }: { rows: { l: string; v: number; onClick?: () => void }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.v));
   return (

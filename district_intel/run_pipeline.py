@@ -165,9 +165,72 @@ def _mysql(settings) -> dict:
     return export(settings)
 
 
+def _news_docs(settings):
+    """News articles from the last build's store (doc_id, title, summary, published_at), newest first."""
+    import sqlite3
+
+    import pandas as pd
+
+    with sqlite3.connect(settings.path(settings.raw["output"]["sqlite"])) as con:
+        d = pd.read_sql("SELECT doc_id, title, summary, published_at FROM documents WHERE source_kind = 'news'", con)
+    d["published_at"] = pd.to_datetime(d["published_at"], utc=True, format="ISO8601")
+    return d.sort_values("published_at", ascending=False)
+
+
+def _label_news(settings, args) -> None:
+    from dintel import newsllm
+    from dintel.refdata import Reference
+
+    docs = _news_docs(settings).head(args.limit)
+    model = args.model or settings.raw.get("news_llm", {}).get("backlog_model")
+    lab = newsllm.classify(settings, Reference(settings), docs, minutes=args.minutes, model=model)
+    print(json.dumps({"articles": len(docs), "labelled": len(lab)}, indent=2))
+
+
+def _train_news(settings, args) -> None:
+    from dintel import newsllm, newsmodel
+    from dintel.refdata import Reference
+
+    docs = _news_docs(settings)
+    lab = newsllm.classify(settings, Reference(settings), docs, minutes=0)  # cached labels only
+    base = settings.raw.get("news_model", {}).get("base_model", "intfloat/multilingual-e5-base")
+    print(json.dumps(newsmodel.train(settings, lab, docs, base=base), indent=2))
+
+
+def _train_news_local(settings, args) -> None:
+    """The TF-IDF model, tested on the very articles SetFit was tested on (and trained, for the like-for-like score,
+    only on the labels SetFit had), so the two can be compared fairly; SetFit's own scores are computed here too."""
+    import pandas as pd
+
+    from dintel import newsllm, newslocal
+    from dintel.refdata import Reference
+
+    docs = _news_docs(settings)
+    lab = newsllm.classify(settings, Reference(settings), docs, minutes=0)
+    sf = settings.out_dir / "models" / "news_setfit"
+    held, fair, setfit = [], None, {}
+    if (sf / "held_out_predictions.csv").exists():
+        h = pd.read_csv(sf / "held_out_predictions.csv", encoding="utf-8-sig")
+        held = h["doc_id"].astype(str).tolist()
+        setfit = {"category": newslocal._scores(h["category"].astype(str).tolist(), h["predicted"].astype(str).tolist())}
+        n_sf = json.loads((sf / "meta.json").read_text(encoding="utf-8"))
+        lines = (settings.out_dir / "state" / "news_llm_labels.jsonl").read_text(encoding="utf-8").splitlines()
+        fair = {json.loads(x)["k"] for x in lines[: n_sf["train"] + n_sf["held_out"]]}
+        setfit.update({k: v for k, v in n_sf.items() if k.endswith("_with_llm")})
+    rep = newslocal.train(settings, lab, docs, held, fair)
+    rep["setfit_same_held_out"] = setfit
+    out = settings.out_dir / "models" / "news_local" / "meta.json"
+    out.write_text(json.dumps(rep, indent=2), encoding="utf-8")
+    print(json.dumps({k: rep[k] for k in ("silver_labels", "gold_labels", "held_out", "fair_vs_setfit", "all_silver", "setfit_same_held_out", "suggested_trust")
+                      if k in rep}, indent=1))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql"])
+    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql", "label-news", "train-news", "train-news-local"])
+    ap.add_argument("--minutes", type=float, default=60, help="label-news: time budget for LLM calls")
+    ap.add_argument("--limit", type=int, default=2500, help="label-news: label the newest N articles")
+    ap.add_argument("--model", default=None, help="label-news: Groq model (default: news_llm.backlog_model)")
     ap.add_argument("--all", action="store_true", help="refresh every source regardless of schedule")
     ap.add_argument("--every", type=int, default=15, help="watch interval in minutes")
     ap.add_argument("--config", default=None)
@@ -209,7 +272,13 @@ def main() -> None:
         sync_mysql(s)
         return m
 
-    if args.command == "mysql":
+    if args.command == "label-news":
+        _label_news(settings, args)
+    elif args.command == "train-news":
+        _train_news(settings, args)
+    elif args.command == "train-news-local":
+        _train_news_local(settings, args)
+    elif args.command == "mysql":
         rep = _mysql(settings)
         print(json.dumps({k: rep[k] for k in ("database", "ops_database", "tables", "rows", "documents_columns",
                                               "ops_tables_created", "briefings_archived", "mismatches", "runtime_s")}, indent=2))

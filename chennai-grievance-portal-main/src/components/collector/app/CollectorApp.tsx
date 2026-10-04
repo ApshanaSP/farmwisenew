@@ -11,6 +11,7 @@ import { BrandMark } from "./assistant/Brand";
 import { EnvPage, Page1 } from "./Overview";
 import { BriefingPage, GapsBody, PatternBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
+import { BriefingBook } from "./BriefingBook";
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
@@ -19,6 +20,7 @@ import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, type Layout } from "./Workspace";
 import { deptIcon, fmtDate, fmtShort, fmtTime, fullTitle, rel, sevTone, type Row } from "./lib";
 import { esc } from "./SatMap";
+import "./tokens.css";
 import "./collector.css";
 
 // The assistant loads only when it is first opened, so the console stays fast.
@@ -188,6 +190,14 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: 1366, h: 680 });
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+  // dark (District IQ midnight) by default; light is the original white theme. Remembered in this browser.
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => { try { if (localStorage.getItem("diq-theme") === "light") setTheme("light"); } catch { /* storage unavailable */ } }, []);
+  const toggleTheme = () => setTheme((t) => {
+    const n = t === "dark" ? "light" : "dark";
+    try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
+    return n;
+  });
   const [archived, setArchived] = useState<Archived | null>(null);
   const firstLoad = useRef(true);
   const lastExport = useRef(initial.exportedAt);
@@ -478,7 +488,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const pi = pages.indexOf(page);
 
   return (
-    <div className={`dic${fit.on ? " fit" : ""}`}
+    <div className={`dic${fit.on ? " fit" : ""}`} data-theme={theme}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#4D8DFF" /><stop offset="1" stopColor="#B9D2FF" /></linearGradient></defs>
@@ -487,7 +497,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
       <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
         <div className="main">
           <header className="top">
-            <div className="tbrand"><Logo className="tlogo" /><span><b>District <span>IQ</span></b><small>Collector&apos;s Console · Chennai</small></span></div>
+            <div className="tbrand"><Logo className="tlogo" /><span><b>District <span>IQ</span></b><small>Chennai District Intelligence</small></span></div>
             <button className="feedlight" onClick={c.openFeeds}
               title={`Data sources: status, refresh, add a source, OCR, audit log${feedsPartial.length ? `. Partly available (some endpoints blocked): ${feedsPartial.join(", ")}` : ""}`}>
               <i className={feedsOk === ov.feeds.length && !feedsPartial.length ? "" : "warn"} />{feedsOk}/{ov.feeds.length} feeds live
@@ -496,6 +506,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
             <Search c={c} ov={ov} />
             <Collected ov={ov} onClick={c.openFeeds} />
             <button className="tbtn" onClick={c.openWorkspace} title="Save or reopen a workspace"><I n="layers" /><span className="lb">{workspaceName ? workspaceName.slice(0, 18) : "Workspace"}</span></button>
+            <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}><I n={theme === "dark" ? "sun" : "moon"} /></button>
             <button className="tbtn icon" onClick={() => setModal({ kind: "customize", title: "Customize the dashboard" })} title="Choose what the dashboard shows" aria-label="Customize"><I n="sliders" /></button>
             <button className="tbtn pri" onClick={() => setModal({ kind: "export", title: "Export report" })}><I n="download" /><span className="lb">Export</span></button>
             <div className="rel">
@@ -586,7 +597,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
             </section>
             <div id="view" className={anim ? "anim" : ""}>
               {page === "overview" ? <Page1 d={ov} c={c} />
-                : page === "briefing" ? <BriefingPage ins={ins} d={ov} c={c} />
+                : page === "briefing" ? (ins?.book && !archived ? <BriefingBook ins={ins} d={ov} c={c} /> : <BriefingPage ins={ins} d={ov} c={c} />)
                   : page === "trends" ? <TrendsPage ins={ins} c={c} />
                     : <EnvPage d={ov} ins={ins} c={c} />}
             </div>

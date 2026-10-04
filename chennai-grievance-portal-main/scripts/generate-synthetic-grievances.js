@@ -29,6 +29,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const mysql = require("mysql2/promise");
 const { getDbConfig, describeDb } = require("./db-config");
 const T = require("./lib/synthetic-text");
@@ -183,10 +184,21 @@ function mulberry32(a) {
   };
 }
 
+/** A 32-bit seed from the run seed and a key ("day|2026-09-01", "base|2026-09-01|12"). */
+function seedOf(seed, key) {
+  return crypto.createHash("sha1").update(`${seed}|${key}`).digest().readUInt32LE(0);
+}
+
 function makeRng(seed) {
-  const r = mulberry32(seed);
+  let r = mulberry32(seed);
   const R = {
-    next: r,
+    /**
+     * Start a fresh stream for one keyed part of the world (a day, a complaint, a burst). Each part then comes out the
+     * same on every run, whatever else the run generates before it, so complaint codes and histories stay stable while
+     * the window slides and the clock moves: later runs only reveal what has happened since.
+     */
+    reseed(key) { r = mulberry32(seedOf(seed, key)); },
+    next: () => r(),
     float: (a, b) => a + (b - a) * r(),
     int: (a, b) => a + Math.floor(r() * (b - a + 1)),
     chance: (p) => r() < p,
@@ -370,6 +382,7 @@ function generate(ref, opts) {
   const rainMultByDate = new Map();
   const rainEventOf = new Map();
   for (const d of rainDays) {
+    R.reseed("rain|" + d);
     const m = R.float(3, 4);
     for (let k = 0; k < 3; k++) {
       const dd = dateOf(dayStart(d) + k * DAY);
@@ -381,6 +394,8 @@ function generate(ref, opts) {
   }
 
   // ---- sub-type weights ---------------------------------------------------
+  // fixed weights, whatever the window and the rain calendar (ward weights below continue this stream)
+  R.reseed("weights");
   const catKey = (cat) => (cat.startsWith("MEGA STREETS") ? "MEGA" : cat);
   const byCat = new Map();
   for (const s of ref.subtypes) {
@@ -697,37 +712,58 @@ function generate(ref, opts) {
   const shape = dayPlan.reduce((a, p) => a + p.weekday * p.factor, 0);
   const baseScale = Math.max(opts.perDay * opts.days * (1 - RATES.duplicate) - expectedHotspots, 0) / shape;
   const base = [];
-  for (const { d0, weekday, sample, factor } of dayPlan) {
+  for (const { date, d0, weekday, sample, factor } of dayPlan) {
+    // each day, and each complaint in it, has its own stream: the same complaint every run, revealed once its time passes
+    R.reseed(`day|${date}`);
     const n = R.poisson(baseScale * weekday * factor);
     for (let i = 0; i < n; i++) {
+      const key = `base|${date}|${i}`;
+      R.reseed(key);
       const t = d0 + hourSampler() * HOUR + R.int(0, 59) * MIN + R.int(0, 59) * SEC;
       if (t > now) continue;
-      base.push(newComplaint(t, sample()));
+      const c = newComplaint(t, sample());
+      c.key = key;
+      base.push(c);
     }
   }
 
   // ---- 2. hotspot bursts --------------------------------------------------
+  // Decided per calendar week (not per window), so a burst stays where it was as the window slides. A week with a rain
+  // day usually gets a rain-driven burst on that day; any week may get an ordinary one (about 12 bursts per 180 days).
   const hotspots = [];
   const hotComplaints = [];
-  const nHot = R.int(10, 15);
-  for (let h = 0; h < nHot; h++) {
-    const label = R.pick(HOTSPOT_SUBTYPES);
+  const WEEK = 7 * DAY;
+  const rainLabels = HOTSPOT_SUBTYPES.filter((l) => RAIN_HOTSPOT_SUBTYPES.has(l));
+  const dryLabels = HOTSPOT_SUBTYPES.filter((l) => !RAIN_HOTSPOT_SUBTYPES.has(l));
+  const weeks = [...new Set(dates.map((d) => Math.floor(dayStart(d) / WEEK)))];
+  const peak = Math.max(...HOUR_PROFILE);
+  for (const wk of weeks) {
+    R.reseed(`hot|${wk}`);
+    const w0 = wk * WEEK;
+    const wetDays = rainDays.filter((d) => dayStart(d) >= w0 && dayStart(d) < w0 + WEEK);
+    let label, start, rainy;
+    if (wetDays.length && R.chance(0.8)) {
+      rainy = true;
+      label = R.pick(rainLabels);
+      start = dayStart(R.pick(wetDays)) + R.int(6, 20) * HOUR;
+    } else if (R.chance(0.34)) {
+      rainy = false;
+      label = R.pick(dryLabels);
+      start = w0 + R.float(0, WEEK);
+    } else continue;
+    if (start < startMs || start > now) continue;
     const sub = findSubtype(ref, label);
-    const rainy = RAIN_HOTSPOT_SUBTYPES.has(label) && rainDays.length > 0;
-    let start = rainy
-      ? dayStart(R.pick(rainDays)) + R.int(6, 20) * HOUR
-      : startMs + R.float(0, Math.max(now - 48 * HOUR - startMs, DAY));
-    if (start > now - 2 * HOUR) start = now - 30 * HOUR;
     const ward = rainy ? rainWardSampler() : wardSampler();
     const center = randomPointInWard(ward);
     const shared = { ward };
     setWard(shared, ward);
     placeStreet(shared);
-    const id = "HOT-" + String(h + 1).padStart(2, "0");
+    const id = `HOT-W${wk}`;
     const k = R.int(5, 20);
     let made = 0;
-    const peak = Math.max(...HOUR_PROFILE);
     for (let j = 0; j < k; j++) {
+      const key = `hot|${wk}|${j}`;
+      R.reseed(key);
       // Burst members still follow the hour-of-day filing profile.
       let t;
       do t = start + R.float(0, 48 * HOUR);
@@ -753,61 +789,69 @@ function generate(ref, opts) {
       writeText(c, c.lang, c.junk ? "always" : "never");
       c.truth = id;
       c.hotspot = true;
+      c.key = key;
       hotComplaints.push(c);
       made++;
     }
-    hotspots.push({ id, label, ward, zone: shared.zoneName, start: fmtMin(start), complaints: made, rain: rainy });
+    if (made) hotspots.push({ id, label, ward, zone: shared.zoneName, start: fmtMin(start), complaints: made, rain: rainy });
   }
 
   // ---- 3. near-duplicate re-reports --------------------------------------
-  const candidates = base.filter((c) => c.lat !== undefined && c.sub.category !== "Other" && !c.junk && c.t <= now - 30 * MIN);
-  const nDup = Math.round(((base.length + hotComplaints.length) * RATES.duplicate) / (1 - RATES.duplicate));
+  // Decided per original complaint (up to three re-reports, about 6% of all complaints), each at its own time within
+  // 72 hours; a re-report appears once its time has passed.
+  const candidates = base.filter((c) => c.lat !== undefined && c.sub.category !== "Other" && !c.junk);
   const dups = [];
-  let attempts = 0;
-  while (dups.length < nDup && attempts++ < nDup * 20) {
-    const orig = R.pick(candidates);
-    if ((orig.dupCount || 0) >= 3) continue;
-    const latest = Math.min(orig.t + 72 * HOUR, now);
-    if (latest - orig.t < 20 * MIN) continue;
-    const t = wholeSec(orig.t + R.float(20 * MIN, latest - orig.t));
-    const d = {
-      t,
-      sub: orig.sub,
-      rain: rainMultByDate.has(dateOf(t)),
-      rainEvent: rainEventOf.get(dateOf(t)) || null
-    };
-    setWard(d, orig.ward);
-    for (const f of ["areaId", "areaName", "localityId", "localityName", "streetId", "streetName", "manualStreet", "streetType"]) {
-      if (orig[f] !== undefined) d[f] = orig[f];
+  for (const orig of candidates) {
+    R.reseed(`dup|${orig.key}`);
+    let m = 0;
+    while (m < 3 && R.chance(m === 0 ? 0.066 : 0.2)) m++;
+    for (let j = 0; j < m; j++) {
+      const key = `dup|${orig.key}|${j}`;
+      R.reseed(key);
+      const t = wholeSec(orig.t + R.float(20 * MIN, 72 * HOUR));
+      if (t > now) continue;
+      const d = {
+        t,
+        sub: orig.sub,
+        rain: rainMultByDate.has(dateOf(t)),
+        rainEvent: rainEventOf.get(dateOf(t)) || null,
+        key
+      };
+      setWard(d, orig.ward);
+      for (const f of ["areaId", "areaName", "localityId", "localityName", "streetId", "streetName", "manualStreet", "streetType"]) {
+        if (orig[f] !== undefined) d[f] = orig[f];
+      }
+      const p = pointNear(orig.lat, orig.lng, orig.ward, 140, 5) || { lat: orig.lat, lng: orig.lng };
+      d.lat = p.lat;
+      d.lng = p.lng;
+      d.wardSource = "map_boundary";
+      d.pin = R.chance(0.5) ? orig.pin : R.chance(RATES.locationPin) ? R.pick(PIN_BY_ZONE[d.zoneNumber]) : null;
+      // Reworded, and usually in a different language from the original.
+      const langs = Object.keys(LANGUAGE_MIX).filter((l) => l !== orig.lang);
+      const lang = R.chance(0.6) ? R.pick(langs) : orig.lang;
+      d.landmark = R.chance(0.5) ? orig.landmark : landmarkFor(lang);
+      writeText(d, lang, "never");
+      finishRouting(d);
+      d.dupOf = orig;
+      orig.dupCount = (orig.dupCount || 0) + 1;
+      dups.push(d);
     }
-    const p = pointNear(orig.lat, orig.lng, orig.ward, 140, 5) || { lat: orig.lat, lng: orig.lng };
-    d.lat = p.lat;
-    d.lng = p.lng;
-    d.wardSource = "map_boundary";
-    d.pin = R.chance(0.5) ? orig.pin : R.chance(RATES.locationPin) ? R.pick(PIN_BY_ZONE[d.zoneNumber]) : null;
-    // Reworded, and usually in a different language from the original.
-    const langs = Object.keys(LANGUAGE_MIX).filter((l) => l !== orig.lang);
-    const lang = R.chance(0.6) ? R.pick(langs) : orig.lang;
-    d.landmark = R.chance(0.5) ? orig.landmark : landmarkFor(lang);
-    writeText(d, lang, "never");
-    finishRouting(d);
-    d.dupOf = orig;
-    orig.dupCount = (orig.dupCount || 0) + 1;
-    dups.push(d);
   }
-  if (dups.length < nDup) warnings.push(`only ${dups.length} of ${nDup} duplicates could be placed`);
 
-  const all = [...base, ...hotComplaints, ...dups].sort((a, b) => a.t - b.t);
+  const all = [...base, ...hotComplaints, ...dups].sort((a, b) => a.t - b.t || (a.key < b.key ? -1 : 1));
 
   // ---- 4. codes -----------------------------------------------------------
+  // From the complaint's own key, so a complaint keeps its code on every run.
   const used = new Set(ref.existingCodes);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   for (const c of all) {
     let code;
+    let k = 0;
     do {
+      const h = crypto.createHash("sha1").update(`${opts.seed}|code|${c.key}|${k++}`).digest();
       let tail = "";
-      for (let i = 0; i < 3; i++) tail += String(R.int(0, 9));
-      for (let i = 0; i < 3; i++) tail += LETTERS[R.int(0, 25)];
+      for (let i = 0; i < 3; i++) tail += String(h[i] % 10);
+      for (let i = 3; i < 6; i++) tail += LETTERS[h[i] % 26];
       code = dateOf(c.t).slice(0, 4) + "-" + tail;
     } while (used.has(code));
     used.add(code);
@@ -821,6 +865,7 @@ function generate(ref, opts) {
   let rewrites = 0;
   for (const c of all) {
     let key = c.ward + "|" + dateOf(c.t) + "|" + c.details;
+    if (seen.has(key)) R.reseed(`text|${c.key}`);
     for (let i = 0; i < 25 && seen.has(key); i++) {
       writeText(c, c.lang, c.junk ? "always" : "never");
       if (c.sub.category === "Other") finishRouting(c);
@@ -835,21 +880,26 @@ function generate(ref, opts) {
   }
 
   // ---- 6. complainants ----------------------------------------------------
+  // A fixed pool of repeat complainants (about a quarter of complaints come from them, as with RATES.repeatComplainant
+  // people filing two to four each); everyone else is new. Chosen per complaint, so a complaint keeps its complainant.
   const people = [];
-  const slots = [];
-  while (slots.length < all.length) {
-    const p = newPerson();
-    people.push(p);
-    const k = R.chance(RATES.repeatComplainant) ? R.int(2, 4) : 1;
-    for (let i = 0; i < k; i++) slots.push(p);
-  }
-  R.shuffle(slots);
-  all.forEach((c, i) => {
-    c.person = slots[i];
+  const POOL = Math.max(20, Math.round((opts.perDay * opts.days * 0.25) / 3));
+  const pool = Array.from({ length: POOL }, (_, i) => { R.reseed(`person|pool|${i}`); return newPerson(); });
+  const inPool = new Set();
+  for (const c of all) {
+    R.reseed(`person|${c.key}`);
+    if (R.chance(0.25)) {
+      c.person = pool[R.int(0, POOL - 1)];
+      if (!inPool.has(c.person)) { inPool.add(c.person); people.push(c.person); }
+    } else {
+      c.person = newPerson();
+      people.push(c.person);
+    }
     c.anonymous = R.chance(RATES.anonymous);
-  });
+  }
   for (const d of dups) {
     if (d.person === d.dupOf.person) {
+      R.reseed(`person2|${d.key}`);
       d.person = newPerson();
       people.push(d.person);
     }
@@ -894,6 +944,7 @@ function generate(ref, opts) {
 
   // ---- 7. media -----------------------------------------------------------
   for (const c of all) {
+    R.reseed(`media|${c.key}`);
     if (!R.chance(RATES.photo)) continue;
     const epoch = c.t - 5.5 * HOUR - R.int(20, 600) * SEC;
     let rnd = "";
@@ -908,6 +959,8 @@ function generate(ref, opts) {
       : c.deptName === "Storm Water Drain Department" ? 2.0 : 0.6;
   const meanStall = all.reduce((a, c) => a + stallWeight(c), 0) / all.length;
   for (const c of all) {
+    // the whole history is planned per complaint and shown up to now, so statuses only move forward run to run
+    R.reseed(`life|${c.key}`);
     c.stalled = R.chance((RATES.stall * stallWeight(c)) / meanStall);
     simulate(c);
   }

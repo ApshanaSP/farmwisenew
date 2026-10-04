@@ -72,13 +72,15 @@ export async function recentTurns(owner: string, sessionId: string, limit = 6): 
   return safe("history", async () => {
     const [rows] = await intelPool.query<RowDataPacket[]>(
       `SELECT m.message_id, m.role, m.content_text, m.language, m.plan_json, m.scope_json, JSON_UNQUOTE(JSON_EXTRACT(m.payload_json, '$.headline')) AS headline,
-              JSON_EXTRACT(m.payload_json, '$.chart') AS chart, JSON_UNQUOTE(JSON_EXTRACT(m.payload_json, '$.display')) AS display
+              JSON_EXTRACT(m.payload_json, '$.chart') AS chart, JSON_UNQUOTE(JSON_EXTRACT(m.payload_json, '$.display')) AS display,
+              JSON_EXTRACT(m.payload_json, '$.context') AS context
        FROM ${ops("assistant_messages")} m JOIN ${ops("assistant_sessions")} s ON s.session_id = m.session_id
-       WHERE m.session_id = ? AND s.owner = ? ORDER BY m.created_at DESC LIMIT ?`,
+       WHERE m.session_id = ? AND s.owner = ? ORDER BY m.created_at DESC, m.role = 'user' LIMIT ?`,
       [sessionId, owner, limit]
     );
+    // newest first from the query (an answer saved in the same second as its question sorts after it), oldest first here
     return rows.reverse().map((r) => ({ ...r, plan: parse(r.plan_json), scope: parse(r.scope_json), headline: r.headline ?? null, chart: parse(r.chart),
-      display: r.display ?? null }));
+      display: r.display ?? null, context: parse(r.context) }));
   }, []);
 }
 

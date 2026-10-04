@@ -19,6 +19,7 @@ import { ScopeSchema, refNames, scopeProblems, type AssistantScope } from "@/lib
 import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { classify } from "@/lib/collector/nlp";
+import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
   ENV_METRICS, addedSources, categoryFigures, deptBacklog, envSignals, feeds, incidentFlags, incidentSeries, incidentsByIds, newsGapTotal, placeBreakdown, seriesNormal,
   syntheticShare,
@@ -91,7 +92,7 @@ function incRow(i: Row, withWhy = false) {
 
 /** Incident words in Tamil and Tanglish, to their English form in the records. */
 const INCIDENT_WORDS: Record<string, string> = {
-  "கொலை": "murder", "கொள்ளை": "robbery", "திருட்டு": "theft", "விபத்து": "accident", "தீ விபத்து": "fire", "வெள்ளம்": "flood", "தாக்குதல்": "assault",
+  "தற்கொலை": "suicide", "கொலை": "murder", "கொள்ளை": "robbery", "திருட்டு": "theft", "விபத்து": "accident", "தீ விபத்து": "fire", "வெள்ளம்": "flood", "தாக்குதல்": "assault",
   "கடத்தல்": "kidnap", "சங்கிலி": "snatching", "காணவில்லை": "missing", "மூழ்கி": "drown", "மின்சாரம்": "electric", "மரம்": "tree", "கட்டிடம்": "building",
   kolai: "murder", kollai: "robbery", thiruttu: "theft", vibathu: "accident", vibaththu: "accident", vellam: "flood", kadathal: "kidnap"
 };
@@ -102,6 +103,45 @@ const STORY_STOP = new Set(["what", "this", "that", "case", "incident", "tell", 
   "give", "please", "near", "area", "zone", "ward"]);
 
 const NEWS_CAVEAT = "News answers rest on headlines: about 98% of news rows are headline snippets, and the news incident filter scores F1 0.63.";
+
+/**
+ * The incidents a description names, best first (incident_story; scripts/eval-assistant.cjs measures it): an INC- id,
+ * else hybrid scoring over every incident in the filter, else the console's keyword search while the index is built.
+ */
+export async function findIncidents(text: string, scope: Partial<AssistantScope>, now: string) {
+  const id = text.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase();
+  if (id) return { found: [{ id, score: 1 }], how: "id", confident: true };
+  const place = await resolvePlace(text);
+  const zone = scope.zone ?? place?.zone ?? null;
+  const named = classify(text);
+  const cats = scope.cat ? [scope.cat] : named && named.conf >= 0.6 ? [named.code] : null;
+  // hybrid scoring over every incident in the filter: closeness in meaning, plus the question's own key words found in
+  // the incident's type, title and reasons ("murder" is in a murder's reasons, not its generic title; Tamil and
+  // Tanglish words count through their English form); recency, the named locality and severity break near-ties
+  const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
+  const locality = place?.place?.toLowerCase() ?? null;
+  const placeWords = new Set((locality ?? "").split(/\s+/).filter(Boolean));
+  const low = text.toLowerCase();
+  // whole words only: தற்கொலை (suicide) must not count as கொலை (murder)
+  const qWords = tokens(text);
+  const local = Object.entries(INCIDENT_WORDS).filter(([k]) => hasPhrase(qWords, k)).map(([, v]) => v);
+  const keys = [...new Set([...(low.match(/[a-z]{4,}/g) ?? []), ...local])].filter((w) => !STORY_STOP.has(w) && !placeWords.has(w));
+  const lexOf = (words: string | undefined) => keys.filter((w) => (words ?? "").includes(w)).length;
+  // the word the question names ("murder") outweighs small differences in meaning between near-identical police records
+  const boost = (m: Meta) => Math.min(0.14, 0.07 * lexOf(m.words)) + 0.03 * Math.exp(-Math.max(0, nowT - m.t) / (30 * 86400))
+    + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0);
+  // the zone and type the question names narrow the search; if nothing matches, each is relaxed in turn
+  let hits = await semanticSearch(text, { zone, cats }, 12, boost);
+  if (hits && !hits.length && cats) hits = await semanticSearch(text, { zone }, 12, boost);
+  if (hits && !hits.length && zone != null) hits = await semanticSearch(text, { cats }, 12, boost);
+  if (hits) {
+    // sure only when the question's key words are in the record, or the meaning is very close
+    const top = hits[0];
+    return { found: hits.map((h) => ({ id: h.id, score: h.score })), how: "meaning", confident: !top || !keys.length || lexOf(top.meta.words) > 0 || top.sim >= 0.86 };
+  }
+  // the meaning index is still being built: the console's keyword search
+  return { found: (await search(text)).incidents.slice(0, 8).map((i, k) => ({ id: String(i.id), score: 1 - k / 100 })), how: "keywords", confident: true };
+}
 
 /**
  * One incident in full, for incident_detail and incident_story: its facts, plain-language reasons, the pipeline's own
@@ -352,45 +392,7 @@ export const TOOLS = [
     async run({ text, scope }) {
       const now = await asOf();
       warmUp(now);
-      const id = text.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase();
-      let found: { id: string; score: number }[] = [];
-      let how = "id";
-      let confident = true;
-      if (id) found = [{ id, score: 1 }];
-      else {
-        const place = await resolvePlace(text);
-        const zone = scope.zone ?? place?.zone ?? null;
-        const named = classify(text);
-        const cats = scope.cat ? [scope.cat] : named && named.conf >= 0.6 ? [named.code] : null;
-        // hybrid scoring over every incident in the filter: closeness in meaning, plus the question's own key words found in
-        // the incident's type, title and reasons ("murder" is in a murder's reasons, not its generic title; Tamil and
-        // Tanglish words count through their English form); recency, the named locality and severity break near-ties
-        const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
-        const locality = place?.place?.toLowerCase() ?? null;
-        const placeWords = new Set((locality ?? "").split(/\s+/).filter(Boolean));
-        const low = text.toLowerCase();
-        const local = Object.entries(INCIDENT_WORDS).filter(([k]) => low.includes(k)).map(([, v]) => v);
-        const keys = [...new Set([...(low.match(/[a-z]{4,}/g) ?? []), ...local])].filter((w) => !STORY_STOP.has(w) && !placeWords.has(w));
-        const lexOf = (words: string | undefined) => keys.filter((w) => (words ?? "").includes(w)).length;
-        // the word the question names ("murder") outweighs small differences in meaning between near-identical police records
-        const boost = (m: Meta) => Math.min(0.14, 0.07 * lexOf(m.words)) + 0.03 * Math.exp(-Math.max(0, nowT - m.t) / (30 * 86400))
-          + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0);
-        // the zone and type the question names narrow the search; if nothing matches, each is relaxed in turn
-        let hits = await semanticSearch(text, { zone, cats }, 12, boost);
-        if (hits && !hits.length && cats) hits = await semanticSearch(text, { zone }, 12, boost);
-        if (hits && !hits.length && zone != null) hits = await semanticSearch(text, { cats }, 12, boost);
-        if (hits) {
-          how = "meaning";
-          found = hits.map((h) => ({ id: h.id, score: h.score }));
-          // sure only when the question's key words are in the record, or the meaning is very close
-          const top = hits[0];
-          confident = !top || !keys.length || lexOf(top.meta.words) > 0 || top.sim >= 0.86;
-        } else {
-          // the meaning index is still being built: the console's keyword search
-          how = "keywords";
-          found = (await search(text)).incidents.slice(0, 8).map((i, k) => ({ id: String(i.id), score: 1 - k / 100 }));
-        }
-      }
+      const { found, how, confident } = await findIncidents(text, scope, now);
       if (!found.length) return { scope: null, asOf: now, data: { found: false }, facts: [], sources: [fn("embed.semanticSearch")], incidentIds: [], testData: false,
         caveats: ["No incident in the store matches that description."] };
       const body = await incidentBody(found[0].id, now);

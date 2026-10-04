@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-02T07:13:57.491Z",
+  "generatedAt": "2026-10-04T05:33:53.445Z",
   "seed": 42,
   "days": 180,
   "perDay": 90,
-  "startDate": "2026-04-06",
-  "endDate": "2026-10-02",
-  "snapshotIst": "2026-10-02 12:43",
+  "startDate": "2026-04-08",
+  "endDate": "2026-10-04",
+  "snapshotIst": "2026-10-04 11:03",
   "rainDays": [
     "2026-05-19",
     "2026-07-18",
@@ -17,5 +17,5 @@
     "2026-09-20"
   ],
   "mode": "csv-only",
-  "syntheticComplaints": 16199
+  "syntheticComplaints": 16093
 }

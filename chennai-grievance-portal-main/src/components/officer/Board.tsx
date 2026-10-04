@@ -71,7 +71,7 @@ function MapCard({ c, style }: { c: Ctx; style: React.CSSProperties }) {
   const [layers, setLayers] = useState<Record<string, boolean>>({ severe: true, complaint: true, other: true, added: false, stations: false });
   const pins = useMemo(() => d.map.pins, [d.map.pins]);
   const LAYERS = [
-    ["severe", "Severe", "#E5484D", d.map.layerCounts.severe], ["complaint", "Complaints", "#FFA114", d.map.layerCounts.complaint],
+    ["severe", "Severe", "#F2555A", d.map.layerCounts.severe], ["complaint", "Complaints", "#FFA114", d.map.layerCounts.complaint],
     ["other", "Other", "#4D8DFF", d.map.layerCounts.other]
   ] as const;
   return (

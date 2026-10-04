@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-from . import PIPELINE_VERSION, analytics, classify, dedup, geolocate, incidents, linking, store, world
+from . import PIPELINE_VERSION, analytics, briefai, classify, dedup, geolocate, incidents, linking, newsllm, store, world
 from .agents import briefing, steward, workers
 from .agents.llm import LLM
 from .geo import WardIndex
@@ -152,7 +152,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
 
     # ------------------------------------------------------------- incidents --
     I = incidents.build(events, timeline, conform(actions, ACTION_COLUMNS), ref, calendar, as_of, zone_names)
-    inc = I["incidents"]
+    inc = newsllm.narrate(settings, ref, I["incidents"], events, as_of)
 
     # ------------------------------------------------------------- analytics --
     hs, assign = analytics.hotspots(inc, as_of, settings.pipe["hotspot_eps_m"], settings.pipe["hotspot_min_samples"])
@@ -188,6 +188,8 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     alerts_df["created_at"] = as_of
     alerts_df["status"] = "new"
     B, r5 = briefing.run(inc, kp, alerts_df, gaps, all_actions, S["health"], ref, as_of, llm)
+    B = newsllm.brief(settings, B)
+    notes = briefai.run(settings, ref, inc, docs, sig, E["forecasts"], calendar, an, as_of)
     agent_runs = [r.row(as_of) for r in (r1, r2, r3, r4, S["run"], r5)]
     metrics["briefing_unverified_numbers"] = int(B["unverified_numbers"].sum())
 
@@ -197,7 +199,11 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
                               "reason": "Low location confidence (" + geo_low["geo_method"].astype(str) + ")", "evidence": geo_low["place_text"]})
     gap_items = pd.DataFrame({"item_type": "gap", "item_id": gaps["incident_id"], "suggestion": gaps["suggested_action"],
                               "reason": "In the news, no departmental record", "evidence": gaps["title"]})
-    review = pd.concat([link_items, S["proposals"], geo_items, gap_items], ignore_index=True)
+    # news the classifiers could not categorise with confidence (and the LLM did not reach): a person decides
+    unsure = docs[(docs.get("category_method") == "review") & (docs["is_district"] == 1)].sort_values("published_at", ascending=False).head(300)
+    news_items = pd.DataFrame({"item_type": "news_label", "item_id": unsure["doc_id"], "suggestion": unsure.get("category_suggestion"),
+                               "reason": "Category too uncertain to assign automatically", "evidence": unsure["title"]})
+    review = pd.concat([link_items, S["proposals"], geo_items, gap_items, news_items], ignore_index=True)
     review.insert(0, "review_id", [f"REV-{i + 1:05d}" for i in range(len(review))])
     review["status"] = "open"
     review["created_at"] = as_of
@@ -217,7 +223,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     tables = {
         "events": ev_store, "incidents": inc, "incident_members": I["members"], "incident_timeline": I["timeline"],
         "actions": all_actions, "documents": docs_store, "observations": obs, "observation_signals": sig, "forecasts": E["forecasts"],
-        "daily_counts": dc, "anomalies": an, "hotspots": hs, "kpis": kp, "alerts": alerts_df, "briefings": B, "gaps": gaps,
+        "daily_counts": dc, "anomalies": an, "hotspots": hs, "kpis": kp, "alerts": alerts_df, "briefings": B, "briefing_notes": notes, "gaps": gaps,
         "link_pairs": pairs, "review_queue": review, "source_health": S["health"], "data_quality": S["issues"], "quarantine": S["quarantine"],
         "category_drift": S["drift"], "world_calendar": calendar, "pwd_works": W["works"], "agent_runs": pd.DataFrame(agent_runs),
         "metrics": metrics_df, **ref_tables}
@@ -271,6 +277,16 @@ def _dashboard_extras(settings, wards, ws, inc, obs, sig, E, ref, zone_names, he
     return {"meta": meta, "environment": env, "trends": trends, "wards_geojson": wards.ward_geojson(props), "zone_outlines": zo}
 
 
+def _setfit_meta(metrics) -> dict:
+    from .util import INTEL_DIR
+
+    p = INTEL_DIR / "output" / "models" / "news_setfit" / "meta.json"
+    if not p.exists():
+        return {}
+    m = json.loads(p.read_text(encoding="utf-8"))
+    return {k: v for k, v in m.items() if k.endswith("_with_llm") or k in ("trained_at", "train", "held_out")}
+
+
 def _reports(dir_, metrics, S, B, as_of) -> None:
     dir_.mkdir(parents=True, exist_ok=True)
     L = [f"# Evaluation report", f"_As of {as_of:%d %b %Y %H:%M} IST · {metrics['pipeline_version']}_", ""]
@@ -291,10 +307,12 @@ def _reports(dir_, metrics, S, B, as_of) -> None:
     L += ["## One shared world", f"- Flood-day correlation before overlay: {json.dumps(metrics.get('flood_day_correlation_before_overlay'))}",
           f"- After overlay: {json.dumps(metrics.get('flood_day_correlation_after_overlay'))}", f"- Overlay: {json.dumps(metrics.get('overlay'), default=str)}", ""]
     ng = metrics.get("news_gate", {})
-    L += ["## News incident filter (300 hand labels, stratified; population-weighted 5-fold cross-validation)",
-          f"- Weak labels only: {json.dumps(ng.get('weak_labels_only'))}",
-          f"- Weak + hand labels: {json.dumps(ng.get('weak_plus_hand_labels_cv'))} at threshold {ng.get('threshold')}",
-          f"- Features: {ng.get('features')}; story merges from embeddings: {json.dumps(ng.get('story_merges'))}", ""]
+    L += ["## News classification (in Chennai, incident, report type, category)",
+          "- By meaning: Groq LLM labels (cached), the local SetFit model (multilingual-e5-base, trained on those labels)",
+          "  for articles the LLM has not reached; the old rules only when neither exists.",
+          f"- Articles by method: {json.dumps(ng.get('labels_by_method'))}; Chennai incident articles: {ng.get('incident_articles')}",
+          f"- SetFit agreement with the LLM on held-out labels: {json.dumps(_setfit_meta(metrics))}",
+          f"- Story merges from embeddings: {json.dumps(ng.get('story_merges'))}", ""]
     L += ["## News funnel", f"- {json.dumps(metrics.get('news_funnel'))}", "",
           f"## Briefings", f"- Unverified numbers across all briefings: {metrics.get('briefing_unverified_numbers')}", ""]
     (dir_ / "evaluation.md").write_text("\n".join(L), encoding="utf-8")

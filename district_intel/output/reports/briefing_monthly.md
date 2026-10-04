@@ -1,58 +1,58 @@
 # Collector's Monthly Briefing, Chennai District
-_02 Sep 2026 12:32 to 02 Oct 2026 12:32 · 6 of 8 data feeds healthy_
+_04 Sep 2026 10:57 to 04 Oct 2026 10:57 · 4 of 8 data feeds healthy_
 
 ## At a glance
-- 5049 incidents this period (4869 in the previous one); 163 severe; 1965 still open; 4583 resolved.
-- 2882 citizen complaints filed; 917 of them still open.
-- 678 open incidents from this period are past their deadline. Median time to first action on civic complaints: 26.0 hours.
-- 100 incidents were reported by more than one source; 455 appear only in the news.
+- 5253 incidents this period (4610 in the previous one); 180 severe; 2178 still open; 4641 resolved.
+- 2984 citizen complaints filed; 924 of them still open.
+- 801 open incidents from this period are past their deadline. Median time to first action on civic complaints: 25.2 hours.
+- 73 incidents were reported by more than one source; 518 appear only in the news.
 
 ## Needs your attention
-1. **Lakes, bunds & sluices – Perungudi (Perungudi Lake)** (Severe, Sholinganallur, ward 197; in progress). Well past its deadline, Needs several departments. Why it matters: Severe lakes, bunds & sluices (98); reported by 3 sources; 4 citizen complaints; resolution over twice the 6 h target; affects hospital, worship; covered by 2 news outlets; linked to a rain event. Evidence: 12 reports from grievance, news, pwd, 2 news outlets. Next: PWD Water Resources, clear waterlogging at sholinganallur (vinayagar koil st) (Executive Engineer (V. Karthikeyan)). `INC-20260919-0D73F1`
-2. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 144; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; not yet verified by an officer; linked to a rain event; 6 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect the structure (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20260930-030D94`
-3. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 147; in progress). Well past its deadline, Needs several departments. Why it matters: Severe lakes, bunds & sluices (90); reported by 3 sources; 2 citizen complaints; resolution over twice the 6 h target; affects bus stop, worship; linked to a rain event; 5 similar incidents here in 90 days. Evidence: 9 reports from grievance, police, pwd. Next: PWD Water Resources, attend canal overflow - pallavan nagar 4th cross st, maduravoyal (Executive Engineer (S. Prabhakaran)). `INC-20260930-34D62E`
-4. **Flooding & waterlogging – Perambur** (Severe, Thiru-Vi-Ka-Nagar, ward 67; in progress). Well past its deadline, Needs several departments. Why it matters: Severe flooding & waterlogging (83); reported by 3 sources; 4 citizen complaints; resolution over twice the 6 h target; affects bus stop, school, worship; linked to a rain event; 5 similar incidents here in 90 days. Evidence: 11 reports from grievance, police, pwd. Next: PWD Water Resources, desilt / clear blockage in kodungaiyur canal near kodungaiyur (Assistant Executive Engineer (M. Gunasekaran)). `INC-20260919-833DAE`
-5. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 147; in progress). Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; linked to a rain event; 4 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, plug breach in porur lake bund (Executive Engineer (G. Selvi)). `INC-20260930-C9D941`
+1. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 144; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; not yet verified by an officer; linked to a rain event; 5 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect the structure (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20260930-030D94`
+2. **Roads, footpaths & bridges – Pulianthope (Basin Bridge)** (Severe, Royapuram, ward 58; open). Severe and not verified, Well past its deadline. Why it matters: Severe roads, footpaths & bridges (100); resolution over twice the 24 h target; not yet verified by an officer; linked to a rain event. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect and barricade (Assistant Engineer, Ward 58 (Royapuram zone)). `INC-20261002-37C0B4`
+3. **Flooding & waterlogging – Anna Arch** (Severe, Anna Nagar, ward 100; in progress). Well past its deadline, Spreading: several new reports in 24 h. Why it matters: Severe flooding & waterlogging (99); resolution over twice the 6 h target; 3 new reports in 24 h; linked to a rain event. Evidence: 3 reports from police. Next: Greater Chennai Police, deploy pumps and clear standing water (Assistant Engineer, Ward 100 (Anna Nagar zone)). `INC-20261003-7675E9`
+4. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 147; in progress). Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; linked to a rain event; 4 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, plug breach in porur lake bund (Executive Engineer (G. Selvi)). `INC-20260930-C9D941`
+5. **Lakes, bunds & sluices – Chetpet (Chetpet Lake)** (Severe, Royapuram, ward 58; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe lakes, bunds & sluices (86); resolution over twice the 6 h target; not yet verified by an officer; affects bus stop, elderly; linked to a rain event; 9 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect the structure (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20260919-C34947`
 
 ## Early warnings
-- Adambakkam Lake at 98% of capacity: Rising 0.23 points a day; full in about 7 days
-- Palavanthangal Lake at 98% of capacity: Rising 0.23 points a day; full in about 7 days
-- Ambattur Lake at 98% of capacity: Rising 0.05 points a day
-- Korattur Lake at 98% of capacity: Rising 0.05 points a day
-- Mogappair Eri at 98% of capacity: Rising 0.04 points a day
-- Kolathur Lake at 98% of capacity: Rising 0.06 points a day; full in about 26 days
-- Chetpet Lake at 98% of capacity: Rising 0.06 points a day; full in about 25 days
-- Madhavaram Lake at 98% of capacity: Rising 0.06 points a day; full in about 26 days
+- IMD warning level 1 for 06 Oct: Thunderstorms & Lightning, Squall etc
+- IMD warning level 1 for 04 Oct: Thunderstorms & Lightning, Squall etc
+- IMD warning level 1 for 05 Oct: Thunderstorms & Lightning, Squall etc
+- Adambakkam Lake at 98% of capacity: Rising 0.05 points a day; full in about 28 days
+- Palavanthangal Lake at 98% of capacity: Rising 0.07 points a day; full in about 21 days
+- Ambattur Lake at 98% of capacity: Falling 0.00 points a day
+- Korattur Lake at 98% of capacity: Falling 0.00 points a day
+- Mogappair Eri at 98% of capacity: Falling 0.01 points a day
 
 ## In the news, not in any department's records
-- நேபாள பெருவெள்ளம்: தமிழக யாத்ரீகர்கள் 85 பேர் தொடர்பாக தகவல் எதுவும் இல்லை: உறவினர்கள் வேதனை (1 outlet); ask Storm Water Drain to verify. `INC-20260926-6D4DF9`
-- கொடுங்கையூரில் ரூ.34 கோடி நிலம் மீட்பு 18 கடைகளை இடித்து அகற்றியது மாநகராட்சி (1 outlet); ask District Disaster Management to verify. `INC-20260928-D8D861`
-- 17 stray dogs found dead in Madambakkam; IT employee arrested for poisoning (1 outlet); ask Public Health (GCC) to verify. `INC-20260924-140BF9`
-- Senior citizen falls in between moving train and platform at Guindy railway station, rescued (1 outlet); ask District Disaster Management to verify. `INC-20260924-85CF4A`
-- சென்னை மாநகராட்சிப் பகுதிகளில் உள்ள 1,534 பள்ளிகளில் டெங்கு தடுப்பு நடவடிக்கைகள் (1 outlet); ask Public Health (GCC) to verify. `INC-20260926-9E3A5B`
+- Staircase collapse leaves Pattinapakkam TNUHDB residents cutoff from their homes (1 outlet); ask PWD Buildings to verify. `INC-20260929-A10EA6`
+- Chennai: Woman set afire by estranged lover dies after a week (1 outlet); ask District Disaster Management to verify. `INC-20260928-743634`
+- Over 1,500 homes in Srinivasapuram TNUHDB falling apart with collapsed ceilings, cracked walls (1 outlet); ask PWD Buildings to verify. `INC-20261003-37BFB9`
+- With 1,775 dengue cases in Chennai, GCC steps up mosquito control (1 outlet); ask Public Health (GCC) to verify. `INC-20260929-0167C7`
+- Chennai: Balconies gone, it is double the danger now (1 outlet); ask PWD Buildings to verify. `INC-20261001-B49886`
 
 ## Department follow-up
 | Department | Open | Past deadline | Severe | Top item |
 |---|---|---|---|---|
-| PWD Water Resources | 236 | 189 | 38 | Lakes, bunds & sluices – Perungudi (Perungudi Lake) |
-| Greater Chennai Police | 1242 | 181 | 101 | 'Invited her to guest house': 3rd case filed against granite baron R Veeramani over Class 11 student suicide |
-| Storm Water Drain | 200 | 143 | 0 | Flooding & waterlogging – Kalyana Mastri Garden 6Th Street, Pattalam |
-| Roads & Building Permissions | 272 | 119 | 0 | Dark spots & public safety – Karpagam Garden 2Nd Link Road, Besant Nagar, Urur |
-| PWD Buildings | 63 | 56 | 2 | Unsafe buildings & walls – Valasaravakkam |
-| Solid Waste Management | 94 | 53 | 0 | Garbage & solid waste – Annamalai Avenue Chanakiya 1St Cross Street, Nolambur, Nolambur |
-| Public Health (GCC) | 151 | 50 | 0 | Drainage & sewage – Voc Street, Kottivakkam |
-| Street Lighting & Electrical | 99 | 49 | 0 | Street lights & electrical hazards – Tholaipesi Aluvalaga Kudieruppu, Mannurpet |
+| Greater Chennai Police | 1397 | 280 | 104 | Flooding & waterlogging – Anna Arch |
+| PWD Water Resources | 240 | 191 | 37 | Lakes, bunds & sluices – Porur (Porur Lake Bund) |
+| Storm Water Drain | 233 | 166 | 0 | Flooding & waterlogging – Sannadhi Street, Gandhi Salai, Gandhi Salai |
+| Roads & Building Permissions | 299 | 108 | 0 | Roads, footpaths & bridges – Fakkir (S) 2Nd Lane, Jam Bazaar, Triplicane |
+| Solid Waste Management | 118 | 63 | 0 | Garbage & solid waste – Lakshmi Nagar Rd |
+| PWD Buildings | 66 | 60 | 2 | Staircase collapse leaves Pattinapakkam TNUHDB residents cutoff from their homes |
+| Public Health (GCC) | 150 | 57 | 0 | With 1,775 dengue cases in Chennai, GCC steps up mosquito control |
+| Street Lighting & Electrical | 66 | 42 | 0 | Street lights & electrical hazards – Varalakshmi Nagar (South) Iii Street, Varalakshmi Nagar (South), Peravallur |
 
 ## Categories against the previous period
 | Category | This period | Previous | Change |
 |---|---|---|---|
-| Garbage & solid waste | 578 | 605 | -27 |
-| Theft, snatching & fraud | 484 | 533 | -49 |
-| Street lights & electrical hazards | 385 | 430 | -45 |
-| Road accident | 349 | 311 | +38 |
-| Violent crime & crimes against women | 323 | 235 | +88 |
-| Flooding & waterlogging | 311 | 326 | -15 |
-| Drainage & sewage | 299 | 324 | -25 |
-| Roads, footpaths & bridges | 268 | 213 | +55 |
+| Garbage & solid waste | 640 | 600 | +40 |
+| Theft, snatching & fraud | 520 | 519 | +1 |
+| Street lights & electrical hazards | 378 | 393 | -15 |
+| Flooding & waterlogging | 370 | 292 | +78 |
+| Protests & public nuisance | 334 | 220 | +114 |
+| Road accident | 321 | 297 | +24 |
+| Drainage & sewage | 297 | 291 | +6 |
+| Roads, footpaths & bridges | 248 | 208 | +40 |
 
-_Feeds needing attention: imd (degraded), cpcb (degraded)._
+_Feeds needing attention: imd (degraded), cpcb (stale), cfm (stale), hospital (stale)._

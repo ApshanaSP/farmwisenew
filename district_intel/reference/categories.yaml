@@ -296,7 +296,8 @@
   keywords_en: [chain snatching, snatched, theft, stolen, burglary, robbed, robbery, cyber fraud, duped, cheated]
   keywords_ta: [திருட்டு, சங்கிலி பறிப்பு, கொள்ளை, மோசடி]
 - code: CRIME_VIOLENT
-  label: Violent crime & crimes against women
+  label: Violent crime
+  hint: murder, assault, attack, stabbing, kidnapping by another person (not suicide; crimes against women have their own category)
   family: CRIME
   lead: POL-GCP
   support: []
@@ -307,8 +308,53 @@
   link_window_h: 6
   link_radius_m: 300
   playbook: [Respond immediately, Register the case, Protect the victim, Arrest the accused, Close]
-  keywords_en: [murder, murdered, hacked to death, stabbed, assault, attacked, sexual assault, harassment, molested]
-  keywords_ta: [கொலை, வெட்டிக் கொலை, தாக்குதல், பாலியல்]
+  keywords_en: [murder, murdered, hacked to death, stabbed, assault, attacked]
+  keywords_ta: [வெட்டிக் கொலை, தாக்குதல்]
+- code: CRIMES_AGAINST_WOMEN
+  label: Crimes against women & children
+  hint: sexual assault, harassment, stalking, dowry or domestic violence against women; abuse of girls and boys
+  family: CRIME
+  lead: POL-GCP
+  support: [GCC-HLT]
+  base_severity: 60
+  rain_sensitive: false
+  sla_h: [2, 6, 24, 48]
+  sla_basis: response
+  link_window_h: 12
+  link_radius_m: 500
+  playbook: [Respond immediately, Register the case (POCSO where a child is involved), Protect and counsel the victim, Arrest the accused, Close]
+  keywords_en: [sexual assault, sexually assaulted, harassment, molested, stalking, dowry]
+  keywords_ta: [பாலியல், வரதட்சணை]
+- code: SUICIDE_SELF_HARM
+  label: Suicide & self-harm
+  hint: suicide, attempted suicide or self-harm; if the article says it was really a murder, use Violent crime
+  family: CRIME
+  lead: POL-GCP
+  support: [HLT-DMS]
+  base_severity: 50
+  rain_sensitive: false
+  sla_h: [2, 12, 24, 48]
+  sla_basis: response
+  link_window_h: 24
+  link_radius_m: 500
+  playbook: [Police register the death and inquire, Inform the family and arrange counselling, Check for abetment or harassment, Note any pattern at the place (campus, bridge, high-rise), Close]
+  keywords_en: [suicide, self-harm]
+  keywords_ta: [தற்கொலை]
+- code: FIRE_EXPLOSION
+  label: Fire & explosion
+  hint: fire, blaze, gas cylinder or compressor blast, short-circuit fire, explosion
+  family: PUBLIC_SAFETY
+  lead: DIST-DM
+  support: [POL-GCP, HLT-DMS]
+  base_severity: 55
+  rain_sensitive: false
+  sla_h: [1, 4, 24, 48]
+  sla_basis: response
+  link_window_h: 12
+  link_radius_m: 400
+  playbook: [Confirm Fire and Rescue Services are on site, Treat the injured and count the dead, Evacuate and cordon the building, Inspect the cause and building safety, Close]
+  keywords_en: [fire broke out, blaze, gutted, explosion, cylinder blast]
+  keywords_ta: [தீ விபத்து, தீப்பிடித்து]
 - code: MISSING_PERSON
   label: Missing person
   family: CRIME
