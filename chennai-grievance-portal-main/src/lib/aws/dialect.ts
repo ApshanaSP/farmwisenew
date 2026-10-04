@@ -439,6 +439,14 @@ export function registerFunctions(db: DatabaseSync): void {
   fn("UTC_TIMESTAMP", () => new Date().toISOString().slice(0, 19).replace("T", " "), false);
   fn("dt_add", dtAdd);
   fn("DATE_FORMAT", dateFormat);
+  // TIMESTAMP(d) / TIMESTAMP(d, 'HH:MM:SS'): d as a datetime, with the time added (the source sweep's 6:00 AM cut-off)
+  fn("TIMESTAMP", (a, t) => {
+    const d = wall(a);
+    if (!d) return null;
+    const m = t == null ? null : /^(-)?(\d+):(\d{2})(?::(\d{2}))?/.exec(String(t));
+    if (m) d.setTime(d.getTime() + (m[1] ? -1 : 1) * ((+m[2] * 60 + +m[3]) * 60 + +(m[4] ?? 0)) * 1000);
+    return fmtWall(d);
+  });
   fn("TIMESTAMPDIFF", tsDiff);
   fn("TIMESTAMPADD", (unit, n, x) => dtAdd(x, n, unit));
   fn("DATEDIFF", (a, b) => { const x = wall(a), y = wall(b); return x && y ? Math.round((Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()) - Date.UTC(y.getUTCFullYear(), y.getUTCMonth(), y.getUTCDate())) / 864e5) : null; });

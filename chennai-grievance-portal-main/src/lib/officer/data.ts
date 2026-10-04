@@ -12,7 +12,7 @@
  * Every panel follows the period (the Collector's windows: Daily = the last 24 hours,
  * Weekly .. Quarterly = the last 7, 30, 90 days of reports) and the zone / taluk filter.
  * "Now" is the pipeline's as-of time, so the windows line up with the data. The data
- * itself is only what the pipeline's daily collection loads; nothing here fetches it.
+ * itself is only what the pipeline's hourly collection loads; nothing here fetches it.
  */
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
@@ -180,12 +180,12 @@ const FEED_LABEL: Record<string, string> = {
 };
 
 /**
- * When the dashboard data was last collected: the pipeline's daily 6:00 AM collection (the same
- * status the Collector console shows), with each feed's newest record. Falls back to the
- * store's export time if the pipeline's state file cannot be read.
+ * When the dashboard data was last collected (the hourly collection; the same status the Collector
+ * console shows), with each feed's newest record. Falls back to the store's export time if the
+ * build has no source health.
  */
-function refreshInfo(exportedAt: string | null, feeds: Row[]) {
-  const cs = collectionStatus();
+async function refreshInfo(exportedAt: string | null, feeds: Row[]) {
+  const cs = await collectionStatus();
   const missing = new Set(cs?.missing ?? []);
   return {
     at: cs?.lastRun ?? exportedAt,
@@ -193,7 +193,7 @@ function refreshInfo(exportedAt: string | null, feeds: Row[]) {
     store: exportedAt ? `store rebuilt ${exportedAt.slice(0, 16)}` : null,
     sources: feeds.map((f) => ({
       source: String(f.source), label: FEED_LABEL[f.source] ?? String(f.source), newest: (f.newest as string | null) ?? null,
-      failed: missing.has(f.source) ? "not collected in today's 6:00 AM run yet" : null
+      failed: missing.has(f.source) ? "behind: not collected in the last few hours" : null
     }))
   };
 }
@@ -252,7 +252,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
 
   const c = counts[0] ?? {};
   const outlets = await outletsFor(news.map((r) => r.id));
-  const updated = refreshInfo(meta.exported_at ?? null, feeds);
+  const updated = await refreshInfo(meta.exported_at ?? null, feeds);
   const series = new Map<string, { code: string; l: string; v: number[] }>();
   for (const r of trend) {
     const k = Math.min(P.buckets - 1, Math.max(0, Number(r.b)));
@@ -271,7 +271,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     taluk: s.taluk,
     dept,
     exportedAt: meta.exported_at ?? null,
-    /** the pipeline's daily collection: when it last ran, and each feed's newest record */
+    /** the hourly collection: when it last ran, and each feed's newest record */
     updated,
     counts: {
       new: Number(c.new ?? 0), action: Number(c.action ?? 0), sent: Number(c.sent ?? 0), verified: Number(c.verified ?? 0),
@@ -332,7 +332,7 @@ export async function officerPulse(dept: DeptProfile) {
     exportMeta(),
     collectorFeedback(dept.code, { period: "quarterly", zone: null, taluk: null }, 1)
   ]);
-  const updated = refreshInfo(meta.exported_at ?? null, []);
+  const updated = await refreshInfo(meta.exported_at ?? null, []);
   return { now, exportedAt: meta.exported_at ?? null, newCount: Number(c?.new ?? 0), lastDecision: fb[0]?.at ?? null, updatedAt: updated.at };
 }
 

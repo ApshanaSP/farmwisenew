@@ -603,16 +603,14 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
   );
 }
 
-/** Did today's 6:00 AM collection happen? The same chip as the Collector console's. */
+/** Are the feeds current? The same chip as the Collector console's. */
 function Collected({ ov }: { ov: OfficerOverview }) {
   const s = ov.board.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
-  const head = !s ? "Collected daily, 6:00 AM"
-    : all ? `Collected today, ${fmtTime(s.lastRun ?? ov.now)}`
-      : s.running ? "Collecting now…"
-        : s.done.length ? `Today: ${s.done.length} of ${s.total} feeds` : "Today's 6:00 AM run pending";
-  const tip = "Every source is collected once a day from 6:00 AM by the district intelligence pipeline." +
-    (s?.missing.length ? ` Not yet collected today: ${s.missing.join(", ")}.` : "");
+  const head = !s ? "Collected hourly"
+    : all ? `Collected ${fmtTime(s.lastRun ?? ov.now)}` : `${s.done.length} of ${s.total} feeds current`;
+  const tip = "Every source is collected hourly by the district intelligence pipeline." +
+    (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "");
   return (
     <span className={`daily${s && !all ? " pend" : ""}`} title={tip}>
       <I n={all ? "checkc" : "clock"} /><span>{head}<small>Data as of {fmtTime(ov.now)}, {fmtDate(ov.now)}</small></span>

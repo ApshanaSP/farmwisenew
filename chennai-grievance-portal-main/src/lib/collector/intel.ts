@@ -746,8 +746,8 @@ export async function overview(period: Period, zone: number | null, dept: string
     cat,
     taluk,
     exportedAt: meta.exported_at ?? null,
-    /** did today's 6:00 AM collection run, and which feeds are still missing */
-    collection: collectionStatus(),
+    /** how current the feeds in this build are, and which are behind */
+    collection: await collectionStatus(),
     kpi,
     zoneTable: zoneTable.map((z) => ({ zone: z.zone, name: z.name, n: Number(z.n), open: Number(z.open),
       complaints: Number(z.complaints), severe: Number(z.severe) })),

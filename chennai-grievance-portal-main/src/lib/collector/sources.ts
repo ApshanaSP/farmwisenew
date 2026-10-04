@@ -36,6 +36,11 @@ export async function audit(actor: string, action: string, table: string, record
 
 // --------------------------------------------------------------- listing --
 
+/** Why a pipeline feed falls behind, shown under its status when it is not healthy. */
+const PIPE_NOTE: Record<string, string> = {
+  cpcb: "Collected only on the PC (GitHub can't reach the CPCB site)"
+};
+
 export async function listSources() {
   const [rows, health, runs] = await Promise.all([
     q(`SELECT source_id AS id, name, url, kind, description, pipeline_key, auth, login_url, username, refresh_minutes, enabled, status,
@@ -53,11 +58,12 @@ export async function listSources() {
     return {
       ...s,
       enabled: Number(s.enabled) === 1,
-      // pipeline feeds take their status from the store; "partial" = today's data arrived but some endpoints are blocked
+      // pipeline feeds take their status from the store; "partial" = today's data arrived but some endpoints are blocked.
+      // Their own last_error only holds a Refresh click's reply (already shown as a toast), so it is never shown here.
       status: pipe ? (pipe.status === "ok" ? "ok" : pipe.status === "degraded" ? "partial" : "stale") : s.status,
       last_error: pipe ? (pipe.status === "degraded"
         ? (pipe.ep_total ? `${pipe.ep_total - pipe.ep_ok} of ${pipe.ep_total} endpoints blocked by the site; the rest delivered today's data` : "Some endpoints are blocked")
-        : pipe.status === "ok" ? null : s.last_error) : s.last_error,
+        : pipe.status === "ok" ? null : PIPE_NOTE[s.pipeline_key] ?? null) : s.last_error,
       error_detail: pipe?.status === "degraded" ? pipe.detail : null,
       newest: pipe?.newest ?? s.last_ok_at,
       rows: pipe ? Number(pipe.row_count) : Number(s.items_total),
@@ -134,7 +140,7 @@ export async function runSource(id: number, actor: string) {
   const run: { ok: boolean; http?: number; seen: number; items_new: number; login: string; attempts: number; error: string | null } =
     { ok: false, seen: 0, items_new: 0, login: "none", attempts: 0, error: null };
   try {
-    if (s.kind === "pipeline") Object.assign(run, await triggerPipeline());
+    if (s.kind === "pipeline") Object.assign(run, await (process.env.DATA_BACKEND === "aws" ? triggerDataload() : triggerPipeline()));
     else if (s.kind === "agmarknet") Object.assign(run, await collectMandi());
     else if (s.kind === "ocr") Object.assign(run, { ok: true, error: null });
     else Object.assign(run, await fetchAndIngest(s));
@@ -421,41 +427,45 @@ export type AddedItems = Awaited<ReturnType<typeof addedItems>>;
 const PIPE_DIR = path.resolve(process.cwd(), "..", "district_intel");
 const LOCK = path.join(PIPE_DIR, "output", ".dashboard-refresh.lock");
 
-const COLLECT_HOUR = 6;
-
 /**
- * Has today's collection happened? Read from the pipeline's own run record
- * (district_intel/output/state/refresh_state.json): which feeds were fetched since today's
- * 6:00 AM, which failed, and when the last collection ran. Null when the pipeline is not
- * installed next to the portal.
+ * How current the feeds are, from the build the console is showing (its source_health table): a feed
+ * collected within its freshness target is done, the rest are behind; lastRun is the newest collection.
+ * The same on every PC, unlike the pipeline's local run record. Null when the store has no health rows.
  */
-export function collectionStatus() {
+export async function collectionStatus() {
   try {
-    const st = JSON.parse(fs.readFileSync(path.join(PIPE_DIR, "output", "state", "refresh_state.json"), "utf8"));
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), COLLECT_HOUR);
-    if (start > now) start.setDate(start.getDate() - 1);
-    const feeds = Object.entries(st).filter(([k, v]) => !k.startsWith("_") && v && typeof v === "object") as [string, Record<string, any>][];
-    const since = start.getTime() / 1000;
-    const done = feeds.filter(([, v]) => Number(v.last_ok ?? 0) >= since).map(([k]) => k);
-    const missing = feeds.filter(([, v]) => Number(v.last_ok ?? 0) < since).map(([k]) => k);
-    const lastOk = Math.max(0, ...feeds.map(([, v]) => Number(v.last_ok ?? 0)));
-    // IST wall-clock "YYYY-MM-DD HH:MM:SS", the format every time on the console uses
-    const ist = (sec: number) => new Date(sec * 1000).toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" });
-    const last = Number(st._last_collection?.at ?? lastOk);
-    return {
-      dayStart: ist(since),
-      lastRun: last ? ist(last) : null,
-      done, missing, total: feeds.length,
-      running: fs.existsSync(path.join(PIPE_DIR, "output", ".refresh.lock"))
-    };
+    const rows = await q(`SELECT source, status, DATE_FORMAT(last_success_at, '%Y-%m-%d %H:%i:%s') AS ok_at FROM source_health`);
+    if (!rows.length) return null;
+    const done = rows.filter((r) => r.status === "ok" || r.status === "degraded").map((r) => String(r.source));
+    const missing = rows.map((r) => String(r.source)).filter((s) => !done.includes(s));
+    const lastRun = rows.map((r) => r.ok_at as string | null).filter(Boolean).sort().pop() ?? null;
+    return { lastRun, done, missing, total: rows.length };
   } catch {
     return null;
   }
 }
-export type CollectionStatus = ReturnType<typeof collectionStatus>;
+export type CollectionStatus = Awaited<ReturnType<typeof collectionStatus>>;
 
-/** Start `python run_pipeline.py refresh` (the same job the daily 6:00 AM schedule runs), once at a time. */
+const DATALOAD = "ApshanaSP/farmwisenew-dataload";
+
+/**
+ * On AWS data the store is built by the hourly GitHub run (github.com/ApshanaSP/farmwisenew-dataload), so Refresh
+ * starts that run now. GITHUB_DISPATCH_TOKEN is a fine-grained token limited to that repo with Actions: write.
+ */
+async function triggerDataload() {
+  const token = process.env.GITHUB_DISPATCH_TOKEN?.trim();
+  if (!token) return { ok: false, error: "Collected every hour on GitHub. To start a run from here, add GITHUB_DISPATCH_TOKEN to .env.", seen: 0, items_new: 0 };
+  const r = await fetch(`https://api.github.com/repos/${DATALOAD}/actions/workflows/dataload.yml/dispatches`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": UA },
+    body: JSON.stringify({ ref: "main", inputs: { force: "true" } }),
+    signal: AbortSignal.timeout(20000)
+  });
+  if (r.status !== 204) return { ok: false, error: `GitHub did not start the run (HTTP ${r.status}).`, seen: 0, items_new: 0 };
+  return { ok: true, error: null, seen: 0, items_new: 0 };
+}
+
+/** Start `python run_pipeline.py refresh` on this PC (MySQL setup: the local build is what the console reads), once at a time. */
 async function triggerPipeline() {
   if (!fs.existsSync(path.join(PIPE_DIR, "run_pipeline.py"))) return { ok: false, error: "The district_intel pipeline is not installed next to the portal.", seen: 0, items_new: 0 };
   if (fs.existsSync(LOCK) && Date.now() - fs.statSync(LOCK).mtimeMs < 15 * 60_000) return { ok: true, error: "A refresh is already running.", seen: 0, items_new: 0 };

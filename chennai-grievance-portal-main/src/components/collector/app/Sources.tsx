@@ -43,7 +43,7 @@ function SourceList({ c }: { c: Console }) {
     setBusy(s.id);
     try {
       const r = await call(`/api/collector/sources/${s.id}`, "POST");
-      c.toast(s.kind === "pipeline" ? "Pipeline refresh started. The dashboard updates when it finishes (a few minutes)."
+      c.toast(s.kind === "pipeline" && r.ok ? "Data load started. The dashboard updates when it finishes (about 25 minutes)."
         : r.ok ? `${s.name}: ${r.items_new} new of ${r.seen} read${r.login !== "none" ? ` (login ${r.login})` : ""}.` : `${s.name}: ${r.error}`, r.ok ? "ok" : "alert");
       await load();
     } catch (e: any) { c.toast(e.message, "alert"); } finally { setBusy(null); }
@@ -67,7 +67,7 @@ function SourceList({ c }: { c: Console }) {
   const ok = rows.filter((r) => r.status === "ok").length;
   return (
     <>
-      <p className="sub">{ok} of {rows.length} sources healthy. Added sources refresh on their own interval (daily by default); all feeds are collected once a day at 6:00 AM.
+      <p className="sub">{ok} of {rows.length} sources healthy. Added sources refresh on their own interval (daily by default); the pipeline feeds are collected every hour.
         Every run is logged, and failures show the reason.</p>
       <div className="tbl-wrap">
         <table>
