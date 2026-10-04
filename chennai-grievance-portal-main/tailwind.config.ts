@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const scale = (f: string) => Object.fromEntries(SHADES.map((s) => [s, v(`${f}-${s}`)]));
+const FAMILIES = ["red", "rose", "orange", "amber", "yellow", "emerald", "green", "teal", "sky", "blue", "indigo", "violet", "gray", "slate"];
+
 const config: Config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -7,60 +12,30 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // every colour is a theme variable (src/app/theme.css): District IQ dark by default, light under html[data-theme="light"]
       colors: {
-        navy: {
-          DEFAULT: "#0B3D91",
-          50: "#F0F4FC",
-          100: "#DCE6F8",
-          200: "#BACEF0",
-          300: "#8DAEE4",
-          400: "#5B86D4",
-          500: "#2C5FBE",
-          600: "#0B3D91",
-          700: "#0A3175",
-          800: "#082555",
-          900: "#061A3B",
-          950: "#040F24"
-        },
-        gold: {
-          DEFAULT: "#C8891B",
-          50: "#FDF8EC",
-          100: "#FAEDCF",
-          200: "#F4D89B",
-          300: "#EBBE60",
-          400: "#DEA334",
-          500: "#C8891B",
-          600: "#A66C13",
-          700: "#7D4F10",
-          800: "#5A3A0F"
-        },
-        ink: {
-          DEFAULT: "#0C1B33",
-          muted: "#4A5A75",
-          subtle: "#7A879E",
-          faint: "#A3AEC2"
-        },
-        canvas: {
-          DEFAULT: "#F7F8FC",
-          raised: "#FFFFFF",
-          sunken: "#EEF1F8",
-          border: "#E4E9F2"
-        }
+        ...Object.fromEntries(FAMILIES.map((f) => [f, scale(f)])),
+        navy: { DEFAULT: v("navy-600"), ...scale("navy") },
+        gold: { DEFAULT: v("gold-500"), ...scale("gold") },
+        ink: { DEFAULT: v("ink"), muted: v("ink-muted"), subtle: v("ink-subtle"), faint: v("ink-faint") },
+        canvas: { DEFAULT: v("canvas"), raised: v("canvas-raised"), sunken: v("canvas-sunken"), border: v("canvas-border") }
       },
+      backgroundImage: { brand: "var(--grad)" },
       fontFamily: {
         sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"]
+        display: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"]
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1rem" }]
       },
       boxShadow: {
-        xs: "0 1px 2px rgba(12, 27, 51, 0.05)",
-        soft: "0 1px 2px rgba(12, 27, 51, 0.04), 0 4px 12px -2px rgba(12, 27, 51, 0.06)",
-        card: "0 1px 3px rgba(12, 27, 51, 0.05), 0 12px 28px -12px rgba(12, 27, 51, 0.16)",
-        lift: "0 12px 24px -10px rgba(12, 27, 51, 0.18), 0 28px 56px -20px rgba(12, 27, 51, 0.22)",
-        glow: "0 0 0 4px rgba(11, 61, 145, 0.10)",
-        "glow-gold": "0 0 0 4px rgba(200, 137, 27, 0.16)",
+        xs: "var(--sh-xs)",
+        soft: "var(--sh-soft)",
+        card: "var(--sh-card)",
+        lift: "var(--sh-lift)",
+        glow: "var(--sh-glow)",
+        "glow-gold": "var(--sh-glow-gold)",
+        brand: "var(--brand-glow)",
         inset: "inset 0 1px 0 rgba(255, 255, 255, 0.08)"
       },
       borderRadius: {

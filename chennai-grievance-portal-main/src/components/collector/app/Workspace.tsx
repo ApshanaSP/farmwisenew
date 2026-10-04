@@ -81,7 +81,7 @@ export function CustomizeBody({ c }: { c: Console }) {
       </section>
       <section>
         <h4>Overview panels</h4>
-        {([["map", "Satellite map"], ["snapshot", "District snapshot"], ["brief", "Today's briefing (news)"], ["severity", "Severity-based incidents"], ["tasks", "My tasks"]] as const).map(([k, t]) => (
+        {([["map", "Satellite map"], ["snapshot", "District snapshot"], ["brief", "Latest news"], ["severity", "Severity-based incidents"], ["tasks", "My tasks"]] as const).map(([k, t]) => (
           <label key={k} className="chk"><input type="checkbox" checked={l.panels[k]} disabled={l.panels[k] && panelCount === 1} onChange={(e) => setPanel(k, e.target.checked)} />{t}</label>
         ))}
         <h4 style={{ marginTop: 14 }}>Headline cards</h4>

@@ -5,7 +5,7 @@ import { list, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@
 export const dynamic = "force-dynamic";
 
 const SEVS = ["Severe", "High", "Medium", "Low"];
-const STATUSES = ["open", "awaiting", "unverified", "verified", "critical", "Open", "Under review", "Assigned", "In progress",
+const STATUSES = ["open", "awaiting", "unverified", "verified", "critical", "overdue", "Open", "Under review", "Assigned", "In progress",
   "Awaiting verification", "Resolved", "Rejected", "Lapsed"];
 
 export async function GET(req: NextRequest) {

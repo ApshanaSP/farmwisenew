@@ -55,6 +55,7 @@ export const CHENNAI_CENTER = { lat: 13.0827, lng: 80.2707 };
  * because the citizen landing page no longer repeats them as body actions.
  */
 export const CITIZEN_NAV = [
+  { href: "/citizen", label: "Overview" },
   { href: "/citizen/file-complaint", label: "File a Complaint" },
   { href: "/citizen/track-complaints", label: "Track Status" }
 ];

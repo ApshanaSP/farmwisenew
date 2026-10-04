@@ -16,6 +16,9 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-display"
 });
 
+const THEME_SCRIPT =
+  "try{if(localStorage.getItem('diq-theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}";
+
 export const metadata: Metadata = {
   title: "District IQ | Chennai Intelligent District Governance Platform",
   description: "One platform for citizens, department officers and the District Collector of Chennai."
@@ -23,7 +26,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jakarta.variable}`} data-theme="dark" suppressHydrationWarning>
+      <head>
+        {/* apply the saved theme before the first paint (shared with the Collector and Officer consoles) */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );

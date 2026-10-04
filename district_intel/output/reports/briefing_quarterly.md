@@ -1,18 +1,18 @@
 # Collector's Quarterly Briefing, Chennai District
-_06 Jul 2026 10:57 to 04 Oct 2026 10:57 · 4 of 8 data feeds healthy_
+_06 Jul 2026 11:31 to 04 Oct 2026 11:31 · 5 of 8 data feeds healthy_
 
 ## At a glance
-- 14267 incidents this period (12944 in the previous one); 453 severe; 2516 still open; 13357 resolved.
-- 8523 citizen complaints filed; 983 of them still open.
-- 959 open incidents from this period are past their deadline. Median time to first action on civic complaints: 27.9 hours.
-- 124 incidents were reported by more than one source; 584 appear only in the news.
+- 14798 incidents this period (12794 in the previous one); 446 severe; 2371 still open; 13615 resolved.
+- 8957 citizen complaints filed; 1034 of them still open.
+- 920 open incidents from this period are past their deadline. Median time to first action on civic complaints: 27.9 hours.
+- 168 incidents were reported by more than one source; 821 appear only in the news.
 
 ## Needs your attention
 1. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 144; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; not yet verified by an officer; linked to a rain event; 5 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect the structure (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20260930-030D94`
-2. **Roads, footpaths & bridges – Pulianthope (Basin Bridge)** (Severe, Royapuram, ward 58; open). Severe and not verified, Well past its deadline. Why it matters: Severe roads, footpaths & bridges (100); resolution over twice the 24 h target; not yet verified by an officer; linked to a rain event. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect and barricade (Assistant Engineer, Ward 58 (Royapuram zone)). `INC-20261002-37C0B4`
-3. **Flooding & waterlogging – Anna Arch** (Severe, Anna Nagar, ward 100; in progress). Well past its deadline, Spreading: several new reports in 24 h. Why it matters: Severe flooding & waterlogging (99); resolution over twice the 6 h target; 3 new reports in 24 h; linked to a rain event. Evidence: 3 reports from police. Next: Greater Chennai Police, deploy pumps and clear standing water (Assistant Engineer, Ward 100 (Anna Nagar zone)). `INC-20261003-7675E9`
+2. **Roads, footpaths & bridges – Pulianthope (Basin Bridge)** (Severe, Royapuram, ward 58; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe roads, footpaths & bridges (100); resolution over twice the 24 h target; not yet verified by an officer; linked to a rain event. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect and barricade (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20261002-37C0B4`
+3. **Flooding & waterlogging – Anna Arch** (Severe, Anna Nagar, ward 100; in progress). Well past its deadline, Spreading: several new reports in 24 h. Why it matters: Severe flooding & waterlogging (99); resolution over twice the 6 h target; 3 new reports in 24 h; linked to a rain event. Evidence: 3 reports from police. Next: Greater Chennai Police, deploy pumps and clear standing water (SHO, Aminjikarai Police Station). `INC-20261003-7675E9`
 4. **Lakes, bunds & sluices – Porur (Porur Lake Bund)** (Severe, Valasaravakkam, ward 147; in progress). Well past its deadline. Why it matters: Severe lakes, bunds & sluices (100); resolution over twice the 6 h target; linked to a rain event; 4 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, plug breach in porur lake bund (Executive Engineer (G. Selvi)). `INC-20260930-C9D941`
-5. **Lakes, bunds & sluices – Chetpet (Chetpet Lake)** (Severe, Royapuram, ward 58; in progress). Severe and not verified, Well past its deadline. Why it matters: Severe lakes, bunds & sluices (86); resolution over twice the 6 h target; not yet verified by an officer; affects bus stop, elderly; linked to a rain event; 9 similar incidents here in 90 days. Evidence: 1 report from pwd. Next: PWD Water Resources, inspect the structure (Assistant Executive Engineer, Water Bodies Protection (Encroachment) Cell (S. Palanisamy)). `INC-20260919-C34947`
+5. **Flooding & waterlogging – Koyambedu (Cooum River - Koyambedu stretch)** (Severe, Valasaravakkam, ward 144; in progress). Well past its deadline. Why it matters: Severe flooding & waterlogging (85); reported by 2 sources; 2 citizen complaints; resolution over twice the 6 h target; affects children, elderly, worship; linked to a rain event; 4 similar incidents here in 90 days. Evidence: 7 reports from grievance, pwd. Next: PWD Water Resources, verify the completed work and close. `INC-20260919-9E98A9`
 
 ## Early warnings
 - IMD warning level 1 for 06 Oct: Thunderstorms & Lightning, Squall etc
@@ -25,34 +25,34 @@ _06 Jul 2026 10:57 to 04 Oct 2026 10:57 · 4 of 8 data feeds healthy_
 - Mogappair Eri at 98% of capacity: Falling 0.01 points a day
 
 ## In the news, not in any department's records
-- Staircase collapse leaves Pattinapakkam TNUHDB residents cutoff from their homes (1 outlet); ask PWD Buildings to verify. `INC-20260929-A10EA6`
-- Chennai: Woman set afire by estranged lover dies after a week (1 outlet); ask District Disaster Management to verify. `INC-20260928-743634`
-- Over 1,500 homes in Srinivasapuram TNUHDB falling apart with collapsed ceilings, cracked walls (1 outlet); ask PWD Buildings to verify. `INC-20261003-37BFB9`
-- With 1,775 dengue cases in Chennai, GCC steps up mosquito control (1 outlet); ask Public Health (GCC) to verify. `INC-20260929-0167C7`
-- Chennai: Balconies gone, it is double the danger now (1 outlet); ask PWD Buildings to verify. `INC-20261001-B49886`
+- சென்னை | விடுதியில் சகோதரர்கள் சடலம் மீட்பு (1 outlet); ask District Disaster Management to verify. `INC-20261003-F20CE5`
+- கொடுங்கையூரில் ரூ.34 கோடி நிலம் மீட்பு 18 கடைகளை இடித்து அகற்றியது மாநகராட்சி (1 outlet); ask District Disaster Management to verify. `INC-20260928-D8D861`
+- Man suffers minor injury after concrete step collapses in Pattinapakkam (1 outlet); ask PWD Buildings to verify. `INC-20260928-E13C81`
+- Chennai Dengue Prevention Drive: 1,534 Schools Cleared of Waste and Mosquito Breeding Spots (1 outlet); ask Public Health (GCC) to verify. `INC-20260928-22C36A`
+- டெங்கு காய்ச்சல் பரவல் எதிரொலி - சென்னை அண்ணா பல்கலை மாணவர்களுக்கு 4 நாட்கள் விடுமுறை! (1 outlet); ask Public Health (GCC) to verify. `INC-20260928-448D23`
 
 ## Department follow-up
 | Department | Open | Past deadline | Severe | Top item |
 |---|---|---|---|---|
-| Greater Chennai Police | 1397 | 280 | 104 | Flooding & waterlogging – Anna Arch |
-| PWD Water Resources | 240 | 191 | 37 | Lakes, bunds & sluices – Porur (Porur Lake Bund) |
-| Storm Water Drain | 233 | 166 | 0 | Flooding & waterlogging – Sannadhi Street, Gandhi Salai, Gandhi Salai |
-| Roads & Building Permissions | 299 | 108 | 0 | Roads, footpaths & bridges – Fakkir (S) 2Nd Lane, Jam Bazaar, Triplicane |
-| Solid Waste Management | 118 | 63 | 0 | Garbage & solid waste – Lakshmi Nagar Rd |
-| PWD Buildings | 66 | 60 | 2 | Staircase collapse leaves Pattinapakkam TNUHDB residents cutoff from their homes |
-| Public Health (GCC) | 150 | 57 | 0 | With 1,775 dengue cases in Chennai, GCC steps up mosquito control |
-| Street Lighting & Electrical | 66 | 42 | 0 | Street lights & electrical hazards – Varalakshmi Nagar (South) Iii Street, Varalakshmi Nagar (South), Peravallur |
+| PWD Water Resources | 234 | 187 | 38 | Lakes, bunds & sluices – Porur (Porur Lake Bund) |
+| Greater Chennai Police | 1235 | 178 | 104 | Flooding & waterlogging – Anna Arch |
+| Storm Water Drain | 233 | 167 | 0 | Flooding & waterlogging – Elango St 10Th Block, 7H Bus Stand |
+| Roads & Building Permissions | 275 | 131 | 0 | Roads, footpaths & bridges – Ellupaithoppu 4Th Street, Ellupaithoppu, Kaladipet |
+| Public Health (GCC) | 195 | 80 | 0 | Vector- & water-borne disease – Vikneshvara Nagar, Near Pillayar Koil, Puthagaram |
+| Street Lighting & Electrical | 91 | 65 | 0 | Street lights & electrical hazards – Pillaiyar Koil Main Salai |
+| Solid Waste Management | 95 | 56 | 0 | Garbage & solid waste – P. E. Koil West Mada Street, Annai Indira Nagar, Ayanavaram |
+| PWD Buildings | 59 | 53 | 1 | Unsafe buildings & walls – Korukkupet |
 
 ## Categories against the previous period
 | Category | This period | Previous | Change |
 |---|---|---|---|
-| Garbage & solid waste | 1839 | 1798 | +41 |
-| Theft, snatching & fraud | 1497 | 1531 | -34 |
-| Street lights & electrical hazards | 1138 | 1031 | +107 |
-| Road accident | 909 | 879 | +30 |
-| Flooding & waterlogging | 886 | 541 | +345 |
-| Drainage & sewage | 813 | 631 | +182 |
-| Protests & public nuisance | 775 | 617 | +158 |
-| Roads, footpaths & bridges | 687 | 689 | -2 |
+| Garbage & solid waste | 1837 | 1770 | +67 |
+| Theft, snatching & fraud | 1489 | 1531 | -42 |
+| Street lights & electrical hazards | 1261 | 1010 | +251 |
+| Road accident | 1010 | 880 | +130 |
+| Flooding & waterlogging | 901 | 548 | +353 |
+| Drainage & sewage | 875 | 596 | +279 |
+| Violent crime & crimes against women | 769 | 589 | +180 |
+| Roads, footpaths & bridges | 760 | 712 | +48 |
 
-_Feeds needing attention: imd (degraded), cpcb (stale), cfm (stale), hospital (stale)._
+_Feeds needing attention: imd (degraded), cpcb (degraded), hospital (stale)._

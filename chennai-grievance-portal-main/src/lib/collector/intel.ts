@@ -582,7 +582,7 @@ async function kpiBlock(s: Scope, now: string) {
   const cur = scopeWhere(s, now);
   const prev = scopeWhere({ ...s, offset: 1 }, now);
   const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
-    SUM(i.is_open) AS ongoing, SUM(i.is_open = 0 AND i.status_std = 'Resolved') AS resolved`;
+    SUM(i.is_open = 1 AND NOT ${ROUTED}) AS ongoing, SUM(i.is_open = 0 AND i.status_std = 'Resolved') AS resolved`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
   const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
   const [c, pv, series] = await Promise.all([
@@ -787,7 +787,9 @@ export async function overview(period: Period, zone: number | null, dept: string
     }),
     stories,
     added,
-    allNews,
+    // a quarter holds over a thousand stories (1 MB): the newest 250 are sent, with the full count
+    allNews: allNews ? allNews.slice(0, 250) : null,
+    allNewsTotal: allNews ? allNews.length : 0,
     bottom: {
       /** by department (no department filter) or by category (a department is selected) */
       byDept: byDept.map((r) => ({ code: (r.code as string | undefined) ?? null, l: String(r.l ?? r.code ?? "Other"), v: Number(r.v) })),
@@ -827,7 +829,7 @@ async function snapCommon(s: Scope, now: string) {
   const w = scopeWhere(s, now);
   const [r] = await q(
     `SELECT COALESCE(SUM(i.is_open = 1 AND i.severity_level IN ('Severe', 'High')), 0) AS serious,
-            COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue,
+            COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}), 0) AS overdue,
             COALESCE(SUM(i.is_open = 1 AND i.media_only = 1), 0) AS news_only
      FROM incidents i WHERE ${w.sql}`,
     w.params
@@ -842,7 +844,7 @@ async function deptSnapshot(code: string, s: Scope, now: string) {
     q(`SELECT code, name, org, head, route FROM ref_departments WHERE code = ?`, [code]),
     q(
       `SELECT SUM(i.is_open) AS open, SUM(i.is_open = 1 AND i.verified = 1) AS verified,
-              SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1 AND i.is_open = 1) AS overdue
+              SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1 AND i.is_open = 1 AND NOT ${ROUTED}) AS overdue
        FROM incidents i WHERE ${w.sql}`,
       w.params
     ),
@@ -1096,7 +1098,17 @@ export async function list(f: ListFilter) {
   const now = await asOf();
   const where: string[] = [];
   const params: unknown[] = [];
-  if (f.scope === "period") {
+  const st = f.status;
+  if (st === "awaiting" && f.scope === "period") {
+    // My Tasks counts closed work by its last update in the period (the officer's report can come long after the
+    // complaint), and a report sent from the officer console whatever its date: the list follows the same rule
+    const tw = periodWindow(f.period, now, "i.last_update_at");
+    if (f.zone) (where.push("i.zone_no = ?"), params.push(f.zone));
+    if (f.dept) (where.push("i.lead_dept = ?"), params.push(f.dept));
+    where.push(`((${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
+      AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${await sentByOfficer()})`);
+    params.push(...tw.params);
+  } else if (f.scope === "period") {
     const w = scopeWhere({ period: f.period, zone: f.zone, dept: f.dept }, now);
     where.push(w.sql);
     params.push(...w.params);
@@ -1110,9 +1122,9 @@ export async function list(f: ListFilter) {
   if (f.sev) (where.push("i.severity_level = ?"), params.push(f.sev));
   if (f.cat) (where.push("i.category_code = ?"), params.push(f.cat));
   if (f.taluk) (where.push("i.taluk_code = ?"), params.push(f.taluk));
-  const st = f.status;
   // "open" matches the severity tile: news complaints handed to a department are not listed as incidents.
-  if (st === "open") where.push(`i.is_open = 1 AND NOT ${ROUTED}`);
+  if (st === "awaiting" && f.scope === "period") { /* the rule is set above */ }
+  else if (st === "open") where.push(`i.is_open = 1 AND NOT ${ROUTED}`);
   else if (st === "unverified") where.push(`i.is_open = 1 AND i.verified = 0 AND NOT ${DECIDED("'verify','reject','resolve'")}`);
   else if (st === "verified") where.push("i.is_open = 1 AND i.verified = 1");
   else if (st === "overdue") where.push(`i.is_open = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}`);

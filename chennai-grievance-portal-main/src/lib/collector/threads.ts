@@ -15,8 +15,9 @@
  *      Two different named localities, or none of the thread's own words (the name or place in
  *      most of its reports), keep events apart.
  *   3. A thread is shown when it has two or more different headlines from different stories
- *      or several hours apart, from two outlets or in three or more reports. Each report gets a stage (arrest, death, court, action...) from
- *      its headline, so the thread reads as what happened, in order.
+ *      or several hours apart, from two outlets or in three or more reports, and it actually developed: a later report
+ *      is a new kind of step, or the story ran for more than a day. Each report gets a stage (arrest, death, court,
+ *      action...) from its headline, so the thread reads as what happened, in order.
  *
  * Rules only, no language model; every step links to its article or incident.
  */
@@ -107,7 +108,7 @@ declare global {
   // eslint-disable-next-line no-var
   var __threadWards: Row[] | undefined;
   // eslint-disable-next-line no-var
-  var __threadCache: { key: string; at: number; threads: Thread[] } | undefined;
+  var __threadCache: Record<string, { at: number; threads: Thread[] }> | undefined;
 }
 async function wards() {
   global.__threadWards ??= await q(`SELECT ward_no, zone_no, taluk_code, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`);
@@ -136,7 +137,7 @@ export interface Thread {
 }
 
 /** Bump when the threading rules change, so a cached result is not reused. */
-const RULES = 9;
+const RULES = 11;
 
 const SCHEDULE = /power (cut|shutdown)|shutdown areas|மின்தடை|மின் தடை|எந்தெந்த வழக்க/i;
 
@@ -200,19 +201,34 @@ function cluster(docs: Doc[]) {
     d.norm = Math.hypot(...d.w.values()) || 1;
   }
   const rare = (k: string) => (df.get(k) ?? 0) <= 8;
-  interface T { m: Doc[]; c: Map<string, number>; count: Map<string, number>; stories: Set<string>; incs: Set<string>; locs: Set<string>; first: number; last: number }
-  const open: T[] = [];
+  interface T { ix: number; m: Doc[]; c: Map<string, number>; count: Map<string, number>; stories: Set<string>; incs: Set<string>; locs: Set<string>; first: number; last: number }
+  const all: T[] = [];
+  // Only threads still in reach are compared (last report within 4 days, at most 14 days long: reports come in time
+  // order, so a thread out of reach never comes back), and of those only the ones sharing a headline word, the story
+  // or the incident (a thread sharing none of them can never match). Same result as comparing with every thread, in
+  // a fraction of the time: a month of news took seconds.
+  let live: T[] = [];
+  const byWord = new Map<string, Set<T>>();
   for (const d of docs) {
     let best: T | null = null, bestScore = 0;
-    for (const t of open) {
-      if (d.ms - t.last > 4 * 864e5 || d.ms - t.first > 14 * 864e5) continue;
+    if (live.some((t) => d.ms - t.last > 4 * 864e5 || d.ms - t.first > 14 * 864e5)) {
+      const gone = live.filter((t) => d.ms - t.last > 4 * 864e5 || d.ms - t.first > 14 * 864e5);
+      live = live.filter((t) => !gone.includes(t));
+      for (const t of gone) for (const k of t.c.keys()) byWord.get(k)?.delete(t);
+    }
+    const near = new Set<T>();
+    for (const k of d.w.keys()) for (const t of byWord.get(k) ?? []) near.add(t);
+    for (const t of live) if ((d.story && t.stories.has(d.story)) || (d.inc && t.incs.has(d.inc))) near.add(t);
+    // in the order the threads were started, as before
+    for (const t of [...near].sort((a, b) => a.ix - b.ix)) {
       if ((d.story && t.stories.has(d.story)) || (d.inc && t.incs.has(d.inc))) { best = t; bestScore = 9; break; }
       // a different named locality is a different event
       if (d.local && d.place && t.locs.size && !t.locs.has(d.place.toLowerCase())) continue;
-      let dot = 0, cn = 0;
+      let dot = 0;
       const shared: string[] = [];
-      for (const v of t.c.values()) cn += v * v;
       for (const [k, v] of d.w) if (t.c.has(k)) { dot += v * t.c.get(k)!; shared.push(k); }
+      let cn = 0; // summed in the same order as before, so borderline scores come out exactly the same
+      for (const v of t.c.values()) cn += v * v;
       const cos = dot / (d.norm * Math.sqrt(cn) || 1);
       let pair = 0;
       for (const m of t.m) {
@@ -230,17 +246,23 @@ function cluster(docs: Doc[]) {
       if (ok && sc > bestScore) { best = t; bestScore = sc; }
     }
     if (!best) {
-      best = { m: [], c: new Map(), count: new Map(), stories: new Set(), incs: new Set(), locs: new Set(), first: d.ms, last: d.ms };
-      open.push(best);
+      best = { ix: all.length, m: [], c: new Map(), count: new Map(), stories: new Set(), incs: new Set(), locs: new Set(), first: d.ms, last: d.ms };
+      all.push(best);
+      live.push(best);
     }
     best.m.push(d);
     best.last = Math.max(best.last, d.ms);
-    for (const [k, v] of d.w) { best.c.set(k, (best.c.get(k) ?? 0) + v); best.count.set(k, (best.count.get(k) ?? 0) + 1); }
+    for (const [k, v] of d.w) {
+      const was = best.c.get(k) ?? 0;
+      best.c.set(k, was + v);
+      best.count.set(k, (best.count.get(k) ?? 0) + 1);
+      (byWord.get(k) ?? byWord.set(k, new Set()).get(k)!).add(best);
+    }
     if (d.story) best.stories.add(d.story);
     if (d.inc) best.incs.add(d.inc);
     if (d.local && d.place) best.locs.add(d.place.toLowerCase());
   }
-  return open.map((t) => t.m);
+  return all.map((t) => t.m);
 }
 
 const mode = <T,>(xs: T[]) => {
@@ -276,6 +298,13 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
     byTitle.set(k, st);
     steps.push(st);
   }
+  // Developing means something happened after the first report: a later report is a new kind of step (a protest after
+  // a collapse, a court case after a launch, an arrest after a murder), or the story kept being reported for more than
+  // a day. The same event written up by several outlets within hours is coverage, not development, and is not shown.
+  const own = steps[0].stage;
+  const moved = steps.slice(1).some((s) => s.stage !== "Update" && s.stage !== own);
+  const dayN = new Set(steps.map((s) => s.t.slice(0, 10))).size;
+  if (!moved && !(hours >= 24 && dayN >= 2)) return null;
   steps[0].stage = "First report";
   const days: Thread["days"] = [];
   for (const s of steps) {
@@ -285,7 +314,8 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
     else days.push({ day, steps: [s] });
   }
   const stages: Thread["stages"] = [];
-  for (const s of steps) if (s.stage !== "Update" && !stages.some((x) => x.stage === s.stage)) stages.push({ stage: s.stage, t: s.t });
+  // what the first report already was (an arrest reported as an arrest) is not a later stage
+  for (const s of steps) if (s.stage !== "Update" && s.stage !== own && !stages.some((x) => x.stage === s.stage)) stages.push({ stage: s.stage, t: s.t });
   const cat = mode(m.map((d) => d.cat).filter(Boolean) as string[]);
   const lastInc = [...m].reverse().find((d) => d.sev);
   return {
@@ -304,18 +334,28 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
   };
 }
 
+/** The pipeline build the stories were threaded from: they only change when a new build is published. */
+async function buildStamp(): Promise<string> {
+  const [r] = await q(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).catch(() => [] as Row[]);
+  return String(r?.v ?? "");
+}
+
 /** Developing stories in the scope, most recently updated first. */
 export async function threads(s: ThreadScope, now: string) {
   const days = Math.min(30, Math.max(14, Math.round(s.hours / 24)));
-  const key = `${RULES}|${now}|${days}`;
-  let all = global.__threadCache?.key === key && Date.now() - global.__threadCache.at < 5 * 60_000 ? global.__threadCache.threads : null;
+  // Keyed on the build, not on "now" (which moves every 30 s): threading a month of news takes seconds, so it runs
+  // once per build and period length, and at most every 10 minutes for items from added sources.
+  const key = `${RULES}|${await buildStamp()}|${days}`;
+  let all = global.__threadCache?.[key] && Date.now() - global.__threadCache[key].at < 10 * 60_000 ? global.__threadCache[key].threads : null;
   if (!all) {
     const catLabel = new Map(categories().map((c) => [c.code, c.label]));
     all = cluster(await load(now, days)).map((m) => build(m, catLabel)).filter((t): t is Thread => !!t);
     // latest day first; within a day, the stories that have developed furthest
     all.sort((a, b) => b.last.slice(0, 10).localeCompare(a.last.slice(0, 10)) || b.stages.length - a.stages.length || b.days.length - a.days.length ||
       b.reports - a.reports || b.last.localeCompare(a.last));
-    global.__threadCache = { key, at: Date.now(), threads: all };
+    // one entry per period length (14 or 30 days); entries of older builds are dropped
+    const keep = Object.fromEntries(Object.entries(global.__threadCache ?? {}).filter(([k]) => k.split("|")[1] === key.split("|")[1]));
+    global.__threadCache = { ...keep, [key]: { at: Date.now(), threads: all } };
   }
   const shown = all.filter((t) => (!s.since || t.last >= s.since) &&
     (!s.zone || t.zones.includes(s.zone)) && (!s.dept || t.depts.includes(s.dept)) && (!s.cat || t.cat === s.cat) && (!s.taluk || t.taluks.includes(s.taluk)));

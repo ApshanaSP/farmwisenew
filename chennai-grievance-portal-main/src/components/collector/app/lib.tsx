@@ -1,8 +1,40 @@
 /* Shared helpers for the Collector console: time formatting, chips, tones and charts. */
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { I, type IconName } from "./icons";
 
 export type Row = Record<string, any>;
+
+/**
+ * A list that shows only the rows that fit its box whole: no inner scrollbar and no half-cut row. Rows past the
+ * bottom get data-clip (hidden by CSS); the hook returns how many were hidden, for a "See all" link. Outside the
+ * fitted console (phones), every row shows and the page scrolls. `key` re-measures when the rows change.
+ */
+export function useFit<T extends HTMLElement>(key: unknown) {
+  const ref = useRef<T>(null);
+  const [hidden, setHidden] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const run = () => {
+      const kids = Array.from(el.children) as HTMLElement[];
+      for (const k of kids) delete k.dataset.clip;
+      if (!el.closest(".dic.fit")) return setHidden(0);
+      const room = el.clientHeight + 1;
+      let n = 0;
+      while (n < kids.length && kids[n].offsetTop + kids[n].offsetHeight <= room) n++;
+      n = Math.max(1, n);
+      kids.forEach((k, i) => { if (i >= n) k.dataset.clip = ""; });
+      setHidden(Math.max(0, kids.length - n));
+    };
+    run();
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run); });
+    ro.observe(el);
+    document.fonts?.ready.then(run).catch(() => {});
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
+  }, [key]);
+  return [ref, hidden] as const;
+}
 
 // ---------------------------------------------------------------- time --
 
@@ -19,6 +51,8 @@ export const fmtDate = (s: string | number) =>
 export const fmtDay = (s: string | number) =>
   new Date(typeof s === "number" ? s : ms(s)).toLocaleDateString("en-GB", { ...IST, weekday: "long", day: "numeric", month: "long" });
 export const fmtShort = (s: string | number) => `${fmtDate(s)}, ${fmtTime(s)}`;
+/** "today, 10:17 PM" when `s` falls on the same day as `now`, else "3 Oct, 10:17 PM" (the data chip's collection time). */
+export const fmtWhen = (s: string, now: string) => `${fmtDate(s) === fmtDate(now) ? "today" : fmtDate(s)}, ${fmtTime(s)}`;
 
 /** Relative to the data's "now" (the pipeline as-of time), so it matches the windows. */
 export function rel(s: string, now: string): string {
@@ -38,9 +72,12 @@ export const plural = (n: number, one: string, many = one + "s") => `${n.toLocal
 // ------------------------------------------------------ severity, status --
 
 export const SEVS = ["Severe", "High", "Medium", "Low"] as const;
-/** Severity colours on the dark surfaces (mirror of tokens.css: --sev, --high, --med, --cool). */
-export const SEV_HEX: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#E8B84A", Low: "#4DB3E8" };
-export const CAT_COL: Record<string, string> = { severe: "#F2555A", complaint: "#F7893B", other: "#4C8DFF" };
+/** Severity marks (mirror of tokens.css): rose and amber for what matters, indigo and slate for routine. */
+export const SEV_HEX: Record<string, string> = { Severe: "#FB7185", High: "#FBBF24", Medium: "#818CF8", Low: "#94A3B8" };
+/** Map pins: severe rose, citizen complaints amber, everything else indigo. */
+export const CAT_COL: Record<string, string> = { severe: "#FB7185", complaint: "#FBBF24", other: "#818CF8" };
+/** The accent for charts (tokens.css --accent); SVG attributes cannot read CSS variables, so charts use style. */
+export const ACCENT = "var(--accent)";
 export const sevTone = (s: string) => ({ Severe: "t-sev", High: "t-high", Medium: "t-med", Low: "t-cool" })[s] ?? "t-info";
 
 export function SevChip({ s }: { s: string }) {
@@ -193,7 +230,7 @@ const uid = (p: string) => `${p}${++gid}`;
  * A tile's trend: the line in the tile's own colour (red for severe events, not one blue for all), a flat wash under it, a
  * dashed line at the period's average and the last value marked; hovering reads out the value under the pointer.
  */
-export function Spark({ vals, color = "#6FA3FF" }: { vals: number[]; color?: string }) {
+export function Spark({ vals, color }: { vals: number[]; color?: string }) {
   const W = 74, H = 38, n = vals.length;
   const [hover, setHover] = useState<number | null>(null);
   if (n < 2) return null;
@@ -208,14 +245,14 @@ export function Spark({ vals, color = "#6FA3FF" }: { vals: number[]; color?: str
     setHover(Math.max(0, Math.min(n - 1, Math.round((((e.clientX - r.left) / r.width) * W - 2) / ((W - 6) / (n - 1))))));
   };
   return (
-    <svg className="spk" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseMove={move} onMouseLeave={() => setHover(null)} style={{ color }}>
+    <svg className="spk" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseMove={move} onMouseLeave={() => setHover(null)} style={color ? { color } : undefined}>
       <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill="currentColor" fillOpacity=".12" />
       <line x1="2" x2={W - 4} y1={y(avg)} y2={y(avg)} stroke="currentColor" strokeOpacity=".35" strokeWidth="1" strokeDasharray="2 3" />
       <path className="ln-d" d={d} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
       {hover != null && <line x1={x(at)} x2={x(at)} y1="2" y2={H} stroke="currentColor" strokeOpacity=".4" strokeWidth="1" />}
-      <circle cx={x(at)} cy={y(vals[at])} r="2.8" fill="currentColor" stroke="#0B1426" strokeWidth="1.5" />
+      <circle cx={x(at)} cy={y(vals[at])} r="2.8" fill="currentColor" style={{ stroke: "var(--surface)" }} strokeWidth="1.5" />
       {hover != null && (
-        <text x={x(at) > W / 2 ? x(at) - 4 : x(at) + 4} y="9" textAnchor={x(at) > W / 2 ? "end" : "start"} fontSize="9" fontWeight="700" fill="#E6ECF7">
+        <text x={x(at) > W / 2 ? x(at) - 4 : x(at) + 4} y="9" textAnchor={x(at) > W / 2 ? "end" : "start"} fontSize="9" fontWeight="700" style={{ fill: "var(--text)" }}>
           {vals[at].toLocaleString("en-IN")}
         </text>
       )}
@@ -230,7 +267,7 @@ function ticks(n: number, room: number) {
 }
 
 /** Bar or line chart drawn at the container's pixel size, with value labels on hover and the last value marked. */
-export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
+export function Chart({ kind, vals, labels, color = ACCENT, fmt, band }: {
   kind: "bar" | "line"; vals: number[]; labels: string[]; color?: string; fmt: (v: number) => string;
   /** optional shaded threshold, e.g. the AQI "satisfactory" ceiling */
   band?: { at: number; label: string };
@@ -253,8 +290,8 @@ export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
       <svg width={W} height={H + 18} className="mini" role="img" aria-label="Chart">
         <defs>
           <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor={color} stopOpacity=".3" />
-            <stop offset="1" stopColor={color} stopOpacity="0" />
+            <stop offset="0" style={{ stopColor: color, stopOpacity: 0.22 }} />
+            <stop offset="1" style={{ stopColor: color, stopOpacity: 0 }} />
           </linearGradient>
         </defs>
         {grid.map((g, k) => (
@@ -265,8 +302,8 @@ export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
         ))}
         {band && band.at > bot && band.at < top && (
           <g>
-            <line x1={L} x2={W - R} y1={y(band.at)} y2={y(band.at)} stroke="#E8B84A" strokeDasharray="4 4" strokeWidth="1.2" />
-            <text x={W - R} y={y(band.at) - 4} textAnchor="end" style={{ font: "600 10.5px var(--dic-sans)", fill: "#E8B84A" }}>{band.label}</text>
+            <line x1={L} x2={W - R} y1={y(band.at)} y2={y(band.at)} style={{ stroke: "var(--text-3)" }} strokeDasharray="4 4" strokeWidth="1" />
+            <text x={W - R} y={y(band.at) - 4} textAnchor="end" style={{ font: "500 10.5px var(--dic-sans)", fill: "var(--text-3)" }}>{band.label}</text>
           </g>
         )}
         {kind === "bar"
@@ -274,8 +311,8 @@ export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
               const bw = Math.min(34, (iw / n) * 0.66);
               const h = Math.max(2, H - y(v));
               return (
-                <rect key={i} x={x(i) - bw / 2} y={H - h} width={bw} height={h} rx="3" fill={i === n - 1 ? color : `url(#${id})`}
-                  stroke={color} strokeOpacity={i === n - 1 ? 0 : 0.5}>
+                <rect key={i} x={x(i) - bw / 2} y={H - h} width={bw} height={h} rx="2"
+                  style={{ fill: color, fillOpacity: i === n - 1 ? 1 : 0.35 }}>
                   <title>{`${labels[i]}: ${fmt(v)}`}</title>
                 </rect>
               );
@@ -285,9 +322,9 @@ export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
               return (
                 <>
                   <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill={`url(#${id})`} />
-                  <path className="ln-d" d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                  <path className="ln-d" d={d} fill="none" style={{ stroke: color }} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
                   {vals.map((v, i) => (
-                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 4 : n <= 31 ? 2.2 : 0} fill={i === n - 1 ? color : "#0B1426"} stroke={color} strokeWidth="1.5">
+                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 3.6 : n <= 31 ? 2 : 0} style={{ fill: i === n - 1 ? color : "var(--surface)", stroke: color }} strokeWidth="1.5">
                       <title>{`${labels[i]}: ${fmt(v)}`}</title>
                     </circle>
                   ))}
@@ -305,7 +342,6 @@ export function Chart({ kind, vals, labels, color = "#4C8DFF", fmt, band }: {
   return <div ref={ref} className="env-chart">{body()}</div>;
 }
 
-const BLUES = ["#4C8DFF", "#4483EE", "#3C78DC", "#3570CB", "#2F66B8"];
 export function HBars({ rows }: { rows: { l: string; v: number; onClick?: () => void }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.v));
   return (
@@ -315,10 +351,7 @@ export function HBars({ rows }: { rows: { l: string; v: number; onClick?: () => 
           <span className="hb-l">{r.l}</span>
           <span className="hb-v">{r.v.toLocaleString("en-IN")}</span>
           <span className="hb-t">
-            <span className="hb-b" style={{
-              width: `${((r.v / max) * 100).toFixed(1)}%`,
-              background: `linear-gradient(90deg,${BLUES[Math.min(ix, 4)]},${BLUES[Math.min(ix + 1, 4)]})`
-            }} />
+            <span className="hb-b" style={{ width: `${((r.v / max) * 100).toFixed(1)}%`, background: ACCENT, opacity: ix ? 0.7 : 1 }} />
           </span>
         </button>
       ))}

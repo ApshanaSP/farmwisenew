@@ -364,20 +364,35 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
         </div>
       </article>
       <article className="card" style={{ gridColumn: "span 4" }}>
-        <div className="ch"><I n="alert" /><h3>Locations needing review</h3><span className="cnt-b">{ins.review.unplacedTotal}</span></div>
-        <div className="cb scroll-list">
-          {ins.review.unplaced.length ? ins.review.unplaced.map((i) => (
-            <button key={i.id} className="rt" onClick={() => c.openInc(i.id)}>
-              <span className={`bic ${sevTone(i.sev)}`}><I n="pin" /></span>
-              <span style={{ minWidth: 0, flex: 1 }}>
-                <b title={i.title}>{i.title || i.type}</b>
-                <small>Place given: {i.loc || "none"} · {String(i.sources).replace(/\|/g, ", ")}</small>
-              </span>
-            </button>
-          )) : <Empty>Every open incident has a location.</Empty>}
-        </div>
+        <LocationReview ins={ins} c={c} />
       </article>
     </section>
+  );
+}
+
+/**
+ * Open incidents of the last 30 days whose place nobody knows: a specific event reported only "in Chennai". Weather
+ * warnings and city-wide news (no single place), incidents placed by their own map point or a place in the headline,
+ * and towns outside the district are left out, and counted in the note (locreview.ts).
+ */
+function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
+  const r = ins.review, k = r.counts;
+  const skipped = k ? [k.district ? `${k.district} city-wide` : null, k.located ? `${k.located} placed from the report` : null,
+    k.outside ? `${k.outside} outside Chennai` : null].filter(Boolean).join(" · ") : "";
+  return (
+    <>
+      <div className="ch"><I n="pin" /><h3 title="Specific incidents reported only as 'in Chennai': the map cannot show them">Locations needing review</h3>
+        <span className="cnt-b">{r.unplacedTotal}</span></div>
+      {skipped && <p className="lr-note" title="Not listed: weather warnings and city-wide reports have no single place; the others were placed from their map point or a place named in the report, or are outside Chennai district.">Not listed: {skipped}</p>}
+      <div className="cb scroll-list">
+        {r.unplaced.length ? r.unplaced.map((i) => (
+          <button key={i.id} className="lr" onClick={() => c.openInc(i.id)} title="Open the incident">
+            <b>{i.title || i.type}</b>
+            <small>{[i.type, rel(i.t, ins.now), i.loc_verdict.how, i.also.length ? `${i.also.length + 1} reports` : null].filter(Boolean).join(" · ")}</small>
+          </button>
+        )) : <Empty>Every open incident has a place on the map.</Empty>}
+      </div>
+    </>
   );
 }
 
@@ -670,7 +685,7 @@ function Weekly({ ins, scope }: { ins: Insights; scope: "chennai" | "tamilNadu" 
               const lvl = m.price > avg * 1.1 ? ["HIGH", "#F2555A"] : m.price < avg * 0.9 ? ["LOW", "#35C28C"] : ["NORMAL", "#6F82A6"];
               return (
                 <tr key={m.commodity} style={{ cursor: "default" }}>
-                  <td className="ev">{m.commodity} <span className="lvl sm" style={{ color: lvl[1], background: lvl[1] + "1A" }}>{lvl[0]}</span></td>
+                  <td className="ev">{m.commodity} <span className="lvl sm" style={{ color: lvl[1] }}>{lvl[0]}</span></td>
                   <td className="num">{d ? kg(d.price) : "—"}<small className="dim"> {d ? fmtDate(d.date + " 00:00:00") : ""}</small></td>
                   <td className="num"><b>{kg(m.price)}</b></td>
                   <td><Chg v={m.chgWeek} /></td>
@@ -704,8 +719,8 @@ function MiniSpark({ vals }: { vals: number[] }) {
   const x = (i: number) => 2 + (i * (W - 4)) / (vals.length - 1), y = (v: number) => 2 + (1 - (v - mn) / (mx - mn || 1)) * (H - 4);
   return (
     <svg width={W} height={H} aria-hidden="true">
-      <path d={vals.map((v, i) => `${i ? "L" : "M"}${x(i)} ${y(v)}`).join(" ")} fill="none" stroke="#4C8DFF" strokeWidth="1.8" />
-      <circle cx={x(vals.length - 1)} cy={y(vals[vals.length - 1])} r="2.6" fill="#4C8DFF" />
+      <path d={vals.map((v, i) => `${i ? "L" : "M"}${x(i)} ${y(v)}`).join(" ")} fill="none" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+      <circle cx={x(vals.length - 1)} cy={y(vals[vals.length - 1])} r="2.4" style={{ fill: "var(--accent)" }} />
     </svg>
   );
 }

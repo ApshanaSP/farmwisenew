@@ -18,7 +18,7 @@ import { AddedAllBody, ItemBody } from "./Added";
 import { StoriesBody } from "./Stories";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, type Layout } from "./Workspace";
-import { deptIcon, fmtDate, fmtShort, fmtTime, fullTitle, rel, sevTone, type Row } from "./lib";
+import { deptIcon, fmtDate, fmtShort, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "./lib";
 import { esc } from "./SatMap";
 import "./tokens.css";
 import "./collector.css";
@@ -153,7 +153,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const [taluk, setTalukState] = useState<string | null>(null);
   const [page, setPageState] = useState<PageKey>("overview");
   const [ov, setOv] = useState<OverviewData>(initial);
-  const [ins, setIns] = useState<Insights | null>(null);
+  // the loaded part, with the query it answers: a page never shows another page's part while its own loads
+  const [insState, setIns] = useState<{ key: string; d: Insights } | null>(null);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [loading, setLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -254,18 +255,19 @@ export default function CollectorApp({ initial, allDepts, user }: {
     return () => { live = false; };
   }, [qs, reloadKey, toast]);
 
-  // briefing, trends and markets load when a page needs them
-  // the news-only list opens from page 1's snapshot too, so it loads insights when that modal is open
+  // briefing, trends and markets load when a page needs them, each only its own part (insights.ts InsightPart)
+  // the news-only list opens from page 1's snapshot too, so it loads the briefing part when that modal is open
   const needIns = page !== "overview" || modal?.kind === "gaps";
+  const part = page === "trends" ? "trends" : page === "environment" ? "environment" : "briefing";
   // Trends and Environment & markets are district-wide: they ignore the zone, taluk and department filters
-  const insQs = page === "trends" || page === "environment" ? `period=${period}` : qs;
+  const insQs = `${page === "trends" || page === "environment" ? `period=${period}` : qs}&part=${part}`;
   useEffect(() => {
     if (!needIns) return;
     let live = true;
-    setIns(null);
-    api(`/api/collector/insights?${insQs}`).then((j) => live && setIns(j)).catch((e) => live && toast(e.message, "alert"));
+    api(`/api/collector/insights?${insQs}`).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => live && toast(e.message, "alert"));
     return () => { live = false; };
   }, [insQs, reloadKey, needIns, toast]);
+  const ins = insState?.key === insQs ? insState.d : null;
 
   useEffect(() => {
     if (!anim) return;
@@ -366,7 +368,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
   const saveWorkspace = async (name: string) => {
     try {
-      const snap: Insights = ins ?? (await api(`/api/collector/insights?${qs}`));
+      // the frozen copy is the briefing of the dashboard's filters (the loaded part may be trends or prices)
+      const snap: Insights = ins?.book ? ins : await api(`/api/collector/insights?${qs}&part=briefing`);
       const r = await api("/api/collector/workspaces", {
         name,
         filters: { period, zone, dept, cat, taluk, page, zoneName, deptName, catLabel, talukName: talukName(taluk), layers, envSel },
@@ -422,7 +425,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
     setDept, setZone,
     openInc: (id) => { setModal(null); setInc(id); },
     openList: (preset, title) => { setInc(null); setModal({ kind: "list", title: `${title} · ${scopeName}`, preset: { cat: cat ?? undefined, taluk: taluk ?? undefined, ...preset } }); },
-    openNewsAll: () => setModal({ kind: "news", title: `Today's Briefing · news · ${scopeName}` }),
+    openNewsAll: () => setModal({ kind: "news", title: `Latest news · ${scopeName}` }),
     openZones: () => setModal({ kind: "zones", title: "Zones by open complaints" }),
     openDepts: () => setModal({ kind: "depts", title: "Departments" }),
     openFeeds: () => setModal({ kind: "sources", title: "Data sources" }),
@@ -498,13 +501,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
         <div className="main">
           <header className="top">
             <div className="tbrand"><Logo className="tlogo" /><span><b>District <span>IQ</span></b><small>Chennai District Intelligence</small></span></div>
-            <button className="feedlight" onClick={c.openFeeds}
-              title={`Data sources: status, refresh, add a source, OCR, audit log${feedsPartial.length ? `. Partly available (some endpoints blocked): ${feedsPartial.join(", ")}` : ""}`}>
-              <i className={feedsOk === ov.feeds.length && !feedsPartial.length ? "" : "warn"} />{feedsOk}/{ov.feeds.length} feeds live
-              {feedsPartial.length > 0 && <small className="feedpart">{feedsPartial.length} partial</small>}
-            </button>
             <Search c={c} ov={ov} />
-            <Collected ov={ov} onClick={c.openFeeds} />
+            {/* one chip for the data: when it was collected and how many feeds are live (it used to be two chips opening the same dialog) */}
+            <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} />
             <button className="tbtn" onClick={c.openWorkspace} title="Save or reopen a workspace"><I n="layers" /><span className="lb">{workspaceName ? workspaceName.slice(0, 18) : "Workspace"}</span></button>
             <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}><I n={theme === "dark" ? "sun" : "moon"} /></button>
             <button className="tbtn icon" onClick={() => setModal({ kind: "customize", title: "Customize the dashboard" })} title="Choose what the dashboard shows" aria-label="Customize"><I n="sliders" /></button>
@@ -597,7 +596,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
             </section>
             <div id="view" className={anim ? "anim" : ""}>
               {page === "overview" ? <Page1 d={ov} c={c} />
-                : page === "briefing" ? (ins?.book && !archived ? <BriefingBook ins={ins} d={ov} c={c} /> : <BriefingPage ins={ins} d={ov} c={c} />)
+                : page === "briefing" ? (archived || !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
                   : page === "trends" ? <TrendsPage ins={ins} c={c} />
                     : <EnvPage d={ov} ins={ins} c={c} />}
             </div>
@@ -645,17 +644,20 @@ export default function CollectorApp({ initial, allDepts, user }: {
 }
 
 /** Are the feeds current? Green when every feed in this build was collected within its freshness target. */
-function Collected({ ov, onClick }: { ov: OverviewData; onClick: () => void }) {
+function Collected({ ov, onClick, live, partial }: { ov: OverviewData; onClick: () => void; live: number; partial: string[] }) {
   const s = ov.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
-  const head = !s ? "Collected hourly"
-    : all ? `Collected ${fmtTime(s.lastRun ?? ov.now)}` : `${s.done.length} of ${s.total} feeds current`;
+  // the time the data was collected always leads; how many feeds are current goes on the second line
+  const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
+  const sub = s && !all ? `${s.done.length} of ${s.total} feeds current · ${live}/${ov.feeds.length} live` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
   const tip = "Every source is collected hourly (CPCB air quality while the PC is on)." +
     (s?.lastRun ? ` Last collection: ${fmtTime(s.lastRun)}, ${fmtDate(s.lastRun)}.` : "") +
-    (s ? (s.missing.length ? ` Behind: ${s.missing.join(", ")}.` : " All feeds current.") : "") + " Click for the data sources.";
+    (s ? (s.missing.length ? ` Behind: ${s.missing.join(", ")}.` : " All feeds current.") : "") +
+    ` ${live} of ${ov.feeds.length} feeds live.` + (partial.length ? ` Partly available (some endpoints blocked): ${partial.join(", ")}.` : "") +
+    " Click for the data sources: status, refresh, add a source, OCR, audit log.";
   return (
     <button className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick}>
-      <I n={all ? "checkc" : "clock"} /><span>{head}<small>Data as of {fmtTime(ov.now)}, {fmtDate(ov.now)}</small></span>
+      <I n={all ? "checkc" : "clock"} /><span>{head}<small>{sub}</small></span>
     </button>
   );
 }
