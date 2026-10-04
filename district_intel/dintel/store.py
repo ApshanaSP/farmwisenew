@@ -59,8 +59,11 @@ def _sqlable(df: pd.DataFrame) -> pd.DataFrame:
             out[c] = s.map(lambda v: json.dumps(v, ensure_ascii=False, default=str) if isinstance(v, (list, dict, set, tuple))
                            else iso(v) if isinstance(v, pd.Timestamp)
                            # numpy scalars in object columns: sqlite3 would store np.int64 as an 8-byte BLOB
-                           else v.item() if isinstance(v, np.generic) else v)
-        elif str(s.dtype) in ("Int64", "Float64", "boolean"):
+                           else v.item() if isinstance(v, np.generic) else v).astype(object)
+            # pandas 3 may turn the mapped column into its string dtype, where None becomes NaN
+            out[c] = out[c].where(out[c].notna(), None)
+        elif str(s.dtype) in ("Int64", "Float64", "boolean") or pd.api.types.is_string_dtype(s):
+            # pandas 3 keeps text in its own string dtype, where a blank is NaN: SQLite and the CSV want None
             out[c] = s.astype(object).where(s.notna(), None)
     return out
 

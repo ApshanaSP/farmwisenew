@@ -140,15 +140,23 @@ export async function buildIndex(asOf: string | null, o: BuildOptions = {}): Pro
     if (o.log && (k / batch) % 50 === 0) o.log(`${Math.min(todo.length, k + batch)} / ${todo.length}`);
     await sleep(o.pauseMs ?? 0);
   }
+  // the other process (the build job, or the web server) may have saved a newer index while this one was embedding:
+  // build on that one, so this save never puts back the older set it started from
+  let src = old;
+  if (fileMtime() > disk) {
+    const newer = load();
+    if (newer) { src = newer; dim ||= newer.dim; }
+  }
+  const kept = (id: string) => !!src && src.pos.has(id) && src.hash[src.pos.get(id)!] === hashOf.get(id);
   // incidents with a vector (kept, or made now); ones still waiting are left out until the build job reaches them
-  const ids = all.filter((id) => fresh.has(id) || (old && old.pos.has(id) && old.hash[old.pos.get(id)!] === hashOf.get(id)));
+  const ids = all.filter((id) => fresh.has(id) || kept(id));
   const vecs = new Float32Array(ids.length * dim);
   ids.forEach((id, i) => {
-    const v = fresh.get(id) ?? old!.vecs.subarray(old!.pos.get(id)! * old!.dim, (old!.pos.get(id)! + 1) * old!.dim);
+    const v = fresh.get(id) ?? src!.vecs.subarray(src!.pos.get(id)! * src!.dim, (src!.pos.get(id)! + 1) * src!.dim);
     vecs.set(v, i * dim);
   });
   S.index = { dim, ids, hash: ids.map((id) => hashOf.get(id)!), vecs, pos: new Map(ids.map((id, i) => [id, i])), meta, asOf };
-  S.pending = todoAll.length - todo.length;
+  S.pending = all.length - ids.length;
   if (todo.length) { save(S.index); S.fileMtime = fileMtime(); }
   S.progress = null;
   return { total: all.length, embedded: todo.length, waiting: S.pending };

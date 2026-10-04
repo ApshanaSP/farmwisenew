@@ -9,8 +9,8 @@ import { itemWhen, safeUrl } from "./Added";
 import type { Console } from "./CollectorApp";
 
 export const STAGE_COL: Record<string, string> = {
-  "First report": "#1560E8", Arrest: "#6A55D8", Death: "#D92D35", Court: "#475569", Probe: "#0891B2", Protest: "#E0730D",
-  Action: "#12925F", Warning: "#B98A00", Completed: "#0E7C50", Update: "#6F82A6"
+  "First report": "#4C8DFF", Arrest: "#A28EFA", Death: "#F2555A", Court: "#475569", Probe: "#2BC7D9", Protest: "#F7893B",
+  Action: "#35C28C", Warning: "#E8B84A", Completed: "#0E7C50", Update: "#6F82A6"
 };
 
 const span = (h: number) => (h < 1 ? "within the hour" : h < 36 ? `over ${h} h` : `over ${Math.round(h / 24)} days`);

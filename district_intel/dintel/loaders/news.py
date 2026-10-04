@@ -242,7 +242,141 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     d["outlet_count"] = d.groupby("story_id")["publisher"].transform("nunique")
     d = d.sort_index()
 
-    # ---- 5. report type, statewide datelines
+    # ---- 5-7. classification: in Chennai? an incident? report type, category
+    # by meaning: the LLM's cached labels first, the local SetFit model for articles the LLM has not reached,
+    # and the old rules only when neither exists (a fresh install with no model and no key)
+    E = embed.encode((d["title"].fillna("") + ". " + d["summary"].fillna("").str.slice(0, 300)).tolist())
+    gate_eval = _classify(settings, ref, d, text, E)
+
+    # ---- 8. places (most specific first-mentioned), casualties
+    rf, gaz, entries = build_gazetteer(settings, extra_places)
+    mentions = MentionCache(rf, gaz, entries)
+    order = {"locality": 0, "zone": 1, "taluk": 2, "district": 3}
+    places, ptxt, lat, lon, level, conf = [], [], [], [], [], []
+    for t in text:
+        ms = mentions.find(t)
+        named = [m for m in ms if m.place.category != "district"]
+        has_anchor = any(not m.place.requires_context for m in ms)
+        named = [m for m in named if not m.place.requires_context or has_anchor]
+        places.append("|".join(dict.fromkeys(m.place.name for m in named)))
+        if named:
+            best = sorted(named, key=lambda m: (order[m.place.category], m.start))[0]
+            ptxt.append(best.place.name); lat.append(best.place.latitude); lon.append(best.place.longitude)
+            level.append(best.place.category); conf.append(GEO_CONF[best.place.category])
+        else:
+            ptxt.append("Chennai"); lat.append(13.0827); lon.append(80.2707); level.append("district"); conf.append(GEO_CONF["district"])
+    d["places"], d["place_text"], d["lat"], d["lon"], d["geo_level"], d["geo_conf"] = places, ptxt, lat, lon, level, conf
+    mentions.save()
+    cas = [tp.casualties(t) for t in text]
+    d["dead"] = [c[0] for c in cas]
+    d["injured"] = [c[1] for c in cas]
+
+    # ---- 7b. stories across languages: embeddings + same category (character n-grams cannot match Tamil to English)
+    if E is not None:
+        merged = _embed_stories(d, E)
+        log.info("news: embedding story merges %s", merged)
+        gate_eval["story_merges"] = merged
+        d = d.sort_values("published_at")
+        d["story_role"] = np.where(d.groupby("story_id").cumcount() == 0, "first_report", "follow_up")
+        d["outlet_count"] = d.groupby("story_id")["publisher"].transform("nunique")
+        d = d.sort_index()
+
+    d["source_kind"] = "news"
+    d["_text"] = text
+    return {"documents": d, "raw_rows": raw_rows, "unique_urls": unique_urls, "snapshot": snap, "gate_eval": gate_eval}
+
+
+def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Series, E: np.ndarray | None) -> dict:
+    """Fills report_type, is_district, statewide_dateline, is_incident, incident_conf/method and
+    category_code/conf/method on `d` in place; returns counts by method for the evaluation report."""
+    from .. import newsllm
+    from ..newslocal import LocalModel
+    from ..newsmodel import NewsModel
+
+    # Cascade (news_model in config.yaml): an article the LLM already labelled keeps that label; otherwise the local
+    # model reads it (TF-IDF + logistic regression by default, or SetFit) and decides alone when it is at least
+    # `trust_confidence` sure; unsure articles, plus a fixed spot-check share of sure ones, go to the LLM within this run's
+    # budget (its answers are cached and become training labels: active learning). With no LLM answer, an unsure article
+    # keeps the local guess if it is at least `review_below` sure, else it is not forced into a category: OTHER, flagged
+    # for review.
+    mcfg = settings.raw.get("news_model", {})
+    cols = ["doc_id", "title", "summary", "published_at"]
+    known = d["doc_id"].isin(newsllm.cached_ids(settings)).to_numpy()
+    tfidf = LocalModel(settings.out_dir / "models" / "news_local")
+    use_tfidf = mcfg.get("local", "tfidf") == "tfidf" and tfidf.exists
+    model = tfidf if use_tfidf else NewsModel(settings.out_dir / "models" / "news_setfit")
+    local_name = "tfidf" if use_tfidf else "setfit"
+    trust_cfg = mcfg.get("trust_confidence", "auto")
+    sf = None
+    if model.exists and (~known).any():
+        model.load()
+        trust = float(model.meta.get("suggested_trust", 0.8)) if str(trust_cfg) == "auto" else float(trust_cfg)
+        part = d.loc[~known, ["doc_id", "title", "summary"]]
+        sf = (model.predict(part) if use_tfidf else model.predict_cached(part, settings.out_dir / "state" / "setfit_predictions.jsonl")).set_index("doc_id")
+        if mcfg.get("mode", "cascade") == "llm_first":
+            trust = 1.01  # SetFit only fills in for what the LLM does not reach
+            recent = d["published_at"] >= d["published_at"].max() - pd.Timedelta(days=int(mcfg.get("llm_recent_days", 14)))
+            ask_ids = set(d.loc[~known & recent.to_numpy(), "doc_id"])
+            log.info("news: LLM first: %d unlabelled articles from the last %s days go to the LLM; SetFit covers the rest",
+                     len(ask_ids), mcfg.get("llm_recent_days", 14))
+        else:
+            share = float(mcfg.get("spot_check_share", 0.05))
+            spot = sf.index.map(lambda x: int(hashlib.sha1(str(x).encode()).hexdigest(), 16) % 1000 < share * 1000)
+            ask_ids = set(sf.index[(sf["confidence"] < trust).to_numpy() | np.asarray(spot)])
+            log.info("news: the local %s model is sure (>= %.2f) of %d of %d unlabelled articles; %d go to the LLM (%d of them spot checks)",
+                     local_name, trust, int((sf["confidence"] >= trust).sum()), len(sf), len(ask_ids), int(np.asarray(spot).sum()))
+        ask = known | d["doc_id"].isin(ask_ids).to_numpy()
+    else:
+        trust = 0.8
+        ask = np.ones(len(d), dtype=bool)
+    llm = newsllm.classify(settings, ref, d.loc[ask, cols])
+    lab = d[["doc_id"]].merge(llm, on="doc_id", how="left") if len(llm) else d[["doc_id"]].assign(category=None)
+    lab["method"] = np.where(lab["category"].notna(), "llm:" + lab.get("model", pd.Series("", index=lab.index)).astype(str), None)
+    need = lab["category"].isna().to_numpy()
+    d["category_suggestion"] = None
+    if sf is not None and need.any():
+        p = sf.reindex(lab.loc[need, "doc_id"])
+        conf = p["confidence"].astype(float).to_numpy()
+        sure = conf >= trust
+        review_below = float(mcfg.get("review_below", 0.45))
+        review = conf < review_below
+        d.loc[need, "category_suggestion"] = (p["category"].astype(str) + " (" + p["confidence"].round(2).astype(str) + ")").to_numpy()
+        p["category"] = np.where(review, "OTHER", p["category"])
+        for c in ("in_chennai", "is_incident", "report_type", "category", "confidence"):
+            lab.loc[need, c] = p[c].to_numpy()
+        # "<local>" = sure; "<local>:unsure" = the local guess, waiting for the LLM; "review" = too unsure to categorise
+        if mcfg.get("mode", "cascade") == "llm_first":
+            lab.loc[need, "method"] = f"{local_name}:backup"
+        else:
+            lab.loc[need, "method"] = np.where(sure, local_name, np.where(review, "review", f"{local_name}:unsure"))
+    need = lab["category"].isna().to_numpy()
+    if need.any():
+        log.warning("news: %d articles have neither an LLM label nor a trained model; using the old rules for them "
+                    "(run `python run_pipeline.py train-news`)", int(need.sum()))
+        old = _legacy_labels(d, text, E, ref)
+        for c in ("in_chennai", "is_incident", "report_type", "category", "confidence", "method"):
+            lab.loc[need, c] = old.loc[need, c].to_numpy()
+
+    in_chennai = lab["in_chennai"].astype(bool).to_numpy()
+    incident = lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
+    d["report_type"] = lab["report_type"].to_numpy()
+    d["is_district"] = in_chennai.astype(int)
+    d["statewide_dateline"] = (~in_chennai).astype(int)
+    d["is_incident"] = incident.astype(int)
+    d["incident_conf"] = lab["confidence"].astype(float).round(3).to_numpy()
+    d["incident_method"] = lab["method"].to_numpy()
+    d["category_code"] = lab["category"].to_numpy()
+    d["category_conf"] = lab["confidence"].astype(float).round(3).to_numpy()
+    d["category_method"] = lab["method"].to_numpy()
+    d["dept_src"] = d["department"].map(ref.cmap["news_department"])
+    by = pd.Series(lab["method"].astype(str).str.replace(r"^llm:.*", "llm", regex=True)).value_counts().to_dict()
+    log.info("news: %d documents classified (%s); %d Chennai incidents", len(d), by, int(incident.sum()))
+    return {"labels_by_method": by, "incident_articles": int(incident.sum())}
+
+
+def _legacy_labels(d: pd.DataFrame, text: pd.Series, E: np.ndarray | None, ref: Reference) -> pd.DataFrame:
+    """The previous rules (report-type patterns, weak-label incident filter, category keywords), kept only for a
+    fresh install that has neither LLM labels nor a trained model."""
     def rtype(t: str) -> str:
         for name, rx in REPORT_TYPE_RULES:
             if rx.search(t):
@@ -254,12 +388,12 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
         if STRONG_INCIDENT.search(t):
             return "incident"
         return "other"
+    d = d.copy()
     d["report_type"] = [rtype(t) for t in text]
     no_local = d["mentioned_taluks"].fillna("[]").eq("[]") & d["mentioned_localities"].fillna("[]").eq("[]")
     d["statewide_dateline"] = (no_local & text.str.contains(OTHER_DISTRICTS)).astype(int)
     d["is_district"] = (1 - d["statewide_dateline"]).astype(int)
 
-    # ---- 6. incident gate: weak labels + hand labels -> logistic regression on char n-grams + multilingual embeddings
     strong = np.array([len(STRONG_INCIDENT.findall(t)) for t in text])
     neg_type = d["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
     weak = np.full(len(d), -1)
@@ -269,7 +403,6 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     weak[(d["report_type"] == "service_notice").to_numpy()] = 0
     vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 5), min_df=3, max_features=150_000, sublinear_tf=True)
     X = vec.fit_transform(text.map(tp.normalize))
-    E = embed.encode((d["title"].fillna("") + ". " + d["summary"].fillna("").str.slice(0, 300)).tolist())
     if E is not None:
         X = hstack([X, csr_matrix(E * 2.0)]).tocsr()
     gold, gate_eval = _gold(d), {}
@@ -317,11 +450,8 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     d["incident_conf"] = prob.round(3)
     gate = (prob >= thr) & (d["is_district"] == 1).to_numpy() & ~d["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
     d["is_incident"] = gate.astype(int)
-    d["incident_method"] = f"logreg weak+hand labels (thr={thr:.2f})" if len(gidx) >= 50 else f"logreg weak labels (thr={thr:.2f})"
-    log.info("news: %d rows -> %d URLs -> %d documents; incident gate keeps %d (threshold %.2f); eval %s",
-             raw_rows, unique_urls, len(d), int(gate.sum()), thr, gate_eval)
 
-    # ---- 7. category by keywords (the classifier fills the rest later)
+    # category by keywords
     kw = []
     for c in ref.cat.values():
         for k in (c.get("keywords_en") or []):
@@ -341,47 +471,10 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
             if s1 >= 2 and s1 > s2:
                 cats.append(best); confs.append(round(min(0.95, 0.5 + 0.1 * s1 - 0.05 * s2), 2)); continue
         cats.append(None); confs.append(None)
-    d["category_code"] = cats
-    d["category_conf"] = confs
-    d["category_method"] = np.where(pd.Series(cats).notna(), "keywords", None)
-    d["dept_src"] = d["department"].map(ref.cmap["news_department"])
-
-    # ---- 8. places (most specific first-mentioned), casualties
-    rf, gaz, entries = build_gazetteer(settings, extra_places)
-    mentions = MentionCache(rf, gaz, entries)
-    order = {"locality": 0, "zone": 1, "taluk": 2, "district": 3}
-    places, ptxt, lat, lon, level, conf = [], [], [], [], [], []
-    for t in text:
-        ms = mentions.find(t)
-        named = [m for m in ms if m.place.category != "district"]
-        has_anchor = any(not m.place.requires_context for m in ms)
-        named = [m for m in named if not m.place.requires_context or has_anchor]
-        places.append("|".join(dict.fromkeys(m.place.name for m in named)))
-        if named:
-            best = sorted(named, key=lambda m: (order[m.place.category], m.start))[0]
-            ptxt.append(best.place.name); lat.append(best.place.latitude); lon.append(best.place.longitude)
-            level.append(best.place.category); conf.append(GEO_CONF[best.place.category])
-        else:
-            ptxt.append("Chennai"); lat.append(13.0827); lon.append(80.2707); level.append("district"); conf.append(GEO_CONF["district"])
-    d["places"], d["place_text"], d["lat"], d["lon"], d["geo_level"], d["geo_conf"] = places, ptxt, lat, lon, level, conf
-    mentions.save()
-    cas = [tp.casualties(t) for t in text]
-    d["dead"] = [c[0] for c in cas]
-    d["injured"] = [c[1] for c in cas]
-
-    # ---- 7b. stories across languages: embeddings + same category (character n-grams cannot match Tamil to English)
-    if E is not None:
-        merged = _embed_stories(d, E)
-        log.info("news: embedding story merges %s", merged)
-        gate_eval["story_merges"] = merged
-        d = d.sort_values("published_at")
-        d["story_role"] = np.where(d.groupby("story_id").cumcount() == 0, "first_report", "follow_up")
-        d["outlet_count"] = d.groupby("story_id")["publisher"].transform("nunique")
-        d = d.sort_index()
-
-    d["source_kind"] = "news"
-    d["_text"] = text
-    return {"documents": d, "raw_rows": raw_rows, "unique_urls": unique_urls, "snapshot": snap, "gate_eval": gate_eval}
+    return pd.DataFrame({"in_chennai": d["is_district"].astype(bool).to_numpy(), "is_incident": gate,
+                         "report_type": d["report_type"].to_numpy(), "category": [c or "OTHER" for c in cats],
+                         "confidence": [c if c is not None else prob[i] for i, c in enumerate(confs)],
+                         "method": "legacy"}, index=d.index)
 
 
 GATE_CACHE = INTEL_DIR / "output" / "cache" / "news_gate.json"

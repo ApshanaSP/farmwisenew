@@ -36,6 +36,7 @@ import { WorkPage } from "./InsightsPage";
 import { ListBody, Modal } from "./Overlays";
 import { SendReport } from "./Report";
 import { PERIOD_KEYS, type Period } from "./format";
+import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/collector.css";
 import "./officer.css";
 

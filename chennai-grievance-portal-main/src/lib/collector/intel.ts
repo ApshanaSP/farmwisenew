@@ -213,7 +213,8 @@ const ROW = `i.incident_id AS id, i.title, i.category_label AS type, i.category_
   i.citizen_complaints AS complaints, i.outlet_count AS outlets, i.sources, i.source_count, i.channels,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, i.summary, i.priority_score AS priority,
   i.sla_breached AS breached, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
-  i.media_only, i.awaiting_collector, i.police_reports, DATE_FORMAT(i.last_update_at, '%Y-%m-%d %H:%i:%s') AS updated`;
+  i.media_only, i.awaiting_collector, i.police_reports, DATE_FORMAT(i.last_update_at, '%Y-%m-%d %H:%i:%s') AS updated,
+  i.ai_summary, i.ai_attention, i.ai_next_step`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 
 /** News outlets the Collector reads: established and regional papers and official pages, not social posts or aggregators. */
@@ -342,6 +343,10 @@ export interface Plain {
   /** kept for the PDF and the Markdown briefing: facts and attention */
   what: string[];
   why: string[];
+  /** suggested next step and who should take it (written by the pipeline's LLM from the incident's facts), or null */
+  next: string | null;
+  /** the summary and reasons were written by the LLM from the incident's facts (numbers checked in the pipeline) */
+  ai: boolean;
 }
 
 const PLACE_WORD: Record<string, string> = { school: "a school", worship: "a place of worship", hospital: "a hospital", bus_stop: "a bus stop" };
@@ -427,9 +432,25 @@ export function explain(r: Row): Plain {
   why.sort((a, b) => b[0] - a[0]);
   const open = Number(r.open ?? 1) === 1;
   const needsYou = open && why.length > 0 && (serious || why[0][0] >= 70);
-  const attention = needsYou ? why.slice(0, 3).map(([, s]) => s) : [];
   const shortFacts = facts.slice(0, 4);
-  return { summary, facts: shortFacts, attention, needsYou, what: [summary, ...shortFacts], why: attention };
+  // The pipeline's LLM text (written only from this incident's computed facts, every number checked) replaces the
+  // template wording; whether the incident needs the Collector is still decided by the rules above.
+  const aiWhy = parseList(r.ai_attention);
+  const ai = Boolean(r.ai_summary) && aiWhy.length > 0;
+  const text = ai ? String(r.ai_summary) : summary;
+  const attention = needsYou ? (ai ? aiWhy.slice(0, 3) : why.slice(0, 3).map(([, s]) => s)) : [];
+  const next = needsYou && ai && r.ai_next_step ? String(r.ai_next_step) : null;
+  return { summary: text, facts: shortFacts, attention, needsYou, what: [text, ...shortFacts], why: attention, next, ai };
+}
+
+function parseList(v: unknown): string[] {
+  if (!v) return [];
+  try {
+    const a = typeof v === "string" ? JSON.parse(v) : v;
+    return Array.isArray(a) ? a.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
 }
 
 // ------------------------------------------------ news complaints routing --
@@ -444,28 +465,13 @@ const AUTO = "District IQ news monitor";
 let lastRoute = 0;
 
 /**
- * Is a news report a citizen complaint (a service failure people are living with),
- * rather than an announcement, a plan, a scheduled shutdown or an achievement?
- * The classifier's report_type is too loose on its own ("incident" covers plans),
- * so the headline must also describe a problem.
+ * Is a news report a citizen complaint (a service failure people are living with), rather than an announcement,
+ * a plan, a scheduled shutdown or an achievement? Decided by the pipeline's news classifier, which reads the
+ * article's meaning (LLM, or the SetFit model trained on its labels): a Chennai incident reported as a civic
+ * complaint or an incident.
  */
-const PROBLEM = new RegExp([
-  "shortage", "no water", "without water", "overflow", "stagnat", "waterlog", "inundat", "flooded", "clogged", "choked", "blocked drain",
-  "garbage (pile|dump|heap|mount|strewn|not cleared)", "dumped", "stench", "foul smell", "pothole", "damaged", "broken", "caved?[- ]in",
-  "collapsed", "dark stretch", "not working", "non[- ]functional", "unlit", "defunct", "contaminat", "sewage (mix|in|overflow|flow)",
-  "leak", "menace", "hassle", "residents (complain|suffer|stage|protest|fume|struggle|demand)", "road blockade", "at risk", "hazard",
-  "power cuts?(?! ?:)", "outage", "bribe", "lack of", "unattended", "neglect",
-  "புகார்", "அவதி", "மறியல்", "தேங்கி", "சேதம்", "பள்ளம்", "துர்நாற்றம்", "தட்டுப்பாடு"
-].join("|"), "i");
-const NOT_COMPLAINT = new RegExp([
-  "\\bplans?\\b", "to be (built|laid|completed|set up)", "\\bwill\\b", "inaugurat", "launch", "vaccinat", "\\bdrive\\b", "survey",
-  "\\borders?\\b", "proposal", "tender", "scheme", "awareness", "schedule", "power cut ?:", "cleared of", "removed", "\\bfined?\\b",
-  "cost owners", "arrested", "sensor", "monetis", "biogas", "நாளை", "எந்தெந்த", "அகற்றம்", "பொருத்தம்"
-].join("|"), "i");
-export function isNewsComplaint(title: string, reportType: string | null): boolean {
-  if (["announcement", "service_notice", "business", "politics", "court", "entertainment_sport", "crime"].includes(String(reportType))) return false;
-  if (NOT_COMPLAINT.test(title)) return false;
-  return reportType === "civic_complaint" || PROBLEM.test(title);
+export function isNewsComplaint(reportType: string | null, isIncident: unknown): boolean {
+  return Number(isIncident) === 1 && ["civic_complaint", "incident"].includes(String(reportType));
 }
 
 /**
@@ -480,15 +486,15 @@ async function routeNewsComplaints(now: string) {
   try {
     const cands = await q(
       `SELECT i.incident_id AS id, i.lead_dept AS dept, i.category_label AS type, i.zone_name,
-              GROUP_CONCAT(CONCAT(COALESCE(d.report_type, ''), '|', d.title) SEPARATOR '\n') AS docs
+              GROUP_CONCAT(CONCAT(COALESCE(d.report_type, ''), '|', COALESCE(d.is_incident, 0)) SEPARATOR '\n') AS docs
        FROM incidents i JOIN documents d ON d.linked_incident_id = i.incident_id
        WHERE i.is_open = 1 AND i.media_only = 1 AND i.category_code IN (?) AND i.first_reported_at > (? - INTERVAL 30 DAY)
        GROUP BY i.incident_id, i.lead_dept, i.category_label, i.zone_name`,
       [NEWS_COMPLAINT_CATS, now]
     );
     const rows = cands.filter((r) => String(r.docs ?? "").split("\n").some((line) => {
-      const [rt, ...t] = line.split("|");
-      return isNewsComplaint(t.join("|"), rt || null);
+      const [rt, inc] = line.split("|");
+      return isNewsComplaint(rt || null, inc);
     }));
     const keep = new Set(rows.map((r) => r.id));
     const auto = await q(`SELECT incident_id FROM ${ops("dept_assignments")} WHERE assigned_by = ? AND status = 'Assigned'`, [AUTO]);

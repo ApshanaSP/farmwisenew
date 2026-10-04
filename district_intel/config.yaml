@@ -78,6 +78,45 @@ overlay:
   other_incidents: 70               # non-rain planted incidents across the window
   news_anchored: 45                 # real news incidents that get departmental records
 
+news_llm:
+  # News classification and incident narratives (dintel/newsllm.py). Key: GROQ_API_KEY in district_intel/.env,
+  # used for this and nothing else. Answers are cached in output/state/; each run spends at most the minutes below,
+  # newest articles first, and the local SetFit model (news_model) labels whatever the LLM has not reached yet.
+  enabled: true
+  key_file: .env                        # GROQ_API_KEY and GEMINI_API_KEY
+  # Each job tries these [provider, model] pairs in order; one out of quota, overloaded or retired hands over to the next.
+  chains:
+    # Groq: news classification and incident explanations. Gemini: strictly the page 2 briefing.
+    classify: [[groq, openai/gpt-oss-120b], [groq, openai/gpt-oss-20b]]
+    explain: [[groq, openai/gpt-oss-120b], [groq, openai/gpt-oss-20b]]
+    brief: [[gemini, gemini-3.8-flash], [gemini, gemini-3.5-flash], [gemini, gemini-flash-latest], [gemini, gemini-3.5-flash-lite]]
+  backlog_model: openai/gpt-oss-20b     # `label-news` (older articles): a separate free-tier daily quota
+  batch: 15                             # articles per call: the instructions are sent once per call, so bigger batches save tokens
+  classify_minutes: 5
+  narratives: true                      # summary, "why it needs your attention" and next step for incidents that need the Collector
+  narrate_batch: 3
+  narrate_minutes: 4
+  narrate_max: 300
+  brief_minutes: 2                      # the briefing's AI opening, one per period (daily, weekly, monthly, quarterly)
+  briefing_notes: true                  # page 2: situation, department briefs, news digest, weather, health, law (dintel/briefai.py)
+  book_minutes: 4
+  book_refresh_hours: 3                 # rewrite at most this often, sooner when a severe incident, a death or a warning changes
+
+news_model:
+  # SetFit (dintel/newsmodel.py), trained on the LLM's labels with `python run_pipeline.py train-news`
+  base_model: intfloat/multilingual-e5-base
+  # mode cascade (local first): the local model decides when at least trust_confidence sure; less sure -> the LLM
+  #   (Groq), plus a spot_check_share of the sure ones; the LLM's answers are cached and become training labels.
+  #   With no LLM answer: below review_below the article is not forced into a category (OTHER, flagged for review).
+  # mode llm_first: the LLM labels every article from the last llm_recent_days; the local model is only the backup.
+  mode: cascade
+  local: tfidf              # tfidf (word + char n-gram TF-IDF + logistic regression; `train-news-local`) | setfit (`train-news`)
+  trust_confidence: auto    # auto = the lowest confidence with >= 90% held-out accuracy (models/news_local/meta.json), or a number
+  review_below: 0.45
+  llm_recent_days: 14
+  spot_check_share: 0.05
+  min_confidence: 0.5        # with no LLM available, a SetFit category below this becomes OTHER
+
 llm:
   # Optional. Every step has a deterministic fallback; LLM steps run only when enabled
   # AND the API key variable is set. Cost stays bounded by the caps below.

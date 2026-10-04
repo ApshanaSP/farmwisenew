@@ -12,7 +12,7 @@ import { fmtValue } from "@/lib/assistant/chartspec";
 import type { ChartSpec, Dataset } from "@/lib/assistant/answer";
 import { esc } from "../SatMap";
 
-const RAMP = ["#CDE2FB", "#86B6EF", "#3987E5", "#1560E8", "#0B3FA8"];
+const RAMP = ["#CDE2FB", "#86B6EF", "#3987E5", "#4C8DFF", "#8DB6FF"];
 
 export default function MapAnswer({ spec, ds, geo, height, onZone }: {
   spec: ChartSpec; ds: Dataset; geo: MapGeo | null; height: number; onZone?: (zone: number) => void;
@@ -46,14 +46,14 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
         for (const w of geo.wards) {
           const v = byZone.get(w.zone) ?? 0;
           const step = v <= 0 ? -1 : Math.min(RAMP.length - 1, Math.floor((v / max) * RAMP.length - 1e-9));
-          const poly = L.polygon(w.rings, { color: "#FFFFFF", weight: 0.4, opacity: 0.5, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.62 })
+          const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.4, opacity: 0.35, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.62 })
             .bindTooltip(`<b>${esc(name.get(w.zone) ?? `Zone ${w.zone}`)}</b>${esc(f?.label ?? y)}: ${esc(fmt(v))}<br><span style="opacity:.7">Click to filter the console</span>`,
               { sticky: true, className: "dtip", direction: "top", offset: [0, -8] })
             .on("click", () => cb.current?.(w.zone))
             .addTo(map);
           bounds.extend(poly.getBounds());
         }
-        for (const z of geo.zones) L.polyline(z.lines, { color: "#FFFFFF", weight: z.zone === top ? 3.4 : 1.8, opacity: 0.95, interactive: false }).addTo(map);
+        for (const z of geo.zones) L.polyline(z.lines, { color: z.zone === top ? "#2BD4E6" : "#C9D7F2", weight: z.zone === top ? 2.6 : 1.3, opacity: 0.8, interactive: false }).addTo(map);
         // the leading zone carries its value as a label
         const tz = geo.zones.find((z) => z.zone === top);
         if (tz) L.marker([tz.lat, tz.lon], { interactive: false, icon: L.divIcon({ className: "aq-maplabel", html: `<b>${esc(name.get(top!) ?? "")}</b>${esc(fmt(byZone.get(top!) ?? 0))}`, iconSize: [0, 0] }) }).addTo(map);
@@ -66,7 +66,7 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
         for (const w of geo.wards) {
           const v = byWard.get(w.ward);
           const step = v == null || v <= 0 ? -1 : Math.min(RAMP.length - 1, Math.floor((v / max) * RAMP.length - 1e-9));
-          const poly = L.polygon(w.rings, { color: "#FFFFFF", weight: 0.5, opacity: 0.6, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.66 })
+          const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.5, opacity: 0.4, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.66 })
             .bindTooltip(`<b>Ward ${w.ward}</b>${esc(f?.label ?? y)}: ${esc(v == null ? "no data" : fmt(v))}<br><span style="opacity:.7">Zone ${w.zone} · click to filter the console</span>`,
               { sticky: true, className: "dtip", direction: "top", offset: [0, -8] })
             .on("click", () => cb.current?.(w.zone))
@@ -90,7 +90,7 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
           const lat = Number(r.lat), lon = Number(r.lon);
           const v = Number(r[y] ?? 1);
           const radius = spec.type === "map_hotspots" ? 5 + 13 * Math.sqrt(v / max) : bySev && r.sev === "Severe" ? 7 : 5;
-          const fill = spec.type === "map_hotspots" ? "#E0730D" : bySev ? SEV[String(r.sev)] ?? "#1560E8" : "#1560E8";
+          const fill = spec.type === "map_hotspots" ? "#F7893B" : bySev ? SEV[String(r.sev)] ?? "#4C8DFF" : "#4C8DFF";
           const place = r.place && r.place !== r[label] ? `<br>${esc(String(r.place))}` : "";
           L.circleMarker([lat, lon], { radius, color: "#FFFFFF", weight: 2, fillColor: fill, fillOpacity: 0.88 })
             .bindTooltip(`<b>${esc(String(r[label] ?? ""))}</b>${place}${bySev && r.sev ? `<br>${esc(String(r.sev))}` : ""}${f && y !== "priority" ? `<br>${esc(f.label)}: ${esc(fmt(v))}` : ""}`
@@ -114,7 +114,7 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
   return <div ref={el} className="aq-map" style={{ height }} role="img" aria-label={spec.title} />;
 }
 
-const SEV: Record<string, string> = { Severe: "#D92D35", High: "#E0730D", Medium: "#EDA100", Low: "#12925F" };
+const SEV: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#EDA100", Low: "#35C28C" };
 
 function addSevLegend(L: typeof Leaflet, map: Leaflet.Map) {
   const Legend = L.Control.extend({

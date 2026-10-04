@@ -1,0 +1,323 @@
+{
+  "asOf": "2026-10-04 03:22:04",
+  "ranAt": "2026-10-03T21:52:06.003Z",
+  "index": {
+    "model": "Xenova/multilingual-e5-base",
+    "ready": true,
+    "incidents": 11681,
+    "waiting": 15325,
+    "building": false,
+    "progress": null,
+    "error": null,
+    "covered": 11681,
+    "total": 27006
+  },
+  "intent": {
+    "n": 60,
+    "accuracy": 100,
+    "misses": [],
+    "note": "hand-written questions (not real usage): an optimistic estimate"
+  },
+  "retrieval": {
+    "query": "a news headline about the incident that is not its own title (another outlet's report of the same event)",
+    "asked": {
+      "n": 1,
+      "top1": 0,
+      "top3": 0,
+      "top5": 0,
+      "mrr": 0,
+      "tamil": {
+        "n": 0,
+        "top1": null,
+        "top5": null
+      },
+      "avgMs": 3829,
+      "misses": [
+        {
+          "query": "Key road caves in again in Chennai, now 20 ft deep",
+          "expected": "INC-20260928-BE2F4F",
+          "expectedTitle": "Roads, footpaths & bridges – Kumaran Nagar 6Th Cross Street, Peravallur",
+          "got": "INC-20260930-D8EC11",
+          "rank": null,
+          "how": "meaning"
+        }
+      ]
+    }
+  },
+  "followUps": {
+    "dialogues": 8,
+    "followUpTurns": 13,
+    "resolved": 84.6,
+    "dialoguesFullyRight": "6/8",
+    "detail": [
+      {
+        "name": "priority list, then one of them in depth",
+        "turns": [
+          {
+            "q": "Show me the top 3 priority crime incidents",
+            "ok": true,
+            "intent": "PRIORITY_INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Top 3 priority crime incidents · last 7 days",
+            "ms": 227
+          },
+          {
+            "q": "Tell me more about the second one",
+            "ok": true,
+            "intent": "INCIDENT_DETAIL",
+            "type": "incident_detail",
+            "headline": "‘Gem Granites’ Veeramani booked in second POCSO Act case",
+            "ms": 1121
+          },
+          {
+            "q": "Where did it happen?",
+            "ok": true,
+            "intent": "INCIDENT_DETAIL",
+            "type": "incident_detail",
+            "headline": "‘Gem Granites’ Veeramani booked in second POCSO Act case",
+            "ms": 893
+          },
+          {
+            "q": "When was it reported?",
+            "ok": true,
+            "intent": "INCIDENT_DETAIL",
+            "type": "incident_detail",
+            "headline": "‘Gem Granites’ Veeramani booked in second POCSO Act case",
+            "ms": 1098
+          },
+          {
+            "q": "Show similar incidents nearby",
+            "ok": true,
+            "intent": "INCIDENT_RELATED",
+            "type": "incident_list",
+            "headline": "Incidents like ‘Gem Granites’ Veeramani booked in second POCSO Act case",
+            "ms": 150
+          },
+          {
+            "q": "Make that a map",
+            "ok": true,
+            "intent": "MAP",
+            "type": "map",
+            "headline": "The same incidents on the map",
+            "ms": 101
+          }
+        ]
+      },
+      {
+        "name": "the last one of a list",
+        "turns": [
+          {
+            "q": "Top 5 priority incidents this month",
+            "ok": true,
+            "intent": "PRIORITY_INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Top 5 priority incidents · last 30 days",
+            "ms": 177
+          },
+          {
+            "q": "Tell me about the last one",
+            "ok": true,
+            "intent": "INCIDENT_DETAIL",
+            "type": "incident_detail",
+            "headline": "Flooding & waterlogging – Koyambedu (Cooum River - Koyambedu stretch)",
+            "ms": 1096
+          }
+        ]
+      },
+      {
+        "name": "a list narrowed to a place",
+        "turns": [
+          {
+            "q": "List the recent accident incidents this month",
+            "ok": true,
+            "intent": "INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Road accidents incidents · last 30 days",
+            "ms": 115
+          },
+          {
+            "q": "Only in Adyar",
+            "ok": true,
+            "intent": "INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Road accidents incidents · last 30 days",
+            "ms": 121
+          }
+        ]
+      },
+      {
+        "name": "actions for a listed incident",
+        "turns": [
+          {
+            "q": "Top 3 priority incidents this week",
+            "ok": true,
+            "intent": "PRIORITY_INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Top 3 priority incidents · last 7 days",
+            "ms": 119
+          },
+          {
+            "q": "What should we do about the first one?",
+            "ok": true,
+            "intent": "ACTION_REQUEST",
+            "type": "actions",
+            "headline": "What to do: Lakes, bunds & sluices – Porur (Porur Lake Bund)",
+            "ms": 11
+          }
+        ]
+      },
+      {
+        "name": "actions for the incident in view",
+        "turns": [
+          {
+            "q": "Show me the top 3 priority incidents today",
+            "ok": true,
+            "intent": "PRIORITY_INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Top 3 priority incidents · last 24 hours",
+            "ms": 106
+          },
+          {
+            "q": "Explain the third one",
+            "ok": true,
+            "intent": "INCIDENT_DETAIL",
+            "type": "incident_detail",
+            "headline": "Unsafe buildings & walls – Nungambakkam",
+            "ms": 1079
+          },
+          {
+            "q": "What should be done about it?",
+            "ok": false,
+            "intent": null,
+            "type": null,
+            "headline": null,
+            "ms": 0
+          }
+        ]
+      },
+      {
+        "name": "a count, then the incidents behind it",
+        "turns": [
+          {
+            "q": "How many crime incidents this month?",
+            "ok": true,
+            "intent": "INCIDENT_COUNT",
+            "type": "kpi",
+            "headline": "1,002 crime incidents · last 30 days",
+            "ms": 30
+          },
+          {
+            "q": "Show me the top 3",
+            "ok": false,
+            "intent": null,
+            "type": null,
+            "headline": null,
+            "ms": 0
+          }
+        ]
+      },
+      {
+        "name": "top news, then one story",
+        "turns": [
+          {
+            "q": "What are the top news stories today?",
+            "ok": true,
+            "intent": "NEWS_TOP",
+            "type": "news_list",
+            "headline": "Top district news · last 36 hours",
+            "ms": 15
+          },
+          {
+            "q": "Tell me more about the first story",
+            "ok": true,
+            "intent": "NEWS_DETAIL",
+            "type": "news_detail",
+            "headline": "A month after mass fish death, Ennore fishers flag inaction by authorities; plan on plugging sewage intru",
+            "ms": 3
+          }
+        ]
+      },
+      {
+        "name": "a list as a table",
+        "turns": [
+          {
+            "q": "Top 4 priority flooding incidents this month",
+            "ok": true,
+            "intent": "PRIORITY_INCIDENT_LIST",
+            "type": "incident_list",
+            "headline": "Top 4 priority flooding incidents · last 30 days",
+            "ms": 80
+          },
+          {
+            "q": "As a table",
+            "ok": true,
+            "intent": "TABLE",
+            "type": "table",
+            "headline": "The same incidents as a table",
+            "ms": 90
+          }
+        ]
+      }
+    ]
+  },
+  "grounding": {
+    "fastPath": {
+      "answers": 25,
+      "numbersChecked": 107,
+      "unmatched": 7,
+      "grounded": 93.5,
+      "examples": [
+        {
+          "q": "Show similar incidents nearby",
+          "number": 60,
+          "text": "Five crimes against women & children incidents within 2 km of Puzhal in the 60 days around it, closest first."
+        },
+        {
+          "q": "List the recent accident incidents this month",
+          "number": 318,
+          "text": "The eight newest of 318 road accidents incidents in the last 30 days."
+        },
+        {
+          "q": "What are the top news stories today?",
+          "number": 190,
+          "text": "Six stories of 190, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped."
+        },
+        {
+          "q": "Top 3 crime types this month",
+          "number": 2,
+          "text": "1. **Theft, snatching & fraud**: 514 (518 the period before)\n2. **Violent crime**: 199 (138 the period before)\n3. **Crimes against women & children**: 109 (64 t"
+        },
+        {
+          "q": "Which kinds of incidents are most common this week?",
+          "number": 2,
+          "text": "1. **Garbage & solid waste**: 150 (151 the period before)\n2. **Theft, snatching & fraud**: 140 (114 the period before)\n3. **Protests & public nuisance**: 111 (8"
+        },
+        {
+          "q": "Top news about flooding this week",
+          "number": 55,
+          "text": "Six stories of 55, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped."
+        },
+        {
+          "q": "News with no department record this week",
+          "number": 235,
+          "text": "Six stories of 235, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped."
+        }
+      ]
+    },
+    "modelWritten": {
+      "answersWithNumbers": 0,
+      "numbersChecked": 0,
+      "answersWithAnUnmatchedNumber": 0,
+      "regenerated": 0,
+      "note": "the runtime check rewrites or drops an answer whose numbers are not in the tool results; unmatched counts what it caught"
+    }
+  },
+  "latency": {
+    "fastPathTurns": 27,
+    "p50ms": 106,
+    "p90ms": 1096,
+    "maxMs": 1121,
+    "note": "the fast path alone, in this process (the web server adds the session, spelling and place lookups)"
+  },
+  "runtimeS": 16
+}

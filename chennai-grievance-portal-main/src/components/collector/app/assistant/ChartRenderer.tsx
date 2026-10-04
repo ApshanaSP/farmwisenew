@@ -23,13 +23,14 @@ import type { Lang } from "@/lib/assistant/lang";
 echarts.use([BarChart, LineChart, PieChart, HeatmapChart, ScatterChart, GaugeChart, TreemapChart, DataZoomComponent, GraphicComponent, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, MarkAreaComponent,
   MarkPointComponent, TitleComponent, VisualMapComponent, AriaComponent, CanvasRenderer, UniversalTransition, LabelLayout]);
 
-/** Validated with the dataviz palette checker on the console's white card surface. */
-const SERIES = ["#1560E8", "#EB6834", "#1BAF7A", "#EDA100"];
-const INK = { primary: "#0A1A3C", secondary: "#3E5278", muted: "#6F82A6", grid: "#EAF0F9", axis: "#DCE5F3" };
-const HIGHLIGHT = "#1560E8";
-const MUTED = "#86B6EF";
-const PREV = "#C8D1DF";
-const SEVERITY: Record<string, string> = { Severe: "#D92D35", High: "#E0730D", Medium: "#B98A00", Low: "#12925F" };
+/** District IQ chart theme (mirror of tokens.css): blue leads, cyan / violet / amber follow; neutral comparison. */
+const SERIES = ["#4C8DFF", "#2BC7D9", "#A28EFA", "#E8B84A"];
+const INK = { primary: "#E6ECF7", secondary: "#A8B5CD", muted: "#7383A2", grid: "rgba(138,164,214,.09)", axis: "rgba(138,164,214,.22)" };
+const HIGHLIGHT = "#4C8DFF";
+const MUTED = "#2C4B7E";
+const PREV = "#3B4B6B";
+const SURFACE = "#0B1426";
+const SEVERITY: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#E8B84A", Low: "#4DB3E8" };
 const FONT = '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
 
 export interface ChartProps {
@@ -63,8 +64,9 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
     animationDelay: (i: number) => Math.min(i * 12, 120),
     textStyle: { fontFamily: FONT, color: INK.secondary },
     aria: { enabled: true, label: { description: describe(v) } },
-    tooltip: { trigger: "item", confine: true, backgroundColor: "#0A1A3C", borderWidth: 0, padding: [8, 10],
-      textStyle: { color: "#fff", fontSize: 12.5, fontFamily: FONT }, extraCssText: "border-radius:9px;box-shadow:0 12px 28px rgba(8,30,80,.3)" }
+    tooltip: { trigger: "item", confine: true, backgroundColor: "#0F192E", borderColor: "rgba(138,164,214,.28)", borderWidth: 1, padding: [9, 12],
+      textStyle: { color: "#E6ECF7", fontSize: 12.5, fontFamily: FONT },
+      extraCssText: "border-radius:8px;box-shadow:0 18px 40px -14px rgba(0,0,0,.8);line-height:1.5;font-variant-numeric:tabular-nums" }
   };
   const s0 = v.series[0];
   const sev = (name: string) => SEVERITY[name];
@@ -78,9 +80,9 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
       yAxis: { type: "category", data: h.ys, inverse: true, axisLabel: { color: INK.secondary, fontSize: 11.5, width: 150, overflow: "truncate" }, axisLine: { show: false },
         axisTick: { show: false } },
       visualMap: { min: 0, max: Math.max(1, h.max), calculable: false, orient: "horizontal", left: "center", bottom: 0, itemHeight: 120, itemWidth: 10,
-        inRange: { color: ["#EEF4FF", "#86B6EF", "#1560E8", "#0B3FA8"] }, textStyle: { color: INK.muted, fontSize: 11 } },
+        inRange: { color: ["#0F1D36", "#1E3D73", "#2F6FE6", "#8DB6FF"] }, textStyle: { color: INK.muted, fontSize: 11 } },
       series: [{ id: "s0", type: "heatmap", data: h.cells, label: { show: h.cells.length <= 120, color: INK.primary, fontSize: 10.5 },
-        itemStyle: { borderColor: "#fff", borderWidth: 2, borderRadius: 3 }, emphasis: { itemStyle: { borderColor: INK.primary, borderWidth: 1 } },
+        itemStyle: { borderColor: SURFACE, borderWidth: 2, borderRadius: 3 }, emphasis: { itemStyle: { borderColor: INK.primary, borderWidth: 1 } },
         universalTransition: { enabled: true } }],
       tooltip: { ...common.tooltip, formatter: (p: { value: [number, number, number] }) => `${h.ys[p.value[1]]}<br>${h.xs[p.value[0]]}: <b>${fmtValue(p.value[2])}</b>` }
     };
@@ -100,13 +102,13 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
         { type: "text", top: 28, style: { text: "total", fontSize: 11.5, fill: INK.muted, fontFamily: FONT, textAlign: "center" }, left: "center" }] }],
       series: [{
         id: "s0", type: "pie", radius: ["50%", "74%"], center: ["50%", "45%"], padAngle: 1.2, animationType: "scale", animationEasing: "elasticOut",
-        emphasis: { scale: true, scaleSize: 8, itemStyle: { shadowBlur: 16, shadowColor: "rgba(10,26,60,.25)" } }, itemStyle: { borderRadius: 4, borderColor: "#fff", borderWidth: 2 },
+        emphasis: { scale: true, scaleSize: 8, itemStyle: { shadowBlur: 16, shadowColor: "rgba(0,0,0,.5)" } }, itemStyle: { borderRadius: 4, borderColor: SURFACE, borderWidth: 2 },
         label: { color: INK.secondary, fontSize: 12, formatter: (p: { name: string; value: number; percent: number }) => `${p.name}\n{b|${fmt(s0)(p.value)}} · ${p.percent.toFixed(0)}%`,
           rich: { b: { fontWeight: 700, color: INK.primary } } },
         labelLine: { length: 8, length2: 8, lineStyle: { color: INK.axis } },
         data: v.categories.map((name, i) => ({
           name, value: s0.values[i] ?? 0,
-          itemStyle: { color: sev(name) ?? (v.highlight.includes(i) ? HIGHLIGHT : [MUTED, "#5598E7", "#B7D3F6", "#3987E5", "#CDE2FB", "#9EC5F4"][i % 6]) },
+          itemStyle: { color: sev(name) ?? (v.highlight.includes(i) ? HIGHLIGHT : [MUTED, "#2BC7D9", "#A28EFA", "#E8B84A", "#35C28C", "#6F86B0"][i % 6]) },
           selected: v.highlight.includes(i)
         })),
         selectedOffset: 6, universalTransition: { enabled: true }
@@ -140,16 +142,16 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
       const hi = v.highlight[0];
       series.push({
         ...base, type: "line", data: s.values, smooth: 0.2, showSymbol: v.categories.length <= 31, symbol: "circle", symbolSize: 7,
-        lineStyle: { width: 2, color }, itemStyle: { color, borderColor: "#fff", borderWidth: 2 },
+        lineStyle: { width: 2, color }, itemStyle: { color, borderColor: SURFACE, borderWidth: 2 },
         areaStyle: v.type === "area" || (!multi && !v.band) ? { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: "rgba(21,96,232,.32)" },
           { offset: 1, color: "rgba(21,96,232,.02)" }]) } : undefined,
         emphasis: { focus: "series", scale: 1.6 },
         endLabel: multi ? { show: true, formatter: "{a}", color: INK.secondary, fontSize: 11 } : undefined,
         markArea: k === 0 && v.band ? { silent: true, itemStyle: { color: "rgba(18,146,95,.08)" },
-          label: { show: true, position: "insideTopLeft", color: "#12925F", fontSize: 10.5, formatter: "Usual range" },
+          label: { show: true, position: "insideTopLeft", color: "#35C28C", fontSize: 10.5, formatter: "Usual range" },
           data: [[{ yAxis: v.band.lo }, { yAxis: v.band.hi }]] } : undefined,
         markLine: k === 0 && v.threshold ? thresholdLine(v, false) : undefined,
-        markPoint: k === 0 && hi != null && s.values[hi] != null ? { symbol: "circle", symbolSize: 10, itemStyle: { color: "#0B3FA8", borderColor: "#fff", borderWidth: 2 },
+        markPoint: k === 0 && hi != null && s.values[hi] != null ? { symbol: "circle", symbolSize: 10, itemStyle: { color: "#8DB6FF", borderColor: SURFACE, borderWidth: 2 },
           label: { show: v.callouts.length > 0, position: "top", distance: 8, color: INK.primary, fontWeight: 700, fontSize: 12, formatter: () => fmt(s)(s.values[hi]) },
           data: [{ coord: [hi, s.values[hi]] }] } : undefined
       });
@@ -165,7 +167,7 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
           borderRadius: stacked ? 0 : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]
         }
       })),
-      itemStyle: stacked ? { borderColor: "#fff", borderWidth: 1 } : undefined,
+      itemStyle: stacked ? { borderColor: SURFACE, borderWidth: 1 } : undefined,
       label: { show: !stacked && v.categories.length <= 16, position: horizontal ? "right" : "top", distance: 6, color: INK.secondary, fontSize: 11.5,
         formatter: (p: { value: number | null; dataIndex: number }) => (p.value == null ? "" : fmt(s)(p.value)),
         rich: {} },
@@ -189,7 +191,7 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
     series,
     // long series: scroll the mouse wheel over the chart or drag the slider to zoom
     dataZoom: isLine && v.categories.length > 31 ? [{ type: "inside", start: 0, end: 100 }, { type: "slider", height: 16, bottom: 0, borderColor: "transparent",
-      backgroundColor: "#F3F6FB", fillerColor: "rgba(21,96,232,.15)", handleStyle: { color: HIGHLIGHT }, textStyle: { color: INK.muted, fontSize: 10 } }] : undefined,
+      backgroundColor: "#101B31", fillerColor: "rgba(76,141,255,.18)", handleStyle: { color: HIGHLIGHT }, textStyle: { color: INK.muted, fontSize: 10 } }] : undefined,
     tooltip: { ...common.tooltip, trigger: isLine ? "axis" : "item", axisPointer: isLine ? { type: "line", lineStyle: { color: INK.muted, width: 1 } } : undefined,
       valueFormatter: (x: number | null) => fmt(s0)(x) }
   };
@@ -198,8 +200,8 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
 function thresholdLine(v: ChartView, horizontal: boolean) {
   const t = v.threshold!;
   return {
-    silent: true, symbol: "none", lineStyle: { color: "#E0730D", width: 1.5, type: [5, 4] },
-    label: { color: "#B45309", fontSize: 11, fontWeight: 600, formatter: t.label, position: horizontal ? "end" : "insideEndTop" },
+    silent: true, symbol: "none", lineStyle: { color: "#F7893B", width: 1.5, type: [5, 4] },
+    label: { color: "#F7893B", fontSize: 11, fontWeight: 600, formatter: t.label, position: horizontal ? "end" : "insideEndTop" },
     data: [horizontal ? { xAxis: t.value } : { yAxis: t.value }]
   };
 }
@@ -235,7 +237,7 @@ function smallMultiples(v: ChartView, common: Common): echarts.EChartsCoreOption
     series: v.series.map((s, i) => ({
       id: `s${i}`, name: s.name, type: "line", xAxisIndex: i, yAxisIndex: i, data: s.values, showSymbol: false, smooth: 0.2,
       lineStyle: { width: 2, color: HIGHLIGHT }, areaStyle: { color: HIGHLIGHT, opacity: 0.08 }, universalTransition: { enabled: true },
-      markPoint: { symbol: "circle", symbolSize: 7, itemStyle: { color: "#0B3FA8", borderColor: "#fff", borderWidth: 2 },
+      markPoint: { symbol: "circle", symbolSize: 7, itemStyle: { color: "#8DB6FF", borderColor: SURFACE, borderWidth: 2 },
         label: { show: true, position: "top", fontSize: 10.5, color: INK.primary, formatter: (p: { value: number }) => fmtValue(p.value, s.format, s.unit) },
         data: [{ type: "max" }] }
     })),
@@ -260,9 +262,9 @@ function dumbbell(v: ChartView, common: Common): echarts.EChartsCoreOption {
     series: [
       { id: "base", type: "bar", stack: "d", data: lo, itemStyle: { color: "transparent" }, silent: true, barWidth: 3, tooltip: { show: false } },
       { id: "span", type: "bar", stack: "d", data: span, itemStyle: { color: PREV, borderRadius: 2 }, silent: true, barWidth: 3, tooltip: { show: false } },
-      { id: "prev", name: "Previous period", type: "scatter", symbolSize: 11, data: prev.map((x, i) => [x, i]), itemStyle: { color: "#9AA8C0", borderColor: "#fff", borderWidth: 2 } },
+      { id: "prev", name: "Previous period", type: "scatter", symbolSize: 11, data: prev.map((x, i) => [x, i]), itemStyle: { color: "#56688C", borderColor: SURFACE, borderWidth: 2 } },
       { id: "s0", name: s.name, type: "scatter", symbolSize: 13, universalTransition: { enabled: true },
-        data: s.values.map((x, i) => ({ value: [x, i], itemStyle: { color: v.highlight.includes(i) || !v.highlight.length ? HIGHLIGHT : MUTED, borderColor: "#fff", borderWidth: 2 } })),
+        data: s.values.map((x, i) => ({ value: [x, i], itemStyle: { color: v.highlight.includes(i) || !v.highlight.length ? HIGHLIGHT : MUTED, borderColor: SURFACE, borderWidth: 2 } })),
         label: { show: v.categories.length <= 12, position: "right", distance: 8, color: INK.primary, fontSize: 11.5,
           formatter: (p: { value: [number | null, number] }) => { const b = prev[p.value[1]]; const a = p.value[0];
             return a == null ? "" : b != null && b !== 0 ? `${f(a)} (${a >= b ? "+" : ""}${Math.round(((a - b) / b) * 100)}%)` : f(a); } } }
@@ -276,7 +278,7 @@ function grad(horizontal: boolean, from: string, to: string) {
   return new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 1, horizontal ? 1 : 0, 0, [{ offset: 0, color: from }, { offset: 1, color: to }]);
 }
 
-const RAMP = ["#0B3FA8", "#1560E8", "#3987E5", "#5598E7", "#86B6EF", "#9EC5F4", "#B7D3F6", "#CDE2FB"];
+const RAMP = ["#8DB6FF", "#4C8DFF", "#3A76DC", "#2F63BC", "#28549E", "#21477F", "#1B3A66", "#162F52"];
 
 /** A rose (Nightingale) chart: petals sized by value, for a handful of categories. */
 function rose(v: ChartView, common: Common): echarts.EChartsCoreOption {
@@ -286,11 +288,11 @@ function rose(v: ChartView, common: Common): echarts.EChartsCoreOption {
     ...common,
     legend: { bottom: 0, icon: "circle", itemWidth: 9, itemHeight: 9, textStyle: { color: INK.secondary, fontSize: 12 } },
     series: [{ id: "s0", type: "pie", roseType: "area", radius: ["14%", "72%"], center: ["50%", "46%"], animationType: "scale", animationEasing: "elasticOut",
-      itemStyle: { borderRadius: 6, borderColor: "#fff", borderWidth: 2 },
+      itemStyle: { borderRadius: 6, borderColor: SURFACE, borderWidth: 2 },
       label: { color: INK.secondary, fontSize: 11.5, formatter: (p: { name: string; value: number }) => `${p.name}
 {b|${fmt(s)(p.value)}}`,
         rich: { b: { fontWeight: 700, color: INK.primary } } },
-      emphasis: { scale: true, scaleSize: 6, itemStyle: { shadowBlur: 14, shadowColor: "rgba(10,26,60,.25)" } },
+      emphasis: { scale: true, scaleSize: 6, itemStyle: { shadowBlur: 14, shadowColor: "rgba(0,0,0,.5)" } },
       data: v.categories.map((name, i) => ({ name, value: s.values[i] ?? 0, itemStyle: { color: SEVERITY[name] ?? RAMP[Math.min(RAMP.length - 1, order.indexOf(i))] } })),
       universalTransition: { enabled: true } }],
     tooltip: { ...common.tooltip, formatter: (p: { name: string; value: number; percent: number }) => `${p.name}<br><b>${fmt(s)(p.value)}</b> · ${p.percent.toFixed(1)}%` }
@@ -305,7 +307,7 @@ function treemap(v: ChartView, common: Common): echarts.EChartsCoreOption {
   return {
     ...common,
     series: [{ id: "s0", type: "treemap", roam: false, nodeClick: false, breadcrumb: { show: false }, width: "100%", height: "100%", top: 0, left: 0,
-      itemStyle: { borderColor: "#fff", borderWidth: 2, gapWidth: 2, borderRadius: 6 },
+      itemStyle: { borderColor: SURFACE, borderWidth: 2, gapWidth: 2, borderRadius: 6 },
       label: { show: true, color: "#fff", fontSize: 12, fontFamily: FONT, overflow: "truncate",
         formatter: (p: { name: string; value: number }) => `{n|${p.name}}
 {v|${fmt(s)(p.value)}} {p|${Math.round((p.value / total) * 100)}%}`,
@@ -321,12 +323,12 @@ function treemap(v: ChartView, common: Common): echarts.EChartsCoreOption {
 function gauge(v: ChartView, common: Common): echarts.EChartsCoreOption {
   const s = v.series[0];
   const val = s.values[0] ?? 0;
-  const color = val >= 90 ? "#D92D35" : val >= 75 ? "#E0730D" : "#12925F";
+  const color = val >= 90 ? "#F2555A" : val >= 75 ? "#F7893B" : "#35C28C";
   return {
     ...common,
     series: [{ id: "s0", type: "gauge", min: 0, max: 100, startAngle: 210, endAngle: -30, radius: "92%", center: ["50%", "58%"],
       progress: { show: true, width: 16, roundCap: true, itemStyle: { color } },
-      axisLine: { lineStyle: { width: 16, color: [[1, "#EAF0F9"]] }, roundCap: true },
+      axisLine: { lineStyle: { width: 16, color: [[1, "rgba(138,164,214,.12)"]] }, roundCap: true },
       pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false },
       axisLabel: { distance: -38, color: INK.muted, fontSize: 10.5, formatter: (x: number) => ([0, 50, 100].includes(x) ? `${x}%` : "") },
       anchor: { show: false }, title: { offsetCenter: [0, "38%"], color: INK.secondary, fontSize: 12.5 },

@@ -10,8 +10,9 @@ import path from "path";
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
 import pool from "@/lib/db";
+import { hasPhrase, tokens } from "@/lib/assistant/intent";
 
-interface Category { code: string; label: string; lead: string; base_severity: number; playbook: string[]; keywords_en: string[]; keywords_ta: string[] }
+interface Category { code: string; label: string; family: string; lead: string; base_severity: number; playbook: string[]; keywords_en: string[]; keywords_ta: string[] }
 interface Reference { categories: Category[]; taluks: { code: string; name: string; name_ta: string | null; in_district: boolean }[]; places?: Place[] }
 
 let ref: Reference | null = null;
@@ -21,18 +22,19 @@ function reference(): Reference {
 }
 
 export function categories() {
-  return reference().categories.map((c) => ({ code: c.code, label: c.label, lead: c.lead, playbook: c.playbook }));
+  return reference().categories.map((c) => ({ code: c.code, label: c.label, family: c.family, lead: c.lead, playbook: c.playbook }));
 }
 
 export interface Classified { code: string; label: string; dept: string; conf: number; terms: string[]; severity: number }
 
 /** Best category by keyword hits (English and Tamil); null when nothing matches. */
 export function classify(text: string): Classified | null {
-  const t = ` ${text.toLowerCase()} `;
+  const words = tokens(text);
   let best: Classified | null = null;
   for (const c of reference().categories) {
     if (c.code === "OTHER") continue;
-    const terms = [...(c.keywords_en ?? []), ...(c.keywords_ta ?? [])].filter((k) => k && t.includes(k.toLowerCase()));
+    // whole words (a Tamil keyword must start a word, so தற்கொலை, suicide, never matches கொலை, murder)
+    const terms = [...(c.keywords_en ?? []), ...(c.keywords_ta ?? [])].filter((k) => k && hasPhrase(words, k));
     if (!terms.length) continue;
     const score = terms.length + terms.reduce((s, k) => s + Math.min(1, k.length / 20), 0);
     if (!best || score > best.conf) best = { code: c.code, label: c.label, dept: c.lead, conf: score, terms, severity: c.base_severity };

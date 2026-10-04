@@ -111,6 +111,34 @@ async function table(name: string, t: TableInfo): Promise<Snapshot> {
 const q = (s: string) => `"${s.replace(/"/g, '""')}"`;
 const SQL_TYPE: Record<Kind, string> = { text: "TEXT COLLATE NOCASE", int: "INTEGER", bool: "INTEGER", float: "REAL", date: "TEXT", datetime: "TEXT" };
 
+/**
+ * Columns and tables that newer pipeline code writes (AI notes, location precision, news labelling) and the website
+ * reads. A build uploaded by a PC on older pipeline code lacks them: they are added empty, so the pages show no AI
+ * note instead of failing. Once the uploading PC runs the newer pipeline, the build carries them and nothing is added.
+ */
+const COMPAT: Record<string, [string, Kind][]> = {
+  incidents: [["loc_precision_m", "float"], ["ai_summary", "text"], ["ai_summary_ta", "text"], ["ai_attention", "text"],
+    ["ai_next_step", "text"], ["ai_model", "text"]],
+  briefings: [["ai_summary", "text"], ["ai_summary_ta", "text"]],
+  documents: [["category_suggestion", "text"], ["category_method", "text"], ["incident_method", "text"], ["places", "text"],
+    ["geo_conf", "float"], ["dept_src", "text"], ["language", "text"], ["is_complaint", "bool"]]
+};
+const COMPAT_TABLES: Record<string, [string, Kind][]> = {
+  briefing_notes: [["section", "text"], ["item_key", "text"], ["text_en", "text"], ["text_ta", "text"], ["extra", "text"],
+    ["model", "text"], ["written_at", "datetime"], ["written_for", "text"], ["as_of", "datetime"]]
+};
+
+function compat(db: DB, snaps: { table: string; columns: [string, Kind][] }[]): void {
+  const have = new Map(snaps.map((s) => [s.table, new Set(s.columns.map(([c]) => c))]));
+  for (const [t, cols] of Object.entries(COMPAT)) {
+    const got = have.get(t);
+    if (!got) continue;
+    for (const [c, k] of cols) if (!got.has(c)) db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} ${SQL_TYPE[k]}`);
+  }
+  for (const [t, cols] of Object.entries(COMPAT_TABLES))
+    if (!have.has(t)) db.exec(`CREATE TABLE ${q(t)} (${cols.map(([c, k]) => `${q(c)} ${SQL_TYPE[k]}`).join(", ")})`);
+}
+
 /** A fresh in-memory database holding one complete build. */
 async function build(m: Manifest): Promise<State> {
   setDatabaseNames(DB_NAMES());
@@ -135,6 +163,7 @@ async function build(m: Manifest): Promise<State> {
     for (const c of m.indexes[s.table] ?? [])
       if (s.columns.some(([n]) => n === c)) db.exec(`CREATE INDEX ${q(`ix_${s.table}_${c}`)} ON ${q(s.table)} (${q(c)})`);
   }
+  compat(db, snaps);
   db.exec("CREATE TABLE _export_meta (k TEXT PRIMARY KEY, v TEXT)");
   const meta = db.prepare("INSERT INTO _export_meta VALUES (?, ?)");
   for (const [k, v] of Object.entries({ ...m.meta, build_id: m.build_id, store: "aws" })) meta.run(k, String(v));

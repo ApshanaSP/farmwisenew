@@ -1,64 +1,64 @@
 {
-  "_last_build_fingerprint": "8ac68597e7cfc1ce3cc01e15a70250a850a80946",
+  "_last_build_fingerprint": "e2cbce5d6c9add6f61d112dd8baf7c1b31dc2f40",
   "imd": {
-    "last_run": 1790944415.8908875,
+    "last_run": 1791091881.0482295,
     "ok": true,
-    "last_ok": 1790944415.8908875,
+    "last_ok": 1791091881.0482295,
     "attempts": 1,
-    "tail": "mwisenew\\imd_weather_collector\\data\\imd_weather_forecasts_chennai.csv  rows=159  range=2026-09-25T10:01:36+05:30 .. 2026-10-02T09:49:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_warnings_chennai.csv  rows=60  range=2026-09-25T12:12:21+05:30 .. 2026-10-02T20:14:34+05:30  archived this run=0\n  D:\\farmwisenew\\imd_weather_collector\\data\\imd_weather_run_log.csv\n"
+    "tail": "d this run=0\n  D:\\farm\\imd_weather_collector\\data\\imd_weather_forecasts_chennai.csv  rows=204  range=2026-09-25T10:01:36+05:30 .. 2026-10-04T10:01:01+05:30  archived this run=0\n  D:\\farm\\imd_weather_collector\\data\\imd_weather_warnings_chennai.csv  rows=78  range=2026-09-25T12:12:21+05:30 .. 2026-10-04T11:12:22+05:30  archived this run=0\n  D:\\farm\\imd_weather_collector\\data\\imd_weather_run_log.csv\n"
   },
   "news": {
-    "last_run": 1790944392.7587445,
+    "last_run": 1791091859.029199,
     "ok": true,
-    "last_ok": 1790944392.7587445,
+    "last_ok": 1791091859.029199,
     "attempts": 1,
-    "tail": "     5    0.5%\n  Financial Management Unit                                       4    0.4%\n  Parks & Play Fields Department                                  4    0.4%\n  Bridges Department                                              2    0.2%\nDepartment method: {'keyword': 366, 'fallback': 546}\nComplaints: 43 of 912 (4.7%)\nMySQL: not configured\n18:03:12 | INFO    | === Run finished in 0:08:32 ===\n"
+    "tail": "     4    0.5%\n  Parks & Play Fields Department                                  3    0.4%\n  Financial Management Unit                                       2    0.2%\n  Family Welfare Department                                       1    0.1%\nDepartment method: {'fallback': 522, 'keyword': 282}\nComplaints: 32 of 804 (4.0%)\nMySQL: not configured\n11:00:58 | INFO    | === Run finished in 0:07:05 ===\n"
   },
   "cpcb": {
-    "last_run": 1790925204.3019855,
-    "ok": true,
+    "last_run": 1791092015.9778922,
+    "ok": false,
     "last_ok": 1790925204.3019855,
-    "attempts": 2,
-    "tail": "..2026-09-24, 2026-09-26\n  Velachery Res. Area, Chennai - CPCB      84/90 missing: 2026-07-05..2026-09-24, 2026-09-26, 2026-09-30\nstale / failed sources: data.gov.in CPCB real-time air quality (3b01bcb8) [no-api-key]; CPCB CCR historical (advance search / repository) [captcha-gated]; app.cpcbccr.com AQI_India [200 rejected: US-AQI scale]\nrows by fetch_method: requests=0, playwright=55, download=0\n"
+    "attempts": 3,
+    "tail": "ing: 2026-07-07..2026-09-24, 2026-09-26, 2026-09-30, 2026-10-03..2026-10-04\nstale / failed sources: data.gov.in CPCB real-time air quality (3b01bcb8) [no-api-key]; CPCB CCR live city map [playwright-error (stale)]; CPCB CCR historical (advance search / repository) [playwright-error]; app.cpcbccr.com AQI_India [200 rejected: US-AQI scale]\nrows by fetch_method: requests=0, playwright=59, download=0\n"
   },
   "cfm": {
-    "last_run": 1790925231.7608016,
+    "last_run": 1791092029.4818845,
     "ok": true,
-    "last_ok": 1790925231.7608016,
+    "last_ok": 1791092029.4818845,
     "attempts": 1,
-    "tail": " : coordinates: not published by any accessible endpoint (latitude/longitude left empty)\nlimitation     : gates_open_count: not published for any site\nlimitation     : gate discharge (spillway) is only in the live daily record; history has inflow only\nlimitation     : alert validity: no valid_from/valid_to published\nfailed calls   : none\nfetch methods  : requests 0, playwright 10 successful calls\n0-02\n2026-10-02 12:43:27 INFO HTTP 403 via requests on /Master/GetCsectionAndWaterLevel; switching to Playwright\n2026-10-02 12:43:42 INFO /Master/GetCsectionAndWaterLevel: skipped 9 readings with no verifiable observation time\n2026-10-02 12:43:42 INFO /Master/GetCsectionAndWaterLevel: dropped 2 out-of-scope records\n2026-10-02 12:43:45 INFO /Master/GetTankDataByDate: dropped 3 out-of-scope records\n"
+    "tail": "charge (spillway) is only in the live daily record; history has inflow only\nlimitation     : alert validity: no valid_from/valid_to published\nfailed calls   : /Master/GetCsectionAndWaterLevel, /Master/GetDangerMaxWaterlevel, /Master/GetTankDataByDate, /Master/GetHistoricalDataForReservoir, /HomePage/GetPublishAlert, /HomePage/GetBulletins\nfetch methods  : requests 0, playwright 0 successful calls\n Sync API inside the asyncio loop.\n2026-10-04 11:03:47 WARNING https://chennaifloodmonitor.tn.gov.in/HomePage/GetPublishAlert failed: playwright: It looks like you are using Playwright Sync API inside the asyncio loop.\n2026-10-04 11:03:49 WARNING https://chennaifloodmonitor.tn.gov.in/HomePage/GetBulletins failed: playwright: It looks like you are using Playwright Sync API inside the asyncio loop.\n"
   },
   "hospital": {
-    "last_run": 1790925232.7115922,
+    "last_run": 1791092030.4904914,
     "ok": true,
-    "last_ok": 1790925232.7115922,
+    "last_ok": 1791092030.4904914,
     "attempts": 1,
-    "tail": "        500           378              75.60              834             134 Gastrointestinal Disorders           102                84.96             Available          116         256                 Yes      Normal                                None\n\nDataset: 2026-04-06 to 2026-10-02 | 180 days | 1620 records\nCSV location: D:\\farmwisenew\\chennai_hospital_data\\chennai_hospital_health_data.csv\n"
+    "tail": "  Mylapore        500           375              75.00              870             114 Gastrointestinal Disorders           101                85.12             Available          119         263                 Yes      Normal                             None\n\nDataset: 2026-04-08 to 2026-10-04 | 180 days | 1620 records\nCSV location: D:\\farm\\chennai_hospital_data\\chennai_hospital_health_data.csv\n"
   },
   "pwd": {
-    "last_run": 1790925233.8855522,
+    "last_run": 1791092031.5311115,
     "ok": true,
-    "last_ok": 1790925233.8855522,
+    "last_ok": 1791092031.5311115,
     "attempts": 1,
     "tail": "747  2026-04-09T10:34:54+05:30  control_room      13.03190,80.26015  Parapet wall of Thiru. Vi. Ka. Bridge, Adyar damaged, Adyar. Dangerous for \n  PWD-INC-049748  2026-04-09T10:47:04+05:30  field_staff       13.02877,80.26047  Thiru. Vi. Ka. Bridge, Adyar \u0b87\u0ba3\u0bc8\u0baa\u0bcd\u0baa\u0bc1 \u0b9a\u0bbe\u0bb2\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0b85\u0bb0\u0bbf\u0baa\u0bcd\u0baa\u0bc1, \u0bb5\u0bbe\u0b95\u0ba9 \u0b93\u0b9f\u0bcd\u0b9f\u0bbf\u0b95\u0bb3\u0bcd \u0b85\u0b9a\u0bcd\u0b9a\u0bae\u0bcd\n\nVALIDATION PASSED: window, NOW-bound, FKs, timestamp order, storage<=capacity, schema, statuses\n"
   },
   "grievance": {
-    "last_run": 1790925252.445914,
+    "last_run": 1791092041.5718699,
     "ok": true,
-    "last_ok": 1790925252.445914,
+    "last_ok": 1791092041.5718699,
     "attempts": 1,
-    "tail": "hennai-grievance-portal-main\\data\\datasets\\grievances.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\grievance_status_history.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\_truth\\duplicate_truth.csv\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\GENERATION_REPORT.md\n  D:\\farmwisenew\\chennai-grievance-portal-main\\data\\datasets\\generation_meta.json\n"
+    "tail": "885 rows\n\nWrote:\n  D:\\farm\\chennai-grievance-portal-main\\data\\datasets\\grievances.csv\n  D:\\farm\\chennai-grievance-portal-main\\data\\datasets\\grievance_status_history.csv\n  D:\\farm\\chennai-grievance-portal-main\\data\\datasets\\_truth\\duplicate_truth.csv\n  D:\\farm\\chennai-grievance-portal-main\\data\\datasets\\GENERATION_REPORT.md\n  D:\\farm\\chennai-grievance-portal-main\\data\\datasets\\generation_meta.json\n"
   },
   "police": {
-    "last_run": 1790925259.4018562,
+    "last_run": 1791092043.8043854,
     "ok": true,
-    "last_ok": 1790925259.4018562,
+    "last_ok": 1791092043.8043854,
     "attempts": 1,
-    "tail": "406-0006' \u2502 '2026-04-06 02:58:00' \u2502 'TLK-AMJ' \u2502 'Shenoy Nagar'               \u2502 'THEFT_BURGLARY'      \u2502 'Burglary reported at residence in Shenoy Nagar'   \u2502 'CONTROL_ROOM_112'  \u2502 'CLOSED' \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
+    "tail": "\u2502\n\u2502 9       \u2502 'POL-20260408-0049' \u2502 '2026-04-08 07:49:00' \u2502 'TLK-TVT' \u2502 'Kathivakkam'    \u2502 'TRAFFIC_OBSTRUCTION' \u2502 'Traffic snarl after sand-laden lorry breaks dow\u2026' \u2502 'NEWS_REPORT'       \u2502 'CLOSED' \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
   },
-  "_mysql_exported_mtime": 1790937238.720048,
+  "_mysql_exported_mtime": 1791092430.9142182,
   "_last_collection": {
-    "at": 1790924015.3610513,
+    "at": 1791091432.2283792,
     "ran": [
       "news",
       "imd",
@@ -69,6 +69,8 @@
       "grievance",
       "police"
     ],
-    "failed": []
+    "failed": [
+      "cpcb"
+    ]
   }
 }

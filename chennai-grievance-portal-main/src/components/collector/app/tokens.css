@@ -1,0 +1,136 @@
+/* =====================================================================================================================
+   District IQ design tokens: "Midnight" (navy, graphite and cool slate, with controlled semantic colour).
+   One source for the Collector console, the Department Officer console and Ask District IQ (all render under .dic).
+   Components use these variables only; the TypeScript mirror for charts and maps is palette.ts.
+
+   Surfaces, from back to front:
+     level 0  --bg          the application background
+     level 1  --bg-2        the workspace behind the panels
+     level 2  --surface     panels
+     level 3  --surface-2   rows, inputs and cards inside a panel   (--surface-3 on hover, --raise for a lifted row)
+     level 4  --elev        popovers, menus, dialogs, the assistant
+   Colour carries meaning only: blue = intelligence / primary action, cyan = live signal, emerald = verified / healthy,
+   amber = warning, orange = high priority, red = severe, violet = news / intelligence gap, slate = neutral.
+   ===================================================================================================================== */
+.dic{
+  color-scheme:dark;
+
+  /* ---- surfaces ---- */
+  --bg:#050A14;
+  --bg-2:#070E1C;
+  --surface:#0B1426;
+  --surface-2:#101B31;
+  --surface-3:#15223C;
+  --raise:#13203A;
+  --elev:#0F192E;
+  --scrim:rgba(2,6,14,.72);
+
+  /* ---- borders ---- */
+  --line:rgba(138,164,214,.13);
+  --line-2:rgba(138,164,214,.075);
+  --line-3:rgba(138,164,214,.24);
+  --line-focus:rgba(92,150,255,.55);
+
+  /* ---- text (cool slate) ---- */
+  --text:#E6ECF7;
+  --text-2:#A8B5CD;
+  --text-3:#7383A2;
+  --text-4:#4D5B77;
+  --text-inv:#06101F;
+
+  /* ---- intelligence blue (primary) ---- */
+  --accent:#4C8DFF;          /* marks, links, selected */
+  --accent-2:#8DB6FF;        /* blue text on dark */
+  --accent-3:#2F6FE6;        /* solid fills (primary buttons) */
+  --accent-soft:rgba(76,141,255,.13);
+  --accent-line:rgba(76,141,255,.38);
+
+  /* ---- live signal (cyan) ---- */
+  --signal:#2BD4E6;
+  --signal-soft:rgba(43,212,230,.12);
+
+  /* ---- semantic ---- */
+  --sev:#F2555A;   --sev-soft:rgba(242,85,90,.13);   --sev-line:rgba(242,85,90,.4);
+  --high:#F7893B;  --high-soft:rgba(247,137,59,.13); --high-line:rgba(247,137,59,.4);
+  --med:#E8B84A;   --med-soft:rgba(232,184,74,.13);  --med-line:rgba(232,184,74,.4);
+  --low:#35C28C;   --low-soft:rgba(53,194,140,.13);  --low-line:rgba(53,194,140,.4);   /* verified, healthy, resolved */
+  --cool:#4DB3E8;  --cool-soft:rgba(77,179,232,.13);                                       /* low severity */
+  --info:#4C8DFF;  --info-soft:rgba(76,141,255,.13);
+  --violet:#A28EFA; --violet-soft:rgba(162,142,250,.14); --violet-line:rgba(162,142,250,.4); /* news, intelligence gaps */
+  --teal:#2BC7D9;  --teal-soft:rgba(43,199,217,.12);
+
+  /* ---- data visualisation ---- */
+  --viz-1:#4C8DFF; --viz-2:#2BC7D9; --viz-3:#A28EFA; --viz-4:#E8B84A; --viz-5:#35C28C; --viz-6:#F7893B;
+  --viz-base:rgba(138,164,214,.26);   /* comparison / previous period */
+  --viz-grid:rgba(138,164,214,.09);
+  --viz-axis:rgba(138,164,214,.2);
+
+  /* ---- type ---- */
+  --dic-display:Manrope;
+  --dic-sans:"IBM Plex Sans";
+  --dic-mono:"IBM Plex Mono";
+  --fs-2xs:10.5px; --fs-xs:11.5px; --fs-sm:12.5px; --fs-base:13.5px; --fs-md:14.5px; --fs-lg:16px; --fs-xl:19px; --fs-2xl:24px; --fs-num:28px;
+  --track-label:.08em;
+
+  /* ---- shape, depth, motion ---- */
+  --r:10px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-pill:999px;
+  --shadow:inset 0 1px 0 rgba(255,255,255,.03),0 14px 30px -24px rgba(0,0,0,.95);
+  --shadow-lg:0 28px 64px -18px rgba(0,0,0,.8),0 0 0 1px var(--line-3);
+  --shadow-pop:0 18px 40px -14px rgba(0,0,0,.75),0 0 0 1px var(--line-3);
+  --ring:0 0 0 3px rgba(76,141,255,.28);
+  --t-fast:120ms; --t:180ms; --t-panel:220ms; --ease:cubic-bezier(.2,.7,.25,1);
+  --h-ctl:34px; --h-ctl-sm:28px;
+}
+
+/* ---- light theme: the original white console (toggle in the header) ---- */
+.dic[data-theme="light"]{
+  color-scheme:light;
+  --bg:#EDF2FA; --bg-2:#E8EEF8; --surface:#FFFFFF; --surface-2:#F4F7FD; --surface-3:#EAF1FC; --raise:#FFFFFF; --elev:#FFFFFF; --scrim:rgba(6,20,56,.45);
+  --line:#DCE5F3; --line-2:#EAF0F9; --line-3:#C4D6F7; --line-focus:rgba(21,96,232,.55);
+  --text:#0A1A3C; --text-2:#3E5278; --text-3:#6F82A6; --text-4:#A3B1CB; --text-inv:#FFFFFF;
+  --accent:#1560E8; --accent-2:#0B3FA8; --accent-3:#1560E8; --accent-soft:#E8F0FE; --accent-line:#BFD3FA;
+  --signal:#0891B2; --signal-soft:#E0F4F8;
+  --sev:#D92D35; --sev-soft:#FDE8E9; --sev-line:#F3C7CA;
+  --high:#E0730D; --high-soft:#FEF0E0; --high-line:#F6D7B8;
+  --med:#B98A00; --med-soft:#FBF3D6; --med-line:#F7E6C4;
+  --low:#12925F; --low-soft:#DFF5EA; --low-line:#B8E6CF;
+  --cool:#0E7FB8; --cool-soft:#E1F1FA;
+  --info:#1560E8; --info-soft:#E8F0FE;
+  --violet:#6A55D8; --violet-soft:#EEEBFC; --violet-line:#D4CCF7;
+  --teal:#0891B2; --teal-soft:#E0F4F8;
+  --viz-base:#C9D3E4; --viz-grid:#EAF0F9; --viz-axis:#DCE5F3;
+  --shadow:0 1px 2px rgba(11,40,100,.05),0 10px 26px -12px rgba(21,70,160,.18);
+  --shadow-lg:0 28px 70px rgba(8,30,80,.3);
+  --shadow-pop:0 18px 40px -14px rgba(8,30,80,.3),0 0 0 1px var(--line);
+  --ring:0 0 0 3px rgba(21,96,232,.18);
+}
+.dic[data-theme="light"]{background:var(--bg)}
+.dic[data-theme="light"] .top{background:rgba(255,255,255,.92)}
+.dic[data-theme="light"] .card,.dic[data-theme="light"] .kpi,.dic[data-theme="light"] .xb{background:var(--surface)}
+.dic[data-theme="light"] .map-wrap .leaflet-tile-pane{filter:none}
+.dic[data-theme="light"] .xb-c,.dic[data-theme="light"] .xb-ev{background:var(--surface-2)}
+.dic[data-theme="light"] .xb-gap{background:var(--surface)}
+.dic[data-theme="light"] .xb-mast{background:radial-gradient(700px 140px at 0% 0%,rgba(21,96,232,.08),transparent 70%),transparent}
+.dic[data-theme="light"] .avatar{background:linear-gradient(145deg,#0B3FA8,#4D8DFF);color:#fff;border:0}
+.dic[data-theme="light"] .btn.plain:hover{background:var(--surface-3)}
+.dic[data-theme="light"] .aq-overlay{background:rgba(10,26,60,.22)}
+.dic[data-theme="light"] .aq{box-shadow:-24px 0 60px -28px rgba(10,26,60,.45)}
+.dic[data-theme="light"] .ask-fab{box-shadow:0 14px 34px -10px rgba(10,26,60,.35)}
+.dic[data-theme="light"] ::-webkit-scrollbar-thumb{background:#C5D3EC;background-clip:padding-box}
+
+/* light theme: coloured edges and corner accents so each panel stands apart from the white page */
+.dic[data-theme="light"] .card,.dic[data-theme="light"] .kpi,.dic[data-theme="light"] .xb{position:relative;border:1px solid #C9D8F1;
+  box-shadow:inset 0 3px 0 -0px var(--edge,#1560E8),0 1px 2px rgba(11,40,100,.06),0 12px 28px -16px rgba(21,70,160,.28)}
+.dic[data-theme="light"] .card::after,.dic[data-theme="light"] .kpi::after,.dic[data-theme="light"] .xb::after{content:"";position:absolute;inset:-1px;pointer-events:none;z-index:2;border-radius:inherit;
+  background:
+    linear-gradient(var(--edge,#1560E8),var(--edge,#1560E8)) left top/14px 2px no-repeat,
+    linear-gradient(var(--edge,#1560E8),var(--edge,#1560E8)) left top/2px 14px no-repeat,
+    linear-gradient(var(--edge,#1560E8),var(--edge,#1560E8)) right bottom/14px 2px no-repeat,
+    linear-gradient(var(--edge,#1560E8),var(--edge,#1560E8)) right bottom/2px 14px no-repeat}
+.dic[data-theme="light"] .kpi{--edge:var(--kc,#1560E8)}
+.dic[data-theme="light"] .a-sev{--edge:#D92D35}
+.dic[data-theme="light"] .a-tasks{--edge:#12925F}
+.dic[data-theme="light"] .a-brief{--edge:#E0730D}
+.dic[data-theme="light"] .a-snap{--edge:#6A55D8}
+.dic[data-theme="light"] .a-map{--edge:#0891B2}
+.dic[data-theme="light"] .card:hover,.dic[data-theme="light"] .kpi:hover{border-color:#9FBCEB}

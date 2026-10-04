@@ -8,6 +8,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { PERIODS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly } from "@/lib/collector/sources";
+import { briefingBook } from "@/lib/collector/briefbook";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -33,6 +34,7 @@ const INC = `i.incident_id AS id, i.title, i.category_label AS type, i.category_
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, i.is_open AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
+  i.ai_summary, i.ai_attention, i.ai_next_step,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 
@@ -122,12 +124,24 @@ export async function insights(period: Period, zone: number | null, dept: string
   const wardZone = new Map<number, number>();
   for (const z of zoneNames) { zn.set(Number(z.zone_no), z.zone_name); wardZone.set(Number(z.ward_no), Number(z.zone_no)); }
   const next = new Map(nextActs.filter((a) => Number(a.rn) === 1).map((a) => [a.id, a]));
+  const deptName = new Map((await q(`SELECT code, name FROM ref_departments`)).map((d) => [d.code, d.name]));
+  const catLead = new Map(cats.map((c) => [c.code, c.lead]));
   const proposed = (i: Row) => {
     const a = next.get(i.id);
     if (a) return { text: a.text, owner: a.owner || i.dept_name, due: a.due, from: "department action list" };
+    // the category's standard procedure belongs to the department that fixes it, not to whoever reported it
     const pb = playbook.get(i.cat);
-    return pb?.length ? { text: pb[0], owner: i.dept_name, due: null, from: "standard procedure for this category" } : null;
+    const lead = catLead.get(i.cat);
+    return pb?.length ? { text: pb[0], owner: (lead && deptName.get(lead)) || i.dept_name, due: null, from: "standard procedure for this category" } : null;
   };
+  // the opening of the pipeline's briefing for this period, written by its LLM from the briefing's facts (numbers checked);
+  // only for the whole district: a zone or department view has its own figures
+  const whole = !zone && !dept && !s.cat && !s.taluk;
+  const [brief] = whole ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
+    .catch(() => [] as Row[]) : [];
+  const opening = brief?.ai_summary ? { en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null } : null;
+  // page 2: the Collector's daily briefing, every section
+  const book = await briefingBook(s, now, opening);
 
   // ---------------------------------------------------------- briefing --
   const K = k[0] ?? {}, P = kp[0] ?? {};
@@ -146,7 +160,9 @@ export async function insights(period: Period, zone: number | null, dept: string
   const attention = top.map((i) => ({ i, why: explain(i) })).filter((x) => x.why.needsYou).slice(0, 6).map(({ i, why }) => ({
     id: i.id, title: i.title || `${i.type} – ${i.loc ?? i.zone_name ?? "Chennai"}`, sev: i.sev, status: i.status, zone: i.zone_name, dept: i.dept_name ?? i.dept,
     why, evidence: `${plural(Number(i.member_count), "report")} from ${String(i.sources).split("|").map((x) => SOURCE_NAME[x] ?? x).join(", ")}`,
-    next: proposed(i), overdue: Number(i.breached) === 1, confidence: i.confidence == null ? null : Number(i.confidence)
+    // the AI's next step (from this incident's facts) when there is one, else the department's list or the standard procedure
+    next: why.next ? { text: why.next, owner: null, due: null, from: "AI, from this incident's records" } : proposed(i),
+    overdue: Number(i.breached) === 1, confidence: i.confidence == null ? null : Number(i.confidence)
   }));
   const handledByDepts = Math.max(0, open - attention.length);
 
@@ -249,9 +265,9 @@ export async function insights(period: Period, zone: number | null, dept: string
   ].filter((x) => x !== "").join("\n");
 
   return {
-    now, scope,
+    now, scope, book,
     briefing: {
-      headline, conditions, market, attention, emerging, fromSources,
+      headline, opening, conditions, market, attention, emerging, fromSources,
       stats: { reported: n, change: ch, open, overdue, severe: sev, multi: Number(K.multi ?? 0), newsOnly: Number(K.news_only ?? 0), handledByDepts },
       env: { rain: envMap.rainfall_24h_mm ?? null, aqi: envMap.aqi != null ? Math.round(envMap.aqi) : null, lakes: envMap.lake_pct_full ?? null }, addedCount: added.count, addedDays: added.days, md, method: "Generated from the store by rules (no language model); every item links to its evidence." },
     deptActions,

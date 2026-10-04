@@ -61,8 +61,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
     gridTemplateAreas: rows.map((r) => `"${r.join(" ")}"`).join(" ")
   };
   const LAYERS = [
-    ["severe", "Severe", "#E5484D", d.map.layerCounts.severe], ["complaint", "Complaints", "#FFA114", d.map.layerCounts.complaint],
-    ["other", "Other", "#4D8DFF", d.map.layerCounts.other]
+    ["severe", "Severe", "#F2555A", d.map.layerCounts.severe], ["complaint", "Complaints", "#F7893B", d.map.layerCounts.complaint],
+    ["other", "Other", "#4C8DFF", d.map.layerCounts.other]
   ] as const;
 
   return (
@@ -95,16 +95,16 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
             <div className="map-leg2" role="group" aria-label="Show on the map">
               {LAYERS.map(([k, l, col, n]) => (
                 <button key={k} className={c.layers[k] ? "" : "off"} aria-pressed={c.layers[k]} onClick={() => c.toggleLayer(k)} title={`Show or hide ${l.toLowerCase()} pins`}>
-                  <i style={{ background: col }} />{l}<b>{n.toLocaleString("en-IN")}</b>
+                  <i style={{ background: col, color: col }} />{l}<b>{n.toLocaleString("en-IN")}</b>
                 </button>
               ))}
               <button className={c.layers.added ? "" : "off"} aria-pressed={c.layers.added} onClick={() => c.toggleLayer("added")}
                 title="Items from sources you added that name a place in or near Chennai">
-                <i className="dia" style={{ background: "#8B5CF6" }} />Added<b>{addedPins.length}</b>
+                <i className="dia" style={{ background: "#A28EFA", color: "#A28EFA" }} />Added<b>{addedPins.length}</b>
               </button>
               <button className={c.layers.stations ? "" : "off"} aria-pressed={c.layers.stations} onClick={() => c.toggleLayer("stations")}
                 title="Air-quality stations, rain gauges and lakes">
-                <i className="sq" style={{ background: "linear-gradient(90deg,#12925F 33%,#1560E8 33% 66%,#0891B2 66%)" }} />Stations<b>{env.mapStations.length}</b>
+                <i className="sq" style={{ background: "linear-gradient(90deg,#35C28C 33%,#4C8DFF 33% 66%,#2BC7D9 66%)", color: "#7383A2" }} />Stations<b>{env.mapStations.length}</b>
               </button>
             </div>
           </article>
@@ -133,7 +133,7 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, series, prevLabel, s
   const same = diff === 0;
   const cls = same ? "" : (goodDown ? diff < 0 : diff > 0) ? "good" : "bad";
   return (
-    <button className="kpi" style={style} onClick={onClick} title={tip ? `${tip} Click for the list.` : undefined}>
+    <button className="kpi" style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick} title={tip ? `${tip} Click for the list.` : undefined}>
       <span className={`kpi-ic ${tone}`}><I n={icon} /></span>
       <span className="kpi-b">
         <span className="kpi-l">{label}{note && <em className="kpi-note">· {note}</em>}</span>
@@ -150,6 +150,9 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, series, prevLabel, s
     </button>
   );
 }
+
+/** The KPI's edge colour, from its tone. */
+const KC: Record<string, string> = { "t-sev": "var(--sev)", "t-high": "var(--high)", "t-info": "var(--accent)", "t-low": "var(--low)" };
 
 // ------------------------------------------------------ severity card --
 
@@ -194,6 +197,11 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
           </button>
         )) : <Empty>No open {tab.toLowerCase()} incidents {c.periodLabel.toLowerCase()}.</Empty>}
       </div>
+      {counts[tab] > 0 && (
+        <button className={`sev-all s-${SEV_WORD[tab]}`} onClick={() => c.openList({ status: "open", sev: tab, sort: "sev", dir: 1 }, `${tab} incidents`)}>
+          See all {counts[tab].toLocaleString("en-IN")} {tab.toLowerCase()} incidents<I n="right" />
+        </button>
+      )}
     </>
   );
 }
@@ -532,7 +540,7 @@ function Trend({ now, prev, unit, upIsBad, since, dec = 1 }: { now: number | nul
 }
 
 function Level({ text, color }: { text: string; color: string }) {
-  return <span className="lvl" style={{ color, background: `${color}1A` }}><i />{text}</span>;
+  return <span className="lvl" style={{ color, background: `${color}1F` }}><i />{text}</span>;
 }
 
 function Scale({ stops, value, max }: { stops: { upto: number; c: string; l: string }[]; value: number | null; max: number }) {
@@ -547,22 +555,22 @@ function Scale({ stops, value, max }: { stops: { upto: number; c: string; l: str
 }
 
 const RAIN_STOPS = [
-  { upto: 15.5, c: "#9FD8B9", l: "Light" }, { upto: 64.4, c: "#F4C542", l: "Moderate" }, { upto: 115.5, c: "#F28A1E", l: "Heavy" }, { upto: 160, c: "#D92D35", l: "Very heavy" }
+  { upto: 15.5, c: "#9FD8B9", l: "Light" }, { upto: 64.4, c: "#F4C542", l: "Moderate" }, { upto: 115.5, c: "#F28A1E", l: "Heavy" }, { upto: 160, c: "#F2555A", l: "Very heavy" }
 ];
 function rainLevel(v: number): [string, string, string] {
-  return v < 15.6 ? ["Low", "#12925F", v < 0.1 ? "No rain" : "Light rain"] : v < 64.5 ? ["Moderate", "#B98A00", "Moderate rain"] : v < 115.6 ? ["High", "#E0730D", "Heavy rain"] : ["High", "#D92D35", "Very heavy rain"];
+  return v < 15.6 ? ["Low", "#35C28C", v < 0.1 ? "No rain" : "Light rain"] : v < 64.5 ? ["Moderate", "#E8B84A", "Moderate rain"] : v < 115.6 ? ["High", "#F7893B", "Heavy rain"] : ["High", "#F2555A", "Very heavy rain"];
 }
 const AQI_STOPS = [
   { upto: 50, c: "#3FB67B", l: "Good" }, { upto: 100, c: "#9ACD5A", l: "Satisf." }, { upto: 200, c: "#F4C542", l: "Moderate" },
-  { upto: 300, c: "#F28A1E", l: "Poor" }, { upto: 400, c: "#D92D35", l: "V. poor" }, { upto: 500, c: "#8E1B2A", l: "Severe" }
+  { upto: 300, c: "#F28A1E", l: "Poor" }, { upto: 400, c: "#F2555A", l: "V. poor" }, { upto: 500, c: "#8E1B2A", l: "Severe" }
 ];
 function aqiLevel(a: number): [string, string, string] {
-  return a <= 50 ? ["Low", "#12925F", "Good"] : a <= 100 ? ["Low", "#12925F", "Satisfactory"] : a <= 200 ? ["Moderate", "#B98A00", "Moderate"]
-    : a <= 300 ? ["High", "#E0730D", "Poor"] : ["High", "#D92D35", a <= 400 ? "Very poor" : "Severe"];
+  return a <= 50 ? ["Low", "#35C28C", "Good"] : a <= 100 ? ["Low", "#35C28C", "Satisfactory"] : a <= 200 ? ["Moderate", "#E8B84A", "Moderate"]
+    : a <= 300 ? ["High", "#F7893B", "Poor"] : ["High", "#F2555A", a <= 400 ? "Very poor" : "Severe"];
 }
 const LAKE_STOPS = [{ upto: 30, c: "#E5767A", l: "Low" }, { upto: 70, c: "#F4C542", l: "Normal" }, { upto: 100, c: "#3FB67B", l: "High" }];
 function lakeLevel(p: number): [string, string, string] {
-  return p < 30 ? ["Low", "#D92D35", "Low storage"] : p < 70 ? ["Normal", "#B98A00", "Normal storage"] : p < 92 ? ["High", "#12925F", "Good storage"] : ["High", "#E0730D", "Near full: watch for surplus release"];
+  return p < 30 ? ["Low", "#F2555A", "Low storage"] : p < 70 ? ["Normal", "#E8B84A", "Normal storage"] : p < 92 ? ["High", "#35C28C", "Good storage"] : ["High", "#F7893B", "Near full: watch for surplus release"];
 }
 
 function EnvHead({ icon, title, c, kind, all }: { icon: IconName; title: string; c: Console; kind: Kind; all: Station[] }) {
@@ -589,7 +597,7 @@ function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
           {lvl ? <><b>{lvl[2]}</b> in the last 24 hours{r.now != null && r.times.length ? ` (IMD, ${fmtDate(r.times[r.times.length - 1])})` : ""}. </> : "No readings. "}
           {b.rainDays} rain day{b.rainDays === 1 ? "" : "s"} in the last {b.days.length} days ({b.prevRainDays} in the {b.days.length} days before).
         </div>
-        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="#1560E8" fmt={(v) => `${v} mm`} />
+        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="#4C8DFF" fmt={(v) => `${v} mm`} />
           : <Empty>No rain recorded at {env.rain.stations.length === 1 ? "this gauge" : "these gauges"} in the last {days.length} days.</Empty>}
       </div>
     </article>
@@ -616,7 +624,7 @@ function AqiCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; 
           {lvl ? <>Air is <b>{lvl[2].toLowerCase()}</b> (CPCB scale). </> : "No readings. "}
           {worst && <>Worst now: <b>{worst.name.replace(/^Chennai-/, "").replace(/, Chennai.*$/, "")}</b> at {worst.series[worst.series.length - 1]}.</>}
         </div>
-        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="#12925F" fmt={(v) => `AQI ${v}`}
+        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="#35C28C" fmt={(v) => `AQI ${v}`}
           band={{ at: 100, label: "Satisfactory limit" }} />
       </div>
     </article>
@@ -642,7 +650,7 @@ function LakeCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
           {lvl ? <><b>{lvl[2]}</b>. </> : "No readings. "}
           {k.now != null && first != null && k.series.length > 1 && <>{k.now >= first ? "Up" : "Down"} {Math.abs(k.now - first).toFixed(1)} points since {fmtDate(k.times[0])}.</>}
         </div>
-        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="#0891B2" fmt={(v) => `${v}% full`} />
+        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="#2BC7D9" fmt={(v) => `${v}% full`} />
       </div>
     </article>
   );

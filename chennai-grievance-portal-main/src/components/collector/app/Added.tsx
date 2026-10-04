@@ -64,7 +64,7 @@ export function ItemBody({ item: i, c }: { item: Row; c: Console }) {
     <div className="itm">
       <div className="iv-tags">
         <span className="tg">{KIND[i.kind] ?? "Added source"}</span>
-        {i.is_incident ? <span className="tg solid" style={{ color: "#6A55D8" }}>Civic issue</span> : <span className="tg">General news</span>}
+        {i.is_incident ? <span className="tg solid" style={{ color: "#A28EFA" }}>Civic issue</span> : <span className="tg">General news</span>}
         {i.lang === "ta" && <span className="tg">Tamil</span>}
       </div>
       <h3>{i.title}</h3>

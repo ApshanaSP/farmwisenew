@@ -21,7 +21,10 @@ HEALTH_SERVICES,Health services & hospital capacity,HEALTH,HLT-DMS,GCC-HLT,35,0,
 AIR_POLLUTION,Air pollution,ENVIRONMENT,TNPCB,GCC-HLT,25,0,24,48,120,240,72,3000,Check station readings|Inspect nearby sources|Issue a health advisory|Enforce against polluters|Close,resolution
 TREES_PARKS,"Trees, parks & playgrounds",GREEN,GCC-PRK,POL-GCP,15,1,6,48,120,240,48,200,Clear the fallen tree|Prune trees|Repair equipment|Clean the park|Close,resolution
 CRIME_PROPERTY,"Theft, snatching & fraud",CRIME,POL-GCP,,25,0,6,24,72,168,6,500,Register the case|Patrol the hotspot|Review CCTV|Recover property|Close,response
-CRIME_VIOLENT,Violent crime & crimes against women,CRIME,POL-GCP,,55,0,2,6,24,48,6,300,Respond immediately|Register the case|Protect the victim|Arrest the accused|Close,response
+CRIME_VIOLENT,Violent crime,CRIME,POL-GCP,,55,0,2,6,24,48,6,300,Respond immediately|Register the case|Protect the victim|Arrest the accused|Close,response
+CRIMES_AGAINST_WOMEN,Crimes against women & children,CRIME,POL-GCP,GCC-HLT,60,0,2,6,24,48,12,500,Respond immediately|Register the case (POCSO where a child is involved)|Protect and counsel the victim|Arrest the accused|Close,response
+SUICIDE_SELF_HARM,Suicide & self-harm,CRIME,POL-GCP,HLT-DMS,50,0,2,12,24,48,24,500,Police register the death and inquire|Inform the family and arrange counselling|Check for abetment or harassment|Note any pattern at the place (campus|bridge|high-rise)|Close,response
+FIRE_EXPLOSION,Fire & explosion,PUBLIC_SAFETY,DIST-DM,POL-GCP|HLT-DMS,55,0,1,4,24,48,12,400,Confirm Fire and Rescue Services are on site|Treat the injured and count the dead|Evacuate and cordon the building|Inspect the cause and building safety|Close,response
 MISSING_PERSON,Missing person,CRIME,POL-GCP,,40,0,2,12,24,48,24,2000,Register the complaint|Circulate details|Search|Trace|Close,response
 DRUGS_LIQUOR,Drugs & illicit liquor,CRIME,POL-GCP,,30,0,12,24,72,168,24,500,Conduct a raid|Seize material|Register the case|Follow up|Close,response
 PUBLIC_ORDER,Protests & public nuisance,PUBLIC_ORDER,POL-GCP,DIST-REV,20,0,2,6,24,48,12,500,Deploy personnel|Manage crowd and traffic|Engage organisers|Document the event|Close,response

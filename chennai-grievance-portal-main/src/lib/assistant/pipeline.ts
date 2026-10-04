@@ -37,6 +37,8 @@ import { editFromText, isBareEdit } from "@/lib/assistant/edits";
 import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
+import { fastPath } from "@/lib/assistant/fastpath";
+import { filtersOf, lastContext } from "@/lib/assistant/context";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 
@@ -518,6 +520,7 @@ function adhocPeriod(plan: QueryPlan, lang: Lang): string | null {
 // ------------------------------------------------------------------- main --
 
 export async function ask(i: ChatInput): Promise<ChatOutput> {
+  const started = Date.now();
   const [now, names] = await Promise.all([storeAsOf(), refNames()]);
   warmUp(now);
   // `typed` is kept as the Collector wrote it; everything below reads `message`, with typos corrected toward the
@@ -546,6 +549,18 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
       card.autoActions = card.autoActions.filter((a) => a.action !== "filter_dept");
     }
     if (route?.offline && card.kind === "answer") card.offline = true;
+    // no automatic follow-up questions: the Collector asks what they want next
+    if (card.kind === "answer" || card.kind === "action") card.followUps = [];
+    // every answer saves the conversation state the next question's follow-ups resolve against
+    if (!card.context) {
+      const prevCtx = lastContext(turns);
+      const ds = card.datasets.find((d) => d.idField && d.rows.some((r) => /^INC-/.test(String(r[d.idField!]))));
+      const ids = ds ? ds.rows.map((r) => String(r[ds.idField!])).filter((x) => /^INC-/.test(x)).slice(0, 10) : [];
+      const single = card.sources.incidentIds.length === 1 ? card.sources.incidentIds[0] : null;
+      card.context = { lastIntent: route?.intent ?? card.kind, activeFilters: filtersOf(card.scope), lastResponseType: card.display === "kpi" ? "kpi" : card.display,
+        resultIds: ids.length ? ids : prevCtx?.resultIds, storyIds: prevCtx?.storyIds, selectedIncidentId: single ?? prevCtx?.selectedIncidentId ?? null,
+        selectedNewsStoryId: prevCtx?.selectedNewsStoryId ?? null, lastVisualization: card.chart?.type ?? null };
+    }
     // what was corrected, shown on the card ("Understood as: tomato price") and kept in the sources
     if (spelled.fixes.length && card.kind !== "refusal") {
       card.understood = message;
@@ -573,6 +588,18 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
   i.stage("understanding");
   const placeData = await runTool("resolve_place", { text: message }).then((r) => r.data as Row | null).catch(() => null);
   const place = placeData ? JSON.stringify(placeData) : "";
+  // explicit intents (incidents themselves, one incident, follow-ups, top news, actions) are answered from the store
+  // directly, against the structured context of the previous answer; everything else goes on to the router below
+  if (!i.pinId && !i.insightKey) {
+    const tf = Date.now();
+    const fp = await fastPath({ message, lang, scope: consoleScope, names, now, lockDept: i.lockDept ?? null, ctx: lastContext(turns), place: placeData })
+      .catch((e) => { if (i.signal?.aborted) throw e; console.warn("[assistant] fast path failed:", (e as Error).message); return null; });
+    if (fp) console.info(`[assistant] ${fp.card.intent} answered from the store in ${Date.now() - tf} ms (${Date.now() - started} ms since the question)`);
+    if (fp) {
+      if (spelled.fixes.length) fp.card.understood = message;
+      return finish(fp.card, fp.plan);
+    }
+  }
   const lastId = turns.filter((t) => t.role === "assistant").slice(-1)[0]?.message_id ?? "";
   const routeKey = `${lang}|${message.toLowerCase()}|${scopeKey(consoleScope)}|${now}|${lastId}`;
   // a pin re-runs its own tools (no router): same question, same design, latest data

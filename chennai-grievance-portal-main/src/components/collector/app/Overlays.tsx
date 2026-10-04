@@ -106,7 +106,7 @@ export function ZonesBody({ d, c }: { d: OverviewData; c: Console }) {
             <tr key={x.zone} onClick={() => { c.closeAll(); c.setZone(x.zone); }}>
               <td className="ev">{x.name}</td><td className="num">{x.open}</td>
               <td><span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span className="hb-t" style={{ flex: 1 }}><span className="hb-b" style={{ width: `${(x.complaints / mx) * 100}%`, background: "linear-gradient(90deg,#1560E8,#6699F5)" }} /></span>
+                <span className="hb-t" style={{ flex: 1 }}><span className="hb-b" style={{ width: `${(x.complaints / mx) * 100}%`, background: "linear-gradient(90deg,#4C8DFF,#6699F5)" }} /></span>
                 <b className="num">{x.complaints}</b></span></td>
               <td className="num" style={{ color: "var(--sev)" }}>{x.severe}</td><td><span className="lnk">Filter ›</span></td>
             </tr>

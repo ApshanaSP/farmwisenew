@@ -101,6 +101,8 @@ export function IncidentView({ id, c }: { id: string; c: Console }) {
             <div className="iv-need">
               <div className="iv-t"><I n="bell" />Why it needs your attention</div>
               <ol>{why.attention.map((w) => <li key={w}>{w}</li>)}</ol>
+              {why.next && <p className="iv-next"><b>Suggested next step:</b> {why.next}</p>}
+              {why.ai && <p className="iv-ai">Written by AI from this incident's records; check before acting.</p>}
             </div>
           ) : open ? (
             <div className="iv-ok"><I n="checkc" /><span><b>No action needed from you.</b> {i.dept_name ?? "The department"} is handling it; nothing about it is unusual.</span></div>

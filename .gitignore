@@ -26,5 +26,10 @@ Thumbs.db
 **/.env
 officer-accounts.local.csv
 
+# Local MySQL server and its data (accounts and complaints): never publish
+mysql/
+district_intel/output/backups/
+# Rebuilt locally (npm run embed:build)
+chennai-grievance-portal-main/data/embeddings/
 # Website AWS cache: durable.sqlite holds every user account and complaint (repos are public)
 chennai-grievance-portal-main/data/aws-cache/

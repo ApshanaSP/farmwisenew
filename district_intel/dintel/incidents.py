@@ -53,6 +53,7 @@ def build(events: pd.DataFrame, timeline: pd.DataFrame, actions: pd.DataFrame, r
     inc["taluk_code"] = lead["taluk_code"]
     best = e.sort_values(["incident_id", "loc_precision_m"]).drop_duplicates("incident_id").set_index("incident_id")
     inc["lat"], inc["lon"] = best["lat"], best["lon"]
+    inc["loc_precision_m"] = best["loc_precision_m"]
     inc["place_text"] = lead["place_text"]
     xy = to_xy(e["lat"], e["lon"])
     e["_x"], e["_y"] = xy[:, 0], xy[:, 1]
@@ -239,9 +240,12 @@ def _sets(ids: np.ndarray, values: np.ndarray, keep=lambda v: isinstance(v, str)
 
 
 def _recurrence(inc: pd.DataFrame, ref: Reference) -> pd.Series:
+    """Same-category incidents within the category's link radius in the 90 days before. Only for incidents with a
+    real location: a report placed only as "Chennai" sits on the district's centre point, and counting every such
+    report as "here" would invent a pattern (140 dengue stories "at one place")."""
     out = pd.Series(0, index=inc.index)
-    t = inc["first_reported_at"].astype("int64").to_numpy() / 8.64e13
-    for cat, grp in inc[inc["lat"].notna()].groupby("category_code"):
+    located = inc["lat"].notna() & (inc["loc_precision_m"].fillna(0) < 10_000)
+    for cat, grp in inc[located].groupby("category_code"):
         if len(grp) < 2:
             continue
         r = ref.cat.get(cat, ref.cat["OTHER"])["link_radius_m"]

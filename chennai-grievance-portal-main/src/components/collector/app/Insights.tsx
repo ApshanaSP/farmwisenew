@@ -8,6 +8,7 @@ import { Empty, SEV_HEX, SevChip, deptIcon, fmtDate, fmtShort, rel, sevTone, typ
 import type { Console } from "./CollectorApp";
 import { itemWhen, itemWhere } from "./Added";
 import { StoriesCard } from "./Stories";
+import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 
 const Loading = () => <div className="empty" style={{ margin: "auto" }}><I n="refresh" className="spin" />Preparing…</div>;
 const day = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -16,6 +17,60 @@ const day = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB",
 const usual = (perDay: number) => (perDay >= 0.95 ? `about ${Math.round(perDay)} a day` : `about 1 every ${Math.max(2, Math.round(1 / Math.max(perDay, 0.01)))} days`);
 
 // ================================================================ briefing ==
+
+type Brief = Insights["briefing"];
+
+/**
+ * The briefing's opening: the period in three sentences (the pipeline's AI opening for the whole district, else the
+ * rule-based headline), with a greeting and Listen in English or Tamil (the browser's own voices).
+ */
+function Opening({ b, c }: { b: Brief; c: Console }) {
+  const [lang, setLang] = useState<"en" | "ta">("en");
+  const [talking, setTalking] = useState(false);
+  const [voice, setVoice] = useState(false);
+  useEffect(() => { setVoice(canSpeak()); return () => stopSpeaking(); }, []);
+  const ta = lang === "ta" && b.opening?.ta;
+  const text = ta ? b.opening!.ta! : b.opening?.en ?? b.headline.join(" ");
+  const h = new Date(c.now.replace(" ", "T")).getHours();
+  const hello = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  const listen = () => {
+    if (talking) { stopSpeaking(); setTalking(false); return; }
+    setTalking(speak(text, ta ? "ta-IN" : "en-IN", () => setTalking(false)));
+  };
+  return (
+    <div className="bf2-open">
+      <div className="bf2-open-h">
+        <b>{hello}, Collector</b>
+        {b.opening?.ta && (
+          <span className="bf2-lang" role="group" aria-label="Language">
+            <button className={lang === "en" ? "on" : ""} onClick={() => { stopSpeaking(); setTalking(false); setLang("en"); }}>English</button>
+            <button className={lang === "ta" ? "on" : ""} onClick={() => { stopSpeaking(); setTalking(false); setLang("ta"); }}>தமிழ்</button>
+          </span>
+        )}
+        {voice && <button className="bf2-listen" onClick={listen} title={talking ? "Stop" : "Read the briefing aloud"}>
+          <I n={talking ? "stop" : "volume"} />{talking ? "Stop" : "Listen"}</button>}
+      </div>
+      <p lang={ta ? "ta" : "en"}>{text}</p>
+      {b.opening && <small>Written by AI from today&apos;s figures; every number is checked against the data.</small>}
+    </div>
+  );
+}
+
+/** The three most urgent decisions; the rest fold away. */
+function Decisions({ items, render }: { items: Brief["attention"]; render: (a: Brief["attention"][number], k: number) => React.ReactNode }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? items : items.slice(0, 3);
+  return (
+    <>
+      <ol className="bf2-list">{shown.map(render)}</ol>
+      {items.length > 3 && (
+        <button className="bf2-more" onClick={() => setAll(!all)}>
+          {all ? "Show only the top 3" : `Show ${items.length - 3} more that need you`}<I n={all ? "up" : "down"} />
+        </button>
+      )}
+    </>
+  );
+}
 
 /**
  * Page 2: the written briefing on the left; developing stories and department
@@ -35,6 +90,7 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
         {c.archived && <ArchivedBanner c={c} />}
         {c.archived ? <div className="bf-body md" dangerouslySetInnerHTML={{ __html: mdToHtml(c.archived.markdown) }} /> : (
           <div className="bf2">
+            <Opening b={b} c={c} />
             <div className="bf2-stats">
               <Stat l="Reported" v={b.stats.reported} sub={b.stats.change == null ? "no earlier data" : b.stats.change === 0 ? "same as before" : `${b.stats.change > 0 ? "▲" : "▼"} ${Math.abs(b.stats.change)}% vs. ${c.period === "daily" ? "yesterday" : "previous period"}`}
                 tone={b.stats.change != null && b.stats.change > 0 ? "bad" : "ok"} />
@@ -55,11 +111,10 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
             </div>
             {b.market.length > 0 && <div className="bf2-market"><I n="chart" /><span><b>Vegetable prices:</b> {b.market[0]}.</span></div>}
 
-            <h4 className="bf2-h"><span>1</span>Needs your attention
+            <h4 className="bf2-h"><span>1</span>Decisions for you
               <small>{b.attention.length ? `${b.attention.length} open incident${b.attention.length === 1 ? "" : "s"}, most urgent first` : "nothing right now"}</small></h4>
             {b.attention.length ? (
-              <ol className="bf2-list">
-                {b.attention.map((a, k) => (
+              <Decisions items={b.attention} render={(a, k) => (
                   <li key={a.id} style={{ "--c": SEV_HEX[a.sev] } as React.CSSProperties}>
                     <div className="bf2-top">
                       <i className="bf2-n">{k + 1}</i>
@@ -81,10 +136,9 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
                         <span>{a.next.text}{a.next.owner ? <> — <em>{a.next.owner}</em></> : null}{a.next.due ? <>, due <em>{fmtShort(a.next.due)}</em></> : null}</span>
                       </div>
                     )}
-                    <div className="bf2-ev">Based on {a.evidence}</div>
+                    <div className="bf2-ev">Based on {a.evidence}{a.why.ai ? " · summary and next step written by AI from these records; check before acting" : ""}</div>
                   </li>
-                ))}
-              </ol>
+                )} />
             ) : <Empty>No open incident needs you in this scope. The departments are handling everything.</Empty>}
             {b.stats.handledByDepts > 0 && (
               <p className="bf2-rest"><I n="checkc" />{b.stats.handledByDepts.toLocaleString("en-IN")} other open incident{b.stats.handledByDepts === 1 ? " is" : "s are"} routine: the departments are handling {b.stats.handledByDepts === 1 ? "it" : "them"}, nothing to do.</p>
@@ -613,7 +667,7 @@ function Weekly({ ins, scope }: { ins: Insights; scope: "chennai" | "tamilNadu" 
             {wk.map((m) => {
               const d = daily.get(m.commodity);
               const avg = m.series.reduce((a, b) => a + b, 0) / m.series.length;
-              const lvl = m.price > avg * 1.1 ? ["HIGH", "#D92D35"] : m.price < avg * 0.9 ? ["LOW", "#12925F"] : ["NORMAL", "#6F82A6"];
+              const lvl = m.price > avg * 1.1 ? ["HIGH", "#F2555A"] : m.price < avg * 0.9 ? ["LOW", "#35C28C"] : ["NORMAL", "#6F82A6"];
               return (
                 <tr key={m.commodity} style={{ cursor: "default" }}>
                   <td className="ev">{m.commodity} <span className="lvl sm" style={{ color: lvl[1], background: lvl[1] + "1A" }}>{lvl[0]}</span></td>
@@ -650,8 +704,8 @@ function MiniSpark({ vals }: { vals: number[] }) {
   const x = (i: number) => 2 + (i * (W - 4)) / (vals.length - 1), y = (v: number) => 2 + (1 - (v - mn) / (mx - mn || 1)) * (H - 4);
   return (
     <svg width={W} height={H} aria-hidden="true">
-      <path d={vals.map((v, i) => `${i ? "L" : "M"}${x(i)} ${y(v)}`).join(" ")} fill="none" stroke="#1560E8" strokeWidth="1.8" />
-      <circle cx={x(vals.length - 1)} cy={y(vals[vals.length - 1])} r="2.6" fill="#1560E8" />
+      <path d={vals.map((v, i) => `${i ? "L" : "M"}${x(i)} ${y(v)}`).join(" ")} fill="none" stroke="#4C8DFF" strokeWidth="1.8" />
+      <circle cx={x(vals.length - 1)} cy={y(vals[vals.length - 1])} r="2.6" fill="#4C8DFF" />
     </svg>
   );
 }
