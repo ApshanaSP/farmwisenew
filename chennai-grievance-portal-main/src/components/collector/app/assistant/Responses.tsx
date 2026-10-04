@@ -60,7 +60,7 @@ export function IncidentCard({ x, rank, onOpen, onAsk }: { x: IncidentItem; rank
         {x.department && <span><I n="gov" />{x.department}</span>}
       </div>
       {x.priorityReasons.length > 0 && (
-        <div className="aq-why"><small>Why it ranks high</small>{x.priorityReasons.slice(0, 3).map((r) => <span key={r}>{r}</span>)}</div>
+        <div className="aq-why"><small>Why it matters</small>{x.priorityReasons.slice(0, 3).map((r) => <span key={r}>{r}</span>)}</div>
       )}
       <footer>
         <button onClick={() => onAsk(`Tell me more about the ${ORD[rank - 1] ?? `number ${rank}`} one`)}><I n="doc" />Details</button>

@@ -136,6 +136,13 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
   return { items: rows.map((r) => itemOf(r, ev.get(String(r.id)) ?? [])), total: num(total), period, widened: period !== f.period };
 }
 
+/** Whether any of these incidents rests on test (synthetic) records: the card's "Test data" label comes from the records shown. */
+export async function anySynthetic(ids: string[]): Promise<boolean> {
+  if (!ids.length) return false;
+  const [r] = await q(`SELECT COALESCE(SUM(is_synthetic_any), 0) AS syn FROM incidents WHERE incident_id IN (?)`, [ids]);
+  return num(r?.syn) > 0;
+}
+
 /** Given incidents in the given order (a follow-up on an earlier list: "make that a map"). */
 export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
   if (!ids.length) return [];

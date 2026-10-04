@@ -1,6 +1,6 @@
 /**
- * The one door to the language models for Ask District IQ. Amazon Bedrock is the default
- * provider (Amazon Nova Lite, bedrock.ts); Groq and OpenAI remain optional fallbacks
+ * The one door to the language models for Ask District IQ. Google Gemini is the default
+ * provider; Amazon Bedrock (Amazon Nova Lite, bedrock.ts), Groq and OpenAI remain optional
  * (AI_PROVIDER / AI_FALLBACK_PROVIDER). Every call asks for JSON that must match a zod
  * schema (a tool call on Bedrock; generateText with Output.object elsewhere);
  * a busy provider (429, 5xx) is retried with backoff and jitter; a model rate-limited for
@@ -12,17 +12,18 @@
  * user has a daily token budget.
  */
 import { APICallError, Output, generateText, type LanguageModel } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
 
 export type Role = "fast" | "reasoning";
-type ProviderName = "bedrock" | "groq" | "openai";
+type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
 
 export class AiUnavailableError extends Error {
   constructor() {
-    super("No AI provider is configured: add the AWS keys for Amazon Bedrock (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, AWS_REGION) to the portal's .env.");
+    super("No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.");
   }
 }
 export class AiBusyError extends Error {
@@ -39,14 +40,31 @@ export class AiBudgetError extends Error {
 interface Provider {
   name: ProviderName;
   model: (role: Role) => { id: string; lm: LanguageModel | null };
-  options: (role: Role) => Record<string, Record<string, string | boolean>>;
+  options: (role: Role) => Record<string, Record<string, string | boolean | Record<string, string>>>;
   /** providers called through their own SDK rather than the AI SDK (Bedrock's Converse API) */
   json?: <T>(c: JsonCall<T>) => Promise<JsonResult<T>>;
 }
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 
-/** Amazon Bedrock (Converse API), the default provider. */
+/**
+ * Google Gemini, the default provider. Flash-Lite routes (about 2 s); 3.8 Flash writes the answer (about 3 s, and keeps
+ * to the facts better: Flash-Lite's answers failed the number check). Each backs up the other when it is busy (503);
+ * 3.5 Flash took 14-30 s. Thinking is kept low for speed.
+ */
+function gemini(): Provider | null {
+  const apiKey = env("GEMINI_API_KEY");
+  if (!apiKey) return null;
+  const p = createGoogleGenerativeAI({ apiKey });
+  const ids = { fast: env("AI_GEMINI_MODEL_FAST") || "gemini-3.5-flash-lite", reasoning: env("AI_GEMINI_MODEL") || "gemini-3.8-flash" };
+  return {
+    name: "gemini",
+    model: (role) => ({ id: ids[role], lm: p(ids[role]) }),
+    options: () => ({ google: { structuredOutputs: true, thinkingConfig: { thinkingLevel: env("AI_REASONING_EFFORT") || "low" } } })
+  };
+}
+
+/** Amazon Bedrock (Converse API). */
 function bedrock(): Provider | null {
   if (!bedrockConfigured()) return null;
   return {
@@ -90,10 +108,10 @@ function openai(): Provider | null {
   };
 }
 
-/** Providers in the order they are tried: AI_PROVIDER (default bedrock), then AI_FALLBACK_PROVIDER (default none); only those configured. */
+/** Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); only those configured. */
 function providers(): Provider[] {
-  const make: Record<string, () => Provider | null> = { bedrock, groq, openai };
-  const order = [env("AI_PROVIDER") || "bedrock", env("AI_FALLBACK_PROVIDER") || "none"];
+  const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai };
+  const order = [env("AI_PROVIDER") || "gemini", env("AI_FALLBACK_PROVIDER") || "none"];
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -201,7 +219,7 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
         continue;
       }
     }
-    // each model has its own rate limits: when one is out for a long while (a daily cap), the provider's other model answers
+    // each model has its own rate limits: when one is out for a long while (a daily cap) or overloaded, the provider's other model answers
     const first = p.model(c.role), other = p.model(c.role === "fast" ? "reasoning" : "fast");
     if (!first.lm) continue;
     const r = await tryModel(c, p, first.id, first.lm, state);
@@ -217,8 +235,16 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
 }
 
 /** Up to three tries on one model. `longBusy`: it is rate-limited for longer than is worth waiting. */
+/**
+ * Models that just said "rate limited" or "overloaded", until when: skipped meanwhile, so a free tier that is out of its
+ * per-minute (or daily) allowance does not cost every question a refused call before the next model answers.
+ */
+const cooling = new Map<string, number>();
+
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
   state: { busyFor: number | null; lastError: unknown; attempts: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
+  const key = `${p.name}/${id}`;
+  if ((cooling.get(key) ?? 0) > Date.now()) return { longBusy: true };
   for (let attempt = 0; attempt < 3; attempt++) {
     state.attempts++;
     const t0 = Date.now();
@@ -254,6 +280,16 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
+      // 503 "high demand" or 429 "rate limited": waiting keeps the Collector waiting; hand over to the other model (then the
+      // next provider) at once. Free tiers cap tokens per minute, and one question can use most of a minute's allowance.
+      if (status === 503 || status === 429) {
+        state.busyFor = Math.max(state.busyFor ?? 0, 10);
+        // a daily quota ("exceeded your current quota") rests longer than a per-minute limit
+        const wait = APICallError.isInstance(e) ? retryAfterSeconds(e) : null;
+        const daily = /quota|per day|RPD|TPD/i.test((e as Error).message);
+        cooling.set(key, Date.now() + 1000 * (daily ? 15 * 60 : Math.min(120, Math.max(20, wait ?? 60))));
+        return { longBusy: true };
+      }
       if (busy) {
         const wait = APICallError.isInstance(e) ? retryAfterSeconds(e) : null;
         state.busyFor = Math.max(state.busyFor ?? 0, wait ?? 10);

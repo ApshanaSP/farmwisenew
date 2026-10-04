@@ -7,7 +7,7 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
-import { categories } from "@/lib/collector/nlp";
+import { categories, resolvePlace } from "@/lib/collector/nlp";
 import { hasPhrase, tokens, topicWords, type Topic } from "@/lib/assistant/intent";
 import type { NewsStory } from "@/lib/assistant/answer";
 
@@ -36,6 +36,17 @@ function firstSentences(s: string, max = 2): string {
   return parts.slice(0, max).join(" ").trim().slice(0, 360);
 }
 
+/**
+ * The current story of each article, in the order given. Story ids are re-drawn by each build's clustering while article ids
+ * stay, so a search index synced before the latest build still finds the right story through its articles.
+ */
+export async function storiesOfDocs(docIds: string[]): Promise<string[]> {
+  if (!docIds.length) return [];
+  const rows = await q(`SELECT doc_id, story_id FROM documents WHERE doc_id IN (?)`, [docIds]);
+  const by = new Map(rows.map((r) => [String(r.doc_id), r.story_id ? String(r.story_id) : `doc:${r.doc_id}`]));
+  return [...new Set(docIds.map((id) => by.get(id)).filter(Boolean) as string[])];
+}
+
 /** Stories for the filters, best first; `storyIds` narrows to given stories (a follow-up on one). */
 export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: string[]): Promise<{ stories: NewsStory[]; candidates: number }> {
   const docs = await q(
@@ -43,9 +54,11 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
             d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t, TIMESTAMPDIFF(MINUTE, d.published_at, ?) AS age_min
      FROM documents d
      WHERE d.source_kind = 'news' AND d.is_district = 1 AND d.published_at > (? - INTERVAL ? HOUR) AND d.published_at <= ?
-       AND (d.report_type IS NULL OR d.report_type NOT IN (?)) ${storyIds?.length ? "AND d.story_id IN (?)" : ""}
+       AND (d.report_type IS NULL OR d.report_type NOT IN (?)) ${storyIds?.length ? "AND (d.story_id IN (?) OR d.doc_id IN (?))" : ""}
      ORDER BY d.published_at LIMIT 3000`,
-    [now, now, storyIds?.length ? 24 * 365 : f.hours, now, SKIP_TYPES, ...(storyIds?.length ? [storyIds] : [])]);
+    // an article in no story is its own story, keyed "doc:<doc_id>"
+    [now, now, storyIds?.length ? 24 * 365 : f.hours, now, SKIP_TYPES,
+      ...(storyIds?.length ? [storyIds, storyIds.map((k) => (k.startsWith("doc:") ? k.slice(4) : k))] : [])]);
   if (!docs.length) return { stories: [], candidates: 0 };
 
   // one row per story (an article without a story id is its own story)
@@ -68,7 +81,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   const deptName = new Map(depts.map((d) => [d.code, d.name]));
   const cat = new Map(categories().map((c) => [c.code, c]));
 
-  const stories: (NewsStory & { score: number; zone: number | null; cats: string[] })[] = [];
+  const stories: (NewsStory & { score: number; zones: number[]; cats: string[] })[] = [];
   for (const [storyId, ds] of groups) {
     const linked = ds.map((d) => inc.get(d.linked_incident_id)).filter(Boolean) as Row[];
     const li = linked.sort((a, b) => num(b.priority) - num(a.priority))[0] ?? null;
@@ -99,16 +112,23 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
       category: li?.label ?? c?.label ?? null, department: li?.dept_name ?? (c ? deptName.get(c.lead) ?? null : null), sourceCount,
       sources: ds.slice(0, 8).map((d) => ({ publisher: d.publisher ?? null, title: String(d.title), url: d.url ?? null, t: d.t ?? null })),
       matchedIncidentId: li?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
-      score, zone: li?.zone == null ? null : num(li.zone), cats
+      score, zones: linked.map((r) => r.zone).filter((z) => z != null).map(num), cats
     });
+    // a story can be about a place no linked incident records (or link no incident at all): the articles' own places count
+    if (f.zone && !stories[stories.length - 1].zones.includes(f.zone)) {
+      for (const d of ds) {
+        const placed = await resolvePlace(`${d.place_text ?? ""} ${d.title ?? ""}`);
+        if (placed?.zone != null) stories[stories.length - 1].zones.push(placed.zone);
+      }
+    }
   }
 
-  // topic: by the story's category or its headline's words (whole words, Tamil included); zone: the linked incident's
+  // topic: by the story's category or its headline's words (whole words, Tamil included); zone: any linked incident's, or an article's place
   const topicWords = f.topic ? topicPhrases(f.topic) : [];
   const keep = stories.filter((s) => (!f.topic || s.cats.some((x) => f.topic!.cats.includes(x)) || s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))))
-    && (!f.zone || s.zone === f.zone) && (!f.gapsOnly || (!s.departmentRecordFound && s.matchedIncidentId != null)));
+    && (!f.zone || s.zones.includes(f.zone)) && (!f.gapsOnly || (!s.departmentRecordFound && s.matchedIncidentId != null)));
   keep.sort((a, b) => b.score - a.score);
-  return { stories: keep.slice(0, n).map(({ score: _s, zone: _z, cats: _c, ...s }) => s), candidates: keep.length };
+  return { stories: keep.slice(0, n).map(({ score: _s, zones: _z, cats: _c, ...s }) => s), candidates: keep.length };
 }
 
 const d0 = (ds: Row[]) => ds[0];

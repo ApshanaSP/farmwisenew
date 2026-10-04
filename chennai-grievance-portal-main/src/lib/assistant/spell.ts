@@ -24,7 +24,9 @@ news stories story developing dashboard console filter status priority report re
 mosquito sanitation encroachment building collapse drinking contamination outbreak cases beds occupancy oxygen ambulance school schools
 tomato tomatoes onion onions potato potatoes brinjal banana carrot beans cabbage cauliflower garlic ginger lemon coconut drumstick pumpkin
 cucumber radish beetroot chilli coriander mint mango apple grapes orange papaya pineapple guava pomegranate greens spinach peas
-koyambedu uzhavar sandhai aqi imd cpcb gcc chennai tamil nadu corporation collector map chart table pie graph export download`.split(/\s+/);
+koyambedu uzhavar sandhai aqi imd cpcb gcc chennai tamil nadu corporation collector map chart table pie graph export download
+alcohol alcoholic liquor hooch arrack murder murders murdered suicide suicides death deaths died killed killing drowning drowned robbery
+snatching ganja drugs protest protests missing stabbing stabbed assault harassment kidnap kidnapping about tell explain`.split(/\s+/);
 
 /**
  * Common English words that sit one edit from a district word ("words"/"wards", "rate"/"date", "like"/"lake"): they

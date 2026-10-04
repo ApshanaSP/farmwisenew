@@ -46,3 +46,27 @@ describe("verifier", () => {
     expect(verifyNumbers(["News: \"6 TMC of water in the lakes\""], [], [], ["6 TMC of water in the lakes this year"]).ok).toBe(true);
   });
 });
+
+describe("street numbers are addresses, not claims", () => {
+  it("19th Street and 2nd Main Road pass; a bare count still fails", () => {
+    expect(verifyNumbers(["Mosquito menace at N Block 19Th Street and 2nd Main Road"], []).ok).toBe(true);
+    expect(verifyNumbers(["19 incidents were reported"], []).ok).toBe(false);
+  });
+});
+
+describe("a number must match what it is said to measure", () => {
+  const facts = [f("complaints.total", 24), f("deaths.total", 3), f("incidents.change_pct", -21.2), f("severe.total", 16)];
+  it("24 deaths from a fact about 24 complaints fails; 3 deaths passes", () => {
+    expect(verifyNumbers(["24 deaths were reported"], facts).ok).toBe(false);
+    expect(verifyNumbers(["3 deaths were reported"], facts).ok).toBe(true);
+    expect(verifyNumbers(["24 complaints came in"], facts).ok).toBe(true);
+  });
+  it("rose 21.2% from a negative change fails; fell 21.2% passes", () => {
+    expect(verifyNumbers(["Incidents rose 21.2% on the week"], facts).ok).toBe(false);
+    expect(verifyNumbers(["Incidents fell 21.2% on the week"], facts).ok).toBe(true);
+  });
+  it("a plain count still passes on its value", () => {
+    expect(verifyNumbers(["Royapuram leads with 16 severe cases"], facts).ok).toBe(true);
+    expect(verifyNumbers(["There were 16 of them"], facts).ok).toBe(true);
+  });
+});

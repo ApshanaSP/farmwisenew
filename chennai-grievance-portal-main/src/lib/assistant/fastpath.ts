@@ -10,9 +10,11 @@ import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, detectIntent, topicByKey, type Detected, type Topic } from "@/lib/assistant/intent";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, categoryRanking, countIncidents, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, categoryRanking, countIncidents, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
-import { topStories } from "@/lib/assistant/news";
+import { storiesOfDocs, topStories } from "@/lib/assistant/news";
+import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
+import { PERIODS } from "@/lib/collector/intel";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
 
@@ -45,8 +47,9 @@ export function periodNamed(text: string): Period | null {
   return null;
 }
 
-export async function fastPath(i: FastInput): Promise<FastOutput | null> {
-  const d = detectIntent(i.message, i.ctx);
+/** `decided`: the intent the router understood; without it (no model) the rules read the message. */
+export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOutput | null> {
+  const d = decided ?? detectIntent(i.message, i.ctx);
   // pictures of an earlier incident list: the same incidents on a map or in a table
   if ((d.intent === "MAP" || d.intent === "TABLE") && i.ctx?.resultIds?.length && ["incident_list", "map", "table"].includes(String(i.ctx.lastResponseType)))
     return pictureOfList(i, d);
@@ -54,7 +57,7 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
 
   // filters: a refinement starts from the previous answer's; a new question from the console's; the question's own words win
   const prev = d.refinement ? i.ctx?.activeFilters ?? null : null;
-  const named = periodNamed(i.message);
+  const named = d.period ?? periodNamed(i.message);
   const f: ActiveFilters = {
     ...(prev ?? filtersOf(i.scope)),
     period: named ?? prev?.period ?? (d.intent.startsWith("NEWS") ? "daily" : i.scope.period),
@@ -76,6 +79,7 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
   card.sources.assumptions.push(`Read as ${d.intent.toLowerCase().replace(/_/g, " ")}: ${d.because}.`);
   const what = topic?.label ?? "";
   const ctxBase: ConversationContext = { lastIntent: d.intent, activeFilters: f, resultIds: i.ctx?.resultIds, storyIds: i.ctx?.storyIds,
+    resultTitles: i.ctx?.resultTitles, storyTitles: i.ctx?.storyTitles, selectedTitle: i.ctx?.selectedTitle ?? null,
     selectedIncidentId: i.ctx?.selectedIncidentId ?? null, selectedNewsStoryId: i.ctx?.selectedNewsStoryId ?? null };
   const plan = { intent: d.intent, fastPath: true, filters: f, n: d.n };
 
@@ -84,7 +88,13 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
     case "INCIDENT_LIST": {
       // a refinement ("only Adyar") keeps the number the previous question asked for
       const n = d.n ?? (d.refinement ? i.ctx?.n ?? null : null) ?? (d.intent === "INCIDENT_LIST" ? 8 : 5);
-      const r = await rankedIncidents(inc, i.now, n, d.intent === "PRIORITY_INCIDENT_LIST" ? "priority" : "recent");
+      // a topic narrower than its category ("murder" within violent crime): the incidents that are about it, by meaning
+      const nar = topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(() => null) : null;
+      if (nar) {
+        card.sources.tools.push({ name: "search_records", args: { text: topic!.narrow, ...inc }, ms: 0 });
+        card.sources.assumptions.push(`"${topic!.label}" is narrower than its category, so the incidents were found by meaning and keywords within it, or by a recorded death.`);
+      }
+      const r = nar ?? await rankedIncidents(inc, i.now, n, d.intent === "PRIORITY_INCIDENT_LIST" ? "priority" : "recent");
       if (r.widened) {
         card.scope = { ...scope, period: r.period };
         card.scopeLine = describeScope(card.scope, i.names, i.lang, i.now);
@@ -100,8 +110,9 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
           : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} in the ${periodLabel(r.period)}${scopeWords(scope, i.names)}.`;
       if (r.widened) card.caveats.push(`Fewer than ${n} in the ${periodLabel(inc.period)}, so this covers the ${periodLabel(r.period)}.`);
       listData(card, r.items);
-      card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), storyIds: undefined,
-        selectedIncidentId: r.items.length === 1 ? r.items[0].incidentId : null, n, activeFilters: { ...f, period: r.period } };
+      card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
+        storyIds: undefined, storyTitles: undefined, selectedIncidentId: r.items.length === 1 ? r.items[0].incidentId : null,
+        selectedTitle: r.items.length === 1 ? r.items[0].title : null, n, activeFilters: { ...f, period: r.period } };
       card.sources.tools.push({ name: d.intent === "PRIORITY_INCIDENT_LIST" ? "priority_incidents" : "recent_incidents", args: { ...inc, n }, ms: 0 });
       break;
     }
@@ -153,10 +164,10 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
       card.headline = d.intent === "INCIDENT_TIMELINE" ? `How it unfolded: ${x.title}` : x.title;
       card.answerMarkdown = d.focus === "where" ? `It happened at ${[x.location, x.ward != null ? `Ward ${x.ward}` : null, x.zone ? `${x.zone} zone` : null, x.taluk ? `${x.taluk} taluk` : null].filter(Boolean).join(", ") || "an unrecorded place"}.`
         : d.focus === "when" ? `It was first reported on ${x.occurredAt ?? "an unrecorded date"}.`
-          : d.focus === "status" ? `It is ${x.status.toLowerCase()}${x.deadlineMissed ? ", and past its deadline" : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
+          : d.focus === "status" ? `${/resolved|closed|verified|completed/i.test(x.status) ? "Yes" : "No"}, it is ${x.status.toLowerCase()}${x.deadlineMissed ? ", and **past its deadline**" : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
             : d.focus === "who" ? `${x.department ?? "The department"} is responsible${x.officials.length ? `: ${x.officials.map((o) => `${o.name}${o.designation ? `, ${o.designation}` : ""}`).join("; ")}` : ""}.`
               : x.whatHappened;
-      card.context = { ...ctxBase, lastResponseType: "incident_detail", selectedIncidentId: id };
+      card.context = { ...ctxBase, lastResponseType: "incident_detail", selectedIncidentId: id, selectedNewsStoryId: null, selectedTitle: x.title };
       card.sources.incidentIds = [id];
       card.sources.tools.push({ name: "incident_detail", args: { id, focus: d.focus }, ms: 0 });
       break;
@@ -173,13 +184,41 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
         ? `${cap(words(r.items.length))} ${r.sameKind ? r.anchor.category.toLowerCase() : "related"} incident${r.items.length === 1 ? "" : "s"} ${r.byZone ? `in ${r.anchor.zone ?? "the same zone"}` : `within ${r.km} km of ${r.anchor.location ?? "it"}`} in the 60 days around it, closest first.`
         : `No ${r.anchor.category.toLowerCase()} incident ${r.byZone ? "in the same zone" : `within ${r.km} km`} in the 60 days around it.`;
       listData(card, r.items);
-      card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), selectedIncidentId: id };
+      card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
+        selectedIncidentId: id, selectedTitle: r.anchor.title };
       card.sources.tools.push({ name: "related_incidents", args: { id }, ms: 0 });
       break;
     }
     case "NEWS_TOP":
     case "NEWS_ONLY_GAPS":
     case "NEWS_DETAIL": {
+      // a story described in words ("the Odisha worker news"): found by meaning and keywords among the period's articles
+      // (the last 7 days when the question names no period); close runner-ups are named so the Collector can switch
+      let others: string[] = [];
+      if (d.intent === "NEWS_DETAIL" && !d.storyId && d.find) {
+        const hours = d.period ? NEWS_HOURS[d.period] : 168;
+        const nowSec = Date.parse(i.now.replace(" ", "T") + "+05:30") / 1000;
+        const found = (await hybridSearch("news", d.find, { since: nowSec - hours * 3600 }, 8).catch(() => null)) ?? [];
+        const keys = await storiesOfDocs(found.map((x) => String(x.id)));
+        if (!keys.length) {
+          card.responseType = "news_list";
+          card.stories = [];
+          card.headline = "No matching story";
+          card.answerMarkdown = `No Chennai news story about "${d.find}" in the ${hours <= 36 ? "last 36 hours" : hours === 168 ? "last 7 days" : periodLabel(d.period!)}.`;
+          card.scopeLine = "Chennai news";
+          card.context = { ...ctxBase, lastResponseType: "news_list" };
+          card.sources.tools.push({ name: "find_news_story", args: { text: d.find, hours }, ms: 0 });
+          break;
+        }
+        d.storyId = keys[0];
+        // runner-ups only when nearly as close in meaning as the story shown (a shared word such as "Odisha" is not enough)
+        const firstTitle = String(found[0]?.rec.title ?? "");
+        const top = found[0]?.sim ?? null;
+        others = found.filter((x) => top != null && x.sim != null && x.sim >= top - 0.02 && x.sim >= 0.86)
+          .map((x) => String(x.rec.title)).filter((t, k, a) => t !== firstTitle && a.indexOf(t) === k).slice(0, 2);
+        card.sources.tools.push({ name: "find_news_story", args: { text: d.find, hours }, ms: 0 });
+        card.sources.assumptions.push(`Found by meaning and keywords: "${d.find}"${d.period ? "" : " (last 7 days)"}.`);
+      }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
       const hours = d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
       const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS" }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
@@ -193,10 +232,13 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
           : `No ${topic ? `${topic.label} ` : ""}story in Chennai news in the ${span}.`;
       card.scopeLine = `${cap(span)}${f.zone ? ` · ${i.names.zones.get(f.zone)?.name ?? `Zone ${f.zone}`}` : ""} · Chennai news`;
       card.context = { ...ctxBase, lastResponseType: card.responseType, storyIds: one ? i.ctx?.storyIds : r.stories.map((s) => s.storyId),
-        selectedNewsStoryId: one ? d.storyId : null, resultIds: i.ctx?.resultIds };
+        storyTitles: one ? i.ctx?.storyTitles : r.stories.map((s) => s.headline), selectedNewsStoryId: one ? r.stories[0]?.storyId ?? d.storyId : null,
+        selectedIncidentId: one ? r.stories[0]?.matchedIncidentId ?? null : ctxBase.selectedIncidentId, selectedTitle: one ? r.stories[0]?.headline ?? null : null,
+        resultIds: i.ctx?.resultIds };
       card.sources.incidentIds = r.stories.map((s) => s.matchedIncidentId).filter(Boolean) as string[];
       card.sources.tools.push({ name: one ? "news_detail" : "top_news", args: { hours, topic: topic?.key ?? null, zone: f.zone ?? null }, ms: 0 });
       card.caveats.push("News rests mostly on headlines and short summaries; open a source for the full report.");
+      if (others.length) card.caveats.push(`Other close matches: ${others.map((t) => `"${t}"`).join("; ")}.`);
       break;
     }
     case "ACTION_REQUEST": {
@@ -218,8 +260,26 @@ export async function fastPath(i: FastInput): Promise<FastOutput | null> {
   card.voiceSummary = card.answerMarkdown.replace(/\*\*/g, "").split("\n")[0].slice(0, 300);
   card.sources.incidentIds = card.sources.incidentIds.length ? card.sources.incidentIds : (card.incidents ?? []).map((x) => x.incidentId);
   card.sources.refs = [{ kind: "table", name: "incidents" }, ...(card.stories ? [{ kind: "table", name: "documents" }] : [])];
-  card.testData = true;
+  // the "Test data" label from the records shown (news articles are real; a story's linked incident may not be)
+  card.testData = await anySynthetic([...new Set([...card.sources.incidentIds, ...(card.incident ? [card.incident.incidentId] : [])])]).catch(() => true);
   return { card, plan };
+}
+
+/**
+ * The incidents of a narrow topic in the period: searched by meaning and keywords within the topic's categories (and the
+ * zone), kept when they match by keyword, are close in meaning, or record a death; priority order. Null while the search
+ * index is not built (the caller lists the whole category instead).
+ */
+async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: number, message: string) {
+  const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
+  const hours = PERIODS[inc.period].hours;
+  const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since: nowT - hours * 3600, until: nowT, zone: inc.zone ?? null,
+    cats: topic.cats, dept: inc.dept ?? null, openOnly: !!inc.openOnly }, 40);
+  if (!hits) return null;
+  const keep = hits.filter((h) => Number(h.rec.dead) > 0 || h.sim == null || h.sim >= 0.83);
+  const all = await incidentsByIds(await currentIncidentIds(keep));
+  const items = [...all].sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0)).slice(0, n);
+  return { items, total: all.length, period: inc.period, widened: false };
 }
 
 /** "make that a map" / "as a table" after an incident list: the same incidents, drawn. */

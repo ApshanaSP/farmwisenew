@@ -47,6 +47,9 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   const [micOk, setMicOk] = useState(false);
   const [past, setPast] = useState<Past[] | null>(null);
   const [showPast, setShowPast] = useState(false);
+  const [find, setFind] = useState("");
+  /** answers that arrived in this visit are revealed word by word; reopened history appears at once */
+  const live = useRef<Set<string>>(new Set());
   const stopListening = useRef<(() => void) | null>(null);
   const story = useRef(0);
   const session = useRef<string | null>(null);
@@ -98,12 +101,25 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
       setShowPast(false);
     }).catch(() => {});
   }, []);
-  const togglePast = () => {
-    setShowPast((v) => !v);
+  const loadPast = useCallback(() => {
     fetch("/api/collector/assistant/sessions").then((r) => (r.ok ? r.json() : null)).then((j) => j && setPast(j.sessions)).catch(() => {});
-  };
+  }, []);
+  // the expanded view is a chat workspace: past conversations stay in the sidebar
+  const togglePast = () => { if (wide) { setWide(false); return; } setShowPast((v) => !v); loadPast(); };
+  useEffect(() => { if (open && wide) loadPast(); }, [open, wide, loadPast]);
 
-  useEffect(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" }); }, [items]);
+  useEffect(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" }); stick.current = true; }, [items]);
+  // while an answer's words appear, the thread follows them, unless the Collector has scrolled up to read
+  const stick = useRef(true);
+  useEffect(() => {
+    const el = thread.current;
+    if (!el || !open) return;
+    const onScroll = () => { stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 90; };
+    const mo = new MutationObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; });
+    el.addEventListener("scroll", onScroll, { passive: true });
+    mo.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => { el.removeEventListener("scroll", onScroll); mo.disconnect(); };
+  }, [open]);
   // the mic button only where the browser can listen; nothing keeps talking once the dialog closes
   useEffect(() => { setMicOk(canListen()); }, []);
   useEffect(() => { if (!open) { stopListening.current?.(); stopSpeaking(); } }, [open]);
@@ -186,7 +202,9 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
             const card = data as Card;
             // follow-ups ("make it a pie") refer to the last answer that has data, not to a confirmation or a refusal
             if (card.datasets?.length) lastAnswer.current = card.id;
+            live.current.add(card.id);
             replace({ id: card.id, role: "assistant", card });
+            if (wide) loadPast();
             // asked by voice, answered by voice: the spoken summary, in the answer's language
             if (inputMode === "voice") speak(card.voiceSummary || card.headline, card.voiceLang);
             for (const a of card.autoActions ?? []) runAction(a, true);
@@ -199,7 +217,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
     } finally {
       if (ctl.current === ac) { ctl.current = null; setBusy(false); }
     }
-  }, [c, choice, lang, runAction]);
+  }, [c, choice, lang, runAction, wide, loadPast]);
 
   const pin = useCallback(async (messageId: string) => {
     const r = await fetch("/api/collector/assistant/pins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId }) }).catch(() => null);
@@ -259,6 +277,8 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   return (
     <div className="aq-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside ref={box} className={`aq${wide ? " wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby="aq-title" onKeyDown={trap}>
+        {wide && <Sidebar t={t} past={past} find={find} setFind={setFind} current={session.current} onNew={reset} onOpen={(id) => loadSession(id)} />}
+        <div className="aq-main">
         <header className="aq-h">
           <BrandMark size={34} />
           <div className="aq-ht">
@@ -284,7 +304,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
             <button className="aq-hb" onClick={onClose} title={t.close} aria-label={t.close}><I n="x" /></button>
           </div>
         </header>
-        {showPast && (
+        {showPast && !wide && (
           <div className="aq-past" role="dialog" aria-label={t.history}>
             <div className="aq-past-h"><b>{t.history}</b><button className="aq-hb" onClick={() => setShowPast(false)} aria-label={t.close}><I n="x" /></button></div>
             {past == null ? <p className="aq-past-empty">…</p> : !past.length ? <p className="aq-past-empty">{t.noHistory}</p> : (
@@ -334,21 +354,31 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
               )}
             </div>
           )}
-          {items.map((it) =>
-            it.role === "user" ? <div key={it.id} className="aq-row me"><div className="aq-bubble">{it.text}</div></div>
-              : it.role === "assistant" ? (
+          {items.map((it, k) => {
+            if (it.role === "user") return (
+              <div key={it.id} className="aq-row me">
+                <button className="aq-edit" onClick={() => { setText(it.text); input.current?.focus(); }} title={t.editQ} aria-label={t.editQ} disabled={busy}><I n="edit" /></button>
+                <div className="aq-bubble">{it.text}</div>
+              </div>
+            );
+            if (it.role === "assistant") {
+              // the question this answered, for "answer again"
+              const q = (items.slice(0, k).reverse().find((x) => x.role === "user") as { text: string } | undefined)?.text;
+              return (
                 <div key={it.id} className="aq-row bot">
                   <BrandMark size={28} className="aq-av" />
-                  <AnswerCard card={it.card} geo={c.geo} onAsk={onAsk} onAction={onAct} expanded={wide} onExpand={onExpand} onPin={pin} />
+                  <AnswerCard card={it.card} geo={c.geo} onAsk={onAsk} onAction={onAct} expanded={wide} onExpand={onExpand} onPin={pin}
+                    reveal={live.current.has(it.card.id)} onRetry={q && !busy && k === items.length - 1 ? () => ask(q) : undefined} />
                 </div>
-              )
-                : it.role === "pending" ? <div key={it.id} className="aq-row bot"><BrandMark size={28} className="aq-av" /><Progress stage={it.stage} lang={lang} /></div>
-                  : <div key={it.id} className="aq-err" role="alert"><I n="alert" />{it.text}</div>
-          )}
+              );
+            }
+            if (it.role === "pending") return <div key={it.id} className="aq-row bot"><BrandMark size={28} className="aq-av" /><Progress stage={it.stage} lang={lang} /></div>;
+            return <div key={it.id} className="aq-err" role="alert"><I n="alert" />{it.text}</div>;
+          })}
         </div>
 
         {playing != null && (
-          <div className="aq-story" role="status"><I n="play" />{x.playing(playing + 1, insights.length)}: {insights[playing]?.title}
+          <div className="aq-storybar" role="status"><I n="play" />{x.playing(playing + 1, insights.length)}: {insights[playing]?.title}
             <button onClick={stopPlay}><I n="stop" />{x.stopPlay}</button></div>
         )}
         {showIns && items.length > 0 && (
@@ -371,6 +401,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
           </div>
           <small className="aq-hint">{t.hint}</small>
         </form>
+        </div>
       </aside>
     </div>
   );
@@ -388,6 +419,34 @@ function Progress({ stage, lang }: { stage: Stage; lang: Lang }) {
       <span className="aq-stage">{T[lang].stages[stage]}…</span>
       <span className="aq-steps" aria-hidden="true">{order.map((s, i) => <b key={s} className={i < at ? "done" : i === at ? "on" : ""} />)}</span>
     </div>
+  );
+}
+
+/** The chat workspace's sidebar: a new conversation, a search, and past conversations by day (reopened with their context). */
+function Sidebar({ t, past, find, setFind, current, onNew, onOpen }: { t: (typeof T)["en"]; past: Past[] | null; find: string; setFind: (s: string) => void;
+  current: string | null; onNew: () => void; onOpen: (id: string) => void }) {
+  const today = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+  const f = find.trim().toLowerCase();
+  const list = (past ?? []).filter((p) => !f || (p.title ?? "").toLowerCase().includes(f));
+  const groups: [string, Past[]][] = [[t.today, list.filter((p) => p.updated_at.slice(0, 10) === today)], [t.earlier, list.filter((p) => p.updated_at.slice(0, 10) !== today)]];
+  return (
+    <nav className="aq-side" aria-label={t.history}>
+      <button className="aq-newchat" onClick={onNew}><I n="plus" />{t.newChat}</button>
+      <label className="aq-find"><I n="search" /><input value={find} onChange={(e) => setFind(e.target.value)} placeholder={t.searchChats} aria-label={t.searchChats} /></label>
+      <div className="aq-side-list">
+        {past == null ? <p className="aq-past-empty">…</p> : !list.length ? <p className="aq-past-empty">{t.noHistory}</p>
+          : groups.filter(([, g]) => g.length).map(([label, g]) => (
+            <section key={label}>
+              <small>{label}</small>
+              {g.map((p) => (
+                <button key={p.id} className={p.id === current ? "on" : ""} onClick={() => onOpen(p.id)} title={p.title}>
+                  <I n="chat" /><span>{p.title || t.newChat}</span>
+                </button>
+              ))}
+            </section>
+          ))}
+      </div>
+    </nav>
   );
 }
 

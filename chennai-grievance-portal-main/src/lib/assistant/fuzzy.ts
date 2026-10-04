@@ -24,7 +24,7 @@ export function editDistance(a: string, b: string, max = 3): number {
 }
 
 /** How many edits a word of this length may carry and still be read as another: short words must be nearly exact. */
-export const allowedEdits = (len: number) => (len <= 3 ? 0 : len <= 5 ? 1 : 2);
+export const allowedEdits = (len: number) => (len <= 3 ? 0 : len <= 5 ? 1 : len <= 8 ? 2 : 3);
 
 /**
  * The candidate closest to `word`, or null when none is close enough or two different candidates are equally close

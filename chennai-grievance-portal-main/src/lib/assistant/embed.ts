@@ -57,7 +57,8 @@ function extractor(): Promise<Extractor> {
   return S.extractor;
 }
 
-async function embed(texts: string[]): Promise<{ vecs: Float32Array; dim: number }> {
+/** Embeds texts with the shared model ("passage: ..." for records, "query: ..." for questions); lance.ts uses it too. */
+export async function embed(texts: string[]): Promise<{ vecs: Float32Array; dim: number }> {
   const fe = await extractor();
   const out = await fe(texts, { pooling: "mean", normalize: true });
   return { vecs: out.data, dim: out.dims[1] };
@@ -172,6 +173,8 @@ export function useThreads(n: number) {
  * held up. Never blocks the caller.
  */
 export function warmUp(asOf: string) {
+  // the search index (LanceDB, lance.ts) replaces this in-memory one once it is built: no embedding here then
+  if (fs.existsSync(path.join(process.cwd(), "data", "lancedb", "incidents.lance"))) return;
   // an index held from before the keyword field existed is refreshed (metadata only: its vectors are reused)
   const current = !!S.index && S.index.meta.values().next().value?.words !== undefined;
   if (S.building || (S.index && current && S.index.asOf === asOf && fileMtime() <= S.fileMtime)) return;

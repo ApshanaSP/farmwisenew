@@ -18,6 +18,7 @@ import { CHENNAI_MARKETS, mandiMarkets, mandiWeekly } from "@/lib/collector/sour
 import { ScopeSchema, refNames, scopeProblems, type AssistantScope } from "@/lib/assistant/scope";
 import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
+import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
@@ -130,7 +131,21 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   // the word the question names ("murder") outweighs small differences in meaning between near-identical police records
   const boost = (m: Meta) => Math.min(0.14, 0.07 * lexOf(m.words)) + 0.03 * Math.exp(-Math.max(0, nowT - m.t) / (30 * 86400))
     + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0);
-  // the zone and type the question names narrow the search; if nothing matches, each is relaxed in turn
+  // the search index (LanceDB): meaning and keywords together, typo-tolerant; the zone and type narrow it, relaxed in turn
+  const hy = (f: { zone?: number | null; cats?: string[] | null }) => hybridSearch("incidents", text, { zone: f.zone ?? null, cats: f.cats ?? null }, 12);
+  let found = await hy({ zone, cats }).catch(() => null);
+  if (found && !found.length && cats) found = await hy({ zone });
+  if (found && !found.length && zone != null) found = await hy({ cats });
+  if (found) {
+    // recency, the named locality and severity break near-ties, as below
+    const ranked = found.map((h) => ({ id: h.id, sim: h.sim, words: `${h.rec.cat_label} ${h.rec.title} ${h.rec.place}`.toLowerCase(),
+      score: h.score + 0.002 * Math.exp(-Math.max(0, nowT - Number(h.rec.t)) / (30 * 86400)) + (locality && h.rec.place.toLowerCase().includes(locality) ? 0.002 : 0)
+        + (h.rec.sev === "Severe" ? 0.001 : 0) })).sort((a, b) => b.score - a.score);
+    const top = ranked[0];
+    return { found: ranked.map((h) => ({ id: h.id, score: h.score })), how: "meaning",
+      confident: !top || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86 };
+  }
+  // the older in-memory index while the search index is being built
   let hits = await semanticSearch(text, { zone, cats }, 12, boost);
   if (hits && !hits.length && cats) hits = await semanticSearch(text, { zone }, 12, boost);
   if (hits && !hits.length && zone != null) hits = await semanticSearch(text, { cats }, 12, boost);
@@ -370,6 +385,49 @@ export const TOOLS = [
         facts: [fact("list.total", "Incidents matching", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
         sources: [fn("intel.list"), tbl("incidents")], incidentIds: rows.map((x) => x.id),
         testData: true, caveats: a.allTime ? ["Covers all 180 days in the store, not only the period."] : [], untrusted: ["title"]
+      };
+    }
+  }),
+
+  tool({
+    name: "search_records",
+    description: "Find incidents and news reports by what they are about, in any wording or language, typos allowed (hybrid search: meaning + keywords): 'murder in Velachery', 'deaths due to alcohol', 'fire near Teynampet metro', 'stray dog attacks', 'protests this week'. Narrows by the period, zone and category when given. Returns the matching incidents and news, best first; use it whenever the question names a kind of event that is not a console category, a person, a place detail or a description.",
+    args: z.object({
+      text: z.string().trim().min(2).max(300),
+      scope: ScopeSchema.default({}),
+      kinds: z.array(z.enum(["incidents", "news"])).min(1).default(["incidents", "news"]),
+      allTime: z.boolean().default(false)
+    }),
+    async run(a) {
+      const s = a.scope;
+      const now = await asOf();
+      const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
+      const place = s.zone == null ? await resolvePlace(a.text).catch(() => null) : null;
+      const zone = s.zone ?? (place?.zone != null ? Number(place.zone) : null);
+      const f = { since: a.allTime ? null : nowT - PERIODS[s.period].hours * 3600, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
+      const [inc, news] = await Promise.all([
+        a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve([]),
+        a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve([])
+      ]);
+      if (inc === null && news === null)
+        return { scope: s, asOf: now, data: { found: false }, facts: [], sources: [fn("lance.hybridSearch")], incidentIds: [], testData: false,
+          caveats: ["The search index is still being built (npm run lance:build); try again shortly."] };
+      // a match: in the keyword results, or close in meaning
+      const keep = <T extends { sim: number | null; score: number }>(xs: T[] | null) => (xs ?? []).filter((x) => x.sim == null || x.sim >= 0.8);
+      const incidents = keep(inc).map((x) => ({ id: x.id, title: x.rec.title, type: x.rec.cat_label, zone_name: x.rec.zone, place: x.rec.place,
+        sev: x.rec.sev, status: x.rec.status, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
+        match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
+      const articles = keep(news).map((x) => ({ id: x.id, title: x.rec.title, publisher: x.rec.source, place: x.rec.place, url: x.rec.url,
+        incident: x.rec.incident || null, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
+        match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
+      return {
+        scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles },
+        facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length),
+          fact("search.news", "News reports matching the description (best 8 shown)", articles.length)],
+        sources: [fn("lance.hybridSearch", "multilingual-e5 meaning + BM25 keywords, fused by rank"), tbl("incidents"), tbl("documents")],
+        incidentIds: await currentIncidentIds(keep(inc)), testData: true,
+        caveats: [`Matches are found by meaning and keywords, not counted from the store: ${incidents.length + articles.length ? "these are the closest records" : "nothing close enough was found"}${a.allTime ? "" : ` in the ${periodOf(s)}`}.`],
+        untrusted: ["title", "incidents", "news"]
       };
     }
   }),

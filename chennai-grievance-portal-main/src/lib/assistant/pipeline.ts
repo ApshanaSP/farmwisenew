@@ -11,7 +11,7 @@
  * comes from the tools, written by a template, and says so.
  */
 import { AiBudgetError, AiBusyError, AiUnavailableError, aiStatus, generateJson, type CallInfo } from "@/lib/ai/gateway";
-import { routerPrompt, routerSchemas, routerSystem } from "@/lib/ai/prompts/router";
+import { routerPrompt, routerSchemas, routerSystem, type AnswerKind } from "@/lib/ai/prompts/router";
 import { PLANNER_SYSTEM, plannerPrompt } from "@/lib/ai/prompts/planner";
 import { ComposerLenient, ComposerSchema, composerPrompt, composerSystem, type ComposerOutput } from "@/lib/ai/prompts/composer";
 import { asOf as storeAsOf } from "@/lib/collector/intel";
@@ -23,6 +23,7 @@ import { ToolError, listTools, runTool } from "@/lib/assistant/tools";
 import { ENV_METRICS } from "@/lib/assistant/queries";
 import { applyTopN, presentAll, spec, type Presentation } from "@/lib/assistant/datasets";
 import { correctSpelling } from "@/lib/assistant/spell";
+import { holdSync, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
@@ -38,7 +39,9 @@ import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, 
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
 import { fastPath } from "@/lib/assistant/fastpath";
-import { filtersOf, lastContext } from "@/lib/assistant/context";
+import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
+import { detectIntent, type Detected } from "@/lib/assistant/intent";
+import { planFromDecision, type Decision } from "@/lib/assistant/decide";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 
@@ -81,7 +84,10 @@ interface Route {
   offline: boolean;
   /** the router read the message as asking for a picture (chart, graph, map), in whatever words */
   visual?: boolean;
+  /** what kind of answer the router understood (router-v2); absent from the rules */
+  decision?: Decision;
 }
+
 
 // ------------------------------------------------------------------ caches --
 
@@ -104,6 +110,7 @@ const TOOL_ARGS: Record<string, (c: Row, s: Scope) => Record<string, unknown>> =
   incidents: (c, s) => ({ scope: s, sev: c.sev ?? null, status: c.status ?? null, q: c.q ?? null, allTime: !!c.allTime }),
   incident_detail: (c) => ({ id: c.id ?? "" }),
   incident_story: (c, s) => ({ text: c.text ?? c.q ?? c.id ?? "", scope: s }),
+  search_records: (c, s) => ({ text: c.text ?? c.q ?? "", scope: s, allTime: !!c.allTime }),
   search: (c) => ({ text: c.text ?? c.q ?? c.place ?? "" }),
   developing_stories: (c, s) => ({ scope: s, place: c.place ?? null }),
   place_breakdown: (c, s) => ({ scope: s, place: c.place ?? null }),
@@ -225,6 +232,7 @@ const BRIEF: Record<string, string> = {
   incidents: "list incidents (sev; status open|awaiting|unverified|verified|critical; q keyword; allTime)",
   incident_detail: "one incident by id (INC-...)",
   incident_story: "explain ONE specific incident described in words (text = the description: 'the murder case in Adyar', 'fire in Guindy yesterday'): what happened, when, status, reports",
+  search_records: "find incidents AND news by what they are about, any wording, Tamil or English, typos allowed (text: 'murder in Velachery', 'deaths due to alcohol', 'stray dog attacks'); use when the question names a kind of event that is not one of the Categories, a person, or a detail",
   search: "find zones, departments or incidents by text",
   briefing: "the Collector's briefing for the period",
   dept_followups: "per department: overdue and serious incidents, next steps",
@@ -269,6 +277,7 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     role: "fast", name: "router", schema: schemas.strict, lenient: schemas.lenient, system, temperature: 0, maxOutputTokens: 1400, user: i.user,
     abortSignal: i.signal,
     prompt: routerPrompt({ message, detected, scopeLine: describeScope(base, n, "en"), scopeJson: JSON.stringify(base), summary: summaryOf(turns), place, category, asOf: now,
+      previous: contextForRouter(lastContext(turns)),
       typed: i.message.replace(/\s+/g, " ").trim() !== message ? i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars) : undefined })
   });
   models.push(r.info);
@@ -309,9 +318,15 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     intent: o.intent, language: o.language, normalized: o.normalizedQuestion || message, scope, scopeRaw: o.scope,
     tools: o.tools.slice(0, LIMITS.queriesPerQuestion).map((c) => ({ name: c.name, args: toolArgs(c.name, c, scope) })),
     chartEdit: o.chartEdit, actions: o.consoleActions, clarify: o.needsClarification ? o.clarificationQuestion : null, refusal: o.refusalReason,
-    assumptions: o.assumptions, offline: false, visual: o.visual
+    assumptions: o.assumptions, offline: false, visual: o.visual,
+    decision: {
+      answer: o.answer, incidentId: o.refIncidentId?.trim().toUpperCase() || null, storyId: o.refStoryId?.trim() || null, find: o.find?.trim() || null,
+      count: o.count != null && o.count >= 1 && o.count <= 20 ? Math.round(o.count) : null, focus: o.focus, openOnly: o.openOnly, severity: o.severity,
+      options: o.clarifyOptions.map((x) => x.trim()).filter(Boolean).slice(0, 3)
+    }
   };
 }
+
 
 /**
  * A locality the resolver placed (Velachery: zone 13, Velachery taluk) narrows the tools' scope, and a keyword that only
@@ -520,9 +535,20 @@ function adhocPeriod(plan: QueryPlan, lang: Lang): string | null {
 // ------------------------------------------------------------------- main --
 
 export async function ask(i: ChatInput): Promise<ChatOutput> {
+  // the search index's background embedding pauses while a question is answered
+  const release = holdSync();
+  try {
+    return await answer(i);
+  } finally {
+    release();
+  }
+}
+
+async function answer(i: ChatInput): Promise<ChatOutput> {
   const started = Date.now();
   const [now, names] = await Promise.all([storeAsOf(), refNames()]);
   warmUp(now);
+  lanceWarm(now);
   // `typed` is kept as the Collector wrote it; everything below reads `message`, with typos corrected toward the
   // district's vocabulary ("tomatoe prifce" -> "tomato price", "incidnets in adyr" -> "incidents in adyar")
   const typed = i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars);
@@ -557,9 +583,13 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
       const ds = card.datasets.find((d) => d.idField && d.rows.some((r) => /^INC-/.test(String(r[d.idField!]))));
       const ids = ds ? ds.rows.map((r) => String(r[ds.idField!])).filter((x) => /^INC-/.test(x)).slice(0, 10) : [];
       const single = card.sources.incidentIds.length === 1 ? card.sources.incidentIds[0] : null;
+      const titleKey = ds?.fields.find((f) => f.key === "title")?.key;
+      const titles = ds && titleKey ? ds.rows.filter((r) => /^INC-/.test(String(r[ds.idField!]))).slice(0, 10).map((r) => String(r[titleKey] ?? "")) : [];
       card.context = { lastIntent: route?.intent ?? card.kind, activeFilters: filtersOf(card.scope), lastResponseType: card.display === "kpi" ? "kpi" : card.display,
-        resultIds: ids.length ? ids : prevCtx?.resultIds, storyIds: prevCtx?.storyIds, selectedIncidentId: single ?? prevCtx?.selectedIncidentId ?? null,
-        selectedNewsStoryId: prevCtx?.selectedNewsStoryId ?? null, lastVisualization: card.chart?.type ?? null };
+        resultIds: ids.length ? ids : prevCtx?.resultIds, resultTitles: ids.length ? titles : prevCtx?.resultTitles, storyIds: prevCtx?.storyIds,
+        storyTitles: prevCtx?.storyTitles, selectedIncidentId: single ?? prevCtx?.selectedIncidentId ?? null,
+        selectedTitle: single ? card.headline.replace(/^Closest match:\s*/i, "") : prevCtx?.selectedTitle ?? null,
+        selectedNewsStoryId: single ? null : prevCtx?.selectedNewsStoryId ?? null, lastVisualization: card.chart?.type ?? null };
     }
     // what was corrected, shown on the card ("Understood as: tomato price") and kept in the sources
     if (spelled.fixes.length && card.kind !== "refusal") {
@@ -588,17 +618,24 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
   i.stage("understanding");
   const placeData = await runTool("resolve_place", { text: message }).then((r) => r.data as Row | null).catch(() => null);
   const place = placeData ? JSON.stringify(placeData) : "";
-  // explicit intents (incidents themselves, one incident, follow-ups, top news, actions) are answered from the store
-  // directly, against the structured context of the previous answer; everything else goes on to the router below
-  if (!i.pinId && !i.insightKey) {
+  const ctx = lastContext(turns);
+  // answers from the store (lists, counts, one incident's facts, news): `decided` is the router's understanding; without
+  // it the keyword rules read the message (the fallback when no model is available)
+  const fast = async (scope: Scope, decided?: Detected): Promise<ChatOutput | null> => {
     const tf = Date.now();
-    const fp = await fastPath({ message, lang, scope: consoleScope, names, now, lockDept: i.lockDept ?? null, ctx: lastContext(turns), place: placeData })
+    const fp = await fastPath({ message, lang, scope, names, now, lockDept: i.lockDept ?? null, ctx, place: placeData }, decided)
       .catch((e) => { if (i.signal?.aborted) throw e; console.warn("[assistant] fast path failed:", (e as Error).message); return null; });
-    if (fp) console.info(`[assistant] ${fp.card.intent} answered from the store in ${Date.now() - tf} ms (${Date.now() - started} ms since the question)`);
-    if (fp) {
-      if (spelled.fixes.length) fp.card.understood = message;
-      return finish(fp.card, fp.plan);
-    }
+    if (!fp) return null;
+    console.info(`[assistant] ${fp.card.intent} answered from the store in ${Date.now() - tf} ms (${Date.now() - started} ms since the question)${decided ? " (router)" : " (rules)"}`);
+    if (spelled.fixes.length) fp.card.understood = message;
+    return finish(fp.card, { ...fp.plan, router: !!decided });
+  };
+  // exact requests need no understanding: a question naming an incident id, or the previous list as a map or table
+  const exact = detectIntent(message, ctx);
+  if (!i.pinId && !i.insightKey && ((exact.intent === "INCIDENT_DETAIL" && /\bINC-[A-Z0-9-]{4,}/i.test(message) && message.length <= 120)
+      || ((exact.intent === "MAP" || exact.intent === "TABLE") && exact.refinement) || !aiStatus().available)) {
+    const r = await fast(consoleScope);
+    if (r) return r;
   }
   const lastId = turns.filter((t) => t.role === "assistant").slice(-1)[0]?.message_id ?? "";
   const routeKey = `${lang}|${message.toLowerCase()}|${scopeKey(consoleScope)}|${now}|${lastId}`;
@@ -628,6 +665,11 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
         if (e instanceof AiBudgetError) return finish(errorCard(card0(null), e.message), { intent: "error" });
         notes.push(e instanceof AiBusyError ? `The AI service was busy (retry in ${e.retryAfter} s), so this was answered from the data without it.`
           : `The AI step failed (${(e as Error).message.slice(0, 200)}), so this was answered from the data without it.`);
+        // the model is out: the keyword rules answer what they can from the store
+        if (!i.pinId && !i.insightKey) {
+          const r = await fast(consoleScope);
+          if (r) { r.card.sources.limits.push(...notes); r.card.offline = true; return r; }
+        }
         route = rulesRoute(message, consoleScope, names, placeData?.zone != null);
       }
     } else {
@@ -640,6 +682,21 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
   // the reply language: the chip, else Tamil script, else the rules' or the router's Tanglish
   if (i.language === "auto") lang = detected.lang !== "en" ? detected.lang : route.language === "tanglish" || (route.language === "ta" && !hasTamilScript(message)) ? "tanglish" : route.language === "ta" ? "ta" : "en";
   if (guard?.kind === "bulk" && !["out_of_scope", "unsafe", "email_followup"].includes(route.intent)) route = { ...route, intent: "bulk_request" };
+  // the router's understanding decides the kind of answer: one incident explained, an area overview, a list, a story, a question back
+  if (route.decision && !i.pinId && !i.insightKey && !["out_of_scope", "unsafe", "bulk_request", "smalltalk", "help", "chart_edit", "console_action", "email_followup"].includes(route.intent)) {
+    const p = planFromDecision(route, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null);
+    if (p?.clarify) {
+      const c = clarifyCard(card0(route.scope), p.clarify.question);
+      c.chips = p.clarify.options;
+      return finish(c, { intent: "clarify", router: true, options: p.clarify.options });
+    }
+    if (p?.fast) {
+      const r = await fast(route.scope, { ...p.fast, refinement: p.fast.refinement || route.intent === "plan_edit" });
+      if (r) return r;
+    }
+    if (p?.tools) route = { ...route, intent: "tool_question", tools: p.tools,
+      assumptions: [...route.assumptions, route.decision.answer === "area_summary" ? "Read as a question about the place or topic as a whole." : "Read as a question about one incident."] };
+  }
   // Tools first: when the router sends a question to the planner but a console tool clearly answers it, the tool wins
   // (its numbers are the console's); the planner stays for groupings no tool offers.
   if (route.intent === "adhoc_question" && !route.offline && !/\b(ward|channel|source|per day|daily|hourly|by hour|between|from \d)/i.test(message)) {
@@ -687,10 +744,18 @@ export async function ask(i: ChatInput): Promise<ChatOutput> {
   if (route.intent !== "chart_edit" && !["out_of_scope", "unsafe"].includes(route.intent) && turns.some((t) => t.role === "assistant")
     && message.length <= 40 && editFromText(message) && isBareEdit(message)) route = { ...route, intent: "chart_edit" };
   // "what is this murder case in Adyar?": one specific incident, told as a story, whatever list the router picked
-  if (["tool_question", "adhoc_question"].includes(route.intent) && STORY.test(message) && STORY_THING.test(message)
+  // ("tell me about the Anna Nagar incident" names only a place and the word "incident": that is the place's summary)
+  const onlyPlace = placeData?.zone != null && !/INC-[A-Z0-9]/i.test(message)
+    && !STORY_THING.test(message.replace(/\b(case|cases|incident|incidents)\b/gi, " "));
+  // (keyword overrides for the rules only: the router's decision already says one incident or a whole place)
+  if (!route.decision && ["tool_question", "adhoc_question"].includes(route.intent) && STORY.test(message) && STORY_THING.test(message) && !onlyPlace
     && !route.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail")) {
     route = { ...route, intent: "tool_question", tools: [{ name: "incident_story", args: { text: message, scope: route.scope } }],
       assumptions: [...route.assumptions, "Read as a question about one incident: its story."] };
+  }
+  if (!route.decision && onlyPlace && route.tools.some((t) => t.name === "incident_story")) {
+    route = { ...route, intent: "tool_question", tools: [{ name: "zone_profile", args: { scope: route.scope, zone: Number(placeData!.zone) } }],
+      assumptions: ["Read as a question about the place, not one incident: its snapshot."] };
   }
   // several subjects in one question ("road accidents, flooding and public-infrastructure complaints"): every part is answered,
   // side by side, instead of the data being narrowed to the one subject a single category filter can hold

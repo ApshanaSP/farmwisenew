@@ -87,7 +87,7 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
           subtitle: `${d.formula}; ${period}` }), kpis: [], table: null, display: "chart" };
       }
       const top: Dataset = { id: "zone_top", title: `Top open incidents in ${d.name}`, idField: "id",
-        fields: [F.id("id", "Incident"), F.text("title", "Incident"), F.cat("sev", "Severity"), F.dec("priority", "Priority score"), F.text("why", "Why it ranks high")],
+        fields: [F.id("id", "Incident"), F.text("title", "Incident"), F.cat("sev", "Severity"), F.dec("priority", "Priority score"), F.text("why", "Why it matters")],
         rows: (d.top as Row[]).map((i) => ({ id: i.id, title: i.title, sev: i.sev, priority: i.priority, why: [...(i.why?.what ?? []), ...(i.why?.why ?? [])].slice(0, 3).join("; ") })) };
       const row = d.row as Row | null;
       return {

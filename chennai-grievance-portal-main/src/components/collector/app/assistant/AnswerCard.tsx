@@ -6,7 +6,9 @@
  * (scope, as-of, sources, how it was calculated) and console actions. No follow-up questions are added: the
  * Collector asks what they want next.
  */
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
+
+const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 import { canSpeak, speak, stopSpeaking } from "./speech";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
@@ -19,12 +21,24 @@ import { ActionsResponse, IncidentDetailResponse, IncidentListResponse, KpiRespo
 
 export default memo(AnswerCard);
 
-function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin }: {
+function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, reveal = false, onRetry }: {
   card: Card; geo: MapGeo | null; onAsk: (q: string) => void; onAction: (a: ConsoleAction) => void; expanded: boolean; onExpand: () => void;
   /** pin this answer; resolves true when saved */
   onPin?: (messageId: string) => Promise<boolean>;
+  /** a new answer: its words appear as if written (the answer was checked in full before it arrived) */
+  reveal?: boolean;
+  /** ask the same question again */
+  onRetry?: () => void;
 }) {
   const t = T[card.language as Lang] ?? T.en;
+  const words = useMemo(() => card.answerMarkdown.split(/(\s+)/), [card.answerMarkdown]);
+  const [shown, setShown] = useState(() => (reveal && !reducedMotion() ? 0 : Number.MAX_SAFE_INTEGER));
+  useEffect(() => {
+    if (shown >= words.length) return;
+    const id = setTimeout(() => setShown((v) => v + 4), 16);
+    return () => clearTimeout(id);
+  }, [shown, words.length]);
+  const typing = !!card.answerMarkdown && card.answerMarkdown !== card.headline && shown < words.length;
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [pinned, setPinned] = useState(false);
   // the question decides: a chart, map or table only when it asked for one (a list, a chart, a graph, a map); otherwise words only
@@ -65,7 +79,8 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin }: {
         </div>
       </header>
       {card.understood && <p className="aq-understood"><I n="info" />{t.understood}: <q>{card.understood}</q></p>}
-      {showMd && <div className="aq-md md" dangerouslySetInnerHTML={{ __html: mdToHtml(card.answerMarkdown) }} />}
+      {showMd && <div className={`aq-md md${typing ? " typing" : ""}`} dangerouslySetInnerHTML={{ __html: mdToHtml(typing ? words.slice(0, shown).join("") : card.answerMarkdown) }} />}
+      {!typing && <div className="aq-rest">
       {card.scopeLine && <p className="aq-scope"><I n="clock" />{card.scopeLine}</p>}
 
       {rt === "incident_list" && card.incidents && <IncidentListResponse items={card.incidents} onOpen={openInc} onAsk={onAsk} />}
@@ -88,6 +103,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin }: {
       <EvidenceDrawer card={card} t={t} onOpen={openInc} />
       {(kind === "answer" || kind === "action") && (
         <footer className="aq-foot">
+          {onRetry && <button onClick={onRetry} title={t.regenerate} aria-label={t.regenerate}><I n="refresh" /></button>}
           {canSpeak() && (card.voiceSummary || card.headline) && (
             <button className={speaking ? "on" : ""} onClick={readAloud} title={speaking ? t.stopReading : t.readAloud} aria-label={speaking ? t.stopReading : t.readAloud} aria-pressed={speaking}>
               <I n={speaking ? "stop" : "volume"} /></button>
@@ -103,6 +119,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin }: {
           )}
         </footer>
       )}
+      </div>}
     </article>
   );
 }

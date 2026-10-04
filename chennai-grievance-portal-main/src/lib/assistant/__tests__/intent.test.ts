@@ -110,3 +110,29 @@ describe("intent evaluation set", () => {
     expect(acc).toBeGreaterThanOrEqual(0.9);
   });
 });
+
+describe("explanations go to the model", () => {
+  it("explain about the anna nagar issue -> not a list", () => {
+    expect(detectIntent("explain about the anna nagar issue").intent).toBe("GENERAL_DISTRICT_QUERY");
+  });
+  it("why is flooding up in Adyar -> not a list", () => {
+    expect(detectIntent("why are flooding complaints high in Adyar").intent).toBe("GENERAL_DISTRICT_QUERY");
+  });
+  it("a list word still lists", () => {
+    expect(detectIntent("show the anna nagar issues").intent).toBe("INCIDENT_LIST");
+  });
+  it("explain the second one -> that incident", () => {
+    expect(detectIntent("explain the second one", afterList).intent).toBe("INCIDENT_DETAIL");
+  });
+});
+
+describe("tell me about = an explanation", () => {
+  it("tell me about anna nagar incident / tell about theft -> the model", () => {
+    expect(detectIntent("tell me about anna nagar incident").intent).toBe("GENERAL_DISTRICT_QUERY");
+    expect(detectIntent("tell about theft").intent).toBe("GENERAL_DISTRICT_QUERY");
+  });
+  it("news and follow-ups keep their own paths", () => {
+    expect(detectIntent("tell me about any news on anna nagar").intent).toBe("NEWS_TOP");
+    expect(detectIntent("what about last week", afterList).refinement).toBe(true);
+  });
+});

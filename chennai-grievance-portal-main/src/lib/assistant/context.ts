@@ -31,6 +31,32 @@ export interface ConversationContext {
   lastVisualization?: string | null;
   /** how many the last list asked for ("top 3") */
   n?: number | null;
+  /** the listed items' titles, in the order shown (so the router can tell the AI what "the second one" is) */
+  resultTitles?: string[];
+  storyTitles?: string[];
+  selectedTitle?: string | null;
+}
+
+/**
+ * The previous answer's state, written for the router: the selected item and the numbered list the Collector sees, so
+ * "the second one", "is it resolved?" or "the Odisha one" can be resolved by understanding, not by keywords.
+ */
+export function contextForRouter(c: ConversationContext | null): string {
+  if (!c) return "";
+  const out: string[] = [];
+  if (c.selectedIncidentId) out.push(`Selected incident: ${c.selectedIncidentId}${c.selectedTitle ? ` (${c.selectedTitle})` : ""}`);
+  if (c.selectedNewsStoryId) out.push(`Selected news story: ${c.selectedNewsStoryId}${c.selectedTitle ? ` (${c.selectedTitle})` : ""}`);
+  const list = (label: string, ids?: string[], titles?: string[]) => {
+    if (!ids?.length) return;
+    const rows = ids.slice(0, 10).map((id, k) => `${k + 1}. ${id}${titles?.[k] ? `: ${titles[k].slice(0, 90)}` : ""}`);
+    out.push(`${label} (numbered as shown):\n${rows.join("\n")}`);
+  };
+  if (String(c.lastResponseType ?? "").startsWith("news")) { list("Last news list", c.storyIds, c.storyTitles); list("Earlier incident list", c.resultIds, c.resultTitles); }
+  else { list("Last incident list", c.resultIds, c.resultTitles); list("Earlier news list", c.storyIds, c.storyTitles); }
+  const f = c.activeFilters ?? {};
+  const filters = Object.entries(f).filter(([, v]) => v != null && v !== false && v !== "").map(([k, v]) => `${k}=${v}`).join(", ");
+  if (filters) out.push(`Filters of the last answer: ${filters}`);
+  return out.join("\n");
 }
 
 export const emptyContext = (): ConversationContext => ({ activeFilters: {} });

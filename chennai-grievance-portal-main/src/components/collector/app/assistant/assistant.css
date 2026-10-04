@@ -245,9 +245,9 @@
 .dic .aq-insc b{font-size:13px;color:var(--text)}
 .dic .aq-insc span{font-size:12px;color:var(--text-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dic .aq-insbar{flex:none;max-height:42%;overflow:auto;padding:0 14px 8px;border-top:1px solid var(--line-2);background:var(--raise)}
-.dic .aq-story{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--accent-soft);color:var(--accent-2);font-size:12.5px;font-weight:600}
-.dic .aq-story .ic{width:12px;height:12px}
-.dic .aq-story button{margin-left:auto;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--accent-line);background:var(--raise);color:var(--accent-2);border-radius:999px;
+.dic .aq-storybar{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--accent-soft);color:var(--accent-2);font-size:12.5px;font-weight:600}
+.dic .aq-storybar .ic{width:12px;height:12px}
+.dic .aq-storybar button{margin-left:auto;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--accent-line);background:var(--raise);color:var(--accent-2);border-radius:999px;
   padding:3px 10px;font-size:12px}
 .dic .aq-pins{display:grid;gap:4px;margin-top:8px;text-align:left}
 .dic .aq-pinrow{display:flex;align-items:center;gap:4px}
@@ -372,3 +372,93 @@
 .dic .aq-exi{border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px var(--accent-line)}
 .dic .aq-ht b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dic .aq-ht b:after{content:" · Copilot"}
+
+/* =====================================================================================================================
+   Ask District IQ · conversation: answers read as a conversation (text first, data inline), the expanded view is a chat
+   workspace with past conversations in a sidebar and the thread at reading width.
+   ===================================================================================================================== */
+/* the question: a soft bubble on the right; edit appears on hover */
+.dic .aq-row.me{align-items:center;gap:6px}
+.dic .aq-bubble{max-width:80%;padding:10px 15px;border-radius:20px 20px 6px 20px;background:var(--surface-2);border:1px solid var(--line);
+  color:var(--text);font:500 14.5px/1.5 var(--dic-sans),sans-serif}
+.dic .aq-edit{opacity:0;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:opacity .15s,background .15s}
+.dic .aq-row.me:hover .aq-edit,.dic .aq-edit:focus-visible{opacity:1}
+.dic .aq-edit:hover{background:var(--surface-2);color:var(--text)}
+.dic .aq-edit .ic{width:14px;height:14px}
+
+/* the answer: no box; a lead line, then the words, then the data */
+.dic .aq-row.bot{gap:12px}
+.dic .aq-av{margin-top:0}
+.dic .aq-card{background:none;border:0;box-shadow:none;border-radius:0;padding:2px 0 0;gap:10px;animation:aq-fadeup .22s ease-out}
+.dic .aq-card.aq-refusal,.dic .aq-card.aq-error{background:none;border:0;padding-left:12px;box-shadow:inset 2px 0 0 var(--high)}
+.dic .aq-card-h h3{font:650 15.5px/1.45 var(--dic-display),sans-serif;letter-spacing:-.005em;color:var(--text)}
+.dic .aq-md{font-size:15px;line-height:1.72;color:var(--text)}
+.dic .aq-md p{margin:0 0 10px}
+.dic .aq-md.typing>:last-child::after{content:"";display:inline-block;width:7px;height:15px;margin-left:3px;vertical-align:-2px;border-radius:1px;
+  background:var(--accent);animation:aq-caret .9s steps(2) infinite}
+@keyframes aq-caret{50%{opacity:0}}
+@keyframes aq-fadeup{from{opacity:0;transform:translateY(4px)}}
+.dic .aq-rest{display:flex;flex-direction:column;gap:10px;animation:aq-fadeup .25s ease-out}
+.dic .aq-scope{font-size:11.5px}
+/* the evidence and the actions stay quiet until wanted */
+.dic .aq-src{border-top:0;padding-top:0}
+.dic .aq-foot{margin-top:0;opacity:.55;transition:opacity .15s}
+.dic .aq-row.bot:hover .aq-foot,.dic .aq-row.bot:last-child .aq-foot,.dic .aq-foot:focus-within{opacity:1}
+.dic .aq-chips button{border-radius:12px;padding:8px 12px;text-align:left;color:var(--text);background:var(--surface);border-color:var(--line-3)}
+.dic .aq-chips button:hover{border-color:var(--accent);color:var(--accent-2)}
+.dic .aq-card.aq-clarify .aq-chips{flex-direction:column;align-items:flex-start}
+
+/* thinking: one calm line, the stage shimmering */
+.dic .aq-typing{background:none;border:0;padding:6px 0;gap:10px}
+.dic .aq-stage{background:linear-gradient(90deg,var(--text-3) 0%,var(--text) 45%,var(--text-3) 90%);background-size:200% 100%;-webkit-background-clip:text;
+  background-clip:text;color:transparent;animation:aq-shimmer 1.6s linear infinite}
+.dic .aq-steps{display:none}
+
+/* composer: a rounded field */
+.dic .aq-f{border-top:0;background:var(--bg-2);padding:8px 14px 12px}
+.dic .aq-box{border-radius:22px;padding:8px 8px 8px 16px;background:var(--surface);border-color:var(--line-3);box-shadow:0 8px 28px -18px rgba(0,0,0,.7)}
+.dic .aq-send{border-radius:50%}
+
+/* ----------------------------------------------------------------- the chat workspace (expanded view) -- */
+.dic .aq.wide{width:min(1480px,100%);display:grid;grid-template-columns:272px minmax(0,1fr)}
+.dic .aq-main{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;height:100%}
+.dic .aq.wide .aq-thread{padding:28px max(22px,calc((100% - 800px) / 2)) 12px}
+.dic .aq.wide .aq-f{padding:8px max(22px,calc((100% - 800px) / 2)) 16px}
+.dic .aq.wide .aq-empty{max-width:720px;margin:auto;width:100%}
+.dic .aq.wide .aq-hello{font-size:26px}
+.dic .aq-side{display:flex;flex-direction:column;gap:10px;min-height:0;padding:14px 10px;background:var(--elev);border-right:1px solid var(--line)}
+.dic .aq-newchat{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line-3);background:var(--surface);
+  color:var(--text);font:600 13.5px var(--dic-sans),sans-serif;transition:border-color .15s,background .15s}
+.dic .aq-newchat:hover{border-color:var(--accent);background:var(--surface-2)}
+.dic .aq-newchat .ic,.dic .aq-find .ic{width:15px;height:15px;flex:none}
+.dic .aq-find{display:flex;align-items:center;gap:8px;padding:0 10px;height:36px;border-radius:10px;background:var(--surface-2);color:var(--text-3)}
+.dic .aq-find input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--text);font-size:13px}
+.dic .aq-side-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:2px}
+.dic .aq-side-list section{display:flex;flex-direction:column;gap:1px}
+.dic .aq-side-list small{padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.dic .aq-side-list button{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:9px;text-align:left;color:var(--text-2);font-size:13px}
+.dic .aq-side-list button span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .aq-side-list button .ic{width:14px;height:14px;flex:none;color:var(--text-3)}
+.dic .aq-side-list button:hover{background:var(--surface-2);color:var(--text)}
+.dic .aq-side-list button.on{background:var(--accent-soft);color:var(--text)}
+@media (max-width:900px){.dic .aq.wide{grid-template-columns:1fr}.dic .aq.wide .aq-side{display:none}}
+@media (prefers-reduced-motion:reduce){.dic .aq-stage,.dic .aq-md.typing>:last-child::after,.dic .aq-rest{animation:none}}
+.dic .aq-main{flex:1}
+
+/* ------------------------------------------------ incident and news cards: calmer, scannable -- */
+.dic .aq-rank{background:var(--surface-3,var(--surface-2));color:var(--text);border:1px solid var(--line-3);font-weight:800}
+.dic .aq-inc,.dic .aq-story{padding:12px 14px 10px 16px;border-radius:12px;background:var(--surface);border-color:var(--line)}
+.dic .aq-story{display:block}
+.dic .aq-inc-t,.dic .aq-story h4{font-size:14.5px;line-height:1.4;margin:8px 0 3px}
+.dic .aq-inc-s{font-size:13.5px;line-height:1.55;color:var(--text-2)}
+.dic .aq-inc-m{gap:4px 14px;margin-top:8px}
+/* why it matters: one quiet line of reasons, not a row of badges */
+.dic .aq-why{gap:4px 6px;margin-top:9px}
+.dic .aq-why small{font-size:10px;letter-spacing:.08em}
+.dic .aq-why span{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--line)}
+.dic .aq-why span:first-of-type{color:var(--text);border-color:var(--line-3)}
+/* card actions: quiet until hovered */
+.dic .aq-inc footer,.dic .aq-story footer{margin-top:10px;padding-top:8px;border-top:1px solid var(--line-2)}
+.dic .aq-inc footer button,.dic .aq-story footer button{height:24px;padding:0 8px;border-color:transparent;background:none;color:var(--text-3)}
+.dic .aq-inc:hover footer button,.dic .aq-story:hover footer button{color:var(--text-2)}
+.dic .aq-inc footer code{opacity:.7}

@@ -14,3 +14,6 @@ public/uploads/complaints/*
 !public/uploads/complaints/.gitkeep
 # each department officer's username and password (npm run seed:officers)
 officer-accounts.local.csv
+
+# Ask District IQ search index (npm run lance:build)
+data/lancedb/

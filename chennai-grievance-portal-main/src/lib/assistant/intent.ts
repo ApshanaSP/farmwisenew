@@ -18,7 +18,8 @@ export const INTENTS = [
 export type Intent = (typeof INTENTS)[number];
 
 /** A topic the question names: categories it covers, in the store's codes. */
-export interface Topic { key: string; label: string; cats: string[] }
+/** `narrow`: the topic is narrower than its categories; this text finds its incidents by meaning (search index). */
+export interface Topic { key: string; label: string; cats: string[]; narrow?: string }
 
 export interface Detected {
   intent: Intent;
@@ -38,6 +39,10 @@ export interface Detected {
   refinement: boolean;
   /** why this intent, for the answer's sources panel */
   because: string;
+  /** a story or incident described in words ("the Odisha worker stabbed"), to be found by meaning (set by the router) */
+  find?: string | null;
+  /** the period the question itself names (set by the router); else the rules' reading of the words */
+  period?: "daily" | "weekly" | "monthly" | "quarterly" | null;
 }
 
 // ------------------------------------------------------------------ tokens --
@@ -75,7 +80,9 @@ const any = (toks: string[], phrases: string[]) => phrases.some((p) => hasPhrase
 const TOPICS: (Topic & { words: string[] })[] = [
   { key: "suicide", label: "suicide", cats: ["SUICIDE_SELF_HARM"], words: ["suicide", "suicides", "self harm", "self-harm", "தற்கொலை", "tharkolai", "tarkolai"] },
   { key: "women", label: "crimes against women", cats: ["CRIMES_AGAINST_WOMEN"], words: ["crimes against women", "sexual assault", "harassment", "molest", "pocso", "dowry", "பாலியல்", "வரதட்சணை"] },
-  { key: "murder", label: "violent crime", cats: ["CRIME_VIOLENT"], words: ["murder", "murders", "killing", "stabbing", "assault", "attack", "violent crime", "violent crimes", "கொலை", "kolai", "தாக்குதல்"] },
+  // narrower than its category ("violent crime" holds assaults too): the incidents are found by meaning within it
+  { key: "murder", label: "murder", cats: ["CRIME_VIOLENT"], narrow: "murder, killed, hacked or stabbed to death, body found", words: ["murder", "murders", "murdered", "killing", "killed", "hacked to death", "stabbed to death", "கொலை", "kolai"] },
+  { key: "violent", label: "violent crime", cats: ["CRIME_VIOLENT"], words: ["stabbing", "assault", "attack", "violent crime", "violent crimes", "தாக்குதல்"] },
   { key: "theft", label: "theft and robbery", cats: ["CRIME_PROPERTY"], words: ["theft", "thefts", "robbery", "snatching", "burglary", "fraud", "திருட்டு", "கொள்ளை", "thiruttu", "kollai"] },
   { key: "crime", label: "crime", cats: ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "DRUGS_LIQUOR", "MISSING_PERSON", "POLICE_OTHER"],
     words: ["crime", "crimes", "criminal", "law and order", "குற்றம்", "kuttram"] },
@@ -99,7 +106,7 @@ const TOPICS: (Topic & { words: string[] })[] = [
 /** A topic by its key (a follow-up keeps the previous answer's topic). */
 export function topicByKey(key: string | null | undefined): Topic | null {
   const t = TOPICS.find((x) => x.key === key);
-  return t ? { key: t.key, label: t.label, cats: t.cats } : null;
+  return t ? { key: t.key, label: t.label, cats: t.cats, narrow: t.narrow } : null;
 }
 
 /** A topic's words (English, Tamil, Tanglish), for matching headlines. */
@@ -108,7 +115,7 @@ export function topicWords(key: string): string[] {
 }
 
 export function topicOf(toks: string[]): Topic | null {
-  for (const t of TOPICS) if (any(toks, t.words)) return { key: t.key, label: t.label, cats: t.cats };
+  for (const t of TOPICS) if (any(toks, t.words)) return { key: t.key, label: t.label, cats: t.cats, narrow: t.narrow };
   return null;
 }
 
@@ -128,6 +135,9 @@ const ACTION = ["what should we do", "what should i do", "what do we do", "what 
 const RELATED = ["similar", "related", "nearby", "near by", "around there", "around it", "same area", "same place", "close to", "other such", "like this", "like that"];
 const TIMELINE = ["timeline", "how did it unfold", "how it unfolded", "sequence", "what happened next", "history of", "step by step"];
 const DETAIL = ["explain", "more about", "tell me more", "details", "detail", "what happened", "what is this", "describe", "elaborate", "enna aachu", "என்ன நடந்தது"];
+/** asks for an explanation of a place or topic, not a list: the model writes it from the tools' facts */
+const EXPLAIN = ["explain", "why", "tell me about", "tell about", "tell me more about", "summarise", "summarize", "summary", "overview", "situation", "what is going on", "what's going on",
+  "whats going on", "what is happening", "what's happening", "analyse", "analyze", "analysis", "brief me", "describe", "elaborate", "yen", "ஏன்", "விளக்கு"];
 const WHERE = ["where", "location", "which area", "which place", "exact place", "எங்கே", "enga"];
 const WHEN = ["when", "what time", "which day", "எப்போது", "eppo"];
 const STATUS = ["status", "resolved", "is it closed", "still open", "progress", "nilai"];
@@ -169,6 +179,8 @@ function ordinal(toks: string[]): number | null {
  * The intent of `message`, given the conversation so far. Pure: no database, no model, so it is fast and testable.
  * Returns GENERAL_DISTRICT_QUERY when no explicit pattern fits; the existing router then takes over.
  */
+const BREAKDOWN = /\b(by|per|across|each|every)\s+(department|departments|dept|depts|zone|zones|taluk|taluks|ward|wards|area|areas|division|divisions)\b|\b(department|dept|zone|taluk|ward|area)[ -]?wise\b/;
+
 export function detectIntent(message: string, ctx: ConversationContext | null = null): Detected {
   const toks = tokens(message);
   const t = toks.join(" ");
@@ -219,6 +231,11 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
 
   // 5. incidents: ranking of kinds, a count, the priority list, a plain list
   const incidenty = !!topic || any(toks, INCIDENT_NOUNS);
+  // "explain the Anna Nagar issue", "why is flooding up in Adyar": an explanation, not a list (a list word still lists)
+  if (any(toks, EXPLAIN) && !any(toks, ["list", "show", "display", "kaattu", "காட்டு"]) && !any(toks, COUNT) && n == null)
+    return mk("GENERAL_DISTRICT_QUERY", "asks for an explanation; the model writes it from the facts");
+  // a breakdown by department, zone, taluk or ward is a grouped count (the router's grouped tools and a chart), not a list
+  if (BREAKDOWN.test(t)) return mk("GENERAL_DISTRICT_QUERY", "asks for a breakdown by department, zone, taluk or ward");
   if (incidenty && any(toks, RANKING)) return mk("CATEGORY_RANKING", "asks which kinds, not which incidents");
   if (incidenty && any(toks, COUNT)) return mk("INCIDENT_COUNT", "asks how many");
   if (any(toks, HOTSPOT)) return mk("HOTSPOT", "asks where incidents cluster");

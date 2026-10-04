@@ -330,11 +330,15 @@ async function runValidation({ root = ROOT, conn = null, quiet = false } = {}) {
         detail = "no synthetic rows (day coverage not applicable), ";
       }
       const statuses = new Set(rows.map((r) => r.Status));
-      for (const s of STATUSES) if (!statuses.has(s)) f.push("status never appears: " + s);
+      // "Complaint Filed" moves on within minutes, so at some snapshot times no complaint is still in it; its absence is
+      // noted, not failed.
+      const TRANSIENT = "Complaint Filed";
+      for (const s of STATUSES) if (s !== TRANSIENT && !statuses.has(s)) f.push("status never appears: " + s);
       const depts = new Set(rows.map((r) => r.Department));
       for (const d of deptNames) if (!depts.has(d)) f.push("department never appears: " + d);
       check(11, "Every day has complaints; all 7 statuses and 16 departments appear", f,
-        detail + `${statuses.size} statuses, ${depts.size} departments`);
+        detail + `${statuses.size} statuses, ${depts.size} departments` +
+        (statuses.has(TRANSIENT) ? "" : ` (none currently "${TRANSIENT}", which is transient)`));
     }
 
     // ---- 12. real rows identical to export:data ---------------------------

@@ -212,7 +212,9 @@ function catalog(db: DB): void {
 
 // ------------------------------------------------------------ durable store --
 
-const DURABLE_FILE = path.join(CACHE_DIR, "durable.sqlite");
+// a second process on the same PC (e.g. `npm run lance:build`, which only reads the build) sets AWS_DURABLE_FILE to a
+// file of its own: Windows does not let it replace the durable file the running website holds open
+const DURABLE_FILE = process.env.AWS_DURABLE_FILE || path.join(CACHE_DIR, "durable.sqlite");
 const BATCH = 400;          // changed rows per POST /store/write
 const RETRY_MS = 60_000;    // a failed send is retried this often (and after the next write)
 // Only the one PC whose .env says AWS_STORE_SAVE=1 sends changes to AWS. Every other copy (a teammate's clone, a test
