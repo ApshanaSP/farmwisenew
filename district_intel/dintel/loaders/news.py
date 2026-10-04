@@ -37,6 +37,52 @@ OTHER_DISTRICTS = re.compile(
     r"Kanyakumari|Nagapattinam|Cuddalore|Villupuram|Kancheepuram|Tiruvallur|Chengalpattu|Krishnagiri|Dharmapuri|Namakkal|"
     r"Karur|Pudukottai|Ramanathapuram|Sivaganga|Virudhunagar|Theni|Nilgiris|Ooty|Tiruppur|Tiruvannamalai|Ranipet|"
     r"Tirupattur|Kallakurichi|Perambalur|Ariyalur|Mayiladuthurai|Tenkasi|Puducherry|Bengaluru|Hyderabad|Delhi|Mumbai|Kerala|Andhra)\b")
+# Headlines that say where the event happened, outside Chennai district: "near Munnar", "Madurai: ...", or the Tamil
+# locative "நெல்லையில்" (in Nellai). Only the headline is read (the body of a Chennai report often names other
+# districts), only the place of the event counts ("Chennai-Trichy road" or "a Kerala youth held at Chennai airport"
+# stay), and a headline that says "in Chennai" / "சென்னையில்" before naming the other place stays.
+_OUT_EN = (r"Madurai|Coimbatore|Tiruchi|Trichy|Tiruchirappalli|Salem|Tirunelveli|Nellai|Kovai|Vellore|Erode|Thoothukudi|Tuticorin|"
+           r"Thanjavur|Dindigul|Kanyakumari|Nagapattinam|Cuddalore|Villupuram|Kancheepuram|Tiruvallur|Chengalpattu|Krishnagiri|"
+           r"Dharmapuri|Namakkal|Karur|Pudukottai|Ramanathapuram|Sivaganga|Virudhunagar|Theni|Nilgiris|Ooty|Tiruppur|Tiruvannamalai|"
+           r"Ranipet|Tirupattur|Kallakurichi|Perambalur|Ariyalur|Mayiladuthurai|Tenkasi|Puducherry|Pondicherry|Kumbakonam|Hosur|"
+           r"Rameswaram|Kodaikanal|Velankanni|Mamallapuram|Mahabalipuram|Sriperumbudur|Oragadam|Padappai|Karasangal|Munnar|Kochi|"
+           r"Tirupati|Nellore|Bengaluru|Bangalore|Hyderabad|Delhi|Mumbai|Kerala|Karnataka|Telangana|Andhra Pradesh")
+_OUT_TA = ("நெல்லையில்|திருநெல்வேலியில்|மதுரையில்|கோவையில்|கோயம்புத்தூரில்|திருச்சியில்|சேலத்தில்|வேலூரில்|ஈரோட்டில்|"
+           "தூத்துக்குடியில்|தஞ்சையில்|தஞ்சாவூரில்|திண்டுக்கல்லில்|கன்னியாகுமரியில்|குமரியில்|நாகையில்|நாகப்பட்டினத்தில்|கடலூரில்|"
+           "விழுப்புரத்தில்|காஞ்சிபுரத்தில்|காஞ்சியில்|திருவள்ளூரில்|செங்கல்பட்டில்|கிருஷ்ணகிரியில்|தருமபுரியில்|நாமக்கல்லில்|கரூரில்|"
+           "புதுக்கோட்டையில்|ராமநாதபுரத்தில்|சிவகங்கையில்|விருதுநகரில்|தேனியில்|நீலகிரியில்|ஊட்டியில்|திருப்பூரில்|திருவண்ணாமலையில்|"
+           "ராணிப்பேட்டையில்|திருப்பத்தூரில்|கள்ளக்குறிச்சியில்|பெரம்பலூரில்|அரியலூரில்|மயிலாடுதுறையில்|தென்காசியில்|புதுச்சேரியில்|"
+           "கும்பகோணத்தில்|ஓசூரில்|ராமேஸ்வரத்தில்|கொடைக்கானலில்|வேளாங்கண்ணியில்|மாமல்லபுரத்தில்|ஸ்ரீபெரும்புதூரில்|ஒரகடத்தில்|"
+           "படப்பையில்|மூணாறில்|மூணாற்றில்|திருப்பதியில்|பெங்களூருவில்|பெங்களூரில்|ஹைதராபாத்தில்|டெல்லியில்|மும்பையில்|கேரளாவில்|"
+           "கேரளத்தில்|கர்நாடகாவில்|ஆந்திராவில்|தெலங்கானாவில்")
+_TA = "஀-௿"
+OUTSIDE_HEADLINE = re.compile(
+    # "in Nellai Express" is a train; "பெங்களூருவில் இருந்து" is "from Bengaluru", not "in"
+    rf"\b(?:in|at|near)\s+(?:the\s+)?(?:{_OUT_EN})\b(?!\s+(?:Express|Mail|road|highway|bypass))|^\s*(?:{_OUT_EN})\s*[:|,]"
+    rf"|(?<![{_TA}])(?:{_OUT_TA})(?![{_TA}])(?!\s*இருந்து)", re.I)
+# the headline also places it in Chennai: "in Chennai", a "Chennai:" dateline, or Chennai in a list ("சென்னை, மதுரையில்" =
+# in Chennai and Madurai)
+CHENNAI_HEADLINE = re.compile(rf"\b(?:in|at)\s+Chennai\b|^\s*(?:Chennai|சென்னை)\s*[:|]|\bChennai\s*(?:,|and\s)"
+                              rf"|(?<![{_TA}])சென்னையில்(?![{_TA}])|(?<![{_TA}])சென்னை\s*(?:,|மற்றும்)", re.I)
+# something is done in Chennai, whatever happened elsewhere first: "டெல்லியில் ... கைது.. சென்னையில் ... போராட்டம்"
+# (a protest in Chennai), "திருச்சியில் காணாமல் போன இளைஞரை ... சென்னையில் மீட்ட" (rescued in Chennai)
+CHENNAI_ACTION = re.compile(rf"(?<![{_TA}])சென்னையில்(?![{_TA}]).{{0,40}}?(?:போராட்ட|ஆர்ப்பாட்ட|மறியல்|கைது|மீட்)"
+                            rf"|\b(?:protest\w*|stir|held|arrest\w*|rescued|detained)\b.{{0,40}}?\b(?:in|at)\s+Chennai\b"
+                            rf"|\b(?:in|at)\s+Chennai\b.{{0,40}}?\b(?:protest\w*|stir|held|arrest\w*|rescued|detained)\b", re.I)
+
+
+def outside_headline(titles: pd.Series) -> pd.Series:
+    """True when a headline places its event outside Chennai district (see OUTSIDE_HEADLINE): it names the outside
+    place before any Chennai anchor. "நெல்லையில் இரட்டைக் கொலை... சென்னையில் கொடூரம்" (a statement about both) is out;
+    "சென்னையில் இன்று மழை.. சேலம் உள்பட 14 மாவட்டங்களில்" (Chennai first) stays."""
+    def one(t: str) -> bool:
+        o = OUTSIDE_HEADLINE.search(t)
+        if not o:
+            return False
+        c = CHENNAI_HEADLINE.search(t)
+        return (c is None or c.start() > o.start()) and not CHENNAI_ACTION.search(t)
+    return titles.fillna("").map(one).astype(bool)
+
 
 REPORT_TYPE_RULES = [
     # scheduled maintenance outages ("power cut tomorrow: full list of areas") are notices, not incidents
@@ -357,8 +403,11 @@ def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Seri
         for c in ("in_chennai", "is_incident", "report_type", "category", "confidence", "method"):
             lab.loc[need, c] = old.loc[need, c].to_numpy()
 
-    in_chennai = lab["in_chennai"].astype(bool).to_numpy()
-    incident = lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
+    # a model label is not enough when the report names another district and no Chennai place (Nellai, Munnar...)
+    outside = (d["mentioned_taluks"].fillna("[]").eq("[]") & d["mentioned_localities"].fillna("[]").eq("[]")
+               & outside_headline(d["title"])).to_numpy()
+    in_chennai = lab["in_chennai"].astype(bool).to_numpy() & ~outside
+    incident =lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
     d["report_type"] = lab["report_type"].to_numpy()
     d["is_district"] = in_chennai.astype(int)
     d["statewide_dateline"] = (~in_chennai).astype(int)
@@ -391,7 +440,7 @@ def _legacy_labels(d: pd.DataFrame, text: pd.Series, E: np.ndarray | None, ref: 
     d = d.copy()
     d["report_type"] = [rtype(t) for t in text]
     no_local = d["mentioned_taluks"].fillna("[]").eq("[]") & d["mentioned_localities"].fillna("[]").eq("[]")
-    d["statewide_dateline"] = (no_local & text.str.contains(OTHER_DISTRICTS)).astype(int)
+    d["statewide_dateline"] = (no_local & (text.str.contains(OTHER_DISTRICTS) | outside_headline(d["title"]))).astype(int)
     d["is_district"] = (1 - d["statewide_dateline"]).astype(int)
 
     strong = np.array([len(STRONG_INCIDENT.findall(t)) for t in text])
