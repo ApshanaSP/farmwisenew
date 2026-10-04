@@ -27,8 +27,13 @@ echarts.use([BarChart, LineChart, PieChart, HeatmapChart, ScatterChart, GaugeCha
 const SERIES = ["#4C8DFF", "#2BC7D9", "#A28EFA", "#E8B84A"];
 const INK = { primary: "#E6ECF7", secondary: "#A8B5CD", muted: "#7383A2", grid: "rgba(138,164,214,.09)", axis: "rgba(138,164,214,.22)" };
 const HIGHLIGHT = "#4C8DFF";
-const MUTED = "#2C4B7E";
-const PREV = "#3B4B6B";
+/** the rest when one mark is the point: a quiet slate, so the highlighted one reads first ("highlight one, grey the rest") */
+const MUTED = "#5A6E95";
+const PREV = "#27324A";
+/** direction of a change: rose (orange) and fell (aqua), never the reserved severity reds */
+const ROSE = "#F0894E";
+const FELL = "#2BC7A0";
+const TRACK = "rgba(138,164,214,.06)";
 const SURFACE = "#0B1426";
 const SEVERITY: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#E8B84A", Low: "#4DB3E8" };
 const FONT = '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -57,7 +62,12 @@ function ChartRenderer({ spec, ds, lang, height, onDrill, onReady }: ChartProps)
 
 const fmt = (s: ChartView["series"][number] | undefined) => (v: number | null) => fmtValue(v, s?.format ?? "integer", s?.unit ?? null);
 
-function buildOption(v: ChartView): echarts.EChartsCoreOption {
+function buildOption(view: ChartView): echarts.EChartsCoreOption {
+  // "Reported" and "Reported, the period before" drawn as two series would give the old period a palette colour of its
+  // own; it is the same measure earlier, so it becomes the grey comparison mark beside its series
+  const folded = view.series.filter((s) => !s.key.endsWith("_prev"))
+    .map((s) => ({ ...s, prev: s.prev ?? view.series.find((p) => p.key === `${s.key}_prev`)?.values ?? null }));
+  const v: ChartView = folded.length && folded.length < view.series.length ? { ...view, series: folded } : view;
   const common = {
     // quick: the answer should feel instant, and a long list must not trickle in bar by bar
     animationDuration: 420, animationDurationUpdate: 320, animationEasing: "cubicOut" as const, animationEasingUpdate: "cubicInOut" as const,
@@ -143,10 +153,13 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
       series.push({
         ...base, type: "line", data: s.values, smooth: 0.2, showSymbol: v.categories.length <= 31, symbol: "circle", symbolSize: 7,
         lineStyle: { width: 2, color }, itemStyle: { color, borderColor: SURFACE, borderWidth: 2 },
-        areaStyle: v.type === "area" || (!multi && !v.band) ? { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: "rgba(21,96,232,.32)" },
-          { offset: 1, color: "rgba(21,96,232,.02)" }]) } : undefined,
+        // a flat wash under one line (no gradient); the line draws itself in on arrival
+        areaStyle: v.type === "area" || (!multi && !v.band) ? { color, opacity: 0.1 } : undefined,
+        animationDuration: 900, animationEasing: "cubicOut",
         emphasis: { focus: "series", scale: 1.6 },
-        endLabel: multi ? { show: true, formatter: "{a}", color: INK.secondary, fontSize: 11 } : undefined,
+        // the last value said at the end of the line, so the reader needs no axis lookup
+        endLabel: { show: true, formatter: multi ? "{a}" : (p: { value: number | null }) => fmt(s)(p.value), color: multi ? INK.secondary : INK.primary,
+          fontSize: 11.5, fontWeight: multi ? 400 : 600, distance: 6 },
         markArea: k === 0 && v.band ? { silent: true, itemStyle: { color: "rgba(18,146,95,.08)" },
           label: { show: true, position: "insideTopLeft", color: "#35C28C", fontSize: 10.5, formatter: "Usual range" },
           data: [[{ yAxis: v.band.lo }, { yAxis: v.band.hi }]] } : undefined,
@@ -160,19 +173,24 @@ function buildOption(v: ChartView): echarts.EChartsCoreOption {
     const stacked = v.type === "stacked_bar";
     series.push({
       ...base, type: "bar", stack: stacked ? "all" : undefined, barMaxWidth: 24, barGap: "20%",
-      data: s.values.map((val, i) => ({
-        value: val,
-        itemStyle: {
-          color: multi ? color : sev(v.categories[i]) ?? (v.highlight.length === 0 || v.highlight.includes(i) ? grad(horizontal, "#4F8DF5", HIGHLIGHT) : grad(horizontal, "#B7D3F6", MUTED)),
-          borderRadius: stacked ? 0 : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]
-        }
-      })),
-      itemStyle: stacked ? { borderColor: SURFACE, borderWidth: 1 } : undefined,
-      label: { show: !stacked && v.categories.length <= 16, position: horizontal ? "right" : "top", distance: 6, color: INK.secondary, fontSize: 11.5,
+      // flat fills; when one bar is the point it takes the accent and the rest go quiet, its label in strong ink
+      data: s.values.map((val, i) => {
+        const on = v.highlight.length === 0 || v.highlight.includes(i);
+        return {
+          value: val,
+          itemStyle: { color: multi ? color : sev(v.categories[i]) ?? (on ? HIGHLIGHT : MUTED), borderRadius: stacked ? 0 : horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
+          label: v.highlight.includes(i) ? { color: INK.primary, fontWeight: 700 } : undefined
+        };
+      }),
+      itemStyle: stacked ? { borderColor: SURFACE, borderWidth: 2 } : undefined,
+      label: { show: !stacked && v.categories.length <= 16, position: horizontal ? "right" : "top", distance: 6, color: INK.muted, fontSize: 11.5,
         formatter: (p: { value: number | null; dataIndex: number }) => (p.value == null ? "" : fmt(s)(p.value)),
         rich: {} },
-      emphasis: { focus: "series", itemStyle: { shadowBlur: 12, shadowColor: "rgba(21,96,232,.35)" } },
-      showBackground: !stacked && !multi, backgroundStyle: { color: "rgba(234,240,249,.55)", borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
+      // bars grow in one after another, quickly
+      animationDuration: 650, animationDelay: (i: number) => Math.min(i * 45, 400), animationEasing: "cubicOut",
+      emphasis: { focus: "series", itemStyle: { color: multi ? color : "#6FA3FF" } },
+      cursor: "pointer",
+      showBackground: !stacked && !multi, backgroundStyle: { color: TRACK, borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
       markLine: k === 0 && v.threshold ? thresholdLine(v, horizontal) : undefined
     });
     if (s.prev) {
@@ -245,37 +263,47 @@ function smallMultiples(v: ChartView, common: Common): echarts.EChartsCoreOption
   };
 }
 
-/** Previous period (grey dot) to this period (blue dot) per category, joined by a line. */
+/**
+ * What changed: the period before (grey dot) to this period (coloured dot) per category, joined by a bar in the direction's
+ * colour (orange rose, aqua fell, grey unchanged), with the value and the change said beside it ("88 · +36").
+ */
 function dumbbell(v: ChartView, common: Common): echarts.EChartsCoreOption {
   const s = v.series[0];
   const prev = s.prev ?? s.values.map(() => null);
   const lo = s.values.map((x, i) => Math.min(x ?? 0, prev[i] ?? x ?? 0));
   const span = s.values.map((x, i) => Math.abs((x ?? 0) - (prev[i] ?? x ?? 0)));
+  const dir = s.values.map((x, i) => ((x ?? 0) > (prev[i] ?? x ?? 0) ? 1 : (x ?? 0) < (prev[i] ?? x ?? 0) ? -1 : 0));
+  const tone = (i: number) => (dir[i] > 0 ? ROSE : dir[i] < 0 ? FELL : "#7383A2");
   const f = fmt(s);
+  const delta = (i: number) => { const a = s.values[i], b = prev[i]; return a == null || b == null ? "" : `${a >= b ? "+" : "−"}${f(Math.abs(a - b))}`; };
   return {
     ...common,
-    grid: { left: 8, right: 48, top: 30, bottom: 8, containLabel: true },
-    legend: { top: 0, left: 0, icon: "circle", itemWidth: 9, itemHeight: 9, data: ["Previous period", s.name], textStyle: { color: INK.secondary, fontSize: 12 } },
+    grid: { left: 8, right: 86, top: 30, bottom: 8, containLabel: true },
+    legend: { top: 0, left: 0, icon: "circle", itemWidth: 9, itemHeight: 9, data: ["Period before", "Rose", "Fell"], textStyle: { color: INK.secondary, fontSize: 12 } },
     xAxis: { type: "value", splitLine: { lineStyle: { color: INK.grid } }, axisLabel: { color: INK.muted, fontSize: 11, formatter: (x: number) => f(x) } },
-    yAxis: { type: "category", data: v.categories, inverse: true, axisTick: { show: false }, axisLine: { lineStyle: { color: INK.axis } },
+    yAxis: { type: "category", data: v.categories, inverse: true, axisTick: { show: false }, axisLine: { show: false },
       axisLabel: { color: INK.secondary, fontSize: 11.5, width: 150, overflow: "truncate" } },
     series: [
-      { id: "base", type: "bar", stack: "d", data: lo, itemStyle: { color: "transparent" }, silent: true, barWidth: 3, tooltip: { show: false } },
-      { id: "span", type: "bar", stack: "d", data: span, itemStyle: { color: PREV, borderRadius: 2 }, silent: true, barWidth: 3, tooltip: { show: false } },
-      { id: "prev", name: "Previous period", type: "scatter", symbolSize: 11, data: prev.map((x, i) => [x, i]), itemStyle: { color: "#56688C", borderColor: SURFACE, borderWidth: 2 } },
-      { id: "s0", name: s.name, type: "scatter", symbolSize: 13, universalTransition: { enabled: true },
-        data: s.values.map((x, i) => ({ value: [x, i], itemStyle: { color: v.highlight.includes(i) || !v.highlight.length ? HIGHLIGHT : MUTED, borderColor: SURFACE, borderWidth: 2 } })),
-        label: { show: v.categories.length <= 12, position: "right", distance: 8, color: INK.primary, fontSize: 11.5,
-          formatter: (p: { value: [number | null, number] }) => { const b = prev[p.value[1]]; const a = p.value[0];
-            return a == null ? "" : b != null && b !== 0 ? `${f(a)} (${a >= b ? "+" : ""}${Math.round(((a - b) / b) * 100)}%)` : f(a); } } }
+      { id: "base", type: "bar", stack: "d", data: lo, itemStyle: { color: "transparent" }, silent: true, barWidth: 4, tooltip: { show: false } },
+      { id: "span", type: "bar", stack: "d", silent: true, barWidth: 4, tooltip: { show: false }, animationDuration: 700, animationDelay: (i: number) => i * 60,
+        data: span.map((x, i) => ({ value: x, itemStyle: { color: tone(i), opacity: 0.55, borderRadius: 2 } })) },
+      { id: "prev", name: "Period before", type: "scatter", symbolSize: 10, data: prev.map((x, i) => [x, i]), itemStyle: { color: "#56688C", borderColor: SURFACE, borderWidth: 2 } },
+      { id: "s0", name: s.name, type: "scatter", symbolSize: 14, universalTransition: { enabled: true }, cursor: "pointer",
+        // a fall ends left of where it started: its label goes on the left, clear of the line back to the grey dot
+        data: s.values.map((x, i) => ({ value: [x, i], itemStyle: { color: tone(i), borderColor: SURFACE, borderWidth: 2 },
+          label: dir[i] < 0 ? { position: "left" as const } : undefined })),
+        label: { show: v.categories.length <= 12, position: "right", distance: 9, fontSize: 11.5,
+          formatter: (p: { value: [number | null, number] }) => (p.value[0] == null ? "" : `{v|${f(p.value[0])}}  {${dir[p.value[1]] > 0 ? "up" : dir[p.value[1]] < 0 ? "dn" : "eq"}|${delta(p.value[1])}}`),
+          rich: { v: { color: INK.primary, fontWeight: 700, fontSize: 12 }, up: { color: ROSE, fontWeight: 600 }, dn: { color: FELL, fontWeight: 600 }, eq: { color: INK.muted } } } },
+      // legend keys for the two directions (no data)
+      { name: "Rose", type: "scatter", data: [], itemStyle: { color: ROSE } },
+      { name: "Fell", type: "scatter", data: [], itemStyle: { color: FELL } }
     ],
-    tooltip: { ...common.tooltip, trigger: "item", formatter: (p: { seriesName: string; value: [number | null, number] }) =>
-      `${v.categories[p.value[1]]}<br>${p.seriesName}: <b>${f(p.value[0])}</b>` }
+    tooltip: { ...common.tooltip, trigger: "item", formatter: (p: { seriesName: string; value: [number | null, number] }) => {
+      const i = p.value[1];
+      return `${v.categories[i]}<br>Now: <b>${f(s.values[i])}</b> · before: ${f(prev[i])}${delta(i) ? ` · <b>${delta(i)}</b>` : ""}`;
+    } }
   };
-}
-
-function grad(horizontal: boolean, from: string, to: string) {
-  return new echarts.graphic.LinearGradient(horizontal ? 0 : 0, horizontal ? 0 : 1, horizontal ? 1 : 0, 0, [{ offset: 0, color: from }, { offset: 1, color: to }]);
 }
 
 const RAMP = ["#8DB6FF", "#4C8DFF", "#3A76DC", "#2F63BC", "#28549E", "#21477F", "#1B3A66", "#162F52"];

@@ -208,6 +208,8 @@ export interface AnswerCard {
   voiceSummary: string;
   voiceLang: "en-IN" | "ta-IN";
   chart: ChartSpec | null;
+  /** why this chart suits the question, in a few words (the composer's, else the form rules') */
+  chartReason?: string | null;
   datasets: Dataset[];
   kpis: Kpi[];
   /** dataset shown as a table (list answers) */

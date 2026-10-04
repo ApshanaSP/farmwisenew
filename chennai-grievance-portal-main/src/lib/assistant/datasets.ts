@@ -378,6 +378,27 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
         title: "Incidents reported over time", subtitle: `Per ${unit}, ${period}` }), kpis: [], table: null, display: "chart" };
     }
 
+    case "change_drivers": {
+      const cats: Dataset = { id: "drivers", title: `What moved, ${period} against the period before`, tab: "What changed", hasPrev: true,
+        fields: [F.cat("label", "Incident type"), F.int("n", "Reported"), F.int("n_prev", "Reported, the period before"), F.int("delta", "Change"),
+          F.int("open", "Still open"), F.int("severe", "Severe"), F.int("rain", "Linked to rain")],
+        rows: (d.categories as Row[]).map((c) => ({ ...pick(c, ["label", "n", "delta", "open", "severe", "rain"]), n_prev: c.prev })) };
+      const places: Dataset = { id: "driver_places", title: "Where the biggest movers happened", tab: "Where",
+        fields: [F.cat("place", "Place"), F.text("category", "Incident type"), F.int("n", "Reported"), F.int("n_prev", "Reported, the period before")],
+        rows: (d.places as Row[]).map((p) => ({ ...pick(p, ["place", "category", "n"]), n_prev: p.prev })) };
+      const depts: Dataset = { id: "driver_depts", title: "Missed deadlines by department", tab: "Departments",
+        fields: [F.cat("name", "Department"), F.int("overdue", "Open past deadline"), F.int("open", "Open")], rows: (d.depts as Row[]).map((x) => pick(x, ["name", "overdue", "open"])) };
+      const top: Dataset = { id: "driver_top", title: "Open incidents that matter most", tab: "Top open", idField: "id",
+        fields: [F.id("id", "Incident"), F.text("title", "Incident"), F.text("place", "Place"), F.cat("severity", "Severity"), F.text("status", "Status"), F.text("reasons", "Why it matters")],
+        rows: (d.top as Row[]).map((x) => pick(x, ["id", "title", "place", "severity", "status", "reasons"])) };
+      const T = d.totals as Row;
+      return { datasets: [cats, places, depts, top].filter((x) => x.rows.length), table: "drivers", display: "chart",
+        kpis: [{ label: "Reported", value: Number(T.n), prev: Number(T.prev), tone: "info" }, { label: "Severe", value: Number(T.severe), prev: Number(T.severePrev), tone: "sev" },
+          { label: "Open past deadline", value: Number(T.overdue), tone: Number(T.overdue) ? "high" : undefined }],
+        chart: spec({ type: "dumbbell", dataset: "drivers", x: "label", y: ["n"], compare: true, sort: "desc", highlight: "max",
+          title: "Incident types against the period before", subtitle: period }) };
+    }
+
     default:
       return none;
   }

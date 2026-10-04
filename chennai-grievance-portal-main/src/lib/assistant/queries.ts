@@ -366,3 +366,71 @@ export async function addedSources(): Promise<Row[]> {
      FROM ${ops("sources")} ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'ocr', 'rss', 'html', 'json'), source_id`
   ).catch(() => []);
 }
+
+// ---------------------------------------------------------- change drivers --
+
+export interface Drivers {
+  totals: { n: number; prev: number; severe: number; severePrev: number; open: number; overdue: number; dead: number; injured: number; rainLinked: number; syn: number };
+  rainDays: number;
+  rainDaysPrev: number;
+  categories: { code: string; label: string; n: number; prev: number; delta: number; open: number; severe: number; rain: number }[];
+  places: { category: string; place: string; n: number; prev: number }[];
+  depts: { name: string; open: number; overdue: number }[];
+  top: { id: string; title: string; place: string | null; severity: string; status: string; overdue: boolean; dead: number; injured: number; reasons: string }[];
+}
+
+/**
+ * What moved and why, for "why is Adyar high?" or "what changed?": the period against the one before (totals, severe, the
+ * incident types that rose or fell most and where), rain days in both windows, rain-linked incidents, missed deadlines by
+ * department, and the top open incidents with their reasons. One evidence pack, so one model call can explain it.
+ */
+export async function changeDrivers(s: AssistantScope, now: string): Promise<Drivers> {
+  const base = { period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk };
+  const w = scopeWhere(base, now), wp = scopeWhere({ ...base, offset: 1 } as typeof base, now);
+  const days = Math.max(1, Math.round(PERIODS[s.period].hours / 24));
+  const [tot, totPrev, cats, catsPrev, places, placesPrev, depts, top, rain] = await Promise.all([
+    q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.is_open), 0) AS open,
+         COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue, COALESCE(SUM(i.dead), 0) AS dead, COALESCE(SUM(i.injured), 0) AS injured,
+         COALESCE(SUM(i.rain_coupled = 1), 0) AS rain, COALESCE(SUM(i.is_synthetic_any), 0) AS syn FROM incidents i WHERE ${w.sql}`, w.params),
+    q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe FROM incidents i WHERE ${wp.sql}`, wp.params),
+    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
+         COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.rain_coupled = 1), 0) AS rain
+       FROM incidents i WHERE ${w.sql} GROUP BY i.category_code`, w.params),
+    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n FROM incidents i WHERE ${wp.sql} GROUP BY i.category_code`, wp.params),
+    q(`SELECT i.category_code AS code, ${LOCALITY} AS place, COUNT(*) AS n FROM incidents i WHERE ${w.sql}
+       GROUP BY i.category_code, place HAVING place IS NOT NULL ORDER BY n DESC LIMIT 300`, w.params),
+    q(`SELECT i.category_code AS code, ${LOCALITY} AS place, COUNT(*) AS n FROM incidents i WHERE ${wp.sql}
+       GROUP BY i.category_code, place HAVING place IS NOT NULL ORDER BY n DESC LIMIT 300`, wp.params),
+    q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
+       FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE ${w.sql} AND i.lead_dept IS NOT NULL
+       GROUP BY name HAVING overdue > 0 ORDER BY overdue DESC, open DESC LIMIT 4`, w.params),
+    q(`SELECT i.incident_id AS id, i.title, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.sla_breached AS overdue,
+         i.dead, i.injured, i.priority_reasons AS reasons FROM incidents i WHERE ${w.sql} AND i.is_open = 1
+       ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 3`, w.params),
+    q(`SELECT COALESCE(SUM(date > DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS cur,
+         COALESCE(SUM(date <= DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS prev
+       FROM world_calendar WHERE date > DATE(?) - INTERVAL ? DAY AND date <= DATE(?)`, [now, days, now, days, now, days * 2, now]).catch(() => [] as Row[])
+  ]);
+  const t = tot[0] ?? {}, tp = totPrev[0] ?? {};
+  const prevBy = new Map(catsPrev.map((r) => [String(r.code), r]));
+  const codes = new Set([...cats.map((r) => String(r.code)), ...catsPrev.map((r) => String(r.code))]);
+  const categories = [...codes].map((code) => {
+    const c = cats.find((r) => String(r.code) === code), p = prevBy.get(code);
+    const cur = n(c?.n), before = n(p?.n);
+    return { code, label: String(c?.label ?? p?.label ?? code), n: cur, prev: before, delta: cur - before, open: n(c?.open), severe: n(c?.severe), rain: n(c?.rain) };
+  }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || b.n - a.n);
+  // where the two biggest movers happened, against the same place before
+  const movers = categories.slice(0, 2).map((c) => c.code);
+  const prevPlace = new Map(placesPrev.map((r) => [`${r.code}|${r.place}`, n(r.n)]));
+  const placeRows = movers.flatMap((code) => places.filter((r) => String(r.code) === code).slice(0, 3).map((r) => ({
+    category: categories.find((c) => c.code === code)!.label, place: String(r.place), n: n(r.n), prev: prevPlace.get(`${code}|${r.place}`) ?? 0 })));
+  return {
+    totals: { n: n(t.n), prev: n(tp.n), severe: n(t.severe), severePrev: n(tp.severe), open: n(t.open), overdue: n(t.overdue), dead: n(t.dead),
+      injured: n(t.injured), rainLinked: n(t.rain), syn: n(t.syn) },
+    rainDays: n(rain[0]?.cur), rainDaysPrev: n(rain[0]?.prev),
+    categories: categories.slice(0, 8), places: placeRows,
+    depts: depts.map((r) => ({ name: String(r.name), open: n(r.open), overdue: n(r.overdue) })),
+    top: top.map((r) => ({ id: String(r.id), title: String(r.title ?? ""), place: r.place ? String(r.place) : null, severity: String(r.sev ?? ""),
+      status: String(r.status ?? ""), overdue: n(r.overdue) === 1, dead: n(r.dead), injured: n(r.injured), reasons: String(r.reasons ?? "") }))
+  };
+}

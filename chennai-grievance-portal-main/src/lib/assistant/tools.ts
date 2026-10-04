@@ -22,7 +22,7 @@ import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
-  ENV_METRICS, addedSources, categoryFigures, deptBacklog, envSignals, feeds, incidentFlags, incidentSeries, incidentsByIds, newsGapTotal, placeBreakdown, seriesNormal,
+  ENV_METRICS, addedSources, categoryFigures, changeDrivers, deptBacklog, envSignals, feeds, incidentFlags, incidentSeries, incidentsByIds, newsGapTotal, placeBreakdown, seriesNormal,
   syntheticShare,
   warningToday, zoneAttention, type EnvMetric
 } from "@/lib/assistant/queries";
@@ -638,6 +638,42 @@ export const TOOLS = [
         incidentIds: [], testData: syn > 0,
         caveats: [`${parts.map((p) => `${p.label}${p.codes.length > 1 ? ` (${p.codes.length} categories)` : ""}`).join("; ")}.`,
           ...(syn ? [syn === total ? `All ${inr(total)} incidents here come from test (synthetic) sources.` : `${inr(syn)} of ${inr(total)} incidents here come from test (synthetic) sources.`] : [])]
+      };
+    }
+  }),
+
+  tool({
+    name: "change_drivers",
+    description: "Why something is high or changed: the scope's period against the one before, with the incident types that rose or fell most and where, rain days in both periods and rain-linked incidents, deaths and injuries, open incidents past their deadline by department, and the top open incidents with their reasons. For 'why is Adyar high', 'what changed since last week', 'is flooding getting better', 'what should I focus on'.",
+    args: scopeOnly,
+    async run({ scope }) {
+      const now = await asOf();
+      const d = await changeDrivers(scope, now);
+      const T = d.totals;
+      const pct = (a: number, b: number) => (b ? round(((a - b) / b) * 100, 1) : 0);
+      const facts: Fact[] = [
+        fact("reported.now", `Incidents reported, ${periodOf(scope)}`, T.n), fact("reported.prev", "Incidents reported, the period before", T.prev),
+        fact("reported.change", "Change in incidents reported", T.n - T.prev), fact("reported.change_pct", "Change in incidents reported, percent", pct(T.n, T.prev), "%"),
+        fact("severe.now", "Severe incidents", T.severe), fact("severe.prev", "Severe incidents, the period before", T.severePrev),
+        fact("open.now", "Incidents still open", T.open), fact("open.overdue", "Open incidents past their deadline", T.overdue),
+        fact("deaths.total", "Deaths recorded", T.dead), fact("injuries.total", "People injured", T.injured),
+        fact("rain.linked", "Incidents linked to rain", T.rainLinked), fact("rain.days", "Rain days in the period", d.rainDays),
+        fact("rain.days_prev", "Rain days in the period before", d.rainDaysPrev),
+        ...d.categories.slice(0, 6).flatMap((c, k) => [fact(`type${k + 1}.now`, `${c.label}: reported`, c.n), fact(`type${k + 1}.prev`, `${c.label}: reported the period before`, c.prev),
+          fact(`type${k + 1}.change`, `${c.label}: change`, c.delta), ...(c.prev ? [fact(`type${k + 1}.change_pct`, `${c.label}: change, percent`, pct(c.n, c.prev), "%")] : []),
+          fact(`type${k + 1}.open`, `${c.label}: still open`, c.open),
+          fact(`type${k + 1}.severe`, `${c.label}: severe`, c.severe), fact(`type${k + 1}.rain`, `${c.label}: linked to rain`, c.rain)]),
+        ...d.places.flatMap((p, k) => [fact(`place${k + 1}.now`, `${p.category} at ${p.place}: reported`, p.n), fact(`place${k + 1}.prev`, `${p.category} at ${p.place}: reported the period before`, p.prev)]),
+        ...d.depts.flatMap((x, k) => [fact(`dept${k + 1}.overdue`, `${x.name}: open past deadline`, x.overdue), fact(`dept${k + 1}.open`, `${x.name}: open`, x.open)]),
+        ...d.top.flatMap((x, k) => [fact(`top${k + 1}.deaths`, `${x.title}: deaths`, x.dead), fact(`top${k + 1}.injured`, `${x.title}: injured`, x.injured)])
+      ];
+      return {
+        scope, asOf: now, data: { ...d, period: periodOf(scope) }, facts,
+        sources: [tbl("incidents", "this period against the one before"), tbl("world_calendar", "rain days")],
+        incidentIds: d.top.map((x) => x.id), testData: T.syn > 0,
+        caveats: [...(T.syn ? [T.syn >= T.n ? `All ${inr(T.n)} incidents here come from test (synthetic) sources.` : `${inr(T.syn)} of ${inr(T.n)} incidents here come from test (synthetic) sources.`] : []),
+          "A rain link means the incident was reported during or after a rain event; it does not by itself establish the cause."],
+        untrusted: ["title"]
       };
     }
   }),

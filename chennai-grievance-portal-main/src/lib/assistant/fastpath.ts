@@ -60,7 +60,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const named = d.period ?? periodNamed(i.message);
   const f: ActiveFilters = {
     ...(prev ?? filtersOf(i.scope)),
-    period: named ?? prev?.period ?? (d.intent.startsWith("NEWS") ? "daily" : i.scope.period),
+    // news without a period: the last 7 days (the whole quarter would bury this week's stories); everything else: the scope's period (the quarter)
+    period: named ?? prev?.period ?? (d.intent.startsWith("NEWS") ? "weekly" : i.scope.period),
     topic: d.topic?.key ?? (d.refinement ? prev?.topic ?? null : null),
     sev: d.sev ?? (d.refinement ? prev?.sev ?? null : null),
     openOnly: d.openOnly || (d.refinement && !!prev?.openOnly)
@@ -70,10 +71,25 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   if (/\b(whole district|all zones|district[- ]wide|everywhere)\b/i.test(i.message)) (f.zone = null, f.taluk = null);
   if (i.lockDept) f.dept = i.lockDept;
   const topic: Topic | null = d.topic ?? (f.topic && prev ? topicByKey(f.topic) ?? { key: f.topic, label: f.topic, cats: catsOf(f, i) ?? [] } : null);
-  const inc: IncidentFilters = { period: f.period as Period, zone: f.zone, taluk: f.taluk, dept: f.dept, cats: topic?.cats ?? (f.cat ? [f.cat] : null),
-    sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly };
+  // the question's own window ("last 10 days") and a locality inside the zone ("Velachery"), never rounded to the console's
+  // period or widened to the whole zone
+  const custom = customWindow(i.message);
+  const zoneName = f.zone != null ? i.names.zones.get(f.zone)?.name ?? null : null;
+  const locality = i.place?.place && !i.place?.asked_for_taluk && f.zone != null && String(i.place.place).toLowerCase() !== (zoneName ?? "").toLowerCase()
+    ? String(i.place.place) : null;
+  const inc: IncidentFilters = { period: (custom?.period ?? f.period) as Period, zone: f.zone, taluk: f.taluk, dept: f.dept, cats: topic?.cats ?? (f.cat ? [f.cat] : null),
+    sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly, hours: custom?.hours ?? null, place: locality };
   const scope: Scope = { period: inc.period, zone: f.zone ?? null, dept: f.dept ?? null, cat: f.cat ?? null, taluk: f.taluk ?? null };
   const card = baseCard(i.lang, scope, describeScope(scope, i.names, i.lang, i.now), i.now);
+  if (custom || locality) {
+    const segs = card.scopeLine.split(" · ");
+    if (custom) segs[0] = cap(custom.label);
+    if (locality && zoneName) segs[1] = `${locality}, in ${segs[1] ?? `${zoneName} zone`}`;
+    card.scopeLine = segs.join(" · ");
+    if (locality) card.sources.assumptions.push(`"${locality}" is a locality in ${zoneName} zone: incidents whose place names it.`);
+  }
+  const pl = (p: Period) => custom?.label ?? periodLabel(p);
+  const sw = locality ? ` in ${locality}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names);
   card.intent = d.intent;
   card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
   card.sources.assumptions.push(`Read as ${d.intent.toLowerCase().replace(/_/g, " ")}: ${d.because}.`);
@@ -102,13 +118,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       const kind = `${d.sev === "Severe" ? "severe " : ""}${what ? `${what} ` : ""}incident${r.items.length === 1 ? "" : "s"}`;
       card.responseType = "incident_list";
       card.incidents = r.items;
-      card.headline = d.intent === "PRIORITY_INCIDENT_LIST" ? `Top ${r.items.length} priority ${kind} · ${periodLabel(r.period)}` : `${cap(kind)} · ${periodLabel(r.period)}`;
-      card.answerMarkdown = !r.items.length ? `No ${kind} ${f.openOnly ? "still open " : ""}in the ${periodLabel(r.period)}${scopeWords(scope, i.names)}.`
+      card.headline = d.intent === "PRIORITY_INCIDENT_LIST" ? `Top ${r.items.length} priority ${kind} · ${pl(r.period)}` : `${cap(kind)} · ${pl(r.period)}`;
+      card.answerMarkdown = !r.items.length ? `No ${kind} ${f.openOnly ? "still open " : ""}in the ${pl(r.period)}${sw}.`
         : d.intent === "PRIORITY_INCIDENT_LIST"
-          ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded in the ${periodLabel(r.period)}${scopeWords(scope, i.names)}, by the console's priority score.`
-            : `These are the ${words(r.items.length)} highest-priority ${kind} recorded in the ${periodLabel(r.period)}${scopeWords(scope, i.names)}, ranked by the console's priority score.`
-          : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} in the ${periodLabel(r.period)}${scopeWords(scope, i.names)}.`;
-      if (r.widened) card.caveats.push(`Fewer than ${n} in the ${periodLabel(inc.period)}, so this covers the ${periodLabel(r.period)}.`);
+          ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, by the console's priority score.`
+            : `These are the ${words(r.items.length)} highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, ranked by the console's priority score.`
+          : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} in the ${pl(r.period)}${sw}.`;
+      if (r.widened) card.caveats.push(`Fewer than ${n} in the ${pl(inc.period)}, so this covers the ${pl(r.period)}.`);
       listData(card, r.items);
       card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
         storyIds: undefined, storyTitles: undefined, selectedIncidentId: r.items.length === 1 ? r.items[0].incidentId : null,
@@ -122,8 +138,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.responseType = "kpi";
       card.display = "kpi";
       card.visualAsked = true;
-      card.headline = `${c.n.toLocaleString("en-IN")} ${kind} · ${periodLabel(inc.period)}`;
-      card.answerMarkdown = `${c.n.toLocaleString("en-IN")} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${periodLabel(inc.period)}${scopeWords(scope, i.names)}`
+      card.headline = `${c.n.toLocaleString("en-IN")} ${kind} · ${pl(inc.period)}`;
+      card.answerMarkdown = `${c.n.toLocaleString("en-IN")} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${pl(inc.period)}${sw}`
         + `${c.prev ? ` (${c.prev.toLocaleString("en-IN")} in the period before)` : ""}: ${c.severe} severe, ${c.open} still open${c.dead ? `, ${c.dead} ${c.dead === 1 ? "death" : "deaths"}` : ""}.`;
       card.kpis = [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
         { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
@@ -144,9 +160,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.visualAsked = true;
       card.chart = spec({ type: "horizontal_bar", dataset: "kinds", x: "label", y: ["n"], compare: true, sort: "desc", highlight: "max",
         title: rows[0] ? `${rows[0].label} leads with ${rows[0].n.toLocaleString("en-IN")}` : "No incidents" });
-      card.headline = `Top ${rows.length} ${what ? `${what} ` : ""}kinds · ${periodLabel(inc.period)}`;
+      card.headline = `Top ${rows.length} ${what ? `${what} ` : ""}kinds · ${pl(inc.period)}`;
       card.answerMarkdown = rows.length ? rows.map((r, k) => `${k + 1}. **${r.label}**: ${r.n.toLocaleString("en-IN")} (${r.prev.toLocaleString("en-IN")} the period before)`).join("\n")
-        : `No ${what || "incidents"} in the ${periodLabel(inc.period)}.`;
+        : `No ${what || "incidents"} in the ${pl(inc.period)}.`;
       card.context = { ...ctxBase, lastResponseType: "category_ranking" };
       card.sources.tools.push({ name: "category_ranking", args: { ...inc, n }, ms: 0 });
       break;
@@ -318,6 +334,24 @@ function listData(card: AnswerCard, items: IncidentItem[]) {
     rows: items.map((x) => ({ id: x.incidentId, title: x.title, place: x.location ?? x.zone, sev: x.severity, status: x.status, when: x.occurredAt,
       priority: x.priorityScore, lat: x.lat, lon: x.lon }))
   }];
+}
+
+/**
+ * A window the question states in its own words: "last 10 days", "past 3 weeks", "last 48 hours", "கடந்த 10 நாட்கள்".
+ * Null when it is one of the console's periods (24 hours, 7, 30 or 90 days) or not stated. At most the store's 180 days.
+ */
+export function customWindow(text: string): { hours: number; label: string; period: Period } | null {
+  const m = text.match(/\b(?:last|past|previous|kadandha|kadaisi)\s+(\d{1,3})\s*(hours?|hrs?|days?|weeks?|months?|naal|naatkal)\b/i)
+    ?? text.match(/(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்கள்|நாள்|வாரங்கள்|வாரம்|மாதங்கள்|மாதம்)/);
+  if (!m) return null;
+  const n = Number(m[1]), u = m[2].toLowerCase();
+  const per = /^(h|மணி)/.test(u) ? 1 : /^(w|வார)/.test(u) ? 168 : /^(mo|மாத)/.test(u) ? 720 : 24;
+  const hours = Math.min(n * per, 180 * 24);
+  if (!n || [24, 168, 720, 2160].includes(hours)) return null;
+  const unit = per === 1 ? "hour" : per === 168 ? "week" : per === 720 ? "month" : "day";
+  // the console period that holds the window: for the previous-period comparison's label and the card's period chip
+  const period: Period = hours <= 24 ? "daily" : hours <= 168 ? "weekly" : hours <= 720 ? "monthly" : "quarterly";
+  return { hours, label: `last ${n} ${unit}${n === 1 ? "" : "s"}`, period };
 }
 
 function scopeWords(s: Scope, n: RefNames): string {

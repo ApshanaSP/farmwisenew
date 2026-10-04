@@ -144,7 +144,7 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, series, prevLabel, s
               <em>{same ? "–" : <I n={diff > 0 ? "up" : "down"} />}{same ? "0" : Math.abs(diff).toLocaleString("en-IN")}</em>vs. {prevLabel}
             </span>
           </span>
-          <Spark vals={series} />
+          <Spark vals={series} color={KC[tone] ?? "var(--accent)"} />
         </span>
       </span>
     </button>
@@ -171,6 +171,7 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
         <h3 title="Open incidents by severity">By severity</h3>
         <button className="more" onClick={() => c.openList({ status: "open", sev: tab, sort: "sev", dir: 1 }, `${tab} incidents`)}>See all<I n="right" /></button>
       </div>
+      <SevMix counts={counts} tab={tab} onPick={(s) => c.setSevTab(s)} />
       <div className="sevtabs" role="tablist" aria-label="Severity">
         {SEVS.map((s) => (
           <button key={s} role="tab" aria-selected={tab === s} className={`sevtab s-${SEV_WORD[s]}${tab === s ? " on" : ""}`} onClick={() => c.setSevTab(s)}>
@@ -203,6 +204,28 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
         </button>
       )}
     </>
+  );
+}
+
+/**
+ * The open incidents' severity mix as one bar: each severity's share of the whole, in its own colour, with a 2px gap
+ * between segments; the selected severity is full strength and the rest recede. A click picks that severity's list.
+ */
+function SevMix({ counts, tab, onPick }: { counts: Record<string, number>; tab: string; onPick: (s: (typeof SEVS)[number]) => void }) {
+  const total = SEVS.reduce((a, s) => a + (counts[s] ?? 0), 0);
+  if (!total) return null;
+  return (
+    <div className="sevmix" role="img" aria-label={SEVS.map((s) => `${s} ${counts[s]}`).join(", ")}>
+      {SEVS.filter((s) => counts[s] > 0).map((s) => {
+        const pct = Math.round(((counts[s] ?? 0) / total) * 100);
+        return (
+          <button key={s} className={`sevmix-s${tab === s ? " on" : ""}`} style={{ flexGrow: counts[s], ["--c" as string]: SEV_HEX[s] }}
+            title={`${s}: ${counts[s].toLocaleString("en-IN")} open · ${pct}%`} onClick={() => onPick(s)} aria-label={`${s} ${pct}%`}>
+            {pct >= 12 && <span>{pct}%</span>}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

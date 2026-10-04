@@ -462,3 +462,28 @@
 .dic .aq-inc footer button,.dic .aq-story footer button{height:24px;padding:0 8px;border-color:transparent;background:none;color:var(--text-3)}
 .dic .aq-inc:hover footer button,.dic .aq-story:hover footer button{color:var(--text-2)}
 .dic .aq-inc footer code{opacity:.7}
+
+/* ------------------------------------------------ stat tiles: the number first, the change as a pill -- */
+.dic .aq-kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.dic .aq-kpi{padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);gap:4px;position:relative;overflow:hidden}
+.dic .aq-kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.8}
+.dic .aq-kpi.sev::before{background:var(--sev)}.dic .aq-kpi.high::before{background:var(--high)}.dic .aq-kpi.low::before{background:var(--low)}
+.dic .aq-kpi small{font-size:11.5px;letter-spacing:.02em}
+.dic .aq-kpi b{font:700 26px/1.1 var(--dic-display),sans-serif;letter-spacing:-.02em;animation:aq-fadeup .35s ease-out}
+.dic .aq-kpi-d{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-3)}
+.dic .aq-kpi-d em{font-style:normal;font-weight:700;font-size:11.5px;padding:1px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
+.dic .aq-kpi-d em.up{color:#F0894E;background:rgba(240,137,78,.12)}
+.dic .aq-kpi-d em.dn{color:#2BC7A0;background:rgba(43,199,160,.12)}
+.dic .aq-kpi-d em.eq{color:var(--text-3);background:var(--surface-2)}
+/* charts: the figure frame recedes; the marks carry the colour */
+.dic .aq-fig{background:var(--surface);border-color:var(--line);border-radius:14px;padding:12px 12px 8px}
+.dic .aq-fig figcaption b{font-size:14px}
+
+/* the chart chosen for the question: why, then one or two other forms that also fit; every form behind "More" */
+.dic .aq-why-chart{display:flex;align-items:flex-start;gap:6px;margin-top:3px;font-size:12px;line-height:1.4;color:var(--text-2)}
+.dic .aq-why-chart .ic{width:13px;height:13px;color:var(--accent);flex:none;margin-top:2px}
+.dic .aq-tools .aq-alt{width:auto;height:26px;display:inline-flex;align-items:center;gap:5px;padding:0 9px;border-radius:999px;border:1px solid var(--line);
+  color:var(--text-2);font-size:11.5px;font-weight:600;flex:none;transition:border-color .15s,color .15s,background .15s}
+.dic .aq-tools .aq-alt:hover{border-color:var(--accent);color:var(--accent-2);background:var(--accent-soft)}
+.dic .aq-tools .aq-alt .ic{width:13px;height:13px}
+.dic .aq-tools .aq-alt.more{padding:0 6px;border-color:transparent}

@@ -18,7 +18,7 @@ interface Strings {
   visualise: string; hide: string; details: string; hint: string; live: string; hello: (part: string) => string; helpLine: string;
   suggest: [string, string, string, string]; scopeNow: string; insightsNow: string;
   history: string; noHistory: string; question1: string; questionN: string;
-  searchChats: string; today: string; earlier: string; regenerate: string; editQ: string; hideSide: string;
+  searchChats: string; today: string; earlier: string; regenerate: string; editQ: string; hideSide: string; defaultPeriod: string; periodTip: string;
 }
 
 const typesEn: Types = { horizontal_bar: "Bar chart", bar: "Column chart", line: "Line chart", area: "Area chart", donut: "Donut chart", grouped_bar: "Grouped bars",
@@ -48,7 +48,7 @@ export const T: Record<Lang, Strings> = {
     live: "Live data", hello: (p) => `Good ${p}, Collector`, helpLine: "Ask about incidents, places, departments, weather, lakes, hospitals or market prices. In English, தமிழ் or Tanglish.",
     suggest: ["Where to focus", "Severe incidents", "Lakes & reservoirs", "Today's briefing"], scopeNow: "Answering for", insightsNow: "Today's insights",
     history: "Conversation history", noHistory: "No earlier conversations yet.", question1: "question", questionN: "questions",
-    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view"
+    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view", defaultPeriod: "Last 90 days", periodTip: "Answers cover the last 90 days unless the question names a period (today, this week, this month)"
   },
   ta: {
     title: "District IQ-இடம் கேளுங்கள்", subtitle: "மாவட்டத்தின் நேரடித் தரவிலிருந்து பதில்கள்", placeholder: "சம்பவங்கள், புகார்கள், வானிலை, விலைகள் பற்றி கேளுங்கள்…", send: "அனுப்பு",
@@ -72,7 +72,7 @@ export const T: Record<Lang, Strings> = {
     live: "நேரடித் தரவு", hello: () => "வணக்கம், ஆட்சியர் அவர்களே", helpLine: "சம்பவங்கள், இடங்கள், துறைகள், வானிலை, ஏரிகள், மருத்துவமனைகள், சந்தை விலைகள் பற்றி கேளுங்கள்.",
     suggest: ["கவனம் தேவைப்படும் இடம்", "கடுமையான சம்பவங்கள்", "ஏரிகள்", "இன்றைய அறிக்கை"], scopeNow: "இதற்கான பதில்", insightsNow: "இன்றைய தகவல்கள்",
     history: "உரையாடல் வரலாறு", noHistory: "முந்தைய உரையாடல்கள் இல்லை.", question1: "கேள்வி", questionN: "கேள்விகள்",
-    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு"
+    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு", defaultPeriod: "கடந்த 90 நாட்கள்", periodTip: "கேள்வியில் காலம் சொல்லாவிட்டால் கடந்த 90 நாட்களுக்கான பதில் (இன்று, இந்த வாரம், இந்த மாதம் என்று சொல்லலாம்)"
   },
   tanglish: {
     title: "District IQ kitta kelunga", subtitle: "District-oda live data-la irundhu answers", placeholder: "Incidents, complaints, weather, prices pathi kelunga…", send: "Send",
@@ -95,7 +95,7 @@ export const T: Record<Lang, Strings> = {
     live: "Live data", hello: () => "Vanakkam, Collector", helpLine: "Incidents, places, departments, weather, lakes, hospitals, market prices pathi kelunga.",
     suggest: ["Enga focus pannanum", "Severe incidents", "Lakes", "Innaikku briefing"], scopeNow: "Indha scope-ku", insightsNow: "Innaikku insights",
     history: "Pazhaya conversations", noHistory: "Munnadi conversations illa.", question1: "kelvi", questionN: "kelvigal",
-    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu"
+    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu", defaultPeriod: "Last 90 naal", periodTip: "Kelviyila period sollalana last 90 naal-ku answer varum (innaikku, indha vaaram, indha maasam nu sollalam)"
   }
 };
 

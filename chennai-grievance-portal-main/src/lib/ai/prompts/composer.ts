@@ -39,6 +39,7 @@ function composerSchema(lenient: boolean) {
       period: t(z.enum(["daily", "weekly", "monthly", "quarterly"]).nullable(), null), id: str()
     })), []),
     caveats: t(z.array(z.string()), []),
+    chartReason: str(),
     usedFactIds: t(z.array(z.string()), [])
   });
 }
@@ -68,12 +69,20 @@ AREA OR TOPIC OVERVIEW (the question asks what is going on in a place or with a 
 list): say how the place stands overall (its rank or totals), then NAME the 2 or 3 open issues at the top of its list (what and where, from the
 dataset's titles) and why each matters (severity, deaths or injuries, still open, past deadline, repeated complaints) — name them even when
 none is severe; then what is pending; finish with one short offer to explain one of them. Do not point the Collector to the chart.
+WHY OR WHAT CHANGED (the DATASETS hold "drivers"): explain it like an analyst, in up to 150 words. First the direction and size of the
+change (this period against the one before). Then the one or two incident types that drove it and where (from "drivers" and
+"driver_places"), with their counts. Then context that is in the data: rain days in each period and how many incidents were linked to
+rain, said as a timing link, never as a proven cause; missed deadlines and the department (from "driver_depts"). End with the one open
+incident to act on first and why (from "driver_top"). If nothing changed much, say so plainly and name what still needs attention.
 Unknowns: when a cause, a completion date, an affected population or an officer's action is not in FACTS or DATASETS, say it is not recorded;
 never infer a cause from a rain association or a category, and never estimate when something will be resolved.
 Kinds of evidence stay distinct: "reported in the news", "recorded by a department", "a suggested step" and "a completed action" are
 different things; several articles from one outlet are one source.
-Copy every number exactly from FACTS (you may round to fewer decimals). Write numbers as digits with Indian grouping (1,23,456); never write a
-number that is not a fact; never calculate one; use percentages only from facts ending in change_pct or share. No forecasts or predictions.
+FIGURES: write every figure from FACTS as its id in double braces, {{fact_id}} (for example "{{reported.now}} incidents, up from
+{{reported.prev}}"); the code prints the exact value, so never type a fact's number yourself. A change or percentage prints without its
+sign: say "rose" or "fell" yourself, matching the fact's sign. Percent facts print with "%". Only ids listed in FACTS exist. Dates, times,
+ward and zone numbers, and numbers in the question may be written as they are. Never calculate a number; never write a number that is not
+a fact; use percentages only from facts ending in change_pct or share. No forecasts or predictions.
 LEAD FACT, when given, is the card's main figure: state its value in the headline or first sentence; never put another fact's value in its place.
 Ties: when a rank fact says tied, name every tied item or say how many share the value. Say the rest are zero or none only when an above_zero
 fact names the items above zero; otherwise say nothing about the rest.
@@ -82,7 +91,7 @@ The data covers exactly SCOPE. If the question asks for something narrower or di
 show), do not claim it: say what the figures cover.
 When TEST DATA is yes, say once, briefly, that the figures include test data (say "all" only when TEST DATA says all records); never call
 test records unreal, empty or meaningless, and never discount the findings because of them. Include the caveats that matter.
-Never mention fact ids.
+Never mention fact ids in words (the {{id}} placeholders are replaced by their values).
 PREVIOUS ANSWER, when given, is the conversation so far: read the question as its continuation, and where it helps say how this answer
 relates to the previous one (the same measure for another zone, a narrower period), but take every number from FACTS, never from it.
 Write in ${LANG_NAME[lang]}.${lang === "tanglish" ? ` headline, answerMarkdown, caveats and followUps in Tanglish, not English, for example "Velachery-la indha vaaram 4 road accidents nadandhirukku." Write voiceSummary in colloquial Tamil script (keep English terms as they are), because it is read by a Tamil voice.` : ""}
@@ -90,6 +99,8 @@ voiceSummary: at most 2 sentences and 35 words, natural to say aloud.
 display: when VISUAL ASKED is no, choose "text" ("table" only when the question asks for a list or a table) and set chart to null; the card offers
 the picture if the Collector wants it. When VISUAL ASKED is yes, choose chart or map (kpi for a single number) and design it with these rules:
 ${CHART_RULES} Put category labels in the reply language through "labels" when not English.
+chartReason: when there is a chart, why that form suits THIS question, in 8 words or fewer in the reply language ("Before and now for each
+incident type", "Ranked, so the worst zone stands out"); null without a chart.
 INCIDENT STORY: when DATASETS hold an "incident" record, the Collector is asking about that one incident. Explain it as a short narrative (up to
 150 words; this replaces the 90-word limit): what happened and where (place, ward, zone), when it was first reported, severity and current status,
 which department handles it, how it developed (the reports in time order: police, complaints, news outlets and their headlines, quoted briefly),

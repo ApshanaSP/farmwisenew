@@ -71,6 +71,9 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
       if (route.tools.length) return { tools: route.tools };
       return { tools: [{ name: "overview_kpis", args: { scope: route.scope } }, { name: "severity", args: { scope: route.scope } }] };
     }
+    case "explain_why":
+      // one evidence pack (this period against the one before, what moved and where, rain, deadlines, the top open) for one explanation
+      return { tools: [{ name: "change_drivers", args: { scope: route.scope.zone == null && placeZone != null ? { ...route.scope, zone: placeZone } : route.scope } }] };
     case "incident_related":
     case "incident_timeline":
       return incidentId ?? ctx?.selectedIncidentId ? { fast: { ...base, intent: FAST_OF[d.answer]!, incidentId: incidentId ?? ctx!.selectedIncidentId! } } : null;

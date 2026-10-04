@@ -40,26 +40,41 @@ export class AiBudgetError extends Error {
 interface Provider {
   name: ProviderName;
   model: (role: Role) => { id: string; lm: LanguageModel | null };
-  options: (role: Role) => Record<string, Record<string, string | boolean | Record<string, string>>>;
+  /**
+   * Every model the provider may use for the role, in preference order. Each free model has its own per-minute allowance,
+   * so a pool of them carries several times the load of one; the least-used model with allowance left goes first.
+   */
+  pool?: (role: Role) => { id: string; lm: LanguageModel }[];
+  /** the free tier's per-minute limits for one model of this provider */
+  limits?: { tpm: number; rpm: number };
+  options: (role: Role, id?: string) => Record<string, Record<string, string | boolean | Record<string, string>>>;
   /** providers called through their own SDK rather than the AI SDK (Bedrock's Converse API) */
   json?: <T>(c: JsonCall<T>) => Promise<JsonResult<T>>;
 }
 
 const env = (k: string) => (process.env[k] ?? "").trim();
 
+/** A comma-separated model list from the environment, else the defaults. */
+const listEnv = (k: string, dflt: string[]) => (env(k) ? env(k).split(",").map((x) => x.trim()).filter(Boolean) : dflt);
+
 /**
- * Google Gemini, the default provider. Flash-Lite routes (about 2 s); 3.8 Flash writes the answer (about 3 s, and keeps
- * to the facts better: Flash-Lite's answers failed the number check). Each backs up the other when it is busy (503);
- * 3.5 Flash took 14-30 s. Thinking is kept low for speed.
+ * Google Gemini. Flash-Lite routes (about 2 s); 3.6 Flash writes (about 5 s, keeps to the facts better than Flash-Lite,
+ * whose answers failed the number check more often). The other free models back them up; each has its own daily quota.
+ * Thinking is kept low for speed.
  */
 function gemini(): Provider | null {
   const apiKey = env("GEMINI_API_KEY");
   if (!apiKey) return null;
   const p = createGoogleGenerativeAI({ apiKey });
-  const ids = { fast: env("AI_GEMINI_MODEL_FAST") || "gemini-3.5-flash-lite", reasoning: env("AI_GEMINI_MODEL") || "gemini-3.8-flash" };
+  const ids = {
+    fast: listEnv("AI_GEMINI_MODEL_FAST", ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.6-flash"]),
+    reasoning: listEnv("AI_GEMINI_MODEL", ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.5-flash-lite"])
+  };
   return {
     name: "gemini",
-    model: (role) => ({ id: ids[role], lm: p(ids[role]) }),
+    model: (role) => ({ id: ids[role][0], lm: p(ids[role][0]) }),
+    pool: (role) => ids[role].map((id) => ({ id, lm: p(id) })),
+    limits: { tpm: 250_000, rpm: 10 },
     options: () => ({ google: { structuredOutputs: true, thinkingConfig: { thinkingLevel: env("AI_REASONING_EFFORT") || "low" } } })
   };
 }
@@ -86,12 +101,19 @@ function groq(): Provider | null {
   const apiKey = env("GROQ_API_KEY");
   if (!apiKey) return null;
   const p = createGroq({ apiKey });
-  const ids = { fast: env("AI_MODEL_FAST") || "openai/gpt-oss-20b", reasoning: env("AI_MODEL_REASONING") || "openai/gpt-oss-120b" };
+  // three free models, 8,000 tokens a minute each (about 1 s a call when not rate-limited); qwen also writes strict JSON
+  const ids = {
+    fast: listEnv("AI_MODEL_FAST", ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"]),
+    reasoning: listEnv("AI_MODEL_REASONING", ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"])
+  };
   return {
     name: "groq",
-    model: (role) => ({ id: ids[role], lm: p(ids[role]) }),
-    // gpt-oss thinks before it answers: keep that short (speed, and the free tier's tokens per minute)
-    options: () => ({ groq: { structuredOutputs: true, strictJsonSchema: true, reasoningEffort: env("AI_REASONING_EFFORT") || "low", reasoningFormat: "hidden" } })
+    model: (role) => ({ id: ids[role][0], lm: p(ids[role][0]) }),
+    pool: (role) => ids[role].map((id) => ({ id, lm: p(id) })),
+    limits: { tpm: 8_000, rpm: 30 },
+    // gpt-oss thinks before it answers: keep that short (speed, and the free tier's tokens per minute); qwen takes no effort setting
+    options: (_role, id) => ({ groq: { structuredOutputs: true, strictJsonSchema: true, reasoningFormat: "hidden",
+      ...(id && !id.startsWith("openai/") ? {} : { reasoningEffort: env("AI_REASONING_EFFORT") || "low" }) } })
   };
 }
 
@@ -219,6 +241,26 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
         continue;
       }
     }
+    // a pool of models, each with its own free allowance: those resting after a refusal or without allowance left this
+    // minute are skipped (no refused call costs the Collector time); among the rest, the least used goes first
+    if (p.pool) {
+      const need = Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
+      const models = p.pool(c.role).map((m, rank) => ({ ...m, rank, key: `${p.name}/${m.id}` }))
+        .filter((m) => (cooling.get(m.key) ?? 0) <= Date.now());
+      const room = (m: { key: string }) => {
+        const u = usedLastMinute(m.key), lim = p.limits ?? { tpm: Infinity, rpm: Infinity };
+        return u.requests < lim.rpm && u.tokens + need <= lim.tpm ? lim.tpm - u.tokens : -1;
+      };
+      // keep the preferred order while a model has room; models that would go over this minute's allowance go last
+      const order = [...models].sort((a, b) => Number(room(b) < 0) - Number(room(a) < 0) || a.rank - b.rank);
+      for (const m of order) {
+        if (room(m) < 0 && order.some((x) => room(x) >= 0)) continue;
+        const r = await tryModel(c, p, m.id, m.lm, state);
+        if (r.result) return r.result;
+        if (r.longBusy) console.warn(`[assistant] ${c.name}: ${m.key} is busy or rate-limited; next model`);
+      }
+      continue;
+    }
     // each model has its own rate limits: when one is out for a long while (a daily cap) or overloaded, the provider's other model answers
     const first = p.model(c.role), other = p.model(c.role === "fast" ? "reasoning" : "fast");
     if (!first.lm) continue;
@@ -241,6 +283,16 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
  */
 const cooling = new Map<string, number>();
 
+/** Tokens and requests each model used in the last minute (this server's calls; the free tiers count per minute). */
+const usage = new Map<string, { t: number; tokens: number }[]>();
+function usedLastMinute(key: string): { requests: number; tokens: number } {
+  const now = Date.now();
+  const l = (usage.get(key) ?? []).filter((x) => now - x.t < 60_000);
+  usage.set(key, l);
+  return { requests: l.length, tokens: l.reduce((a, x) => a + x.tokens, 0) };
+}
+const recordUse = (key: string, tokens: number) => { const l = usage.get(key) ?? []; l.push({ t: Date.now(), tokens }); usage.set(key, l); };
+
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
   state: { busyFor: number | null; lastError: unknown; attempts: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
   const key = `${p.name}/${id}`;
@@ -251,11 +303,12 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     try {
       const r = await generateText({
         model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: c.maxOutputTokens ?? 1200,
-        maxRetries: 0, abortSignal: c.abortSignal, output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role)
+        maxRetries: 0, abortSignal: c.abortSignal, output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
         inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
       charge(c.user, info.inputTokens + info.outputTokens);
+      recordUse(key, info.inputTokens + info.outputTokens);
       console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
       return { result: { object: r.output as T, info }, longBusy: false };
     } catch (e) {
@@ -301,7 +354,8 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         return { longBusy: status === 429 && wait != null && wait > 8 };
       }
       // bad JSON or a schema mismatch: one more try on the same model, then the next provider
-      if (!status && attempt === 0) continue;
+      // (with a pool, the next model is a better bet than the same one again)
+      if (!status && attempt === 0 && !p.pool) continue;
       return { longBusy: false };
     }
   }

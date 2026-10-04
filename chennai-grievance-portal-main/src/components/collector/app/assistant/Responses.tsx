@@ -184,12 +184,21 @@ export function KpiResponse({ kpis, t }: { kpis: Kpi[]; t: { prev: string; vsPre
   return (
     <div className="aq-kpis">
       {kpis.map((k, i) => {
-        const d = k.prev != null && k.prev !== 0 ? Math.round(((k.value - k.prev) / k.prev) * 100) : null;
+        const pct = k.prev != null && k.prev !== 0 ? Math.round(((k.value - k.prev) / k.prev) * 100) : null;
+        const diff = k.prev != null ? k.value - k.prev : null;
+        const f = k.format ?? (Number.isInteger(k.value) ? "integer" : "decimal1");
+        // the change as a pill: its own size first ("+9"), the percent after; up is the warm tone, down the cool one
+        const dir = diff == null || diff === 0 ? "eq" : diff > 0 ? "up" : "dn";
         return (
           <div key={i} className={`aq-kpi ${k.tone ?? ""}`}>
             <small>{k.label}</small>
-            <b>{fmtValue(k.value, k.format ?? (Number.isInteger(k.value) ? "integer" : "decimal1"), k.unit ?? null)}</b>
-            {k.prev != null && <span>{d == null ? `${t.prev} ${fmtValue(k.prev, k.format ?? "integer")}` : `${d > 0 ? "▲" : d < 0 ? "▼" : "•"} ${Math.abs(d)}% ${t.vsPrev}`}</span>}
+            <b>{fmtValue(k.value, f, k.unit ?? null)}</b>
+            {k.prev != null && (
+              <span className="aq-kpi-d">
+                <em className={dir}>{dir === "up" ? "▲" : dir === "dn" ? "▼" : "•"} {diff ? `${diff > 0 ? "+" : "−"}${fmtValue(Math.abs(diff), f)}` : "0"}{pct != null && diff ? ` · ${Math.abs(pct)}%` : ""}</em>
+                {t.vsPrev}
+              </span>
+            )}
           </div>
         );
       })}

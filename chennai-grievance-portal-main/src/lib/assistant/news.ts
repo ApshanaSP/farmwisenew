@@ -55,11 +55,13 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
      FROM documents d
      WHERE d.source_kind = 'news' AND d.is_district = 1 AND d.published_at > (? - INTERVAL ? HOUR) AND d.published_at <= ?
        AND (d.report_type IS NULL OR d.report_type NOT IN (?)) ${storyIds?.length ? "AND (d.story_id IN (?) OR d.doc_id IN (?))" : ""}
-     ORDER BY d.published_at LIMIT 3000`,
+     ORDER BY d.published_at DESC LIMIT 3000`,
     // an article in no story is its own story, keyed "doc:<doc_id>"
     [now, now, storyIds?.length ? 24 * 365 : f.hours, now, SKIP_TYPES,
       ...(storyIds?.length ? [storyIds, storyIds.map((k) => (k.startsWith("doc:") ? k.slice(4) : k))] : [])]);
   if (!docs.length) return { stories: [], candidates: 0 };
+  // the newest 3,000 for a long window, back in time order (a story's first article is its first report)
+  docs.reverse();
 
   // one row per story (an article without a story id is its own story)
   const groups = new Map<string, Row[]>();

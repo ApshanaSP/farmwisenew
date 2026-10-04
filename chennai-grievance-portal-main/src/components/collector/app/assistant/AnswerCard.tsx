@@ -89,7 +89,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       {rt === "actions" && card.actions && <ActionsResponse groups={card.actions} onOpen={openInc} />}
 
       {open && card.kpis.length > 0 && (card.display === "kpi" || !card.chart) && <KpiResponse kpis={card.kpis} t={t} />}
-      {open && rt !== "incident_list" && <FigureResponse card={card} geo={geo} onAction={onAction} expanded={expanded} onExpand={onExpand} />}
+      {open && rt !== "incident_list" && <FigureResponse card={card} geo={geo} onAction={onAction} expanded={expanded} onExpand={onExpand} onAsk={onAsk} />}
 
       {card.download && <a className="aq-dl" href={card.download.href} download><I n="download" />{card.download.label}</a>}
       {card.caveats.length > 0 && <ul className="aq-cav">{card.caveats.map((c, i) => <li key={i}><I n="info" />{c}</li>)}</ul>}

@@ -189,25 +189,36 @@ export function useSize<T extends HTMLElement>() {
 let gid = 0;
 const uid = (p: string) => `${p}${++gid}`;
 
-export function Spark({ vals }: { vals: number[] }) {
+/**
+ * A tile's trend: the line in the tile's own colour (red for severe events, not one blue for all), a flat wash under it, a
+ * dashed line at the period's average and the last value marked; hovering reads out the value under the pointer.
+ */
+export function Spark({ vals, color = "#6FA3FF" }: { vals: number[]; color?: string }) {
   const W = 74, H = 38, n = vals.length;
-  const id = `s${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const [hover, setHover] = useState<number | null>(null);
   if (n < 2) return null;
   const mx = Math.max(...vals, 1), mn = Math.min(...vals, 0);
   const x = (i: number) => 2 + (i * (W - 6)) / (n - 1);
   const y = (v: number) => 4 + (1 - (v - mn) / (mx - mn || 1)) * (H - 8);
   const d = vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const avg = vals.reduce((a, v) => a + v, 0) / n;
+  const at = hover ?? n - 1;
+  const move = (e: React.MouseEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setHover(Math.max(0, Math.min(n - 1, Math.round((((e.clientX - r.left) / r.width) * W - 2) / ((W - 6) / (n - 1))))));
+  };
   return (
-    <svg className="spk" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#4C8DFF" stopOpacity=".32" />
-          <stop offset="1" stopColor="#4C8DFF" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill={`url(#${id})`} />
-      <path className="ln-d" d={d} fill="none" stroke="#6FA3FF" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={x(n - 1)} cy={y(vals[n - 1])} r="2.6" fill="#8DB6FF" stroke="#0B1426" strokeWidth="1.5" />
+    <svg className="spk" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseMove={move} onMouseLeave={() => setHover(null)} style={{ color }}>
+      <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill="currentColor" fillOpacity=".12" />
+      <line x1="2" x2={W - 4} y1={y(avg)} y2={y(avg)} stroke="currentColor" strokeOpacity=".35" strokeWidth="1" strokeDasharray="2 3" />
+      <path className="ln-d" d={d} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+      {hover != null && <line x1={x(at)} x2={x(at)} y1="2" y2={H} stroke="currentColor" strokeOpacity=".4" strokeWidth="1" />}
+      <circle cx={x(at)} cy={y(vals[at])} r="2.8" fill="currentColor" stroke="#0B1426" strokeWidth="1.5" />
+      {hover != null && (
+        <text x={x(at) > W / 2 ? x(at) - 4 : x(at) + 4} y="9" textAnchor={x(at) > W / 2 ? "end" : "start"} fontSize="9" fontWeight="700" fill="#E6ECF7">
+          {vals[at].toLocaleString("en-IN")}
+        </text>
+      )}
     </svg>
   );
 }

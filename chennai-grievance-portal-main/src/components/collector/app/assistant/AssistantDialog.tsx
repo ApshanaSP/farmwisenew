@@ -264,7 +264,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
     stop(); setItems([]); session.current = null; lastAnswer.current = null; input.current?.focus();
     try { localStorage.removeItem(SESSION_KEY); } catch { /* storage blocked */ }
   };
-  const scopeChips = [c.periodLabel, c.zoneName ?? "All zones", c.deptName ?? "All departments", c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
+  const scopeChips = [t.defaultPeriod, c.zoneName ?? "All zones", c.deptName ?? "All departments", c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
   const fresh = status ? t.fresh(status.asOf.slice(0, 16), status.feedsOk, status.feedsTotal) : "";
   const hour = new Date().getHours();
   const part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
@@ -321,7 +321,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
             )}
           </div>
         )}
-        <div className="aq-scopebar" title={scopeChips.join(" · ")}>
+        <div className="aq-scopebar" title={t.periodTip}>
           <small>{t.scopeNow}</small>
           {scopeChips.map((s) => <span key={s}>{s}</span>)}
         </div>

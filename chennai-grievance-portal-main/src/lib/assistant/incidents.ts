@@ -26,6 +26,10 @@ export interface IncidentFilters {
   cats?: string[] | null;
   sev?: "Severe" | "High" | null;
   openOnly?: boolean;
+  /** a window the question names in its own words ("last 10 days" = 240), instead of the period's */
+  hours?: number | null;
+  /** a locality inside the zone ("Velachery"), matched on the incident's place: narrower than the zone */
+  place?: string | null;
 }
 
 const COLS = `i.incident_id AS id, i.title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
@@ -38,9 +42,10 @@ const COLS = `i.incident_id AS id, i.title, i.category_label AS type, i.category
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
 function where(f: IncidentFilters, now: string, hours?: number, off = 0) {
-  const w = periodWindow(f.period, now, "i.first_reported_at", off, hours);
+  const w = periodWindow(f.period, now, "i.first_reported_at", off, hours ?? f.hours ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
+  if (f.place) (parts.push("i.place_text LIKE ?"), params.push(`%${f.place.replace(/[%_]/g, "")}%`));
   if (f.taluk) (parts.push("i.taluk_code = ?"), params.push(f.taluk));
   if (f.dept) (parts.push("i.lead_dept = ?"), params.push(f.dept));
   if (f.cats?.length) (parts.push("i.category_code IN (?)"), params.push(f.cats));
@@ -130,7 +135,8 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
     const w = where({ ...f, period }, now);
     [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
       q<{ total: number }>(`SELECT COUNT(*) AS total FROM incidents i WHERE ${w.sql}`, w.params)]);
-    if (rows.length >= n || order === "recent") break;
+    // a window the question names ("last 10 days") is never widened silently
+    if (rows.length >= n || order === "recent" || f.hours) break;
   }
   const ev = await evidenceFor(rows.map((r) => String(r.id)));
   return { items: rows.map((r) => itemOf(r, ev.get(String(r.id)) ?? [])), total: num(total), period, widened: period !== f.period };

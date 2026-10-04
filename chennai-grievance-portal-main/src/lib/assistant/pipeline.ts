@@ -27,8 +27,8 @@ import { holdSync, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { contextNumbers, extractNumbers, verifyNumbers } from "@/lib/assistant/verify";
-import { allowedTypes, checkChart } from "@/lib/assistant/chartspec";
+import { contextNumbers, extractNumbers, fillFacts, verifyNumbers } from "@/lib/assistant/verify";
+import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { loadCatalog, renderCatalog } from "@/lib/assistant/catalog";
 import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, type QueryResult } from "@/lib/assistant/compile";
@@ -38,10 +38,11 @@ import { editFromText, isBareEdit } from "@/lib/assistant/edits";
 import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
-import { fastPath } from "@/lib/assistant/fastpath";
+import { customWindow, fastPath } from "@/lib/assistant/fastpath";
 import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
+import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 
@@ -107,6 +108,7 @@ const scopeKey = (s: Scope) => `${s.period}|${s.zone ?? ""}|${s.dept ?? ""}|${s.
 
 const TOOL_ARGS: Record<string, (c: Row, s: Scope) => Record<string, unknown>> = {
   zone_profile: (c, s) => ({ scope: s, zone: c.zone ?? s.zone ?? 1 }),
+  change_drivers: (_c, s) => ({ scope: s }),
   incidents: (c, s) => ({ scope: s, sev: c.sev ?? null, status: c.status ?? null, q: c.q ?? null, allTime: !!c.allTime }),
   incident_detail: (c) => ({ id: c.id ?? "" }),
   incident_story: (c, s) => ({ text: c.text ?? c.q ?? c.id ?? "", scope: s }),
@@ -163,6 +165,10 @@ function lockQuery<T extends { filters: { field: string }[]; dimensions: { field
   const isDept = (f: string) => /(^|\.)(lead_dept|dept_code|department)$/.test(f);
   return { ...q, filters: q.filters.filter((f) => !isDept(f.field)), dimensions: q.dimensions.filter((d) => !isDept(d.field)) };
 }
+
+/** The period an answer covers when the question names none: the whole quarter, not just the console's last 24 hours. */
+export const DEFAULT_PERIOD = "quarterly" as const;
+const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" } as const;
 
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
@@ -225,6 +231,7 @@ const BRIEF: Record<string, string> = {
   overview_kpis: "headline figures: severe, open complaints, ongoing, resolved, with the previous period",
   zones: "all zones ranked by attention score (3 x severe + high), with severe, open, open complaints; zone rankings and zone maps",
   zone_profile: "one zone in depth (zone): its rank, top open incidents with reasons, zonal officer",
+  change_drivers: "why something is high or changed: the period against the one before, what rose or fell and where, rain, missed deadlines, top open",
   departments: "departments: open, reported, severe, awaiting verification",
   severity: "open incidents by severity, severity mix, top open incidents",
   verification_queue: "citizen complaints awaiting the Collector's verification",
@@ -252,9 +259,11 @@ const BRIEF: Record<string, string> = {
 };
 
 function summaryOf(turns: Row[]): string {
-  return turns.slice(-8).map((t) => {
+  // compact: the last three exchanges, each tool with only the filters it used (the numbered list goes in "Previous answer")
+  const set = (o: Row) => Object.entries(o ?? {}).filter(([, v]) => v != null && v !== "" && typeof v !== "object").map(([k, v]) => `${k}=${v}`).join(",");
+  return turns.slice(-6).map((t) => {
     if (t.role === "user") return `Collector: ${String(t.content_text ?? "").slice(0, 200)}`;
-    const tools = (t.plan?.tools ?? []).map((x: Row) => `${x.name}(${JSON.stringify(x.args?.scope ?? x.args ?? {})})`).join(", ");
+    const tools = (t.plan?.tools ?? []).map((x: Row) => `${x.name}(${set(x.args?.scope ?? x.args ?? {})})`).join(", ");
     const chart = t.chart ? `${t.chart.type} of ${t.chart.y?.join(",")} in ${t.chart.dataset}` : String(t.display ?? "text");
     return `Assistant: ${String(t.headline ?? "").slice(0, 160)} [intent ${t.plan?.intent ?? "?"}; tools ${tools || "none"}; shown as ${chart}]`;
   }).join("\n");
@@ -273,11 +282,13 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   const category = hint && hint.conf >= 0.6 ? `${hint.code} (${hint.label})` : "";
   // the tool list and codes sit in the system prompt: the same for every question, so read from the prompt cache after the first
   const system = routerSystem(tools.map((t) => `${t.name}(${t.args.join(", ")}): ${BRIEF[t.name] ?? t.description}`).join("\n"), codes(n));
+  // the few worked examples closest to this question (dynamic few-shot), in the message so the system prompt stays cacheable
+  const examples = await examplesFor(message);
   const r = await generateJson({
     role: "fast", name: "router", schema: schemas.strict, lenient: schemas.lenient, system, temperature: 0, maxOutputTokens: 1400, user: i.user,
     abortSignal: i.signal,
     prompt: routerPrompt({ message, detected, scopeLine: describeScope(base, n, "en"), scopeJson: JSON.stringify(base), summary: summaryOf(turns), place, category, asOf: now,
-      previous: contextForRouter(lastContext(turns)),
+      previous: contextForRouter(lastContext(turns)), examples,
       typed: i.message.replace(/\s+/g, " ").trim() !== message ? i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars) : undefined })
   });
   models.push(r.info);
@@ -295,6 +306,20 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     const named = new RegExp(`\\bzone\\s*-?\\s*0?${scope.zone}\\b|மண்டலம்\\s*${scope.zone}\\b|"zone":${scope.zone}\\b`, "i").test(talk)
       || (!!z?.name && talk.includes(z.name.toLowerCase())) || (!!z?.nameTa && talk.includes(z.nameTa)) || Number(placed?.zone) === scope.zone;
     if (!named) { o.assumptions.push(`Zone ${scope.zone} was not named in the question, so the answer covers ${base.zone ? `Zone ${base.zone}` : "the whole district"}.`); scope.zone = base.zone; o.scope.zone = null; }
+  }
+  // a window in the question's own words ("last 10 days"): the lists and counts use it exactly; tools that only know the
+  // console's periods use the smallest one that holds it, and say so
+  const cw = customWindow(message);
+  if (cw) {
+    if (scope.period !== cw.period) o.assumptions.push(`The ${cw.label}: figures from tools that only know fixed periods cover the ${PERIOD_TEXT[cw.period]}.`);
+    scope.period = cw.period;
+    o.scope.period = cw.period;
+  }
+  // a period only when the message (or, for a follow-up, the conversation) names one: a worked example's "this week" is not the Collector's
+  else if (scope.period !== base.period && !PERIOD_WORDS.test(talk)) {
+    o.assumptions.push(`No period was named, so the answer covers the ${base.period === "quarterly" ? "last 90 days" : "console's period"}.`);
+    scope.period = base.period;
+    o.scope.period = null;
   }
   if (scope.taluk && scope.taluk !== base.taluk) {
     const t = n.taluks.get(scope.taluk);
@@ -320,7 +345,9 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     chartEdit: o.chartEdit, actions: o.consoleActions, clarify: o.needsClarification ? o.clarificationQuestion : null, refusal: o.refusalReason,
     assumptions: o.assumptions, offline: false, visual: o.visual,
     decision: {
-      answer: o.answer, incidentId: o.refIncidentId?.trim().toUpperCase() || null, storyId: o.refStoryId?.trim() || null, find: o.find?.trim() || null,
+      answer: o.answer, incidentId: o.refIncidentId?.trim().toUpperCase() || null, storyId: o.refStoryId?.trim() || null,
+      // query rewriting: the description and its translation, searched together (meaning and keywords in both languages)
+      find: [o.find?.trim(), o.findAlt?.trim()].filter(Boolean).join(" / ") || null,
       count: o.count != null && o.count >= 1 && o.count <= 20 ? Math.round(o.count) : null, focus: o.focus, openOnly: o.openOnly, severity: o.severity,
       options: o.clarifyOptions.map((x) => x.trim()).filter(Boolean).slice(0, 3)
     }
@@ -556,7 +583,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const message = spelled.text;
   const detected = detectLanguage(typed);
   let lang: Lang = i.language !== "auto" ? i.language : detected.lang;
-  const consoleScope = ScopeSchema.parse(i.lockDept ? { ...i.scope, dept: i.lockDept } : i.scope);
+  // answers cover the whole quarter (the last 90 days) unless the question names a period ("today", "this week"); the
+  // console's zone, department, category and taluk filters still apply
+  const consoleScope = ScopeSchema.parse({ ...(i.lockDept ? { ...i.scope, dept: i.lockDept } : i.scope), period: DEFAULT_PERIOD });
   const sessionId = await ensureSession(i.user, i.sessionId, typed);
   const turns = await recentTurns(i.user, sessionId, 10);
   const models: CallInfo[] = [];
@@ -1000,7 +1029,10 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   };
   if (c.route.offline || !aiStatus().available) return fallback(null);
 
-  const cache = `card|${lang}|${c.route.normalized.toLowerCase()}|${JSON.stringify(c.route.tools)}|${c.now}`;
+  // semantic cache: two questions that mean the same ("Anna Nagar issues?" / "what is going on in Anna Nagar") get the same
+  // decision and the same tools on the same data, so the verified answer is reused; the wording only matters without a decision
+  const d = c.route.decision;
+  const cache = `card|${lang}|${d ? `${d.answer}|${d.focus}|${d.count ?? ""}` : c.route.normalized.toLowerCase()}|${JSON.stringify(c.route.tools)}|${c.now}`;
   const hit = cachedCard(cache);
   if (hit) {
     hit.sources.limits = [...hit.sources.limits, "Same question on the same data as a few minutes ago: the earlier verified answer was reused."];
@@ -1008,7 +1040,9 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   }
 
   // the card's main figure: the answer must state it, not another fact's value in its place ("0 accidents" when 4 match)
-  const lead = p.kpis[0] && Number.isFinite(Number(p.kpis[0].value)) ? { label: p.kpis[0].label, value: Number(p.kpis[0].value) } : null;
+  // (an explanation of a change leads with the change and its drivers, not with the period's total)
+  const explaining = c.results.some((r) => r.tool === "change_drivers");
+  const lead = !explaining && p.kpis[0] && Number.isFinite(Number(p.kpis[0].value)) ? { label: p.kpis[0].label, value: Number(p.kpis[0].value) } : null;
   const statesLead = (d: ComposerOutput) => !lead || extractNumbers(`${d.headline} ${d.answerMarkdown}`, quotable)
     .some((n) => Math.abs(n.value - lead.value) < 0.01 || Math.abs(n.value - lead.value) <= Math.abs(lead.value) * 0.005);
   const all = facts.find((f) => f.id === "scope.incidents")?.value, syn = facts.find((f) => f.id === "scope.test_incidents")?.value;
@@ -1027,6 +1061,17 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
         temperature: 0.2, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal });
       c.models.push(r.info);
       draft = r.object;
+      // grounded citations: {{fact_id}} placeholders become the facts' exact values before anything is checked or shown
+      const unknown: string[] = [];
+      const fill = (s: string) => { const f = fillFacts(s, facts); unknown.push(...f.unknown); return f.text; };
+      draft = { ...draft, headline: fill(draft.headline), answerMarkdown: fill(draft.answerMarkdown), voiceSummary: fill(draft.voiceSummary),
+        caveats: draft.caveats.map(fill), chart: draft.chart ? { ...draft.chart, title: fill(draft.chart.title), subtitle: draft.chart.subtitle ? fill(draft.chart.subtitle) : draft.chart.subtitle } : null };
+      if (unknown.length) {
+        verdict = { ok: false, checked: 0, unmatched: unknown.map((u) => `{{${u}}}`) };
+        ctx.repair = `These fact ids do not exist: ${[...new Set(unknown)].join(", ")}. Use only ids listed in FACTS.`;
+        regenerated = true;
+        continue;
+      }
     } catch (e) {
       if (i.signal?.aborted) throw e;
       const why = regenerated ? ` while redrafting (the first draft was rejected: ${verdict.unmatched.join(", ") || "empty text"})` : "";
@@ -1062,7 +1107,12 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   const keepCode = (draft.display === "text" || (draft.display === "kpi" && !p.kpis.length)) && !!p.chart && (p.display === "chart" || p.display === "map");
   const wantsChart = draft.display === "chart" || draft.display === "map" || keepCode;
   const checked = wantsChart ? checkChart(keepCode ? p.chart : draft.chart, p.datasets, p.chart) : { spec: null, fixes: [] as string[] };
-  const chart = checked.spec;
+  // the model's chart goes through the same form rules as the code's: a before -> after comparison becomes a dumbbell, a
+  // share a donut, and so on (bestType); the type the data fits wins over the type the model happened to pick
+  const chosen = checked.spec;
+  const cds = chosen ? p.datasets.find((x) => x.id === chosen.dataset) : null;
+  const best = chosen && cds ? bestType(chosen, cds, c.message) : null;
+  const chart = chosen && best && best !== chosen.type ? checkChart({ ...chosen, type: best }, p.datasets, chosen).spec ?? chosen : chosen;
   let display = draft.display;
   if (wantsChart && !chart) display = p.kpis.length ? "kpi" : p.table ? "table" : "text";
   if (chart) display = chart.type.startsWith("map") ? "map" : chart.type === "table" ? "table" : chart.type === "kpi" ? "kpi" : "chart";
@@ -1075,6 +1125,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     voiceSummary: draft.voiceSummary.trim().slice(0, 400), chart: display === "chart" || display === "map" || !c.visual ? chart : null, table, visualAsked: c.visual,
     // a Tanglish voice line should be in Tamil script for the Tamil voice; in English letters, the English (India) voice reads it better
     voiceLang: lang === "tanglish" && !hasTamilScript(draft.voiceSummary) ? "en-IN" : base.voiceLang,
+    // the model's reason only while its own chart form stands (the form rules may have changed it)
+    chartReason: chart && draft.chart && chart.type === draft.chart.type ? draft.chartReason?.trim().slice(0, 80) || null : null,
     followUps: draft.followUps.map((f) => f.trim()).filter(Boolean).slice(0, 3),
     consoleActions: validActions((draft.consoleActions.length ? draft.consoleActions
       : defaultActions(p, c.results))

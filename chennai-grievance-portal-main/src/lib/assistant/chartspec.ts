@@ -182,13 +182,32 @@ export function bestType(spec: ChartSpec, ds: Dataset, question: string): ChartT
   if (xf?.kind === "time") return spec.series ? (want("small_multiples") && new Set(ds.rows.map((r) => String(r[spec.series!]))).size > MAX_LINES ? "small_multiples" : "line")
     : want("area") ? "area" : spec.type;
   const share = /share|mix|split|composition|breakdown|proportion|distribution|percent|பங்கு|பகிர்வு|விகிதம்/.test(q);
-  const compare = /compare|previous|last (week|month)|change|\bvs\b|versus|than before|மாற்றம்|ஒப்பிடு/.test(q);
-  if (compare && want("dumbbell") && n <= 12) return "dumbbell";
+  const compare = /compare|previous|last (week|month)|change|\bvs\b|versus|than before|\bwhy\b|rose|rising|fell|falling|better|worse|improv|what changed|மாற்றம்|ஒப்பிடு|ஏன்/.test(q);
+  // the same measure now and the period before (y = ["n", "n_prev"]) is a before -> after per item: a dumbbell
+  const pair = (spec.y ?? []).length === 2 && spec.y![1] === `${spec.y![0]}_prev`;
+  if ((compare || pair) && want("dumbbell") && n <= 12) return "dumbbell";
   if (share && n <= MAX_SLICES && want("donut")) return "donut";
   if (share && want("treemap")) return "treemap";
   if (/spread|pattern|profile|mix|பரவல்/.test(q) && want("rose") && n >= 4 && n <= 8) return "rose";
   if (n <= 6 && want("bar") && spec.type === "horizontal_bar") return "bar";
   return spec.type;
+}
+
+/**
+ * The one or two other forms worth offering beside the chart chosen for the question (instead of every chart type): the
+ * forms that also fit this data, in the order they would be the next-best reading, and always the table last.
+ */
+export function alternatives(spec: ChartSpec, ds: Dataset, max = 2): ChartType[] {
+  const ok = new Set(allowedTypes(ds));
+  const next: Partial<Record<ChartType, ChartType[]>> = {
+    dumbbell: ["horizontal_bar", "grouped_bar"], horizontal_bar: ["donut", "bar", "treemap"], bar: ["horizontal_bar", "donut"],
+    line: ["area", "bar"], area: ["line", "bar"], donut: ["horizontal_bar", "treemap"], treemap: ["donut", "horizontal_bar"],
+    rose: ["donut", "horizontal_bar"], stacked_bar: ["grouped_bar", "horizontal_bar"], grouped_bar: ["stacked_bar", "dumbbell"],
+    small_multiples: ["line"], heatmap: ["horizontal_bar"], gauge: ["bar"],
+    map_zones: ["horizontal_bar"], map_wards: ["horizontal_bar"], map_points: ["horizontal_bar"], map_hotspots: ["horizontal_bar"]
+  };
+  const picks = (next[spec.type] ?? ["horizontal_bar"]).filter((t) => t !== spec.type && ok.has(t)).slice(0, max - 1);
+  return [...picks, "table"];
 }
 
 /** Switch a checked chart to another type, running the same rules. */

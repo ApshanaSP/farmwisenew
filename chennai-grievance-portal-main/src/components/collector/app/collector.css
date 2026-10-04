@@ -1955,3 +1955,15 @@
 .dic .sev-all.s-severe{color:var(--sev)}.dic .sev-all.s-high{color:var(--high)}.dic .sev-all.s-medium{color:var(--med)}.dic .sev-all.s-low{color:var(--cool)}
 .dic .a-sev .sevtab.s-severe.on{color:var(--sev)!important}.dic .a-sev .sevtab.s-high.on{color:var(--high)!important}.dic .a-sev .sevtab.s-medium.on{color:var(--med)!important}.dic .a-sev .sevtab.s-low.on{color:var(--cool)!important}
 .dic .a-sev .sevtab.on span i{background:currentColor!important}
+
+/* severity mix: one bar of the open incidents by severity (By severity card) */
+.dic .sevmix{display:flex;gap:2px;height:10px;margin:2px 0 10px;border-radius:999px;overflow:hidden}
+.dic .sevmix-s{position:relative;min-width:6px;height:100%;padding:0;border:0;background:var(--c);opacity:.38;cursor:pointer;transition:opacity .15s,transform .15s;
+  animation:sevmix-in .6s cubic-bezier(.2,.8,.2,1) both}
+.dic .sevmix-s.on,.dic .sevmix-s:hover{opacity:1}
+.dic .sevmix-s span{position:absolute;inset:0;display:grid;place-items:center;font:700 8px/1 var(--dic-sans),sans-serif;color:#0B1426;opacity:0;transition:opacity .15s}
+.dic .sevmix:hover .sevmix-s span{opacity:.9}
+@keyframes sevmix-in{from{transform:scaleX(0);transform-origin:left}}
+/* KPI tiles: the trend follows the tile's colour; a hover readout */
+.dic .kpi .spk{cursor:crosshair}
+@media (prefers-reduced-motion:reduce){.dic .sevmix-s{animation:none}}

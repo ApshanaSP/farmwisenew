@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowedTypes, chartView, checkChart } from "@/lib/assistant/chartspec";
+import { allowedTypes, alternatives, bestType, chartView, checkChart } from "@/lib/assistant/chartspec";
 import { spec } from "@/lib/assistant/datasets";
 import type { Dataset } from "@/lib/assistant/answer";
 
@@ -63,5 +63,29 @@ describe("chart checker", () => {
     expect(allowedTypes(perWard)).toEqual(expect.arrayContaining(["line", "heatmap"]));
     const out = checkChart(spec({ type: "heatmap", dataset: "q1", x: "date", series: "ward_no", y: ["n"], title: "Weekly ward counts" }), [perWard]);
     expect(out.spec?.type).toBe("heatmap");
+  });
+});
+
+describe("the chart chosen for the question", () => {
+  const drivers: Dataset = {
+    id: "drivers", title: "What moved", hasPrev: true,
+    fields: [{ key: "label", label: "Type", kind: "category" }, { key: "n", label: "Reported", kind: "value", format: "integer" },
+      { key: "n_prev", label: "Reported, the period before", kind: "value", format: "integer" }],
+    rows: [{ label: "Flooding", n: 88, n_prev: 52 }, { label: "Street lights", n: 95, n_prev: 71 }, { label: "Theft", n: 139, n_prev: 170 }]
+  };
+  it("a why question on now-and-before data becomes a dumbbell, whatever bar the model picked", () => {
+    const s = spec({ type: "horizontal_bar", dataset: "drivers", x: "label", y: ["n", "n_prev"], title: "t" });
+    expect(bestType(s, drivers, "why is Adyar high?")).toBe("dumbbell");
+  });
+  it("offers at most two other forms, the table last, never every chart type", () => {
+    const s = spec({ type: "dumbbell", dataset: "drivers", x: "label", y: ["n"], title: "t", compare: true });
+    const alts = alternatives(s, drivers);
+    expect(alts.length).toBeLessThanOrEqual(2);
+    expect(alts[alts.length - 1]).toBe("table");
+    expect(alts).not.toContain("dumbbell");
+  });
+  it("a ranking offers a share or another bar, then the table", () => {
+    const s = spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: ["score"], title: "t" });
+    expect(alternatives(s, zones)).toEqual([alternatives(s, zones)[0], "table"]);
   });
 });

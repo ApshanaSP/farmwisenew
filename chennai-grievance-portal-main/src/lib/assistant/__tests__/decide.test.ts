@@ -66,3 +66,30 @@ describe("follow-ups keep the conversation", () => {
     expect(s).toContain("2. INC-B2: Mosquito menace – N Block");
   });
 });
+
+describe("“why” questions get the evidence pack", () => {
+  it("“why is Adyar high?” runs change_drivers for the zone", () => {
+    const p = planFromDecision(route({ answer: "explain_why" }), "why is Adyar so high", null, 13);
+    expect(p?.tools?.[0].name).toBe("change_drivers");
+    expect((p?.tools?.[0].args.scope as { zone: number }).zone).toBe(13);
+  });
+  it("“what changed?” without a place stays district-wide", () => {
+    const p = planFromDecision(route({ answer: "explain_why" }), "what changed since last week", null, null);
+    expect((p?.tools?.[0].args.scope as { zone: number | null }).zone).toBeNull();
+  });
+});
+
+describe("a window in the question's own words", () => {
+  it("“last 10 days” is 240 hours, inside the 30-day period", async () => {
+    const { customWindow } = await import("@/lib/assistant/fastpath");
+    expect(customWindow("how many crimes in Velachery in the last 10 days")).toEqual({ hours: 240, label: "last 10 days", period: "monthly" });
+    expect(customWindow("past 3 weeks")).toMatchObject({ hours: 504, label: "last 3 weeks" });
+    expect(customWindow("கடந்த 10 நாட்கள் கொலை")).toMatchObject({ hours: 240 });
+  });
+  it("the console's own periods and no window give null", async () => {
+    const { customWindow } = await import("@/lib/assistant/fastpath");
+    expect(customWindow("last 7 days")).toBeNull();
+    expect(customWindow("last 30 days")).toBeNull();
+    expect(customWindow("how many crimes in Velachery")).toBeNull();
+  });
+});

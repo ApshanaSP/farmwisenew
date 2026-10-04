@@ -65,11 +65,12 @@ export function extractNumbers(text: string, quotable: string[] = []): { raw: st
  * What a number is said to measure, from the word right after it ("24 deaths", "12 injured", "40%"): its value must then
  * come from a fact about that measure, not merely equal some other fact ("24 deaths" from a fact about 24 complaints fails).
  */
-const MEASURES: { said: RegExp; fact: RegExp }[] = [
+const MEASURES: { said: RegExp; fact: RegExp; strict?: boolean }[] = [
   { said: /^\s*(deaths?|dead|died|killed|fatalit|lives? lost|people (died|were killed))/, fact: /death|dead|died|killed|fatal/ },
   { said: /^\s*(injur|people injured|hurt|wounded)/, fact: /injur|hurt|wound/ },
   { said: /^\s*(citizen )?complaints?/, fact: /complaint/ },
-  { said: /^\s*(%|per ?cent|percent)/, fact: /pct|percent|share|rate|%|occupancy/ },
+  // a percentage is the claim a model most often works out itself: it must come from a percent fact, never an equal count
+  { said: /^\s*(%|per ?cent|percent)/, fact: /pct|percent|share|rate|%|occupancy/, strict: true },
   { said: /^\s*(severe)\b/, fact: /severe/ },
   { said: /^\s*(open|pending|unresolved|still open)\b/, fact: /open|pending|unresolved|backlog/ }
 ];
@@ -96,15 +97,34 @@ export function verifyNumbers(texts: string[], facts: Fact[], context: number[] 
       const about = (f: Fact) => `${f.id} ${f.label}`.toLowerCase();
       // only a fact clearly about another measure is ruled out ("24 deaths" on a complaints fact); an unlabelled one still counts
       const otherMeasure = (f: Fact) => !measure!.fact.test(about(f)) && MEASURES.some((m) => m !== measure && m.fact.test(about(f)));
-      let ok = measure ? matches.filter((f) => !otherMeasure(f)) : matches;
+      let ok = measure ? matches.filter((f) => (measure.strict ? measure.fact.test(about(f)) || f.unit === "%" : !otherMeasure(f))) : matches;
       // a change's direction: "rose 21%" must not rest on a fact of -21%
       const change = ok.filter((f) => /change|delta|diff|vs|pct/.test(about(f)));
       if (change.length && UP.test(n.before)) ok = ok.filter((f) => !change.includes(f) || f.value > 0);
       else if (change.length && DOWN.test(n.before)) ok = ok.filter((f) => !change.includes(f) || f.value < 0);
-      if (!ok.length && !(inContext && !measure)) unmatched.push(n.raw);
+      // a number the question itself contains ("beds above 85%") may be repeated, whatever it measures
+      if (!ok.length && !inContext) unmatched.push(n.raw);
     }
   }
   return { ok: unmatched.length === 0, checked, unmatched: [...new Set(unmatched)] };
+}
+
+/**
+ * Grounded citations: the composer writes a figure as {{fact_id}} and the code prints the fact's exact value, so a number
+ * cannot be mistyped or misquoted. A change prints without its sign (the words say "rose" or "fell", and the verifier then
+ * checks that direction); a percent fact prints with "%". Ids that are not facts come back in `unknown`.
+ */
+export function fillFacts(text: string, facts: Fact[]): { text: string; unknown: string[] } {
+  const by = new Map(facts.map((f) => [f.id, f]));
+  const unknown: string[] = [];
+  const out = String(text ?? "").replace(/\{\{\s*([A-Za-z0-9_.:-]+)\s*\}\}(%?)/g, (_m, id: string, pctAfter: string) => {
+    const f = by.get(id);
+    if (!f) { unknown.push(id); return `{{${id}}}${pctAfter}`; }
+    const v = /change|delta/i.test(id) ? Math.abs(f.value) : f.value;
+    const s = Number.isInteger(v) ? v.toLocaleString("en-IN") : v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
+    return `${s}${f.unit === "%" || pctAfter ? "%" : ""}`;
+  });
+  return { text: out, unknown: [...new Set(unknown)] };
 }
 
 /** Numbers in the question and the scope line: repeating them is not a claim. */
