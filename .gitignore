@@ -31,3 +31,5 @@ mysql/
 district_intel/output/backups/
 # Rebuilt locally (npm run embed:build)
 chennai-grievance-portal-main/data/embeddings/
+# Website AWS cache: durable.sqlite holds every user account and complaint (repos are public)
+chennai-grievance-portal-main/data/aws-cache/

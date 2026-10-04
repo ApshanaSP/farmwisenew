@@ -1,4 +1,5 @@
 import mysql, { Pool, PoolConnection } from "mysql2/promise";
+import { awsPool } from "@/lib/aws/store";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -48,7 +49,8 @@ function createPool(): Pool {
 }
 
 // Reuse the pool across hot-reloads in dev and across route invocations.
-const pool: Pool = global.__mysqlPool || createPool();
+// DATA_BACKEND=aws: no MySQL server; the portal's tables live in the AWS durable store (lib/aws/store.ts)
+const pool: Pool = global.__mysqlPool || (process.env.DATA_BACKEND === "aws" ? (awsPool() as Pool) : createPool());
 if (process.env.NODE_ENV !== "production") {
   global.__mysqlPool = pool;
 }

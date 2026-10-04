@@ -178,8 +178,12 @@ function intervals(toks: Tok[]): Tok[] {
   throw new Error("too many INTERVAL rewrites");
 }
 
-const DBS = new Set<string>();
-/** Database names to strip from `db`.`table` (both live in one SQLite store). */
+// Known from the start: Next.js can load this module once per route bundle, and only one copy builds the store
+const DBS = new Set<string>(
+  [process.env.INTEL_DB_NAME || "district_intel", process.env.INTEL_OPS_DB_NAME || "district_intel_ops", process.env.DB_NAME || "district_collector_dashboard"]
+    .map((n) => n.toLowerCase())
+);
+/** Database names to strip from `db`.`table` (all of them live in one SQLite store). */
 export function setDatabaseNames(names: string[]) {
   DBS.clear();
   for (const n of names) DBS.add(n.toLowerCase());
@@ -470,4 +474,14 @@ export function registerFunctions(db: DatabaseSync): void {
   fn("ANY_VALUE", (v) => v);
   fn("LEFT", (s, n) => (s === null || n === null ? null : String(s).slice(0, Math.max(0, Number(n)))));
   fn("RIGHT", (s, n) => (s === null || n === null ? null : Number(n) <= 0 ? "" : String(s).slice(-Number(n))));
+  // Named locks: one website process, so a set of held names stands in for MySQL's server-wide locks.
+  // A lock someone else holds answers 0 at once (MySQL would wait up to the timeout first).
+  fn("GET_LOCK", (name) => (LOCKS.has(String(name)) ? 0 : (LOCKS.add(String(name)), 1)), false);
+  fn("RELEASE_LOCK", (name) => (LOCKS.delete(String(name)) ? 1 : null), false);
 }
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __sqlLocks: Set<string> | undefined;
+}
+const LOCKS = (global.__sqlLocks ??= new Set<string>());
