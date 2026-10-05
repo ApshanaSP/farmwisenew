@@ -1005,6 +1005,22 @@ const SOURCE_WORD: Record<string, string> = {
  * One incident for the Collector's read-only view: the facts, plain-language
  * reasons, and every report the dedup step merged into it, each at its own time.
  */
+/** What the AI read in a news article (pipeline documents.ai_*): people, organisations, casualties, status, place,
+ * and the English headline of a Tamil article. Empty fields are left out. */
+function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | number> } {
+  const ai: Record<string, string | number> = {};
+  if (d.ai_people) ai.people = String(d.ai_people).split("|").join(", ");
+  if (d.ai_orgs) ai.organisations = String(d.ai_orgs).split("|").join(", ");
+  if (Number(d.ai_dead) > 0) ai.dead = Number(d.ai_dead);
+  if (Number(d.ai_injured) > 0) ai.injured = Number(d.ai_injured);
+  if (d.ai_status) ai.status = String(d.ai_status).replace(/_/g, " ");
+  if (d.ai_place) ai.place = String(d.ai_place);
+  return {
+    ...(d.lang === "ta" && d.title_en ? { title_en: String(d.title_en) } : {}),
+    ...(Object.keys(ai).length ? { ai } : {})
+  };
+}
+
 export async function incident(id: string) {
   const [inc] = await q(
     `SELECT ${ROW}, DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at,
@@ -1026,7 +1042,9 @@ export async function incident(id: string) {
     ),
     q(
       // the linked articles plus the rest of their news story (the same event covered by other outlets)
-      `SELECT doc_id, event_id, title, publisher, url, lang, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
+      // documents.*: the AI details (title_en, ai_*) are read when the build has them; an older build or a store
+      // loaded before they existed simply lacks them
+      `SELECT documents.*, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM documents WHERE linked_incident_id = ?
           OR story_id IN (SELECT story_id FROM (SELECT story_id FROM documents WHERE linked_incident_id = ? AND story_id IS NOT NULL) s)
        ORDER BY published_at LIMIT 40`,
@@ -1052,13 +1070,13 @@ export async function incident(id: string) {
       return {
         t: m.t, source: m.source, what: SOURCE_WORD[m.source] ?? m.source, channel: m.channel,
         title: d?.title ?? m.title, text: m.source === "news" ? null : m.text, publisher: d?.publisher ?? null, url: d?.url ?? null,
-        lang: d?.lang ?? null, first: m.role === "first_report",
+        lang: d?.lang ?? null, first: m.role === "first_report", ...(d ? newsDetails(d) : {}),
         link: m.role === "first_report" ? null : m.link_prob == null ? null : Number(m.link_prob), method: m.link_method ?? null
       };
     }),
     ...documents.filter((d) => !d.event_id || !seen.has(d.event_id)).map((d) => ({
       t: d.t, source: "news", what: "News report", channel: "media", title: d.title, text: null, publisher: d.publisher,
-      url: d.url, lang: d.lang, first: false
+      url: d.url, lang: d.lang, first: false, ...newsDetails(d)
     }))
   ].sort((a, b) => String(a.t).localeCompare(String(b.t)));
 

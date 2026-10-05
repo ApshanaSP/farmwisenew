@@ -121,7 +121,9 @@ const COMPAT: Record<string, [string, Kind][]> = {
     ["ai_next_step", "text"], ["ai_model", "text"]],
   briefings: [["ai_summary", "text"], ["ai_summary_ta", "text"]],
   documents: [["category_suggestion", "text"], ["category_method", "text"], ["incident_method", "text"], ["places", "text"],
-    ["geo_conf", "float"], ["dept_src", "text"], ["language", "text"], ["is_complaint", "bool"]]
+    ["geo_conf", "float"], ["dept_src", "text"], ["language", "text"], ["is_complaint", "bool"], ["title_en", "text"],
+    ["ai_people", "text"], ["ai_orgs", "text"], ["ai_dead", "int"], ["ai_injured", "int"], ["ai_status", "text"], ["ai_place", "text"],
+    ["geo_method", "text"], ["body_status", "text"]]
 };
 const COMPAT_TABLES: Record<string, [string, Kind][]> = {
   briefing_notes: [["section", "text"], ["item_key", "text"], ["text_en", "text"], ["text_ta", "text"], ["extra", "text"],
