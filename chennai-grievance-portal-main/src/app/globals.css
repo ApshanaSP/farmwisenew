@@ -1,15 +1,23 @@
+@import "./theme.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Font stacks used by tailwind's font-sans / font-display; the web fonts are linked in app/layout.tsx */
+  :root {
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+
   html,
   body {
     height: 100%;
   }
 
   body {
-    @apply bg-canvas text-ink;
+    @apply diq-bg text-ink;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -22,7 +30,7 @@
   }
 
   ::selection {
-    background: rgba(11, 61, 145, 0.14);
+    background: rgb(var(--c-navy-500) / 0.3);
   }
 
   :focus-visible {
@@ -39,24 +47,24 @@
 @layer components {
   /* ---------- Buttons ---------- */
   .btn {
-    @apply inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-spring focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-[10px] px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-spring focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-navy text-white shadow-soft hover:-translate-y-0.5 hover:bg-navy-700 hover:shadow-lift focus-visible:ring-navy-600/20 active:translate-y-0 active:shadow-soft;
+    @apply btn bg-brand text-white shadow-brand hover:-translate-y-0.5 hover:brightness-110 focus-visible:ring-navy-600/20 active:translate-y-0 active:shadow-soft;
   }
   .btn-secondary {
-    @apply btn border border-canvas-border bg-white text-navy shadow-xs hover:-translate-y-0.5 hover:border-navy-200 hover:bg-navy-50 hover:shadow-soft focus-visible:ring-navy-600/20 active:translate-y-0;
+    @apply btn border border-canvas-border bg-canvas-raised text-ink-muted shadow-xs hover:-translate-y-0.5 hover:border-slate-500/40 hover:bg-canvas-sunken hover:text-ink focus-visible:ring-navy-600/20 active:translate-y-0;
   }
   .btn-gold {
     @apply btn bg-gold-500 text-white shadow-soft hover:-translate-y-0.5 hover:bg-gold-600 hover:shadow-lift focus-visible:ring-gold-500/25 active:translate-y-0;
   }
   .btn-ghost {
-    @apply btn text-ink-muted hover:bg-navy-50 hover:text-navy focus-visible:ring-navy-600/20;
+    @apply btn text-ink-muted hover:bg-navy-50 hover:text-navy-700 focus-visible:ring-navy-600/20;
   }
 
   /* ---------- Forms ---------- */
   .form-input {
-    @apply block w-full rounded-xl border border-canvas-border bg-white px-3.5 py-2.5 text-sm text-ink shadow-xs transition duration-200 placeholder:text-ink-faint hover:border-navy-200 focus:border-navy-500 focus:shadow-glow focus:outline-none disabled:cursor-not-allowed disabled:bg-canvas-sunken disabled:text-ink-subtle;
+    @apply block w-full rounded-xl border border-canvas-border bg-canvas-raised px-3.5 py-2.5 text-sm text-ink shadow-xs transition duration-200 placeholder:text-ink-faint hover:border-navy-200 focus:border-navy-500 focus:shadow-glow focus:outline-none disabled:cursor-not-allowed disabled:bg-canvas-sunken disabled:text-ink-subtle;
   }
   select.form-input {
     @apply cursor-pointer appearance-none bg-[length:16px] bg-[right_0.875rem_center] bg-no-repeat pr-10;
@@ -75,28 +83,29 @@
     @apply mb-1.5 block text-[13px] font-semibold text-ink-muted;
   }
   .auth-input {
-    @apply block h-12 w-full rounded-xl border border-canvas-border bg-canvas/60 px-4 text-[15px] text-ink transition duration-200 placeholder:text-ink-faint hover:border-navy-200 focus:border-navy-500 focus:bg-white focus:shadow-glow focus:outline-none;
+    @apply block h-12 w-full rounded-xl border border-canvas-border bg-canvas/60 px-4 text-[15px] text-ink transition duration-200 placeholder:text-ink-faint hover:border-navy-200 focus:border-navy-500 focus:bg-canvas-raised focus:shadow-glow focus:outline-none;
   }
   select.auth-input {
     @apply cursor-pointer appearance-none bg-[length:16px] bg-[right_0.875rem_center] bg-no-repeat pr-10;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%237A879E' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5'/%3E%3C/svg%3E");
   }
   .auth-submit {
-    @apply inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-navy-600 to-navy-500 text-base font-semibold text-white shadow-soft transition-all duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift focus-visible:ring-4 focus-visible:ring-navy-600/20 disabled:pointer-events-none disabled:opacity-60;
+    @apply inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-base font-semibold text-white shadow-brand transition-all duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift focus-visible:ring-4 focus-visible:ring-navy-600/20 disabled:pointer-events-none disabled:opacity-60;
   }
   .input-affix {
     @apply pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-ink-faint transition-colors;
   }
 
   /* ---------- Surfaces ---------- */
-  .card {
-    @apply rounded-2xl border border-canvas-border bg-white p-6 shadow-card;
-  }
-  .card-flat {
-    @apply rounded-2xl border border-canvas-border bg-white p-6 shadow-xs;
+  /* panels, as on the Collector console: the surface with a soft top sheen */
+  .card,
+  .card-flat,
+  .card-interactive {
+    @apply rounded-[14px] border border-canvas-border bg-canvas-raised p-6 shadow-card;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.006) 140px);
   }
   .card-interactive {
-    @apply rounded-2xl border border-canvas-border bg-white p-6 shadow-card transition-all duration-300 ease-spring hover:-translate-y-1 hover:border-navy-200 hover:shadow-lift;
+    @apply transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-navy-300/60;
   }
 
   /* ---------- Feedback ---------- */
@@ -113,15 +122,61 @@
     @apply alert border-navy-100 bg-navy-50 text-navy-800;
   }
 
+  /* a Collector-style panel: the surface with a soft top sheen */
+  .diq-panel {
+    @apply rounded-[14px] border border-canvas-border bg-canvas-raised shadow-card;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.006) 140px);
+  }
+  /* KPI tile: a coloured top edge and corner glow, coloured by --kc */
+  .diq-kpi {
+    @apply rounded-[14px] border border-canvas-border bg-canvas-raised shadow-card relative flex items-center gap-3.5 overflow-hidden px-4 py-3.5 transition duration-200;
+    background-image: radial-gradient(260px 120px at 100% 0%, color-mix(in srgb, var(--kc) 16%, transparent), transparent 70%),
+      linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.006));
+  }
+  .diq-kpi::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--kc), transparent 70%);
+  }
+  .diq-kpi:hover {
+    border-color: color-mix(in srgb, var(--kc) 45%, transparent);
+    transform: translateY(-1px);
+  }
+  .diq-ic {
+    @apply flex h-10 w-10 flex-none items-center justify-center rounded-xl;
+    color: var(--kc);
+    background: color-mix(in srgb, var(--kc) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kc) 32%, transparent);
+  }
+  /* the Collector's top bar, with its indigo-to-cyan hairline */
+  .diq-top {
+    @apply sticky top-0 z-40 border-b border-canvas-border backdrop-blur-xl;
+    background: linear-gradient(180deg, rgb(var(--c-canvas-raised) / 0.92), rgb(var(--c-canvas) / 0.88));
+  }
+  .diq-top::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(var(--c-navy-500) / 0.55) 30%, rgb(var(--c-sky-400) / 0.45) 70%, transparent);
+    pointer-events: none;
+  }
+  .diq-tbtn {
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-[10px] border border-canvas-border bg-canvas-raised px-3.5 text-[13px] font-semibold text-ink-muted transition hover:border-slate-500/40 hover:bg-canvas-sunken hover:text-ink;
+  }
   /* ---------- Bits ---------- */
   .chip {
     @apply inline-flex select-none items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 ease-spring;
   }
   .chip-idle {
-    @apply chip border-canvas-border bg-white text-ink-muted hover:-translate-y-0.5 hover:border-navy-200 hover:bg-navy-50 hover:text-navy hover:shadow-xs;
+    @apply chip border-canvas-border bg-canvas-raised text-ink-muted hover:-translate-y-0.5 hover:border-navy-200 hover:bg-navy-50 hover:text-navy hover:shadow-xs;
   }
   .chip-active {
-    @apply chip border-navy bg-navy text-white shadow-soft;
+    @apply chip border-transparent bg-brand text-white shadow-brand;
   }
   .eyebrow {
     @apply text-2xs font-bold uppercase tracking-[0.16em];
@@ -130,53 +185,56 @@
     @apply relative overflow-hidden rounded-lg bg-canvas-sunken;
   }
   .skeleton::after {
-    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent;
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent;
     content: "";
   }
 }
 
 @layer utilities {
+  /* the Collector console's backdrop: a faint indigo glow and coordinate grid over the page colour */
+  .diq-bg {
+    background:
+      radial-gradient(1100px 520px at 12% -12%, rgb(var(--c-navy-500) / 0.12), transparent 62%),
+      radial-gradient(900px 480px at 100% -8%, rgb(var(--c-sky-400) / 0.05), transparent 60%),
+      linear-gradient(rgb(var(--c-slate-400) / 0.035) 1px, transparent 1px) 0 0 / 56px 56px,
+      linear-gradient(90deg, rgb(var(--c-slate-400) / 0.035) 1px, transparent 1px) 0 0 / 56px 56px,
+      rgb(var(--c-canvas));
+  }
+  /* deep brand panel (stays dark in both themes, so white text always reads) */
   .mesh-navy {
-    background-color: #0a3175;
+    background-color: #0d1330;
     background-image:
-      radial-gradient(at 12% 10%, rgba(91, 134, 212, 0.45) 0px, transparent 55%),
-      radial-gradient(at 88% 18%, rgba(11, 61, 145, 0.85) 0px, transparent 50%),
-      radial-gradient(at 78% 92%, rgba(200, 137, 27, 0.35) 0px, transparent 52%),
-      radial-gradient(at 22% 88%, rgba(6, 26, 59, 0.9) 0px, transparent 55%),
-      linear-gradient(145deg, #0a3175 0%, #061a3b 100%);
+      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.45) 0px, transparent 55%),
+      radial-gradient(at 0% 100%, rgba(56, 189, 248, 0.16) 0px, transparent 55%),
+      linear-gradient(145deg, #121a3d 0%, #0a0f24 100%);
   }
   .grain::before {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.35;
+    opacity: 0.25;
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   }
   .auth-bg {
-    background-color: #eef3fb;
-    background-image:
-      radial-gradient(60% 50% at 0% 0%, rgba(31, 107, 234, 0.12) 0px, transparent 70%),
-      radial-gradient(50% 45% at 100% 100%, rgba(200, 137, 27, 0.1) 0px, transparent 70%),
-      radial-gradient(circle at 1px 1px, rgba(11, 61, 145, 0.07) 1px, transparent 0);
-    background-size: auto, auto, 22px 22px;
+    @apply diq-bg;
   }
   .auth-hero {
     background:
-      radial-gradient(90% 60% at 100% 0%, rgba(77, 141, 255, 0.45) 0%, transparent 60%),
-      linear-gradient(160deg, #0a2f78 0%, #0b3d91 45%, #061a3b 100%);
+      radial-gradient(90% 60% at 100% 0%, rgba(99, 102, 241, 0.42) 0%, transparent 60%),
+      radial-gradient(70% 50% at 0% 100%, rgba(56, 189, 248, 0.14) 0%, transparent 60%),
+      linear-gradient(160deg, #141c42 0%, #0d1330 50%, #070b1c 100%);
   }
   .auth-grid {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
     mask-image: radial-gradient(80% 70% at 70% 30%, #000 20%, transparent 75%);
     -webkit-mask-image: radial-gradient(80% 70% at 70% 30%, #000 20%, transparent 75%);
   }
   .dotted-canvas {
-    background-image: radial-gradient(circle at 1px 1px, rgba(11, 61, 145, 0.07) 1px, transparent 0);
-    background-size: 22px 22px;
+    @apply diq-bg;
   }
   .text-balance {
     text-wrap: balance;
@@ -196,6 +254,10 @@
   height: 100%;
   border-radius: 0.875rem;
 }
+/* street tiles dimmed to sit in the night theme (the Collector's satellite map is dark already) */
+:root:not([data-theme="light"]) .leaflet-tile-pane {
+  filter: brightness(0.78) contrast(1.08) saturate(0.85);
+}
 
 ::-webkit-scrollbar {
   width: 10px;
@@ -205,13 +267,13 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e6;
+  background: rgb(var(--c-slate-400) / 0.3);
   border: 2px solid transparent;
   background-clip: content-box;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #aab9d4;
+  background: rgb(var(--c-slate-400) / 0.5);
   background-clip: content-box;
 }
 

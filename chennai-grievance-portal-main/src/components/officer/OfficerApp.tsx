@@ -22,7 +22,7 @@ import { I } from "@/components/collector/app/icons";
 import { BrandMark } from "@/components/collector/app/assistant/Brand";
 import type { AssistantHost } from "@/components/collector/app/assistant/host";
 import { ContactBody } from "@/components/collector/app/Overlays";
-import { Empty, deptIcon, fmtDate, fmtTime, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { Empty, deptIcon, fmtDate, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
 import { esc } from "@/components/collector/app/SatMap";
 import type { MapGeo } from "@/lib/collector/geo";
 import type { DeptProfile, OfficerOverview } from "@/lib/officer/data";
@@ -141,6 +141,14 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
   const [modal, setModal] = useState<ModalState | null>(null);
   const [pop, setPop] = useState<"bell" | "profile" | "feeds" | null>(null);
   const [ask, setAskState] = useState(false);
+  // same theme switch and saved choice as the Collector console (dark by default)
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => { try { if (localStorage.getItem("diq-theme") === "light") setTheme("light"); } catch { /* storage unavailable */ } }, []);
+  const toggleTheme = () => setTheme((t) => {
+    const n = t === "dark" ? "light" : "dark";
+    try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
+    return n;
+  });
   // once opened, the assistant stays mounted so the conversation survives closing it
   const [askMounted, setAskMounted] = useState(false);
   const setAsk = useCallback((v: boolean | ((x: boolean) => boolean)) => {
@@ -444,7 +452,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           : `${modal.label} · ${areaName ?? dept.name}`;
 
   return (
-    <div className={`dic ofc${fit.on ? " fit" : ""}`}
+    <div className={`dic ofc${fit.on ? " fit" : ""}`} data-theme={theme}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#4D8DFF" /><stop offset="1" stopColor="#B9D2FF" /></linearGradient></defs>
@@ -472,6 +480,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
             </div>
             <Search c={c} />
             <Collected ov={ov} />
+            <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}><I n={theme === "dark" ? "sun" : "moon"} /></button>
             <button className="tbtn pri" onClick={exportPdf} disabled={exporting} title="Download a PDF report of this period and area">
               <I n={exporting ? "refresh" : "download"} className={exporting ? "spin" : ""} /><span className="lb">Export</span>
             </button>
@@ -608,13 +617,13 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
 function Collected({ ov }: { ov: OfficerOverview }) {
   const s = ov.board.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
-  const head = !s ? "Collected hourly"
-    : all ? `Collected ${fmtTime(s.lastRun ?? ov.now)}` : `${s.done.length} of ${s.total} feeds current`;
+  const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
+  const sub = s && !all ? `${s.done.length} of ${s.total} feeds current` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
   const tip = "Every source is collected hourly by the district intelligence pipeline." +
     (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "");
   return (
     <span className={`daily${s && !all ? " pend" : ""}`} title={tip}>
-      <I n={all ? "checkc" : "clock"} /><span>{head}<small>Data as of {fmtTime(ov.now)}, {fmtDate(ov.now)}</small></span>
+      <I n={all ? "checkc" : "clock"} /><span>{head}<small>{sub}</small></span>
     </span>
   );
 }

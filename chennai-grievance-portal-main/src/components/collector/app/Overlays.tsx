@@ -63,7 +63,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
           <option value="">All statuses</option>{STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <select className="sel" value={f.scope} onChange={(e) => set("scope", e.target.value)} aria-label="Time range">
-          <option value="period">{c.periodLabel}</option><option value="all">All 180 days</option>
+          <option value="period">{c.periodLabel}</option>{f.scope === "30d" && <option value="30d">Last 30 days</option>}<option value="all">All 180 days</option>
         </select>
       </div>
       <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 8 }}>
@@ -106,7 +106,7 @@ export function ZonesBody({ d, c }: { d: OverviewData; c: Console }) {
             <tr key={x.zone} onClick={() => { c.closeAll(); c.setZone(x.zone); }}>
               <td className="ev">{x.name}</td><td className="num">{x.open}</td>
               <td><span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span className="hb-t" style={{ flex: 1 }}><span className="hb-b" style={{ width: `${(x.complaints / mx) * 100}%`, background: "linear-gradient(90deg,#4C8DFF,#6699F5)" }} /></span>
+                <span className="hb-t" style={{ flex: 1 }}><span className="hb-b" style={{ width: `${(x.complaints / mx) * 100}%`, background: "var(--grad)" }} /></span>
                 <b className="num">{x.complaints}</b></span></td>
               <td className="num" style={{ color: "var(--sev)" }}>{x.severe}</td><td><span className="lnk">Filter ›</span></td>
             </tr>

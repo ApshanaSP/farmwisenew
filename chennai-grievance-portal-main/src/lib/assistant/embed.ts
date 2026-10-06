@@ -7,11 +7,11 @@
  * as "query: ...", and the closest incidents by cosine similarity are returned, optionally within a zone or category.
  *
  * Two modes, so the web server never stalls:
- *  - the full build runs as its own process (scripts/build-embeddings.ts, after the daily data refresh) and saves the
- *    vectors to data/embeddings/;
- *  - the web server loads that file, embeds only the questions (about 10 ms each), and adds incidents newer than the
- *    last build in small, paced batches on two threads (at most MAX_LIVE per refresh). Until an index exists, search
- *    returns null and callers fall back to keyword search.
+ *  - the full build runs as its own process (scripts/build-embeddings.cjs, npm run embed:build) and saves the vectors
+ *    to data/embeddings/;
+ *  - the web server loads that file and runs the model on a worker thread (scripts/embed-worker.mjs): it embeds the
+ *    questions, and once per data build adds incidents newer than the saved file in small batches (at most MAX_LIVE
+ *    per build). Until an index exists, search returns null and callers fall back to keyword search.
  */
 import fs from "fs";
 import path from "path";
@@ -31,7 +31,7 @@ type Extractor = (texts: string[], o: { pooling: "mean"; normalize: boolean }) =
 export interface Meta { zone: number | null; cat: string | null; t: number; sev: string | null; place: string; words: string }
 interface Index { dim: number; ids: string[]; hash: string[]; vecs: Float32Array; pos: Map<string, number>; meta: Map<string, Meta>; asOf: string | null }
 interface State { extractor: Promise<Extractor> | null; threads: number; index: Index | null; building: Promise<void> | null; progress: { done: number; total: number } | null;
-  error: string | null; pending: number; fileMtime: number }
+  error: string | null; pending: number; fileMtime: number; /** the model runs on the worker thread */ worker?: boolean }
 
 declare global {
   // eslint-disable-next-line no-var
@@ -39,22 +39,68 @@ declare global {
 }
 const S: State = (global.__embed ??= { extractor: null, threads: 2, index: null, building: null, progress: null, error: null, pending: 0, fileMtime: 0 });
 
-/** The model, loaded once per process (downloaded on first use into .cache/models, about 280 MB), on `threads` CPU threads. */
+/**
+ * The model, loaded once per process (downloaded on first use into .cache/models, about 280 MB), on `threads` CPU
+ * threads. The build job runs it in its own process; the web server runs it on a worker thread (scripts/embed-worker.mjs),
+ * because on the main thread every embedding held all other requests.
+ */
 function extractor(): Promise<Extractor> {
+  const onServer = !(globalThis as { __transformers?: unknown }).__transformers;
+  // a server that loaded the model on its own thread before this change moves it to the worker
+  if (onServer && S.extractor && !S.worker) S.extractor = null;
+  S.worker = onServer;
   S.extractor ??= (async () => {
     // loaded at run time from node_modules (not bundled): it carries ONNX Runtime's native binaries
     const entry = pathToFileURL(path.join(process.cwd(), "node_modules", "@huggingface", "transformers", "dist", "transformers.node.mjs")).href;
-    // the build job loads the library itself and hands it over; the web server uses Node's own import(), which the bundler
-    // does not rewrite (the library is an ES module with native ONNX Runtime binaries)
+    const cacheDir = path.join(process.cwd(), ".cache", "models");
+    // the build job loads the library itself and hands it over
     const given = (globalThis as { __transformers?: any }).__transformers;
-    const tf = given ?? (await (new Function("u", "return import(u)") as (u: string) => Promise<any>)(entry));
-    tf.env.cacheDir = path.join(process.cwd(), ".cache", "models");
     const t0 = Date.now();
-    const fe = await tf.pipeline("feature-extraction", MODEL, { dtype: "q8", session_options: { intraOpNumThreads: S.threads, interOpNumThreads: 1 } });
+    if (!given) {
+      const fe = await workerExtractor(entry, cacheDir);
+      console.info(`[assistant] embedding model ${MODEL} ready on a worker thread in ${Date.now() - t0} ms (${S.threads} threads)`);
+      return fe;
+    }
+    given.env.cacheDir = cacheDir;
+    const fe = await given.pipeline("feature-extraction", MODEL, { dtype: "q8", session_options: { intraOpNumThreads: S.threads, interOpNumThreads: 1 } });
     console.info(`[assistant] embedding model ${MODEL} ready in ${Date.now() - t0} ms (${S.threads} threads)`);
     return fe as unknown as Extractor;
   })().catch((e) => { S.extractor = null; throw e; });
   return S.extractor;
+}
+
+/** The model on a worker thread: texts go in, vectors come back; the web server's own thread stays free. */
+function workerExtractor(entry: string, cacheDir: string): Promise<Extractor> {
+  // Node's own worker_threads (not bundled), loaded the way store.ts loads node:sqlite
+  const { Worker } = (process as unknown as { getBuiltinModule(id: string): unknown }).getBuiltinModule("node:worker_threads") as typeof import("node:worker_threads");
+  const w = new Worker(path.join(process.cwd(), "scripts", "embed-worker.mjs"), { workerData: { entry, cacheDir, model: MODEL, threads: S.threads } });
+  w.unref(); // never keeps the server alive on its own
+  const waiting = new Map<number, { ok: (r: { data: Float32Array; dims: number[] }) => void; no: (e: Error) => void }>();
+  let seq = 0;
+  const fn: Extractor = (texts) => new Promise((ok, no) => {
+    const id = ++seq;
+    waiting.set(id, { ok, no });
+    w.postMessage({ id, texts });
+  });
+  return new Promise<Extractor>((resolve, reject) => {
+    const fail = (e: Error) => {
+      reject(e);
+      for (const p of waiting.values()) p.no(e);
+      waiting.clear();
+      S.extractor = null; // the next call starts a new worker
+    };
+    w.on("message", (m: { ready?: boolean; fail?: string; id?: number; data?: Float32Array; n?: number; dim?: number; error?: string }) => {
+      if (m.ready) return resolve(fn);
+      if (m.fail) return fail(new Error(m.fail));
+      const p = m.id != null ? waiting.get(m.id) : undefined;
+      if (!p) return;
+      waiting.delete(m.id!);
+      if (m.error) p.no(new Error(m.error));
+      else p.ok({ data: m.data!, dims: [m.n!, m.dim!] });
+    });
+    w.on("error", fail);
+    w.on("exit", (code) => { if (code) fail(new Error(`embedding worker stopped (${code})`)); else S.extractor = null; });
+  });
 }
 
 /** Embeds texts with the shared model ("passage: ..." for records, "query: ..." for questions); lance.ts uses it too. */
@@ -73,11 +119,12 @@ function fileMtime(): number {
   try { return fs.statSync(`${FILE}.json`).mtimeMs; } catch { return 0; }
 }
 
-function load(): Index | null {
+async function load(): Promise<Index | null> {
   try {
-    const head = JSON.parse(fs.readFileSync(`${FILE}.json`, "utf8")) as { model: string; dim: number; ids: string[]; hash: string[] };
+    const head = JSON.parse(await fs.promises.readFile(`${FILE}.json`, "utf8")) as { model: string; dim: number; ids: string[]; hash: string[] };
     if (head.model !== MODEL) return null;
-    const buf = fs.readFileSync(`${FILE}.bin`);
+    // read off the main thread (the vectors are tens of megabytes)
+    const buf = await fs.promises.readFile(`${FILE}.bin`);
     const vecs = new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4).slice();
     if (vecs.length !== head.ids.length * head.dim) return null;
     return { dim: head.dim, ids: head.ids, hash: head.hash, vecs, pos: new Map(head.ids.map((id, i) => [id, i])), meta: new Map(), asOf: null };
@@ -86,14 +133,17 @@ function load(): Index | null {
   }
 }
 
-function save(ix: Index) {
-  fs.mkdirSync(DIR, { recursive: true });
+async function save(ix: Index) {
+  await fs.promises.mkdir(DIR, { recursive: true });
   // written beside and renamed, so a reader never sees half a file
-  fs.writeFileSync(`${FILE}.bin.tmp`, Buffer.from(ix.vecs.buffer, ix.vecs.byteOffset, ix.ids.length * ix.dim * 4));
-  fs.writeFileSync(`${FILE}.json.tmp`, JSON.stringify({ model: MODEL, dim: ix.dim, ids: ix.ids, hash: ix.hash, saved: new Date().toISOString() }));
-  fs.renameSync(`${FILE}.bin.tmp`, `${FILE}.bin`);
-  fs.renameSync(`${FILE}.json.tmp`, `${FILE}.json`);
+  await fs.promises.writeFile(`${FILE}.bin.tmp`, Buffer.from(ix.vecs.buffer, ix.vecs.byteOffset, ix.ids.length * ix.dim * 4));
+  await fs.promises.writeFile(`${FILE}.json.tmp`, JSON.stringify({ model: MODEL, dim: ix.dim, ids: ix.ids, hash: ix.hash, saved: new Date().toISOString() }));
+  await fs.promises.rename(`${FILE}.bin.tmp`, `${FILE}.bin`);
+  await fs.promises.rename(`${FILE}.json.tmp`, `${FILE}.json`);
 }
+
+/** Lets other requests run between steps of a long job. */
+const breathe = () => new Promise<void>((r) => setImmediate(r));
 
 export interface BuildOptions {
   /** embed at most this many new or changed incidents (newest first); the rest wait for the build job */
@@ -106,11 +156,18 @@ export interface BuildOptions {
 
 /** Bring the index up to the store: embed new or changed incidents and save. */
 export async function buildIndex(asOf: string | null, o: BuildOptions = {}): Promise<{ total: number; embedded: number; waiting: number }> {
-  const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT incident_id AS id, category_label AS cat_label, category_code AS cat, title, place_text AS place, zone_no AS zone, zone_name, summary,
-            severity_level AS sev, UNIX_TIMESTAMP(first_reported_at) AS t, severity_reasons, priority_reasons, attention_reason
-     FROM incidents ORDER BY first_reported_at DESC`
-  );
+  // in pages, so the store (a synchronous in-memory database on AWS) never holds the server for long
+  const rows: RowDataPacket[] = [];
+  for (let off = 0; ; off += 4000) {
+    const [page] = await intelPool.query<RowDataPacket[]>(
+      `SELECT incident_id AS id, category_label AS cat_label, category_code AS cat, title, place_text AS place, zone_no AS zone, zone_name, summary,
+              severity_level AS sev, UNIX_TIMESTAMP(first_reported_at) AS t, severity_reasons, priority_reasons, attention_reason
+       FROM incidents ORDER BY first_reported_at DESC, incident_id LIMIT 4000 OFFSET ?`, [off]
+    );
+    rows.push(...page);
+    await breathe();
+    if (page.length < 4000) break;
+  }
   const texts = new Map<string, string>();
   const meta = new Map<string, Meta>();
   for (const r of rows) {
@@ -121,10 +178,12 @@ export async function buildIndex(asOf: string | null, o: BuildOptions = {}): Pro
   }
   // the saved file when the build job has written a newer one than this process holds, else what is in memory
   const disk = fileMtime();
-  const old = S.index && S.fileMtime >= disk ? S.index : load() ?? S.index;
+  const old = S.index && S.fileMtime >= disk ? S.index : (await load()) ?? S.index;
   S.fileMtime = Math.max(S.fileMtime, disk);
   const all = [...texts.keys()];
+  await breathe();
   const hashOf = new Map(all.map((id) => [id, sha(texts.get(id)!)]));
+  await breathe();
   const todoAll = all.filter((id) => !old || old.hash[old.pos.get(id) ?? -1] !== hashOf.get(id));
   const todo = todoAll.slice(0, o.maxNew ?? Infinity); // rows come newest first
   const batch = o.batch ?? 32;
@@ -145,7 +204,7 @@ export async function buildIndex(asOf: string | null, o: BuildOptions = {}): Pro
   // build on that one, so this save never puts back the older set it started from
   let src = old;
   if (fileMtime() > disk) {
-    const newer = load();
+    const newer = await load();
     if (newer) { src = newer; dim ||= newer.dim; }
   }
   const kept = (id: string) => !!src && src.pos.has(id) && src.hash[src.pos.get(id)!] === hashOf.get(id);
@@ -158,7 +217,7 @@ export async function buildIndex(asOf: string | null, o: BuildOptions = {}): Pro
   });
   S.index = { dim, ids, hash: ids.map((id) => hashOf.get(id)!), vecs, pos: new Map(ids.map((id, i) => [id, i])), meta, asOf };
   S.pending = all.length - ids.length;
-  if (todo.length) { save(S.index); S.fileMtime = fileMtime(); }
+  if (todo.length) { await save(S.index); S.fileMtime = fileMtime(); }
   S.progress = null;
   return { total: all.length, embedded: todo.length, waiting: S.pending };
 }
@@ -172,13 +231,20 @@ export function useThreads(n: number) {
  * On the web server: load the saved index and add a few new incidents in the background, paced so answers are never
  * held up. Never blocks the caller.
  */
-export function warmUp(asOf: string) {
+export function warmUp(_now?: string) {
   // the search index (LanceDB, lance.ts) replaces this in-memory one once it is built: no embedding here then
   if (fs.existsSync(path.join(process.cwd(), "data", "lancedb", "incidents.lance"))) return;
-  // an index held from before the keyword field existed is refreshed (metadata only: its vectors are reused)
-  const current = !!S.index && S.index.meta.values().next().value?.words !== undefined;
-  if (S.building || (S.index && current && S.index.asOf === asOf && fileMtime() <= S.fileMtime)) return;
-  S.building = buildIndex(asOf, { maxNew: MAX_LIVE, batch: 8, pauseMs: 40, log: (m) => console.info(`[assistant] embeddings: ${m}`) })
+  if (S.building) return;
+  S.building = (async () => {
+    // once per data build: the clock time ("now") moves every 30 seconds, and keying on it re-ran the whole update
+    // on almost every question
+    const [r] = await intelPool.query<RowDataPacket[]>(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).then(([x]) => x).catch(() => [] as RowDataPacket[]);
+    const build = String(r?.v ?? "");
+    // an index held from before the keyword field existed is refreshed (metadata only: its vectors are reused)
+    const current = !!S.index && S.index.meta.values().next().value?.words !== undefined;
+    if (S.index && current && S.index.asOf === build && fileMtime() <= S.fileMtime) return;
+    await buildIndex(build, { maxNew: MAX_LIVE, batch: 8, pauseMs: 40, log: (m) => console.info(`[assistant] embeddings: ${m}`) });
+  })()
     .then(() => { S.error = null; })
     .catch((e) => { S.error = String((e as Error).message ?? e).slice(0, 200); console.warn(`[assistant] embedding index: ${S.error}`); })
     .finally(() => { S.building = null; });

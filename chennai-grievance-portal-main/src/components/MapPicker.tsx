@@ -391,7 +391,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
                 searchInputRef.current?.focus();
               }}
               aria-label="Clear search"
-              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy"
+              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy-700"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -409,7 +409,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-navy-600 px-3 py-1.5 text-xs font-semibold text-navy transition hover:bg-navy-50 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-navy-600 px-3 py-1.5 text-xs font-semibold text-navy-700 transition hover:bg-navy-50 disabled:opacity-60"
         >
           {locating ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -428,11 +428,11 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
         />
         {provider === "loading" && (
           <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-canvas/80">
-            <Loader2 className="h-5 w-5 animate-spin text-navy" aria-hidden="true" />
+            <Loader2 className="h-5 w-5 animate-spin text-navy-700" aria-hidden="true" />
           </div>
         )}
         {geocoding && (
-          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs font-medium text-ink-muted shadow-soft">
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg bg-canvas-raised/95 px-2.5 py-1.5 text-xs font-medium text-ink-muted shadow-soft">
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
             Looking up the address…
           </span>
@@ -441,7 +441,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
 
       {value && (
         <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-ink-muted">
-          <MapPin className="h-4 w-4 text-navy" aria-hidden="true" />
+          <MapPin className="h-4 w-4 text-navy-700" aria-hidden="true" />
           Pin:{" "}
           <span className="font-mono text-ink">
             {value.lat.toFixed(6)}, {value.lng.toFixed(6)}

@@ -107,7 +107,7 @@ export default function RegisterPage() {
                   <Icon className="h-[18px] w-[18px] flex-none" aria-hidden="true" />
                   <span className="truncate">{label}</span>
                   {active && (
-                    <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-navy-500 text-white ring-2 ring-white">
+                    <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-navy-500 text-white ring-2 ring-canvas-raised">
                       <Check className="h-3 w-3" strokeWidth={3.5} />
                     </span>
                   )}
@@ -153,7 +153,7 @@ export default function RegisterPage() {
                 <input id="password" type={showPassword ? "text" : "password"} required autoComplete="new-password"
                   className="auth-input pr-11" value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-faint transition hover:text-navy">
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-faint transition hover:text-navy-700">
                   {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                 </button>
               </div>

@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Officer Console · District IQ" };
 
 // Same fonts as the Collector console, loaded by the browser (see app/collector/page.tsx).
 const FONTS =
-  "https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap";
 
 function Unavailable({ title, text, back = "/login" }: { title: string; text: string; back?: string }) {
   return (

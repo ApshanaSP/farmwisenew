@@ -5,7 +5,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { I, type IconName } from "./icons";
 import SatMap, { type MapStation } from "./SatMap";
 import {
-  Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, Spark, deptIcon, fmtDate, fmtTime, fullTitle,
+  CAT_COL, Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, Spark, deptIcon, fmtDate, fmtTime, fullTitle,
   fmtShort, ms, plural, rel, sevTone, sum, type Row
 } from "./lib";
 import type { Console } from "./CollectorApp";
@@ -61,8 +61,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
     gridTemplateAreas: rows.map((r) => `"${r.join(" ")}"`).join(" ")
   };
   const LAYERS = [
-    ["severe", "Severe", "#F2555A", d.map.layerCounts.severe], ["complaint", "Complaints", "#F7893B", d.map.layerCounts.complaint],
-    ["other", "Other", "#4C8DFF", d.map.layerCounts.other]
+    ["severe", "Severe", CAT_COL.severe, d.map.layerCounts.severe], ["complaint", "Complaints", CAT_COL.complaint, d.map.layerCounts.complaint],
+    ["other", "Other", CAT_COL.other, d.map.layerCounts.other]
   ] as const;
 
   return (
@@ -100,11 +100,11 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
               ))}
               <button className={c.layers.added ? "" : "off"} aria-pressed={c.layers.added} onClick={() => c.toggleLayer("added")}
                 title="Items from sources you added that name a place in or near Chennai">
-                <i className="dia" style={{ background: "#A28EFA", color: "#A28EFA" }} />Added<b>{addedPins.length}</b>
+                <i className="dia" style={{ background: "#A5B4FC" }} />Added<b>{addedPins.length}</b>
               </button>
               <button className={c.layers.stations ? "" : "off"} aria-pressed={c.layers.stations} onClick={() => c.toggleLayer("stations")}
                 title="Air-quality stations, rain gauges and lakes">
-                <i className="sq" style={{ background: "linear-gradient(90deg,#35C28C 33%,#4C8DFF 33% 66%,#2BC7D9 66%)", color: "#7383A2" }} />Stations<b>{env.mapStations.length}</b>
+                <i className="sq" style={{ background: "linear-gradient(90deg,#34D399 33%,#38BDF8 33% 66%,#818CF8 66%)" }} />Stations<b>{env.mapStations.length}</b>
               </button>
             </div>
           </article>
@@ -198,11 +198,6 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
           </button>
         )) : <Empty>No open {tab.toLowerCase()} incidents {c.periodLabel.toLowerCase()}.</Empty>}
       </div>
-      {counts[tab] > 0 && (
-        <button className={`sev-all s-${SEV_WORD[tab]}`} onClick={() => c.openList({ status: "open", sev: tab, sort: "sev", dir: 1 }, `${tab} incidents`)}>
-          See all {counts[tab].toLocaleString("en-IN")} {tab.toLowerCase()} incidents<I n="right" />
-        </button>
-      )}
     </>
   );
 }
@@ -236,7 +231,7 @@ function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
     <>
       <div className="ch"><I n="tasks" /><h3 title="Closed work for you to check">My Tasks</h3>
         <span className="cnt-b">{d.tasks.count}</span>
-        <button className="more" onClick={() => c.openList({ status: "awaiting", scope: "all", sort: "sev", dir: 1 }, "Closed work for you to check")}>
+        <button className="more" onClick={() => c.openList({ status: "awaiting", sort: "sev", dir: 1 }, "Closed work for you to check")}>
           See all<I n="right" />
         </button>
       </div>
@@ -290,15 +285,13 @@ function SnapTitle({ icon, title, sub, more }: { icon: IconName; title: string; 
 /**
  * The two tiles every snapshot shares. None repeats the KPI tiles above: they count open
  * incidents that are severe or high, or past their deadline. (What is only in the news is a
- * tab of Today's Briefing, where the reports can be read.)
+ * tab of Latest news, where the reports can be read.)
  */
-function CommonTiles({ s, c }: { s: { serious: number; overdue: number }; c: Console }) {
+function CommonTiles({ s, c }: { s: { overdue: number }; c: Console }) {
   const p = c.periodLabel.toLowerCase();
+  // "Severe or high, still open" is not repeated here: the severity card beside it counts the same incidents
   return (
     <>
-      <Tile l="Severe or high, still open" v={<Cnt v={s.serious} />} tone={s.serious ? "var(--sev)" : undefined}
-        title={`Open incidents rated severe or high, reported in the ${p}. Click for the list.`}
-        onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents, most severe first")} />
       <Tile l="Past deadline, still open" v={<Cnt v={s.overdue} />} tone={s.overdue ? "var(--high)" : undefined}
         title={`Open incidents that have missed their resolution deadline, reported in the ${p}. Click for the list.`}
         onClick={() => c.openList({ status: "overdue", sort: "sev", dir: 1 }, "Open and past deadline")} />
@@ -321,10 +314,8 @@ function DistrictSnap({ d, c }: { d: OverviewData; c: Console }) {
       <div className="snap">
         <Tile l="Most serious zones" txt v={top.join(", ") || "None"} tone="var(--accent-2)"
           title={`GCC zones with the most severe and high incidents reported in the ${p} (a severe incident counts 3, a high one 1). ` +
-            `This is about seriousness now; "Most open work" below is about backlog. Click to show ${top[0] ?? "the first zone"}.`}
+            `Click to show ${top[0] ?? "the first zone"}.`}
           onClick={s.topZones[0] ? () => c.setZone(s.topZones[0].zone) : undefined} />
-        <Tile l="Most open work (taluk)" txt v={s.topTaluk ? `${s.topTaluk.name} · ${s.topTaluk.n}` : "None"} tone="var(--accent-2)"
-          title={`Revenue taluk with the most incidents still open, among those reported in the ${p}. Taluks and GCC zones have different boundaries.`} />
         <CommonTiles s={s} c={c} />
         <Tile l="Severe, not yet checked" v={<Cnt v={s.critical} />} tone={s.critical ? "var(--sev)" : undefined}
           title="Open severe incidents that no officer has confirmed on the ground yet (any date). Click for the list."
@@ -393,18 +384,18 @@ function DeptSnap({ d, c }: { d: OverviewData; c: Console }) {
 const shortName = (n: string) => String(n ?? "").replace(/\s*\(.*\)\s*$/, "");
 const shortInit = (s: string) => String(s ?? "").split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
 
-/** Today's Briefing: news the monitor linked to incidents, or items from sources the Collector added. */
+/** Latest news: news the monitor linked to incidents, or items from sources the Collector added. */
 function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
   const [tab, setTab] = useState<"news" | "added">("news");
   const when = c.period === "daily" ? "last 24 hours" : `last ${d.added.days} days`;
   return (
     <>
-      <div className="ch"><I n="news" /><h3>Today&apos;s Briefing</h3>
+      <div className="ch"><I n="news" /><h3>Latest news</h3>
         <button className="more" onClick={() => (tab === "news" ? c.openNewsAll() : c.openAdded())}>See more<I n="right" /></button>
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
         <button role="tab" aria-selected={tab === "news"} className={tab === "news" ? "on" : ""} onClick={() => setTab("news")}>
-          News{d.allNews && <> <b className="tab-n">{d.allNews.length}</b></>}</button>
+          News{d.allNews && <> <b className="tab-n">{d.allNewsTotal || d.allNews.length}</b></>}</button>
         <button role="tab" aria-selected={tab === "added"} className={tab === "added" ? "on" : ""} onClick={() => setTab("added")}
           title={`Items from sources you added, ${when}`}>From added sources <b className="tab-n">{d.added.count}</b></button>
       </div>
@@ -566,11 +557,17 @@ function Level({ text, color }: { text: string; color: string }) {
   return <span className="lvl" style={{ color, background: `${color}1F` }}><i />{text}</span>;
 }
 
+/** The official scale in grey, with only the band the reading falls in coloured. */
 function Scale({ stops, value, max }: { stops: { upto: number; c: string; l: string }[]; value: number | null; max: number }) {
   let prev = 0;
+  const at = value == null ? -1 : stops.findIndex((s) => value <= s.upto);
   return (
     <div className="scale" aria-hidden="true">
-      <div className="bar">{stops.map((s) => { const w = ((s.upto - prev) / max) * 100; prev = s.upto; return <span key={s.l} style={{ background: s.c, flex: `0 0 ${w}%` }} />; })}</div>
+      <div className="bar">{stops.map((s, k) => {
+        const w = ((s.upto - prev) / max) * 100;
+        prev = s.upto;
+        return <span key={s.l} style={{ background: k === (at < 0 ? stops.length - 1 : at) && value != null ? s.c : "var(--surface-3)", flex: `0 0 ${w}%`, boxShadow: "inset -1px 0 0 var(--surface)" }} />;
+      })}</div>
       {value != null && <span className="mk" style={{ left: `${Math.min(100, (value / max) * 100)}%` }} />}
       <div className="lb">{(() => { let p = 0; return stops.map((s) => { const w = ((s.upto - p) / max) * 100; p = s.upto; return <span key={s.l} style={{ flex: `0 0 ${w}%` }}>{s.l}</span>; }); })()}</div>
     </div>
@@ -620,7 +617,7 @@ function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
           {lvl ? <><b>{lvl[2]}</b> in the last 24 hours{r.now != null && r.times.length ? ` (IMD, ${fmtDate(r.times[r.times.length - 1])})` : ""}. </> : "No readings. "}
           {b.rainDays} rain day{b.rainDays === 1 ? "" : "s"} in the last {b.days.length} days ({b.prevRainDays} in the {b.days.length} days before).
         </div>
-        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="#4C8DFF" fmt={(v) => `${v} mm`} />
+        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="#38BDF8" fmt={(v) => `${v} mm`} />
           : <Empty>No rain recorded at {env.rain.stations.length === 1 ? "this gauge" : "these gauges"} in the last {days.length} days.</Empty>}
       </div>
     </article>
@@ -647,7 +644,7 @@ function AqiCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; 
           {lvl ? <>Air is <b>{lvl[2].toLowerCase()}</b> (CPCB scale). </> : "No readings. "}
           {worst && <>Worst now: <b>{worst.name.replace(/^Chennai-/, "").replace(/, Chennai.*$/, "")}</b> at {worst.series[worst.series.length - 1]}.</>}
         </div>
-        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="#35C28C" fmt={(v) => `AQI ${v}`}
+        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="#34D399" fmt={(v) => `AQI ${v}`}
           band={{ at: 100, label: "Satisfactory limit" }} />
       </div>
     </article>
@@ -673,7 +670,7 @@ function LakeCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
           {lvl ? <><b>{lvl[2]}</b>. </> : "No readings. "}
           {k.now != null && first != null && k.series.length > 1 && <>{k.now >= first ? "Up" : "Down"} {Math.abs(k.now - first).toFixed(1)} points since {fmtDate(k.times[0])}.</>}
         </div>
-        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="#2BC7D9" fmt={(v) => `${v}% full`} />
+        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="#818CF8" fmt={(v) => `${v}% full`} />
       </div>
     </article>
   );

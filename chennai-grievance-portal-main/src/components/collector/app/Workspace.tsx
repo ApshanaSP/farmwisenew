@@ -6,15 +6,19 @@ import { Empty, fmtShort, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 
 export interface Layout {
-  pages: { briefing: boolean; trends: boolean; environment: boolean };
+  pages: { briefing: boolean; trends: boolean; environment: boolean; studio: boolean };
   panels: { map: boolean; snapshot: boolean; brief: boolean; severity: boolean; tasks: boolean };
   kpis: string[];
 }
 export const DEFAULT_LAYOUT: Layout = {
-  pages: { briefing: true, trends: true, environment: true },
+  pages: { briefing: true, trends: true, environment: true, studio: true },
   panels: { map: true, snapshot: true, brief: true, severity: true, tasks: true },
   kpis: ["severe", "complaints", "ongoing", "resolved"]
 };
+/** A layout saved before a page existed shows that page (the new page is on by default). */
+export function normalizeLayout(l: Layout): Layout {
+  return { ...DEFAULT_LAYOUT, ...l, pages: { ...DEFAULT_LAYOUT.pages, ...l.pages }, panels: { ...DEFAULT_LAYOUT.panels, ...l.panels } };
+}
 export const KPI_LABELS: Record<string, string> = {
   severe: "Severe events", complaints: "Open complaints", ongoing: "Ongoing incidents", resolved: "Resolved"
 };
@@ -75,13 +79,14 @@ export function CustomizeBody({ c }: { c: Console }) {
         <h4>Pages</h4>
         <label className="chk"><input type="checkbox" checked disabled />Overview</label>
         {([["briefing", "Briefing: written briefing, department follow-ups, news-only incidents"], ["trends", "Trends: categories over time, taluks, spikes, hotspots"],
-          ["environment", "Environment & markets: rain, air, reservoirs, mandi prices by Chennai market, developing stories"]] as const).map(([k, t]) => (
+          ["environment", "Environment & markets: rain, air, reservoirs, mandi prices by Chennai market, developing stories"],
+          ["studio", "Data Studio: add a department's file or link; AI cleans, maps, links and explains it"]] as const).map(([k, t]) => (
           <label key={k} className="chk"><input type="checkbox" checked={l.pages[k]} onChange={(e) => setPage(k, e.target.checked)} />{t}</label>
         ))}
       </section>
       <section>
         <h4>Overview panels</h4>
-        {([["map", "Satellite map"], ["snapshot", "District snapshot"], ["brief", "Today's briefing (news)"], ["severity", "Severity-based incidents"], ["tasks", "My tasks"]] as const).map(([k, t]) => (
+        {([["map", "Satellite map"], ["snapshot", "District snapshot"], ["brief", "Latest news"], ["severity", "Severity-based incidents"], ["tasks", "My tasks"]] as const).map(([k, t]) => (
           <label key={k} className="chk"><input type="checkbox" checked={l.panels[k]} disabled={l.panels[k] && panelCount === 1} onChange={(e) => setPanel(k, e.target.checked)} />{t}</label>
         ))}
         <h4 style={{ marginTop: 14 }}>Headline cards</h4>

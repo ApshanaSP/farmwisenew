@@ -6,9 +6,13 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { PERIODS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
-import { categories } from "@/lib/collector/nlp";
-import { addedItems, mandi, mandiMarkets, mandiWeekly } from "@/lib/collector/sources";
+import { categories, placeResolver } from "@/lib/collector/nlp";
+import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
+import { reviewLocations, type Ward } from "@/lib/collector/locreview";
+
+/** An empty price table, for the parts that do not show prices. */
+const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -48,44 +52,59 @@ const pct = (a: number, b: number) => (b ? Math.round(((a - b) / b) * 100) : nul
 /** Monday of the as-of week, as SQL (takes the as-of time twice). */
 const MON = "(DATE(?) - INTERVAL WEEKDAY(?) DAY)";
 
-export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}) {
+/**
+ * Which page asks: the briefing (page 2, the news-only list, a saved workspace), trends (page 3) or the environment
+ * and markets (page 4). Each computes only its own sections; the others come back empty. No part = everything
+ * (the assistant and the workspace snapshot).
+ */
+export type InsightPart = "briefing" | "trends" | "environment";
+export function parsePart(v: unknown): InsightPart | null {
+  return v === "briefing" || v === "trends" || v === "environment" ? v : null;
+}
+
+export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {
   const now = await asOf();
   const s: Scope = { period, zone, dept, cat: focus.cat ?? null, taluk: focus.taluk ?? null };
   const w = where(s, now), pw = where(s, now, { offset: 1 });
   const cats = categories();
   const playbook = new Map(cats.map((c) => [c.code, c.playbook]));
   const catLabel = new Map(cats.map((c) => [c.code, c.label]));
+  const B = !part || part === "briefing", T = !part || part === "trends", E = !part || part === "environment";
+  const none = Promise.resolve([] as Row[]);
+  const when = (on: boolean, run: () => Promise<Row[]>) => (on ? run() : none);
+  // locations needing review: open incidents of the last 30 days (or the period, if longer) with no zone
+  const rw = where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) });
 
-  const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomalies, hotspots, unplaced, unplacedN, review, zoneNames, env, catZones] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open,
+  const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomalies, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
+    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open,
               SUM(i.is_open = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints,
               SUM(i.source_count > 1) AS multi, SUM(i.media_only) AS news_only
-       FROM incidents i WHERE ${w.sql}`, w.params),
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params),
+       FROM incidents i WHERE ${w.sql}`, w.params)),
+    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params)),
     // candidates for "needs your attention": open, highest priority first (explain() decides which need the Collector)
-    q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND i.is_open = 1 ORDER BY i.priority_score DESC LIMIT 30`, w.params),
+    when(B, () => q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND i.is_open = 1 ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
     // next open action per open incident in scope (pipeline action list, SOP order)
-    q(`SELECT a.incident_id AS id, a.dept_code, a.owner, a.text, a.status, DATE_FORMAT(a.due_at, '%Y-%m-%d %H:%i:%s') AS due,
+    when(B, () => q(`SELECT a.incident_id AS id, a.dept_code, a.owner, a.text, a.status, DATE_FORMAT(a.due_at, '%Y-%m-%d %H:%i:%s') AS due,
               ROW_NUMBER() OVER (PARTITION BY a.incident_id ORDER BY a.status = 'In progress' DESC, a.due_at, a.action_id) AS rn
        FROM actions a JOIN incidents i ON i.incident_id = a.incident_id
-       WHERE ${w.sql} AND i.is_open = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params),
-    q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(i.sla_breached) AS overdue,
+       WHERE ${w.sql} AND i.is_open = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params)),
+    when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(i.sla_breached) AS overdue,
               SUM(i.severity_level IN ('Severe', 'High')) AS serious, SUM(i.awaiting_collector) AS awaiting,
               SUM(i.citizen_complaints) AS complaints
        ${FROM} WHERE ${w.sql} AND i.is_open = 1 GROUP BY i.lead_dept, dp.name, dp.head
-       ORDER BY serious DESC, overdue DESC, open DESC`, w.params),
+       ORDER BY serious DESC, overdue DESC, open DESC`, w.params)),
     // in the news, no department record
-    q(`SELECT ${INC}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
+    when(B, () => q(`SELECT ${INC}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
        LEFT JOIN gaps g ON g.incident_id = i.incident_id
        WHERE ${where(s, now).sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
-       ORDER BY i.priority_score DESC LIMIT 60`, where(s, now).params),
-    q(`SELECT i.category_code AS cat, DATE_FORMAT(DATE_SUB(DATE(i.first_reported_at), INTERVAL WEEKDAY(i.first_reported_at) DAY), '%Y-%m-%d') AS b,
+       ORDER BY i.priority_score DESC LIMIT 60`, where(s, now).params)),
+    when(T, () => q(`SELECT i.category_code AS cat, DATE_FORMAT(DATE_SUB(DATE(i.first_reported_at), INTERVAL WEEKDAY(i.first_reported_at) DAY), '%Y-%m-%d') AS b,
               COUNT(*) AS n ${FROM} WHERE ${where(s, now, { hours: 12 * 7 * 24, noCat: true }).sql}
-       GROUP BY cat, b`, where(s, now, { hours: 12 * 7 * 24, noCat: true }).params),
-    q(`SELECT i.category_code AS cat, DATE_FORMAT(i.first_reported_at, '%Y-%m') AS b, COUNT(*) AS n ${FROM}
-       WHERE ${where(s, now, { hours: 180 * 24, noCat: true }).sql} GROUP BY cat, b`, where(s, now, { hours: 180 * 24, noCat: true }).params),
+       GROUP BY cat, b`, where(s, now, { hours: 12 * 7 * 24, noCat: true }).params)),
+    when(T, () => q(`SELECT i.category_code AS cat, DATE_FORMAT(i.first_reported_at, '%Y-%m') AS b, COUNT(*) AS n ${FROM}
+       WHERE ${where(s, now, { hours: 180 * 24, noCat: true }).sql} GROUP BY cat, b`, where(s, now, { hours: 180 * 24, noCat: true }).params)),
     // unresolved incidents by taluk over the last 30 days, against the 30 days before
-    q(`SELECT t.taluk_code AS code, t.name, COALESCE(x.open, 0) AS open, COALESCE(x.severe, 0) AS severe, COALESCE(x.overdue, 0) AS overdue,
+    when(T || (B && !!s.taluk), () => q(`SELECT t.taluk_code AS code, t.name, COALESCE(x.open, 0) AS open, COALESCE(x.severe, 0) AS severe, COALESCE(x.overdue, 0) AS overdue,
               COALESCE(x.reported, 0) AS reported, COALESCE(y.reported, 0) AS prev
        FROM ref_taluks t
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(i.is_open) AS open, SUM(i.is_open = 1 AND i.severity_level = 'Severe') AS severe,
@@ -94,30 +113,28 @@ export async function insights(period: Period, zone: number | null, dept: string
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported FROM incidents i
                   WHERE ${where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql} GROUP BY i.taluk_code) y ON y.taluk_code = t.taluk_code
        WHERE t.in_district = 1 ORDER BY open DESC`,
-      [...where({ ...s, taluk: null }, now, { hours: 720 }).params, ...where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).params]),
-    q(`SELECT DATE_FORMAT(a.date, '%Y-%m-%d') AS date, a.category_code AS cat, a.zone_no AS zone, a.observed, a.expected, a.ratio, a.p_value
+      [...where({ ...s, taluk: null }, now, { hours: 720 }).params, ...where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).params])),
+    when(T || B, () => q(`SELECT DATE_FORMAT(a.date, '%Y-%m-%d') AS date, a.category_code AS cat, a.zone_no AS zone, a.observed, a.expected, a.ratio, a.p_value
        FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""} ORDER BY a.date DESC, a.ratio DESC`,
-      zone ? [now, zone] : [now]),
-    q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
+      zone ? [now, zone] : [now])),
+    when(T, () => q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
               DATE_FORMAT(first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(last_seen, '%Y-%m-%d') AS last_seen
-       FROM hotspots WHERE incidents_30d >= 3 ORDER BY incidents_30d DESC LIMIT 60`),
-    // locations that could not be placed on the district map
-    q(`SELECT ${INC} ${FROM} WHERE ${where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) }).sql}
-       AND i.zone_no IS NULL AND i.is_open = 1 ORDER BY i.priority_score DESC LIMIT 300`,
-      where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) }).params),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) }).sql}
-       AND i.zone_no IS NULL AND i.is_open = 1`, where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) }).params),
-    q(`SELECT item_type, COUNT(*) AS n FROM review_queue WHERE status IN ('open', 'pending', 'new') OR status IS NULL GROUP BY item_type`),
+       FROM hotspots WHERE incidents_30d >= 3 ORDER BY incidents_30d DESC LIMIT 60`)),
+    // open incidents with no zone: judged by locreview.ts (most are not a location problem)
+    when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND i.is_open = 1
+       ORDER BY i.priority_score DESC LIMIT 600`, rw.params)),
+    when(T, () => q(`SELECT ward_no, zone_no, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`)),
+    when(T, () => q(`SELECT item_type, COUNT(*) AS n FROM review_queue WHERE status IN ('open', 'pending', 'new') OR status IS NULL GROUP BY item_type`)),
     q(`SELECT DISTINCT zone_no, zone_name, ward_no FROM ref_wards`),
-    q(`SELECT metric, ROUND(AVG(value), 1) AS v FROM (
+    when(B, () => q(`SELECT metric, ROUND(AVG(value), 1) AS v FROM (
          SELECT o.metric, o.place_id, o.value, ROW_NUMBER() OVER (PARTITION BY o.metric, o.place_id ORDER BY o.observed_at DESC) rn
-         FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]),
+         FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now])),
     // each category by zone, last 4 weeks against the 4 before: where a rise is coming from
-    q(`SELECT i.category_code AS cat, i.zone_no AS zone, SUM(i.first_reported_at >= ${MON} - INTERVAL 28 DAY) AS recent,
+    when(T, () => q(`SELECT i.category_code AS cat, i.zone_no AS zone, SUM(i.first_reported_at >= ${MON} - INTERVAL 28 DAY) AS recent,
               SUM(i.first_reported_at < ${MON} - INTERVAL 28 DAY) AS before_
        FROM incidents i WHERE i.first_reported_at >= ${MON} - INTERVAL 56 DAY AND i.first_reported_at < ${MON} AND i.zone_no IS NOT NULL
        ${zone ? "AND i.zone_no = ?" : ""} ${dept ? "AND i.lead_dept = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}
-       GROUP BY i.category_code, i.zone_no`, [now, now, now, now, now, now, now, now, ...(zone ? [zone] : []), ...(dept ? [dept] : []), ...(s.taluk ? [s.taluk] : [])])
+       GROUP BY i.category_code, i.zone_no`, [now, now, now, now, now, now, now, now, ...(zone ? [zone] : []), ...(dept ? [dept] : []), ...(s.taluk ? [s.taluk] : [])]))
   ]);
 
   const zn = new Map<number, string>();
@@ -137,11 +154,11 @@ export async function insights(period: Period, zone: number | null, dept: string
   // the opening of the pipeline's briefing for this period, written by its LLM from the briefing's facts (numbers checked);
   // only for the whole district: a zone or department view has its own figures
   const whole = !zone && !dept && !s.cat && !s.taluk;
-  const [brief] = whole ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
+  const [brief] = whole && B ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
     .catch(() => [] as Row[]) : [];
   const opening = brief?.ai_summary ? { en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null } : null;
   // page 2: the Collector's daily briefing, every section
-  const book = await briefingBook(s, now, opening);
+  const book = B ? await briefingBook(s, now, opening) : null;
 
   // ---------------------------------------------------------- briefing --
   const K = k[0] ?? {}, P = kp[0] ?? {};
@@ -172,8 +189,10 @@ export async function insights(period: Period, zone: number | null, dept: string
   }) as Row);
 
   const envMap = Object.fromEntries(env.map((e) => [e.metric, Number(e.v)]));
-  const [mTN, mCH, wCH, wTN, byMarket] = await Promise.all([mandi("tamil_nadu"), mandi("chennai_markets"), mandiWeekly("chennai_region"),
-    mandiWeekly("tamil_nadu"), mandiMarkets()]);
+  // prices: page 4, and one line of the written briefing
+  const [mTN, mCH, wCH, wTN, byMarket] = E || B
+    ? await Promise.all([mandi("tamil_nadu"), mandi("chennai_markets"), mandiWeekly("chennai_region"), mandiWeekly("tamil_nadu"), mandiMarkets()])
+    : [noMandi("tamil_nadu"), noMandi("chennai_markets"), [], [], { latest: "", dates: [], fetched: null, markets: [], commodities: [] } satisfies MandiMarkets];
   const kg = (v: number) => `₹${(v / 100).toFixed(0)}`;
   // Chennai's own markets when they have reported; else the districts around Chennai, else the state
   const market = byMarket.commodities.length
@@ -196,9 +215,9 @@ export async function insights(period: Period, zone: number | null, dept: string
 
   // --------------------------------------------------- department list --
   const perDept = new Map<string, Row[]>();
-  const topByDept = await q(
+  const topByDept = await when(B, () => q(
     `SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
-                    ${FROM} WHERE ${w.sql} AND i.is_open = 1) x WHERE rk <= 3`, w.params);
+                    ${FROM} WHERE ${w.sql} AND i.is_open = 1) x WHERE rk <= 3`, w.params));
   for (const i of topByDept) (perDept.get(i.dept) ?? perDept.set(i.dept, []).get(i.dept)!).push(i);
   const deptActions = deptRows.map((d) => ({
     code: d.code, name: d.name ?? d.code, head: d.head, open: Number(d.open), overdue: Number(d.overdue ?? 0), serious: Number(d.serious ?? 0),
@@ -247,8 +266,11 @@ export async function insights(period: Period, zone: number | null, dept: string
     .slice(0, 8);
 
   const reviewCounts = Object.fromEntries(review.map((r) => [r.item_type, Number(r.n)]));
+  const wards: Ward[] = wardRows.map((r) => ({ ward_no: Number(r.ward_no), zone_no: Number(r.zone_no), lat: Number(r.lat), lon: Number(r.lon) }));
+  const places = T ? reviewLocations(unplaced, wards, await placeResolver().catch(() => () => null)) : null;
   // Items from sources the Collector added: civic issues first, then the newest.
-  const added = await addedItems({ now, days: Math.max(1, Math.round(PERIODS[period].hours / 24)), since: periodSince(period, now), zone, dept, cat: s.cat, taluk: s.taluk }, 60);
+  const added = B ? await addedItems({ now, days: Math.max(1, Math.round(PERIODS[period].hours / 24)), since: periodSince(period, now), zone, dept, cat: s.cat, taluk: s.taluk }, 60)
+    : { items: [] as Row[], pins: [] as Row[], count: 0, civic: 0, placed: 0, days: 0 };
   const fromSources = [...added.items].sort((a, b) => Number(b.is_incident) - Number(a.is_incident) || String(b.t).localeCompare(String(a.t))).slice(0, 5);
 
   const md = [
@@ -276,7 +298,9 @@ export async function insights(period: Period, zone: number | null, dept: string
     taluks: taluks.map((t) => ({ code: t.code, name: t.name, open: Number(t.open), severe: Number(t.severe), overdue: Number(t.overdue),
       reported: Number(t.reported), prev: Number(t.prev) })),
     patterns: { emerging, hotspots: hs },
-    review: { unplaced, unplacedTotal: Number(unplacedN[0]?.n ?? unplaced.length), links: reviewCounts.link ?? 0, gaps: reviewCounts.gap ?? 0 },
+    // Locations needing review: only incidents whose place is unknown (locreview.ts); the counts say what was left out
+    review: { unplaced: places?.missing ?? [], unplacedTotal: places?.counts.missing ?? 0, counts: places?.counts ?? null, located: places?.located ?? [],
+      links: reviewCounts.link ?? 0, gaps: reviewCounts.gap ?? 0 },
     markets: { chennai: mCH, tamilNadu: mTN, weekly: { chennai: wCH, tamilNadu: wTN }, byMarket }
   };
 }

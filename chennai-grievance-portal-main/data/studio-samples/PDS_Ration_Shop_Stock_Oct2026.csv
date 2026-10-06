@@ -1,0 +1,237 @@
+﻿கடை எண் / Shop No,பகுதி / Area,மண்டலம் / Zone,அரிசி இருப்பு (கிலோ) / Rice stock (kg),சர்க்கரை (கிலோ) / Sugar (kg),துவரம் பருப்பு (கிலோ) / Toor dal (kg),குடும்ப அட்டைகள் / Ration cards,கடைசி விநியோகம் / Last supply,நிலை / Status
+FP-1001,Ramapuram,Valasaravakkam,5265,414,180,781,20-09-2026,போதுமானது / Adequate
+FP-1002,Saligramam,ZONE-10,147,237,7,951,19 Sep 2026,குறைவு / Low
+FP-1003,Santhome,Zone 9 - Teynampet,469,572,56,898,26 Sep 2026,குறைவு / Low
+FP-1004,Chepauk,ZONE-9,393,94,46,1560,21 Sep 2026,குறைவு / Low
+FP-1005,Vadapalani,Zone 10 - Kodambakkam,4345,351,255,2065,1 Oct 2026,போதுமானது / Adequate
+FP-1006,Koyambedu,மண்டலம் 10,0,0,84,1334,25-09-2026,இருப்பு இல்லை / Out of stock
+FP-1007,Arumbakkam,மண்டலம் 8,3115,686,256,2239,22 Sep 2026,போதுமானது / Adequate
+FP-1008,Ennore,Thiruvottiyur,5141,513,304,2114,26 Sep 2026,போதுமானது / Adequate
+FP-1009,Triplicane,ZONE-9,4434,686,141,740,27 Sep 2026,போதுமானது / Adequate
+FP-1010,Alwarpet,Teynampet,509,94,8,1152,01-10-2026,குறைவு / Low
+FP-1011,Ennore,ZONE-1,4130,575,402,2077,23 Sep 2026,போதுமானது / Adequate
+FP-1012,Nanganallur,ZONE-12,87,152,57,634,25 Sep 2026,குறைவு / Low
+FP-1013,Porur,Valasaravakkam,4957,484,151,1052,2026-09-20,போதுமானது / Adequate
+FP-1014,Ekkattuthangal,ZONE-13,8118,634,198,1704,2026-10-03,போதுமானது / Adequate
+FP-1015,Ashok Nagar,ZONE-10,8811,620,102,907,21 Sep 2026,போதுமானது / Adequate
+FP-1016,Neelankarai,Sholinganallur,3740,455,433,1568,4 Oct 2026,போதுமானது / Adequate
+FP-1017,Thiruvanmiyur,Zone 13 - Adyar,2765,150,246,1784,4 Oct 2026,போதுமானது / Adequate
+FP-1018,Virugambakkam,ZONE-10,6229,53,400,1196,24 Sep 2026,போதுமானது / Adequate
+FP-1019,Kotturpuram,மண்டலம் 13,1975,557,215,1546,2026-09-20,போதுமானது / Adequate
+FP-1020,Nandanam,ZONE-10,472,531,65,1518,26-09-2026,குறைவு / Low
+FP-1021,Taramani,ZONE-13,8874,528,494,696,21 Sep 2026,போதுமானது / Adequate
+FP-1022,T. Nagar,மண்டலம் 10,1964,529,500,830,22 Sep 2026,போதுமானது / Adequate
+FP-1023,Kodungaiyur,மண்டலம் 4,3332,355,117,1044,22-09-2026,போதுமானது / Adequate
+FP-1024,Santhome,Zone 9 - Teynampet,6223,303,323,2375,2 Oct 2026,போதுமானது / Adequate
+FP-1025,Puzhal,Madhavaram,129,615,89,1838,25-09-2026,குறைவு / Low
+FP-1026,Kottivakkam,மண்டலம் 14,7641,685,322,1622,18-09-2026,போதுமானது / Adequate
+FP-1027,Mogappair,மண்டலம் 7,540,70,5,2008,2026-10-05,குறைவு / Low
+FP-1028,Puzhal,ZONE-3,8292,406,321,2008,28 Sep 2026,போதுமானது / Adequate
+FP-1029,Porur,Zone 11 - Valasaravakkam,4557,215,430,1509,22-09-2026,போதுமானது / Adequate
+FP-1030,Marina Beach,ZONE-9,2810,445,363,2172,2026-10-02,போதுமானது / Adequate
+FP-1031,Kotturpuram,மண்டலம் 13,0,0,33,1793,2026-10-03,இருப்பு இல்லை / Out of stock
+FP-1032,Besant Nagar,Adyar,2936,63,175,1005,2026-09-29,போதுமானது / Adequate
+FP-1033,Karapakkam,மண்டலம் 15,457,457,45,2202,5 Oct 2026,குறைவு / Low
+FP-1034,Karapakkam,மண்டலம் 15,4914,285,439,1521,1 Oct 2026,போதுமானது / Adequate
+FP-1035,Besant Nagar,மண்டலம் 13,5924,136,222,1901,22 Sep 2026,போதுமானது / Adequate
+FP-1036,Saidapet,Kodambakkam,273,208,0,921,28 Sep 2026,குறைவு / Low
+FP-1037,Alwarpet,Zone 9 - Teynampet,7544,521,121,1367,2026-10-05,போதுமானது / Adequate
+FP-1038,Vyasarpadi,மண்டலம் 4,1778,158,423,866,2 Oct 2026,போதுமானது / Adequate
+FP-1039,Kottivakkam,மண்டலம் 14,3983,246,149,2159,2026-09-19,போதுமானது / Adequate
+FP-1040,Chintadripet,Zone 5 - Royapuram,5717,69,134,1660,20 Sep 2026,போதுமானது / Adequate
+FP-1041,Nandanam,Kodambakkam,2049,663,296,2356,19 Sep 2026,போதுமானது / Adequate
+FP-1042,Nanganallur,மண்டலம் 12,2203,311,97,666,2026-10-05,போதுமானது / Adequate
+FP-1043,Ekkattuthangal,ZONE-13,0,0,28,1729,21 Sep 2026,இருப்பு இல்லை / Out of stock
+FP-1044,Pattinapakkam,ZONE-9,264,608,69,2388,2026-09-22,குறைவு / Low
+FP-1045,Saligramam,Kodambakkam,6307,573,497,1346,2026-10-02,போதுமானது / Adequate
+FP-1046,Kasimedu,மண்டலம் 4,299,691,15,1085,24-09-2026,குறைவு / Low
+FP-1047,Villivakkam,Anna Nagar,4338,214,446,1579,27-09-2026,போதுமானது / Adequate
+FP-1048,Neelankarai,ZONE-15,0,0,35,1858,04-10-2026,இருப்பு இல்லை / Out of stock
+FP-1049,Washermanpet,Zone 5 - Royapuram,488,582,72,2364,24 Sep 2026,குறைவு / Low
+FP-1050,Sembium,Thiru-Vi-Ka-Nagar,5967,336,212,1138,23 Sep 2026,போதுமானது / Adequate
+FP-1051,Mandaveli,மண்டலம் 13,7239,577,169,929,5 Oct 2026,போதுமானது / Adequate
+FP-1052,Padi,Zone 7 - Ambattur,178,256,74,838,21-09-2026,குறைவு / Low
+FP-1053,K.K. Nagar,Kodambakkam,7801,586,139,1914,23-09-2026,போதுமானது / Adequate
+FP-1054,Kilpauk,Anna Nagar,138,292,75,1073,26 Sep 2026,குறைவு / Low
+FP-1055,Villivakkam,Zone 8 - Anna Nagar,7513,50,174,2382,05-10-2026,போதுமானது / Adequate
+FP-1056,Arumbakkam,மண்டலம் 8,508,443,2,1625,2026-10-04,குறைவு / Low
+FP-1057,Otteri,Thiru-Vi-Ka-Nagar,6442,424,177,1423,20-09-2026,போதுமானது / Adequate
+FP-1058,Vadapalani,ZONE-10,0,0,2,930,2026-09-24,இருப்பு இல்லை / Out of stock
+FP-1059,Enjambakkam,Zone 15 - Sholinganallur,2355,233,131,1644,2026-09-20,போதுமானது / Adequate
+FP-1060,Kasimedu,Tondiarpet,7173,325,273,1676,1 Oct 2026,போதுமானது / Adequate
+FP-1061,Nungambakkam,ZONE-9,376,571,46,697,2026-09-24,குறைவு / Low
+FP-1062,Kodungaiyur,Zone 4 - Tondiarpet,4606,553,426,2013,2 Oct 2026,போதுமானது / Adequate
+FP-1063,Vepery,Royapuram,2671,302,430,1243,2026-10-01,போதுமானது / Adequate
+FP-1064,Otteri,ZONE-6,161,81,5,1787,21-09-2026,குறைவு / Low
+FP-1065,Otteri,Thiru-Vi-Ka-Nagar,562,136,61,2164,22 Sep 2026,குறைவு / Low
+FP-1066,Padi,Zone 7 - Ambattur,562,550,46,1135,22-09-2026,குறைவு / Low
+FP-1067,Otteri,Zone 6 - Thiru-Vi-Ka-Nagar,474,473,7,2295,21-09-2026,குறைவு / Low
+FP-1068,Chepauk,மண்டலம் 9,5408,522,456,1614,3 Oct 2026,போதுமானது / Adequate
+FP-1069,Korattur,ZONE-7,0,0,73,1092,2026-09-22,இருப்பு இல்லை / Out of stock
+FP-1070,Saligramam,Kodambakkam,0,0,44,1294,2026-10-03,இருப்பு இல்லை / Out of stock
+FP-1071,Koyambedu,ZONE-10,496,663,36,1061,2026-10-03,குறைவு / Low
+FP-1072,Meenambakkam,Zone 12 - Alandur,198,371,41,924,18 Sep 2026,குறைவு / Low
+FP-1073,K.K. Nagar,ZONE-10,6459,414,320,2079,1 Oct 2026,போதுமானது / Adequate
+FP-1074,Nandanam,Kodambakkam,1510,449,216,1666,27 Sep 2026,போதுமானது / Adequate
+FP-1075,Enjambakkam,ZONE-15,5347,554,104,751,2026-09-30,போதுமானது / Adequate
+FP-1076,Koyambedu,Zone 10 - Kodambakkam,3917,535,118,640,25 Sep 2026,போதுமானது / Adequate
+FP-1077,Chepauk,மண்டலம் 9,7599,504,458,2134,18-09-2026,போதுமானது / Adequate
+FP-1078,Nungambakkam,Zone 9 - Teynampet,0,0,8,1817,22-09-2026,இருப்பு இல்லை / Out of stock
+FP-1079,Ashok Nagar,Zone 10 - Kodambakkam,214,444,25,1915,2026-10-02,குறைவு / Low
+FP-1080,Porur,ZONE-11,4154,397,413,1663,29 Sep 2026,போதுமானது / Adequate
+FP-1081,Padi,மண்டலம் 7,91,270,62,2167,26-09-2026,குறைவு / Low
+FP-1082,Sembium,மண்டலம் 6,8325,547,122,1227,2026-09-20,போதுமானது / Adequate
+FP-1083,Koyambedu,ZONE-10,2068,293,329,873,3 Oct 2026,போதுமானது / Adequate
+FP-1084,Saidapet,Zone 10 - Kodambakkam,5923,581,255,1100,5 Oct 2026,போதுமானது / Adequate
+FP-1085,Alwarpet,Teynampet,8579,598,488,1973,2026-09-21,போதுமானது / Adequate
+FP-1086,Madipakkam,Perungudi,0,0,13,1836,2 Oct 2026,இருப்பு இல்லை / Out of stock
+FP-1087,Triplicane,Zone 9 - Teynampet,5627,271,98,2175,2026-09-20,போதுமானது / Adequate
+FP-1088,Chepauk,Zone 9 - Teynampet,6245,63,389,1660,04-10-2026,போதுமானது / Adequate
+FP-1089,Sembium,Thiru-Vi-Ka-Nagar,4588,630,495,1154,23-09-2026,போதுமானது / Adequate
+FP-1090,Choolaimedu,Teynampet,5030,644,188,1314,25 Sep 2026,போதுமானது / Adequate
+FP-1091,Ekkattuthangal,Zone 13 - Adyar,1590,499,270,1722,02-10-2026,போதுமானது / Adequate
+FP-1092,Karapakkam,ZONE-15,5962,55,252,1306,2026-10-01,போதுமானது / Adequate
+FP-1093,Parrys,ZONE-5,0,0,33,2155,19 Sep 2026,இருப்பு இல்லை / Out of stock
+FP-1094,Arumbakkam,Zone 8 - Anna Nagar,3936,393,156,1263,2026-10-05,போதுமானது / Adequate
+FP-1095,Royapettah,மண்டலம் 9,564,172,12,675,2026-09-26,குறைவு / Low
+FP-1096,Alwarpet,Teynampet,4123,573,406,2010,24 Sep 2026,போதுமானது / Adequate
+FP-1097,Kotturpuram,Adyar,7347,286,459,1883,2026-09-24,போதுமானது / Adequate
+FP-1098,Meenambakkam,Alandur,239,660,17,1597,2026-09-23,குறைவு / Low
+FP-1099,Sembium,மண்டலம் 6,4750,238,370,2137,2026-09-19,போதுமானது / Adequate
+FP-1100,Chintadripet,ZONE-5,0,0,8,2060,28-09-2026,இருப்பு இல்லை / Out of stock
+FP-1101,Otteri,Thiru-Vi-Ka-Nagar,7380,688,481,1756,04-10-2026,போதுமானது / Adequate
+FP-1102,Mandaveli,ZONE-13,0,0,5,714,3 Oct 2026,இருப்பு இல்லை / Out of stock
+FP-1103,Marina Beach,மண்டலம் 9,220,149,51,960,2026-10-04,குறைவு / Low
+FP-1104,Nungambakkam,Teynampet,7053,404,278,2201,27 Sep 2026,போதுமானது / Adequate
+FP-1105,Nanganallur,Alandur,1663,204,433,2276,29-09-2026,போதுமானது / Adequate
+FP-1106,Kottivakkam,ZONE-14,3187,680,148,1450,2026-09-20,போதுமானது / Adequate
+FP-1107,Kasimedu,மண்டலம் 4,6729,164,151,2296,01-10-2026,போதுமானது / Adequate
+FP-1108,Kasimedu,Zone 4 - Tondiarpet,120,56,46,1870,29-09-2026,குறைவு / Low
+FP-1109,Marina Beach,Zone 9 - Teynampet,104,612,19,1535,24 Sep 2026,குறைவு / Low
+FP-1110,Nungambakkam,Zone 9 - Teynampet,5661,124,377,2104,22 Sep 2026,போதுமானது / Adequate
+FP-1111,Saligramam,Zone 10 - Kodambakkam,8604,615,85,2096,24-09-2026,போதுமானது / Adequate
+FP-1112,Virugambakkam,Kodambakkam,5286,202,126,2159,26 Sep 2026,போதுமானது / Adequate
+FP-1113,Madipakkam,Zone 14 - Perungudi,0,0,7,620,22-09-2026,இருப்பு இல்லை / Out of stock
+FP-1114,Triplicane,மண்டலம் 9,328,139,64,1222,28-09-2026,குறைவு / Low
+FP-1115,Karapakkam,ZONE-15,2430,252,254,704,30 Sep 2026,போதுமானது / Adequate
+FP-1116,Padi,மண்டலம் 7,7628,452,483,707,2026-09-28,போதுமானது / Adequate
+FP-1117,Karapakkam,Sholinganallur,0,0,25,1884,28-09-2026,இருப்பு இல்லை / Out of stock
+FP-1118,Alwarpet,Zone 9 - Teynampet,4984,308,174,2362,19-09-2026,போதுமானது / Adequate
+FP-1119,Korattur,Ambattur,0,0,65,791,2026-10-03,இருப்பு இல்லை / Out of stock
+FP-1120,Arumbakkam,மண்டலம் 8,6054,183,212,1821,05-10-2026,போதுமானது / Adequate
+FP-1121,Semmancheri,ZONE-15,253,229,50,944,4 Oct 2026,குறைவு / Low
+FP-1122,Nandanam,Zone 10 - Kodambakkam,3799,529,293,1442,04-10-2026,போதுமானது / Adequate
+FP-1123,Kasimedu,Tondiarpet,0,0,8,2039,24-09-2026,இருப்பு இல்லை / Out of stock
+FP-1124,Madipakkam,Perungudi,5441,330,426,2064,21 Sep 2026,போதுமானது / Adequate
+FP-1125,Padi,மண்டலம் 7,3656,412,288,1625,3 Oct 2026,போதுமானது / Adequate
+FP-1126,Thoraipakkam,ZONE-15,550,92,74,1757,2026-09-20,குறைவு / Low
+FP-1127,Washermanpet,Zone 5 - Royapuram,7437,597,401,1252,28 Sep 2026,போதுமானது / Adequate
+FP-1128,Nandanam,Kodambakkam,6192,341,171,1252,26-09-2026,போதுமானது / Adequate
+FP-1129,K.K. Nagar,ZONE-10,7901,157,200,1440,22 Sep 2026,போதுமானது / Adequate
+FP-1130,Thiruvanmiyur,ZONE-13,266,128,5,2178,18-09-2026,குறைவு / Low
+FP-1131,Kotturpuram,Adyar,1633,400,352,1116,27 Sep 2026,போதுமானது / Adequate
+FP-1132,Taramani,ZONE-13,7647,626,261,1597,2026-10-02,போதுமானது / Adequate
+FP-1133,Pallikaranai,Zone 14 - Perungudi,1226,306,311,1622,2026-09-24,போதுமானது / Adequate
+FP-1134,Porur,மண்டலம் 11,253,328,88,2167,03-10-2026,குறைவு / Low
+FP-1135,Kilpauk,Anna Nagar,8103,590,192,2308,2026-10-05,போதுமானது / Adequate
+FP-1136,Washermanpet,Zone 5 - Royapuram,6228,233,112,926,2026-09-20,போதுமானது / Adequate
+FP-1137,Ashok Nagar,மண்டலம் 10,139,203,48,984,18 Sep 2026,குறைவு / Low
+FP-1138,Alwarpet,மண்டலம் 9,6972,100,283,1855,28 Sep 2026,போதுமானது / Adequate
+FP-1139,Mandaveli,ZONE-13,8688,64,498,2322,25 Sep 2026,போதுமானது / Adequate
+FP-1140,Marina Beach,ZONE-9,2852,290,157,1912,30-09-2026,போதுமானது / Adequate
+FP-1141,Vyasarpadi,மண்டலம் 4,6514,49,173,2386,2026-09-25,போதுமானது / Adequate
+FP-1142,Nandanam,Kodambakkam,8595,43,460,1319,23-09-2026,போதுமானது / Adequate
+FP-1143,Karapakkam,மண்டலம் 15,3013,111,481,1848,26-09-2026,போதுமானது / Adequate
+FP-1144,Vyasarpadi,ZONE-4,1533,79,185,1452,27 Sep 2026,போதுமானது / Adequate
+FP-1145,Ekkattuthangal,மண்டலம் 13,3744,375,275,1405,5 Oct 2026,போதுமானது / Adequate
+FP-1146,Parrys,மண்டலம் 5,3288,180,178,1766,27-09-2026,போதுமானது / Adequate
+FP-1147,George Town,Zone 5 - Royapuram,7360,417,346,1086,2026-09-24,போதுமானது / Adequate
+FP-1148,Pulianthope,ZONE-6,0,0,75,2101,2026-09-29,இருப்பு இல்லை / Out of stock
+FP-1149,Puzhal,Zone 3 - Madhavaram,229,150,89,889,25-09-2026,குறைவு / Low
+FP-1150,Kodungaiyur,மண்டலம் 4,4740,381,468,1781,3 Oct 2026,போதுமானது / Adequate
+FP-1151,Korattur,Zone 7 - Ambattur,544,477,80,1589,2026-09-19,குறைவு / Low
+FP-1152,Saligramam,Zone 10 - Kodambakkam,0,0,74,674,2026-10-04,இருப்பு இல்லை / Out of stock
+FP-1153,Kottivakkam,Zone 14 - Perungudi,8135,109,93,1842,3 Oct 2026,போதுமானது / Adequate
+FP-1154,Choolaimedu,Teynampet,123,299,2,1429,05-10-2026,குறைவு / Low
+FP-1155,Pulianthope,ZONE-6,369,657,73,1203,05-10-2026,குறைவு / Low
+FP-1156,Thoraipakkam,மண்டலம் 15,305,240,41,1331,2026-09-24,குறைவு / Low
+FP-1157,Ramapuram,மண்டலம் 11,1280,423,210,1946,29 Sep 2026,போதுமானது / Adequate
+FP-1158,Kottivakkam,மண்டலம் 14,4417,266,108,876,04-10-2026,போதுமானது / Adequate
+FP-1159,Thiruvanmiyur,மண்டலம் 13,7978,219,259,1351,3 Oct 2026,போதுமானது / Adequate
+FP-1160,Kotturpuram,Zone 13 - Adyar,464,637,55,1394,27 Sep 2026,குறைவு / Low
+FP-1161,Sembium,Zone 6 - Thiru-Vi-Ka-Nagar,511,433,39,1650,2 Oct 2026,குறைவு / Low
+FP-1162,Nanganallur,ZONE-12,1477,67,155,953,2026-09-29,போதுமானது / Adequate
+FP-1163,Neelankarai,ZONE-15,7278,129,332,1098,05-10-2026,போதுமானது / Adequate
+FP-1164,Vepery,Royapuram,503,421,44,664,2026-09-20,குறைவு / Low
+FP-1165,Neelankarai,Sholinganallur,8407,458,188,2073,24-09-2026,போதுமானது / Adequate
+FP-1166,Vadapalani,ZONE-10,8168,380,329,1322,19-09-2026,போதுமானது / Adequate
+FP-1167,Porur,ZONE-11,8840,520,439,1098,21 Sep 2026,போதுமானது / Adequate
+FP-1168,T. Nagar,மண்டலம் 10,535,426,87,602,28 Sep 2026,குறைவு / Low
+FP-1169,Pattinapakkam,Zone 9 - Teynampet,3624,120,466,1138,2026-09-27,போதுமானது / Adequate
+FP-1170,Nanganallur,ZONE-12,356,308,35,915,2026-10-04,குறைவு / Low
+FP-1171,Kotturpuram,Adyar,81,505,82,1462,24 Sep 2026,குறைவு / Low
+FP-1172,Marina Beach,ZONE-9,440,523,4,2156,19 Sep 2026,குறைவு / Low
+FP-1173,Villivakkam,ZONE-8,147,558,71,951,2026-09-27,குறைவு / Low
+FP-1174,Meenambakkam,Alandur,6513,138,391,2247,2026-10-03,போதுமானது / Adequate
+FP-1175,Arumbakkam,Zone 8 - Anna Nagar,7544,212,483,890,03-10-2026,போதுமானது / Adequate
+FP-1176,Porur,ZONE-11,271,389,89,1835,28 Sep 2026,குறைவு / Low
+FP-1177,Royapettah,Zone 9 - Teynampet,426,170,65,2058,4 Oct 2026,குறைவு / Low
+FP-1178,Sembium,Zone 6 - Thiru-Vi-Ka-Nagar,7713,607,134,1160,24 Sep 2026,போதுமானது / Adequate
+FP-1179,Kodungaiyur,ZONE-4,8463,164,120,1877,27-09-2026,போதுமானது / Adequate
+FP-1180,Madipakkam,Perungudi,3545,179,340,1826,2026-10-05,போதுமானது / Adequate
+FP-1181,Vyasarpadi,Tondiarpet,435,619,63,1495,27 Sep 2026,குறைவு / Low
+FP-1182,Karapakkam,மண்டலம் 15,334,525,62,851,22-09-2026,குறைவு / Low
+FP-1183,Chepauk,Zone 9 - Teynampet,7007,255,317,2217,29-09-2026,போதுமானது / Adequate
+FP-1184,Neelankarai,Sholinganallur,2411,674,209,1196,24-09-2026,போதுமானது / Adequate
+FP-1185,Ashok Nagar,ZONE-10,4087,366,308,1165,2026-09-29,போதுமானது / Adequate
+FP-1186,Korattur,ZONE-7,95,686,62,1275,04-10-2026,குறைவு / Low
+FP-1187,Pulianthope,Zone 6 - Thiru-Vi-Ka-Nagar,543,150,16,2100,2026-09-19,குறைவு / Low
+FP-1188,Pattinapakkam,Teynampet,551,48,54,2312,25 Sep 2026,குறைவு / Low
+FP-1189,Kasimedu,Zone 4 - Tondiarpet,279,52,24,1165,26 Sep 2026,குறைவு / Low
+FP-1190,Ennore,Thiruvottiyur,327,362,61,1849,2026-09-21,குறைவு / Low
+FP-1191,Koyambedu,ZONE-10,0,0,56,718,03-10-2026,இருப்பு இல்லை / Out of stock
+FP-1192,Kasimedu,Tondiarpet,8231,86,202,1953,20-09-2026,போதுமானது / Adequate
+FP-1193,Kasimedu,Zone 4 - Tondiarpet,5972,52,311,1020,20 Sep 2026,போதுமானது / Adequate
+FP-1194,Enjambakkam,Zone 15 - Sholinganallur,6707,50,353,1355,2026-10-04,போதுமானது / Adequate
+FP-1195,Neelankarai,Sholinganallur,6203,571,121,2104,05-10-2026,போதுமானது / Adequate
+FP-1196,Padi,Zone 7 - Ambattur,0,0,26,1851,04-10-2026,இருப்பு இல்லை / Out of stock
+FP-1197,Kilpauk,மண்டலம் 8,5825,263,405,1151,2026-09-21,போதுமானது / Adequate
+FP-1198,Saidapet,Zone 10 - Kodambakkam,316,549,35,1596,2026-09-23,குறைவு / Low
+FP-1199,Padi,ZONE-7,2708,660,363,1390,03-10-2026,போதுமானது / Adequate
+FP-1200,Nungambakkam,Teynampet,448,589,31,2331,28-09-2026,குறைவு / Low
+FP-1201,George Town,Zone 5 - Royapuram,7328,591,427,2259,03-10-2026,போதுமானது / Adequate
+FP-1202,Sembium,ZONE-6,2348,571,146,2155,02-10-2026,போதுமானது / Adequate
+FP-1203,Virugambakkam,Zone 10 - Kodambakkam,398,256,51,1443,28 Sep 2026,குறைவு / Low
+FP-1204,Mandaveli,Adyar,5626,181,318,762,2026-10-03,போதுமானது / Adequate
+FP-1205,Neelankarai,மண்டலம் 15,7413,583,151,1719,23 Sep 2026,போதுமானது / Adequate
+FP-1206,Kodungaiyur,Tondiarpet,4434,575,297,1194,30-09-2026,போதுமானது / Adequate
+FP-1207,Choolaimedu,Teynampet,5909,70,375,1616,2026-09-28,போதுமானது / Adequate
+FP-1208,Alwarpet,Zone 9 - Teynampet,6864,584,120,1367,23 Sep 2026,போதுமானது / Adequate
+FP-1209,Padi,மண்டலம் 7,565,664,87,907,26-09-2026,குறைவு / Low
+FP-1210,Nandanam,Zone 10 - Kodambakkam,4250,495,369,830,18 Sep 2026,போதுமானது / Adequate
+FP-1211,Virugambakkam,Kodambakkam,4634,360,249,718,2026-09-27,போதுமானது / Adequate
+FP-1212,Kottivakkam,Perungudi,588,532,27,935,27-09-2026,குறைவு / Low
+FP-1213,Saligramam,மண்டலம் 10,555,369,72,1690,25 Sep 2026,குறைவு / Low
+FP-1214,Madipakkam,Zone 14 - Perungudi,5219,143,258,1133,18 Sep 2026,போதுமானது / Adequate
+FP-1215,Nanganallur,மண்டலம் 12,328,597,18,2400,02-10-2026,குறைவு / Low
+FP-1216,Washermanpet,மண்டலம் 5,367,398,53,1231,2026-10-01,குறைவு / Low
+FP-1217,Taramani,மண்டலம் 13,5399,317,485,1232,4 Oct 2026,போதுமானது / Adequate
+FP-1218,K.K. Nagar,Zone 10 - Kodambakkam,5459,186,213,1810,21 Sep 2026,போதுமானது / Adequate
+FP-1219,Kottivakkam,Perungudi,8355,115,454,1853,27-09-2026,போதுமானது / Adequate
+FP-1220,Karapakkam,ZONE-15,5096,502,477,1578,02-10-2026,போதுமானது / Adequate
+FP-1221,Padi,Ambattur,2831,460,475,1199,19-09-2026,போதுமானது / Adequate
+FP-1222,Otteri,மண்டலம் 6,4829,321,314,1309,19-09-2026,போதுமானது / Adequate
+FP-1223,Saidapet,ZONE-10,8206,330,417,1146,3 Oct 2026,போதுமானது / Adequate
+FP-1224,Nandanam,மண்டலம் 10,3916,153,273,1700,2026-10-05,போதுமானது / Adequate
+FP-1225,Santhome,மண்டலம் 9,494,438,81,2343,23-09-2026,குறைவு / Low
+FP-1226,Kasimedu,ZONE-4,4898,123,342,680,2026-09-19,போதுமானது / Adequate
+FP-1227,Kottivakkam,ZONE-14,1458,563,483,1920,2026-10-05,போதுமானது / Adequate
+FP-1228,Meenambakkam,Zone 12 - Alandur,327,668,50,791,23-09-2026,குறைவு / Low
+FP-1229,Kasimedu,Zone 4 - Tondiarpet,6213,115,160,934,25-09-2026,போதுமானது / Adequate
+FP-1230,Nungambakkam,Zone 9 - Teynampet,5344,249,332,1996,2026-09-30,போதுமானது / Adequate
+FP-1231,Mogappair,மண்டலம் 7,502,162,43,2018,2026-09-28,குறைவு / Low
+FP-1232,Saligramam,Zone 10 - Kodambakkam,6568,552,316,831,03-10-2026,போதுமானது / Adequate
+FP-1233,Thiruvanmiyur,மண்டலம் 13,6739,511,150,2146,22 Sep 2026,போதுமானது / Adequate
+FP-1234,Ashok Nagar,ZONE-10,2283,546,101,2358,2026-09-20,போதுமானது / Adequate
+FP-1235,K.K. Nagar,ZONE-10,334,613,27,1491,23-09-2026,குறைவு / Low
+FP-1236,Vadapalani,மண்டலம் 10,542,297,80,998,18-09-2026,குறைவு / Low

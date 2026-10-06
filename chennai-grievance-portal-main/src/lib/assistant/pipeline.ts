@@ -14,7 +14,8 @@ import { AiBudgetError, AiBusyError, AiUnavailableError, aiStatus, generateJson,
 import { routerPrompt, routerSchemas, routerSystem, type AnswerKind } from "@/lib/ai/prompts/router";
 import { PLANNER_SYSTEM, plannerPrompt } from "@/lib/ai/prompts/planner";
 import { ComposerLenient, ComposerSchema, composerPrompt, composerSystem, type ComposerOutput } from "@/lib/ai/prompts/composer";
-import { asOf as storeAsOf } from "@/lib/collector/intel";
+import { asOf as storeAsOf, contactsFor } from "@/lib/collector/intel";
+import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { classify } from "@/lib/collector/nlp";
 import { audit } from "@/lib/collector/sources";
 import { EXAMPLES, TEXT, detectLanguage, hasTamilScript, requestedCount, wantsNoVisual, wantsTable, wantsVisual, wantsVisualByNature, type Lang, type LangChoice } from "@/lib/assistant/lang";
@@ -23,7 +24,7 @@ import { ToolError, listTools, runTool } from "@/lib/assistant/tools";
 import { ENV_METRICS } from "@/lib/assistant/queries";
 import { applyTopN, presentAll, spec, type Presentation } from "@/lib/assistant/datasets";
 import { correctSpelling } from "@/lib/assistant/spell";
-import { holdSync, lanceWarm } from "@/lib/assistant/lance";
+import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
@@ -164,6 +165,60 @@ function otherDeptsIncident(r: ToolResult, dept: string): boolean {
 function lockQuery<T extends { filters: { field: string }[]; dimensions: { field: string }[] }>(q: T): T {
   const isDept = (f: string) => /(^|\.)(lead_dept|dept_code|department)$/.test(f);
   return { ...q, filters: q.filters.filter((f) => !isDept(f.field)), dimensions: q.dimensions.filter((d) => !isDept(d.field)) };
+}
+
+const NEWS_STOP = new Set(["what", "whats", "happening", "happened", "that", "this", "about", "tell", "there", "which", "where", "when", "with", "from",
+  "have", "news", "today", "chennai", "please", "know", "going", "explain", "something", "anything", "event"]);
+
+/**
+ * Whether a question the router called out of scope names a story in the last 7 days of district news: two of its own words
+ * (or one long one) in a headline the search finds. "Who won the IPL?" names none and stays refused.
+ */
+export async function inOurNews(message: string, now: string): Promise<boolean> {
+  const words = message.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length >= 4 && !NEWS_STOP.has(w));
+  if (!words.length) return false;
+  const since = Date.parse(now.replace(" ", "T") + "+05:30") / 1000 - 168 * 3600;
+  const found = await hybridSearch("news", message, { since }, 5).catch(() => null);
+  return !!found?.some((f) => {
+    const title = String(f.rec.title ?? "").toLowerCase();
+    const hits = words.filter((w) => title.includes(w));
+    return hits.length >= 2 || hits.some((w) => w.length >= 8);
+  });
+}
+
+/** Asks whom to contact: an officer, a phone number or the person in charge (of a department or zone, never of a citizen). */
+// (phrases, not single words: "number of accidents" or "not confirmed by an officer" are not contact questions)
+export const CONTACT = /\b(contacts?( (of|for|details|number))?|phone (number|no)|helpline|whom to (call|contact)|who (handles|is (the )?(head|officer|incharge|in[- ]charge))|(officers?|officials?|head|in[- ]?charge) (of|for|in)\b)|(?<!\bby (?:an? |the )?)\b(officers?|officials?|contacts?)\s*\??\s*$|தொடர்பு|அதிகாரி/i;
+
+/** The departments a message names, best match first, by the words of their names ("health department" -> every health one). */
+export function deptsNamed(message: string, n: RefNames): string[] {
+  const said = message.toLowerCase();
+  const skip = new Set(["and", "the", "department", "dept", "gcc", "wing", "of", "for", "services", "government", "chennai"]);
+  const out: { code: string; score: number; owner: boolean }[] = [];
+  for (const [code, d] of n.depts.entries()) {
+    const words = `${d.name ?? ""} ${code}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !skip.has(w));
+    const score = words.filter((w) => new RegExp(`\\b${w}`).test(said)).length;
+    if (score) out.push({ code, score, owner: !!d.actionOwner });
+  }
+  return out.sort((a, b) => b.score - a.score || Number(b.owner) - Number(a.owner)).map((x) => x.code);
+}
+
+/**
+ * The department to show contacts for: of those the message names, the first that has officials in the directory (several
+ * share a word: "health" names three health departments, and only some of them are in the GCC directory).
+ */
+async function contactDept(message: string, n: RefNames): Promise<string | null> {
+  // the directory files officials under the GCC departments' codes (GCC-HLT "Health Department"), which the incident
+  // departments (HLT-DMS ...) do not share: both lists are matched, the directory's first
+  const said = message.toLowerCase();
+  const skip = /^(and|the|department|dept|gcc|wing|of|for|services)$/;
+  const gcc = Object.entries(DEPT_CONFIG)
+    .map(([code, c]) => ({ code, score: `${c.portalName ?? ""} ${c.short}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !skip.test(w))
+      .filter((w) => new RegExp(`\\b${w}`).test(said)).length }))
+    .filter((x) => x.score).sort((a, b) => b.score - a.score).map((x) => x.code);
+  const names = [...new Set([...gcc, ...deptsNamed(message, n)])];
+  for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(() => [])).length) return code;
+  return names[0] ?? null;
 }
 
 /** The period an answer covers when the question names none: the whole quarter, not just the console's last 24 hours. */
@@ -711,6 +766,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // the reply language: the chip, else Tamil script, else the rules' or the router's Tanglish
   if (i.language === "auto") lang = detected.lang !== "en" ? detected.lang : route.language === "tanglish" || (route.language === "ta" && !hasTamilScript(message)) ? "tanglish" : route.language === "ta" ? "ta" : "en";
   if (guard?.kind === "bulk" && !["out_of_scope", "unsafe", "email_followup"].includes(route.intent)) route = { ...route, intent: "bulk_request" };
+  // "what is the Black Flag March?" reads like general knowledge to a router that cannot see the day's news: before refusing,
+  // the district's own news is searched, and a story the question's words name is answered instead of refused
+  if (route.intent === "out_of_scope" && !route.offline && !i.pinId && !i.insightKey && await inOurNews(message, now)) {
+    route = { ...route, intent: "tool_question", refusal: null,
+      decision: { answer: "news_story", incidentId: null, storyId: null, find: message, count: null, focus: "all", openOnly: false, severity: null, options: [] },
+      assumptions: [...route.assumptions, "Not general knowledge: it is in the district's news, so it was answered from there."] };
+  }
   // the router's understanding decides the kind of answer: one incident explained, an area overview, a list, a story, a question back
   if (route.decision && !i.pinId && !i.insightKey && !["out_of_scope", "unsafe", "bulk_request", "smalltalk", "help", "chart_edit", "console_action", "email_followup"].includes(route.intent)) {
     const p = planFromDecision(route, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null);
@@ -785,6 +847,16 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (!route.decision && onlyPlace && route.tools.some((t) => t.name === "incident_story")) {
     route = { ...route, intent: "tool_question", tools: [{ name: "zone_profile", args: { scope: route.scope, zone: Number(placeData!.zone) } }],
       assumptions: ["Read as a question about the place, not one incident: its snapshot."] };
+  }
+  // "contact of health department", "who is the officer for PWD in Adyar": the officials' directory, never the incidents of a
+  // subject the department's name happens to share ("health")
+  if (CONTACT.test(message) && !route.tools.some((t) => t.name === "contacts") && !["out_of_scope", "unsafe"].includes(route.intent)) {
+    const dept = await contactDept(message, names);
+    const zone = placeData?.zone != null ? Number(placeData.zone) : route.scope.zone ?? null;
+    if (dept || zone) {
+      route = { ...route, intent: "tool_question", tools: [{ name: "contacts", args: { dept, zone } }], decision: undefined,
+        assumptions: [...route.assumptions, "Read as a request for the officials to contact."] };
+    }
   }
   // several subjects in one question ("road accidents, flooding and public-infrastructure complaints"): every part is answered,
   // side by side, instead of the data being narrowed to the one subject a single category filter can hold

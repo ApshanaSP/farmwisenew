@@ -89,7 +89,7 @@ function LoginForm() {
             <input id="password" type={showPassword ? "text" : "password"} required autoComplete="current-password"
               className="auth-input pl-11 pr-12" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
             <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-faint transition hover:text-navy">
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-faint transition hover:text-navy-700">
               {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
             </button>
           </div>

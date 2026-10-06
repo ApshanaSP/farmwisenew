@@ -8,6 +8,9 @@ import type { Scope } from "@/lib/assistant/answer";
 import type { ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 
+/** Words that name a period ("recent" is not one: the fast path reads it as the last day, whatever period the router copied). */
+const NAMES_PERIOD = /\b(today|tonight|yesterday|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|vaaram|maasam/i;
+
 /** The parts of a route the decision reads. */
 export interface RouteLike {
   intent: string;
@@ -53,7 +56,10 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
   const storyId = d.storyId && stories.has(d.storyId) ? d.storyId : null;
   const rules = detectIntent(message, ctx);
   const base: Detected = { ...rules, n: d.count ?? rules.n, sev: d.severity ?? rules.sev, openOnly: d.openOnly || rules.openOnly, incidentId, storyId,
-    focus: d.focus, refinement: false, find: d.find, period: route.scopeRaw?.period ?? null, because: "understood by the router" };
+    focus: d.focus, refinement: false, find: d.find, because: "understood by the router",
+    // a period only when the words name one (or a follow-up changes it): the router copying the chat's default 90 days into
+    // "recent news" is not the Collector asking for 90 days
+    period: route.scopeRaw?.period && (NAMES_PERIOD.test(message) || route.intent === "plan_edit") ? route.scopeRaw.period : null };
   switch (d.answer) {
     case "clarify":
       return d.options.length >= 2 ? { clarify: { question: route.clarify || "Which one do you mean?", options: d.options } } : null;

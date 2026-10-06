@@ -9,9 +9,9 @@ import { CAT_COL, type Row } from "./lib";
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
 
 export const STATION_STYLE: Record<MapStation["kind"], { color: string; letter: string; title: string }> = {
-  aqi: { color: "#35C28C", letter: "A", title: "Air quality station" },
-  rain: { color: "#4C8DFF", letter: "R", title: "Rain gauge" },
-  lake: { color: "#2BC7D9", letter: "L", title: "Lake / reservoir" }
+  aqi: { color: "#34D399", letter: "A", title: "Air quality station" },
+  rain: { color: "#38BDF8", letter: "R", title: "Rain gauge" },
+  lake: { color: "#818CF8", letter: "L", title: "Lake / reservoir" }
 };
 
 interface Props {
@@ -39,15 +39,16 @@ interface Props {
   pinColor?: (pin: Row) => string;
 }
 
+/** zone shading: indigo, warming to rose where the most incidents were reported */
 const HEAT = [
   { c: "#000000", o: 0 },
-  { c: "#4C8DFF", o: 0.12 },
-  { c: "#E8B84A", o: 0.16 },
-  { c: "#F7893B", o: 0.24 },
-  { c: "#F2555A", o: 0.32 }
+  { c: "#818CF8", o: 0.14 },
+  { c: "#818CF8", o: 0.24 },
+  { c: "#A78BFA", o: 0.3 },
+  { c: "#FB7185", o: 0.34 }
 ];
-const TALUK_COL = ["#4D8DFF", "#FFB020", "#22C55E", "#E879F9", "#F97316", "#14B8A6", "#A78BFA", "#F43F5E", "#84CC16",
-  "#06B6D4", "#EAB308", "#A28EFA", "#EF4444", "#10B981", "#3B82F6", "#F59E0B", "#EC4899", "#64748B"];
+/** taluks: one coordinated set of tones, so neighbours stand apart */
+const TALUK_COL = ["#818CF8", "#38BDF8", "#34D399", "#FBBF24", "#FB7185", "#A78BFA", "#2DD4BF", "#F472B6", "#A3E635"];
 
 interface State {
   L: typeof Leaflet;
@@ -64,6 +65,8 @@ interface State {
   district: Leaflet.LatLngBounds;
   zoneBounds: Map<number, Leaflet.LatLngBounds>;
   talukBounds: Map<string, Leaflet.LatLngBounds>;
+  /** hides zone or taluk names that would overlap another name */
+  declutter: () => void;
 }
 
 /** Satellite map of the district: ward heat or taluk colours, zone outlines, incident pins and stations. */
@@ -85,6 +88,24 @@ export default function SatMap(props: Props) {
       if (dead || !el.current) return;
       const map = L.map(el.current, { zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, minZoom: 9, maxZoom: 18, attributionControl: true });
       map.attributionControl.setPrefix(false);
+      // markers and zone names scale with the zoom: small over the whole district, larger as the Collector zooms in
+      const box = el.current;
+      const scale = () => box.style.setProperty("--pz", String(Math.max(0.7, Math.min(1.45, 0.7 + (map.getZoom() - 11) * 0.25))));
+      map.on("zoomend", scale);
+      scale();
+      // zone and taluk names never overlap: a name that would cover another (the selected one wins) waits for a closer zoom
+      const declutter = () => {
+        const ls = [...box.querySelectorAll<HTMLElement>(".zlbl")]
+          .sort((a, b) => Number(b.classList.contains("zsel")) - Number(a.classList.contains("zsel")));
+        const taken: DOMRect[] = [];
+        for (const l of ls) {
+          l.style.visibility = "";
+          const r = l.getBoundingClientRect();
+          if (taken.some((t) => r.left < t.right + 4 && r.right > t.left - 4 && r.top < t.bottom + 1 && r.bottom > t.top - 1)) l.style.visibility = "hidden";
+          else taken.push(r);
+        }
+      };
+      map.on("zoomend moveend", declutter);
       L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics"
       }).addTo(map);
@@ -137,7 +158,7 @@ export default function SatMap(props: Props) {
       map.fitBounds(district, { padding: [8, 8] });
 
       st.current = {
-        L, map, wards, zoneLabels, talukLabels, outlines, zoneBounds, talukBounds, district,
+        L, map, wards, zoneLabels, talukLabels, outlines, zoneBounds, talukBounds, district, declutter,
         sel: L.layerGroup().addTo(map),
         pins: L.layerGroup().addTo(map),
         stations: L.layerGroup().addTo(map),
@@ -168,11 +189,11 @@ export default function SatMap(props: Props) {
     };
     for (const w of s.wards) {
       if (mode === "taluks") {
-        const col = TALUK_COL[(talukIx.get(w.taluk ?? "") ?? 17) % TALUK_COL.length];
+        const col = TALUK_COL[(talukIx.get(w.taluk ?? "") ?? 0) % TALUK_COL.length];
         if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.15, color: "#9FB4D9", weight: 0.5 });
         else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.1 : 0.26, opacity: 0.3, color: "#9FB4D9", weight: 0.5 });
       } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.18 });
-      else if (zone) w.poly.setStyle({ fillColor: "#4C8DFF", fillOpacity: 0.08, opacity: 0.55 });
+      else if (zone) w.poly.setStyle({ fillColor: "#818CF8", fillOpacity: 0.1, opacity: 0.55 });
       else {
         const h = HEAT[level(w.zone)];
         w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.35 });
@@ -204,10 +225,11 @@ export default function SatMap(props: Props) {
     if (mode === "taluks" && taluk) target = s.talukBounds.get(taluk);
     else if (zone) {
       const g = geo.zones.find((z) => z.zone === zone);
-      if (g) s.L.polyline(g.lines, { color: "#2BD4E6", weight: 2.6, opacity: 1, interactive: false }).addTo(s.sel);
+      if (g) s.L.polyline(g.lines, { color: "#FFFFFF", weight: 2.4, opacity: 0.95, interactive: false }).addTo(s.sel);
       target = s.zoneBounds.get(zone);
     }
     if (!cb.current.focus) s.map.flyToBounds(target ?? s.district, { padding: target ? [24, 24] : [8, 8], duration: 0.6 });
+    requestAnimationFrame(() => st.current?.declutter());
   }, [ready, zoneCounts, zone, geo, mode, taluk]);
 
   // ---- incident pins
@@ -218,11 +240,12 @@ export default function SatMap(props: Props) {
     const shown = pins.filter((p) => p.lat != null && layers[p.cat]).slice(0, 150).reverse();
     for (const p of shown) {
       const open = Number(p.open) === 1;
-      const size = p.sev === "Severe" ? 14 : 10;
+      // the dot is centred on the point by CSS and sized by --s x the zoom scale (--pz)
+      const size = p.sev === "Severe" ? 11 : 8;
       const color = cb.current.pinColor?.(p) ?? CAT_COL[p.cat];
-      const html = `<div class="mpin${open ? "" : " faded"}${open && p.sev === "Severe" ? " pulse" : ""}" style="width:${size}px;height:${size}px;background:${color};--mc:${color}"></div>`;
+      const html = `<div class="mpin${open ? "" : " faded"}${open && p.sev === "Severe" ? " pulse" : ""}" style="--s:${size}px;background:${color};--mc:${color}"></div>`;
       s.L.marker([Number(p.lat), Number(p.lon)], {
-        icon: s.L.divIcon({ className: "", html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
+        icon: s.L.divIcon({ className: "", html, iconSize: [0, 0], iconAnchor: [0, 0] }),
         zIndexOffset: p.sev === "Severe" ? 500 : 0
       })
         .on("click", () => cb.current.onPin(p.id))
@@ -231,7 +254,7 @@ export default function SatMap(props: Props) {
     }
   }, [ready, pins, layers]);
 
-  // ---- items from added sources: violet diamonds; items naming the same place fan out slightly
+  // ---- items from added sources: indigo diamonds; items naming the same place fan out slightly
   useEffect(() => {
     const s = st.current;
     if (!s) return;
@@ -275,7 +298,7 @@ export default function SatMap(props: Props) {
     for (const x of stations) {
       const sty = STATION_STYLE[x.kind];
       s.L.marker([x.lat, x.lon], {
-        icon: s.L.divIcon({ className: "", html: `<div class="mst" style="background:${sty.color}">${sty.letter}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] })
+        icon: s.L.divIcon({ className: "", html: `<div class="mst" style="background:${sty.color};color:#0B1020">${sty.letter}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] })
       })
         .on("click", () => cb.current.onStation(x))
         .bindTooltip(`<b>${esc(x.name)}</b>${sty.title} · ${esc(x.label)}`, { className: "dtip", direction: "top", offset: [0, -10] })

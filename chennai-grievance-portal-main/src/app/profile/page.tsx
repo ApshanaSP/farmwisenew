@@ -270,7 +270,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-canvas">
+      <div className="flex min-h-screen flex-col diq-bg">
         <Header userName={user?.email} />
         <main className="flex flex-1 items-center justify-center">
           <p className="text-gray-500">Loading profile...</p>
@@ -281,7 +281,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col diq-bg">
       <Header userName={user?.email || undefined} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
         <h1 className="mb-6 text-2xl font-bold text-navy-900">My Profile</h1>
@@ -294,7 +294,7 @@ export default function ProfilePage() {
               alt="Profile photo"
               className="h-24 w-24 rounded-full border-2 border-navy-100 object-cover"
             />
-            <label className="cursor-pointer text-xs font-semibold text-navy hover:underline">
+            <label className="cursor-pointer text-xs font-semibold text-navy-700 hover:underline">
               {photoUploading ? "Uploading..." : "Change photo"}
               <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
             </label>

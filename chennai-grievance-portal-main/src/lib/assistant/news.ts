@@ -10,6 +10,7 @@ import intelPool from "@/lib/collector/db";
 import { categories, resolvePlace } from "@/lib/collector/nlp";
 import { hasPhrase, tokens, topicWords, type Topic } from "@/lib/assistant/intent";
 import type { NewsStory } from "@/lib/assistant/answer";
+import { embed } from "@/lib/assistant/embed";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -108,9 +109,13 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
       + Math.max(0, 20 - ageH / 2) + (li && num(li.open) ? 8 : 0) + Math.min(10, num(li?.complaints) * 2) + (newsOnly && ds.some((d) => num(d.is_incident)) ? 10 : 0)
       + (ds.some((d) => num(d.is_incident) === 1) ? 10 : 0) + num(li?.dead) * 10;
     const c = cat.get(li?.cat ?? cats[0]);
+    // the article's own place first (a story linked to the wrong incident must not move the lake to Egmore); the linked
+    // incident's place only when the articles name none more specific than "Chennai"
+    const said = ds.map((d) => String(d.place_text ?? "").trim()).find((p) => p && !/^chennai( district)?$/i.test(p)) ?? null;
+    const where = said ?? li?.zone_name ?? null;
     stories.push({
-      storyId, headline: String(lead.title), summary: ai ?? (own || `${sourceCount > 1 ? `${sourceCount} outlets` : String(lead.publisher ?? "One outlet")} reported this${li?.zone_name ? ` in ${li.zone_name}` : ""}.`),
-      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: li?.loc ?? lead.place_text ?? li?.zone_name ?? null,
+      storyId, headline: String(lead.title), summary: ai ?? (own || `${sourceCount > 1 ? `${sourceCount} outlets` : String(lead.publisher ?? "One outlet")} reported this${where ? ` in ${where}` : ""}.`),
+      aiSummary: !!ai, publishedAt: d0(ds).t ?? null, location: said ?? li?.loc ?? lead.place_text ?? li?.zone_name ?? null,
       category: li?.label ?? c?.label ?? null, department: li?.dept_name ?? (c ? deptName.get(c.lead) ?? null : null), sourceCount,
       sources: ds.slice(0, 8).map((d) => ({ publisher: d.publisher ?? null, title: String(d.title), url: d.url ?? null, t: d.t ?? null })),
       matchedIncidentId: li?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
@@ -130,7 +135,35 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   const keep = stories.filter((s) => (!f.topic || s.cats.some((x) => f.topic!.cats.includes(x)) || s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))))
     && (!f.zone || s.zones.includes(f.zone)) && (!f.gapsOnly || (!s.departmentRecordFound && s.matchedIncidentId != null)));
   keep.sort((a, b) => b.score - a.score);
-  return { stories: keep.slice(0, n).map(({ score: _s, zones: _z, cats: _c, ...s }) => s), candidates: keep.length };
+  const merged = storyIds?.length ? keep : await mergeSameEvent(keep.slice(0, Math.max(n * 4, 24)));
+  return { stories: merged.slice(0, n).map(({ score: _s, zones: _z, cats: _c, ...s }) => s), candidates: keep.length - (Math.min(keep.length, Math.max(n * 4, 24)) - merged.length) };
+}
+
+/**
+ * One event reported in different words ("Four school students found dead in Thiruneermalai lake" / "Four kids die in
+ * suspected drowning in Tiruneermalai lake") is one story: headlines that mean nearly the same (the local multilingual model,
+ * cosine >= 0.92), in the same kind of incident and within 3 days of each other, are merged, their sources added together.
+ * The pipeline's clustering groups same-language reports; this also catches spelling and language differences.
+ */
+async function mergeSameEvent<S extends NewsStory & { score: number; cats: string[] }>(stories: S[]): Promise<S[]> {
+  if (stories.length < 2) return stories;
+  let vecs: Float32Array, dim: number;
+  try { ({ vecs, dim } = await embed(stories.map((s) => `query: ${s.headline.slice(0, 200)}`))); } catch { return stories; }
+  const v = (i: number) => vecs.subarray(i * dim, (i + 1) * dim);
+  const cos = (a: Float32Array, b: Float32Array) => { let s = 0; for (let k = 0; k < a.length; k++) s += a[k] * b[k]; return s; };
+  const t = (s: S) => (s.publishedAt ? Date.parse(s.publishedAt.replace(" ", "T") + "+05:30") : NaN);
+  const out: { s: S; i: number }[] = [];
+  stories.forEach((s, i) => {
+    const same = out.find((o) => cos(v(o.i), v(i)) >= 0.92 && (o.s.category === s.category || o.s.cats.some((c) => s.cats.includes(c)))
+      && !(Math.abs(t(o.s) - t(s)) > 72 * 3600_000));
+    if (!same) { out.push({ s: { ...s }, i }); return; }
+    // the higher-ranked story keeps its card; the other's outlets and reports join it
+    const seen = new Set(same.s.sources.map((x) => x.url ?? x.title));
+    same.s.sources = [...same.s.sources, ...s.sources.filter((x) => !seen.has(x.url ?? x.title))].slice(0, 8);
+    const outlets = new Set(same.s.sources.map((x) => x.publisher).filter(Boolean));
+    same.s.sourceCount = Math.max(same.s.sourceCount, outlets.size);
+  });
+  return out.map((o) => o.s);
 }
 
 const d0 = (ds: Row[]) => ds[0];

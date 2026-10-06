@@ -150,7 +150,7 @@ export default function ComplaintTypeSelector({
             rows={3}
             maxLength={400}
             required
-            className="form-input bg-white"
+            className="form-input bg-canvas-raised"
             placeholder="e.g. A transformer near the park has been sparking for two days."
             value={otherDescription}
             onChange={(e) => onOtherDescriptionChange(e.target.value)}
@@ -225,7 +225,7 @@ export default function ComplaintTypeSelector({
             href={source.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-navy"
+            className="underline hover:text-navy-700"
           >
             source
           </a>

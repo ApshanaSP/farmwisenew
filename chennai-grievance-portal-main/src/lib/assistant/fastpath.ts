@@ -40,7 +40,7 @@ export interface FastOutput { card: AnswerCard; plan: Record<string, unknown> }
 /** The period a question names, else null. */
 export function periodNamed(text: string): Period | null {
   const t = text.toLowerCase();
-  if (/\b(today|tonight|last 24 ?h(ours)?|past day|this morning|yesterday|innaiki|innaikku)\b|இன்று|நேற்று/.test(t)) return "daily";
+  if (/\b(today|tonight|last 24 ?h(ours)?|past day|this morning|yesterday|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|நேற்று/.test(t)) return "daily";
   if (/\b(this|last|past) week\b|\b7 days\b|\bweekly\b|vaaram|வாரம்/.test(t)) return "weekly";
   if (/\b(this|last|past) month\b|\b30 days\b|\bmonthly\b|maasam|மாதம்/.test(t)) return "monthly";
   if (/\b(this|last|past) quarter\b|\b90 days\b|\bquarterly\b/.test(t)) return "quarterly";

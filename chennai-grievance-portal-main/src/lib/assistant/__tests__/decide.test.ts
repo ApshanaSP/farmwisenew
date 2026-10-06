@@ -93,3 +93,24 @@ describe("a window in the question's own words", () => {
     expect(customWindow("how many crimes in Velachery")).toBeNull();
   });
 });
+
+describe("contact questions go to the officials' directory", () => {
+  it("recognises contact phrasing, not counts or officer checks", async () => {
+    const { CONTACT } = await import("@/lib/assistant/pipeline");
+    for (const q of ["contact of health department", "who is the officer for PWD in Adyar", "health department officer", "helpline for flooding", "who handles drainage in Zone 9"])
+      expect(CONTACT.test(q), q).toBe(true);
+    for (const q of ["number of road accidents this week", "incidents not confirmed by an officer", "how many health incidents", "what is the Black Flag March"])
+      expect(CONTACT.test(q), q).toBe(false);
+  });
+});
+
+describe("“recent” is the last day, not the chat's default 90 days", () => {
+  it("the router's copied period is dropped when the words name none", () => {
+    const p = planFromDecision(route({ answer: "news_list" }, { scopeRaw: { period: "quarterly" } }), "tell me about recent news", null, null);
+    expect(p?.fast?.period).toBeNull();
+  });
+  it("a period the words name is kept", () => {
+    const p = planFromDecision(route({ answer: "news_list" }, { scopeRaw: { period: "monthly" } }), "top news this month", null, null);
+    expect(p?.fast?.period).toBe("monthly");
+  });
+});

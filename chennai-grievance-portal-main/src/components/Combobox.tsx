@@ -270,7 +270,7 @@ export default function Combobox({
             type="button"
             onClick={clear}
             aria-label={`Clear selected ${noun}`}
-            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy"
+            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy-700"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -285,7 +285,7 @@ export default function Combobox({
       </div>
 
       {showList && (
-        <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl border border-canvas-border bg-white shadow-lift">
+        <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl border border-canvas-border bg-canvas-raised shadow-lift">
           {promptToType ? (
             <p className="px-3.5 py-3 text-sm text-ink-muted">
               Start typing to find your {noun} &mdash;{" "}
@@ -323,7 +323,7 @@ export default function Combobox({
                         choose(opt);
                       }}
                       className={`flex cursor-pointer items-center gap-2 px-3.5 py-2 text-sm transition-colors ${
-                        isActive ? "bg-navy-50 text-navy" : "text-ink"
+                        isActive ? "bg-navy-50 text-navy-700" : "text-ink"
                       }`}
                     >
                       <span className="min-w-0 flex-1">
@@ -335,7 +335,7 @@ export default function Combobox({
                         )}
                       </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 flex-shrink-0 text-navy" aria-hidden="true" />
+                        <Check className="h-4 w-4 flex-shrink-0 text-navy-700" aria-hidden="true" />
                       )}
                     </li>
                   );

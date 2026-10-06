@@ -16,7 +16,7 @@ export const itemWhen = (t: string, now: string) => (ms(t) > ms(now) ? fmtShort(
 
 export const itemWhere = (i: Row) => (i.place ?? i.zone_name ?? null) as string | null;
 
-/** One item in Today's Briefing: headline, source, place and time; opens the item. */
+/** One item in Latest news (from added sources): headline, source, place and time; opens the item. */
 export function AddedRow({ i, now, c }: { i: Row; now: string; c: Console }) {
   return (
     <button className="brief" onClick={() => c.openItem(i)}>
@@ -64,7 +64,7 @@ export function ItemBody({ item: i, c }: { item: Row; c: Console }) {
     <div className="itm">
       <div className="iv-tags">
         <span className="tg">{KIND[i.kind] ?? "Added source"}</span>
-        {i.is_incident ? <span className="tg solid" style={{ color: "#A28EFA" }}>Civic issue</span> : <span className="tg">General news</span>}
+        {i.is_incident ? <span className="tg solid">Civic issue</span> : <span className="tg">General news</span>}
         {i.lang === "ta" && <span className="tg">Tamil</span>}
       </div>
       <h3>{i.title}</h3>

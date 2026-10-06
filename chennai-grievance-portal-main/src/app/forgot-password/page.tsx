@@ -104,12 +104,12 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="dotted-canvas flex min-h-screen flex-col bg-canvas">
+    <div className="diq-bg flex min-h-screen flex-col">
       <Header />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12 sm:px-6">
         <div className="card animate-fade-up">
           <div className="mb-6 flex items-center gap-3">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy">
+            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
               {step === 4 ? <CheckCircle2 className="h-5 w-5" /> : <KeyRound className="h-5 w-5" />}
             </span>
             <div>
@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
               <div>
                 {info}
                 {devOtp && (
-                  <p className="mt-2 rounded-lg bg-white/70 px-2.5 py-1.5 font-mono text-sm font-bold text-navy">
+                  <p className="mt-2 rounded-lg bg-canvas-raised/70 px-2.5 py-1.5 font-mono text-sm font-bold text-navy-700">
                     [Dev mode] OTP: {devOtp}
                   </p>
                 )}
@@ -198,7 +198,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={(e) => requestOtp(e as unknown as FormEvent)}
                 disabled={submitting || cooldown > 0}
-                className="mb-6 text-sm font-medium text-navy hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="mb-6 text-sm font-medium text-navy-700 hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 {cooldown > 0 ? `Resend OTP in ${cooldown}s` : "Resend OTP"}
               </button>
@@ -260,7 +260,7 @@ export default function ForgotPasswordPage() {
           {step < 4 && (
             <p className="mt-6 text-center text-sm text-gray-600">
               Remembered your password?{" "}
-              <Link href="/login" className="font-semibold text-navy hover:underline">
+              <Link href="/login" className="font-semibold text-navy-700 hover:underline">
                 Back to Login
               </Link>
             </p>

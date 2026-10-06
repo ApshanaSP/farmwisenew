@@ -258,8 +258,16 @@ function fill(db: DB, doc: Doc, track: boolean): void {
   const inserts = new Map<string, ReturnType<DB["prepare"]>>();
   for (const [t, s] of Object.entries(doc.schema)) {
     for (const ddl of s.ddl) db.exec(ddl);
+    // a row saved by a newer copy of the app may carry a column this schema does not list yet (sources.mapping):
+    // the column is added, so the row loads (and is saved back whole) instead of the whole store failing to load
+    const known = new Set((db.prepare(`SELECT name FROM pragma_table_info(?)`).all(t) as { name: string }[]).map((c) => c.name));
     for (const row of doc.rows[t] ?? []) {
       const cols = Object.keys(row);
+      for (const c of cols) if (!known.has(c)) {
+        db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)}`);
+        known.add(c);
+        console.warn(`[aws-store] ${t}.${c} is not in the stored schema; added it (saved by a newer copy of the app)`);
+      }
       const sig = `${t}\u0000${cols.join("\u0000")}`;
       if (!inserts.has(sig)) inserts.set(sig, db.prepare(`INSERT INTO ${q(t)} (${cols.map(q).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`));
       inserts.get(sig)!.run(...(cols.map((c) => toSql(row[c])) as any[]));

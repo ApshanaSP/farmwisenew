@@ -40,9 +40,9 @@
   },
   "documents_columns": 32,
   "ops_tables_created": [],
-  "briefings_archived": 4,
+  "briefings_archived": 0,
   "mismatches": [],
-  "runtime_s": 78.8,
+  "runtime_s": 60.7,
   "column_types": {
     "actions": {
       "action_id": "VARCHAR(32)",

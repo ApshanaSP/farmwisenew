@@ -105,6 +105,7 @@ export interface PlaceBreakdown {
  * locality ("Sasi Nagar East Street, Sasi Nagar, Velachery"): the part before a bracket, then the
  * last comma-separated part.
  */
+// (the plain "Chennai" is what a report says when it names no locality: never ranked as a place)
 const LOCALITY = `NULLIF(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(i.place_text, ' (', 1), ',', -1)), '')`;
 
 /**
@@ -176,7 +177,7 @@ export async function categoryFigures(s: AssistantScope, now: string, codes: str
     q(`SELECT i.category_code AS code, i.zone_name AS name, COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND ${inCodes} AND i.zone_name IS NOT NULL
        GROUP BY i.category_code, i.zone_name ORDER BY n DESC`, [...w.params, ...codes]),
     q(`SELECT i.category_code AS code, ${LOCALITY} AS name, COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND ${inCodes}
-       GROUP BY i.category_code, name HAVING name IS NOT NULL ORDER BY n DESC LIMIT 400`, [...w.params, ...codes])
+       GROUP BY i.category_code, name HAVING name IS NOT NULL AND LOWER(name) NOT IN ('chennai', 'chennai district') ORDER BY n DESC LIMIT 400`, [...w.params, ...codes])
   ]);
   const prevBy = new Map(prev.map((r) => [String(r.code), n(r.n)]));
   return codes.map((code) => {
@@ -398,9 +399,9 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
        FROM incidents i WHERE ${w.sql} GROUP BY i.category_code`, w.params),
     q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n FROM incidents i WHERE ${wp.sql} GROUP BY i.category_code`, wp.params),
     q(`SELECT i.category_code AS code, ${LOCALITY} AS place, COUNT(*) AS n FROM incidents i WHERE ${w.sql}
-       GROUP BY i.category_code, place HAVING place IS NOT NULL ORDER BY n DESC LIMIT 300`, w.params),
+       GROUP BY i.category_code, place HAVING place IS NOT NULL AND LOWER(place) NOT IN ('chennai', 'chennai district') ORDER BY n DESC LIMIT 300`, w.params),
     q(`SELECT i.category_code AS code, ${LOCALITY} AS place, COUNT(*) AS n FROM incidents i WHERE ${wp.sql}
-       GROUP BY i.category_code, place HAVING place IS NOT NULL ORDER BY n DESC LIMIT 300`, wp.params),
+       GROUP BY i.category_code, place HAVING place IS NOT NULL AND LOWER(place) NOT IN ('chennai', 'chennai district') ORDER BY n DESC LIMIT 300`, wp.params),
     q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE ${w.sql} AND i.lead_dept IS NOT NULL
        GROUP BY name HAVING overdue > 0 ORDER BY overdue DESC, open DESC LIMIT 4`, w.params),

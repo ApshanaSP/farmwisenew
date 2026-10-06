@@ -543,7 +543,7 @@ export default function FileComplaintPage() {
 
   if (!checkedSession) {
     return (
-      <div className="flex min-h-screen flex-col bg-canvas">
+      <div className="flex min-h-screen flex-col diq-bg">
         <Header homeHref="/citizen" nav={CITIZEN_NAV} />
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
           <div className="skeleton mb-3 h-8 w-56" />
@@ -565,13 +565,13 @@ export default function FileComplaintPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col diq-bg">
       <Header userName={me?.email} homeHref="/citizen" nav={CITIZEN_NAV} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-8">
           <Link
             href="/citizen"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle transition hover:text-navy"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle transition hover:text-navy-700"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Back to dashboard
@@ -605,8 +605,8 @@ export default function FileComplaintPage() {
                         done
                           ? "border-navy bg-navy text-white"
                           : current
-                            ? "scale-110 border-navy bg-white text-navy shadow-glow"
-                            : "border-canvas-border bg-white text-ink-faint"
+                            ? "scale-110 border-navy bg-canvas-raised text-navy-700 shadow-glow"
+                            : "border-canvas-border bg-canvas-raised text-ink-faint"
                       }`}
                     >
                       {done ? <Check className="h-4 w-4" strokeWidth={3} /> : <Icon className="h-4 w-4" />}
@@ -619,7 +619,7 @@ export default function FileComplaintPage() {
                   </div>
                   <span
                     className={`mt-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
-                      current ? "text-navy" : done ? "text-ink-muted" : "text-ink-faint"
+                      current ? "text-navy-700" : done ? "text-ink-muted" : "text-ink-faint"
                     }`}
                   >
                     {s.label}
@@ -634,7 +634,7 @@ export default function FileComplaintPage() {
         {step === 1 && (
           <div className="card animate-fade-up">
             <div className="mb-6 flex items-start gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
                 <UserRound className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -682,7 +682,7 @@ export default function FileComplaintPage() {
 
             <p className="mt-2.5 text-xs text-ink-muted">
               Something out of date?{" "}
-              <Link href="/profile" className="font-semibold text-navy hover:underline">
+              <Link href="/profile" className="font-semibold text-navy-700 hover:underline">
                 Update it in your profile
               </Link>
               .
@@ -807,7 +807,7 @@ export default function FileComplaintPage() {
         {step === 2 && (
           <div className="card animate-fade-up">
             <div className="mb-6 flex items-start gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
                 <MapPin className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -1065,7 +1065,7 @@ export default function FileComplaintPage() {
         {step === 3 && (
           <div className="card animate-fade-up">
             <div className="mb-6 flex items-start gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
                 <Building2 className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -1126,7 +1126,7 @@ export default function FileComplaintPage() {
         {step === 4 && (
           <form className="card animate-fade-up" onSubmit={handleSubmit} noValidate>
             <div className="mb-6 flex items-start gap-3">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
                 <FileText className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -1168,7 +1168,7 @@ export default function FileComplaintPage() {
               <span className="form-label">Photograph / Video <span className="normal-case text-ink-faint">(optional, max 10MB)</span></span>
               {mediaFile ? (
                 <div className="flex items-center gap-3 rounded-xl border border-navy-200 bg-navy-50 p-3">
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-navy">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-canvas-raised text-navy-700">
                     <ImagePlus className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1179,7 +1179,7 @@ export default function FileComplaintPage() {
                     type="button"
                     onClick={() => setMediaFile(null)}
                     aria-label="Remove attachment"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-subtle transition hover:bg-white hover:text-red-600"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-subtle transition hover:bg-canvas-raised hover:text-red-600"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1252,9 +1252,9 @@ export default function FileComplaintPage() {
             <div className="mx-auto mt-6 max-w-sm overflow-hidden rounded-2xl border border-canvas-border">
               <div className="border-b border-canvas-border bg-navy-50 px-5 py-4">
                 <p className="text-2xs font-semibold uppercase tracking-wide text-navy-600">Complaint Number</p>
-                <p className="mt-1 font-mono text-xl font-bold tracking-tight text-navy">{result.complaintCode}</p>
+                <p className="mt-1 font-mono text-xl font-bold tracking-tight text-navy-700">{result.complaintCode}</p>
               </div>
-              <dl className="grid grid-cols-2 divide-x divide-canvas-border bg-white text-left">
+              <dl className="grid grid-cols-2 divide-x divide-canvas-border bg-canvas-raised text-left">
                 <div className="px-5 py-3.5">
                   <dt className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Department</dt>
                   <dd className="mt-0.5 text-sm font-medium text-ink">{result.department}</dd>

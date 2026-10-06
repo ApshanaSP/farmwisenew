@@ -86,13 +86,13 @@ export default function TrackComplaintsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col diq-bg">
       <Header userName={me?.email} homeHref="/citizen" nav={CITIZEN_NAV} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-7">
           <Link
             href="/citizen"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle transition hover:text-navy"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle transition hover:text-navy-700"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Back to dashboard
@@ -145,7 +145,7 @@ export default function TrackComplaintsPage() {
           </div>
         ) : complaints.length === 0 ? (
           <div className="card flex flex-col items-center py-14 text-center">
-            <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-navy-50 text-navy">
+            <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-navy-50 text-navy-700">
               <FileSearch className="h-7 w-7" aria-hidden="true" />
             </span>
             <p className="font-display text-base font-bold text-ink">No complaints found</p>
@@ -161,7 +161,7 @@ export default function TrackComplaintsPage() {
               return (
                 <article
                   key={c.id}
-                  className={`overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
+                  className={`overflow-hidden rounded-2xl border bg-canvas-raised transition-all duration-300 ${
                     expanded ? "border-navy-200 shadow-lift" : "border-canvas-border shadow-card"
                   }`}
                 >
@@ -171,7 +171,7 @@ export default function TrackComplaintsPage() {
                         <p className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
                           Complaint Number
                         </p>
-                        <p className="font-mono text-lg font-bold tracking-tight text-navy">
+                        <p className="font-mono text-lg font-bold tracking-tight text-navy-700">
                           {c.complaint_code}
                         </p>
                       </div>
@@ -220,7 +220,7 @@ export default function TrackComplaintsPage() {
                       type="button"
                       onClick={() => toggleDetails(c.complaint_code)}
                       aria-expanded={expanded}
-                      className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-navy transition hover:text-navy-700"
+                      className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-navy-700 transition hover:text-navy-700"
                     >
                       {expanded ? "Hide details" : "View details"}
                       <ChevronDown
@@ -269,7 +269,7 @@ export default function TrackComplaintsPage() {
                                 href={detail.media_path}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline"
+                                className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-700 hover:underline"
                               >
                                 <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
                                 View attached photo/video

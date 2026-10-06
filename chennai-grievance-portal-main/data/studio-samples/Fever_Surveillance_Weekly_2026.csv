@@ -1,0 +1,402 @@
+﻿Week Ending,Hospital,Area,Fever Cases,Dengue Suspected,Dengue Confirmed,Admitted
+18/04/2026,UPHC Velachery,Velachery,21,2,1,1
+18/04/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,44,7,2,3
+18/04/2026,RSRM Hospital,Royapuram,42,6,2,4
+18/04/2026,UPHC Saidapet,Saidapet,36,6,3,2
+18/04/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,29,6,2,2
+18/04/2026,UPHC Perungudi,Perungudi,22,3,1,2
+18/04/2026,UPHC Mylapore,Mylapore,17,2,1,1
+18/04/2026,"Govt Hospital, Tondiarpet",Tondiarpet,35,4,1,4
+18/04/2026,UPHC Kodambakkam,Kodambakkam,31,5,2,2
+18/04/2026,UPHC Adyar,Adyar,20,3,1,1
+18/04/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,21,2,1,2
+18/04/2026,UPHC Sholinganallur,Sholinganallur,14,1,0,1
+18/04/2026,UPHC Thiruvottiyur,Thiruvottiyur,28,4,1,2
+18/04/2026,UPHC Ambattur,Ambattur,23,3,1,2
+18/04/2026,UPHC Alandur,Alandur,42,6,2,3
+18/04/2026,UPHC Valasaravakkam,Valasaravakkam,23,3,1,2
+25/04/2026,UPHC Velachery,Velachery,17,2,1,2
+25/04/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,47,11,5,4
+25/04/2026,RSRM Hospital,Royapuram,44,7,3,3
+25/04/2026,UPHC Saidapet,Saidapet,38,6,2,3
+25/04/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,39,6,2,4
+25/04/2026,UPHC Perungudi,Perungudi,29,4,2,3
+25/04/2026,UPHC Mylapore,Mylapore,17,2,1,2
+25/04/2026,"Govt Hospital, Tondiarpet",Tondiarpet,25,3,1,2
+25/04/2026,UPHC Kodambakkam,Kodambakkam,21,3,1,2
+25/04/2026,UPHC Adyar,Adyar,53,12,5,3
+25/04/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,25,2,1,3
+25/04/2026,UPHC Sholinganallur,Sholinganallur,34,4,1,3
+25/04/2026,UPHC Thiruvottiyur,Thiruvottiyur,34,5,2,3
+25/04/2026,UPHC Ambattur,Ambattur,51,12,4,4
+25/04/2026,UPHC Alandur,Alandur,33,5,2,3
+25/04/2026,UPHC Valasaravakkam,Valasaravakkam,20,3,1,2
+02/05/2026,UPHC Velachery,Velachery,11,1,0,1
+02/05/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,40,10,5,3
+02/05/2026,RSRM Hospital,Royapuram,45,10,5,4
+02/05/2026,UPHC Saidapet,Saidapet,35,6,3,3
+02/05/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,,5,2,2
+02/05/2026,UPHC Perungudi,Perungudi,26,4,2,2
+02/05/2026,UPHC Mylapore,Mylapore,15,1,0,1
+02/05/2026,"Govt Hospital, Tondiarpet",Tondiarpet,39,6,2,3
+02/05/2026,UPHC Kodambakkam,Kodambakkam,35,5,2,4
+02/05/2026,UPHC Adyar,Adyar,55,16,7,6
+02/05/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,32,3,1,3
+02/05/2026,UPHC Sholinganallur,Sholinganallur,35,6,2,3
+02/05/2026,UPHC Thiruvottiyur,Thiruvottiyur,47,7,2,4
+02/05/2026,UPHC Ambattur,Ambattur,36,6,2,3
+02/05/2026,UPHC Alandur,Alandur,45,9,4,4
+02/05/2026,UPHC Valasaravakkam,Valasaravakkam,39,5,2,4
+09/05/2026,UPHC Velachery,Velachery,18,2,1,2
+09/05/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,64,20,8,4
+09/05/2026,RSRM Hospital,Royapuram,48,8,3,4
+09/05/2026,UPHC Saidapet,Saidapet,29,5,2,3
+09/05/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,44,8,3,4
+09/05/2026,UPHC Perungudi,Perungudi,15,1,0,1
+09/05/2026,UPHC Mylapore,Mylapore,15,1,0,1
+09/05/2026,"Govt Hospital, Tondiarpet",Tondiarpet,47,10,3,4
+09/05/2026,UPHC Kodambakkam,Kodambakkam,41,8,4,3
+09/05/2026,UPHC Adyar,Adyar,30,5,2,2
+09/05/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,27,2,1,2
+09/05/2026,UPHC Sholinganallur,Sholinganallur,41,6,3,4
+09/05/2026,UPHC Thiruvottiyur,Thiruvottiyur,47,10,5,4
+09/05/2026,UPHC Ambattur,Ambattur,32,7,3,3
+09/05/2026,UPHC Alandur,Alandur,35,6,2,2
+09/05/2026,UPHC Valasaravakkam,Valasaravakkam,27,3,1,2
+16/05/2026,UPHC Velachery,Velachery,13,1,0,1
+16/05/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,31,5,2,3
+16/05/2026,RSRM Hospital,Royapuram,38,6,2,4
+16/05/2026,UPHC Saidapet,Saidapet,48,9,3,3
+16/05/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,42,8,4,4
+16/05/2026,UPHC Perungudi,Perungudi,17,2,1,2
+16/05/2026,UPHC Mylapore,Mylapore,29,3,1,2
+16/05/2026,"Govt Hospital, Tondiarpet",Tondiarpet,38,8,2,3
+16/05/2026,UPHC Kodambakkam,Kodambakkam,34,7,3,3
+16/05/2026,UPHC Adyar,Adyar,41,10,3,4
+16/05/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,24,2,1,2
+16/05/2026,UPHC Sholinganallur,Sholinganallur,32,5,2,3
+16/05/2026,UPHC Thiruvottiyur,Thiruvottiyur,57,14,5,6
+16/05/2026,UPHC Ambattur,Ambattur,26,4,2,2
+16/05/2026,UPHC Alandur,Alandur,60,14,6,4
+16/05/2026,UPHC Valasaravakkam,Valasaravakkam,35,4,1,3
+23/05/2026,UPHC Velachery,Velachery,23,2,1,2
+23/05/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,49,11,4,3
+23/05/2026,RSRM Hospital,Royapuram,30,6,2,3
+23/05/2026,UPHC Saidapet,Saidapet,42,7,3,3
+23/05/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,45,7,3,4
+23/05/2026,UPHC Perungudi,Perungudi,25,4,2,3
+23/05/2026,UPHC Mylapore,Mylapore,31,3,1,3
+23/05/2026,"Govt Hospital, Tondiarpet",Tondiarpet,41,9,3,4
+23/05/2026,UPHC Kodambakkam,Kodambakkam,38,6,3,4
+23/05/2026,UPHC Adyar,Adyar,33,6,2,4
+23/05/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,19,2,1,1
+23/05/2026,UPHC Sholinganallur,Sholinganallur,17,2,1,1
+23/05/2026,UPHC Thiruvottiyur,Thiruvottiyur,37,6,2,2
+23/05/2026,UPHC Ambattur,Ambattur,33,6,2,2
+23/05/2026,UPHC Alandur,Alandur,40,7,3,4
+23/05/2026,UPHC Valasaravakkam,Valasaravakkam,44,9,4,3
+30/05/2026,UPHC Velachery,Velachery,13,1,0,1
+30/05/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,58,18,5,5
+30/05/2026,RSRM Hospital,Royapuram,57,15,5,6
+30/05/2026,UPHC Saidapet,Saidapet,69,20,7,6
+30/05/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,53,16,7,4
+30/05/2026,UPHC Perungudi,Perungudi,32,5,2,2
+30/05/2026,UPHC Mylapore,Mylapore,19,2,1,2
+30/05/2026,"Govt Hospital, Tondiarpet",Tondiarpet,46,11,5,4
+30/05/2026,UPHC Kodambakkam,Kodambakkam,58,17,6,6
+30/05/2026,UPHC Adyar,Adyar,71,24,7,5
+30/05/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,13,1,0,1
+30/05/2026,UPHC Sholinganallur,Sholinganallur,44,11,4,5
+30/05/2026,UPHC Thiruvottiyur,Thiruvottiyur,36,6,2,3
+30/05/2026,UPHC Ambattur,Ambattur,45,12,6,3
+30/05/2026,UPHC Alandur,Alandur,61,15,6,4
+30/05/2026,UPHC Valasaravakkam,Valasaravakkam,49,13,6,4
+06/06/2026,UPHC Velachery,Velachery,19,2,1,2
+06/06/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,44,10,4,4
+06/06/2026,RSRM Hospital,Royapuram,48,13,5,4
+06/06/2026,UPHC Saidapet,Saidapet,38,6,3,4
+06/06/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,27,4,1,3
+06/06/2026,UPHC Perungudi,Perungudi,23,3,1,2
+06/06/2026,UPHC Mylapore,Mylapore,24,2,1,3
+06/06/2026,"Govt Hospital, Tondiarpet",Tondiarpet,40,NIL,3,3
+06/06/2026,UPHC Kodambakkam,Kodambakkam,31,5,2,3
+06/06/2026,UPHC Adyar,Adyar,35,7,3,4
+06/06/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,13,1,0,1
+06/06/2026,UPHC Sholinganallur,Sholinganallur,39,5,2,3
+06/06/2026,UPHC Thiruvottiyur,Thiruvottiyur,55,14,5,5
+06/06/2026,UPHC Ambattur,Ambattur,33,6,2,3
+06/06/2026,UPHC Alandur,Alandur,18,3,1,2
+06/06/2026,UPHC Valasaravakkam,Valasaravakkam,22,4,2,2
+13/06/2026,UPHC Velachery,Velachery,18,2,1,1
+13/06/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,48,12,4,4
+13/06/2026,RSRM Hospital,Royapuram,41,9,4,3
+13/06/2026,UPHC Saidapet,Saidapet,43,9,4,3
+13/06/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,49,9,3,4
+13/06/2026,UPHC Perungudi,Perungudi,24,3,1,2
+13/06/2026,UPHC Mylapore,Mylapore,32,3,1,3
+13/06/2026,"Govt Hospital, Tondiarpet",Tondiarpet,41,9,3,3
+13/06/2026,UPHC Kodambakkam,Kodambakkam,43,9,3,4
+13/06/2026,UPHC Adyar,Adyar,51,13,5,4
+13/06/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,11,1,0,1
+13/06/2026,UPHC Sholinganallur,Sholinganallur,27,4,2,2
+13/06/2026,UPHC Thiruvottiyur,Thiruvottiyur,34,7,3,3
+13/06/2026,UPHC Ambattur,Ambattur,48,11,4,5
+13/06/2026,UPHC Alandur,Alandur,35,5,2,3
+13/06/2026,UPHC Valasaravakkam,Valasaravakkam,26,4,1,2
+20/06/2026,UPHC Velachery,Velachery,13,1,0,1
+20/06/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,33,6,3,2
+20/06/2026,RSRM Hospital,Royapuram,59,16,6,5
+20/06/2026,UPHC Saidapet,Saidapet,52,13,6,4
+20/06/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,51,13,6,3
+20/06/2026,UPHC Perungudi,Perungudi,33,4,2,2
+20/06/2026,UPHC Mylapore,Mylapore,19,2,1,2
+20/06/2026,"Govt Hospital, Tondiarpet",Tondiarpet,33,6,2,3
+20/06/2026,UPHC Kodambakkam,Kodambakkam,47,12,6,4
+20/06/2026,UPHC Adyar,Adyar,38,6,3,3
+20/06/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,25,2,1,2
+20/06/2026,UPHC Sholinganallur,Sholinganallur,27,3,1,3
+20/06/2026,UPHC Thiruvottiyur,Thiruvottiyur,37,8,3,3
+20/06/2026,UPHC Ambattur,Ambattur,18,2,1,1
+20/06/2026,UPHC Alandur,Alandur,32,6,2,2
+20/06/2026,UPHC Valasaravakkam,Valasaravakkam,28,4,2,2
+27/06/2026,UPHC Velachery,Velachery,15,1,0,1
+27/06/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,49,12,5,3
+27/06/2026,RSRM Hospital,Royapuram,24,4,2,1
+27/06/2026,UPHC Saidapet,Saidapet,40,7,3,3
+27/06/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,38,6,3,2
+27/06/2026,UPHC Perungudi,Perungudi,25,4,2,2
+27/06/2026,UPHC Mylapore,Mylapore,27,3,1,2
+27/06/2026,"Govt Hospital, Tondiarpet",Tondiarpet,42,9,3,3
+27/06/2026,UPHC Kodambakkam,Kodambakkam,28,5,2,3
+27/06/2026,UPHC Adyar,Adyar,35,5,2,3
+27/06/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,12,1,0,1
+27/06/2026,UPHC Sholinganallur,Sholinganallur,27,4,2,2
+27/06/2026,UPHC Thiruvottiyur,Thiruvottiyur,50,12,5,5
+27/06/2026,UPHC Ambattur,Ambattur,52,10,4,5
+27/06/2026,UPHC Alandur,Alandur,38,5,2,3
+27/06/2026,UPHC Valasaravakkam,Valasaravakkam,37,7,3,3
+04/07/2026,UPHC Velachery,Velachery,15,1,0,1
+04/07/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,39,8,4,3
+04/07/2026,RSRM Hospital,Royapuram,34,6,2,2
+04/07/2026,UPHC Saidapet,Saidapet,25,3,1,2
+04/07/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,37,6,3,4
+04/07/2026,UPHC Perungudi,Perungudi,23,2,1,2
+04/07/2026,UPHC Mylapore,Mylapore,19,2,1,1
+04/07/2026,"Govt Hospital, Tondiarpet",Tondiarpet,43,8,3,4
+04/07/2026,UPHC Kodambakkam,Kodambakkam,39,6,2,3
+04/07/2026,UPHC Adyar,Adyar,28,5,2,3
+04/07/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,23,3,1,2
+04/07/2026,UPHC Sholinganallur,Sholinganallur,27,5,2,2
+04/07/2026,UPHC Thiruvottiyur,Thiruvottiyur,30,5,2,3
+04/07/2026,UPHC Ambattur,Ambattur,43,8,3,3
+04/07/2026,UPHC Alandur,Alandur,39,6,2,4
+04/07/2026,UPHC Valasaravakkam,Valasaravakkam,35,7,3,3
+11/07/2026,UPHC Velachery,Velachery,13,1,0,1
+11/07/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,47,9,4,4
+11/07/2026,RSRM Hospital,Royapuram,32,6,3,3
+11/07/2026,UPHC Saidapet,Saidapet,48,9,4,5
+11/07/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,32,6,3,3
+11/07/2026,UPHC Perungudi,Perungudi,34,4,2,4
+11/07/2026,UPHC Mylapore,Mylapore,28,3,1,3
+11/07/2026,UPHC Mylapore,Mylapore,28,3,1,3
+11/07/2026,"Govt Hospital, Tondiarpet",Tondiarpet,24,4,2,2
+11/07/2026,UPHC Kodambakkam,Kodambakkam,40,7,2,2
+11/07/2026,UPHC Adyar,Adyar,36,6,3,3
+11/07/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,28,3,1,3
+11/07/2026,UPHC Sholinganallur,Sholinganallur,18,2,1,2
+11/07/2026,UPHC Thiruvottiyur,Thiruvottiyur,41,5,2,3
+11/07/2026,UPHC Ambattur,Ambattur,43,10,4,5
+11/07/2026,UPHC Alandur,Alandur,32,5,2,3
+11/07/2026,UPHC Valasaravakkam,Valasaravakkam,45,7,3,3
+18/07/2026,UPHC Velachery,Velachery,11,1,0,1
+18/07/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,58,17,6,4
+18/07/2026,RSRM Hospital,Royapuram,43,8,3,3
+18/07/2026,UPHC Saidapet,Saidapet,32,5,2,3
+18/07/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,43,7,2,4
+18/07/2026,UPHC Perungudi,Perungudi,26,4,2,2
+18/07/2026,UPHC Mylapore,Mylapore,27,3,1,3
+18/07/2026,"Govt Hospital, Tondiarpet",Tondiarpet,51,10,4,5
+18/07/2026,UPHC Kodambakkam,Kodambakkam,32,6,2,3
+18/07/2026,UPHC Adyar,Adyar,49,13,4,3
+18/07/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,22,2,1,2
+18/07/2026,UPHC Sholinganallur,Sholinganallur,44,7,3,4
+18/07/2026,UPHC Thiruvottiyur,Thiruvottiyur,29,5,2,2
+18/07/2026,UPHC Ambattur,Ambattur,33,6,2,2
+18/07/2026,UPHC Alandur,Alandur,50,13,6,5
+18/07/2026,UPHC Valasaravakkam,Valasaravakkam,25,3,1,3
+25/07/2026,UPHC Velachery,Velachery,20,2,1,2
+25/07/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,53,11,5,4
+25/07/2026,RSRM Hospital,Royapuram,48,11,4,4
+25/07/2026,UPHC Saidapet,Saidapet,37,5,2,3
+25/07/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,26,3,1,2
+25/07/2026,UPHC Perungudi,Perungudi,23,3,1,2
+25/07/2026,UPHC Mylapore,Mylapore,16,1,0,1
+25/07/2026,"Govt Hospital, Tondiarpet",Tondiarpet,41,10,3,3
+25/07/2026,UPHC Kodambakkam,Kodambakkam,38,5,2,3
+25/07/2026,UPHC Adyar,Adyar,61,19,6,4
+25/07/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,30,3,1,3
+25/07/2026,UPHC Sholinganallur,Sholinganallur,61,14,7,5
+25/07/2026,UPHC Thiruvottiyur,Thiruvottiyur,54,13,6,5
+25/07/2026,UPHC Ambattur,Ambattur,40,9,3,4
+25/07/2026,UPHC Alandur,Alandur,50,11,5,5
+25/07/2026,UPHC Valasaravakkam,Valasaravakkam,57,13,5,6
+01/08/2026,UPHC Velachery,Velachery,31,3,1,2
+01/08/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,48,13,5,5
+01/08/2026,RSRM Hospital,Royapuram,43,8,3,4
+01/08/2026,UPHC Saidapet,Saidapet,48,9,3,3
+01/08/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,44,9,4,3
+01/08/2026,UPHC Perungudi,Perungudi,29,4,1,2
+01/08/2026,UPHC Mylapore,Mylapore,24,3,1,2
+01/08/2026,"Govt Hospital, Tondiarpet",Tondiarpet,40,8,3,3
+01/08/2026,UPHC Kodambakkam,Kodambakkam,34,7,3,3
+01/08/2026,UPHC Adyar,Adyar,38,9,4,3
+01/08/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,14,2,1,1
+01/08/2026,UPHC Sholinganallur,Sholinganallur,36,5,2,4
+01/08/2026,UPHC Thiruvottiyur,Thiruvottiyur,42,9,3,4
+01/08/2026,UPHC Ambattur,Ambattur,42,7,3,3
+01/08/2026,UPHC Alandur,Alandur,33,5,2,2
+01/08/2026,UPHC Valasaravakkam,Valasaravakkam,30,5,2,3
+08/08/2026,UPHC Velachery,Velachery,22,2,1,1
+08/08/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,69,18,8,7
+08/08/2026,RSRM Hospital,Royapuram,32,5,2,3
+08/08/2026,UPHC Saidapet,Saidapet,41,8,3,3
+08/08/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,36,7,2,4
+08/08/2026,UPHC Perungudi,Perungudi,24,4,1,2
+08/08/2026,UPHC Mylapore,Mylapore,17,1,0,2
+08/08/2026,"Govt Hospital, Tondiarpet",Tondiarpet,38,6,2,3
+08/08/2026,UPHC Kodambakkam,Kodambakkam,49,9,4,3
+08/08/2026,UPHC Adyar,Adyar,41,7,3,4
+08/08/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,31,3,1,2
+08/08/2026,UPHC Sholinganallur,Sholinganallur,35,5,2,4
+08/08/2026,UPHC Thiruvottiyur,Thiruvottiyur,24,4,2,2
+08/08/2026,UPHC Ambattur,Ambattur,31,5,2,3
+08/08/2026,UPHC Alandur,Alandur,39,5,2,4
+08/08/2026,UPHC Valasaravakkam,Valasaravakkam,47,10,4,3
+15/08/2026,UPHC Velachery,Velachery,18,2,1,2
+15/08/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,38,10,4,3
+15/08/2026,RSRM Hospital,Royapuram,31,5,2,2
+15/08/2026,UPHC Saidapet,Saidapet,20,3,1,2
+15/08/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,36,5,2,4
+15/08/2026,UPHC Perungudi,Perungudi,45,8,2,5
+15/08/2026,UPHC Mylapore,Mylapore,13,1,0,1
+15/08/2026,"Govt Hospital, Tondiarpet",Tondiarpet,45,8,3,5
+15/08/2026,UPHC Kodambakkam,Kodambakkam,30,4,2,2
+15/08/2026,UPHC Adyar,Adyar,42,8,3,3
+15/08/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,12,1,0,1
+15/08/2026,UPHC Sholinganallur,Sholinganallur,40,7,3,4
+15/08/2026,UPHC Thiruvottiyur,Thiruvottiyur,30,5,2,2
+15/08/2026,UPHC Ambattur,Ambattur,30,5,2,3
+15/08/2026,UPHC Alandur,Alandur,41,7,3,3
+15/08/2026,UPHC Valasaravakkam,Valasaravakkam,37,5,2,2
+22/08/2026,UPHC Velachery,Velachery,28,3,1,2
+22/08/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,81,34,16,8
+22/08/2026,RSRM Hospital,Royapuram,94,40,13,6
+22/08/2026,UPHC Saidapet,Saidapet,92,42,18,9
+22/08/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,95,44,21,10
+22/08/2026,UPHC Perungudi,Perungudi,58,12,6,4
+22/08/2026,UPHC Mylapore,Mylapore,33,3,1,3
+22/08/2026,"Govt Hospital, Tondiarpet",Tondiarpet,68,25,8,6
+22/08/2026,UPHC Kodambakkam,Kodambakkam,96,43,13,10
+22/08/2026,UPHC Adyar,Adyar,87,34,11,8
+22/08/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,24,2,1,2
+22/08/2026,UPHC Sholinganallur,Sholinganallur,57,16,5,4
+22/08/2026,UPHC Thiruvottiyur,Thiruvottiyur,60,15,5,4
+22/08/2026,UPHC Ambattur,Ambattur,50,14,6,4
+22/08/2026,UPHC Alandur,Alandur,39,7,3,4
+22/08/2026,UPHC Valasaravakkam,Valasaravakkam,67,21,6,4
+29/08/2026,UPHC Velachery,Velachery,24,3,1,2
+29/08/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,30,5,2,2
+29/08/2026,RSRM Hospital,Royapuram,36,5,2,3
+29/08/2026,UPHC Saidapet,Saidapet,35,7,3,4
+29/08/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,43,9,4,3
+29/08/2026,UPHC Perungudi,Perungudi,31,4,2,3
+29/08/2026,UPHC Mylapore,Mylapore,18,2,1,2
+29/08/2026,"Govt Hospital, Tondiarpet",Tondiarpet,36,5,2,3
+29/08/2026,UPHC Kodambakkam,Kodambakkam,33,7,3,3
+29/08/2026,UPHC Adyar,Adyar,33,6,2,2
+29/08/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,31,3,1,2
+29/08/2026,UPHC Sholinganallur,Sholinganallur,18,2,1,2
+29/08/2026,UPHC Thiruvottiyur,Thiruvottiyur,34,7,3,3
+29/08/2026,UPHC Ambattur,Ambattur,39,8,3,4
+29/08/2026,UPHC Alandur,Alandur,30,5,2,2
+29/08/2026,UPHC Valasaravakkam,Valasaravakkam,48,10,4,5
+05/09/2026,UPHC Velachery,Velachery,25,3,1,2
+05/09/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,55,15,7,3
+05/09/2026,RSRM Hospital,Royapuram,63,17,7,4
+05/09/2026,UPHC Saidapet,Saidapet,61,16,5,5
+05/09/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,55,15,7,6
+05/09/2026,UPHC Perungudi,Perungudi,28,4,2,3
+05/09/2026,UPHC Mylapore,Mylapore,23,2,1,1
+05/09/2026,"Govt Hospital, Tondiarpet",Tondiarpet,70,20,6,5
+05/09/2026,UPHC Kodambakkam,Kodambakkam,63,16,7,4
+05/09/2026,UPHC Adyar,Adyar,86,32,10,8
+05/09/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,23,3,1,2
+05/09/2026,UPHC Sholinganallur,Sholinganallur,45,8,4,5
+05/09/2026,UPHC Thiruvottiyur,Thiruvottiyur,50,11,5,5
+05/09/2026,UPHC Ambattur,Ambattur,71,21,8,5
+05/09/2026,UPHC Alandur,Alandur,58,13,6,6
+05/09/2026,UPHC Valasaravakkam,Valasaravakkam,51,10,5,5
+12/09/2026,UPHC Velachery,Velachery,13,1,0,1
+12/09/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,42,7,3,3
+12/09/2026,RSRM Hospital,Royapuram,51,12,5,5
+12/09/2026,UPHC Saidapet,Saidapet,52,12,5,6
+12/09/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,47,9,4,4
+12/09/2026,UPHC Perungudi,Perungudi,31,4,1,3
+12/09/2026,UPHC Mylapore,Mylapore,21,2,1,2
+12/09/2026,"Govt Hospital, Tondiarpet",Tondiarpet,47,10,4,4
+12/09/2026,UPHC Kodambakkam,Kodambakkam,36,8,4,2
+12/09/2026,UPHC Adyar,Adyar,45,11,4,5
+12/09/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,18,2,1,1
+12/09/2026,UPHC Sholinganallur,Sholinganallur,41,6,3,4
+12/09/2026,UPHC Thiruvottiyur,Thiruvottiyur,32,4,2,2
+12/09/2026,UPHC Ambattur,Ambattur,41,8,3,3
+12/09/2026,UPHC Alandur,Alandur,29,5,2,3
+12/09/2026,UPHC Valasaravakkam,Valasaravakkam,39,9,4,4
+19/09/2026,UPHC Velachery,Velachery,20,2,1,1
+19/09/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,72,21,9,5
+19/09/2026,RSRM Hospital,Royapuram,60,21,9,5
+19/09/2026,UPHC Saidapet,Saidapet,72,22,9,7
+19/09/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,66,20,10,5
+19/09/2026,UPHC Perungudi,Perungudi,45,8,3,4
+19/09/2026,UPHC Mylapore,Mylapore,12,1,0,1
+19/09/2026,"Govt Hospital, Tondiarpet",Tondiarpet,71,28,13,7
+19/09/2026,UPHC Kodambakkam,Kodambakkam,68,22,7,7
+19/09/2026,UPHC Adyar,Adyar,52,14,5,3
+19/09/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,19,2,1,2
+19/09/2026,UPHC Sholinganallur,Sholinganallur,56,11,5,6
+19/09/2026,UPHC Thiruvottiyur,Thiruvottiyur,38,7,3,3
+19/09/2026,UPHC Ambattur,Ambattur,61,16,7,4
+19/09/2026,UPHC Alandur,Alandur,32,6,3,3
+19/09/2026,UPHC Valasaravakkam,Valasaravakkam,79,28,11,6
+26/09/2026,UPHC Velachery,Velachery,16,2,1,2
+26/09/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,57,14,5,5
+26/09/2026,RSRM Hospital,Royapuram,34,7,3,3
+26/09/2026,UPHC Saidapet,Saidapet,66,19,8,5
+26/09/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,67,18,7,7
+26/09/2026,UPHC Perungudi,Perungudi,31,4,1,2
+26/09/2026,UPHC Mylapore,Mylapore,25,2,1,2
+26/09/2026,"Govt Hospital, Tondiarpet",Tondiarpet,53,15,7,6
+26/09/2026,UPHC Kodambakkam,Kodambakkam,49,14,6,4
+26/09/2026,UPHC Adyar,Adyar,61,18,7,4
+26/09/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,32,3,1,3
+26/09/2026,UPHC Sholinganallur,Sholinganallur,33,6,2,4
+26/09/2026,UPHC Thiruvottiyur,Thiruvottiyur,44,9,4,4
+26/09/2026,UPHC Ambattur,Ambattur,40,9,4,4
+26/09/2026,UPHC Alandur,Alandur,42,8,3,4
+26/09/2026,UPHC Valasaravakkam,Valasaravakkam,49,13,5,5
+03/10/2026,UPHC Velachery,Velachery,22,2,1,1
+03/10/2026,"Govt Peripheral Hospital, Anna Nagar",Anna Nagar,58,17,5,6
+03/10/2026,RSRM Hospital,Royapuram,66,19,7,7
+03/10/2026,UPHC Saidapet,Saidapet,57,15,5,6
+03/10/2026,"Govt Peripheral Hospital, K.K. Nagar",K.K. Nagar,61,16,7,6
+03/10/2026,UPHC Perungudi,Perungudi,44,8,4,5
+03/10/2026,UPHC Mylapore,Mylapore,26,3,1,2
+03/10/2026,"Govt Hospital, Tondiarpet",Tondiarpet,61,17,8,7
+03/10/2026,UPHC Kodambakkam,Kodambakkam,55,15,6,5
+03/10/2026,UPHC Adyar,Adyar,63,21,8,4
+03/10/2026,"Govt Peripheral Hospital, Periyar Nagar",Perambur,26,2,1,2
+03/10/2026,UPHC Sholinganallur,Sholinganallur,59,14,6,5
+03/10/2026,UPHC Thiruvottiyur,Thiruvottiyur,42,8,3,4
+03/10/2026,UPHC Ambattur,Ambattur,49,12,6,5
+03/10/2026,UPHC Alandur,Alandur,36,6,2,3
+03/10/2026,UPHC Valasaravakkam,Valasaravakkam,56,14,5,6
