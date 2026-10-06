@@ -128,7 +128,7 @@ export const POLICY: Record<string, TableSpec> = {
   observations: {
     db: "intel", d: "Readings over time: hospital capacity and cases, lake storage, IMD rainfall/temperature/warnings, CPCB air quality, CFM gauges and reservoir inflows.",
     grain: "one row per reading", time: "observed_at", test: "is_synthetic = 1",
-    note: "The unit depends on the metric. Hospital and lake readings are test data. CPCB and CFM station positions are approximate; rainfall and air-quality history is short.",
+    note: "The unit depends on the metric. Hospital readings are test data; lake readings are the six CMWSSB reservoirs on the AWS store, test data otherwise. CPCB and CFM station positions are approximate; rainfall and air-quality history is short.",
     cols: {
       metric: ["dim", "what was measured", { values: ["aqi", "rainfall_24h_mm", "temp_max_c", "temp_min_c", "temp_departure_c", "humidity_pct", "imd_warning_level",
         "reservoir_inflow_cusec", "gauge_level_m", "lake_pct_full", "lake_storage_mcft", "lake_outflow_cusec", "bed_occupancy_pct", "occupied_beds", "total_beds",
@@ -161,7 +161,7 @@ export const POLICY: Record<string, TableSpec> = {
     }
   },
   anomalies: {
-    db: "intel", d: "Unusual rises: a day, zone and category whose count was far above its usual level (Poisson baseline with a weekday factor, 28 days).",
+    db: "intel", d: "Unusual rises: a day (spike) or a run of days (slow rise) where a zone and category's count was far above its usual level (28-day baseline with weekday and rain factors, kept only after a false-discovery check). For a slow rise, observed and expected are totals over the run of days.",
     grain: "one row per unusual day, zone and category", time: "date", cap: "`date` <= DATE(:asOf)", test: "1",
     cols: {
       date: ["time", "day"], category_code: ["dim", "category", J.cat], zone_no: ["dim", "zone", J.zone], observed: ["measure", "reports that day"],

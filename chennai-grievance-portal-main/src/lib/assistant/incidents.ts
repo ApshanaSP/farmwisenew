@@ -5,7 +5,7 @@
  * number-checked AI summary when it exists, else the rule-based summary.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool from "@/lib/collector/db";
+import intelPool, { TITLE } from "@/lib/collector/db";
 import { explain, incident as incidentFull, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
@@ -32,7 +32,7 @@ export interface IncidentFilters {
   place?: string | null;
 }
 
-const COLS = `i.incident_id AS id, i.title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, i.status_std AS status,
   i.is_open AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { OfficerCard, StoryLink } from "./Overview";
@@ -10,8 +11,11 @@ import type { Console, ListPreset } from "./CollectorApp";
 // -------------------------------------------------------------- modal --
 
 export function Modal({ title, children, c, narrow, wide }: { title: string; children: ReactNode; c: Console; narrow?: boolean; wide?: boolean }) {
+  // the dialog grows out of the tile, row or button that opened it
+  const ref = useRef<HTMLDivElement>(null);
+  useGrowFrom(ref, [title]);
   return (
-    <div className={`modal${narrow ? " narrow" : ""}${wide ? " wide" : ""}`} role="dialog" aria-label={title}>
+    <div ref={ref} className={`modal${narrow ? " narrow" : ""}${wide ? " wide" : ""}`} role="dialog" aria-modal="true" aria-label={title}>
       <div className="modal-h"><h2>{title}</h2><button className="xbtn" onClick={c.closeAll} aria-label="Close"><I n="x" /></button></div>
       <div className="modal-b">{children}</div>
     </div>
@@ -278,9 +282,9 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
     return (
       <div className="ngrid">
         {d.allNews.map((i) => (
-          <button key={i.id} className="ncard" onClick={() => (i.incident ? c.openInc(i.incident) : i.url && window.open(i.url, "_blank", "noopener"))}>
-            <div className="nout">{(i.outletNames.length ? i.outletNames : ["News"]).map((n) => <span key={n}>{n}</span>)}</div>
-            <h4>{i.title}</h4>
+          <button key={i.id} className="ncard" onClick={() => c.openStory(i)}>
+            <div className="nout">{(i.outletNames.length ? i.outletNames : ["News"]).slice(0, 4).map((n) => <span key={n}>{n}</span>)}{i.outletNames.length > 4 && <span>+{i.outletNames.length - 4}</span>}</div>
+            <h4 title={i.original ?? undefined}>{i.title}</h4>
             <div className="nmeta"><span>{i.loc ?? "Chennai"}</span><span>{rel(i.t, d.now)}</span>{i.sev && <SevChip s={i.sev} />}</div>
             <StoryLink i={i} />
           </button>

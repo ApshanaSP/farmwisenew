@@ -1,0 +1,269 @@
+/* =====================================================================================================================
+   MARINA: the final visual layer for the Collector and Department Officer consoles (after collector.css and civic.css).
+   Bright cool-white pages, the pages as tabs across a white top bar, an ocean-blue band at the top of every page (on
+   page 1 it carries the greeting, the key points of the period, the four counts and the snapshot), white cards with
+   soft shadows under it, deep ocean for what is interactive, coral for Ask District IQ. Tokens: tokens.css.
+   The old incident pop-up (a centred three-column dialog) keeps its layout from collector.css; only its colours follow.
+   ===================================================================================================================== */
+.dic{font-family:var(--font-ui);font-feature-settings:normal;letter-spacing:-.003em;background:var(--bg)}
+:root[data-theme="light"] .dic,.dic[data-theme="light"],:root[data-theme="dark"] .dic,.dic[data-theme="dark"]{background:var(--bg)}
+.dic h1,.dic h2,.dic h3{font-family:var(--font-ui);letter-spacing:-.018em}
+.dic .num,.dic .kpi-n,.dic .stile b,.dic .sevtab b,.dic .cnt-b,.dic .tab-n,.dic .bb-n,.dic .env-v{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.dic ::selection{background:rgba(24,167,188,.28)}
+.dic ::-webkit-scrollbar-thumb{background:#C9D3DE;background-clip:padding-box}
+.dic *{scrollbar-color:#C9D3DE transparent}
+:root[data-theme="dark"] .dic *,.dic[data-theme="dark"] *{scrollbar-color:rgba(255,255,255,.16) transparent}
+.dic kbd{font-family:var(--font-code)}
+
+/* ---------------- top bar: white, the pages as tabs ---------------- */
+.dic .top{height:60px;gap:8px;padding:0 18px 0 16px;background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(15,27,45,.02)}
+:root[data-theme="light"] .dic .top,.dic[data-theme="light"] .top{background:var(--surface)}
+.dic .tbrand{gap:10px;margin:0;padding:0 6px 0 0;border-right:0}
+.dic .tlogo{width:34px;height:34px}
+.dic .tbrand b{font:800 16px/1 var(--font-ui);letter-spacing:-.02em}
+.dic .tbrand small{font:600 11px/1 var(--font-ui);letter-spacing:0;text-transform:none;color:var(--text-3)}
+
+.dic .ptabs{position:relative;align-self:stretch;display:flex;align-items:stretch;gap:2px;margin-left:26px}
+.dic .ptab{position:relative;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:0;color:var(--text-3);font:650 13.5px var(--font-ui);white-space:nowrap;
+  transition:color var(--t-fast),background var(--t-fast)}
+.dic .ptab .ic{width:16px;height:16px}
+.dic .ptab:hover{color:var(--text);background:var(--surface-2)}
+.dic .ptab.on{color:var(--accent-3)}
+:root[data-theme="dark"] .dic .ptab.on,.dic[data-theme="dark"] .ptab.on{color:var(--accent-2)}
+.dic .ptab-bar{position:absolute;left:0;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent-3);pointer-events:none}
+:root[data-theme="dark"] .dic .ptab-bar,.dic[data-theme="dark"] .ptab-bar{background:var(--accent)}
+.dic .ptab-b{min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--critical);color:#fff;font:700 10px/17px var(--font-num);font-style:normal}
+
+.dic .cmdk{width:auto;height:36px;gap:8px;padding:0 6px 0 11px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--line);color:var(--text-3)}
+.dic .cmdk span{flex:none}
+.dic .tbtn{height:36px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--line);color:var(--text-2)}
+.dic .tbtn:hover{background:var(--surface-2);border-color:var(--line-3);color:var(--text)}
+.dic .tbtn.icon{width:36px}
+.dic .tbtn.on{color:var(--accent-2);border-color:var(--accent-line);background:var(--accent-soft)}
+.dic .tbtn.pri{background:var(--accent-3);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+.dic .tbtn.pri:hover{background:var(--accent-3);filter:brightness(1.1);color:#fff}
+.dic .dot-n{background:var(--ai);border-color:var(--surface)}
+.dic .avatar{background:var(--ai-grad);box-shadow:none}
+.dic .me{padding:2px 4px 2px 2px}
+.dic .ldock{flex:0 0 214px}
+.dic .ldock-f{background:var(--surface-2);border-radius:var(--r-sm)}
+
+/* ---------------- the work area ---------------- */
+.dic .body{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px;padding:12px 22px 14px}
+
+/* ---------------- the ocean band ---------------- */
+.dic .band{--sev:#FF9C8C;--critical:#FF9C8C;--high:#FFC56E;--medium:#FFE08A;--low:#7CE8B3;--ok:#7CE8B3;--accent:#7FE3F2;--accent-2:#A6EEF7;
+  position:relative;flex:none;isolation:isolate;overflow:hidden;border-radius:var(--r-lg);background:var(--band);color:var(--band-ink);padding:13px 18px 14px 22px;
+  box-shadow:0 18px 40px -26px rgba(8,47,78,.75)}
+.dic .band:before{content:"";position:absolute;z-index:-1;right:-70px;bottom:-150px;width:460px;height:250px;border-radius:50%;border:1px solid rgba(255,255,255,.11);
+  box-shadow:0 0 0 34px rgba(255,255,255,.028),0 0 0 70px rgba(255,255,255,.022);pointer-events:none}
+.dic .band-row{display:flex;align-items:center;gap:16px;min-width:0}
+.dic .band-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.dic .band-eb{display:flex;align-items:center;gap:7px;min-width:0;font:600 12px var(--font-ui);color:var(--band-ink-2);white-space:nowrap}
+.dic .band-eb>i{font-style:normal;color:var(--band-ink-3)}
+.dic .band-scope{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dic .band h1.roll{position:relative;width:auto;height:30px;clip:auto;overflow:hidden;margin:0;font:800 23px/30px var(--font-ui);letter-spacing:-.025em;color:var(--band-ink);white-space:nowrap}
+.dic .band h1.roll span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .band.hero h1.roll{height:34px;font-size:26px;line-height:34px}
+/* pages 2-4 (and the officer console): one slim line, the title first, then the day and the data */
+.dic .band:not(.hero){padding:9px 12px 9px 22px}
+.dic .band:not(.hero) .band-t{flex-direction:row;align-items:center;gap:16px}
+.dic .band:not(.hero) h1.roll{order:-1;flex:none;max-width:46%;font-size:21px}
+
+/* the data chip, as a small glass pill in the eyebrow line */
+.dic .band .daily{height:22px;gap:6px;padding:0 9px 0 8px;margin-left:4px;border-radius:var(--r-pill);background:var(--band-glass);border:1px solid var(--band-line);color:var(--band-ink);animation:none}
+.dic .band .daily:hover{background:var(--band-glass-2);border-color:rgba(255,255,255,.3)}
+.dic .band .daily>span{flex-direction:row;align-items:baseline;gap:6px;font:650 11.5px var(--font-ui);color:var(--band-ink)}
+.dic .band .daily small{font:500 11px var(--font-ui);color:var(--band-ink-2)}
+.dic .band .daily.pend{background:rgba(255,197,110,.16);border-color:rgba(255,197,110,.45)}
+.dic .band .daily.pend small{color:#FFD9A0}
+
+/* filters: glass on the band */
+.dic .band .filters{flex:none;gap:3px;padding:3px;border-radius:var(--r-md);background:var(--band-glass);border:1px solid var(--band-line);box-shadow:none}
+.dic .band .filters .ui-seg{background:rgba(4,22,38,.28);border:0}
+.dic .band .ui-seg button.ui-seg-o{color:var(--band-ink-2)}
+.dic .band .ui-seg button.ui-seg-o:hover{color:#fff}
+.dic .band .ui-seg button.ui-seg-o[aria-selected="true"],.dic .band .ui-seg button.ui-seg-o[aria-pressed="true"]{color:#0A3D62}
+.dic .band .ui-seg .ui-seg-pill{background:#fff;box-shadow:0 2px 6px rgba(4,22,38,.3)}
+.dic .band .fsel{height:30px;border-radius:var(--r-sm)}
+.dic .band .fsel:hover{background:var(--band-glass-2);border-color:transparent}
+.dic .band .fsel .ic{color:var(--band-ink-2)}
+.dic .band .fsel select,.dic .band .filters .fsel select{color:#fff;font-weight:650;
+  background:linear-gradient(45deg,transparent 50%,var(--band-ink-2) 50%) calc(100% - 8px) 50%/4px 4px no-repeat,linear-gradient(135deg,var(--band-ink-2) 50%,transparent 50%) calc(100% - 4px) 50%/4px 4px no-repeat}
+.dic .band select option{background:var(--elev);color:var(--text)}
+.dic .band .fclear{color:#fff}
+.dic .band .fclear:hover{background:var(--band-glass-2);color:#fff}
+.dic .band .ui-chip{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
+.dic .band .fnote{flex:none;height:32px;cursor:pointer;background:var(--band-glass);border:1px solid var(--band-line);color:var(--band-ink)}
+.dic .band .fnote .ic{color:var(--accent)}
+.dic .band button.fnote:hover{background:var(--band-glass-2)}
+.dic .band .odept-badge{background:var(--band-glass-2);color:#fff;box-shadow:inset 0 0 0 1px var(--band-line)}
+.dic .band .odept-badge .ic{color:var(--accent)}
+
+/* page 1: under the greeting, the four counts as glass tiles and the snapshot beside them (the briefing is page 2) */
+.dic .hero-b{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:12px;margin-top:12px;align-items:stretch;animation:marina-rise var(--t-slow) var(--ease-out) both}
+.dic .hero-b.one{grid-template-columns:minmax(0,1fr)}
+@keyframes marina-rise{from{opacity:0;transform:translateY(6px)}}
+.dic .hero .kpis{gap:10px}
+.dic .hero .kpi{flex-direction:row;align-items:center;gap:12px;padding:12px 14px 11px;border-radius:14px;background:var(--band-glass);border:1px solid var(--band-line);box-shadow:none;color:#fff}
+.dic .hero .kpi:before{display:none}
+.dic .hero .kpi:hover{background:var(--band-glass-2);border-color:rgba(255,255,255,.32);transform:translateY(-2px)}
+.dic .hero .kpi-ic{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.12);color:var(--kc);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.dic .hero .kpi-ic .ic{width:19px;height:19px}
+.dic .hero .kpi-l{font:650 12px/1.25 var(--font-ui);letter-spacing:0;text-transform:none;color:var(--band-ink-2)}
+.dic .hero .kpi-note{color:var(--band-ink-3);font-size:11px}
+.dic .hero .kpi-r{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:6px}
+.dic .hero .kpi-n,.dic .hero .kpi-n.c-sev{margin:3px 0 3px;font:800 30px/1.05 var(--font-num);letter-spacing:-.035em;color:#fff}
+.dic .hero .kpi-d{font:600 11px var(--font-ui);color:var(--band-ink-3)}
+.dic .hero .kpi-d em{height:18px;padding:0 6px;background:rgba(255,255,255,.12);color:#fff}
+.dic .hero .kpi-d.good em{background:rgba(124,232,179,.18);color:#9CF0C6}
+.dic .hero .kpi-d.bad em{background:rgba(255,156,140,.2);color:#FFC2B6}
+.dic .hero .spk{width:74px;height:34px;flex:none}
+/* the snapshot: one line per fact, stacked */
+.dic .hsnap{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0}
+.dic .hsnap .snap-t{flex:none;min-width:0;min-height:0;display:block}
+.dic .hsnap .snap-t b,.dic .hsnap .snap-t small{display:none}
+.dic .hsnap .snap-t .more{display:inline-flex;margin:0;height:22px;padding:0 9px;border-radius:var(--r-pill);background:var(--band-glass);border:1px solid var(--band-line);color:#fff;font:650 11.5px var(--font-ui)}
+.dic .hsnap .snap-t .more .ic{color:#fff;width:13px;height:13px}
+.dic .hsnap .snap{flex:1;min-height:0;display:grid;grid-auto-flow:row;grid-auto-columns:auto;grid-auto-rows:minmax(0,1fr);gap:6px}
+.dic .hsnap .stile,.dic .hero .a-snap .stile{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;min-height:0;padding:3px 12px;border-radius:10px;
+  background:var(--band-glass);border:1px solid var(--band-line)}
+.dic .hsnap .stile:hover:not(.static){background:var(--band-glass-2);border-color:rgba(255,255,255,.3);transform:translateX(2px)}
+.dic .hsnap .stile small{font:600 12px/1.25 var(--font-ui);letter-spacing:0;text-transform:none;color:var(--band-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:none}
+.dic .hsnap .stile b{flex:none;font:800 17px/1.1 var(--font-num);color:#fff;max-width:58%}
+.dic .hsnap .stile b.txt{font:750 12.5px/1.2 var(--font-ui);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .hsnap .officer{min-height:0;display:flex;align-items:center;gap:8px;padding:3px 10px;border-radius:10px;background:var(--band-glass);border:1px solid var(--band-line);color:#fff}
+.dic .hsnap .officer .avatar{width:22px;height:22px;font-size:9.5px;background:rgba(255,255,255,.18);color:#fff;box-shadow:none}
+.dic .hsnap .officer b{display:inline;color:#fff;font-size:12.5px}
+.dic .hsnap .officer .olabel,.dic .hsnap .officer .desig{display:none}
+.dic .hsnap .officer .ocontact{display:inline-flex;margin-left:8px}
+.dic .hsnap .officer a{color:#A6EEF7;font-size:12px}
+/* a faint dot field on the right of the band, like the pulli dots of a kolam */
+.dic .band:after{content:"";position:absolute;z-index:-1;inset:0 0 0 45%;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.3px);background-size:16px 16px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 70%);mask-image:linear-gradient(90deg,transparent,#000 70%);opacity:.55}
+
+/* ---------------- cards ---------------- */
+.dic .card,.dic .bb-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.dic .ch,.dic .bb-h{padding:12px 15px 9px}
+.dic .ch h3,.dic .bb-h h3{font:750 14.5px/1.2 var(--font-ui);letter-spacing:-.012em}
+.dic .ch>.ic,.dic .ch>svg.ic,.dic .bb-h>.ic{width:30px;height:30px;padding:7px;border-radius:10px;box-shadow:none}
+.dic .a-map .ch>.ic{--tc:var(--accent)}
+.dic .ch .more,.dic .bb-more,.dic .lnk{color:var(--accent-2)}
+:root[data-theme="light"] .dic .ch .more,.dic[data-theme="light"] .ch .more,:root[data-theme="light"] .dic .lnk,.dic[data-theme="light"] .lnk{color:var(--accent-2)}
+.dic .ch .more:hover,.dic .bb-more:hover{background:var(--accent-soft)}
+.dic .cnt-b,.dic .tab-n,.dic .bb-n{font:700 11px/1.75 var(--font-num);background:var(--accent-soft);color:var(--accent-2)}
+.dic .btabs button.on,.dic .tabs2 button.on,.dic .bk2-tabs button.on{border-color:var(--accent-3);color:var(--text)}
+:root[data-theme="dark"] .dic .btabs button.on,.dic[data-theme="dark"] .btabs button.on{border-color:var(--accent)}
+.dic .p1{gap:14px}
+.dic .seg{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:2px}
+.dic .seg button{border-radius:8px;color:var(--text-3);font-weight:650}
+.dic .seg button.on{background:var(--surface);color:var(--accent-3);box-shadow:0 1px 3px rgba(15,27,45,.12),inset 0 0 0 1px var(--line)}
+:root[data-theme="dark"] .dic .seg button.on,.dic[data-theme="dark"] .seg button.on{background:var(--surface-3);color:var(--text)}
+.ui-seg .ui-seg-pill{background:var(--accent-3);box-shadow:var(--glow)}
+
+/* rows inside cards: quiet, with a severity edge */
+.dic .si-item,.dic .a-sev .si-item,.dic .task,.dic .a-tasks .task{background:var(--surface);border:1px solid var(--line-2);border-radius:12px}
+.dic .si-item:hover{background:var(--surface-2);border-color:var(--line-3);transform:none}
+.dic .si-item.need{background:linear-gradient(90deg,var(--critical-soft),transparent 70%),var(--surface);border-color:var(--critical-line);box-shadow:none}
+.dic .si-ic{border-radius:10px}
+.dic .sevtab,.dic .a-sev .sevtab{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.dic .sevtab.on,.dic .a-sev .sevtab.on{background:color-mix(in srgb,var(--sc) 9%,var(--surface));box-shadow:none;border-color:color-mix(in srgb,var(--sc) 50%,transparent)}
+.dic .task-rule{background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px}
+.dic .task-why i{background:var(--surface-3)}
+.dic .brief{border-radius:12px}
+.dic .brief .bic{width:36px;height:36px;border-radius:11px}
+.dic .brief:hover b{color:var(--accent-2)}
+.dic .routed{background:var(--critical-soft);color:var(--critical)}
+:root[data-theme="light"] .dic .routed:not(.dim):not(.added),.dic[data-theme="light"] .routed:not(.dim):not(.added){color:var(--critical)}
+.dic .routed.added{background:var(--ai-soft);color:var(--ai)}
+
+/* buttons: deep ocean; Verify stays green */
+.dic .btn{border-radius:var(--r-sm);background:var(--accent-3);box-shadow:var(--glow)}
+.dic .btn:hover{background:var(--accent-3);filter:brightness(1.12)}
+.dic .btn.ok{background:var(--ok);color:#fff;box-shadow:0 6px 14px -8px var(--ok)}
+:root[data-theme="dark"] .dic .btn.ok,.dic[data-theme="dark"] .btn.ok{color:#04261A}
+.dic .btn.plain{background:var(--surface);color:var(--text-2);box-shadow:inset 0 0 0 1px var(--line-3)}
+.dic .btn.plain:hover{background:var(--surface-2)}
+
+/* map */
+:root[data-theme="light"] .dic .map-wrap,.dic[data-theme="light"] .map-wrap{background:#DCE6EF}
+.dic .map-leg2 button{background:var(--surface);border-color:var(--line)}
+.dic .map-heat div{background:linear-gradient(90deg,var(--heat-1),var(--heat-2),var(--heat-3),var(--heat-4),var(--heat-5))}
+
+/* ---------------- dialogs: solid white, rounded ---------------- */
+.dic .scrim{background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.dic .modal{background:var(--elev);backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--line);border-radius:var(--r-lg)}
+.dic .modal-h{padding:15px 18px 14px 22px}
+.dic .modal-h h2{font:750 17px/1.25 var(--font-ui)}
+.dic .pal,.dic .pop,.dic .sres,.dic .toast{background:var(--elev);backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* the old incident pop-up: a centred dialog in three columns; its header is tinted by severity */
+.dic .iv-h{background:linear-gradient(110deg,var(--accent-soft),transparent 62%),var(--elev);color:var(--text);border-bottom:1px solid var(--line)}
+.dic .iv-h.s-severe{background:linear-gradient(110deg,var(--critical-soft),transparent 62%),var(--elev)}
+.dic .iv-h.s-high{background:linear-gradient(110deg,var(--high-soft),transparent 62%),var(--elev)}
+.dic .iv-h:before{width:4px;background:var(--hcl,var(--accent))}
+.dic .iv-h.s-severe{--hcl:var(--critical)}
+.dic .iv-h.s-high{--hcl:var(--high)}
+.dic .iv-h h2{font:800 21px/1.28 var(--font-ui);letter-spacing:-.02em;color:var(--text)}
+.dic .iv-tags .tg{border-radius:var(--r-pill)}
+.dic .iv-loc{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-2);border-radius:var(--r-pill)}
+.dic .iv-t{font:700 10.5px var(--font-ui);letter-spacing:.12em;color:var(--accent-2)}
+.dic .iv-t .ic{color:var(--accent)}
+.dic .iv-need{background:linear-gradient(180deg,var(--critical-soft),transparent);border:1px solid var(--critical-line)}
+.dic .iv-ok,.dic .iv-rep{background:var(--ok-soft);border:1px solid var(--ok-line);color:var(--text)}
+.dic .tl .first{background:var(--accent-3);color:#fff;box-shadow:none}
+
+/* ---------------- Ask District IQ: a coral pill with its name ---------------- */
+.dic .ask-fab{right:20px;bottom:18px;height:50px;min-width:50px;gap:0;padding:0 9px;border-radius:25px;background:var(--ai-grad);color:#fff;font:750 14px var(--font-ui);
+  box-shadow:var(--ai-glow),0 14px 30px -14px rgba(8,26,44,.5);transition:gap var(--t-base) var(--ease-out),transform var(--t-fast),box-shadow var(--t-fast)}
+.dic .ask-fab .aq-mark rect:first-child{fill:transparent}
+.dic .ask-fab span{max-width:0;overflow:hidden;white-space:nowrap;transition:max-width var(--t-slow) var(--ease-out),padding var(--t-slow) var(--ease-out)}
+.dic .ask-fab:hover span,.dic .ask-fab:focus-visible span{max-width:150px;padding-right:8px}
+.dic .ask-fab:hover,.dic .ask-fab:focus-visible{transform:translateY(-1px);box-shadow:0 0 0 4px var(--ai-soft),var(--ai-glow);gap:8px}
+.dic .ask-fab .ask-badge{background:#fff;color:var(--ai);box-shadow:0 0 0 2px var(--bg)}
+.dic .aq .aq-h{background:linear-gradient(180deg,var(--ai-soft),transparent),transparent}
+.dic .aq-overlay .aq{background:var(--elev);backdrop-filter:none}
+
+/* ---------------- motion: the shell assembles once after sign-in ---------------- */
+.dic.boot .band{animation:civic-in .5s var(--ease-out) .1s both}
+@media (prefers-reduced-motion:reduce){.dic.boot .band,.dic .hero-b{animation:none!important}.dic .hero .kpi:hover,.dic .hsnap .stile:hover{transform:none}}
+
+/* ---------------- phones and narrow windows: the tabs become a bottom bar; the band stacks ---------------- */
+.dic:not(.fit) .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:60;height:60px;margin:0;justify-content:space-around;padding:0 6px env(safe-area-inset-bottom);
+  background:var(--surface);border-top:1px solid var(--line)}
+.dic:not(.fit) .ptab{flex-direction:column;justify-content:center;gap:3px;padding:0 8px;font-size:11px}
+.dic:not(.fit) .ptab-bar{top:-1px;bottom:auto;border-radius:0 0 3px 3px}
+.dic:not(.fit) .ldock,.dic:not(.fit) .tbrand small{display:none}
+.dic:not(.fit) .cmdk span,.dic:not(.fit) .cmdk kbd{display:none}
+.dic:not(.fit) .body{padding:12px 12px 84px}
+.dic:not(.fit) .band-row{flex-wrap:wrap}
+.dic:not(.fit) .band .filters{flex-wrap:wrap;width:100%}
+.dic:not(.fit) .band-eb{flex-wrap:wrap;white-space:normal}
+.dic:not(.fit) .hero-b{grid-template-columns:1fr}
+.dic:not(.fit) .ask-fab{bottom:76px}
+.dic:not(.fit) .top>.tbtn.icon:not(.theme-t),.dic:not(.fit) .top .tspace{display:none}
+.dic:not(.fit) .top .cmdk{margin-left:auto}
+.dic:not(.fit) .hsnap .snap{grid-auto-flow:row;grid-auto-columns:auto}
+
+/* ---------------- polish ---------------- */
+/* status pills under a news story never spill out of the card */
+.dic .routed{display:block;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:20px}
+.dic .routed>.ic{display:inline-block;vertical-align:-2px;margin-right:4px}
+/* rows that need the Collector: a softer tint, the red edge carries it */
+.dic .si-item.need{background:linear-gradient(90deg,color-mix(in srgb,var(--critical) 7%,transparent),transparent 70%),var(--surface)}
+/* severity mix: a thicker, rounded bar */
+.dic .sevmix{height:10px;border-radius:6px;overflow:hidden}
+/* card heads: the count badge sits next to the title, the action on the right */
+.dic .ch .cnt-b{margin-left:-2px}
+.dic .ch .more{height:28px;border-radius:var(--r-pill);padding:0 8px 0 10px}
+/* the map card: rounder well, a hairline frame */
+.dic .a-map .map-wrap{border-radius:12px}
+.dic .map-leg2 button{height:26px}
+/* tabs inside cards: a pill track */
+.dic .btabs{gap:4px}
+.dic .btabs button{border-radius:8px 8px 0 0}
+.dic .btabs button:hover{background:var(--surface-2)}
+/* focus: a clear ocean ring everywhere */
+.dic :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dic .band :focus-visible{outline-color:#fff}

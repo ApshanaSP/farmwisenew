@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AlertCircle, Camera, CheckCircle2, Loader2, Lock, PencilLine } from "lucide-react";
 import Header from "@/components/Header";
+import { Chip, OtpInput, ProgressRing, Skeleton, Tabs, Tip, Toaster, useToasts } from "@/components/ui";
+import { EASE_OUT } from "@/components/ui/motion";
+import { CITIZEN_NAV } from "@/lib/constants";
 import Footer from "@/components/Footer";
 import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
 
@@ -84,6 +89,13 @@ export default function ProfilePage() {
   // Photo upload
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  /** the chosen photo, shown in the circle while it uploads */
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [tab, setTab] = useState<"account" | "personal" | "mobile" | "password">("account");
+  const toasts = useToasts();
+  // saves confirm with a toast as well as the inline message
+  useEffect(() => { if (success) toasts.push(success); }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pwSuccess) toasts.push(pwSuccess); }, [pwSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadProfile();
@@ -248,6 +260,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError(null);
+    setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploading(true);
     try {
       const formData = new FormData();
@@ -263,6 +276,7 @@ export default function ProfilePage() {
       setPhotoError("Something went wrong. Please try again.");
     } finally {
       setPhotoUploading(false);
+      setPhotoPreview(null);
     }
   }
 
@@ -272,302 +286,292 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen flex-col diq-bg">
         <Header userName={user?.email} />
-        <main className="flex flex-1 items-center justify-center">
-          <p className="text-gray-500">Loading profile...</p>
+        <main className="mx-auto grid w-full max-w-[1100px] flex-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[300px_1fr]">
+          <div className="card flex flex-col items-center gap-3"><Skeleton w={96} h={96} r={48} /><Skeleton h={16} w={140} /><Skeleton h={12} w={100} /></div>
+          <div className="card space-y-4"><Skeleton h={30} w="70%" /><Skeleton h={14} /><Skeleton h={14} w="80%" /><Skeleton h={14} w="60%" /></div>
         </main>
         <Footer />
       </div>
     );
   }
 
+  const name = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || user?.email || "Your profile";
+  const roleLabel = user?.role === "department_officer" ? "Department officer" : user?.role === "collector" ? "District Collector" : "Citizen";
+  const TABS = [
+    { value: "account" as const, label: "Account information" },
+    { value: "personal" as const, label: "Personal details" },
+    { value: "mobile" as const, label: "Mobile number" },
+    { value: "password" as const, label: "Password" }
+  ];
+  const Note = ({ kind, children }: { kind: "err" | "ok"; children: React.ReactNode }) => (
+    <motion.div role={kind === "err" ? "alert" : "status"} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+      className={`mb-4 ${kind === "err" ? "alert-error" : "alert-success"}`}>
+      {kind === "err" ? <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />}
+      <span>{children}</span>
+    </motion.div>
+  );
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="flex min-h-screen flex-col diq-bg">
-      <Header userName={user?.email || undefined} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
-        <h1 className="mb-6 text-2xl font-bold text-navy-900">My Profile</h1>
+      <Header userName={user?.email || undefined} homeHref={user?.role === "citizen" ? "/citizen" : "/"} nav={user?.role === "citizen" ? CITIZEN_NAV : []} />
+      <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <h1 className="mb-6 text-[28px] font-semibold tracking-[-0.03em] text-ink">My profile</h1>
 
-        {/* Profile photo + completeness */}
-        <div className="card mb-6 flex flex-col items-center gap-4 sm:flex-row">
-          <div className="flex flex-col items-center gap-2">
-            <img
-              src={profile?.profilePhoto || "/default-avatar.svg"}
-              alt="Profile photo"
-              className="h-24 w-24 rounded-full border-2 border-navy-100 object-cover"
-            />
-            <label className="cursor-pointer text-xs font-semibold text-navy-700 hover:underline">
-              {photoUploading ? "Uploading..." : "Change photo"}
-              <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
+        <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+          {/* ---- profile card ---- */}
+          <motion.aside initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_OUT }}
+            className="card flex flex-col items-center p-6 text-center lg:sticky lg:top-[84px]">
+            <label className="group relative cursor-pointer rounded-full focus-within:ring-4 focus-within:ring-navy-600/25" title="Change photo">
+              <span className="relative block h-28 w-28">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photoPreview || profile?.profilePhoto || "/default-avatar.svg"} alt="Profile photo"
+                  className="h-28 w-28 rounded-full border-2 border-canvas-border object-cover" />
+                <span className="absolute inset-0 grid place-items-center rounded-full bg-black/45 text-[12px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+                  <Camera className="h-5 w-5" aria-hidden="true" />
+                </span>
+                {photoUploading && (
+                  <span className="absolute -inset-1.5 grid place-items-center">
+                    <svg className="h-full w-full animate-spin" viewBox="0 0 120 120" aria-hidden="true">
+                      <circle cx="60" cy="60" r="56" fill="none" stroke="var(--line)" strokeWidth="4" />
+                      <circle cx="60" cy="60" r="56" fill="none" stroke="var(--accent)" strokeWidth="4" strokeLinecap="round" strokeDasharray="90 300" />
+                    </svg>
+                  </span>
+                )}
+              </span>
+              <input type="file" accept="image/jpeg,image/png" className="sr-only" onChange={handlePhotoChange} disabled={photoUploading} aria-label="Change photo" />
             </label>
-            {photoError && <p className="form-error text-center">{photoError}</p>}
-          </div>
-          <div className="w-full flex-1">
-            <p className="mb-1 flex justify-between text-sm font-medium text-gray-700">
-              <span>Profile completeness</span>
-              <span>{completeness}%</span>
-            </p>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
-              <div className="h-full rounded-full bg-navy transition-all" style={{ width: `${completeness}%` }} />
-            </div>
-          </div>
-        </div>
+            <p className="mt-2 text-xs font-semibold text-navy-600">{photoUploading ? "Uploading…" : "Change photo"}</p>
+            {photoError && <p className="form-error justify-center text-center">{photoError}</p>}
 
-        {/* Read-only account info */}
-        <div className="card mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-navy-900">Account Information</h2>
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm text-gray-500">Login Email</dt>
-              <dd className="font-medium text-gray-900">{user?.email}</dd>
-            </div>
-            <div>
-              <dt className="text-sm text-gray-500">Role</dt>
-              <dd className="font-medium capitalize text-gray-900">{user?.role.replace("_", " ")}</dd>
-            </div>
-            {user?.role === "department_officer" && (
+            <h2 className="mt-4 text-[18px] font-semibold tracking-[-0.02em] text-ink">{name}</h2>
+            <p className="mt-0.5 text-[13px] text-ink-subtle">{roleLabel}{user?.departmentName ? ` · ${user.departmentName}` : ""}</p>
+
+            <div className="mt-5 flex w-full items-center gap-3 rounded-[12px] border border-canvas-border bg-canvas-sunken/60 p-3 text-left">
+              <ProgressRing value={completeness / 100} size={46} stroke={4}>{completeness}%</ProgressRing>
               <div>
-                <dt className="text-sm text-gray-500">Department</dt>
-                <dd className="font-medium text-gray-900">{user.departmentName}</dd>
+                <p className="text-[13px] font-semibold text-ink">Profile completeness</p>
+                <p className="text-[12px] text-ink-subtle">{completeness >= 100 ? "Everything is filled in." : "Complete it so complaints prefill."}</p>
               </div>
-            )}
-            {user?.role === "collector" && (
-              <div>
-                <dt className="text-sm text-gray-500">Designation</dt>
-                <dd className="font-medium text-gray-900">District Collector, Chennai.</dd>
-              </div>
-            )}
-          </dl>
-          <p className="mt-3 text-xs text-gray-500">Contact admin to change your role or email.</p>
-        </div>
+            </div>
+          </motion.aside>
 
-        {error && <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-        {success && <div role="status" className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>}
-
-        {/* Editable personal details */}
-        <div className="card mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-navy-900">Personal Details</h2>
-            {!editing && (
-              <button type="button" onClick={() => setEditing(true)} className="btn-secondary">
-                Edit Profile
-              </button>
-            )}
-          </div>
-
-          {!editing ? (
-            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="First Name" value={profile?.firstName} />
-              <Field label="Last Name" value={profile?.lastName} />
-              <Field label="Gender" value={profile?.gender} />
-              <Field label="Date of Birth" value={profile?.dateOfBirth ? String(profile.dateOfBirth).slice(0, 10) : null} />
-              <Field label="Alternate Email" value={profile?.alternateEmail} />
-              <Field label="Door No. & Street" value={profile?.doorNoAndStreet} />
-              <Field label="Area" value={profile?.area} />
-              <Field label="Locality" value={profile?.locality} />
-              <Field label="Pincode" value={profile?.pincode} />
-              <Field label="Zone" value={profile?.zoneName} />
-              <Field label="Ward Number" value={profile?.wardNumber ? String(profile.wardNumber) : null} />
-              <Field label="Aadhaar Number" value={profile?.aadhaarMasked || null} />
-            </dl>
-          ) : (
-            <form onSubmit={handleSaveProfile} noValidate>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="form-label" htmlFor="firstName">First Name</label>
-                  <input id="firstName" required className="form-input" value={form.firstName}
-                    onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="lastName">Last Name</label>
-                  <input id="lastName" className="form-input" value={form.lastName}
-                    onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-                </div>
-                <div>
-                  <span className="form-label">Gender</span>
-                  <div className="flex gap-4 pt-1">
-                    {["Male", "Female", "Transgender"].map((g) => (
-                      <label key={g} className="flex items-center gap-1.5 text-sm">
-                        <input
-                          type="radio"
-                          name="gender"
-                          value={g}
-                          checked={form.gender === g}
-                          onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                        />
-                        {g}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="dob">Date of Birth</label>
-                  <input id="dob" type="date" className="form-input" value={form.dateOfBirth}
-                    onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="altEmail">Alternate Email</label>
-                  <input id="altEmail" type="email" className="form-input" value={form.alternateEmail}
-                    onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="pincode">Pincode</label>
-                  <input id="pincode" maxLength={6} className="form-input" value={form.pincode}
-                    onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "") })} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="form-label" htmlFor="doorStreet">Door No. &amp; Street</label>
-                  <input id="doorStreet" className="form-input" value={form.doorNoAndStreet}
-                    onChange={(e) => setForm({ ...form, doorNoAndStreet: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="area">Area</label>
-                  <input id="area" className="form-input" value={form.area}
-                    onChange={(e) => setForm({ ...form, area: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="locality">Locality</label>
-                  <input id="locality" className="form-input" value={form.locality}
-                    onChange={(e) => setForm({ ...form, locality: e.target.value })} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="zone">Zone</label>
-                  <select id="zone" className="form-input" value={form.zoneId}
-                    onChange={(e) => setForm({ ...form, zoneId: e.target.value, wardNumber: "" })}>
-                    <option value="">Select zone</option>
-                    {zones.map((z) => (
-                      <option key={z.id} value={z.id}>Zone {z.zone_number} &ndash; {z.zone_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="ward">
-                    Ward Number {selectedZone && `(${selectedZone.ward_start}-${selectedZone.ward_end})`}
-                  </label>
-                  <input id="ward" type="number" className="form-input" value={form.wardNumber}
-                    min={selectedZone?.ward_start} max={selectedZone?.ward_end}
-                    onChange={(e) => setForm({ ...form, wardNumber: e.target.value })} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="form-label" htmlFor="aadhaar">
-                    Aadhaar Number {profile?.aadhaarMasked && `(current: ${profile.aadhaarMasked})`}
-                  </label>
-                  <input id="aadhaar" maxLength={12} placeholder="12-digit Aadhaar (leave blank to keep unchanged)"
-                    className="form-input" value={form.aadhaarNumber}
-                    onChange={(e) => setForm({ ...form, aadhaarNumber: e.target.value.replace(/\D/g, "") })} />
-                </div>
-              </div>
-              <div className="mt-6 flex gap-3">
-                <button type="submit" disabled={saving} className="btn-primary">
-                  {saving ? "Saving..." : "Save"}
-                </button>
-                <button type="button" className="btn-secondary" onClick={() => setEditing(false)} disabled={saving}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-
-        {/* Mobile number + OTP re-verification */}
-        <div className="card mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-navy-900">Mobile Number</h2>
-          {!mobileEditing ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-900">
-                  {profile?.mobileNumber || "Not set"}{" "}
-                  {profile?.mobileNumber && (
-                    <span className={`ml-1 text-xs font-semibold ${profile.mobileVerified ? "text-green-700" : "text-yellow-700"}`}>
-                      {profile.mobileVerified ? "Verified" : "Not verified"}
-                    </span>
+          {/* ---- tabbed sections ---- */}
+          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.06, ease: EASE_OUT }} className="card min-w-0 p-0">
+            <div className="overflow-x-auto px-4 pt-2">
+              <Tabs label="Profile sections" items={TABS} value={tab} onChange={setTab} />
+            </div>
+            <div className="p-5 sm:p-6">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
+                  {tab === "account" && (
+                    <>
+                      <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <Field label="Login email" value={user?.email} />
+                        <Field label="Role" value={roleLabel} />
+                        {user?.role === "department_officer" && <Field label="Department" value={user.departmentName} />}
+                        {user?.role === "collector" && <Field label="Designation" value="District Collector, Chennai." />}
+                      </dl>
+                      <p className="mt-5 text-xs text-ink-subtle">Contact admin to change your role or email.</p>
+                    </>
                   )}
-                </p>
-              </div>
-              <button type="button" className="btn-secondary" onClick={() => setMobileEditing(true)}>
-                Change
-              </button>
-            </div>
-          ) : (
-            <div>
-              {mobileError && <div role="alert" className="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-800">{mobileError}</div>}
-              {!mobileOtpSent ? (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="flex-1">
-                    <label className="form-label" htmlFor="newMobile">New Mobile Number</label>
-                    <input id="newMobile" maxLength={10} className="form-input" value={newMobile}
-                      onChange={(e) => setNewMobile(e.target.value.replace(/\D/g, ""))} />
-                  </div>
-                  <button type="button" disabled={mobileSubmitting} onClick={requestMobileOtp} className="btn-primary">
-                    {mobileSubmitting ? "Sending..." : "Send OTP"}
-                  </button>
-                  <button type="button" className="btn-secondary" onClick={() => setMobileEditing(false)}>Cancel</button>
-                </div>
-              ) : (
-                <div>
-                  {mobileDevOtp && (
-                    <p className="mb-2 rounded bg-navy-50 p-2 font-mono text-sm font-bold text-navy-900">
-                      [Dev mode] Your OTP: {mobileDevOtp}
-                    </p>
-                  )}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                      <label className="form-label" htmlFor="mobileOtp">Enter OTP sent to verify {newMobile}</label>
-                      <input id="mobileOtp" maxLength={6} className="form-input" value={mobileOtp}
-                        onChange={(e) => setMobileOtp(e.target.value.replace(/\D/g, ""))} />
-                    </div>
-                    <button type="button" disabled={mobileSubmitting} onClick={verifyMobileOtp} className="btn-primary">
-                      {mobileSubmitting ? "Verifying..." : "Verify & Save"}
-                    </button>
-                    <button type="button" className="btn-secondary" onClick={() => { setMobileEditing(false); setMobileOtpSent(false); }}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* Change password */}
-        <div className="card">
-          <h2 className="mb-4 text-lg font-semibold text-navy-900">Change Password</h2>
-          {pwError && <div role="alert" className="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-800">{pwError}</div>}
-          {pwSuccess && <div role="status" className="mb-3 rounded-md bg-green-50 p-3 text-sm text-green-800">{pwSuccess}</div>}
-          <form onSubmit={handleChangePassword} noValidate>
-            <div className="mb-4">
-              <label className="form-label" htmlFor="currentPassword">Current Password</label>
-              <input id="currentPassword" type="password" required className="form-input"
-                value={pwForm.currentPassword}
-                onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+                  {tab === "personal" && (
+                    <>
+                      {error && <Note kind="err">{error}</Note>}
+                      {success && <Note kind="ok">{success}</Note>}
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-[15px] font-semibold text-ink">Personal details</h3>
+                        {!editing && (
+                          <button type="button" onClick={() => setEditing(true)} className="btn-secondary h-9"><PencilLine className="h-4 w-4" aria-hidden="true" />Edit profile</button>
+                        )}
+                      </div>
+
+                      {!editing ? (
+                        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                          <Field label="First name" value={profile?.firstName} />
+                          <Field label="Last name" value={profile?.lastName} />
+                          <Field label="Gender" value={profile?.gender} />
+                          <Field label="Date of birth" value={profile?.dateOfBirth ? String(profile.dateOfBirth).slice(0, 10) : null} />
+                          <Field label="Alternate email" value={profile?.alternateEmail} />
+                          <Field label="Door no. & street" value={profile?.doorNoAndStreet} />
+                          <Field label="Area" value={profile?.area} />
+                          <Field label="Locality" value={profile?.locality} />
+                          <Field label="Pincode" value={profile?.pincode} mono />
+                          <Field label="Zone" value={profile?.zoneName} />
+                          <Field label="Ward number" value={profile?.wardNumber ? String(profile.wardNumber) : null} mono />
+                          <Aadhaar masked={profile?.aadhaarMasked || null} />
+                        </dl>
+                      ) : (
+                        <form onSubmit={handleSaveProfile} noValidate>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                              <label className="form-label" htmlFor="firstName">First name</label>
+                              <input id="firstName" required className="form-input" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="lastName">Last name</label>
+                              <input id="lastName" className="form-input" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+                            </div>
+                            <div>
+                              <span className="form-label">Gender</span>
+                              <div className="flex flex-wrap gap-2 pt-0.5" role="radiogroup" aria-label="Gender">
+                                {["Male", "Female", "Transgender"].map((g) => (
+                                  <label key={g} className={form.gender === g ? "chip-active cursor-pointer px-3 py-1.5" : "chip-idle cursor-pointer px-3 py-1.5"}>
+                                    <input type="radio" name="gender" value={g} className="sr-only" checked={form.gender === g} onChange={(e) => setForm({ ...form, gender: e.target.value })} />
+                                    {g}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="dob">Date of birth</label>
+                              <input id="dob" type="date" className="form-input" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="altEmail">Alternate email</label>
+                              <input id="altEmail" type="email" className="form-input" value={form.alternateEmail} onChange={(e) => setForm({ ...form, alternateEmail: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="pincode">Pincode</label>
+                              <input id="pincode" maxLength={6} className="form-input font-mono" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value.replace(/\D/g, "") })} />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="form-label" htmlFor="doorStreet">Door no. &amp; street</label>
+                              <input id="doorStreet" className="form-input" value={form.doorNoAndStreet} onChange={(e) => setForm({ ...form, doorNoAndStreet: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="area">Area</label>
+                              <input id="area" className="form-input" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="locality">Locality</label>
+                              <input id="locality" className="form-input" value={form.locality} onChange={(e) => setForm({ ...form, locality: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="zone">Zone</label>
+                              <select id="zone" className="form-input" value={form.zoneId} onChange={(e) => setForm({ ...form, zoneId: e.target.value, wardNumber: "" })}>
+                                <option value="">Select zone</option>
+                                {zones.map((z) => (<option key={z.id} value={z.id}>Zone {z.zone_number} &ndash; {z.zone_name}</option>))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="form-label" htmlFor="ward">Ward number {selectedZone && `(${selectedZone.ward_start}-${selectedZone.ward_end})`}</label>
+                              <input id="ward" type="number" className="form-input font-mono" value={form.wardNumber} min={selectedZone?.ward_start} max={selectedZone?.ward_end}
+                                onChange={(e) => setForm({ ...form, wardNumber: e.target.value })} />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="form-label" htmlFor="aadhaar">
+                                <Lock className="mr-1 inline h-3 w-3" aria-hidden="true" />Aadhaar number {profile?.aadhaarMasked && `(current: ${profile.aadhaarMasked})`}
+                              </label>
+                              {/* typed digits are hidden like a password: the full number is never shown */}
+                              <input id="aadhaar" type="password" autoComplete="off" maxLength={12} placeholder="12-digit Aadhaar (leave blank to keep unchanged)"
+                                className="form-input font-mono" value={form.aadhaarNumber} onChange={(e) => setForm({ ...form, aadhaarNumber: e.target.value.replace(/\D/g, "") })} />
+                              <p className="form-hint">Stored encrypted. Only the last four digits are ever shown.</p>
+                            </div>
+                          </div>
+                          <div className="mt-6 flex gap-3">
+                            <button type="submit" disabled={saving} className="btn-primary">{saving ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />Saving…</> : "Save"}</button>
+                            <button type="button" className="btn-secondary" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+                          </div>
+                        </form>
+                      )}
+                    </>
+                  )}
+
+                  {tab === "mobile" && (
+                    <>
+                      {mobileError && <Note kind="err">{mobileError}</Note>}
+                      {!mobileEditing ? (
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Mobile number</p>
+                            <p className="mt-1 flex items-center gap-2 font-mono text-[17px] text-ink">
+                              {profile?.mobileNumber || <span className="font-sans text-ink-faint">Not set</span>}
+                              {profile?.mobileNumber && <Chip tone={profile.mobileVerified ? "ok" : "medium"} pill>{profile.mobileVerified ? "Verified" : "Not verified"}</Chip>}
+                            </p>
+                          </div>
+                          <button type="button" className="btn-secondary h-9" onClick={() => setMobileEditing(true)}>Change</button>
+                        </div>
+                      ) : !mobileOtpSent ? (
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                          <div className="flex-1">
+                            <label className="form-label" htmlFor="newMobile">New mobile number</label>
+                            <input id="newMobile" maxLength={10} inputMode="numeric" className="form-input font-mono" value={newMobile} onChange={(e) => setNewMobile(e.target.value.replace(/\D/g, ""))} />
+                          </div>
+                          <button type="button" disabled={mobileSubmitting} onClick={requestMobileOtp} className="btn-primary">{mobileSubmitting ? "Sending..." : "Send OTP"}</button>
+                          <button type="button" className="btn-secondary" onClick={() => setMobileEditing(false)}>Cancel</button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {mobileDevOtp && <p className="rounded-[8px] bg-navy-50 p-2 font-mono text-sm font-bold text-navy-800">[Dev mode] Your OTP: {mobileDevOtp}</p>}
+                          <div>
+                            <span className="form-label">Enter the code sent to verify <span className="font-mono normal-case">{newMobile}</span></span>
+                            <OtpInput value={mobileOtp} onChange={setMobileOtp} autoFocus label="Mobile OTP" />
+                          </div>
+                          <div className="flex gap-3">
+                            <button type="button" disabled={mobileSubmitting} onClick={verifyMobileOtp} className="btn-primary">{mobileSubmitting ? "Verifying..." : "Verify & save"}</button>
+                            <button type="button" className="btn-secondary" onClick={() => { setMobileEditing(false); setMobileOtpSent(false); }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {tab === "password" && (
+                    <>
+                      {pwError && <Note kind="err">{pwError}</Note>}
+                      {pwSuccess && <Note kind="ok">{pwSuccess}</Note>}
+                      <form onSubmit={handleChangePassword} noValidate className="max-w-md">
+                        <div className="mb-4">
+                          <label className="form-label" htmlFor="currentPassword">Current password</label>
+                          <input id="currentPassword" type="password" required className="form-input" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+                        </div>
+                        <div className="mb-4">
+                          <label className="form-label" htmlFor="newPassword2">New password</label>
+                          <input id="newPassword2" type="password" required className="form-input" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+                          <PasswordStrengthMeter password={pwForm.newPassword} />
+                        </div>
+                        <div className="mb-6">
+                          <label className="form-label" htmlFor="confirmNewPassword">Confirm new password</label>
+                          <input id="confirmNewPassword" type="password" required className="form-input" value={pwForm.confirmPassword} onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
+                        </div>
+                        <button type="submit" disabled={pwSubmitting} className="btn-primary">{pwSubmitting ? "Updating..." : "Change password"}</button>
+                      </form>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <div className="mb-4">
-              <label className="form-label" htmlFor="newPassword2">New Password</label>
-              <input id="newPassword2" type="password" required className="form-input"
-                value={pwForm.newPassword}
-                onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
-              <PasswordStrengthMeter password={pwForm.newPassword} />
-            </div>
-            <div className="mb-6">
-              <label className="form-label" htmlFor="confirmNewPassword">Confirm New Password</label>
-              <input id="confirmNewPassword" type="password" required className="form-input"
-                value={pwForm.confirmPassword}
-                onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
-            </div>
-            <button type="submit" disabled={pwSubmitting} className="btn-primary">
-              {pwSubmitting ? "Updating..." : "Change Password"}
-            </button>
-          </form>
+          </motion.section>
         </div>
       </main>
       <Footer />
+      <Toaster items={toasts.items} dismiss={toasts.dismiss} />
+    </div>
+    </MotionConfig>
+  );
+}
+
+function Field({ label, value, mono }: { label: string; value: string | null | undefined; mono?: boolean }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">{label}</dt>
+      <dd className={`mt-0.5 text-[14.5px] font-medium text-ink ${mono ? "font-mono" : ""}`}>{value || <span className="font-normal text-ink-faint">Not provided</span>}</dd>
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+/** Aadhaar is always shown masked (XXXX XXXX 1234), with a lock and an "Encrypted" tooltip; never the full number. */
+function Aadhaar({ masked }: { masked: string | null }) {
+  const last4 = masked ? masked.replace(/\D/g, "").slice(-4) : "";
   return (
     <div>
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="font-medium text-gray-900">{value || <span className="text-gray-400">Not provided</span>}</dd>
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Aadhaar number</dt>
+      <dd className="mt-0.5 flex items-center gap-2 text-[14.5px] font-medium text-ink">
+        {last4 ? <span className="font-mono tracking-wide">XXXX XXXX {last4}</span> : <span className="font-normal text-ink-faint">Not provided</span>}
+        <Tip text="Encrypted. Only the last four digits are ever shown."><span tabIndex={0} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><Lock className="h-3 w-3" aria-hidden="true" />Encrypted</span></Tip>
+      </dd>
     </div>
   );
 }

@@ -1,32 +1,41 @@
 interface LogoProps {
   className?: string;
-  /** "navy": the dark application tile (on any background); "white": a light tile for light pages */
+  /** kept for older callers: the mark is the same ocean tile on any background */
   tone?: "navy" | "white";
+  /** "ai": the coral variant used by Ask District IQ */
+  variant?: "brand" | "ai";
 }
 
 /**
- * District IQ symbol: a district boundary (an irregular administrative polygon) holding three connected
- * intelligence nodes; the live node is cyan. Geometric enough to read at 16 px.
+ * District IQ mark: a kolam-inspired "D". A single unbroken line loops round a dot grid, as a kolam is drawn round its
+ * pulli dots, and the live node is coral. Ocean gradient tile; reads at 16 px.
  */
-export default function Logo({ className = "h-10 w-10", tone = "navy" }: LogoProps) {
-  const dark = tone === "navy";
-  const id = dark ? "diq-b-d" : "diq-b-l";
+export default function Logo({ className = "h-10 w-10", variant = "brand" }: LogoProps) {
+  const ai = variant === "ai";
+  // identical definitions per variant, so a shared id is safe (no hook: the mark renders in server components too)
+  const id = ai ? "diq-logo-ai" : "diq-logo";
   return (
     <svg viewBox="0 0 48 48" className={className} role="img" aria-label="District IQ">
       <defs>
-        <linearGradient id={id} x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor={dark ? "#8DB6FF" : "#2F6FE6"} />
-          <stop offset="1" stopColor={dark ? "#2F6FE6" : "#0B3FA8"} />
+        <linearGradient id={id} x1="4" y1="2" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={ai ? "#FF7A5C" : "#0A3D62"} />
+          <stop offset="1" stopColor={ai ? "#F0525A" : "#13A3BA"} />
+        </linearGradient>
+        <linearGradient id={`${id}s`} x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fff" stopOpacity=".28" />
+          <stop offset=".5" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <rect x="1" y="1" width="46" height="46" rx="12" fill={dark ? "#0A1426" : "#FFFFFF"} stroke={dark ? "rgba(138,164,214,.32)" : "#D5E0F2"} />
-      <path d="M15.5 9.5 33.5 8 40 22 31.5 39 12 36.5 8 20.5Z" fill={dark ? "rgba(76,141,255,.12)" : "rgba(47,111,230,.08)"}
-        stroke={`url(#${id})`} strokeWidth="2.6" strokeLinejoin="round" />
-      <path d="M17.5 19.5 28.5 16.5M17.5 19.5 23 29.5M28.5 16.5 23 29.5" stroke={dark ? "#8DB6FF" : "#2F6FE6"} strokeWidth="1.7" strokeLinecap="round" opacity=".9" />
-      <circle cx="17.5" cy="19.5" r="2.7" fill={dark ? "#8DB6FF" : "#2F6FE6"} />
-      <circle cx="28.5" cy="16.5" r="2.7" fill={dark ? "#8DB6FF" : "#2F6FE6"} />
-      <circle cx="23" cy="29.5" r="5.6" fill="#2BD4E6" opacity=".18" />
-      <circle cx="23" cy="29.5" r="3.4" fill="#2BD4E6" />
+      <rect x="1" y="1" width="46" height="46" rx="13" fill={`url(#${id})`} />
+      <rect x="1" y="1" width="46" height="46" rx="13" fill={`url(#${id}s)`} />
+      <rect x="1.5" y="1.5" width="45" height="45" rx="12.5" fill="none" stroke="#fff" strokeOpacity=".22" />
+      {/* the kolam line: one stroke forming the D */}
+      <path d="M15 12.5h9.5a11.5 11.5 0 0 1 0 23H15Z" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinejoin="round" />
+      {/* pulli dots */}
+      <circle cx="20.5" cy="18.5" r="2" fill="#fff" />
+      <circle cx="20.5" cy="29.5" r="2" fill="#fff" />
+      <circle cx="27.5" cy="24" r="4.6" fill="#FF8466" opacity=".35" />
+      <circle cx="27.5" cy="24" r="2.6" fill="#FF7A5C" stroke="#fff" strokeWidth="1.2" />
     </svg>
   );
 }

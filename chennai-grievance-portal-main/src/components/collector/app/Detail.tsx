@@ -18,7 +18,7 @@ const CHANNEL: Record<string, string> = {
  * words, and every report merged into it, each at its own time. No actions here.
  */
 /** What the AI read in one news article: who, which bodies, casualties, where it stands, the exact place. */
-function NewsDetails({ ai }: { ai: Record<string, string | number> }) {
+export function NewsDetails({ ai }: { ai: Record<string, string | number> }) {
   const hurt = [ai.dead ? plural(Number(ai.dead), "death") : null, ai.injured ? `${ai.injured} injured` : null].filter(Boolean).join(", ");
   const items: [string, string | number | undefined][] = [
     ["Place", ai.place], ["People", ai.people], ["Bodies named", ai.organisations], ["Casualties", hurt || undefined], ["Status", ai.status]

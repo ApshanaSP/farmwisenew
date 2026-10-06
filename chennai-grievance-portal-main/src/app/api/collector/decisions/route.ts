@@ -18,6 +18,13 @@ const DecisionSchema = z
     path: ["note"]
   });
 
+/**
+ * The incident facts its priority is computed from (district_intel/dintel/priority.py FACTS). Saved with every
+ * decision so the pipeline can learn the priority weights from what the Collector did, against the score as it was.
+ */
+const SCORE_FACTS = ["severity_score", "severity_level", "category_label", "source_count", "citizen_complaints", "is_open", "sla_ratio",
+  "sla_basis", "sla_hours", "verified", "growth_24h", "vulnerable", "outlet_count", "media_only", "rain_coupled", "recurrence_90d"] as const;
+
 /** Next level in a department's escalation route, e.g. "AE → EE → SE" -> "EE". */
 function nextLevel(route: string | null): string | null {
   const steps = String(route ?? "").split("→").map((s) => s.trim()).filter((s) => s && s !== "-");
@@ -48,8 +55,7 @@ export async function POST(req: NextRequest) {
   const conn = await intelPool.getConnection();
   try {
     const [incs] = await conn.query<RowDataPacket[]>(
-      `SELECT i.incident_id, i.status_std, i.verified, i.is_open, i.severity_level, i.lead_dept, dp.route
-       FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE i.incident_id IN (?)`,
+      `SELECT i.*, dp.route FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE i.incident_id IN (?)`,
       [d.incidentIds]
     );
     if (incs.length !== new Set(d.incidentIds).size) {
@@ -75,7 +81,8 @@ export async function POST(req: NextRequest) {
         `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value)
          VALUES (?, ?, 'collector_decisions', ?, ?, ?)`,
         [session.email, `decision:${d.decision}`, inc.incident_id,
-          JSON.stringify({ status_std: inc.status_std, verified: inc.verified, is_open: inc.is_open, severity_level: inc.severity_level }),
+          JSON.stringify({ status_std: inc.status_std, verified: inc.verified, is_open: inc.is_open, severity_level: inc.severity_level,
+            score: { priority_score: inc.priority_score ?? null, facts: Object.fromEntries(SCORE_FACTS.map((k) => [k, inc[k] ?? null])) } }),
           JSON.stringify({ decision_id: res.insertId, decision: d.decision, note, escalate_to: d.escalateTo ?? null })]
       );
       saved.push({ incident_id: inc.incident_id, decision_id: res.insertId, escalated_to_level: level });

@@ -14,6 +14,7 @@ import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
+import { applyMapping, extractRecords, nearChennai, readStored, type FetchKind } from "@/lib/collector/sourcemap";
 
 type Row = Record<string, any>;
 const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard prototype)";
@@ -42,8 +43,10 @@ const PIPE_NOTE: Record<string, string> = {
 };
 
 export async function listSources() {
+  const mapped = await hasMappingColumn();
   const [rows, health, runs] = await Promise.all([
     q(`SELECT source_id AS id, name, url, kind, description, pipeline_key, auth, login_url, username, refresh_minutes, enabled, status,
+              ${mapped ? "mapping IS NOT NULL" : "0"} AS mapped,
               DATE_FORMAT(last_run_at, '%Y-%m-%d %H:%i:%s') AS last_run_at, DATE_FORMAT(last_ok_at, '%Y-%m-%d %H:%i:%s') AS last_ok_at,
               last_error, items_total, created_by, DATE_FORMAT(session_expires_at, '%Y-%m-%d %H:%i:%s') AS session_expires_at
        FROM ${ops("sources")} ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'ocr', 'rss', 'html', 'json'), source_id`),
@@ -58,6 +61,7 @@ export async function listSources() {
     return {
       ...s,
       enabled: Number(s.enabled) === 1,
+      mapped: Number(s.mapped) === 1,
       // pipeline feeds take their status from the store; "partial" = today's data arrived but some endpoints are blocked.
       // Their own last_error only holds a Refresh click's reply (already shown as a toast), so it is never shown here.
       status: pipe ? (pipe.status === "ok" ? "ok" : pipe.status === "degraded" ? "partial" : "stale") : s.status,
@@ -71,6 +75,13 @@ export async function listSources() {
       runs: runs.filter((r) => r.source_id === s.id)
     };
   });
+}
+
+/** Whether sources.mapping exists yet (the onboarding agent adds it with its first approved source). */
+async function hasMappingColumn(): Promise<boolean> {
+  const r = await q(`SELECT COUNT(*) AS n FROM information_schema.columns WHERE table_schema = ? AND table_name = 'sources' AND column_name = 'mapping'`,
+    [process.env.INTEL_OPS_DB_NAME || "district_intel_ops"]).catch(() => [{ n: 0 }]);
+  return Number(r[0]?.n) > 0;
 }
 
 // ------------------------------------------------------------------ add --
@@ -257,12 +268,21 @@ async function fetchAndIngest(s: Row) {
     if (looksLikeLogin(res.r, res.text)) return { ok: false, login: "failed", error: "The site still asks for a login.", http: res.r.status, seen: 0, items_new: 0, attempts };
   }
   if (res.r.status >= 400) return { ok: false, http: res.r.status, error: `HTTP ${res.r.status}`, login: sess.login, seen: 0, items_new: 0, attempts };
-  const items = s.kind === "rss" ? parseRss(res.text) : s.kind === "json" ? parseJson(res.text) : parseHtml(res.text, s.url);
+  // a source set up by the onboarding agent reads its records with the stored mapping (no AI at run time)
+  const stored = readStored(s.mapping);
+  const items: Item[] = stored
+    ? extractRecords(s.kind as FetchKind, res.text, s.url, stored.recordPath).records
+      .map((r) => applyMapping(r, stored.map)).filter((x): x is NonNullable<typeof x> => !!x)
+    : s.kind === "rss" ? parseRss(res.text) : s.kind === "json" ? parseJson(res.text) : parseHtml(res.text, s.url);
   const n = await ingest(s.source_id, items, "fetch");
   return { ok: true, http: res.r.status, seen: items.length, items_new: n, login: sess.login, attempts, error: items.length ? null : "No items found on the page." };
 }
 
-interface Item { title: string; url?: string | null; body?: string | null; published?: string | null }
+interface Item {
+  title: string; url?: string | null; body?: string | null; published?: string | null;
+  /** from a stored mapping: location text, coordinates and the source's own category, to help place and classify */
+  place?: string | null; lat?: number | null; lon?: number | null; category?: string | null;
+}
 
 /** Numeric character references (&#038; &#x2019;), left behind by some feeds. */
 const unent = (s: string) => s.replace(/&#(\d{1,6});/g, (_, d) => String.fromCodePoint(Number(d))).replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)));
@@ -333,8 +353,11 @@ export async function ingest(sourceId: number, items: Item[], origin: "fetch" | 
     const title = it.title.slice(0, 480);
     const text = `${title}. ${it.body ?? ""}`;
     const hash = crypto.createHash("sha1").update(`${sourceId}|${it.url ?? ""}|${title}`).digest("hex");
-    const c = classify(text);
-    const p = await resolvePlace(text);
+    const c = classify(it.category ? `${text} ${it.category}` : text);
+    const p = await resolvePlace(it.place ? `${it.place}. ${text}` : text);
+    // the source's own coordinates win over a place found in the text, when they are in the district
+    const own = nearChennai(it.lat, it.lon);
+    const lat = own ? it.lat! : p?.lat ?? null, lon = own ? it.lon! : p?.lon ?? null;
     const tamil = /[஀-௿]/.test(text);
     const r = await exec(
       `INSERT IGNORE INTO ${ops("source_items")}
@@ -343,7 +366,7 @@ export async function ingest(sourceId: number, items: Item[], origin: "fetch" | 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [sourceId, hash, it.url?.slice(0, 690) ?? null, title, it.body?.slice(0, 6000) ?? null, toDate(it.published), tamil ? "ta" : "en",
         c?.code ?? null, c?.label ?? null, c?.dept ?? null, c?.conf ?? null, c?.terms.slice(0, 6).join(", ").slice(0, 250) ?? null,
-        p?.zone ?? null, p?.ward ?? null, p?.taluk ?? null, p?.place ?? null, p?.conf ?? null, p?.lat ?? null, p?.lon ?? null, PLACE_V, c ? 1 : 0, origin]
+        p?.zone ?? null, p?.ward ?? null, p?.taluk ?? null, p?.place ?? it.place?.slice(0, 250) ?? null, p?.conf ?? null, lat, lon, PLACE_V, c ? 1 : 0, origin]
     );
     added += r.affectedRows;
   }

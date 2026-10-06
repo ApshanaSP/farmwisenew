@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 
+from . import priority
 from .refdata import SEV_RANK, Reference
 from .util import IST, log, to_xy
 
@@ -134,40 +135,12 @@ def build(events: pd.DataFrame, timeline: pd.DataFrame, actions: pd.DataFrame, r
     rs = inc["category_code"].map(lambda c: bool(ref.cat.get(c, ref.cat["OTHER"]).get("rain_sensitive")))
     inc["rain_coupled"] = (np.array(near_rain) & rs.to_numpy()).astype(int)
 
-    # ---- priority with reasons
-    pr, reasons = [], []
-    for r in inc.itertuples():
-        s = float(r.severity_score)
-        why = [f"{r.severity_level} {r.category_label.lower()} ({r.severity_score:.0f})"]
-        if r.source_count > 1:
-            s += 5 * np.log2(r.source_count); why.append(f"reported by {r.source_count} sources")
-        if r.citizen_complaints > 1:
-            s += 3 * np.log2(1 + r.citizen_complaints); why.append(f"{r.citizen_complaints} citizen complaints")
-        if r.is_open:
-            over = r.sla_ratio if pd.notna(r.sla_ratio) else 0
-            what = "response" if r.sla_basis == "response" else "resolution"
-            if over > 2:
-                s += 20; why.append(f"{what} over twice the {r.sla_hours:.0f} h target")
-            elif over > 1:
-                s += 10; why.append(f"{what} past the {r.sla_hours:.0f} h target")
-            if not r.verified and r.severity_level in ("Severe", "High"):
-                s += 8; why.append("not yet verified by an officer")
-            if r.growth_24h >= 3:
-                s += 8; why.append(f"{r.growth_24h} new reports in 24 h")
-        if r.vulnerable:
-            s += 5; why.append(f"affects {r.vulnerable.replace('|', ', ').replace('_', ' ')}")
-        if r.outlet_count >= 2:
-            s += 5; why.append(f"covered by {r.outlet_count} news outlets")
-        if r.media_only:
-            s += 5; why.append("in the news but not in any department's records")
-        if r.rain_coupled:
-            s += 5; why.append("linked to a rain event")
-        if r.recurrence_90d >= 3:
-            s += 5; why.append(f"{r.recurrence_90d} similar incidents here in 90 days")
-        pr.append(round(s, 1))
-        reasons.append("; ".join(why))
-    inc["priority_score"] = pr
-    inc["priority_reasons"] = reasons
+    # ---- priority with reasons (hand-set weights here; the pipeline re-scores with learned ones when there are enough
+    # Collector decisions, see priority.py)
+    facts = inc[priority.FACTS].to_dict("records")
+    sev, X = priority.matrix(facts)
+    inc["priority_score"] = priority.score(sev, X, priority.DEFAULT_WEIGHTS)
+    inc["priority_reasons"] = [priority.reasons(r) for r in facts]
     inc["awaiting_collector"] = (inc["status_std"] == "Awaiting verification").astype(int)
     age_d = (as_of - inc["first_reported_at"]).dt.total_seconds() / 86400
     hi = inc["severity_level"].isin(["Severe", "High"])

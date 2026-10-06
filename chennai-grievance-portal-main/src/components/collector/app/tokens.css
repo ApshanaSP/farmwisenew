@@ -1,113 +1,159 @@
 /* =====================================================================================================================
-   District IQ design tokens: "Premium" — deep navy, an indigo-to-blue accent, and four coordinated hues that carry
-   meaning (rose = severe / deaths, amber = high / warning, emerald = verified / good, indigo = information and selection).
-   One source for the Collector console, the Department Officer console and Ask District IQ (all render under .dic).
+   District IQ design tokens: "Marina". Bright cool-white pages with an ocean-blue band at the top of each page, white
+   cards, deep ocean for what is interactive, coral for Ask District IQ and other AI things, and severity colours that
+   read at a glance. Light by default; the dark theme is the same harbour at night. ONE token set for every portal: the
+   citizen pages and sign-in (:root, via theme.css + Tailwind), the Collector console, the Department Officer console
+   and Ask District IQ (.dic).
 
    Surfaces, from back to front:
-     level 0  --bg          the application background (with a soft glow)
-     level 1  --bg-2        the workspace behind the panels
-     level 2  --surface     panels
-     level 3  --surface-2   rows, inputs and cards inside a panel   (--surface-3 on hover, --raise for a lifted row)
+     level 0  --bg          the page
+     level 1  --bg-2        wells and the space behind panels
+     level 2  --surface     cards
+     level 3  --surface-2   rows and inputs inside a card   (--surface-3 on hover)
      level 4  --elev        popovers, menus, dialogs, the assistant
-   ===================================================================================================================== */
-.dic{
-  color-scheme:dark;
+   The ocean band (--band) sits on top of level 0 and carries white text in both themes.
 
-  /* ---- surfaces: deep navy ---- */
-  --bg:#060912;
-  --bg-2:#090D18;
-  --surface:#0D1322;
-  --surface-2:#121a2d;
-  --surface-3:#18223a;
-  --raise:#141c31;
-  --elev:#0F1628;
-  --scrim:rgba(3,5,12,.72);
+   The older names (--sev, --med, --low, --info, --violet, --teal, --grad …) are kept as aliases so every existing rule
+   reads the new palette.
+   ===================================================================================================================== */
+:root,:root[data-theme="light"],.dic[data-theme="light"]{
+  color-scheme:light;
+
+  /* ---- surfaces: cool white ---- */
+  --bg:#F3F6F9;
+  --bg-2:#EBF0F5;
+  --surface:#FFFFFF;
+  --surface-2:#F6F8FB;
+  --surface-3:#ECF1F6;
+  --raise:#FFFFFF;
+  --elev:#FFFFFF;
+  --elev-glass:rgba(255,255,255,.96);
+  --scrim:rgba(8,26,44,.38);
 
   /* ---- borders ---- */
-  --line:rgba(148,163,184,.13);
-  --line-2:rgba(148,163,184,.075);
-  --line-3:rgba(148,163,184,.24);
-  --line-focus:rgba(129,140,248,.65);
+  --line:#E0E7EF;
+  --line-2:#EAEFF5;
+  --line-3:#CFD9E4;
+  --line-focus:rgba(11,114,144,.55);
 
   /* ---- text ---- */
-  --text:#F1F5F9;
-  --text-2:#B6C2D4;
-  --text-3:#8492A9;
-  --text-4:#56627A;
-  --text-inv:#060912;
+  --text:#0F1B2D;
+  --text-2:#40506A;
+  --text-3:#64748B;
+  --text-4:#A0AEC0;
+  --text-inv:#FFFFFF;
 
-  /* ---- the accent: indigo, with a blue gradient for primary actions ---- */
-  --accent:#818CF8;
-  --accent-2:#A5B4FC;          /* accent text on dark */
-  --accent-3:#6366F1;          /* solid fills */
-  --accent-soft:rgba(99,102,241,.16);
-  --accent-line:rgba(129,140,248,.42);
-  --grad:linear-gradient(135deg,#6366F1 0%,#4F7CF6 100%);
-  --grad-soft:linear-gradient(135deg,rgba(99,102,241,.22),rgba(79,124,246,.1));
+  /* ---- the accent: deep ocean ---- */
+  --accent:#0B7290;
+  --accent-2:#086784;          /* accent text */
+  --accent-3:#0A3D62;          /* solid fills: primary buttons, the active tab */
+  --accent-soft:#E2F2F6;
+  --accent-line:#B3DCE6;
+  --accent-grad:linear-gradient(135deg,#0A3D62 0%,#0C6283 100%);
+  --grad:var(--accent-grad);
+  --grad-soft:linear-gradient(135deg,#EAF5F8,#F1F6FB);
 
-  /* ---- live signal ---- */
-  --signal:#38BDF8;
-  --signal-soft:rgba(56,189,248,.14);
+  /* ---- the ocean band at the top of every page (white text on it in both themes) ---- */
+  --band:radial-gradient(120% 150% at 88% -10%,#18A7BC 0%,rgba(24,167,188,0) 55%),linear-gradient(115deg,#082F4E 0%,#0A3D62 46%,#0C6283 100%);
+  --band-ink:#FFFFFF;
+  --band-ink-2:#CFE9F0;
+  --band-ink-3:#93C6D4;
+  --band-glass:rgba(255,255,255,.10);
+  --band-glass-2:rgba(255,255,255,.17);
+  --band-line:rgba(255,255,255,.18);
 
-  /* ---- semantic: four hues that belong together ---- */
-  --sev:#FB7185;   --sev-soft:rgba(244,63,94,.15);   --sev-line:rgba(251,113,133,.42);
-  --high:#FBBF24;  --high-soft:rgba(251,191,36,.13); --high-line:rgba(251,191,36,.4);
-  --med:#FCD34D;   --med-soft:rgba(252,211,77,.12);  --med-line:rgba(252,211,77,.36);   /* warnings (IMD), pending */
-  --low:#34D399;   --low-soft:rgba(52,211,153,.13);  --low-line:rgba(52,211,153,.38);   /* verified, healthy, resolved */
-  --cool:#94A3B8;  --cool-soft:rgba(148,163,184,.13);                                      /* low severity */
-  --info:#818CF8;  --info-soft:rgba(99,102,241,.16);
-  --violet:#A5B4FC; --violet-soft:rgba(129,140,248,.14); --violet-line:rgba(129,140,248,.38); /* news, intelligence gaps */
-  --teal:#38BDF8;  --teal-soft:rgba(56,189,248,.13);
+  /* ---- AI: coral, only for AI things (Ask District IQ, the AI briefing, the onboarding agent) ---- */
+  --ai:#E5533A;
+  --ai-2:#C9432C;
+  --ai-soft:#FFEEE9;
+  --ai-line:#FBC6B8;
+  --ai-grad:linear-gradient(135deg,#FF7A5C 0%,#F0525A 100%);
 
-  /* ---- data visualisation ---- */
-  --viz-1:#818CF8; --viz-2:#38BDF8; --viz-3:#A78BFA; --viz-4:#FBBF24; --viz-5:#34D399; --viz-6:#FB7185;
-  --viz-base:rgba(148,163,184,.24);
-  --viz-grid:rgba(148,163,184,.08);
-  --viz-axis:rgba(148,163,184,.18);
+  /* ---- live signal: freshness dot, data refresh ---- */
+  --live:#0E9F6E;
+  --live-soft:#E3F6EE;
+  --signal:var(--live);
+  --signal-soft:var(--live-soft);
 
-  /* ---- type ---- */
-  --dic-display:Inter;
-  --dic-sans:Inter;
-  --dic-mono:"JetBrains Mono";
-  --fs-2xs:10.5px; --fs-xs:11.5px; --fs-sm:12.5px; --fs-base:13.5px; --fs-md:14.5px; --fs-lg:16px; --fs-xl:19px; --fs-2xl:24px; --fs-num:28px;
-  --track-label:.07em;
+  /* ---- semantic: severity and status ---- */
+  --critical:#E0364A; --critical-soft:#FFEFF1; --critical-line:#F8C3CA;
+  --high:#E5720F;     --high-soft:#FFF3E6;     --high-line:#F7D0A6;
+  --medium:#B98B00;   --medium-soft:#FDF6DD;   --medium-line:#EEDC99;
+  --ok:#0E9F6E;       --ok-soft:#E3F6EE;       --ok-line:#A7E0C8;
+  --neutral:#64748B;  --neutral-soft:#EEF2F6;  --neutral-line:#CFD9E4;
 
-  /* ---- shape, depth, motion ---- */
-  --r:14px; --r-sm:7px; --r-md:10px; --r-lg:16px; --r-pill:999px;
-  --shadow:inset 0 1px 0 rgba(255,255,255,.045),0 1px 0 rgba(0,0,0,.4),0 18px 40px -26px rgba(0,0,0,.95);
-  --shadow-lg:0 30px 70px -20px rgba(0,0,0,.85),0 0 0 1px var(--line-3);
-  --shadow-pop:0 18px 40px -14px rgba(0,0,0,.75),0 0 0 1px var(--line-3);
-  --glow:0 8px 24px -8px rgba(99,102,241,.55);
-  --ring:0 0 0 3px rgba(129,140,248,.3);
-  --t-fast:120ms; --t:180ms; --t-panel:220ms; --ease:cubic-bezier(.2,.7,.25,1);
+  /* aliases used across the consoles */
+  --sev:var(--critical); --sev-soft:var(--critical-soft); --sev-line:var(--critical-line);
+  --med:var(--medium);   --med-soft:var(--medium-soft);   --med-line:var(--medium-line);
+  --low:var(--ok);       --low-soft:var(--ok-soft);       --low-line:var(--ok-line);   /* verified, healthy, resolved */
+  --cool:var(--neutral); --cool-soft:var(--neutral-soft);                               /* low severity, unknown */
+  --info:var(--accent);  --info-soft:var(--accent-soft);
+  --violet:var(--ai);    --violet-soft:var(--ai-soft);    --violet-line:var(--ai-line);  /* added sources, AI */
+  --teal:var(--accent);  --teal-soft:var(--accent-soft);
+
+  /* ---- data visualisation (ECharts, SVG charts) ---- */
+  --viz-1:#0B7290; --viz-2:#18A7BC; --viz-3:#E5533A; --viz-4:#E0A800; --viz-5:#0E9F6E; --viz-6:#E0364A;
+  --viz-base:#D6DFE8;
+  --viz-grid:#EDF1F6;
+  --viz-axis:#DDE4EC;
+  /* map choropleth: sea -> ocean -> coral -> critical, five steps */
+  --heat-1:rgba(24,167,188,.18); --heat-2:#18A7BC; --heat-3:#0B7290; --heat-4:#F08A5D; --heat-5:#E0364A;
+
+  /* ---- type: Plus Jakarta Sans for UI and numbers, Noto Sans Tamil for Tamil, Geist Mono for key caps ---- */
+  --font-ui:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Noto Sans Tamil Variable","Noto Sans Tamil",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-num:"Plus Jakarta Sans Variable","Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-code:var(--font-geist-mono),"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --dic-display:var(--font-ui);
+  --dic-sans:var(--font-ui);
+  --dic-mono:var(--font-code);
+  --fs-2xs:11px; --fs-xs:11.5px; --fs-sm:12.5px; --fs-base:13.5px; --fs-md:15px; --fs-lg:17px; --fs-xl:20px; --fs-2xl:26px; --fs-num:30px;
+  --track-label:.05em;
+
+  /* ---- shape, depth ---- */
+  --r-xs:7px; --r-sm:10px; --r-md:12px; --r:16px; --r-lg:20px; --r-pill:999px;
+  --shadow:0 1px 2px rgba(15,27,45,.04),0 8px 24px -16px rgba(15,27,45,.18);
+  --shadow-lg:0 40px 90px -30px rgba(8,26,44,.38),0 0 0 1px var(--line);
+  --shadow-pop:0 18px 40px -14px rgba(8,26,44,.26),0 0 0 1px var(--line);
+  --glow:0 8px 18px -10px rgba(10,61,98,.55);
+  --ai-glow:0 12px 26px -10px rgba(240,82,90,.6);
+  --ring:0 0 0 3px rgba(11,114,144,.2);
+
+  /* ---- motion ---- */
+  --t-instant:90ms; --t-fast:160ms; --t-base:240ms; --t-slow:380ms; --t-enter:520ms;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --t:var(--t-base); --t-panel:var(--t-base); --ease:var(--ease-out);
   --h-ctl:36px; --h-ctl-sm:28px;
 }
 
-/* ---- light theme: white cards on a cool page ---- */
-.dic[data-theme="light"]{
-  color-scheme:light;
-  --bg:#F2F4FA; --bg-2:#EEF1F8; --surface:#FFFFFF; --surface-2:#F7F8FC; --surface-3:#EEF1F9; --raise:#FFFFFF; --elev:#FFFFFF; --scrim:rgba(15,23,42,.42);
-  --line:#E2E7F0; --line-2:#EDF0F6; --line-3:#CDD5E3; --line-focus:rgba(79,70,229,.5);
-  --text:#0F172A; --text-2:#475569; --text-3:#64748B; --text-4:#A0AEC2; --text-inv:#FFFFFF;
-  --accent:#4F46E5; --accent-2:#4338CA; --accent-3:#4F46E5; --accent-soft:#EEF0FF; --accent-line:#C7CBFB;
-  --grad:linear-gradient(135deg,#4F46E5 0%,#3B6FF0 100%); --grad-soft:linear-gradient(135deg,#EEF0FF,#EEF4FF);
-  --signal:#0284C7; --signal-soft:#E0F2FE;
-  --sev:#E11D48; --sev-soft:#FFF1F3; --sev-line:#FBC7D2;
-  --high:#D97706; --high-soft:#FFF7E6; --high-line:#F7D9A6;
-  --med:#B45309; --med-soft:#FEF8E7; --med-line:#F2DDA4;
-  --low:#059669; --low-soft:#ECFDF5; --low-line:#A7E8CF;
-  --cool:#64748B; --cool-soft:#F1F5F9;
-  --info:#4F46E5; --info-soft:#EEF0FF;
-  --violet:#4F46E5; --violet-soft:#EEF0FF; --violet-line:#C7CBFB;
-  --teal:#0284C7; --teal-soft:#E0F2FE;
-  --viz-base:#D3DAE6; --viz-grid:#EEF1F6; --viz-axis:#DCE2EC;
-  --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 24px -14px rgba(30,41,90,.18);
-  --shadow-lg:0 30px 70px -18px rgba(15,23,42,.3),0 0 0 1px var(--line);
-  --shadow-pop:0 16px 36px -12px rgba(15,23,42,.22),0 0 0 1px var(--line);
-  --glow:0 8px 20px -8px rgba(79,70,229,.45);
-  --ring:0 0 0 3px rgba(79,70,229,.16);
+/* ---- dark theme: the harbour at night. Deep blue-black, sea-cyan accent, the same ocean band ---- */
+:root[data-theme="dark"],.dic[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#06111C; --bg-2:#081624; --surface:#0D1C2B; --surface-2:#122435; --surface-3:#192D41; --raise:#0F2131; --elev:#10233A;
+  --elev-glass:rgba(16,35,58,.95); --scrim:rgba(2,8,14,.66);
+  --line:rgba(148,190,230,.12); --line-2:rgba(148,190,230,.07); --line-3:rgba(148,190,230,.2); --line-focus:rgba(60,194,219,.7);
+  --text:#E8F1F8; --text-2:#AFC2D3; --text-3:#7F94A9; --text-4:#4F6478; --text-inv:#06111C;
+  --accent:#3CC2DB; --accent-2:#74D6EA; --accent-3:#1583A3; --accent-soft:rgba(60,194,219,.13); --accent-line:rgba(60,194,219,.4);
+  --accent-grad:linear-gradient(135deg,#1583A3 0%,#1E9EBB 100%);
+  --grad-soft:linear-gradient(135deg,rgba(60,194,219,.14),rgba(60,194,219,.05));
+  --band:radial-gradient(120% 150% at 88% -10%,rgba(24,167,188,.75) 0%,rgba(24,167,188,0) 55%),linear-gradient(115deg,#061F35 0%,#082F4E 46%,#0A4B68 100%);
+  --band-glass:rgba(255,255,255,.08); --band-glass-2:rgba(255,255,255,.14); --band-line:rgba(255,255,255,.14);
+  --ai:#FF8466; --ai-2:#FFA48C; --ai-soft:rgba(255,132,102,.14); --ai-line:rgba(255,132,102,.4);
+  --ai-grad:linear-gradient(135deg,#FF7A5C 0%,#F0525A 100%);
+  --live:#34D399; --live-soft:rgba(52,211,153,.14);
+  --critical:#FF5C6C; --critical-soft:rgba(255,92,108,.14); --critical-line:rgba(255,92,108,.4);
+  --high:#FFA24C;     --high-soft:rgba(255,162,76,.14);     --high-line:rgba(255,162,76,.4);
+  --medium:#F2C94C;   --medium-soft:rgba(242,201,76,.14);   --medium-line:rgba(242,201,76,.4);
+  --ok:#34D399;       --ok-soft:rgba(52,211,153,.14);       --ok-line:rgba(52,211,153,.4);
+  --neutral:#8BA0B5;  --neutral-soft:rgba(139,160,181,.14); --neutral-line:rgba(139,160,181,.4);
+  --viz-1:#3CC2DB; --viz-2:#74D6EA; --viz-3:#FF8466; --viz-4:#F2C94C; --viz-5:#34D399; --viz-6:#FF5C6C;
+  --viz-base:rgba(255,255,255,.13); --viz-grid:rgba(255,255,255,.05); --viz-axis:rgba(255,255,255,.1);
+  --heat-1:rgba(60,194,219,.2); --heat-2:#3CC2DB; --heat-3:#1E8FB0; --heat-4:#FF8A5C; --heat-5:#FF5C6C;
+  --shadow:inset 0 1px 0 rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.35),0 14px 32px -20px rgba(0,0,0,.9);
+  --shadow-lg:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px var(--line-3);
+  --shadow-pop:0 20px 44px -16px rgba(0,0,0,.8),0 0 0 1px var(--line-3);
+  --glow:0 8px 18px -10px rgba(60,194,219,.55);
+  --ai-glow:0 12px 26px -10px rgba(255,122,92,.55);
+  --ring:0 0 0 3px rgba(60,194,219,.26);
 }
-.dic[data-theme="light"] .map-wrap .leaflet-tile-pane{filter:none}
-.dic[data-theme="light"] .aq-overlay{background:rgba(15,23,42,.2)}
-.dic[data-theme="light"] .aq{box-shadow:-24px 0 60px -28px rgba(15,23,42,.4)}
-.dic[data-theme="light"] ::-webkit-scrollbar-thumb{background:#CBD3E1;background-clip:padding-box}
+.dic[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);background-clip:padding-box}

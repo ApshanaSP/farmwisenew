@@ -18,11 +18,11 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Logo from "@/components/Logo";
-import { I } from "@/components/collector/app/icons";
+import { I, type IconName } from "@/components/collector/app/icons";
 import { BrandMark } from "@/components/collector/app/assistant/Brand";
 import type { AssistantHost } from "@/components/collector/app/assistant/host";
 import { ContactBody } from "@/components/collector/app/Overlays";
-import { Empty, deptIcon, fmtDate, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { Empty, deptIcon, fmtDate, fmtDay, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
 import { esc } from "@/components/collector/app/SatMap";
 import type { MapGeo } from "@/lib/collector/geo";
 import type { DeptProfile, OfficerOverview } from "@/lib/officer/data";
@@ -39,6 +39,11 @@ import { PERIOD_KEYS, type Period } from "./format";
 import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/collector.css";
 import "./officer.css";
+import "@/components/collector/app/civic.css";
+import "@/components/collector/app/marina.css";
+import { MotionConfig } from "motion/react";
+import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
+import { LiveDot, SegmentedControl } from "@/components/ui";
 
 // Ask District IQ loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("@/components/collector/app/assistant/AssistantDialog"), { ssr: false });
@@ -142,13 +147,19 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
   const [pop, setPop] = useState<"bell" | "profile" | "feeds" | null>(null);
   const [ask, setAskState] = useState(false);
   // same theme switch and saved choice as the Collector console (dark by default)
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => { try { if (localStorage.getItem("diq-theme") === "light") setTheme("light"); } catch { /* storage unavailable */ } }, []);
+  // null until mounted, so the first paint follows <html data-theme> (set before paint)
+  const [theme, setTheme] = useState<"dark" | "light" | null>(null);
+  useEffect(() => { try { setTheme(localStorage.getItem("diq-theme") === "dark" ? "dark" : "light"); } catch { setTheme("light"); } }, []);
   const toggleTheme = () => setTheme((t) => {
     const n = t === "dark" ? "light" : "dark";
     try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
+    document.documentElement.dataset.theme = n;
     return n;
   });
+  const [palette, setPalette] = useState(false);
+  const [pageDir, setPageDir] = useState(1);
+  const [boot, setBoot] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setBoot(false), 1400); return () => clearTimeout(t); }, []);
   // once opened, the assistant stays mounted so the conversation survives closing it
   const [askMounted, setAskMounted] = useState(false);
   const setAsk = useCallback((v: boolean | ((x: boolean) => boolean)) => {
@@ -292,7 +303,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     setModal(null);
     if (dirty.current) { dirty.current = false; setReloadKey((k) => k + 1); }
   }, []);
-  const goPage = (p: PageKey) => { setView(p); setAnim(true); };
+  const goPage = (p: PageKey) => { setPageDir(PAGES.indexOf(p) >= PAGES.indexOf(view) ? 1 : -1); setView(p); setAnim(true); };
   const setTab = useCallback((t: Tab) => { setTabState(t); setPageState(0); }, []);
   /** the grievance board on page 2, at one tab */
   const goGrievances = (t: Tab) => { setTab(t); goPage("work"); };
@@ -391,14 +402,15 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         return;
       }
       if (e.key === "Escape") {
-        // the assistant sits above everything else, so it closes first
-        if (ask) setAsk(false);
+        // the palette and the assistant sit above everything else, so they close first
+        if (palette) setPalette(false);
+        else if (ask) setAsk(false);
         else if (drawer || modal) closeAll();
         setPop(null);
       }
       if (e.key === "/" && !typing) {
         e.preventDefault();
-        document.getElementById("ofc-q")?.focus();
+        setPalette(true);
       }
       if (!typing && !drawer && !modal && !ask && (e.key === "PageDown" || e.key === "PageUp")) {
         e.preventDefault();
@@ -408,7 +420,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, modal, ask, closeAll, setAsk, view]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [drawer, modal, ask, palette, closeAll, setAsk, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const unread = ov.feedback.filter((f) => !seen || String(f.at) > seen);
   const markRead = () => {
@@ -451,118 +463,138 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         : modal.kind === "news" ? `${dept.short} in the news · ${ov.periodInfo.label}`
           : `${modal.label} · ${areaName ?? dept.name}`;
 
+  const actions: Hit[] = [
+    ...PAGES.map((p, k) => ({ g: "Go to", ic: (p === "overview" ? "grid" : "tasks") as IconName, l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${k + 1}`, run: () => goPage(p) })),
+    { g: "Go to", ic: "tasks", l: "New grievances: approve", s: "Grievance board · New", run: () => goGrievances("new") },
+    { g: "Go to", ic: "send", l: "Sent to the Collector", s: "Grievance board · Sent to Collector", run: () => goGrievances("sent") },
+    { g: "Actions", ic: "chat", l: "Ask District IQ", s: `Answers about ${dept.short} only`, kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "download", l: "Export PDF report", s: "This period and area", run: exportPdf },
+    { g: "Actions", ic: "phone", l: "Department contacts", run: () => setModal({ kind: "contacts" }) },
+    { g: "Actions", ic: "news", l: `${dept.short} in the news`, run: () => setModal({ kind: "news" }) },
+    { g: "Actions", ic: theme === "dark" ? "sun" : "moon", l: `Switch to ${theme === "dark" ? "light" : "dark"} theme`, run: toggleTheme },
+    { g: "Actions", ic: "refresh", l: "Reload data", run: () => setReloadKey((k) => k + 1) }
+  ];
+  /** the department's grievances of the last 90 days; picking one opens it */
+  const searchHits = async (q: string): Promise<Hit[]> => {
+    const r = await api(`/api/officer/search?q=${encodeURIComponent(q)}`);
+    return (r.rows as Row[]).map((h) => ({ g: "Grievances", ic: deptIcon(dept.code), l: fullTitle(h), s: `${STAGE_LABEL[h.stage as Stage]} · ${rel(h.t, c.now)}`, run: () => c.openGrievance(h.id) }));
+  };
+  const askWith = (q: string) => {
+    setAsk(true);
+    [60, 900].forEach((ms) => setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), ms));
+  };
+
   return (
-    <div className={`dic ofc${fit.on ? " fit" : ""}`} data-theme={theme}
+    <MotionConfig reducedMotion="user">
+    <div className={`dic ofc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#4D8DFF" /><stop offset="1" stopColor="#B9D2FF" /></linearGradient></defs>
+        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0B7290" /><stop offset="1" stopColor="#7FD3E6" /></linearGradient></defs>
       </svg>
       {(loading || exporting) && <div className="loading-bar" />}
       <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
-        <div className="main">
-          <header className="top">
-            <div className="tbrand"><Logo className="tlogo" /><span><b>District <span>IQ</span></b><small>Officer Console · {dept.short}</small></span></div>
-            <div className="rel">
-              <button className="feedlight" data-pop onClick={() => setPop((p) => (p === "feeds" ? null : "feeds"))} title="Data feeds behind this dashboard">
-                <i className={feedsOk === ov.feeds.length ? "" : "warn"} />{feedsOk}/{ov.feeds.length} feeds live
-              </button>
-              {pop === "feeds" && (
-                <div className="pop" style={{ left: 0, right: "auto", width: 320 }}>
-                  <div className="pop-h">Data feeds</div>
-                  {ov.updated.sources.map((s) => (
-                    <div key={s.source} className="pop-i ofeed">
-                      <span className={`kpi-ic ${s.failed ? "t-high" : "t-low"}`} style={{ width: 30, height: 30 }}><I n={s.failed ? "alert" : "checkc"} /></span>
-                      <span><b>{s.label}</b><small>{s.newest ? `Data up to ${fmtTime(s.newest)}, ${fmtDate(s.newest)}` : "No data"}{s.failed ? ` · ${s.failed}` : ""}</small></span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <Search c={c} />
-            <Collected ov={ov} />
-            <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}><I n={theme === "dark" ? "sun" : "moon"} /></button>
-            <button className="tbtn pri" onClick={exportPdf} disabled={exporting} title="Download a PDF report of this period and area">
-              <I n={exporting ? "refresh" : "download"} className={exporting ? "spin" : ""} /><span className="lb">Export</span>
-            </button>
-            <div className="rel">
-              <button className="tbtn icon" data-pop onClick={() => setPop((p) => (p === "bell" ? null : "bell"))} aria-label="Notifications">
-                <I n="bell" />{unread.length > 0 && <span className="dot-n">{unread.length}</span>}
-              </button>
-              {pop === "bell" && (
-                <div className="pop">
-                  <div className="pop-h">The Collector&apos;s decisions<button className="lnk" onClick={() => { markRead(); setPop(null); }}>Mark all read</button></div>
-                  {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
-                    <button key={f.did} className="pop-i" onClick={() => { setPop(null); c.openGrievance(f.id); }}>
-                      <span className={`kpi-ic ${f.ok ? "t-low" : "t-high"}`} style={{ width: 32, height: 32 }}><I n={f.ok ? "checkc" : "refresh"} /></span>
-                      <span><b>{f.ok ? "Collector verified" : "Collector returned for rework"}: {f.title ?? f.type}</b>
-                        <small>{rel(f.at, c.now)}{!seen || String(f.at) > seen ? " · new" : ""}</small></span>
-                    </button>
-                  )) : <div className="empty">No notifications in this period.</div>}
-                </div>
-              )}
-            </div>
-            <div className="rel">
-              <button className="me ome" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label={`Account: signed in as ${user}`}
-                title={`Signed in as ${user}`}>
-                <span className="avatar">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
-                <span className="who"><small>Logged in as</small><b>{me}</b></span><I n="chevd" />
-              </button>
-              {pop === "profile" && (
-                <div className="pop" style={{ width: 320 }}>
-                  <div className="pop-h">{me}</div>
-                  <div style={{ padding: "0 8px 8px", color: "var(--text-3)", fontSize: 13, lineHeight: 1.45 }}>
-                    Signed in as <b style={{ color: "var(--text)" }}>{user}</b><br />{dept.name}{dept.org ? `, ${dept.org}` : ""} · Department officer
-                    {dept.route ? <><br />Escalation: {dept.route}</> : null}
+        <header className="top">
+          <div className="tbrand"><Logo className="tlogo" /><span><b>District IQ</b><small>Officer · {dept.short}</small></span></div>
+          <PageTabs items={PAGES.map((p) => ({ key: p, label: PAGE_TITLE[p], icon: (p === "overview" ? "grid" : "tasks") as IconName }))} active={view} onPick={(p) => goPage(p as PageKey)} />
+          <span className="tspace" />
+          <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
+            <I n="search" /><span>Search</span><kbd>/</kbd>
+          </button>
+          <div className="rel">
+            <Collected ov={ov} live={feedsOk} onClick={() => setPop((p) => (p === "feeds" ? null : "feeds"))} />
+            {pop === "feeds" && (
+              <div className="pop" style={{ left: 0, right: "auto", width: 330 }}>
+                <div className="pop-h">Data feeds · {feedsOk}/{ov.feeds.length} live</div>
+                {ov.updated.sources.map((s) => (
+                  <div key={s.source} className="pop-i ofeed">
+                    <span className={`kpi-ic ${s.failed ? "t-high" : "t-low"}`} style={{ width: 30, height: 30 }}><I n={s.failed ? "alert" : "checkc"} /></span>
+                    <span><b>{s.label}</b><small>{s.newest ? `Data up to ${fmtTime(s.newest)}, ${fmtDate(s.newest)}` : "No data"}{s.failed ? ` · ${s.failed}` : ""}</small></span>
                   </div>
-                  <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
-                  {(zone || taluk) && <button className="pop-i" onClick={() => { setPop(null); setZone(null); setTaluk(null); }}><I n="home" /><span><b>Clear the area filter</b><small>Every zone and taluk</small></span></button>}
-                  <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
-                    <I n="user" /><span><b>Sign out</b></span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </header>
-
-          <div className="body">
-            <section className="phead">
-              <h1>{PAGE_TITLE[view]}</h1>
-              {(
-                <div className="filters" role="group" aria-label="Filters">
-                  <div className="seg fseg" role="tablist" aria-label="Period">
-                    {PERIOD_KEYS.map((p) => (
-                      <button key={p} role="tab" aria-selected={period === p} className={period === p ? "on" : ""} title={PERIOD_HINT[p]} onClick={() => setPeriod(p)}>{PERIOD_WORD[p]}</button>
-                    ))}
-                  </div>
-                  <label className="fsel" title="Zone (Greater Chennai Corporation)"><I n="pin" />
-                    <select value={zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} aria-label="Zone">
-                      <option value="">All 15 zones</option>
-                      {ov.zones.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
-                    </select>
-                  </label>
-                  <label className="fsel" title={zone ? `Revenue taluks in ${zoneName} zone` : "Revenue taluk"}><I n="map" />
-                    <select value={taluk ?? ""} onChange={(e) => setTaluk(e.target.value || null)} aria-label="Taluk">
-                      <option value="">{zone ? `All taluks in ${zoneName}` : "All taluks"}</option>
-                      {talukOptions.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-                    </select>
-                  </label>
-                  {/* the department is fixed: it is the signed-in officer's */}
-                  <span className="fchip alt odept-chip" title={`${dept.name}: your department (fixed for this account)`}><I n={deptIcon(dept.code)} />{dept.name}</span>
-                  {(zone || taluk) && <button className="fclear" onClick={() => { setZone(null); setTaluk(null); }}><I n="x" />Clear</button>}
-                </div>
-              )}
-              <div className="pager" role="tablist" aria-label="Pages">
-                <button className="nx" onClick={() => PAGES[pi - 1] && goPage(PAGES[pi - 1])} disabled={pi <= 0} aria-label="Previous page"><I n="chevl" /></button>
-                {PAGES.map((p, k) => (
-                  <button key={p} role="tab" aria-selected={view === p} className={`pg${view === p ? " on" : ""}`} onClick={() => goPage(p)} title={PAGE_TITLE[p]}>
-                    <i>{k + 1}</i>{view === p && <span>{PAGE_TITLE[p]}</span>}
-                  </button>
                 ))}
-                <button className="nx" onClick={() => PAGES[pi + 1] && goPage(PAGES[pi + 1])} disabled={pi >= PAGES.length - 1} aria-label="Next page"><I n="chevr" /></button>
+              </div>
+            )}
+          </div>
+          <button className="tbtn icon" onClick={() => setModal({ kind: "news" })} title={`${dept.short} in the news`} aria-label={`${dept.short} in the news`}><I n="news" /></button>
+          <button className="tbtn icon" onClick={() => setModal({ kind: "contacts" })} title="Department contacts" aria-label="Department contacts"><I n="phone" /></button>
+          <button className="tbtn pri" onClick={exportPdf} disabled={exporting} title="Download a PDF report of this period and area">
+            <I n={exporting ? "refresh" : "download"} className={exporting ? "spin" : ""} /><span className="lb">Export PDF</span>
+          </button>
+          <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+            <span key={theme ?? "l"} className="theme-ic"><I n={theme === "dark" ? "sun" : "moon"} /></span>
+          </button>
+          <div className="rel">
+            <button className="tbtn icon" data-pop onClick={() => setPop((p) => (p === "bell" ? null : "bell"))} aria-label="Notifications" aria-expanded={pop === "bell"}>
+              <I n="bell" />{unread.length > 0 && <span className="dot-n">{unread.length}</span>}
+            </button>
+            {pop === "bell" && (
+              <div className="pop bellpop">
+                <div className="pop-h">The Collector&apos;s decisions<button className="lnk" onClick={() => { markRead(); setPop(null); }}>Mark all read</button></div>
+                {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
+                  <button key={f.did} className="pop-i" onClick={() => { setPop(null); c.openGrievance(f.id); }}>
+                    <span className={`bell-dot ${f.ok ? "" : "s-high"}`} style={f.ok ? { background: "var(--ok)" } : undefined} aria-hidden="true" />
+                    <span><b>{f.ok ? "Collector verified" : "Collector returned for rework"}: {f.title ?? f.type}</b>
+                      <small>{rel(f.at, c.now)}{!seen || String(f.at) > seen ? " · new" : ""}</small></span>
+                  </button>
+                )) : <div className="empty">No notifications in this period.</div>}
+              </div>
+            )}
+          </div>
+          <div className="rel">
+            <button className="me ome" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label={`Account: signed in as ${user}`}
+              title={`Signed in as ${user}`}>
+              <span className="avatar">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
+              <span className="who"><small>Logged in as</small><b>{me}</b></span><I n="chevd" />
+            </button>
+            {pop === "profile" && (
+              <div className="pop" style={{ width: 320 }}>
+                <div className="pop-me"><span className="avatar">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span><span><b>{me}</b><small>Department officer · {dept.short}</small></span></div>
+                <div style={{ padding: "0 10px 8px", color: "var(--text-3)", fontSize: 12.5, lineHeight: 1.5 }}>
+                  Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b><br />{dept.name}{dept.org ? `, ${dept.org}` : ""}
+                  {dept.route ? <><br />Department head / escalation: {dept.route}</> : null}
+                </div>
+                <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "contacts" }); }}><I n="phone" /><span><b>Department contacts</b><small>Head of department and officials</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
+                {(zone || taluk) && <button className="pop-i" onClick={() => { setPop(null); setZone(null); setTaluk(null); }}><I n="home" /><span><b>Clear the area filter</b><small>Every zone and taluk</small></span></button>}
+                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
+                  <I n="user" /><span><b>Sign out</b></span>
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className="shell">
+          <div className="body">
+            {/* the ocean band: the day, the page and the filters; the department is fixed (the signed-in officer's) */}
+            <section className="band">
+              <div className="band-row">
+                <div className="band-t">
+                  <div className="band-eb"><span>{fmtDay(ov.now)}</span><i aria-hidden="true">·</i><span className="band-scope">{greeting(ov.now)}</span></div>
+                  <RollTitle text={PAGE_TITLE[view]} />
+                </div>
+              <div className="filters" role="group" aria-label="Filters">
+                <SegmentedControl label="Period" size="sm" value={period} onChange={(p) => setPeriod(p)}
+                  options={PERIOD_KEYS.map((p) => ({ value: p, label: PERIOD_WORD[p], title: PERIOD_HINT[p] }))} />
+                <label className="fsel" title="Zone (Greater Chennai Corporation)"><I n="pin" />
+                  <select value={zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} aria-label="Zone">
+                    <option value="">All 15 zones</option>
+                    {ov.zones.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
+                  </select>
+                </label>
+                <label className="fsel" title={zone ? `Revenue taluks in ${zoneName} zone` : "Revenue taluk"}><I n="map" />
+                  <select value={taluk ?? ""} onChange={(e) => setTaluk(e.target.value || null)} aria-label="Taluk">
+                    <option value="">{zone ? `All taluks in ${zoneName}` : "All taluks"}</option>
+                    {talukOptions.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+                  </select>
+                </label>
+                {(zone || taluk) && <button className="fclear" onClick={() => { setZone(null); setTaluk(null); }}>Clear</button>}
+              </div>
+              {/* the department is fixed: it is the signed-in officer's */}
+              <span className="odept-badge" title={`${dept.name}: your department (fixed for this account)`}><I n={deptIcon(dept.code)} />{dept.short}</span>
               </div>
             </section>
 
-            <div id="view" className={anim ? "anim" : ""}>
+            <PageSwap k={view} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
               {view === "overview" ? (
                 <OverviewPage c={c} goGrievances={goGrievances} openContacts={() => setModal({ kind: "contacts" })} openNews={() => setModal({ kind: "news" })} />
               ) : (
@@ -572,7 +604,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                   <WorkPage c={c} modules={insights} openModule={openModule} />
                 </>
               )}
-            </div>
+            </PageSwap>
           </div>
         </div>
 
@@ -596,35 +628,30 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                   : <ListBody c={c} cat={modal.cat} flag={modal.flag} sev={modal.sev} tab={modal.tab} />}
           </Modal>
         )}
-        <div className="toasts">
-          {toasts.map((t) => (
-            <div key={t.id} className={`toast${t.kind === "alert" ? " alert" : ""}`}>
-              <I n={t.kind === "alert" ? "bell" : "checkc"} /><span>{t.msg}</span>
-              {t.act && <button onClick={() => { t.act!.run(); setToasts((x) => x.filter((y) => y.id !== t.id)); }}>{t.act.label}</button>}
-            </div>
-          ))}
-        </div>
+        <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
+        <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
         <button className="ask-fab" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
-          <BrandMark size={34} className="ask-mark" /><span>Ask District IQ</span>
+          <BrandMark size={30} className="ask-mark" /><span>Ask District IQ</span>
         </button>
         {askMounted && <AssistantDialog c={host} open={ask} onClose={() => setAsk(false)} />}
       </div>
     </div>
+    </MotionConfig>
   );
 }
 
-/** Are the feeds current? The same chip as the Collector console's. */
-function Collected({ ov }: { ov: OfficerOverview }) {
+/** Are the feeds current? The same chip as the Collector console's; it opens the feeds list. */
+function Collected({ ov, live, onClick }: { ov: OfficerOverview; live: number; onClick: () => void }) {
   const s = ov.board.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
   const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
-  const sub = s && !all ? `${s.done.length} of ${s.total} feeds current` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
+  const sub = s && !all ? `${s.done.length} of ${s.total} feeds current · ${live}/${ov.feeds.length} live` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
   const tip = "Every source is collected hourly by the district intelligence pipeline." +
-    (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "");
+    (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "") + " Click for the data feeds.";
   return (
-    <span className={`daily${s && !all ? " pend" : ""}`} title={tip}>
-      <I n={all ? "checkc" : "clock"} /><span>{head}<small>{sub}</small></span>
-    </span>
+    <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick} data-pop>
+      <LiveDot state={s && !all ? "warn" : "ok"} /><span>{head}<small>{sub}</small></span>
+    </button>
   );
 }
 
@@ -642,53 +669,6 @@ function NewsAll({ c }: { c: Ctx }) {
           {i.summary && <p style={{ margin: 0, fontSize: 13, color: "var(--text-2)" }}>{i.summary}</p>}
         </button>
       ))}
-    </div>
-  );
-}
-
-/** Search the department's grievances of the last 90 days; picking one opens it. */
-function Search({ c }: { c: Ctx }) {
-  const [text, setText] = useState("");
-  const [hits, setHits] = useState<Row[] | null>(null);
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const q = text.trim();
-    if (q.length < 2) { setHits(null); return; }
-    let live = true;
-    const t = setTimeout(async () => {
-      try {
-        const r = await api(`/api/officer/search?q=${encodeURIComponent(q)}`);
-        if (live) { setHits(r.rows); setIdx(0); }
-      } catch { /* ignore */ }
-    }, 200);
-    return () => { live = false; clearTimeout(t); };
-  }, [text]);
-  const pick = (r: Row) => { setText(""); setHits(null); c.openGrievance(r.id); };
-  return (
-    <div className="search">
-      <input id="ofc-q" type="search" placeholder={`Search ${c.dept.short} grievances, streets, IDs…`} autoComplete="off" aria-label="Search"
-        value={text} onChange={(e) => setText(e.target.value)} onBlur={() => setTimeout(() => setHits(null), 150)}
-        onKeyDown={(e) => {
-          if (!hits) return;
-          if (e.key === "ArrowDown") { setIdx((i) => Math.min(hits.length - 1, i + 1)); e.preventDefault(); }
-          else if (e.key === "ArrowUp") { setIdx((i) => Math.max(0, i - 1)); e.preventDefault(); }
-          else if (e.key === "Enter" && hits[idx]) pick(hits[idx]);
-          else if (e.key === "Escape") { setText(""); setHits(null); }
-        }} />
-      <I n="search" /><kbd>/</kbd>
-      {hits && (
-        <div className="sres">
-          {hits.length ? <>
-            <div className="sh">Grievances</div>
-            {hits.map((h, k) => (
-              <button key={h.id} className={k === idx ? "hl" : ""} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(h)}>
-                <span className={`si-ic ${sevTone(h.sev)}`} style={{ width: 26, height: 26 }}><I n={deptIcon(c.dept.code)} /></span>
-                <span>{fullTitle(h)}</span><small>{STAGE_LABEL[h.stage as Stage]} · {rel(h.t, c.now)}</small>
-              </button>
-            ))}
-          </> : <div className="empty">No matches. Try a street, area, type or grievance ID.</div>}
-        </div>
-      )}
     </div>
   );
 }

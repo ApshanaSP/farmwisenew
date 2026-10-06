@@ -56,13 +56,13 @@ function Head({ ic, title, n, note, more, children }:
 const Calm = ({ children }: { children: React.ReactNode }) => <p className="bb-calm"><I n="checkc" />{children}</p>;
 
 /** Numbers stand out, so the points can be scanned. */
-function Emph({ text }: { text: string }) {
+export function Emph({ text }: { text: string }) {
   const parts = text.split(/(\d[\d,.]*\s?%?)/);
   return <>{parts.map((p, k) => (k % 2 ? <b key={k}>{p}</b> : <Fragment key={k}>{p}</Fragment>))}</>;
 }
 
 /** A paragraph as points: one sentence each. */
-function sentences(text: string): string[] {
+export function sentences(text: string): string[] {
   return text.replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=\S)/).map((s) => s.trim()).filter((s) => s.length > 2);
 }
 
@@ -115,20 +115,24 @@ function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
     <section className="bb-card bb-brief">
       <Head ic="scroll" title="Key points" note={c.periodLabel.toLowerCase()}>
         <span className="bb-tools">
+          <span className={`bb-ai${ai ? "" : " rules"}`} title={ai ? "Written by AI from the records; numbers checked against the data" : "From the district's records, by rules"}>
+            <I n={ai ? "spark" : "doc"} />{ai ? `AI${written ? ` · ${written.replace(/^\d+ \w+, /, "")}` : ""}` : "Rules-based"}
+          </span>
           {story?.ta && (
             <span className="bb-lang" role="group" aria-label="Language">
               <button className={lang === "en" ? "on" : ""} aria-pressed={lang === "en"} onClick={() => pick("en")}>EN</button>
               <button className={lang === "ta" ? "on" : ""} aria-pressed={lang === "ta"} onClick={() => pick("ta")}>தமிழ்</button>
             </span>
           )}
-          {voice && <button className="bb-btn" onClick={listen} title={talking ? "Stop" : "Read the brief aloud"}><I n={talking ? "stop" : "volume"} />{talking ? "Stop" : "Listen"}</button>}
+          {voice && <button className={`bb-btn${talking ? " talking" : ""}`} onClick={listen} title={talking ? "Stop" : "Read the brief aloud"} aria-pressed={talking}>
+            {talking ? <span className="bb-bars" aria-hidden="true"><i /><i /><i /><i /></span> : <I n="volume" />}{talking ? "Stop" : "Listen"}</button>}
         </span>
       </Head>
       <div className="bb-body">
         <p className={`bb-status lv-${b.status.level}`} title="District status, by fixed rules: deaths, severe incidents, IMD warnings">
           <i /><b>{STATUS[b.status.level]}</b><span>{reasons.length ? reasons.join(" · ") : b.status.warning ? "IMD warning in force" : "Nothing unusual in this period"}</span>
         </p>
-        <ol className="bb-points" lang={ta ? "ta" : "en"}>
+        <ol className="bb-points" lang={ta ? "ta" : "en"} key={ta ? "ta" : "en"}>
           {points.map((p, k) => <li key={k}><Emph text={p} /></li>)}
         </ol>
         {b.critical.length > 0 && (

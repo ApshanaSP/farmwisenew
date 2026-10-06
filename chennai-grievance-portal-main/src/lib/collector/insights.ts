@@ -4,12 +4,13 @@
  * incident IDs behind it, so each claim can be opened and checked.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool, { ops } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
+import { elsewhere } from "@/lib/collector/newsrel";
 
 /** An empty price table, for the parts that do not show prices. */
 const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
@@ -34,7 +35,7 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
   return { sql: parts.join(" AND "), params };
 }
 
-const INC = `i.incident_id AS id, i.title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, i.is_open AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
@@ -57,10 +58,46 @@ const MON = "(DATE(?) - INTERVAL WEEKDAY(?) DAY)";
  * and markets (page 4). Each computes only its own sections; the others come back empty. No part = everything
  * (the assistant and the workspace snapshot).
  */
+/** The pipeline's priority-learning report (metrics.priority_learning) as one line for the Collector. */
+function rankingOf(v: unknown): { learned: boolean; counted: number; needed: number; text: string } | null {
+  let m: Record<string, unknown>;
+  try {
+    m = typeof v === "string" ? JSON.parse(v) : (v as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+  if (!m || typeof m !== "object" || !m.status || m.status === "off") return null;
+  const counted = Number(m.counted ?? 0), needed = Number(m.needed ?? 30);
+  const text = m.status === "learned" ? `order learned from ${counted} of your decisions`
+    : m.status === "kept_default" ? `hand-set order: ${counted} of your decisions checked, not yet a better order`
+    : `hand-set order; learns from your decisions after ${needed} (${counted} so far)`;
+  return { learned: m.status === "learned", counted, needed, text };
+}
+
 export type InsightPart = "briefing" | "trends" | "environment";
 export function parsePart(v: unknown): InsightPart | null {
   return v === "briefing" || v === "trends" || v === "environment" ? v : null;
 }
+
+/** What a category's reports are, in the plural, as one would say it ("4 road accidents", "thefts and snatchings keep coming back"). */
+const CAT_NOUN: Record<string, [string, string]> = {
+  FLOOD_WATERLOGGING: ["waterlogging report", "waterlogging reports"], FLOOD_RELIEF: ["call for flood relief", "calls for flood relief"],
+  WATERBODY_INFRA: ["lake or sluice problem", "lake and sluice problems"], FLOOD_RISK_SIGNAL: ["weather warning", "weather warnings"],
+  DRAINAGE_SEWAGE: ["drain or sewage complaint", "drain and sewage complaints"], DRAIN_WORKS_SAFETY: ["unsafe drain worksite", "unsafe drain worksites"],
+  ROAD_DAMAGE: ["damaged road or footpath", "damaged roads and footpaths"], ROAD_ACCIDENT: ["road accident", "road accidents"],
+  TRAFFIC_OBSTRUCTION: ["traffic or parking complaint", "traffic and parking complaints"], ENCROACHMENT: ["encroachment", "encroachments"],
+  BUILDING_SAFETY: ["unsafe building or wall", "unsafe buildings and walls"], SOLID_WASTE: ["garbage complaint", "garbage complaints"],
+  SANITATION_TOILETS: ["public toilet complaint", "public toilet complaints"], STREETLIGHT_ELECTRICAL: ["street light or electrical fault", "street light and electrical faults"],
+  DARK_SPOT_SAFETY: ["dark-spot complaint", "dark-spot complaints"], VECTOR_DISEASE: ["fever or mosquito complaint", "fever and mosquito complaints"],
+  FOOD_SAFETY: ["food safety complaint", "food safety complaints"], STRAY_ANIMALS: ["stray animal complaint", "stray animal complaints"],
+  HEALTH_SERVICES: ["hospital report", "hospital reports"], AIR_POLLUTION: ["air pollution complaint", "air pollution complaints"],
+  TREES_PARKS: ["tree or park complaint", "tree and park complaints"], CRIME_PROPERTY: ["theft or snatching", "thefts and snatchings"],
+  CRIME_VIOLENT: ["violent crime", "violent crimes"], CRIMES_AGAINST_WOMEN: ["crime against women or children", "crimes against women and children"],
+  SUICIDE_SELF_HARM: ["suicide or self-harm case", "suicide and self-harm cases"], FIRE_EXPLOSION: ["fire", "fires"], MISSING_PERSON: ["missing person", "missing persons"],
+  DRUGS_LIQUOR: ["drugs or liquor case", "drugs and liquor cases"], PUBLIC_ORDER: ["protest or nuisance report", "protests and nuisance reports"],
+  POLICE_OTHER: ["police case", "police cases"], PUBLIC_WORKS: ["worksite complaint", "worksite complaints"], WATER_SUPPLY: ["water supply complaint", "water supply complaints"],
+  CIVIC_FACILITIES: ["civic facility complaint", "civic facility complaints"], ADMIN_SERVICES: ["tax or certificate complaint", "tax and certificate complaints"]
+};
 
 export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null) {
   const now = await asOf();
@@ -114,7 +151,8 @@ export async function insights(period: Period, zone: number | null, dept: string
                   WHERE ${where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql} GROUP BY i.taluk_code) y ON y.taluk_code = t.taluk_code
        WHERE t.in_district = 1 ORDER BY open DESC`,
       [...where({ ...s, taluk: null }, now, { hours: 720 }).params, ...where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).params])),
-    when(T || B, () => q(`SELECT DATE_FORMAT(a.date, '%Y-%m-%d') AS date, a.category_code AS cat, a.zone_no AS zone, a.observed, a.expected, a.ratio, a.p_value
+    // a.*: kind / rise_days / q_value exist only in builds with slow-rise detection (older ones read as one-day spikes)
+    when(T || B, () => q(`SELECT a.*, DATE_FORMAT(a.date, '%Y-%m-%d') AS day, a.category_code AS cat, a.zone_no AS zone
        FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""} ORDER BY a.date DESC, a.ratio DESC`,
       zone ? [now, zone] : [now])),
     when(T, () => q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
@@ -157,6 +195,9 @@ export async function insights(period: Period, zone: number | null, dept: string
   const [brief] = whole && B ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
     .catch(() => [] as Row[]) : [];
   const opening = brief?.ai_summary ? { en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null } : null;
+  // how "most urgent first" is ordered: hand-set priority weights, or weights learned from the Collector's decisions
+  const [pl] = B ? await q(`SELECT value FROM metrics WHERE metric = 'priority_learning'`).catch(() => [] as Row[]) : [];
+  const ranking = rankingOf(pl?.value);
   // page 2: the Collector's daily briefing, every section
   const book = B ? await briefingBook(s, now, opening) : null;
 
@@ -183,10 +224,36 @@ export async function insights(period: Period, zone: number | null, dept: string
   }));
   const handledByDepts = Math.max(0, open - attention.length);
 
-  const emerging = anomalies.slice(0, 8).map((a) => ({
-    ...a, label: catLabel.get(a.cat) ?? a.cat, zone_name: zn.get(Number(a.zone)) ?? null,
-    text: `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(Number(a.zone)) ?? "the district"}: ${a.observed} reports on ${new Date(a.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}, about ${Math.round(Number(a.ratio))} times the usual.`
-  }) as Row);
+  // what the reports behind each spike and hotspot actually say: the newest ones' own headlines, and the localities
+  const [spikeEx, hotEx] = await Promise.all([
+    Promise.all(anomalies.slice(0, 8).map((a) => {
+      const days = a.kind === "slow_rise" ? Math.max(1, Number(a.rise_days) || 1) : 1;
+      return q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i
+        WHERE i.category_code = ? AND i.zone_no = ? AND DATE(i.first_reported_at) > DATE(?) - INTERVAL ? DAY AND DATE(i.first_reported_at) <= DATE(?)
+        ORDER BY i.first_reported_at DESC LIMIT 12`, [a.cat, a.zone, a.day, days, a.day]).catch(() => [] as Row[]);
+    })),
+    Promise.all(hotspots.slice(0, 20).map((h) => q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i WHERE i.hotspot_id = ?
+      ORDER BY i.first_reported_at DESC LIMIT 12`, [h.id]).catch(() => [] as Row[])))
+  ]);
+  const exampleOf = (rows: Row[]) => ({
+    example: rows[0]?.title ? String(rows[0].title) : null,
+    // the localities the reports name, most frequent first ("Greams Road, Thousand Lights" -> "Thousand Lights")
+    localities: [...rows.reduce((m, r) => {
+      const l = String(r.loc ?? "").split(",").map((x) => x.replace(/\(.*\)/, "").trim()).filter(Boolean).pop();
+      if (l && !/^chennai/i.test(l)) m.set(l, (m.get(l) ?? 0) + 1);
+      return m;
+    }, new Map<string, number>()).entries()].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([l]) => l)
+  });
+
+  const emerging = anomalies.slice(0, 8).map(({ category_code: _c, zone_no: _z, ...a }, k) => {
+    const date = String(a.day), kind = a.kind === "slow_rise" ? "slow_rise" : "spike", days = kind === "slow_rise" ? Math.max(1, Number(a.rise_days) || 1) : 1;
+    const on = new Date(date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return {
+      ...a, date, kind, days, perDay: Number(a.expected) / days, label: catLabel.get(a.cat) ?? a.cat, zone_name: zn.get(Number(a.zone)) ?? null,
+      noun: CAT_NOUN[a.cat] ?? null, ...exampleOf(spikeEx[k] ?? []),
+      text: `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(Number(a.zone)) ?? "the district"}: ${a.observed} reports ${kind === "slow_rise" ? `in the ${days} days to ${on}, a slow rise` : `on ${on}`}, about ${Math.round(Number(a.ratio))} times the usual.`
+    } as Row;
+  });
 
   const envMap = Object.fromEntries(env.map((e) => [e.metric, Number(e.v)]));
   // prices: page 4, and one line of the written briefing
@@ -260,12 +327,18 @@ export async function insights(period: Period, zone: number | null, dept: string
   const hs = hotspots
     .map((h) => {
       const wz = String(h.wards ?? "").split(/[|,;\s]+/).map(Number).filter(Boolean).map((x) => wardZone.get(x)).filter(Boolean) as number[];
-      return { ...h, label: catLabel.get(h.cat) ?? h.cat, zone: wz[0] ?? null, zone_name: wz[0] ? zn.get(wz[0]) : null } as Row;
+      return { ...h, label: catLabel.get(h.cat) ?? h.cat, zone: wz[0] ?? null, zone_name: wz[0] ? zn.get(wz[0]) : null,
+        noun: CAT_NOUN[h.cat] ?? null, ...exampleOf(hotEx[hotspots.indexOf(h)] ?? []) } as Row;
     })
     .filter((h: Row) => (!zone || h.zone === zone) && (!s.cat || h.cat === s.cat))
     .slice(0, 8);
 
   const reviewCounts = Object.fromEntries(review.map((r) => [r.item_type, Number(r.n)]));
+  // open incidents this server placed from their reports (derive.ts), shown on the map; only on the AWS store
+  const placedRows = T ? await q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.zone_name, i.lat, i.lon, p.place, p.how,
+      DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
+    FROM _placed p JOIN incidents i ON i.incident_id = p.incident_id WHERE ${rw.sql} AND i.is_open = 1
+    ORDER BY i.first_reported_at DESC LIMIT 120`, rw.params).catch(() => [] as Row[]) : [];
   const wards: Ward[] = wardRows.map((r) => ({ ward_no: Number(r.ward_no), zone_no: Number(r.zone_no), lat: Number(r.lat), lon: Number(r.lon) }));
   const places = T ? reviewLocations(unplaced, wards, await placeResolver().catch(() => () => null)) : null;
   // Items from sources the Collector added: civic issues first, then the newest.
@@ -289,17 +362,18 @@ export async function insights(period: Period, zone: number | null, dept: string
   return {
     now, scope, book,
     briefing: {
-      headline, opening, conditions, market, attention, emerging, fromSources,
+      headline, opening, conditions, market, attention, emerging, fromSources, ranking,
       stats: { reported: n, change: ch, open, overdue, severe: sev, multi: Number(K.multi ?? 0), newsOnly: Number(K.news_only ?? 0), handledByDepts },
       env: { rain: envMap.rainfall_24h_mm ?? null, aqi: envMap.aqi != null ? Math.round(envMap.aqi) : null, lakes: envMap.lake_pct_full ?? null }, addedCount: added.count, addedDays: added.days, md, method: "Generated from the store by rules (no language model); every item links to its evidence." },
     deptActions,
-    gaps: gaps.map((g) => ({ ...g, why: explain(g) }) as Row),
+    // only news about this district (the monitor sometimes links a report from elsewhere to an incident)
+    gaps: gaps.filter((g) => !elsewhere(String(g.title ?? ""))).map((g) => ({ ...g, why: explain(g) }) as Row),
     trends: { weekly: { keys: weeks, lines: seriesOf(weekly, weeks) }, monthly: { keys: months, lines: seriesOf(monthly, months) }, where: whereRising },
     taluks: taluks.map((t) => ({ code: t.code, name: t.name, open: Number(t.open), severe: Number(t.severe), overdue: Number(t.overdue),
       reported: Number(t.reported), prev: Number(t.prev) })),
     patterns: { emerging, hotspots: hs },
     // Locations needing review: only incidents whose place is unknown (locreview.ts); the counts say what was left out
-    review: { unplaced: places?.missing ?? [], unplacedTotal: places?.counts.missing ?? 0, counts: places?.counts ?? null, located: places?.located ?? [],
+    review: { unplaced: places?.missing ?? [], unplacedTotal: places?.counts.missing ?? 0, counts: places?.counts ?? null, located: places?.located ?? [], placed: placedRows,
       links: reviewCounts.link ?? 0, gaps: reviewCounts.gap ?? 0 },
     markets: { chennai: mCH, tamilNadu: mTN, weekly: { chennai: wCH, tamilNadu: wTN }, byMarket }
   };
@@ -397,42 +471,51 @@ export async function pattern(p: PatternQuery) {
     const label = catLabel.get(p.cat) ?? p.cat;
     const zoneSql = p.zone ? "AND i.zone_no = ?" : "";
     const zp = p.zone ? [p.zone] : [];
-    const [an, days, rows] = await Promise.all([
-      q(`SELECT observed, expected, ratio FROM anomalies WHERE date = ? AND category_code = ? ${p.zone ? "AND zone_no = ?" : ""} LIMIT 1`, [p.date, p.cat, ...zp]),
-      // three weeks before the spike and up to a week after it, so the jump and what followed are both visible
+    // a.*: builds before slow-rise detection have no kind / rise_days columns (read as a one-day spike)
+    const [a] = await q(`SELECT a.* FROM anomalies a WHERE a.date = ? AND a.category_code = ? ${p.zone ? "AND a.zone_no = ?" : ""}
+      ORDER BY a.ratio DESC LIMIT 1`, [p.date, p.cat, ...zp]);
+    const slow = a?.kind === "slow_rise";
+    const span = slow ? Math.max(1, Number(a.rise_days) || 1) : 1;
+    const from = new Date(new Date(p.date + "T00:00:00Z").getTime() - (span - 1) * 864e5).toISOString().slice(0, 10);
+    const before = Math.max(20, span + 6);
+    const [days, rows] = await Promise.all([
+      // three weeks before the spike (or the whole rise) and up to a week after it, so the jump and what followed are both visible
       q(`SELECT DATE_FORMAT(DATE(i.first_reported_at), '%Y-%m-%d') AS d, COUNT(*) AS n FROM incidents i
-         WHERE i.category_code = ? ${zoneSql} AND i.first_reported_at >= DATE(?) - INTERVAL 20 DAY
+         WHERE i.category_code = ? ${zoneSql} AND i.first_reported_at >= DATE(?) - INTERVAL ${before} DAY
            AND i.first_reported_at < LEAST(DATE(?) + INTERVAL 8 DAY, DATE(?) + INTERVAL 1 DAY) GROUP BY d`, [p.cat, ...zp, p.date, p.date, now]),
-      incidentsOf(`i.category_code = ? ${zoneSql} AND DATE(i.first_reported_at) = ?`, [p.cat, ...zp, p.date])
+      incidentsOf(`i.category_code = ? ${zoneSql} AND DATE(i.first_reported_at) BETWEEN ? AND ?`, [p.cat, ...zp, from, p.date])
     ]);
-    const a = an[0];
     const expected = a ? Number(a.expected) : 0;
     const observed = a ? Number(a.observed) : rows.length;
     const byDay = new Map(days.map((d) => [d.d, Number(d.n)]));
     const end = new Date(Math.min(new Date(p.date + "T00:00:00").getTime() + 7 * 864e5, new Date(now.slice(0, 10) + "T00:00:00").getTime()));
     const series: { label: string; n: number; hl: boolean }[] = [];
-    for (let t = new Date(p.date + "T00:00:00").getTime() - 20 * 864e5; t <= end.getTime(); t += 864e5) {
+    for (let t = new Date(p.date + "T00:00:00").getTime() - before * 864e5; t <= end.getTime(); t += 864e5) {
       const d = new Date(t + 5.5 * 3600e3).toISOString().slice(0, 10);
-      series.push({ label: dayWord(d), n: byDay.get(d) ?? 0, hl: d === p.date });
+      series.push({ label: dayWord(d), n: byDay.get(d) ?? 0, hl: d >= from && d <= p.date });
     }
-    const after = series.slice(series.findIndex((x) => x.hl) + 1);
+    const after = series.slice(series.map((x) => x.hl).lastIndexOf(true) + 1);
     const places = placesOf(rows);
     const open = rows.filter((r) => Number(r.open) === 1).length;
     const one = places.length === 1 || (places[0] && places[0].n >= rows.length * 0.6);
     const lead = [
-      `${observed} reports about ${label.toLowerCase()} came in from ${zoneName} on ${dayWord(p.date)}. This place normally gets ${usual(expected)}, so that day had about ${Math.round(Number(a?.ratio ?? 0))} times the usual number.`,
+      slow
+        ? `${observed} reports about ${label.toLowerCase()} came in from ${zoneName} in the ${span} days to ${dayWord(p.date)}. This place normally gets ${usual(expected / span)}, so that is about ${Math.round(Number(a?.ratio ?? 0))} times the usual number: a steady build-up rather than one bad day.`
+        : `${observed} reports about ${label.toLowerCase()} came in from ${zoneName} on ${dayWord(p.date)}. This place normally gets ${usual(expected)}, so that day had about ${Math.round(Number(a?.ratio ?? 0))} times the usual number.`,
       one && places[0] ? `Most of them are about one place, ${places[0].name}: probably one problem that several people reported.`
         : `They are spread over ${places.length} places, so check whether they share a cause (rain, a works site, an event).`,
       after.length ? (after.some((x) => x.n >= Math.max(2, observed / 2)) ? "Reports stayed high on the days after: it has not settled." : "Reports dropped back on the days after.") : "This is the latest day with data.",
       rows.length ? `${open} of the ${rows.length} ${rows.length === 1 ? "incident is" : "incidents are"} still open, handled by ${deptsOf(rows).join(", ") || "the department"}.` : ""
     ].filter(Boolean);
     return {
-      kind: "spike" as const, title: `${label} in ${zoneName}`, when: dayWord(p.date), lead,
+      kind: "spike" as const, title: `${observed} ${(CAT_NOUN[p.cat] ?? [label.toLowerCase(), label.toLowerCase()])[observed === 1 ? 0 : 1]} in ${places[0] && one ? `${places[0].name}, ` : ""}${zoneName}${slow ? ` in ${span} days` : ""}`,
+      when: slow ? `${dayWord(from)} – ${dayWord(p.date)}` : dayWord(p.date), lead,
       stats: [
-        { l: "Reports that day", v: String(observed) }, { l: "Usual for this place", v: usual(expected) },
+        { l: slow ? `Reports in ${span} days` : "Reports that day", v: String(observed) }, { l: "Usual for this place", v: usual(expected / span) },
         { l: "Times the usual", v: `${Number(a?.ratio ?? 0).toFixed(1)}×` }, { l: "Still open", v: `${open} of ${rows.length}` }
       ],
-      seriesTitle: "Reports per day, three weeks before and the days after",
+      seriesTitle: slow ? "Reports per day: the build-up (highlighted), the weeks before and the days after"
+        : "Reports per day, three weeks before and the days after",
       series, places: places.slice(0, 6), incidents: rows, next: playbook.get(p.cat)?.[0] ?? null,
       filter: { cat: p.cat, zone: p.zone }
     };
@@ -458,7 +541,7 @@ export async function pattern(p: PatternQuery) {
   ];
   const monthName = (m: string) => new Date(m + "-01T00:00:00").toLocaleDateString("en-GB", { month: "short", year: "numeric" });
   return {
-    kind: "hotspot" as const, title: `${label}: ${h.top_place}`, when: `${dayWord(h.first_seen)} to ${dayWord(h.last_seen)}`, lead,
+    kind: "hotspot" as const, title: `${((n) => n[0].toUpperCase() + n.slice(1))((CAT_NOUN[h.cat] ?? [label, label])[1])} keep coming back near ${String(h.top_place).replace(/^(.*?)s*((.+))s*$/, "$2, $1")}`, when: `${dayWord(h.first_seen)} to ${dayWord(h.last_seen)}`, lead,
     stats: [
       { l: "Incidents in all", v: String(h.incidents) }, { l: "In the last 30 days", v: String(h.incidents_30d) },
       { l: "Still open", v: String(open) }, { l: wards.length === 1 ? "Ward" : "Wards", v: wards.join(", ") || "—" }

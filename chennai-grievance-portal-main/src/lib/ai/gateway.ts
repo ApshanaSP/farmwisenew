@@ -19,7 +19,7 @@ import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
 
 export type Role = "fast" | "reasoning";
-type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
+export type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
 
 export class AiUnavailableError extends Error {
   constructor() {
@@ -130,10 +130,13 @@ function openai(): Provider | null {
   };
 }
 
-/** Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); only those configured. */
-function providers(): Provider[] {
+/**
+ * Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); only those
+ * configured. `prefer` goes first when it is configured (the source onboarding agent asks for Gemini).
+ */
+function providers(prefer?: ProviderName): Provider[] {
   const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai };
-  const order = [env("AI_PROVIDER") || "gemini", env("AI_FALLBACK_PROVIDER") || "none"];
+  const order = [...(prefer ? [prefer] : []), env("AI_PROVIDER") || "gemini", env("AI_FALLBACK_PROVIDER") || "none"];
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -187,6 +190,8 @@ export interface JsonCall<T> {
   abortSignal?: AbortSignal;
   /** who is asking, for the daily budget */
   user: string;
+  /** a provider to try first, when it is configured */
+  prefer?: ProviderName;
 }
 
 export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
@@ -224,7 +229,7 @@ function retryAfterSeconds(e: APICallError): number | null {
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
-  const list = providers();
+  const list = providers(c.prefer);
   if (!list.length) throw new AiUnavailableError();
   if (!budgetLeft(c.user)) throw new AiBudgetError();
   const state = { busyFor: null as number | null, lastError: null as unknown, attempts: 0 };

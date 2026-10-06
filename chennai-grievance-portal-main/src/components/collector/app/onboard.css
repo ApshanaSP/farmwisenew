@@ -1,0 +1,290 @@
+/* =====================================================================================================================
+   Source onboarding: the link dock in the top bar and the agent drawer (Onboard.tsx). Built on the console tokens
+   (tokens.css), so it follows the dark and light themes. Motion: one curve (--ob-ease), springs come from motion.
+   "Backlit" edges are a conic gradient masked to a 1px ring and turned by the --ob-ang custom property.
+   ===================================================================================================================== */
+@property --ob-ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes ob-ang{to{--ob-ang:360deg}}
+@keyframes ob-shine{to{background-position:-200% 0}}
+@keyframes ob-beam{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+@keyframes ob-sk{0%{background-position:150% 0}100%{background-position:-50% 0}}
+@keyframes ob-thin{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@keyframes ob-breathe{50%{box-shadow:0 0 0 6px rgba(99,102,241,.08),0 0 22px rgba(99,102,241,.6)}}
+
+.dic{--ob-ease:cubic-bezier(.32,.72,0,1)}
+
+/* ------------------------------------------------------------------ link dock -- */
+/* a fixed slot in the top bar; the field inside grows leftward over the search when in use, so nothing else moves */
+.dic .ldock{position:relative;flex:0 0 196px;height:var(--h-ctl);z-index:6}
+.dic .ldock-f{position:absolute;right:0;top:0;bottom:0;width:100%;display:flex;align-items:center;border-radius:var(--r-md);
+  background:rgba(18,26,45,.75);border:1px solid var(--line);isolation:isolate;
+  transition:width .55s var(--ob-ease),border-color var(--t) var(--ease),box-shadow .45s var(--ob-ease),background var(--t)}
+.dic .ldock.on .ldock-f,.dic .ldock.ok .ldock-f{width:440px;background:var(--elev);border-color:transparent;box-shadow:0 0 0 3px rgba(99,102,241,.13),0 14px 34px -12px rgba(79,124,246,.6)}
+.dic .ldock-ring{position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;z-index:-1;opacity:0;
+  background:conic-gradient(from var(--ob-ang),rgba(129,140,248,.08) 0 55%,rgba(129,140,248,.95) 68%,rgba(56,189,248,.95) 78%,rgba(129,140,248,.08) 92%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:ob-ang 3.6s linear infinite;transition:opacity .35s var(--ob-ease)}
+.dic .ldock:hover .ldock-ring{opacity:.5}
+.dic .ldock.on .ldock-ring,.dic .ldock.ok .ldock-ring{opacity:1}
+.dic .ldock-ic{flex:none;width:32px;display:grid;place-items:center;color:var(--accent-2);padding-left:3px}
+.dic .ldock-ic .ic{width:15px;height:15px}
+.dic .ldock input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:none;color:var(--text);font:500 12px var(--dic-mono),monospace;padding:0 6px 0 1px}
+.dic .ldock-hint{position:absolute;left:33px;right:36px;inset-block:0;display:flex;align-items:center;font-size:12.5px;color:var(--text-3);pointer-events:none;white-space:nowrap;overflow:hidden}
+.dic .ldock-hint b{display:inline-block;font-weight:600;color:var(--accent-2)}
+.dic .ldock-go{flex:none;width:28px;height:28px;margin-right:4px;border-radius:9px;display:grid;place-items:center;background:var(--grad);color:#fff;box-shadow:var(--glow)}
+.dic .ldock-go .ic{width:15px;height:15px}
+.dic .ldock-go:active{transform:scale(.94)}
+.dic[data-theme="light"] .ldock-f{background:#fff}
+.dic:not(.fit) .ldock{order:6;flex-basis:100%}
+.dic:not(.fit) .ldock .ldock-f{width:100%}
+
+/* --------------------------------------------------------------------- drawer -- */
+.dic .ob-scrim{position:fixed;inset:0;background:var(--scrim);backdrop-filter:blur(3px);z-index:86}
+/* double bezel: a tinted outer shell with the panel set inside it */
+.dic .ob{position:fixed;top:10px;right:10px;bottom:10px;width:min(820px,calc(100% - 20px));z-index:87;display:flex;padding:5px;border-radius:22px;
+  background:linear-gradient(180deg,rgba(148,163,184,.12),rgba(148,163,184,.04));border:1px solid var(--line-3);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 60px -20px rgba(79,124,246,.25)}
+.dic .ob-core{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;border-radius:17px;background:var(--elev);overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.dic .ob-core:before{content:"";position:absolute;right:-120px;top:-160px;width:420px;height:360px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(99,102,241,.16),transparent);z-index:0}
+.dic .ob-core>*{position:relative;z-index:1}
+.dic[data-theme="light"] .ob{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(238,241,249,.6));box-shadow:0 40px 90px -30px rgba(15,23,42,.45)}
+.dic[data-theme="light"] .ob-core{box-shadow:inset 0 1px 0 #fff}
+
+.dic .ob-h{flex:none;display:flex;align-items:center;gap:12px;padding:13px 14px 13px 16px;border-bottom:1px solid var(--line-2)}
+.dic .ob-mark{position:relative;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--accent-2);background:var(--grad-soft);border:1px solid var(--accent-line)}
+.dic .ob-mark .ic{width:18px;height:18px}
+.dic .ob-mark.live:after{content:"";position:absolute;inset:-2px;border-radius:12px;padding:1.5px;pointer-events:none;
+  background:conic-gradient(from var(--ob-ang),transparent 0 60%,var(--accent) 80%,var(--signal) 90%,transparent);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:ob-ang 1.4s linear infinite}
+.dic .ob-ht{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dic .ob-ht b{font-size:15px;font-weight:700;letter-spacing:-.015em}
+.dic .ob-url{display:flex;align-items:center;gap:6px;font:500 11.5px var(--dic-mono),monospace;color:var(--text-2);white-space:nowrap;overflow:hidden}
+.dic .ob-url em{font-style:normal;color:var(--text-4);overflow:hidden;text-overflow:ellipsis}
+.dic .ob-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--text-4)}
+.dic .ob-dot.run{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.dic .ob-dot.good{background:var(--low);box-shadow:0 0 8px var(--low)}
+.dic .ob-dot.bad{background:var(--sev)}
+.dic .ob-ib{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--text-3);transition:background var(--t),color var(--t)}
+.dic .ob-ib:hover{background:var(--surface-3);color:var(--text)}
+.dic .ob-ib .ic{width:16px;height:16px}
+
+.dic .ob-main{flex:1;min-height:0;display:grid;grid-template-columns:244px minmax(0,1fr)}
+
+/* ------------------------------------------------------------------- the rail -- */
+.dic .ob-rail{display:flex;flex-direction:column;gap:12px;padding:14px 12px 12px 14px;border-right:1px solid var(--line-2);overflow:auto;
+  background:linear-gradient(180deg,rgba(99,102,241,.05),transparent 45%)}
+.dic .ob-cap{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.dic .ob-cap span{font:600 11px var(--dic-mono),monospace;letter-spacing:0;color:var(--text-4)}
+.dic .ob-tl{position:relative;list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dic .ob-tl-rail{position:absolute;left:11px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--line)}
+.dic .ob-tl-fill{position:absolute;inset:0;border-radius:inherit;transform-origin:top;transform:scaleY(0);
+  background:linear-gradient(180deg,var(--accent),var(--signal));box-shadow:0 0 10px rgba(129,140,248,.55)}
+.dic .ob-tl-fill.bad{background:linear-gradient(180deg,var(--accent),var(--sev))}
+.dic .ob-st{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:start;padding:6px 0}
+.dic .ob-node{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--elev);border:1.5px solid var(--line-3);
+  transition:background .3s var(--ob-ease),border-color .3s var(--ob-ease),color .3s}
+.dic .ob-node-i{display:grid;place-items:center}
+.dic .ob-node .ic{width:13px;height:13px;stroke-width:2.6}
+.dic .ob-st.run .ob-node{border-color:var(--accent);animation:ob-breathe 1.6s var(--ob-ease) infinite;box-shadow:0 0 0 4px rgba(99,102,241,.12),0 0 14px rgba(99,102,241,.45)}
+.dic .ob-st.ok .ob-node{background:var(--accent-3);border-color:transparent;color:#fff}
+.dic .ob-st.warn .ob-node{background:var(--high-soft);border-color:var(--high-line);color:var(--high)}
+.dic .ob-st.fail .ob-node{background:var(--sev-soft);border-color:var(--sev-line);color:var(--sev)}
+.dic .ob-pip{width:5px;height:5px;border-radius:50%;background:var(--text-4)}
+.dic .ob-spin{width:12px;height:12px;border-radius:50%;border:2px solid rgba(129,140,248,.25);border-top-color:var(--accent-2);animation:dic-spin .7s linear infinite}
+.dic .ob-st-t{min-width:0;display:flex;flex-direction:column;gap:2px;padding-top:2px}
+.dic .ob-st-l{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.dic .ob-st.wait .ob-st-l{color:var(--text-4);font-weight:500}
+/* the running step's label shimmers, like a model thinking */
+.dic .ob-st.run .ob-st-l{background:linear-gradient(90deg,var(--text-3) 0%,var(--text) 45%,var(--text-3) 90%);background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:ob-shine 1.5s linear infinite}
+.dic .ob-st-t small{font-size:11.5px;line-height:1.4;color:var(--text-3);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dic .ob-st.warn .ob-st-t small{color:var(--high)}
+.dic .ob-st.fail .ob-st-t small{color:var(--sev)}
+.dic .ob-ms{font:500 10.5px var(--dic-mono),monospace;font-style:normal;color:var(--text-4);padding-top:4px}
+
+.dic .ob-after{margin-top:auto;display:flex;flex-direction:column;gap:7px;padding:11px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2)}
+.dic .ob-after p{margin:0;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2)}
+.dic .ob-after .ic{width:14px;height:14px;flex:none;color:var(--accent-2)}
+
+/* ------------------------------------------------------------------- the pane -- */
+.dic .ob-pane{position:relative;min-width:0;min-height:0;display:flex}
+.dic .ob-stage{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;padding:16px 18px;overflow:auto;scrollbar-gutter:stable}
+
+.dic .ob-live{display:flex;flex-direction:column;gap:14px}
+.dic .ob-live-h{position:relative;overflow:hidden;padding:18px 20px;border-radius:16px;background:var(--grad-soft);border:1px solid var(--accent-line)}
+.dic .ob-beam{position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 30%,rgba(165,180,252,.18) 50%,transparent 70%);animation:ob-beam 2.4s var(--ob-ease) infinite}
+.dic .ob-live-k{position:relative;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.dic .ob-live-k b{font:600 11px var(--dic-mono),monospace;letter-spacing:0;text-transform:none;color:var(--accent-2)}
+.dic .ob-live-t{position:relative;display:block;margin:8px 0 4px;font:700 23px/1.2 var(--dic-display),sans-serif;letter-spacing:-.025em;color:var(--text)}
+.dic .ob-live-d{position:relative;display:block;font-size:12.5px;color:var(--text-2);max-width:56ch}
+.dic .ob-skel{display:flex;flex-direction:column;gap:8px}
+.dic .ob-sk{display:grid;grid-template-columns:8px 1fr;grid-template-rows:auto auto;gap:8px 12px;padding:13px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);animation:dic-rise .5s var(--ob-ease) both}
+.dic .ob-sk i{grid-row:span 2;width:8px;height:8px;margin-top:3px;border-radius:50%;background:var(--line-3)}
+.dic .ob-sk b{display:block;height:11px;border-radius:6px;width:82%;background:linear-gradient(90deg,var(--surface-3) 25%,var(--line-3) 50%,var(--surface-3) 75%);background-size:200% 100%;animation:ob-sk 1.4s linear infinite}
+.dic .ob-sk b.s{width:46%;height:9px}
+
+.dic .ob-stop{margin:auto;max-width:440px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.dic .ob-stop-i{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:var(--sev-soft);border:1px solid var(--sev-line);color:var(--sev)}
+.dic .ob-stop-i .ic{width:24px;height:24px}
+.dic .ob-stop h3{margin:6px 0 0;font-size:19px;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+.dic .ob-stop p{margin:0;font-size:13.5px;color:var(--text-2);text-wrap:pretty}
+.dic .ob-stop ul{margin:6px 0 8px;padding:12px 14px 12px 30px;text-align:left;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);font-size:12.5px;color:var(--text-3);display:flex;flex-direction:column;gap:5px}
+.dic .ob-ghost{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-3);font-size:13px;font-weight:600;color:var(--text);transition:transform .3s var(--ob-ease),background var(--t)}
+.dic .ob-ghost:hover{background:var(--surface-3)}
+.dic .ob-ghost:active{transform:scale(.97)}
+.dic .ob-ghost .ic{width:15px;height:15px}
+
+/* ------------------------------------------------------------------ the review -- */
+.dic .ob-review{display:flex;flex-direction:column;gap:10px}
+.dic .ob-hero{display:flex;align-items:flex-start;gap:14px}
+.dic .ob-hero-p{margin:1px 0 2px;font-size:12.5px;line-height:1.45;color:var(--text-2);max-width:62ch;text-wrap:pretty}
+.dic .ob-glyph{position:relative;isolation:isolate;flex:none;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;color:#fff;background:var(--grad);
+  box-shadow:0 12px 28px -10px rgba(79,124,246,.75),inset 0 1px 0 rgba(255,255,255,.28)}
+.dic .ob-glyph:before{content:"";position:absolute;inset:-9px;z-index:-1;border-radius:22px;filter:blur(11px);opacity:.75;
+  background:conic-gradient(from var(--ob-ang),transparent,rgba(129,140,248,.6),rgba(56,189,248,.5),transparent 70%);animation:ob-ang 5s linear infinite}
+.dic .ob-glyph .ic{width:23px;height:23px}
+.dic .ob-glyph.g-api{background:linear-gradient(135deg,#10B981,#0EA5E9);box-shadow:0 12px 28px -10px rgba(16,185,129,.6),inset 0 1px 0 rgba(255,255,255,.28)}
+.dic .ob-glyph.g-page{background:linear-gradient(135deg,#0EA5E9,#4F7CF6);box-shadow:0 12px 28px -10px rgba(14,165,233,.6),inset 0 1px 0 rgba(255,255,255,.28)}
+.dic .ob-glyph.g-login{background:linear-gradient(135deg,#F59E0B,#D97706);box-shadow:0 12px 28px -10px rgba(245,158,11,.6),inset 0 1px 0 rgba(255,255,255,.28)}
+.dic .ob-hero-t{min-width:0;display:flex;flex-direction:column;gap:3px}
+.dic .ob-eyebrow{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3)}
+.dic .ob-hero-t>b{font-size:19px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.dic .ob-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.dic .ob-chips i{font:500 11px var(--dic-mono),monospace;font-style:normal;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line-2);color:var(--text-2)}
+
+.dic .ob-tip{margin:0;display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:11px;background:var(--signal-soft);font-size:12.5px;color:var(--text-2)}
+.dic .ob-tip.warn{background:var(--high-soft)}
+.dic .ob-tip.warn .ic{color:var(--high)}
+.dic .ob-tip .ic{width:14px;height:14px;flex:none;margin-top:2px;color:var(--signal)}
+.dic .ob-rel{flex:none;display:inline-flex;align-items:center;gap:5px;height:21px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.dic .ob-rel .ic{width:13px;height:13px}
+.dic .ob-rel.yes{background:var(--low-soft);color:var(--low)}
+.dic .ob-rel.no{background:var(--high-soft);color:var(--high)}
+.dic .ob-warn{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.dic .ob-warn li{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--high)}
+.dic .ob-warn .ic{width:13px;height:13px;flex:none;margin-top:2px}
+
+.dic .ob-tabs{position:sticky;top:-16px;z-index:2;display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2)}
+.dic .ob-tabs button{position:relative;flex:none;white-space:nowrap;height:30px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--text-3);transition:color var(--t)}
+.dic .ob-tabs button:hover{color:var(--text-2)}
+.dic .ob-tabs button.on{color:var(--text)}
+.dic .ob-tab-pill,.dic .ob-seg-pill{position:absolute;inset:0;border-radius:9px;background:var(--raise);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 4px 14px -6px rgba(0,0,0,.55),0 0 0 1px var(--line-3)}
+.dic[data-theme="light"] .ob-tab-pill,.dic[data-theme="light"] .ob-seg-pill{box-shadow:0 1px 3px rgba(15,23,42,.12),0 0 0 1px var(--line)}
+.dic .ob-tabs button>span:last-child{position:relative;display:inline-flex;align-items:center;gap:6px}
+.dic .ob-tabs em{font:600 10.5px var(--dic-mono),monospace;font-style:normal;color:var(--text-4)}
+.dic .ob-ai{flex:1 1 auto;min-width:0;justify-content:flex-end;margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:8px;font:500 11px var(--dic-mono),monospace;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .ob-ai-dot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--low);box-shadow:0 0 8px var(--low)}
+.dic .ob-tabbody{position:relative;display:flex;flex-direction:column;gap:10px}
+
+.dic .ob-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dic .ob-stat{display:flex;flex-direction:column;gap:1px;padding:9px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line-2)}
+.dic .ob-stat b{font-size:21px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.dic .ob-stat small{font-size:11px;color:var(--text-3)}
+.dic .ob-stat.acc b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dic .ob-thin{position:relative;height:2px;border-radius:2px;overflow:hidden;background:var(--line-2)}
+.dic .ob-thin:after{content:"";position:absolute;inset:0;width:40%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:ob-thin 1s var(--ob-ease) infinite}
+.dic .ob-cards{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dic .ob-card{display:grid;grid-template-columns:8px minmax(0,1fr);gap:12px;padding:11px 13px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);
+  transition:border-color .25s var(--ob-ease),transform .35s var(--ob-ease),background .25s}
+.dic .ob-card:hover{border-color:var(--line-3);background:var(--surface-3);transform:translateY(-1px)}
+.dic .ob-civ{width:8px;height:8px;margin-top:6px;border-radius:50%;background:var(--line-3)}
+.dic .ob-civ.on{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),0 0 10px var(--accent)}
+.dic .ob-card-b{min-width:0}
+.dic .ob-card-b>b{display:block;font-size:13.5px;font-weight:600;line-height:1.38;color:var(--text);text-wrap:pretty}
+.dic .ob-card-b>b a{color:inherit;text-decoration:none}
+.dic .ob-card-b>b a:hover{text-decoration:underline;text-decoration-color:var(--accent-line);text-underline-offset:3px}
+.dic .ob-meta{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:6px}
+.dic .ob-meta i{display:inline-flex;align-items:center;gap:5px;font-style:normal;font-size:11.5px;color:var(--text-3)}
+.dic .ob-meta .ic{width:12px;height:12px}
+.dic .ob-meta i.dim{opacity:.55}
+.dic .ob-meta i.acc{color:var(--accent-2)}
+.dic .ob-empty{padding:26px 16px;text-align:center;border-radius:12px;border:1px dashed var(--line-3);font-size:13px;color:var(--text-3)}
+
+.dic .ob-map{display:flex;flex-direction:column;gap:5px}
+.dic .ob-mrow{display:grid;grid-template-columns:118px 14px minmax(0,1fr);gap:10px;align-items:start;padding:8px 10px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line-2)}
+.dic .ob-mrow.need{border-color:var(--high-line);background:var(--high-soft)}
+.dic .ob-mk{display:flex;align-items:center;gap:8px;padding-top:6px;font-size:12.5px;font-weight:600;color:var(--text-2)}
+.dic .ob-mk .ic{width:14px;height:14px;color:var(--accent-2)}
+.dic .ob-arrow{padding-top:6px;font-size:12px;color:var(--text-4)}
+.dic .ob-mv{min-width:0}
+.dic .ob-mv select{height:30px;max-width:100%;padding:0 8px;border-radius:8px;background:var(--elev);border:1px solid var(--line);color:var(--text);font:500 12px var(--dic-mono),monospace;outline:none;transition:border-color var(--t)}
+.dic .ob-mv select:focus{border-color:var(--accent-line);box-shadow:var(--ring)}
+.dic .ob-single{display:flex;gap:6px;flex-wrap:wrap}
+.dic .ob-single .ob-fmt{font-family:var(--dic-sans),sans-serif}
+.dic .ob-multi{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.dic .ob-tag{display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 3px 0 9px;border-radius:7px;background:var(--accent-soft);border:1px solid var(--accent-line);font:500 11.5px var(--dic-mono),monospace;color:var(--accent-2)}
+.dic .ob-tag button{width:18px;height:18px;display:grid;place-items:center;border-radius:5px}
+.dic .ob-tag button:hover{background:var(--accent-soft)}
+.dic .ob-tag .ic{width:11px;height:11px}
+.dic .ob-sample{display:block;margin-top:4px;font:400 11px var(--dic-mono),monospace;color:var(--text-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.dic .ob-raw{display:flex;flex-direction:column;gap:8px}
+.dic .ob-raw dl{margin:0;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);display:flex;flex-direction:column;gap:3px}
+.dic .ob-raw dl>div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;font:11.5px/1.45 var(--dic-mono),monospace}
+.dic .ob-raw dt{color:var(--accent-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .ob-raw dd{margin:0;color:var(--text-2);overflow-wrap:anywhere}
+
+/* ------------------------------------------------------------------- sign-in -- */
+.dic .ob-login{display:flex;flex-direction:column;gap:12px}
+.dic .ob-note{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-2);max-width:62ch}
+.dic .ob-grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.dic .ob-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dic .ob-login label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-3)}
+.dic .ob-login input{height:36px;padding:0 11px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);font-size:13px;outline:none}
+.dic .ob-login input:focus{border-color:var(--accent-line);box-shadow:var(--ring)}
+.dic .ob-login .ob-go{align-self:flex-start}
+
+/* -------------------------------------------------------------------- footer -- */
+.dic .ob-f{flex:none;display:flex;flex-direction:column;gap:10px;padding:12px 16px 14px;border-top:1px solid var(--line-2);background:linear-gradient(180deg,transparent,rgba(99,102,241,.05))}
+.dic .ob-f1,.dic .ob-f2{display:flex;align-items:center;gap:10px}
+.dic .ob-name{flex:1;min-width:0;display:flex;align-items:center;gap:10px;height:36px;padding:0 4px 0 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);transition:border-color var(--t),box-shadow var(--t)}
+.dic .ob-name:focus-within{border-color:var(--accent-line);box-shadow:var(--ring)}
+.dic .ob-name span{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--text-3)}
+.dic .ob-name input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--text);font-size:13.5px;font-weight:600}
+.dic .ob-seg{display:flex;padding:3px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line)}
+.dic .ob-seg button{position:relative;height:28px;padding:0 11px;border-radius:8px;font-size:12px;font-weight:600;color:var(--text-3);white-space:nowrap;transition:color var(--t)}
+.dic .ob-seg button.on{color:var(--text)}
+.dic .ob-seg button>span:last-child{position:relative}
+.dic .ob-chk{flex:1;display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.45;color:var(--text-3);cursor:pointer}
+.dic .ob-chk input{margin-top:2px;accent-color:var(--accent-3);flex:none}
+/* the primary action: a pill with its arrow in its own circle */
+.dic .ob-go{display:inline-flex;align-items:center;gap:12px;height:40px;padding:0 5px 0 18px;border-radius:999px;background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;white-space:nowrap;
+  box-shadow:var(--glow),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .35s var(--ob-ease),box-shadow .35s var(--ob-ease),opacity .2s}
+.dic .ob-go-i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);transition:transform .4s var(--ob-ease)}
+.dic .ob-go-i .ic{width:15px;height:15px}
+.dic .ob-go:hover:not(:disabled){box-shadow:0 12px 30px -8px rgba(79,124,246,.7),inset 0 1px 0 rgba(255,255,255,.22)}
+.dic .ob-go:hover:not(:disabled) .ob-go-i{transform:translate(2px,-1px) scale(1.06)}
+.dic .ob-go:active:not(:disabled){transform:scale(.98)}
+.dic .ob-go:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}
+.dic .ob-go:focus-visible,.dic .ldock-go:focus-visible,.dic .ob-ghost:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------------------------------------------------------------------- done -- */
+.dic .ob-done{margin:auto;max-width:440px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.dic .ob-done-mark{width:84px;height:84px;fill:none;stroke:var(--low);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 14px rgba(52,211,153,.45))}
+.dic .ob-done-mark.warn{stroke:var(--high);filter:drop-shadow(0 0 14px rgba(251,191,36,.4))}
+.dic .ob-done h3{margin:4px 0 0;font-size:21px;font-weight:700;letter-spacing:-.025em;text-wrap:balance}
+.dic .ob-done p{margin:0;font-size:13.5px;color:var(--text-2)}
+.dic .ob-done p b{font-variant-numeric:tabular-nums;color:var(--text)}
+.dic .ob-done-k{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0 10px}
+.dic .ob-done-k span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line-2);font-size:12px;color:var(--text-2)}
+.dic .ob-done-k .ic{width:13px;height:13px;color:var(--accent-2)}
+
+/* -------------------------------------------------------------------- phones -- */
+@media (max-width:760px){
+  .dic .ob{inset:0;width:100%;padding:0;border-radius:0;border:0}
+  .dic .ob-core{border-radius:0}
+  .dic .ob-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .dic .ob-rail{border-right:0;border-bottom:1px solid var(--line-2);max-height:200px}
+  .dic .ob-after{display:none}
+  .dic .ob-stats{grid-template-columns:repeat(2,1fr)}
+  .dic .ob-f1,.dic .ob-f2{flex-direction:column;align-items:stretch}
+  .dic .ob-grid3,.dic .ob-grid2{grid-template-columns:1fr}
+  .dic .ob-mrow{grid-template-columns:96px minmax(0,1fr)}
+  .dic .ob-arrow{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .dic .ldock-ring,.dic .ob-mark.live:after,.dic .ob-glyph:before,.dic .ob-beam,.dic .ob-sk b,.dic .ob-thin:after{animation:none}
+  .dic .ob-st.run .ob-st-l{animation:none;color:var(--text);background:none}
+}

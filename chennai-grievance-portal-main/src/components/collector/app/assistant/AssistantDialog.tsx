@@ -48,6 +48,12 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   const [past, setPast] = useState<Past[] | null>(null);
   const [showPast, setShowPast] = useState(false);
   const [find, setFind] = useState("");
+  // the console's command palette hands over a question to fill the input (the Collector still presses send)
+  useEffect(() => {
+    const fill = (e: Event) => { const q = (e as CustomEvent<string>).detail; if (q) setText(q); };
+    window.addEventListener("diq:ask", fill);
+    return () => window.removeEventListener("diq:ask", fill);
+  }, []);
   /** answers that arrived in this visit are revealed word by word; reopened history appears at once */
   const live = useRef<Set<string>>(new Set());
   const stopListening = useRef<(() => void) | null>(null);
@@ -414,9 +420,10 @@ function Progress({ stage, lang }: { stage: Stage; lang: Lang }) {
   const order: Stage[] = ["understanding", "fetching", "drawing"];
   const at = order.indexOf(stage);
   return (
-    <div className="aq-typing" role="status" aria-live="polite">
+    // while the answer is being made: a violet border beam and the thinking shimmer (the only AI loops)
+    <div className="aq-typing ui-beam" role="status" aria-live="polite">
       <span className="aq-dots"><i /><i /><i /></span>
-      <span className="aq-stage">{T[lang].stages[stage]}…</span>
+      <span className="aq-stage ui-think">{T[lang].stages[stage]}…</span>
       <span className="aq-steps" aria-hidden="true">{order.map((s, i) => <b key={s} className={i < at ? "done" : i === at ? "on" : ""} />)}</span>
     </div>
   );

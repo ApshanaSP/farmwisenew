@@ -1,7 +1,12 @@
 """Aggregates, baselines, anomalies, hotspots, ward statistics and KPIs.
 
-* Expected daily count per (category x zone): rolling 28-day mean with a district-wide
-  weekday factor; anomaly when P(X >= x | expected) < 0.01 and x >= 3 (Poisson).
+* Expected daily count per (category x zone): the rate over the previous 28 days, adjusted
+  for the weekday and for rain (a rain day and the two after it carry the category's own
+  rain factor, learned from the history before the checked days).
+* Two checks per series: a one-day spike (Poisson tail) on each of the last 7 days, and a
+  slow rise (Poisson CUSUM for a doubling, against a baseline frozen before the last
+  14 days; p-value by simulation). All checks together pass one Benjamini-Hochberg
+  false-discovery correction, so checking ~500 series a day does not breed false alarms.
 * Hotspots: DBSCAN with haversine distance per category; Getis-Ord Gi* on ward counts.
 * Metric series: EWMA (span 7) and z-score of the latest value against 28 days.
 Everything here is deterministic SQL-style arithmetic; no model writes a number.
@@ -26,32 +31,141 @@ def daily_counts(events: pd.DataFrame) -> pd.DataFrame:
     return e.groupby(["date", "zone_no", "category_code", "source"], dropna=False).size().rename("count").reset_index()
 
 
-def anomalies(inc: pd.DataFrame, as_of: pd.Timestamp, days_back: int, p_thr: float, min_count: int, window: int) -> pd.DataFrame:
-    """Incident counts per (category, zone, day) against the rolling baseline."""
+RAIN_LAG_DAYS = 3            # a rain day and the two after it (complaints lag the rain)
+RAIN_PSEUDO = 5.0            # pseudo-reports pulling a category's rain factor towards 1 when rain days are few
+ANOMALY_COLUMNS = ["date", "category_code", "zone_no", "observed", "expected", "p_value", "ratio",
+                   "kind", "rise_days", "q_value", "rain_adjusted"]
+
+
+def rain_days(calendar: pd.DataFrame | None) -> set:
+    """Dates (tz-naive midnight) that are rain days or up to two days after one."""
+    if calendar is None or not len(calendar) or "rain_event" not in calendar:
+        return set()
+    wet = pd.to_datetime(calendar.loc[calendar["rain_event"] == 1, "date"]).dt.normalize()
+    return {d + pd.Timedelta(days=k) for d in wet for k in range(RAIN_LAG_DAYS)}
+
+
+def _rain_factors(cnt: pd.Series, days: pd.DatetimeIndex, wet: np.ndarray, before: pd.Timestamp) -> dict:
+    """Per category: district-wide mean count on rain-affected days / on dry days, shrunk towards 1.
+    Learned only from days before `before`, so the checked days do not set their own baseline."""
+    out = {}
+    hist = days < before
+    w = wet[hist]
+    if w.sum() < 3 or (~w).sum() < 7:
+        return out
+    for cat, s in cnt.groupby(level=0):
+        d = s.groupby(level=2).sum().reindex(days, fill_value=0).to_numpy(float)[hist]
+        f = (d[w].sum() + RAIN_PSEUDO) / (w.sum() * d[~w].mean() + RAIN_PSEUDO)
+        out[cat] = float(np.clip(f, 0.5, 10.0))
+    return out
+
+
+def bh_qvalues(p: np.ndarray) -> np.ndarray:
+    """Benjamini-Hochberg adjusted p-values (q-values) for one family of checks."""
+    p = np.asarray(p, float)
+    m = len(p)
+    if not m:
+        return p
+    o = np.argsort(p)
+    q = np.minimum.accumulate((p[o] * m / np.arange(1, m + 1))[::-1])[::-1]
+    out = np.empty(m)
+    out[o] = np.minimum(q, 1.0)
+    return out
+
+
+def cusum(x: np.ndarray, lam: np.ndarray, rho: float) -> np.ndarray:
+    """Poisson CUSUM path for a shift from lam to rho * lam (the last axis is time)."""
+    step = x * np.log(rho) - lam * (rho - 1)
+    s = np.zeros(step.shape[:-1])
+    path = np.empty(step.shape, dtype=float)
+    for t in range(step.shape[-1]):
+        s = np.maximum(0.0, s + step[..., t])
+        path[..., t] = s
+    return path
+
+
+def _cusum_p(stat: float, lam: np.ndarray, rho: float, recent: int, rng: np.random.Generator) -> float:
+    """P(peak CUSUM in the last `recent` days >= stat) under the baseline, by simulation; more runs when it is rare."""
+    hits = runs = 0
+    for n_sim in (2_000, 50_000, 50_000, 50_000, 50_000):
+        sim = rng.poisson(np.broadcast_to(lam, (n_sim, len(lam))))
+        hits += int((cusum(sim, lam, rho)[:, -recent:].max(axis=1) >= stat - 1e-9).sum())
+        runs += n_sim
+        if hits >= 20:
+            break
+    return (hits + 1) / (runs + 1)
+
+
+def anomalies(inc: pd.DataFrame, as_of: pd.Timestamp, days_back: int, fdr: float, min_count: int, window: int,
+              calendar: pd.DataFrame | None = None, rise_days: int = 14, rise_factor: float = 2.0) -> tuple[pd.DataFrame, dict]:
+    """Unusual incident counts per (category, zone): one-day spikes and slow rises, false-discovery controlled."""
     x = inc[inc["zone_no"].notna()].copy()
-    x["date"] = x["first_reported_at"].dt.tz_convert(IST).dt.normalize()
+    x["date"] = x["first_reported_at"].dt.tz_convert(IST).dt.normalize().dt.tz_localize(None)
+    today = as_of.tz_convert(IST).normalize().tz_localize(None)
     cnt = x.groupby(["category_code", "zone_no", "date"]).size().rename("n")
-    days = pd.date_range(x["date"].min(), as_of.tz_convert(IST).normalize(), freq="D")
+    days = pd.date_range(x["date"].min(), today, freq="D")
     wk = x.groupby(x["date"].dt.dayofweek).size()
     wk = (wk / wk.mean()).reindex(range(7)).fillna(1.0)
-    out = []
+    wk_d = days.dayofweek.map(wk).to_numpy(float)
+    rd = rain_days(calendar)
+    wet = np.array([d in rd for d in days])
+    rain_f = _rain_factors(cnt, days, wet, today - pd.Timedelta(days=rise_days - 1))
+    recent = np.where(days >= today - pd.Timedelta(days=days_back - 1))[0]
+    rng = np.random.default_rng(20261006)
+    checks = []
     for (cat, zone), s in cnt.groupby(level=[0, 1]):
-        s = s.droplevel([0, 1]).reindex(days, fill_value=0)
-        base = s.shift(1).rolling(window, min_periods=14).mean()
-        exp = base * s.index.dayofweek.map(wk).to_numpy()
-        recent = s.index >= as_of.tz_convert(IST).normalize() - pd.Timedelta(days=days_back - 1)
-        for d in s.index[recent]:
-            n = int(s[d])
-            lam = float(exp[d]) if pd.notna(exp[d]) else np.nan
-            if np.isnan(lam) or n < min_count:
+        y = s.droplevel([0, 1]).reindex(days, fill_value=0).to_numpy(float)
+        rf = rain_f.get(cat, 1.0)
+        mult = wk_d * np.where(wet, rf, 1.0)
+        rain_adj = wet & (abs(rf - 1) > 0.05)
+        # ---- one-day spikes: the rate per unit of expected load over the previous `window` days
+        ys, ms = pd.Series(y).shift(1), pd.Series(mult).shift(1)
+        exp = (ys.rolling(window, min_periods=14).sum() / ms.rolling(window, min_periods=14).sum()).to_numpy() * mult
+        exp_old = ys.rolling(window, min_periods=14).mean().to_numpy() * wk_d     # the rule before rain and many-checks
+        for i in recent:
+            if np.isnan(exp[i]):
                 continue
-            p = float(poisson.sf(n - 1, max(lam, 0.05)))
-            if p < p_thr:
-                out.append({"date": str(d.date()), "category_code": cat, "zone_no": int(zone), "observed": n,
-                            "expected": round(lam, 2), "p_value": float(f"{p:.2e}"), "ratio": round(n / max(lam, 0.05), 1)})
-    a = pd.DataFrame(out)
-    log.info("anomalies: %d (category x zone x day) spikes in the last %d days", len(a), days_back)
-    return a
+            n, lam = int(y[i]), max(float(exp[i]), 0.05)
+            checks.append({"date": str(days[i].date()), "category_code": cat, "zone_no": int(zone), "observed": n,
+                           "expected": round(float(exp[i]), 2), "p_value": float(poisson.sf(n - 1, lam)) if n else 1.0,
+                           "ratio": round(n / lam, 1), "kind": "spike", "rise_days": 1, "rain_adjusted": int(rain_adj[i]),
+                           "p_old": float(poisson.sf(n - 1, max(float(exp_old[i]), 0.05))) if n else 1.0})
+        # ---- slow rise: CUSUM over the last `rise_days` days against a baseline frozen before them
+        k0 = len(days) - rise_days
+        lo = max(0, k0 - window)
+        if k0 - lo < 14 or mult[lo:k0].sum() <= 0:
+            continue
+        lam0 = np.maximum(y[lo:k0].sum() / mult[lo:k0].sum() * mult[k0:], 0.02)
+        path = cusum(y[k0:], lam0, rise_factor)
+        stat = float(path[-days_back:].max())
+        j_end = len(path) - days_back + int(path[-days_back:].argmax())
+        j0 = j_end
+        while j0 > 0 and path[j0 - 1] > 0:       # the rise starts where the CUSUM last left zero
+            j0 -= 1
+        o_sum, e_sum = float(y[k0 + j0:k0 + j_end + 1].sum()), float(lam0[j0:j_end + 1].sum())
+        p = _cusum_p(stat, lam0, rise_factor, days_back, rng) if o_sum >= 2 * min_count and o_sum > 1.5 * e_sum else 1.0
+        checks.append({"date": str(days[k0 + j_end].date()), "category_code": cat, "zone_no": int(zone), "observed": int(o_sum),
+                       "expected": round(e_sum, 2), "p_value": p, "ratio": round(o_sum / max(e_sum, 0.05), 1), "kind": "slow_rise",
+                       "rise_days": int(j_end - j0 + 1), "rain_adjusted": int(rain_adj[k0 + j0:k0 + j_end + 1].any())})
+    if not checks:
+        return pd.DataFrame(columns=ANOMALY_COLUMNS), {"checks": 0}
+    allc = pd.DataFrame(checks)
+    allc["q_value"] = bh_qvalues(allc["p_value"].to_numpy())
+    a = allc[(allc["q_value"] <= fdr) & (allc["observed"] >= min_count)].copy()
+    # a series that already shows a one-day spike this week is not repeated as a slow rise
+    spiked = set(zip(a.loc[a["kind"] == "spike", "category_code"], a.loc[a["kind"] == "spike", "zone_no"]))
+    a = a.loc[np.array([k == "spike" or (c, z) not in spiked for k, c, z in zip(a["kind"], a["category_code"], a["zone_no"])], dtype=bool)]
+    for c in ("p_value", "q_value"):
+        a[c] = a[c].map(lambda v: float(f"{v:.2e}"))
+    a = a[ANOMALY_COLUMNS].sort_values(["date", "ratio"], ascending=[False, False]).reset_index(drop=True)
+    sp = allc["kind"] == "spike"
+    info = {"checks": int(len(allc)), "spike_checks": int(sp.sum()), "slow_rise_checks": int((~sp).sum()), "false_discovery_rate": fdr,
+            "old_rule_alerts": int((sp & (allc["p_old"] < 0.01) & (allc["observed"] >= min_count)).sum()),
+            "spikes": int((a["kind"] == "spike").sum()), "slow_rises": int((a["kind"] == "slow_rise").sum()),
+            "rain_factors": {k: round(v, 2) for k, v in sorted(rain_f.items()) if abs(v - 1) > 0.05}}
+    log.info("anomalies: %d spikes + %d slow rises kept from %d checks (the old rule would have raised %d)",
+             info["spikes"], info["slow_rises"], info["checks"], info["old_rule_alerts"])
+    return a, info
 
 
 def hotspots(inc: pd.DataFrame, as_of: pd.Timestamp, eps_m: float, min_samples: int, days: int = 90) -> tuple[pd.DataFrame, pd.Series]:

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import { AlertCircle, ArrowRight, Building2, Check, Eye, EyeOff, Loader2, User, Wrench } from "lucide-react";
+import { motion } from "motion/react";
 import AuthShell from "@/components/AuthShell";
+import { authError, authLeave } from "@/components/auth/AuthCard";
 import { checkPasswordRules, passwordStrengthScore } from "@/lib/validators";
 
 interface Department {
@@ -47,10 +49,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    if (!role) return setError("Please choose who you are.");
-    if (role === "department_officer" && !departmentId) return setError("Please select your department.");
-    if (!firstName.trim()) return setError("Please enter your first name.");
-    if (password !== confirmPassword) return setError("Passwords do not match.");
+    const fail = (m: string) => { setError(m); authError(); };
+    if (!role) return fail("Please choose who you are.");
+    if (role === "department_officer" && !departmentId) return fail("Please select your department.");
+    if (!firstName.trim()) return fail("Please enter your first name.");
+    if (password !== confirmPassword) return fail("Passwords do not match.");
 
     setSubmitting(true);
     try {
@@ -71,19 +74,22 @@ export default function RegisterPage() {
       if (!res.ok) {
         setError(data.error || "Something went wrong.");
         setSubmitting(false);
+        authError();
         return;
       }
+      await authLeave();
       router.push("/login?registered=1");
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
+      authError();
     }
   }
 
   return (
     <AuthShell headline={<>One account. The right dashboard for your role.</>}>
       <div className="mx-auto w-full max-w-[480px]">
-        <h1 className="font-display text-[1.75rem] font-extrabold leading-tight tracking-tight text-ink">Create your account</h1>
+        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-ink">Create your account</h1>
         <p className="mt-1 text-[15px] text-ink-muted">Takes under a minute. Choose who you are to begin.</p>
 
         {error && (
@@ -99,10 +105,10 @@ export default function RegisterPage() {
               const active = role === value;
               return (
                 <button key={value} type="button" role="radio" aria-checked={active} onClick={() => setRole(value)}
-                  className={`relative flex h-12 items-center justify-center gap-2 rounded-xl border px-2 text-[14px] font-semibold transition-all duration-200 ease-spring ${
+                  className={`relative flex h-11 items-center justify-center gap-2 rounded-[8px] border px-2 text-[14px] font-semibold transition-all duration-150 ease-spring active:scale-[.97] ${
                     active
-                      ? "border-navy-500 bg-navy-50 text-navy-600 shadow-glow"
-                      : "border-canvas-border bg-canvas/60 text-ink-muted hover:border-navy-200 hover:text-navy-600"
+                      ? "border-navy-500 bg-navy-50 text-navy-700 shadow-glow"
+                      : "border-canvas-border bg-canvas-sunken text-ink-muted hover:border-navy-300 hover:text-ink"
                   }`}>
                   <Icon className="h-[18px] w-[18px] flex-none" aria-hidden="true" />
                   <span className="truncate">{label}</span>
@@ -203,18 +209,26 @@ export default function RegisterPage() {
 function StrengthLine({ password }: { password: string }) {
   const rules = checkPasswordRules(password);
   const score = passwordStrengthScore(password);
-  const passed = rules.filter((r) => r.passed).length;
-  const tone = !password ? "bg-canvas-sunken" : score >= 100 ? "bg-emerald-500" : score >= 60 ? "bg-gold-400" : "bg-red-500";
+  // four segments that fill as the rules pass and change colour: weak (red) -> fair (amber) -> strong (green)
+  const filled = password ? Math.max(1, Math.round((rules.filter((r) => r.passed).length / rules.length) * 4)) : 0;
+  const colour = score >= 100 ? "var(--ok)" : score >= 60 ? "var(--medium)" : "var(--critical)";
+  const word = !password ? "" : score >= 100 ? "Strong" : score >= 60 ? "Fair" : "Weak";
   const short: Record<string, string> = {
     "At least 8 characters": "8+ chars", "One uppercase letter": "A–Z", "One lowercase letter": "a–z",
     "One number": "0–9", "One special character": "symbol", "No spaces": "no spaces"
   };
   return (
     <div aria-live="polite">
-      <div className="flex gap-1">
-        {rules.map((r, i) => (
-          <span key={r.label} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i < passed ? tone : "bg-canvas-sunken"}`} />
-        ))}
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 gap-1" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-canvas-sunken">
+              <motion.span className="block h-full rounded-full" initial={false} style={{ originX: 0 }}
+                animate={{ scaleX: i < filled ? 1 : 0, backgroundColor: colour }} transition={{ duration: 0.3, delay: i * 0.04 }} />
+            </span>
+          ))}
+        </div>
+        <span className="w-12 text-right text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: password ? colour : undefined }}>{word}</span>
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px]">
         {rules.map((r) => (

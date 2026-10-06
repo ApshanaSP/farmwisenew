@@ -8,10 +8,13 @@
  * period windows line up with the data even between builds.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool, { OPS_DB, ops } from "@/lib/collector/db";
+import intelPool, { OPS_DB, TITLE, ops } from "@/lib/collector/db";
+import "@/lib/collector/derive";
+import { clusterNews, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
 import { addedItems, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
+import { cmwssbLakes } from "@/lib/collector/lakes";
 
 type Row = Record<string, any>;
 
@@ -207,7 +210,7 @@ async function officerReportsFull(id: string): Promise<Row[]> {
 }
 
 /** Columns every incident row on the console carries. */
-const ROW = `i.incident_id AS id, i.title, i.category_label AS type, i.category_code AS cat_code, i.family,
+const ROW = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat_code, i.family,
   i.lead_dept AS dept, dp.name AS dept_name, i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc,
   i.lat, i.lon, i.severity_level AS sev, i.status_std AS status, i.is_open AS open, i.verified,
   i.citizen_complaints AS complaints, i.outlet_count AS outlets, i.sources, i.source_count, i.channels,
@@ -223,53 +226,98 @@ const NEWS_TIERS = "('established', 'regional', 'official')";
 const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|#gallery/i;
 
 /**
- * News stories in the period that matter to the Collector, newest first: from a real news outlet,
- * and either linked to an incident in our records or about a category the district handles
- * (drains, dengue, power, crime, encroachment…). One row per story, every outlet that covered it
- * merged. `incident` is the linked incident; `complaints`/`grievances` say whether citizens
- * also raised it, so the card can tell news that is also a grievance from news alone.
+ * News stories in the period that matter to the Collector, newest first: from a real news outlet, linked to an
+ * incident in our records or about a category the district handles, and not off-topic or about another district
+ * (newsrel.ts). Reports about the same event, from every outlet and in Tamil and English, are one story; routine
+ * notices of one kind (power shutdowns, rain updates, dengue counts) are one story each. `incident` is the linked
+ * incident (the story opens it); `docIds` are its reports (a news-only story opens them in the news preview);
+ * `complaints`/`grievances` say whether citizens also raised it.
  */
 async function newsStories(period: Period, now: string) {
   const w = periodWindow(period, now, "d.published_at");
   const docs = (await q(
-    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.url, d.publisher, d.place_text, d.category_code,
-            d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
+    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_tier, d.place_text, d.ai_place,
+            d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
      FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS}
        AND (d.linked_incident_id IS NOT NULL OR (d.category_code IS NOT NULL AND d.category_code <> 'OTHER'
             AND COALESCE(d.report_type, '') NOT IN ('entertainment_sport', 'business')))
        AND ${w.sql}
      ORDER BY d.published_at DESC LIMIT 1500`,
     w.params
-  )).filter((r) => !ROUNDUP.test(String(r.title)));
+  )).filter((r) => !ROUNDUP.test(String(r.title)) && relevantNews(r, english(r)));
   const by = new Map<string, Row[]>();
   for (const r of docs) {
     const k = String(r.story_id ?? r.doc_id);
     (by.get(k) ?? by.set(k, []).get(k)!).push(r);
   }
-  const groups = [...by.values()];
-  const ids = [...new Set(groups.map((g) => g.find((r) => r.linked_incident_id)?.linked_incident_id).filter(Boolean))] as string[];
+  const groups: NewsGroup[] = [...by.entries()].map(([key, g]) => ({
+    key, docs: g, english: english(g.find((r) => r.lang === "en") ?? g[0]), ms: wallMs(g[0].t),
+    incident: (g.find((r) => r.linked_incident_id)?.linked_incident_id as string | undefined) ?? null
+  }));
+  const ids = [...new Set(groups.map((g) => g.incident).filter(Boolean))] as string[];
   const [src, inc] = await Promise.all([
     sourcesFor(ids),
     ids.length ? q(`SELECT ${ROW} ${FROM} WHERE i.incident_id IN (?)`, [ids]) : Promise.resolve([] as Row[])
   ]);
   const incOf = new Map(inc.map((r) => [r.id, r]));
-  return groups.map((g) => {
-    const lead = g.find((r) => r.story_role === "first_report") ?? g[g.length - 1];
-    const incident = (g.find((r) => r.linked_incident_id)?.linked_incident_id as string | undefined) ?? null;
+  const RANK: Record<string, number> = { Severe: 0, High: 1, Medium: 2, Low: 3 };
+  const TIER: Record<string, number> = { official: 0, established: 1, regional: 2 };
+  return clusterNews(groups).map((cl) => {
+    const g = cl.flatMap((x) => x.docs).sort((a, b) => String(b.t).localeCompare(String(a.t)));
+    // the incident with the most citizen complaints, then the most severe
+    const incident = ([...new Set(cl.map((x) => x.incident).filter(Boolean))] as string[])
+      .sort((a, b) => Number(incOf.get(b)?.complaints ?? 0) - Number(incOf.get(a)?.complaints ?? 0) ||
+        (RANK[incOf.get(a)?.sev] ?? 9) - (RANK[incOf.get(b)?.sev] ?? 9))[0] ?? null;
     const i = incident ? incOf.get(incident) : undefined;
+    // the headline: an English one from the best outlet, the latest of those
+    const lead = [...g].sort((a, b) => Number(b.lang === "en") - Number(a.lang === "en") || (TIER[a.publisher_tier] ?? 9) - (TIER[b.publisher_tier] ?? 9) ||
+      String(b.t).localeCompare(String(a.t)))[0];
+    const place = g.map((r) => r.ai_place || r.place_text).find((p) => p && !/^\s*chennai( district)?\s*$/i.test(p)) ?? null;
     return {
       id: String(lead.doc_id),
-      title: String(lead.title),
+      title: cleanHeadline(english(lead)),
+      /** the headline as published, when it is not in English */
+      original: lead.lang !== "en" ? String(lead.title) : null,
       url: lead.url ?? null,
-      loc: i?.zone_name ?? g.find((r) => r.place_text)?.place_text ?? null,
+      loc: i?.zone_name ?? place,
       t: g[0].t, // newest article of the story
       incident,
       sev: i?.sev ?? null,
       /** citizen grievances merged into the linked incident */
       grievances: incident ? Number(src[incident]?.grievance ?? 0) : 0,
       complaints: i ? Number(i.complaints ?? 0) : 0,
-      outletNames: [...new Set(g.map((r) => r.publisher).filter(Boolean))] as string[]
+      outletNames: [...new Set(g.map((r) => r.publisher).filter(Boolean))] as string[],
+      /** every report of the story, newest first, and how many different headlines they carry */
+      docIds: g.map((r) => String(r.doc_id)),
+      headlines: new Set(g.map((r) => english(r).toLowerCase())).size,
+      /** power, weather or dengue: a group of routine notices */
+      topic: incident ? null : topicOf(english(lead), String(lead.title))
     };
+  });
+}
+
+/** A report's headline in English: its own, or the translation of a Tamil headline. */
+const english = (r: Row) => String((r.lang !== "en" && r.title_en) || r.title || "");
+/** Hashtags and a trailing "| Outlet - news" trimmed. */
+const cleanHeadline = (t: string) => t.replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
+const wallMs = (t: string) => Date.parse(String(t).replace(" ", "T") + "+05:30");
+
+/** The reports of a news story, for the news preview: headline, translation, outlet, full text (or summary), what the AI read. */
+export async function newsArticles(ids: string[]) {
+  const want = [...new Set(ids.map(String))].slice(0, 60);
+  if (!want.length) return [];
+  const rows = await q(
+    `SELECT d.doc_id AS id, d.title, d.title_en, d.lang, d.publisher, d.url, d.summary, SUBSTR(d.body, 1, 12000) AS body, d.body_status,
+            DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t, d.place_text AS place, d.category_code AS cat, d.report_type,
+            d.linked_incident_id AS incident, d.ai_people, d.ai_orgs, d.ai_dead, d.ai_injured, d.ai_status, d.ai_place, d.story_id
+     FROM documents d WHERE d.doc_id IN (?) ORDER BY d.published_at DESC`,
+    [want]
+  );
+  return rows.map((r) => {
+    const { ai_people, ai_orgs, ai_dead, ai_injured, ai_status, ai_place, ...x } = r;
+    const ai = Object.fromEntries(Object.entries({ place: ai_place, people: ai_people, organisations: ai_orgs, dead: ai_dead, injured: ai_injured, status: ai_status })
+      .filter(([, v]) => v != null && v !== "" && v !== 0));
+    return { ...x, body: x.body && String(x.body).trim().length > 80 ? String(x.body) : null, ai: Object.keys(ai).length ? ai : null };
   });
 }
 
@@ -651,7 +699,7 @@ export async function overview(period: Period, zone: number | null, dept: string
     ),
     q(
       `SELECT i.incident_id AS id, i.lat, i.lon, i.severity_level AS sev, i.is_open AS open, i.citizen_complaints AS complaints,
-              i.title, i.status_std AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
+              ${TITLE} AS title, i.status_std AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM incidents i WHERE ${w.sql} AND i.lat IS NOT NULL
        ORDER BY i.is_open DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 150`,
       w.params
@@ -877,7 +925,7 @@ async function deptSnapshot(code: string, s: Scope, now: string) {
  */
 async function environment(period: Period, now: string) {
   const days = Math.max(7, Math.round(PERIODS[period].hours / 24));
-  const [rainDays, rain, aqi, lakes] = await Promise.all([
+  const [rainDays, rain, aqi, lakes, real] = await Promise.all([
     q(
       `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, rain_intensity AS v, rain_event AS ev FROM world_calendar
        WHERE date > DATE(?) - INTERVAL ? DAY AND date <= DATE(?) ORDER BY date`,
@@ -899,7 +947,9 @@ async function environment(period: Period, now: string) {
               DATE_FORMAT(observed_at, '%Y-%m-%d') AS t, value AS v
        FROM observations WHERE metric = 'lake_pct_full' AND observed_at > ? - INTERVAL ? DAY ORDER BY observed_at`,
       [now, days]
-    )
+    ),
+    // Chennai Metro Water's published reservoir storage (the store's lake figures are simulated): see lakes.ts
+    cmwssbLakes(now, Math.max(days, 10)).catch(() => null)
   ]);
   const group = (rows: Row[]) => {
     const m = new Map<string, Row>();
@@ -922,11 +972,15 @@ async function environment(period: Period, now: string) {
       prevRainDays: prev.filter((r) => Number(r.ev)).length
     },
     aqi: { stations: group(aqi) },
-    lakes: { stations: group(lakes) }
+    lakes: real?.stations.length
+      ? { stations: real.stations as Station[], source: "CMWSSB", sourceUrl: real.source, asOn: real.asOn, total: real.total }
+      : { stations: group(lakes), source: "store", sourceUrl: null, asOn: null, total: null }
   };
 }
 
-export interface Station { id: string; name: string; zone: number | null; lat: number; lon: number; times: string[]; series: number[] }
+export interface Station { id: string; name: string; zone: number | null; lat: number; lon: number; times: string[]; series: number[];
+  /** reservoirs (CMWSSB): full capacity and storage by day in mcft, today's level, flows and last year's storage */
+  capacity?: number; storage?: number[]; levelFt?: number | null; ftlFt?: number | null; inflow?: number | null; outflow?: number | null; lastYear?: number | null }
 
 async function districtSnapshot(s: Scope, now: string) {
   const w = scopeWhere(s, now);
@@ -974,7 +1028,7 @@ async function areaSnapshot(zone: number, s: Scope, now: string) {
       w.params
     ),
     q(
-      `SELECT DATE_FORMAT(t.at, '%Y-%m-%d %H:%i:%s') AS at, t.step, t.note, i.title
+      `SELECT DATE_FORMAT(t.at, '%Y-%m-%d %H:%i:%s') AS at, t.step, t.note, ${TITLE} AS title
        FROM incident_timeline t JOIN incidents i ON i.incident_id = t.incident_id
        WHERE i.zone_no = ? AND i.is_open = 1 AND t.at <= ? ORDER BY t.at DESC LIMIT 1`,
       [zone, now]
@@ -1153,7 +1207,7 @@ export async function list(f: ListFilter) {
     where.push(`i.is_open = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`);
   else if (st) (where.push("i.status_std = ?"), params.push(st));
   if (f.q) {
-    where.push("(i.title LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ? OR i.zone_name LIKE ? OR i.category_label LIKE ?)");
+    where.push(`(${TITLE} LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ? OR i.zone_name LIKE ? OR i.category_label LIKE ?)`);
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
     params.push(like, like, like, like, like);
   }
@@ -1191,7 +1245,7 @@ export async function search(text: string) {
       [like, like]
     ),
     q(
-      `SELECT ${ROW} ${FROM} WHERE i.title LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ?
+      `SELECT ${ROW} ${FROM} WHERE ${TITLE} LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ?
        ORDER BY i.is_open DESC, i.first_reported_at DESC LIMIT 7`,
       [like, like, like]
     )

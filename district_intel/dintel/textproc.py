@@ -149,6 +149,53 @@ def casualties(text: str) -> tuple[int, int]:
     return dead, injured
 
 
+# ------------------------------------------------------------------ entities --
+
+_LANDMARK = (r"lake|eri|tank|kulam|canal|river|nullah|hospital|station|bridge|flyover|subway|junction|signal|road|salai|"
+             r"street|st|avenue|lane|nagar|colony|park|temple|koil|kovil|church|mosque|masjid|school|college|university|"
+             r"market|bazaar|theatre|theater|mall|beach|metro|plaza|depot|terminus|stand|office|stadium|ground|tower|"
+             r"apartments?|complex|layout|extension|extn|gate|bus\s+stop")
+# one to four capitalised words ending in a place-kind word: "Korattur Lake", "Kasi Theatre Junction", "Perungudi Toll Plaza"
+_ENT_PLACE = re.compile(rf"(?:\b[A-Z][\w.'&-]*\s+){{1,4}}(?i:{_LANDMARK})\b")
+_ENT_ACRONYM = re.compile(r"\b[A-Z]{2,6}\b")
+_ENT_MONEY = re.compile(r"(?:rs\.?|₹|inr)\s?([\d,]+(?:\.\d+)?)\s*(lakh|crore|thousand)?", re.I)
+_ENT_QTY = re.compile(r"\b(\d+(?:\.\d+)?)[\s-]*(kg|kilos?|kilograms?|litres?|liters?|sovereigns?|tonnes?|grams?)\b", re.I)
+_NOT_ACRONYM = {"AM", "PM", "RS", "NO", "OK", "TN", "IN", "ON", "AT", "IST", "PLS", "UPHC"}
+_SYN = {"salai": "road", "rd": "road", "st": "street", "koil": "temple", "kovil": "temple", "theater": "theatre",
+        "extn": "extension", "liters": "litres", "liter": "litres", "litre": "litres", "kilo": "kg", "kilos": "kg",
+        "kilograms": "kg", "kilogram": "kg", "sovereign": "sovereigns", "the": ""}
+
+
+def entities(text: Any) -> list[frozenset]:
+    """Named things a report mentions, each as a set of normalised tokens: landmark and road names,
+    agency acronyms (MTC, SWD), amounts of money and quantities. Latin script only (Tamil text gives none;
+    pass an English translation where there is one)."""
+    s = text if isinstance(text, str) else ""
+    out: set[frozenset] = set()
+    for m in _ENT_PLACE.finditer(s):
+        toks = frozenset(_SYN.get(t, t) for t in re.findall(r"[a-z0-9]+", m.group(0).lower())) - {""}
+        if len(toks) >= 2:
+            out.add(toks)
+    for m in _ENT_ACRONYM.finditer(s):
+        if m.group(0) not in _NOT_ACRONYM:
+            out.add(frozenset({"acr:" + m.group(0).lower()}))
+    for m in _ENT_MONEY.finditer(s):
+        out.add(frozenset({f"rs:{m.group(1).replace(',', '')}{(m.group(2) or '').lower()}"}))
+    for m in _ENT_QTY.finditer(s):
+        unit = m.group(2).lower()
+        out.add(frozenset({f"qty:{m.group(1)}{_SYN.get(unit, unit)}"}))
+    return list(out)
+
+
+def entity_overlap(a: list[frozenset], b: list[frozenset]) -> float:
+    """Share of the shorter list's entities found in the other (token Jaccard >= 0.5 counts as the same one)."""
+    if not a or not b:
+        return 0.0
+    small, big = (a, b) if len(a) <= len(b) else (b, a)
+    hit = sum(any(len(x & y) / len(x | y) >= 0.5 for y in big) for x in small)
+    return hit / len(small)
+
+
 # ------------------------------------------------------------------- hashing --
 
 def normalize(text: Any) -> str:

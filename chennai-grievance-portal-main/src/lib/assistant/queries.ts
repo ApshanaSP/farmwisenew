@@ -10,9 +10,11 @@
  * never selected: the assistant reports what happened, not forecasts.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool, { ops } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, exportMeta, scopeWhere } from "@/lib/collector/intel";
 import type { AssistantScope } from "@/lib/assistant/scope";
+
+const REAL_LAKES = process.env.DATA_BACKEND === "aws";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -132,7 +134,7 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
     q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
          COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
        FROM incidents i WHERE ${where} GROUP BY i.category_code ORDER BY n DESC LIMIT 12`, params),
-    q(`SELECT i.incident_id AS id, i.title, i.category_label AS type, i.severity_level AS sev, i.is_open AS open, i.place_text AS place, i.lat, i.lon,
+    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.severity_level AS sev, i.is_open AS open, i.place_text AS place, i.lat, i.lon,
          i.priority_score AS priority
        FROM incidents i WHERE ${where} AND i.lat IS NOT NULL AND i.lon IS NOT NULL
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 400`, params),
@@ -301,9 +303,10 @@ export const ENV_METRICS = {
   humidity_pct: { label: "Relative humidity", unit: "%", source: "imd", test: false },
   imd_warning_level: { label: "IMD warning level (0 green, 1 yellow, 2 orange, 3 red)", unit: "level", source: "imd", test: false },
   reservoir_inflow_cusec: { label: "Reservoir inflow", unit: "cusec", source: "cfm", test: false },
-  lake_pct_full: { label: "Lake storage", unit: "% full", source: "pwd", test: true },
-  lake_storage_mcft: { label: "Lake storage", unit: "mcft", source: "pwd", test: true },
-  lake_outflow_cusec: { label: "Lake outflow", unit: "cusec", source: "pwd", test: true },
+  // on the AWS store these are Chennai Metro Water's published reservoir figures (lib/collector/derive.ts); a MySQL build keeps the simulated PWD lakes
+  lake_pct_full: { label: "Reservoir storage", unit: "% full", source: REAL_LAKES ? "cmwssb" : "pwd", test: !REAL_LAKES },
+  lake_storage_mcft: { label: "Reservoir storage", unit: "mcft", source: REAL_LAKES ? "cmwssb" : "pwd", test: !REAL_LAKES },
+  lake_outflow_cusec: { label: "Reservoir outflow", unit: "cusec", source: REAL_LAKES ? "cmwssb" : "pwd", test: !REAL_LAKES },
   bed_occupancy_pct: { label: "Hospital bed occupancy", unit: "%", source: "hospital", test: true },
   occupied_beds: { label: "Occupied hospital beds", unit: "beds", source: "hospital", test: true },
   total_beds: { label: "Hospital beds", unit: "beds", source: "hospital", test: true },
@@ -405,7 +408,7 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
     q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE ${w.sql} AND i.lead_dept IS NOT NULL
        GROUP BY name HAVING overdue > 0 ORDER BY overdue DESC, open DESC LIMIT 4`, w.params),
-    q(`SELECT i.incident_id AS id, i.title, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.sla_breached AS overdue,
+    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.sla_breached AS overdue,
          i.dead, i.injured, i.priority_reasons AS reasons FROM incidents i WHERE ${w.sql} AND i.is_open = 1
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 3`, w.params),
     q(`SELECT COALESCE(SUM(date > DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS cur,

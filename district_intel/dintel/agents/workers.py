@@ -171,10 +171,20 @@ def watchdog(inc: pd.DataFrame, anomalies: pd.DataFrame, signals: pd.DataFrame, 
     run.tool("anomalies")
     for r in anomalies.itertuples() if len(anomalies) else []:
         lbl = ref.cat.get(r.category_code, ref.cat["OTHER"])["label"]
+        zone = zone_names.get(r.zone_no, f"zone {r.zone_no}")
+        rain = "; rain days allowed for" if r.rain_adjusted else ""
+        checked = f"kept after the false-discovery check across all of today's checks (q = {r.q_value}){rain}"
+        if r.kind == "slow_rise":
+            alerts.append({"type": "anomaly", "severity": "High" if r.ratio >= 4 else "Medium",
+                           "title": f"Slow rise in {lbl.lower()} in {zone}",
+                           "message": f"{r.observed} incidents in the {r.rise_days} days to {r.date} against {r.expected} expected",
+                           "explanation": f"CUSUM check for a doubling against the baseline before the last two weeks; {checked}",
+                           "place": zone_names.get(r.zone_no), "zone_no": r.zone_no, "date": r.date, "category_code": r.category_code})
+            continue
         alerts.append({"type": "anomaly", "severity": "High" if r.ratio >= 4 else "Medium",
-                       "title": f"Spike in {lbl.lower()} in {zone_names.get(r.zone_no, f'zone {r.zone_no}')}",
+                       "title": f"Spike in {lbl.lower()} in {zone}",
                        "message": f"{r.observed} incidents on {r.date} against {r.expected} expected",
-                       "explanation": f"Poisson probability {r.p_value} against the 28-day baseline with weekday adjustment",
+                       "explanation": f"Poisson probability {r.p_value} against the 28-day baseline with weekday adjustment; {checked}",
                        "place": zone_names.get(r.zone_no), "zone_no": r.zone_no, "date": r.date, "category_code": r.category_code})
     run.tool("warnings")
     for r in forecasts_warn.itertuples() if len(forecasts_warn) else []:

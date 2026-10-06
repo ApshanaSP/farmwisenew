@@ -39,7 +39,6 @@ export function AddedAllBody({ d, c }: { d: OverviewData; c: Console }) {
       <div className="add-bar">
         <span><b>{d.added.count}</b> items in the last {d.added.days} days · <b>{d.added.civic}</b> read as civic issues · <b>{d.added.placed}</b> placed on the map</span>
         <label className="tgl"><input type="checkbox" checked={civic} onChange={(e) => setCivic(e.target.checked)} />Civic issues only</label>
-        <button className="btn sm plain" onClick={() => c.openSources("add")}><I n="plus" />Add a source</button>
       </div>
       {rows.length ? (
         <div className="ngrid">

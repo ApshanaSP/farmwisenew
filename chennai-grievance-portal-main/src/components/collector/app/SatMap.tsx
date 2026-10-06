@@ -10,8 +10,8 @@ export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "
 
 export const STATION_STYLE: Record<MapStation["kind"], { color: string; letter: string; title: string }> = {
   aqi: { color: "#34D399", letter: "A", title: "Air quality station" },
-  rain: { color: "#38BDF8", letter: "R", title: "Rain gauge" },
-  lake: { color: "#818CF8", letter: "L", title: "Lake / reservoir" }
+  rain: { color: "#7FD3E6", letter: "R", title: "Rain gauge" },
+  lake: { color: "#3B82F6", letter: "L", title: "Lake / reservoir" }
 };
 
 interface Props {
@@ -39,16 +39,16 @@ interface Props {
   pinColor?: (pin: Row) => string;
 }
 
-/** zone shading: indigo, warming to rose where the most incidents were reported */
+/** zone shading: sea cyan, warming to coral and red where the most incidents were reported */
 const HEAT = [
   { c: "#000000", o: 0 },
-  { c: "#818CF8", o: 0.14 },
-  { c: "#818CF8", o: 0.24 },
-  { c: "#A78BFA", o: 0.3 },
-  { c: "#FB7185", o: 0.34 }
+  { c: "#22B8D0", o: 0.16 },
+  { c: "#F2B33D", o: 0.24 },
+  { c: "#F07A4A", o: 0.32 },
+  { c: "#F0414F", o: 0.38 }
 ];
 /** taluks: one coordinated set of tones, so neighbours stand apart */
-const TALUK_COL = ["#818CF8", "#38BDF8", "#34D399", "#FBBF24", "#FB7185", "#A78BFA", "#2DD4BF", "#F472B6", "#A3E635"];
+const TALUK_COL = ["#22B8D0", "#3B82F6", "#34D399", "#F2C94C", "#F0414F", "#FF8466", "#FFA24C", "#F472B6", "#A3E635"];
 
 interface State {
   L: typeof Leaflet;
@@ -138,7 +138,7 @@ export default function SatMap(props: Props) {
         if (w.taluk) grow(talukBounds, w.taluk, b);
         return { zone: w.zone, taluk: w.taluk, poly };
       });
-      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: "#C9D7F2", weight: 1.4, opacity: 0.75, interactive: false }).addTo(map));
+      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: "#D6DEEA", weight: 1.4, opacity: 0.75, interactive: false }).addTo(map));
       const zoneLabels = new Map<number, Leaflet.Marker>();
       for (const z of geo.zones) {
         zoneLabels.set(z.zone, L.marker([z.lat, z.lon], {
@@ -193,7 +193,7 @@ export default function SatMap(props: Props) {
         if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.15, color: "#9FB4D9", weight: 0.5 });
         else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.1 : 0.26, opacity: 0.3, color: "#9FB4D9", weight: 0.5 });
       } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.18 });
-      else if (zone) w.poly.setStyle({ fillColor: "#818CF8", fillOpacity: 0.1, opacity: 0.55 });
+      else if (zone) w.poly.setStyle({ fillColor: "#22B8D0", fillOpacity: 0.1, opacity: 0.55 });
       else {
         const h = HEAT[level(w.zone)];
         w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.35 });

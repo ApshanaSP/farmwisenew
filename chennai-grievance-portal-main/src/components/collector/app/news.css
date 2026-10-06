@@ -1,0 +1,63 @@
+/* News preview (NewsPreview.tsx): the report in full on the left, every outlet's report of the story on the right */
+.dic .np{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:22px}
+.dic .np-read{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;padding-right:6px}
+.dic .np-tags{display:flex;flex-wrap:wrap;gap:6px}
+.dic .np-read h3{margin:2px 0 0;font:800 21px/1.3 var(--dic-display),sans-serif;color:var(--text);letter-spacing:-.01em}
+.dic .np-orig{margin:0;font-size:14.5px;line-height:1.5;color:var(--text-2)}
+.dic .np-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:13px;color:var(--text-3)}
+.dic .np-meta b{color:var(--accent-2);font-weight:800}
+.dic .np-meta span{display:inline-flex;align-items:center;gap:4px}
+.dic .np-meta svg{width:14px;height:14px}
+.dic .np-text{border-top:1px solid var(--line-2);padding-top:10px;font-size:15px;line-height:1.65;color:var(--text)}
+.dic .np-text p{margin:0 0 10px}
+.dic .np-text .np-note{font-size:13.5px;color:var(--text-3);font-style:italic}
+.dic .np-act{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:4px}
+.dic .np-act a.btn{text-decoration:none}
+.dic .np-side{min-height:0;display:flex;flex-direction:column;gap:8px;border-left:1px solid var(--line-2);padding-left:18px}
+.dic .np-list{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.dic .np-i{display:flex;flex-direction:column;gap:3px;text-align:left;padding:9px 11px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);cursor:pointer;transition:border-color var(--t-fast,.15s)}
+.dic .np-i:hover{border-color:var(--accent-line,var(--accent))}
+.dic .np-i.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.dic .np-i-h{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.dic .np-i-h b{color:var(--accent-2);font-weight:800}
+.dic .np-i-h time{color:var(--text-3);white-space:nowrap}
+.dic .np-i-t{font-size:13.5px;font-weight:650;line-height:1.4;color:var(--text)}
+.dic .np-i small{font-size:12px;line-height:1.4;color:var(--text-3)}
+.dic .np-i em{font-style:normal;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
+@media (max-width:899px){.dic .np{grid-template-columns:1fr}.dic .np-side{border-left:0;padding-left:0}}
+
+/* Briefing page, "Stories still developing": compact previews, so two or three fit (each with its steps as chips) */
+.dic .bb-dev.grow{flex:1.6}
+.dic .bb-dev .bb-story{gap:5px;padding:8px 11px;margin-bottom:6px}
+.dic .bb-dev .bb-track{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;overflow:hidden}
+.dic .bb-dev .bb-track:before{display:none}
+.dic .bb-dev .bb-track>span{flex:0 1 auto;flex-direction:row;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;
+  background:var(--surface,transparent);border:1px solid var(--line-2);font-size:11.5px;line-height:1.5}
+.dic .bb-dev .bb-track i{position:static;flex:0 0 auto;width:7px;height:7px;box-shadow:none}
+.dic .bb-dev .bb-track em{font-size:10.5px}
+
+/* Trends page, "Locations needing review": place unknown | placed from the report (with Show on map) */
+.dic .lr-tabs{display:flex;gap:4px;padding:0 14px 6px}
+.dic .lr-tabs button{flex:1;min-width:0;padding:4px 8px;border-radius:8px;font-size:12px;font-weight:700;color:var(--text-3);border:1px solid var(--line-2);background:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .lr-tabs button.on{color:var(--accent-2);border-color:var(--accent);background:var(--surface-2)}
+.dic .lr-tabs b{margin-left:3px}
+.dic .lr.lr-placed{display:flex;align-items:center;gap:6px;padding:0}
+.dic .lr-placed .lr-open{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;padding:8px 10px;background:transparent;border:0;color:inherit;cursor:pointer}
+.dic .lr-placed .lr-open b{display:block;-webkit-line-clamp:unset;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .lr-map{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;margin-right:8px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--accent-2);cursor:pointer}
+.dic .lr-map:hover{border-color:var(--accent)}
+.dic .lr-map svg{width:15px;height:15px}
+
+/* Environment page: the reservoir figures' source */
+.dic .env-src{font-size:11.5px;color:var(--text-3);text-decoration:underline dotted;white-space:nowrap}
+
+.dic .np-tags .tg{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-2);
+  font-size:12px;font-weight:700;color:var(--text-2)}
+.dic .np-tags .tg svg{width:13px;height:13px}
+.dic .lr.lr-placed{flex-direction:row;align-items:center;gap:6px;padding:0}
+.dic .lr-placed .lr-open small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* developing stories: tighter, so three fit */
+.dic .bb-dev .bb-story{gap:3px;padding:6px 10px}
+.dic .bb-dev .bb-story b{font-size:12.5px;line-height:1.35}
+.dic .bb-dev .bb-story small{font-size:11px}
+.dic .bb-dev .bb-track>span{padding:1px 8px 1px 6px;font-size:11px}

@@ -49,8 +49,8 @@ const OUT_EN = new RegExp(
   "Kelambakkam|Siruseri|Thiruporur|Medavakkam|Selaiyur|Madambakkam|Perungalathur|Iyyappanthangal|Thirumazhisai|Maraimalai ?Nagar|" +
   "Thirunindravur|Tirunindravur|Sriperumbudur|Oragadam|Padappai|Tiruvallur|Thiruvallur|Kancheepuram|Kanchipuram|Chengalpattu|" +
   "Mamallapuram|Mahabalipuram|Madurai|Coimbatore|Tiruchi|Trichy|Salem|Tirunelveli|Nellai|Vellore|Erode|Thoothukudi|Thanjavur|" +
-  "Cuddalore|Villupuram|Puducherry|Pondicherry|Bengaluru|Bangalore|Hyderabad|Kerala|Karnataka|Andhra)\\b", "i");
-const OUT_TA = /மாங்காட்|பல்லாவர|தாம்பர|குரோம்பேட்ட|பம்மல்|அனகாபுத்தூ|பட்டாபிரா|ஆவடி|திருமுல்லைவாய|பூந்தமல்ல|திருவேற்கா|குன்றத்தூ|திருத்தணி|பெரியபாளைய|பொன்னேரி|கும்மிடிப்பூண்டி|மீஞ்சூ|சோழவர|கூடுவாஞ்சேரி|ஊரப்பாக்க|வண்டலூ|கேளம்பாக்க|சிறுசேரி|திருப்போரூ|மேடவாக்க|சேலையூ|பெருங்களத்தூ|ஐயப்பன்தாங்க|திருமழிசை|மறைமலை|திருநின்றவூ|ஸ்ரீபெரும்புதூ|திருவள்ளூ|காஞ்சிபுர|செங்கல்பட்ட|மாமல்லபுர|மதுரை|கோவை|திருச்சி|சேலம|நெல்லை|வேலூ|புதுச்சேரி|பெங்களூ|கேரள/;
+  "Cuddalore|Villupuram|Puducherry|Pondicherry|Bengaluru|Bangalore|Hyderabad|Kerala|Karnataka|Andhra|Ulundurpet|Thiruneermalai)\\b", "i");
+const OUT_TA = /உளுந்தூர்பேட்|திருநீர்மலை|மாங்காட்|பல்லாவர|தாம்பர|குரோம்பேட்ட|பம்மல்|அனகாபுத்தூ|பட்டாபிரா|ஆவடி|திருமுல்லைவாய|பூந்தமல்ல|திருவேற்கா|குன்றத்தூ|திருத்தணி|பெரியபாளைய|பொன்னேரி|கும்மிடிப்பூண்டி|மீஞ்சூ|சோழவர|கூடுவாஞ்சேரி|ஊரப்பாக்க|வண்டலூ|கேளம்பாக்க|சிறுசேரி|திருப்போரூ|மேடவாக்க|சேலையூ|பெருங்களத்தூ|ஐயப்பன்தாங்க|திருமழிசை|மறைமலை|திருநின்றவூ|ஸ்ரீபெரும்புதூ|திருவள்ளூ|காஞ்சிபுர|செங்கல்பட்ட|மாமல்லபுர|மதுரை|கோவை|திருச்சி|சேலம|நெல்லை|வேலூ|புதுச்சேரி|பெங்களூ|கேரள/;
 
 // A daily round-up lists many unrelated items: it is not one event.
 const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|headlines today|#gallery/i;
@@ -66,11 +66,26 @@ const LANDMARKS: [RegExp, string][] = [
   [/\bpaper mills? road\b/i, "Perambur"],
   [/\bcentral station\b|சென்ட்ரல் ரயில்/i, "Park Town"],
   [/\bkoyambedu market\b|கோயம்பேடு சந்தை/i, "Koyambedu"],
+  [/\banna salai\b|\bmount road\b|அண்ணா ?சாலை/i, "Thousand Lights"],
+  [/\b(chennai )?fort (railway )?station\b|கோட்டை ரயில் நிலைய|கோட்டை ரெயில் நிலைய/i, "George Town"],
+  [/\bchennai port\b|சென்னை துறைமுக/i, "Royapuram"],
+  [/\brajarathinam stadium\b|ராஜரத்தினம் ஸ்டேடிய|ராஜரத்தினம் மைதான/i, "Egmore"],
+  [/\bgovt\.? general hospital\b|\brajiv gandhi government general hospital\b|\bgh\b|அரசு பொது மருத்துவமனை/i, "Park Town"],
   [/எழும்பூ/i, "Egmore"],
   [/மெரினா/i, "Marina Beach"]
 ];
 
 export const isEvent = (t: string) => EVENT_EN.test(t) || EVENT_TA.test(t);
+
+/** A landmark, road or Tamil spelling the text names, with the gazetteer place it stands for. */
+export function landmark(text: string, resolve: (text: string) => Placed | null): { named: string; p: Placed } | null {
+  for (const [re, name] of LANDMARKS) {
+    const m = text.match(re);
+    const p = m ? resolve(name) : null;
+    if (m && p?.zone) return { named: m[0].trim(), p };
+  }
+  return null;
+}
 export const isCityTopic = (t: string) => TOPIC_EN.test(t) || TOPIC_TA.test(t);
 export function outsidePlace(t: string): string | null {
   return t.match(OUT_EN)?.[0] ?? t.match(OUT_TA)?.[0] ?? null;
@@ -117,13 +132,10 @@ export function judgeLocation(i: Row, wards: Ward[], resolve: (text: string) => 
   // 3. the headline: a town outside the district, or a known Chennai place (by name, or a landmark or Tamil spelling)
   const out = outsidePlace(title);
   if (out) return { kind: "outside", how: `the headline places it in ${out}, outside Chennai district`, place: out };
+  const lm = landmark(title, resolve);
+  if (lm) return { kind: "located", how: `the headline names ${lm.named} (${lm.p.place})`, place: lm.p.place, zone: lm.p.zone };
   const p = title ? resolve(title) : null;
   if (p?.zone) return { kind: "located", how: `the headline names ${p.place}`, place: p.place, zone: p.zone };
-  for (const [re, name] of LANDMARKS) {
-    const m = title.match(re);
-    const lp = m ? resolve(name) : null;
-    if (m && lp?.zone) return { kind: "located", how: `the headline names ${m[0].trim()} (${lp.place})`, place: lp.place, zone: lp.zone };
-  }
 
   // 4. city-wide news is not about one spot
   if (ROUNDUP.test(title)) return { kind: "district", how: "daily news round-up" };

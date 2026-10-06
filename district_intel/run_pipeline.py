@@ -6,6 +6,7 @@
   python run_pipeline.py refresh --all    run all of them regardless of schedule
   python run_pipeline.py watch --every 15 loop: refresh what is due every N minutes, rebuild when inputs change
   python run_pipeline.py mysql            copy the last build into MySQL (databases district_intel and district_intel_ops)
+  python run_pipeline.py link-labels --n 150   add real news-record pairs to reference/labels/link_pair_labels.csv for marking
 
 The existing collectors keep their own fetching methods; this only calls their
 command lines (see `refresh:` in config.yaml) and reads their output files.
@@ -232,7 +233,8 @@ def _train_news_local(settings, args) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql", "label-news", "train-news", "train-news-local"])
+    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql", "label-news", "train-news", "train-news-local", "link-labels"])
+    ap.add_argument("--n", type=int, default=150, help="link-labels: real news-record pairs to add for marking")
     ap.add_argument("--minutes", type=float, default=60, help="label-news: time budget for LLM calls")
     ap.add_argument("--limit", type=int, default=2500, help="label-news: label the newest N articles")
     ap.add_argument("--model", default=None, help="label-news: Groq model (default: news_llm.backlog_model)")
@@ -277,7 +279,10 @@ def main() -> None:
         sync_mysql(s)
         return m
 
-    if args.command == "label-news":
+    if args.command == "link-labels":
+        from dintel.linking import make_label_set
+        print(json.dumps(make_label_set(settings.path(settings.raw["output"]["sqlite"]), args.n), indent=1))
+    elif args.command == "label-news":
         _label_news(settings, args)
     elif args.command == "train-news":
         _train_news(settings, args)

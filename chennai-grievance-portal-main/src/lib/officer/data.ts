@@ -16,7 +16,7 @@
  */
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
-import intelPool, { ops } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
 import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
@@ -100,7 +100,7 @@ function withStage(dept: string, now: string) {
           FROM ${ops("collector_decisions")} d JOIN incidents di ON di.incident_id = d.incident_id AND di.lead_dept = ?
           WHERE d.decision IN ('verify', 'reopen', 'resolve', 'reject')) x WHERE rn = 1),
       w AS (
-        SELECT i.incident_id, i.title, i.category_label, i.category_code, i.zone_no, i.zone_name, i.ward_no, i.taluk_code, i.place_text,
+        SELECT i.incident_id, ${TITLE} AS title, i.category_label, i.category_code, i.zone_no, i.zone_name, i.ward_no, i.taluk_code, i.place_text,
                i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.source_count, i.officer,
                i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
                ${STAGE_SQL} AS stage,
@@ -343,7 +343,7 @@ const istNow = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(
 async function collectorFeedback(dept: string, s: Scope, limit: number) {
   const r = await q(
     `SELECT d.decision_id AS did, d.incident_id AS id, d.decision, d.note, ${fmt("d.decided_at")} AS at,
-            i.title, i.category_label AS type, i.place_text AS loc, i.zone_name
+            ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name
      FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
      WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen') AND d.decided_at >= ?
        ${s.zone ? "AND i.zone_no = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}

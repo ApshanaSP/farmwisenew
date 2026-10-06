@@ -8,7 +8,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import Logo from "@/components/Logo";
 import { I, type IconName } from "./icons";
 import { BrandMark } from "./assistant/Brand";
-import { EnvPage, Page1 } from "./Overview";
+import { EnvPage, HeroBody, Page1 } from "./Overview";
 import { BriefingPage, GapsBody, PatternBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
@@ -16,12 +16,20 @@ import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, Zones
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
 import { StoriesBody } from "./Stories";
+import { NewsPreview } from "./NewsPreview";
+import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
-import { deptIcon, fmtDate, fmtShort, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "./lib";
+import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, type Row } from "./lib";
 import { esc } from "./SatMap";
 import "./tokens.css";
 import "./collector.css";
+import { MotionConfig } from "motion/react";
+import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
+import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
+import "./civic.css";
+import "./marina.css";
+import "./news.css";
 
 // The assistant loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
@@ -49,6 +57,7 @@ type ModalState =
   | { kind: "contact"; title: string; dept: Row; contacts: Row[] }
   | { kind: "text"; title: string; md: string }
   | { kind: "item"; title: string; item: Row }
+  | { kind: "story"; title: string; story: Story }
   | { kind: "added"; title: string }
   | { kind: "stories"; title: string; focus: string | null }
   | { kind: "markets"; title: string }
@@ -97,6 +106,8 @@ export interface Console {
   openInc: (id: string) => void;
   openList: (preset: ListPreset, title: string) => void;
   openNewsAll: () => void;
+  /** a news story: its linked incident, or (news only) the story's reports in the news preview */
+  openStory: (s: Story) => void;
   openZones: () => void;
   openDepts: () => void;
   openFeeds: () => void;
@@ -193,14 +204,22 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: 1366, h: 680 });
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
-  // dark (District IQ midnight) by default; light is the original white theme. Remembered in this browser.
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => { try { if (localStorage.getItem("diq-theme") === "light") setTheme("light"); } catch { /* storage unavailable */ } }, []);
+  // light (Marina) by default; dark is the harbour at night. Remembered in this browser.
+  // null until mounted: the first paint follows <html data-theme> (set before paint), so a dark-theme user never sees light
+  const [theme, setTheme] = useState<"dark" | "light" | null>(null);
+  useEffect(() => { try { setTheme(localStorage.getItem("diq-theme") === "dark" ? "dark" : "light"); } catch { setTheme("light"); } }, []);
   const toggleTheme = () => setTheme((t) => {
     const n = t === "dark" ? "light" : "dark";
     try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
+    document.documentElement.dataset.theme = n;
     return n;
   });
+  const [palette, setPalette] = useState(false);
+  /** direction of travel between pages (1 = next), so the new page slides in from that side */
+  const [pageDir, setPageDir] = useState(1);
+  /** the shell assembles once after sign-in: top bar, rail, then cards */
+  const [boot, setBoot] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setBoot(false), 1400); return () => clearTimeout(t); }, []);
   const [archived, setArchived] = useState<Archived | null>(null);
   const firstLoad = useRef(true);
   const lastExport = useRef(initial.exportedAt);
@@ -302,18 +321,20 @@ export default function CollectorApp({ initial, allDepts, user }: {
     if (dirty.current) { dirty.current = false; setReloadKey((k) => k + 1); }
   }, []);
   const pages = (Object.keys(PAGE_TITLE) as PageKey[]).filter((k) => k === "overview" || layout.pages[k as keyof Layout["pages"]] !== false);
-  const setPage = (p: PageKey) => { setPageState(p); setAnim(true); };
+  const setPage = (p: PageKey) => {
+    setPageDir(pages.indexOf(p) >= pages.indexOf(page) ? 1 : -1);
+    setPageState(p);
+    setAnim(true);
+  };
   const setDept = (code: string | null) => {
     closeAll();
     setDeptState(code);
-    setAnim(true);
     const name = code ? allDepts.find((d) => d.code === code)?.name : null;
     if (name) toast(`Showing ${name} only. All panels filtered.`);
   };
   const setZone = (z: number | null) => {
     setZoneState(z);
     setEnvSelState({ rain: "auto", aqi: "auto", lake: "auto" });
-    setAnim(true);
     closeAll();
     const name = z ? ov.zoneTable.find((x) => x.zone === z)?.name : null;
     if (z && name) toast(`Showing ${name}. All panels filtered.`);
@@ -322,12 +343,10 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const catLabel = cat ? ins?.trends.weekly.lines.find((l) => l.cat === cat)?.label ?? cat.replace(/_/g, " ").toLowerCase() : null;
   const setCat = (c: string | null) => {
     setCatState(c);
-    setAnim(true);
     if (c) toast("Category filter applied to the map, lists, briefing and follow-ups.");
   };
   const setTaluk = (t: string | null) => {
     setTalukState(t);
-    setAnim(true);
     closeAll();
     if (t) toast(`Showing ${talukName(t)} taluk. All panels filtered.`);
   };
@@ -423,11 +442,13 @@ export default function CollectorApp({ initial, allDepts, user }: {
     sevTab, setSevTab,
     envSel, setEnvSel: (card, id) => setEnvSelState((m) => ({ ...m, [card]: id })),
     busyIds, reloadKey, setAsk,
-    setPeriod: (p) => { setPeriod(p); setAnim(true); },
+    // a filter change does not replay entrances: the view cross-fades while loading and the numbers roll
+    setPeriod: (p) => setPeriod(p),
     setDept, setZone,
     openInc: (id) => { setModal(null); setInc(id); },
     openList: (preset, title) => { setInc(null); setModal({ kind: "list", title: `${title} · ${scopeName}`, preset: { cat: cat ?? undefined, taluk: taluk ?? undefined, ...preset } }); },
     openNewsAll: () => setModal({ kind: "news", title: `Latest news · ${scopeName}` }),
+    openStory: (s) => { if (s.incident) { setModal(null); setInc(s.incident); } else { setInc(null); setModal({ kind: "story", title: "In the news", story: s }); } },
     openZones: () => setModal({ kind: "zones", title: "Zones by open complaints" }),
     openDepts: () => setModal({ kind: "depts", title: "Departments" }),
     openFeeds: () => setModal({ kind: "sources", title: "Data sources" }),
@@ -468,13 +489,14 @@ export default function CollectorApp({ initial, allDepts, user }: {
       }
       if (e.key === "Escape") {
         // the assistant sits above everything else, so it closes first
-        if (ask) setAsk(false);
+        if (palette) setPalette(false);
+        else if (ask) setAsk(false);
         else if (inc || modal) closeAll();
         setPop(null);
       }
       if (e.key === "/" && !typing) {
         e.preventDefault();
-        document.getElementById("dic-q")?.focus();
+        setPalette(true);
       }
       if (!typing && !inc && !modal && (e.key === "PageDown" || e.key === "PageUp")) {
         e.preventDefault();
@@ -484,88 +506,113 @@ export default function CollectorApp({ initial, allDepts, user }: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inc, modal, ask, closeAll, page, pages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inc, modal, ask, palette, closeAll, page, pages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bellN = bellRead ? 0 : ov.bell.length;
   // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live
   const feedsOk = ov.feeds.filter((f) => f.status === "ok" || f.status === "degraded").length;
   const feedsPartial = ov.feeds.filter((f) => f.status === "degraded").map((f) => String(f.source).toUpperCase());
-  const pi = pages.indexOf(page);
+  const districtWide = page === "environment" || page === "trends";
+  const clearFilters = () => { setDept(null); setZone(null); setCatState(null); setTalukState(null); };
+  const openExport = () => setModal({ kind: "export", title: "Export report" });
+  const openCustomize = () => setModal({ kind: "customize", title: "Customize the dashboard" });
+  const askWith = (q: string) => {
+    setAsk(true);
+    // the assistant loads on first open, so hand the question over once it is listening
+    [60, 900].forEach((ms) => setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), ms));
+  };
+
+  const actions: Hit[] = [
+    ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
+    { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
+    { g: "Actions", ic: "sensor", l: "Open data sources", s: "Feeds, OCR upload, audit log", run: c.openFeeds },
+    { g: "Actions", ic: "layers", l: "Workspaces", s: "Save or reopen a view", run: c.openWorkspace },
+    { g: "Actions", ic: "sliders", l: "Customize the dashboard", run: openCustomize },
+    { g: "Actions", ic: theme === "dark" ? "sun" : "moon", l: `Switch to ${theme === "dark" ? "light" : "dark"} theme`, run: toggleTheme },
+    { g: "Actions", ic: "refresh", l: "Reload data", s: "Fetch the latest from the store", run: () => setReloadKey((k) => k + 1) },
+    ...(zone || dept || cat || taluk ? [{ g: "Actions", ic: "x" as IconName, l: "Clear all filters", s: scopeName, run: clearFilters }] : [])
+  ];
+  const searchHits = async (q: string): Promise<Hit[]> => {
+    const r = await api(`/api/collector/search?q=${encodeURIComponent(q)}`);
+    const out: Hit[] = [];
+    r.zones.forEach((z: Row) => out.push({ g: "Zones", ic: "pin", l: z.name, s: `${z.open} open incidents`, run: () => c.setZone(z.zone) }));
+    r.depts.forEach((d: Row) => out.push({ g: "Departments", ic: deptIcon(d.code), l: d.name, s: d.org, run: () => c.setDept(d.code) }));
+    r.incidents.forEach((i: Row) => out.push({ g: "Incidents", ic: deptIcon(i.dept), l: fullTitle(i), s: `${i.zone_name ?? "Chennai"} · ${rel(i.t, ov.now)}`, run: () => c.openInc(i.id) }));
+    return out;
+  };
 
   return (
-    <div className={`dic${fit.on ? " fit" : ""}`} data-theme={theme}
+    <MotionConfig reducedMotion="user">
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#4D8DFF" /><stop offset="1" stopColor="#B9D2FF" /></linearGradient></defs>
+        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0B7290" /><stop offset="1" stopColor="#7FD3E6" /></linearGradient></defs>
       </svg>
       {loading && <div className="loading-bar" />}
       <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
-        <div className="main">
-          <header className="top">
-            <div className="tbrand"><Logo className="tlogo" /><span><b>District <span>IQ</span></b><small>Chennai District Intelligence</small></span></div>
-            <Search c={c} ov={ov} />
-            {/* one chip for the data: when it was collected and how many feeds are live (it used to be two chips opening the same dialog) */}
-            <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} />
-            <button className="tbtn" onClick={c.openWorkspace} title="Save or reopen a workspace"><I n="layers" /><span className="lb">{workspaceName ? workspaceName.slice(0, 18) : "Workspace"}</span></button>
-            <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}><I n={theme === "dark" ? "sun" : "moon"} /></button>
-            <button className="tbtn icon" onClick={() => setModal({ kind: "customize", title: "Customize the dashboard" })} title="Choose what the dashboard shows" aria-label="Customize"><I n="sliders" /></button>
-            <button className="tbtn pri" onClick={() => setModal({ kind: "export", title: "Export report" })}><I n="download" /><span className="lb">Export</span></button>
-            <div className="rel">
-              <button className="tbtn icon" data-pop onClick={() => setPop((p) => (p === "bell" ? null : "bell"))} aria-label="Alerts">
-                <I n="bell" />{bellN > 0 && <span className="dot-n">{bellN}</span>}
-              </button>
-              {pop === "bell" && (
-                <div className="pop">
-                  <div className="pop-h">Severe and high · last 24 hours<button className="lnk" onClick={() => { setBellRead(true); setPop(null); }}>Mark all read</button></div>
-                  {ov.bell.length ? ov.bell.map((i) => (
-                    <button key={i.id} className="pop-i" onClick={() => { setPop(null); c.openInc(i.id); }}>
-                      <span className={`kpi-ic ${sevTone(i.sev)}`} style={{ width: 34, height: 34 }}><I n={deptIcon(i.dept)} /></span>
-                      <span><b>{fullTitle(i)}</b><small>{i.zone_name ?? "Chennai"} · {i.sev} · {rel(i.t, ov.now)}</small></span>
-                    </button>
-                  )) : <div className="empty">No alerts.</div>}
+        <header className="top">
+          <div className="tbrand"><Logo className="tlogo" /><span><b>District IQ</b><small>Chennai · Collector</small></span></div>
+          <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
+          <span className="tspace" />
+          <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
+            <I n="search" /><span>Search</span><kbd>/</kbd>
+          </button>
+          <button className="tbtn icon" onClick={openExport} title="Export report: PDF or CSV action list" aria-label="Export report"><I n="download" /></button>
+          <button className={`tbtn icon${workspaceName ? " on" : ""}`} onClick={c.openWorkspace} title={workspaceName ? `Workspace: ${workspaceName}` : "Save or reopen a workspace"} aria-label="Workspaces"><I n="layers" /></button>
+          <button className="tbtn icon" onClick={openCustomize} title="Choose what the dashboard shows" aria-label="Customize"><I n="sliders" /></button>
+          <button className="tbtn icon theme-t" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+            <span key={theme ?? "l"} className="theme-ic"><I n={theme === "dark" ? "sun" : "moon"} /></span>
+          </button>
+          <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)}
+            onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
+            items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />
+          <div className="rel">
+            <button className="me" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label="Account" aria-expanded={pop === "profile"}>
+              <span className="avatar">CO</span><I n="chevd" />
+            </button>
+            {pop === "profile" && (
+              <div className="pop" style={{ width: 300 }}>
+                <div className="pop-me"><span className="avatar">CO</span><span><b>Collector&apos;s Office</b><small>District Collector, Chennai</small></span></div>
+                <div style={{ padding: "0 10px 8px", color: "var(--text-3)", fontSize: 12.5 }}>
+                  Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b>. Figures come from the district intelligence store, as of {fmtTime(ov.now)}.
                 </div>
-              )}
-            </div>
-            <div className="rel">
-              <button className="me" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))}>
-                <span className="avatar">CO</span>
-                <span className="who"><b>Collector&apos;s Office</b></span><I n="chevd" />
-              </button>
-              {pop === "profile" && (
-                <div className="pop" style={{ width: 290 }}>
-                  <div className="pop-h">Collector&apos;s Office</div>
-                  <div style={{ padding: "0 8px 8px", color: "var(--text-3)", fontSize: 13 }}>
-                    Signed in as {user}. Figures come from the district intelligence store, as of {fmtTime(ov.now)}.
-                  </div>
-                  <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
-                  <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
-                  <button className="pop-i" onClick={() => { setPop(null); setDept(null); setZone(null); setCatState(null); setTalukState(null); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
-                  <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
-                    <I n="user" /><span><b>Sign out</b></span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </header>
+                <button className="pop-i" onClick={() => { setPop(null); c.openFeeds(); }}><I n="sensor" /><span><b>Data sources</b><small>Feeds, added sources, OCR upload</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
+                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
+                  <I n="user" /><span><b>Sign out</b></span>
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
 
-          <div className="body">
-            <section className="phead">
-              <h1>{PAGE_TITLE[page]}</h1>
+        <div className="body">
+          {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
+          <section className={`band${page === "overview" ? " hero" : ""}`}>
+            <div className="band-row">
+              <div className="band-t">
+                <div className="band-eb">
+                  <span>{fmtDay(ov.now)}</span>
+                  <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} />
+                </div>
+                <RollTitle text={page === "overview" ? `${greeting(ov.now)}, Collector` : PAGE_TITLE[page]} />
+              </div>
               {page === "studio" ? (
-                <span className="fnote"><I n="spark" />Your own files and links: AI reads, cleans, maps and links them with the district. Not affected by the dashboard filters.</span>
-              ) : page === "environment" || page === "trends" ? (
-                <span className="fnote"><I n="map" />{page === "trends"
-                  ? "Whole district, not filtered. Click any row to see what is behind it."
-                  : "Whole district: choose a station on each card. Prices are shown per Chennai market."}</span>
+                <span className="fnote" title="Your own files and links: AI reads, cleans, maps and links them with the district. Not affected by the dashboard filters.">
+                  <I n="spark" />Your files · not filtered
+                </span>
+              ) : districtWide ? (
+                <span className="fnote" title={page === "trends" ? "Whole district, not filtered. Click any row to see what is behind it." : "Whole district: choose a station on each card. Prices are shown per Chennai market."}>
+                  <I n="map" />District-wide · not filtered
+                </span>
               ) : (
                 // every filter in one group, in the order the Collector narrows down: when, where, which department
                 <div className="filters" role="group" aria-label="Filters">
-                  <div className="seg fseg" role="tablist" aria-label="Period">
-                    {PERIOD_KEYS.map((p) => (
-                      <button key={p} role="tab" aria-selected={period === p} className={period === p ? "on" : ""} title={PERIOD_HINT[p]}
-                        onClick={() => { setPeriod(p); setAnim(true); }}>{PERIOD_WORD[p]}</button>
-                    ))}
-                  </div>
+                  <SegmentedControl label="Period" size="sm" value={period} onChange={(p) => setPeriod(p)}
+                    options={PERIOD_KEYS.map((p) => ({ value: p, label: PERIOD_WORD[p], title: PERIOD_HINT[p] }))} />
                   <label className="fsel" title="Zone (Greater Chennai Corporation)"><I n="pin" />
                     <select value={zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} aria-label="Zone">
                       <option value="">All 15 zones</option>
@@ -584,34 +631,26 @@ export default function CollectorApp({ initial, allDepts, user }: {
                       {depts.map((d) => <option key={d.code} value={d.code}>{d.name}{d.open && d.code !== dept ? ` (${d.open} open)` : ""}</option>)}
                     </select>
                   </label>
-                  {cat && <span className="fchip alt" title="Category filter">{catLabel}<button onClick={() => setCat(null)} aria-label="Clear category"><I n="x" /></button></span>}
-                  {(zone || dept || cat || taluk) && <button className="fclear" onClick={() => { setDept(null); setZone(null); setCatState(null); setTalukState(null); }}><I n="x" />Clear</button>}
+                  {cat && <FilterChip onRemove={() => setCat(null)} removeLabel="Clear category">{catLabel}</FilterChip>}
+                  {(zone || dept || cat || taluk) && <button className="fclear" onClick={clearFilters}>Clear</button>}
                 </div>
               )}
-              <div className="pager" role="tablist" aria-label="Pages">
-                <button className="nx" onClick={() => pages[pi - 1] && setPage(pages[pi - 1])} disabled={pi <= 0} aria-label="Previous page"><I n="chevl" /></button>
-                {pages.map((p, k) => (
-                  <button key={p} role="tab" aria-selected={page === p} className={`pg${page === p ? " on" : ""}${p === "studio" ? " pg-ai" : ""}`} onClick={() => setPage(p)} title={PAGE_TITLE[p]}>
-                    <i>{k + 1}</i>{page === p && <span>{p === "environment" ? "Environment" : PAGE_TITLE[p]}</span>}
-                  </button>
-                ))}
-                <button className="nx" onClick={() => pages[pi + 1] && setPage(pages[pi + 1])} disabled={pi >= pages.length - 1} aria-label="Next page"><I n="chevr" /></button>
-              </div>
-            </section>
-            <div id="view" className={anim ? "anim" : ""}>
-              {page === "overview" ? <Page1 d={ov} c={c} />
-                : page === "briefing" ? (archived || !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
-                  : page === "trends" ? <TrendsPage ins={ins} c={c} />
-                    : page === "studio" ? <Studio c={c} />
-                      : <EnvPage d={ov} ins={ins} c={c} />}
             </div>
-          </div>
+            {page === "overview" && <HeroBody d={ov} c={c} />}
+          </section>
+          <PageSwap k={page} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
+            {page === "overview" ? <Page1 d={ov} c={c} />
+              : page === "briefing" ? (archived || !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
+                : page === "trends" ? <TrendsPage ins={ins} c={c} />
+                  : page === "studio" ? <Studio c={c} />
+                    : <EnvPage d={ov} ins={ins} c={c} />}
+          </PageSwap>
         </div>
 
         {(inc || modal) && <div className="scrim" onClick={closeAll} />}
         {inc && <IncidentView id={inc} c={c} />}
         {modal && (
-          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern"].includes(modal.kind)}>
+          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
                 : modal.kind === "depts" ? <DeptsBody c={c} />
@@ -623,6 +662,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
                             : modal.kind === "contact" ? <ContactBody dept={modal.dept} contacts={modal.contacts} />
                               : modal.kind === "text" ? <div className="md" dangerouslySetInnerHTML={{ __html: mdToHtml(modal.md) }} />
                                 : modal.kind === "item" ? <ItemBody item={modal.item} c={c} />
+                                : modal.kind === "story" ? <NewsPreview key={modal.story.id} s={modal.story} c={c} />
                                   : modal.kind === "added" ? <AddedAllBody d={ov} c={c} />
                                     : modal.kind === "stories" ? <StoriesBody d={ov} c={c} focus={modal.focus} />
                                       : modal.kind === "markets" ? <MarketsFull ins={ins} c={c} />
@@ -630,25 +670,23 @@ export default function CollectorApp({ initial, allDepts, user }: {
                                           : modal.kind === "gaps" ? <GapsBody ins={ins} c={c} /> : null}
           </Modal>
         )}
-        <div className="toasts">
-          {toasts.map((t) => (
-            <div key={t.id} className={`toast${t.kind === "alert" ? " alert" : ""}`}>
-              <I n={t.kind === "alert" ? "bell" : "checkc"} /><span>{t.msg}</span>
-              {t.act && <button onClick={() => { t.act!.run(); setToasts((x) => x.filter((y) => y.id !== t.id)); }}>{t.act.label}</button>}
-            </div>
-          ))}
-        </div>
+        <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
+        <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
         <button className="ask-fab" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
-          <BrandMark size={34} className="ask-mark" /><span>Ask District IQ</span>
+          <BrandMark size={30} className="ask-mark" /><span>Ask District IQ</span>
           {insightCount > 0 && !ask && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
         </button>
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} />}
       </div>
     </div>
+    </MotionConfig>
   );
 }
 
-/** Are the feeds current? Green when every feed in this build was collected within its freshness target. */
+const PAGE_ICON: Record<PageKey, IconName> = { overview: "grid", briefing: "news", trends: "line", environment: "leaf", studio: "spark" };
+const TAB_LABEL: Record<PageKey, string> = { overview: "Overview", briefing: "Briefing", trends: "Trends", environment: "Environment", studio: "Data Studio" };
+
+/** Are the feeds current? The collection time always leads; a feed behind turns the chip orange. Pulses once on new data. */
 function Collected({ ov, onClick, live, partial }: { ov: OverviewData; onClick: () => void; live: number; partial: string[] }) {
   const s = ov.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
@@ -659,70 +697,10 @@ function Collected({ ov, onClick, live, partial }: { ov: OverviewData; onClick: 
     (s?.lastRun ? ` Last collection: ${fmtTime(s.lastRun)}, ${fmtDate(s.lastRun)}.` : "") +
     (s ? (s.missing.length ? ` Behind: ${s.missing.join(", ")}.` : " All feeds current.") : "") +
     ` ${live} of ${ov.feeds.length} feeds live.` + (partial.length ? ` Partly available (some endpoints blocked): ${partial.join(", ")}.` : "") +
-    " Click for the data sources: status, refresh, add a source, OCR, audit log.";
+    " Click for the data sources: status, refresh, OCR, audit log.";
   return (
-    <button className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick}>
-      <I n={all ? "checkc" : "clock"} /><span>{head}<small>{sub}</small></span>
+    <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick}>
+      <LiveDot state={s && !all ? "warn" : "ok"} /><span>{head}<small>{sub}</small></span>
     </button>
-  );
-}
-
-interface Hit { g: string; ic: IconName; l: string; s: string; run: () => void }
-
-function Search({ c, ov }: { c: Console; ov: OverviewData }) {
-  const [text, setText] = useState("");
-  const [hits, setHits] = useState<Hit[] | null>(null);
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const q = text.trim();
-    if (q.length < 2) { setHits(null); return; }
-    let live = true;
-    const t = setTimeout(async () => {
-      try {
-        const r = await api(`/api/collector/search?q=${encodeURIComponent(q)}`);
-        if (!live) return;
-        const out: Hit[] = [];
-        r.zones.forEach((z: Row) => out.push({ g: "Zones", ic: "pin", l: z.name, s: `${z.open} open incidents`, run: () => c.setZone(z.zone) }));
-        r.depts.forEach((d: Row) => out.push({ g: "Departments", ic: deptIcon(d.code), l: d.name, s: d.org, run: () => c.setDept(d.code) }));
-        r.incidents.forEach((i: Row) => out.push({ g: "Incidents", ic: deptIcon(i.dept), l: fullTitle(i), s: `${i.zone_name ?? "Chennai"} · ${rel(i.t, ov.now)}`, run: () => c.openInc(i.id) }));
-        setHits(out);
-        setIdx(0);
-      } catch { /* ignore */ }
-    }, 200);
-    return () => { live = false; clearTimeout(t); };
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const pick = (h: Hit) => { setText(""); setHits(null); h.run(); };
-  let g = "";
-  return (
-    <div className="search">
-      <input id="dic-q" type="search" placeholder="Search incidents, zones, departments…" autoComplete="off" aria-label="Search"
-        value={text} onChange={(e) => setText(e.target.value)}
-        onBlur={() => setTimeout(() => setHits(null), 150)}
-        onKeyDown={(e) => {
-          if (!hits) return;
-          if (e.key === "ArrowDown") { setIdx((i) => Math.min(hits.length - 1, i + 1)); e.preventDefault(); }
-          else if (e.key === "ArrowUp") { setIdx((i) => Math.max(0, i - 1)); e.preventDefault(); }
-          else if (e.key === "Enter" && hits[idx]) pick(hits[idx]);
-          else if (e.key === "Escape") { setText(""); setHits(null); }
-        }} />
-      <I n="search" /><kbd>/</kbd>
-      {hits && (
-        <div className="sres">
-          {hits.length ? hits.map((h, k) => {
-            const head = h.g !== g ? <div className="sh">{h.g}</div> : null;
-            g = h.g;
-            return (
-              <div key={k}>
-                {head}
-                <button className={k === idx ? "hl" : ""} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(h)}>
-                  <I n={h.ic} /><span>{h.l}</span><small>{h.s}</small>
-                </button>
-              </div>
-            );
-          }) : <div className="empty">No matches. Try a zone, street, department or incident ID.</div>}
-        </div>
-      )}
-    </div>
   );
 }

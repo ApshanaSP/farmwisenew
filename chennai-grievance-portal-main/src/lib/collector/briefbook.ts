@@ -5,7 +5,7 @@
  * A section without its note falls back to rule-based text, so the page never depends on the AI.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool from "@/lib/collector/db";
+import intelPool, { TITLE } from "@/lib/collector/db";
 import { PERIODS, explain, periodWindow, type Period } from "@/lib/collector/intel";
 
 type Row = Record<string, any>;
@@ -30,7 +30,7 @@ function filters(s: BookScope, a = "i") {
 
 const CRIME = ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "SUICIDE_SELF_HARM", "DRUGS_LIQUOR", "PUBLIC_ORDER", "ROAD_ACCIDENT", "MISSING_PERSON"];
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
-const INC = `i.incident_id AS id, i.title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
+const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, i.is_open AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.dead, i.injured, i.lat, i.lon,

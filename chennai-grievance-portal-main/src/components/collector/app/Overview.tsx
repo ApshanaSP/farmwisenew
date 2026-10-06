@@ -16,13 +16,11 @@ import { useState } from "react";
 
 // =================================================================== page 1 ==
 
-export function Page1({ d, c }: { d: OverviewData; c: Console }) {
+/** The KPI tiles, in the order the Collector chose (Customize). */
+function useKpis(d: OverviewData, c: Console) {
   const P = d.periodInfo;
-  const env = useEnv(d, c.geo, c);
-  const L = c.layout;
   let ix = 0;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
-
   // With a department selected, open complaints and ongoing incidents are nearly the same
   // things counted twice (each complaint is usually one incident), so they become one tile.
   const merged = !!c.dept;
@@ -36,29 +34,49 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
       tip="Citizen complaints on incidents that are still open. One incident can have several complaints." />,
     ongoing: <Kpi key="ongoing" k="ongoing" icon="doc" tone="t-info" label={merged ? "Open incidents" : "Ongoing incidents"} v={d.kpi.cur.ongoing} p={d.kpi.prev.ongoing}
       goodDown series={d.kpi.series.ongoing} prevLabel={P.prev} style={iv()} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
-      note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} citizen complaints` : undefined}
+      note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
       tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
     resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={period1(c) ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
       p={d.kpi.prev.resolved} series={d.kpi.series.resolved} prevLabel={P.prev} style={iv()}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
       tip="Incidents reported in the period that the department has already resolved." />
   };
-  const kpis = L.kpis.filter((k) => KPIS[k]);
+  return c.layout.kpis.filter((k) => KPIS[k]).map((k) => KPIS[k]);
+}
+
+/** Page 1's ocean band, under the greeting: the four counts, and the snapshot beside them. The briefing lives on page 2. */
+export function HeroBody({ d, c }: { d: OverviewData; c: Console }) {
+  const kpis = useKpis(d, c);
+  const snap = c.layout.panels.snapshot;
+  if (!kpis.length && !snap) return null;
+  return (
+    <div className={`hero-b${snap && kpis.length ? "" : " one"}`}>
+      {kpis.length > 0 && <section className="kpis" style={{ gridTemplateColumns: `repeat(${kpis.length},minmax(0,1fr))` }}>{kpis}</section>}
+      {snap && (
+        <div className="hsnap">
+          {d.snapshot.kind === "dept" ? <DeptSnap d={d} c={c} /> : d.snapshot.kind === "area" ? <AreaSnap d={d} c={c} /> : <DistrictSnap d={d} c={c} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Page1({ d, c }: { d: OverviewData; c: Console }) {
+  const env = useEnv(d, c.geo, c);
+  const L = c.layout;
+  let ix = 4;
+  const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   const addedPins = d.added.pins;
 
-  // The map runs the full height on the left, where it has room to pan and zoom. On the right,
-  // the district snapshot is one horizontal strip, and under it the three working lists side by
-  // side: what is urgent (severity), what to check (tasks), and today's news.
-  const right = ([["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const).filter(([, on]) => on).map(([k]) => k as string);
-  const W: Record<string, string> = { map: "1.45fr", sev: "1fr", tasks: "1fr", brief: "1.15fr" };
-  const cols = [...(L.panels.map ? ["map"] : []), ...right];
-  const strip = L.panels.snapshot;
-  const top = [...(L.panels.map ? ["map"] : []), ...(right.length ? right.map(() => "snap") : ["snap"])];
-  const rows = strip && right.length ? [top, cols] : strip ? [top] : [cols];
+  // Under the ocean band, one row of four: the map (where), by severity (what is urgent), my tasks (what to check)
+  // and the latest news. The counts and the snapshot live in the band above.
+  const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
+  const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
+    .filter(([, on]) => on).map(([k]) => k as string);
   const grid: React.CSSProperties = {
-    gridTemplateColumns: (strip && !right.length ? top : cols).map((k) => `minmax(0,${W[k] ?? "1fr"})`).join(" "),
-    gridTemplateRows: rows.length > 1 ? "auto minmax(0,1fr)" : "minmax(0,1fr)",
-    gridTemplateAreas: rows.map((r) => `"${r.join(" ")}"`).join(" ")
+    gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
+    gridTemplateRows: "minmax(0,1fr)",
+    gridTemplateAreas: `"${cols.join(" ")}"`
   };
   const LAYERS = [
     ["severe", "Severe", CAT_COL.severe, d.map.layerCounts.severe], ["complaint", "Complaints", CAT_COL.complaint, d.map.layerCounts.complaint],
@@ -67,8 +85,6 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
 
   return (
     <>
-      {kpis.length > 0 && <section className="kpis" style={{ gridTemplateColumns: `repeat(${kpis.length},minmax(0,1fr))` }}>{kpis.map((k) => KPIS[k])}</section>}
-
       <section className="p1" style={grid}>
         {L.panels.map && (
           <article className="card a-map" style={iv()}>
@@ -100,19 +116,13 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
               ))}
               <button className={c.layers.added ? "" : "off"} aria-pressed={c.layers.added} onClick={() => c.toggleLayer("added")}
                 title="Items from sources you added that name a place in or near Chennai">
-                <i className="dia" style={{ background: "#A5B4FC" }} />Added<b>{addedPins.length}</b>
+                <i className="dia" style={{ background: "var(--ai)" }} />Added<b>{addedPins.length}</b>
               </button>
               <button className={c.layers.stations ? "" : "off"} aria-pressed={c.layers.stations} onClick={() => c.toggleLayer("stations")}
                 title="Air-quality stations, rain gauges and lakes">
-                <i className="sq" style={{ background: "linear-gradient(90deg,#34D399 33%,#38BDF8 33% 66%,#818CF8 66%)" }} />Stations<b>{env.mapStations.length}</b>
+                <i className="sq" style={{ background: "linear-gradient(90deg,#34D399 33%,#7FD3E6 33% 66%,#3B82F6 66%)" }} />Stations<b>{env.mapStations.length}</b>
               </button>
             </div>
-          </article>
-        )}
-
-        {strip && (
-          <article className="card a-snap" style={iv()}>
-            {d.snapshot.kind === "dept" ? <DeptSnap d={d} c={c} /> : d.snapshot.kind === "area" ? <AreaSnap d={d} c={c} /> : <DistrictSnap d={d} c={c} />}
           </article>
         )}
 
@@ -227,10 +237,15 @@ function SevMix({ counts, tab, onPick }: { counts: Record<string, number>; tab: 
 // ------------------------------------------------------------- tasks --
 
 function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
+  // Verify: the button turns into a green check, then the row collapses (the reload removes it) and the count ticks down
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const verify = async (i: Row) => {
+    if (await c.verify([i])) setDone((s) => new Set(s).add(i.id));
+  };
   return (
     <>
       <div className="ch"><I n="tasks" /><h3 title="Closed work for you to check">My Tasks</h3>
-        <span className="cnt-b">{d.tasks.count}</span>
+        <span className="cnt-b"><Cnt v={d.tasks.count} /></span>
         <button className="more" onClick={() => c.openList({ status: "awaiting", sort: "sev", dir: 1 }, "Closed work for you to check")}>
           See all<I n="right" />
         </button>
@@ -240,7 +255,7 @@ function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
       </div>
       <div className="fitlist">
         {d.tasks.rows.length ? d.tasks.rows.map((i) => (
-          <div className="task" key={i.id} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
+          <div className={`task${done.has(i.id) ? " leaving" : ""}`} key={i.id} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
             <button className="task-h" onClick={() => c.openInc(i.id)} title={fullTitle(i)}><b>{fullTitle(i)}</b></button>
             <div className="task-act" title={`${i.officer ?? i.dept_name ?? "Department officer"}: ${i.action ? i.action.note || i.action.step : "reported the work as done"}`}>
               <em>{i.officer ?? i.dept_name ?? "Officer"}{i.action ? `, ${rel(i.action.t, d.now)}` : ""}:</em> {i.action ? i.action.note || i.action.step : "Reported the work as done."}
@@ -249,7 +264,9 @@ function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
               <span className="task-why" title={`With you because: ${(i.because as string[]).join(", ")}`}>{(i.because as string[]).slice(0, 2).map((b) => <i key={b}>{b}</i>)}</span>
               <button className="btn sm plain icon" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)}
                 title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
-              <button className="btn sm ok" onClick={() => c.verify([i])} disabled={c.busyIds.has(i.id)} title="The work is done: close it"><I n="check" />Verify</button>
+              <button className={`btn sm ok${done.has(i.id) ? " did" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it">
+                {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}{done.has(i.id) ? "Verified" : "Verify"}
+              </button>
             </div>
           </div>
         )) : <Empty>All caught up. Nothing needs your check right now.</Empty>}
@@ -405,7 +422,7 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
             ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
             : d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
           : d.added.items.length ? d.added.items.slice(0, 10).map((i: Row) => <AddedRow key={i.item_id} i={i} now={d.now} c={c} />)
-            : <Empty>Nothing from added sources {`in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a source</button></Empty>}
+            : <Empty>Nothing from added sources {`in the ${when}`}.</Empty>}
       </div>
     </>
   );
@@ -427,25 +444,32 @@ export type Story = NonNullable<OverviewData["allNews"]>[number];
  * "How it unfolded" shows the articles and the citizen grievances together; news alone opens the article.
  */
 export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) {
-  const open = () => (i.incident ? c.openInc(i.incident) : i.url && window.open(i.url, "_blank", "noopener"));
   return (
-    <button className="brief" onClick={open} title={i.incident ? "Open the incident: the news and the grievances together" : "News only: open the article"}>
+    <button className="brief" onClick={() => c.openStory(i)} title={i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report"}>
       <span className={`bic ${i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <b>{i.title}</b>
-        <span className="loc">{i.outletNames.length ? i.outletNames.join(", ") : "News"} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
+        <b title={i.original ?? undefined}>{i.title}</b>
+        <span className="loc">{outletLine(i)} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
         <StoryLink i={i} />
       </span>
     </button>
   );
 }
 
+/** "The Hindu, DT Next +3": the outlets that carried the story. */
+export function outletLine(i: Story) {
+  const n = i.outletNames.length;
+  if (!n) return "News";
+  return n > 2 ? `${i.outletNames.slice(0, 2).join(", ")} +${n - 2}` : i.outletNames.join(", ");
+}
+
 /** Whether a news story is also in our records: citizen grievances, an incident, or news only. */
 export function StoryLink({ i }: { i: Story }) {
+  const more = i.headlines > 1 ? ` · ${plural(i.headlines - 1, "similar report")}` : "";
   if (i.grievances > 0) return <span className="routed"><I n="user" />Also a grievance · {plural(i.grievances, "citizen complaint")}</span>;
   if (i.incident) return <span className="routed" title="Linked to an incident in our records; no citizen has complained about it yet">
     <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
-  return <span className="routed dim"><I n="news" />News only · no grievance yet</span>;
+  return <span className="routed dim"><I n="news" />News only · no grievance yet{more}</span>;
 }
 
 export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Console; showDept?: boolean }) {
@@ -517,7 +541,10 @@ function useEnv(d: OverviewData, geo: MapGeo | null, c: Console, district = fals
     ...b.rain.stations.map((s) => ({ id: s.id, name: s.name, kind: "rain" as const, lat: s.lat, lon: s.lon, label: `${last(s)} mm in 24 h` })),
     ...b.lakes.stations.map((s) => ({ id: s.id, name: s.name, kind: "lake" as const, lat: s.lat, lon: s.lon, label: `${last(s)}% full` }))
   ];
-  return { rain: pick("rain", b.rain.stations, "rain gauges"), aqi: pick("aqi", b.aqi.stations, "stations"), lake: pick("lake", b.lakes.stations, "lakes"), mapStations };
+  const lake = pick("lake", b.lakes.stations, b.lakes.source === "CMWSSB" ? "reservoirs" : "lakes");
+  // CMWSSB's reservoirs serve the whole city: "all" is their combined storage, as CMWSSB totals it
+  if (b.lakes.source === "CMWSSB" && lake.stations.length > 1) lake.label = `Chennai's ${lake.stations.length} drinking-water reservoirs, combined`;
+  return { rain: pick("rain", b.rain.stations, "rain gauges"), aqi: pick("aqi", b.aqi.stations, "stations"), lake, mapStations };
 }
 type Env = ReturnType<typeof useEnv>;
 
@@ -590,7 +617,8 @@ function aqiLevel(a: number): [string, string, string] {
 }
 const LAKE_STOPS = [{ upto: 30, c: "#E5767A", l: "Low" }, { upto: 70, c: "#F4C542", l: "Normal" }, { upto: 100, c: "#3FB67B", l: "High" }];
 function lakeLevel(p: number): [string, string, string] {
-  return p < 30 ? ["Low", "#F2555A", "Low storage"] : p < 70 ? ["Normal", "#E8B84A", "Normal storage"] : p < 92 ? ["High", "#35C28C", "Good storage"] : ["High", "#F7893B", "Near full: watch for surplus release"];
+  return p < 30 ? ["Low", "#F2555A", "Low storage: water supply may need watching"] : p < 50 ? ["Below half", "#E8B84A", "Below half full"] : p < 70 ? ["Normal", "#E8B84A", "Normal storage"]
+    : p < 92 ? ["High", "#35C28C", "Good storage"] : ["High", "#F7893B", "Near full: watch for surplus release"];
 }
 
 function EnvHead({ icon, title, c, kind, all }: { icon: IconName; title: string; c: Console; kind: Kind; all: Station[] }) {
@@ -617,7 +645,7 @@ function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
           {lvl ? <><b>{lvl[2]}</b> in the last 24 hours{r.now != null && r.times.length ? ` (IMD, ${fmtDate(r.times[r.times.length - 1])})` : ""}. </> : "No readings. "}
           {b.rainDays} rain day{b.rainDays === 1 ? "" : "s"} in the last {b.days.length} days ({b.prevRainDays} in the {b.days.length} days before).
         </div>
-        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="#38BDF8" fmt={(v) => `${v} mm`} />
+        {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="var(--live)" fmt={(v) => `${v} mm`} />
           : <Empty>No rain recorded at {env.rain.stations.length === 1 ? "this gauge" : "these gauges"} in the last {days.length} days.</Empty>}
       </div>
     </article>
@@ -644,7 +672,7 @@ function AqiCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; 
           {lvl ? <>Air is <b>{lvl[2].toLowerCase()}</b> (CPCB scale). </> : "No readings. "}
           {worst && <>Worst now: <b>{worst.name.replace(/^Chennai-/, "").replace(/, Chennai.*$/, "")}</b> at {worst.series[worst.series.length - 1]}.</>}
         </div>
-        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="#34D399" fmt={(v) => `AQI ${v}`}
+        <Chart kind="line" vals={a.series.slice(-n)} labels={a.times.slice(-n).map((t) => fmtTime(t))} color="var(--ok)" fmt={(v) => `AQI ${v}`}
           band={{ at: 100, label: "Satisfactory limit" }} />
       </div>
     </article>
@@ -652,9 +680,18 @@ function AqiCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; 
 }
 
 function LakeCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; style: React.CSSProperties }) {
-  const k = combine(env.lake.stations);
+  const L = d.bottom.lakes;
+  const all = env.lake.stations.length > 1 && L.total && env.lake.stations.length === L.stations.length;
+  // all reservoirs: storage over capacity (a big reservoir counts for more than a small one), else the one chosen
+  const k = all && L.total
+    ? { times: L.total.times, series: L.total.series, now: L.total.series[L.total.series.length - 1] ?? null, prev: L.total.series.length > 1 ? L.total.series[L.total.series.length - 2] : null }
+    : combine(env.lake.stations);
   const lvl = k.now != null ? lakeLevel(k.now) : null;
   const first = k.series[0];
+  const one = env.lake.stations.length === 1 ? env.lake.stations[0] : null;
+  const store = all && L.total ? { st: L.total.storageMcft, cap: L.total.capacityMcft, ly: L.total.lastYearMcft }
+    : one?.capacity ? { st: one.storage?.[one.storage.length - 1] ?? null, cap: one.capacity, ly: one.lastYear ?? null } : null;
+  const mcft = (v: number) => `${Math.round(v).toLocaleString("en-IN")} mcft`;
   return (
     <article className="card env" style={style}>
       <EnvHead icon="drop" title="Reservoir storage" c={c} kind="lake" all={d.bottom.lakes.stations} />
@@ -668,9 +705,11 @@ function LakeCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
         <Scale stops={LAKE_STOPS} value={k.now} max={100} />
         <div className="env-say">
           {lvl ? <><b>{lvl[2]}</b>. </> : "No readings. "}
+          {store?.st != null && <>{mcft(store.st)} of {mcft(store.cap)}{store.ly != null ? <>; a year ago {mcft(store.ly)} ({Math.round((store.ly / store.cap) * 100)}%)</> : null}. </>}
           {k.now != null && first != null && k.series.length > 1 && <>{k.now >= first ? "Up" : "Down"} {Math.abs(k.now - first).toFixed(1)} points since {fmtDate(k.times[0])}.</>}
+          {L.source === "CMWSSB" && L.asOn && <> <a className="env-src" href={L.sourceUrl ?? undefined} target="_blank" rel="noreferrer">CMWSSB, {fmtDate(L.asOn + " 06:00:00")}</a></>}
         </div>
-        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="#818CF8" fmt={(v) => `${v}% full`} />
+        <Chart kind="line" vals={k.series} labels={k.times.map((t) => fmtDate(t))} color="var(--accent)" fmt={(v) => `${v}% full`} />
       </div>
     </article>
   );

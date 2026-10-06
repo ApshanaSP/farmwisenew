@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-from . import PIPELINE_VERSION, analytics, briefai, classify, dedup, geolocate, incidents, linking, newsllm, store, world
+from . import PIPELINE_VERSION, analytics, briefai, classify, dedup, geolocate, incidents, linking, newsllm, priority, store, world
 from .agents import briefing, steward, workers
 from .agents.llm import LLM
 from .geo import WardIndex
@@ -146,7 +146,9 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     metrics["dedup"] = {**dedup.evaluate(events, gg, pg, settings), **ginfo}
 
     # --------------------------------------------------------------- linking --
-    L = linking.link(events, ref, truth, settings.pipe["link_merge_threshold"], settings.pipe["link_review_threshold"])
+    has_en = docs["title_en"].notna() if "title_en" in docs else pd.Series(False, index=docs.index)
+    english = dict(zip("NEWS-" + docs.loc[has_en, "doc_id"], docs.loc[has_en, "title_en"].astype(str)))
+    L = linking.link(events, ref, truth, settings.pipe["link_merge_threshold"], settings.pipe["link_review_threshold"], english)
     events, pairs = L["events"], L["pairs"]
     metrics["linking"] = L["metrics"]
     docs["event_id"] = np.where(docs["doc_id"].isin(events.loc[events["source"] == "news", "source_record_id"]), "NEWS-" + docs["doc_id"], None)
@@ -155,11 +157,14 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     # ------------------------------------------------------------- incidents --
     I = incidents.build(events, timeline, conform(actions, ACTION_COLUMNS), ref, calendar, as_of, zone_names)
     inc = newsllm.narrate(settings, ref, I["incidents"], events, as_of)
+    inc, metrics["priority_learning"] = priority.apply(inc, settings.raw.get("priority_learning", {}))
 
     # ------------------------------------------------------------- analytics --
     hs, assign = analytics.hotspots(inc, as_of, settings.pipe["hotspot_eps_m"], settings.pipe["hotspot_min_samples"])
     inc["hotspot_id"] = inc["incident_id"].map(assign)
-    an = analytics.anomalies(inc, as_of, 7, settings.pipe["anomaly_p_value"], settings.pipe["anomaly_min_count"], settings.pipe["baseline_days"])
+    an, metrics["anomalies"] = analytics.anomalies(inc, as_of, 7, settings.pipe["anomaly_fdr"], settings.pipe["anomaly_min_count"],
+                                                   settings.pipe["baseline_days"], calendar, settings.pipe["anomaly_rise_days"],
+                                                   settings.pipe["anomaly_rise_factor"])
     adj = wards.adjacency()
     obs = pd.concat([W["observations"], H["observations"], E["observations"]], ignore_index=True)
     ow = wards.locate(obs["lat"].to_numpy(float), obs["lon"].to_numpy(float))
@@ -305,6 +310,26 @@ def _reports(dir_, metrics, S, B, as_of) -> None:
           f"- Pairwise: {json.dumps(lk.get('eval_cross_source_pairs'))}", f"- World events fully joined: {lk.get('eval_world_events_fully_joined')}",
           f"- Linked pairs {lk.get('linked_pairs')}, review band {lk.get('review_pairs')}, multi-source incidents {lk.get('multi_source_incidents')}",
           f"- Coefficients: {json.dumps(lk.get('scorer_coefficients'))}", ""]
+    er = lk.get("eval_real_pairs") or {}
+    L += ["## Cross-source linking on real pairs (news vs departmental records, marked by a person)",
+          f"- Real candidate pairs this build: {json.dumps(lk.get('real_candidate_pairs'))}",
+          (f"- Marked {er.get('marked')} ({er.get('marked_same')} same incident; {er.get('found_in_build')} still in this build): "
+           f"precision {er.get('precision')}, recall {er.get('recall')}, F1 {er.get('f1')}, accuracy {er.get('accuracy')} "
+           f"(band-weighted); wrong links {er.get('wrong_links')}, missed links {er.get('missed_links')}"
+           if er.get("marked") else "- No marked pairs yet: `python run_pipeline.py link-labels`, then fill `same_incident` in "
+                                    "reference/labels/link_pair_labels.csv"), ""]
+    an = metrics.get("anomalies", {})
+    L += ["## Unusual rises (spikes and slow rises)",
+          f"- {an.get('checks')} checks ({an.get('spike_checks')} one-day, {an.get('slow_rise_checks')} slow-rise) under one "
+          f"false-discovery rate of {an.get('false_discovery_rate')}: {an.get('spikes')} spikes and {an.get('slow_rises')} slow rises kept; "
+          f"the old rule (p < 0.01 each, no rain factor) would have raised {an.get('old_rule_alerts')}",
+          f"- Rain factors (reports on a rain day and the two after, against dry days): {json.dumps(an.get('rain_factors'))}", ""]
+    pl = metrics.get("priority_learning", {})
+    L += ["## Priority learning from the Collector's decisions",
+          f"- Status: {pl.get('status')}; {pl.get('counted')} of {pl.get('decisions')} decisions count "
+          f"(raise: {pl.get('raise_actions')} = {pl.get('raise')}, lower: {pl.get('lower_actions')} = {pl.get('lower')}); needs {pl.get('needed')}",
+          f"- Ranking of the decisions (AUC, held out): learned {pl.get('auc_learned_held_out')}, hand-set {pl.get('auc_default')}",
+          f"- Weights in use: {json.dumps(pl.get('weights'))}", ""]
     L += ["## Geo resolution from text (20% of pinned grievances held out)", f"- {json.dumps(metrics.get('geo_holdout'))}", ""]
     L += ["## Category classifier (multilingual, held-out 20%)", f"- {json.dumps(metrics.get('category_classifier'))}", ""]
     L += ["## One shared world", f"- Flood-day correlation before overlay: {json.dumps(metrics.get('flood_day_correlation_before_overlay'))}",

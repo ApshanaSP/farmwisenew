@@ -1,7 +1,8 @@
 /**
  * Generates src/app/theme.css: the Tailwind colour families used by the citizen portal and the sign-in pages,
- * as CSS variables, in the District IQ dark theme (default) and light theme (html[data-theme="light"]).
- * Dark values follow the Collector console tokens (src/components/collector/app/tokens.css).
+ * as CSS variables, in the District IQ "Marina" light theme (default) and dark theme (html[data-theme="dark"]).
+ * Values follow the one token set in src/components/collector/app/tokens.css (cool-white surfaces, deep ocean accent,
+ * coral for AI, severity colours). The semantic tokens themselves (--accent, --surface …) live in tokens.css.
  *   node scripts/gen-portal-theme.js
  */
 const fs = require("fs");
@@ -11,65 +12,72 @@ const tw = require("tailwindcss/colors");
 const hex = (h) => { h = h.replace("#", ""); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
 const mix = (a, b, t) => hex(a).map((v, i) => Math.round(v * t + hex(b)[i] * (1 - t)));
 const trip = (rgb) => (Array.isArray(rgb) ? rgb : hex(rgb)).join(" ");
-const SURFACE = "#0D1322";
+const SURFACE = "#0D1C2B";
 
-// light: the brand palette used before (navy re-pointed at the Collector's indigo), dark: tinted to the night surface
-const NAVY_LIGHT = { 50: "#EEF0FF", 100: "#E0E4FF", 200: "#C7CBFB", 300: "#A5ADF8", 400: "#818CF8", 500: "#5B57EC", 600: "#4F46E5", 700: "#4338CA", 800: "#3730A3", 900: "#1E1B4B", 950: "#12103A" };
-const NAVY_DARK = { 50: "#161C38", 100: "#1D2550", 200: "#2D3672", 300: "#4A54A6", 400: "#6E78F0", 500: "#818CF8", 600: "#6366F1", 700: "#A5B4FC", 800: "#C7D2FE", 900: "#E0E7FF", 950: "#EEF2FF" };
-const GOLD_LIGHT = { 50: "#FFF7E6", 100: "#FDEBC8", 200: "#F7D9A6", 300: "#EBBE60", 400: "#DEA334", 500: "#D97706", 600: "#B45309", 700: "#92400E", 800: "#78350F", 900: "#5A2A0B", 950: "#3B1A06" };
+// "navy" is the portal's brand family: now Marina deep ocean (tokens.css --accent / --accent-3)
+const OCEAN_LIGHT = { 50: "#EAF6F9", 100: "#D2EDF3", 200: "#A6DAE7", 300: "#6FC1D5", 400: "#34A3BE", 500: "#0E86A6", 600: "#0B7290", 700: "#0A5F7B", 800: "#0A4D68", 900: "#0A3D62", 950: "#06253D" };
+const OCEAN_DARK = {
+  50: mix("#3CC2DB", SURFACE, 0.12), 100: mix("#3CC2DB", SURFACE, 0.2), 200: mix("#3CC2DB", SURFACE, 0.34), 300: mix("#5FCFE3", SURFACE, 0.62),
+  400: "#5FCFE3", 500: "#3CC2DB", 600: "#3CC2DB", 700: "#74D6EA", 800: "#A8E7F2", 900: "#D6F4F9", 950: "#EEFAFC"
+};
+// neutral greys: cool slate with a slight ocean bias
+const SLATE = { 50: "#F6F8FB", 100: "#ECF1F6", 200: "#E0E7EF", 300: "#CFD9E4", 400: "#A0AEC0", 500: "#64748B", 600: "#40506A", 700: "#2E3B50", 800: "#1C2738", 900: "#0F1B2D", 950: "#08111D" };
+// "gold" is the portal's second family: now Marina coral (tokens.css --ai), the colour of Ask District IQ
+const CORAL = { 50: "#FFF1EC", 100: "#FFE0D6", 200: "#FFC2B0", 300: "#FF9E84", 400: "#FF7A5C", 500: "#F0603F", 600: "#D94B2E", 700: "#B53A22", 800: "#8F2E1C", 900: "#6E2416", 950: "#42150C" };
 const families = {
   red: tw.red, rose: tw.rose, orange: tw.orange, amber: tw.amber, yellow: tw.yellow, emerald: tw.emerald, green: tw.green,
-  teal: tw.teal, sky: tw.sky, blue: tw.blue, indigo: tw.indigo, violet: tw.violet, gray: tw.slate, slate: tw.slate, gold: { ...tw.amber, ...{} }
+  teal: tw.teal, sky: tw.sky, blue: tw.blue, indigo: tw.indigo, violet: tw.violet, gray: SLATE, slate: SLATE
 };
 
 // dark version of a light palette: the pale tints become low-alpha washes on the panel, the dark text shades become light
 function darkOf(p) {
   return {
-    50: mix(p[500], SURFACE, 0.13), 100: mix(p[500], SURFACE, 0.2), 200: mix(p[500], SURFACE, 0.34), 300: mix(p[400], SURFACE, 0.62),
+    50: mix(p[500], SURFACE, 0.12), 100: mix(p[500], SURFACE, 0.19), 200: mix(p[500], SURFACE, 0.32), 300: mix(p[400], SURFACE, 0.6),
     400: p[400], 500: p[500], 600: p[400], 700: p[300], 800: p[200], 900: p[100], 950: p[50]
   };
 }
+// greys in the dark theme follow the text levels (--text … --text-4) and the surfaces
+const SLATE_DARK = { 50: "#122435", 100: "#192D41", 200: "#22374D", 300: "#2F465E", 400: "#7F94A9", 500: "#64788D", 600: "#AFC2D3", 700: "#C5D3E0", 800: "#DAE4EC", 900: "#E8F1F8", 950: "#F3F8FB" };
 
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 const dark = [], light = [];
 const put = (name, d, l) => { dark.push(`--c-${name}:${trip(d)};`); light.push(`--c-${name}:${trip(l)};`); };
 
-for (const s of SHADES) put(`navy-${s}`, NAVY_DARK[s], NAVY_LIGHT[s]);
-for (const s of SHADES) put(`gold-${s}`, darkOf(tw.amber)[s], GOLD_LIGHT[s]);
+for (const s of SHADES) put(`navy-${s}`, OCEAN_DARK[s], OCEAN_LIGHT[s]);
+for (const s of SHADES) put(`gold-${s}`, darkOf(CORAL)[s], CORAL[s]);
 for (const [f, p] of Object.entries(families)) {
-  if (f === "gold") continue;
-  const d = darkOf(p);
+  const d = p === SLATE ? SLATE_DARK : darkOf(p);
   for (const s of SHADES) put(`${f}-${s}`, d[s], p[s]);
 }
-// text and surfaces: the Collector's --text..--text-4, --bg, --surface, --surface-2 and --line
-put("ink", "#F1F5F9", "#0F172A"); put("ink-muted", "#B6C2D4", "#475569"); put("ink-subtle", "#8492A9", "#64748B"); put("ink-faint", "#56627A", "#A0AEC2");
-put("canvas", "#060912", "#F2F4FA"); put("canvas-raised", "#0D1322", "#FFFFFF"); put("canvas-sunken", "#121A2D", "#EEF1F8"); put("canvas-border", "#1E2738", "#E2E7F0");
+// text and surfaces: tokens.css --text … --text-4, --bg, --surface, --surface-2 and --line
+put("ink", "#E8F1F8", "#0F1B2D"); put("ink-muted", "#AFC2D3", "#40506A"); put("ink-subtle", "#7F94A9", "#64748B"); put("ink-faint", "#4F6478", "#A0AEC0");
+put("canvas", "#06111C", "#F3F6F9"); put("canvas-raised", "#0D1C2B", "#FFFFFF"); put("canvas-sunken", "#122435", "#ECF1F6"); put("canvas-border", "#1C3044", "#E0E7EF");
+// AI coral and the live green, for the few citizen-side AI and freshness hints
+put("ai", "#FF8466", "#E5533A"); put("live", "#34D399", "#0E9F6E");
 
 const css = `/* Generated by scripts/gen-portal-theme.js — do not edit by hand.
-   District IQ colours for the citizen portal and sign-in pages: dark by default (as the Collector console), light under
-   html[data-theme="light"]. Tailwind reads them as rgb(var(--c-…) / alpha). */
-:root{color-scheme:dark;
+   District IQ "Marina" colours for the citizen portal and sign-in pages, as Tailwind colour families: light by default,
+   dark under html[data-theme="dark"]. Tailwind reads them as rgb(var(--c-…) / alpha). Semantic tokens: tokens.css. */
+:root,:root[data-theme="light"]{color-scheme:light;
+  ${light.join("")}
+  --sh-xs:0 1px 2px rgba(15,27,45,.05);
+  --sh-soft:0 1px 2px rgba(15,27,45,.04),0 4px 12px -2px rgba(15,27,45,.06);
+  --sh-card:0 1px 2px rgba(15,27,45,.04),0 8px 24px -16px rgba(15,27,45,.18);
+  --sh-lift:0 30px 70px -20px rgba(8,26,44,.3),0 0 0 1px #E0E7EF;
+  --sh-glow:0 0 0 3px rgba(11,114,144,.2);
+  --sh-glow-gold:0 0 0 3px rgba(240,96,63,.2);
+  --brand-glow:0 8px 18px -10px rgba(10,61,98,.55);
+}
+:root[data-theme="dark"]{color-scheme:dark;
   ${dark.join("")}
   --sh-xs:0 1px 2px rgba(0,0,0,.4);
-  --sh-soft:inset 0 1px 0 rgba(255,255,255,.04),0 1px 0 rgba(0,0,0,.35),0 10px 24px -16px rgba(0,0,0,.9);
-  --sh-card:inset 0 1px 0 rgba(255,255,255,.045),0 1px 0 rgba(0,0,0,.4),0 18px 40px -26px rgba(0,0,0,.95);
-  --sh-lift:0 30px 70px -20px rgba(0,0,0,.85),0 0 0 1px rgba(148,163,184,.16);
-  --sh-glow:0 0 0 3px rgba(129,140,248,.3);
-  --sh-glow-gold:0 0 0 3px rgba(251,191,36,.25);
-  --grad:linear-gradient(135deg,#6366F1 0%,#4F7CF6 100%);
-  --brand-glow:0 8px 24px -8px rgba(99,102,241,.55);
-}
-:root[data-theme="light"]{color-scheme:light;
-  ${light.join("")}
-  --sh-xs:0 1px 2px rgba(15,23,42,.05);
-  --sh-soft:0 1px 2px rgba(15,23,42,.04),0 4px 12px -2px rgba(15,23,42,.06);
-  --sh-card:0 1px 2px rgba(15,23,42,.05),0 8px 24px -14px rgba(30,41,90,.18);
-  --sh-lift:0 30px 70px -18px rgba(15,23,42,.3),0 0 0 1px #E2E7F0;
-  --sh-glow:0 0 0 3px rgba(79,70,229,.16);
-  --sh-glow-gold:0 0 0 3px rgba(217,119,6,.18);
-  --grad:linear-gradient(135deg,#4F46E5 0%,#3B6FF0 100%);
-  --brand-glow:0 8px 20px -8px rgba(79,70,229,.45);
+  --sh-soft:inset 0 1px 0 rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.35),0 10px 24px -16px rgba(0,0,0,.9);
+  --sh-card:inset 0 1px 0 rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.35),0 14px 32px -20px rgba(0,0,0,.9);
+  --sh-lift:0 30px 70px -24px rgba(0,0,0,.85),0 0 0 1px rgba(148,190,230,.2);
+  --sh-glow:0 0 0 3px rgba(60,194,219,.26);
+  --sh-glow-gold:0 0 0 3px rgba(255,132,102,.25);
+  --brand-glow:0 8px 18px -10px rgba(60,194,219,.55);
 }
 `;
 fs.writeFileSync(path.join(__dirname, "..", "src", "app", "theme.css"), css);
-console.log("theme.css written:", dark.length, "colours");
+console.log("theme.css written:", light.length, "colours");

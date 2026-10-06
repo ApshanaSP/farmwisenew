@@ -38,7 +38,7 @@ export interface ThreadScope { hours: number; /** only stories with a report sin
 interface Doc {
   id: string; story: string | null; inc: string | null; itemId: number | null; publisher: string | null; title: string; url: string | null;
   lang: string | null; cat: string | null; dept: string | null; place: string | null; local: boolean; zone: number | null; taluk: string | null;
-  sev: string | null; open: boolean | null; t: string; ms: number; w: Map<string, number>; norm: number; tk: string[];
+  sev: string | null; open: boolean | null; t: string; ms: number; w: Map<string, number>; norm: number; tk: string[]; original: string | null;
 }
 
 // ------------------------------------------------------------ headlines --
@@ -57,7 +57,7 @@ const SYN: Record<string, string> = {
 };
 
 /** "Headline | Outlet" and "Headline - India Today": keep the headline. */
-function cleanTitle(t: string) {
+export function cleanTitle(t: string) {
   let s = String(t ?? "").replace(/\s+/g, " ").trim();
   s = s.replace(/\s*\|\s*Tap to know more.*$/i, "");
   for (let k = 0; k < 2; k++) {
@@ -67,7 +67,7 @@ function cleanTitle(t: string) {
   return s;
 }
 
-function tokens(s: string) {
+export function tokens(s: string) {
   const out: string[] = [];
   for (let w of s.toLowerCase().replace(/[‘’'`"“”]/g, "").split(/[^a-z0-9஀-௿-]+/)) {
     w = w.replace(/^-+|-+$/g, "");
@@ -127,7 +127,7 @@ function nearestWard(ws: Row[], lat: number, lon: number) {
 // --------------------------------------------------------------- threads --
 
 export interface ThreadStep {
-  t: string; title: string; publisher: string | null; url: string | null; lang: string | null; stage: string;
+  t: string; title: string; /** the headline as published, when it is not English */ original: string | null; publisher: string | null; url: string | null; lang: string | null; stage: string;
   incident: string | null; itemId: number | null; added: boolean; also: string[];
 }
 export interface Thread {
@@ -137,13 +137,13 @@ export interface Thread {
 }
 
 /** Bump when the threading rules change, so a cached result is not reused. */
-const RULES = 11;
+const RULES = 12;
 
 const SCHEDULE = /power (cut|shutdown)|shutdown areas|மின்தடை|மின் தடை|எந்தெந்த வழக்க/i;
 
 async function load(now: string, days: number): Promise<Doc[]> {
   const [news, added, ws] = await Promise.all([
-    q(`SELECT d.doc_id AS id, d.story_id AS story, d.linked_incident_id AS inc, d.publisher, d.title, d.url, d.lang, d.category_code AS cat,
+    q(`SELECT d.doc_id AS id, d.story_id AS story, d.linked_incident_id AS inc, d.publisher, d.title, d.title_en, d.url, d.lang, d.category_code AS cat,
               d.department AS ddept, d.place_text AS place, d.geo_level, d.lat, d.lon, i.zone_no AS izone, i.taluk_code AS italuk, i.lead_dept AS idept,
               i.severity_level AS sev, i.is_open AS open, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM documents d LEFT JOIN incidents i ON i.incident_id = d.linked_incident_id
@@ -163,7 +163,8 @@ async function load(now: string, days: number): Promise<Doc[]> {
   const docs: Doc[] = [];
   const seen = new Set<string>();
   const push = (r: Row, id: string, itemId: number | null) => {
-    const title = cleanTitle(r.title);
+    // Tamil reports are read through their English headline, so they thread with the English ones
+    const title = cleanTitle(r.lang && r.lang !== "en" && r.title_en ? r.title_en : r.title);
     if (!title || SCHEDULE.test(title) || !r.t) return;
     const key = `${(r.publisher ?? "").toLowerCase()}|${title.toLowerCase()}`;
     if (seen.has(key)) return;
@@ -179,7 +180,7 @@ async function load(now: string, days: number): Promise<Doc[]> {
       id, story: r.story ?? null, inc: r.inc ?? null, itemId, publisher: r.publisher ?? null, title, url: r.url ?? null, lang: r.lang ?? null,
       cat, dept: r.idept ?? r.ddept ?? (cat ? cats.get(cat) ?? null : null), place: r.place ?? null, local, zone, taluk,
       sev: r.sev ?? null, open: r.open == null ? null : Number(r.open) === 1, t: r.t, ms: Date.parse(r.t.replace(" ", "T") + "+05:30"),
-      w: new Map(), norm: 1, tk: []
+      w: new Map(), norm: 1, tk: [], original: title !== cleanTitle(r.title) ? cleanTitle(r.title) : null
     });
   };
   for (const r of news) push(r, String(r.id), null);
@@ -293,7 +294,7 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
     const k = d.title.toLowerCase();
     const prev = byTitle.get(k);
     if (prev) { if (d.publisher && d.publisher !== prev.publisher && !prev.also.includes(d.publisher)) prev.also.push(d.publisher); continue; }
-    const st: ThreadStep = { t: d.t, title: d.title, publisher: d.publisher, url: d.url, lang: d.lang, stage: stageOf(d.title),
+    const st: ThreadStep = { t: d.t, title: d.title, original: d.original, publisher: d.publisher, url: d.url, lang: d.lang, stage: stageOf(d.original ? `${d.title} ${d.original}` : d.title),
       incident: d.inc, itemId: d.itemId, added: d.itemId != null, also: [] };
     byTitle.set(k, st);
     steps.push(st);

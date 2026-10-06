@@ -11,16 +11,17 @@ const STATUS: Record<string, [string, string]> = {
   ok: ["Healthy", "st-resolved"], partial: ["Partial", "st-review"], stale: ["Stale", "st-progress"], failing: ["Failing", "st-progress"], login_failed: ["Login failed", "st-progress"], new: ["Not run yet", "st-review"]
 };
 
+// Adding a source is being built separately (a teammate is integrating it), so the console has no "Add a source" tab.
 export function SourcesBody({ c, initial = "sources" }: { c: Console; initial?: Tab }) {
-  const [tab, setTab] = useState<Tab>(initial);
+  const [tab, setTab] = useState<Tab>(initial === "add" ? "sources" : initial);
   return (
     <>
       <div className="tabs2">
-        {([["sources", "Connected sources"], ["add", "Add a source"], ["ocr", "Newspaper page (OCR)"], ["audit", "Audit log"]] as const).map(([k, l]) => (
+        {([["sources", "Connected sources"], ["ocr", "Newspaper page (OCR)"], ["audit", "Audit log"]] as const).map(([k, l]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
-      {tab === "sources" ? <SourceList c={c} /> : tab === "add" ? <AddSource c={c} done={() => setTab("sources")} /> : tab === "ocr" ? <OcrUpload c={c} /> : <AuditLog />}
+      {tab === "sources" ? <SourceList c={c} /> : tab === "ocr" ? <OcrUpload c={c} /> : <AuditLog />}
     </>
   );
 }
@@ -82,7 +83,7 @@ function SourceList({ c }: { c: Console }) {
                     <small className="dim" style={{ display: "block", fontWeight: 400 }}>{/^https?:/.test(s.url) ? <a href={s.url} target="_blank" rel="noreferrer" className="lnk" style={{ fontWeight: 500 }}>{s.url.replace(/^https?:\/\//, "").slice(0, 48)}</a> : s.url}</small>
                     {s.auth !== "none" && <small className="dim" style={{ display: "block" }}><I n="shield" /> Signs in as {s.username} ({s.auth}){s.session_expires_at ? ` · session until ${fmtShort(s.session_expires_at)}` : ""}</small>}
                   </td>
-                  <td className="dim">{KIND[s.kind] ?? s.kind}</td>
+                  <td className="dim">{KIND[s.kind] ?? s.kind}{s.mapped && <small style={{ display: "block", color: "var(--accent-2)" }} title="Set up by the onboarding agent: runs with its saved field mapping, no AI calls"><I n="flow" /> Agent mapping</small>}</td>
                   <td><span className={`st ${cls}`}>{st}</span>{s.last_error && s.status !== "ok" && <small className="dim" title={s.error_detail ?? undefined} style={{ display: "block", whiteSpace: "normal", maxWidth: 220 }}>{s.last_error}</small>}</td>
                   <td className="dim">{s.newest ? fmtShort(s.newest) : "—"}</td>
                   <td className="num">{Number(s.rows ?? 0).toLocaleString("en-IN")}</td>
@@ -144,6 +145,7 @@ function AddSource({ c, done }: { c: Console; done: () => void }) {
   };
   return (
     <form className="addf" onSubmit={submit}>
+      <p className="sub" style={{ color: "var(--accent-2)" }}><I n="scan" /> Faster: paste the link into <b>Add a source</b> in the top bar. The onboarding agent works out the type, maps the fields and shows a preview before anything is saved.</p>
       <p className="sub">Paste the link of a feed, web page or API. District IQ reads it on a schedule, finds incidents (category and place) and adds them to the store. Credentials are stored encrypted and used only for this site&apos;s own login.</p>
       <label>Name<input required value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. GCC press releases" /></label>
       <label>Link<input required type="url" value={f.url} onChange={(e) => set("url", e.target.value)} placeholder="https://…" /></label>

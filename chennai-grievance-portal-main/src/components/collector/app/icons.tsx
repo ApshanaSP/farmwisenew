@@ -7,7 +7,7 @@ import {
   ChartBarBig, ChartLine, ChartNoAxesCombined, ChartPie, CloudRain, Copy, CornerUpRight, Download, Droplets, Ellipsis, ExternalLink, FileText,
   GitCompareArrows, HeartPulse, House, Image, Info, Landmark, Layers, LayoutGrid, Leaf, Lightbulb, ListChecks, Map, MapPin, Maximize2, Menu,
   MessageSquareText, Mic, Newspaper, PanelLeft, Pencil, Phone, Play, Plus, RadioTower, Radar, RefreshCw, ScrollText, Search, SendHorizontal, Shield, SlidersHorizontal,
-  Smartphone, Square, Table2, Target, ThumbsDown, ThumbsUp, Timer, Trash, TriangleAlert, Tv, User, Users, Volume2, Wind, X, Zap, Sun, Moon, type LucideIcon
+  Smartphone, Square, Table2, Target, ThumbsDown, ThumbsUp, Timer, Trash, TriangleAlert, Tv, User, Users, Volume2, Wind, X, Zap, Sun, Moon, Link2, Rss, Braces, Globe, LockKeyhole, ScanSearch, CalendarClock, ArrowUpRight, Workflow, Sparkles, type LucideIcon
 } from "lucide-react";
 
 const ICONS = {
@@ -19,7 +19,8 @@ const ICONS = {
   copy: Copy, refresh: RefreshCw, plus: Plus, send: SendHorizontal, spark: Radar, layers: Layers, bolt: Zap, expand: Maximize2, timer: Timer,
   sliders: SlidersHorizontal, target: Target, thumbUp: ThumbsUp, thumbDown: ThumbsDown, table: Table2, donut: ChartPie, line: ChartLine,
   barH: ChartBarBig, stop: Square, info: Info, grid: LayoutGrid, compare: GitCompareArrows, play: Play, bookmark: Bookmark, mic: Mic, volume: Volume2,
-  pulse: Activity, sun: Sun, moon: Moon, edit: Pencil, sidebar: PanelLeft
+  pulse: Activity, sun: Sun, moon: Moon, edit: Pencil, sidebar: PanelLeft,
+  link: Link2, rss: Rss, api: Braces, globe: Globe, lock: LockKeyhole, scan: ScanSearch, cal: CalendarClock, arrowUR: ArrowUpRight, flow: Workflow, ai: Sparkles
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

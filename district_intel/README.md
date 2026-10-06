@@ -104,9 +104,9 @@ load (8 sources) -> classify -> locate -> overlay -> dedup -> link -> incidents
 | Location | Point-in-polygon on the 200 GCC wards, snapping within 500 m (flagged), ward -> taluk by majority vote of coded points | `dintel/geo.py`, `dintel/geolocate.py` |
 | Scenario overlay | One shared world for the separately generated sources (see below) | `dintel/world.py` |
 | Duplicates | Union-find over blocked pairs; the portal's rule for grievances plus officers' own "Duplicate of" decisions; police and PWD rules | `dintel/dedup.py` |
-| Cross-source linking | Blocking (category group, KD-tree, category time window) -> logistic scorer -> threshold learned on half the world events -> review band -> union-find | `dintel/linking.py` |
-| Incidents | Lead record, status, deadline (response-based for police cases), priority with reasons, attention flags | `dintel/incidents.py` |
-| Analytics | Poisson baselines with weekday factor, DBSCAN hotspots, Getis-Ord Gi*, EWMA and z-scores, KPIs by period and zone | `dintel/analytics.py` |
+| Cross-source linking | Blocking (category group, KD-tree, category time window) -> logistic scorer on distance, time, wording, meaning (multilingual-e5) and shared named things -> threshold learned on half the world events -> review band -> union-find; accuracy on real pairs from hand labels | `dintel/linking.py` |
+| Incidents | Lead record, status, deadline (response-based for police cases), priority with reasons (weights learn from the Collector's decisions), attention flags | `dintel/incidents.py`, `dintel/priority.py` |
+| Analytics | Poisson baselines with weekday and rain factors, one-day spikes and CUSUM slow rises under one Benjamini-Hochberg false-discovery check, DBSCAN hotspots, Getis-Ord Gi*, EWMA and z-scores, KPIs by period and zone | `dintel/analytics.py` |
 | Agents | Data Steward, Action Planner, Gap Finder, Linker, Watchdog, Briefing (with a numeric verifier) | `dintel/agents/` |
 
 Tuning lives in `config.yaml` and `reference/*.yaml` (categories carry their
@@ -119,6 +119,7 @@ Work whose inputs do not change between builds is kept on disk. Delete a file to
 | File | Holds | Rebuilt when |
 |---|---|---|
 | `output/cache/e5_small.npz` | multilingual-e5 vectors per news text | a text is new |
+| `output/cache/e5_small_records.npz` | e5 vectors of the reports in candidate link pairs (only this build's; real citizens' complaints are never written) | a text is new |
 | `output/cache/news_mentions.json` | gazetteer place mentions per article | an article is new, or the gazetteer's names, aliases or matcher code change |
 | `output/cache/news_gate.json` | the incident filter's cut-off and its cross-validated scores | first build of the day (IST), new hand labels, or a code change |
 | `output/models/category_model.pkl` | the category classifier | first build of the day (IST), a new category, or a code or scikit-learn change. Not in `output/cache`, which GitHub publishes, because it is trained on complaint text. |
@@ -170,11 +171,56 @@ name in `reviewed_by`. The next build retrains on them. Labelling rules:
 Scores are population-weighted (each label carries its stratum weight) and come from
 5-fold cross-validation, so the model is never scored on labels it trained on.
 
+## Unusual rises
+
+Every build checks about 500 (category x zone) series: one-day spikes on each of the last 7 days, and one
+slow-rise check per series (Poisson CUSUM for a doubling over the last 14 days, against the rate before them;
+its p-value by simulation). The expected count allows for the weekday and for rain: a rain day and the two days
+after it carry each category's own rain factor (reports on such days against dry days, learned from the history
+before the checked days and shrunk towards 1). All checks together pass one Benjamini-Hochberg correction at a
+5% false-discovery rate (`pipeline.anomaly_fdr`), so roughly 1 in 20 kept alerts may be chance, not 1 in 20
+checks. On the 4 Oct 2026 data the old rule raised 26 alerts in a week; this one keeps 5 spikes and 2 slow
+rises. `reports/evaluation.md` shows both counts and the rain factors every build.
+
+## Hand labels for cross-source links
+
+The linker is trained and scored on the overlay's planted pairs, which are synthetic. To measure it on real
+data, each build writes every candidate pair of a real news report and a departmental record the overlay did
+not plant (`output/eval/link_real_candidates.csv`; real citizens' complaints are left out). Then:
+
+```bash
+python run_pipeline.py link-labels --n 150     # adds 150 pairs (linked / review / below, 50 each) to the file below
+```
+
+A person opens `reference/labels/link_pair_labels.csv` in Excel and, for each row, fills **`same_incident`**
+(`1` = the news report and the record describe the same real-world event, `0` = different events) and their name
+in `labeled_by`; `note` is free. Judge from the two texts, places and times; the score columns are only context.
+Rules: same event = same place (or one inside the other), same kind of thing, and times that fit (a news story
+can come up to two days after the record). Two incidents of the same kind at the same place are still `0`. Leave
+`same_incident` empty when you cannot tell. Every build then reports precision, recall, F1 and accuracy on the
+marked pairs (band-weighted, so they estimate all real pairs) in `reports/evaluation.md`. Running `link-labels`
+again adds new pairs and keeps the marks.
+
+## Priority learning
+
+Priority = severity + weighted signals (`dintel/priority.py`; the hand-set weights are the dashboard's original
+rule). The website saves every Collector decision with the incident's facts at that moment
+(`audit_log.before_value.score`). Each build reads the decisions (from AWS in the hourly job, else the website's
+local copy) and, once 30 count with at least 5 on each side, refits the weights: a logistic model of "this
+decision says the incident needed the Collector" on the priority, with a Gaussian prior around the hand-set
+weights (a few decisions move them a little, many move them more; no signal above max(4x, 30 points)). The
+learned weights are used only if, held out, they rank the decisions at least as well as the hand-set ones. Which
+decisions count is `priority_learning.raise` / `lower` in `config.yaml`. The console's "Decisions for you" says
+whether the order is hand-set or learned, and from how many decisions. No names are read or stored.
+
 ## Known limits
 
 * **News filter:** F1 0.63 (precision 0.69, recall 0.57) with the hand labels, up from
   about 0.41 for the first rule-trained version. About 4 in 10 incident articles are
   still missed; more labels are the fastest way to improve it.
+* **Linking on real data:** unmeasured until the real-pair labels are filled in. Spot checks of the current links
+  between real news and the synthetic records found mostly coincidences of place and time (a road-rage report and
+  a murder story at Perungudi).
 * **English-Tamil story merging:** multilingual-e5-small cannot tell a same-event pair
   from two different accidents on the same day using headlines (same-event pairs score
   0.84-0.98; unrelated English-Tamil pairs reach 0.86). The strict rule therefore merges

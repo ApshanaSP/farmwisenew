@@ -203,8 +203,8 @@ function WorkCard({ c, goGrievances }: { c: Ctx; goGrievances: (tab: "new" | "ac
       <div className="fitlist">
         {rows.length ? rows.map((r) => (
           <div className="task" key={r.id} style={{ "--c": SEV_HEX[r.sev] } as React.CSSProperties}>
-            <button className="task-h" onClick={() => c.openGrievance(r.id)} title={fullTitle(r)}>
-              <b>{r.type}{r.loc ? ` – ${r.loc}` : ""}</b>
+            <button className="task-h" onClick={() => c.openGrievance(r.id)} title={[r.type, r.loc].filter(Boolean).join(" – ")}>
+              <b>{fullTitle(r)}</b>
               <small>{[r.zone_name, rel(r.t, c.now), r.complaints ? `${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ")}</small>
             </button>
             <div className="task-f">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, FormEvent } from "react";
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import AuthShell from "@/components/AuthShell";
+import { authError, authLeave } from "@/components/auth/AuthCard";
 
 function LoginForm() {
   const router = useRouter();
@@ -31,19 +32,23 @@ function LoginForm() {
       if (!res.ok) {
         setError(data.error || "Invalid email or password.");
         setSubmitting(false);
+        authError();
         return;
       }
+      // the card steps back before the console assembles
+      await authLeave();
       router.push(data.redirectTo || "/");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
+      authError();
     }
   }
 
   return (
     <div className="mx-auto w-full max-w-[420px]">
-      <h1 className="font-display text-[2rem] font-extrabold leading-tight tracking-tight text-ink">Welcome back</h1>
+      <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-ink">Welcome back</h1>
       <p className="mt-1.5 text-[15px] text-ink-muted">
         Sign in with your District IQ account. You&apos;ll land on the dashboard for your role.
       </p>
@@ -110,7 +115,7 @@ function LoginForm() {
         </button>
       </form>
 
-      <p className="mt-5 flex items-center gap-2 rounded-xl bg-canvas-sunken/70 px-3.5 py-2.5 text-[13px] text-ink-muted">
+      <p className="mt-5 flex items-center gap-2 rounded-[10px] border border-canvas-border bg-canvas-sunken/60 px-3.5 py-2.5 text-[13px] text-ink-muted">
         <ShieldCheck className="h-4 w-4 flex-none text-emerald-600" aria-hidden="true" />
         One sign-in for citizens, department officers and the Collector&apos;s office.
       </p>
@@ -127,7 +132,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthShell headline={<>Intelligence for every desk of the district.</>}>
+    <AuthShell>
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

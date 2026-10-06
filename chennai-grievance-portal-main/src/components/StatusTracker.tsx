@@ -1,85 +1,76 @@
+"use client";
+
+import { Timeline, type TimelineItem } from "@/components/ui";
 import { ComplaintStatus } from "@/types";
 
+interface HistoryRow { status: string; stage?: string | null; remarks?: string | null; created_at: string }
 interface StatusTrackerProps {
   status: ComplaintStatus;
   rejectedStage: "Department Officer" | "Collector" | null;
   remarks: string | null;
+  /** complaint_status_history rows (oldest first), for each step's date and remarks */
+  history?: HistoryRow[];
 }
 
-const STEPS = [
-  { key: "filed", label: "Complaint Filed" },
-  { key: "approved", label: "Approved by Department Officer" },
-  { key: "in_progress", label: "Reviewed & In Progress by Department Officer" },
-  { key: "verified", label: "Verified by Collector" }
+/** Every stage a complaint passes, in order. */
+export const STATUS_CHAIN: ComplaintStatus[] = [
+  "Complaint Filed",
+  "Pending Approval",
+  "Approved by Department Officer",
+  "In Progress",
+  "Completed - Pending Collector Verification",
+  "Verified by Collector"
 ];
+const LABEL: Record<string, string> = {
+  "Completed - Pending Collector Verification": "Completed – pending Collector verification"
+};
 
-function getStepState(status: ComplaintStatus, stepKey: string): "done" | "current" | "pending" {
-  const order = ["filed", "approved", "in_progress", "verified"];
-  const statusToIndex: Record<string, number> = {
-    "Complaint Filed": 0,
-    "Pending Approval": 0,
-    "Approved by Department Officer": 1,
-    "In Progress": 2,
-    "Completed - Pending Collector Verification": 2,
-    "Verified by Collector": 3,
-    Rejected: -1
-  };
-  const currentIndex = statusToIndex[status] ?? 0;
-  const stepIndex = order.indexOf(stepKey);
+const when = (s: string) =>
+  new Date(s).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
 
-  if (currentIndex === -1) return "pending";
-  if (stepIndex < currentIndex) return "done";
-  if (stepIndex === currentIndex) return "current";
-  return "pending";
+/**
+ * The complaint's journey as a vertical timeline: completed stages filled, the current one pulses once, later ones
+ * hollow; each shows its date and remarks. A rejection ends the chain with a red node giving the stage and reason.
+ */
+export default function StatusTracker({ status, rejectedStage, remarks, history = [] }: StatusTrackerProps) {
+  const last = (s: string) => [...history].reverse().find((h) => h.status === s);
+  const rejected = status === "Rejected";
+  // a rejection stops the chain after the stage that rejected it
+  const stopAt = rejected ? (rejectedStage === "Collector" ? 4 : 1) : STATUS_CHAIN.indexOf(status);
+  const cur = stopAt < 0 ? 0 : stopAt;
+  const done = status === "Verified by Collector";
+
+  const items: TimelineItem[] = STATUS_CHAIN.slice(0, rejected ? cur + 1 : undefined).map((s, i) => {
+    const h = last(s);
+    const state: TimelineItem["state"] = rejected ? "done" : i < cur || (done && i === cur) ? "done" : i === cur ? "now" : "todo";
+    return { state, title: LABEL[s] ?? s, time: h ? when(h.created_at) : undefined, body: h?.remarks || undefined };
+  });
+  if (rejected) {
+    const h = last("Rejected");
+    items.push({
+      state: "bad",
+      title: `Rejected${rejectedStage ? ` at the ${rejectedStage} stage` : ""}`,
+      time: h ? when(h.created_at) : undefined,
+      body: remarks ? `Reason: ${remarks}` : h?.remarks || undefined
+    });
+  }
+  return <Timeline items={items} />;
 }
 
-export default function StatusTracker({ status, rejectedStage, remarks }: StatusTrackerProps) {
-  if (status === "Rejected") {
-    return (
-      <div className="rounded-lg border border-red-300 bg-red-50 p-4">
-        <p className="font-semibold text-red-800">
-          Rejected {rejectedStage ? `at ${rejectedStage} stage` : ""}
-        </p>
-        {remarks && <p className="mt-1 text-sm text-red-700">Reason: {remarks}</p>}
-      </div>
-    );
-  }
-
+/** Filed -> Approved -> In progress -> Verified, as four short segments (the list's mini progress bar). */
+export function MiniProgress({ status }: { status: ComplaintStatus }) {
+  const idx: Record<string, number> = {
+    "Complaint Filed": 0, "Pending Approval": 0, "Approved by Department Officer": 1, "In Progress": 2,
+    "Completed - Pending Collector Verification": 2, "Verified by Collector": 3, Rejected: -1
+  };
+  const at = idx[status] ?? 0;
+  const steps = ["Filed", "Approved", "In progress", "Verified"];
   return (
-    <ol className="space-y-4">
-      {STEPS.map((step, idx) => {
-        const state = getStepState(status, step.key);
-        return (
-          <li key={step.key} className="flex items-start gap-3">
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                state === "done"
-                  ? "bg-green-600 text-white"
-                  : state === "current"
-                    ? "bg-navy text-white"
-                    : "bg-gray-200 text-gray-500"
-              }`}
-            >
-              {state === "done" ? "✓" : idx + 1}
-            </span>
-            <div>
-              <p
-                className={`text-sm font-medium ${
-                  state === "pending" ? "text-gray-400" : "text-gray-900"
-                }`}
-              >
-                {step.label}
-              </p>
-              {state === "current" && (
-                <p className="text-xs text-navy-700">
-                  {step.key === "in_progress" ? "In progress" : "Pending"}
-                </p>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="flex items-center gap-1" aria-label={`Progress: ${at < 0 ? "rejected" : steps[at]}`} role="img">
+      {steps.map((s, i) => (
+        <span key={s} title={s} className="h-1 flex-1 rounded-full transition-colors duration-500"
+          style={{ background: at < 0 ? (i === 0 ? "var(--critical)" : "var(--line)") : i <= at ? (at === 3 ? "var(--ok)" : "var(--accent)") : "var(--line)" }} />
+      ))}
+    </div>
   );
 }

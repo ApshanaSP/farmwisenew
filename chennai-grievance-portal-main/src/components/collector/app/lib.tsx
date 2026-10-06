@@ -1,6 +1,7 @@
 /* Shared helpers for the Collector console: time formatting, chips, tones and charts. */
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { I, type IconName } from "./icons";
+import { CountUp } from "@/components/ui";
 
 export type Row = Record<string, any>;
 
@@ -72,10 +73,10 @@ export const plural = (n: number, one: string, many = one + "s") => `${n.toLocal
 // ------------------------------------------------------ severity, status --
 
 export const SEVS = ["Severe", "High", "Medium", "Low"] as const;
-/** Severity marks (mirror of tokens.css): rose and amber for what matters, indigo and slate for routine. */
-export const SEV_HEX: Record<string, string> = { Severe: "#FB7185", High: "#FBBF24", Medium: "#818CF8", Low: "#94A3B8" };
-/** Map pins: severe rose, citizen complaints amber, everything else indigo. */
-export const CAT_COL: Record<string, string> = { severe: "#FB7185", complaint: "#FBBF24", other: "#818CF8" };
+/** Severity marks (mirror of tokens.css --critical / --high / --medium / --neutral). */
+export const SEV_HEX: Record<string, string> = { Severe: "#E5484D", High: "#F28C28", Medium: "#E0A800", Low: "#8BA0B5" };
+/** Map pins: severe in critical red, citizen complaints in amber, everything else in sea cyan. */
+export const CAT_COL: Record<string, string> = { severe: "#F0414F", complaint: "#F7B32B", other: "#22B8D0" };
 /** The accent for charts (tokens.css --accent); SVG attributes cannot read CSS variables, so charts use style. */
 export const ACCENT = "var(--accent)";
 export const sevTone = (s: string) => ({ Severe: "t-sev", High: "t-high", Medium: "t-med", Low: "t-cool" })[s] ?? "t-info";
@@ -181,30 +182,9 @@ export function Empty({ children }: { children: ReactNode }) {
   );
 }
 
-/** Count-up number (respects reduced motion). */
+/** Count-up number (respects reduced motion); a changed value rolls to the new one and flashes azure for a second. */
 export function Cnt({ v, dec = 0 }: { v: number; dec?: number }) {
-  const [shown, setShown] = useState(v);
-  const from = useRef(0);
-  useEffect(() => {
-    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const start = from.current;
-    from.current = v;
-    if (reduce || start === v) {
-      setShown(v);
-      return;
-    }
-    const t0 = performance.now();
-    let raf = 0;
-    const step = (t: number) => {
-      const p = Math.min(1, (t - t0) / 900);
-      const e = 1 - Math.pow(1 - p, 3);
-      setShown(start + (v - start) * e);
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [v]);
-  return <>{dec ? shown.toFixed(dec) : Math.round(shown).toLocaleString("en-IN")}</>;
+  return <CountUp value={v} dec={dec} flash />;
 }
 
 /** Element size, for charts drawn at their real pixel size (text stays crisp and readable). */

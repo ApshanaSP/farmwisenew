@@ -711,15 +711,17 @@ export const TOOLS = [
 
   tool({
     name: "unusual_rises",
-    description: "Unusual rises in the last 21 days: a day, zone and category with far more reports than its usual level (Poisson baseline with a weekday factor, 28 days), as the Briefing page's 'Unusual rises'. Descriptive only, no forecast.",
+    description: "Unusual rises in the last 21 days: a day (spike) or a run of days (slow rise) where a zone and category had far more reports than its usual level (28-day baseline with weekday and rain factors; kept only after a false-discovery check across all checks), as the Briefing page's 'Unusual rises'. Descriptive only, no forecast.",
     args: scopeOnly,
     async run({ scope }) {
       const i = await ins(scope);
       const rows = i.patterns.emerging.map((e) => ({ date: e.date, cat: e.cat, label: e.label, zone: e.zone == null ? null : Number(e.zone), zone_name: e.zone_name,
+        kind: String(e.kind ?? "spike"), days: Number(e.days ?? 1),
         observed: Number(e.observed), expected: round(Number(e.expected)), ratio: round(Number(e.ratio)), p_value: Number(e.p_value) }));
-      const facts = rows.flatMap((e, k) => [fact(`rise.${k}.observed`, `${e.label}, ${e.zone_name ?? "district"}, ${e.date}: reports`, e.observed),
-        fact(`rise.${k}.expected`, `${e.label}, ${e.zone_name ?? "district"}, ${e.date}: usual level`, e.expected),
-        fact(`rise.${k}.ratio`, `${e.label}, ${e.zone_name ?? "district"}, ${e.date}: times the usual level`, e.ratio, "x")]);
+      const when = (e: { date: string; kind: string; days: number }) => e.kind === "slow_rise" ? `${e.days} days to ${e.date}` : e.date;
+      const facts = rows.flatMap((e, k) => [fact(`rise.${k}.observed`, `${e.label}, ${e.zone_name ?? "district"}, ${when(e)}: reports`, e.observed),
+        fact(`rise.${k}.expected`, `${e.label}, ${e.zone_name ?? "district"}, ${when(e)}: usual level`, e.expected),
+        fact(`rise.${k}.ratio`, `${e.label}, ${e.zone_name ?? "district"}, ${when(e)}: times the usual level`, e.ratio, "x")]);
       return { scope: null, asOf: i.now, data: { rows }, facts, sources: [fn("insights.insights", "unusual rises"), tbl("anomalies")], incidentIds: [], testData: true,
         caveats: ["Covers the last 21 days, whatever the console's period."] };
     }

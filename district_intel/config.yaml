@@ -62,10 +62,22 @@ pipeline:
   link_merge_threshold: 0.85
   link_review_threshold: 0.40
   baseline_days: 28                 # rolling window for expected counts
-  anomaly_p_value: 0.01
+  anomaly_fdr: 0.05                 # Benjamini-Hochberg false-discovery rate over all spike and slow-rise checks
   anomaly_min_count: 3
+  anomaly_rise_days: 14             # slow-rise (CUSUM) window, against a baseline frozen before it
+  anomaly_rise_factor: 2.0          # the CUSUM looks for a doubling of the usual rate
   hotspot_eps_m: 250
   hotspot_min_samples: 5
+
+priority_learning:
+  # The priority weights learn from the Collector's decisions (dintel/priority.py). The website saves each decision
+  # with the incident's facts at that moment; once enough count, the weights are refitted around the hand-set ones.
+  enabled: true
+  raise: [reopen, escalate]         # decisions that say "this needed the Collector" (Send back is "reopen")
+  lower: [verify]                   # decisions that say "the department had it in hand"
+  min_decisions: 30                 # counted decisions before any weight moves
+  min_each: 5                       # and at least this many on each side
+  prior_sd: 0.5                     # how far a weight may move: the prior's sd is this share of its hand-set value
 
 overlay:
   # Scenario overlay: adds clearly flagged synthetic records so that the separately

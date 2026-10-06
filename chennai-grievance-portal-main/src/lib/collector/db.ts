@@ -44,6 +44,12 @@ if (process.env.NODE_ENV !== "production") {
 
 export default intelPool;
 
+/**
+ * An incident's title for display: on the AWS store, the readable headline taken from its own reports
+ * (lib/collector/derive.ts), else the pipeline's "<category> – <place>" title. `i` is the incidents alias.
+ */
+export const TITLE = process.env.DATA_BACKEND === "aws" ? "COALESCE(i.headline, i.title)" : "i.title";
+
 /** Fully qualified ops table, e.g. ops("collector_decisions") -> `district_intel_ops`.`collector_decisions` */
 export function ops(table: string): string {
   return `\`${OPS_DB}\`.\`${table}\``;

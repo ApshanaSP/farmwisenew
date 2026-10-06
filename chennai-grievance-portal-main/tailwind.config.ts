@@ -12,18 +12,22 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // every colour is a theme variable (src/app/theme.css): District IQ dark by default, light under html[data-theme="light"]
+      // every colour is a theme variable (src/app/theme.css): District IQ Marina light by default, dark under html[data-theme="dark"]
       colors: {
         ...Object.fromEntries(FAMILIES.map((f) => [f, scale(f)])),
         navy: { DEFAULT: v("navy-600"), ...scale("navy") },
         gold: { DEFAULT: v("gold-500"), ...scale("gold") },
         ink: { DEFAULT: v("ink"), muted: v("ink-muted"), subtle: v("ink-subtle"), faint: v("ink-faint") },
-        canvas: { DEFAULT: v("canvas"), raised: v("canvas-raised"), sunken: v("canvas-sunken"), border: v("canvas-border") }
+        canvas: { DEFAULT: v("canvas"), raised: v("canvas-raised"), sunken: v("canvas-sunken"), border: v("canvas-border") },
+        ai: v("ai"),
+        live: v("live")
       },
-      backgroundImage: { brand: "var(--grad)" },
+      backgroundImage: { brand: "var(--accent-grad)", ai: "var(--ai-grad)" },
       fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
-        display: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"]
+        // Plus Jakarta Sans (UI and numbers), Geist Mono (code), Noto Sans Tamil for Tamil glyphs: tokens.css --font-ui / --font-num
+        sans: ["Plus Jakarta Sans Variable", "Noto Sans Tamil Variable", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans Variable", "Noto Sans Tamil Variable", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "Menlo", "Consolas", "monospace"]
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1rem" }]
@@ -79,7 +83,8 @@ const config: Config = {
         "progress-grow": "progress-grow 0.5s cubic-bezier(0.22, 1, 0.36, 1) both"
       },
       transitionTimingFunction: {
-        spring: "cubic-bezier(0.22, 1, 0.36, 1)"
+        spring: "cubic-bezier(0.16, 1, 0.3, 1)",
+        "in-out-civic": "cubic-bezier(0.65, 0, 0.35, 1)"
       }
     }
   },

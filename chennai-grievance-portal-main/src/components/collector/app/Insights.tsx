@@ -16,6 +16,30 @@ const day = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB",
 /** "about 1 a day", "about 1 every 3 days": what is normal for a place, in words. */
 const usual = (perDay: number) => (perDay >= 0.95 ? `about ${Math.round(perDay)} a day` : `about 1 every ${Math.max(2, Math.round(1 / Math.max(perDay, 0.01)))} days`);
 
+/** "Thousand Lights and Royapettah, Teynampet": the localities the reports name, then the zone. */
+const placeLine = (p: Row) => {
+  const loc = ((p.localities ?? []) as string[]).filter((l) => l.toLowerCase() !== String(p.zone_name ?? "").toLowerCase()).slice(0, 2);
+  return [loc.join(" and "), p.zone_name].filter(Boolean).join(", ") || "the district";
+};
+const nounOf = (p: Row, n: number) => (p.noun ? (n === 1 ? p.noun[0] : p.noun[1]) : `${String(p.label).toLowerCase()} report${n === 1 ? "" : "s"}`);
+/** A spike as one would say it: "4 road accidents in Thousand Lights, Teynampet on Tue 6 Oct". */
+export const spikeLine = (e: Row, short = false) => {
+  const n = Number(e.observed);
+  return `${n} ${nounOf(e, n)} in ${short ? e.zone_name ?? "the district" : placeLine(e)} ${e.kind === "slow_rise" ? `in the ${e.days} days to ${day(e.date)}` : `on ${day(e.date)}`}`;
+};
+/** The localities a spike's reports name, other than the zone itself. */
+const localities = (e: Row) => ((e.localities ?? []) as string[]).filter((l) => l.toLowerCase() !== String(e.zone_name ?? "").toLowerCase()).slice(0, 2).join(", ");
+/** "Royapettah (Govt Royapettah Hospital)" -> "Govt Royapettah Hospital, Royapettah" */
+const spot = (s: string) => {
+  const m = String(s ?? "").match(/^(.*?)\s*\((.+)\)\s*$/);
+  // "Rajiv Nagar, Rajiv Nagar, Kaladipet": each name once
+  return [...new Set((m ? `${m[2]}, ${m[1]}` : String(s ?? "")).split(/\s*,\s*/).filter(Boolean))].join(", ");
+};
+/** A hotspot as one would say it: "Thefts and snatchings keep coming back near Egmore Railway Station, Egmore". */
+const hotspotLine = (h: Row) => { const s = nounOf(h, 2); return `${s[0].toUpperCase()}${s.slice(1)} near ${spot(h.top_place)}`; };
+/** The newest report behind it, in its own words. */
+const Quote = ({ t }: { t: string | null }) => (t ? <>&ldquo;{t}&rdquo;</> : null);
+
 // ================================================================ briefing ==
 
 type Brief = Insights["briefing"];
@@ -112,7 +136,9 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
             {b.market.length > 0 && <div className="bf2-market"><I n="chart" /><span><b>Vegetable prices:</b> {b.market[0]}.</span></div>}
 
             <h4 className="bf2-h"><span>1</span>Decisions for you
-              <small>{b.attention.length ? `${b.attention.length} open incident${b.attention.length === 1 ? "" : "s"}, most urgent first` : "nothing right now"}</small></h4>
+              <small title={b.ranking ? "Priority = severity plus weighted signals (deadlines, sources, rain...). The weights learn from your Verify and Send back decisions." : undefined}>
+                {b.attention.length ? `${b.attention.length} open incident${b.attention.length === 1 ? "" : "s"}, most urgent first` : "nothing right now"}
+                {b.ranking && b.attention.length ? ` · ${b.ranking.text}` : ""}</small></h4>
             {b.attention.length ? (
               <Decisions items={b.attention} render={(a, k) => (
                   <li key={a.id} style={{ "--c": SEV_HEX[a.sev] } as React.CSSProperties}>
@@ -151,8 +177,8 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
                   {b.emerging.slice(0, 4).map((e, k) => (
                     <button key={k} onClick={() => c.openPattern({ kind: "spike", cat: e.cat, zone: e.zone != null ? Number(e.zone) : null, date: e.date })}>
                       <i className="spk" />
-                      <b>{e.label} in {e.zone_name ?? "the district"}</b>
-                      <small>{e.observed} reports on {day(e.date)}; normally {usual(Number(e.expected))}</small>
+                      <b>{spikeLine(e)}</b>
+                      <small>{e.example ? <><Quote t={e.example} /> · </> : null}normally {usual(Number(e.perDay ?? e.expected))}{e.kind === "slow_rise" ? " (slow rise)" : ""}</small>
                     </button>
                   ))}
                 </div>
@@ -161,7 +187,7 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
 
             <h4 className="bf2-h"><span>{b.emerging.length ? 3 : 2}</span>From added sources
               <small>{b.addedCount ? `${b.addedCount} item${b.addedCount === 1 ? "" : "s"} in the last ${b.addedDays} days` : `none in the last ${b.addedDays} days`}</small>
-              <button className="lnk" onClick={() => (b.addedCount ? c.openAdded() : c.openSources("add"))}>{b.addedCount ? "See all ›" : "Add a source ›"}</button>
+              {b.addedCount > 0 && <button className="lnk" onClick={() => c.openAdded()}>See all ›</button>}
             </h4>
             <div className="bf2-src">
               {b.fromSources.slice(0, 4).map((i) => (
@@ -331,20 +357,22 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
       </article>
 
       <article className="card" style={{ gridColumn: "span 4" }}>
-        <div className="ch"><I n="bolt" /><h3>Unusual spikes <span>· a day far above normal</span></h3><span className="cnt-b">{ins.patterns.emerging.length}</span></div>
+        <div className="ch"><I n="bolt" /><h3>Unusual rises <span>· a day or a fortnight far above normal</span></h3><span className="cnt-b">{ins.patterns.emerging.length}</span></div>
         <div className="fitlist">
           {ins.patterns.emerging.length ? ins.patterns.emerging.map((e, k) => (
             <button key={k} className="pat" onClick={() => c.openPattern({ kind: "spike", cat: e.cat, zone: e.zone != null ? Number(e.zone) : null, date: e.date })}
-              title="See the reports behind this spike">
+              title={e.kind === "slow_rise" ? "See the reports behind this slow rise" : "See the reports behind this spike"}>
               <span className="bic t-high"><I n="bolt" /></span>
               <span className="pat-m">
-                <b>{e.label} · {e.zone_name ?? "District"}</b>
-                <small title={`Normally ${usual(Number(e.expected))}`}>{e.observed} reports on {day(e.date)}</small>
+                <b title={spikeLine(e)}>{spikeLine(e, true)}</b>
+                <small title={`Normally ${usual(Number(e.perDay ?? e.expected))}`}>
+                  {localities(e) ? `${localities(e)} · ` : ""}{e.example ? <Quote t={e.example} /> : e.kind === "slow_rise" ? `Slow rise over ${e.days} days` : `Normally ${usual(Number(e.perDay ?? e.expected))}`}
+                </small>
               </span>
-              <span className="pat-x" title={`Normally ${usual(Number(e.expected))}`}>{Math.round(Number(e.ratio))}×<small>usual</small></span>
+              <span className="pat-x" title={`Normally ${usual(Number(e.perDay ?? e.expected))}`}>{Math.round(Number(e.ratio))}×<small>usual</small></span>
               <I n="chevr" />
             </button>
-          )) : <Empty>No unusual spikes in the last three weeks.</Empty>}
+          )) : <Empty>No unusual rises in the last three weeks.</Empty>}
         </div>
       </article>
       <article className="card" style={{ gridColumn: "span 4" }}>
@@ -354,8 +382,10 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
             <button key={h.id} className="pat" onClick={() => c.openPattern({ kind: "hotspot", id: h.id })} title="See every incident at this spot">
               <span className="bic t-violet"><I n="pin" /></span>
               <span className="pat-m">
-                <b title={h.top_place}>{h.label} · {h.top_place}</b>
-                <small>{h.incidents} since {fmtDate(h.first_seen + " 00:00:00")} · {h.open} open{h.zone_name ? ` · ${h.zone_name}` : ""}</small>
+                <b title={`${h.label} · ${h.top_place}`}>{hotspotLine(h)}</b>
+                <small title={`${h.incidents} since ${fmtDate(h.first_seen + " 00:00:00")} · ${h.open} open${h.zone_name ? ` · ${h.zone_name}` : ""}`}>
+                  {h.open} open · {h.example ? <>latest: <Quote t={h.example} /></> : `${h.incidents} since ${fmtDate(h.first_seen + " 00:00:00")}`}
+                </small>
               </span>
               <span className="pat-x" title="Incidents in the last 30 days">{h.incidents_30d}<small>in 30 d</small></span>
               <I n="chevr" />
@@ -377,12 +407,34 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
  */
 function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
   const r = ins.review, k = r.counts;
+  const placed = (r.placed ?? []) as Row[];
+  const [tab, setTab] = useState<"missing" | "placed">("missing");
   const skipped = k ? [k.district ? `${k.district} city-wide` : null, k.located ? `${k.located} placed from the report` : null,
     k.outside ? `${k.outside} outside Chennai` : null].filter(Boolean).join(" · ") : "";
   return (
     <>
       <div className="ch"><I n="pin" /><h3 title="Specific incidents reported only as 'in Chennai': the map cannot show them">Locations needing review</h3>
         <span className="cnt-b">{r.unplacedTotal}</span></div>
+      {placed.length > 0 && (
+        <div className="lr-tabs" role="tablist" aria-label="Locations">
+          <button role="tab" aria-selected={tab === "missing"} className={tab === "missing" ? "on" : ""} onClick={() => setTab("missing")}>Place unknown <b>{r.unplacedTotal}</b></button>
+          <button role="tab" aria-selected={tab === "placed"} className={tab === "placed" ? "on" : ""} onClick={() => setTab("placed")}
+            title="Reported only as 'in Chennai' by the pipeline, but the headline, its translation or the article names the place: now on the map">Placed from the report <b>{placed.length}</b></button>
+        </div>
+      )}
+      {tab === "placed" ? (
+        <div className="cb scroll-list">
+          {placed.map((i) => (
+            <div key={i.id} className="lr lr-placed">
+              <button className="lr-open" onClick={() => c.openInc(i.id)} title="Open the incident">
+                <b>{i.title || i.type}</b>
+                <small>{[i.place + (i.zone_name && i.zone_name !== i.place ? `, ${i.zone_name}` : ""), i.how, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small>
+              </button>
+              <button className="lr-map" onClick={() => c.locate(i)} title="Show it on the map" aria-label="Show on the map"><I n="target" /></button>
+            </div>
+          ))}
+        </div>
+      ) : <>
       {skipped && <p className="lr-note" title="Not listed: weather warnings and city-wide reports have no single place; the others were placed from their map point or a place named in the report, or are outside Chennai district.">Not listed: {skipped}</p>}
       <div className="cb scroll-list">
         {r.unplaced.length ? r.unplaced.map((i) => (
@@ -392,6 +444,7 @@ function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
           </button>
         )) : <Empty>Every open incident has a place on the map.</Empty>}
       </div>
+      </>}
     </>
   );
 }

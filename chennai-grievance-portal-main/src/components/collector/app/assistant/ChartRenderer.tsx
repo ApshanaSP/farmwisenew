@@ -16,6 +16,7 @@ import { AriaComponent, DataZoomComponent, GraphicComponent, GridComponent, Lege
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
 import ReactEChartsCore from "echarts-for-react/lib/core";
+import { PALETTE, currentTheme, type Theme } from "@/components/ui/chartTheme";
 import { chartView, fmtValue, type ChartView } from "@/lib/assistant/chartspec";
 import type { ChartSpec, Dataset } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
@@ -23,20 +24,19 @@ import type { Lang } from "@/lib/assistant/lang";
 echarts.use([BarChart, LineChart, PieChart, HeatmapChart, ScatterChart, GaugeChart, TreemapChart, DataZoomComponent, GraphicComponent, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent, MarkAreaComponent,
   MarkPointComponent, TitleComponent, VisualMapComponent, AriaComponent, CanvasRenderer, UniversalTransition, LabelLayout]);
 
-/** District IQ chart theme (mirror of tokens.css): blue leads, cyan / violet / amber follow; neutral comparison. */
-const SERIES = ["#4C8DFF", "#2BC7D9", "#A28EFA", "#E8B84A"];
-const INK = { primary: "#E6ECF7", secondary: "#A8B5CD", muted: "#7383A2", grid: "rgba(138,164,214,.09)", axis: "rgba(138,164,214,.22)" };
-const HIGHLIGHT = "#4C8DFF";
-/** the rest when one mark is the point: a quiet slate, so the highlighted one reads first ("highlight one, grey the rest") */
-const MUTED = "#5A6E95";
-const PREV = "#27324A";
-/** direction of a change: rose (orange) and fell (aqua), never the reserved severity reds */
-const ROSE = "#F0894E";
-const FELL = "#2BC7A0";
-const TRACK = "rgba(138,164,214,.06)";
-const SURFACE = "#0B1426";
-const SEVERITY: Record<string, string> = { Severe: "#F2555A", High: "#F7893B", Medium: "#E8B84A", Low: "#4DB3E8" };
-const FONT = '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+/** District IQ chart theme (src/components/ui/chartTheme.ts, mirror of tokens.css), set for the page's theme before each draw:
+ *  azure leads, cyan / violet / amber follow; comparisons are neutral greys. */
+let SERIES: string[], INK: { primary: string; secondary: string; muted: string; grid: string; axis: string }, HIGHLIGHT: string, MUTED: string, PREV: string;
+/** direction of a change: rose (orange) and fell (green), never the reserved severity red */
+let ROSE: string, FELL: string, TRACK: string, SURFACE: string, SEVERITY: Record<string, string>, FONT: string, TIP_BG: string, TIP_LINE: string;
+function applyChartTheme(theme: Theme) {
+  const p = PALETTE[theme];
+  SERIES = p.series.slice(0, 4);
+  INK = { primary: p.text, secondary: p.text2, muted: p.text3, grid: p.grid, axis: p.axis };
+  HIGHLIGHT = p.series[0]; MUTED = p.muted; PREV = p.prev; ROSE = p.rose; FELL = p.fell; TRACK = p.track; SURFACE = p.surface;
+  SEVERITY = p.severity; FONT = p.font; TIP_BG = p.tooltipBg; TIP_LINE = p.tooltipLine;
+}
+applyChartTheme("dark");
 
 export interface ChartProps {
   spec: ChartSpec;
@@ -52,7 +52,8 @@ export default memo(ChartRenderer);
 
 function ChartRenderer({ spec, ds, lang, height, onDrill, onReady }: ChartProps) {
   const view = useMemo(() => chartView(spec, ds, lang), [spec, ds, lang]);
-  const option = useMemo(() => buildOption(view), [view]);
+  const theme = currentTheme();
+  const option = useMemo(() => { applyChartTheme(theme); return buildOption(view); }, [view, theme]);
   return (
     <ReactEChartsCore echarts={echarts} option={option} replaceMerge={["series", "xAxis", "yAxis", "visualMap", "legend"]} lazyUpdate
       style={{ height, width: "100%" }} opts={{ renderer: "canvas" }} onChartReady={onReady}
@@ -70,12 +71,12 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
   const v: ChartView = folded.length && folded.length < view.series.length ? { ...view, series: folded } : view;
   const common = {
     // quick: the answer should feel instant, and a long list must not trickle in bar by bar
-    animationDuration: 420, animationDurationUpdate: 320, animationEasing: "cubicOut" as const, animationEasingUpdate: "cubicInOut" as const,
-    animationDelay: (i: number) => Math.min(i * 12, 120),
+    animationDuration: 700, animationDurationUpdate: 420, animationEasing: "cubicOut" as const, animationEasingUpdate: "cubicInOut" as const,
+    animationDelay: (i: number) => Math.min(i * 30, 240),
     textStyle: { fontFamily: FONT, color: INK.secondary },
     aria: { enabled: true, label: { description: describe(v) } },
-    tooltip: { trigger: "item", confine: true, backgroundColor: "#0F192E", borderColor: "rgba(138,164,214,.28)", borderWidth: 1, padding: [9, 12],
-      textStyle: { color: "#E6ECF7", fontSize: 12.5, fontFamily: FONT },
+    tooltip: { trigger: "item", confine: true, backgroundColor: TIP_BG, borderColor: TIP_LINE, borderWidth: 1, padding: [9, 12],
+      textStyle: { color: INK.primary, fontSize: 12.5, fontFamily: FONT },
       extraCssText: "border-radius:8px;box-shadow:0 18px 40px -14px rgba(0,0,0,.8);line-height:1.5;font-variant-numeric:tabular-nums" }
   };
   const s0 = v.series[0];
@@ -90,7 +91,7 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
       yAxis: { type: "category", data: h.ys, inverse: true, axisLabel: { color: INK.secondary, fontSize: 11.5, width: 150, overflow: "truncate" }, axisLine: { show: false },
         axisTick: { show: false } },
       visualMap: { min: 0, max: Math.max(1, h.max), calculable: false, orient: "horizontal", left: "center", bottom: 0, itemHeight: 120, itemWidth: 10,
-        inRange: { color: ["#0F1D36", "#1E3D73", "#2F6FE6", "#8DB6FF"] }, textStyle: { color: INK.muted, fontSize: 11 } },
+        inRange: { color: [TRACK, "#18A7BC", "#F07A4A", "#E0364A"] }, textStyle: { color: INK.muted, fontSize: 11 } },
       series: [{ id: "s0", type: "heatmap", data: h.cells, label: { show: h.cells.length <= 120, color: INK.primary, fontSize: 10.5 },
         itemStyle: { borderColor: SURFACE, borderWidth: 2, borderRadius: 3 }, emphasis: { itemStyle: { borderColor: INK.primary, borderWidth: 1 } },
         universalTransition: { enabled: true } }],
@@ -118,7 +119,7 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
         labelLine: { length: 8, length2: 8, lineStyle: { color: INK.axis } },
         data: v.categories.map((name, i) => ({
           name, value: s0.values[i] ?? 0,
-          itemStyle: { color: sev(name) ?? (v.highlight.includes(i) ? HIGHLIGHT : [MUTED, "#2BC7D9", "#A28EFA", "#E8B84A", "#35C28C", "#6F86B0"][i % 6]) },
+          itemStyle: { color: sev(name) ?? (v.highlight.includes(i) ? HIGHLIGHT : [MUTED, SERIES[1], SERIES[2], SERIES[3], FELL, INK.muted][i % 6]) },
           selected: v.highlight.includes(i)
         })),
         selectedOffset: 6, universalTransition: { enabled: true }
@@ -161,10 +162,10 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
         endLabel: { show: true, formatter: multi ? "{a}" : (p: { value: number | null }) => fmt(s)(p.value), color: multi ? INK.secondary : INK.primary,
           fontSize: 11.5, fontWeight: multi ? 400 : 600, distance: 6 },
         markArea: k === 0 && v.band ? { silent: true, itemStyle: { color: "rgba(18,146,95,.08)" },
-          label: { show: true, position: "insideTopLeft", color: "#35C28C", fontSize: 10.5, formatter: "Usual range" },
+          label: { show: true, position: "insideTopLeft", color: FELL, fontSize: 10.5, formatter: "Usual range" },
           data: [[{ yAxis: v.band.lo }, { yAxis: v.band.hi }]] } : undefined,
         markLine: k === 0 && v.threshold ? thresholdLine(v, false) : undefined,
-        markPoint: k === 0 && hi != null && s.values[hi] != null ? { symbol: "circle", symbolSize: 10, itemStyle: { color: "#8DB6FF", borderColor: SURFACE, borderWidth: 2 },
+        markPoint: k === 0 && hi != null && s.values[hi] != null ? { symbol: "circle", symbolSize: 10, itemStyle: { color: HIGHLIGHT, borderColor: SURFACE, borderWidth: 2 },
           label: { show: v.callouts.length > 0, position: "top", distance: 8, color: INK.primary, fontWeight: 700, fontSize: 12, formatter: () => fmt(s)(s.values[hi]) },
           data: [{ coord: [hi, s.values[hi]] }] } : undefined
       });
@@ -188,7 +189,7 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
         rich: {} },
       // bars grow in one after another, quickly
       animationDuration: 650, animationDelay: (i: number) => Math.min(i * 45, 400), animationEasing: "cubicOut",
-      emphasis: { focus: "series", itemStyle: { color: multi ? color : "#6FA3FF" } },
+      emphasis: { focus: "series", itemStyle: { color: multi ? color : HIGHLIGHT } },
       cursor: "pointer",
       showBackground: !stacked && !multi, backgroundStyle: { color: TRACK, borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
       markLine: k === 0 && v.threshold ? thresholdLine(v, horizontal) : undefined
@@ -209,7 +210,7 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
     series,
     // long series: scroll the mouse wheel over the chart or drag the slider to zoom
     dataZoom: isLine && v.categories.length > 31 ? [{ type: "inside", start: 0, end: 100 }, { type: "slider", height: 16, bottom: 0, borderColor: "transparent",
-      backgroundColor: "#101B31", fillerColor: "rgba(76,141,255,.18)", handleStyle: { color: HIGHLIGHT }, textStyle: { color: INK.muted, fontSize: 10 } }] : undefined,
+      backgroundColor: TRACK, fillerColor: "rgba(61,139,255,.18)", handleStyle: { color: HIGHLIGHT }, textStyle: { color: INK.muted, fontSize: 10 } }] : undefined,
     tooltip: { ...common.tooltip, trigger: isLine ? "axis" : "item", axisPointer: isLine ? { type: "line", lineStyle: { color: INK.muted, width: 1 } } : undefined,
       valueFormatter: (x: number | null) => fmt(s0)(x) }
   };
@@ -218,8 +219,8 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
 function thresholdLine(v: ChartView, horizontal: boolean) {
   const t = v.threshold!;
   return {
-    silent: true, symbol: "none", lineStyle: { color: "#F7893B", width: 1.5, type: [5, 4] },
-    label: { color: "#F7893B", fontSize: 11, fontWeight: 600, formatter: t.label, position: horizontal ? "end" : "insideEndTop" },
+    silent: true, symbol: "none", lineStyle: { color: SEVERITY.High, width: 1.5, type: [5, 4] },
+    label: { color: SEVERITY.High, fontSize: 11, fontWeight: 600, formatter: t.label, position: horizontal ? "end" : "insideEndTop" },
     data: [horizontal ? { xAxis: t.value } : { yAxis: t.value }]
   };
 }
@@ -255,7 +256,7 @@ function smallMultiples(v: ChartView, common: Common): echarts.EChartsCoreOption
     series: v.series.map((s, i) => ({
       id: `s${i}`, name: s.name, type: "line", xAxisIndex: i, yAxisIndex: i, data: s.values, showSymbol: false, smooth: 0.2,
       lineStyle: { width: 2, color: HIGHLIGHT }, areaStyle: { color: HIGHLIGHT, opacity: 0.08 }, universalTransition: { enabled: true },
-      markPoint: { symbol: "circle", symbolSize: 7, itemStyle: { color: "#8DB6FF", borderColor: SURFACE, borderWidth: 2 },
+      markPoint: { symbol: "circle", symbolSize: 7, itemStyle: { color: HIGHLIGHT, borderColor: SURFACE, borderWidth: 2 },
         label: { show: true, position: "top", fontSize: 10.5, color: INK.primary, formatter: (p: { value: number }) => fmtValue(p.value, s.format, s.unit) },
         data: [{ type: "max" }] }
     })),
@@ -273,7 +274,7 @@ function dumbbell(v: ChartView, common: Common): echarts.EChartsCoreOption {
   const lo = s.values.map((x, i) => Math.min(x ?? 0, prev[i] ?? x ?? 0));
   const span = s.values.map((x, i) => Math.abs((x ?? 0) - (prev[i] ?? x ?? 0)));
   const dir = s.values.map((x, i) => ((x ?? 0) > (prev[i] ?? x ?? 0) ? 1 : (x ?? 0) < (prev[i] ?? x ?? 0) ? -1 : 0));
-  const tone = (i: number) => (dir[i] > 0 ? ROSE : dir[i] < 0 ? FELL : "#7383A2");
+  const tone = (i: number) => (dir[i] > 0 ? ROSE : dir[i] < 0 ? FELL : INK.muted);
   const f = fmt(s);
   const delta = (i: number) => { const a = s.values[i], b = prev[i]; return a == null || b == null ? "" : `${a >= b ? "+" : "−"}${f(Math.abs(a - b))}`; };
   return {
