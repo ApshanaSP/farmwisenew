@@ -24,7 +24,7 @@ class LLM:
         self.jobs = set(cfg.get("jobs") or [])
         self._chain = Chain(news_cfg or {}, "link") if cfg.get("enabled") else None
         self.enabled = bool(self._chain and self._chain.enabled)
-        self.deadline = time.time() + 60 * float(cfg.get("minutes", 3))
+        self.deadline: float | None = None  # the time budget starts at the first call, not when the build starts
         if cfg.get("enabled") and not self.enabled:
             log.info("agent LLM: no GROQ_API_KEY or GEMINI_API_KEY in district_intel/.env; agents use their rules")
 
@@ -33,6 +33,8 @@ class LLM:
         return self if self.enabled and job in self.jobs else None
 
     def available(self) -> bool:
+        if self.enabled and self.deadline is None:
+            self.deadline = time.time() + 60 * float(self.cfg.get("minutes", 3))
         return (self.enabled and not self._chain.stopped and time.time() < self.deadline
                 and self.calls < int(self.cfg.get("max_calls_per_run", 200)))
 

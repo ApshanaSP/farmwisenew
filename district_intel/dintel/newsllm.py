@@ -48,8 +48,8 @@ DEFAULT_CHAINS = {
     "explain": [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b")],
     # the page 2 briefing: Gemini only (the rule text covers what it does not reach)
     # Tamil headline translation and the "same incident?" check on unsure report pairs: Groq, Gemini as the backup
-    "translate": [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-3.5-flash")],
-    "link": [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-3.5-flash")],
+    "translate": [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-3.5-flash"), ("gemini", "gemini-3.5-flash-lite")],
+    "link": [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-3.5-flash"), ("gemini", "gemini-3.5-flash-lite")],
     "brief": [("gemini", "gemini-3.8-flash"), ("gemini", "gemini-3.5-flash"), ("gemini", "gemini-flash-latest"), ("gemini", "gemini-3.5-flash-lite")],
 }
 
