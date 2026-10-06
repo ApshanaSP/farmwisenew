@@ -1,21 +1,21 @@
 ﻿table,check,severity,failing,total,examples,action
-events,event_id unique,hard,0,31915,,keep first; fix loader
-events,reported_at present,hard,0,31915,,quarantine
-events,category in master,hard,0,31915,,propose crosswalk entry
-events,lead department in master,soft,0,31915,,propose department mapping
-events,reported not before occurred (15 min),soft,2,31915,IMDW-202610060000|IMDW-202610050000,flag
-events,closed not before reported,hard,0,31915,,quarantine
-events,not in the future,hard,3,31915,IMDW-202610060000|IMDW-202610040000|IMDW-202610050000,quarantine
-events,has a location,soft,0,31915,,geo review queue
-events,inside the district,soft,177,31915,POL-20260408-0065|POL-20260408-0039|POL-20260410-0038|POL-20260410-0049|POL-20260410-0047,flag out of district
-events,taluk resolved,soft,2,31915,NEWS-20260927-125df991739d4613|POL-OVL-00069,flag
-events,geo confidence >= 0.7,soft,434,31915,NEWS-20260924-30597496e6114dbd|NEWS-20261001-8e3a3957bb22453c|NEWS-20260924-eeca4b93d5a1478d|NEWS-20260924-1de4c813f6ca475f|NEWS-20260929-535fecb487f54d23,geo review queue
-events,text usable,soft,219,31915,GRV-2026-566PNC|GRV-2026-911QEX|GRV-2026-671TXB|GRV-2026-051TWS|GRV-2026-321MEP,hide from briefings
-events,provenance snapshot present,soft,0,31915,,flag
-events,cross-reference resolves,soft,1181,31915,POL-20260408-0023|POL-20260408-0065|POL-20260409-0003|POL-20260410-0018|POL-20260409-0023,kept as external reference; links come from matching
-events,Closed status has a close time,soft,0,31915,,flag
-observations,plausible reading,soft,24,29674,gauge_level_m:CFM-106:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-111:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-118:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-131:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-132:2026-09-30 06:30:00+05:30,"keep value, never alert on it"
-observations,value present,hard,0,29674,,quarantine
-actions,lifecycle in order,hard,0,5057,,quarantine
+events,event_id unique,hard,0,32503,,keep first; fix loader
+events,reported_at present,hard,0,32503,,quarantine
+events,category in master,hard,0,32503,,propose crosswalk entry
+events,lead department in master,soft,0,32503,,propose department mapping
+events,reported not before occurred (15 min),soft,2,32503,IMDW-202610060000|IMDW-202610050000,flag
+events,closed not before reported,hard,0,32503,,quarantine
+events,not in the future,hard,0,32503,,quarantine
+events,has a location,soft,0,32503,,geo review queue
+events,inside the district,soft,178,32503,POL-20260408-0065|POL-20260408-0039|POL-20260410-0038|POL-20260410-0049|POL-20260410-0047,flag out of district
+events,taluk resolved,soft,3,32503,NEWS-20260924-c65e5810043a4323|NEWS-20260927-125df991739d4613|POL-OVL-00188,flag
+events,geo confidence >= 0.7,soft,716,32503,NEWS-20260924-7d4c7e3fb15e4f68|NEWS-20260924-429c90689abe42cc|NEWS-20260924-a2ac03d9e83b4bf1|NEWS-20260924-8ff30146c40d478a|NEWS-20261001-8e3a3957bb22453c,geo review queue
+events,text usable,soft,225,32503,GRV-2026-401AJB|GRV-2026-963PDJ|GRV-2026-599WLX|GRV-2026-086RWC|GRV-2026-601XVP,hide from briefings
+events,provenance snapshot present,soft,0,32503,,flag
+events,cross-reference resolves,soft,1181,32503,POL-20260408-0023|POL-20260408-0065|POL-20260409-0003|POL-20260410-0018|POL-20260409-0023,kept as external reference; links come from matching
+events,Closed status has a close time,soft,0,32503,,flag
+observations,plausible reading,soft,24,29748,gauge_level_m:CFM-106:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-111:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-118:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-131:2026-09-30 06:30:00+05:30|gauge_level_m:CFM-132:2026-09-30 06:30:00+05:30,"keep value, never alert on it"
+observations,value present,hard,0,29748,,quarantine
+actions,lifecycle in order,hard,0,4592,,quarantine
 pwd_works,spend within 1.25 x sanction,soft,0,242,,flag cost overrun
 pwd_works,completed at 100%,soft,0,242,,flag

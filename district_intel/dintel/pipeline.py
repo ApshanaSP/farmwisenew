@@ -73,7 +73,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     ref = Reference(settings)
     wards = WardIndex(settings.src("wards_geojson"))
     zone_names = {w.zone_no: w.zone_name for w in wards.wards}
-    llm = LLM(settings.raw.get("llm", {}))
+    llm = LLM(settings.raw.get("llm", {}), settings.raw.get("news_llm", {}))
     metrics: dict = {"pipeline_version": PIPELINE_VERSION, "llm_enabled": llm.enabled}
     agent_runs = []
 
@@ -99,7 +99,8 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     metrics["news_gate"] = N.get("gate_eval", {})
     metrics["news_funnel"] = {"feed_rows": N["raw_rows"], "unique_urls": N["unique_urls"], "documents": len(docs),
                               "stories": int(docs["story_id"].nunique()), "incident_articles": int(docs["is_incident"].sum()),
-                              "incident_events": int(len(NE)), "with_full_text": int((docs["body_status"] == "full").sum()),
+                              "incident_events": int(len(NE)), "with_full_text": int(docs["body_status"].isin(["full", "full_publisher_page"]).sum()),
+                              "full_text_from_publisher_page": int((docs["body_status"] == "full_publisher_page").sum()),
                               "located_below_district": int((docs["geo_level"] != "district").sum())}
 
     # ------------------------------------------------------------------- geo --
@@ -107,6 +108,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     gmask = events["source"] == "grievance"
     tables = geolocate.place_tables(events[gmask])
     metrics["geo_holdout"] = geolocate.geo_holdout(events[gmask])
+    events = geolocate.place_from_story(events, docs)
     events = geolocate.resolve(events, wards, ward_taluk, settings.pipe["snap_outside_points_m"], tables)
     as_of = _as_of(settings, events)
     metrics["as_of"] = str(as_of)
@@ -178,16 +180,16 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     inc["action_total"] = inc["action_total"].fillna(0).astype(int)
     inc["action_done"] = inc["action_done"].fillna(0).astype(int)
     gaps, r2 = workers.gap_finder(inc, as_of)
-    link_items, r3 = workers.linker(pairs, events, llm)
+    link_items, r3 = workers.linker(pairs, events, llm.for_job("link"), settings.out_dir / "state" / "link_llm.jsonl")
     warn_obs = obs[(obs["metric"] == "imd_warning_level") & (obs["value"] >= 1) & (obs["observed_at"] >= as_of.normalize())]
     alerts, r4 = workers.watchdog(inc, an, sig, warn_obs, ref, as_of, zone_names)
-    S = steward.run(settings, ref, events, obs, all_actions, W["works"], docs, N["raw_rows"], as_of, llm)
+    S = steward.run(settings, ref, events, obs, all_actions, W["works"], docs, N["raw_rows"], as_of, llm.for_job("steward"))
     alerts += S["alerts"]
     alerts_df = pd.DataFrame(alerts)
     alerts_df.insert(0, "alert_id", [f"ALR-{i + 1:04d}" for i in range(len(alerts_df))])
     alerts_df["created_at"] = as_of
     alerts_df["status"] = "new"
-    B, r5 = briefing.run(inc, kp, alerts_df, gaps, all_actions, S["health"], ref, as_of, llm)
+    B, r5 = briefing.run(inc, kp, alerts_df, gaps, all_actions, S["health"], ref, as_of, llm.for_job("briefing"))
     B = newsllm.brief(settings, B)
     notes = briefai.run(settings, ref, inc, docs, sig, E["forecasts"], calendar, an, as_of)
     agent_runs = [r.row(as_of) for r in (r1, r2, r3, r4, S["run"], r5)]

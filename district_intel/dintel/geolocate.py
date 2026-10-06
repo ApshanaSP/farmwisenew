@@ -83,6 +83,41 @@ def geo_holdout(g: pd.DataFrame, seed: int = 11) -> dict:
     return out
 
 
+STORY_PRECISION = {"locality": 1500.0, "zone": 4000.0, "taluk": 4000.0}
+LEVEL_ORDER = {"locality": 0, "zone": 1, "taluk": 2}
+
+
+def place_from_story(events: pd.DataFrame, docs: pd.DataFrame) -> pd.DataFrame:
+    """News incidents found from a headline that names no place (most Google News items) sit at "Chennai" and get no
+    ward or zone, so the map cannot show them. When another article of the same story (any outlet, Tamil or English)
+    names the place, the incident takes it: the most specific level, then the place most articles name. Headlines with
+    no such article stay district-wide; nothing is guessed."""
+    e = events
+    todo = (e["source"] == "news") & (e["geo_level"] == "district")
+    if not todo.any():
+        return e
+    placed = docs[(docs["geo_level"] != "district") & (docs["is_district"] == 1) & docs["lat"].notna()]
+    if not len(placed):
+        return e
+    best = (placed.assign(_lvl=placed["geo_level"].map(LEVEL_ORDER).fillna(3))
+            .groupby(["story_id", "place_text", "geo_level", "_lvl"]).agg(n=("doc_id", "size"), lat=("lat", "first"), lon=("lon", "first"))
+            .reset_index().sort_values(["story_id", "_lvl", "n"], ascending=[True, True, False]).drop_duplicates("story_id")
+            .set_index("story_id"))
+    story = e["ext_ref"].where(todo)
+    hit = todo & story.isin(best.index)
+    s = story[hit]
+    e.loc[hit, "lat"] = s.map(best["lat"]).to_numpy()
+    e.loc[hit, "lon"] = s.map(best["lon"]).to_numpy()
+    e.loc[hit, "place_text"] = s.map(best["place_text"]).to_numpy()
+    e.loc[hit, "geo_level"] = s.map(best["geo_level"]).to_numpy()
+    e.loc[hit, "loc_precision_m"] = s.map(best["geo_level"]).map(STORY_PRECISION).to_numpy()
+    e.loc[hit, "geo_conf"] = 0.5
+    e.loc[hit, "geo_method"] = "story_place"
+    log.info("geo: %d of %d news incidents with no place of their own placed from another article of the same story",
+             int(hit.sum()), int(todo.sum()))
+    return e
+
+
 def resolve(events: pd.DataFrame, wards: WardIndex, ward_taluk: dict[int, tuple[str, float]], snap_m: float,
             tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
     e = events

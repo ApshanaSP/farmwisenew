@@ -49,13 +49,17 @@ EXTRA_INDEXES = {
 DOCUMENT_COLUMNS = {
     "doc_id": ["doc_id"], "article_id": ["article_id"], "story_id": ["story_id"], "story_role": ["story_role"],
     "outlet_count": ["outlet_count"], "title": ["title"], "summary": ["summary"], "body": ["body"],
-    "url": ["canonical_url", "url"], "publisher": ["publisher"], "publisher_domain": ["source_domain", "publisher_domain"],
+    "url": ["publisher_url", "canonical_url", "url"], "publisher": ["publisher"], "publisher_domain": ["source_domain", "publisher_domain"],
     "publisher_tier": ["publisher_tier"], "reliability": ["reliability"], "lang": ["lang"], "source_kind": ["source_kind"],
     "report_type": ["report_type"], "published_at": ["published_at"], "fetched_at": ["fetched_at"],
     "is_district": ["is_district"], "is_incident": ["is_incident"], "incident_conf": ["incident_conf"],
     "category_code": ["category_code"], "category_conf": ["category_conf"], "department": ["dept_src"],
     "place_text": ["place_text"], "lat": ["lat"], "lon": ["lon"], "geo_level": ["geo_level"],
     "dead": ["dead"], "injured": ["injured"], "event_id": ["event_id"], "linked_incident_id": ["linked_incident_id"],
+    # the LLM's details on each article, the English headline of a Tamil one, how it was placed, where its text came from
+    "ai_people": ["ai_people"], "ai_orgs": ["ai_orgs"], "ai_dead": ["ai_dead"], "ai_injured": ["ai_injured"],
+    "ai_status": ["ai_status"], "ai_place": ["ai_place"], "title_en": ["title_en"], "geo_method": ["geo_method"],
+    "body_status": ["body_status"],
 }
 
 DATETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$")

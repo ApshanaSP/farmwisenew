@@ -30,6 +30,7 @@ from ..util import INTEL_DIR, IST, REF_DIR, Settings, UnionFind, log, mixed_to_i
 
 NON_INCIDENT_TYPES = ["service_notice", "announcement", "court", "politics", "entertainment_sport", "business"]
 
+TR_SAME_PLACE, TR_ONE_PLACE = 0.90, 0.94   # translated Tamil headline vs English headline (e5 cosine), see _embed_stories
 PRECISION = {"locality": 1500.0, "zone": 4000.0, "taluk": 4000.0, "district": 15000.0}
 GEO_CONF = {"locality": 0.7, "zone": 0.55, "taluk": 0.5, "district": 0.3}
 OTHER_DISTRICTS = re.compile(
@@ -230,6 +231,57 @@ def _stories(docs: pd.DataFrame, threshold: float = 0.55, hours: float = 48) -> 
     return roots
 
 
+def _add_full_text(settings: Settings, d: pd.DataFrame) -> None:
+    """Google News items carry only a headline: add the article text found on the publisher's own site
+    (dintel/fulltext.py; never through Google's links). The publisher's URL becomes the article's link."""
+    from .. import fulltext
+    try:
+        ft = fulltext.fetch(settings, d)
+    except Exception as exc:  # a network problem must never stop the build
+        log.warning("news full text skipped (%s)", exc)
+        ft = fulltext.read_cache(settings)
+    got = d["doc_id"].map(lambda k: (ft.get(k) or {}).get("text"))
+    has = got.notna() & (d["body_status"] == "snippet_google_news")
+    d.loc[has, "body_clean"] = got[has]
+    d.loc[has, "body_extracted"] = True
+    d.loc[has, "publisher_url"] = d.loc[has, "doc_id"].map(lambda k: ft[k]["url"])
+    d.loc[has, "body_status"] = "full_publisher_page"
+    log.info("news: %d Google News headlines have the article text from the publisher's site", int(has.sum()))
+
+
+def _details(d: pd.DataFrame, lab: pd.DataFrame) -> None:
+    """The LLM's details on each article: people, organisations, deaths/injured, status and the place phrase."""
+    def joined(col):
+        return [("|".join(dict.fromkeys(str(x).strip() for x in v if str(x).strip()))[:300] or None) if isinstance(v, list) else None
+                for v in lab.get(col, pd.Series(None, index=lab.index))]
+    d["ai_people"] = joined("people")
+    d["ai_orgs"] = joined("organisations")
+    d["ai_dead"] = pd.to_numeric(lab.get("dead"), errors="coerce").to_numpy() if "dead" in lab else np.nan
+    d["ai_injured"] = pd.to_numeric(lab.get("injured"), errors="coerce").to_numpy() if "injured" in lab else np.nan
+    st = lab["status"] if "status" in lab else pd.Series(None, index=lab.index)
+    d["ai_status"] = st.where(st.notna() & (st != "not_stated"), None).to_numpy()
+    pl = lab["place"] if "place" in lab else pd.Series(None, index=lab.index)
+    d["ai_place"] = pl.where(pl.fillna("").astype(str).str.strip() != "", None).to_numpy()
+
+
+def _ai_places(d: pd.DataFrame, rf, gaz, order: dict) -> None:
+    """Articles the gazetteer could place only at "Chennai": look up the LLM's place phrase in the same gazetteer."""
+    m = (d["geo_level"] == "district") & d["ai_place"].notna()
+    n = 0
+    for i in d.index[m]:
+        named = [x for x in gaz.find_mentions(str(d.at[i, "ai_place"])) if x.place.category != "district"]
+        if not named:
+            continue
+        best = sorted(named, key=lambda x: (order[x.place.category], x.start))[0]
+        d.at[i, "place_text"], d.at[i, "lat"], d.at[i, "lon"] = best.place.name, best.place.latitude, best.place.longitude
+        d.at[i, "geo_level"], d.at[i, "geo_conf"] = best.place.category, GEO_CONF[best.place.category] - 0.05
+        d.at[i, "geo_method"] = "gazetteer+llm_place"
+        d.at[i, "places"] = "|".join(dict.fromkeys(x.place.name for x in named))
+        n += 1
+    if m.any():
+        log.info("news: %d of %d articles with no place in the text placed from the LLM's place phrase", n, int(m.sum()))
+
+
 def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict[str, pd.DataFrame]:
     path = settings.src("news", "master")
     n = pd.read_csv(path, encoding="utf-8-sig", low_memory=False)
@@ -275,6 +327,7 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     d["doc_id"] = d["article_id"]
     d["title"] = d["title_clean"].fillna(d["title"])
     d["summary"] = d["summary_clean"].fillna("")
+    _add_full_text(settings, d)
     d["body"] = np.where(d["body_extracted"], d["body_clean"], "")
     text = (d["title"].fillna("") + ". " + d["summary"].fillna("") + ". " + d["body"].fillna("")).str.slice(0, 6000)
     d["lang"] = d["language"]
@@ -312,14 +365,23 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
         else:
             ptxt.append("Chennai"); lat.append(13.0827); lon.append(80.2707); level.append("district"); conf.append(GEO_CONF["district"])
     d["places"], d["place_text"], d["lat"], d["lon"], d["geo_level"], d["geo_conf"] = places, ptxt, lat, lon, level, conf
+    d["geo_method"] = "gazetteer"
     mentions.save()
+    _ai_places(d, rf, gaz, order)
     cas = [tp.casualties(t) for t in text]
-    d["dead"] = [c[0] for c in cas]
-    d["injured"] = [c[1] for c in cas]
+    # the LLM's counts (read in context) where it gave them, else the pattern counts
+    d["dead"] = pd.to_numeric(d["ai_dead"], errors="coerce").fillna(pd.Series([c[0] for c in cas], index=d.index)).astype(int)
+    d["injured"] = pd.to_numeric(d["ai_injured"], errors="coerce").fillna(pd.Series([c[1] for c in cas], index=d.index)).astype(int)
 
-    # ---- 7b. stories across languages: embeddings + same category (character n-grams cannot match Tamil to English)
+    # ---- 7b. stories across languages: embeddings + same category (character n-grams cannot match Tamil to English),
+    # plus Tamil headlines translated to English once by the LLM and matched to English headlines by meaning
+    from .. import newsllm
+    en = newsllm.translate(settings, d)
+    d["title_en"] = np.where(d["lang"] == "ta", d["doc_id"].map(en), np.where(d["lang"] == "en", d["title"], None))
     if E is not None:
-        merged = _embed_stories(d, E)
+        has_en = d["title_en"].notna().to_numpy()
+        E_en = embed.encode(d.loc[has_en, "title_en"].astype(str).tolist()) if has_en.any() else None
+        merged = _embed_stories(d, E, E_en, has_en)
         log.info("news: embedding story merges %s", merged)
         gate_eval["story_merges"] = merged
         d = d.sort_values("published_at")
@@ -346,7 +408,10 @@ def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Seri
     # keeps the local guess if it is at least `review_below` sure, else it is not forced into a category: OTHER, flagged
     # for review.
     mcfg = settings.raw.get("news_model", {})
-    cols = ["doc_id", "title", "summary", "published_at"]
+    cols = ["doc_id", "title", "summary", "body", "published_at"]
+    # the details (people, place, deaths...) come only from the LLM: recent incidents go to it even when the local
+    # model is sure of them, and recent ones labelled before the details were asked for are asked again
+    recent_details = d["published_at"] >= d["published_at"].max() - pd.Timedelta(days=float(settings.raw.get("news_llm", {}).get("details_days", 3)))
     known = d["doc_id"].isin(newsllm.cached_ids(settings)).to_numpy()
     tfidf = LocalModel(settings.out_dir / "models" / "news_local")
     use_tfidf = mcfg.get("local", "tfidf") == "tfidf" and tfidf.exists
@@ -371,12 +436,17 @@ def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Seri
             ask_ids = set(sf.index[(sf["confidence"] < trust).to_numpy() | np.asarray(spot)])
             log.info("news: the local %s model is sure (>= %.2f) of %d of %d unlabelled articles; %d go to the LLM (%d of them spot checks)",
                      local_name, trust, int((sf["confidence"] >= trust).sum()), len(sf), len(ask_ids), int(np.asarray(spot).sum()))
+        recent_ids = set(d.loc[recent_details.to_numpy(), "doc_id"])
+        inc_ids = set(sf.index[(sf["is_incident"].astype(bool) & sf["in_chennai"].astype(bool)).to_numpy()]) & recent_ids
+        log.info("news: %d recent incident articles also go to the LLM for their details", len(inc_ids - ask_ids))
+        ask_ids |= inc_ids
         ask = known | d["doc_id"].isin(ask_ids).to_numpy()
     else:
         trust = 0.8
         ask = np.ones(len(d), dtype=bool)
-    llm = newsllm.classify(settings, ref, d.loc[ask, cols])
+    llm = newsllm.classify(settings, ref, d.loc[ask, cols], details=set(d.loc[recent_details.to_numpy(), "doc_id"]))
     lab = d[["doc_id"]].merge(llm, on="doc_id", how="left") if len(llm) else d[["doc_id"]].assign(category=None)
+    _details(d, lab)
     lab["method"] = np.where(lab["category"].notna(), "llm:" + lab.get("model", pd.Series("", index=lab.index)).astype(str), None)
     need = lab["category"].isna().to_numpy()
     d["category_suggestion"] = None
@@ -562,11 +632,16 @@ def _wmetrics(pred: np.ndarray, y: np.ndarray, w: np.ndarray, blocked: np.ndarra
     return {"precision": round(P, 3), "recall": round(R, 3), "f1": round(2 * P * R / (P + R), 3) if P + R else 0.0}
 
 
-def _embed_stories(d: pd.DataFrame, E: np.ndarray, hours: float = 24) -> dict:
+def _embed_stories(d: pd.DataFrame, E: np.ndarray, E_en: np.ndarray | None = None, has_en: np.ndarray | None = None,
+                   hours: float = 24) -> dict:
     """Conservative merges (a wrong merge hides an incident, a missed one only double-counts it):
     same language: cosine >= 0.95, same category, within 24 h;
     English-Tamil: cosine >= 0.90, same non-OTHER category, both incidents, same specific place (not just "Chennai"),
-    and casualty counts that do not disagree. Edges are applied strongest first and never grow a story past 6 articles."""
+    and casualty counts that do not disagree;
+    English-Tamil by translation (the Tamil headline's English version, E_en, against the English headline): both
+    incidents within 24 h, casualty counts that do not disagree, and the same place: cosine >= TR_SAME_PLACE when both
+    name the same specific place, >= TR_ONE_PLACE plus the same category when only one names a place (the other says
+    just "Chennai"). Edges are applied strongest first and never grow a story past 6 articles."""
     t = d["published_at"].astype("int64").to_numpy() / 3.6e12
     order = np.argsort(t)
     ts = t[order]
@@ -590,9 +665,34 @@ def _embed_stories(d: pd.DataFrame, E: np.ndarray, hours: float = 24) -> dict:
             elif ({lang[a], lang[b]} == {"en", "ta"} and inc[a] and inc[b] and isinstance(ca, str) and ca == cb and ca != "OTHER"
                   and level[a] != "district" and place[a] == place[b] and not (dead[a] and dead[b] and dead[a] != dead[b])):
                 edges.append((float(S[i, j]), a, b, "cross"))
+    if E_en is not None and has_en is not None:
+        V = np.zeros((len(d), E_en.shape[1]), dtype=np.float32)
+        V[has_en] = E_en
+        ta = np.where(has_en & (lang == "ta") & (inc == 1))[0]
+        en = np.where(has_en & (lang == "en") & (inc == 1))[0]
+        en = en[np.argsort(t[en])]
+        ten = t[en]
+        for a in ta:
+            lo, hi = np.searchsorted(ten, t[a] - hours), np.searchsorted(ten, t[a] + hours, side="right")
+            if lo == hi:
+                continue
+            cand = en[lo:hi]
+            sims = V[cand] @ V[a]
+            for b, sim in zip(cand, sims):
+                if sim < TR_SAME_PLACE or sid[a] == sid[b] or (dead[a] and dead[b] and dead[a] != dead[b]):
+                    continue
+                named_a, named_b = level[a] != "district", level[b] != "district"
+                if named_a and named_b:
+                    ok = place[a] == place[b]
+                elif named_a or named_b:
+                    ok = sim >= TR_ONE_PLACE and cat[a] == cat[b] and cat[a] != "OTHER"
+                else:
+                    ok = False  # neither names a place: too many "Chennai" incidents look alike
+                if ok:
+                    edges.append((float(sim), int(min(a, b)), int(max(a, b)), "translated"))
     uf = UnionFind(d["story_id"].tolist())
     size = d.groupby("story_id").size().to_dict()
-    n = {"same": 0, "cross": 0}
+    n = {"same": 0, "cross": 0, "translated": 0}
     for _, a, b, kind in sorted(edges, reverse=True):
         ra, rb = uf.find(sid[a]), uf.find(sid[b])
         if ra == rb or size.get(ra, 1) + size.get(rb, 1) > 6:
@@ -601,7 +701,8 @@ def _embed_stories(d: pd.DataFrame, E: np.ndarray, hours: float = 24) -> dict:
         size[r] = size.get(ra, 1) + size.get(rb, 1)
         n[kind] += 1
     d["story_id"] = d["story_id"].map(uf.find)
-    return {"same_language_merges": n["same"], "english_tamil_merges": n["cross"], "stories_after": int(d["story_id"].nunique())}
+    return {"same_language_merges": n["same"], "english_tamil_merges": n["cross"], "english_tamil_translated_merges": n["translated"],
+            "stories_after": int(d["story_id"].nunique())}
 
 
 def to_events(d: pd.DataFrame, ref: Reference, snap: str | None) -> pd.DataFrame:
@@ -615,7 +716,7 @@ def to_events(d: pd.DataFrame, ref: Reference, snap: str | None) -> pd.DataFrame
         "category_src": x["report_type"], "category_code": x["category_code"], "category_conf": x["category_conf"],
         "category_method": x["category_method"], "dept_src": x["department"], "is_actionable": 1,
         "lat": x["lat"], "lon": x["lon"], "loc_precision_m": x["geo_level"].map(PRECISION), "place_text": x["place_text"],
-        "geo_level": x["geo_level"], "geo_method": "gazetteer", "geo_conf": x["geo_conf"],
+        "geo_level": x["geo_level"], "geo_method": x["geo_method"], "geo_conf": x["geo_conf"],
         "dead": x["dead"], "injured": x["injured"],
         "vulnerable_flags": ["|".join(tp.vulnerable_flags(t)) for t in x["_text"]],
         "hazard_flag": [int(tp.hazard(t)) for t in x["_text"]],

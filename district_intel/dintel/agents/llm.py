@@ -1,49 +1,59 @@
-"""Optional LLM client. Off unless config llm.enabled is true AND the key variable is set.
+"""Optional LLM helper for the agents. Off unless config llm.enabled is true AND a key exists.
 
-Only three kinds of calls exist: rewrite a briefing from its fact pack, adjudicate a
-gray-band link, and explain data-quality findings in plain words. Every output is
-checked (numbers verified, labels validated) and falls back to the deterministic
-result when the check fails. Personal data never reaches the model: the pipeline
-does not carry names, phone numbers or addresses in the first place.
+It uses the same Groq / Gemini setup as the news work (dintel/newsllm.py: GROQ_API_KEY and GEMINI_API_KEY in
+district_intel/.env, each provider the other's backup). `llm.jobs` in config.yaml says which agent steps may use it;
+today only "link": a second opinion on report pairs the linker is not sure about (a person still decides).
+Every output is checked and falls back to the deterministic result when the check fails. Personal data never reaches
+the model: the pipeline does not carry names, phone numbers or addresses in the first place.
 """
 from __future__ import annotations
 
 import json
-import os
+import time
 from typing import Any
 
 from ..util import log
 
 
 class LLM:
-    def __init__(self, cfg: dict[str, Any]) -> None:
+    def __init__(self, cfg: dict[str, Any], news_cfg: dict[str, Any] | None = None) -> None:
+        from ..newsllm import LLM as Chain
+
         self.cfg = cfg
         self.calls = 0
-        self.enabled = bool(cfg.get("enabled")) and bool(os.environ.get(cfg.get("api_key_env", "OPENAI_API_KEY")))
-        self._client = None
-        if self.enabled:
-            try:
-                from openai import OpenAI
-                self._client = OpenAI(api_key=os.environ[cfg["api_key_env"]])
-            except Exception as exc:  # library missing or bad key
-                log.warning("LLM disabled: %s", exc)
-                self.enabled = False
+        self.jobs = set(cfg.get("jobs") or [])
+        self._chain = Chain(news_cfg or {}, "link") if cfg.get("enabled") else None
+        self.enabled = bool(self._chain and self._chain.enabled)
+        self.deadline: float | None = None  # the time budget starts at the first call, not when the build starts
+        if cfg.get("enabled") and not self.enabled:
+            log.info("agent LLM: no GROQ_API_KEY or GEMINI_API_KEY in district_intel/.env; agents use their rules")
+
+    def for_job(self, job: str) -> "LLM | None":
+        """This helper for an agent step listed in llm.jobs, else None (the step keeps its rules)."""
+        return self if self.enabled and job in self.jobs else None
 
     def available(self) -> bool:
-        return self.enabled and self.calls < int(self.cfg.get("max_calls_per_run", 200))
+        if self.enabled and self.deadline is None:
+            self.deadline = time.time() + 60 * float(self.cfg.get("minutes", 3))
+        return (self.enabled and not self._chain.stopped and time.time() < self.deadline
+                and self.calls < int(self.cfg.get("max_calls_per_run", 200)))
 
-    def complete(self, system: str, user: str, json_mode: bool = False, max_tokens: int = 900) -> str | None:
+    def json(self, system: str, user: str, schema: dict, max_tokens: int = 1500) -> dict | None:
+        """One strict-schema call; None when it failed or the run's budget is spent."""
         if not self.available():
             return None
-        try:
-            self.calls += 1
-            kw = {"response_format": {"type": "json_object"}} if json_mode else {}
-            r = self._client.chat.completions.create(model=self.cfg["model"], temperature=0.2, max_tokens=max_tokens,
-                                                     messages=[{"role": "system", "content": system}, {"role": "user", "content": user}], **kw)
-            return r.choices[0].message.content
-        except Exception as exc:
-            log.warning("LLM call failed, using fallback: %s", exc)
-            return None
+        self.calls += 1
+        return self._chain.json(system, user, schema, self.deadline, max_tokens=max_tokens)
+
+    @property
+    def model(self) -> str:
+        return self._chain.model if self._chain else "none"
+
+    # the old free-form interface (briefing rewrite, data-quality notes): JSON object or text, no schema
+    def complete(self, system: str, user: str, json_mode: bool = False, max_tokens: int = 900) -> str | None:
+        schema = {"type": "object", "additionalProperties": False, "required": ["text"], "properties": {"text": {"type": "string"}}}
+        out = self.json(system + "\nReply as JSON {\"text\": ...}.", user, schema, max_tokens)
+        return out["text"] if out else None
 
     def complete_json(self, system: str, user: str) -> dict | None:
         out = self.complete(system, user, json_mode=True)

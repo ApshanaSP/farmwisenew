@@ -101,6 +101,26 @@ news_llm:
   briefing_notes: true                  # page 2: situation, department briefs, news digest, weather, health, law (dintel/briefai.py)
   book_minutes: 4
   book_refresh_hours: 3                 # rewrite at most this often, sooner when a severe incident, a death or a warning changes
+  # the classify call also returns people, organisations, deaths/injured, status and the place phrase (documents.ai_*);
+  # incident articles from the last details_days go to the LLM for them even when the local model is sure
+  details_days: 3
+  translate: true                       # Tamil headlines -> English once (documents.title_en), to match Tamil and English stories
+  translate_days: 3
+  translate_batch: 30
+  translate_minutes: 2
+
+news_fulltext:
+  # Google News items carry only a headline. dintel/fulltext.py finds the same article in the publisher's own news
+  # sitemap and downloads it from the publisher's site where its robots.txt allows (Google's links are never followed:
+  # news.google.com's robots.txt disallows them). Cached in output/state/news_fulltext.jsonl.
+  enabled: true
+  days: 3                # only headlines this recent (news sitemaps list the last day or two)
+  max_per_run: 200
+  minutes: 3
+  retry_hours: 48        # a headline not yet in the sitemap is tried again on later runs for this long
+  workers: 6             # sites fetched in parallel; each site gets at most one request a second
+  min_chars: 200
+  skip_domains: [facebook.com, magzter.com, youtube.com, x.com, instagram.com]
 
 news_model:
   # SetFit (dintel/newsmodel.py), trained on the LLM's labels with `python run_pipeline.py train-news`
@@ -118,13 +138,14 @@ news_model:
   min_confidence: 0.5        # with no LLM available, a SetFit category below this becomes OTHER
 
 llm:
-  # Optional. Every step has a deterministic fallback; LLM steps run only when enabled
-  # AND the API key variable is set. Cost stays bounded by the caps below.
-  enabled: false
-  provider: openai
-  model: gpt-4o-mini
-  api_key_env: OPENAI_API_KEY
-  max_calls_per_run: 200
+  # The agents' helper (dintel/agents/llm.py): the Groq / Gemini keys of news_llm (district_intel/.env), chain
+  # news_llm.chains.link or the default (Groq, then Gemini). Every step has a deterministic fallback; with no key it
+  # is off. jobs = the agent steps allowed to use it: link (second opinion on unsure report pairs, cached in
+  # output/state/link_llm.jsonl). Also possible, not on: briefing (rewrites the rule briefing), steward.
+  enabled: true
+  jobs: [link]
+  minutes: 3
+  max_calls_per_run: 60
 
 # Existing collectors and generators, run with their own command lines by
 # `python run_pipeline.py refresh`. Nothing here changes how they fetch.

@@ -17,6 +17,19 @@ const CHANNEL: Record<string, string> = {
  * Read-only incident view for the Collector: what happened, why it matters in plain
  * words, and every report merged into it, each at its own time. No actions here.
  */
+/** What the AI read in one news article: who, which bodies, casualties, where it stands, the exact place. */
+function NewsDetails({ ai }: { ai: Record<string, string | number> }) {
+  const hurt = [ai.dead ? plural(Number(ai.dead), "death") : null, ai.injured ? `${ai.injured} injured` : null].filter(Boolean).join(", ");
+  const items: [string, string | number | undefined][] = [
+    ["Place", ai.place], ["People", ai.people], ["Bodies named", ai.organisations], ["Casualties", hurt || undefined], ["Status", ai.status]
+  ];
+  return (
+    <dl className="ev-ai" title="Read from the article by AI; check the article before acting">
+      {items.filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+    </dl>
+  );
+}
+
 export function IncidentView({ id, c }: { id: string; c: Console }) {
   const [data, setData] = useState<IncidentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +160,8 @@ export function IncidentView({ id, c }: { id: string; c: Console }) {
                           <p>
                             {r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title} ↗</a> : (r.text || r.title)}
                           </p>
+                          {r.title_en && <p className="ev-en">{r.title_en}</p>}
+                          {r.ai && <NewsDetails ai={r.ai} />}
                         </div>
                       </li>
                     );
