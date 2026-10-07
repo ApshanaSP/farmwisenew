@@ -29,6 +29,8 @@ export interface Detected {
   sev: "Severe" | "High" | null;
   /** only open ones ("pending", "unresolved", "still open") */
   openOnly: boolean;
+  /** only open ones past their deadline ("overdue", "missed the deadline") */
+  overdue?: boolean;
   /** the incident a follow-up points at, resolved from the context ("the second one", "this incident") */
   incidentId: string | null;
   /** the news story a follow-up points at */
@@ -39,6 +41,8 @@ export interface Detected {
   refinement: boolean;
   /** why this intent, for the answer's sources panel */
   because: string;
+  /** places compared side by side ("compare Velachery and Adyar") */
+  sides?: string[];
   /** a story or incident described in words ("the Odisha worker stabbed"), to be found by meaning (set by the router) */
   find?: string | null;
   /** the period the question itself names (set by the router); else the rules' reading of the words */
@@ -79,7 +83,10 @@ const any = (toks: string[], phrases: string[]) => phrases.some((p) => hasPhrase
 /** Topics by meaning; each lists its words (English, Tamil, Tanglish) and the categories it covers. */
 const TOPICS: (Topic & { words: string[] })[] = [
   { key: "suicide", label: "suicide", cats: ["SUICIDE_SELF_HARM"], words: ["suicide", "suicides", "self harm", "self-harm", "தற்கொலை", "tharkolai", "tarkolai"] },
-  { key: "women", label: "crimes against women", cats: ["CRIMES_AGAINST_WOMEN"], words: ["crimes against women", "sexual assault", "harassment", "molest", "pocso", "dowry", "பாலியல்", "வரதட்சணை"] },
+  // narrower than its categories: found by meaning, so a rape case is never answered with every crime against women
+  { key: "rape", label: "rape and sexual assault", cats: ["CRIMES_AGAINST_WOMEN", "CRIME_VIOLENT"], narrow: "rape, sexual assault, sexually assaulted, molestation, POCSO case",
+    words: ["rape", "rapes", "raped", "rape case", "rape cases", "sexual assault", "sexually assaulted", "molestation", "molested", "pocso", "கற்பழிப்பு", "பாலியல் வன்கொடுமை", "பாலியல் வன்முறை"] },
+  { key: "women", label: "crimes against women", cats: ["CRIMES_AGAINST_WOMEN"], words: ["crimes against women", "harassment", "molest", "pocso", "dowry", "பாலியல்", "வரதட்சணை"] },
   // narrower than its category ("violent crime" holds assaults too): the incidents are found by meaning within it
   { key: "murder", label: "murder", cats: ["CRIME_VIOLENT"], narrow: "murder, killed, hacked or stabbed to death, body found", words: ["murder", "murders", "murdered", "killing", "killed", "hacked to death", "stabbed to death", "கொலை", "kolai"] },
   { key: "violent", label: "violent crime", cats: ["CRIME_VIOLENT"], words: ["stabbing", "assault", "attack", "violent crime", "violent crimes", "தாக்குதல்"] },
@@ -149,6 +156,8 @@ const HOTSPOT = ["hotspot", "hotspots", "cluster", "clusters"];
 const MAP = ["map", "on the map", "show on map", "make it a map", "make that a map"];
 const CHART = ["chart", "graph", "pie", "bar chart", "donut", "visualise", "visualize", "plot"];
 const TABLE = ["as a table", "in a table", "table"];
+/** past the deadline: "overdue", "missed deadline", "delayed", "beyond the SLA" (Tanglish "late aagudhu") */
+export const OVERDUE = /(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadline|deadline (missed|crossed|passed)|beyond (the )?(sla|deadline)|sla breach(ed)?|breached|delayed|late aag)/i;
 const OPEN_ONLY = ["pending", "unresolved", "still open", "open ones", "not resolved", "not closed"];
 const ORDINALS: [string[], number][] = [[["first", "1st", "top one", "முதல்"], 0], [["second", "2nd", "இரண்டாவது"], 1], [["third", "3rd", "மூன்றாவது"], 2],
   // "the last 24 hours" is a period: only "the last one" / "last incident" point at the end of a list
@@ -188,7 +197,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const n = countAsked(message);
   const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High" : null;
   const openOnly = any(toks, OPEN_ONLY);
-  const base = { n, topic, sev: sev as Detected["sev"], openOnly, incidentId: null, storyId: null, focus: "all" as Detected["focus"], refinement: false };
+  const overdue = OVERDUE.test(message);
+  const base = { n, topic, sev: sev as Detected["sev"], openOnly, overdue, incidentId: null, storyId: null, focus: "all" as Detected["focus"], refinement: false };
   const mk = (intent: Intent, because: string, extra: Partial<Detected> = {}): Detected => ({ ...base, intent, because, ...extra });
   const explicitId = message.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase() ?? null;
 
@@ -255,4 +265,4 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
 
 /** Intents this module answers itself; the rest go to the existing router and tools. */
 export const HANDLED: Intent[] = ["INCIDENT_COUNT", "INCIDENT_LIST", "PRIORITY_INCIDENT_LIST", "INCIDENT_DETAIL", "INCIDENT_RELATED", "INCIDENT_TIMELINE",
-  "NEWS_TOP", "NEWS_DETAIL", "NEWS_ONLY_GAPS", "CATEGORY_RANKING", "ACTION_REQUEST"];
+  "NEWS_TOP", "NEWS_DETAIL", "NEWS_ONLY_GAPS", "CATEGORY_RANKING", "ACTION_REQUEST", "COMPARISON"];

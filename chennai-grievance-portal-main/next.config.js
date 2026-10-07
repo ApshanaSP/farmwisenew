@@ -5,7 +5,7 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // LanceDB (Ask District IQ's search index) ships native binaries: Node loads it as is, the bundler leaves it out
   experimental: {
-    serverComponentsExternalPackages: ["@lancedb/lancedb", "apache-arrow"]
+    serverComponentsExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core"]
   },
   eslint: {
     ignoreDuringBuilds: true

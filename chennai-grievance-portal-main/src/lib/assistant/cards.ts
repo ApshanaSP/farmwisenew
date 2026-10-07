@@ -185,6 +185,36 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     ];
     return { ...base, headline: head, answerMarkdown: lines.join("\n\n"), voiceSummary: `${head}. Status: ${rec.status ?? "not recorded"}.` };
   }
+  // officials: who they are and where, not how many were found
+  const people = p.datasets.find((d) => d.id === "contacts")?.rows ?? [];
+  if (people.length) {
+    const who = people.slice(0, 5).map((r) => `- **${r.name}**${r.designation ? `, ${r.designation}` : ""}${r.office ? ` (${r.office})` : ""}`);
+    const head = people.length === 1 ? `${people[0].name}${people[0].designation ? `, ${people[0].designation}` : ""}` : `${people.length} officials`;
+    return { ...base, headline: head, answerMarkdown: who.join("\n"), voiceSummary: head };
+  }
+  // in English, sentences a staff officer would say: the period's key figures, what leads, and what to act on first
+  if (lang === "en" && kpis.length) {
+    const span = (base.scopeLine.split(" · ")[0] ?? "").trim();
+    const when = /^(last|previous)/i.test(span) ? `In the ${span.charAt(0).toLowerCase()}${span.slice(1)}` : "Right now";
+    const figs = kpis.slice(0, 4).map((k) => `**${kpiText(k)}** ${k.label.toLowerCase()}`);
+    const out: string[] = [`${when}: ${figs.join(", ")}.`];
+    const c = p.chart;
+    const ds = c ? p.datasets.find((d) => d.id === c.dataset) : null;
+    const yf = ds && c?.y[0] ? ds.fields.find((f) => f.key === c.y[0]) : null;
+    const xf = ds && c?.x ? ds.fields.find((f) => f.key === c.x) : null;
+    if (c && ds && yf && xf && (xf.kind === "category" || xf.kind === "text")) {
+      const rows = ds.rows.filter((r) => r[yf.key] != null && Number.isFinite(Number(r[yf.key]))).sort((a, b) => Number(b[yf.key]) - Number(a[yf.key])).slice(0, 3);
+      if (rows.length) out.push(`Most ${yf.label.toLowerCase()}: ${rows.map((r) => `${r[xf.key]} (${fmtValue(Number(r[yf.key]), yf.format ?? "integer", yf.unit ?? null)})`).join(", ")}.`);
+    }
+    const top = ["driver_top", "zone_top", "top", "severity_top"].map((id) => p.datasets.find((d) => d.id === id)).find((d) => d?.rows.length)?.rows ?? [];
+    if (top.length) {
+      const why = (r: Record<string, unknown>) => String(r.reasons ?? r.why ?? "").split(/;\s*/).filter(Boolean).slice(0, 2).join("; ");
+      out.push(`Act first on **${top[0].title}**${top[0].place ? ` at ${top[0].place}` : ""}${why(top[0]) ? `: ${why(top[0])}` : ""}.`
+        + (top[1] ? ` Next: ${top[1].title}${top[1].place ? ` at ${top[1].place}` : ""}.` : ""));
+    }
+    const headline = kpis.slice(0, 3).map((k) => `${kpiText(k)} ${k.label.toLowerCase()}`).join(" · ");
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
   const lead = kpis[0] ? `${kpis[0].label}: ${kpiText(kpis[0])}` : p.chart?.title ?? FRAME[lang];
   const lines: string[] = [];
   if (kpis.length > 1) lines.push(kpis.slice(1).map((k) => `${k.label} **${kpiText(k)}**`).join(" · "));

@@ -12,6 +12,7 @@
  */
 import { AiBudgetError, AiBusyError, AiUnavailableError, aiStatus, generateJson, type CallInfo } from "@/lib/ai/gateway";
 import { routerPrompt, routerSchemas, routerSystem, type AnswerKind } from "@/lib/ai/prompts/router";
+import { sidesOf } from "@/lib/assistant/compare";
 import { PLANNER_SYSTEM, plannerPrompt } from "@/lib/ai/prompts/planner";
 import { ComposerLenient, ComposerSchema, composerPrompt, composerSystem, type ComposerOutput } from "@/lib/ai/prompts/composer";
 import { asOf as storeAsOf, contactsFor } from "@/lib/collector/intel";
@@ -71,6 +72,8 @@ export interface ChatInput {
 export interface ChatOutput { card: AnswerCard; sessionId: string; messageId: string }
 
 interface Route {
+  /** a name that matched more than one department ("PWD"): what was assumed, shown on the card, and the other choices as chips */
+  alt?: { note: string; chips: string[] } | null;
   intent: string;
   language: Lang | null;
   normalized: string;
@@ -227,7 +230,7 @@ const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "l
 
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
-const PERIOD_WORDS = /\b(today|yesterday|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
+const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
 /** A question about one specific incident ("what is this murder case", "tell me about the fire at", "Adyar murder enna aachu"). */
 const STORY = /\b(what (is|was|are) (this|that|the)|tell me (more )?about|explain|details? (of|about|on)|what happened|story of|about (this|that|the) (case|incident)|update on (the|this|that))\b|enna (aachu|nadandhuchu|nadanthuchu|case)|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi|patthi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)|பற்றி (சொல்|விளக்கு)/i;
 const STORY_THING = /\b(case|incident|murder|killing|killed|accident|crash|fire|blaze|theft|robbery|snatching|burglary|collapse|death|died|attack|assault|stabbing|drowning|drowned|missing|explosion|clash|protest)\b|INC-[A-Z0-9]|கொலை|விபத்து|தீ விபத்து|வழக்கு/i;
@@ -364,11 +367,14 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   }
   // a window in the question's own words ("last 10 days"): the lists and counts use it exactly; tools that only know the
   // console's periods use the smallest one that holds it, and say so
+  let deptAlt: Route["alt"] = null;
   const cw = customWindow(message);
   if (cw) {
     if (scope.period !== cw.period) o.assumptions.push(`The ${cw.label}: figures from tools that only know fixed periods cover the ${PERIOD_TEXT[cw.period]}.`);
     scope.period = cw.period;
     o.scope.period = cw.period;
+    // "yesterday": the previous day's window, for the tools as for the lists
+    if (cw.offset) scope.offset = cw.offset;
   }
   // a period only when the message (or, for a follow-up, the conversation) names one: a worked example's "this week" is not the Collector's
   else if (scope.period !== base.period && !PERIOD_WORDS.test(talk)) {
@@ -381,6 +387,11 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     const named = talk.includes(scope.taluk.toLowerCase()) || (!!t?.name && talk.includes(t.name.toLowerCase())) || (!!t?.nameTa && talk.includes(t.nameTa))
       || placed?.taluk === scope.taluk || (placed?.taluk_named as Row | null)?.code === scope.taluk;
     if (!named) { scope.taluk = base.taluk; o.scope.taluk = null; }
+    // a follow-up that names another place ("and in Anna Nagar?") leaves the previous answer's taluk behind, unless it names that taluk
+    else if (placed && placed.taluk !== scope.taluk && !(placed.taluk_named as Row | null)?.code
+      && !(t?.name && message.toLowerCase().includes(t.name.toLowerCase())) && !message.toLowerCase().includes(scope.taluk.toLowerCase())) {
+      scope.taluk = base.taluk; o.scope.taluk = null;
+    }
   }
   // a department filter only when the question (or, for a follow-up, the conversation) names it: "public infrastructure
   // complaints" is not "Parks & Play Fields"
@@ -388,9 +399,37 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     const d = n.depts.get(scope.dept);
     const words = `${d?.name ?? ""} ${scope.dept}`.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !["and", "the", "department", "dept", "gcc", "wing"].includes(w));
     if (!words.some((w) => new RegExp(`\\b${w}`, "i").test(talk))) { scope.dept = base.dept; o.scope.dept = null; }
+    else {
+      // "PWD" names two departments (Buildings, Water Resources): the card says which one it covers and offers the other
+      const hit = words.find((w) => new RegExp(`\\b${w}`, "i").test(talk))!;
+      const siblings = [...n.depts.entries()].filter(([k, v]) => k !== scope.dept && v.actionOwner && `${v.name} ${k}`.toLowerCase().includes(hit));
+      const own = words.filter((w) => w !== hit && !siblings.some(([, v]) => v.name.toLowerCase().includes(w)));
+      if (siblings.length && !own.some((w) => new RegExp(`\\b${w}`, "i").test(talk)))
+        deptAlt = { note: `"${hit.toUpperCase()}" can mean ${[d?.name, ...siblings.map(([, v]) => v.name)].join(" or ")}: this covers ${d?.name}.`,
+          chips: siblings.slice(0, 2).map(([, v]) => message.replace(new RegExp(`\\b${hit}\\b`, "i"), v.name)) };
+    }
+  }
+  // a department the message names by its usual short name, when the router left the filter empty ("PWD pending works list")
+  if (!scope.dept && !base.dept && (o.intent === "tool_question" || o.intent === "plan_edit")) {
+    const ALIAS: [RegExp, string[]][] = [[/\bpwd\b/i, ["PWD-WRD", "PWD-BLD"]], [/\b(metro ?water|cmwssb)\b/i, ["CMWSSB"]], [/\bswd\b|storm ?water drain(s|age)? (dept|department|wing)/i, ["GCC-SWD"]],
+      [/\bswm\b|solid waste management/i, ["GCC-SWM"]], [/\btnpcb\b|pollution control board/i, ["TNPCB"]], [/\bpolice\b(?! station)/i, ["POL-GCP"]]];
+    const hit = ALIAS.find(([re]) => re.test(message));
+    const codes = hit ? hit[1].filter((c) => n.depts.has(c)) : [];
+    // "PWD buildings" / "PWD water": the one named
+    const pick = codes.find((c) => (/build/i.test(message) && /BLD/.test(c)) || (/water|lake|tank|canal|river/i.test(message) && /WRD/.test(c))) ?? codes[0];
+    if (pick) {
+      scope.dept = pick;
+      o.scope.dept = pick;
+      const others = codes.filter((c) => c !== pick);
+      if (others.length && pick === codes[0] && !/build|water|lake|tank|canal|river/i.test(message))
+        deptAlt = { note: `"PWD" can mean ${codes.map((c) => n.depts.get(c)?.name ?? c).join(" or ")}: this covers ${n.depts.get(pick)?.name}.`,
+          chips: others.map((c) => message.replace(/\bpwd\b/i, n.depts.get(c)?.name ?? c)) };
+    }
   }
   // A category the question names must narrow the data, or the answer would claim it without covering it.
-  if (!scope.cat && category && hint && o.intent === "tool_question" && !/\b(categor|by type|each type|vs\.?|versus|compare)/i.test(message)) {
+  // ("compare crime and flooding" compares categories: no narrowing; "compare Velachery and Adyar for flooding" compares places: narrowed)
+  const comparesKinds = /\b(vs\.?|versus|compare)/i.test(message) && !placed;
+  if (!scope.cat && category && hint && o.intent === "tool_question" && !/\b(categor|by type|each type)/i.test(message) && !comparesKinds) {
     scope.cat = hint.code;
     o.assumptions.push(`Narrowed to ${hint.label} (named in the question).`);
   }
@@ -398,12 +437,12 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
     intent: o.intent, language: o.language, normalized: o.normalizedQuestion || message, scope, scopeRaw: o.scope,
     tools: o.tools.slice(0, LIMITS.queriesPerQuestion).map((c) => ({ name: c.name, args: toolArgs(c.name, c, scope) })),
     chartEdit: o.chartEdit, actions: o.consoleActions, clarify: o.needsClarification ? o.clarificationQuestion : null, refusal: o.refusalReason,
-    assumptions: o.assumptions, offline: false, visual: o.visual,
+    assumptions: o.assumptions, offline: false, visual: o.visual, alt: deptAlt,
     decision: {
       answer: o.answer, incidentId: o.refIncidentId?.trim().toUpperCase() || null, storyId: o.refStoryId?.trim() || null,
       // query rewriting: the description and its translation, searched together (meaning and keywords in both languages)
       find: [o.find?.trim(), o.findAlt?.trim()].filter(Boolean).join(" / ") || null,
-      count: o.count != null && o.count >= 1 && o.count <= 20 ? Math.round(o.count) : null, focus: o.focus, openOnly: o.openOnly, severity: o.severity,
+      count: o.count != null && o.count >= 1 && o.count <= 20 ? Math.round(o.count) : null, focus: o.focus, openOnly: o.openOnly, overdueOnly: o.overdueOnly, severity: o.severity,
       options: o.clarifyOptions.map((x) => x.trim()).filter(Boolean).slice(0, 3)
     }
   };
@@ -659,6 +698,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       card.autoActions = card.autoActions.filter((a) => a.action !== "filter_dept");
     }
     if (route?.offline && card.kind === "answer") card.offline = true;
+    if (route?.alt && card.kind === "answer") { card.caveats = [route.alt.note, ...card.caveats]; card.chips = [...route.alt.chips, ...(card.chips ?? [])].slice(0, 4); }
     // no automatic follow-up questions: the Collector asks what they want next
     if (card.kind === "answer" || card.kind === "action") card.followUps = [];
     // every answer saves the conversation state the next question's follow-ups resolve against
@@ -720,6 +760,22 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       || ((exact.intent === "MAP" || exact.intent === "TABLE") && exact.refinement) || !aiStatus().available)) {
     const r = await fast(consoleScope);
     if (r) return r;
+  }
+  // places compared side by side: split, resolved and counted the same way each, without a model
+  const sides = !i.pinId && !i.insightKey ? sidesOf(message) : null;
+  if (sides) {
+    const r = await fast(consoleScope, { ...exact, intent: "COMPARISON", sides, refinement: false, because: "a comparison of places, side by side" });
+    if (r) return r;
+  }
+  // a named kind of case ("any murder in the past 24 hrs", "rape cases this month in Anna Nagar"): the matching cases listed,
+  // searched by meaning in department records and the news linked to them, or "none recorded" said plainly
+  if (!sides && !i.pinId && !i.insightKey && exact.topic?.narrow && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|how many|count|number of|per (zone|ward|month))\b/i.test(message)) {
+    const r = await fast(consoleScope, { ...exact, intent: exact.intent === "PRIORITY_INCIDENT_LIST" ? exact.intent : "INCIDENT_LIST", refinement: false,
+      because: `a named kind of case (${exact.topic.label}): the matching cases` });
+    if (r) {
+      r.card.caveats.push("Checked department records (police, complaints, PWD, hospitals) and the news reports linked to them.");
+      return r;
+    }
   }
   const lastId = turns.filter((t) => t.role === "assistant").slice(-1)[0]?.message_id ?? "";
   const routeKey = `${lang}|${message.toLowerCase()}|${scopeKey(consoleScope)}|${now}|${lastId}`;
@@ -1124,12 +1180,16 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     facts: factLines(promptFacts(facts, p)), lead: lead ? `${lead.label} = ${lead.value}` : "", datasets: datasetsText(p.datasets, [p.chart?.dataset, p.table]), suggested: p.chart ? JSON.stringify(p.chart) : p.display === "kpi" ? "kpi tiles" : "none",
     actions: allowedActionsText(p, c.results, base.scope?.period ?? null, i.scope.period), previous: c.previous, repair: "", count: c.count, parts: c.parts, visual: (c.visual ? "yes" : "no") as "yes" | "no"
   };
+  // only the instructions this answer needs (fewer tokens against the free tiers' per-minute limits)
+  const used = new Set(c.results.map((r) => r.tool));
+  const need = { area: ["zone_profile", "place_breakdown", "overview_kpis", "severity", "briefing", "taluks", "zones"].some((t) => used.has(t)), why: explaining,
+    story: used.has("incident_story") || used.has("incident_detail"), visual: !!c.visual };
   let draft: ComposerOutput | null = null;
   let verdict = { ok: false, checked: 0, unmatched: [] as string[] };
   let regenerated = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await generateJson({ role: "reasoning", name: "composer", schema: ComposerSchema, lenient: ComposerLenient, system: composerSystem(lang), prompt: composerPrompt(ctx),
+      const r = await generateJson({ role: "reasoning", name: "composer", schema: ComposerSchema, lenient: ComposerLenient, system: composerSystem(lang, need), prompt: composerPrompt(ctx),
         temperature: 0.2, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal });
       c.models.push(r.info);
       draft = r.object;
@@ -1161,6 +1221,13 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       console.warn(`[assistant] draft did not state the lead fact (${lead!.label} = ${lead!.value})`);
       verdict = { ok: false, checked: verdict.checked, unmatched: [`lead fact ${lead!.value} not stated`] };
       ctx.repair = `State the LEAD FACT value (${lead!.label} = ${lead!.value}) as digits in the headline or first sentence.`;
+      regenerated = true;
+      continue;
+    }
+    // a Tanglish question answered in plain English (a fallback model ignoring the language): asked again once
+    if (verdict.ok && lang === "tanglish" && attempt === 0 && detectLanguage(`${draft.headline} ${draft.answerMarkdown}`).lang === "en") {
+      console.warn("[assistant] draft not in Tanglish: asking again");
+      ctx.repair = "Write headline, answerMarkdown, caveats and followUps in Tanglish (Tamil words in English letters, mixed with English terms), not in English.";
       regenerated = true;
       continue;
     }

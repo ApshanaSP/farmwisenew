@@ -28,7 +28,10 @@ const WHY: Record<InsightLabel, (s: Spec) => string> = {
   Linked: () => "Two independent sources pointing at the same zones make the signal much harder to dismiss.",
   Growth: () => "The latest period sets the baseline for planning and budgets.",
   Pattern: () => "Staff rosters and inspections can follow the rhythm of demand.",
-  "Data gap": () => "What the data leaves out cannot be monitored; fixing entry at source improves every figure."
+  "Data gap": () => "What the data leaves out cannot be monitored; fixing entry at source improves every figure.",
+  Ranking: () => "The extremes show where the district is most exposed and where it is best placed.",
+  Capacity: () => "How full the system is against what it can hold sets the margin for supply and for safety.",
+  Change: () => "The same day a year ago is the honest comparison: it shows whether the position is better or worse."
 };
 
 const ACTION: Record<InsightLabel, (x: Insight, s: Spec) => string | null> = {
@@ -47,7 +50,10 @@ const ACTION: Record<InsightLabel, (x: Insight, s: Spec) => string | null> = {
   Linked: () => "Treat the shared hotspot zones as priority areas in the next review.",
   Growth: () => "Use the latest period, not the long-run average, for planning.",
   Pattern: () => null,
-  "Data gap": () => "Ask the department to record the location and date on every entry."
+  "Data gap": () => "Ask the department to record the location and date on every entry.",
+  Ranking: (x) => `Ask ${x.owner ?? "the department"} for the plan for the item at the bottom of this list.`,
+  Capacity: (x) => `Ask ${x.owner ?? "the department"} for the outlook: how long the present level lasts, and the plan if it falls further.`,
+  Change: (x) => `Ask ${x.owner ?? "the department"} to explain the change from last year and what it means for the coming weeks.`
 };
 
 /** A brief from the insights alone (the strongest first, at most two of a kind). */

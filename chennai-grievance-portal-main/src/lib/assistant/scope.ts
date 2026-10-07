@@ -19,7 +19,9 @@ export const ScopeSchema = z.object({
   zone: z.number().int().min(1).max(15).nullable().default(null),
   dept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null),
   cat: z.string().regex(/^[A-Z_]{3,40}$/).nullable().default(null),
-  taluk: z.string().regex(/^TLK-[A-Z]{3}$/).nullable().default(null)
+  taluk: z.string().regex(/^TLK-[A-Z]{3}$/).nullable().default(null),
+  /** windows back from now: 1 with a daily period = yesterday */
+  offset: z.number().int().min(0).max(3).optional()
 });
 export type AssistantScope = z.infer<typeof ScopeSchema>;
 export const DISTRICT_DAY: AssistantScope = { period: "daily", zone: null, dept: null, cat: null, taluk: null };
@@ -98,8 +100,9 @@ export function fmtAsOf(asOf: string, lang: Lang): string {
 }
 
 /** The scope line printed on every answer card, in the reply language. */
-export function describeScope(s: AssistantScope, n: RefNames, lang: Lang, asOf?: string): string {
-  const parts: string[] = [PERIOD_LABEL[s.period][lang]];
+export function describeScope(s: AssistantScope & { offset?: number }, n: RefNames, lang: Lang, asOf?: string): string {
+  const prevDay = s.offset === 1 && s.period === "daily";
+  const parts: string[] = [prevDay ? ({ en: "Previous day (yesterday)", ta: "நேற்று", tanglish: "Nethu (previous day)" } as Record<Lang, string>)[lang] : PERIOD_LABEL[s.period][lang]];
   if (s.zone != null) {
     const z = n.zones.get(s.zone);
     const name = lang === "ta" ? z?.nameTa ?? z?.name : z?.name;

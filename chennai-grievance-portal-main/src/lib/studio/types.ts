@@ -85,6 +85,8 @@ export interface Spec {
   questions: string[];
   by: "ai" | "rules";
   model: string | null;
+  /** the Profiler's own reading of whether the data is the district's (the gate weighs it with the rows' places) */
+  aiRelevance?: { verdict: "district" | "partly" | "unrelated"; why: string } | null;
 }
 
 // ----------------------------------------------------------------- detective --
@@ -231,7 +233,7 @@ export interface Story {
 /** What kind of finding an insight is: the label on its card. */
 export type InsightLabel =
   | "Backlog" | "Delay" | "Turnaround" | "Service gap" | "Bright spot" | "Hotspot" | "Rising" | "Falling" | "Local pattern"
-  | "Concentration" | "Magnitude" | "Anomaly" | "Linked" | "Growth" | "Pattern" | "Data gap";
+  | "Concentration" | "Magnitude" | "Anomaly" | "Linked" | "Growth" | "Pattern" | "Data gap" | "Ranking" | "Capacity" | "Change";
 
 /**
  * One finding computed from the rows by insights.ts: a sentence with its numbers, a headline number, a small picture
@@ -312,6 +314,81 @@ export interface SourceInfo {
   bytes: number;
   /** title rows above the header ("GCC SWD dept, desilting status as on 30.09.2026") */
   caption: string | null;
+  /** a link: how it was read, what was found on it, and how it stays up to date */
+  connect?: ConnectInfo | null;
+}
+
+// ----------------------------------------------------------------- connecting --
+
+/**
+ * How a link signs in. The secrets themselves never leave the server's vault (connect/vault.ts): the page only ever
+ * sees the mode and the user name.
+ *   apikey  a key the site issued, sent as a header or a query parameter (data.gov.in, most APIs)
+ *   basic   a user name and password the site asks for in a browser pop-up (HTTP Basic)
+ *   login   a user name and password typed into the site's own sign-in page, by a browser the server drives
+ *   manual  the Collector signs in once in a browser window (OTP, CAPTCHA, single sign-on); the session is kept
+ */
+export type AuthMode = "none" | "apikey" | "basic" | "login" | "manual";
+export const AUTH_LABEL: Record<AuthMode, string> = { none: "Public", apikey: "API key", basic: "User name & password (pop-up)", login: "User name & password", manual: "I'll sign in myself" };
+
+export interface AuthInput {
+  mode: AuthMode;
+  /** apikey: the key, its name ("api-key", "x-api-key", "Authorization") and where it goes */
+  key?: string;
+  keyName?: string;
+  keyPlace?: "query" | "header";
+  /** basic / login */
+  username?: string;
+  password?: string;
+  /** login / manual: the sign-in page when it is not the link itself */
+  loginUrl?: string;
+}
+
+/** One thing on a link that could be the data: a file, a table, the JSON the page loads, a feed, a list of headlines. */
+export interface Candidate {
+  id: string;
+  kind: "file" | "table" | "api" | "feed" | "headlines";
+  label: string;
+  rows: number;
+  cols: number;
+  headers: string[];
+  /** how much it looks like the data asked for (0..100), and why */
+  score: number;
+  why: string;
+}
+
+export interface RefreshRun { at: string; ok: boolean; rows: number | null; changed: boolean; note: string }
+
+export interface ConnectInfo {
+  /** "http": read as sent; "browser": opened in a real browser (the page builds itself with JavaScript, or a sign-in) */
+  method: "http" | "browser";
+  via: string;
+  auth: AuthMode;
+  /** the user name, shown so the Collector knows which account is used (never the password or key) */
+  account: string | null;
+  candidates: Candidate[];
+  choice: string;
+  /** the content's fingerprint (SHA-256): a refresh that brings the same bytes changes nothing */
+  hash: string;
+  fetchedAt: string;
+  /** minutes between automatic refreshes (null: only by hand) */
+  every: number | null;
+  lastOkAt: string | null;
+  lastError: string | null;
+  history: RefreshRun[];
+}
+
+/** Is the data about the district? The gate after the Profiler: accepted, kept to Chennai's rows, or stopped. */
+export interface Relevance {
+  verdict: "district" | "partly" | "unrelated";
+  why: string;
+  by: "ai" | "rules";
+  /** a state-wide table kept to Chennai: the column, the rows kept and the rows read */
+  filtered: { column: string; kept: number; of: number } | null;
+  /** the Collector added it although it read as unrelated */
+  forced: boolean;
+  /** the signals behind the verdict, shown with it */
+  signals: string[];
 }
 
 export interface DatasetMeta {
@@ -331,6 +408,7 @@ export interface DatasetMeta {
   story: Story | null;
   /** the AI brief over the computed insights (older datasets: built when first opened) */
   brief?: Brief | null;
+  relevance?: Relevance | null;
   rules: Rule[];
   steps: StepLog[];
   sample: boolean;
@@ -348,6 +426,10 @@ export interface DatasetCard {
   updatedAt: string;
   link: LinkResult["strength"] | null;
   sample: boolean;
+  /** a link that refreshes on its own, and whether its last refresh failed */
+  every?: number | null;
+  failing?: boolean;
+  auth?: AuthMode;
 }
 
 export interface Pin { id: string; datasetId: string; datasetName: string; plan: Plan; at: string }
@@ -357,7 +439,9 @@ export type RunEvent =
   | { t: "step"; step: StepKey; state: "run" | "done" | "skip"; detail: string; by?: "ai" | "rules" | "code"; model?: string | null; ms?: number }
   | { t: "log"; text: string }
   | { t: "done"; id: string }
-  | { t: "error"; message: string };
+  | { t: "error"; message: string }
+  /** the Relevance gate stopped the run: the data does not read as the district's; "Use anyway" resumes it */
+  | { t: "blocked"; id: string; why: string; signals: string[] };
 
 // ------------------------------------------------------------------ helpers --
 

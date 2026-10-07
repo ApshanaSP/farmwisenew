@@ -76,13 +76,14 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
       const ranks: Row[] = r.tool === "zones" ? d.rows : d.ranks;
       const ds: Dataset = {
         id: "zones", title: "Zones", drill: { field: "zone", action: "filter_zone" },
-        fields: [F.cat("name", "Zone"), F.id("zone", "Zone number"), F.int("score", "Attention score"), F.int("severe", "Severe incidents"),
+        // the attention score only orders the rows (they come ranked): the card shows the counts it rests on
+        fields: [F.cat("name", "Zone"), F.id("zone", "Zone number"), F.int("severe", "Severe incidents"),
           F.int("high", "High incidents"), F.int("n", "Incidents reported"), F.int("open", "Open incidents"), F.int("complaints", "Open complaints")],
-        rows: ranks.map((z) => pick(z, ["name", "zone", "score", "severe", "high", "n", "open", "complaints"]))
+        rows: ranks.map((z) => pick(z, ["name", "zone", "severe", "high", "n", "open", "complaints"]))
       };
-      const y = measure(question, { severe: SEVERE, complaints: COMPLAINT, open: OPEN }, "score");
+      const y = measure(question, { severe: SEVERE, complaints: COMPLAINT, open: OPEN }, "open");
       if (r.tool === "zones") {
-        const what = y === "severe" ? "severe incidents" : y === "complaints" ? "open complaints" : y === "open" ? "open incidents" : "attention score";
+        const what = y === "severe" ? "severe incidents" : y === "complaints" ? "open complaints" : "open incidents";
         return { datasets: [ds], chart: spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: [y], title: `Zones by ${what}`,
           subtitle: `${d.formula}; ${period}` }), kpis: [], table: null, display: "chart" };
       }
@@ -92,9 +93,9 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
       const row = d.row as Row | null;
       return {
         datasets: [ds, top],
-        chart: spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: ["score"], highlight: String(d.name), title: `${d.name} ranks ${d.rank} of ${d.of} zones`,
+        chart: spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: ["open"], highlight: String(d.name), title: `${d.name} ranks ${d.rank} of ${d.of} zones on severe and high incidents`,
           subtitle: `${d.formula}; ${period}`, topN: 15 }),
-        kpis: [{ label: `Attention rank (of ${d.of})`, value: Number(d.rank), tone: "info" }, { label: "Attention score", value: Number(row?.score ?? 0) },
+        kpis: [{ label: `Rank (of ${d.of} zones)`, value: Number(d.rank), tone: "info" }, { label: "Incidents reported", value: Number(row?.n ?? 0) },
           { label: "Severe", value: Number(row?.severe ?? 0), tone: "sev" }, { label: "High", value: Number(row?.high ?? 0), tone: "high" }],
         table: "zone_top", display: "chart"
       };

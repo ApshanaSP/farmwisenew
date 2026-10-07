@@ -30,6 +30,10 @@ export interface IncidentFilters {
   hours?: number | null;
   /** a locality inside the zone ("Velachery"), matched on the incident's place: narrower than the zone */
   place?: string | null;
+  /** windows back from now (1 = yesterday when the window is a day) */
+  offset?: number;
+  /** only open incidents past their deadline */
+  overdue?: boolean;
 }
 
 const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
@@ -42,7 +46,7 @@ const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, 
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
 function where(f: IncidentFilters, now: string, hours?: number, off = 0) {
-  const w = periodWindow(f.period, now, "i.first_reported_at", off, hours ?? f.hours ?? undefined);
+  const w = periodWindow(f.period, now, "i.first_reported_at", off + (f.offset ?? 0), hours ?? f.hours ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
   if (f.place) (parts.push("i.place_text LIKE ?"), params.push(`%${f.place.replace(/[%_]/g, "")}%`));
@@ -51,7 +55,8 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0) {
   if (f.cats?.length) (parts.push("i.category_code IN (?)"), params.push(f.cats));
   if (f.sev === "Severe") parts.push("i.severity_level = 'Severe'");
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
-  if (f.openOnly) parts.push("i.is_open = 1");
+  if (f.openOnly || f.overdue) parts.push("i.is_open = 1");
+  if (f.overdue) parts.push("i.sla_breached = 1");
   return { sql: parts.join(" AND "), params };
 }
 
@@ -136,10 +141,18 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
     [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
       q<{ total: number }>(`SELECT COUNT(*) AS total FROM incidents i WHERE ${w.sql}`, w.params)]);
     // a window the question names ("last 10 days") is never widened silently
-    if (rows.length >= n || order === "recent" || f.hours) break;
+    if (rows.length >= n || order === "recent" || f.hours || f.offset) break;
   }
   const ev = await evidenceFor(rows.map((r) => String(r.id)));
   return { items: rows.map((r) => itemOf(r, ev.get(String(r.id)) ?? [])), total: num(total), period, widened: period !== f.period };
+}
+
+/** The raw records of a window, most important first, with the window's open and complaint totals (a zone on a given day). */
+export async function windowRows(f: IncidentFilters, now: string, n: number): Promise<{ rows: Row[]; total: number; open: number; complaints: number }> {
+  const w = where(f, now);
+  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY i.is_open DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
+    q(`SELECT COUNT(*) AS total, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints FROM incidents i WHERE ${w.sql}`, w.params)]);
+  return { rows, total: num(t?.total), open: num(t?.open), complaints: num(t?.complaints) };
 }
 
 /** Whether any of these incidents rests on test (synthetic) records: the card's "Test data" label comes from the records shown. */

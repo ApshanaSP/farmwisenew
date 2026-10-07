@@ -133,7 +133,21 @@ export function designDashboard(rows: DRow[], spec: Spec, window: { from: string
   }
   // the most telling type column (work type, complaint type, disease), split by what is open when there is a status
   const cat = typeColumn(rows, spec);
-  if (cat) {
+  // a snapshot (one row per lake, hospital, shop): the measures by item, not a count of one row each
+  const itemCol = spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && (() => {
+    const vals = rows.map((r) => r[c.key]).filter((v) => v != null).map(String);
+    return vals.length >= 3 && vals.length <= 300 && new Set(vals).size >= vals.length * 0.8;
+  })());
+  // the measures that move (storage, cases, stock), not fixed reference values (full tank level, capacity) or last year's
+  const measures = spec.columns.filter((c) => c.role === "measure" && !/last\s*year|previous|same\s*day/i.test(c.header) && !/capacity|full\b|\bmax\b|maximum|target|sanction/i.test(c.header));
+  if (itemCol && !q.col && measures.length) {
+    const firstSum = measures.find((c) => c.agg === "sum" && c.unit !== "%");
+    if (prim?.agg === "avg" || prim?.unit === "%") out.splice(1, 0, plan({ id: "k5", title: `Average ${prim.label.toLowerCase()}`, chart: "kpi", agg: "avg", col: prim.key, filters: latest }));
+    if (firstSum && firstSum.key !== prim?.key) out.splice(2, 0, plan({ id: "k6", title: `Total ${firstSum.label.toLowerCase()}`, chart: "kpi", agg: "sum", col: firstSum.key, filters: latest }));
+    const shown = [prim, ...measures.filter((c) => c.key !== prim?.key)].filter((c): c is NonNullable<typeof c> => !!c).slice(0, 3);
+    shown.forEach((m, i) => out.push(plan({ id: i ? `item${i}` : "cat", title: `${m.label} by ${itemCol.label.toLowerCase()}`, chart: "hbar", by: "col", byCol: itemCol.key,
+      agg: m.agg === "avg" || m.unit === "%" ? "avg" : m.agg === "max" ? "max" : "sum", col: m.key, filters: latest, limit: 15 })));
+  } else if (cat) {
     const d = new Set(rows.map((r) => r[cat.key]).filter((v) => v != null)).size;
     out.push(plan({ id: "cat", title: `${hasOpen ? `${cap(q.word)} ${ow}` : cap(q.word)} by ${cat.label.toLowerCase()}${when}`, chart: d <= 5 ? "donut" : "hbar", by: "col", byCol: cat.key, ...measure, filters: [...openF, ...latest], limit: d <= 5 ? 6 : 8 }));
   }

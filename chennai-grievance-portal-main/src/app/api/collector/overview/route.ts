@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { asOf, exportMeta, overview, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 import { runDueSources } from "@/lib/collector/sources";
+import { runDueRefreshes } from "@/lib/studio/pipeline";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,8 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   try {
     // ?meta=1: a cheap check the console polls to learn that the pipeline published new data.
+    // Data Studio links that refresh on their own (at most one sweep a minute, in the background)
+    runDueRefreshes();
     if (p.get("meta")) {
       const [now, meta] = await Promise.all([asOf(), exportMeta()]);
       return NextResponse.json({ now, exportedAt: meta.exported_at ?? null });

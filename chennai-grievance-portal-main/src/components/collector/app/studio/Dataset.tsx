@@ -15,6 +15,7 @@ import { api, reduced } from "./client";
 import Analyst from "./Analyst";
 import Drill from "./Drill";
 import { BriefCard, InsightGrid } from "./Insights";
+import SourceBar from "./Source";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
 const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });
@@ -26,8 +27,9 @@ const KPI_IC: IconName[] = ["table", "clock", "chart", "pin"];
 
 interface Chip { label: string; filters: Filter[] }
 
-export default function Dataset({ id, c, onRemap, onRefresh, onDeleted, onPinned }: {
-  id: string; c: Console; onRemap: (changes: { key: string; role: Role; label?: string }[]) => void; onRefresh: () => void; onDeleted: () => void; onPinned: () => void;
+export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted, onPinned }: {
+  id: string; c: Console; onRemap: (changes: { key: string; role: Role; label?: string }[]) => void; onRefresh: () => void; onChoose: (candidate: string) => void;
+  onDeleted: () => void; onPinned: () => void;
 }) {
   const [data, setData] = useState<DatasetData | null>(null);
   // the dashboard's filters, each added by focusing on a mark (a zone, a type, a week); every panel follows them
@@ -110,6 +112,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onDeleted, onPinned
     <>
       <section className="ds-ws card">
         <Head data={data} tab={tab} setTab={setTab} issuesN={issuesN} c={c} onRefresh={onRefresh} onDeleted={onDeleted} onRenamed={refresh} />
+        <SourceBar meta={m as DatasetData["meta"]} c={c} onChoose={onChoose} onRefresh={onRefresh} onChanged={() => { refresh(); onPinned(); }} />
         <div className="ds-ws-b" key={tab}>
           {tab === "dash" && (
             <div className="ds-dash">

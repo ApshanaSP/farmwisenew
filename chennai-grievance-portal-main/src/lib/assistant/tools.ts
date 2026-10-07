@@ -19,6 +19,7 @@ import { ScopeSchema, refNames, scopeProblems, type AssistantScope } from "@/lib
 import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
+import { windowRows } from "@/lib/assistant/incidents";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
@@ -238,14 +239,15 @@ export const TOOLS = [
       const s = { ...scope, zone: null };
       const rows = await zoneAttention(s, now);
       const facts = rows.flatMap((r, k) => [
-        fact(`zone.${r.zone}.rank`, `Attention rank of ${r.name}`, k + 1), fact(`zone.${r.zone}.score`, `Attention score of ${r.name}`, r.score),
+        // the attention score only orders the zones: the composer gets the counts it rests on, never the score itself
+        fact(`zone.${r.zone}.rank`, `Rank of ${r.name} by severe and high incidents`, k + 1),
         fact(`zone.${r.zone}.severe`, `Severe incidents in ${r.name}`, r.severe), fact(`zone.${r.zone}.high`, `High incidents in ${r.name}`, r.high),
         fact(`zone.${r.zone}.n`, `Incidents reported in ${r.name}`, r.n), fact(`zone.${r.zone}.open`, `Open incidents in ${r.name}`, r.open),
         fact(`zone.${r.zone}.complaints`, `Open citizen complaints in ${r.name}`, r.complaints)
       ]);
       const t = await testShare(s, now);
       return {
-        scope: s, asOf: now, data: { rows, formula: "attention score = 3 x severe + 1 x high, incidents reported in the period" },
+        scope: s, asOf: now, data: { rows, formula: "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only" },
         facts: [...facts, ...t.facts], sources: [fn("intel.scopeWhere"), tbl("incidents"), tbl("ref_wards")], incidentIds: [],
         testData: t.testData, caveats: t.caveats
       };
@@ -261,21 +263,23 @@ export const TOOLS = [
       const d = await ov(s);
       const [ranks, names] = await Promise.all([zoneAttention({ ...scope, zone: null }, d.now), refNames()]);
       const at = ranks.findIndex((r) => r.zone === zone);
-      const snap = d.snapshot.kind === "area" ? d.snapshot : null;
-      const top = [...d.severity.rows].sort((a, b) => Number(b.priority ?? 0) - Number(a.priority ?? 0)).slice(0, 5).map((i) => incRow(i, true));
+      const snap0 = d.snapshot.kind === "area" ? d.snapshot : null;
+      // an earlier window ("yesterday"): the zone's own records for that day, not the console's current snapshot
+      const day = scope.offset ? await windowRows({ period: s.period, zone, dept: s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk, offset: scope.offset }, d.now, 5) : null;
+      const snap = day && snap0 ? { ...snap0, active: day.open, complaints: day.complaints } : snap0;
+      const top = day ? day.rows.map((i) => incRow(i, true)) : [...d.severity.rows].sort((a, b) => Number(b.priority ?? 0) - Number(a.priority ?? 0)).slice(0, 5).map((i) => incRow(i, true));
       const zn = names.zones.get(zone)?.name ?? `Zone ${zone}`;
       const facts = [
-        fact(`zone.${zone}.rank`, `Attention rank of ${zn}`, at + 1), fact(`zone.${zone}.score`, `Attention score of ${zn}`, ranks[at]?.score),
+        fact(`zone.${zone}.rank`, `Rank of ${zn} among zones by severe and high incidents`, at + 1), fact(`zone.${zone}.n`, `Incidents reported in ${zn}`, ranks[at]?.n),
         fact(`zone.${zone}.severe`, `Severe incidents in ${zn}`, ranks[at]?.severe), fact(`zone.${zone}.high`, `High incidents in ${zn}`, ranks[at]?.high),
         fact(`zone.${zone}.active`, `Open incidents in ${zn}`, snap?.active), fact(`zone.${zone}.complaints`, `Open citizen complaints in ${zn}`, snap?.complaints),
-        ...top.map((i) => fact(`inc.${i.id}.priority`, `Priority score of ${i.id}`, i.priority))
       ];
       const officer = snap?.zoneOfficer ? { name: snap.zoneOfficer.name, designation: snap.zoneOfficer.designation, office: snap.zoneOfficer.office } : null;
       const t = await testShare(s, d.now);
       return {
         scope: s, asOf: d.now,
         data: { zone, name: zn, rank: at + 1, of: ranks.length, row: ranks[at] ?? null, ranks, keyDept: snap?.keyDept ?? null, officer, top,
-          formula: "attention score = 3 x severe + 1 x high, incidents reported in the period" },
+          formula: "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only" },
         facts: [...facts, ...t.facts], sources: [fn("intel.overview", "zone snapshot and severity list"), tbl("incidents")],
         incidentIds: top.map((i) => i.id), testData: t.testData, caveats: t.caveats, untrusted: ["title"]
       };

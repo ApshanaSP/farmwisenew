@@ -16,6 +16,8 @@ export interface ActiveFilters {
   topic?: string | null;
   sev?: string | null;
   openOnly?: boolean;
+  /** only open ones past their deadline */
+  overdue?: boolean;
 }
 
 export interface ConversationContext {

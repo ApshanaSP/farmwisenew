@@ -5,7 +5,7 @@
 import type { Lang } from "@/lib/assistant/lang";
 
 export type Period = "daily" | "weekly" | "monthly" | "quarterly";
-export interface Scope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }
+export interface Scope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null; /** windows back from now: 1 with a daily period = yesterday */ offset?: number }
 
 // ---------------------------------------------------------------- datasets --
 

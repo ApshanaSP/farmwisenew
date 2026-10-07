@@ -6,6 +6,7 @@
  * analyst beside it. Datasets and the board of pinned panels are listed on the left.
  */
 import dynamic from "next/dynamic";
+import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SampleInfo } from "@/lib/studio/samples";
 import type { DatasetCard, PanelData, Pin, Role, RunEvent } from "@/lib/studio/types";
@@ -15,6 +16,7 @@ import { api, runStream } from "./client";
 import Pipeline, { emptyRun, type RunState } from "./Pipeline";
 import Hero from "./Hero";
 import Dataset from "./Dataset";
+import Connect, { type ConnectRequest } from "./Connect";
 import "./studio.css";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
@@ -32,6 +34,7 @@ export default function Studio({ c }: { c: Console }) {
   const [run, setRun] = useState<RunState | null>(null);
   const [drag, setDrag] = useState(false);
   const [link, setLink] = useState("");
+  const [connecting, setConnecting] = useState(false);
   const fileIn = useRef<HTMLInputElement>(null);
   const lastStart = useRef<(() => void) | null>(null);
   // the console object is rebuilt on every render of the shell: read it through a ref, so loading runs once
@@ -83,6 +86,11 @@ export default function Studio({ c }: { c: Console }) {
       if (e.t === "log") {
         return { ...r, logs: [...r.logs, { id: ++logId.current, text: e.text, step: owner }].slice(-80) };
       }
+      if (e.t === "blocked") {
+        const steps = { ...r.steps };
+        for (const k of Object.keys(steps) as (keyof RunState["steps"])[]) if (steps[k].state === "run") steps[k] = { ...steps[k], detail: "Stopped: does not look like Chennai district data" };
+        return { ...r, steps, blocked: { id: e.id, why: e.why, signals: e.signals } };
+      }
       if (e.t === "error") {
         const steps = { ...r.steps };
         for (const k of Object.keys(steps) as (keyof RunState["steps"])[]) if (steps[k].state === "run") steps[k] = { ...steps[k], state: "error" };
@@ -128,20 +136,29 @@ export default function Studio({ c }: { c: Console }) {
     fd.append("file", f);
     start(f.name, "file", "/api/collector/studio", { method: "POST", body: fd });
   };
-  const addLink = () => {
-    const u = link.trim();
+  const addLink = (req?: ConnectRequest) => {
+    const u = (req?.url ?? link).trim();
     let url: URL;
     try { url = new URL(u); } catch { c.toast("Paste a full link that starts with http:// or https://", "alert"); return; }
     if (!/^https?:$/.test(url.protocol)) { c.toast("Only http and https links can be read.", "alert"); return; }
     setLink("");
-    start(`${url.hostname}${url.pathname.length > 1 ? url.pathname.slice(0, 40) : ""}`, "link", "/api/collector/studio", json({ url: u }));
+    setConnecting(false);
+    start(req?.name || `${url.hostname}${url.pathname.length > 1 ? url.pathname.slice(0, 40) : ""}`, "link", "/api/collector/studio",
+      json({ url: u, name: req?.name ?? null, auth: req?.auth ?? null, every: req?.every ?? null }));
   };
+  const force = (id: string) => start(run?.title ?? "Dataset", "force", `/api/collector/studio/${id}`, json({ action: "force" }));
+  const discard = async (id: string) => {
+    try { await api(`/api/collector/studio/${id}`, { json: { action: "discard" } }); } catch { /* already gone */ }
+    setRun(null);
+    setMode(datasets[0] ? { k: "dataset", id: datasets[0].id } : { k: "home" });
+  };
+  const choose = (id: string, name: string) => (candidate: string) => start(name, "choose", `/api/collector/studio/${id}`, json({ action: "choose", candidate }));
   const addSample = (key: string) => start(list?.samples.find((x) => x.key === key)?.file ?? "Sample", "sample", "/api/collector/studio", json({ sample: key }));
   const remap = (id: string, name: string) => (changes: { key: string; role: Role; label?: string }[]) =>
     start(name, "remap", `/api/collector/studio/${id}`, json({ columns: changes }, "PATCH"));
   const refresh = (id: string, name: string) => () => start(name, "refresh", `/api/collector/studio/${id}`, json({ action: "refresh" }));
 
-  const busy = mode.k === "run" && !!run && !run.doneAt && !run.error;
+  const busy = mode.k === "run" && !!run && !run.doneAt && !run.error && !run.blocked;
   const datasets = list?.datasets ?? [];
   const current = mode.k === "dataset" ? datasets.find((d) => d.id === mode.id) : null;
 
@@ -163,9 +180,11 @@ export default function Studio({ c }: { c: Console }) {
           <input ref={fileIn} type="file" accept={ACCEPT} hidden onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ""; }} />
           <form className="ds-linkf" onSubmit={(e) => { e.preventDefault(); addLink(); }}>
             <I n="ext" />
-            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: CSV, Excel, JSON, Google Sheet" aria-label="Link to a data file" disabled={busy} />
+            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: page, file, feed, API" aria-label="Link to a data source" disabled={busy} />
+            <button type="button" className="alt" disabled={busy} onClick={() => setConnecting(true)} aria-label="Sign-in and refresh options" title="Sign-in and refresh options"><I n="sliders" /></button>
             <button disabled={busy || link.trim().length < 10} aria-label="Read the link"><I n="right" /></button>
           </form>
+          <button type="button" className="ds-connect-cta" disabled={busy} onClick={() => setConnecting(true)}><I n="shield" />Connect with sign-in or schedule</button>
           {!!list?.samples.length && (
             <div className="ds-samples">
               <small>Samples</small>
@@ -184,7 +203,7 @@ export default function Studio({ c }: { c: Console }) {
               <span className="ds-li-ic"><I n="bookmark" /></span>
               <span className="ds-li-b"><b>Studio board</b><small>{list?.board.length ? `${list.board.length} pinned ${list.board.length === 1 ? "chart" : "charts"}` : "Pin charts from any dataset"}</small></span>
             </button>
-            {run && mode.k !== "run" && (run.doneAt == null && !run.error) && (
+            {run && mode.k !== "run" && (run.doneAt == null && !run.error && !run.blocked) && (
               <button className="ds-li running" onClick={() => setMode({ k: "run" })}>
                 <span className="ds-li-ic"><span className="ds-spin sm" /></span><span className="ds-li-b"><b>{run.title}</b><small>Agents at work…</small></span>
               </button>
@@ -196,6 +215,7 @@ export default function Studio({ c }: { c: Console }) {
                   <b>{d.name}</b>
                   <small>{d.rows.toLocaleString("en-IN")} rows · health {d.health}{d.department ? ` · ${d.department}` : ""}</small>
                 </span>
+                {d.every ? <span className={`ds-li-sync${d.failing ? " bad" : ""}`} title={d.failing ? "The last automatic refresh failed" : `Refreshes ${d.every >= 1440 ? "daily" : d.every >= 360 ? "every 6 hours" : "hourly"}`}><I n={d.failing ? "alert" : "refresh"} /></span> : null}
                 {d.link && d.link !== "none" && <span className={`ds-li-link s-${d.link}`} title={`${d.link} link with district incidents`}><I n="compare" /></span>}
               </button>
             ))}
@@ -207,11 +227,11 @@ export default function Studio({ c }: { c: Console }) {
       {mode.k === "run" && run ? (
         <section className="ds-span card ds-run-wrap">
           <Pipeline run={run} onBack={() => setMode(run.id ? { k: "dataset", id: run.id } : current ? { k: "dataset", id: current.id } : datasets[0] ? { k: "dataset", id: datasets[0].id } : { k: "home" })}
-            onRetry={lastStart.current ?? undefined} />
+            onRetry={lastStart.current ?? undefined} onForce={force} onDiscard={discard} />
         </section>
       ) : mode.k === "dataset" ? (
         <Dataset key={mode.id} id={mode.id} c={c}
-          onRemap={remap(mode.id, current?.name ?? "Dataset")} onRefresh={refresh(mode.id, current?.name ?? "Dataset")}
+          onRemap={remap(mode.id, current?.name ?? "Dataset")} onRefresh={refresh(mode.id, current?.name ?? "Dataset")} onChoose={choose(mode.id, current?.name ?? "Dataset")}
           onDeleted={() => { load().then((r) => setMode(r?.datasets[0] ? { k: "dataset", id: r.datasets[0].id } : { k: "home" })); }}
           onPinned={() => load()} />
       ) : mode.k === "board" ? (
@@ -219,6 +239,7 @@ export default function Studio({ c }: { c: Console }) {
       ) : (
         <section className="ds-span card ds-hero-wrap"><Hero samples={list?.samples ?? []} onSample={addSample} busy={busy} /></section>
       )}
+      <AnimatePresence>{connecting && <Connect initialUrl={link} onClose={() => setConnecting(false)} onConnect={addLink} />}</AnimatePresence>
       {drag && <div className="ds-dropveil"><div><I n="download" /><b>Drop to analyse</b><small>Seven agents will read, clean, map and explain it</small></div></div>}
     </div>
   );

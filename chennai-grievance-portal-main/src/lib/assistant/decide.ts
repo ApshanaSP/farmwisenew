@@ -9,7 +9,7 @@ import type { ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 
 /** Words that name a period ("recent" is not one: the fast path reads it as the last day, whatever period the router copied). */
-const NAMES_PERIOD = /\b(today|tonight|yesterday|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|vaaram|maasam/i;
+const NAMES_PERIOD = /\b(today'?s?|tonight|yesterday|nethu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|vaaram|maasam/i;
 
 /** The parts of a route the decision reads. */
 export interface RouteLike {
@@ -30,6 +30,8 @@ export interface Decision {
   count: number | null;
   focus: Detected["focus"];
   openOnly: boolean;
+  /** only open ones past their deadline */
+  overdueOnly?: boolean;
   severity: "Severe" | "High" | null;
   options: string[];
 }
@@ -55,11 +57,18 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
   const stories = new Set([...(ctx?.storyIds ?? []), ctx?.selectedNewsStoryId ?? ""].filter(Boolean));
   const storyId = d.storyId && stories.has(d.storyId) ? d.storyId : null;
   const rules = detectIntent(message, ctx);
-  const base: Detected = { ...rules, n: d.count ?? rules.n, sev: d.severity ?? rules.sev, openOnly: d.openOnly || rules.openOnly, incidentId, storyId,
+  const base: Detected = { ...rules, n: d.count ?? rules.n, sev: d.severity ?? rules.sev, openOnly: d.openOnly || rules.openOnly, overdue: !!d.overdueOnly || !!rules.overdue, incidentId, storyId,
     focus: d.focus, refinement: false, find: d.find, because: "understood by the router",
     // a period only when the words name one (or a follow-up changes it): the router copying the chat's default 90 days into
     // "recent news" is not the Collector asking for 90 days
     period: route.scopeRaw?.period && (NAMES_PERIOD.test(message) || route.intent === "plan_edit") ? route.scopeRaw.period : null };
+  // "what about Anna Nagar?" after a count or a list: the same answer (its topic, filters and kind) for the new place or period,
+  // not an overview of the place
+  const last = ctx?.lastIntent as Detected["intent"] | undefined;
+  const followUp = route.intent === "plan_edit" || (message.length <= 60 && /^\s*(and|what about|how about|same (for|in)|now (for|in)|also|then)\b/i.test(message));
+  if (followUp && last && Object.values(FAST_OF).includes(last) && !["NEWS_DETAIL", "INCIDENT_TIMELINE", "INCIDENT_RELATED"].includes(last)
+    && ["area_summary", "other", "incident_count", "incident_list", "priority_list", "category_ranking"].includes(d.answer))
+    return { fast: { ...base, intent: last, refinement: true, n: base.n ?? ctx?.n ?? null } };
   switch (d.answer) {
     case "clarify":
       return d.options.length >= 2 ? { clarify: { question: route.clarify || "Which one do you mean?", options: d.options } } : null;

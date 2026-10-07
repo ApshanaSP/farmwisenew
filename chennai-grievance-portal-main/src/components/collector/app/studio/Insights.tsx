@@ -12,7 +12,8 @@ import { I, type IconName } from "../icons";
 
 const LABEL_IC: Record<InsightLabel, IconName> = {
   Backlog: "tasks", Delay: "clock", Turnaround: "timer", "Service gap": "target", "Bright spot": "thumbUp", Hotspot: "pin", Rising: "up", Falling: "down",
-  "Local pattern": "layers", Concentration: "donut", Magnitude: "barH", Anomaly: "alert", Linked: "compare", Growth: "line", Pattern: "pulse", "Data gap": "info"
+  "Local pattern": "layers", Concentration: "donut", Magnitude: "barH", Anomaly: "alert", Linked: "compare", Growth: "line", Pattern: "pulse", "Data gap": "info",
+  Ranking: "barH", Capacity: "drop", Change: "compare"
 };
 const PRIO = { act: "Act now", watch: "Watch", note: "Note" } as const;
 

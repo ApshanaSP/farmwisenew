@@ -89,7 +89,9 @@ function feed(xml: string): Table {
 
 // -------------------------------------------------------------------- html --
 
-const stripPage = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "");
+export const stripPage = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style|noscript|svg|template)\b[\s\S]*?<\/\1>/gi, "")
+  // an attribute value holding < or > (Wikipedia's data-mw JSON) would end a tag early: emptied, so the tags read right
+  .replace(/(\s[\w:-]+=)("[^"]*"|'[^']*')/g, (m, a: string, v: string) => (/[<>]/.test(v) ? `${a}""` : m));
 /** A cell's text: tags, footnote marks ([1], [a]) and extra spaces removed. */
 const cellText = (s: string) => tidy(unxml(s.replace(/<br\s*\/?>/gi, " ").replace(/<sup\b[\s\S]*?<\/sup>/gi, "").replace(/<[^>]+>/g, " ")).replace(/\[\s*(\d+|[a-z]|note \d+|citation needed)\s*\]/gi, ""));
 
@@ -124,19 +126,8 @@ function htmlPage(html: string, base: string): Table {
     const t = shape(tables[0]);
     return { ...t, sheet: tables.length > 1 ? `Largest of ${tables.length} tables` : null, sheets: [], caption: title, format: "html" };
   }
-  // headlines: links whose text reads like a headline, each once
   const host = (() => { try { return new URL(base).hostname.replace(/^www\./, ""); } catch { return null; } })();
-  const seen = new Set<string>();
-  const rows: Cell[][] = [];
-  for (const m of stripPage(html).matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const text = cellText(m[2]);
-    if (text.length < 30 || text.length > 260 || text.split(" ").length < 5 || seen.has(text.toLowerCase())) continue;
-    seen.add(text.toLowerCase());
-    let link: string | null = null;
-    try { link = new URL(unxml(m[1]), base).toString(); } catch { /* keep null */ }
-    rows.push([text, host, null, null, link]);
-    if (rows.length >= 300) break;
-  }
+  const rows = headlinesIn(html, base);
   if (rows.length >= 5) return { headers: ["Headline", "Source", "Published", "Summary", "Link"], rows, sheet: null, sheets: [], caption: title ? `Headlines on ${title}` : "Headlines on the page", format: "feed", truncated: 0 };
   const host2 = host ?? "";
   if (/data\.gov\.in$/.test(host2)) throw new ParseError("data.gov.in builds its pages with JavaScript, so the data is not in the page. On the dataset's page press Download, choose CSV (or Excel), and drop that file here; or paste its API link (api.data.gov.in/resource/...&format=csv).");
@@ -145,17 +136,38 @@ function htmlPage(html: string, base: string): Table {
   throw new ParseError("That web page has no table, no data file and no list of headlines to read. Open it, look for a \"Download\" (CSV / Excel) or an RSS link, and paste that instead.");
 }
 
+/** Links whose text reads like a headline (5+ words), each once: a news or notices page as the rows of a feed. */
+export function headlinesIn(html: string, base: string): Cell[][] {
+  const host = (() => { try { return new URL(base).hostname.replace(/^www\./, ""); } catch { return null; } })();
+  const seen = new Set<string>();
+  const rows: Cell[][] = [];
+  // menus, headers and footers are not headlines
+  const body = stripPage(html).replace(/<(nav|header|footer)\b[\s\S]*?<\/\1>/gi, "");
+  for (const m of body.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const text = cellText(m[2]);
+    if (text.length < 30 || text.length > 260 || text.split(" ").length < 5 || seen.has(text.toLowerCase())) continue;
+    seen.add(text.toLowerCase());
+    let link: string | null = null;
+    try { link = new URL(unxml(m[1]), base).toString(); } catch { /* keep null */ }
+    rows.push([text, host, null, null, link]);
+    if (rows.length >= 300) break;
+  }
+  return rows;
+}
+
 /** Links on a page to data files (CSV first, then Excel, then JSON), for a page that only links its data. */
 export function dataLinksIn(html: string, base: string): string[] {
   const out: { url: string; rank: number }[] = [];
   for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     const href = unxml(m[1]);
     const text = cellText(m[2]).toLowerCase();
-    const ext = href.toLowerCase().match(/\.(csv|xlsx|xls|json)(\?|$)/)?.[1] ?? (/(^|\W)(csv)(\W|$)/.test(text) ? "csv" : /(^|\W)(xlsx?|excel)(\W|$)/.test(text) ? "xlsx" : null);
+    const h = href.toLowerCase();
+    // a file by its name, by a format parameter (?format=csv, export=xlsx), or by the link's own words ("Download CSV")
+    const ext = h.match(/\.(csv|xlsx|xls|json)(\?|$)/)?.[1] ?? h.match(/[?&](?:format|type|output|export)=(csv|xlsx|xls|json)\b/)?.[1] ?? (/(^|\W)(csv)(\W|$)/.test(text) ? "csv" : /(^|\W)(xlsx?|excel)(\W|$)/.test(text) ? "xlsx" : null);
     if (!ext) continue;
     try { out.push({ url: new URL(href, base).toString(), rank: { csv: 0, xlsx: 1, xls: 1, json: 2 }[ext] ?? 3 }); } catch { /* a broken link */ }
   }
-  return [...new Set(out.sort((a, b) => a.rank - b.rank).map((x) => x.url))].slice(0, 3);
+  return [...new Set(out.sort((a, b) => a.rank - b.rank).map((x) => x.url))].slice(0, 4);
 }
 
 /** The news feed a web page points to (<link rel="alternate" type="application/rss+xml">), if any. */
@@ -164,7 +176,9 @@ export function feedLinkIn(html: string, base: string): string | null {
     const tag = m[0];
     if (!/rel=["']?alternate/i.test(tag) || !/type=["']?application\/(rss|atom)\+xml/i.test(tag)) continue;
     const href = tag.match(/href=["']([^"']+)["']/i)?.[1];
-    if (href) try { return new URL(unxml(href), base).toString(); } catch { /* a broken link */ }
+    // a site-wide feed of edits or comments (a wiki's recent changes) is not this page's content
+    if (!href || /recentchanges|special:|action=history|\/comments\/feed|feed=atom&|title=special/i.test(href)) continue;
+    try { return new URL(unxml(href), base).toString(); } catch { /* a broken link */ }
   }
   return null;
 }
@@ -352,7 +366,7 @@ function scalar(v: unknown): Cell {
 const isText = (c: Cell) => typeof c === "string" && !/^[-+]?[\d.,\s₹%/:-]+$/.test(c.trim());
 
 /** Header row, caption, two-row headers, empty columns: a grid becomes headers + rows. */
-function shape(grid: Cell[][], forceHeader?: number): Omit<Table, "sheet" | "sheets" | "format"> {
+export function shape(grid: Cell[][], forceHeader?: number): Omit<Table, "sheet" | "sheets" | "format"> {
   // trailing empty columns and rows
   while (grid.length && grid[grid.length - 1].every((c) => c == null)) grid.pop();
   if (!grid.length) throw new ParseError("The file has no rows.");

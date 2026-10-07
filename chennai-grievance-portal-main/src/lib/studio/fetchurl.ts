@@ -1,20 +1,26 @@
 /**
- * Downloading a data file from a link the Collector pastes. Share links are turned into the file itself (a Google
- * Sheet into its CSV export, Dropbox ?dl=0 into ?dl=1, a GitHub page into the raw file). Only public http(s) addresses
- * are fetched: a name that resolves to this machine or a private network is refused (no reaching into the server's
- * own network through a pasted link), redirects are followed by hand and checked the same way, and the size and time
- * are capped.
+ * Downloading what a link points to, as sent (no browser). Share links are turned into the file itself (a Google
+ * Sheet into its CSV export, Dropbox ?dl=0 into ?dl=1, a GitHub page into the raw file).
+ *
+ * Only public http(s) addresses are fetched: a name that resolves to this machine or a private network is refused (no
+ * reaching into the server's own network through a pasted link), unless the host is listed in STUDIO_ALLOW_HOSTS (a
+ * demo department app on this machine). Redirects are followed by hand and every hop is checked the same way; a
+ * sign-in (key, password) is sent only to the host it was given for. Size and time are capped.
+ *
+ * The Studio announces itself honestly: a site that refuses it is reported as refusing, never retried in disguise.
  */
 import dns from "dns/promises";
 import net from "net";
 import { dataLinksIn, feedLinkIn, htmlTables } from "@/lib/studio/parse";
 
 export const MAX_BYTES = 15 * 1024 * 1024;
-const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard; data studio)";
-// some sites (news, government portals) answer only browsers: a refused request is retried as one
-const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+export const UA = "DistrictIQ/1.0 (Chennai District Collectorate; data studio)";
+export const UA_TOKEN = "DistrictIQ";
 
-export class LinkError extends Error {}
+export type LinkErrorCode = "invalid" | "private" | "network" | "timeout" | "auth" | "forbidden" | "limited" | "missing" | "http" | "size" | "robots" | "login" | "browser" | "empty";
+export class LinkError extends Error {
+  constructor(message: string, public code: LinkErrorCode = "http", public status: number | null = null) { super(message); }
+}
 
 /** The direct file behind a share link. */
 export function directUrl(raw: string): string {
@@ -43,24 +49,101 @@ function privateIp(ip: string): boolean {
   return s === "::1" || s === "::" || s.startsWith("fc") || s.startsWith("fd") || s.startsWith("fe80") || s.startsWith("::ffff:127.") || s.startsWith("::ffff:10.") || s.startsWith("::ffff:192.168.");
 }
 
-async function checkHost(u: URL) {
-  if (u.protocol !== "http:" && u.protocol !== "https:") throw new LinkError("Only http and https links can be read.");
-  if (u.username || u.password) throw new LinkError("Links with a username or password in them are not accepted; add the source with its sign-in under Data sources instead.");
+/** Hosts (host or host:port) the administrator allows although they are private: a demo department app on this PC. */
+function allowed(u: URL): boolean {
+  const list = (process.env.STUDIO_ALLOW_HOSTS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return list.includes(u.host.toLowerCase()) || list.includes(u.hostname.toLowerCase());
+}
+
+const hostOk = new Map<string, { ok: boolean; at: number }>();
+/** Throws for anything but a public http(s) address. Used for every hop, every discovered file and every browser request. */
+export async function checkHost(u: URL) {
+  if (u.protocol !== "http:" && u.protocol !== "https:") throw new LinkError("Only http and https links can be read.", "invalid");
+  if (u.username || u.password) throw new LinkError("Put the user name and password in the sign-in fields, not in the link.", "invalid");
+  if (allowed(u)) return;
   const host = u.hostname.replace(/^\[|\]$/g, "");
-  if (/^(localhost|.*\.local|.*\.internal)$/i.test(host)) throw new LinkError("That address is on a private network and cannot be read.");
-  const ips = net.isIP(host) ? [host] : (await dns.lookup(host, { all: true }).catch(() => { throw new LinkError(`The address ${host} could not be found.`); })).map((x) => x.address);
-  if (!ips.length || ips.some(privateIp)) throw new LinkError("That address is on a private network and cannot be read.");
+  const c = hostOk.get(host);
+  if (c && Date.now() - c.at < 60_000) { if (!c.ok) throw new LinkError("That address is on a private network and cannot be read.", "private"); return; }
+  if (/^(localhost|.*\.local|.*\.internal)$/i.test(host)) throw new LinkError("That address is on a private network and cannot be read.", "private");
+  const ips = net.isIP(host) ? [host] : (await dns.lookup(host, { all: true }).catch(() => { throw new LinkError(`The address ${host} could not be found.`, "network"); })).map((x) => x.address);
+  const ok = ips.length > 0 && !ips.some(privateIp);
+  hostOk.set(host, { ok, at: Date.now() });
+  if (!ok) throw new LinkError("That address is on a private network and cannot be read.", "private");
+}
+
+/** A sign-in sent with a request: headers and query parameters, only to the host they were given for. */
+export interface Credentials { host: string; headers?: Record<string, string>; query?: Record<string, string> }
+
+export interface Fetched { buf: Buffer; name: string; contentType: string; url: string; status: number }
+
+/** The message for an HTTP status that stops a read. */
+export function statusError(status: number, signedIn: boolean): LinkError {
+  if (status === 401) return new LinkError(signedIn ? "The site did not accept the sign-in details (HTTP 401). Check them and try again." : "The site asks for a sign-in (HTTP 401). Add the link again with its sign-in details.", "auth", status);
+  if (status === 403) return new LinkError(signedIn
+    ? "The site refused this account (HTTP 403): it may not have access to this page."
+    : "The site refused access (HTTP 403). It may need a sign-in, or it may not allow automated reading. If you have access, add the link with its sign-in details, or download the file and drop it here.", "forbidden", status);
+  if (status === 404 || status === 410) return new LinkError(`Nothing is at that address (HTTP ${status}). Check the link.`, "missing", status);
+  if (status === 429) return new LinkError("The site is limiting how often it can be read (HTTP 429). Try again in a few minutes.", "limited", status);
+  if (status >= 500) return new LinkError(`The site has a problem of its own right now (HTTP ${status}). Try again later.`, "http", status);
+  return new LinkError(`The link answered HTTP ${status}.`, "http", status);
+}
+
+/** One download: redirects followed and checked, the sign-in sent to its own host only, the size capped. */
+export async function fetchOnce(raw: string, cred?: Credentials | null, accept?: string, timeoutMs = 25_000): Promise<Fetched> {
+  let url: URL;
+  try { url = new URL(directUrl(raw)); } catch { throw new LinkError("That is not a valid link.", "invalid"); }
+  for (let hop = 0; hop < 8; hop++) {
+    await checkHost(url);
+    const mine = !!cred && url.host === cred.host;
+    const target = new URL(url);
+    if (mine && cred!.query) for (const [k, v] of Object.entries(cred!.query)) target.searchParams.set(k, v);
+    let res: Response;
+    try {
+      res = await fetch(target, { redirect: "manual",
+        headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9", Accept: accept ?? "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5", ...(mine ? cred!.headers : {}) },
+        signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
+    } catch (e) {
+      throw /timeout|abort/i.test(String(e)) ? new LinkError("The link took too long to answer.", "timeout") : new LinkError("The link could not be reached.", "network");
+    }
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      url = new URL(res.headers.get("location")!, url);
+      continue;
+    }
+    if (!res.ok) throw statusError(res.status, !!cred);
+    const len = Number(res.headers.get("content-length") ?? 0);
+    if (len > MAX_BYTES) throw new LinkError("The file is larger than 15 MB.", "size");
+    const reader = res.body?.getReader();
+    if (!reader) throw new LinkError("The link sent nothing.", "empty");
+    const parts: Uint8Array[] = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > MAX_BYTES) { await reader.cancel(); throw new LinkError("The file is larger than 15 MB.", "size"); }
+      parts.push(value);
+    }
+    const ct = res.headers.get("content-type") ?? "";
+    return { buf: Buffer.concat(parts), name: nameOf(url, ct, res.headers.get("content-disposition") ?? ""), contentType: ct, url: url.toString(), status: res.status };
+  }
+  throw new LinkError("The link redirected too many times.", "http");
+}
+
+export function nameOf(url: URL, ct: string, cd = ""): string {
+  const fromCd = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i)?.[1];
+  const last = (() => { try { return decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() ?? ""); } catch { return ""; } })();
+  const ext = /spreadsheetml/.test(ct) ? ".xlsx" : /ms-excel/.test(ct) ? ".xls" : /json/.test(ct) ? ".json" : /rss|atom|xml/.test(ct) ? ".xml" : /html/.test(ct) ? ".html" : /csv|text\/plain/.test(ct) ? ".csv" : "";
+  return (fromCd ? decodeURIComponent(fromCd) : /\.[a-z]{2,5}$/i.test(last) ? last : `${url.hostname}${last && last !== "rss" ? `-${last}` : ""}${ext || ".csv"}`).slice(0, 120);
 }
 
 /**
- * The file behind a link. A short share link (share.google, bit.ly) is followed through its redirects; a web page
- * that advertises a news feed (<link rel="alternate" type="application/rss+xml">) is read through that feed.
+ * The file behind a link, the old way (one best guess): a web page is read through its own table, else a data file
+ * it links, else its news feed. Kept for callers that want one file; connect/ finds every candidate.
  */
 export async function fetchLink(raw: string): Promise<{ buf: Buffer; name: string; contentType: string; url: string; via: string | null }> {
   const got = await fetchOnce(raw);
   const head = got.buf.subarray(0, 4000).toString("utf8").trimStart();
   if (!(/html/i.test(got.contentType) || /^<(!doctype|html)/i.test(head))) return { ...got, via: null };
-  // a web page: its own table first; else a data file it links; else its news feed; else (parse.ts) its headlines
   const html = got.buf.subarray(0, 3_000_000).toString("utf8");
   const table = htmlTables(html)[0];
   if (table && table.length >= 4) return { ...got, via: "a table on the page" };
@@ -72,48 +155,4 @@ export async function fetchLink(raw: string): Promise<{ buf: Buffer; name: strin
     try { return { ...(await fetchOnce(feedUrl)), via: "the news feed the page points to" }; } catch { /* the page itself */ }
   }
   return { ...got, via: "the headlines listed on the page" };
-}
-
-async function fetchOnce(raw: string): Promise<{ buf: Buffer; name: string; contentType: string; url: string }> {
-  let url: URL;
-  try { url = new URL(directUrl(raw)); } catch { throw new LinkError("That is not a valid link."); }
-  let asBrowser = false;
-  for (let hop = 0; hop < 8; hop++) {
-    await checkHost(url);
-    let res: Response;
-    try {
-      res = await fetch(url, { redirect: "manual", headers: { "User-Agent": asBrowser ? BROWSER_UA : UA, "Accept-Language": "en-IN,en;q=0.9", Accept: "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5" },
-        signal: AbortSignal.timeout(25_000), cache: "no-store" });
-    } catch (e) {
-      throw new LinkError(/timeout|abort/i.test(String(e)) ? "The link took too long to answer." : "The link could not be reached.");
-    }
-    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
-      url = new URL(res.headers.get("location")!, url);
-      continue;
-    }
-    if ((res.status === 403 || res.status === 429 || res.status === 503 || res.status === 406) && !asBrowser) { asBrowser = true; hop--; continue; }
-    if (res.status === 401 || res.status === 403) throw new LinkError("The link needs a sign-in. Share it publicly (\"anyone with the link\"), or download the file and drop it here.");
-    if (!res.ok) throw new LinkError(`The link answered HTTP ${res.status}.`);
-    const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_BYTES) throw new LinkError("The file is larger than 15 MB.");
-    const reader = res.body?.getReader();
-    if (!reader) throw new LinkError("The link sent nothing.");
-    const parts: Uint8Array[] = [];
-    let size = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > MAX_BYTES) { await reader.cancel(); throw new LinkError("The file is larger than 15 MB."); }
-      parts.push(value);
-    }
-    const ct = res.headers.get("content-type") ?? "";
-    const cd = res.headers.get("content-disposition") ?? "";
-    const fromCd = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i)?.[1];
-    const last = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() ?? "");
-    const ext = /spreadsheetml/.test(ct) ? ".xlsx" : /ms-excel/.test(ct) ? ".xls" : /json/.test(ct) ? ".json" : /rss|atom|xml/.test(ct) ? ".xml" : /csv|text\/plain/.test(ct) ? ".csv" : "";
-    const name = (fromCd ? decodeURIComponent(fromCd) : /\.[a-z]{2,5}$/i.test(last) ? last : `${url.hostname}${last && last !== "rss" ? `-${last}` : ""}${ext || ".csv"}`).slice(0, 120);
-    return { buf: Buffer.concat(parts), name, contentType: ct, url: url.toString() };
-  }
-  throw new LinkError("The link redirected too many times.");
 }

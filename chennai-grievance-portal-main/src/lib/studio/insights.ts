@@ -415,6 +415,84 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
     }
   }
 
+  // ------------------------------------------------------------ a snapshot: one row per item (a lake, a hospital, a shop)
+  const itemCol = spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && (() => {
+    const vals = now.map((r) => r[c.key]).filter((v) => v != null).map(String);
+    return vals.length >= 3 && new Set(vals).size >= vals.length * 0.8;
+  })());
+  if (itemCol && now.length >= 3 && now.length <= 300) {
+    const items = itemCol.label.toLowerCase();
+    const nameOf = (r: DRow) => String(r[itemCol.key]);
+    const val = (r: DRow, k: string) => (typeof r[k] === "number" && Number.isFinite(r[k] as number) ? (r[k] as number) : null);
+    const fm = (c: { key: string }, v: number) => {
+      const { format, unit } = formatOf(spec, mk({ id: "f", title: "", chart: "kpi", agg: "sum", col: c.key }));
+      return fmtNum(v, format === "int" && !Number.isInteger(v) ? "dec" : format, unit);
+    };
+    const measures = spec.columns.filter((c) => c.role === "measure");
+    const PREV = /last\s*year|previous|\bprev\b|same\s*day|earlier|last\s*(week|month)|ago/i;
+    const CAP = /capacity|full\b|\bfull |target|sanction|allot|maximum|\bmax\b/i;
+    const CUR = /storage|current|present|actual|achiev|stock|filled|available|level|spent|utili|balance/i;
+    const itemPlan = (c: { key: string; label: string; agg: string | null }, agg: Plan["agg"] = c.agg === "avg" ? "avg" : "sum") =>
+      mk({ id: `ins-item-${c.key}`, title: `${c.label} by ${items}`, chart: "hbar", by: "col", byCol: itemCol.key, agg, col: c.key, filters: latestF, limit: 15 });
+    // the extremes of the main measure (and of a percentage)
+    const rankCols = [prim, ...measures.filter((c) => c.unit === "%" && c.key !== prim?.key && !PREV.test(c.header))].filter((c): c is NonNullable<typeof c> => !!c && !PREV.test(c.header)).slice(0, 2);
+    rankCols.forEach((c, i) => {
+      const xs = now.map((r) => ({ n: nameOf(r), v: val(r, c.key) })).filter((x): x is { n: string; v: number } => x.v != null).sort((a, b) => a.v - b.v);
+      if (xs.length < 3 || xs[xs.length - 1].v === xs[0].v) return;
+      const lo = xs[0], hi = xs[xs.length - 1], avg = xs.reduce((s, x) => s + x.v, 0) / xs.length;
+      const pctLow = c.unit === "%" && lo.v < 30;
+      add({ label: "Ranking", tone: pctLow ? "high" : "info", score: (i === 0 ? 54 : 46) + (pctLow ? 10 : 0), owner: dept,
+        title: `${lo.n} lowest on ${c.label.toLowerCase()}`, metric: { value: fm(c, lo.v), caption: `${c.label.toLowerCase()}, ${lo.n}` },
+        text: `${c.label}: ${lo.n} is lowest at ${fm(c, lo.v)} and ${hi.n} highest at ${fm(c, hi.v)}; the average across ${xs.length} ${items}s is ${fm(c, avg)}.`,
+        bars: xs.slice(0, 5).map((x, k) => ({ label: x.n, value: x.v, hi: k === 0, fmt: fm(c, x.v) })),
+        plan: { ...itemPlan(c), sort: "asc" }, key: lo.n });
+    });
+    // how full: a current amount against its capacity, in the same unit
+    // "capacity" before "full tank level"; "storage" or "stock" before a height ("level"), so volumes are compared with volumes
+    const rankBy = (re: RegExp[]) => (c: { header: string }) => { const i = re.findIndex((r) => r.test(c.header)); return i < 0 ? re.length : i; };
+    const capRank = rankBy([/capacity/i, /target|sanction|allot/i, /full|max/i]);
+    const curRank = rankBy([/storage|stock|available|balance/i, /actual|achiev|spent|utili|filled|current|present/i, /level/i]);
+    let cap: (typeof measures)[number] | undefined, cur: (typeof measures)[number] | undefined;
+    for (const c of measures.filter((m) => CAP.test(m.header) && !PREV.test(m.header) && m.unit !== "%").sort((a, b) => capRank(a) - capRank(b))) {
+      const m = measures.filter((x) => x.key !== c.key && x.unit === c.unit && CUR.test(x.header) && !CAP.test(x.header) && !PREV.test(x.header)).sort((a, b) => curRank(a) - curRank(b))[0];
+      if (m) { cap = c; cur = m; break; }
+    }
+    if (cap && cur) {
+      const pairs = now.map((r) => ({ n: nameOf(r), a: val(r, cur.key), b: val(r, cap.key) })).filter((x): x is { n: string; a: number; b: number } => x.a != null && x.b != null && x.b > 0);
+      if (pairs.length >= 2) {
+        const A = pairs.reduce((s, x) => s + x.a, 0), B = pairs.reduce((s, x) => s + x.b, 0);
+        const all = r1((A / B) * 100);
+        const each = pairs.map((x) => ({ ...x, p: r1((x.a / x.b) * 100) })).sort((x, y) => x.p - y.p);
+        add({ label: "Capacity", tone: all < 35 ? "sev" : all < 60 ? "high" : "low", score: 63 + (all < 35 ? 12 : all < 60 ? 6 : 0), owner: dept,
+          title: `${all}% full across ${pairs.length} ${items}s`, metric: { value: `${all}%`, caption: `${cur.label.toLowerCase()} of ${cap.label.toLowerCase()}` },
+          text: `${cur.label} is ${fm(cur, A)} of a ${cap.label.toLowerCase()} of ${fm(cap, B)} (${all}%); ${each[0].n} is the lowest at ${each[0].p}% and ${each[each.length - 1].n} the highest at ${each[each.length - 1].p}%.`,
+          bars: each.slice(0, 5).map((x, k) => ({ label: x.n, value: x.p, hi: k === 0, fmt: `${x.p}%` })),
+          plan: itemPlan(cur, "sum"), key: each[0].n });
+      }
+    }
+    // against the same column a year (or a week) before
+    const prevCol = measures.find((c) => PREV.test(c.header) && c.unit !== "%");
+    const words = (h: string) => h.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 3);
+    const nowCol = prevCol && measures.filter((c) => c.key !== prevCol.key && c.unit === prevCol.unit && !PREV.test(c.header) && !CAP.test(c.header))
+      .sort((a, b) => words(b.header).filter((w) => words(prevCol.header).includes(w)).length - words(a.header).filter((w) => words(prevCol.header).includes(w)).length)[0];
+    if (prevCol && nowCol) {
+      const pairs = now.map((r) => ({ n: nameOf(r), a: val(r, nowCol.key), b: val(r, prevCol.key) })).filter((x): x is { n: string; a: number; b: number } => x.a != null && x.b != null);
+      const A = pairs.reduce((s, x) => s + x.a, 0), B = pairs.reduce((s, x) => s + x.b, 0);
+      if (pairs.length >= 2 && B > 0) {
+        const ch = Math.round(((A - B) / B) * 100);
+        const when = /same\s*day\s*last\s*year/i.test(prevCol.header) ? "on the same day last year" : /last\s*year/i.test(prevCol.header) ? "last year" : /week/i.test(prevCol.header) ? "a week before" : /month/i.test(prevCol.header) ? "a month before" : "before";
+        const moved = [...pairs].sort((x, y) => (x.a - x.b) - (y.a - y.b));
+        const worst = moved[0];
+        add({ label: "Change", tone: ch <= -20 ? "sev" : ch <= -5 ? "high" : ch >= 5 ? "low" : "info", score: 60 + Math.min(15, Math.abs(ch) / 3), owner: dept,
+          title: `Total ${nowCol.label.toLowerCase()} ${ch >= 0 ? "up" : "down"} ${Math.abs(ch)}% ${/year/.test(when) ? "on last year" : /week/.test(when) ? "in a week" : /month/.test(when) ? "in a month" : "since before"}`,
+          metric: { value: `${ch >= 0 ? "+" : "−"}${Math.abs(ch)}%`, caption: `${nowCol.label.toLowerCase()} vs ${when}` },
+          text: `Total ${nowCol.label.toLowerCase()} across ${pairs.length} ${items}s: ${fm(nowCol, A)} now against ${fm(prevCol, B)} ${when} (${ch >= 0 ? "up" : "down"} ${Math.abs(ch)}% in all). ${worst.n} ${worst.a < worst.b ? "fell" : "changed"} most, to ${fm(nowCol, worst.a)} from ${fm(prevCol, worst.b)}.`,
+          bars: [{ label: when.replace(/^on /, "").replace(/^the /, ""), value: B, fmt: fm(prevCol, B) }, { label: "Now", value: A, hi: true, fmt: fm(nowCol, A) }],
+          plan: itemPlan(nowCol, "sum"), key: worst.n });
+      }
+    }
+  }
+
   // ------------------------------------------------------------ the district's incidents
   if (link && link.mode === "place" && link.strength !== "none") {
     const o = link.overlap;

@@ -6,6 +6,9 @@
  *   <id>.json           the dataset: source, spec, profile, Data Detective report, dashboard plans, link, story, alerts
  *   <id>.rows.json.gz   the cleaned rows with their derived fields
  *   <id>.src            the original file, so a re-mapping re-reads it exactly
+ *   <id>.cand.json.gz   a link's candidate tables (every table, file, feed it held), so another can be chosen
+ *   <id>.auth           a link's sign-in and browser session, encrypted (connect/vault.ts)
+ *   <id>.pending.json   a run the Relevance gate stopped, waiting for "Use anyway"
  *   board.json          panels pinned to the Studio board
  * Writes go to a temporary file first and are renamed into place, so a crash never leaves half a file.
  */
@@ -13,7 +16,8 @@ import fs from "fs";
 import path from "path";
 import zlib from "zlib";
 import type { DRow } from "@/lib/studio/clean";
-import type { DatasetCard, DatasetMeta, Pin } from "@/lib/studio/types";
+import type { Table } from "@/lib/studio/parse";
+import type { Candidate, DatasetCard, DatasetMeta, Pin, Spec } from "@/lib/studio/types";
 
 const DIR = path.join(process.cwd(), "data", "studio");
 const ID_RE = /^ds_[a-z0-9]{6,24}$/;
@@ -65,8 +69,27 @@ export function getRows(id: string): DRow[] {
   return rows;
 }
 
+export function saveCandidates(id: string, found: { cand: Candidate; table: Table }[]) {
+  write(p(id, ".cand.json.gz"), zlib.gzipSync(JSON.stringify(found)));
+}
+export function getCandidates(id: string): { cand: Candidate; table: Table }[] {
+  try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".cand.json.gz"))).toString("utf8")); } catch { return []; }
+}
+
+/** A run stopped by the Relevance gate: what is needed to resume it with "Use anyway". */
+export interface Pending { id: string; table: Table; source: DatasetMeta["source"]; name: string | null; sample: boolean; spec: Spec; why: string; signals: string[]; at: string }
+export function savePending(x: Pending) { write(p(x.id, ".pending.json"), JSON.stringify(x)); }
+export function getPending(id: string): Pending | null {
+  try { return JSON.parse(fs.readFileSync(p(id, ".pending.json"), "utf8")); } catch { return null; }
+}
+export function dropPending(id: string, all = false) {
+  fs.rmSync(p(id, ".pending.json"), { force: true });
+  // a dataset that was never kept leaves nothing behind
+  if (all) for (const ext of [".src", ".cand.json.gz", ".auth"]) fs.rmSync(p(id, ext), { force: true });
+}
+
 export function deleteDataset(id: string) {
-  for (const ext of [".json", ".rows.json.gz", ".src"]) fs.rmSync(p(id, ext), { force: true });
+  for (const ext of [".json", ".rows.json.gz", ".src", ".cand.json.gz", ".auth", ".pending.json"]) fs.rmSync(p(id, ext), { force: true });
   rowCache.delete(id);
   const b = getBoard();
   saveBoard(b.filter((x) => x.datasetId !== id));
@@ -81,7 +104,8 @@ export function listDatasets(): DatasetCard[] {
     const m = getMeta(id);
     if (!m) continue;
     out.push({ id: m.id, name: m.name, kind: m.source.kind, file: m.source.file, rows: m.rows, health: m.detective.after, department: m.spec.deptName,
-      updatedAt: m.updatedAt, link: m.link?.strength ?? null, sample: m.sample });
+      updatedAt: m.updatedAt, link: m.link?.strength ?? null, sample: m.sample,
+      every: m.source.connect?.every ?? null, failing: !!m.source.connect?.lastError, auth: m.source.connect?.auth ?? "none" });
   }
   return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }

@@ -6,6 +6,7 @@ import { audit } from "@/lib/collector/sources";
 import type { RunEvent } from "@/lib/studio/types";
 import { LinkError } from "@/lib/studio/fetchurl";
 import { ParseError } from "@/lib/studio/parse";
+import { BlockedError } from "@/lib/studio/pipeline";
 
 export function stream(work: (emit: (e: RunEvent) => void) => Promise<string>): Response {
   const enc = new TextEncoder();
@@ -20,6 +21,7 @@ export function stream(work: (emit: (e: RunEvent) => void) => Promise<string>): 
         const id = await work(emit);
         emit({ t: "done", id });
       } catch (e) {
+        if (e instanceof BlockedError) { emit({ t: "blocked", id: e.id, why: e.why, signals: e.signals }); return; }
         const known = e instanceof ParseError || e instanceof LinkError;
         if (!known) console.error("[studio] run failed", e);
         emit({ t: "error", message: known ? (e as Error).message : `Something went wrong while reading the data: ${((e as Error).message ?? "").slice(0, 140)}` });

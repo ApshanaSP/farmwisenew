@@ -4,9 +4,9 @@ import { aiStatus } from "@/lib/ai/gateway";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { runPlan } from "@/lib/studio/engine";
-import { fetchLink, LinkError, MAX_BYTES } from "@/lib/studio/fetchurl";
+import { MAX_BYTES } from "@/lib/studio/fetchurl";
 import { note, stream } from "@/lib/studio/http";
-import { ingest, namesOf } from "@/lib/studio/pipeline";
+import { ingest, ingestLink, namesOf, runDueRefreshes } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { availableSamples, sampleFile } from "@/lib/studio/samples";
 import { getBoard, getMeta, getRows, listDatasets } from "@/lib/studio/store";
@@ -19,6 +19,7 @@ export async function GET() {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   try {
+    runDueRefreshes();
     const names = namesOf(await refs());
     const board = getBoard().flatMap((pin) => {
       const meta = getMeta(pin.datasetId);
@@ -39,7 +40,17 @@ export async function GET() {
   }
 }
 
-const LinkBody = z.object({ url: z.string().trim().url().max(1000), name: z.string().trim().max(100).optional().nullable() });
+const AuthBody = z.object({
+  mode: z.enum(["none", "apikey", "basic", "login", "manual"]),
+  key: z.string().max(2000).optional(), keyName: z.string().max(80).optional(), keyPlace: z.enum(["query", "header"]).optional(),
+  username: z.string().max(200).optional(), password: z.string().max(400).optional(), loginUrl: z.string().trim().url().max(1000).optional().or(z.literal(""))
+});
+const LinkBody = z.object({
+  url: z.string().trim().url().max(1000), name: z.string().trim().max(100).optional().nullable(),
+  auth: AuthBody.optional().nullable(),
+  /** minutes between automatic refreshes: 60, 360, 1440 (null: by hand) */
+  every: z.number().int().min(30).max(10080).optional().nullable()
+});
 const SampleBody = z.object({ sample: z.string().max(20) });
 
 /**
@@ -79,13 +90,11 @@ export async function POST(req: NextRequest) {
   }
   const link = LinkBody.safeParse(body);
   if (!link.success) return NextResponse.json({ error: "Paste a link (http or https), choose a file, or pick a sample." }, { status: 400 });
+  const d = link.data;
   return stream(async (emit) => {
-    emit({ t: "step", step: "read", state: "run", detail: "Downloading the file from the link" });
-    let got;
-    try { got = await fetchLink(link.data.url); } catch (e) { throw e instanceof LinkError ? e : new LinkError("The link could not be read."); }
-    emit({ t: "log", text: `Downloaded ${(got.buf.length / 1024).toFixed(0)} KB from ${new URL(got.url).hostname}${got.via ? `, read through ${got.via}` : ""}` });
-    const id = await ingest({ buf: got.buf, file: got.name, kind: "link", url: link.data.url, base: got.url, contentType: got.contentType, name: link.data.name ?? null, user: s.email }, emit);
-    await note(s.email, "studio:add", id, { url: link.data.url, bytes: got.buf.length });
+    const id = await ingestLink({ url: d.url, auth: d.auth ? { ...d.auth, loginUrl: d.auth.loginUrl || undefined } : null, every: d.every ?? null, name: d.name ?? null, user: s.email }, emit);
+    // the audit says which way it signed in and as whom, never the secret
+    await note(s.email, "studio:add", id, { url: d.url, auth: d.auth?.mode ?? "none", account: d.auth?.username ?? null, every: d.every ?? null });
     return id;
   });
 }

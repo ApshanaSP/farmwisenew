@@ -57,7 +57,9 @@ function specSchema(lenient: boolean) {
     open_phrase: t(z.string(), ""),
     primary: t(z.string().nullable(), null),
     link_categories: t(z.array(z.string()), []),
-    questions: t(z.array(z.string()), [])
+    questions: t(z.array(z.string()), []),
+    relevance: t(z.enum(["district", "partly", "unrelated"]), "district"),
+    relevance_why: t(z.string(), "")
   });
 }
 
@@ -86,7 +88,9 @@ Also give:
 - primary: the key of the most important measure column, or null
 - link_categories: up to 3 incident category codes from CATEGORIES this data is about or is driven by (drain works relate to FLOOD_WATERLOGGING and DRAINAGE_SEWAGE; fever and dengue cases to VECTOR_DISEASE and FLOOD_WATERLOGGING, since stagnant water breeds mosquitoes)
 - questions: 4 short questions a Collector would ask of this data. Each must be answerable from ONE of these: counting rows, adding up or averaging one measure column, ranking zones / wards / places / categories, or following one date column over time. No durations between two dates, no forecasts, nothing the columns do not hold
-- for each column: a short readable English label (at most 4 words), the unit of a measure ("Rs", "Rs lakh", "kg", "m", "%" or null), agg (sum, avg or max) for a measure, and why (at most 15 words).`;
+- for each column: a short readable English label (at most 4 words), the unit of a measure ("Rs", "Rs lakh", "kg", "m", "%" or null), agg (sum, avg or max) for a measure, and why (at most 15 words)
+- relevance: is this data useful to the District Collector of Chennai for running the district? "district": about Chennai district, its people, places, services, departments, incidents, environment or economy (Chennai lakes, wards, hospitals, schools, complaints, prices at Chennai markets, rainfall in Chennai). "partly": wider data that includes or affects Chennai (all Tamil Nadu districts, state-wide prices or weather, national data with a Chennai row). "unrelated": nothing to do with governing Chennai (a student's marks, a company's sales, sports scores, another country, a recipe, personal lists). Judge the content, not the file's quality; when unsure, say "partly"
+- relevance_why: at most 20 words saying why.`;
 
 export async function understandAI(p: { file: string; caption: string | null; sheet: string | null; rows: number; profile: ColumnProfile[]; sample: Cell[][]; refs: Refs; user: string }):
   Promise<{ spec: AiSpec; info: CallInfo }> {

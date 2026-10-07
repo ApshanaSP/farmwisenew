@@ -4,11 +4,10 @@ import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
 import { filterRows, runPlan } from "@/lib/studio/engine";
-import { fetchLink, LinkError } from "@/lib/studio/fetchurl";
 import { note, stream } from "@/lib/studio/http";
-import { analyse, ask, draftNote, drillInto, namesOf, refreshFrom, remap, view } from "@/lib/studio/pipeline";
+import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, runDueRefreshes, setSchedule, view } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
-import { deleteDataset, getBoard, getMeta, getRows, saveBoard, saveMeta, validId } from "@/lib/studio/store";
+import { deleteDataset, dropPending, getBoard, getMeta, getPending, getRows, saveBoard, saveMeta, validId } from "@/lib/studio/store";
 import { ROLES, type Filter, type Plan, type Role } from "@/lib/studio/types";
 import { AiBudgetError } from "@/lib/ai/gateway";
 
@@ -23,6 +22,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   if (s instanceof NextResponse) return s;
   if (!validId(params.id)) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
   try {
+    runDueRefreshes();
     const extra = filtersOf(req.nextUrl.searchParams.get("f"));
     if (req.nextUrl.searchParams.get("export") === "csv") return exportCsv(params.id, extra);
     if (req.nextUrl.searchParams.get("rows") === "1") {
@@ -131,16 +131,31 @@ const Action = z.discriminatedUnion("action", [
   z.object({ action: z.literal("watch"), text: z.string().trim().min(4).max(300), plan: PlanSchema, op: z.enum(["gt", "gte", "lt", "lte"]), threshold: z.number() }),
   z.object({ action: z.literal("unwatch"), ruleId: z.string().max(40) }),
   z.object({ action: z.literal("refresh") }),
-  z.object({ action: z.literal("analyse") })
+  z.object({ action: z.literal("analyse") }),
+  z.object({ action: z.literal("choose"), candidate: z.string().max(40) }),
+  z.object({ action: z.literal("schedule"), every: z.number().int().min(30).max(10080).nullable() })
 ]);
+/** Actions on a run the Relevance gate stopped (no dataset yet): resume it anyway, or drop it. */
+const PendingAction = z.object({ action: z.enum(["force", "discard"]) });
 
 /** Ask the data, pin a panel to the board, add or remove a dashboard panel, set or drop an alert, fetch a link again. */
 export async function POST(req: NextRequest, { params }: Ctx) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
+  const body = await req.json().catch(() => ({}));
+  const pend = PendingAction.safeParse(body);
+  if (pend.success && validId(params.id)) {
+    if (!getPending(params.id)) return NextResponse.json({ error: "That stopped run is no longer waiting. Add the data again." }, { status: 404 });
+    if (pend.data.action === "discard") { dropPending(params.id, !getMeta(params.id)); return NextResponse.json({ ok: true }); }
+    return stream(async (emit) => {
+      const id = await forceIngest(params.id, s.email, emit);
+      await note(s.email, "studio:use-anyway", id, {});
+      return id;
+    });
+  }
   const meta = validId(params.id) ? getMeta(params.id) : null;
   if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
-  const b = Action.safeParse(await req.json().catch(() => ({})));
+  const b = Action.safeParse(body);
   if (!b.success) return NextResponse.json({ error: b.error.issues[0]?.message ?? "Unknown action." }, { status: 400 });
   const a = b.data;
   try {
@@ -202,15 +217,22 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       }
       case "refresh": {
         if (meta.source.kind !== "link" || !meta.source.url) return NextResponse.json({ error: "Only data added by a link can be fetched again." }, { status: 400 });
-        const url = meta.source.url;
         return stream(async (emit) => {
-          emit({ t: "step", step: "read", state: "run", detail: "Fetching the link again" });
-          let got;
-          try { got = await fetchLink(url); } catch (e) { throw e instanceof LinkError ? e : new LinkError("The link could not be read."); }
-          const id = await refreshFrom(meta.id, got.buf, s.email, emit);
-          await note(s.email, "studio:refresh", id, { bytes: got.buf.length });
+          const id = await refreshDataset(meta.id, s.email, emit);
+          await note(s.email, "studio:refresh", id, {});
           return id;
         });
+      }
+      case "choose":
+        return stream(async (emit) => {
+          const id = await chooseCandidate(meta.id, a.candidate, s.email, emit);
+          await note(s.email, "studio:choose", id, { candidate: a.candidate });
+          return id;
+        });
+      case "schedule": {
+        setSchedule(meta.id, a.every);
+        await note(s.email, "studio:schedule", meta.id, { every: a.every });
+        return NextResponse.json({ ok: true });
       }
     }
   } catch (err) {

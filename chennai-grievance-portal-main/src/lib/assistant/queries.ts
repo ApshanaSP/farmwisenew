@@ -33,7 +33,7 @@ export interface ZoneRow { zone: number; name: string; score: number; severe: nu
  * attention score behind the "Hotspot zones" tile. Ties break by severe, then open.
  */
 export async function zoneAttention(s: AssistantScope, now: string): Promise<ZoneRow[]> {
-  const w = scopeWhere({ period: s.period, zone: null, dept: s.dept, cat: s.cat, taluk: s.taluk }, now);
+  const w = scopeWhere({ period: s.period, zone: null, dept: s.dept, cat: s.cat, taluk: s.taluk, offset: s.offset ?? 0 }, now);
   const rows = await q(
     `SELECT z.zone_no AS zone, z.zone_name AS name,
             COALESCE(SUM(CASE i.severity_level WHEN 'Severe' THEN 3 WHEN 'High' THEN 1 ELSE 0 END), 0) AS score,

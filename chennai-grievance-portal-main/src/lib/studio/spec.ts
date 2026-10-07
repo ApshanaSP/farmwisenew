@@ -133,6 +133,7 @@ export interface AiSpec {
   title: string; summary: string; entity: string; entity_plural: string; department: string | null;
   columns: { key: string; role: Role; label: string; unit: string | null; agg: "sum" | "avg" | "max" | null; why: string }[];
   open_values: string[]; open_phrase?: string; primary: string | null; link_categories: string[]; questions: string[];
+  relevance?: "district" | "partly" | "unrelated"; relevance_why?: string;
 }
 
 /** "still pending", "short of stock": what open means for this data, from its status values when the AI gave none. */
@@ -183,7 +184,8 @@ export function mergeSpec(ai: AiSpec, profile: ColumnProfile[], rules: Spec, ref
     primary,
     linkCategories: link.length ? link : rules.linkCategories,
     questions: [],
-    by: "ai", model
+    by: "ai", model,
+    aiRelevance: ai.relevance ? { verdict: ai.relevance, why: safe(ai.relevance_why, 160) } : null
   };
   const phrase = safe(ai.open_phrase, 32).toLowerCase().replace(/[^a-z\s-]/g, "").trim();
   spec.openWord = phrase && phrase.split(/\s+/).length <= 4 ? phrase : openWordOf(spec.openValues);
