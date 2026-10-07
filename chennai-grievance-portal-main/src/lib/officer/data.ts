@@ -14,6 +14,7 @@
  * "Now" is the pipeline's as-of time, so the windows line up with the data. The data
  * itself is only what the pipeline's hourly collection loads; nothing here fetches it.
  */
+import { isNewsMedia } from "@/lib/collector/newsrel";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
@@ -72,6 +73,7 @@ export async function deptProfile(code: string): Promise<DeptProfile | null> {
 const STAGE_SQL = `CASE
     WHEN cd.decided_at IS NOT NULL AND (os.at IS NULL OR cd.decided_at >= os.at)
       THEN CASE cd.decision WHEN 'reopen' THEN 'action' WHEN 'reject' THEN 'closed' ELSE 'verified' END
+    WHEN os.step = 'close' THEN 'verified'
     WHEN os.step = 'send' THEN 'sent'
     WHEN os.step = 'action' THEN 'action'
     WHEN os.step = 'approve' THEN 'approved'
@@ -356,13 +358,16 @@ async function collectorFeedback(dept: string, s: Scope, limit: number) {
 /** Publishers of the articles linked to each incident (and their news stories). */
 async function outletsFor(ids: string[]): Promise<Record<string, string[]>> {
   if (!ids.length) return {};
+  // one row per publisher (GROUP_CONCAT(DISTINCT ... SEPARATOR) has no SQLite form); news media only
   const r = await q(
-    `SELECT d1.linked_incident_id AS id, GROUP_CONCAT(DISTINCT d2.publisher ORDER BY d2.publisher SEPARATOR '|') AS p
+    `SELECT DISTINCT d1.linked_incident_id AS id, d2.publisher AS p
      FROM documents d1 JOIN documents d2 ON d2.story_id = d1.story_id OR d2.doc_id = d1.doc_id
-     WHERE d1.linked_incident_id IN (?) AND d2.publisher IS NOT NULL GROUP BY d1.linked_incident_id`,
+     WHERE d1.linked_incident_id IN (?) AND d2.publisher IS NOT NULL ORDER BY d2.publisher`,
     [ids]
   );
-  return Object.fromEntries(r.map((x) => [x.id, String(x.p).split("|").filter(Boolean)]));
+  const out: Record<string, string[]> = {};
+  for (const x of r) if (isNewsMedia(x.p)) (out[x.id] ??= []).push(String(x.p));
+  return out;
 }
 
 // ---------------------------------------------------------------- list --
@@ -438,17 +443,22 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
   const now = await asOf();
   const g = await stageRow(dept.code, id, now);
   if (!g) return null;
-  const [pipeline, steps, decisions, members, docs, reports] = await Promise.all([
+  const [pipeline, steps, decisions, members, docs, reports, instructions] = await Promise.all([
     q(`SELECT ${fmt("at")} AS t, step, note, actor FROM incident_timeline WHERE incident_id = ? ORDER BY at`, [id]),
     q(`SELECT step, note, actor, ${fmt("at")} AS t FROM ${ops("officer_steps")} WHERE incident_id = ? AND dept_code = ? ORDER BY at, step_id`, [id, dept.code]),
-    q(`SELECT decision, note, decided_by, ${fmt("decided_at")} AS t FROM ${ops("collector_decisions")} WHERE incident_id = ? ORDER BY decided_at, decision_id`, [id]),
+    // the department's own closure is a resolve by the officer: it shows as its "close" step, not as a Collector decision
+    q(`SELECT decision, note, decided_by, ${fmt("decided_at")} AS t FROM ${ops("collector_decisions")} WHERE incident_id = ?
+       AND COALESCE(decided_role, '') <> 'department_officer' ORDER BY decided_at, decision_id`, [id]),
     q(`SELECT m.source, m.channel, ${fmt("m.reported_at")} AS t, m.title, m.role, LEFT(e.text, 280) AS text
        FROM incident_members m LEFT JOIN events e ON e.event_id = m.event_id WHERE m.incident_id = ? ORDER BY m.reported_at LIMIT 60`, [id]),
     q(`SELECT publisher, title, url, ${fmt("published_at")} AS t FROM documents WHERE linked_incident_id = ?
           OR story_id IN (SELECT story_id FROM (SELECT story_id FROM documents WHERE linked_incident_id = ? AND story_id IS NOT NULL) s)
        ORDER BY published_at LIMIT 30`, [id, id]),
     q(`SELECT report_id AS rid, remarks, photo_dir, photos, sent_by, ${fmt("sent_at")} AS t
-       FROM ${ops("officer_reports")} WHERE incident_id = ? AND dept_code = ? ORDER BY sent_at DESC, report_id DESC`, [id, dept.code])
+       FROM ${ops("officer_reports")} WHERE incident_id = ? AND dept_code = ? ORDER BY sent_at DESC, report_id DESC`, [id, dept.code]),
+    // instructions the Collector sent about it (Take action on a severe incident)
+    q(`SELECT email_id AS id, subject, body, ${fmt("created_at")} AS t FROM ${ops("outbound_emails")} WHERE incident_id = ?
+       ORDER BY created_at DESC, email_id DESC LIMIT 5`, [id]).catch(() => [] as Row[])
   ]);
 
   const kindOf = (step: string) => (/resolved|verified/i.test(step) ? "fin" : /reject|lapsed|return|escalat/i.test(step) ? "esc" : "");
@@ -456,10 +466,10 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     ...pipeline.map((p) => ({ t: p.t, label: p.step, note: p.note ?? (p.actor ? `By ${p.actor}` : ""), kind: kindOf(p.step) })),
     ...steps.map((st) => ({
       t: st.t,
-      label: st.step === "approve" ? "Approved by department" : st.step === "action" ? "Work started" : "Sent to Collector",
+      label: st.step === "approve" ? "Approved by department" : st.step === "action" ? "Work started" : st.step === "close" ? "Closed by department" : "Sent to Collector",
       note: st.step === "approve" ? `Approved by ${st.actor}; assigned to ${g.officer ?? "the field officer"}`
         : st.step === "action" ? `${g.officer ?? "Field team"} started work on site` : st.note ? `Completion report: “${String(st.note).slice(0, 140)}”` : "Completion report sent",
-      kind: ""
+      kind: st.step === "close" ? "fin" : ""
     })),
     ...decisions.filter((d) => d.decision !== "note").map((d) => ({
       t: d.t,
@@ -492,6 +502,10 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
         returned: lastReturn && lastReturn.t >= r.t ? { t: String(lastReturn.t), note: String(lastReturn.note ?? "") } : null
       };
     }),
+    /** the Collector's instructions on this grievance, newest first */
+    instructions,
+    /** the department closed it itself (not severe) */
+    closedByDept: steps.length > 0 && steps[steps.length - 1].step === "close",
     firstSource: members[0] ? SOURCE_LABEL[members[0].source] ?? members[0].source : docs[0]?.publisher ?? "—"
   };
 }
@@ -503,16 +517,21 @@ export class WorkflowError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-/** Stages each step starts from: approve a new grievance; send one that is in action (approved or started). */
-const ALLOWED: Record<"approve" | "send", Stage[]> = { approve: ["new"], send: ["approved", "action"] };
+/**
+ * Stages each step starts from: approve a new grievance; send one that is in action (approved or started) to the
+ * Collector; close one in action as done. Only severe grievances go to the Collector for verification: the
+ * department closes every other one itself (also one it sent to the Collector before that rule).
+ */
+const ALLOWED: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"], send: ["approved", "action"], close: ["approved", "action", "sent"] };
 
 /**
  * Records one workflow step after checking, under a per-grievance lock, that the
  * grievance belongs to the department and is at a stage the step starts from.
- * `send` also stores the completion report (photos are written by the caller first).
+ * `send` and `close` also store the completion report (photos are written by the caller first); `close` is the
+ * department's own verification, recorded as a resolve decision by the officer so every console shows it closed.
  */
 export async function recordStep(
-  dept: DeptProfile, id: string, step: "approve" | "send", actor: { email: string; userId: number },
+  dept: DeptProfile, id: string, step: "approve" | "send" | "close", actor: { email: string; userId: number },
   report?: { remarks: string; photoDir: string; photos: string[] }
 ): Promise<{ stage: Stage; reportId: number | null }> {
   const now = await asOf();
@@ -528,27 +547,35 @@ export async function recordStep(
     if (!ALLOWED[step].includes(g.stage as Stage)) {
       throw new WorkflowError(409, `This grievance is already at “${STAGE_LABEL[g.stage as Stage] ?? g.stage}”. Refresh to see its latest stage.`);
     }
+    const severe = g.sev === "Severe";
+    if (step === "send" && !severe) throw new WorkflowError(409, "Only severe grievances go to the Collector. Close this one as done yourself.");
+    if (step === "close" && severe) throw new WorkflowError(409, "A severe grievance is verified by the Collector: send it with your completion report.");
     await conn.beginTransaction();
     let reportId: number | null = null;
-    if (step === "send" && report) {
+    if ((step === "send" || step === "close") && report) {
       const [res] = await conn.query<ResultSetHeader>(
         `INSERT INTO ${ops("officer_reports")} (incident_id, dept_code, remarks, photo_dir, photos, sent_by, sent_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [id, dept.code, report.remarks, report.photoDir, JSON.stringify(report.photos), actor.email, actor.userId]
       );
       reportId = res.insertId;
     }
-    const note = step === "send" ? report?.remarks ?? null : null;
+    const note = step !== "approve" ? report?.remarks ?? null : null;
     const [res] = await conn.query<ResultSetHeader>(
       `INSERT INTO ${ops("officer_steps")} (incident_id, dept_code, step, note, report_id, actor, actor_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, dept.code, step, note, reportId, actor.email, actor.userId]
     );
+    if (step === "close")
+      await conn.query(
+        `INSERT INTO ${ops("collector_decisions")} (incident_id, decision, escalate_to, note, decided_by, decided_role) VALUES (?, 'resolve', NULL, ?, ?, 'department_officer')`,
+        [id, `Closed by the department: ${report?.remarks ?? "work done"}`, actor.email]
+      );
     await conn.query(
       `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, ?, 'officer_steps', ?, ?, ?)`,
       [actor.email, `officer:${step}`, id, JSON.stringify({ stage: g.stage, status_std: g.status, dept: dept.code }),
         JSON.stringify({ step_id: res.insertId, step, report_id: reportId, photos: report?.photos.length ?? 0 })]
     );
     await conn.commit();
-    return { stage: step === "approve" ? "approved" : "sent", reportId };
+    return { stage: step === "approve" ? "approved" : step === "close" ? "verified" : "sent", reportId };
   } catch (err) {
     await conn.rollback().catch(() => undefined);
     throw err;

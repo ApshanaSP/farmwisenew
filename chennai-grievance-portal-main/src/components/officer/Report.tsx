@@ -30,8 +30,12 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
-/** Completion report to the Collector: what was done, with photos of the finished work. */
+/**
+ * Completion report: what was done, with photos of the finished work. A severe grievance goes to the Collector for
+ * verification; any other is closed by the department, and the report is kept as its record.
+ */
 export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () => void }) {
+  const toCollector = row.sev === "Severe";
   const [remarks, setRemarks] = useState("");
   const [photos, setPhotos] = useState<{ blob: Blob; url: string }[]>([]);
   const [err, setErr] = useState("");
@@ -63,6 +67,7 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () =>
     setErr("");
     const fd = new FormData();
     fd.append("remarks", text);
+    fd.append("step", toCollector ? "send" : "close");
     photos.forEach((p, k) => fd.append("photos", p.blob, `photo-${k + 1}.jpg`));
     try {
       const r = await fetch(`/api/officer/grievances/${encodeURIComponent(row.id)}/report`, { method: "POST", body: fd });
@@ -112,7 +117,9 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () =>
       {err && <div className="oerr" role="alert">{err}</div>}
       <div className="osend-f">
         <button className="btn plain" onClick={c.closeAll} disabled={busy}>Cancel</button>
-        <button className="btn" onClick={send} disabled={busy}>{busy ? <><I n="refresh" className="spin" />Sending…</> : <><I n="send" />Send to Collector</>}</button>
+        {!toCollector && <span className="hint" style={{ marginRight: "auto" }}>Not severe: your department verifies and closes it.</span>}
+        <button className="btn" onClick={send} disabled={busy}>{busy ? <><I n="refresh" className="spin" />{toCollector ? "Sending…" : "Closing…"}</>
+          : toCollector ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
       </div>
     </div>
   );

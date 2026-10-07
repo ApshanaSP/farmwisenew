@@ -41,6 +41,7 @@ import "@/components/collector/app/collector.css";
 import "./officer.css";
 import "@/components/collector/app/civic.css";
 import "@/components/collector/app/marina.css";
+import "@/components/collector/app/action.css";
 import { MotionConfig } from "motion/react";
 import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
 import { LiveDot, SegmentedControl } from "@/components/ui";
@@ -457,7 +458,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     }
   };
 
-  const modalTitle = !modal ? "" : modal.kind === "send" ? "Completion report to the Collector"
+  const modalTitle = !modal ? "" : modal.kind === "send" ? (modal.row.sev === "Severe" ? "Completion report to the Collector" : "Completion report · close as done")
     : modal.kind === "module" ? `${moduleOpen?.title ?? "Department data"} · ${areaName ?? dept.name}`
       : modal.kind === "contacts" ? `${dept.name} · contacts`
         : modal.kind === "news" ? `${dept.short} in the news · ${ov.periodInfo.label}`
@@ -615,7 +616,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
             {modal.kind === "send" ? (
               <SendReport row={modal.row} c={c} onSent={() => {
                 const r = modal.row;
-                toast(`Sent to the Collector for verification: ${r.type}.`);
+                toast(r.sev === "Severe" ? `Sent to the Collector for verification: ${r.type}.` : `Closed as done by your department: ${r.type}.`);
                 setFresh(r.id);
                 setModal(null);
                 setTab("sent");

@@ -54,3 +54,9 @@ export const TITLE = process.env.DATA_BACKEND === "aws" ? "COALESCE(i.headline, 
 export function ops(table: string): string {
   return `\`${OPS_DB}\`.\`${table}\``;
 }
+
+/**
+ * The group an incident belongs to: incidents that are the same problem in the same area share it on the AWS store
+ * (lib/collector/cluster.ts, set when a build loads); elsewhere every incident is its own group. `i` is the incidents alias.
+ */
+export const CLUSTER = process.env.DATA_BACKEND === "aws" ? "COALESCE(i.cluster_id, i.incident_id)" : "i.incident_id";

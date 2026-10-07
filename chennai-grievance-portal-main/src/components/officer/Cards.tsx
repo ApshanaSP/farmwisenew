@@ -40,9 +40,13 @@ export function NextStep({ r, c }: { r: Row; c: Ctx }) {
       return <button className="btn sm" disabled={busy} onClick={(e) => run(e, () => c.approve(r))}><I n="check" />Approve</button>;
     case "approved":
     case "action":
-      return <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="send" />Complete &amp; send</button>;
+      // severe work goes to the Collector; the department closes everything else itself
+      return r.sev === "Severe"
+        ? <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="send" />Complete &amp; send</button>
+        : <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="check" />Complete &amp; close</button>;
     case "sent":
-      return <span className="dim" style={{ fontSize: 12.5 }}>Awaiting Collector</span>;
+      return r.sev === "Severe" ? <span className="dim" style={{ fontSize: 12.5 }}>Awaiting Collector</span>
+        : <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="check" />Close as done</button>;
     default:
       return <span className="chip sev-low"><I n="check" />Verified</span>;
   }
@@ -116,7 +120,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
   const recent = c.tab === "new" || c.tab === "action";
   return (
     <article className="card o-q" id="o-queue" style={style}>
-      <div className="ch"><I n="tasks" /><h3>Grievances <span>· Approve → Complete &amp; send → Collector verifies</span></h3>
+      <div className="ch"><I n="tasks" /><h3>Grievances <span>· Approve → Complete → you close it (severe: the Collector verifies)</span></h3>
         <span className="pgr">
           <span>{from}–{to} of {L?.total.toLocaleString("en-IN") ?? "…"}</span>
           <button onClick={() => c.setPage((L?.page ?? 0) - 1)} disabled={!L || L.page <= 0} aria-label="Previous page"><I n="chevl" /></button>

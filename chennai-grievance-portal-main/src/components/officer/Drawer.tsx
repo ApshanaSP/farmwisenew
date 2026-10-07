@@ -135,6 +135,13 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
             <span><b>Returned by the Collector for rework.</b> {lastReturn.note || "No note was added."} Fix it on site, then complete and send again.</span>
           </div>
         )}
+        {d.instructions.length > 0 && (
+          <div className="o-instr">
+            <div className="sec-t"><I n="send" />From the Collector · {fmtShort(d.instructions[0].t)}</div>
+            <b>{d.instructions[0].subject}</b>
+            <p>{String(d.instructions[0].body)}</p>
+          </div>
+        )}
         {g.summary && <p style={{ margin: 0, color: "var(--text-2)" }}>{g.summary}</p>}
         <div className="dgrid">
           <div><small>Reported</small><b>{fmtShort(g.t)}</b></div>
@@ -174,13 +181,16 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         {g.stage === "new" ? (
           <><button className="btn" disabled={busy} onClick={() => c.approve(g)}><I n="check" />Approve</button>
             <span className="hint">Approving moves it to In action and assigns it to {g.officer ?? "the field officer"}.</span></>
-        ) : g.stage === "approved" || g.stage === "action" ? (
+        ) : (g.stage === "approved" || g.stage === "action") && g.sev === "Severe" ? (
           <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="send" />Complete &amp; send to Collector</button>
-            <span className="hint">When the work is done: remarks and photos go to the Collector.</span></>
+            <span className="hint">Severe: the Collector verifies it. Remarks and photos go to the Collector.</span></>
+        ) : g.stage === "approved" || g.stage === "action" || (g.stage === "sent" && g.sev !== "Severe") ? (
+          <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="check" />Complete &amp; close</button>
+            <span className="hint">You verify this one: your remarks and photos are kept as the record.</span></>
         ) : g.stage === "sent" ? (
           <span className="st st-await" style={{ padding: "8px 12px", display: "inline-flex", gap: 6, alignItems: "center" }}><I n="clock" />Waiting for the Collector&apos;s verification</span>
         ) : (
-          <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />Verified by Collector</span>
+          <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />{d.closedByDept ? "Closed by your department" : "Verified by Collector"}</span>
         )}
       </div>
     </aside>

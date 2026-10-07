@@ -16,7 +16,7 @@ import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, Zones
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
 import { StoriesBody } from "./Stories";
-import { NewsPreview } from "./NewsPreview";
+import { NewsView } from "./NewsPreview";
 import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
@@ -30,6 +30,7 @@ import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
 import "./marina.css";
 import "./news.css";
+import "./action.css";
 
 // The assistant loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
@@ -104,6 +105,8 @@ export interface Console {
   setDept: (code: string | null) => void;
   setZone: (z: number | null) => void;
   openInc: (id: string) => void;
+  /** open a severe incident with Take action (the AI-drafted instruction to its department officer) */
+  openAction: (id: string) => void;
   openList: (preset: ListPreset, title: string) => void;
   openNewsAll: () => void;
   /** a news story: its linked incident, or (news only) the story's reports in the news preview */
@@ -178,6 +181,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const [sevTab, setSevTab] = useState<string | null>(null);
   const [envSel, setEnvSelState] = useState<Record<string, string>>({ rain: "auto", aqi: "auto", lake: "auto" });
   const [inc, setInc] = useState<string | null>(null);
+  /** the incident opened with Take action showing (from the By severity list) */
+  const [actionFor, setActionFor] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [pop, setPop] = useState<"bell" | "profile" | null>(null);
   const [bellRead, setBellRead] = useState(false);
@@ -445,7 +450,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
     // a filter change does not replay entrances: the view cross-fades while loading and the numbers roll
     setPeriod: (p) => setPeriod(p),
     setDept, setZone,
-    openInc: (id) => { setModal(null); setInc(id); },
+    openInc: (id) => { setModal(null); setActionFor(null); setInc(id); },
+    openAction: (id) => { setModal(null); setActionFor(id); setInc(id); },
     openList: (preset, title) => { setInc(null); setModal({ kind: "list", title: `${title} · ${scopeName}`, preset: { cat: cat ?? undefined, taluk: taluk ?? undefined, ...preset } }); },
     openNewsAll: () => setModal({ kind: "news", title: `Latest news · ${scopeName}` }),
     openStory: (s) => { if (s.incident) { setModal(null); setInc(s.incident); } else { setInc(null); setModal({ kind: "story", title: "In the news", story: s }); } },
@@ -648,8 +654,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
         </div>
 
         {(inc || modal) && <div className="scrim" onClick={closeAll} />}
-        {inc && <IncidentView id={inc} c={c} />}
-        {modal && (
+        {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
+        {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
+        {modal && modal.kind !== "story" && (
           <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
@@ -662,7 +669,6 @@ export default function CollectorApp({ initial, allDepts, user }: {
                             : modal.kind === "contact" ? <ContactBody dept={modal.dept} contacts={modal.contacts} />
                               : modal.kind === "text" ? <div className="md" dangerouslySetInnerHTML={{ __html: mdToHtml(modal.md) }} />
                                 : modal.kind === "item" ? <ItemBody item={modal.item} c={c} />
-                                : modal.kind === "story" ? <NewsPreview key={modal.story.id} s={modal.story} c={c} />
                                   : modal.kind === "added" ? <AddedAllBody d={ov} c={c} />
                                     : modal.kind === "stories" ? <StoriesBody d={ov} c={c} focus={modal.focus} />
                                       : modal.kind === "markets" ? <MarketsFull ins={ins} c={c} />

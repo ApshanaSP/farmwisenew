@@ -145,7 +145,8 @@ const SQL_TYPE: Record<Kind, string> = { text: "TEXT COLLATE NOCASE", int: "INTE
  */
 const COMPAT: Record<string, [string, Kind][]> = {
   // headline: filled on this server from the incident's own reports (lib/collector/derive.ts)
-  incidents: [["headline", "text"], ["loc_precision_m", "float"], ["ai_summary", "text"], ["ai_summary_ta", "text"], ["ai_attention", "text"],
+  // cluster_id, cluster_size: incidents that are one problem in one area (lib/collector/cluster.ts via derive.ts)
+  incidents: [["headline", "text"], ["cluster_id", "text"], ["cluster_size", "int"], ["loc_precision_m", "float"], ["ai_summary", "text"], ["ai_summary_ta", "text"], ["ai_attention", "text"],
     ["ai_next_step", "text"], ["ai_model", "text"]],
   briefings: [["ai_summary", "text"], ["ai_summary_ta", "text"]],
   documents: [["category_suggestion", "text"], ["category_method", "text"], ["incident_method", "text"], ["places", "text"],

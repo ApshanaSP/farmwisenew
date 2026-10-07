@@ -1,0 +1,189 @@
+/* Take action (AI-drafted instruction on a severe incident), the tidier incident pop-up, grouped incidents, task
+   evidence and the news preview laid out like an incident. Imported last by the Collector and Officer consoles. */
+
+/* ------------------------------------------------------------ incident pop-up */
+.dic .iv2{overflow:hidden}
+.dic .iv2 .iv-h{padding:16px 22px 14px}
+.dic .iv2 .iv-h h2{margin:8px 120px 6px 0}
+.dic .iv2 .iv-where{gap:4px 14px;font-size:13px}
+.dic .iv2 .iv-where .late{color:var(--critical);font-weight:700}
+.dic .iv2-acts{display:flex;align-items:center;gap:8px;margin-top:10px}
+.dic .iv2-acts .iv-loc{height:32px;padding:0 12px}
+.dic .btn.ta-go{height:32px;padding:0 14px;border:0;border-radius:var(--r-pill);background:var(--ai-grad,var(--ai));color:#fff;font-weight:700;
+  box-shadow:0 6px 16px -8px var(--ai-glow,rgba(232,93,74,.6))}
+.dic .btn.ta-go:hover{filter:brightness(1.06)}
+.dic .iv2-b{grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr)}
+.dic .iv2-main{gap:14px}
+.dic .iv2-main>.iv-t{margin-top:4px}
+.dic .iv2-rail{background:var(--surface-2);gap:18px}
+.dic .iv2-rail .smix div{background:var(--surface);padding:7px 10px}
+.dic .iv2-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.dic .iv2-facts div{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2);min-width:0}
+.dic .iv2-facts small{font-size:11px;color:var(--text-3)}
+.dic .iv2-facts b{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .iv2 .iv-facts{margin-top:8px}
+.dic .iv2-rail .smix .si{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none}
+.dic .iv2-rail .smix div b{font-size:15px}
+.dic .iv2-who{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.dic .iv2-who .officer{background:var(--surface)}
+.dic .iv2-grp{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dic .iv2-grp li{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2)}
+.dic .iv2-grp b{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .iv2-grp small{font-size:11.5px;color:var(--text-3)}
+.dic .iv2-nophoto,.dic .iv2-sent{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:12px;font-size:13.5px;line-height:1.45}
+.dic .iv2-nophoto{background:var(--high-soft);border:1px solid var(--high-line);color:var(--text)}
+.dic .iv2-nophoto .ic{color:var(--high);width:18px;height:18px;flex:none;margin-top:1px}
+.dic .iv2-sent{background:var(--ai-soft,var(--accent-soft));border:1px solid var(--ai-line,var(--accent-line));color:var(--text)}
+.dic .iv2-sent .ic{color:var(--ai);width:17px;height:17px;flex:none;margin-top:2px}
+.dic .iv2-sent small{display:block;color:var(--text-3);font-size:12.5px;margin-top:1px}
+.dic .iv2 .iv-rep{gap:8px}
+.dic .iv2 .iv-ph{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+/* ------------------------------------------------------------------ Take action */
+.dic .ta{position:absolute;top:0;right:0;bottom:0;width:min(560px,100%);z-index:5;display:flex;flex-direction:column;background:var(--elev,var(--surface));
+  border-left:1px solid var(--line);box-shadow:-24px 0 48px -24px rgba(10,30,60,.35);animation:ta-in .22s var(--ease-out,ease-out)}
+@keyframes ta-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.dic .ta{animation:none}}
+.dic .ta-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dic .ta-h h3{margin:0;font:800 17px var(--font-ui,inherit);color:var(--text)}
+.dic .ta-h .xbtn{margin-left:auto}
+.dic .ta-badge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:var(--r-pill);background:var(--ai-soft);color:var(--ai);
+  font-size:11.5px;font-weight:800;letter-spacing:.02em}
+.dic .ta-badge .ic{width:13px;height:13px}
+.dic .ta-b{flex:1;min-height:0;overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.dic .ta-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dic .ta-steps li{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-3)}
+.dic .ta-steps li i{width:24px;height:24px;flex:none;border-radius:50%;display:grid;place-items:center;font:700 11.5px var(--font-ui,inherit);font-style:normal;
+  background:var(--surface-2);border:1px solid var(--line)}
+.dic .ta-steps li i .ic{width:14px;height:14px}
+.dic .ta-steps li.run{color:var(--text)}
+.dic .ta-steps li.run i{border-color:var(--ai-line);color:var(--ai)}
+.dic .ta-steps li.ok{color:var(--text-2)}
+.dic .ta-steps li.ok i{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.dic .ta-steps li.warn i{background:var(--high-soft);border-color:var(--high-line);color:var(--high)}
+.dic .ta-steps.done li{align-items:flex-start}
+.dic .ta-steps span b{display:block;font-size:13px;color:var(--text);font-weight:700}
+.dic .ta-steps span small{font-size:12.5px;color:var(--text-3)}
+.dic .ta-to{border:1px solid var(--line-2);border-radius:12px;background:var(--surface-2)}
+.dic .ta-row{display:flex;gap:12px;align-items:baseline;padding:8px 12px}
+.dic .ta-row+.ta-row{border-top:1px solid var(--line-2)}
+.dic .ta-row>small{width:38px;flex:none;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3)}
+.dic .ta-row b{font-size:13.5px;color:var(--text)}
+.dic .ta-row em{display:block;font-style:normal;font-size:12.5px;color:var(--text-3)}
+.dic .ta-mode{display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:10px;font-size:12.5px;line-height:1.45;background:var(--ok-soft);color:var(--text-2);border:1px solid var(--ok-line)}
+.dic .ta-mode.warn{background:var(--surface-2);border-color:var(--line-2)}
+.dic .ta-mode .ic{width:15px;height:15px;flex:none;margin-top:1px;color:var(--accent)}
+.dic .ta-prev{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-2)}
+.dic .ta-prev .ic{width:14px;height:14px;color:var(--ai)}
+.dic .ta-f{display:flex;flex-direction:column;gap:5px}
+.dic .ta-f.grow{flex:1;min-height:220px}
+.dic .ta-f>small{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3)}
+.dic .ta-f>small em{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-style:normal;text-transform:none;letter-spacing:0;font-weight:600;color:var(--ai)}
+.dic .ta-f>small em .ic{width:12px;height:12px}
+.dic .ta-f input,.dic .ta-f textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);
+  font:500 14px/1.5 var(--font-ui,inherit);padding:9px 12px;outline:none}
+.dic .ta-f textarea{flex:1;resize:none;min-height:200px}
+.dic .ta-f input:focus,.dic .ta-f textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.dic .ta-f2{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:var(--surface-2)}
+.dic .ta-f2 .grow{flex:1}
+.dic .ta-err{padding:12px 14px;border-radius:12px;background:var(--critical-soft);color:var(--critical);font-size:14px}
+.dic .ta-done{align-items:center;justify-content:center;text-align:center}
+.dic .ta-done h4{margin:0;font:800 18px var(--font-ui,inherit);color:var(--text)}
+.dic .ta-done p{margin:0;max-width:400px;font-size:14px;line-height:1.5;color:var(--text-2)}
+.dic .ta-ok{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok)}
+.dic .ta-ok .ic{width:28px;height:28px}
+
+/* ------------------------------------------------------------ by severity, tasks */
+.dic .si-item.si-row{padding:0;gap:0;align-items:stretch}
+.dic .si-row .si-open{flex:1;min-width:0;display:flex;gap:9px;padding:6px 9px 6px 11px;text-align:left;background:none;border:0;color:inherit;cursor:pointer}
+/* Take action: a small coral disc that opens out to its label on hover or focus, so the title keeps its width */
+.dic .si-row .si-act{flex:none;align-self:center;margin-right:7px;display:inline-flex;align-items:center;justify-content:center;gap:0;height:28px;min-width:28px;
+  padding:0 7px;border-radius:var(--r-pill);border:1px solid var(--ai-line);background:var(--ai-soft);color:var(--ai);font-size:11.5px;font-weight:700;
+  white-space:nowrap;cursor:pointer;transition:background var(--t-fast,.15s),color var(--t-fast,.15s)}
+.dic .si-row .si-act span{max-width:0;overflow:hidden;transition:max-width var(--t-base,.2s) var(--ease-out,ease-out),margin var(--t-base,.2s)}
+.dic .si-row .si-act:hover,.dic .si-row .si-act:focus-visible{background:var(--ai);color:#fff;border-color:var(--ai)}
+.dic .si-row .si-act:hover span,.dic .si-row .si-act:focus-visible span{max-width:90px;margin-left:5px}
+.dic .si-row .si-act .ic{width:13px;height:13px}
+.dic .grp-n{display:inline-flex;margin-left:6px;padding:0 6px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-2);
+  font-style:normal;font-size:10.5px;font-weight:700;line-height:16px;vertical-align:1px}
+.dic .task-h{flex-direction:row;align-items:center;gap:6px}
+.dic .task-h .grp-n{margin-left:0;flex:none}
+.dic .task-ev{display:flex;flex-direction:column;gap:3px;padding:6px 8px;border-radius:9px;background:var(--ok-soft);border:1px solid var(--ok-line);min-width:0}
+.dic .task-ev.none{background:var(--surface-2);border-color:var(--line-2)}
+.dic .task-who{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--ok);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .task-ev.none .task-who{color:var(--high)}
+.dic .task-who .ic{width:13px;height:13px;flex:none}
+.dic .task-ev q{quotes:none;font-size:12.5px;line-height:1.35;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dic .task-miss{font-size:12px;line-height:1.35;color:var(--text-2)}
+.dic .task-ph{display:flex;gap:5px;align-items:center}
+.dic .task-ph img{display:block;width:44px;height:34px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.dic .task-ph b{font-size:11.5px;color:var(--text-3)}
+
+/* ------------------------------------------------------- news, like an incident */
+.dic .np2{grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}
+.dic .np2 .np-side{overflow:auto;gap:10px}
+.dic .np-tl{margin:0;padding:0}
+.dic .np-ev .evb{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:10px;padding:4px 8px;margin:-4px 0;cursor:pointer;color:inherit}
+.dic .np-ev .evb:hover{background:var(--surface-2)}
+.dic .np-ev.on .evb{background:var(--accent-soft);border-color:var(--accent-line)}
+.dic .np-ev .eh{display:flex;gap:8px;align-items:baseline}
+.dic .np-ev .eh span{font-size:11px;color:var(--text-3)}
+.dic .np-ev .eh time{margin-left:auto}
+.dic .np-ev-t{display:block;font-size:13px;line-height:1.4;color:var(--text);margin-top:1px}
+.dic .np-who{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--line-2)}
+.dic .np-dept{margin:0;font-size:13.5px;color:var(--text)}
+.dic .np-dept small{display:block;font-size:12px;color:var(--text-3)}
+.dic .np-kind{padding:1px 8px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-2);font-size:11px;font-weight:700}
+.dic .np-text .np-note .ic{width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+
+/* ------------------------------------------------- officer console: Collector's word */
+.o-instr{border-radius:12px;padding:11px 13px;background:var(--ai-soft,#FFF1EC);border:1px solid var(--ai-line,#F6C7B8);display:flex;flex-direction:column;gap:5px}
+.o-instr .sec-t{display:flex;align-items:center;gap:6px;margin:0;color:var(--ai,#D2553E)}
+.o-instr .sec-t .ic{width:14px;height:14px}
+.o-instr b{font-size:14px;color:var(--text)}
+.o-instr p{margin:0;font-size:13.5px;line-height:1.5;color:var(--text);white-space:pre-line}
+
+@media (max-width:899px){
+  .dic .iv2-b{grid-template-columns:1fr}
+  .dic .iv2 .iv-h h2{margin-right:44px}
+  .dic .np2{grid-template-columns:1fr}
+}
+
+/* ---------------------------------------------- round 20, third pass: analysis, news, marks */
+.dic .iv2 .iv-where{align-items:center}
+.dic .iv2 .iv-where .btn.ta-go{height:30px;margin-left:auto}
+.dic .btn.ta-go.done{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok-line);box-shadow:none}
+.dic .iv-tags .tg.iv-id{font:600 11.5px var(--font-code,monospace);letter-spacing:.02em}
+.dic .iv-tags .tg.acted{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.dic .iv-tags .tg.merged{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-2)}
+.dic .iv-analysis{font-size:14.5px;line-height:1.6;font-weight:500}
+.dic .ai-busy{display:inline-flex;align-items:center;gap:5px;color:var(--ai)!important;font-weight:600!important;animation:ai-pulse 1.4s ease-in-out infinite}
+.dic .ai-busy .ic{width:13px;height:13px}
+@keyframes ai-pulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.dic .ai-busy{animation:none}}
+.dic .iv-need ol.iv-why{font-size:14px;line-height:1.5}
+.dic .iv-need ol.iv-why li{margin:0 0 6px}
+.dic .iv-need ol.iv-why b{color:var(--text)}
+.dic .iv-need .iv-ai{display:flex;align-items:center;gap:5px}
+.dic .iv-need .iv-ai .ic{width:12px;height:12px;color:var(--ai);flex:none}
+.dic .iv2-grp li.on{border-color:var(--accent-line);background:var(--accent-soft)}
+.dic .grp-n{white-space:nowrap}
+.dic .acted-n{display:inline-flex;align-items:center;gap:3px;margin-left:6px;padding:0 6px;border-radius:var(--r-pill);background:var(--ok-soft);
+  color:var(--ok);font-style:normal;font-size:10.5px;font-weight:700;line-height:16px;vertical-align:1px;white-space:nowrap}
+.dic .acted-n .ic{width:10px;height:10px}
+
+/* the news pop-up: the ocean band of the console, then the incident's three columns */
+.dic .iv-h.s-news{background:linear-gradient(115deg,color-mix(in srgb,var(--accent) 16%,transparent),transparent 65%),var(--elev);--hcl:var(--accent)}
+.dic .nv .iv-h h2{margin-top:2px}
+.dic .nv-orig{margin:0 60px 6px 0;font-size:13.5px;color:var(--text-2)}
+.dic .nv-read{gap:10px}
+.dic .nv-h{margin:0;font:800 17px/1.35 var(--font-ui,inherit);color:var(--text)}
+.dic .nv .np-text{font-size:14.5px;line-height:1.65}
+.dic .nv .iv-ok{margin-top:0}
+/* what the AI read from the report, in the news pop-up's reader (outside a timeline) */
+.dic .nv-read .ev-ai{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0}
+.dic .nv-read .ev-ai div{display:flex;flex-direction:column;gap:1px;padding:6px 9px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-2);min-width:0}
+.dic .nv-read .ev-ai dt{font-size:11px;color:var(--text-3)}
+.dic .nv-read .ev-ai dd{margin:0;font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
+.dic .si-row .si-act.done{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.dic .si-row .si-act.done:hover,.dic .si-row .si-act.done:focus-visible{background:var(--ok);border-color:var(--ok);color:#fff}

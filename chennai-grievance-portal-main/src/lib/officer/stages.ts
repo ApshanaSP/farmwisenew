@@ -1,5 +1,6 @@
 /**
- * The officer workflow: Received -> In action -> Sent to Collector -> Verified.
+ * The officer workflow: Received -> In action -> Sent to Collector -> Verified for a severe grievance; any other is
+ * closed by the department itself: Received -> In action -> Verified (the `close` step).
  * "In action" covers a grievance the officer approved and one where work has started (the
  * pipeline's Assigned and In progress, and the `action` step recorded before the two were merged).
  * Shared by the API (which enforces the transitions) and the console (labels, chips, buttons).
@@ -8,7 +9,7 @@
 export type Stage = "new" | "approved" | "action" | "sent" | "verified" | "closed";
 export type Tab = "new" | "action" | "sent" | "verified";
 /** `action` is no longer offered but stays readable in officer_steps written before */
-export type OfficerStep = "approve" | "action" | "send";
+export type OfficerStep = "approve" | "action" | "send" | "close";
 
 export const TABS: Tab[] = ["new", "action", "sent", "verified"];
 export const TAB_STAGES: Record<Tab, Stage[]> = { new: ["new"], action: ["approved", "action"], sent: ["sent"], verified: ["verified"] };

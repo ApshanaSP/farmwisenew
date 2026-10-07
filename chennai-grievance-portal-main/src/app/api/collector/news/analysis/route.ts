@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
-import { newsArticles, storyDept } from "@/lib/collector/intel";
+import { analyseStory } from "@/lib/collector/analysis";
 
 export const dynamic = "force-dynamic";
 
-/** GET ?ids=DOC-1,DOC-2: the reports of one news story, for the news preview, and the department that handles what it is about. */
+/** GET ?ids=DOC-1,DOC-2: what the story is and why it matters to the Collector, analysed by AI from every outlet's report. */
 export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
@@ -13,9 +13,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid report ids." }, { status: 400 });
   }
   try {
-    const articles = await newsArticles(ids);
-    return NextResponse.json({ articles, dept: await storyDept(articles.map((x) => (x as Record<string, unknown>).cat as string | null), articles as unknown as { title: string; title_en?: string | null }[]) });
+    return NextResponse.json({ analysis: await analyseStory(ids, s.email) });
   } catch (err) {
-    return failed(err, "the news reports");
+    return failed(err, "the analysis");
   }
 }

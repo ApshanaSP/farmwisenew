@@ -213,7 +213,8 @@ function WorkCard({ c, goGrievances }: { c: Ctx; goGrievances: (tab: "new" | "ac
               <span style={{ flex: 1 }} />
               {tab === "new"
                 ? <button className="btn sm" disabled={c.busy.has(r.id)} onClick={() => c.approve(r)}><I n="check" />Approve</button>
-                : <button className="btn sm ok" disabled={c.busy.has(r.id)} onClick={() => c.openSend(r)}><I n="send" />Complete &amp; send</button>}
+                : <button className="btn sm ok" disabled={c.busy.has(r.id)} onClick={() => c.openSend(r)}>
+                  {r.sev === "Severe" ? <><I n="send" />Complete &amp; send</> : <><I n="check" />Complete &amp; close</>}</button>}
             </div>
           </div>
         )) : <Empty>{tab === "new" ? "Nothing waiting for your approval." : "Nothing in action right now."}</Empty>}

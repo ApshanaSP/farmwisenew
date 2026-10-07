@@ -71,7 +71,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
         </select>
       </div>
       <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 8 }}>
-        {data ? `${data.total.toLocaleString("en-IN")} incidents · ${c.zoneName ?? "District-wide"} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}` : "Loading…"}
+        {data ? `${data.total.toLocaleString("en-IN")} incidents (similar reports in one area grouped) · ${c.zoneName ?? "District-wide"} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}` : "Loading…"}
       </div>
       <div className="tbl-wrap">
         <table>
@@ -79,7 +79,9 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
           <tbody>
             {data?.rows.map((i) => (
               <tr key={i.id} onClick={() => c.openInc(i.id)}>
-                <td className="ev" style={{ maxWidth: 340, overflow: "hidden", textOverflow: "ellipsis" }} title={fullTitle(i)}>{fullTitle(i)}</td>
+                <td className="ev" style={{ maxWidth: 340, overflow: "hidden", textOverflow: "ellipsis" }} title={fullTitle(i)}>{fullTitle(i)}
+                  {Number(i.grouped) > 1 && <em className="grp-n" title="The same problem reported in the same area: one row">{i.grouped} incidents merged</em>}
+                  {i.acted && <em className="acted-n" title="An instruction was sent to the department"><I n="checkc" />Action taken</em>}</td>
                 <td>{i.zone_name ?? "—"}</td>
                 <td>{i.dept_name ?? i.dept}</td><td><SevChip s={i.sev} /></td><td><StChip s={i.status} /></td>
                 <td><Sources i={i} /></td><td className="dim">{fmtShort(i.t)}</td>
@@ -298,7 +300,7 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
       {d.news.map((i) => (
         <button key={i.id} className="ncard" onClick={() => c.openInc(i.id)}>
           <div className="nout">{(i.outletNames?.length ? i.outletNames : ["News"]).map((n: string) => <span key={n}>{n}</span>)}</div>
-          <h4>{fullTitle(i)}</h4>
+          <h4 title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined}>{i.news_title ?? fullTitle(i)}</h4>
           <div className="nmeta">
             <span>{i.zone_name ?? "Chennai"}</span><span>{i.dept_name ?? i.dept}</span><span>{rel(i.t, d.now)}</span><SevChip s={i.sev} />
           </div>

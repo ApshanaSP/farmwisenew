@@ -7,9 +7,9 @@ import { newPhotoDir, removePhotoDir, savePhotos, sniff, type PhotoExt } from "@
 export const dynamic = "force-dynamic";
 
 /**
- * Completion report to the Collector: remarks plus at least one photo of the finished
- * work (multipart form: `remarks`, `photos` repeated). Moves the grievance from
- * "In action" to "Sent to Collector".
+ * Completion report: remarks plus at least one photo of the finished work (multipart form: `remarks`, `photos`
+ * repeated, `step`). A severe grievance is sent to the Collector for verification (`step=send`, "Sent to
+ * Collector"); any other is closed by the department itself (`step=close`, "Verified").
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
@@ -34,10 +34,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     photos.push({ buf, ext });
   }
 
+  const step = form.get("step") === "close" ? "close" : "send";
   const dir = newPhotoDir();
   try {
     const names = await savePhotos(dir, photos);
-    const r = await recordStep(ctx.dept, params.id, "send", { email: ctx.session.email, userId: ctx.session.userId },
+    const r = await recordStep(ctx.dept, params.id, step, { email: ctx.session.email, userId: ctx.session.userId },
       { remarks, photoDir: dir, photos: names });
     return NextResponse.json(r, { status: 201 });
   } catch (err) {

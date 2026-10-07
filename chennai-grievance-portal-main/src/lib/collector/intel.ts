@@ -8,9 +8,9 @@
  * period windows line up with the data even between builds.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool, { OPS_DB, TITLE, ops } from "@/lib/collector/db";
+import intelPool, { CLUSTER, OPS_DB, TITLE, ops } from "@/lib/collector/db";
 import "@/lib/collector/derive";
-import { clusterNews, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
+import { clusterNews, isNewsMedia, mediaKind, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
 import { addedItems, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
@@ -132,23 +132,18 @@ export function scopeWhere(s: Scope, now: string): { sql: string; params: unknow
 
 const SEV_RANK = `FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')`;
 /**
- * Closed-work checks the Collector does personally. The rest (low or medium severity,
- * one or two complaints, one department, closed near its deadline) are left to the
- * department head, so My Tasks holds only the closures worth the Collector's time.
+ * Closed-work checks the Collector does personally: severe incidents only. Every other closure is verified by the
+ * department itself (the officer console's "Close as done", with remarks and photos), so My Tasks holds only the
+ * closures worth the Collector's time.
  */
-const FOR_COLLECTOR = `(i.severity_level IN ('Severe', 'High') OR i.citizen_complaints >= 3
-  OR i.attention_reason LIKE '%several departments%' OR i.sources LIKE '%news%'
-  OR (i.severity_level = 'Medium' AND i.priority_reasons LIKE '%resolution over twice%'))`;
+const FOR_COLLECTOR = `(i.severity_level = 'Severe')`;
 
-/** Which of the FOR_COLLECTOR rules put a task on the Collector's list, in words. */
+/** Why a task is on the Collector's list, in words. */
 function taskBecause(r: Row): string[] {
-  const out: string[] = [];
-  if (Number(r.officer_sent)) out.push("Department sent a completion report");
-  if (r.sev === "Severe" || r.sev === "High") out.push(`${r.sev} severity`);
+  const out: string[] = ["Severe severity"];
   if (Number(r.complaints) >= 3) out.push(`${r.complaints} citizens complained`);
   if (/several departments/i.test(String(r.attention_reason ?? ""))) out.push("Several departments");
   if (/news/.test(String(r.sources ?? ""))) out.push("In the news");
-  if (r.sev === "Medium" && /resolution over twice/i.test(String(r.priority_reasons ?? ""))) out.push("Took over twice its deadline");
   return out;
 }
 
@@ -171,24 +166,25 @@ const SENT_BY_OFFICER = `EXISTS (SELECT 1 FROM ${ops("officer_steps")} s WHERE s
     AND NOT EXISTS (SELECT 1 FROM ${ops("officer_steps")} s2 WHERE s2.incident_id = s.incident_id AND (s2.at > s.at OR (s2.at = s.at AND s2.step_id > s.step_id)))
     AND NOT EXISTS (SELECT 1 FROM ${ops("collector_decisions")} d WHERE d.incident_id = s.incident_id
                     AND d.decision IN ('verify', 'reject', 'resolve', 'reopen') AND d.decided_at >= s.at))`;
-/** Open and sent to the Collector from the officer console, not yet decided; FALSE without the officer tables. */
+/** Open, severe and sent to the Collector from the officer console, not yet decided; FALSE without the officer tables. */
 async function sentByOfficer(): Promise<string> {
-  return (await officerOpsReady()) ? `(i.is_open = 1 AND ${SENT_BY_OFFICER})` : "(1 = 0)";
+  return (await officerOpsReady()) ? `(i.is_open = 1 AND i.severity_level = 'Severe' AND ${SENT_BY_OFFICER})` : "(1 = 0)";
 }
 
-/** The officer's latest completion report per incident, for the task card. */
+/** The officer's latest completion report per incident, for the task card: remarks, who sent it, and the photos. */
 async function officerReports(ids: string[]): Promise<Record<string, Row>> {
   if (!ids.length || !(await officerOpsReady())) return {};
   const r = await q(
-    `SELECT id, t, note, actor, photos FROM (
-       SELECT incident_id AS id, DATE_FORMAT(sent_at, '%Y-%m-%d %H:%i:%s') AS t, remarks AS note, sent_by AS actor, photos,
+    `SELECT id, t, note, actor, photo_dir, photos FROM (
+       SELECT incident_id AS id, DATE_FORMAT(sent_at, '%Y-%m-%d %H:%i:%s') AS t, remarks AS note, sent_by AS actor, photo_dir, photos,
               ROW_NUMBER() OVER (PARTITION BY incident_id ORDER BY sent_at DESC, report_id DESC) rn
        FROM ${ops("officer_reports")} WHERE incident_id IN (?)) x WHERE rn = 1`,
     [ids]
   );
   return Object.fromEntries(r.map((x) => {
-    const photos: string[] = Array.isArray(x.photos) ? x.photos : JSON.parse(String(x.photos || "[]"));
-    return [x.id, { id: x.id, t: x.t, note: x.note, actor: x.actor, step: "Completion report", photos: photos.length }];
+    const names: string[] = Array.isArray(x.photos) ? x.photos : JSON.parse(String(x.photos || "[]"));
+    return [x.id, { id: x.id, t: x.t, note: x.note, actor: x.actor, step: "Completion report", evidence: true,
+      photos: names.map((nm) => photoUrl(String(x.photo_dir), nm)) }];
   }));
 }
 
@@ -236,7 +232,7 @@ const ROUNDUP = /latest news today|news today live|live updates|top news|news hi
 async function newsStories(period: Period, now: string) {
   const w = periodWindow(period, now, "d.published_at");
   const docs = (await q(
-    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_tier, d.place_text, d.ai_place,
+    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,
             d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
      FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS}
        AND (d.linked_incident_id IS NOT NULL OR (d.category_code IS NOT NULL AND d.category_code <> 'OTHER'
@@ -244,7 +240,7 @@ async function newsStories(period: Period, now: string) {
        AND ${w.sql}
      ORDER BY d.published_at DESC LIMIT 1500`,
     w.params
-  )).filter((r) => !ROUNDUP.test(String(r.title)) && relevantNews(r, english(r)));
+  )).filter((r) => isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier) && !ROUNDUP.test(String(r.title)) && relevantNews(r, english(r)));
   const by = new Map<string, Row[]>();
   for (const r of docs) {
     const k = String(r.story_id ?? r.doc_id);
@@ -307,17 +303,65 @@ export async function newsArticles(ids: string[]) {
   const want = [...new Set(ids.map(String))].slice(0, 60);
   if (!want.length) return [];
   const rows = await q(
-    `SELECT d.doc_id AS id, d.title, d.title_en, d.lang, d.publisher, d.url, d.summary, SUBSTR(d.body, 1, 12000) AS body, d.body_status,
+    `SELECT d.doc_id AS id, d.title, d.title_en, d.lang, d.publisher, d.publisher_domain, d.publisher_tier, d.url, d.summary, SUBSTR(d.body, 1, 12000) AS body, d.body_status,
             DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t, d.place_text AS place, d.category_code AS cat, d.report_type,
             d.linked_incident_id AS incident, d.ai_people, d.ai_orgs, d.ai_dead, d.ai_injured, d.ai_status, d.ai_place, d.story_id
      FROM documents d WHERE d.doc_id IN (?) ORDER BY d.published_at DESC`,
     [want]
   );
-  return rows.map((r) => {
-    const { ai_people, ai_orgs, ai_dead, ai_injured, ai_status, ai_place, ...x } = r;
+  return rows.filter((r) => isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier)).map((r) => {
+    const { ai_people, ai_orgs, ai_dead, ai_injured, ai_status, ai_place, publisher_domain, publisher_tier, ...x } = r;
     const ai = Object.fromEntries(Object.entries({ place: ai_place, people: ai_people, organisations: ai_orgs, dead: ai_dead, injured: ai_injured, status: ai_status })
       .filter(([, v]) => v != null && v !== "" && v !== 0));
-    return { ...x, body: x.body && String(x.body).trim().length > 80 ? String(x.body) : null, ai: Object.keys(ai).length ? ai : null };
+    return { ...x, kind: mediaKind(x.publisher, publisher_domain, publisher_tier), body: x.body && String(x.body).trim().length > 80 ? String(x.body) : null,
+      ai: Object.keys(ai).length ? ai : null };
+  });
+}
+
+/** Who handles what a news story is about: its category's lead department (ref_categories), with the department's contacts. */
+export async function storyDept(cats: (string | null)[], titles: { title: string; title_en?: string | null }[] = []) {
+  // routine notices: the topic decides (a power shutdown list filed under roads is still the electricity department's)
+  const topic = titles.map((t) => topicOf(String(t.title_en || t.title || ""), String(t.title || ""))).find(Boolean);
+  const TOPIC_CAT: Record<string, string> = { power: "STREETLIGHT_ELECTRICAL", weather: "FLOOD_RISK_SIGNAL", dengue: "VECTOR_DISEASE" };
+  const n = new Map<string, number>();
+  for (const c of cats) if (c && c !== "OTHER") n.set(c, (n.get(c) ?? 0) + 1);
+  const cat = (topic && TOPIC_CAT[topic]) || [...n.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (!cat) return null;
+  const [r] = await q(
+    `SELECT c.category_code AS cat, c.label, c.lead_dept AS code, dp.name, dp.head, dp.org
+     FROM ref_categories c LEFT JOIN ref_departments dp ON dp.code = c.lead_dept WHERE c.category_code = ?`, [cat]);
+  if (!r) return null;
+  return { ...r, contacts: (await contactsFor(r.code, null)).filter((x) => x.dept_code === r.code).slice(0, 2) };
+}
+
+/** One news report's address and headline, for fetching its full text (fulltext.ts). */
+export async function newsDoc(id: string) {
+  const [r] = await q(`SELECT doc_id AS id, url, title, title_en, publisher, publisher_domain, publisher_tier, body FROM documents WHERE doc_id = ?`, [id]);
+  return r ?? null;
+}
+
+/** When an instruction was last sent about each incident (Take action), for the "Action taken" mark on lists. */
+async function actedOn(ids: string[]): Promise<Record<string, { t: string; n: number }>> {
+  if (!ids.length) return {};
+  const r = await q(
+    `SELECT incident_id AS id, DATE_FORMAT(MAX(created_at), '%Y-%m-%d %H:%i:%s') AS t, COUNT(*) AS n
+     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) GROUP BY incident_id`, [ids]
+  ).catch(() => [] as Row[]);
+  return Object.fromEntries(r.map((x) => [x.id, { t: String(x.t), n: Number(x.n) }]));
+}
+
+/** Instructions the Collector emailed about these incidents (Take action, actionmail.ts), newest first. */
+export async function actionEmails(ids: string[]): Promise<Row[]> {
+  if (!ids.length) return [];
+  const rows = await q(
+    `SELECT email_id AS id, incident_id, subject, body, mode, status, delivered_to, owner, to_contact_ids AS rcpt,
+            DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS t
+     FROM ${ops("outbound_emails")} WHERE incident_id IN (?) ORDER BY created_at DESC, email_id DESC LIMIT 20`, [ids]
+  ).catch(() => [] as Row[]); // a store without the table: nothing sent yet
+  return rows.map(({ rcpt, ...x }) => {
+    let to = null;
+    try { to = JSON.parse(String(rcpt))?.[0] ?? null; } catch { /* not JSON */ }
+    return { ...x, to };
   });
 }
 
@@ -353,10 +397,11 @@ async function sourcesFor(ids: string[]): Promise<Record<string, SourceCounts>> 
   const [m, d] = await Promise.all([
     q(`SELECT incident_id AS id, source, COUNT(*) AS n FROM incident_members WHERE incident_id IN (?) GROUP BY incident_id, source`, [ids]),
     q(
-      // outlets = publishers of the linked articles and of every article in the same news story
-      `SELECT d1.linked_incident_id AS id, GROUP_CONCAT(DISTINCT d2.publisher ORDER BY d2.publisher SEPARATOR '|') AS p
+      // outlets = publishers of the linked articles and of every article in the same news story (one row per
+      // publisher: GROUP_CONCAT(DISTINCT ... SEPARATOR) has no SQLite form, it joined them with commas)
+      `SELECT DISTINCT d1.linked_incident_id AS id, d2.publisher AS p
        FROM documents d1 JOIN documents d2 ON d2.story_id = d1.story_id OR d2.doc_id = d1.doc_id
-       WHERE d1.linked_incident_id IN (?) AND d2.publisher IS NOT NULL GROUP BY d1.linked_incident_id`,
+       WHERE d1.linked_incident_id IN (?) AND d2.publisher IS NOT NULL ORDER BY d2.publisher`,
       [ids]
     )
   ]);
@@ -367,7 +412,7 @@ async function sourcesFor(ids: string[]): Promise<Record<string, SourceCounts>> 
     if (r.source in s) (s as any)[r.source] = Number(r.n);
     s.total += Number(r.n);
   }
-  for (const r of d) get(r.id).outlets = String(r.p).split("|").filter(Boolean);
+  for (const r of d) if (isNewsMedia(r.p)) get(r.id).outlets.push(String(r.p));
   return out;
 }
 
@@ -711,18 +756,30 @@ export async function overview(period: Period, zone: number | null, dept: string
        FROM incidents i WHERE ${w.sql}`,
       w.params
     ),
-    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND i.outlet_count > 0 ORDER BY i.first_reported_at DESC LIMIT 24`, w.params),
-    q(`SELECT ${ROW}, ${sent} AS officer_sent ${FROM} WHERE ${qWhere} ORDER BY officer_sent DESC, ${SEV_RANK}, i.last_update_at ASC LIMIT 12`, qParams),
-    q(`SELECT COALESCE(SUM((${awaitCore} AND ${FOR_COLLECTOR}) OR ${sent}), 0) AS n,
-              COALESCE(SUM(${awaitCore} AND NOT ${FOR_COLLECTOR} AND NOT ${sent}), 0) AS left_to_depts
+    // news linked to incidents in scope, headed by the article's own headline (an English one first), not the incident's
+    q(`SELECT ${ROW}, (SELECT COALESCE(NULLIF(d.title_en, ''), d.title) FROM documents d WHERE d.linked_incident_id = i.incident_id
+         ORDER BY (d.lang = 'en') DESC, d.published_at DESC LIMIT 1) AS news_title
+       ${FROM} WHERE ${w.sql} AND i.outlet_count > 0 ORDER BY i.first_reported_at DESC LIMIT 24`, w.params),
+    // one task per group of incidents that are the same problem in the same area (CLUSTER): a report sent by the
+    // department first, then the group's member waiting longest
+    q(`SELECT * FROM (SELECT ${ROW}, ${sent} AS officer_sent, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+         ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${sent} DESC, i.last_update_at ASC) AS g_rn
+       ${FROM} WHERE ${qWhere}) x WHERE g_rn = 1 ORDER BY officer_sent DESC, updated ASC LIMIT 12`, qParams),
+    q(`SELECT COUNT(DISTINCT CASE WHEN (${awaitCore} AND ${FOR_COLLECTOR}) OR ${sent} THEN ${CLUSTER} END) AS n,
+              COUNT(DISTINCT CASE WHEN ${awaitCore} AND NOT ${FOR_COLLECTOR} AND NOT ${sent} THEN ${CLUSTER} END) AS left_to_depts
        FROM incidents i WHERE 1 = 1 ${inScope}`, [...tw.params, ...tw.params, ...scopeParams]),
+    // By severity: one row per group (CLUSTER), shown under the group's most severe level, the 12 most urgent each
     q(
-      `SELECT * FROM (SELECT ${ROW}, ROW_NUMBER() OVER (PARTITION BY i.severity_level
-         ORDER BY i.priority_score DESC, i.first_reported_at DESC) AS rn ${FROM} WHERE ${sevWhere}) x
+      `SELECT * FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY x.sev ORDER BY x.priority DESC, x.t DESC) AS rn FROM (
+         SELECT ${ROW}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+                ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${SEV_RANK}, i.priority_score DESC, i.citizen_complaints DESC) AS g_rn
+         ${FROM} WHERE ${sevWhere}) x WHERE x.g_rn = 1) y
        WHERE rn <= 12 ORDER BY FIELD(sev, 'Severe', 'High', 'Medium', 'Low'), rn`,
       w.params
     ),
-    q(`SELECT i.severity_level AS sev, COUNT(*) AS n FROM incidents i WHERE ${sevWhere} GROUP BY i.severity_level`, w.params),
+    q(`SELECT sev, COUNT(*) AS n FROM (SELECT i.severity_level AS sev,
+         ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${SEV_RANK}) AS g_rn FROM incidents i WHERE ${sevWhere}) x
+       WHERE g_rn = 1 GROUP BY sev`, w.params),
     dept
       ? q(
           `SELECT i.category_label AS l, COUNT(*) AS v FROM incidents i WHERE ${w.sql}
@@ -785,11 +842,19 @@ export async function overview(period: Period, zone: number | null, dept: string
     withDecisions(sevRows).then(withSources),
     withDecisions(bell).then(withSources)
   ]);
-  const [actionsTaken, reportsSent, assigned] = await Promise.all([
+  const grouped = taskRows.filter((r) => Number(r.grouped) > 1).map((r) => String(r.grp));
+  const [actionsTaken, reportsSent, assigned, taskMembers] = await Promise.all([
     officerActions(taskRows.map((r) => r.id)),
-    officerReports(taskRows.filter((r) => Number(r.officer_sent)).map((r) => r.id)),
-    assignmentsFor(newsRows.map((r) => r.id))
+    officerReports(taskRows.map((r) => r.id)),
+    assignmentsFor(newsRows.map((r) => r.id)),
+    // every incident of a grouped task, so Verify and Send back act on the whole group
+    grouped.length
+      ? q(`SELECT i.incident_id AS id, ${CLUSTER} AS grp FROM incidents i WHERE ${qWhere} AND ${CLUSTER} IN (?)`, [...qParams, grouped])
+      : Promise.resolve([] as Row[])
   ]);
+  const acted = await actedOn([...sevList, ...taskRows].map((r) => String(r.id)));
+  const membersOf = new Map<string, string[]>();
+  for (const m of taskMembers) (membersOf.get(m.grp) ?? membersOf.set(m.grp, []).get(m.grp)!).push(String(m.id));
   const num = (rows: Row[]) => Object.fromEntries(SEV_LEVELS.map((k) => [k, Number(rows.find((r) => r.sev === k)?.n ?? 0)]));
 
   return {
@@ -821,13 +886,18 @@ export async function overview(period: Period, zone: number | null, dept: string
     snapshot: snap,
     news: newsRows.map((r) => ({ ...r, outletNames: r.src?.outlets ?? [], assigned: assigned[r.id] ?? null }) as Row),
     tasks: {
-      rows: taskRows.map((r) => ({ ...r, action: reportsSent[r.id] ?? actionsTaken[r.id] ?? null, because: taskBecause(r) }) as Row),
+      // `action`: the department's completion report (remarks and photos) when it sent one; else the last step the
+      // pipeline's records show, which carries no photo (`evidence` false)
+      rows: taskRows.map((r) => ({
+        ...r, action: reportsSent[r.id] ?? (actionsTaken[r.id] ? { ...actionsTaken[r.id], evidence: false, photos: [] } : null),
+        because: taskBecause(r), members: membersOf.get(String(r.grp)) ?? [r.id], acted: acted[r.id] ?? null
+      }) as Row),
       count: Number(taskCount[0]?.n ?? 0),
       leftToDepts: Number(taskCount[0]?.left_to_depts ?? 0)
     },
     severity: {
       counts: num(sevCounts) as Record<string, number>,
-      rows: sevList.map((r) => ({ ...r, why: explain(r) }) as Row)
+      rows: sevList.map((r) => ({ ...r, why: explain(r), acted: acted[r.id] ?? null }) as Row)
     },
     severityMix: SEV_LEVELS.map((k) => {
       const r = sevAll.find((x) => x.sev === k);
@@ -1080,65 +1150,93 @@ export async function incident(id: string) {
     `SELECT ${ROW}, DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at,
             DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.depts_involved, i.dead, i.injured,
             i.persons_affected, i.vulnerable, dp.head AS dept_head, dp.org AS dept_org, i.confidence, i.needs_review, i.review_reason,
-            i.taluk_code, tk.name AS taluk_name, i.spread_m
+            i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp
      ${FROM} LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code WHERE i.incident_id = ?`,
     [id]
   );
   if (!inc) return null;
+  // the other incidents of its group (the same problem in the same area, CLUSTER): their reports are this incident's too
+  const group = await q(
+    `SELECT i.incident_id AS id, ${TITLE} AS title, i.severity_level AS sev, i.status_std AS status, i.is_open AS open, i.place_text AS loc,
+            i.citizen_complaints AS complaints, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
+     FROM incidents i WHERE ${CLUSTER} = ? AND i.incident_id <> ? ORDER BY i.first_reported_at LIMIT 40`,
+    [inc.grp, id]
+  );
+  const ids = [id, ...group.map((g) => String(g.id))];
 
   const [members, documents, decisions, contacts, assigned, src, deptReports] = await Promise.all([
     q(
-      `SELECT m.event_id, m.source, m.channel, DATE_FORMAT(m.reported_at, '%Y-%m-%d %H:%i:%s') AS t, m.title, m.role,
+      `SELECT m.incident_id AS inc, m.event_id, m.source, m.channel, DATE_FORMAT(m.reported_at, '%Y-%m-%d %H:%i:%s') AS t, m.title, m.role,
               m.link_prob, m.link_method, LEFT(e.text, 280) AS text
        FROM incident_members m LEFT JOIN events e ON e.event_id = m.event_id
-       WHERE m.incident_id = ? ORDER BY m.reported_at LIMIT 80`,
-      [id]
+       WHERE m.incident_id IN (?) ORDER BY m.reported_at LIMIT 120`,
+      [ids]
     ),
     q(
       // the linked articles plus the rest of their news story (the same event covered by other outlets)
       // documents.*: the AI details (title_en, ai_*) are read when the build has them; an older build or a store
       // loaded before they existed simply lacks them
       `SELECT documents.*, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
-       FROM documents WHERE linked_incident_id = ?
-          OR story_id IN (SELECT story_id FROM (SELECT story_id FROM documents WHERE linked_incident_id = ? AND story_id IS NOT NULL) s)
-       ORDER BY published_at LIMIT 40`,
-      [id, id]
+       FROM documents WHERE linked_incident_id IN (?)
+          OR story_id IN (SELECT story_id FROM (SELECT story_id FROM documents WHERE linked_incident_id IN (?) AND story_id IS NOT NULL) s)
+       ORDER BY published_at LIMIT 60`,
+      [ids, ids]
     ),
     q(
-      `SELECT decision, note, decided_by, DATE_FORMAT(decided_at, '%Y-%m-%d %H:%i:%s') AS t
+      `SELECT decision, note, decided_by, decided_role, DATE_FORMAT(decided_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM ${ops("collector_decisions")} WHERE incident_id = ? ORDER BY decision_id`,
       [id]
     ),
     contactsFor(inc.dept, inc.zone),
     assignmentsFor([id]),
-    sourcesFor([id]),
-    officerReportsFull(id)
+    sourcesFor(ids),
+    Promise.all(ids.slice(0, 12).map(officerReportsFull)).then((r) => r.flat().sort((a, b) => String(b.t).localeCompare(String(a.t))))
   ]);
+  const emails = await actionEmails(ids);
 
-  // Linked reports in time order; news articles linked without a member row are added too.
+  // Linked reports in time order; news articles linked without a member row are added too. News comes from news media
+  // and government sources only (isNewsMedia): a blog or a trading app that copied the story is left out.
+  const media = (d: Row) => isNewsMedia(d.publisher, d.publisher_domain, d.publisher_tier);
   const seen = new Set(members.map((m) => m.event_id));
   const docOf = new Map(documents.filter((d) => d.event_id).map((d) => [d.event_id, d]));
   const reports = [
-    ...members.map((m) => {
+    ...members.filter((m) => m.source !== "news" || !docOf.get(m.event_id) || media(docOf.get(m.event_id)!)).map((m) => {
       const d = docOf.get(m.event_id);
       return {
-        t: m.t, source: m.source, what: SOURCE_WORD[m.source] ?? m.source, channel: m.channel,
+        t: m.t, source: m.source, what: SOURCE_WORD[m.source] ?? m.source, channel: m.channel, inc: m.inc, docId: d?.doc_id ?? null,
         title: d?.title ?? m.title, text: m.source === "news" ? null : m.text, publisher: d?.publisher ?? null, url: d?.url ?? null,
+        kind: d ? mediaKind(d.publisher, d.publisher_domain, d.publisher_tier) : null,
         lang: d?.lang ?? null, first: m.role === "first_report", ...(d ? newsDetails(d) : {}),
         link: m.role === "first_report" ? null : m.link_prob == null ? null : Number(m.link_prob), method: m.link_method ?? null
       };
     }),
-    ...documents.filter((d) => !d.event_id || !seen.has(d.event_id)).map((d) => ({
-      t: d.t, source: "news", what: "News report", channel: "media", title: d.title, text: null, publisher: d.publisher,
-      url: d.url, lang: d.lang, first: false, ...newsDetails(d)
+    ...documents.filter((d) => (!d.event_id || !seen.has(d.event_id)) && media(d)).map((d) => ({
+      t: d.t, source: "news", what: "News report", channel: "media", inc: d.linked_incident_id ?? id, docId: d.doc_id, title: d.title, text: null,
+      publisher: d.publisher, url: d.url, lang: d.lang, first: false, kind: mediaKind(d.publisher, d.publisher_domain, d.publisher_tier), ...newsDetails(d)
     }))
   ].sort((a, b) => String(a.t).localeCompare(String(b.t)));
 
   const last = decisions.filter((d) => d.decision !== "note").slice(-1)[0];
-  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined), src: src[id] ?? null };
+  // the group's sources added up: every report it unfolded from
+  const all: SourceCounts = { grievance: 0, police: 0, pwd: 0, hospital: 0, imd: 0, news: 0, outlets: [], total: 0 };
+  for (const k of ids) {
+    const x = src[k];
+    if (!x) continue;
+    for (const f of ["grievance", "police", "pwd", "hospital", "imd", "news", "total"] as const) all[f] += x[f];
+    all.outlets = [...new Set([...all.outlets, ...x.outlets])];
+  }
+  // the outlets are the news media whose reports are listed (the store's per-incident outlet list can miss some)
+  const listed = [...new Set(reports.filter((r) => r.source === "news" && r.publisher).map((r) => String(r.publisher)))];
+  if (listed.length) all.outlets = [...new Set([...listed, ...all.outlets])];
+  const complaints = Number(inc.complaints) + group.reduce((n, g) => n + Number(g.complaints ?? 0), 0);
+  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined), src: all.total || all.outlets.length ? all : null, complaints };
   return {
     incident: { ...row, why: explain(row) } as Row,
+    /** the other incidents merged into this one: the same problem in the same area */
+    group,
     reports,
+    /** action emails the Collector sent about it (Take action) */
+    emails,
     contacts,
     assigned: assigned[id] ?? null,
     decisions,
@@ -1211,23 +1309,28 @@ export async function list(f: ListFilter) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
     params.push(like, like, like, like, like);
   }
+  // one row per group of incidents that are the same problem in the same area (CLUSTER): its most severe member
   const order = {
-    t: "i.first_reported_at",
-    sev: SEV_RANK,
-    c: "i.citizen_complaints",
-    r: "i.zone_name",
-    d: "dp.name"
+    t: "x.t",
+    sev: "FIELD(x.sev, 'Severe', 'High', 'Medium', 'Low')",
+    c: "x.complaints",
+    r: "x.zone_name",
+    d: "x.dept_name"
   }[f.sort];
   const dir = f.dir < 0 ? "DESC" : "ASC";
   const W = where.join(" AND ");
   const [rows, tot] = await Promise.all([
-    q(`SELECT ${ROW} ${FROM} WHERE ${W} ORDER BY ${order} ${dir}, i.first_reported_at DESC LIMIT 12 OFFSET ?`, [
+    q(`SELECT * FROM (SELECT ${ROW}, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
+         ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC) AS g_rn
+       ${FROM} WHERE ${W}) x WHERE x.g_rn = 1 ORDER BY ${order} ${dir}, x.t DESC LIMIT 12 OFFSET ?`, [
       ...params,
       f.page * 12
     ]),
-    q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.citizen_complaints), 0) AS c ${FROM} WHERE ${W}`, params)
+    q(`SELECT COUNT(DISTINCT ${CLUSTER}) AS n, COALESCE(SUM(i.citizen_complaints), 0) AS c ${FROM} WHERE ${W}`, params)
   ]);
-  return { rows: await withDecisions(rows).then(withSources), total: Number(tot[0].n), complaints: Number(tot[0].c) };
+  const acted = await actedOn(rows.map((r) => String(r.id)));
+  return { rows: (await withDecisions(rows).then(withSources)).map((r) => ({ ...r, acted: acted[r.id] ?? null })), total: Number(tot[0].n),
+    complaints: Number(tot[0].c) };
 }
 
 // ---------------------------------------------------------------- search --
