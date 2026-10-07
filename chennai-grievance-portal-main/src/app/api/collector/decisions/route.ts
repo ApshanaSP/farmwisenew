@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
     if (incs.length !== new Set(d.incidentIds).size) {
       return NextResponse.json({ error: "Incident not found." }, { status: 404 });
     }
+    // the Collector verifies severe work only; the department verifies and closes everything else itself
+    if (d.decision === "verify" && incs.some((i) => i.severity_level !== "Severe")) {
+      return NextResponse.json({ error: "Only severe incidents are verified by the Collector; the department closes the rest itself." }, { status: 409 });
+    }
     if (d.escalateTo) {
       const [dept] = await conn.query<RowDataPacket[]>("SELECT code FROM ref_departments WHERE code = ?", [d.escalateTo]);
       if (dept.length === 0) return NextResponse.json({ error: "Unknown department." }, { status: 400 });

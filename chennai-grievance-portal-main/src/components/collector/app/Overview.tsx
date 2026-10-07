@@ -195,17 +195,27 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
       )}
       <div className="fitlist">
         {rows.length ? [...rows].sort((a, b) => Number(!!b.why?.needsYou) - Number(!!a.why?.needsYou)).map((i) => (
-          <button key={i.id} className={`si-item${c.focus?.id === i.id ? " on" : ""}${i.why?.needsYou ? " need" : ""}`} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}
-            onClick={() => { c.highlight(i); c.openInc(i.id); }}>
-            <span className={`si-ic ${sevTone(i.sev)}`}><I n={deptIcon(i.dept)} /></span>
-            <span className="si-main">
-              <span className="si-t" title={fullTitle(i)}>{fullTitle(i)}</span>
-              <span className="si-meta">{[i.zone_name, i.dept_name ?? i.dept, rel(i.t, d.now)].filter(Boolean).join(" · ")}</span>
-              {i.why?.needsYou && (
-                <span className="si-why" title={i.why.attention.join("\n")}><I n="bell" />{i.why.attention[0]}</span>
-              )}
-            </span>
-          </button>
+          <div key={i.id} className={`si-item si-row${c.focus?.id === i.id ? " on" : ""}${i.why?.needsYou ? " need" : ""}`} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
+            <button className="si-open" onClick={() => { c.highlight(i); c.openInc(i.id); }}>
+              <span className={`si-ic ${sevTone(i.sev)}`}><I n={deptIcon(i.dept)} /></span>
+              <span className="si-main">
+                <span className="si-t" title={fullTitle(i)}>{fullTitle(i)}</span>
+                <span className="si-meta">{[i.zone_name, i.dept_name ?? i.dept, rel(i.t, d.now)].filter(Boolean).join(" · ")}
+                  {Number(i.grouped) > 1 && <em className="grp-n" title="The same problem reported in the same area: merged into one">{i.grouped} incidents merged</em>}
+</span>
+                {i.why?.needsYou && (
+                  <span className="si-why" title={i.why.attention.join("\n")}><I n="bell" />{i.why.attention[0]}</span>
+                )}
+              </span>
+            </button>
+            {i.sev === "Severe" && (
+              <button className={`si-act${i.acted ? " done" : ""}`} onClick={() => c.openAction(i.id)}
+                title={i.acted ? `Action taken: instruction sent ${rel(i.acted.t, d.now)}. Click to send another.` : "Take action: AI drafts an instruction email to the department officer; you approve it"}
+                aria-label={`${i.acted ? "Action taken on" : "Take action on"} ${fullTitle(i)}`}>
+                <I n={i.acted ? "checkc" : "send"} /><span>{i.acted ? "Action taken" : "Take action"}</span>
+              </button>
+            )}
+          </div>
         )) : <Empty>No open {tab.toLowerCase()} incidents {c.periodLabel.toLowerCase()}.</Empty>}
       </div>
     </>
@@ -237,10 +247,12 @@ function SevMix({ counts, tab, onPick }: { counts: Record<string, number>; tab: 
 // ------------------------------------------------------------- tasks --
 
 function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
-  // Verify: the button turns into a green check, then the row collapses (the reload removes it) and the count ticks down
+  // Verify: the button turns into a green check, then the row collapses (the reload removes it) and the count ticks down.
+  // A grouped task (the same problem reported several times in one area) verifies every incident of the group.
   const [done, setDone] = useState<Set<string>>(new Set());
   const verify = async (i: Row) => {
-    if (await c.verify([i])) setDone((s) => new Set(s).add(i.id));
+    const ids: string[] = i.members ?? [i.id];
+    if (await c.verify(ids.map((id) => (id === i.id ? i : { ...i, id })))) setDone((s) => new Set(s).add(i.id));
   };
   return (
     <>
@@ -251,32 +263,52 @@ function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
         </button>
       </div>
       <div className="task-rule" title={TASK_RULE}>
-        <I n="alert" /><span>{d.tasks.leftToDepts > 0 ? <><b>{d.tasks.leftToDepts}</b> routine closures left to departments</> : "Only important closures come to you"}</span>
+        <I n="alert" /><span>Severe work only{d.tasks.leftToDepts > 0 ? <> · <b>{d.tasks.leftToDepts}</b> other closures verified by departments</> : ""}</span>
       </div>
       <div className="fitlist">
-        {d.tasks.rows.length ? d.tasks.rows.map((i) => (
-          <div className={`task${done.has(i.id) ? " leaving" : ""}`} key={i.id} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
-            <button className="task-h" onClick={() => c.openInc(i.id)} title={fullTitle(i)}><b>{fullTitle(i)}</b></button>
-            <div className="task-act" title={`${i.officer ?? i.dept_name ?? "Department officer"}: ${i.action ? i.action.note || i.action.step : "reported the work as done"}`}>
-              <em>{i.officer ?? i.dept_name ?? "Officer"}{i.action ? `, ${rel(i.action.t, d.now)}` : ""}:</em> {i.action ? i.action.note || i.action.step : "Reported the work as done."}
+        {d.tasks.rows.length ? d.tasks.rows.map((i) => {
+          const a = i.action as Row | null;
+          const photos: string[] = a?.photos ?? [];
+          const proof = !!a?.evidence;
+          return (
+            <div className={`task${done.has(i.id) ? " leaving" : ""}`} key={i.id} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
+              <button className="task-h" onClick={() => c.openInc(i.id)} title={fullTitle(i)}><b>{fullTitle(i)}</b>
+                {Number(i.grouped) > 1 && <em className="grp-n" title="The same problem reported in the same area: verified together">{i.grouped} merged</em>}
+                {i.acted && <em className="acted-n" title={`Instruction sent ${rel(i.acted.t, d.now)}`}><I n="checkc" />Action taken</em>}</button>
+              <div className={`task-ev${proof ? "" : " none"}`}>
+                <span className="task-who"><I n={proof ? "photo" : "alert"} />{proof ? `${i.dept_name ?? a?.actor ?? "Department"} · ${rel(a!.t, d.now)}` : `${i.dept_name ?? i.dept ?? "Department"}`}</span>
+                {proof ? <q title={a!.note}>“{a!.note}”</q> : <span className="task-miss">{a?.note ? `Records say: ${String(a.note).replace(/\.$/, "")}. ` : ""}No remarks or photos sent from the officer console yet.</span>}
+                {photos.length > 0 && (
+                  <span className="task-ph">
+                    {photos.slice(0, 3).map((p, k) => <a key={p} href={p} target="_blank" rel="noreferrer" title="Open the photo"><img src={p} alt={`Site photo ${k + 1}`} loading="lazy" /></a>)}
+                    {photos.length > 3 && <b>+{photos.length - 3}</b>}
+                  </span>
+                )}
+              </div>
+              <div className="task-f">
+                <span className="task-why" title={`With you because: ${(i.because as string[]).join(", ")}`}>{(i.because as string[]).slice(0, 2).map((b) => <i key={b}>{b}</i>)}</span>
+                <button className="btn sm plain icon" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)}
+                  title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
+                {proof ? (
+                  <button className={`btn sm ok${done.has(i.id) ? " did" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it">
+                    {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}{done.has(i.id) ? "Verified" : "Verify"}
+                  </button>
+                ) : (
+                  <button className="btn sm" onClick={() => c.openAction(i.id)} title="Ask the department officer for the completion report with site photos">
+                    <I n="send" />Ask for report
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="task-f">
-              <span className="task-why" title={`With you because: ${(i.because as string[]).join(", ")}`}>{(i.because as string[]).slice(0, 2).map((b) => <i key={b}>{b}</i>)}</span>
-              <button className="btn sm plain icon" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)}
-                title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
-              <button className={`btn sm ok${done.has(i.id) ? " did" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it">
-                {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}{done.has(i.id) ? "Verified" : "Verify"}
-              </button>
-            </div>
-          </div>
-        )) : <Empty>All caught up. Nothing needs your check right now.</Empty>}
+          );
+        }) : <Empty>All caught up. Nothing needs your check right now.</Empty>}
       </div>
     </>
   );
 }
 
-const TASK_RULE = "You check closed work only when it is severe or high severity, has 3 or more citizen complaints, needs several departments, " +
-  "was reported in the news, or (medium severity) took more than twice its deadline. Everything else is checked by the department head.";
+const TASK_RULE = "You verify closed work on severe incidents only, from the department's remarks and site photos. " +
+  "The department verifies and closes everything else itself. The same problem reported several times in one area is one task.";
 
 // ------------------------------------------------------------ snapshot --
 
@@ -432,7 +464,7 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
 function uniqueNews(rows: Row[]) {
   const seen = new Set<string>();
   return rows.filter((r) => {
-    const k = fullTitle(r).toLowerCase().replace(/\s+/g, " ").trim();
+    const k = String(r.news_title ?? fullTitle(r)).toLowerCase().replace(/\s+/g, " ").trim();
     return seen.has(k) ? false : (seen.add(k), true);
   });
 }
@@ -469,7 +501,7 @@ export function StoryLink({ i }: { i: Story }) {
   if (i.grievances > 0) return <span className="routed"><I n="user" />Also a grievance · {plural(i.grievances, "citizen complaint")}</span>;
   if (i.incident) return <span className="routed" title="Linked to an incident in our records; no citizen has complained about it yet">
     <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
-  return <span className="routed dim"><I n="news" />News only · no grievance yet{more}</span>;
+  return more ? <span className="routed dim"><I n="news" />{more.replace(/^ · /, "")}</span> : null;
 }
 
 export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Console; showDept?: boolean }) {
@@ -478,7 +510,7 @@ export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Cons
     <button className="brief" onClick={() => c.openInc(i.id)}>
       <span className="bic t-high"><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <b>{fullTitle(i)}</b>
+        <b title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined}>{i.news_title ?? fullTitle(i)}</b>
         <span className="loc">{outlets.length ? outlets.join(", ") : "News"} · {i.zone_name ?? "Chennai"} · {rel(i.t, now)}</span>
         {showDept && !i.assigned && <span className="routed"><I n="gov" />Belongs to {i.dept_name ?? i.dept}</span>}
         {i.assigned && <span className="routed"><I n="send" />Sent to {i.assigned.officer_designation ?? i.dept_name}</span>}

@@ -1,3 +1,5 @@
+import fs from "fs";
+import tls from "tls";
 import nodemailer from "nodemailer";
 
 let transporter: nodemailer.Transporter | null = null;
@@ -6,17 +8,46 @@ export function isSmtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
+/**
+ * Certificates to trust besides Node's own: SMTP_CA_FILE, a PEM file. Antivirus mail shields (Avast, AVG, Kaspersky)
+ * re-sign the mail server's certificate with their own; their root goes here, so the connection is still verified.
+ */
+function trustedCa(): string[] | undefined {
+  const file = (process.env.SMTP_CA_FILE || "").trim();
+  if (!file) return undefined;
+  try {
+    return [...tls.rootCertificates, fs.readFileSync(file, "utf8")];
+  } catch (err) {
+    console.warn(`[mailer] SMTP_CA_FILE could not be read (${file}): ${err instanceof Error ? err.message : err}`);
+    return undefined;
+  }
+}
+
 function getTransporter(): nodemailer.Transporter | null {
   if (!isSmtpConfigured()) return null;
   if (!transporter) {
+    const ca = trustedCa();
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: Number(process.env.SMTP_PORT) === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      ...(ca ? { tls: { ca } } : {})
     });
   }
   return transporter;
+}
+
+/** Connects and signs in to the mail server without sending anything: for checking the settings. */
+export async function verifySmtp(): Promise<{ ok: true } | { ok: false; detail: string }> {
+  const t = getTransporter();
+  if (!t) return { ok: false, detail: "SMTP is not configured" };
+  try {
+    await t.verify();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 export type MailResult =

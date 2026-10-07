@@ -366,3 +366,6 @@ export function Donut({ parts }: { parts: { l: string; v: number; c: string; sub
     </div>
   );
 }
+
+/** An official outlet's kind, in words (newsrel.mediaKind). */
+export const MEDIA_KIND: Record<string, string> = { newspaper: "Newspaper", tv: "TV news", agency: "News agency", government: "Government" };

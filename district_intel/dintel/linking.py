@@ -19,6 +19,8 @@ Blocking -> pair features -> calibrated scorer -> decision bands -> union-find.
 from __future__ import annotations
 
 import hashlib
+import json
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -89,6 +91,54 @@ def _candidates(e: pd.DataFrame, ref: Reference) -> pd.DataFrame:
         out.append(pd.DataFrame({"a": a[keep], "b": b[keep], "dist_m": d[keep], "dt_h": dt[keep],
                                  "dist_norm": d[keep] / allow[keep], "dt_norm": dt[keep] / wmax[keep]}))
     return pd.concat(out, ignore_index=True) if out else pd.DataFrame(columns=["a", "b", "dist_m", "dt_h", "dist_norm", "dt_norm"])
+
+
+REGISTRY = INTEL_DIR / "output" / "state" / "incident_ids.json"
+
+
+def _new_id(members, first) -> str:
+    m0 = min(members, key=lambda m: (first[m], m))
+    return f"INC-{first[m0].tz_convert(IST):%Y%m%d}-{hashlib.md5(m0.encode()).hexdigest()[:6].upper()}"
+
+
+def stable_ids(comp: dict, first: dict, registry: Path | None = REGISTRY) -> dict:
+    """Incident ids that stay the same from build to build, so the Collector's decisions, officer reports and emails,
+    all kept by incident id, stay attached. An incident keeps the id most of its reports had in the last build (the
+    registry, output/state/incident_ids.json), even when an earlier report joins it later; when an incident splits,
+    the larger part keeps the id. Only an incident none of whose reports was seen before gets a new id (from its first
+    report, as before). The registry is rewritten with this build's ids."""
+    prev: dict = {}
+    if registry is not None and registry.exists():
+        try:
+            prev = json.loads(registry.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            log.warning("incident id registry unreadable: new ids this build")
+    inc_of: dict = {}
+    taken: set = set()
+    # bigger incidents claim their old id first; ties in a fixed order so a build is repeatable
+    for members in sorted(comp.values(), key=lambda m: (-len(m), min(first[x] for x in m), min(m))):
+        votes = Counter(prev[m] for m in members if m in prev)
+        iid = next((i for i, _ in sorted(votes.items(), key=lambda kv: (-kv[1], kv[0])) if i not in taken), None)
+        if iid is None:
+            iid = _new_id(members, first)
+            k = 1
+            while iid in taken:  # a fresh id that an old incident still holds
+                iid = f"{_new_id(members, first)}-{k}"
+                k += 1
+        taken.add(iid)
+        for m in members:
+            inc_of[m] = iid
+    if registry is not None:
+        kept = sum(1 for m, i in inc_of.items() if prev.get(m) == i)
+        log.info("incident ids: %d of %d reports kept their incident id from the last build", kept, sum(1 for m in inc_of if m in prev))
+        try:
+            registry.parent.mkdir(parents=True, exist_ok=True)
+            tmp = registry.with_suffix(".tmp")
+            tmp.write_text(json.dumps(inc_of, separators=(",", ":")), encoding="utf-8")
+            tmp.replace(registry)
+        except OSError as exc:
+            log.warning("incident id registry not saved: %s", exc)
+    return inc_of
 
 
 def _split(world_id: str) -> str:
@@ -195,13 +245,7 @@ def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge
     for a, b in zip(accept["a"], accept["b"]):
         uf.union(ids[a], ids[b])
     first = dict(zip(e["event_id"], e["reported_at"]))
-    comp = uf.groups()
-    inc_of = {}
-    for root, members in comp.items():
-        m0 = min(members, key=lambda m: (first[m], m))
-        iid = f"INC-{first[m0].tz_convert(IST):%Y%m%d}-{hashlib.md5(m0.encode()).hexdigest()[:6].upper()}"
-        for m in members:
-            inc_of[m] = iid
+    inc_of = stable_ids(uf.groups(), first)
     e["incident_id"] = e["event_id"].map(inc_of)
     best_prob = pd.concat([accept[["a", "prob"]].rename(columns={"a": "i"}), accept[["b", "prob"]].rename(columns={"b": "i"})])
     bp = best_prob.groupby("i")["prob"].max()

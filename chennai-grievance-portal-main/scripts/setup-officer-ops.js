@@ -18,7 +18,7 @@ const TABLES = [
     step_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     incident_id VARCHAR(64) NOT NULL,
     dept_code VARCHAR(16) NOT NULL,
-    step ENUM('approve','action','send') NOT NULL,
+    step ENUM('approve','action','send','close') NOT NULL COMMENT 'close: the department verified it itself (not severe)',
     note TEXT NULL,
     report_id BIGINT NULL COMMENT 'officer_reports row for a send step',
     actor VARCHAR(128) NOT NULL,
@@ -75,6 +75,8 @@ async function main() {
   await db.query(`CREATE DATABASE IF NOT EXISTS \`${OPS}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`);
   await db.query(`USE \`${OPS}\``);
   for (const sql of TABLES) await db.query(sql);
+  // a table made before the department could close a grievance itself
+  await db.query(`ALTER TABLE officer_steps MODIFY step ENUM('approve','action','send','close') NOT NULL`);
   const [[s]] = await db.query(`SELECT COUNT(*) AS n FROM officer_steps`);
   const [[r]] = await db.query(`SELECT COUNT(*) AS n FROM officer_reports`);
   console.log(`${OPS}: officer_steps (${s.n} rows) and officer_reports (${r.n} rows) ready`);

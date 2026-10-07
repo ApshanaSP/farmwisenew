@@ -12,13 +12,21 @@
  *                translation, the AI's place, another outlet's article of the same story, or the opening of the
  *                article) is given that place's ward, zone, taluk and point, so it is on the map and in the zone's
  *                counts. Each is noted in _placed with how it was found, for the Trends page.
+ *   news media   an incident known only from the news, and only from sites that are not news media (property blogs,
+ *                trading apps, aggregators, content farms: newsrel.isNewsMedia), is taken out of the build, so the
+ *                console's counts, map, lists and assistant follow official news media only.
+ *   clusters     incidents that are the same problem in the same area (neighbouring streets, the same street or
+ *                locality, the same citizen again, days apart, or one event covered by many outlets) share incidents.cluster_id (cluster.ts), so the console lists each group once
+ *                with all its sources. Runs after places, so an incident placed from its reports groups by its place.
  */
 import type { DatabaseSync as DB } from "node:sqlite";
 import { onBuild } from "@/lib/aws/store";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { placeResolver, type Placed } from "@/lib/collector/nlp";
 import { judgeLocation, landmark, outsidePlace, type Ward } from "@/lib/collector/locreview";
-import { clusterNews, type NewsGroup } from "@/lib/collector/newsrel";
+import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsrel";
+import { cleanTitle } from "@/lib/collector/threads";
+import { CITY_ONLY, clusterIncidents } from "@/lib/collector/cluster";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -115,6 +123,32 @@ function headlines(db: DB) {
     const rank = (SOURCE_RANK[src] ?? 6) * 2 + (e.lang === "en" || !/[஀-௿]/.test(String(raw)) ? 0 : 1);
     const cur = best.get(id);
     if (!cur || rank < cur.rank) best.set(id, { rank, text: headlineOf(String(raw)) });
+  }
+  tx(db, () => {
+    const up = db.prepare(`UPDATE incidents SET headline = ? WHERE incident_id = ?`);
+    for (const [id, b] of best) up.run(b.text, id);
+  });
+}
+
+// ---------------------------------------------------------- news headlines --
+
+/**
+ * An incident that official news media reported is headed by the article's own headline (an English one first, else
+ * the English translation of a Tamil one; then the earliest), not a citizen's complaint text: the reports themselves
+ * still show in "How it unfolded".
+ */
+function newsHeadlines(db: DB) {
+  if (!has(db, "incidents", "headline") || !has(db, "documents", "publisher_domain")) return;
+  const best = new Map<string, { rank: number; t: string; text: string }>();
+  for (const d of db.prepare(`SELECT linked_incident_id AS id, title, title_en, lang, publisher, publisher_domain AS dom, publisher_tier AS tier,
+      published_at AS t FROM documents WHERE linked_incident_id IS NOT NULL AND title IS NOT NULL`).all() as Row[]) {
+    if (!isNewsMedia(d.publisher, d.dom, d.tier)) continue;
+    const english = d.lang === "en" ? String(d.title) : d.title_en ? String(d.title_en) : null;
+    const text = cleanTitle(String(english ?? d.title)).replace(/\s*#\S+/g, "").trim();
+    if (text.length < 12) continue;
+    const rank = d.lang === "en" ? 0 : english ? 1 : 2;
+    const cur = best.get(d.id);
+    if (!cur || rank < cur.rank || (rank === cur.rank && String(d.t) < cur.t)) best.set(String(d.id), { rank, t: String(d.t), text });
   }
   tx(db, () => {
     const up = db.prepare(`UPDATE incidents SET headline = ? WHERE incident_id = ?`);
@@ -251,6 +285,70 @@ function eventPlaces(db: DB, since: string, resolve: (t: string) => Placed | nul
   return out;
 }
 
+// ------------------------------------------------------------- news media --
+
+function newsMedia(db: DB) {
+  if (!has(db, "incidents", "media_only") || !has(db, "documents", "publisher_domain")) return;
+  const seen = new Set<string>(), ok = new Set<string>();
+  for (const d of db.prepare(`SELECT linked_incident_id AS id, publisher, publisher_domain AS dom, publisher_tier AS tier FROM documents
+      WHERE linked_incident_id IS NOT NULL`).all() as Row[]) {
+    seen.add(d.id);
+    if (isNewsMedia(d.publisher, d.dom, d.tier)) ok.add(d.id);
+  }
+  const drop = (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[])
+    .map((r) => String(r.id)).filter((id) => seen.has(id) && !ok.has(id));
+  if (!drop.length) return;
+  tx(db, () => {
+    const del = db.prepare(`DELETE FROM incidents WHERE incident_id = ?`);
+    for (const id of drop) del.run(id);
+    if (has(db, "incident_members")) {
+      const dm = db.prepare(`DELETE FROM incident_members WHERE incident_id = ?`);
+      for (const id of drop) dm.run(id);
+    }
+  });
+  console.log(`[derive] ${drop.length} news-only incidents from sites that are not news media left out`);
+}
+
+// --------------------------------------------------------------- clusters --
+
+function clusters(db: DB) {
+  if (!has(db, "incidents")) return;
+  if (!has(db, "incidents", "cluster_id")) db.exec(`ALTER TABLE incidents ADD COLUMN cluster_id TEXT`);
+  if (!has(db, "incidents", "cluster_size")) db.exec(`ALTER TABLE incidents ADD COLUMN cluster_size INTEGER`);
+  // a Tamil headline is compared through its English translation
+  const en = new Map<string, string>();
+  if (has(db, "documents", "title_en"))
+    for (const d of db.prepare(`SELECT linked_incident_id AS id, title_en FROM documents
+        WHERE linked_incident_id IS NOT NULL AND lang <> 'en' AND title_en IS NOT NULL`).all() as Row[])
+      if (!en.has(d.id)) en.set(d.id, String(d.title_en));
+  // who filed the citizen complaints in each incident: the same person reporting a problem again is the same problem
+  const reporters = new Map<string, string[]>();
+  if (has(db, "events", "reporter_hash"))
+    for (const e of db.prepare(`SELECT DISTINCT incident_id AS id, reporter_hash AS r FROM events
+        WHERE incident_id IS NOT NULL AND reporter_hash IS NOT NULL AND source = 'grievance'`).all() as Row[])
+      (reporters.get(e.id) ?? reporters.set(e.id, []).get(e.id)!).push(String(e.r));
+  const text = has(db, "incidents", "headline") ? "COALESCE(headline, title)" : "title";
+  const rows = db.prepare(`SELECT incident_id AS id, category_code AS cat, first_reported_at AS t, lat, lon, place_text AS place,
+    zone_no AS zone, citizen_complaints AS complaints, sources, ${text} AS text, title FROM incidents`).all() as Row[];
+  const wall = (t: string) => Date.parse(String(t).replace(" ", "T") + "+05:30");
+  const group = clusterIncidents(rows.map((r) => ({
+    id: String(r.id), cat: String(r.cat ?? "OTHER"), t: wall(r.t), lat: r.lat ?? null, lon: r.lon ?? null,
+    placed: !CITY_ONLY.test(String(r.place ?? "")), text: en.get(r.id) ?? String(r.text ?? ""), original: String(r.title ?? ""),
+    zone: r.zone ?? null, place: r.place ?? null, reporters: reporters.get(r.id) ?? [], civic: Number(r.complaints) > 0,
+    official: !/grievance|news/.test(String(r.sources ?? ""))
+  })));
+  const size = new Map<string, number>();
+  for (const g of group.values()) size.set(g, (size.get(g) ?? 0) + 1);
+  tx(db, () => {
+    const up = db.prepare(`UPDATE incidents SET cluster_id = ?, cluster_size = ? WHERE incident_id = ?`);
+    for (const [id, g] of group) up.run(g, size.get(g) ?? 1, id);
+  });
+  db.exec(`CREATE INDEX IF NOT EXISTS ix_incidents_cluster ON incidents (cluster_id)`);
+}
+
 onBuild("cmwssb-reservoirs@1", reservoirs);
 onBuild("readable-headlines@3", headlines);
+onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
+onBuild("news-media-only@1", newsMedia);
+onBuild("incident-clusters@3", clusters);

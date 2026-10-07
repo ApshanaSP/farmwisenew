@@ -37,3 +37,11 @@ describe("grouping the same news", () => {
     expect(keys).toEqual(["ab", "c", "de"]);
   });
 });
+
+describe("news whose headline names no place", () => {
+  it("stays out when the article places it in another district", () => {
+    const d = { title: "Rithanya suicide case: HC orders return of dowry to her father", ai_orgs: "Madras High Court|Tirupur Police", ai_place: null };
+    expect(relevantNews(d, d.title)).toBe(false);
+    expect(relevantNews({ ...d, ai_orgs: "Greater Chennai Police" }, d.title)).toBe(true);
+  });
+});
