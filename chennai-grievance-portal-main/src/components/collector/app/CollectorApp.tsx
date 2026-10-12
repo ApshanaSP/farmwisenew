@@ -51,6 +51,7 @@ export type PageKey = "overview" | "briefing" | "trends" | "environment" | "stud
 const PAGE_TITLE: Record<PageKey, string> = { overview: "Overview", briefing: "Briefing", trends: "Trends", environment: "Environment & markets", studio: "Data Studio" };
 
 export type ListPreset = Partial<{ dept: string; sev: string; status: string; q: string; sort: string; dir: number; scope: string; cat: string; taluk: string;
+  /** "unlocated" | "nozone" | "notaluk": incidents with no exact place */ place: string;
   /** ignore the dashboard's zone filter (lists opened from the district-wide pages) */ anyZone: boolean }>;
 export interface DeptNav { code: string; name: string; head?: string | null; open: number; n: number; severe: number; unverified: number }
 type ModalState =

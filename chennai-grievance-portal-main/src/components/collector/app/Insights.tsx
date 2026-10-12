@@ -353,6 +353,16 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
               </button>
             );
           })}
+          {/* incidents with no in-district taluk, so the ranking adds up to the district total */}
+          {ins.talukUnassigned.open > 0 && (
+            <button className="tk" onClick={() => c.openList({ status: "open", place: "notaluk", cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, "Still open with no taluk, reported in the last 30 days")}
+              title="District-wide reports, places that could not be found, and places outside Chennai district">
+              <span className="tk-l"><b>No taluk</b><small>district-wide or unknown{ins.talukUnassigned.severe ? ` · ${ins.talukUnassigned.severe} severe` : ""}</small></span>
+              <span className="tk-b"><i style={{ width: `${(ins.talukUnassigned.open / Math.max(maxT, ins.talukUnassigned.open)) * 100}%`, background: "var(--text-3)" }} /></span>
+              <b className="tk-v">{ins.talukUnassigned.open}</b>
+              <span className="tk-d">–</span>
+            </button>
+          )}
         </div>
       </article>
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
-import { list, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
+import { list, parseCat, parseDept, parsePeriod, parsePlace, parseTaluk, parseZone } from "@/lib/collector/intel";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
         sev: sev && SEVS.includes(sev) ? sev : null,
         cat: parseCat(p.get("cat")),
         taluk: parseTaluk(p.get("taluk")),
+        place: parsePlace(p.get("place")),
         status: status && STATUSES.includes(status) ? status : null,
         q: (p.get("q") || "").trim().slice(0, 80) || null,
         sort: sort === "sev" || sort === "c" || sort === "r" || sort === "d" ? sort : "t",

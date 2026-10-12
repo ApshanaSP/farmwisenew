@@ -15,6 +15,8 @@ import { addedItems, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
+import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
+export { PINNABLE, PLACE_FILTERS, parsePlace, type PlaceFilter } from "@/lib/collector/mapplace";
 
 type Row = Record<string, any>;
 
@@ -729,7 +731,7 @@ export async function overview(period: Period, zone: number | null, dept: string
   const sevWhere = `${w.sql} AND i.is_open = 1 AND NOT ${ROUTED}`;
 
   const [kpi, meta, zoneTable, pins, layerCounts, news, tasks, taskCount, sevRows, sevCounts, byDept, byZone,
-    feeds, bell, deptNav, snap, backlog, env, stories, sevAll, added, allNews] = await Promise.all([
+    feeds, bell, deptNav, snap, backlog, env, stories, sevAll, added, allNews, noZone] = await Promise.all([
     kpiBlock(s, now),
     exportMeta(),
     // Every zone, even with no incidents in this scope (the zone picker lists them all).
@@ -745,14 +747,16 @@ export async function overview(period: Period, zone: number | null, dept: string
     q(
       `SELECT i.incident_id AS id, i.lat, i.lon, i.severity_level AS sev, i.is_open AS open, i.citizen_complaints AS complaints,
               ${TITLE} AS title, i.status_std AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
-       FROM incidents i WHERE ${w.sql} AND i.lat IS NOT NULL
+       FROM incidents i WHERE ${w.sql} AND ${PINNABLE}
        ORDER BY i.is_open DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 150`,
       w.params
     ),
+    // the legend: pins per layer, plus the incidents with no exact place (not pinned); together they make the scope's total
     q(
-      `SELECT SUM(i.severity_level = 'Severe') AS severe,
-              SUM(i.severity_level <> 'Severe' AND i.citizen_complaints > 0) AS complaint,
-              SUM(i.severity_level <> 'Severe' AND i.citizen_complaints = 0) AS other
+      `SELECT SUM(${PINNABLE} AND i.severity_level = 'Severe') AS severe,
+              SUM(${PINNABLE} AND i.severity_level <> 'Severe' AND i.citizen_complaints > 0) AS complaint,
+              SUM(${PINNABLE} AND i.severity_level <> 'Severe' AND i.citizen_complaints = 0) AS other,
+              SUM(NOT ${PINNABLE}) AS unlocated, COUNT(*) AS total
        FROM incidents i WHERE ${w.sql}`,
       w.params
     ),
@@ -833,7 +837,16 @@ export async function overview(period: Period, zone: number | null, dept: string
     addedItems({ now, days: Math.max(1, Math.round(p.hours / 24)), since: periodSince(period, now), zone, dept, cat, taluk }),
     // News stories relevant to the Collector (see newsStories); articles carry no zone or department,
     // so a filtered view keeps to the news linked to incidents in scope (`news`).
-    zone || dept || cat || taluk ? Promise.resolve(null) : newsStories(period, now)
+    zone || dept || cat || taluk ? Promise.resolve(null) : newsStories(period, now),
+    // the zone table's last row: incidents in the same scope with no zone (district-wide, place unknown or outside the
+    // GCC wards), so the rows add up to the district total
+    q(
+      `SELECT COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
+              COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints,
+              COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
+       FROM incidents i WHERE ${all.sql} AND i.zone_no IS NULL`,
+      all.params
+    )
   ]);
 
   const [taskRows, newsRows, sevList, bellRows] = await Promise.all([
@@ -870,6 +883,9 @@ export async function overview(period: Period, zone: number | null, dept: string
     kpi,
     zoneTable: zoneTable.map((z) => ({ zone: z.zone, name: z.name, n: Number(z.n), open: Number(z.open),
       complaints: Number(z.complaints), severe: Number(z.severe) })),
+    /** incidents in the zone table's scope with no zone; zoneTable plus this is every incident in that scope */
+    zoneUnassigned: { n: Number(noZone[0]?.n ?? 0), open: Number(noZone[0]?.open ?? 0),
+      complaints: Number(noZone[0]?.complaints ?? 0), severe: Number(noZone[0]?.severe ?? 0) },
     backlog: backlog[0] ? { code: backlog[0].code, name: backlog[0].name, hours: Number(backlog[0].h), n: Number(backlog[0].n) } : null,
     map: {
       zoneCounts: Object.fromEntries(zoneTable.map((z) => [z.zone, Number(z.n)])),
@@ -881,7 +897,11 @@ export async function overview(period: Period, zone: number | null, dept: string
         severe: Number(layerCounts[0]?.severe ?? 0),
         complaint: Number(layerCounts[0]?.complaint ?? 0),
         other: Number(layerCounts[0]?.other ?? 0)
-      }
+      },
+      /** incidents in scope not drawn as pins: no point, or a district-wide / locality-only place (see PINNABLE) */
+      unlocated: Number(layerCounts[0]?.unlocated ?? 0),
+      /** every incident in scope: severe + complaint + other + unlocated */
+      total: Number(layerCounts[0]?.total ?? 0)
     },
     snapshot: snap,
     news: newsRows.map((r) => ({ ...r, outletNames: r.src?.outlets ?? [], assigned: assigned[r.id] ?? null }) as Row),
@@ -1255,6 +1275,8 @@ export interface ListFilter {
   sev: string | null;
   cat?: string | null;
   taluk?: string | null;
+  /** incidents with no exact place (see PLACE_FILTERS) */
+  place?: PlaceFilter | null;
   status: string | null;
   q: string | null;
   sort: "t" | "sev" | "c" | "r" | "d";
@@ -1292,6 +1314,7 @@ export async function list(f: ListFilter) {
   if (f.sev) (where.push("i.severity_level = ?"), params.push(f.sev));
   if (f.cat) (where.push("i.category_code = ?"), params.push(f.cat));
   if (f.taluk) (where.push("i.taluk_code = ?"), params.push(f.taluk));
+  if (f.place) where.push(PLACE_FILTERS[f.place]);
   // "open" matches the severity tile: news complaints handed to a department are not listed as incidents.
   if (st === "awaiting" && f.scope === "period") { /* the rule is set above */ }
   else if (st === "open") where.push(`i.is_open = 1 AND NOT ${ROUTED}`);

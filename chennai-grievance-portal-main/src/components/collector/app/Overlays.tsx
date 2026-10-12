@@ -40,7 +40,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
     let live = true;
     const p = new URLSearchParams({ period: c.period, sort: String(f.sort), dir: String(f.dir), page: String(f.page), scope: String(f.scope) });
     if (c.zone && !f.anyZone) p.set("zone", String(c.zone));
-    for (const k of ["dept", "sev", "status", "q", "cat", "taluk"] as const) if ((f as Record<string, unknown>)[k]) p.set(k, String((f as Record<string, unknown>)[k]));
+    for (const k of ["dept", "sev", "status", "q", "cat", "taluk", "place"] as const) if ((f as Record<string, unknown>)[k]) p.set(k, String((f as Record<string, unknown>)[k]));
     fetch(`/api/collector/list?${p}`).then((r) => r.json()).then((j) => live && setData(j));
     return () => { live = false; };
   }, [f, c.period, c.zone, c.reloadKey]);
@@ -102,7 +102,8 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
 
 export function ZonesBody({ d, c }: { d: OverviewData; c: Console }) {
   const rows = [...d.zoneTable].sort((a, b) => b.complaints - a.complaints);
-  const mx = Math.max(1, ...rows.map((x) => x.complaints));
+  const u = d.zoneUnassigned;
+  const mx = Math.max(1, u.complaints, ...rows.map((x) => x.complaints));
   return (
     <div className="tbl-wrap">
       <table>
@@ -117,6 +118,17 @@ export function ZonesBody({ d, c }: { d: OverviewData; c: Console }) {
               <td className="num" style={{ color: "var(--sev)" }}>{x.severe}</td><td><span className="lnk">Filter ›</span></td>
             </tr>
           ))}
+          {/* incidents with no zone, so the rows add up to the district total */}
+          {u.n > 0 && (
+            <tr onClick={() => c.openList({ place: "nozone", anyZone: true, sort: "sev", dir: 1 }, "Incidents with no zone")}
+              title="District-wide reports, places that could not be found, and places outside the GCC wards">
+              <td className="ev">No zone <small style={{ color: "var(--text-3)" }}>(district-wide or unknown)</small></td><td className="num">{u.open}</td>
+              <td><span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span className="hb-t" style={{ flex: 1 }}><span className="hb-b" style={{ width: `${(u.complaints / mx) * 100}%`, background: "var(--text-3)" }} /></span>
+                <b className="num">{u.complaints}</b></span></td>
+              <td className="num" style={{ color: "var(--sev)" }}>{u.severe}</td><td><span className="lnk">List ›</span></td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

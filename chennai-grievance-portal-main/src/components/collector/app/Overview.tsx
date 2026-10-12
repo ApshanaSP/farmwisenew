@@ -133,6 +133,13 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                 title="Air-quality stations, rain gauges and lakes">
                 <i className="sq" style={{ background: "linear-gradient(90deg,#34D399 33%,#7FD3E6 33% 66%,#3B82F6 66%)" }} />Stations<b>{env.mapStations.length}</b>
               </button>
+              {/* not pinned: a district-wide or locality-only place would draw a false hotspot (see PINNABLE in intel.ts) */}
+              {d.map.unlocated > 0 && (
+                <button className="unloc" onClick={() => c.openList({ place: "unlocated", sort: "sev", dir: 1 }, "Incidents with no exact place")}
+                  title={`${d.map.unlocated.toLocaleString("en-IN")} of ${d.map.total.toLocaleString("en-IN")} incidents in this view have no exact place (district-wide or unknown), so they are not drawn as pins. Click for the list.`}>
+                  <i className="ring" /><b>{d.map.unlocated.toLocaleString("en-IN")}</b>incidents with no exact place (district-wide or unknown)
+                </button>
+              )}
             </div>
           </article>
         )}

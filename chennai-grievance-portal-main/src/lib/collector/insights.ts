@@ -5,7 +5,7 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
-import { PERIODS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
+import { PERIODS, PLACE_FILTERS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
@@ -174,6 +174,14 @@ export async function insights(period: Period, zone: number | null, dept: string
        ${zone ? "AND i.zone_no = ?" : ""} ${dept ? "AND i.lead_dept = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}
        GROUP BY i.category_code, i.zone_no`, [now, now, now, now, now, now, now, now, ...(zone ? [zone] : []), ...(dept ? [dept] : []), ...(s.taluk ? [s.taluk] : [])]))
   ]);
+  // the taluk ranking's last row: the same 30 days, incidents with no in-district taluk (district-wide, place unknown or
+  // outside the district), so the ranking adds up to the total
+  const tw = where({ ...s, taluk: null }, now, { hours: 720 });
+  const [noTaluk] = T
+    ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.severity_level = 'Severe'), 0) AS severe,
+              COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
+       FROM incidents i WHERE ${tw.sql} AND ${PLACE_FILTERS.notaluk}`, tw.params)
+    : [];
 
   const zn = new Map<number, string>();
   const wardZone = new Map<number, number>();
@@ -371,6 +379,8 @@ export async function insights(period: Period, zone: number | null, dept: string
     trends: { weekly: { keys: weeks, lines: seriesOf(weekly, weeks) }, monthly: { keys: months, lines: seriesOf(monthly, months) }, where: whereRising },
     taluks: taluks.map((t) => ({ code: t.code, name: t.name, open: Number(t.open), severe: Number(t.severe), overdue: Number(t.overdue),
       reported: Number(t.reported), prev: Number(t.prev) })),
+    talukUnassigned: { open: Number(noTaluk?.open ?? 0), severe: Number(noTaluk?.severe ?? 0), overdue: Number(noTaluk?.overdue ?? 0),
+      reported: Number(noTaluk?.reported ?? 0) },
     patterns: { emerging, hotspots: hs },
     // Locations needing review: only incidents whose place is unknown (locreview.ts); the counts say what was left out
     review: { unplaced: places?.missing ?? [], unplacedTotal: places?.counts.missing ?? 0, counts: places?.counts ?? null, located: places?.located ?? [], placed: placedRows,

@@ -1707,3 +1707,6 @@
 .dic .pager .pg.pg-ai.on i{background:linear-gradient(115deg,#6366F1,#38BDF8 55%,#A78BFA);color:#fff}
 .dic .pager .pg.pg-ai i::after{content:"";position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:#F472B6;box-shadow:0 0 0 2px var(--surface),0 0 8px #F472B6}
 .dic .pager .pg.pg-ai.on i::after{display:none}
+/* map legend: incidents not drawn as pins (no exact place); a hollow ring, never a layer toggle */
+.dic .map-leg2 button.unloc{font-weight:500}
+.dic .map-leg2 button.unloc i.ring{background:transparent;box-shadow:none;border:1.5px dashed var(--text-3)}
