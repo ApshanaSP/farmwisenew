@@ -34,7 +34,7 @@ const TOPICS: [RegExp, string][] = [
   [/\b(bangalore|bengaluru|mumbai|delhi|hyderabad|kolkata|pune|coimbatore|madurai|trichy|tiruchirappalli|salem|tirunelveli|kerala|karnataka|andhra|telangana|another district|other districts?)\b/i, "elsewhere"]
 ];
 /** Words that tie a message to the console's data: with one of these, the router decides, never this list. */
-const DATA_WORDS = /\b(incidents?|complaints?|grievances?|zones?|wards?|taluks?|departments?|dept|lakes?|reservoirs?|hospitals?|beds?|aqi|air quality|rain(fall)?|floods?|warnings?|imd|mandi|vegetables?|tomato(es)?|onions?|potato(es)?|brinjal|uzhavar|koyambedu|chennai|gcc|police|severe|briefing|verif\w*|officers?|officials?|news|developing|hotspots?|dashboard|console|trend|accidents?|crimes?|theft|fires?|drains?|garbage|water|power|roads?|dengue|cases|reports?|district)\b|சம்பவ|புகார்|மண்டல|வார்டு|ஏரி|மழை|மருத்துவமனை|விலை|சென்னை/i;
+const DATA_WORDS = /\b(incidents?|complaints?|grievances?|zones?|wards?|taluks?|departments?|dept|lakes?|reservoirs?|hospitals?|beds?|aqi|air quality|rain(fall)?|flood(s|ing|ed)?|waterlogg\w*|warnings?|imd|mandi|vegetables?|tomato(es)?|onions?|potato(es)?|brinjal|uzhavar|koyambedu|chennai|gcc|police|severe|briefing|verif\w*|officers?|officials?|news|developing|hotspots?|dashboard|console|trend|accidents?|crimes?|theft|fires?|drains?|garbage|water|power|roads?|dengue|cases|reports?|district)\b|சம்பவ|புகார்|மண்டல|வார்டு|ஏரி|மழை|மருத்துவமனை|விலை|சென்னை/i;
 
 /** The topic of a question plainly outside the district data, or null. */
 export function offTopic(message: string): string | null {
@@ -46,13 +46,21 @@ export function offTopic(message: string): string | null {
   return hit[1];
 }
 
+/** Where an instruction can begin: the message or a sentence, or after a request word ("please delete", "can you drop"). */
+const COMMAND_START = String.raw`(?:^|[.!?;:\n]\s*|\b(?:please|pls|kindly|(?:can|could|would|will) you|go and|now|then|and|also|just|i want (?:you )?to|i need (?:you )?to|let'?s|help me)\s+)\s*(?:please\s+|just\s+|also\s+)?`;
+
 const UNSAFE: [RegExp, string][] = [
   [/\b(phone|mobile|cell|contact|whatsapp)\s*(no\.?|number|details?)?\b.{0,50}\b(citizen|complainant|resident|reporter|caller|victim|person|people|filed|complained|reported)/i, "personal data"],
   [/\b(citizen|complainant|resident|reporter|caller|victim)s?('s)?\b.{0,50}\b(phone|mobile|number|address|aadhaa?r|email|e-mail|name|identity|details)\b/i, "personal data"],
   [/\bwho (filed|complained|reported|lodged)\b.{0,40}\b(name|phone|number|address)|\b(name|phone|address) of (the )?(person|citizen|complainant)/i, "personal data"],
   [/\baadhaa?r\b|ஆதார்/i, "personal data"],
   [/(தொலைபேசி|கைபேசி|செல்பேசி|முகவரி|பெயர்).{0,30}(புகார்தாரர்|குடிமக|புகார் அளித்த)|(புகார்தாரர்|புகார் அளித்த).{0,30}(தொலைபேசி|கைபேசி|முகவரி|பெயர்)/, "personal data"],
-  [/\b(delete|drop|truncate|erase|wipe|purge|destroy)\b.{0,40}\b(complaints?|incidents?|records?|data|tables?|database|rows?|entries|logs?|everything)\b/i, "data change"],
+  // a destructive verb is a command only where a command starts (the message, a sentence, or after "please", "can you",
+  // "go and", "now" ...) and when it has a target: "a drop in complaints" or "did complaints drop" is a question
+  [new RegExp(`${COMMAND_START}(delete|drop(?!\\s+(in|of|by|after|since|over|during|between|across|compared)\\b)|truncate|erase|wipe|purge|destroy)\\b`
+    + `.{0,40}\\b(complaints?|incidents?|records?|data|tables?|database|rows?|entries|logs?|everything)\\b`, "i"), "data change"],
+  // SQL written out is a command wherever it appears
+  [/\b(drop|truncate)\s+(table|database|schema)\b|\bdelete\s+from\s+\w/i, "data change"],
   [/\b(modify|change|edit|update|alter|overwrite|insert)\s+(the\s+|a\s+|this\s+|these\s+|all\s+|every\s+)?(status|records?|data|database|tables?|entr(y|ies)|incidents?|complaints?)\b/i, "data change"],
   [/\bmark\b.{0,40}\bas\s+(resolved|verified|closed|rejected|done)\b/i, "data change"],
   [/(நீக்கு|அழி|நீக்கவும்|அழிக்கவும்).{0,20}(புகார்|சம்பவ|தரவு)|(புகார்|சம்பவ|தரவு).{0,20}(நீக்கு|அழி)/, "data change"],
