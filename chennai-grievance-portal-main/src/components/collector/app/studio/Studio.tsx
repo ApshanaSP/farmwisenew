@@ -238,7 +238,7 @@ export default function Studio({ c }: { c: Console }) {
       ) : mode.k === "board" ? (
         <Board list={list} c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : (
-        <section className="ds-span card ds-hero-wrap"><Hero samples={list?.samples ?? []} onSample={addSample} busy={busy} /></section>
+        <section className="ds-span card ds-hero-wrap"><Hero samples={list ? list.samples ?? [] : null} onSample={addSample} busy={busy} /></section>
       )}
       <AnimatePresence>{connecting && <Connect initialUrl={link} onClose={() => setConnecting(false)} onConnect={addLink} />}</AnimatePresence>
       {drag && <div className="ds-dropveil"><div><I n="download" /><b>Drop to analyse</b><small>Seven agents will read, clean, map and explain it</small></div></div>}

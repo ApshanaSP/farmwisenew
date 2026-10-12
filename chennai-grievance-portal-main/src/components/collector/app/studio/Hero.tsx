@@ -2,6 +2,7 @@
 
 /** The Studio before any data: what it does, the seven agents around the District IQ core, and samples to try. */
 import type { SampleInfo } from "@/lib/studio/samples";
+import { Skeleton } from "@/components/ui";
 import { STEPS } from "@/lib/studio/types";
 import { I } from "../icons";
 import { AGENT_ICON } from "./Pipeline";
@@ -13,7 +14,8 @@ const FEATS = [
   { ic: "chat" as const, t: "Answers in plain words", s: "Ask, pin, set alerts; every number computed" }
 ];
 
-export default function Hero({ samples, onSample, busy }: { samples: SampleInfo[]; onSample: (k: string) => void; busy: boolean }) {
+/** `samples` is null while the Studio's list is still loading (placeholders), [] when none are installed. */
+export default function Hero({ samples, onSample, busy }: { samples: SampleInfo[] | null; onSample: (k: string) => void; busy: boolean }) {
   return (
     <div className="ds-hero">
       <div className="ds-hero-l">
@@ -31,7 +33,8 @@ export default function Hero({ samples, onSample, busy }: { samples: SampleInfo[
         <div className="ds-try">
           <h4>Try it with a sample <small>synthetic data on real Chennai wards</small></h4>
           <div className="ds-try-g">
-            {samples.map((s, i) => (
+            {samples == null && [0, 1, 2].map((k) => <Skeleton key={k} w="100%" h={34} r={9} />)}
+            {(samples ?? []).map((s, i) => (
               <button key={s.key} className="ds-sample" disabled={busy} onClick={() => onSample(s.key)} style={{ ["--i" as string]: i }}>
                 <span className={`ds-sample-ic ${s.icon}`}><I n={s.icon} /></span>
                 <span className="ds-sample-b"><b>{s.title}</b><small>{s.dept}</small><em>{s.blurb}</em></span>
@@ -39,7 +42,8 @@ export default function Hero({ samples, onSample, busy }: { samples: SampleInfo[
                 <I n="right" className="ds-go" />
               </button>
             ))}
-            {!samples.length && <p className="ds-muted">Samples are not on this server: run <code>node scripts/make-studio-samples.cjs</code>.</p>}
+            {/* the setup command stays available to an administrator (tooltip), not in the Collector's way */}
+            {samples?.length === 0 && <p className="ds-muted" title="Administrator: run node scripts/make-studio-samples.cjs on the server">Sample files are not installed on this server yet. Drop your own file or paste a link above.</p>}
           </div>
         </div>
       </div>
