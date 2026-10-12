@@ -32,7 +32,7 @@ from sklearn.linear_model import LogisticRegression
 from . import embed
 from . import textproc as tp
 from .refdata import Reference
-from .util import INTEL_DIR, IST, UnionFind, jdump, log, to_xy
+from .util import INTEL_DIR, IST, UnionFind, epoch_hours, jdump, log, to_xy
 
 LINK_GROUP = {"FLOOD": "WATER", "DRAINAGE": "WATER", "ROADS_TRAFFIC": "ROADS", "GREEN": "ROADS", "ELECTRICAL": "ELEC",
               "PUBLIC_SAFETY": "ELEC", "STRUCTURES_LAND": "STRUCT", "HEALTH": "HEALTH", "WASTE_SANITATION": "WASTE",
@@ -51,7 +51,7 @@ def _candidates(e: pd.DataFrame, ref: Reference) -> pd.DataFrame:
     win = e["category_code"].map(lambda c: ref.cat.get(c, ref.cat["OTHER"])["link_window_h"]).to_numpy(float)
     prec = e["loc_precision_m"].fillna(300).clip(upper=4000).to_numpy(float)
     xy = to_xy(e["lat"].to_numpy(), e["lon"].to_numpy())
-    t = e["reported_at"].astype("int64").to_numpy() / 3.6e12
+    t = epoch_hours(e["reported_at"])
     src = e["source"].to_numpy()
     grp = e["_lg"].to_numpy()
     news = src == "news"

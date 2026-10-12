@@ -91,6 +91,15 @@ def iso(ts: Any) -> str | None:
     return pd.Timestamp(ts).isoformat()
 
 
+def epoch_hours(s: Any) -> np.ndarray:
+    """Hours since 1970 for a column of datetimes, whatever unit pandas stores them in. pandas 3 keeps microseconds
+    (or seconds) where pandas 2 kept nanoseconds, so `astype("int64") / 3.6e12` silently made every time window
+    1,000 times wider. Missing times give NaN."""
+    s = pd.Series(s)
+    epoch = pd.Timestamp(0, tz="UTC") if getattr(s.dt, "tz", None) is not None else pd.Timestamp(0)
+    return ((s - epoch) / pd.Timedelta(hours=1)).to_numpy(dtype=float)
+
+
 def epoch_ms(ts: Any) -> int | None:
     if ts is None or pd.isna(ts):
         return None

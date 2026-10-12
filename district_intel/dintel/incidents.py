@@ -10,7 +10,7 @@ from scipy.spatial import cKDTree
 
 from . import priority
 from .refdata import SEV_RANK, Reference
-from .util import IST, log, to_xy
+from .util import IST, epoch_hours, log, to_xy
 
 OFFICIAL = {"grievance", "police", "pwd", "hospital"}
 CHANNEL_LABEL = {"citizen_app": "Grievance portal", "control_room_112": "Police 112", "fir_walk_in": "Police FIR",
@@ -224,7 +224,7 @@ def _recurrence(inc: pd.DataFrame, ref: Reference) -> pd.Series:
         r = ref.cat.get(cat, ref.cat["OTHER"])["link_radius_m"]
         xy = to_xy(grp["lat"], grp["lon"])
         tree = cKDTree(xy)
-        tt = grp["first_reported_at"].astype("int64").to_numpy() / 8.64e13
+        tt = epoch_hours(grp["first_reported_at"]) / 24
         cnt = []
         for i, nb in enumerate(tree.query_ball_point(xy, r)):
             cnt.append(sum(1 for j in nb if j != i and 0 < tt[i] - tt[j] <= 90))

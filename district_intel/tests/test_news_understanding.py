@@ -159,3 +159,17 @@ def test_linker_asks_once_and_caches(tmp_path):
     assert again.calls == 0 and items2["suggestion"].tolist() == items["suggestion"].tolist()
     none, _ = workers.linker(pairs, ev, None, tmp_path / "other.jsonl")
     assert none["suggestion"].eq("person to decide").all()
+
+
+# ------------------------------------------------------------ time units --
+
+def test_epoch_hours_ignores_the_storage_unit():
+    """pandas 3 stores datetimes in microseconds where pandas 2 used nanoseconds; windows must not widen 1,000 times."""
+    from dintel.util import epoch_hours
+    base = pd.Timestamp("2026-10-04", tz="Asia/Kolkata") + pd.to_timedelta(pd.Series([0, 3, 40]), unit="h")
+    for unit in ("s", "ms", "us", "ns"):
+        h = epoch_hours(base.dt.as_unit(unit))
+        assert np.allclose(h - h[0], [0, 3, 40])
+    naive = pd.Series(pd.to_datetime(["2026-10-04 00:00", "2026-10-05 12:00", None]))
+    h = epoch_hours(naive)
+    assert h[1] - h[0] == 36 and np.isnan(h[2])

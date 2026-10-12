@@ -26,7 +26,7 @@ from .. import severity as sev
 from .. import textproc as tp
 from ..refdata import Reference
 from ..schema import DOC_COLUMNS, EVENT_COLUMNS, conform
-from ..util import INTEL_DIR, IST, REF_DIR, Settings, UnionFind, log, mixed_to_ist, sha256_file
+from ..util import INTEL_DIR, IST, REF_DIR, Settings, UnionFind, epoch_hours, log, mixed_to_ist, sha256_file
 
 NON_INCIDENT_TYPES = ["service_notice", "announcement", "court", "politics", "entertainment_sport", "business"]
 
@@ -212,7 +212,7 @@ def _stories(docs: pd.DataFrame, threshold: float = 0.55, hours: float = 48) -> 
     titles = docs["title"].fillna("").map(tp.normalize)
     vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=2, sublinear_tf=True)
     X = vec.fit_transform(titles)
-    t = docs["published_at"].astype("int64").to_numpy() / 3.6e12
+    t = epoch_hours(docs["published_at"])
     uf = UnionFind(range(len(docs)))
     order = np.argsort(t)
     Xo = X[order]
@@ -258,10 +258,13 @@ def _details(d: pd.DataFrame, lab: pd.DataFrame) -> None:
     d["ai_orgs"] = joined("organisations")
     d["ai_dead"] = pd.to_numeric(lab.get("dead"), errors="coerce").to_numpy() if "dead" in lab else np.nan
     d["ai_injured"] = pd.to_numeric(lab.get("injured"), errors="coerce").to_numpy() if "injured" in lab else np.nan
-    st = lab["status"] if "status" in lab else pd.Series(None, index=lab.index)
-    d["ai_status"] = st.where(st.notna() & (st != "not_stated"), None).to_numpy()
-    pl = lab["place"] if "place" in lab else pd.Series(None, index=lab.index)
-    d["ai_place"] = pl.where(pl.fillna("").astype(str).str.strip() != "", None).to_numpy()
+    # missing is None (SQL NULL), never NaN: Series.where(..., None) fills NaN, and pandas 3 stores a column of
+    # text as its "str" dtype, whose missing value is NaN, unless the column is built as object
+    def text(col, skip=()):
+        vals = lab[col] if col in lab else pd.Series(None, index=lab.index, dtype=object)
+        return pd.Series([None if not isinstance(v, str) or not v.strip() or v in skip else v for v in vals], index=d.index, dtype=object)
+    d["ai_status"] = text("status", skip=("not_stated",))
+    d["ai_place"] = text("place")
 
 
 def _ai_places(d: pd.DataFrame, rf, gaz, order: dict) -> None:
@@ -659,7 +662,7 @@ def _embed_stories(d: pd.DataFrame, E: np.ndarray, E_en: np.ndarray | None = Non
     incidents within 24 h, casualty counts that do not disagree, and the same place: cosine >= TR_SAME_PLACE when both
     name the same specific place, >= TR_ONE_PLACE plus the same category when only one names a place (the other says
     just "Chennai"). Edges are applied strongest first and never grow a story past 6 articles."""
-    t = d["published_at"].astype("int64").to_numpy() / 3.6e12
+    t = epoch_hours(d["published_at"])
     order = np.argsort(t)
     ts = t[order]
     lang, cat, inc, sid = d["lang"].to_numpy(), d["category_code"].to_numpy(), d["is_incident"].to_numpy(), d["story_id"].to_numpy()

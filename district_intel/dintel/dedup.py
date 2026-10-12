@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 
-from .util import UnionFind, to_xy
+from .util import UnionFind, epoch_hours, to_xy
 
 
 def _window_pairs(df: pd.DataFrame, key: str, hours: float, radius_m: float, extra=None) -> list[tuple[str, str]]:
@@ -21,7 +21,7 @@ def _window_pairs(df: pd.DataFrame, key: str, hours: float, radius_m: float, ext
         if len(grp) < 2:
             continue
         g = grp.sort_values("reported_at")
-        t = g["reported_at"].astype("int64").to_numpy() / 3.6e12
+        t = epoch_hours(g["reported_at"])
         xy = to_xy(g["lat"].to_numpy(), g["lon"].to_numpy())
         ok = ~np.isnan(xy).any(axis=1)
         ids = g["event_id"].to_numpy()
@@ -48,7 +48,7 @@ def grievances(ev: pd.DataFrame) -> tuple[dict[str, str], dict]:
         if len(grp) < 2 or grp["_street"].iloc[0] == "" or not grp["event_id"].isin(nopin["event_id"]).any():
             continue
         grp = grp.sort_values("reported_at")
-        t = grp["reported_at"].astype("int64").to_numpy() / 3.6e12
+        t = epoch_hours(grp["reported_at"])
         ids = grp["event_id"].to_numpy()
         for i in range(len(grp)):
             for j in range(i + 1, len(grp)):
