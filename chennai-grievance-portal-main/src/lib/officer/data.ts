@@ -319,7 +319,7 @@ export type OfficerOverview = Awaited<ReturnType<typeof officerOverview>>;
  * news routing the Collector console does on load is not repeated here.
  */
 async function deptBoard(dept: string, s: Scope) {
-  const d = await overview(s.period, s.zone, dept, { taluk: s.taluk }, { route: false });
+  const d = await overview(s.period, s.zone, dept, { taluk: s.taluk });
   return { kpi: d.kpi, map: d.map, snapshot: d.snapshot, severity: d.severity, news: d.news, bell: d.bell, collection: d.collection,
     severityMix: d.severityMix, byCategory: d.bottom.byDept };
 }

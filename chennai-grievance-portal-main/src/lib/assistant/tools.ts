@@ -53,7 +53,7 @@ const scopeKey = (s: AssistantScope) => `${s.period}|${s.zone ?? ""}|${s.dept ??
 /** The console's overview for the scope, without the news-routing write (the console does that). */
 async function ov(s: AssistantScope): Promise<Overview> {
   const now = await asOf();
-  return once(`ov|${now}|${scopeKey(s)}`, () => overview(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }, { route: false }));
+  return once(`ov|${now}|${scopeKey(s)}`, () => overview(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }));
 }
 /** The console's briefing, trends and patterns for the scope. */
 async function ins(s: AssistantScope): Promise<Insights> {

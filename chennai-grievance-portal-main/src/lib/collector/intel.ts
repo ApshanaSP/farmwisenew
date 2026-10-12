@@ -7,11 +7,11 @@
  * "Now" is the pipeline's as-of time (the newest record across sources), so the
  * period windows line up with the data even between builds.
  */
-import { RowDataPacket } from "mysql2";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import intelPool, { CLUSTER, OPS_DB, TITLE, ops } from "@/lib/collector/db";
 import "@/lib/collector/derive";
 import { clusterNews, isNewsMedia, mediaKind, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
-import { addedItems, collectionStatus } from "@/lib/collector/sources";
+import { addedItems, audit, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
@@ -560,7 +560,6 @@ export const NEWS_COMPLAINT_CATS = [
 ];
 const ROUTED = `EXISTS (SELECT 1 FROM ${ops("dept_assignments")} da WHERE da.incident_id = i.incident_id)`;
 const AUTO = "District IQ news monitor";
-let lastRoute = 0;
 
 /**
  * Is a news report a citizen complaint (a service failure people are living with), rather than an announcement,
@@ -573,32 +572,39 @@ export function isNewsComplaint(reportType: string | null, isIncident: unknown):
 }
 
 /**
- * News reports that are really civic complaints (no department has a record of
- * them yet) go to the department's officer instead of the incident feed. Runs at
- * most once a minute. Automatic assignments that no longer pass the test are
- * withdrawn; anything an officer has acknowledged is left alone.
+ * News reports that are really civic complaints (no department has a record of them yet) go to the department's
+ * officer instead of the incident feed. Automatic assignments that no longer pass the test are withdrawn; anything an
+ * officer has acknowledged is left alone. A write to the ops tables, so it runs only as a job
+ * (POST /api/collector/jobs/route-news), never while a page is read; each assignment added or withdrawn is audited.
  */
-async function routeNewsComplaints(now: string) {
-  if (Date.now() - lastRoute < 60_000) return;
-  lastRoute = Date.now();
-  try {
-    const cands = await q(
-      `SELECT i.incident_id AS id, i.lead_dept AS dept, i.category_label AS type, i.zone_name,
-              GROUP_CONCAT(CONCAT(COALESCE(d.report_type, ''), '|', COALESCE(d.is_incident, 0)) SEPARATOR '\n') AS docs
-       FROM incidents i JOIN documents d ON d.linked_incident_id = i.incident_id
-       WHERE i.is_open = 1 AND i.media_only = 1 AND i.category_code IN (?) AND i.first_reported_at > (? - INTERVAL 30 DAY)
-       GROUP BY i.incident_id, i.lead_dept, i.category_label, i.zone_name`,
-      [NEWS_COMPLAINT_CATS, now]
-    );
-    const rows = cands.filter((r) => String(r.docs ?? "").split("\n").some((line) => {
-      const [rt, inc] = line.split("|");
-      return isNewsComplaint(rt || null, inc);
-    }));
-    const keep = new Set(rows.map((r) => r.id));
-    const auto = await q(`SELECT incident_id FROM ${ops("dept_assignments")} WHERE assigned_by = ? AND status = 'Assigned'`, [AUTO]);
-    const drop = auto.map((a) => a.incident_id).filter((id) => !keep.has(id));
-    if (drop.length) await q(`DELETE FROM ${ops("dept_assignments")} WHERE assigned_by = ? AND status = 'Assigned' AND incident_id IN (?)`, [AUTO, drop]);
-    if (!rows.length) return;
+export async function routeNewsComplaints(): Promise<{ added: string[]; withdrawn: string[]; candidates: number }> {
+  const now = await asOf();
+  const cands = await q(
+    `SELECT i.incident_id AS id, i.lead_dept AS dept, i.category_label AS type, i.zone_name,
+            GROUP_CONCAT(CONCAT(COALESCE(d.report_type, ''), '|', COALESCE(d.is_incident, 0)) SEPARATOR '\n') AS docs
+     FROM incidents i JOIN documents d ON d.linked_incident_id = i.incident_id
+     WHERE i.is_open = 1 AND i.media_only = 1 AND i.category_code IN (?) AND i.first_reported_at > (? - INTERVAL 30 DAY)
+     GROUP BY i.incident_id, i.lead_dept, i.category_label, i.zone_name`,
+    [NEWS_COMPLAINT_CATS, now]
+  );
+  const rows = cands.filter((r) => String(r.docs ?? "").split("\n").some((line) => {
+    const [rt, inc] = line.split("|");
+    return isNewsComplaint(rt || null, inc);
+  }));
+  const keep = new Set(rows.map((r) => r.id));
+  const auto = await q(
+    `SELECT incident_id, dept_code, contact_id, officer_name, officer_designation, officer_phone, reason, status
+     FROM ${ops("dept_assignments")} WHERE assigned_by = ? AND status = 'Assigned'`, [AUTO]);
+  const withdrawn: string[] = [];
+  for (const a of auto.filter((x) => !keep.has(x.incident_id))) {
+    const [r] = await intelPool.query<ResultSetHeader>(
+      `DELETE FROM ${ops("dept_assignments")} WHERE assigned_by = ? AND status = 'Assigned' AND incident_id = ?`, [AUTO, a.incident_id]);
+    if (!r.affectedRows) continue;
+    withdrawn.push(String(a.incident_id));
+    await audit(AUTO, "withdraw_assignment", "dept_assignments", a.incident_id, a, null);
+  }
+  const added: string[] = [];
+  if (rows.length) {
     const contacts = await q(
       `SELECT dept_code, contact_id, name, designation, phone FROM (
          SELECT c.*, ROW_NUMBER() OVER (PARTITION BY dept_code ORDER BY \`rank\`, contact_id) rn
@@ -609,18 +615,23 @@ async function routeNewsComplaints(now: string) {
     const headOf = new Map(heads.map((h) => [h.code, h.head]));
     for (const r of rows) {
       const c = byDept.get(r.dept);
-      await q(
+      const row = {
+        incident_id: r.id, dept_code: r.dept, contact_id: c?.contact_id ?? null, officer_name: c?.name ?? null,
+        officer_designation: c?.designation ?? headOf.get(r.dept) ?? null, officer_phone: c?.phone ?? null,
+        reason: `News report of ${String(r.type).toLowerCase()}${r.zone_name ? ` in ${r.zone_name}` : ""} with no department record`
+      };
+      const [res] = await intelPool.query<ResultSetHeader>(
         `INSERT IGNORE INTO ${ops("dept_assignments")}
            (incident_id, dept_code, contact_id, officer_name, officer_designation, officer_phone, reason, assigned_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [r.id, r.dept, c?.contact_id ?? null, c?.name ?? null, c?.designation ?? headOf.get(r.dept) ?? null, c?.phone ?? null,
-          `News report of ${String(r.type).toLowerCase()}${r.zone_name ? ` in ${r.zone_name}` : ""} with no department record`, AUTO]
+        [row.incident_id, row.dept_code, row.contact_id, row.officer_name, row.officer_designation, row.officer_phone, row.reason, AUTO]
       );
+      if (!res.affectedRows) continue; // already assigned
+      added.push(String(r.id));
+      await audit(AUTO, "assign", "dept_assignments", r.id, null, { ...row, assigned_by: AUTO, status: "Assigned" });
     }
-  } catch (err) {
-    // The ops tables come from scripts/seed-official-contacts.js; the console still works without them.
-    console.warn("news routing skipped:", (err as Error).message);
   }
+  return { added, withdrawn, candidates: rows.length };
 }
 
 async function assignmentsFor(ids: string[]): Promise<Record<string, Row>> {
@@ -701,14 +712,9 @@ async function kpiBlock(s: Scope, now: string) {
   };
 }
 
-/**
- * `route: false` skips routing news complaints to departments (a write to the ops tables),
- * for read-only callers such as the assistant; the console, open behind it, routes them.
- */
-export async function overview(period: Period, zone: number | null, dept: string | null = null, focus: Focus = {},
-  opts: { route?: boolean } = {}) {
+/** Everything on the console's first pages. Read-only: routing news complaints is a job (routeNewsComplaints). */
+export async function overview(period: Period, zone: number | null, dept: string | null = null, focus: Focus = {}) {
   const now = await asOf();
-  if (opts.route !== false) await routeNewsComplaints(now);
   const cat = focus.cat ?? null, taluk = focus.taluk ?? null;
   const s: Scope = { period, zone, dept, cat, taluk };
   const w = scopeWhere(s, now);
