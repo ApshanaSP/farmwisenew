@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Overview as OverviewData, Period } from "@/lib/collector/intel";
 import type { Insights } from "@/lib/collector/insights";
 import type { MapGeo } from "@/lib/collector/geo";
+import { PAGE_FEEDS, freshnessLine } from "@/lib/collector/freshness";
 import Logo from "@/components/Logo";
 import { I, type IconName } from "./icons";
 import { BrandMark } from "./assistant/Brand";
@@ -617,6 +618,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
                 <div className="band-eb">
                   <span>{fmtDay(ov.now)}</span>
                   <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} />
+                  <FreshWarn ov={ov} page={page} onClick={c.openFeeds} />
                 </div>
                 <RollTitle text={page === "overview" ? `${greeting(ov.now)}, Collector` : PAGE_TITLE[page]} />
               </div>
@@ -700,6 +702,24 @@ export default function CollectorApp({ initial, allDepts, user }: {
       </div>
     </div>
     </MotionConfig>
+  );
+}
+
+/**
+ * One line, only when a feed this page draws on is more than twice its refresh interval behind (freshness.ts): the
+ * feed most behind is named, any others are counted, and the tooltip lists them all. Nothing when every feed is fresh.
+ */
+function FreshWarn({ ov, page, onClick }: { ov: OverviewData; page: PageKey; onClick: () => void }) {
+  const feeds = PAGE_FEEDS[page] ?? [];
+  const stale = (ov.collection?.stale ?? []).filter((f) => feeds.includes(f.source));
+  if (!stale.length) return null;
+  const view = page === "environment" ? "this page" : "today's view";
+  const more = stale.length > 1 ? ` (+${stale.length - 1} more)` : "";
+  return (
+    <button className="fresh-warn" role="status" onClick={onClick}
+      title={`${stale.map((f) => freshnessLine(f, view)).join("\n")}\nClick for the data sources.`}>
+      <I n="alert" />{freshnessLine(stale[0], view)}{more}
+    </button>
   );
 }
 

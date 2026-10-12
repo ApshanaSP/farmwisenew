@@ -18,7 +18,8 @@ import { ComposerLenient, ComposerSchema, composerPrompt, composerSystem, type C
 import { asOf as storeAsOf, contactsFor } from "@/lib/collector/intel";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { classify } from "@/lib/collector/nlp";
-import { audit } from "@/lib/collector/sources";
+import { audit, collectionStatus } from "@/lib/collector/sources";
+import { feedsForAnswer, freshnessLine } from "@/lib/collector/freshness";
 import { EXAMPLES, TEXT, detectLanguage, hasTamilScript, requestedCount, wantsNoVisual, wantsTable, wantsVisual, wantsVisualByNature, type Lang, type LangChoice } from "@/lib/assistant/lang";
 import { ScopeSchema, describeScope, fmtAsOf, refNames, type RefNames } from "@/lib/assistant/scope";
 import { ToolError, listTools, runTool } from "@/lib/assistant/tools";
@@ -655,6 +656,14 @@ function adhocPeriod(plan: QueryPlan, lang: Lang): string | null {
 
 // ------------------------------------------------------------------- main --
 
+/** Caveats for feeds an answer drew on that are behind (freshness.ts), e.g. "News last collected 6 hours ago; ...". */
+export async function staleCaveats(results: { tool: string; args?: Record<string, unknown> }[], tables: string[]): Promise<string[]> {
+  const stale = (await collectionStatus())?.stale ?? [];
+  if (!stale.length) return [];
+  const used = feedsForAnswer(results, tables, (m) => (ENV_METRICS as Record<string, { source: string }>)[m]?.source ?? null);
+  return stale.filter((f) => used.includes(f.source)).map((f) => freshnessLine(f, "this answer"));
+}
+
 export async function ask(i: ChatInput): Promise<ChatOutput> {
   // the search index's background embedding pauses while a question is answered
   const release = holdSync();
@@ -1105,6 +1114,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (namedTaluk && namedTaluk.code !== scope?.taluk && namedTaluk.code !== placeData?.taluk) {
     caveats.push(`${namedTaluk.name} is also a revenue taluk${namedTaluk.note ? ` (${namedTaluk.note})` : ""}; ask for "${namedTaluk.name} taluk" to see it.`);
   }
+  // a feed this answer drew on that is more than twice its refresh interval behind: say which, not "the data is old"
+  caveats.push(...(await staleCaveats(adhoc ? [] : results, adhoc ? adhoc.results.map((r) => r.compiled.table.name) : [])));
 
   let card = await compose(i, { base, route, message: question, lang, p, facts, testData, caveats, results, names, models, now, previous: plainSummary(turns), count: topN,
     parts: ((results.find((r) => r.tool === "category_summary")?.data as Row | undefined)?.parts as Row[] | undefined)?.map((x) => String(x.part)) ?? null,
@@ -1271,7 +1282,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       : defaultActions(p, c.results))
       .filter((a) => a.action !== "set_period" || (a.period !== i.scope.period && a.period === base.scope?.period)), c.names, lang, base.sources.incidentIds),
     // what the figures do not cover (a locality read as its zone) stays on the card even when the draft leaves it out
-    caveats: [...new Set([...c.caveats.filter((x) => /has no filter of its own|is also a revenue taluk|by the place name in their records|^Why it matters/.test(x)),
+    caveats: [...new Set([...c.caveats.filter((x) => /has no filter of its own|is also a revenue taluk|by the place name in their records|^Why it matters|last collected .* may be incomplete|has not been collected yet/.test(x)),
       ...draft.caveats.map((x) => x.trim()).filter(Boolean)])].slice(0, 4)
   };
   card.sources.verifier = { checked: verdict.checked, unmatched: [], regenerated, template: false };

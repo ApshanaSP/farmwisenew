@@ -15,6 +15,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
 import { applyMapping, extractRecords, nearChennai, readStored, type FetchKind } from "@/lib/collector/sourcemap";
+import { istNow, staleFeeds } from "@/lib/collector/freshness";
 import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
 
 type Row = Record<string, any>;
@@ -462,12 +463,17 @@ const LOCK = path.join(PIPE_DIR, "output", ".dashboard-refresh.lock");
  */
 export async function collectionStatus() {
   try {
-    const rows = await q(`SELECT source, status, DATE_FORMAT(last_success_at, '%Y-%m-%d %H:%i:%s') AS ok_at FROM source_health`);
+    const rows = await q(`SELECT source, status, DATE_FORMAT(last_success_at, '%Y-%m-%d %H:%i:%s') AS ok_at, freshness_target_min FROM source_health`)
+      // a store built before freshness targets were recorded: no stale verdicts, rather than invented ones
+      .catch(() => q(`SELECT source, status, DATE_FORMAT(last_success_at, '%Y-%m-%d %H:%i:%s') AS ok_at, NULL AS freshness_target_min FROM source_health`));
     if (!rows.length) return null;
     const done = rows.filter((r) => r.status === "ok" || r.status === "degraded").map((r) => String(r.source));
     const missing = rows.map((r) => String(r.source)).filter((s) => !done.includes(s));
     const lastRun = rows.map((r) => r.ok_at as string | null).filter(Boolean).sort().pop() ?? null;
-    return { lastRun, done, missing, total: rows.length };
+    /** feeds more than twice their refresh interval behind the clock (freshness.ts), most behind first */
+    const stale = staleFeeds(rows.map((r) => ({ source: String(r.source), okAt: r.ok_at ?? null,
+      targetMin: r.freshness_target_min == null ? null : Number(r.freshness_target_min) })), istNow());
+    return { lastRun, done, missing, total: rows.length, stale };
   } catch {
     return null;
   }
