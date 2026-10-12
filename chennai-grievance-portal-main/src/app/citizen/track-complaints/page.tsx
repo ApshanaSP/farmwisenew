@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
@@ -10,7 +10,7 @@ import { CITIZEN_NAV, COMPLAINT_STATUSES } from "@/lib/constants";
 import Footer from "@/components/Footer";
 import StatusBadge from "@/components/StatusBadge";
 import StatusTracker, { MiniProgress } from "@/components/StatusTracker";
-import { EmptyState, Skeleton } from "@/components/ui";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 import { ComplaintStatus } from "@/types";
 import { isPhotoPath, privateMediaName } from "@/lib/complaint-media-path";
@@ -48,6 +48,11 @@ export default function TrackComplaintsPage() {
   const [detail, setDetail] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  // a failed request says so (with Retry) instead of looking like "no complaints" or loading forever
+  const [listError, setListError] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+  // only the latest detail request may fill the panel (a slow answer for an earlier complaint is dropped)
+  const detailReq = useRef(0);
   const [copied, setCopied] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
 
@@ -64,17 +69,22 @@ export default function TrackComplaintsPage() {
 
   async function loadComplaints(codeQuery?: string, status?: string): Promise<ComplaintListItem[] | null> {
     setLoading(true);
+    setListError(false);
     const params = new URLSearchParams();
     if (codeQuery) params.set("code", codeQuery);
     if (status) params.set("status", status);
-    const res = await fetch(`/api/complaints?${params.toString()}`);
     let list: ComplaintListItem[] | null = null;
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/complaints?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       list = data.complaints || [];
       setComplaints(list!);
+    } catch {
+      setListError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
     return list;
   }
 
@@ -84,15 +94,26 @@ export default function TrackComplaintsPage() {
       setDetail(null);
       return;
     }
+    loadDetail(code);
+  }
+
+  async function loadDetail(code: string) {
     setExpandedCode(code);
     setDetailLoading(true);
-    const res = await fetch(`/api/complaints/${code}`);
-    if (res.ok) {
+    setDetailError(false);
+    const req = ++detailReq.current;
+    try {
+      const res = await fetch(`/api/complaints/${code}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (req !== detailReq.current) return;
       setDetail(data.complaint);
       setHistory(data.history || []);
+    } catch {
+      if (req === detailReq.current) { setDetail(null); setDetailError(true); }
+    } finally {
+      if (req === detailReq.current) setDetailLoading(false);
     }
-    setDetailLoading(false);
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -149,6 +170,10 @@ export default function TrackComplaintsPage() {
                     {[0, 1, 2].map((i) => (
                       <div key={i} className="card-flat space-y-2.5 p-4"><Skeleton h={12} w={120} /><Skeleton h={16} w="80%" /><Skeleton h={4} /></div>
                     ))}
+                  </div>
+                ) : listError ? (
+                  <div className="card p-2" role="alert">
+                    <ErrorState message="Your complaints could not be loaded. Check your connection and try again." onRetry={() => loadComplaints(search, statusFilter)} />
                   </div>
                 ) : complaints.length === 0 ? (
                   <div className="card p-2">
@@ -232,6 +257,8 @@ export default function TrackComplaintsPage() {
                         <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">Journey</h3>
                         {detailLoading ? (
                           <div className="space-y-4">{[0, 1, 2, 3].map((i) => <div key={i} className="flex gap-3"><Skeleton w={28} h={28} r={14} /><div className="flex-1 space-y-2"><Skeleton h={13} w="60%" /><Skeleton h={10} w="30%" /></div></div>)}</div>
+                        ) : detailError ? (
+                          <div role="alert"><ErrorState message="This complaint's details could not be loaded." onRetry={() => loadDetail(sel.complaint_code)} /></div>
                         ) : (
                           <StatusTracker status={sel.status} rejectedStage={sel.rejected_stage} remarks={sel.remarks} history={history} />
                         )}
