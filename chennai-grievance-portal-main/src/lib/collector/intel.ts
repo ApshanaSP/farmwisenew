@@ -16,6 +16,7 @@ import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
+import { decisionEffect, effectiveSql } from "@/lib/collector/effective";
 export { PINNABLE, PLACE_FILTERS, parsePlace, type PlaceFilter } from "@/lib/collector/mapplace";
 
 type Row = Record<string, any>;
@@ -151,6 +152,8 @@ function taskBecause(r: Row): string[] {
 
 const DECIDED = (decisions: string) =>
   `EXISTS (SELECT 1 FROM ${ops("collector_decisions")} d WHERE d.incident_id = i.incident_id AND d.decision IN (${decisions}))`;
+/** Effective open flag and status (the Collector's latest decision on top), the same rule as overlay() for row lists. */
+const EFF = effectiveSql(ops("collector_decisions"));
 
 // ---- Shared with the Department Officer console (src/lib/officer): completion reports officers send.
 // A grievance waits for the Collector when the department's latest officer step is "send" and the
@@ -655,9 +658,9 @@ function overlay<T extends Row>(r: T, d: Row | undefined): T {
   const out: Row = { ...r, decision: d.decision, decided_at: d.decided_at };
   if (d.decision === "verify") out.verified = 1;
   if (d.decision === "escalate") out.escalated = 1;
-  if (d.decision === "resolve") Object.assign(out, { open: 0, status: "Resolved", verified: 1 });
-  if (d.decision === "reject") Object.assign(out, { open: 0, status: "Rejected" });
-  if (d.decision === "reopen") Object.assign(out, { open: 1, status: "Open" });
+  const e = decisionEffect(d.decision); // resolve and reject close, reopen opens (effective.ts, shared with the SQL)
+  if (e) Object.assign(out, { open: e.open, status: e.status });
+  if (d.decision === "resolve") out.verified = 1;
   return out as T;
 }
 
@@ -676,8 +679,8 @@ async function kpiBlock(s: Scope, now: string) {
   const p = PERIODS[s.period];
   const cur = scopeWhere(s, now);
   const prev = scopeWhere({ ...s, offset: 1 }, now);
-  const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
-    SUM(i.is_open = 1 AND NOT ${ROUTED}) AS ongoing, SUM(i.is_open = 0 AND i.status_std = 'Resolved') AS resolved`;
+  const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN ${EFF.open} = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
+    SUM(${EFF.open} = 1 AND NOT ${ROUTED}) AS ongoing, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
   const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
   const [c, pv, series] = await Promise.all([
@@ -728,7 +731,7 @@ export async function overview(period: Period, zone: number | null, dept: string
   const qWhere = `1 = 1 ${inScope} AND ((${awaitCore} AND ${FOR_COLLECTOR}) OR ${sent})`;
   const qParams = [...scopeParams, ...tw.params];
   // Severity-based incidents: open incidents in the period, minus news complaints sent to a department.
-  const sevWhere = `${w.sql} AND i.is_open = 1 AND NOT ${ROUTED}`;
+  const sevWhere = `${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED}`;
 
   const [kpi, meta, zoneTable, pins, layerCounts, news, tasks, taskCount, sevRows, sevCounts, byDept, byZone,
     feeds, bell, deptNav, snap, backlog, env, stories, sevAll, added, allNews, noZone] = await Promise.all([
@@ -736,8 +739,8 @@ export async function overview(period: Period, zone: number | null, dept: string
     exportMeta(),
     // Every zone, even with no incidents in this scope (the zone picker lists them all).
     q(
-      `SELECT z.zone_no AS zone, z.zone_name AS name, COUNT(i.incident_id) AS n, COALESCE(SUM(i.is_open), 0) AS open,
-              COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints,
+      `SELECT z.zone_no AS zone, z.zone_name AS name, COUNT(i.incident_id) AS n, COALESCE(SUM(${EFF.open}), 0) AS open,
+              COALESCE(SUM(CASE WHEN ${EFF.open} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints,
               COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
        FROM (SELECT DISTINCT zone_no, zone_name FROM ref_wards) z
        LEFT JOIN incidents i ON i.zone_no = z.zone_no AND ${all.sql}
@@ -745,10 +748,10 @@ export async function overview(period: Period, zone: number | null, dept: string
       all.params
     ),
     q(
-      `SELECT i.incident_id AS id, i.lat, i.lon, i.severity_level AS sev, i.is_open AS open, i.citizen_complaints AS complaints,
-              ${TITLE} AS title, i.status_std AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
+      `SELECT i.incident_id AS id, i.lat, i.lon, i.severity_level AS sev, ${EFF.open} AS open, i.citizen_complaints AS complaints,
+              ${TITLE} AS title, ${EFF.status} AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM incidents i WHERE ${w.sql} AND ${PINNABLE}
-       ORDER BY i.is_open DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 150`,
+       ORDER BY ${EFF.open} DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 150`,
       w.params
     ),
     // the legend: pins per layer, plus the incidents with no exact place (not pinned); together they make the scope's total
@@ -797,13 +800,13 @@ export async function overview(period: Period, zone: number | null, dept: string
         ),
     zone
       ? q(
-          `SELECT i.place_text AS l, COUNT(*) AS n, SUM(i.citizen_complaints) AS v FROM incidents i WHERE ${w.sql} AND i.is_open = 1
+          `SELECT i.place_text AS l, COUNT(*) AS n, SUM(i.citizen_complaints) AS v FROM incidents i WHERE ${w.sql} AND ${EFF.open} = 1
            AND i.place_text IS NOT NULL GROUP BY i.place_text ORDER BY v DESC, n DESC LIMIT 5`,
           w.params
         )
       : q(
           `SELECT i.zone_no AS zone, i.zone_name AS l, COUNT(*) AS n, SUM(i.citizen_complaints) AS v FROM incidents i WHERE ${w.sql}
-           AND i.is_open = 1 AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY v DESC, n DESC LIMIT 5`,
+           AND ${EFF.open} = 1 AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY v DESC, n DESC LIMIT 5`,
           w.params
         ),
     q(
@@ -812,27 +815,27 @@ export async function overview(period: Period, zone: number | null, dept: string
        FROM source_health ORDER BY FIELD(source, 'grievance', 'police', 'pwd', 'hospital', 'news', 'imd', 'cpcb', 'cfm')`
     ),
     q(
-      `SELECT ${ROW} ${FROM} WHERE i.is_open = 1 AND i.severity_level IN ('Severe', 'High') AND NOT ${ROUTED}
+      `SELECT ${ROW} ${FROM} WHERE ${EFF.open} = 1 AND i.severity_level IN ('Severe', 'High') AND NOT ${ROUTED}
        AND ${periodWindow(period, now).sql} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
       periodWindow(period, now).params
     ),
     q(
-      `SELECT i.lead_dept AS code, dp.name, dp.head, SUM(i.is_open) AS open, COUNT(*) AS n,
+      `SELECT i.lead_dept AS code, dp.name, dp.head, SUM(${EFF.open}) AS open, COUNT(*) AS n,
               SUM(i.severity_level = 'Severe') AS severe,
-              SUM(i.is_open = 1 AND i.awaiting_collector = 1) AS unverified
+              SUM(${EFF.open} = 1 AND i.awaiting_collector = 1) AS unverified
        ${FROM} WHERE ${nd.sql} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY open DESC, n DESC`,
       nd.params
     ),
     dept ? deptSnapshot(dept, s, now) : zone ? areaSnapshot(zone, s, now) : districtSnapshot(s, now),
     q(
       `SELECT i.lead_dept AS code, dp.name, AVG(i.hours_open) AS h, COUNT(*) AS n ${FROM}
-       WHERE i.is_open = 1 ${zone ? "AND i.zone_no = ?" : ""} GROUP BY i.lead_dept, dp.name HAVING n >= 5 ORDER BY h DESC LIMIT 1`,
+       WHERE ${EFF.open} = 1 ${zone ? "AND i.zone_no = ?" : ""} GROUP BY i.lead_dept, dp.name HAVING n >= 5 ORDER BY h DESC LIMIT 1`,
       zone ? [zone] : []
     ),
     environment(period, now),
     threads({ hours: p.hours, zone, dept, cat, taluk, since: periodSince(period, now) }, now),
     // Severity mix of everything reported in the period (open and closed), for page 2.
-    q(`SELECT i.severity_level AS sev, COUNT(*) AS n, SUM(i.is_open) AS open FROM incidents i WHERE ${w.sql} GROUP BY i.severity_level`, w.params),
+    q(`SELECT i.severity_level AS sev, COUNT(*) AS n, SUM(${EFF.open}) AS open FROM incidents i WHERE ${w.sql} GROUP BY i.severity_level`, w.params),
     // Items from sources the Collector added: at least the last 7 days, so a quiet day still shows them.
     addedItems({ now, days: Math.max(1, Math.round(p.hours / 24)), since: periodSince(period, now), zone, dept, cat, taluk }),
     // News stories relevant to the Collector (see newsStories); articles carry no zone or department,
@@ -841,8 +844,8 @@ export async function overview(period: Period, zone: number | null, dept: string
     // the zone table's last row: incidents in the same scope with no zone (district-wide, place unknown or outside the
     // GCC wards), so the rows add up to the district total
     q(
-      `SELECT COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
-              COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints,
+      `SELECT COUNT(*) AS n, COALESCE(SUM(${EFF.open}), 0) AS open,
+              COALESCE(SUM(CASE WHEN ${EFF.open} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints,
               COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
        FROM incidents i WHERE ${all.sql} AND i.zone_no IS NULL`,
       all.params
@@ -1317,16 +1320,16 @@ export async function list(f: ListFilter) {
   if (f.place) where.push(PLACE_FILTERS[f.place]);
   // "open" matches the severity tile: news complaints handed to a department are not listed as incidents.
   if (st === "awaiting" && f.scope === "period") { /* the rule is set above */ }
-  else if (st === "open") where.push(`i.is_open = 1 AND NOT ${ROUTED}`);
-  else if (st === "unverified") where.push(`i.is_open = 1 AND i.verified = 0 AND NOT ${DECIDED("'verify','reject','resolve'")}`);
-  else if (st === "verified") where.push("i.is_open = 1 AND i.verified = 1");
-  else if (st === "overdue") where.push(`i.is_open = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}`);
+  else if (st === "open") where.push(`${EFF.open} = 1 AND NOT ${ROUTED}`);
+  else if (st === "unverified") where.push(`${EFF.open} = 1 AND i.verified = 0 AND NOT ${DECIDED("'verify','reject','resolve'")}`);
+  else if (st === "verified") where.push(`${EFF.open} = 1 AND i.verified = 1`);
+  else if (st === "overdue") where.push(`${EFF.open} = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}`);
   else if (st === "awaiting")
     where.push(`((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR} AND NOT ${DECIDED("'verify','reject','resolve','reopen'")})
       OR ${await sentByOfficer()})`);
   else if (st === "critical")
-    where.push(`i.is_open = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`);
-  else if (st) (where.push("i.status_std = ?"), params.push(st));
+    where.push(`${EFF.open} = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`);
+  else if (st) (where.push(`${EFF.status} = ?`), params.push(st));
   if (f.q) {
     where.push(`(${TITLE} LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ? OR i.zone_name LIKE ? OR i.category_label LIKE ?)`);
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
