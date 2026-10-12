@@ -259,7 +259,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 function mailHtml(subject: string, body: string, banner: string | null) {
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;padding:8px;color:#111">
   ${banner ? `<p style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:6px;padding:8px 10px;font-size:12px;color:#7A4B00">${esc(banner)}</p>` : ""}
-  <h2 style="color:#0A3D62;margin:0 0 2px">District Collectorate &ndash; Chennai</h2>
+  <h2 style="color:#14532D;margin:0 0 2px">District Collectorate &ndash; Chennai</h2>
   <p style="color:#666;font-size:12px;margin:0 0 14px">District IQ &middot; instruction on a severe incident</p>
   <h3 style="margin:0 0 10px">${esc(subject)}</h3>
   ${body.split(/\n{2,}/).map((p) => `<p style="line-height:1.5;margin:0 0 10px">${esc(p).replace(/\n/g, "<br>")}</p>`).join("")}

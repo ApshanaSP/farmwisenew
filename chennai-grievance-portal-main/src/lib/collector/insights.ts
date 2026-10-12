@@ -472,7 +472,9 @@ export async function pattern(p: PatternQuery) {
       ],
       seriesTitle: "Incidents per week, by the week's Monday (darker = last 4 full weeks)",
       series, places: up.map((z) => ({ name: z.name, n: z.d })), placesTitle: "Zones adding the most reports",
-      incidents: rows, next: playbook.get(p.cat)?.[0] ?? null, filter: { cat: p.cat, zone: null }
+      incidents: rows, next: playbook.get(p.cat)?.[0] ?? null, filter: { cat: p.cat, zone: null },
+      /** the usual level for the chart: a week of the 4 weeks before */
+      usual: before / 4, usualLabel: "average week before"
     };
   }
 
@@ -527,7 +529,7 @@ export async function pattern(p: PatternQuery) {
       seriesTitle: slow ? "Reports per day: the build-up (highlighted), the weeks before and the days after"
         : "Reports per day, three weeks before and the days after",
       series, places: places.slice(0, 6), incidents: rows, next: playbook.get(p.cat)?.[0] ?? null,
-      filter: { cat: p.cat, zone: p.zone }
+      filter: { cat: p.cat, zone: p.zone }, usual: expected / span, usualLabel: "usual per day"
     };
   }
 
@@ -551,7 +553,7 @@ export async function pattern(p: PatternQuery) {
   ];
   const monthName = (m: string) => new Date(m + "-01T00:00:00").toLocaleDateString("en-GB", { month: "short", year: "numeric" });
   return {
-    kind: "hotspot" as const, title: `${((n) => n[0].toUpperCase() + n.slice(1))((CAT_NOUN[h.cat] ?? [label, label])[1])} keep coming back near ${String(h.top_place).replace(/^(.*?)s*((.+))s*$/, "$2, $1")}`, when: `${dayWord(h.first_seen)} to ${dayWord(h.last_seen)}`, lead,
+    kind: "hotspot" as const, title: `${((n) => n[0].toUpperCase() + n.slice(1))((CAT_NOUN[h.cat] ?? [label, label])[1])} keep coming back near ${String(h.top_place).replace(/^(.*?)\s*\((.+)\)\s*$/, "$2, $1")}`, when: `${dayWord(h.first_seen)} to ${dayWord(h.last_seen)}`, lead,
     stats: [
       { l: "Incidents in all", v: String(h.incidents) }, { l: "In the last 30 days", v: String(h.incidents_30d) },
       { l: "Still open", v: String(open) }, { l: wards.length === 1 ? "Ward" : "Wards", v: wards.join(", ") || "—" }
@@ -559,7 +561,7 @@ export async function pattern(p: PatternQuery) {
     seriesTitle: "Incidents per month at this spot",
     series: months.map((m, k) => ({ label: monthName(m.m), n: Number(m.n), hl: k === months.length - 1 })),
     places: places.slice(0, 6), incidents: rows, next: playbook.get(h.cat)?.[0] ?? null,
-    filter: { cat: h.cat, zone: zone != null ? Number(zone) : null }
+    filter: { cat: h.cat, zone: zone != null ? Number(zone) : null }, usual: null as number | null, usualLabel: ""
   };
 }
 export type PatternDetail = NonNullable<Awaited<ReturnType<typeof pattern>>>;

@@ -179,18 +179,18 @@
 
   /* ---------- the sign-in hero: the Marina ocean band, the same in both themes (white text) ---------- */
   .auth-hero2 {
-    --h-bg: radial-gradient(110% 80% at 85% 0%, rgba(24, 167, 188, 0.55), transparent 55%),
-      radial-gradient(80% 60% at 0% 100%, rgba(255, 122, 92, 0.16), transparent 60%), linear-gradient(160deg, #082f4e 0%, #0a3d62 48%, #0b5878 100%);
-    --h-bg-solid: #0a3d62;
+    --h-bg: radial-gradient(110% 80% at 85% 0%, rgba(47,174,102, 0.55), transparent 55%),
+      radial-gradient(80% 60% at 0% 100%, rgba(255, 122, 92, 0.16), transparent 60%), linear-gradient(160deg, #0b3b22 0%, #14532d 48%, #0e5a33 100%);
+    --h-bg-solid: #14532d;
     --h-text: #ffffff;
-    --h-text-2: #cfe9f0;
-    --h-text-3: #93c6d4;
-    --h-line: rgba(127, 211, 230, 0.4);
+    --h-text-2: #d2eedc;
+    --h-text-3: #9ccdb0;
+    --h-line: rgba(142, 221, 176, 0.4);
     --h-line-strong: rgba(255, 255, 255, 0.16);
     --h-fill: rgba(255, 255, 255, 0.06);
     --h-pin: #ff7a5c;
     --h-chip: rgba(255, 255, 255, 0.1);
-    --h-label-bg: rgba(8, 47, 78, 0.92);
+    --h-label-bg: rgba(11,59,34, 0.92);
     background: var(--h-bg);
     border-right: 1px solid var(--line);
   }
@@ -202,7 +202,7 @@
     -webkit-mask-image: radial-gradient(80% 70% at 70% 40%, #000 15%, transparent 75%);
   }
   .auth-hero2-spot {
-    background: radial-gradient(420px circle at var(--sx, 70%) var(--sy, 30%), rgba(127, 227, 242, 0.14), transparent 60%);
+    background: radial-gradient(420px circle at var(--sx, 70%) var(--sy, 30%), rgba(142, 240, 182, 0.14), transparent 60%);
     transition: background 0.2s;
   }
 }
@@ -212,12 +212,12 @@
   .diq-bg {
     background: rgb(var(--c-canvas));
   }
-  /* the ocean band (stays dark in both themes, so white text always reads); same as the consoles' --band */
+  /* the green band (stays dark in both themes, so white text always reads); same as the consoles' --band */
   .mesh-navy {
-    background-color: #0a3d62;
+    background-color: #14532d;
     background-image:
-      radial-gradient(120% 150% at 88% -10%, #18a7bc 0%, rgba(24, 167, 188, 0) 55%),
-      linear-gradient(115deg, #082f4e 0%, #0a3d62 46%, #0c6283 100%);
+      radial-gradient(120% 150% at 88% -10%, #2fae66 0%, rgba(47,174,102, 0) 55%),
+      linear-gradient(115deg, #0b3b22 0%, #14532d 46%, #177a43 100%);
   }
   .grain::before {
     content: "";
@@ -296,3 +296,11 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* the District IQ logo (components/Logo.tsx): the dark-green original on light pages, the light version on dark ones */
+.brand-swap { display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.brand-swap > img, .brand-img { display: block; height: 100%; width: 100%; object-fit: contain; user-select: none; }
+.brand-wm > img, img.brand-wm { width: auto; }
+.brand-swap > .brand-on-dark { display: none; }
+[data-theme="dark"] .brand-swap > .brand-on-light { display: none; }
+[data-theme="dark"] .brand-swap > .brand-on-dark { display: block; }

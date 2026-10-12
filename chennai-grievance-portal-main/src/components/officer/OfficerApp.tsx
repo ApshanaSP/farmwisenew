@@ -17,7 +17,7 @@
  */
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Logo from "@/components/Logo";
+import { Wordmark } from "@/components/Logo";
 import { I, type IconName } from "@/components/collector/app/icons";
 import { BrandMark } from "@/components/collector/app/assistant/Brand";
 import type { AssistantHost } from "@/components/collector/app/assistant/host";
@@ -42,6 +42,7 @@ import "./officer.css";
 import "@/components/collector/app/civic.css";
 import "@/components/collector/app/marina.css";
 import "@/components/collector/app/action.css";
+import "@/components/collector/app/motionfx.css";
 import { MotionConfig } from "motion/react";
 import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
 import { LiveDot, SegmentedControl } from "@/components/ui";
@@ -490,12 +491,12 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     <div className={`dic ofc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0B7290" /><stop offset="1" stopColor="#7FD3E6" /></linearGradient></defs>
+        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {(loading || exporting) && <div className="loading-bar" />}
       <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
         <header className="top">
-          <div className="tbrand"><Logo className="tlogo" /><span><b>District IQ</b><small>Officer · {dept.short}</small></span></div>
+          <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Officer · {dept.short}</small></div>
           <PageTabs items={PAGES.map((p) => ({ key: p, label: PAGE_TITLE[p], icon: (p === "overview" ? "grid" : "tasks") as IconName }))} active={view} onPick={(p) => goPage(p as PageKey)} />
           <span className="tspace" />
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">

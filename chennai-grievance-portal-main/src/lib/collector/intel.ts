@@ -234,7 +234,7 @@ const ROUNDUP = /latest news today|news today live|live updates|top news|news hi
  * incident (the story opens it); `docIds` are its reports (a news-only story opens them in the news preview);
  * `complaints`/`grievances` say whether citizens also raised it.
  */
-async function newsStories(period: Period, now: string) {
+export async function newsStories(period: Period, now: string) {
   const w = periodWindow(period, now, "d.published_at");
   const docs = (await q(
     `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,

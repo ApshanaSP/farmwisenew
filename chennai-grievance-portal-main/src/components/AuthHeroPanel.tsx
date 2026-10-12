@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
-import Logo from "@/components/Logo";
+import { Wordmark } from "@/components/Logo";
 
 interface AuthHeroPanelProps {
   eyebrow: string;
@@ -24,7 +24,7 @@ export default function AuthHeroPanel({ eyebrow, title, description, points, sta
       />
 
       <div className="relative z-10">
-        <Logo className="h-12 w-12" tone="white" />
+        <Wordmark className="h-12" tone="white" />
         <p className="eyebrow mt-9 text-gold-300">{eyebrow}</p>
         <h2 className="mt-3 text-balance text-[2rem] font-extrabold leading-[1.12]">{title}</h2>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-navy-100">{description}</p>

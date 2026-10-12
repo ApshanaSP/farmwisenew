@@ -702,7 +702,7 @@ export function SuccessCheck({ size = 72, color = "var(--ok)" }: { size?: number
 export function Confetti() {
   const [on] = useState(() => !reduced());
   if (!on) return null;
-  const cols = ["#0B7290", "#18A7BC", "#FF7A5C", "#F2C94C", "#34D399", "#7FD3E6"];
+  const cols = ["#15803D", "#2FAE66", "#FF7A5C", "#F2C94C", "#34D399", "#8EDDB0"];
   return (
     <span className="ui-confetti" aria-hidden="true">
       {Array.from({ length: 12 }, (_, i) => {

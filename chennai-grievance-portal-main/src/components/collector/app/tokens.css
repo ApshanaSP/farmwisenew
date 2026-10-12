@@ -1,6 +1,6 @@
 /* =====================================================================================================================
-   District IQ design tokens: "Marina". Bright cool-white pages with an ocean-blue band at the top of each page, white
-   cards, deep ocean for what is interactive, coral for Ask District IQ and other AI things, and severity colours that
+   District IQ design tokens: "Marina". Bright cool-white pages with a forest-green band (FarmWise green) at the top of each page, white
+   cards, deep green for what is interactive, coral for Ask District IQ and other AI things, and severity colours that
    read at a glance. Light by default; the dark theme is the same harbour at night. ONE token set for every portal: the
    citizen pages and sign-in (:root, via theme.css + Tailwind), the Collector console, the Department Officer console
    and Ask District IQ (.dic).
@@ -11,7 +11,7 @@
      level 2  --surface     cards
      level 3  --surface-2   rows and inputs inside a card   (--surface-3 on hover)
      level 4  --elev        popovers, menus, dialogs, the assistant
-   The ocean band (--band) sits on top of level 0 and carries white text in both themes.
+   The green band (--band) sits on top of level 0 and carries white text in both themes.
 
    The older names (--sev, --med, --low, --info, --violet, --teal, --grad …) are kept as aliases so every existing rule
    reads the new palette.
@@ -20,21 +20,21 @@
   color-scheme:light;
 
   /* ---- surfaces: cool white ---- */
-  --bg:#F3F6F9;
-  --bg-2:#EBF0F5;
+  --bg:#F3F7F5;
+  --bg-2:#EBF2EE;
   --surface:#FFFFFF;
   --surface-2:#F6F8FB;
   --surface-3:#ECF1F6;
   --raise:#FFFFFF;
   --elev:#FFFFFF;
   --elev-glass:rgba(255,255,255,.96);
-  --scrim:rgba(8,26,44,.38);
+  --scrim:rgba(8,30,18,.38);
 
   /* ---- borders ---- */
   --line:#E0E7EF;
   --line-2:#EAEFF5;
   --line-3:#CFD9E4;
-  --line-focus:rgba(11,114,144,.55);
+  --line-focus:rgba(21,128,61,.55);
 
   /* ---- text ---- */
   --text:#0F1B2D;
@@ -43,21 +43,21 @@
   --text-4:#A0AEC0;
   --text-inv:#FFFFFF;
 
-  /* ---- the accent: deep ocean ---- */
-  --accent:#0B7290;
-  --accent-2:#086784;          /* accent text */
-  --accent-3:#0A3D62;          /* solid fills: primary buttons, the active tab */
-  --accent-soft:#E2F2F6;
-  --accent-line:#B3DCE6;
-  --accent-grad:linear-gradient(135deg,#0A3D62 0%,#0C6283 100%);
+  /* ---- the accent: FarmWise green ---- */
+  --accent:#15803D;
+  --accent-2:#166534;          /* accent text */
+  --accent-3:#14532D;          /* solid fills: primary buttons, the active tab */
+  --accent-soft:#E4F4EA;
+  --accent-line:#B5DFC4;
+  --accent-grad:linear-gradient(135deg,#14532D 0%,#177A43 100%);
   --grad:var(--accent-grad);
-  --grad-soft:linear-gradient(135deg,#EAF5F8,#F1F6FB);
+  --grad-soft:linear-gradient(135deg,#EBF6EF,#F2F7F3);
 
-  /* ---- the ocean band at the top of every page (white text on it in both themes) ---- */
-  --band:radial-gradient(120% 150% at 88% -10%,#18A7BC 0%,rgba(24,167,188,0) 55%),linear-gradient(115deg,#082F4E 0%,#0A3D62 46%,#0C6283 100%);
+  /* ---- the green band at the top of every page (white text on it in both themes) ---- */
+  --band:radial-gradient(120% 150% at 88% -10%,#2FAE66 0%,rgba(47,174,102,0) 55%),linear-gradient(115deg,#0B3B22 0%,#14532D 46%,#177A43 100%);
   --band-ink:#FFFFFF;
-  --band-ink-2:#CFE9F0;
-  --band-ink-3:#93C6D4;
+  --band-ink-2:#D2EEDC;
+  --band-ink-3:#9CCDB0;
   --band-glass:rgba(255,255,255,.10);
   --band-glass-2:rgba(255,255,255,.17);
   --band-line:rgba(255,255,255,.18);
@@ -92,12 +92,12 @@
   --teal:var(--accent);  --teal-soft:var(--accent-soft);
 
   /* ---- data visualisation (ECharts, SVG charts) ---- */
-  --viz-1:#0B7290; --viz-2:#18A7BC; --viz-3:#E5533A; --viz-4:#E0A800; --viz-5:#0E9F6E; --viz-6:#E0364A;
+  --viz-1:#15803D; --viz-2:#2FAE66; --viz-3:#E5533A; --viz-4:#E0A800; --viz-5:#0E9F6E; --viz-6:#E0364A;
   --viz-base:#D6DFE8;
   --viz-grid:#EDF1F6;
   --viz-axis:#DDE4EC;
-  /* map choropleth: sea -> ocean -> coral -> critical, five steps */
-  --heat-1:rgba(24,167,188,.18); --heat-2:#18A7BC; --heat-3:#0B7290; --heat-4:#F08A5D; --heat-5:#E0364A;
+  /* map choropleth: light green -> green -> coral -> critical, five steps */
+  --heat-1:rgba(47,174,102,.18); --heat-2:#2FAE66; --heat-3:#15803D; --heat-4:#F08A5D; --heat-5:#E0364A;
 
   /* ---- type: Plus Jakarta Sans for UI and numbers, Noto Sans Tamil for Tamil, Geist Mono for key caps ---- */
   --font-ui:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Noto Sans Tamil Variable","Noto Sans Tamil",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -112,11 +112,11 @@
   /* ---- shape, depth ---- */
   --r-xs:7px; --r-sm:10px; --r-md:12px; --r:16px; --r-lg:20px; --r-pill:999px;
   --shadow:0 1px 2px rgba(15,27,45,.04),0 8px 24px -16px rgba(15,27,45,.18);
-  --shadow-lg:0 40px 90px -30px rgba(8,26,44,.38),0 0 0 1px var(--line);
-  --shadow-pop:0 18px 40px -14px rgba(8,26,44,.26),0 0 0 1px var(--line);
-  --glow:0 8px 18px -10px rgba(10,61,98,.55);
+  --shadow-lg:0 40px 90px -30px rgba(8,30,18,.38),0 0 0 1px var(--line);
+  --shadow-pop:0 18px 40px -14px rgba(8,30,18,.26),0 0 0 1px var(--line);
+  --glow:0 8px 18px -10px rgba(20,83,45,.55);
   --ai-glow:0 12px 26px -10px rgba(240,82,90,.6);
-  --ring:0 0 0 3px rgba(11,114,144,.2);
+  --ring:0 0 0 3px rgba(21,128,61,.2);
 
   /* ---- motion ---- */
   --t-instant:90ms; --t-fast:160ms; --t-base:240ms; --t-slow:380ms; --t-enter:520ms;
@@ -126,17 +126,17 @@
   --h-ctl:36px; --h-ctl-sm:28px;
 }
 
-/* ---- dark theme: the harbour at night. Deep blue-black, sea-cyan accent, the same ocean band ---- */
+/* ---- dark theme: the harbour at night. Deep blue-black, leaf-green accent, the same green band ---- */
 :root[data-theme="dark"],.dic[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#06111C; --bg-2:#081624; --surface:#0D1C2B; --surface-2:#122435; --surface-3:#192D41; --raise:#0F2131; --elev:#10233A;
-  --elev-glass:rgba(16,35,58,.95); --scrim:rgba(2,8,14,.66);
-  --line:rgba(148,190,230,.12); --line-2:rgba(148,190,230,.07); --line-3:rgba(148,190,230,.2); --line-focus:rgba(60,194,219,.7);
-  --text:#E8F1F8; --text-2:#AFC2D3; --text-3:#7F94A9; --text-4:#4F6478; --text-inv:#06111C;
-  --accent:#3CC2DB; --accent-2:#74D6EA; --accent-3:#1583A3; --accent-soft:rgba(60,194,219,.13); --accent-line:rgba(60,194,219,.4);
-  --accent-grad:linear-gradient(135deg,#1583A3 0%,#1E9EBB 100%);
-  --grad-soft:linear-gradient(135deg,rgba(60,194,219,.14),rgba(60,194,219,.05));
-  --band:radial-gradient(120% 150% at 88% -10%,rgba(24,167,188,.75) 0%,rgba(24,167,188,0) 55%),linear-gradient(115deg,#061F35 0%,#082F4E 46%,#0A4B68 100%);
+  --bg:#06120D; --bg-2:#08170F; --surface:#0D1D15; --surface-2:#12261C; --surface-3:#193325; --raise:#0F2218; --elev:#10251B;
+  --elev-glass:rgba(16,37,27,.95); --scrim:rgba(2,8,14,.66);
+  --line:rgba(150,210,175,.12); --line-2:rgba(150,210,175,.07); --line-3:rgba(150,210,175,.2); --line-focus:rgba(61,214,140,.7);
+  --text:#E8F1F8; --text-2:#AFC2D3; --text-3:#7F94A9; --text-4:#4F6478; --text-inv:#06120D;
+  --accent:#3DD68C; --accent-2:#7EE6AE; --accent-3:#1A8F4E; --accent-soft:rgba(61,214,140,.13); --accent-line:rgba(61,214,140,.4);
+  --accent-grad:linear-gradient(135deg,#1A8F4E 0%,#22A85C 100%);
+  --grad-soft:linear-gradient(135deg,rgba(61,214,140,.14),rgba(61,214,140,.05));
+  --band:radial-gradient(120% 150% at 88% -10%,rgba(47,174,102,.75) 0%,rgba(47,174,102,0) 55%),linear-gradient(115deg,#062414 0%,#0B3B22 46%,#0E5A33 100%);
   --band-glass:rgba(255,255,255,.08); --band-glass-2:rgba(255,255,255,.14); --band-line:rgba(255,255,255,.14);
   --ai:#FF8466; --ai-2:#FFA48C; --ai-soft:rgba(255,132,102,.14); --ai-line:rgba(255,132,102,.4);
   --ai-grad:linear-gradient(135deg,#FF7A5C 0%,#F0525A 100%);
@@ -146,14 +146,14 @@
   --medium:#F2C94C;   --medium-soft:rgba(242,201,76,.14);   --medium-line:rgba(242,201,76,.4);
   --ok:#34D399;       --ok-soft:rgba(52,211,153,.14);       --ok-line:rgba(52,211,153,.4);
   --neutral:#8BA0B5;  --neutral-soft:rgba(139,160,181,.14); --neutral-line:rgba(139,160,181,.4);
-  --viz-1:#3CC2DB; --viz-2:#74D6EA; --viz-3:#FF8466; --viz-4:#F2C94C; --viz-5:#34D399; --viz-6:#FF5C6C;
+  --viz-1:#3DD68C; --viz-2:#7EE6AE; --viz-3:#FF8466; --viz-4:#F2C94C; --viz-5:#34D399; --viz-6:#FF5C6C;
   --viz-base:rgba(255,255,255,.13); --viz-grid:rgba(255,255,255,.05); --viz-axis:rgba(255,255,255,.1);
-  --heat-1:rgba(60,194,219,.2); --heat-2:#3CC2DB; --heat-3:#1E8FB0; --heat-4:#FF8A5C; --heat-5:#FF5C6C;
+  --heat-1:rgba(61,214,140,.2); --heat-2:#3DD68C; --heat-3:#1F9A55; --heat-4:#FF8A5C; --heat-5:#FF5C6C;
   --shadow:inset 0 1px 0 rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.35),0 14px 32px -20px rgba(0,0,0,.9);
   --shadow-lg:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px var(--line-3);
   --shadow-pop:0 20px 44px -16px rgba(0,0,0,.8),0 0 0 1px var(--line-3);
-  --glow:0 8px 18px -10px rgba(60,194,219,.55);
+  --glow:0 8px 18px -10px rgba(61,214,140,.55);
   --ai-glow:0 12px 26px -10px rgba(255,122,92,.55);
-  --ring:0 0 0 3px rgba(60,194,219,.26);
+  --ring:0 0 0 3px rgba(61,214,140,.26);
 }
 .dic[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);background-clip:padding-box}

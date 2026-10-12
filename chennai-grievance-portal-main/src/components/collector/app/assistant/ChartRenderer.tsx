@@ -91,7 +91,7 @@ function buildOption(view: ChartView): echarts.EChartsCoreOption {
       yAxis: { type: "category", data: h.ys, inverse: true, axisLabel: { color: INK.secondary, fontSize: 11.5, width: 150, overflow: "truncate" }, axisLine: { show: false },
         axisTick: { show: false } },
       visualMap: { min: 0, max: Math.max(1, h.max), calculable: false, orient: "horizontal", left: "center", bottom: 0, itemHeight: 120, itemWidth: 10,
-        inRange: { color: [TRACK, "#18A7BC", "#F07A4A", "#E0364A"] }, textStyle: { color: INK.muted, fontSize: 11 } },
+        inRange: { color: [TRACK, "#2FAE66", "#F07A4A", "#E0364A"] }, textStyle: { color: INK.muted, fontSize: 11 } },
       series: [{ id: "s0", type: "heatmap", data: h.cells, label: { show: h.cells.length <= 120, color: INK.primary, fontSize: 10.5 },
         itemStyle: { borderColor: SURFACE, borderWidth: 2, borderRadius: 3 }, emphasis: { itemStyle: { borderColor: INK.primary, borderWidth: 1 } },
         universalTransition: { enabled: true } }],

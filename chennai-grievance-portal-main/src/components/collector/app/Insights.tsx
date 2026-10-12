@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Insights, PatternDetail } from "@/lib/collector/insights";
+import type { PatternBrief } from "@/lib/collector/aibrief";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { Empty, SEV_HEX, SevChip, deptIcon, fmtDate, fmtShort, rel, sevTone, type Row } from "./lib";
@@ -11,6 +12,28 @@ import { StoriesCard } from "./Stories";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 
 const Loading = () => <div className="empty" style={{ margin: "auto" }}><I n="refresh" className="spin" />Preparing…</div>;
+
+/** An AI write-up from /api/collector/brief (aibrief.ts): undefined while it is written, null when no model answered. */
+function useAi<T>(qs: string | null): T | null | undefined {
+  const [s, set] = useState<{ qs: string; v: T | null } | null>(null);
+  useEffect(() => {
+    if (!qs) return;
+    let live = true;
+    fetch(`/api/collector/brief?${qs}`).then((r) => r.json()).then((j) => live && set({ qs, v: j.brief ?? null })).catch(() => live && set({ qs, v: null }));
+    return () => { live = false; };
+  }, [qs]);
+  return s && s.qs === qs ? s.v : undefined;
+}
+
+/** Suggested next steps: who does what (and why, when known). */
+function NextSteps({ steps, title = "Suggested next steps" }: { steps: { who: string; what: string; why?: string }[]; title?: string }) {
+  return (
+    <div className="ai-next">
+      <b>{title}</b>
+      <ol>{steps.map((x, k) => <li key={k}><em>{x.who}</em><span>{x.what}{x.why ? <small>{x.why}</small> : null}</span></li>)}</ol>
+    </div>
+  );
+}
 const day = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
 /** "about 1 a day", "about 1 every 3 days": what is normal for a place, in words. */
@@ -413,49 +436,80 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
 /**
  * Open incidents of the last 30 days whose place nobody knows: a specific event reported only "in Chennai". Weather
  * warnings and city-wide news (no single place), incidents placed by their own map point or a place in the headline,
- * and towns outside the district are left out, and counted in the note (locreview.ts).
+ * and towns outside the district are left out, and counted in the note (locreview.ts). The card shows the two counts
+ * and the first few; the review list opens in its own window.
  */
 function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
-  const r = ins.review, k = r.counts;
+  const r = ins.review;
   const placed = (r.placed ?? []) as Row[];
-  const [tab, setTab] = useState<"missing" | "placed">("missing");
-  const skipped = k ? [k.district ? `${k.district} city-wide` : null, k.located ? `${k.located} placed from the report` : null,
-    k.outside ? `${k.outside} outside Chennai` : null].filter(Boolean).join(" · ") : "";
   return (
     <>
       <div className="ch"><I n="pin" /><h3 title="Specific incidents reported only as 'in Chennai': the map cannot show them">Locations needing review</h3>
-        <span className="cnt-b">{r.unplacedTotal}</span></div>
-      {placed.length > 0 && (
-        <div className="lr-tabs" role="tablist" aria-label="Locations">
-          <button role="tab" aria-selected={tab === "missing"} className={tab === "missing" ? "on" : ""} onClick={() => setTab("missing")}>Place unknown <b>{r.unplacedTotal}</b></button>
-          <button role="tab" aria-selected={tab === "placed"} className={tab === "placed" ? "on" : ""} onClick={() => setTab("placed")}
-            title="Reported only as 'in Chennai' by the pipeline, but the headline, its translation or the article names the place: now on the map">Placed from the report <b>{placed.length}</b></button>
-        </div>
-      )}
-      {tab === "placed" ? (
-        <div className="cb scroll-list">
-          {placed.map((i) => (
-            <div key={i.id} className="lr lr-placed">
-              <button className="lr-open" onClick={() => c.openInc(i.id)} title="Open the incident">
-                <b>{i.title || i.type}</b>
-                <small>{[i.place + (i.zone_name && i.zone_name !== i.place ? `, ${i.zone_name}` : ""), i.how, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small>
-              </button>
-              <button className="lr-map" onClick={() => c.locate(i)} title="Show it on the map" aria-label="Show on the map"><I n="target" /></button>
-            </div>
-          ))}
-        </div>
-      ) : <>
-      {skipped && <p className="lr-note" title="Not listed: weather warnings and city-wide reports have no single place; the others were placed from their map point or a place named in the report, or are outside Chennai district.">Not listed: {skipped}</p>}
-      <div className="cb scroll-list">
-        {r.unplaced.length ? r.unplaced.map((i) => (
-          <button key={i.id} className="lr" onClick={() => c.openInc(i.id)} title="Open the incident">
-            <b>{i.title || i.type}</b>
-            <small>{[i.type, rel(i.t, ins.now), i.loc_verdict.how, i.also.length ? `${i.also.length + 1} reports` : null].filter(Boolean).join(" · ")}</small>
-          </button>
-        )) : <Empty>Every open incident has a place on the map.</Empty>}
+        {(r.unplacedTotal > 0 || placed.length > 0) && <button className="more" onClick={c.openReview}>Review all<I n="right" /></button>}
       </div>
-      </>}
+      <div className="lr2">
+        <div className="lr2-stats">
+          <button className="miss" onClick={c.openReview} title="Open the review list">
+            <b>{r.unplacedTotal}</b><span>Place unknown<small>only &ldquo;Chennai&rdquo; is known</small></span>
+          </button>
+          <button onClick={c.openReview} title="Open the review list">
+            <b>{placed.length}</b><span>Placed from the report<small>now on the map</small></span>
+          </button>
+        </div>
+        <div className="fitlist lr2-list">
+          {r.unplaced.length ? r.unplaced.map((i) => (
+            <button key={i.id} className="lr2-row" onClick={() => c.openInc(i.id)} title={`${i.title || i.type}. Open the incident.`}>
+              <i style={{ background: SEV_HEX[i.sev] ?? "var(--text-4)" }} />
+              <span><b>{i.title || i.type}</b><small>{[i.type, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small></span>
+            </button>
+          )) : <Empty>Every open incident has a place on the map.</Empty>}
+        </div>
+      </div>
     </>
+  );
+}
+
+/** Modal: the review list. Place unknown (open the incident to set it) and placed from the report (check it on the map). */
+export function ReviewBody({ ins, c }: { ins: Insights | null; c: Console }) {
+  const [tab, setTab] = useState<"missing" | "placed">("missing");
+  const [find, setFind] = useState("");
+  if (!ins) return <Loading />;
+  const r = ins.review, k = r.counts;
+  const placed = (r.placed ?? []) as Row[];
+  const match = (i: Row) => !find.trim() || `${i.title} ${i.type} ${i.place ?? ""} ${i.zone_name ?? ""}`.toLowerCase().includes(find.trim().toLowerCase());
+  const skipped = k ? [k.district ? `${k.district} city-wide reports` : null, k.located ? `${k.located} placed from their map point` : null,
+    k.outside ? `${k.outside} outside Chennai` : null].filter(Boolean).join(", ") : "";
+  const rows = (tab === "missing" ? r.unplaced : placed).filter(match);
+  return (
+    <div className="rv">
+      <div className="rv-bar">
+        <div className="seg" role="tablist" aria-label="Locations">
+          <button role="tab" aria-selected={tab === "missing"} className={tab === "missing" ? "on" : ""} onClick={() => setTab("missing")}>Place unknown <b>{r.unplacedTotal}</b></button>
+          <button role="tab" aria-selected={tab === "placed"} className={tab === "placed" ? "on" : ""} onClick={() => setTab("placed")}>Placed from the report <b>{placed.length}</b></button>
+        </div>
+        <label className="mk-find"><I n="search" /><input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find an incident or place…" aria-label="Find" /></label>
+      </div>
+      <p className="rv-note">
+        {tab === "missing"
+          ? <>Open incidents of the last 30 days reported only as &ldquo;in Chennai&rdquo;: the map cannot show them. Open one to see its reports and set the place.{skipped ? ` Not listed: ${skipped}.` : ""}</>
+          : <>The pipeline had only &ldquo;Chennai&rdquo;, but the headline, its translation or the article names the place, so they are now on the map. Check that the place is right.</>}
+      </p>
+      <div className="rv-list">
+        {rows.length ? rows.map((i) => (
+          <div key={i.id} className="rv-row">
+            <i style={{ background: SEV_HEX[i.sev] ?? "var(--text-4)" }} />
+            <button className="rv-open" onClick={() => c.openInc(i.id)} title="Open the incident">
+              <b>{i.title || i.type}</b>
+              <small>{tab === "missing"
+                ? [i.type, rel(i.t, ins.now), i.loc_verdict?.how, i.also?.length ? `${i.also.length + 1} reports` : null].filter(Boolean).join(" · ")
+                : [`${i.place}${i.zone_name && i.zone_name !== i.place ? `, ${i.zone_name}` : ""}`, i.how, i.type, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small>
+            </button>
+            {tab === "placed" && <button className="btn sm plain" onClick={() => c.locate(i)} title="Show it on the map"><I n="target" />Map</button>}
+            <button className="btn sm" onClick={() => c.openInc(i.id)}>Open<I n="chevr" /></button>
+          </div>
+        )) : <Empty>{find ? `Nothing matches "${find}".` : tab === "missing" ? "Every open incident has a place on the map." : "No incident was placed from its report."}</Empty>}
+      </div>
+    </div>
   );
 }
 
@@ -508,55 +562,60 @@ function Rising({ t, where, c }: { t: Insights["trends"]["weekly"]; where: Insig
           );
         })}
       </div>
-      <p className="rs-foot">A change under 10% is shown as &ldquo;about the same&rdquo;. Click a problem to see its weekly trend, the zones behind it and its incidents.</p>
+      <p className="rs-foot">A change under 10% is shown as &ldquo;about the same&rdquo;. Click a problem for what is behind it, its weekly trend and its incidents.</p>
     </div>
   );
 }
 
-/** Modal: one unusual spike, recurring hotspot or category trend, with what happened and every incident behind it. */
+/**
+ * Modal: one unusual spike, recurring hotspot or category trend. Left: what is really happening (AI, from the incidents
+ * behind it; the rules' summary until then or without a model), the counts as a chart, the places, and suggested next
+ * steps. Right: every incident behind it.
+ */
 export function PatternBody({ p, c }: { p: Pattern; c: Console }) {
   const [d, setD] = useState<PatternDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const q = new URLSearchParams(p.kind === "spike" ? { kind: "spike", cat: p.cat, date: p.date, ...(p.zone ? { zone: String(p.zone) } : {}) }
+    : p.kind === "hotspot" ? { kind: "hotspot", id: p.id } : { kind: "category", cat: p.cat }).toString();
+  const ai = useAi<PatternBrief>(`${q.replace(/^kind=/, "kind=pattern&what=")}`);
   useEffect(() => {
-    const q = new URLSearchParams(p.kind === "spike" ? { kind: "spike", cat: p.cat, date: p.date, ...(p.zone ? { zone: String(p.zone) } : {}) }
-      : p.kind === "hotspot" ? { kind: "hotspot", id: p.id } : { kind: "category", cat: p.cat });
     fetch(`/api/collector/pattern?${q}`).then(async (r) => {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Could not load it.");
       setD(j);
     }).catch((e) => setErr(e.message));
-  }, [p]);
+  }, [q]);
   if (err) return <Empty>{err}</Empty>;
   if (!d) return <Loading />;
-  const mx = Math.max(1, ...d.series.map((s) => s.n));
   const icon = d.kind === "spike" ? "bolt" : d.kind === "hotspot" ? "pin" : "chart";
-  const labelAt = (s: { label: string; hl: boolean }, k: number) =>
-    d.kind === "spike" ? (s.hl || k === 0 ? s.label.replace(/^\w+ /, "") : "") : d.kind === "category" ? (k % 3 === 2 || k === d.series.length - 1 ? s.label : "") : s.label;
   return (
     <div className="pt">
       <div className="pt-l">
         <div className="pt-h"><span className={`bic ${d.kind === "spike" ? "t-high" : d.kind === "hotspot" ? "t-violet" : "t-info"}`}><I n={icon} /></span>
           <span><b>{d.title}</b><small>{d.when}</small></span></div>
         <div className="pt-stats">{d.stats.map((s) => <div key={s.l}><small>{s.l}</small><b>{s.v}</b></div>)}</div>
-        <div className="pt-sec"><b>What is happening</b>
-          <ul>{d.lead.map((x) => <li key={x}>{x}</li>)}</ul>
+        <div className="ai-box pt-ai">
+          <span className="ai-tag"><I n="ai" />What is happening{ai ? <small>AI · {ai.at} · from the {d.incidents.length} incidents</small> : null}</span>
+          {ai ? (
+            <>
+              <p>{ai.what}</p>
+              {ai.cause && <p className="ai-cause"><b>Shared cause</b>{ai.cause}</p>}
+            </>
+          ) : (
+            <>
+              {ai === undefined && <p className="ai-wait">Reading the {d.incidents.length} incidents behind it…</p>}
+              <ul className="pt-lead">{d.lead.map((x) => <li key={x}>{x}</li>)}</ul>
+            </>
+          )}
         </div>
-        <div className="pt-sec"><b>{d.seriesTitle}</b>
-          <div className={`pt-bars${d.kind === "category" ? " cat" : ""}`}>
-            {d.series.map((s, k) => (
-              <span key={k} className={s.hl ? "hl" : ""} title={`${s.label}: ${s.n}`}>
-                <em>{s.n || ""}</em><i style={{ height: `${Math.max(3, (s.n / mx) * 100)}%` }} />
-                <small>{labelAt(s, k)}</small>
-              </span>
-            ))}
-          </div>
-        </div>
+        <div className="pt-sec"><b>{d.seriesTitle}</b><PatChart d={d} /></div>
         {d.places.length > 0 && (
           <div className="pt-sec"><b>{"placesTitle" in d && d.placesTitle ? d.placesTitle : "Where"}</b>
             <div className="pt-places">{d.places.map((x) => <span key={x.name}>{x.name}<em>{d.kind === "category" ? `+${x.n}` : x.n}</em></span>)}</div>
           </div>
         )}
-        {d.next && <div className="bf2-next" style={{ margin: 0 }}><b>Suggested next step</b><span>{d.next}</span></div>}
+        {ai && ai.next.length ? <NextSteps steps={ai.next} />
+          : d.next ? <NextSteps title="Suggested next step" steps={[{ who: "Standard procedure", what: d.next }]} /> : null}
       </div>
       <div className="pt-r">
         <div className="iv-t"><I n="doc" />The incidents<span>{d.incidents.length}{d.incidents.length >= 60 ? "+" : ""} · newest first · click to open</span></div>
@@ -574,6 +633,41 @@ export function PatternBody({ p, c }: { p: Pattern; c: Console }) {
   );
 }
 
+/**
+ * The pattern's counts as bars. Dates are written only where they fit (the highlighted days' first and last, the ends,
+ * then evenly spaced), the highlighted bars carry their number, and a dashed line marks the usual level.
+ */
+function PatChart({ d }: { d: PatternDetail }) {
+  const s = d.series, N = s.length;
+  const usualV = d.usual != null && d.usual > 0 ? d.usual : null;
+  const mx = Math.max(1, ...s.map((x) => x.n), usualV ?? 0);
+  const short = (l: string) => (d.kind === "spike" ? l.replace(/^\w+ /, "") : l);
+  const gap = N <= 8 ? 1 : Math.ceil(N / 6);
+  const hl = s.map((x, k) => (x.hl ? k : -1)).filter((k) => k >= 0);
+  const want = [...(hl.length ? [hl[0], hl[hl.length - 1]] : []), N - 1, 0];
+  for (let k = 0; k < N; k += gap) want.push(k);
+  const shown = new Set<number>();
+  for (const k of want) if (![...shown].some((j) => Math.abs(j - k) < gap)) shown.add(k);
+  const usualText = usualV == null ? "" : d.kind === "spike" ? (usualV >= 0.95 ? `about ${Math.round(usualV)} a day` : `about 1 every ${Math.max(2, Math.round(1 / usualV))} days`)
+    : `${Math.round(usualV)} a week`;
+  return (
+    <div className={`pc ${d.kind}`}>
+      <div className="pc-bars">
+        {usualV != null && <span className="pc-usual" style={{ bottom: `${(usualV / mx) * 100}%` }}><em>Usual: {usualText}</em></span>}
+        {s.map((x, k) => (
+          <span key={k} className={x.hl ? "hl" : ""} title={`${x.label}: ${x.n}`}>
+            <em>{x.n && (x.hl || N <= 14 || x.n === mx) ? x.n : ""}</em>
+            <i style={{ height: `${x.n ? Math.max(4, (x.n / mx) * 100) : 1.5}%` }} />
+          </span>
+        ))}
+      </div>
+      <div className="pc-axis" aria-hidden="true">
+        {s.map((x, k) => <span key={k} className={x.hl ? "hl" : ""}>{shown.has(k) ? <small>{short(x.label)}</small> : null}</span>)}
+      </div>
+    </div>
+  );
+}
+
 // ================================================================= markets ==
 
 /** Rs per quintal to ₹ per kg: whole rupees from ₹10 up, one decimal below. */
@@ -585,16 +679,17 @@ const kg = (v: number | null | undefined, dec?: number) => (v == null ? "—" : 
  * views average the districts around Chennai or the whole state.
  */
 export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console; full?: boolean }) {
-  const [scope, setScope] = useState<"markets" | "chennai" | "tamilNadu">("markets");
+  const [scope, setScope] = useState<"list" | "markets" | "chennai" | "tamilNadu">(full ? "markets" : "list");
   const [market, setMarket] = useState<string | null>(null);
   const head = (
-    <div className="ch"><I n="chart" /><h3>Vegetable and fruit prices <span>· AGMARKNET mandi prices</span></h3>
+    <div className="ch"><I n="chart" /><h3>Vegetable and fruit prices</h3>
       <div className="seg sm" style={{ marginLeft: "auto" }}>
-        <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Each Chennai market (Uzhavar Sandhai farmer markets)">Chennai markets</button>
+        <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">Prices today</button>
+        <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Chennai market side by side (Uzhavar Sandhai farmer markets)">Compare markets</button>
         <button className={scope === "chennai" ? "on" : ""} onClick={() => setScope("chennai")} title="Weekly average over Thiruvallur, Kancheepuram and Chengalpattu">Around Chennai</button>
         <button className={scope === "tamilNadu" ? "on" : ""} onClick={() => setScope("tamilNadu")}>Tamil Nadu</button>
       </div>
-      {!full && scope === "markets" && <button className="more" style={{ marginLeft: 0 }} onClick={() => c.openMarkets()} title="Every commodity at every market">Full table<I n="right" /></button>}
+      {!full && <button className="more" style={{ marginLeft: 0 }} onClick={() => c.openMarkets()} title="Every commodity at every market, full screen">Full screen<I n="expand" /></button>}
     </div>
   );
   if (!ins) return <>{head}<Loading /></>;
@@ -602,9 +697,66 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
     <>
       {head}
       <div className={`cb mk-cb${full ? " mk-full" : ""}`}>
-        {scope === "markets" ? <ByMarket m={ins.markets.byMarket} c={c} full={full} market={market} setMarket={setMarket} />
-          : <Weekly ins={ins} scope={scope} />}
+        {scope === "list" ? <PriceList m={ins.markets.byMarket} />
+          : scope === "markets" ? <ByMarket m={ins.markets.byMarket} c={c} full={full} market={market} setMarket={setMarket} />
+            : <Weekly ins={ins} scope={scope} />}
       </div>
+    </>
+  );
+}
+
+/**
+ * The simple view: one line per vegetable or fruit sold in two or more Chennai markets: the average price, how it moved
+ * since the last report, where it is cheapest and dearest, and its last two weeks. Searchable, sortable by movement.
+ */
+function PriceList({ m }: { m: ByM }) {
+  const [find, setFind] = useState("");
+  const [sort, setSort] = useState<"name" | "up" | "down">("name");
+  if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run AGMARKNET.</Empty>;
+  const short = (k: string) => k.replace(/\s*Uzhavar Sandhai$/i, "");
+  const rows = m.commodities.filter((x) => x.markets >= 2 && x.avg != null && (!find.trim() || x.commodity.toLowerCase().includes(find.trim().toLowerCase())))
+    .map((x) => {
+      const at = Object.entries(x.prices).sort((a, b) => a[1].price - b[1].price);
+      // the average of the markets' daily prices, for the trend line
+      const len = Math.max(0, ...Object.values(x.prices).map((p) => p.series.length));
+      const trend = Array.from({ length: len }, (_, k) => {
+        const v = Object.values(x.prices).map((p) => p.series[k]).filter((y): y is number => y != null);
+        return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+      }).filter((y): y is number => y != null);
+      return { ...x, chg: x.avgPrev ? ((x.avg! - x.avgPrev) / x.avgPrev) * 100 : null, lo: at[0], hi: at[at.length - 1], trend };
+    })
+    .sort((a, b) => sort === "name" ? a.commodity.localeCompare(b.commodity) : sort === "up" ? (b.chg ?? -999) - (a.chg ?? -999) : (a.chg ?? 999) - (b.chg ?? 999));
+  const up = rows.filter((r) => (r.chg ?? 0) >= 5).length, down = rows.filter((r) => (r.chg ?? 0) <= -5).length;
+  return (
+    <>
+      <div className="mk-bar">
+        <label className="mk-find"><I n="search" /><input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a vegetable or fruit…" aria-label="Find a commodity" /></label>
+        <div className="seg sm" role="group" aria-label="Order">
+          <button className={sort === "name" ? "on" : ""} onClick={() => setSort("name")}>A–Z</button>
+          <button className={sort === "up" ? "on" : ""} onClick={() => setSort("up")} title="Biggest price rises first">Rising first{up ? ` (${up})` : ""}</button>
+          <button className={sort === "down" ? "on" : ""} onClick={() => setSort("down")} title="Biggest price falls first">Falling first{down ? ` (${down})` : ""}</button>
+        </div>
+        <span className="mk-date" title="AGMARKNET, Uzhavar Sandhai farmer markets">₹ per kg{m.latest ? ` · ${fmtDate(m.latest + " 00:00:00")}` : ""} · {m.markets.length} farmer markets · AGMARKNET</span>
+      </div>
+      <div className="mk-scroll">
+        <table className="mk pl">
+          <thead><tr><th>Vegetable or fruit</th><th className="r">Average</th><th className="r">Change</th><th>Cheapest at</th><th>Dearest at</th><th>2 weeks</th></tr></thead>
+          <tbody>
+            {rows.map((x) => (
+              <tr key={x.commodity}>
+                <td className="ev">{x.commodity}<small className="dim"> · {x.markets} markets</small></td>
+                <td className="num r"><b>{kg(x.avg)}</b></td>
+                <td className="r">{x.chg == null || Math.abs(x.chg) <= 0.5 ? <span className="chg">no change</span> : <Chg v={x.chg} />}</td>
+                <td><span className="pl-at lo"><b>{kg(x.lo[1].price)}</b>{short(x.lo[0])}</span></td>
+                <td>{x.hi[0] !== x.lo[0] ? <span className="pl-at hi"><b>{kg(x.hi[1].price)}</b>{short(x.hi[0])}</span> : <span className="dim">same everywhere</span>}</td>
+                <td><MiniSpark vals={x.trend} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!rows.length && <Empty>{find ? <>No item matches &quot;{find}&quot;.</> : "No item is sold in two or more Chennai markets."}</Empty>}
+      </div>
+      <p className="mk-foot">Red ▲ = price went up since the market&apos;s last report (hurts households), green ▼ = went down. &ldquo;Compare markets&rdquo; shows every market side by side. Koyambedu does not report to AGMARKNET.</p>
     </>
   );
 }

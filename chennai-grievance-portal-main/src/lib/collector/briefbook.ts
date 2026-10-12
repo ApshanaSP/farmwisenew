@@ -48,7 +48,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const wk = periodWindow(s.period, now, "i.first_reported_at", 0, 168), pwk = periodWindow(s.period, now, "i.first_reported_at", 1, 168);
 
   const [tiles, tilesPrev, awaiting, critical, deptRows, deptItems, zones, zoneKinds, notes, warn, beds, law, lawPrev, kinds, oldest,
-    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones] = await Promise.all([
+    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(i.media_only) AS news_only FROM incidents i WHERE ${W}`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${P}`, PP),
@@ -81,7 +81,9 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${wk.sql}${f.sql} AND i.category_code = 'VECTOR_DISEASE'`, [...wk.params, ...f.params]),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${pwk.sql}${f.sql} AND i.category_code = 'VECTOR_DISEASE'`, [...pwk.params, ...f.params]),
     q(`SELECT i.zone_name AS zone, COUNT(*) AS n FROM incidents i WHERE ${wk.sql}${f.sql} AND i.category_code = 'VECTOR_DISEASE'
-       AND i.zone_name IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 3`, [...wk.params, ...f.params])
+       AND i.zone_name IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 3`, [...wk.params, ...f.params]),
+    // every incident with a death in the period: the department rows say what happened
+    q(`SELECT ${INC} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP)
   ]);
 
   // ---- AI notes (the pipeline's, district-wide, last 24 hours)
@@ -115,7 +117,10 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     code: d.code as string, name: (d.name ?? d.code) as string, head: d.head as string | null, n: n(d.n), severe: n(d.severe), dead: n(d.dead),
     items: deptItems.filter((x) => x.dept === d.code).map((x) => ({ id: x.id as string, title: (x.title || x.type) as string, type: x.type as string,
       zone: x.zone_name as string | null, loc: x.loc as string | null, sev: x.sev as string, status: x.status as string, t: x.t as string, dead: n(x.dead) })),
-    ai: daily && whole ? ai("departments", d.code) : null
+    ai: daily && whole ? ai("departments", d.code) : null,
+    deaths: deathRows.filter((x) => x.dept === d.code).map((x) => ({ id: x.id as string, title: (x.title || x.type) as string, type: x.type as string,
+      place: [x.loc, x.zone_name].filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).join(", ") || null, dead: n(x.dead), injured: n(x.injured),
+      status: x.status as string, t: x.t as string, what: explain(x).summary }))
   }));
 
   // ---- where it is happening
