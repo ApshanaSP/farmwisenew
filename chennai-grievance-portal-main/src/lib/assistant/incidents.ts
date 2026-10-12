@@ -45,8 +45,8 @@ const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, 
   DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
-function where(f: IncidentFilters, now: string, hours?: number, off = 0) {
-  const w = periodWindow(f.period, now, "i.first_reported_at", off + (f.offset ?? 0), hours ?? f.hours ?? undefined);
+function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at") {
+  const w = periodWindow(f.period, now, col, off + (f.offset ?? 0), hours ?? f.hours ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
   if (f.place) (parts.push("i.place_text LIKE ?"), params.push(`%${f.place.replace(/[%_]/g, "")}%`));
@@ -178,6 +178,17 @@ export async function countIncidents(f: IncidentFilters, now: string) {
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open, SUM(COALESCE(i.dead, 0)) AS dead FROM incidents i WHERE ${w.sql}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), open: num(a?.open), dead: num(a?.dead), prev: num(b?.n) };
+}
+
+/** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
+export async function countResolved(f: IncidentFilters, now: string) {
+  const g = { ...f, openOnly: false, overdue: false };
+  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
+  const done = "i.is_open = 0 AND i.status_std = 'Resolved'";
+  const [[a], [b]] = await Promise.all([
+    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
+    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
+  return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
 }
 
 /** Kinds of incident ranked by how many, against the period before. */

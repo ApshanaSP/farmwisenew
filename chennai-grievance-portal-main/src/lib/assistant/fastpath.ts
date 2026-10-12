@@ -10,7 +10,7 @@ import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, detectIntent, topicByKey, type Detected, type Topic } from "@/lib/assistant/intent";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, anySynthetic, categoryRanking, countIncidents, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, categoryRanking, countIncidents, countResolved, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
@@ -135,8 +135,26 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       break;
     }
     case "INCIDENT_COUNT": {
+      // "how many were resolved yesterday": counted by when they were closed, not when they were reported
+      if (d.resolved) {
+        const r = await countResolved(inc, i.now);
+        const kind = countNoun(what, r.n);
+        card.responseType = "kpi";
+        card.display = "kpi";
+        card.visualAsked = true;
+        card.headline = `${r.n.toLocaleString("en-IN")} ${kind} resolved · ${pl(inc.period)}`;
+        card.answerMarkdown = `${r.n.toLocaleString("en-IN")} ${kind} ${r.n === 1 ? "was" : "were"} closed as resolved in the ${pl(inc.period)}${sw}`
+          + `${` (${r.prev.toLocaleString("en-IN")} in the period before)`}${r.severe ? `, ${r.severe} of them severe` : ""}`
+          + `${r.late ? `; ${r.late} ${r.late === 1 ? "was" : "were"} closed after the deadline` : ""}.`;
+        card.kpis = [{ label: "Resolved", value: r.n, prev: r.prev, tone: "low" }, ...(r.severe ? [{ label: "Severe", value: r.severe, tone: "sev" as const }] : []),
+          ...(r.late ? [{ label: "Closed late", value: r.late }] : [])];
+        card.caveats.push("Counted by when each incident was closed as resolved, in the department records.");
+        card.context = { ...ctxBase, lastResponseType: "kpi" };
+        card.sources.tools.push({ name: "count_resolved", args: { ...inc }, ms: 0 });
+        break;
+      }
       const c = await countIncidents(inc, i.now);
-      const kind = `${what ? `${what} ` : ""}incident${c.n === 1 ? "" : "s"}`;
+      const kind = countNoun(what, c.n);
       card.responseType = "kpi";
       card.display = "kpi";
       card.visualAsked = true;
@@ -412,4 +430,12 @@ function scopeWords(s: Scope, n: RefNames): string {
 
 function catsOf(f: ActiveFilters, i: FastInput): string[] | null {
   return topicByKey(f.topic)?.cats ?? (f.cat ? [f.cat] : null) ?? (i.scope.cat ? [i.scope.cat] : null);
+}
+
+/** "4 road accidents", "1 fire", "12 garbage incidents": a topic that is already a noun is not followed by "incidents". */
+export function countNoun(what: string, n: number): string {
+  const one = n === 1;
+  const m = what.match(/^(.*?)(accident|case|complaint|fire|theft|murder|death|protest|snatching|incident)s?$/i);
+  if (m) return `${m[1]}${m[2]}${one ? "" : "s"}`;
+  return `${what ? `${what} ` : ""}incident${one ? "" : "s"}`;
 }

@@ -97,7 +97,7 @@ export function verifyNumbers(texts: string[], facts: Fact[], context: number[] 
       const about = (f: Fact) => `${f.id} ${f.label}`.toLowerCase();
       // only a fact clearly about another measure is ruled out ("24 deaths" on a complaints fact); an unlabelled one still counts
       const otherMeasure = (f: Fact) => !measure!.fact.test(about(f)) && MEASURES.some((m) => m !== measure && m.fact.test(about(f)));
-      let ok = measure ? matches.filter((f) => (measure.strict ? measure.fact.test(about(f)) || f.unit === "%" : !otherMeasure(f))) : matches;
+      let ok = measure ? matches.filter((f) => (measure.strict ? measure.fact.test(about(f)) || !!f.unit?.startsWith("%") : !otherMeasure(f))) : matches;
       // a change's direction: "rose 21%" must not rest on a fact of -21%
       const change = ok.filter((f) => /change|delta|diff|vs|pct/.test(about(f)));
       if (change.length && UP.test(n.before)) ok = ok.filter((f) => !change.includes(f) || f.value > 0);
@@ -109,6 +109,9 @@ export function verifyNumbers(texts: string[], facts: Fact[], context: number[] 
   return { ok: unmatched.length === 0, checked, unmatched: [...new Set(unmatched)] };
 }
 
+/** Units printed with a figure: measurements whose number means nothing without them (counts carry none). */
+const MEASURE_UNIT = /^(mm|cm|°c|aqi|% full|cusec|mcft|tmc|hours?|days?|km|rs\/kg|₹\/kg|beds?)$/i;
+
 /**
  * Grounded citations: the composer writes a figure as {{fact_id}} and the code prints the fact's exact value, so a number
  * cannot be mistyped or misquoted. A change prints without its sign (the words say "rose" or "fell", and the verifier then
@@ -117,12 +120,19 @@ export function verifyNumbers(texts: string[], facts: Fact[], context: number[] 
 export function fillFacts(text: string, facts: Fact[]): { text: string; unknown: string[] } {
   const by = new Map(facts.map((f) => [f.id, f]));
   const unknown: string[] = [];
-  const out = String(text ?? "").replace(/\{\{\s*([A-Za-z0-9_.:-]+)\s*\}\}(%?)/g, (_m, id: string, pctAfter: string) => {
+  const out = String(text ?? "").replace(/\{\{\s*([A-Za-z0-9_.:-]+)\s*\}\}(%?)/g, (_m, id: string, pctAfter: string, at: number, all: string) => {
     const f = by.get(id);
     if (!f) { unknown.push(id); return `{{${id}}}${pctAfter}`; }
     const v = /change|delta/i.test(id) ? Math.abs(f.value) : f.value;
     const s = Number.isInteger(v) ? v.toLocaleString("en-IN") : v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
-    return `${s}${f.unit === "%" || pctAfter ? "%" : ""}`;
+    if (f.unit === "%" || pctAfter) return `${s}%`;
+    // a measurement keeps its unit ("0 mm", "85 AQI", "34.1% full"), unless the sentence already writes it after the figure
+    const unit = f.unit && MEASURE_UNIT.test(f.unit) ? f.unit : "";
+    // what follows the figure, past markdown ("**{{x}}** days")
+    const next = all.slice(at + _m.length, at + _m.length + 20).replace(/^[\s*_`]+/, "").toLowerCase();
+    if (!unit) return s;
+    if (unit.startsWith("%")) return next.startsWith("%") ? s : next.startsWith(unit.slice(1).trim().toLowerCase()) ? `${s}%` : `${s}${unit}`;
+    return next.startsWith(unit.toLowerCase().split(" ")[0]) ? s : `${s} ${unit}`;
   });
   return { text: out, unknown: [...new Set(unknown)] };
 }

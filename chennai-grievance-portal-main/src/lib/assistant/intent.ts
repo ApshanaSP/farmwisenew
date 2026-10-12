@@ -31,6 +31,8 @@ export interface Detected {
   openOnly: boolean;
   /** only open ones past their deadline ("overdue", "missed the deadline") */
   overdue?: boolean;
+  /** closed ones, counted by when they were closed ("how many were resolved yesterday") */
+  resolved?: boolean;
   /** the incident a follow-up points at, resolved from the context ("the second one", "this incident") */
   incidentId: string | null;
   /** the news story a follow-up points at */
@@ -157,8 +159,10 @@ const MAP = ["map", "on the map", "show on map", "make it a map", "make that a m
 const CHART = ["chart", "graph", "pie", "bar chart", "donut", "visualise", "visualize", "plot"];
 const TABLE = ["as a table", "in a table", "table"];
 /** past the deadline: "overdue", "missed deadline", "delayed", "beyond the SLA" (Tanglish "late aagudhu") */
-export const OVERDUE = /(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadline|deadline (missed|crossed|passed)|beyond (the )?(sla|deadline)|sla breach(ed)?|breached|delayed|late aag)/i;
+export const OVERDUE = /\b(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadline|deadline (missed|crossed|passed)|beyond (the )?(sla|deadline)|sla breach(ed)?|breached|delayed|late aag)/i;
 const OPEN_ONLY = ["pending", "unresolved", "still open", "open ones", "not resolved", "not closed"];
+/** closed work: "resolved", "closed", "completed", "fixed", "solved", "disposed of" (not "unresolved" / "not closed") */
+const RESOLVED = /\b(resolved|closed|completed|fixed|solved|cleared|disposed)\b|தீர்க்கப்பட்ட|முடிக்கப்பட்ட/i;
 const ORDINALS: [string[], number][] = [[["first", "1st", "top one", "முதல்"], 0], [["second", "2nd", "இரண்டாவது"], 1], [["third", "3rd", "மூன்றாவது"], 2],
   // "the last 24 hours" is a period: only "the last one" / "last incident" point at the end of a list
   [["fourth", "4th"], 3], [["fifth", "5th"], 4], [["last one", "last incident", "last case", "last story", "bottom one"], -1]];
@@ -198,7 +202,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High" : null;
   const openOnly = any(toks, OPEN_ONLY);
   const overdue = OVERDUE.test(message);
-  const base = { n, topic, sev: sev as Detected["sev"], openOnly, overdue, incidentId: null, storyId: null, focus: "all" as Detected["focus"], refinement: false };
+  const resolved = !openOnly && !overdue && RESOLVED.test(message) && !/\b(un|not |n't )(resolved|closed|completed|fixed|solved)/i.test(message);
+  const base = { n, topic, sev: sev as Detected["sev"], openOnly, overdue, resolved, incidentId: null, storyId: null, focus: "all" as Detected["focus"], refinement: false };
   const mk = (intent: Intent, because: string, extra: Partial<Detected> = {}): Detected => ({ ...base, intent, because, ...extra });
   const explicitId = message.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase() ?? null;
 

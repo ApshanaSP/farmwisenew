@@ -77,9 +77,10 @@ export async function syntheticShare(s: AssistantScope, now: string): Promise<{ 
  * How many incidents are in the news with no department record, over the Briefing page's
  * window (the period, or 7 days if longer); its list shows only the top 40.
  */
-export async function newsGapTotal(s: AssistantScope, now: string): Promise<number> {
+export async function newsGapTotal(s: AssistantScope, now: string, minOutlets = 1): Promise<number> {
   const w = scopeWhere({ ...s, period: s.period === "daily" ? "weekly" : s.period }, now);
-  const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'`, w.params);
+  const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
+    ${minOutlets > 1 ? "AND i.outlet_count >= ?" : ""}`, [...w.params, ...(minOutlets > 1 ? [minOutlets] : [])]);
   return n(r?.n);
 }
 

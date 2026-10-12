@@ -33,6 +33,7 @@ import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
 import { contextNumbers, extractNumbers, fillFacts, verifyNumbers } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
+import { directTool } from "@/lib/assistant/direct";
 import { loadCatalog, renderCatalog } from "@/lib/assistant/catalog";
 import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, type QueryResult } from "@/lib/assistant/compile";
 import { helpFor, isHelpQuestion } from "@/lib/assistant/help";
@@ -232,6 +233,17 @@ const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "l
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
 const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
+/** The period the question's own words name, or null. */
+export function periodFromWords(m: string): Scope["period"] | null {
+  if (/\b(today'?s?|24 ?h(ou)?rs?|last day)\b|இன்று|innaiki/i.test(m)) return "daily";
+  if (/\b(this week|last week|weekly|7 days|seven days)\b|இந்த வாரம்|indha vaaram/i.test(m)) return "weekly";
+  if (/\b(this month|last month|monthly|30 days|thirty days)\b|இந்த மாதம்|maasam/i.test(m)) return "monthly";
+  if (/\b(quarter|quarterly|90 days|three months)\b|காலாண்டு/i.test(m)) return "quarterly";
+  return null;
+}
+/** "Which zone needs attention now?": now / currently / right now, with no other period, is the last 7 days, not 90. */
+const NOW_WORDS = /\b(now|right now|currently|at (the moment|present)|these days|latest situation)\b|இப்போது|ippo/i;
+
 /** A question about one specific incident ("what is this murder case", "tell me about the fire at", "Adyar murder enna aachu"). */
 const STORY = /\b(what (is|was|are) (this|that|the)|tell me (more )?about|explain|details? (of|about|on)|what happened|story of|about (this|that|the) (case|incident)|update on (the|this|that))\b|enna (aachu|nadandhuchu|nadanthuchu|case)|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi|patthi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)|பற்றி (சொல்|விளக்கு)/i;
 const STORY_THING = /\b(case|incident|murder|killing|killed|accident|crash|fire|blaze|theft|robbery|snatching|burglary|collapse|death|died|attack|assault|stabbing|drowning|drowned|missing|explosion|clash|protest)\b|INC-[A-Z0-9]|கொலை|விபத்து|தீ விபத்து|வழக்கு/i;
@@ -803,6 +815,14 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     route = { intent: "tool_question", language: null, normalized: insight.question, scope: s, scopeRaw: {}, tools: insight.tools, chartEdit: null, actions: [],
       clarify: null, refusal: null, assumptions: [`From today's insights: ${insight.finding}`], offline: false };
   }
+  // a question plainly answered by one console tool (the verification queue, the department backlog, news with no
+  // department record): that tool, decided in code; the composer still writes the answer from its facts
+  const direct = !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
+  if (direct) {
+    const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
+    route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: direct.name, args: { scope: s, ...direct.args } }],
+      chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: [`Read as: ${direct.because}.`], offline: false };
+  }
   if (!route) route = cached<Route>(routeKey);
   if (!route) {
     if (aiStatus().available) {
@@ -827,6 +847,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
         : "No AI provider is configured (the AWS keys for Amazon Bedrock), so this was answered by simple rules, without the language model.");
       route = rulesRoute(message, consoleScope, names, placeData?.zone != null);
     }
+  }
+  // "needs attention now": with no period of its own, "now" is the last 7 days, not the default 90 (the router keeps the default)
+  if (NOW_WORDS.test(message) && !PERIOD_WORDS.test(message) && route.scope?.period === DEFAULT_PERIOD && !i.pinId && !i.insightKey) {
+    const now7 = (s: Scope): Scope => (s.period === DEFAULT_PERIOD ? { ...s, period: "weekly" } : s);
+    route = { ...route, scope: now7(route.scope),
+      tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: now7(t.args.scope as Scope) } } : t)),
+      assumptions: [...route.assumptions, "“Now” read as the last 7 days."] };
   }
   // the reply language: the chip, else Tamil script, else the rules' or the router's Tanglish
   if (i.language === "auto") lang = detected.lang !== "en" ? detected.lang : route.language === "tanglish" || (route.language === "ta" && !hasTamilScript(message)) ? "tanglish" : route.language === "ta" ? "ta" : "en";
@@ -1151,7 +1178,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   base.kpis = p.kpis;
   base.testData = c.testData;
   const quotable = p.datasets.flatMap((d) => d.rows.flatMap((r) => Object.values(r).filter((v): v is string => typeof v === "string" && v.length > 12)));
-  const context = contextNumbers(c.message, base.scopeLine, c.route.normalized);
+  // the caveats are written by the code from the data (e.g. "1,080 of 1,228 incidents …"): a draft that repeats them is not inventing numbers
+  const context = contextNumbers(c.message, base.scopeLine, c.route.normalized, ...c.caveats);
   const fallback = (why: string | null): AnswerCard => {
     const t = templateCard({ ...base, table: p.table, display: p.display, chart: p.chart ? checkChart(p.chart, p.datasets).spec : null, caveats: c.caveats }, p, facts, p.kpis);
     t.followUps = EXAMPLES[lang].slice(0, 3);
@@ -1182,10 +1210,16 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   // (an explanation of a change leads with the change and its drivers, not with the period's total)
   const explaining = c.results.some((r) => r.tool === "change_drivers");
   const lead = !explaining && p.kpis[0] && Number.isFinite(Number(p.kpis[0].value)) ? { label: p.kpis[0].label, value: Number(p.kpis[0].value) } : null;
+  // a small figure may be written as a word ("three complaints await you"), as people write it
+  const LEAD_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
   const statesLead = (d: ComposerOutput) => !lead || extractNumbers(`${d.headline} ${d.answerMarkdown}`, quotable)
-    .some((n) => Math.abs(n.value - lead.value) < 0.01 || Math.abs(n.value - lead.value) <= Math.abs(lead.value) * 0.005);
+    .some((n) => Math.abs(n.value - lead.value) < 0.01 || Math.abs(n.value - lead.value) <= Math.abs(lead.value) * 0.005)
+    || (Number.isInteger(lead.value) && lead.value >= 0 && lead.value < LEAD_WORDS.length
+      && new RegExp(`\\b${LEAD_WORDS[lead.value]}\\b`, "i").test(`${d.headline} ${d.answerMarkdown}`));
   const all = facts.find((f) => f.id === "scope.incidents")?.value, syn = facts.find((f) => f.id === "scope.test_incidents")?.value;
-  const testLine = !c.testData ? "no" : all != null && syn != null ? (syn >= all ? "yes (all records)" : `yes (${syn} of ${all} incidents)`) : "yes (some records)";
+  // the counts stay out of the prompt: the card's caveat states them, and a draft that repeats them crowds the answer
+  const testLine = !c.testData ? "no" : "yes (already shown on the card as a caveat: do not mention it)";
+  void all; void syn;
   const ctx = {
     question: c.message, normalized: c.route.normalized, scopeLine: base.scopeLine, asOf: base.asOf, testData: testLine, caveats: c.caveats,
     facts: factLines(promptFacts(facts, p)), lead: lead ? `${lead.label} = ${lead.value}` : "", datasets: datasetsText(p.datasets, [p.chart?.dataset, p.table]), suggested: p.chart ? JSON.stringify(p.chart) : p.display === "kpi" ? "kpi tiles" : "none",

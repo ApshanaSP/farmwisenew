@@ -537,18 +537,19 @@ export const TOOLS = [
 
   tool({
     name: "news_gaps",
-    description: "Incidents seen in the news with no department record yet (at least the last 7 days), as the Briefing page's 'In the news, not in department records', with the gap finder's suggested action.",
-    args: scopeOnly,
-    async run({ scope }) {
+    description: "Incidents seen in the news with no department record yet (at least the last 7 days), as the Briefing page's 'In the news, not in department records', with the gap finder's suggested action. minOutlets: only those reported by at least this many news outlets (2 = 'more than one newspaper').",
+    args: z.object({ scope: ScopeSchema.default({}), minOutlets: z.number().int().min(1).max(10).default(1) }),
+    async run({ scope, minOutlets }) {
       const i = await ins(scope);
-      const total = await newsGapTotal(scope, i.now);
-      const rows = i.gaps.map((g) => ({ ...incRow(g), outlets: Number(g.outlet_count ?? 0), gap_strength: g.gap_strength ?? null, suggested_action: g.suggested_action ?? null }));
+      const total = await newsGapTotal(scope, i.now, minOutlets);
+      const rows = i.gaps.map((g) => ({ ...incRow(g), outlets: Number(g.outlet_count ?? 0), gap_strength: g.gap_strength ?? null, suggested_action: g.suggested_action ?? null }))
+        .filter((g) => g.outlets >= minOutlets);
       const days = Math.max(7, PERIODS[scope.period].hours / 24);
       return {
         // the window is at least 7 days, whatever the console's period: the card says so
         scope: { ...scope, period: scope.period === "daily" ? "weekly" : scope.period }, asOf: i.now,
         data: { count: total, listed: rows.length, rows: rows.slice(0, 20), window_days: days },
-        facts: [fact("gaps.count", `Incidents in the news with no department record, last ${days} days`, total),
+        facts: [fact("gaps.count", `Incidents in the news with no department record${minOutlets > 1 ? `, reported by ${minOutlets} or more outlets` : ""}, last ${days} days`, total),
           fact("gaps.listed", "Of them listed on the Briefing page (highest priority first)", rows.length)],
         sources: [fn("insights.insights", "news gaps"), tbl("incidents"), tbl("gaps"), tbl("documents")], incidentIds: rows.slice(0, 20).map((r) => r.id),
         testData: false, caveats: [NEWS_CAVEAT, ...(total > rows.length ? [`The Briefing page lists the ${rows.length} highest-priority of ${total}.`] : [])],
