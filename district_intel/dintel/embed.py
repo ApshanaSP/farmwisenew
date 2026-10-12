@@ -1,9 +1,10 @@
-"""Multilingual sentence embeddings (intfloat/multilingual-e5-small), cached on disk.
+"""Multilingual sentence embeddings, cached on disk.
 
-The model reads Tamil and English into one space, so a Tamil headline and an English
-headline about the same event land close together. Vectors are cached by text hash,
-so only new articles are encoded on each build. If the model is not available the
-pipeline carries on without it (character n-grams only).
+Two models read Tamil and English into one space:
+  e5   intfloat/multilingual-e5-small: the news classifier's features and record linking (small, fast);
+  bge  BAAI/bge-m3: finds candidate reports of the same event across Tamil and English (dintel/eventmatch.py).
+Vectors are cached by text hash, so only new articles are encoded on each build. If a model is not available
+the pipeline carries on without it.
 """
 from __future__ import annotations
 
@@ -13,17 +14,19 @@ from pathlib import Path
 
 import numpy as np
 
-from .util import INTEL_DIR, log
+from .util import INTEL_DIR, full_speed, log
 
 MODEL = "intfloat/multilingual-e5-small"
 CACHE = INTEL_DIR / "output" / "cache" / "e5_small.npz"
-_model = None
+BGE = "BAAI/bge-m3"
+BGE_CACHE = INTEL_DIR / "output" / "cache" / "bge_m3.npz"
+DIMS = {MODEL: 384, BGE: 1024}
+_models: dict[str, object] = {}
 
 
-def _load():
-    global _model
-    if _model is not None:
-        return _model
+def _load(name: str = MODEL):
+    if name in _models:
+        return _models[name]
     try:
         try:  # antivirus / proxy TLS inspection: verify against the OS certificate store
             import truststore
@@ -31,19 +34,23 @@ def _load():
         except ImportError:
             pass
         os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+        full_speed()
         from sentence_transformers import SentenceTransformer
         try:
-            _model = SentenceTransformer(MODEL, local_files_only=True)
+            m = SentenceTransformer(name, local_files_only=True)
         except Exception:
-            _model = SentenceTransformer(MODEL)
+            m = SentenceTransformer(name)
+        if name == BGE:
+            m.max_seq_length = 256  # headline + summary; the 8k default only costs time
     except Exception as exc:
-        log.warning("embeddings unavailable (%s); continuing without them", exc)
-        _model = False
-    return _model
+        log.warning("embeddings %s unavailable (%s); continuing without them", name, exc)
+        m = False
+    _models[name] = m
+    return m
 
 
 def encode(texts: list[str], prefix: str = "query: ", cache_path: Path | None = CACHE, prune: bool = False,
-           store: list[bool] | None = None) -> np.ndarray | None:
+           store: list[bool] | None = None, model: str = MODEL) -> np.ndarray | None:
     """L2-normalised vectors, one row per text; None when the model is unavailable.
 
     cache_path=None encodes without any cache. prune=True keeps only this call's texts in the cache file
@@ -56,10 +63,10 @@ def encode(texts: list[str], prefix: str = "query: ", cache_path: Path | None = 
     todo = [i for i, k in enumerate(keys) if k not in cache]
     fresh: dict[str, np.ndarray] = {}
     if todo:
-        m = _load()
+        m = _load(model)
         if not m:
             return None
-        vecs = m.encode([prefix + texts[i] for i in todo], batch_size=64, normalize_embeddings=True, show_progress_bar=False)
+        vecs = m.encode([prefix + texts[i] for i in todo], batch_size=32 if model == BGE else 64, normalize_embeddings=True, show_progress_bar=False)
         for i, v in zip(todo, vecs):
             fresh[keys[i]] = v.astype(np.float32)
         log.info("embeddings: encoded %d new texts (%d cached)", len(todo), len(keys) - len(todo))
@@ -70,4 +77,4 @@ def encode(texts: list[str], prefix: str = "query: ", cache_path: Path | None = 
         if out and (fresh.keys() & keep or prune and len(out) != len(cache)):
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             np.savez(cache_path, keys=np.array(list(out.keys())), vecs=np.stack(list(out.values())))
-    return np.stack([vec[k] for k in keys]) if keys else np.zeros((0, 384), np.float32)
+    return np.stack([vec[k] for k in keys]) if keys else np.zeros((0, DIMS.get(model, 384)), np.float32)

@@ -1,0 +1,40 @@
+/* =====================================================================================================================
+   DATA STUDIO in the Command Centre language (after studio.css; see ../command.css). The "aurora" (indigo → sky →
+   violet → pink) becomes the one accent, deep ocean, so AI moments read as part of the app rather than a different
+   product. The agents' own colours (Pipeline.tsx) and the map's ramp (StudioMap.tsx) carry meaning and stay.
+   ===================================================================================================================== */
+.dic.cc .ds{
+  --aur:linear-gradient(115deg,#0A3D62 0%,#0B7290 60%,#18A7BC 100%);
+  --aur-soft:linear-gradient(115deg,rgba(11,114,144,.10),rgba(24,167,188,.06))}
+:root[data-theme="dark"] .dic.cc .ds,.dic.cc[data-theme="dark"] .ds{
+  --aur:linear-gradient(115deg,#1583A3 0%,#1E9EBB 60%,#3CC2DB 100%);
+  --aur-soft:linear-gradient(115deg,rgba(60,194,219,.14),rgba(60,194,219,.06))}
+
+/* the drop zone: a quiet dashed well, no spinning rainbow edge */
+.dic.cc .ds-drop{background:var(--surface-2);border:1.5px dashed var(--line-3)}
+.dic.cc .ds-drop:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.dic.cc .ds-drop::before{display:none}
+.dic.cc .ds-drop-ic{animation:none}
+.dic.cc .ds-dropveil>div::before{background:var(--accent);animation:none}
+
+/* AI marks: no coloured glow */
+.dic.cc .ds-spark-ic,.dic.cc .ds-drop-ic,.dic.cc .ds-run-ic,.dic.cc .ds-now-ic,.dic.cc .ds-spot-ic{box-shadow:none}
+.dic.cc .ds-kicker i{box-shadow:none}
+.dic.cc .ds-prog i{box-shadow:none}
+.dic.cc .ds-ring{background:conic-gradient(from var(--ds-a),transparent 0deg,var(--accent) 140deg,transparent 300deg)}
+.dic.cc .ds-node.flow::after{background:linear-gradient(90deg,transparent,var(--accent),transparent) 0 0/200% 100%,var(--line-3)}
+.dic.cc .ds-meter i{background:var(--accent)}
+.dic.cc .ds-bridge-l i:nth-child(2),.dic.cc .ds-dots i:nth-child(3){background:var(--accent);box-shadow:none}
+.dic.cc .ds-hero h2 span{animation:none}
+.dic.cc .ds-headline.ai::after{display:none}
+
+/* opening a dataset: a skeleton in the shape of the page, not a spinner in an empty card */
+.dic .ds-loading-sk{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px}
+.dic .ds-loading-sk .sk-head{flex:none;min-height:44px;width:55%}
+.dic .ds-loading-sk .sk-tabs{flex:none;min-height:28px;width:40%}
+.dic .ds-loading-sk .sk-brief{flex:none;min-height:220px}
+.dic .ds-loading-sk .sk-row{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dic .ds-loading-sk .sk-row.two{flex:1;grid-template-columns:1fr 1fr}
+.dic .ds-loading-sk .sk-row .ds-skel{min-height:84px}
+.dic .ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.dic .ds-skel{animation:none}}

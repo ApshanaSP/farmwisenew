@@ -91,15 +91,28 @@ def alias_pattern(alias: str, block_suffixes: Iterable[str] = ()) -> str:
     if not tokens:
         raise ValueError(f"Empty alias: {alias!r}")
     if is_tamil(alias):
-        lookahead = ""
-        if tokens[-1].endswith(_PULLI) and len(tokens[-1]) > 1:
-            tokens[-1] = tokens[-1][:-1]
-            lookahead = f"(?=[{_TAMIL_MARKS}])"
         blocks = "".join(f"(?!{re.escape(s)})" for s in block_suffixes)
-        body = _FLEX_SEP.join(re.escape(t) for t in tokens)
-        return f"(?<![{TAMIL_BLOCK}]){body}{lookahead}{blocks}"
+        head = _FLEX_SEP.join(re.escape(t) for t in tokens[:-1])
+        head = head + _FLEX_SEP if head else ""
+        return f"(?<![{TAMIL_BLOCK}]){head}{_tamil_last(tokens[-1])}{blocks}"
     body = _FLEX_SEP.join(re.escape(t) for t in tokens)
     return rf"(?<![A-Za-z0-9]){body}(?![A-Za-z0-9])"
+
+
+def _tamil_last(word: str) -> str:
+    """The last word of a Tamil alias with its inflected forms (Tamil case endings change the end of the stem):
+    -ம் -> -த்த-   பட்டினப்பாக்கம் -> பட்டினப்பாக்கத்தில் ("in Pattinapakkam"), மாம்பலத்தில்
+    -டு -> -ட்ட-   கோயம்பேடு -> கோயம்பேட்டில்
+    -று -> -ற்ற-   (the same doubling)
+    other pulli endings: the pulli is replaced by a vowel sign (மயிலாப்பூர் -> மயிலாப்பூரில்)."""
+    if len(word) > 2 and word.endswith("ம" + _PULLI):
+        return f"{re.escape(word[:-2])}(?:ம(?=[{_TAMIL_MARKS}])|த{_PULLI}(?=த))"
+    for c in ("ட", "ற"):
+        if len(word) > 2 and word.endswith(c + "ு"):
+            return f"{re.escape(word[:-2])}(?:{c}ு|{c}{_PULLI}{c})"
+    if word.endswith(_PULLI) and len(word) > 1:
+        return f"{re.escape(word[:-1])}(?=[{_TAMIL_MARKS}])"
+    return re.escape(word)
 
 
 class Gazetteer:

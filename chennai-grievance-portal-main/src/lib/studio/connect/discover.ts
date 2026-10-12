@@ -72,8 +72,12 @@ function safeParse(buf: Buffer, name: string, ct: string, base: string): Table |
   try { return parseFile(buf, name, ct, base); } catch { return null; }
 }
 
+/** JSON a page loads that is never its data: map tiles and styles, social embeds, analytics, ads, consent, fonts. */
+const NOT_DATA = /\/maps\/vt|\/vt\/|tiles?[./]|mapbox|arcgis.*\/(tile|basemap)|openstreetmap|google(apis|tagmanager|-analytics|syndication)|doubleclick|facebook|twitter|x\.com|tweet|syndication|youtube|instagram|linkedin|analytics|gtag|hotjar|clarity\.ms|recaptcha|consent|cookie|fonts?\.|translate/i;
+
 /** Arrays of records inside a JSON answer (the data a dashboard loads), as tables. */
 function jsonTables(c: Captured): Table[] {
+  if (NOT_DATA.test(c.url)) return [];
   let doc: unknown;
   try { doc = JSON.parse(c.text); } catch { return []; }
   const found: unknown[][] = [];

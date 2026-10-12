@@ -31,6 +31,8 @@ import "./civic.css";
 import "./marina.css";
 import "./news.css";
 import "./action.css";
+import "./command.css";
+import "./command-bold.css";
 
 // The assistant loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
@@ -157,6 +159,16 @@ function loadLayout(): Layout {
     if (l?.pages && l?.panels && Array.isArray(l?.kpis)) return normalizeLayout(l);
   } catch { /* storage unavailable */ }
   return DEFAULT_LAYOUT;
+}
+
+
+/** The cards' soft accent light follows the cursor (command-bold.css reads --mx/--my). Visual only. */
+function spotlight(e: React.PointerEvent<HTMLDivElement>) {
+  const card = (e.target as HTMLElement).closest<HTMLElement>(".card, .bb-card");
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  card.style.setProperty("--my", `${e.clientY - r.top}px`);
 }
 
 export default function CollectorApp({ initial, allDepts, user }: {
@@ -550,8 +562,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
-      onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
+    <div className={`dic cc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
+      onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
+      onPointerMove={spotlight}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0B7290" /><stop offset="1" stopColor="#7FD3E6" /></linearGradient></defs>
       </svg>

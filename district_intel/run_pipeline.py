@@ -7,6 +7,8 @@
   python run_pipeline.py watch --every 15 loop: refresh what is due every N minutes, rebuild when inputs change
   python run_pipeline.py mysql            copy the last build into MySQL (databases district_intel and district_intel_ops)
   python run_pipeline.py link-labels --n 150   add real news-record pairs to reference/labels/link_pair_labels.csv for marking
+  python run_pipeline.py news-labels           write news place and same-event samples to mark (reference/labels/*.new.csv)
+  python run_pipeline.py news-eval             news places and same-event grouping: before vs after, cross-validated
 
 The existing collectors keep their own fetching methods; this only calls their
 command lines (see `refresh:` in config.yaml) and reads their output files.
@@ -233,7 +235,8 @@ def _train_news_local(settings, args) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql", "label-news", "train-news", "train-news-local", "link-labels"])
+    ap.add_argument("command", choices=["build", "refresh", "watch", "mysql", "label-news", "train-news", "train-news-local", "link-labels",
+                                            "news-labels", "news-eval"])
     ap.add_argument("--n", type=int, default=150, help="link-labels: real news-record pairs to add for marking")
     ap.add_argument("--minutes", type=float, default=60, help="label-news: time budget for LLM calls")
     ap.add_argument("--limit", type=int, default=2500, help="label-news: label the newest N articles")
@@ -282,6 +285,16 @@ def main() -> None:
     if args.command == "link-labels":
         from dintel.linking import make_label_set
         print(json.dumps(make_label_set(settings.path(settings.raw["output"]["sqlite"]), args.n), indent=1))
+    elif args.command == "news-labels":
+        from dintel import newseval
+        out = settings.path("district_intel/reference/labels")
+        newseval.place_sample(settings, n=args.n).to_csv(out / "news_place_labels.new.csv", index=False, encoding="utf-8-sig")
+        newseval.pair_sample(settings, n=args.n).to_csv(out / "news_pair_labels.new.csv", index=False, encoding="utf-8-sig")
+        print(f"wrote {out}/news_place_labels.new.csv and news_pair_labels.new.csv: fill event_place / same, then add the rows "
+              "to news_place_labels.csv / news_pair_labels.csv")
+    elif args.command == "news-eval":
+        from dintel import newseval
+        print(json.dumps(newseval.report(settings), indent=1, default=str, ensure_ascii=False))
     elif args.command == "label-news":
         _label_news(settings, args)
     elif args.command == "train-news":

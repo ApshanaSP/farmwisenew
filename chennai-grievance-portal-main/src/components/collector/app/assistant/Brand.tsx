@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Ask District IQ's identity: the District IQ kolam "D" on the AI gradient (coral) with a sparkle for the
- * live node. Coral is reserved for AI, so this mark only ever means "the assistant". Used on the launcher, the panel
- * header, the empty state and beside each answer.
+ * Ask District IQ's identity: the District IQ kolam "D" on the AI colour (--ai: coral, or the ocean accent in the
+ * Collector's Command Centre look) with a sparkle for the live node. Used on the launcher, the panel header, the empty
+ * state and beside each answer.
  */
 import { useId } from "react";
 
@@ -13,8 +13,8 @@ export function BrandMark({ size = 32, className = "" }: { size?: number; classN
     <svg className={`aq-mark ${className}`} width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id={g} x1="3" y1="2" x2="37" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FF7A5C" />
-          <stop offset="1" stopColor="#F0525A" />
+          <stop offset="0" style={{ stopColor: "var(--ai, #E5533A)" }} />
+          <stop offset="1" style={{ stopColor: "var(--ai-2, #C9432C)" }} />
         </linearGradient>
       </defs>
       <rect x="1" y="1" width="38" height="38" rx="11" fill={`url(#${g})`} />

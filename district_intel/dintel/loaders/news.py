@@ -21,7 +21,7 @@ from sklearn.linear_model import LogisticRegression
 from scipy.sparse import csr_matrix, hstack
 from sklearn.model_selection import StratifiedKFold
 
-from .. import embed
+from .. import embed, eventmatch, placerole
 from .. import severity as sev
 from .. import textproc as tp
 from ..refdata import Reference
@@ -347,26 +347,33 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     E = embed.encode((d["title"].fillna("") + ". " + d["summary"].fillna("").str.slice(0, 300)).tolist())
     gate_eval = _classify(settings, ref, d, text, E)
 
-    # ---- 8. places (most specific first-mentioned), casualties
+    # ---- 8. places: where the event happened (dintel/placerole.py: each mention's role -> event place), casualties
     rf, gaz, entries = build_gazetteer(settings, extra_places)
     mentions = MentionCache(rf, gaz, entries)
     order = {"locality": 0, "zone": 1, "taluk": 2, "district": 3}
-    places, ptxt, lat, lon, level, conf = [], [], [], [], [], []
+    found = []
     for t in text:
         ms = mentions.find(t)
-        named = [m for m in ms if m.place.category != "district"]
         has_anchor = any(not m.place.requires_context for m in ms)
-        named = [m for m in named if not m.place.requires_context or has_anchor]
+        found.append([m for m in ms if m.place.category != "district" and (not m.place.requires_context or has_anchor)])
+    mentions.save()
+    tlen = d["title"].fillna("").str.len().tolist()
+    role_model, how = placerole.model_for(list(zip(d["doc_id"], text, tlen, found)))
+    places, ptxt, lat, lon, level, conf, roles = [], [], [], [], [], [], []
+    for t, n, named in zip(text, tlen, found):
         places.append("|".join(dict.fromkeys(m.place.name for m in named)))
-        if named:
-            best = sorted(named, key=lambda m: (order[m.place.category], m.start))[0]
-            ptxt.append(best.place.name); lat.append(best.place.latitude); lon.append(best.place.longitude)
-            level.append(best.place.category); conf.append(GEO_CONF[best.place.category])
-        else:
+        ev, scored = placerole.decide(placerole.mention_rows(t, n, named), role_model)
+        roles.append(placerole.roles_json(scored, ev))
+        if ev is not None:
+            ptxt.append(ev.name); lat.append(ev.lat); lon.append(ev.lon)
+            level.append(ev.category); conf.append(round(GEO_CONF[ev.category] * (0.5 + ev.p / 2), 3))
+        else:  # no place where it happened (only "Chennai", many areas, a route, a hospital or someone's home town)
             ptxt.append("Chennai"); lat.append(13.0827); lon.append(80.2707); level.append("district"); conf.append(GEO_CONF["district"])
     d["places"], d["place_text"], d["lat"], d["lon"], d["geo_level"], d["geo_conf"] = places, ptxt, lat, lon, level, conf
-    d["geo_method"] = "gazetteer"
-    mentions.save()
+    d["place_roles"] = roles
+    d["geo_method"] = "gazetteer+role"
+    log.info("news places: event place by role (%s model); %d of %d reports placed below district level",
+             how, int((d["geo_level"] != "district").sum()), len(d))
     _ai_places(d, rf, gaz, order)
     cas = [tp.casualties(t) for t in text]
     # the LLM's counts (read in context) where it gave them, else the pattern counts
@@ -378,17 +385,27 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
     from .. import newsllm
     en = newsllm.translate(settings, d)
     d["title_en"] = np.where(d["lang"] == "ta", d["doc_id"].map(en), np.where(d["lang"] == "en", d["title"], None))
-    if E is not None:
+    # same event across languages and headlines (dintel/eventmatch.py: bge-m3 -> reranker -> pair model -> LLM for
+    # unsure pairs -> constrained grouping); the older e5 + translation matching when bge-m3 is not installed
+    merged = None
+    try:
+        merged = eventmatch.run(settings, d, (d["is_district"] == 1).to_numpy(),
+                                rerank_budget_s=float(settings.raw.get("news_llm", {}).get("rerank_seconds", 1200)))
+    except Exception as exc:  # a model problem must never stop the build
+        log.warning("same-event grouping failed (%s); using the older matching", exc)
+    if merged is None and E is not None:
         has_en = d["title_en"].notna().to_numpy()
         E_en = embed.encode(d.loc[has_en, "title_en"].astype(str).tolist()) if has_en.any() else None
         merged = _embed_stories(d, E, E_en, has_en)
-        log.info("news: embedding story merges %s", merged)
+    if merged is not None:
+        log.info("news: story merges %s", merged)
         gate_eval["story_merges"] = merged
         d = d.sort_values("published_at")
         d["story_role"] = np.where(d.groupby("story_id").cumcount() == 0, "first_report", "follow_up")
         d["outlet_count"] = d.groupby("story_id")["publisher"].transform("nunique")
         d = d.sort_index()
 
+    d = d.drop(columns=["_match_text"], errors="ignore")
     d["source_kind"] = "news"
     d["_text"] = text
     return {"documents": d, "raw_rows": raw_rows, "unique_urls": unique_urls, "snapshot": snap, "gate_eval": gate_eval}

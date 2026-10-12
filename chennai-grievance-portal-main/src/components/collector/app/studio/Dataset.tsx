@@ -95,7 +95,10 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
   }, [id, c, refresh]);
 
   if (err && !data) return <section className="ds-ws card ds-span"><div className="ds-empty"><I n="alert" /><b>{err}</b><button className="ds-btn" onClick={refresh}>Try again</button></div></section>;
-  if (!data) return (<><section className="ds-ws card"><div className="ds-loading"><span className="ds-spin" />Opening the dataset…</div></section><aside className="ds-ai-col card"><div className="ds-skel tall" /></aside></>);
+  if (!data) return (<><section className="ds-ws card"><div className="ds-loading-sk" role="status" aria-live="polite"><span className="ds-sr">Opening the dataset…</span>
+    <div className="ds-skel sk-head" /><div className="ds-skel sk-tabs" /><div className="ds-skel sk-brief" />
+    <div className="sk-row"><div className="ds-skel" /><div className="ds-skel" /><div className="ds-skel" /></div>
+    <div className="sk-row two"><div className="ds-skel" /><div className="ds-skel" /></div></div></section><aside className="ds-ai-col card"><div className="ds-skel tall" /></aside></>);
 
   const m = data.meta;
   const kpis = data.panels.filter((p) => p.chart === "kpi");

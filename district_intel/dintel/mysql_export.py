@@ -60,6 +60,8 @@ DOCUMENT_COLUMNS = {
     "ai_people": ["ai_people"], "ai_orgs": ["ai_orgs"], "ai_dead": ["ai_dead"], "ai_injured": ["ai_injured"],
     "ai_status": ["ai_status"], "ai_place": ["ai_place"], "title_en": ["title_en"], "geo_method": ["geo_method"],
     "body_status": ["body_status"],
+    # every place a report names and the role of each (where it happened, hospital, home town...)
+    "places": ["places"], "place_roles": ["place_roles"],
 }
 
 DATETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$")

@@ -1,6 +1,9 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "grievance-portal", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "chennai-grievance-portal-main", "run", "dev"], "port": 3000 }
+    { "name": "grievance-portal", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "chennai-grievance-portal-main", "run", "dev"], "port": 3000 },
+    { "name": "grievance-portal-3001", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "chennai-grievance-portal-main", "run", "dev", "--", "-p", "3001"], "port": 3001 },
+    { "name": "portal-local-build-3001", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set DATA_BACKEND=mysql&& set NEXT_DIST_DIR=.next-local&& npm --prefix chennai-grievance-portal-main run dev -- -p 3001"], "port": 3001 },
+    { "name": "studio-3002", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set NEXT_DIST_DIR=.next-studio&& npm --prefix chennai-grievance-portal-main run dev -- -p 3002"], "port": 3002 }
   ]
 }

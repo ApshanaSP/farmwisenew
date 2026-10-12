@@ -73,11 +73,22 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
   const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
     .filter(([, on]) => on).map(([k]) => k as string);
-  const grid: React.CSSProperties = {
-    gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
-    gridTemplateRows: "minmax(0,1fr)",
-    gridTemplateAreas: `"${cols.join(" ")}"`
-  };
+  // Command Centre composition: with both My Tasks and the news on, they share the right column (tasks above, news
+  // below) so the map, the centrepiece, gets the width; otherwise one row of the panels that are on.
+  const stack = cols.includes("tasks") && cols.includes("brief");
+  const left = cols.filter((k) => k !== "tasks" && k !== "brief");
+  const LW: Record<string, string> = { map: "1.62fr", sev: "1fr" };
+  const grid: React.CSSProperties = stack
+    ? {
+        gridTemplateColumns: [...left.map((k) => `minmax(0,${LW[k]})`), "minmax(0,1.08fr)"].join(" "),
+        gridTemplateRows: "minmax(0,.8fr) minmax(0,1.2fr)",
+        gridTemplateAreas: `"${[...left, "tasks"].join(" ")}" "${[...left, "brief"].join(" ")}"`
+      }
+    : {
+        gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
+        gridTemplateRows: "minmax(0,1fr)",
+        gridTemplateAreas: `"${cols.join(" ")}"`
+      };
   const LAYERS = [
     ["severe", "Severe", CAT_COL.severe, d.map.layerCounts.severe], ["complaint", "Complaints", CAT_COL.complaint, d.map.layerCounts.complaint],
     ["other", "Other", CAT_COL.other, d.map.layerCounts.other]

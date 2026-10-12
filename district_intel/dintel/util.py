@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import math
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -198,3 +199,22 @@ def setup_logging(verbose: bool = False) -> None:
     warnings.filterwarnings("ignore", category=FutureWarning)
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO,
                         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s", datefmt="%H:%M:%S")
+
+
+def full_speed() -> None:
+    """Windows runs a hidden background process (the scheduled build) in power-saving mode, on about one core; the
+    embedding and reranking models then take 4x longer. Opt this process out of execution-speed throttling
+    (SetProcessInformation, ProcessPowerThrottling). Best effort, this process only; nothing elsewhere changes."""
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+
+        class _State(ctypes.Structure):
+            _fields_ = [("Version", ctypes.c_ulong), ("ControlMask", ctypes.c_ulong), ("StateMask", ctypes.c_ulong)]
+
+        st = _State(1, 0x1, 0)  # PROCESS_POWER_THROTTLING_EXECUTION_SPEED controlled, and off
+        k32 = ctypes.windll.kernel32
+        k32.SetProcessInformation(k32.GetCurrentProcess(), 4, ctypes.byref(st), ctypes.sizeof(st))
+    except Exception:  # noqa: BLE001 - an older Windows or no permission: run as before
+        pass

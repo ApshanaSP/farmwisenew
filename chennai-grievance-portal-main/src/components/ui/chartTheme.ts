@@ -50,9 +50,18 @@ export function currentTheme(): Theme {
   return (dic?.dataset.theme ?? document.documentElement.dataset.theme) === "dark" ? "dark" : "light";
 }
 
+/** The UI font of the console the chart is drawn in (its --font-ui, resolved), so canvas text matches the page:
+ * Geist in the Collector's Command Centre look, the default elsewhere. */
+export function currentFont(): string {
+  if (typeof document === "undefined") return FONT;
+  const dic = document.querySelector<HTMLElement>(".dic");
+  const f = dic ? getComputedStyle(dic).getPropertyValue("--font-ui").trim() : "";
+  return f || FONT;
+}
+
 /** Shared option pieces: spread into an ECharts option. */
 export function chartBase(theme: Theme = currentTheme()) {
-  const p = PALETTE[theme];
+  const p = { ...PALETTE[theme], font: currentFont() };
   return {
     backgroundColor: "transparent",
     color: p.series,

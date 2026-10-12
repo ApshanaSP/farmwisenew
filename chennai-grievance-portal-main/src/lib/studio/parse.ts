@@ -386,22 +386,36 @@ export function shape(grid: Cell[][], forceHeader?: number): Omit<Table, "sheet"
   }
   const caption = grid.slice(0, h).map((r) => r.filter((c) => c != null).map(String).map(tidy).join(" · ")).filter(Boolean).join(" — ").slice(0, 240) || null;
   let headerCells = grid[h].map((c) => (c == null ? "" : tidy(c)));
-  let start = h + 1;
-  // a two-row header: the second row names the parts of a group in the first ("Amount" over "Sanctioned | Spent")
-  const next = grid[h + 1];
+  let top = h, cap = caption;
+  // a title merged across the whole width ("STATUS OF CITY MOBILE WATER SUPPLY - OCT 2016") is the table's caption: the row below is the header
+  const tops = headerCells.filter(Boolean);
+  const below = grid[h + 1];
+  if (forceHeader == null && below && tops.length >= 3 && new Set(tops).size === 1
+    && filled(below) >= Math.ceil(width * 0.3) && below.filter(isText).length >= Math.ceil(filled(below) * 0.6)) {
+    cap = [caption, tops[0]].filter(Boolean).join(" — ").slice(0, 240);
+    top = h + 1;
+    headerCells = below.map((c) => (c == null ? "" : tidy(c)));
+  }
+  let start = top + 1;
+  // a two-row header: the second row names the parts of a group in the first ("Amount" over "Sanctioned | Spent", "Area-I" over "16 KL | 9 KL | 6 KL")
+  const next = grid[top + 1];
   if (next && forceHeader == null) {
     const nf = filled(next), nt = next.filter(isText).length;
     const grouped = next.filter((c, i) => isText(c) && (headerCells[i] === "" || (i > 0 && headerCells[i] === headerCells[i - 1]))).length;
-    const after = grid.slice(h + 2, h + 7);
+    const after = grid.slice(top + 2, top + 7);
     if (nf >= Math.ceil(width * 0.3) && nt >= Math.ceil(nf * 0.8) && grouped >= 2 && after.some((x) => filled(x) >= Math.ceil(width * 0.4))) {
-      headerCells = headerCells.map((top, i) => {
+      headerCells = headerCells.map((head, i) => {
         const sub = next[i] == null ? "" : tidy(next[i]);
-        return top && sub && top !== sub ? `${top} ${sub}` : sub || top;
+        return head && sub && head.replace(/s+/g, " ") !== sub.replace(/s+/g, " ") ? `${head} ${sub}` : sub || head;
       });
-      start = h + 2;
+      start = top + 2;
     }
   }
-  const body = grid.slice(start);
+  return shapeFrom(headerCells, grid.slice(start), cap);
+}
+
+/** Headers and body as a table: empty columns dropped, repeated names numbered, the row cap applied. */
+function shapeFrom(headerCells: string[], body: Cell[][], caption: string | null): Omit<Table, "sheet" | "sheets" | "format"> {
   const ncol = Math.min(MAX_COLS, Math.max(headerCells.length, ...body.slice(0, 200).map((r) => r.length)));
   // columns with neither a header nor any value are dropped
   const keep: number[] = [];

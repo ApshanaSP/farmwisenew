@@ -23,6 +23,18 @@ def test_tamil_inflected_pulli_ending(relevance, gazetteer):
     assert names == ["Mylapore"]
 
 
+def test_tamil_inflected_am_ending(gazetteer):
+    # பட்டினப்பாக்கம் -> பட்டினப்பாக்கத்தில் ("in Pattinapakkam"): -ம் becomes -த்த- before a case ending.
+    names = [m.place.name for m in gazetteer.find_mentions("சென்னை பட்டினப்பாக்கத்தில் மீனவர்கள் ஆர்ப்பாட்டம்")]
+    assert names == ["Chennai", "Pattinapakkam"]
+    assert [m.place.name for m in gazetteer.find_mentions("பட்டினப்பாக்கம் கடற்கரை")] == ["Pattinapakkam"]
+
+
+def test_tamil_inflected_doubling(gazetteer):
+    # கோயம்பேடு -> கோயம்பேட்டில் ("in Koyambedu"): -டு doubles to -ட்ட-.
+    assert [m.place.name for m in gazetteer.find_mentions("கோயம்பேட்டில் காய்கறி விலை")] == ["Koyambedu"]
+
+
 def test_rejects_unrelated(relevance):
     result = relevance.evaluate("Coimbatore corporation opens new bus stand")
     assert not result.is_relevant and result.reason == "no_gazetteer_mention"

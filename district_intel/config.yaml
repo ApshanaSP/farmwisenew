@@ -120,6 +120,11 @@ news_llm:
   translate_days: 3
   translate_batch: 30
   translate_minutes: 2
+  # same event across Tamil/English and headlines (dintel/eventmatch.py): reranker time per build (scores are cached,
+  # so a build only reads new pairs; incident and Tamil-English pairs first), and the LLM check of unsure pairs
+  rerank_seconds: 600
+  same_event_minutes: 2
+  same_event_max_pairs: 200
 
 news_fulltext:
   # Google News items carry only a headline. dintel/fulltext.py finds the same article in the publisher's own news

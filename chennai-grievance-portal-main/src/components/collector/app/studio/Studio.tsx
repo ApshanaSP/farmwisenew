@@ -18,6 +18,7 @@ import Hero from "./Hero";
 import Dataset from "./Dataset";
 import Connect, { type ConnectRequest } from "./Connect";
 import "./studio.css";
+import "./studio-command.css";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
 const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });

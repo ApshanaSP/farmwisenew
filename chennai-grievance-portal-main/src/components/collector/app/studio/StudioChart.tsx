@@ -14,11 +14,13 @@ import { CanvasRenderer } from "echarts/renderers";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import { fmtNum, type PanelData } from "@/lib/studio/types";
 import { useInk, type Ink } from "./client";
+import { currentFont } from "@/components/ui/chartTheme";
 
 echarts.use([BarChart, LineChart, PieChart, TreemapChart, GraphicComponent, GridComponent, LegendComponent, MarkPointComponent, TooltipComponent, AriaComponent,
   LabelLayout, UniversalTransition, CanvasRenderer]);
 
-const FONT = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif';
+// the console's own UI font (Geist in the Collector), resolved each time a chart's option is built
+const font = () => currentFont();
 const grad = (a: string, b: string, horizontal = false) =>
   new echarts.graphic.LinearGradient(0, horizontal ? 0 : 1, horizontal ? 1 : 0, 0, [{ offset: 0, color: a }, { offset: 1, color: b }]);
 const alpha = (hex: string, a: number) => {
@@ -77,11 +79,11 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
   const fs = compact ? 10.5 : 11.5;
   const common = {
     animationDuration: 700, animationDurationUpdate: 420, animationEasing: "cubicOut" as const,
-    textStyle: { fontFamily: FONT, color: ink.text2 },
+    textStyle: { fontFamily: font(), color: ink.text2 },
     aria: { enabled: true, label: { description: `${p.title}: ${p.labels.slice(0, 5).map((l, i) => `${l} ${f(p.values[i])}`).join(", ")}` } },
     tooltip: {
       confine: true, backgroundColor: ink.elev, borderColor: ink.line, borderWidth: 1, padding: [8, 11],
-      textStyle: { color: ink.text, fontSize: 12.5, fontFamily: FONT },
+      textStyle: { color: ink.text, fontSize: 12.5, fontFamily: font() },
       extraCssText: "border-radius:10px;box-shadow:0 18px 40px -14px rgba(0,0,0,.55);font-variant-numeric:tabular-nums"
     }
   };
@@ -95,7 +97,7 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
         ...common,
         series: [{ type: "treemap", roam: false, nodeClick: false, breadcrumb: { show: false }, top: 0, left: 0, right: 0, bottom: 0,
           itemStyle: { borderColor: ink.surface, borderWidth: 2, gapWidth: 2, borderRadius: 7 },
-          label: { show: true, fontFamily: FONT, color: "#fff", fontSize: fs, overflow: "truncate",
+          label: { show: true, fontFamily: font(), color: "#fff", fontSize: fs, overflow: "truncate",
             formatter: (x: { name: string; value: number }) => `{n|${x.name}}\n{v|${fl(x.value)}}`, rich: { n: { fontSize: fs, color: "rgba(255,255,255,.9)" }, v: { fontSize: fs + 3, fontWeight: 700, color: "#fff", lineHeight: 20 } } },
           data: p.labels.map((name, i) => ({ name, value: p.values[i], itemStyle: { color: grad(alpha(colors[i % 6], 0.95), alpha(colors[i % 6], 0.7)) } })) }],
         tooltip: { ...common.tooltip, formatter: (x: { name: string; value: number }) => `${x.name}<br><b>${f(x.value)}</b> · ${total ? Math.round((x.value / total) * 100) : 0}%` }
@@ -106,8 +108,8 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
       legend: compact ? undefined : { orient: "vertical", right: 4, top: "middle", icon: "circle", itemWidth: 8, itemHeight: 8, itemGap: 9,
         textStyle: { color: ink.text2, fontSize: fs }, formatter: (name: string) => { const i = p.labels.indexOf(name); return `${name.length > 18 ? name.slice(0, 17) + "…" : name}  ${total ? Math.round((p.values[i] / total) * 100) : 0}%`; } },
       graphic: [{ type: "group", left: compact ? "center" : "27%", top: "middle", bounding: "raw", children: [
-        { type: "text", style: { text: fl(total), x: 0, y: -10, fontSize: compact ? 16 : 20, fontWeight: 700, fill: ink.text, fontFamily: FONT, textAlign: "center", textVerticalAlign: "middle" } },
-        { type: "text", style: { text: "total", x: 0, y: 12, fontSize: 11, fill: ink.text3, fontFamily: FONT, textAlign: "center", textVerticalAlign: "middle" } }] }],
+        { type: "text", style: { text: fl(total), x: 0, y: -10, fontSize: compact ? 16 : 20, fontWeight: 700, fill: ink.text, fontFamily: font(), textAlign: "center", textVerticalAlign: "middle" } },
+        { type: "text", style: { text: "total", x: 0, y: 12, fontSize: 11, fill: ink.text3, fontFamily: font(), textAlign: "center", textVerticalAlign: "middle" } }] }],
       series: [{
         type: "pie", radius: compact ? ["52%", "78%"] : ["56%", "82%"], center: [compact ? "50%" : "28%", "50%"], padAngle: 1.5, avoidLabelOverlap: true,
         itemStyle: { borderRadius: 5, borderColor: ink.surface, borderWidth: 2 }, label: { show: false }, labelLine: { show: false },
@@ -189,7 +191,7 @@ export const PairChart = memo(function PairChart({ pairs, dsLabel, incLabel, hei
     const top = [...pairs].sort((a, b) => b.ds - a.ds).slice(0, 8);
     const A = ink.viz[0], C = ink.high;
     return {
-      animationDuration: 800, animationDelay: (i: number) => i * 40, textStyle: { fontFamily: FONT, color: ink.text2 },
+      animationDuration: 800, animationDelay: (i: number) => i * 40, textStyle: { fontFamily: font(), color: ink.text2 },
       legend: { top: 0, left: 0, icon: "roundRect", itemWidth: 10, itemHeight: 6, textStyle: { color: ink.text2, fontSize: 10.5 }, data: [cap(dsLabel), cap(incLabel)] },
       grid: { left: 2, right: 6, top: 24, bottom: 2, containLabel: true },
       xAxis: { type: "category", data: top.map((p) => p.name), axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } },
@@ -199,7 +201,7 @@ export const PairChart = memo(function PairChart({ pairs, dsLabel, incLabel, hei
         { name: cap(dsLabel), type: "bar", barWidth: 7, data: top.map((p) => p.ds), itemStyle: { color: grad(alpha(A, 0.6), A), borderRadius: [4, 4, 0, 0] } },
         { name: cap(incLabel), type: "bar", yAxisIndex: 1, barWidth: 7, data: top.map((p) => p.inc), itemStyle: { color: grad(alpha(C, 0.55), C), borderRadius: [4, 4, 0, 0] } }
       ],
-      tooltip: { trigger: "axis", confine: true, backgroundColor: ink.elev, borderColor: ink.line, textStyle: { color: ink.text, fontSize: 12, fontFamily: FONT } }
+      tooltip: { trigger: "axis", confine: true, backgroundColor: ink.elev, borderColor: ink.line, textStyle: { color: ink.text, fontSize: 12, fontFamily: font() } }
     } as echarts.EChartsCoreOption;
   }, [pairs, dsLabel, incLabel, ink]);
   return <div ref={box} style={{ height }}>{option && <ReactEChartsCore echarts={echarts} option={option} notMerge style={{ height: "100%", width: "100%" }} />}</div>;
@@ -214,7 +216,7 @@ export const TimeChart = memo(function TimeChart({ series, dsLabel, incLabel, he
     const A = ink.viz[0], C = ink.high;
     const lbl = (w: string) => `${Number(w.slice(8, 10))} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(w.slice(5, 7)) - 1]}`;
     return {
-      animationDuration: 1200, textStyle: { fontFamily: FONT, color: ink.text2 },
+      animationDuration: 1200, textStyle: { fontFamily: font(), color: ink.text2 },
       legend: { top: 0, left: 0, icon: "roundRect", itemWidth: 10, itemHeight: 4, textStyle: { color: ink.text2, fontSize: 10.5 }, data: [cap(dsLabel), cap(incLabel)] },
       grid: { left: 2, right: 6, top: 22, bottom: 2, containLabel: true },
       xAxis: { type: "category", data: series.map((s) => lbl(s.week)), boundaryGap: false, axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } }, axisLabel: { color: ink.text3, fontSize: 9.5 } },
@@ -223,7 +225,7 @@ export const TimeChart = memo(function TimeChart({ series, dsLabel, incLabel, he
         { name: cap(dsLabel), type: "line", smooth: 0.35, showSymbol: false, data: series.map((s) => s.ds), lineStyle: { width: 2.2, color: A }, areaStyle: { color: grad(alpha(A, 0), alpha(A, 0.28)) } },
         { name: cap(incLabel), type: "line", yAxisIndex: 1, smooth: 0.35, showSymbol: false, data: series.map((s) => s.inc), lineStyle: { width: 2, color: C, type: "dashed" } }
       ],
-      tooltip: { trigger: "axis", confine: true, backgroundColor: ink.elev, borderColor: ink.line, textStyle: { color: ink.text, fontSize: 12, fontFamily: FONT } }
+      tooltip: { trigger: "axis", confine: true, backgroundColor: ink.elev, borderColor: ink.line, textStyle: { color: ink.text, fontSize: 12, fontFamily: font() } }
     } as echarts.EChartsCoreOption;
   }, [series, dsLabel, incLabel, ink]);
   return <div ref={box} style={{ height }}>{option && <ReactEChartsCore echarts={echarts} option={option} notMerge style={{ height: "100%", width: "100%" }} />}</div>;

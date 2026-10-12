@@ -12,7 +12,8 @@
  */
 import { credentialsFor } from "@/lib/studio/connect/vault";
 import { visit, type Visit } from "@/lib/studio/connect/browser";
-import { discover, isHtml, jsShell, type Found } from "@/lib/studio/connect/discover";
+import { discover, isHtml, jsShell, scoreTable, type Found } from "@/lib/studio/connect/discover";
+import { adapterFor } from "@/lib/studio/connect/adapters";
 import { robotsAllow } from "@/lib/studio/connect/robots";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
 import type { AuthInput } from "@/lib/studio/types";
@@ -34,6 +35,15 @@ const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./,
 
 export async function connectLink(url: string, auth: AuthInput, opts: { session?: string | null; log: (t: string) => void }): Promise<Connected> {
   const log = opts.log;
+  // a site whose data sits behind its own open API (AGMARKNET): read through that API, as the site itself does
+  const adapter = auth.mode === "none" ? adapterFor(url) : null;
+  if (adapter) {
+    log(`${host(url)} serves its data through an open API: reading it there.`);
+    const a = await adapter(log);
+    const { score, why } = scoreTable(a.table, "api");
+    const found: Found[] = [{ cand: { id: "api-1", kind: "api", label: a.label, rows: a.table.rows.length, cols: a.table.headers.length, headers: a.table.headers.slice(0, 30), score, why }, table: a.table }];
+    return { buf: a.raw, name: `${host(url)}.json`, contentType: "application/json", url: a.url, method: "http", found, session: null, signedIn: "none" };
+  }
   const browserFirst = auth.mode === "login" || auth.mode === "manual";
   const cred = credentialsFor(url, auth);
 

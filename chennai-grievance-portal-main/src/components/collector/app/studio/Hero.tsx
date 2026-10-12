@@ -61,14 +61,14 @@ function Constellation() {
       <svg viewBox="0 0 400 400">
         <defs>
           <radialGradient id="dsCore" cx="50%" cy="50%" r="50%">
-            <stop offset="0" stopColor="#A5B4FC" stopOpacity=".95" />
-            <stop offset=".55" stopColor="#6366F1" stopOpacity=".55" />
-            <stop offset="1" stopColor="#6366F1" stopOpacity="0" />
+            <stop offset="0" stopColor="#74D6EA" stopOpacity=".9" />
+            <stop offset=".55" stopColor="#0B7290" stopOpacity=".5" />
+            <stop offset="1" stopColor="#0B7290" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="dsSpoke" x1="0" x2="1">
             <stop offset="0" stopColor="#38BDF8" stopOpacity="0" />
             <stop offset=".5" stopColor="#38BDF8" stopOpacity=".9" />
-            <stop offset="1" stopColor="#A78BFA" stopOpacity="0" />
+            <stop offset="1" stopColor="#18A7BC" stopOpacity="0" />
           </linearGradient>
         </defs>
         <circle cx={cx} cy={cy} r={R} className="ds-orbit" />

@@ -16,7 +16,7 @@ import { AriaComponent, DataZoomComponent, GraphicComponent, GridComponent, Lege
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
 import ReactEChartsCore from "echarts-for-react/lib/core";
-import { PALETTE, currentTheme, type Theme } from "@/components/ui/chartTheme";
+import { PALETTE, currentFont, currentTheme, type Theme } from "@/components/ui/chartTheme";
 import { chartView, fmtValue, type ChartView } from "@/lib/assistant/chartspec";
 import type { ChartSpec, Dataset } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
@@ -34,7 +34,7 @@ function applyChartTheme(theme: Theme) {
   SERIES = p.series.slice(0, 4);
   INK = { primary: p.text, secondary: p.text2, muted: p.text3, grid: p.grid, axis: p.axis };
   HIGHLIGHT = p.series[0]; MUTED = p.muted; PREV = p.prev; ROSE = p.rose; FELL = p.fell; TRACK = p.track; SURFACE = p.surface;
-  SEVERITY = p.severity; FONT = p.font; TIP_BG = p.tooltipBg; TIP_LINE = p.tooltipLine;
+  SEVERITY = p.severity; FONT = currentFont(); TIP_BG = p.tooltipBg; TIP_LINE = p.tooltipLine;
 }
 applyChartTheme("dark");
 

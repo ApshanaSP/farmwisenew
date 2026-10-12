@@ -1,0 +1,204 @@
+/* =====================================================================================================================
+   COMMAND CENTRE: the last visual layer for the Collector console only (after marina.css, news.css, action.css;
+   everything is scoped to .dic.cc, the Collector's root, so the officer console and the citizen portal are untouched). Calm, premium operations look: the page header sits on the page (no dark band), the counts are white
+   tiles with a hairline edge, rows inside a card are flat (no card in a card), ONE accent (deep ocean), severity colours
+   only where they mean severity. Remove this file's import to return to Marina. Tokens: tokens.css.
+   ===================================================================================================================== */
+
+/* ---------------- tokens for the Collector: Geist type, ONE accent (AI uses it too), tighter radii, flatter depth ---------------- */
+.dic.cc,:root[data-theme="light"] .dic.cc,.dic.cc[data-theme="light"]{
+  --font-ui:var(--font-geist-sans),"Geist","Noto Sans Tamil Variable","Noto Sans Tamil",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-num:var(--font-geist-sans),"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --dic-display:var(--font-ui);--dic-sans:var(--font-ui);
+  --ai:#0B7290;--ai-2:#086784;--ai-soft:#E2F2F6;--ai-line:#B3DCE6;--ai-grad:linear-gradient(180deg,#0C5F7E 0%,#0A4D69 100%);
+  --violet:var(--ai);--violet-soft:var(--ai-soft);--violet-line:var(--ai-line);
+  --r-xs:6px;--r-sm:8px;--r-md:10px;--r:12px;--r-lg:14px;
+  --shadow:0 1px 2px rgba(15,27,45,.04);
+  --glow:0 1px 2px rgba(10,61,98,.25);--ai-glow:0 6px 16px -8px rgba(10,61,98,.45)}
+:root[data-theme="dark"] .dic.cc,.dic.cc[data-theme="dark"]{
+  --ai:#3CC2DB;--ai-2:#74D6EA;--ai-soft:rgba(60,194,219,.13);--ai-line:rgba(60,194,219,.4);--ai-grad:linear-gradient(180deg,#1A8EAD 0%,#147A97 100%);
+  --shadow:inset 0 1px 0 rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.35);
+  --glow:0 1px 2px rgba(0,0,0,.5);--ai-glow:0 6px 16px -8px rgba(0,0,0,.7)}
+.dic.cc{font-family:var(--font-ui)}
+
+/* ---------------- type ---------------- */
+.dic.cc{letter-spacing:-.006em}
+.dic.cc h1,.dic.cc h2,.dic.cc h3{letter-spacing:-.02em}
+.dic.cc .tbrand b{font-weight:700;letter-spacing:-.025em}
+.dic.cc .ch h3,.dic.cc .bb-h h3{font-weight:650;font-size:14px}
+.dic.cc .kpi-l,.dic.cc .okpi-l,.dic.cc .stat-l{text-transform:none;letter-spacing:0}
+
+/* ---------------- the page header: on the page, not a dark band ---------------- */
+.dic.cc .band{
+  --band-ink:var(--text);--band-ink-2:var(--text-2);--band-ink-3:var(--text-3);
+  --band-glass:var(--surface);--band-glass-2:var(--surface-2);--band-line:var(--line);
+  --sev:#E0364A;--critical:#E0364A;--high:#E5720F;--medium:#B98B00;--low:#0E9F6E;--ok:#0E9F6E;--accent:#0B7290;--accent-2:#086784;
+  background:transparent;color:var(--text);border:0;border-radius:0;box-shadow:none;overflow:visible;padding:2px 2px 0}
+:root[data-theme="dark"] .dic.cc .band,.dic.cc[data-theme="dark"] .band{
+  --sev:#FF5C6C;--critical:#FF5C6C;--high:#FFA24C;--medium:#F2C94C;--low:#34D399;--ok:#34D399;--accent:#3CC2DB;--accent-2:#74D6EA}
+.dic.cc .band:before,.dic.cc .band:after{display:none}
+.dic.cc .band:not(.hero){padding:2px 2px 0}
+.dic.cc .band h1.roll,.dic.cc .band.hero h1.roll{font-weight:650;color:var(--text);letter-spacing:-.028em}
+.dic.cc .band.hero h1.roll{font-size:25px}
+.dic.cc .band:not(.hero) h1.roll{font-size:21px}
+.dic.cc .band-eb{color:var(--text-3);font-weight:550}
+.dic.cc .band-eb>i{color:var(--text-4)}
+
+/* the data freshness chip */
+.dic.cc .band .daily{background:var(--surface);border-color:var(--line);color:var(--text)}
+.dic.cc .band .daily:hover{background:var(--surface-2);border-color:var(--line-3)}
+.dic.cc .band .daily>span{color:var(--text);font-weight:600}
+.dic.cc .band .daily small{color:var(--text-3)}
+.dic.cc .band .daily.pend{background:var(--high-soft);border-color:var(--high-line)}
+.dic.cc .band .daily.pend small{color:var(--high)}
+
+/* filters: one quiet toolbar */
+.dic.cc .band .filters{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.dic.cc .band .filters .ui-seg{background:var(--surface-2)}
+.dic.cc .band .ui-seg button.ui-seg-o{color:var(--text-3)}
+.dic.cc .band .ui-seg button.ui-seg-o:hover{color:var(--text)}
+.dic.cc .band .ui-seg button.ui-seg-o[aria-selected="true"],.dic.cc .band .ui-seg button.ui-seg-o[aria-pressed="true"]{color:#fff}
+.dic.cc .band .ui-seg .ui-seg-pill{background:var(--accent-3);box-shadow:none}
+.dic.cc .band .fsel:hover{background:var(--surface-2)}
+.dic.cc .band .fsel .ic{color:var(--text-3)}
+.dic.cc .band .fsel select,.dic.cc .band .filters .fsel select{color:var(--text);font-weight:600;
+  background:linear-gradient(45deg,transparent 50%,var(--text-3) 50%) calc(100% - 8px) 50%/4px 4px no-repeat,linear-gradient(135deg,var(--text-3) 50%,transparent 50%) calc(100% - 4px) 50%/4px 4px no-repeat}
+.dic.cc .band .fclear,.dic.cc .band .fclear:hover{color:var(--text-2)}
+.dic.cc .band .fclear:hover{background:var(--surface-2)}
+.dic.cc .band .ui-chip{background:var(--accent-soft);color:var(--accent-2);border-color:var(--accent-line)}
+.dic.cc .band .fnote{background:var(--surface);border-color:var(--line);color:var(--text-2)}
+.dic.cc .band button.fnote:hover{background:var(--surface-2)}
+.dic.cc .band .odept-badge{background:var(--accent-soft);color:var(--accent-2);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.dic.cc .band :focus-visible{outline-color:var(--accent)}
+
+/* page 1: the counts as white tiles, the snapshot as a quiet list beside them */
+.dic.cc .hero .kpi{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--text);border-radius:var(--r)}
+.dic.cc .hero .kpi:hover{background:var(--surface);border-color:var(--line-3);transform:none;box-shadow:var(--shadow)}
+.dic.cc .hero .kpi-ic{background:color-mix(in srgb,var(--kc) 10%,var(--surface));box-shadow:none;border-radius:10px}
+.dic.cc .hero .kpi-l{color:var(--text-2);font-weight:550}
+.dic.cc .hero .kpi-note,.dic.cc .hero .kpi-d{color:var(--text-3)}
+.dic.cc .hero .kpi-n,.dic.cc .hero .kpi-n.c-sev{color:var(--text);font-weight:650;letter-spacing:-.04em}
+.dic.cc .hero .kpi-d em{background:var(--surface-2);color:var(--text-2)}
+.dic.cc .hero .kpi-d.good em{background:var(--ok-soft);color:var(--ok)}
+.dic.cc .hero .kpi-d.bad em{background:var(--critical-soft);color:var(--critical)}
+.dic.cc .hsnap .snap-t .more{background:var(--surface);border-color:var(--line);color:var(--accent-2)}
+.dic.cc .hsnap .snap-t .more .ic{color:var(--accent-2)}
+.dic.cc .hsnap .stile,.dic.cc .hero .a-snap .stile{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.dic.cc .hsnap .stile:hover:not(.static){background:var(--surface-2);border-color:var(--line-3);transform:none}
+.dic.cc .hsnap .stile small{color:var(--text-2);font-weight:550}
+.dic.cc .hsnap .stile b{color:var(--text);font-weight:650}
+.dic.cc .hsnap .officer{background:var(--surface);border:1px solid var(--line);color:var(--text)}
+.dic.cc .hsnap .officer .avatar{background:var(--accent-soft);color:var(--accent-2)}
+.dic.cc .hsnap .officer b{color:var(--text)}
+.dic.cc .hsnap .officer a{color:var(--accent-2)}
+
+/* ---------------- cards: white, hairline edge, no heavy shadow ---------------- */
+.dic.cc .card,.dic.cc .bb-card{border-radius:var(--r);box-shadow:var(--shadow)}
+.dic.cc .ch>.ic,.dic.cc .ch>svg.ic,.dic.cc .bb-h>.ic{border-radius:8px}
+
+/* rows inside a card are flat: a hairline between them, a tint on hover, the severity edge stays */
+.dic.cc .si-item,.dic.cc .a-sev .si-item,.dic.cc .task,.dic.cc .a-tasks .task{border-color:transparent;background:transparent;border-radius:var(--r-sm)}
+.dic.cc .si-item:hover,.dic.cc .task:hover{background:var(--surface-2);border-color:transparent}
+.dic.cc .si-item.need{background:linear-gradient(90deg,color-mix(in srgb,var(--critical) 6%,transparent),transparent 60%);border-color:transparent}
+.dic.cc .sevtab,.dic.cc .a-sev .sevtab{border-radius:var(--r-sm)}
+.dic.cc .task-rule{border-radius:var(--r-sm)}
+
+/* the briefing's lists (departments, developing stories, only in the news): flat rows with a hairline between */
+.dic.cc .bb-dept,.dic.cc .bb-story,.dic.cc .bb-item{margin-bottom:0;border-radius:var(--r-sm);background:transparent;border:1px solid transparent;
+  box-shadow:0 1px 0 var(--line-2)}
+.dic.cc .bb-dept:hover,.dic.cc .bb-story:hover,.dic.cc .bb-item:hover{background:var(--surface-2);border-color:transparent;box-shadow:none}
+.dic.cc .bb-depts li.on .bb-dept{background:var(--accent-soft);border-color:transparent}
+.dic.cc .bb-dic{box-shadow:none;border-radius:8px}
+
+/* small labels on tiles: sentence case, not shouted */
+.dic.cc .stile small,.dic.cc .a-snap .stile small{text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:550;color:var(--text-2)}
+
+/* ---------------- people and AI: the accent, never a second colour ---------------- */
+.dic.cc .avatar{background:var(--accent-3);color:#fff}
+.dic.cc .dot-n{background:var(--critical)}
+
+/* Ask District IQ: a compact accent button that does not sit on top of the content */
+.dic.cc .ask-fab{height:44px;min-width:44px;border-radius:22px;background:var(--accent-3);box-shadow:0 8px 20px -10px rgba(10,61,98,.6),0 0 0 1px rgba(255,255,255,.08) inset}
+.dic.cc .ask-fab:hover,.dic.cc .ask-fab:focus-visible{box-shadow:0 0 0 4px var(--accent-soft),0 8px 20px -10px rgba(10,61,98,.6)}
+.dic.cc .ask-fab .ask-badge{color:var(--accent-3)}
+.dic.cc .aq-mark,.dic.cc .aq .aq-mark{filter:none}
+
+/* ---------------- buttons: solid accent, a hairline instead of a glow ---------------- */
+.dic.cc .btn{box-shadow:none}
+.dic.cc .btn:active,.dic.cc .tbtn:active,.dic.cc .ask-fab:active{transform:translateY(1px)}
+.dic.cc .tbtn.pri{box-shadow:none}
+
+@media (prefers-reduced-motion:reduce){.dic.cc .btn:active,.dic.cc .tbtn:active,.dic.cc .ask-fab:active{transform:none}}
+
+/* =====================================================================================================================
+   BRIEFING: read top to bottom. The key points are the executive narrative (wider column, set for reading); the
+   departments and the developing stories follow. Same blocks, same order, same actions.
+   ===================================================================================================================== */
+.dic.cc .bb{grid-template-columns:minmax(0,1.38fr) minmax(0,1fr) minmax(0,1fr);gap:14px}
+.dic.cc .bb-brief .bb-body{padding:4px 22px 16px}
+.dic.cc .bb-status{border-radius:var(--r-sm);padding:7px 12px;margin:2px 0 14px;align-self:stretch}
+.dic.cc .bb-status b{font-weight:650;letter-spacing:.04em}
+.dic.cc .bb-points{gap:2px}
+.dic.cc .bb-points li{font-size:15px;line-height:1.62;color:var(--text);padding:8px 0 8px 36px;border-bottom:1px solid var(--line-2);text-wrap:pretty}
+.dic.cc .bb-points[lang="ta"] li{font-size:14px;line-height:1.7}
+.dic.cc .bb-points li:last-child{border-bottom:0}
+.dic.cc .bb-points li:before{top:9px;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font:600 12px/1 var(--font-num);font-variant-numeric:tabular-nums;
+  background:var(--accent-soft);color:var(--accent-2);box-shadow:none}
+.dic.cc .bb-points li b{font-weight:650}
+.dic.cc .bb-crit{margin-top:14px}
+.dic.cc .bb-lbl{font-weight:650;letter-spacing:.06em;color:var(--critical)}
+.dic.cc .bb-crit>div{display:flex;flex-direction:column;gap:2px}
+.dic.cc .bb-crit button{width:100%;justify-content:flex-start;border-radius:var(--r-sm);border:0;background:transparent;padding:6px 8px;font-weight:550;color:var(--text);text-align:left}
+.dic.cc .bb-crit button:hover{background:var(--critical-soft)}
+.dic.cc .bb-crit button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic.cc .bb-fact{border-radius:var(--r-sm)}
+.dic.cc .bb-h{padding:14px 18px 10px}
+.dic.cc .bb-ai{border-radius:var(--r-xs)}
+
+/* =====================================================================================================================
+   MOTION: entrance, change and feedback only. Micro 120-160ms, panels 240-320ms, entrance 420ms. Nothing loops.
+   ===================================================================================================================== */
+@keyframes cc-rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes cc-fade{from{opacity:0}}
+@keyframes cc-drawer{from{opacity:0;transform:translateX(24px)}}
+@keyframes cc-pop{from{opacity:0;transform:translate(-50%,-49%) scale(.985)}}
+
+/* a page (or a filter change that rebuilds it) assembles once: header, then the cards in reading order */
+.dic.cc .band{animation:cc-fade .32s var(--ease-out) both}
+.dic.cc .card,.dic.cc .bb-card,.dic.cc .hero .kpi,.dic.cc .hsnap .stile{animation:cc-rise .42s var(--ease-out) both;animation-delay:calc(var(--i,0) * 45ms)}
+.dic.cc .hero .kpi:nth-child(1){--i:0}.dic.cc .hero .kpi:nth-child(2){--i:1}.dic.cc .hero .kpi:nth-child(3){--i:2}.dic.cc .hero .kpi:nth-child(4){--i:3}
+.dic.cc .bb>*:nth-child(1){--i:1}.dic.cc .bb>*:nth-child(2){--i:2}.dic.cc .bb>*:nth-child(3){--i:3}
+
+/* dialogs and side panels: a short scale-fade / slide-fade, no bounce */
+.dic.cc .modal{animation:cc-pop .26s var(--ease-out)}
+.dic.cc .scrim{animation:cc-fade .24s var(--ease-out)}
+.dic.cc .drawer,.dic.cc .drw,.dic.cc .side-panel,.dic.cc .aq-overlay .aq{animation:cc-drawer .3s var(--ease-out)}
+.dic.cc .pop,.dic.cc .pal,.dic.cc .sres{animation:cc-rise .16s var(--ease-out)}
+
+/* feedback: hover and press on everything clickable, focus always visible */
+.dic.cc .card,.dic.cc .hero .kpi{transition:border-color .16s,box-shadow .16s,background-color .16s}
+.dic.cc .hero .kpi:hover{box-shadow:0 4px 14px -8px rgba(15,27,45,.22);border-color:var(--line-3)}
+.dic.cc .si-item,.dic.cc .task,.dic.cc .bb-dept,.dic.cc .bb-story,.dic.cc .bb-item,.dic.cc .brief{transition:background-color .14s,border-color .14s}
+.dic.cc .ptab{transition:color .14s,background-color .14s}
+.dic.cc .ptab-bar{transition:left .28s var(--ease-out),width .28s var(--ease-out)}
+.dic.cc button:focus-visible,.dic.cc a:focus-visible,.dic.cc select:focus-visible,.dic.cc [tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+@media (prefers-reduced-motion:reduce){
+  .dic.cc .band,.dic.cc .card,.dic.cc .bb-card,.dic.cc .hero .kpi,.dic.cc .hsnap .stile,.dic.cc .modal,.dic.cc .scrim,.dic.cc .drawer,.dic.cc .drw,
+  .dic.cc .side-panel,.dic.cc .aq-overlay .aq,.dic.cc .pop,.dic.cc .pal,.dic.cc .sres{animation:none!important}
+  .dic.cc .ptab-bar{transition:none}
+}
+
+/* =====================================================================================================================
+   MAP: the centrepiece. Calm frame, controls as one floating group, the legend as a quiet toolbar under it.
+   ===================================================================================================================== */
+.dic.cc .a-map .map-wrap{border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line)}
+.dic.cc .map-heat{border-radius:var(--r-sm);box-shadow:0 4px 14px -8px rgba(15,27,45,.35);border:1px solid var(--line)}
+.dic.cc .map-leg2{gap:6px}
+.dic.cc .map-leg2 button{border-radius:var(--r-pill);height:28px;font-weight:550;transition:background-color .14s,opacity .14s,border-color .14s}
+.dic.cc .map-leg2 button:hover{border-color:var(--line-3)}
+.dic.cc .map-leg2 button.off{opacity:.5}
+.dic.cc .map-leg2 button b{font-variant-numeric:tabular-nums;font-weight:650}
+
+/* incident view: section labels in sentence case, like every other label */
+.dic.cc .iv-t{letter-spacing:.01em;text-transform:none;font-size:12.5px;font-weight:650}
