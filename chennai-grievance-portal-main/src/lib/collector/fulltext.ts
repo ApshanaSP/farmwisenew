@@ -12,6 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { isNewsMedia } from "@/lib/collector/newsrel";
+import { safeFetch } from "@/lib/netsafe";
 
 const AGENT = "ChennaiDistrictNewsDataset"; // robots.txt token (chennai_news_pipeline/config.yaml)
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 (compatible; ChennaiDistrictNewsDataset/1.0)";
@@ -41,9 +42,10 @@ function remember(id: string, v: FullText) {
 
 async function get(url: string, ms = 12_000): Promise<string | null> {
   try {
-    const r = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "en-IN,ta;q=0.8" }, signal: AbortSignal.timeout(ms), redirect: "follow" });
-    if (!r.ok) return null;
-    return await r.text();
+    // news-site and sitemap links come from feeds: every hop must be a public address (lib/netsafe.ts)
+    const r = await safeFetch(url, { headers: { "User-Agent": UA, "Accept-Language": "en-IN,ta;q=0.8" }, timeout: ms, maxBytes: 8_000_000 });
+    if (!r.res.ok) return null;
+    return r.buf.toString("utf8");
   } catch {
     return null;
   }

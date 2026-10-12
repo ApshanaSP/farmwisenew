@@ -4,13 +4,12 @@
  *
  * Only public http(s) addresses are fetched: a name that resolves to this machine or a private network is refused (no
  * reaching into the server's own network through a pasted link), unless the host is listed in STUDIO_ALLOW_HOSTS (a
- * demo department app on this machine). Redirects are followed by hand and every hop is checked the same way; a
- * sign-in (key, password) is sent only to the host it was given for. Size and time are capped.
+ * demo department app on this machine). Redirects are followed by hand and every hop is checked the same way (the
+ * shared lib/netsafe.ts); a sign-in (key, password) is sent only to the host it was given for. Size and time are capped.
  *
  * The Studio announces itself honestly: a site that refuses it is reported as refusing, never retried in disguise.
  */
-import dns from "dns/promises";
-import net from "net";
+import { UnsafeUrlError, assertPublicUrl, safeFetch } from "@/lib/netsafe";
 import { dataLinksIn, feedLinkIn, htmlTables } from "@/lib/studio/parse";
 
 export const MAX_BYTES = 15 * 1024 * 1024;
@@ -40,15 +39,6 @@ export function directUrl(raw: string): string {
   return u.toString();
 }
 
-function privateIp(ip: string): boolean {
-  if (net.isIPv4(ip)) {
-    const [a, b] = ip.split(".").map(Number);
-    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
-  }
-  const s = ip.toLowerCase();
-  return s === "::1" || s === "::" || s.startsWith("fc") || s.startsWith("fd") || s.startsWith("fe80") || s.startsWith("::ffff:127.") || s.startsWith("::ffff:10.") || s.startsWith("::ffff:192.168.");
-}
-
 /** Hosts (host or host:port) the administrator allows although they are private: a demo department app on this PC. */
 function allowed(u: URL): boolean {
   const list = (process.env.STUDIO_ALLOW_HOSTS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
@@ -56,7 +46,17 @@ function allowed(u: URL): boolean {
 }
 
 const hostOk = new Map<string, { ok: boolean; at: number }>();
-/** Throws for anything but a public http(s) address. Used for every hop, every discovered file and every browser request. */
+/** The shared check's refusal (lib/netsafe.ts) in the Studio's words. */
+function linkErrorOf(e: unknown): unknown {
+  if (!(e instanceof UnsafeUrlError)) return e;
+  if (e.code === "private") return new LinkError("That address is on a private network and cannot be read.", "private");
+  if (e.code === "dns") return new LinkError(e.message.replace("The site", "The address").replace(" (DNS)", ""), "network");
+  if (e.code === "redirects") return new LinkError("The link redirected too many times.", "http");
+  return new LinkError(e.message.includes("user name") ? "Put the user name and password in the sign-in fields, not in the link." : "Only http and https links can be read.", "invalid");
+}
+
+/** Throws for anything but a public http(s) address (lib/netsafe.ts), or a host in STUDIO_ALLOW_HOSTS. Used for every
+ *  hop, every discovered file and every browser request. */
 export async function checkHost(u: URL) {
   if (u.protocol !== "http:" && u.protocol !== "https:") throw new LinkError("Only http and https links can be read.", "invalid");
   if (u.username || u.password) throw new LinkError("Put the user name and password in the sign-in fields, not in the link.", "invalid");
@@ -64,11 +64,13 @@ export async function checkHost(u: URL) {
   const host = u.hostname.replace(/^\[|\]$/g, "");
   const c = hostOk.get(host);
   if (c && Date.now() - c.at < 60_000) { if (!c.ok) throw new LinkError("That address is on a private network and cannot be read.", "private"); return; }
-  if (/^(localhost|.*\.local|.*\.internal)$/i.test(host)) throw new LinkError("That address is on a private network and cannot be read.", "private");
-  const ips = net.isIP(host) ? [host] : (await dns.lookup(host, { all: true }).catch(() => { throw new LinkError(`The address ${host} could not be found.`, "network"); })).map((x) => x.address);
-  const ok = ips.length > 0 && !ips.some(privateIp);
-  hostOk.set(host, { ok, at: Date.now() });
-  if (!ok) throw new LinkError("That address is on a private network and cannot be read.", "private");
+  try {
+    await assertPublicUrl(u);
+    hostOk.set(host, { ok: true, at: Date.now() });
+  } catch (e) {
+    if (e instanceof UnsafeUrlError && e.code === "private") hostOk.set(host, { ok: false, at: Date.now() });
+    throw linkErrorOf(e);
+  }
 }
 
 /** A sign-in sent with a request: headers and query parameters, only to the host they were given for. */
@@ -88,45 +90,35 @@ export function statusError(status: number, signedIn: boolean): LinkError {
   return new LinkError(`The link answered HTTP ${status}.`, "http", status);
 }
 
-/** One download: redirects followed and checked, the sign-in sent to its own host only, the size capped. */
+/** One download (lib/netsafe.ts): redirects followed and checked, the sign-in sent to its own host only, the size capped. */
 export async function fetchOnce(raw: string, cred?: Credentials | null, accept?: string, timeoutMs = 25_000): Promise<Fetched> {
   let url: URL;
   try { url = new URL(directUrl(raw)); } catch { throw new LinkError("That is not a valid link.", "invalid"); }
-  for (let hop = 0; hop < 8; hop++) {
-    await checkHost(url);
-    const mine = !!cred && url.host === cred.host;
-    const target = new URL(url);
-    if (mine && cred!.query) for (const [k, v] of Object.entries(cred!.query)) target.searchParams.set(k, v);
-    let res: Response;
-    try {
-      res = await fetch(target, { redirect: "manual",
-        headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9", Accept: accept ?? "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5", ...(mine ? cred!.headers : {}) },
-        signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
-    } catch (e) {
-      throw /timeout|abort/i.test(String(e)) ? new LinkError("The link took too long to answer.", "timeout") : new LinkError("The link could not be reached.", "network");
-    }
-    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
-      url = new URL(res.headers.get("location")!, url);
-      continue;
-    }
-    if (!res.ok) throw statusError(res.status, !!cred);
-    const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_BYTES) throw new LinkError("The file is larger than 15 MB.", "size");
-    const reader = res.body?.getReader();
-    if (!reader) throw new LinkError("The link sent nothing.", "empty");
-    const parts: Uint8Array[] = [];
-    let size = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > MAX_BYTES) { await reader.cancel(); throw new LinkError("The file is larger than 15 MB.", "size"); }
-      parts.push(value);
-    }
-    const ct = res.headers.get("content-type") ?? "";
-    return { buf: Buffer.concat(parts), name: nameOf(url, ct, res.headers.get("content-disposition") ?? ""), contentType: ct, url: url.toString(), status: res.status };
+  let got: Awaited<ReturnType<typeof safeFetch>>;
+  try {
+    got = await safeFetch(url, {
+      allow: allowed, maxHops: 8, timeout: timeoutMs, maxBytes: MAX_BYTES,
+      onTooLarge: () => new LinkError("The file is larger than 15 MB.", "size"),
+      headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9", Accept: accept ?? "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5" },
+      // the sign-in goes to the host it was given for, on whichever hop reaches it
+      prepare: (u) => {
+        if (!cred || u.host !== cred.host) return;
+        const target = new URL(u);
+        if (cred.query) for (const [k, v] of Object.entries(cred.query)) target.searchParams.set(k, v);
+        return { url: target, headers: cred.headers };
+      }
+    });
+  } catch (e) {
+    if (e instanceof LinkError) throw e;
+    if (e instanceof UnsafeUrlError) throw linkErrorOf(e);
+    throw /timeout|abort/i.test(String(e)) ? new LinkError("The link took too long to answer.", "timeout") : new LinkError("The link could not be reached.", "network");
   }
-  throw new LinkError("The link redirected too many times.", "http");
+  const { res } = got;
+  if (!res.ok) throw statusError(res.status, !!cred);
+  if (!res.body && !got.buf.length) throw new LinkError("The link sent nothing.", "empty");
+  const final = new URL(got.url);
+  const ct = res.headers.get("content-type") ?? "";
+  return { buf: got.buf, name: nameOf(final, ct, res.headers.get("content-disposition") ?? ""), contentType: ct, url: final.toString(), status: res.status };
 }
 
 export function nameOf(url: URL, ct: string, cd = ""): string {

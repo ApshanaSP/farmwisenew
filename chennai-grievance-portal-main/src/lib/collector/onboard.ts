@@ -13,8 +13,7 @@
  * Nothing is stored until the Collector approves. The approved source keeps the mapping (sources.mapping) and from
  * then on runs as a scheduled job (runDueSources) with no LLM calls: sourcemap.ts applies the stored mapping.
  */
-import dns from "dns/promises";
-import net from "net";
+import { UnsafeUrlError, assertPublicUrl, safeFetch as netFetch } from "@/lib/netsafe";
 import { z } from "zod";
 import intelPool, { ops } from "@/lib/collector/db";
 import { encryptSecret } from "@/lib/crypto";
@@ -56,53 +55,31 @@ export class OnboardError extends Error {}
 
 // ---------------------------------------------------------------- safety --
 
-function privateIp(ip: string): boolean {
-  if (ip.startsWith("::ffff:")) ip = ip.slice(7);
-  if (net.isIPv4(ip)) {
-    const [a, b] = ip.split(".").map(Number);
-    return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)
-      || (a === 100 && b >= 64 && b <= 127) || a >= 224;
-  }
-  const x = ip.toLowerCase();
-  return x === "::" || x === "::1" || x.startsWith("fc") || x.startsWith("fd") || x.startsWith("fe8") || x.startsWith("fe9") || x.startsWith("fea") || x.startsWith("feb");
-}
-
-/** Only public http(s) hosts: the server must not be pointed at its own network. */
+/** Only public http(s) hosts (lib/netsafe.ts): the server must not be pointed at its own network. */
 async function assertPublic(u: URL) {
-  if (!/^https?:$/.test(u.protocol)) throw new OnboardError("Only http and https links can be added.");
-  const host = u.hostname.replace(/^\[|\]$/g, "");
-  if (/^localhost$|\.local$|\.internal$|\.localhost$/i.test(host)) throw new OnboardError("That link points to this computer or a private network; only public sites can be added.");
-  const addrs = net.isIP(host) ? [host] : await dns.lookup(host, { all: true }).then((l) => l.map((a) => a.address))
-    .catch(() => { throw new OnboardError(`The site ${host} could not be found (DNS).`); });
-  if (addrs.some(privateIp)) throw new OnboardError("That link points to a private network address; only public sites can be added.");
+  try {
+    await assertPublicUrl(u);
+  } catch (e) {
+    if (e instanceof UnsafeUrlError) throw new OnboardError(e.message);
+    throw e;
+  }
 }
 
-/** fetch() that checks every redirect hop against assertPublic, and stops reading after MAX_BYTES. */
-async function safeFetch(url: string, init: RequestInit & { timeout?: number } = {}): Promise<{ res: Response; url: string; text: string }> {
-  let cur = url;
-  for (let hop = 0; hop < 6; hop++) {
-    await assertPublic(new URL(cur));
-    const res = await fetch(cur, { ...init, redirect: "manual", signal: AbortSignal.timeout(init.timeout ?? 20000),
+/**
+ * fetch() through the shared safe fetcher (lib/netsafe.ts): only public http(s) hosts, every redirect hop checked
+ * (no private network addresses), the sign-in kept to its own site, and reading stopped after MAX_BYTES.
+ */
+async function safeFetch(url: string, init: { method?: string; body?: BodyInit; headers?: Record<string, string>; timeout?: number } = {}):
+  Promise<{ res: Response; url: string; text: string }> {
+  try {
+    const r = await netFetch(url, { method: init.method, body: init.body, timeout: init.timeout, maxBytes: MAX_BYTES,
+      stopAtRedirect: init.method === "POST", // a login's redirect: the caller reads the cookie
       headers: { "User-Agent": UA, Accept: "application/rss+xml, application/atom+xml, application/json, text/html;q=0.9, */*;q=0.8", ...(init.headers ?? {}) } });
-    const loc = res.headers.get("location");
-    if (res.status >= 300 && res.status < 400 && loc) {
-      cur = new URL(loc, cur).toString();
-      if (init.method === "POST") return { res, url: cur, text: "" }; // a login's redirect: the caller reads the cookie
-      continue;
-    }
-    const reader = res.body?.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    if (reader) for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      size += value.length;
-      if (size > MAX_BYTES) { await reader.cancel(); break; }
-    }
-    return { res, url: cur, text: Buffer.concat(chunks).toString("utf8") };
+    return { res: r.res, url: r.url, text: r.buf.toString("utf8") };
+  } catch (e) {
+    if (e instanceof UnsafeUrlError) throw new OnboardError(e.message);
+    throw e;
   }
-  throw new OnboardError("The link redirects too many times.");
 }
 
 /** robots.txt rules for us (our agent name or "*"); allowed unless a Disallow prefix matches and no longer Allow does. */

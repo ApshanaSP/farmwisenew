@@ -15,6 +15,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
 import { applyMapping, extractRecords, nearChennai, readStored, type FetchKind } from "@/lib/collector/sourcemap";
+import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
 
 type Row = Record<string, any>;
 const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard prototype)";
@@ -95,6 +96,9 @@ export interface NewSource {
 export async function addSource(s: NewSource, actor: string) {
   const u = new URL(s.url);
   if (!/^https?:$/.test(u.protocol)) throw new Error("Only http and https links can be added.");
+  // only public sites (lib/netsafe.ts): the same check the onboarding wizard makes, before anything is stored
+  await assertPublicUrl(u);
+  if (s.loginUrl) await assertPublicUrl(new URL(s.loginUrl));
   let kind = s.kind && s.kind !== "auto" ? s.kind : null;
   if (!kind) kind = await detectKind(s.url);
   const r = await exec(
@@ -128,11 +132,11 @@ export async function removeSource(id: number, actor: string) {
 
 async function detectKind(url: string): Promise<"rss" | "html" | "json"> {
   try {
-    const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
-    const ct = r.headers.get("content-type") ?? "";
+    const r = await safeFetch(url, { headers: { "User-Agent": UA }, timeout: 20000, maxBytes: 1_000_000 });
+    const ct = r.res.headers.get("content-type") ?? "";
     if (/json/.test(ct)) return "json";
     if (/xml|rss|atom/.test(ct)) return "rss";
-    const head = (await r.text()).slice(0, 600).trimStart();
+    const head = r.buf.subarray(0, 4000).toString("utf8").slice(0, 600).trimStart();
     if (head.startsWith("{") || head.startsWith("[")) return "json";
     if (/^<\?xml|<rss|<feed/i.test(head)) return "rss";
   } catch { /* fall through: treat as a web page */ }
@@ -217,9 +221,9 @@ function cookiesFrom(res: Response): string | null {
 async function login(s: Row): Promise<string> {
   if (!s.login_url || !s.username || !s.secret_enc) throw new Error("Login details are incomplete.");
   const body = new URLSearchParams({ [s.user_field || "username"]: s.username, [s.pass_field || "password"]: decryptSecret(s.secret_enc) });
-  const r = await fetch(s.login_url, {
-    method: "POST", redirect: "manual", body,
-    headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }, signal: AbortSignal.timeout(20000)
+  const { res: r } = await safeFetch(s.login_url, {
+    method: "POST", body, stopAtRedirect: true, timeout: 20000,
+    headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }
   });
   const cookie = cookiesFrom(r);
   if (!cookie || r.status >= 400) throw new Error(`Login was refused (HTTP ${r.status}).`);
@@ -250,9 +254,10 @@ async function fetchAndIngest(s: Row) {
     if (cookie) headers.Cookie = cookie;
     if (s.auth === "basic" && s.secret_enc) headers.Authorization = "Basic " + Buffer.from(`${s.username}:${decryptSecret(s.secret_enc)}`).toString("base64");
     if (s.auth === "token" && s.secret_enc) headers.Authorization = "Bearer " + decryptSecret(s.secret_enc);
-    const r = await fetch(s.url, { headers, signal: AbortSignal.timeout(25000) });
+    // every hop checked, the sign-in kept to its own site (lib/netsafe.ts)
+    const { res: r, buf } = await safeFetch(s.url, { headers, timeout: 25000, maxBytes: 6_000_000 });
     if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
-    return { r, text: await r.text() };
+    return { r, text: buf.toString("utf8") };
   };
   let { v: res, attempts } = await withRetry(() => get(sess.cookie));
   // an expired session: log in again once and retry
