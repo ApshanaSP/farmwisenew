@@ -538,11 +538,14 @@ export function EnvPage({ d, ins, c }: { d: OverviewData; ins: Insights | null; 
   let ix = 0;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   return (
-    <section className="p2">
-      <RainCard d={d} c={c} env={env} style={iv()} />
-      <AqiCard c={c} d={d} env={env} style={iv()} />
-      <LakeCard c={c} d={d} env={env} style={iv()} />
-      <article className="card mk-card" style={{ ...iv(), gridColumn: "1 / -1" }}><MarketsCard ins={ins} c={c} /></article>
+    // conditions in a compact column on the left; the price table gets the page's full height on the right
+    <section className="p2 env2">
+      <div className="env2-col">
+        <RainCard d={d} c={c} env={env} style={iv()} />
+        <AqiCard c={c} d={d} env={env} style={iv()} />
+        <LakeCard c={c} d={d} env={env} style={iv()} />
+      </div>
+      <article className="card mk-card" style={iv()}><MarketsCard ins={ins} c={c} /></article>
     </section>
   );
 }

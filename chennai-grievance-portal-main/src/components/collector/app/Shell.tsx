@@ -166,21 +166,53 @@ export function RollTitle({ text, className = "" }: { text: string; className?: 
 
 // ------------------------------------------------------------ page change --
 
-/** Pages slide in 24px from the direction of travel and fade; reduced motion: fade only. */
+/**
+ * Page change: the old page dissolves (fade + blur), the new one comes into focus, and its cards settle in one after
+ * another (`Settle`). Reduced motion: a plain fade.
+ */
 export function PageSwap({ k, dir, children, className }: { k: string; dir: number; children: ReactNode; className?: string }) {
   return (
     <AnimatePresence mode="wait" initial={false} custom={dir}>
       <motion.div key={k} id="view" className={className} custom={dir}
         variants={{
-          enter: (d: number) => ({ opacity: 0, x: 24 * d }),
-          center: { opacity: 1, x: 0, transition: { duration: T.slow, ease: EASE_OUT } },
-          exit: (d: number) => ({ opacity: 0, x: -16 * d, transition: { duration: T.fast, ease: EASE_IN_OUT } })
+          enter: (d: number) => ({ opacity: 0, y: 6, x: 6 * d, filter: "blur(10px)" }),
+          center: { opacity: 1, y: 0, x: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: EASE_OUT } },
+          exit: (d: number) => ({ opacity: 0, x: -4 * d, filter: "blur(8px)", transition: { duration: 0.2, ease: EASE_IN_OUT } })
         }}
-        initial="enter" animate="center" exit="exit">
+        initial="enter" animate="center" exit="exit"
+        onAnimationComplete={(def) => { if (def === "center") (document.getElementById("view") as HTMLElement | null)?.style.removeProperty("filter"); }}>
+        <Settle k={k} />
         {children}
       </motion.div>
     </AnimatePresence>
   );
+}
+/** Marks the page's cards so they rise into place 45ms apart (CSS `.settle`); runs once per page. */
+function Settle({ k }: { k: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const view = ref.current?.parentElement;
+    if (!view || reduced()) return;
+    settle(view);
+  }, [k]);
+  return <span ref={ref} hidden />;
+}
+/** The cards (and big tiles) under `root` rise into place one after another. */
+export function settle(root: HTMLElement, sel = ".card,.bb-card,.o-card,.kpi,.stile", gap = 45) {
+  if (reduced()) return;
+  const els = Array.from(root.querySelectorAll<HTMLElement>(sel)).filter((e) => !e.parentElement?.closest(sel)).slice(0, 18);
+  els.forEach((el, i) => {
+    el.style.animationDelay = `${i * gap}ms`;
+    el.classList.remove("settle");
+    void el.offsetWidth;
+    el.classList.add("settle");
+    el.addEventListener("animationend", function done(e) {
+      if (e.target !== el) return;
+      el.classList.remove("settle");
+      el.style.removeProperty("animation-delay");
+      el.removeEventListener("animationend", done);
+    });
+  });
 }
 
 // --------------------------------------------------------- command palette --
@@ -309,14 +341,15 @@ export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs 
 // ------------------------------------------------------------------ toasts --
 
 export interface ToastMsg { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
-/** Top-right toast stack: slides in, swipe right to dismiss. */
+/** Top-right toast stack: slides in and comes into focus, swipe right to dismiss. */
 export function ToastStack({ toasts, dismiss }: { toasts: ToastMsg[]; dismiss: (id: number) => void }) {
   return (
     <div className="toasts" role="status" aria-live="polite">
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div key={t.id} layout="position" className={`toast${t.kind === "alert" ? " alert" : ""}`}
-            initial={{ opacity: 0, x: 40, scale: 0.98 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 60, transition: { duration: T.fast } }}
+            initial={{ opacity: 0, x: 32, scale: 0.96, filter: "blur(6px)" }} animate={{ opacity: 1, x: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, x: 48, filter: "blur(4px)", transition: { duration: T.fast } }}
             transition={spring.snappy} drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={{ left: 0, right: 0.7 }}
             onDragEnd={(_, i) => { if (i.offset.x > 80) dismiss(t.id); }}>
             <I n={t.kind === "alert" ? "bell" : "checkc"} /><span>{t.msg}</span>

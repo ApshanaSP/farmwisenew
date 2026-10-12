@@ -22,17 +22,17 @@ const MONO = '"Geist Mono", ui-monospace, Menlo, Consolas, monospace';
 
 export const PALETTE: Record<Theme, ChartPalette> = {
   dark: {
-    series: ["#3CC2DB", "#74D6EA", "#FF8466", "#F2C94C", "#34D399", "#FF5C6C"],
+    series: ["#3DD68C", "#7EE6AE", "#FF8466", "#F2C94C", "#34D399", "#FF5C6C"],
     text: "#E8F1F8", text2: "#AFC2D3", text3: "#7F94A9",
     grid: "rgba(255,255,255,.05)", axis: "rgba(255,255,255,.1)",
-    surface: "#0D1C2B", tooltipBg: "rgba(16,35,58,.95)", tooltipLine: "rgba(148,190,230,.2)",
-    muted: "#4F6478", prev: "#1E3347", track: "rgba(255,255,255,.04)",
+    surface: "#0D1D15", tooltipBg: "rgba(16,37,27,.95)", tooltipLine: "rgba(150,210,175,.2)",
+    muted: "#4F6478", prev: "#1E3A2B", track: "rgba(255,255,255,.04)",
     rose: "#FFA24C", fell: "#34D399",
     severity: { Severe: "#FF5C6C", High: "#FFA24C", Medium: "#F2C94C", Low: "#8BA0B5" },
     font: FONT, mono: MONO
   },
   light: {
-    series: ["#0B7290", "#18A7BC", "#E5533A", "#E0A800", "#0E9F6E", "#E0364A"],
+    series: ["#15803D", "#2FAE66", "#E5533A", "#E0A800", "#0E9F6E", "#E0364A"],
     text: "#0F1B2D", text2: "#40506A", text3: "#64748B",
     grid: "#EDF1F6", axis: "#DDE4EC",
     surface: "#FFFFFF", tooltipBg: "rgba(255,255,255,.97)", tooltipLine: "#E0E7EF",

@@ -256,6 +256,10 @@ export function Chart({ kind, vals, labels, color = ACCENT, fmt, band }: {
   const id = `c${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const n = vals.length;
   const H = Math.max(40, H0 - 18), L = 36, R = 8, T = 8;
+  // the point under the pointer: a guide line, a ringed dot and a dark read-out that follows it
+  const [hov, setHov] = useState<number | null>(null);
+  const stroke = color;
+  let tip: { x: number; y: number } | null = null;
   const body = () => {
     if (!n || W < 60) return null;
     const mx = Math.max(...vals, band?.at ?? 0, kind === "bar" ? 0.1 : -Infinity);
@@ -291,10 +295,8 @@ export function Chart({ kind, vals, labels, color = ACCENT, fmt, band }: {
               const bw = Math.min(34, (iw / n) * 0.66);
               const h = Math.max(2, H - y(v));
               return (
-                <rect key={i} x={x(i) - bw / 2} y={H - h} width={bw} height={h} rx="2"
-                  style={{ fill: color, fillOpacity: i === n - 1 ? 1 : 0.35 }}>
-                  <title>{`${labels[i]}: ${fmt(v)}`}</title>
-                </rect>
+                <rect key={i} className="bar-r" x={x(i) - bw / 2} y={H - h} width={bw} height={h} rx="2"
+                  style={{ fill: color, fillOpacity: hov === i ? 1 : hov != null ? 0.22 : i === n - 1 ? 1 : 0.35 }} />
               );
             })
           : (() => {
@@ -302,15 +304,29 @@ export function Chart({ kind, vals, labels, color = ACCENT, fmt, band }: {
               return (
                 <>
                   <path d={`${d} L${x(n - 1)} ${H} L${x(0)} ${H}Z`} fill={`url(#${id})`} />
-                  <path className="ln-d" d={d} fill="none" style={{ stroke: color }} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+                  <path className="ln-d" d={d} fill="none" style={{ stroke }} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
                   {vals.map((v, i) => (
-                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 3.6 : n <= 31 ? 2 : 0} style={{ fill: i === n - 1 ? color : "var(--surface)", stroke: color }} strokeWidth="1.5">
-                      <title>{`${labels[i]}: ${fmt(v)}`}</title>
-                    </circle>
+                    <circle key={i} cx={x(i)} cy={y(v)} r={i === n - 1 ? 3.6 : n <= 31 ? 2 : 0} style={{ fill: i === n - 1 ? stroke : "var(--surface)", stroke }} strokeWidth="1.5" />
                   ))}
                 </>
               );
             })()}
+        {hov != null && hov < n && (() => {
+          tip = { x: x(hov), y: kind === "bar" ? Math.max(T, y(vals[hov])) : y(vals[hov]) };
+          return kind === "line" ? (
+            <g className="hov" pointerEvents="none">
+              <line x1={x(hov)} x2={x(hov)} y1={T} y2={H} style={{ stroke: "var(--text-3)" }} strokeOpacity=".45" strokeDasharray="3 3" />
+              <circle cx={x(hov)} cy={y(vals[hov])} r="5.5" style={{ fill: "var(--surface)", stroke }} strokeWidth="2.2" />
+            </g>
+          ) : null;
+        })()}
+        <rect x={L} y={0} width={Math.max(0, iw)} height={H} fill="transparent"
+          onMouseMove={(e) => {
+            const r = (e.currentTarget as SVGRectElement).getBoundingClientRect();
+            const f = (e.clientX - r.left) / (r.width || 1);
+            setHov(Math.max(0, Math.min(n - 1, kind === "bar" ? Math.floor(f * n) : Math.round(f * (n - 1)))));
+          }}
+          onMouseLeave={() => setHov(null)} />
         <line className="axis" x1={L} x2={W - R} y1={H} y2={H} />
         {ticks(n, iw).map((i) => {
           const edge = x(i) - L < 26 ? "start" : W - R - x(i) < 26 ? "end" : "middle";
@@ -319,7 +335,18 @@ export function Chart({ kind, vals, labels, color = ACCENT, fmt, band }: {
       </svg>
     );
   };
-  return <div ref={ref} className="env-chart">{body()}</div>;
+  const svg = body();
+  const at = tip as { x: number; y: number } | null;
+  return (
+    <div ref={ref} className="env-chart" style={{ position: "relative" }}>
+      {svg}
+      {at && hov != null && (
+        <div className={`ch-tip${at.x > W - 90 ? " left" : ""}`} style={{ left: at.x, top: at.y }} role="status">
+          <b>{fmt(vals[hov])}</b><small>{labels[hov]}</small>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function HBars({ rows }: { rows: { l: string; v: number; onClick?: () => void }[] }) {

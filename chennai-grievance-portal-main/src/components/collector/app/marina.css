@@ -1,15 +1,15 @@
 /* =====================================================================================================================
    MARINA: the final visual layer for the Collector and Department Officer consoles (after collector.css and civic.css).
-   Bright cool-white pages, the pages as tabs across a white top bar, an ocean-blue band at the top of every page (on
+   Bright cool-white pages, the pages as tabs across a white top bar, a forest-green band at the top of every page (on
    page 1 it carries the greeting, the key points of the period, the four counts and the snapshot), white cards with
-   soft shadows under it, deep ocean for what is interactive, coral for Ask District IQ. Tokens: tokens.css.
+   soft shadows under it, deep green for what is interactive, coral for Ask District IQ. Tokens: tokens.css.
    The old incident pop-up (a centred three-column dialog) keeps its layout from collector.css; only its colours follow.
    ===================================================================================================================== */
 .dic{font-family:var(--font-ui);font-feature-settings:normal;letter-spacing:-.003em;background:var(--bg)}
 :root[data-theme="light"] .dic,.dic[data-theme="light"],:root[data-theme="dark"] .dic,.dic[data-theme="dark"]{background:var(--bg)}
 .dic h1,.dic h2,.dic h3{font-family:var(--font-ui);letter-spacing:-.018em}
 .dic .num,.dic .kpi-n,.dic .stile b,.dic .sevtab b,.dic .cnt-b,.dic .tab-n,.dic .bb-n,.dic .env-v{font-family:var(--font-num);font-variant-numeric:tabular-nums}
-.dic ::selection{background:rgba(24,167,188,.28)}
+.dic ::selection{background:rgba(47,174,102,.28)}
 .dic ::-webkit-scrollbar-thumb{background:#C9D3DE;background-clip:padding-box}
 .dic *{scrollbar-color:#C9D3DE transparent}
 :root[data-theme="dark"] .dic *,.dic[data-theme="dark"] *{scrollbar-color:rgba(255,255,255,.16) transparent}
@@ -51,10 +51,10 @@
 /* ---------------- the work area ---------------- */
 .dic .body{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px;padding:12px 22px 14px}
 
-/* ---------------- the ocean band ---------------- */
-.dic .band{--sev:#FF9C8C;--critical:#FF9C8C;--high:#FFC56E;--medium:#FFE08A;--low:#7CE8B3;--ok:#7CE8B3;--accent:#7FE3F2;--accent-2:#A6EEF7;
+/* ---------------- the green band ---------------- */
+.dic .band{--sev:#FF9C8C;--critical:#FF9C8C;--high:#FFC56E;--medium:#FFE08A;--low:#7CE8B3;--ok:#7CE8B3;--accent:#8EF0B6;--accent-2:#B7F5CF;
   position:relative;flex:none;isolation:isolate;overflow:hidden;border-radius:var(--r-lg);background:var(--band);color:var(--band-ink);padding:13px 18px 14px 22px;
-  box-shadow:0 18px 40px -26px rgba(8,47,78,.75)}
+  box-shadow:0 18px 40px -26px rgba(11,59,34,.75)}
 .dic .band:before{content:"";position:absolute;z-index:-1;right:-70px;bottom:-150px;width:460px;height:250px;border-radius:50%;border:1px solid rgba(255,255,255,.11);
   box-shadow:0 0 0 34px rgba(255,255,255,.028),0 0 0 70px rgba(255,255,255,.022);pointer-events:none}
 .dic .band-row{display:flex;align-items:center;gap:16px;min-width:0}
@@ -80,11 +80,11 @@
 
 /* filters: glass on the band */
 .dic .band .filters{flex:none;gap:3px;padding:3px;border-radius:var(--r-md);background:var(--band-glass);border:1px solid var(--band-line);box-shadow:none}
-.dic .band .filters .ui-seg{background:rgba(4,22,38,.28);border:0}
+.dic .band .filters .ui-seg{background:rgba(4,28,16,.28);border:0}
 .dic .band .ui-seg button.ui-seg-o{color:var(--band-ink-2)}
 .dic .band .ui-seg button.ui-seg-o:hover{color:#fff}
-.dic .band .ui-seg button.ui-seg-o[aria-selected="true"],.dic .band .ui-seg button.ui-seg-o[aria-pressed="true"]{color:#0A3D62}
-.dic .band .ui-seg .ui-seg-pill{background:#fff;box-shadow:0 2px 6px rgba(4,22,38,.3)}
+.dic .band .ui-seg button.ui-seg-o[aria-selected="true"],.dic .band .ui-seg button.ui-seg-o[aria-pressed="true"]{color:#14532D}
+.dic .band .ui-seg .ui-seg-pill{background:#fff;box-shadow:0 2px 6px rgba(4,28,16,.3)}
 .dic .band .fsel{height:30px;border-radius:var(--r-sm)}
 .dic .band .fsel:hover{background:var(--band-glass-2);border-color:transparent}
 .dic .band .fsel .ic{color:var(--band-ink-2)}
@@ -137,7 +137,7 @@
 .dic .hsnap .officer b{display:inline;color:#fff;font-size:12.5px}
 .dic .hsnap .officer .olabel,.dic .hsnap .officer .desig{display:none}
 .dic .hsnap .officer .ocontact{display:inline-flex;margin-left:8px}
-.dic .hsnap .officer a{color:#A6EEF7;font-size:12px}
+.dic .hsnap .officer a{color:#B7F5CF;font-size:12px}
 /* a faint dot field on the right of the band, like the pulli dots of a kolam */
 .dic .band:after{content:"";position:absolute;z-index:-1;inset:0 0 0 45%;pointer-events:none;
   background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.3px);background-size:16px 16px;
@@ -178,7 +178,7 @@
 :root[data-theme="light"] .dic .routed:not(.dim):not(.added),.dic[data-theme="light"] .routed:not(.dim):not(.added){color:var(--critical)}
 .dic .routed.added{background:var(--ai-soft);color:var(--ai)}
 
-/* buttons: deep ocean; Verify stays green */
+/* buttons: deep green; Verify stays green */
 .dic .btn{border-radius:var(--r-sm);background:var(--accent-3);box-shadow:var(--glow)}
 .dic .btn:hover{background:var(--accent-3);filter:brightness(1.12)}
 .dic .btn.ok{background:var(--ok);color:#fff;box-shadow:0 6px 14px -8px var(--ok)}
@@ -216,8 +216,8 @@
 
 /* ---------------- Ask District IQ: a coral pill with its name ---------------- */
 .dic .ask-fab{right:20px;bottom:18px;height:50px;min-width:50px;gap:0;padding:0 9px;border-radius:25px;background:var(--ai-grad);color:#fff;font:750 14px var(--font-ui);
-  box-shadow:var(--ai-glow),0 14px 30px -14px rgba(8,26,44,.5);transition:gap var(--t-base) var(--ease-out),transform var(--t-fast),box-shadow var(--t-fast)}
-.dic .ask-fab .aq-mark rect:first-child{fill:transparent}
+  box-shadow:var(--ai-glow),0 14px 30px -14px rgba(8,30,18,.5);transition:gap var(--t-base) var(--ease-out),transform var(--t-fast),box-shadow var(--t-fast)}
+.dic .ask-fab .aq-mark rect:first-child{fill:#fff}
 .dic .ask-fab span{max-width:0;overflow:hidden;white-space:nowrap;transition:max-width var(--t-slow) var(--ease-out),padding var(--t-slow) var(--ease-out)}
 .dic .ask-fab:hover span,.dic .ask-fab:focus-visible span{max-width:150px;padding-right:8px}
 .dic .ask-fab:hover,.dic .ask-fab:focus-visible{transform:translateY(-1px);box-shadow:0 0 0 4px var(--ai-soft),var(--ai-glow);gap:8px}
@@ -264,6 +264,11 @@
 .dic .btabs{gap:4px}
 .dic .btabs button{border-radius:8px 8px 0 0}
 .dic .btabs button:hover{background:var(--surface-2)}
-/* focus: a clear ocean ring everywhere */
+/* focus: a clear green ring everywhere */
 .dic :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dic .band :focus-visible{outline-color:#fff}
+
+/* the logo in the top bar: DistrictIQ by FarmwiseAI, then the console's name after a hairline */
+.dic .tbrand .twm{height:38px}
+.dic .tbrand .tsub{display:block;padding-left:12px;border-left:1px solid var(--line);font:600 11.5px/1.25 var(--font-ui);color:var(--text-3);white-space:nowrap}
+.dic:not(.fit) .tbrand .twm{height:32px}

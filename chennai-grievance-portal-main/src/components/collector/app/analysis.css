@@ -1,0 +1,241 @@
+/* Round 21: AI key points, department briefs, developing stories, trends analysis, location review, environment layout.
+   Imported last by CollectorApp, so it sits on top of collector.css, civic.css, marina.css and news.css. */
+
+/* ---------------------------------------------------------------- shared AI blocks -- */
+.dic .ai-box{flex:none;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,var(--ai-soft),transparent 140%);
+  border:1px solid var(--ai-line)}
+.dic .ai-tag{display:inline-flex;align-items:center;gap:6px;font:700 11px/1.2 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ai)}
+.dic .ai-tag .ic{width:13px;height:13px}
+.dic .ai-tag small{margin-left:4px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-3)}
+.dic .ai-box p{margin:0;font-size:13.5px;line-height:1.55;color:var(--text)}
+.dic .ai-wait{margin:0;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-3)}
+.dic .ai-wait:before{content:"";width:10px;height:10px;border-radius:50%;border:2px solid var(--ai-line);border-top-color:var(--ai);animation:spin 1s linear infinite}
+.dic .ai-cause{font-size:13px!important}
+.dic .ai-cause b{margin-right:6px;color:var(--ai)}
+.dic .ai-next{display:flex;flex-direction:column;gap:6px}
+.dic .ai-next>b{font:700 11px/1.2 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-2)}
+.dic .ai-next ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:nx}
+.dic .ai-next li{position:relative;display:flex;flex-direction:column;gap:1px;padding:7px 10px 7px 34px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-2);
+  counter-increment:nx;font-size:13px;line-height:1.45;color:var(--text)}
+.dic .ai-next li:before{content:counter(nx);position:absolute;left:9px;top:8px;width:18px;height:18px;border-radius:6px;display:grid;place-items:center;
+  background:var(--accent);color:#fff;font:700 11px/1 var(--font-num)}
+.dic .ai-next li em{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-2)}
+.dic .ai-next li small{display:block;margin-top:2px;font-size:11.5px;color:var(--text-3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ------------------------------------------------------------------- key points -- */
+.dic .bb-brief .bb-body.kp{padding:2px 14px 10px}
+.dic .kp-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;margin-right:-6px;padding-right:6px;scrollbar-width:thin}
+.dic .kp-head{flex:none;margin:0 0 8px;padding:8px 11px;border-radius:10px;background:var(--surface-2);border-left:3px solid var(--ai);font-size:13.5px;font-weight:600;line-height:1.45;color:var(--text)}
+.dic .kp-head b{color:var(--ai)}
+.dic .kp-list{flex:none;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;animation:dic-fade var(--t-base) var(--ease-out)}
+.dic .kp-list li>*{display:grid;grid-template-columns:26px minmax(0,1fr) 14px;align-items:start;gap:9px;width:100%;padding:6px 6px;border-radius:10px;text-align:left;color:var(--text)}
+.dic .kp-list li>button:hover{background:var(--surface-2)}
+.dic .kp-list li>*>.ic{margin-top:5px;width:14px;height:14px;color:var(--text-4)}
+.dic .kp-ic{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--tc) 14%,transparent);color:var(--tc)}
+.dic .kp-ic .ic{width:14px;height:14px}
+.dic .kp-no{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--surface-3);font:700 11.5px var(--font-num);color:var(--text)}
+.dic .kp-t{font-size:13.2px;line-height:1.5}
+.dic .kp-t em{display:block;font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;line-height:1.3;margin-bottom:1px}
+.dic .kp-t b{font-weight:700;color:var(--accent-2)}
+.dic .kp-list[lang="ta"] .kp-t{font-size:12.8px;line-height:1.6}
+.dic .kp-wait{display:flex;flex-direction:column;gap:9px;padding:6px 2px 10px}
+.dic .kp-sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--surface-3),var(--surface-2),var(--surface-3));background-size:200% 100%;animation:kp-sh 1.3s linear infinite}
+.dic .kp-sk.short{width:62%}
+.dic .kp-wait small{display:inline-flex;align-items:center;gap:6px;margin-top:2px;font-size:12px;color:var(--text-3)}
+.dic .kp-wait small .ic{width:13px;height:13px;color:var(--ai)}
+@keyframes kp-sh{from{background-position:200% 0}to{background-position:0 0}}
+.dic .kp-scroll .bb-crit{margin-top:8px}
+.dic .kp-scroll .bb-watch{margin-top:8px}
+.dic .bb-brief .bb-src{flex:none;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ----------------------------------------------------------------- departments -- */
+.dic .dp-list{flex:1;min-height:0;overflow-y:auto;list-style:none;margin:0;padding:0 12px 10px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin}
+.dic .dp-list>li{flex:none;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.dic .dp-list>li:hover{border-color:var(--accent-line)}
+.dic .dp-list>li.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
+.dic .dp-row{display:grid;grid-template-columns:32px minmax(0,1fr) auto auto 14px;align-items:center;gap:9px;width:100%;padding:8px 10px;text-align:left}
+.dic .dp-row .bb-dic{width:32px;height:32px;grid-row:auto;grid-column:auto}
+.dic .dp-row>.ic{width:14px;height:14px;color:var(--text-3)}
+.dic .dp-n{min-width:0;font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .dp-tags{display:flex;gap:4px}
+.dic .dp-tags em{font-style:normal;font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap}
+.dic .dp-tags em.dead{background:color-mix(in srgb,var(--sev) 15%,transparent);color:var(--sev)}
+.dic .dp-tags em.sev{background:color-mix(in srgb,var(--high) 15%,transparent);color:var(--high)}
+.dic .dp-k{min-width:26px;text-align:right;font:700 16px/1 var(--font-num);color:var(--text)}
+.dic .dp-x{display:flex;flex-direction:column;gap:8px;padding:2px 12px 12px 12px;animation:civic-in var(--t-base) var(--ease-out) both}
+.dic .dp-brief{margin:0;font-size:13px;line-height:1.55;color:var(--text)}
+.dic .dp-brief>.ic{width:13px;height:13px;margin-right:6px;vertical-align:-2px;color:var(--ai)}
+.dic .dp-brief.wait{display:flex;align-items:center;gap:6px;color:var(--text-3)}
+.dic .dp-brief.wait .ic{margin:0;animation:spin 1.6s linear infinite}
+.dic .dp-watch{margin:0;padding:6px 10px;border-radius:9px;background:var(--high-soft,rgba(242,140,40,.12));font-size:12.5px;line-height:1.45;color:var(--text)}
+.dic .dp-watch b{margin-right:6px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--high)}
+.dic .dp-lbl{display:block;margin-bottom:4px;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
+.dic .dp-deaths .dp-lbl{color:var(--sev)}
+.dic .dp-deaths,.dic .dp-items{display:flex;flex-direction:column;gap:4px}
+.dic .dp-death{display:grid;grid-template-columns:8px minmax(0,1fr) 14px;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:9px;text-align:left;
+  background:color-mix(in srgb,var(--sev) 7%,var(--surface));border:1px solid color-mix(in srgb,var(--sev) 22%,transparent)}
+.dic .dp-death:hover{border-color:var(--sev)}
+.dic .dp-death>i{width:8px;height:8px;border-radius:50%;background:var(--sev)}
+.dic .dp-death>.ic{width:13px;height:13px;color:var(--text-3)}
+.dic .dp-death span{min-width:0;display:flex;flex-direction:column;gap:1px}
+.dic .dp-death b{font-size:12.8px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .dp-death small{font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ------------------------------------------------------------ developing stories -- */
+.dic .sv-latest{display:block;font-size:12.3px;line-height:1.45;color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dic .sv-latest em{font-style:normal;margin-right:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ai)}
+.dic .sv-now{display:flex;align-items:baseline;gap:8px;margin:10px 0 12px;padding:9px 12px;border-radius:10px;background:var(--ai-soft);border:1px solid var(--ai-line);font-size:13.5px;line-height:1.5;color:var(--text)}
+.dic .sv-now .ic{flex:none;width:14px;height:14px;color:var(--ai);align-self:center}
+.dic .sv-now b{flex:none;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ai)}
+.dic .sv-ms{margin:0 0 12px;padding:0;list-style:none;display:flex;flex-direction:column}
+.dic .sv-ms li{position:relative;display:grid;grid-template-columns:62px minmax(0,1fr);gap:14px;padding:0 0 14px}
+.dic .sv-ms li:before{content:"";position:absolute;left:69px;top:6px;bottom:-6px;width:2px;background:var(--line-2)}
+.dic .sv-ms li:last-child:before{display:none}
+.dic .sv-ms li:after{content:"";position:absolute;left:64px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--surface)}
+.dic .sv-when{display:flex;flex-direction:column;align-items:flex-end;padding-right:6px;font-variant-numeric:tabular-nums}
+.dic .sv-when b{font-size:12.5px;font-weight:700;color:var(--text)}
+.dic .sv-when small{font-size:11px;color:var(--text-3)}
+.dic .sv-body{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding-left:12px}
+.dic .sv-what{font-size:14px;font-weight:600;line-height:1.45;color:var(--text)}
+.dic .sv-body small{font-size:11.5px;color:var(--text-3);line-height:1.45}
+.dic .sv-body small a{color:var(--text-2);text-decoration:underline dotted}
+.dic .sv-body small a .ic{width:11px;height:11px;margin-left:3px;vertical-align:-1px}
+.dic .sv-body small .lnk{margin-left:8px}
+.dic .sv-all{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:6px 12px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--surface-2);
+  font-size:12.5px;font-weight:600;color:var(--accent-2)}
+.dic .sv-all .ic{width:14px;height:14px}
+.dic .sv-all:hover{border-color:var(--accent)}
+.dic .tg-sim{margin-left:6px;padding:1px 7px;border-radius:var(--r-pill);background:var(--surface-3);font-size:10.5px;font-weight:600;color:var(--text-3)}
+
+/* ------------------------------------------------------------------------ trends -- */
+.dic .rs-ai{flex-direction:row;align-items:stretch;gap:14px;margin:0 0 8px;max-height:44%;overflow-y:auto}
+.dic .rs-ai .ai-what{flex:1.25;min-width:0;display:flex;flex-direction:column;gap:5px}
+.dic .rs-ai .ai-what p{font-size:13.2px}
+.dic .rs-ai .ai-next{flex:1;min-width:0}
+.dic .rs-ai .ai-next li{padding:5px 9px 5px 32px;font-size:12.5px}
+.dic .rs-ai .ai-next li:before{top:6px}
+.dic .rs-lead .ai-wait{margin-right:8px}
+
+.dic .lr2{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:0 12px 10px}
+.dic .lr2-stats{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dic .lr2-stats button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2);text-align:left}
+.dic .lr2-stats button:hover{border-color:var(--accent)}
+.dic .lr2-stats b{font:700 22px/1 var(--font-num);color:var(--accent-2)}
+.dic .lr2-stats .miss b{color:var(--high)}
+.dic .lr2-stats span{display:flex;flex-direction:column;font-size:12.5px;font-weight:600;color:var(--text);line-height:1.25}
+.dic .lr2-stats small{font-size:11px;font-weight:500;color:var(--text-3)}
+.dic .lr2-list{flex:1;min-height:0;padding:0!important}
+.dic .lr2-row{display:grid;grid-template-columns:8px minmax(0,1fr);align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:9px;text-align:left}
+.dic .lr2-row:hover{background:var(--surface-2)}
+.dic .lr2-row>i{width:7px;height:7px;border-radius:50%}
+.dic .lr2-row span{min-width:0;display:flex;flex-direction:column}
+.dic .lr2-row b{font-size:12.8px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .lr2-row small{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.dic .rv{display:flex;flex-direction:column;gap:10px;min-height:0;height:min(70vh,560px)}
+.dic .rv-bar{flex:none;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dic .rv-bar .seg b{margin-left:6px;font-family:var(--font-num)}
+.dic .rv-bar .mk-find{margin-left:auto}
+.dic .rv-note{flex:none;margin:0;font-size:12.5px;line-height:1.5;color:var(--text-3)}
+.dic .rv-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.dic .rv-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-2)}
+.dic .rv-row:hover{border-color:var(--accent-line)}
+.dic .rv-row>i{width:8px;height:8px;border-radius:50%}
+.dic .rv-open{min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
+.dic .rv-open b{font-size:13.5px;font-weight:600;line-height:1.4;color:var(--text)}
+.dic .rv-open small{font-size:12px;color:var(--text-3)}
+.dic .rv-row .btn .ic{width:13px;height:13px}
+
+/* the spike / hotspot / trend pop-up */
+.dic .pt-l{overflow-y:auto;padding-right:6px;scrollbar-width:thin}
+.dic .pt-ai p{font-size:13.6px}
+.dic .pt-lead{margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--text-2)}
+.dic .pc{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.dic .pc-bars{position:relative;display:flex;align-items:flex-end;gap:3px;height:112px;padding-top:16px;border-bottom:1px solid var(--line)}
+.dic .pc-bars>span{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.dic .pc-bars i{width:100%;max-width:34px;border-radius:3px 3px 0 0;background:var(--viz-base);transform-origin:bottom;animation:dic-growY .6s var(--ease-out) both}
+.dic .pc-bars em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--text-3);line-height:1.3}
+.dic .pc-bars .hl i{background:var(--high)}
+.dic .pc.category .pc-bars .hl i,.dic .pc.hotspot .pc-bars .hl i{background:var(--accent)}
+.dic .pc-bars .hl em{color:var(--text);font-size:11.5px}
+.dic .pc-usual{position:absolute;left:0;right:0;height:0;border-top:1.5px dashed var(--text-3);z-index:1;pointer-events:none}
+.dic .pc-usual em{position:absolute;right:0;bottom:2px;padding:0 5px;border-radius:4px;background:var(--surface);font-size:10.5px;font-weight:600;color:var(--text-3)}
+.dic .pc-axis{display:flex;gap:3px;height:15px}
+.dic .pc-axis>span{position:relative;flex:1;min-width:0}
+.dic .pc-axis small{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10.5px;color:var(--text-3)}
+.dic .pc-axis>span:first-child small{left:0;transform:none}
+.dic .pc-axis>span:last-child small{left:auto;right:0;transform:none}
+.dic .pc-axis .hl small{color:var(--text);font-weight:700}
+
+/* ------------------------------------------------------------------- environment -- */
+.dic .p2.env2{grid-template-columns:minmax(0,4.1fr) minmax(0,7.9fr);grid-template-rows:minmax(0,1fr)}
+.dic .env2-col{min-height:0;min-width:0;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px}
+.dic .env2 .env{grid-column:auto;min-height:0;display:flex;flex-direction:column}
+.dic .env2 .env .ch{padding:9px 12px 4px}
+.dic .env2 .env .ch h3{font-size:13.5px}
+.dic .env2 .env .ch>.ic{width:24px;height:24px;padding:5px}
+.dic .env2 .env .sel{height:28px;font-size:12px;max-width:150px!important}
+.dic .env2 .env .cb{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:14px;row-gap:5px;padding:2px 12px 10px}
+.dic .env2 .env .env-lbl{grid-column:1/-1;font-size:11.5px}
+.dic .env2 .env .env-top{grid-column:1;gap:8px;flex-wrap:wrap}
+.dic .env2 .env .env-v{font-size:28px}
+.dic .env2 .env .env-v small{font-size:12px}
+.dic .env2 .env .lvl{padding:3px 8px;font-size:10px}
+.dic .env2 .env .trend{margin-left:0;padding:3px 8px 3px 4px;gap:6px}
+.dic .env2 .env .trend .arr{width:22px;height:22px;border-radius:7px}
+.dic .env2 .env .trend .arr .ic{width:13px;height:13px}
+.dic .env2 .env .trend b{font-size:12px}
+.dic .env2 .env .trend small{font-size:10.5px}
+.dic .env2 .env .scale{display:none}
+.dic .env2 .env .env-say{grid-column:1;font-size:12px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.dic .env2 .env .env-chart,.dic .env2 .env .cb>.empty{grid-column:2;grid-row:2/4;min-height:0}
+.dic .env2 .env .cb>.empty{font-size:12px;padding:8px}
+.dic .env2 .mk-card{grid-column:auto;min-height:0}
+.dic .env2 .mk-card .cb.mk-cb{padding:0 14px 10px}
+
+/* the simple price list */
+.dic table.mk.pl{width:100%;border-collapse:separate;border-spacing:0}
+.dic table.mk.pl th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);font-weight:700;padding:8px 10px;text-align:left;white-space:nowrap}
+.dic table.mk.pl th.r,.dic table.mk.pl td.r{text-align:right}
+.dic table.mk.pl td{padding:7px 10px;border-top:1px solid var(--line-2);font-size:13.5px;color:var(--text);white-space:nowrap}
+.dic table.mk.pl tbody tr:hover td{background:var(--surface-2)}
+.dic table.mk.pl td.ev{font-weight:600}
+.dic table.mk.pl td.ev small{font-weight:500;font-size:11.5px}
+.dic table.mk.pl td.num b{font:700 14.5px var(--font-num)}
+.dic .pl-at{display:inline-flex;align-items:baseline;gap:7px;font-size:12.5px;color:var(--text-2)}
+.dic .pl-at b{font:700 13px var(--font-num);padding:1px 7px;border-radius:6px}
+.dic .pl-at.lo b{background:color-mix(in srgb,var(--low) 16%,transparent);color:var(--low)}
+.dic .pl-at.hi b{background:color-mix(in srgb,var(--sev) 13%,transparent);color:var(--sev)}
+.dic .mk-bar .seg.sm button{white-space:nowrap}
+.dic .mk-bar .mk-date{margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* small screens: stack */
+.dic:not(.fit) .p2.env2{grid-template-columns:minmax(0,1fr)}
+.dic:not(.fit) .env2-col{grid-template-rows:none}
+.dic:not(.fit) .env2-col>*{height:220px}
+.dic:not(.fit) .dp-list,.dic:not(.fit) .kp-scroll{overflow:visible}
+
+/* ---------------------------------------------------------------- second pass -- */
+.dic .dp-row{grid-template-columns:32px minmax(0,1fr) auto 14px}
+.dic .dp-main{min-width:0;display:flex;align-items:center;flex-wrap:wrap;column-gap:8px;row-gap:3px}
+.dic .dp-main .dp-n{flex:0 1 auto}
+.dic .bb-track>span{flex:1 1 0}
+.dic .rs-ai{max-height:58%}
+.dic .rs-ai .ai-what p{font-size:12.8px;line-height:1.5}
+.dic .rs-ai .ai-next ol{gap:4px}
+.dic .rs-ai .ai-next li{display:block;padding:4px 8px 4px 30px;font-size:12.3px;line-height:1.4;background:transparent;border:0;border-left:2px solid var(--accent-line);border-radius:0}
+.dic .rs-ai .ai-next li:before{left:6px;top:4px;width:17px;height:17px;font-size:10.5px}
+.dic .rs-ai .ai-next li em{margin-right:6px;font-size:10.5px}
+.dic .env2 .env .env-lbl{display:none}
+.dic .env2 .env .cb{grid-template-rows:auto minmax(0,1fr)}
+.dic .env2 .env .env-chart,.dic .env2 .env .cb>.empty{grid-row:1/3}
+.dic .mk-card .seg.sm button{white-space:nowrap}
+.dic table.mk.pl th,.dic table.mk.pl td{padding-left:8px;padding-right:8px}
+.dic table.mk.pl td{font-size:13px}
+.dic .pc-bars>.pc-usual{display:block;flex:none;height:0;width:auto;min-width:0}
+.dic .env2 .env .cb{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)}
+.dic .env2 .env .env-say{font-size:11.8px;line-height:1.4;-webkit-line-clamp:3}
+.dic .env2 .env .trend small{display:none}
+.dic .env2 table.mk.mx{min-width:940px}
+.dic .env2 .mk-key{white-space:nowrap}

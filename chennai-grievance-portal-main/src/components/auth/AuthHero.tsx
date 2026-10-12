@@ -49,7 +49,7 @@ export default function AuthHero({ headline, children }: { headline: ReactNode; 
           <linearGradient id="ah-beam" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="var(--h-pin)" stopOpacity="0" />
             <stop offset=".5" stopColor="var(--h-pin)" />
-            <stop offset="1" stopColor="#7FD3E6" />
+            <stop offset="1" stopColor="#8EDDB0" />
           </linearGradient>
           <radialGradient id="ah-glow"><stop offset="0" stopColor="var(--h-pin)" stopOpacity=".35" /><stop offset="1" stopColor="var(--h-pin)" stopOpacity="0" /></radialGradient>
         </defs>

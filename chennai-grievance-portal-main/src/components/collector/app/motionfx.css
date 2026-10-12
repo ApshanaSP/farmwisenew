@@ -1,0 +1,74 @@
+/* =====================================================================================================================
+   MOTION: the transitions of the Collector and Department Officer consoles (loaded last; it changes no layout or colour).
+   One idea everywhere: things come into focus. A page, a card, a dialog or a menu fades in, rises a few pixels and
+   un-blurs; it leaves the same way. The cards of a page settle one after another; the theme cross-fades instead of
+   snapping. Everything is off under "reduce motion".
+   ===================================================================================================================== */
+
+/* the theme colours are registered so a light <-> dark switch cross-fades (the whole console re-tints smoothly) */
+@property --bg{syntax:"<color>";inherits:true;initial-value:#F3F6F9}
+@property --surface{syntax:"<color>";inherits:true;initial-value:#FFFFFF}
+@property --surface-2{syntax:"<color>";inherits:true;initial-value:#F6F8FB}
+@property --text{syntax:"<color>";inherits:true;initial-value:#0F1B2D}
+@property --text-2{syntax:"<color>";inherits:true;initial-value:#40506A}
+@property --text-3{syntax:"<color>";inherits:true;initial-value:#64748B}
+@property --accent{syntax:"<color>";inherits:true;initial-value:#15803D}
+@property --accent-2{syntax:"<color>";inherits:true;initial-value:#166534}
+.dic{transition:--bg .5s ease,--surface .5s ease,--surface-2 .5s ease,--text .5s ease,--text-2 .5s ease,--text-3 .5s ease,--accent .5s ease,--accent-2 .5s ease}
+
+/* ---------------- a page's cards settle in one after another (Shell.tsx settle()) ---------------- */
+.dic .settle{animation:fx-settle .6s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes fx-settle{from{opacity:0;transform:translateY(12px) scale(.985);filter:blur(8px)}}
+
+/* page 1: the four counts and the snapshot come into focus in turn */
+.dic .hero-b{animation:none}
+.dic .hero .kpi,.dic .hsnap .stile,.dic .hsnap .officer{animation:fx-settle .6s cubic-bezier(.22,1,.36,1) backwards}
+.dic .hero .kpi:nth-child(2){animation-delay:.05s}
+.dic .hero .kpi:nth-child(3){animation-delay:.1s}
+.dic .hero .kpi:nth-child(4){animation-delay:.15s}
+.dic .hsnap .stile,.dic .hsnap .officer{animation-delay:.2s}
+.dic .hero .kpi{transition:transform .35s cubic-bezier(.22,1,.36,1),background .25s,border-color .25s,box-shadow .35s}
+
+/* after sign-in: the top bar drops in, then the band, then the page */
+.dic.boot .top{animation:fx-top .6s cubic-bezier(.22,1,.36,1) both}
+.dic.boot .band{animation:fx-settle .6s cubic-bezier(.22,1,.36,1) .1s both}
+@keyframes fx-top{from{opacity:0;transform:translateY(-10px);filter:blur(6px)}}
+
+/* new data on its way: the page dims and softens instead of blinking */
+.dic #view{transition:opacity .3s cubic-bezier(.22,1,.36,1),filter .3s cubic-bezier(.22,1,.36,1)}
+.dic #view.busy{opacity:.55;filter:blur(1.5px)}
+
+/* ---------------- dialogs and menus come into focus ---------------- */
+.dic .scrim{animation:fx-fade .35s cubic-bezier(.22,1,.36,1)}
+.dic .modal{animation:fx-dialog .5s cubic-bezier(.22,1,.36,1) both}
+.dic .modal.grow{animation:fx-grow .5s cubic-bezier(.22,1,.36,1) both}
+.dic .pop:not(.bellpop){animation:fx-pop .3s cubic-bezier(.22,1,.36,1)}
+@keyframes fx-fade{from{opacity:0}}
+@keyframes fx-dialog{from{opacity:0;transform:translate(-50%,-50%) scale(.955) translateY(10px);filter:blur(12px)}}
+@keyframes fx-grow{from{opacity:0;transform:translate(-50%,-50%) scale(.9);filter:blur(12px)}}
+@keyframes fx-pop{from{opacity:0;transform:translateY(-4px) scale(.98);filter:blur(6px)}}
+
+/* ---------------- charts: a dark read-out follows the pointer ---------------- */
+.dic .ch-tip{position:absolute;z-index:5;transform:translate(12px,-50%);display:flex;flex-direction:column;gap:2px;padding:7px 10px;border-radius:10px;pointer-events:none;white-space:nowrap;
+  background:#0F1B2D;color:#fff;box-shadow:0 14px 30px -12px rgba(0,0,0,.55);animation:fx-tip .22s cubic-bezier(.22,1,.36,1)}
+.dic .ch-tip.left{transform:translate(calc(-100% - 12px),-50%)}
+.dic .ch-tip b{font:700 13px/1.1 var(--font-num)}
+.dic .ch-tip small{font:500 11px/1.1 var(--font-ui);color:rgba(255,255,255,.62)}
+.dic[data-theme="dark"] .ch-tip,:root[data-theme="dark"] .dic:not([data-theme="light"]) .ch-tip{background:#F2F6F3;color:#0F1B2D}
+.dic[data-theme="dark"] .ch-tip small,:root[data-theme="dark"] .dic:not([data-theme="light"]) .ch-tip small{color:rgba(15,27,45,.6)}
+.dic .env-chart .bar-r{transition:fill-opacity .2s}
+@keyframes fx-tip{from{opacity:0;filter:blur(4px)}}
+
+/* ---------------- small things that respond ---------------- */
+.dic .ptab .ic{transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.dic .ptab:hover .ic{transform:translateY(-1px)}
+.dic .btn{transition:transform .25s cubic-bezier(.22,1,.36,1),filter .2s,box-shadow .25s}
+.dic .btn:active,.dic .tbtn:active{transform:scale(.97)}
+.dic .si-item,.dic .task{transition:background .25s cubic-bezier(.22,1,.36,1),border-color .25s,transform .3s cubic-bezier(.22,1,.36,1)}
+
+@media (prefers-reduced-motion:reduce){
+  .dic{transition:none}
+  .dic .settle,.dic .hero .kpi,.dic .hsnap .stile,.dic .hsnap .officer,.dic.boot .top,.dic.boot .band,.dic .pop,.dic .ch-tip{animation:none!important}
+  .dic .modal,.dic .modal.grow{animation:fx-fade .12s both!important}
+  .dic #view.busy{filter:none}
+}

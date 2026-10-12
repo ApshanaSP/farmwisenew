@@ -34,18 +34,18 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
         {/* the ocean band, as on the consoles: the day, the greeting and the two things a citizen comes to do */}
         <motion.section variants={enter} className="mesh-navy relative mb-6 flex flex-wrap items-end justify-between gap-5 overflow-hidden rounded-[20px] px-7 py-6 text-white shadow-lift">
           <div className="relative">
-            <p className="text-[13px] font-semibold text-[#CFE9F0]">{today}</p>
+            <p className="text-[13px] font-semibold text-[#D2EEDC]">{today}</p>
             <h1 className="mt-1 text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-white">
-              Vanakkam{name ? `, ${name}` : ""} <span className="font-medium text-[#93C6D4]" lang="ta">· வணக்கம்</span>
+              Vanakkam{name ? `, ${name}` : ""} <span className="font-medium text-[#9CCDB0]" lang="ta">· வணக்கம்</span>
             </h1>
-            <p className="mt-1.5 max-w-[60ch] text-[15px] text-[#CFE9F0]">
+            <p className="mt-1.5 max-w-[60ch] text-[15px] text-[#D2EEDC]">
               Report a civic issue in your neighbourhood or follow one you have filed. Most complaints reach a department within minutes.
             </p>
           </div>
           <div className="relative flex flex-wrap gap-2">
             <Link href="/citizen/track-complaints" className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-white/25 bg-white/10 px-4 text-[14px] font-semibold text-white transition hover:bg-white/20">
               <Search className="h-4 w-4" aria-hidden="true" />Track status</Link>
-            <Link href="/citizen/file-complaint" className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-white px-5 text-[15px] font-bold text-[#0A3D62] shadow-[0_10px_24px_-12px_rgba(0,0,0,.6)] transition hover:-translate-y-0.5">
+            <Link href="/citizen/file-complaint" className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-white px-5 text-[15px] font-bold text-[#14532D] shadow-[0_10px_24px_-12px_rgba(0,0,0,.6)] transition hover:-translate-y-0.5">
               <FilePlus2 className="h-[18px] w-[18px]" aria-hidden="true" />File a complaint</Link>
           </div>
         </motion.section>

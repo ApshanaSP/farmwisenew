@@ -4,12 +4,14 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Overview as OverviewData, Period } from "@/lib/collector/intel";
 import type { Insights } from "@/lib/collector/insights";
+import type { Stories } from "@/lib/collector/storyai";
+import type { DayBrief } from "@/lib/collector/aibrief";
 import type { MapGeo } from "@/lib/collector/geo";
-import Logo from "@/components/Logo";
+import { Wordmark } from "@/components/Logo";
 import { I, type IconName } from "./icons";
 import { BrandMark } from "./assistant/Brand";
 import { EnvPage, HeroBody, Page1 } from "./Overview";
-import { BriefingPage, GapsBody, PatternBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
+import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
@@ -31,8 +33,10 @@ import "./civic.css";
 import "./marina.css";
 import "./news.css";
 import "./action.css";
-import "./command.css";
-import "./command-bold.css";
+import "./analysis.css";
+import "./motionfx.css";
+// The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
+// "./command.css" and "./command-bold.css" here and add "cc" to the root's className below.
 
 // The assistant loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
@@ -65,7 +69,8 @@ type ModalState =
   | { kind: "stories"; title: string; focus: string | null }
   | { kind: "markets"; title: string }
   | { kind: "pattern"; title: string; pattern: Pattern }
-  | { kind: "gaps"; title: string };
+  | { kind: "gaps"; title: string }
+  | { kind: "review"; title: string };
 interface Toast { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
 export interface Archived { name: string; version: number; markdown: string; as_of: string; issued_at: string }
 
@@ -128,6 +133,12 @@ export interface Console {
   openPattern: (p: Pattern) => void;
   /** incidents seen only in the news, with no department record */
   openGaps: () => void;
+  /** Trends: open incidents whose place is unknown, and those placed from their reports */
+  openReview: () => void;
+  /** developing stories of the scope, joined and explained by AI (null while loading) */
+  stories: Stories | null;
+  /** the key points of the period and scope, written by AI: null while loading, { brief: null } when no model answered */
+  dayBrief: { brief: DayBrief | null } | null;
   zoneTip: (z: number) => string;
   zoneNameOf: (z: number) => string | null;
   talukName: (code: string | null) => string | null;
@@ -307,6 +318,17 @@ export default function CollectorApp({ initial, allDepts, user }: {
   }, [insQs, reloadKey, needIns, toast]);
   const ins = insState?.key === insQs ? insState.d : null;
 
+  // The Briefing's developing stories (duplicates joined, repeats dropped, storyai.ts) and AI key points (aibrief.ts) take
+  // a few seconds the first time for a build: they load with every scope change on any page, so the Briefing has them.
+  const [storiesState, setStories] = useState<{ key: string; d: Stories } | null>(null);
+  const [dayState, setDay] = useState<{ key: string; d: { brief: DayBrief | null } } | null>(null);
+  useEffect(() => {
+    let live = true;
+    api(`/api/collector/stories?${qs}`).then((j) => live && setStories({ key: qs, d: j })).catch(() => {});
+    api(`/api/collector/brief?kind=day&${qs}`).then((j) => live && setDay({ key: qs, d: j })).catch(() => live && setDay({ key: qs, d: { brief: null } }));
+    return () => { live = false; };
+  }, [qs, reloadKey]);
+
   useEffect(() => {
     if (!anim) return;
     const t = setTimeout(() => setAnim(false), 1200);
@@ -479,6 +501,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
     openPattern: (p) => setModal({ kind: "pattern", pattern: p,
       title: p.kind === "spike" ? "Unusual spike: what happened" : p.kind === "hotspot" ? "Recurring hotspot: what keeps happening" : "Is this problem rising?" }),
     openGaps: () => setModal({ kind: "gaps", title: `In the news, not in department records · ${scopeName}` }),
+    openReview: () => setModal({ kind: "review", title: "Locations needing review" }),
+    stories: storiesState?.key === qs ? storiesState.d : null,
+    dayBrief: dayState?.key === qs ? dayState.d : null,
     zoneTip: (z) => {
       const r = ov.zoneTable.find((x) => x.zone === z);
       if (!r) return `<b>Zone ${z}</b>`;
@@ -562,16 +587,16 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic cc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0B7290" /><stop offset="1" stopColor="#7FD3E6" /></linearGradient></defs>
+        <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {loading && <div className="loading-bar" />}
       <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
         <header className="top">
-          <div className="tbrand"><Logo className="tlogo" /><span><b>District IQ</b><small>Chennai · Collector</small></span></div>
+          <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
           <span className="tspace" />
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
@@ -607,6 +632,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
             )}
           </div>
         </header>
+
 
         <div className="body">
           {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
@@ -670,7 +696,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
         {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
         {modal && modal.kind !== "story" && (
-          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story"].includes(modal.kind)}>
+          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story", "review"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
                 : modal.kind === "depts" ? <DeptsBody c={c} />
@@ -683,10 +709,11 @@ export default function CollectorApp({ initial, allDepts, user }: {
                               : modal.kind === "text" ? <div className="md" dangerouslySetInnerHTML={{ __html: mdToHtml(modal.md) }} />
                                 : modal.kind === "item" ? <ItemBody item={modal.item} c={c} />
                                   : modal.kind === "added" ? <AddedAllBody d={ov} c={c} />
-                                    : modal.kind === "stories" ? <StoriesBody d={ov} c={c} focus={modal.focus} />
+                                    : modal.kind === "stories" ? <StoriesBody c={c} focus={modal.focus} />
                                       : modal.kind === "markets" ? <MarketsFull ins={ins} c={c} />
                                         : modal.kind === "pattern" ? <PatternBody key={JSON.stringify(modal.pattern)} p={modal.pattern} c={c} />
-                                          : modal.kind === "gaps" ? <GapsBody ins={ins} c={c} /> : null}
+                                          : modal.kind === "gaps" ? <GapsBody ins={ins} c={c} />
+                                            : modal.kind === "review" ? <ReviewBody ins={ins} c={c} /> : null}
           </Modal>
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />

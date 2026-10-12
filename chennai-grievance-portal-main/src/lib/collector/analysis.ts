@@ -84,7 +84,7 @@ function remember(key: string, a: Analysis) {
 }
 
 /** Every number in the text must be a number of the facts (small counts and clock times aside). */
-function numbersHold(text: string, facts: string): boolean {
+export function numbersHold(text: string, facts: string): boolean {
   const have = new Set((facts.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, "")));
   for (const n of text.match(/\d+(?:[.,]\d+)*/g) ?? []) {
     const v = n.replace(/,/g, "");
@@ -125,7 +125,7 @@ async function write(key: string, system: string, facts: string, user: string): 
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** "2026-10-06 04:32:55" -> "6 Oct, 04:32": the way the analysis should write it. */
-const when = (t: unknown) => {
+export const when = (t: unknown) => {
   const m = String(t ?? "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
   return m ? `${Number(m[3])} ${MON[Number(m[2]) - 1]}${m[4] && `${m[4]}:${m[5]}` !== "00:00" ? `, ${m[4]}:${m[5]}` : ""}` : String(t ?? "");
 };
