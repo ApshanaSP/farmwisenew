@@ -13,6 +13,7 @@ import StatusTracker, { MiniProgress } from "@/components/StatusTracker";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 import { ComplaintStatus } from "@/types";
+import { isPhotoPath, privateMediaName } from "@/lib/complaint-media-path";
 
 const MiniMap = dynamic(() => import("@/components/citizen/MiniMap"), { ssr: false });
 
@@ -253,11 +254,14 @@ export default function TrackComplaintsPage() {
                             <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Description</dt><dd className="leading-relaxed text-ink-muted">{detail.description}</dd></div>
                           </dl>
                           {detail.media_path && (
-                            /\.(png|jpe?g|webp|gif)$/i.test(detail.media_path) ? (
+                            // private uploads (/api/complaints/media/...) load with the citizen's own session; older public ones as before
+                            isPhotoPath(detail.media_path) ? (
                               <button type="button" onClick={() => setPhoto(detail.media_path)} className="block overflow-hidden rounded-[10px] border border-canvas-border transition hover:border-navy-300" aria-label="View the attached photo">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={detail.media_path} alt="Attached photo" className="aspect-[4/3] w-full object-cover" />
                               </button>
+                            ) : privateMediaName(detail.media_path) ? (
+                              <video src={detail.media_path} controls preload="metadata" className="aspect-video w-full rounded-[10px] border border-canvas-border bg-black" aria-label="Attached video" />
                             ) : (
                               <a href={detail.media_path} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-600 hover:underline">
                                 <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />View attached photo/video

@@ -8,6 +8,7 @@ import { classifyComplaint } from "@/lib/ai-classifier";
 import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { appendComplaintToDataset } from "@/lib/dataset/append";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +26,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
     const data = parsed.data;
+
+    // A private upload can be attached only by the citizen who uploaded it.
+    const mediaName = privateMediaName(data.mediaPath);
+    if (mediaName && (await mediaOwner(mediaName)) !== session.userId) {
+      return NextResponse.json({ error: "The attached file was not recognised. Please attach it again." }, { status: 400 });
+    }
 
     // ---- Re-validate every location relationship server-side -------------
     // The client already enforces these, which is exactly why the server must

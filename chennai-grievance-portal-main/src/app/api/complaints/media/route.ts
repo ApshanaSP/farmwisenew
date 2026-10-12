@@ -1,39 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { getActiveSession } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { MAX_MEDIA_BYTES, saveMedia, sniffMedia } from "@/lib/complaint-media";
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "video/mp4"];
-const EXT_BY_TYPE: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/png": "png",
-  "video/mp4": "mp4"
-};
-
+/**
+ * A photo or video for a complaint the signed-in citizen is filing. Stored privately (see complaint-media.ts) and
+ * returned as a URL that only the citizen, the department and the Collector can open. The type is checked from the
+ * file's first bytes: JPG, PNG or MP4, up to 10 MB.
+ */
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const file = formData.get("media") as File | null;
+  const session = await getActiveSession();
+  if (!session || session.role !== "citizen") {
+    return NextResponse.json({ error: "Please sign in to attach a photo." }, { status: 401 });
+  }
+  const rl = checkRateLimit(`complaint-media:${session.userId}`, 20, 60 * 15);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many uploads. Please try again in a few minutes." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds ?? 60) } }
+    );
+  }
 
+  let file: File | null = null;
+  try {
+    const v = (await req.formData()).get("media");
+    file = v instanceof File ? v : null;
+  } catch {
+    return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
+  }
   if (!file) {
     return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: "Only JPG, PNG and MP4 files are allowed." }, { status: 400 });
-  }
-  if (file.size > MAX_SIZE_BYTES) {
+  if (file.size > MAX_MEDIA_BYTES) {
     return NextResponse.json({ error: "File must be 10MB or smaller." }, { status: 400 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "complaints");
-  await mkdir(uploadDir, { recursive: true });
-
-  const ext = EXT_BY_TYPE[file.type];
-  const filename = `complaint-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const filePath = path.join(uploadDir, filename);
-
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filePath, buffer);
+  const ext = sniffMedia(buffer);
+  if (!ext || buffer.length > MAX_MEDIA_BYTES) {
+    return NextResponse.json({ error: "Only JPG, PNG and MP4 files are allowed." }, { status: 400 });
+  }
 
-  return NextResponse.json({ mediaPath: `/uploads/complaints/${filename}` });
+  try {
+    return NextResponse.json({ mediaPath: await saveMedia(buffer, ext, session.userId) });
+  } catch (err) {
+    console.error("complaint media upload failed", err);
+    return NextResponse.json({ error: "Could not save the file. Please try again." }, { status: 500 });
+  }
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isComplaintMediaPath } from "@/lib/complaint-media-path";
 
 // ---------------------------------------------------------------------
 // Password: min 8 chars, 1 upper, 1 lower, 1 number, 1 special, no spaces
@@ -175,7 +176,10 @@ export const complaintSubmitSchema = z
 
     title: z.string().trim().min(1, "Title is required").max(200),
     description: z.string().trim().min(1, "Details are required").max(400),
-    mediaPath: z.string().trim().optional().nullable(),
+    // only a path the upload route returned: a private upload, or an older public one; never a URL or a file path
+    mediaPath: z.string().trim().max(200)
+      .refine((p) => p === "" || isComplaintMediaPath(p), "The attached file was not recognised. Please attach it again.")
+      .optional().nullable(),
     isAnonymous: z.boolean().optional().default(false)
   })
   .refine(
