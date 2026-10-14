@@ -30,7 +30,7 @@ import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { contextNumbers, extractNumbers, fillFacts, verifyNumbers } from "@/lib/assistant/verify";
+import { contextNumbers, extractNumbers, fillFacts, pruneUnverified, verifyNumbers } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
@@ -744,6 +744,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     await addMessage({ sessionId, role: "user", text: typed, language: lang, inputMode: i.inputMode, scope: consoleScope });
     const messageId = await addMessage({ sessionId, role: "assistant", text: card.headline, language: lang, payload: { ...card, id: undefined }, plan, scope: card.scope });
     card.id = messageId;
+    // where the time went: the models' share, and everything else (data, search, saving)
+    const modelMs = models.reduce((s, m) => s + m.ms, 0);
+    console.info(`[assistant] answered in ${Date.now() - started} ms (models ${modelMs} ms, other ${Date.now() - started - modelMs} ms): ${card.kind}/${card.display}${card.sources.verifier && typeof card.sources.verifier === "object" && card.sources.verifier.template ? " template" : ""}`);
     await audit(i.user, "assistant:answer", "assistant_messages", messageId, null, {
       kind: card.kind, intent: route?.intent ?? null, tools: card.sources.tools.map((t) => t.name), sql: card.sources.sql.length,
       verifier: card.sources.verifier, language: lang, inputMode: i.inputMode, models: card.sources.models.map((m) => `${m.step}:${m.provider}`)
@@ -820,6 +823,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const direct = !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
   if (direct) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
+    // "why did flooding rise in Adyar?": the place the question names narrows the explanation to its zone
+    if (direct.name === "change_drivers" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zone);
     route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: direct.name, args: { scope: s, ...direct.args } }],
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: [`Read as: ${direct.because}.`], offline: false };
   }
@@ -953,7 +958,17 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // several subjects in one question ("road accidents, flooding and public-infrastructure complaints"): every part is answered,
   // side by side, instead of the data being narrowed to the one subject a single category filter can hold
   const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent)
-    && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts"].includes(t.name)) ? multiPart(message) : null;
+    && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts", "change_drivers"].includes(t.name)) ? multiPart(message) : null;
+  // "why did flooding rise in Adyar?": the explanation of a change, narrowed to the one subject it names (its main category),
+  // not a side-by-side summary that gives the figures but no reasons
+  if (!parts && !route.scope.cat && route.tools.length === 1 && route.tools[0].name === "change_drivers") {
+    const one = multiPart(message);
+    if (one?.length === 1 && one[0].codes.length) {
+      const scope = { ...route.scope, cat: one[0].codes[0] };
+      route = { ...route, scope, tools: [{ name: "change_drivers", args: { ...route.tools[0].args, scope } }],
+        assumptions: [...route.assumptions, `Narrowed to ${one[0].label}.`] };
+    }
+  }
   if (parts) {
     route = { ...route, intent: "tool_question", scope: { ...route.scope, cat: null }, tools: [{ name: "category_summary", args: { scope: { ...route.scope, cat: null }, parts } }],
       assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `Answered part by part: ${parts.map((x) => x.label).join("; ")}.`] };
@@ -1240,7 +1255,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       draft = r.object;
       // grounded citations: {{fact_id}} placeholders become the facts' exact values before anything is checked or shown
       const unknown: string[] = [];
-      const fill = (s: string) => { const f = fillFacts(s, facts); unknown.push(...f.unknown); return f.text; };
+      // a placeholder the model wrote half of ("{{departments.top") is as unknown as a wrong id: it must never reach the card
+      const fill = (s: string) => { const f = fillFacts(s, facts); unknown.push(...f.unknown); if (/\{\{|\}\}/.test(f.text)) unknown.push(f.text.match(/\{\{[^\s}]*/)?.[0]?.slice(2) || "malformed placeholder"); return f.text; };
       draft = { ...draft, headline: fill(draft.headline), answerMarkdown: fill(draft.answerMarkdown), voiceSummary: fill(draft.voiceSummary),
         caveats: draft.caveats.map(fill), chart: draft.chart ? { ...draft.chart, title: fill(draft.chart.title), subtitle: draft.chart.subtitle ? fill(draft.chart.subtitle) : draft.chart.subtitle } : null };
       if (unknown.length) {
@@ -1251,6 +1267,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       }
     } catch (e) {
       if (i.signal?.aborted) throw e;
+      // a redraft asked only for polish (a figure, the language) failed: the first draft, which passed the checks, stands
+      if (draft && verdict.ok && statesLead(draft)) break;
       const why = regenerated ? ` while redrafting (the first draft was rejected: ${verdict.unmatched.join(", ") || "empty text"})` : "";
       return fallback(e instanceof AiBusyError ? `The AI service was busy${why}, so this answer was written from the data by a template.`
         : `The composer failed${why} (${(e as Error).message.slice(0, 160)}); answer written by a template.`);
@@ -1269,6 +1287,14 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       regenerated = true;
       continue;
     }
+    // "which zone has the most open incidents?" answered without a single figure ("Anna Nagar tops the list"): asked again once
+    if (verdict.ok && verdict.checked === 0 && attempt === 0 && facts.length
+      && /\b(how many|most|highest|lowest|least|fewest|top|count|number of|which|compare|vs\.?|versus)\b|எத்தனை|evlo|ethana/i.test(c.message)) {
+      console.warn("[assistant] draft states no figure: asking again");
+      ctx.repair = "The answer states no figure. Give the key figure (the leader's value, and the next ones where they matter) using {{fact_id}} placeholders.";
+      regenerated = true;
+      continue;
+    }
     // a Tanglish question answered in plain English (a fallback model ignoring the language): asked again once
     if (verdict.ok && lang === "tanglish" && attempt === 0 && detectLanguage(`${draft.headline} ${draft.answerMarkdown}`).lang === "en") {
       console.warn("[assistant] draft not in Tanglish: asking again");
@@ -1280,6 +1306,25 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     console.warn(`[assistant] verifier rejected numbers: ${verdict.unmatched.join(", ")}`);
     ctx.repair = `These numbers are not in FACTS: ${verdict.unmatched.join(", ")}. Use only fact values (rounding allowed) or remove them.`;
     regenerated = true;
+  }
+  // the model's wording is kept without the sentences whose numbers could not be verified, when what is left still states
+  // the main figure (the template's headline stands in for a dropped one)
+  let pruned = 0;
+  if (draft && !verdict.ok && verdict.checked > 0 && !verdict.unmatched.some((u) => u.startsWith("{{"))) {
+    const sure = (t: string) => !t.trim() || verifyNumbers([t], facts, context, quotable).ok;
+    const kept = pruneUnverified(draft, sure);
+    if (kept) {
+      const headline = kept.headline ?? fallback(null).headline;
+      const next = { ...draft, headline, answerMarkdown: kept.answerMarkdown, voiceSummary: kept.voiceSummary ?? headline,
+        chart: draft.chart && sure(`${draft.chart.title} ${draft.chart.subtitle ?? ""}`) ? draft.chart : null };
+      const v = verifyNumbers([next.headline, next.answerMarkdown, next.voiceSummary], facts, context, quotable);
+      if (v.ok && statesLead(next)) {
+        console.warn(`[assistant] kept the draft without ${kept.dropped} unverified sentence(s): ${verdict.unmatched.join(", ")}`);
+        draft = next;
+        pruned = kept.dropped;
+        verdict = v;
+      }
+    }
   }
   if (!draft || !verdict.ok) {
     const t = fallback(`The draft's numbers could not be verified (${verdict.unmatched.join(", ")}), so a template wrote this answer.`);
@@ -1320,6 +1365,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       ...draft.caveats.map((x) => x.trim()).filter(Boolean)])].slice(0, 4)
   };
   card.sources.verifier = { checked: verdict.checked, unmatched: [], regenerated, template: false };
+  if (pruned) card.sources.limits.push(`${pruned} sentence(s) with figures the checker could not verify were left out.`);
   if (checked.fixes.length) card.sources.limits.push(`Chart checker: ${checked.fixes.join("; ")}.`);
   card.sources.limits.push(...c.caveats.filter((x) => !card.caveats.includes(x)));
   rememberCard(cache, card);

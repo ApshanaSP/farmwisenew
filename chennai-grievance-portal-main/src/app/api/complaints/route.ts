@@ -7,6 +7,7 @@ import { resolveWard } from "@/lib/wards";
 import { classifyComplaint } from "@/lib/ai-classifier";
 import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { appendComplaintToDataset } from "@/lib/dataset/append";
+import { progressFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 
@@ -308,14 +309,19 @@ export async function GET(req: NextRequest) {
     query += " AND c.complaint_code LIKE ?";
     params.push(`%${code}%`);
   }
-  if (status) {
-    query += " AND c.status = ?";
-    params.push(status);
-  }
-
   query += " ORDER BY c.created_at DESC";
 
   const [rows] = await pool.query<RowDataPacket[]>(query, params);
+  // each complaint's status as the officer's and the Collector's work left it (complaint-progress.ts); the status filter
+  // applies to that, not to the status it was filed with
+  const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at }))).catch((e) => {
+    console.warn("complaint progress failed", e);
+    return new Map();
+  });
+  for (const r of rows) {
+    const p = prog.get(String(r.complaint_code));
+    if (p) Object.assign(r, { status: p.status, rejected_stage: p.rejectedStage, ...(p.remarks ? { remarks: p.remarks } : {}) });
+  }
 
-  return NextResponse.json({ complaints: rows });
+  return NextResponse.json({ complaints: status ? rows.filter((r) => r.status === status) : rows });
 }

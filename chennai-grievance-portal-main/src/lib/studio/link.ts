@@ -36,6 +36,10 @@ async function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   return out;
 }
 
+/** zones that must hold some of the data before a zone-by-zone link is read */
+export const MIN_ZONES = 5;
+/** Bumped when the link is read differently: 2 = a period table is read in its latest period, and 5 zones must hold data. */
+export const LINK_VERSION = 2;
 const strength = (rho: number): LinkResult["strength"] => (rho >= 0.6 ? "strong" : rho >= 0.4 ? "moderate" : rho >= 0.25 ? "weak" : "none");
 
 export async function crossLink(rows: DRow[], spec: Spec, window: { from: string | null; to: string | null }, refs: Refs): Promise<LinkResult | null> {
@@ -56,7 +60,11 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
   }
   const inWin = store.list.filter((x) => x.d >= from && x.d <= to);
   const hasOpen = spec.openValues.length > 0 && rows.some((r) => r._o === 1);
-  const dsRows = hasOpen ? rows.filter((r) => r._o === 1) : rows;
+  // a period table (one row per hospital per day) is read in its latest period, as everywhere else: adding a daily bed
+  // count over 180 days gave "11,84,029 beds" in a zone of a district with 10,058
+  const latest = spec.panelBy && window.to ? rows.filter((r) => r._d === window.to) : [];
+  const base = latest.length ? latest : rows;
+  const dsRows = hasOpen ? base.filter((r) => r._o === 1) : base;
   // how much each row counts: 1, or its cases for a periodic return (spec.weight)
   const wcol = spec.weight ?? null;
   const wOf = (r: DRow) => (wcol ? (typeof r[wcol] === "number" ? (r[wcol] as number) : 0) : 1);
@@ -90,9 +98,12 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
   const dsVec = zones.map((z) => dsByZone.get(z) ?? 0);
 
   // ---- place: zone by zone
+  // a rank correlation over zones most of which have none of the data is decided by the ties at zero (hospitals in 3 of
+  // 15 zones "lined up" with health incidents, reported at those hospitals): MIN_ZONES zones must have some
+  const byPlace = usePlace && dsVec.filter((v) => v > 0).length >= MIN_ZONES;
   type Scored = { cand: (typeof cands)[number]; rho: number; total: number; byZone: Map<number, number> };
   let best: Scored | null = null;
-  if (usePlace) {
+  if (byPlace) {
     const scored: Scored[] = cands.map((cand) => {
       const set = new Set(cand.codes);
       const byZone = new Map<number, number>();
@@ -136,7 +147,7 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
           rho: Math.round(top.rho * 100) / 100, weeks: weeks.length, lag: top.lag, label: top.cand.label,
           series: weeks.map((w) => ({ week: w, ds: dsW.get(w) ?? 0, inc: top!.inc.get(addDays(w, -7 * top!.lag)) ?? 0 }))
         };
-        if (!best && !usePlace) best = { cand: top.cand, rho: top.rho, total: 0, byZone: new Map() };
+        if (!best && !byPlace) best = { cand: top.cand, rho: top.rho, total: 0, byZone: new Map() };
       }
     }
   }
@@ -144,7 +155,7 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
 
   const set = new Set(best.cand.codes);
   const chosen = inWin.filter((x) => set.has(x.c));
-  const pairs = usePlace ? zones.map((z) => ({ key: z, name: refs.zones.get(z)?.name ?? `Zone ${z}`, ds: dsByZone.get(z) ?? 0, inc: best!.byZone.get(z) ?? 0 })) : [];
+  const pairs = byPlace ? zones.map((z) => ({ key: z, name: refs.zones.get(z)?.name ?? `Zone ${z}`, ds: dsByZone.get(z) ?? 0, inc: best!.byZone.get(z) ?? 0 })) : [];
   const topDs = [...pairs].sort((a, b) => b.ds - a.ds).slice(0, 5).filter((p) => p.ds > 0);
   const topInc = new Set([...pairs].sort((a, b) => b.inc - a.inc).slice(0, 5).filter((p) => p.inc > 0).map((p) => p.key));
   const overlap = topDs.filter((p) => topInc.has(p.key));
@@ -175,13 +186,13 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
     console.warn("[studio] link sample failed", (e as Error).message);
   }
 
-  const rho = usePlace ? best.rho : time?.rho ?? 0;
+  const rho = byPlace ? best.rho : time?.rho ?? 0;
   return {
-    mode: usePlace ? "place" : "time", level: "zone", dsLabel,
+    mode: byPlace ? "place" : "time", level: "zone", dsLabel,
     incLabel: best.cand.label.toLowerCase().includes("incident") ? best.cand.label : `${best.cand.label} incidents`,
     category: { codes: best.cand.codes, label: best.cand.label, by: best.cand.by },
     window: { from, to, basis },
-    rho: Math.round(rho * 100) / 100, strength: strength(rho), n: usePlace ? zones.length : time?.weeks ?? 0,
+    rho: Math.round(rho * 100) / 100, strength: strength(rho), n: byPlace ? zones.length : time?.weeks ?? 0,
     pairs, overlap,
     incidents: chosen.length, open: chosen.filter((x) => x.o).length, news: chosen.filter((x) => x.news).length, overdue: chosen.filter((x) => x.o && x.late).length,
     sample, time, lowlying

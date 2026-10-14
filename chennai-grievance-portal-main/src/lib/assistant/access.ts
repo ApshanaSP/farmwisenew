@@ -6,7 +6,7 @@
  * (officerDeptCode), never from the request.
  */
 import { NextResponse } from "next/server";
-import { getActiveSession } from "@/lib/auth";
+import { getActivePortalSession, resolvePortal } from "@/lib/auth";
 import { officerDeptCode } from "@/lib/officer/guard";
 
 export interface AssistantUser {
@@ -19,7 +19,9 @@ export interface AssistantUser {
 
 /** The signed-in Collector or department officer, or the response to return. */
 export async function assistantSession(): Promise<AssistantUser | NextResponse> {
-  const s = await getActiveSession();
+  // the Collector's or the officer's own session (the asking console first), never a citizen's that happens to be signed in
+  const order = resolvePortal() === "officer" ? ["officer", "collector"] as const : ["collector", "officer"] as const;
+  const s = (await getActivePortalSession(order[0])) ?? (await getActivePortalSession(order[1]));
   if (!s || (s.role !== "collector" && s.role !== "department_officer")) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { collectorSession } from "@/lib/collector/guard";
+import { syncComplaints } from "@/lib/complaint-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,8 @@ export async function POST(req: NextRequest) {
       saved.push({ incident_id: inc.incident_id, decision_id: res.insertId, escalated_to_level: level });
     }
     await conn.commit();
+    // verify / resolve / return / reject reach the residents' trackers (complaint-progress.ts); notes and escalations do not
+    if (["verify", "resolve", "reopen", "reject"].includes(d.decision)) await syncComplaints(saved.map((x) => x.incident_id), session.userId);
     return NextResponse.json({ saved }, { status: 201 });
   } catch (err) {
     await conn.rollback().catch(() => undefined);

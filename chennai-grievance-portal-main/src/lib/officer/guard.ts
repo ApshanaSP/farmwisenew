@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
-import { getActiveSession } from "@/lib/auth";
+import { getActivePortalSession } from "@/lib/auth";
 import type { JwtPayload } from "@/types";
 import { parsePeriod, parseTaluk, parseZone, type Period } from "@/lib/collector/intel";
 import { OFFICER, codeForPortalDept } from "./departments";
@@ -45,7 +45,8 @@ export async function officerDeptCode(userId: number): Promise<string | null> {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function officerSession(_params?: URLSearchParams, _opts: { write?: boolean } = {}): Promise<OfficerContext | NextResponse> {
-  const session = await getActiveSession();
+  // the officer's own session, whatever page asked (a missing Referer used to read the citizen's first)
+  const session = await getActivePortalSession("officer");
   if (!session || session.role !== "department_officer") {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

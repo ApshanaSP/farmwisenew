@@ -73,6 +73,8 @@ export function fold(steps: ThreadStep[]): { steps: (ThreadStep & { similar: num
 function merge(ts: Thread[], title: string | null): Story {
   const all = ts.flatMap((t) => t.days.flatMap((d) => d.steps));
   const { steps, folded } = fold(all);
+  // a copy: the threads' own steps are shared with the rules' stories built alongside
+  if (steps[0]) steps[0] = { ...steps[0], stage: "First report" };
   const days: Thread["days"] = [];
   for (const s of steps) {
     const day = s.t.slice(0, 10);
@@ -82,7 +84,6 @@ function merge(ts: Thread[], title: string | null): Story {
   }
   const stages: Thread["stages"] = [];
   for (const s of steps.slice(1)) if (s.stage !== "Update" && s.stage !== "First report" && !stages.some((x) => x.stage === s.stage)) stages.push({ stage: s.stage, t: s.t });
-  if (steps[0]) steps[0].stage = "First report";
   const big = [...ts].sort((a, b) => b.reports - a.reports)[0];
   const uniq = <T,>(xs: T[]) => [...new Set(xs)];
   const first = steps[0]?.t ?? big.first, last = steps[steps.length - 1]?.t ?? big.last;
@@ -184,6 +185,8 @@ export interface Stories { days: number; total: number; threads: Story[]; /** a 
 declare global {
   // eslint-disable-next-line no-var
   var __stories: Map<string, { at: number; v: Stories }> | undefined;
+  // eslint-disable-next-line no-var
+  var __storyJobs: Map<string, Promise<Stories | null>> | undefined;
 }
 
 /** The developing stories of the scope, joined, cleaned and explained. `ai` says whether a model did the joining. */
@@ -195,6 +198,20 @@ export async function stories(scope: ThreadScope, now: string, user: string): Pr
   if (memo && Date.now() - memo.at < 30 * 60_000) return memo.v;
 
   const cand = base.threads.filter((t) => !routine(t));
+  // The model's joining runs in the background: a page waits at most WAIT_MS for it (a remembered write-up comes back at
+  // once), else gets the rules' stories now and the model's on its next load. New data used to hold the Overview 14 s.
+  const jobs = (global.__storyJobs ??= new Map());
+  if (!jobs.has(key)) jobs.set(key, withAi(base, cand, key, user).catch((e) => {
+    console.warn(`[stories] ${(e as Error).message.slice(0, 200)}`);
+    return null;
+  }).finally(() => jobs.delete(key)));
+  const quick = await Promise.race([jobs.get(key)!, new Promise<null>((r) => setTimeout(() => r(null), WAIT_MS))]);
+  return quick ?? finish(base, cand.map((t) => merge([t], null)), false, key);
+}
+
+const WAIT_MS = 1500;
+
+async function withAi(base: Awaited<ReturnType<typeof threads>>, cand: Awaited<ReturnType<typeof threads>>["threads"], key: string, user: string): Promise<Stories | null> {
   const facts = cand.map((t, k) => {
     const steps = t.days.flatMap((d) => d.steps);
     const pick = [...new Set([0, Math.floor(steps.length / 3), Math.floor((2 * steps.length) / 3), steps.length - 1])].filter((j) => steps[j]);
@@ -205,28 +222,30 @@ export async function stories(scope: ThreadScope, now: string, user: string): Pr
     text: (o) => o.stories.map((s) => s.title).join(" "),
     ok: (o) => o.stories.some((s) => s.threads.length > 0) }) : null;
 
-  let out: Story[];
-  if (grouped) {
-    const used = new Set<number>();
-    out = [];
-    for (const g of grouped.o.stories) {
-      const ix = [...new Set(g.threads)].map((x) => x - 1).filter((x) => cand[x] && !used.has(x));
-      ix.forEach((x) => used.add(x));
-      if (!ix.length || !g.keep) continue;
-      out.push(merge(ix.map((x) => cand[x]), g.title.trim() || null));
-    }
-    // a thread the model left out keeps the rules' verdict only when it has a named new step
-    cand.forEach((t, x) => { if (!used.has(x) && t.stages.length) out.push(merge([t], null)); });
-    await milestones(out, user);
-    // a story with only one step after all did not develop
-    out = out.filter((s) => !s.ai || s.ai.milestones.length >= 2);
-  } else {
-    out = cand.map((t) => merge([t], null));
+  if (!grouped) return null;
+  const used = new Set<number>();
+  let out: Story[] = [];
+  for (const g of grouped.o.stories) {
+    const ix = [...new Set(g.threads)].map((x) => x - 1).filter((x) => cand[x] && !used.has(x));
+    ix.forEach((x) => used.add(x));
+    if (!ix.length || !g.keep) continue;
+    out.push(merge(ix.map((x) => cand[x]), g.title.trim() || null));
   }
+  // a thread the model left out keeps the rules' verdict only when it has a named new step
+  cand.forEach((t, x) => { if (!used.has(x) && t.stages.length) out.push(merge([t], null)); });
+  await milestones(out, user);
+  // a story with only one step after all did not develop
+  out = out.filter((s) => !s.ai || s.ai.milestones.length >= 2);
+  return finish(base, out, true, key);
+}
+
+/** Sorted, and remembered when a model joined them. */
+function finish(base: { days: number }, out: Story[], ai: boolean, key: string): Stories {
   out.sort((a, b) => b.last.slice(0, 10).localeCompare(a.last.slice(0, 10)) || (b.ai?.milestones.length ?? b.stages.length) - (a.ai?.milestones.length ?? a.stages.length) ||
     b.reports - a.reports);
-  const v: Stories = { days: base.days, total: out.length, threads: out, ai: !!grouped };
-  if (grouped) global.__stories.set(key, { at: Date.now(), v });
-  while (global.__stories.size > 20) global.__stories.delete(global.__stories.keys().next().value!);
+  const v: Stories = { days: base.days, total: out.length, threads: out, ai };
+  const memo = (global.__stories ??= new Map());
+  if (ai) memo.set(key, { at: Date.now(), v });
+  while (memo.size > 20) memo.delete(memo.keys().next().value!);
   return v;
 }

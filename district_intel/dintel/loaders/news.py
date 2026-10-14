@@ -85,6 +85,39 @@ def outside_headline(titles: pd.Series) -> pd.Series:
     return titles.fillna("").map(one).astype(bool)
 
 
+# A history column ("13.10.1976: 95 killed in a Bombay air crash", Dinamani's daily slot) is not an incident of today.
+HISTORY = re.compile(r"this day in history|on this day|years ago today|today in history|இதே நாளில்|அன்று இதே நாள்|வரலாற்றில் இன்று|இன்றைய வரலாறு", re.I)
+DATED = re.compile(r"^\s*(\d{1,2})[./-](\d{1,2})[./-](\d{4})\s*[:：\-–—]")
+YEAR = re.compile(r"^\s*(1[5-9]\d\d|20\d\d)\s*[:：\-–—]")
+
+
+def archival(titles: pd.Series, published: pd.Series) -> pd.Series:
+    """True for a history item: a history column, or a headline opening with a date more than 30 days before publication
+    (the same rule as the website's newssanity.ts)."""
+    pub = pd.to_datetime(published, errors="coerce")
+
+    def one(t: str, p) -> bool:
+        if HISTORY.search(t):
+            return True
+        m = DATED.match(t)
+        if m:
+            try:
+                when = pd.Timestamp(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+            except ValueError:
+                return False
+            if pd.isna(p):
+                return when.year < pd.Timestamp.now().year - 1
+            return when < p.tz_localize(None).normalize() - pd.Timedelta(days=30)
+        y = YEAR.match(t)
+        return bool(y) and not pd.isna(p) and int(y.group(1)) < p.year - 1
+    return pd.Series([one(str(t or ""), p) for t, p in zip(titles, pub)], index=titles.index, dtype=bool)
+
+
+# Workers overcome by gas in a drain, sewer or tank were read as vector-borne disease (விஷ, poison, is in both).
+GAS = re.compile(r"\b(?:gas|fumes?|toxic|asphyxia\w*|suffocat\w*|manhole|septic|sewer|sewage tank|stormwater well|poisonous)\b|விஷவாயு|விஷ வாயு|கழிவுநீர்த் ?தொட்டி|மூச்சுத் ?திணற", re.I)
+DISEASE = re.compile(r"\b(?:dengue|malaria|chikungunya|cholera|typhoid|fever|mosquito|diarr\w*|jaundice|hepatitis|leptospir\w*|outbreak|infection|virus|viral|cases)\b|டெங்கு|காய்ச்சல்|கொசு|மலேரியா", re.I)
+
+
 REPORT_TYPE_RULES = [
     # scheduled maintenance outages ("power cut tomorrow: full list of areas") are notices, not incidents
     ("service_notice", re.compile(r"power ?cut (today|tomorrow|on )|power shutdown|outage (list|on )|affected areas|check (timings|full list|affected)|"
@@ -728,6 +761,11 @@ def _embed_stories(d: pd.DataFrame, E: np.ndarray, E_en: np.ndarray | None = Non
 def to_events(d: pd.DataFrame, ref: Reference, snap: str | None) -> pd.DataFrame:
     """Incident articles become events (severity capped at High until confirmed)."""
     x = d[(d["is_incident"] == 1) & d["category_code"].notna() & (d["category_code"] != "OTHER")].copy()
+    x = x[~archival(x["title"], x["published_at"]).to_numpy()]
+    gas_text = x["title"].fillna("") + " " + (x["title_en"].fillna("") if "title_en" in x else "")
+    gas = (x["category_code"] == "VECTOR_DISEASE") & gas_text.str.contains(GAS) & ~gas_text.str.contains(DISEASE)
+    if "DRAIN_WORKS_SAFETY" in ref.cat:
+        x.loc[gas, "category_code"] = "DRAIN_WORKS_SAFETY"
     ev = pd.DataFrame({
         "event_id": "NEWS-" + x["doc_id"], "source": "news", "source_record_id": x["doc_id"],
         "deep_link": x["publisher_url"].fillna(x["canonical_url"]), "snapshot_sha256": snap, "is_synthetic": 0, "is_overlay": 0,

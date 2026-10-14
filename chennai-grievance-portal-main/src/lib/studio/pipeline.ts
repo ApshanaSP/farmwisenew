@@ -7,18 +7,18 @@ import { classify } from "@/lib/collector/nlp";
 import { askAI, briefAI, checkPlan, noteAI, understandAI } from "@/lib/studio/ai";
 import { rulesAsk } from "@/lib/studio/ask";
 import { rulesBrief } from "@/lib/studio/brief";
-import { clean } from "@/lib/studio/clean";
+import { clean, type DRow } from "@/lib/studio/clean";
 import { designDashboard, panelColumn, periodicWeight } from "@/lib/studio/dashboard";
 import { answerText, describeFilter, runPlan, type Names } from "@/lib/studio/engine";
 import { drill } from "@/lib/studio/drill";
 import { computeInsights } from "@/lib/studio/insights";
-import { crossLink } from "@/lib/studio/link";
+import { LINK_VERSION, crossLink } from "@/lib/studio/link";
 import { parseFile, type Table } from "@/lib/studio/parse";
 import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
 import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
 import { mergeSpec, respec, rulesSpec } from "@/lib/studio/spec";
-import { dropPending, getCandidates, getMeta, getPending, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, saveSource } from "@/lib/studio/store";
+import { dropPending, findBySource, getCandidates, getMeta, getPending, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, saveSource } from "@/lib/studio/store";
 import { connectLink, type Connected } from "@/lib/studio/connect";
 import { choose, tableHash, type Found } from "@/lib/studio/connect/discover";
 import { cleanAuth, getVault, saveSession, saveVault } from "@/lib/studio/connect/vault";
@@ -87,10 +87,21 @@ export class BlockedError extends Error {
   constructor(public id: string, public why: string, public signals: string[]) { super(why); }
 }
 
+/** The same bytes were added before: that dataset is opened, not copied. */
+function alreadyAdded(meta: DatasetMeta, emit: Emit): string {
+  emit({ t: "step", step: "read", state: "done", detail: `Already added on ${fmtDay(meta.createdAt.slice(0, 10))} as "${meta.name}": opening it`, by: "code", ms: 0 });
+  emit({ t: "log", text: `This file is the same as "${meta.name}", so no copy was made. Delete that dataset first to read it afresh.` });
+  return meta.id;
+}
+
 const rowsCols = (t: Table) => `${t.rows.length.toLocaleString("en-IN")} rows · ${t.headers.length} columns`;
 
 /** A new dataset from a file, a link or a sample. Returns its id. */
 export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
+  if (!inp.id) {
+    const same = findBySource(inp.buf);
+    if (same) return alreadyAdded(same, emit);
+  }
   const id = inp.id ?? newId();
   const t0 = Date.now();
   emit({ t: "step", step: "read", state: "run", detail: `Opening ${inp.file}` });
@@ -124,6 +135,8 @@ export async function ingestLink(p: { url: string; auth: AuthInput | null; every
   emit({ t: "step", step: "read", state: "run", detail: auth.mode === "none" ? "Connecting to the link" : `Connecting with ${AUTH_LABEL[auth.mode].toLowerCase()}` });
   const log = (text: string) => emit({ t: "log", text });
   const c = await connectLink(p.url, auth, { log });
+  const same = findBySource(c.buf);
+  if (same) return alreadyAdded(same, emit);
   const chosen = choose(c.found);
   const id = newId();
   saveCandidates(id, c.found);
@@ -399,7 +412,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   const now = new Date().toISOString();
   const meta: DatasetMeta = {
     id: ctx.id, name: ctx.name || spec.title, source: ctx.source, createdAt: ctx.createdAt ?? now, updatedAt: now,
-    rows: rows.length, cols: table.headers.length, window: cleaned.window, spec, profile, detective: cleaned.detective, panels, link, story, brief,
+    rows: rows.length, cols: table.headers.length, window: cleaned.window, spec, profile, detective: cleaned.detective, panels, link, linkVersion: LINK_VERSION, story, brief,
     relevance: gate.relevance, rules: ctx.rules ?? [], steps, sample: ctx.sample
   };
   saveDataset(meta, rows);
@@ -467,14 +480,34 @@ export interface DatasetView {
  * zone can be picked) but follows the other filters.
  */
 export async function view(id: string, extra: Filter[]): Promise<DatasetView | null> {
-  const meta = getMeta(id);
+  let meta = getMeta(id);
   if (!meta) return null;
   const rows = getRows(id);
   const refs = await loadRefs();
   const names = namesOf(refs);
+  if ((meta.linkVersion ?? 1) < LINK_VERSION) meta = await relink(meta, rows, refs, names);
   const panels = meta.panels.map((p) => runPlan(rows, meta.spec, { ...p, filters: [...p.filters, ...(p.chart === "map" ? extra.filter((f) => f.col !== "_z") : extra)] }, names));
   const brief = meta.brief ?? rulesBrief(computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names), meta.spec);
   return { meta, panels, focus: { filters: extra, chips: extra.map((f) => describeFilter(meta.spec, f, names)) }, brief, briefStale: !meta.brief };
+}
+
+/**
+ * A dataset linked by an older crossLink is linked again once. When the link changes, the story and the AI brief written
+ * from it are rebuilt (the brief when next asked for), so no card keeps the old figures.
+ */
+async function relink(meta: DatasetMeta, rows: DRow[], refs: Refs, names: Names): Promise<DatasetMeta> {
+  let link = meta.link;
+  try {
+    link = await crossLink(rows, meta.spec, meta.window, refs);
+  } catch (e) {
+    console.warn("[studio] relink failed", (e as Error).message);
+    return meta;
+  }
+  const changed = JSON.stringify(link) !== JSON.stringify(meta.link);
+  const next: DatasetMeta = { ...meta, link, linkVersion: LINK_VERSION,
+    ...(changed ? { story: rulesStory(buildFacts(rows, meta.spec, meta.detective, link, meta.window, names), meta.spec, link), brief: null } : {}) };
+  saveMeta(next);
+  return next;
 }
 
 /** One mark of a chart opened (see drill.ts). */

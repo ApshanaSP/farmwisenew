@@ -106,7 +106,25 @@ export function requireRole(session: JwtPayload | null, roles: UserRole[]): bool
  * 7-day token to expire.
  */
 export async function getActiveSession(): Promise<JwtPayload | null> {
-  const session = await getSessionFromCookies();
+  return active(await getSessionFromCookies());
+}
+
+/**
+ * The active session of one portal, whatever page made the request. A Collector or officer API asks for its own portal:
+ * read from the Referer instead, a request without one (a privacy setting, a link opened in a new tab) fell back to the
+ * citizen's session first and was refused with "Not authenticated" in a browser signed in to both.
+ */
+export async function getActivePortalSession(portal: Portal): Promise<JwtPayload | null> {
+  return active(await getPortalSession(portal));
+}
+
+/** Every active session this browser holds (collector, officer, citizen), for a resource any of them may open. */
+export async function getActiveSessions(): Promise<JwtPayload[]> {
+  const all = await Promise.all((["collector", "officer", "citizen"] as Portal[]).map((p) => getActivePortalSession(p)));
+  return all.filter((s): s is JwtPayload => !!s);
+}
+
+async function active(session: JwtPayload | null): Promise<JwtPayload | null> {
   if (!session) return null;
 
   const [rows] = await pool.query<RowDataPacket[]>(

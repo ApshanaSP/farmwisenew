@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clusterIncidents, type ClusterInput } from "./cluster";
+import { clusterIncidents, placeKey, type ClusterInput } from "./cluster";
 
 const H = 36e5;
 const at = (h: number) => Date.parse("2026-10-01T08:00:00+05:30") + h * H;
@@ -126,5 +126,18 @@ describe("clusterIncidents", () => {
     const t0 = Date.now();
     clusterIncidents(rows);
     expect(Date.now() - t0).toBeLessThan(2000);
+  });
+});
+
+describe("placeKey", () => {
+  it("reads St / Rd as street / road, so one street reported two ways is one place", () => {
+    expect(placeKey("Gandhi St")).toBe(placeKey("Gandhi Street"));
+    expect(placeKey("Gandhi St.")).toBe("gandhi street");
+    expect(placeKey("Arcot Rd")).toBe("arcot road");
+  });
+  it("does not touch 'st' / 'rd' inside a word", () => {
+    expect(placeKey("Thiruvottiyur High Road")).toBe("thiruvottiyur high road");
+    expect(placeKey("Stella Maris")).toBe("stella maris");
+    expect(placeKey("3rd Avenue")).toBe("3rd avenue");
   });
 });

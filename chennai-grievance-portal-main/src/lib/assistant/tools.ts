@@ -19,6 +19,7 @@ import { ScopeSchema, refNames, scopeProblems, type AssistantScope } from "@/lib
 import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
+import { pickIncident } from "@/lib/assistant/rerank";
 import { windowRows } from "@/lib/assistant/incidents";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
@@ -100,6 +101,9 @@ const INCIDENT_WORDS: Record<string, string> = {
 };
 
 /** Words that describe the question, not the incident (left out of the keyword match of a story). */
+/** a question about people who died ("gas deaths", "how many were killed", பலி, உயிரிழப்பு) */
+const DEATH_WORDS = /\b(deaths?|died|dies|dead|killed|fatal\w*|lives? lost|bodies|body found|drown\w*|electrocuted)\b|பலி|உயிரிழ|மரணம்|சாவு|sethu|setha|irandh/i;
+
 const STORY_STOP = new Set(["what", "this", "that", "case", "incident", "tell", "about", "more", "details", "detail", "explain", "happened", "there",
   "which", "when", "where", "with", "from", "enna", "aachu", "pathi", "sollu", "yesterday", "today", "last", "week", "month", "recent", "latest", "show",
   "give", "please", "near", "area", "zone", "ward"]);
@@ -116,7 +120,12 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   const place = await resolvePlace(text);
   const zone = scope.zone ?? place?.zone ?? null;
   const named = classify(text);
-  const cats = scope.cat ? [scope.cat] : named && named.conf >= 0.6 ? [named.code] : null;
+  // the category the words suggest ranks higher but does not filter: "Kodungaiyur gas deaths" reads as fire & explosion,
+  // and the event (two workers dead in a stormwater well) is filed under drainage. Only the console's own filter filters.
+  const cats = scope.cat ? [scope.cat] : null;
+  const catHint = !scope.cat && named && named.conf >= 0.6 ? named.code : null;
+  // a question about deaths looks first at incidents with deaths
+  const aboutDeaths = DEATH_WORDS.test(text);
   // hybrid scoring over every incident in the filter: closeness in meaning, plus the question's own key words found in
   // the incident's type, title and reasons ("murder" is in a murder's reasons, not its generic title; Tamil and
   // Tanglish words count through their English form); recency, the named locality and severity break near-ties
@@ -131,20 +140,40 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   const lexOf = (words: string | undefined) => keys.filter((w) => (words ?? "").includes(w)).length;
   // the word the question names ("murder") outweighs small differences in meaning between near-identical police records
   const boost = (m: Meta) => Math.min(0.14, 0.07 * lexOf(m.words)) + 0.03 * Math.exp(-Math.max(0, nowT - m.t) / (30 * 86400))
-    + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0);
+    + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0)
+    + (catHint && m.cat === catHint ? 0.03 : 0);
   // the search index (LanceDB): meaning and keywords together, typo-tolerant; the zone and type narrow it, relaxed in turn
   const hy = (f: { zone?: number | null; cats?: string[] | null }) => hybridSearch("incidents", text, { zone: f.zone ?? null, cats: f.cats ?? null }, 12);
   let found = await hy({ zone, cats }).catch(() => null);
   if (found && !found.length && cats) found = await hy({ zone });
   if (found && !found.length && zone != null) found = await hy({ cats });
+  // "the Kodungaiyur gas deaths": among the many records of a locality the words alone miss the one whose title says
+  // "workers die"; the incidents with deaths are searched on their own and joined in, and rank first below
+  // among incidents with deaths, the order of that search (meaning and words, deaths only) decides
+  const deathRank = new Map<string, number>();
+  if (found && aboutDeaths) {
+    const dead = (await hybridSearch("incidents", text, { zone, cats, deadOnly: true }, 6).catch(() => null)) ?? [];
+    dead.forEach((h, k) => deathRank.set(h.id, k));
+    const seen = new Set(found.map((h) => h.id));
+    found = [...found, ...dead.filter((h) => !seen.has(h.id))];
+  }
   if (found) {
     // recency, the named locality and severity break near-ties, as below
-    const ranked = found.map((h) => ({ id: h.id, sim: h.sim, words: `${h.rec.cat_label} ${h.rec.title} ${h.rec.place}`.toLowerCase(),
+    const ranked = found.map((h) => ({ id: h.id, sim: h.sim, rec: h.rec, words: `${h.rec.cat_label} ${h.rec.title} ${h.rec.place}`.toLowerCase(),
+      dead: Number(h.rec.dead) > 0,
       score: h.score + 0.002 * Math.exp(-Math.max(0, nowT - Number(h.rec.t)) / (30 * 86400)) + (locality && h.rec.place.toLowerCase().includes(locality) ? 0.002 : 0)
-        + (h.rec.sev === "Severe" ? 0.001 : 0) })).sort((a, b) => b.score - a.score);
+        + (h.rec.sev === "Severe" ? 0.001 : 0) + (catHint && h.rec.cat === catHint ? 0.004 : 0)
+        // fused ranks score about 0.016 per list: a death the question asks about outranks a near match in meaning alone
+        + (deathRank.has(h.id) ? 0.05 - 0.002 * deathRank.get(h.id)! : aboutDeaths && Number(h.rec.dead) > 0 ? 0.012 : 0) })).sort((a, b) => b.score - a.score);
+    // the model reads the best candidates side by side and picks the one meant (rerank.ts); the search order otherwise
+    const head = ranked.slice(0, 8);
+    const pick = await pickIncident(text, head.map((h) => ({ id: h.id, title: String(h.rec.title ?? ""), place: String(h.rec.place ?? ""), type: String(h.rec.cat_label || h.rec.cat || ""),
+      when: new Date(Number(h.rec.t) * 1000 + 330 * 60_000).toISOString(), dead: Number(h.rec.dead) || 0, severity: String(h.rec.sev ?? "") })));
+    if (pick?.index != null && pick.index > 0) ranked.unshift(...ranked.splice(pick.index, 1));
     const top = ranked[0];
-    return { found: ranked.map((h) => ({ id: h.id, score: h.score })), how: "meaning",
-      confident: !top || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86 };
+    return { found: ranked.map((h) => ({ id: h.id, score: h.score })), how: pick?.index != null ? "meaning, checked" : "meaning",
+      confident: pick?.index != null ? pick.sure || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86
+        : !top || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86 || (aboutDeaths && top.dead) };
   }
   // the older in-memory index while the search index is being built
   let hits = await semanticSearch(text, { zone, cats }, 12, boost);

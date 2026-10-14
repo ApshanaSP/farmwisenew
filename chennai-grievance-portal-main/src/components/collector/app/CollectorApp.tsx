@@ -23,7 +23,7 @@ import { NewsView } from "./NewsPreview";
 import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
-import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, type Row } from "./lib";
+import { deptIcon, fmtDate, fmtDay, fmtShort, fmtTime, fmtWhen, fullTitle, ms, rel, watchBrief, type Row } from "./lib";
 import { esc } from "./SatMap";
 import "./tokens.css";
 import "./collector.css";
@@ -327,8 +327,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   useEffect(() => {
     let live = true;
     api(`/api/collector/stories?${qs}`).then((j) => live && setStories({ key: qs, d: j })).catch(() => {});
-    api(`/api/collector/brief?kind=day&${qs}`).then((j) => live && setDay({ key: qs, d: j })).catch(() => live && setDay({ key: qs, d: { brief: null } }));
-    return () => { live = false; };
+    const stop = watchBrief<DayBrief>(`/api/collector/brief?kind=day&${qs}`, (brief) => live && setDay({ key: qs, d: { brief } }));
+    return () => { live = false; stop(); };
   }, [qs, reloadKey]);
 
   useEffect(() => {

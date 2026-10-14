@@ -33,7 +33,7 @@ interface ComplaintListItem {
 
 const SHORT: Record<string, string> = {
   "Complaint Filed": "Filed", "Pending Approval": "Pending approval", "Approved by Department Officer": "Approved", "In Progress": "In progress",
-  "Completed - Pending Collector Verification": "Awaiting Collector", "Verified by Collector": "Verified", Rejected: "Rejected"
+  "Completed - Pending Collector Verification": "Awaiting Collector", "Verified by Collector": "Verified", "Resolved by Department": "Resolved", Rejected: "Rejected"
 };
 const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -47,6 +47,8 @@ export default function TrackComplaintsPage() {
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const [detail, setDetail] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  // the department's and the Collector's work on it: who checked it, and the completion photos
+  const [progress, setProgress] = useState<{ checkedBy: "department" | "collector" | null; photos: string[] } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   // a failed request says so (with Retry) instead of looking like "no complaints" or loading forever
   const [listError, setListError] = useState(false);
@@ -109,6 +111,7 @@ export default function TrackComplaintsPage() {
       if (req !== detailReq.current) return;
       setDetail(data.complaint);
       setHistory(data.history || []);
+      setProgress(data.progress ?? null);
     } catch {
       if (req === detailReq.current) { setDetail(null); setDetailError(true); }
     } finally {
@@ -260,7 +263,28 @@ export default function TrackComplaintsPage() {
                         ) : detailError ? (
                           <div role="alert"><ErrorState message="This complaint's details could not be loaded." onRetry={() => loadDetail(sel.complaint_code)} /></div>
                         ) : (
-                          <StatusTracker status={sel.status} rejectedStage={sel.rejected_stage} remarks={sel.remarks} history={history} />
+                          <>
+                            <StatusTracker status={sel.status} rejectedStage={sel.rejected_stage} remarks={sel.remarks} history={history} />
+                            {progress?.checkedBy && (
+                              <p className="mt-4 flex items-center gap-2 rounded-[10px] border border-canvas-border bg-canvas-sunken p-3 text-[13px] text-ink-muted">
+                                <Check className="h-4 w-4 flex-shrink-0 text-[var(--ok)]" aria-hidden="true" />
+                                {progress.checkedBy === "collector" ? "The Collector's office checked the finished work." : "The department checked the finished work and closed the complaint."}
+                              </p>
+                            )}
+                            {!!progress?.photos.length && (
+                              <div className="mt-4">
+                                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">Photos of the work done</h3>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {progress.photos.map((src, i) => (
+                                    <button key={src} type="button" onClick={() => setPhoto(src)} className="block overflow-hidden rounded-[10px] border border-canvas-border transition hover:border-navy-300" aria-label={`View photo ${i + 1} of the work done`}>
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={src} alt={`Work done, photo ${i + 1}`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                       {detail && !detailLoading && (

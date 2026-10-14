@@ -45,8 +45,12 @@ export const COMPLAINT_STATUSES = [
   "In Progress",
   "Completed - Pending Collector Verification",
   "Verified by Collector",
+  "Resolved by Department",
   "Rejected"
 ] as const;
+
+/** Closed: the work is done and checked (by the Collector for severe work, else by the department). */
+export const RESOLVED_STATUSES = ["Verified by Collector", "Resolved by Department"] as const;
 
 export const CHENNAI_CENTER = { lat: 13.0827, lng: 80.2707 };
 

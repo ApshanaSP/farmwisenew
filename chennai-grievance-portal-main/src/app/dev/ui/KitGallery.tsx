@@ -12,7 +12,7 @@ import {
   SuccessCheck, Tabs, Timeline, Tip, Toaster, useToasts
 } from "@/components/ui";
 
-const STATUSES = ["Complaint Filed", "Pending Approval", "Approved by Department Officer", "In Progress", "Completed - Pending Collector Verification", "Verified by Collector", "Rejected"];
+const STATUSES = ["Complaint Filed", "Pending Approval", "Approved by Department Officer", "In Progress", "Completed - Pending Collector Verification", "Verified by Collector", "Resolved by Department", "Rejected"];
 const STAGES = ["new", "approved", "action", "sent", "verified", "closed"];
 
 export default function KitGallery() {

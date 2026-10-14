@@ -405,6 +405,8 @@ export interface DatasetMeta {
   detective: Detective;
   panels: Plan[];
   link: LinkResult | null;
+  /** crossLink's version when the link was read (LINK_VERSION); older datasets are linked again when opened */
+  linkVersion?: number;
   story: Story | null;
   /** the AI brief over the computed insights (older datasets: built when first opened) */
   brief?: Brief | null;

@@ -26,7 +26,8 @@ import { placeResolver, type Placed } from "@/lib/collector/nlp";
 import { judgeLocation, landmark, outsidePlace, type Ward } from "@/lib/collector/locreview";
 import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsrel";
 import { cleanTitle } from "@/lib/collector/threads";
-import { CITY_ONLY, clusterIncidents } from "@/lib/collector/cluster";
+import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
+import { MASS_DEATHS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -309,6 +310,123 @@ function newsMedia(db: DB) {
   console.log(`[derive] ${drop.length} news-only incidents from sites that are not news media left out`);
 }
 
+// ------------------------------------------------------------- news sanity --
+
+/** Takes incidents out of the build with their members, timeline, actions and gaps; their articles stay, unlinked. */
+function dropIncidents(db: DB, ids: string[]) {
+  for (const [table, col] of [["incidents", "incident_id"], ["incident_members", "incident_id"], ["incident_timeline", "incident_id"],
+    ["actions", "incident_id"], ["gaps", "incident_id"]] as const) {
+    if (!has(db, table, col)) continue;
+    const del = db.prepare(`DELETE FROM ${table} WHERE ${col} = ?`);
+    for (const id of ids) del.run(id);
+  }
+  if (has(db, "events", "incident_id")) {
+    const up = db.prepare(`UPDATE events SET incident_id = NULL WHERE incident_id = ?`);
+    for (const id of ids) up.run(id);
+  }
+  if (has(db, "documents", "linked_incident_id")) {
+    const up = db.prepare(`UPDATE documents SET linked_incident_id = NULL${has(db, "documents", "is_incident") ? ", is_incident = 0" : ""} WHERE linked_incident_id = ?`);
+    for (const id of ids) up.run(id);
+  }
+}
+
+/** Moves everything that points at `from` to `to`, then removes `from`. */
+function mergeInto(db: DB, from: string, to: string) {
+  // one row per incident (its news gap, its drafted playbook): the duplicate's go when the kept incident has its own
+  for (const table of ["actions", "gaps"])
+    if (has(db, table, "incident_id") && db.prepare(`SELECT 1 FROM ${table} WHERE incident_id = ? LIMIT 1`).get(to))
+      db.prepare(`DELETE FROM ${table} WHERE incident_id = ?`).run(from);
+  for (const [table, col] of [["documents", "linked_incident_id"], ["incident_members", "incident_id"], ["incident_timeline", "incident_id"],
+    ["events", "incident_id"], ["actions", "incident_id"], ["gaps", "incident_id"]] as const)
+    if (has(db, table, col)) {
+      // a row the kept incident already has (same key) is not copied twice; what is left is the duplicate's own
+      db.prepare(`UPDATE OR IGNORE ${table} SET ${col} = ? WHERE ${col} = ?`).run(to, from);
+      if (table !== "documents" && table !== "events") db.prepare(`DELETE FROM ${table} WHERE ${col} = ?`).run(from);
+    }
+  if (has(db, "alerts", "incident_ids"))
+    // matched on the old list itself: the store's keyed tables have no rowid (WITHOUT ROWID)
+    for (const a of db.prepare(`SELECT DISTINCT incident_ids AS ids FROM alerts WHERE incident_ids LIKE ?`).all(`%${from}%`) as Row[])
+      db.prepare(`UPDATE alerts SET incident_ids = ? WHERE incident_ids = ?`).run(String(a.ids).split(from).join(to), a.ids);
+  db.prepare(`DELETE FROM incidents WHERE incident_id = ?`).run(from);
+}
+
+export function newsSanity(db: DB) {
+  if (!has(db, "incidents", "media_only") || !has(db, "documents", "linked_incident_id")) return;
+  const docs = db.prepare(`SELECT linked_incident_id AS id, story_id AS story, title, ${has(db, "documents", "title_en") ? "title_en" : "NULL AS title_en"},
+    published_at AS pub, publisher FROM documents WHERE linked_incident_id IS NOT NULL`).all() as Row[];
+  const byInc = new Map<string, Row[]>();
+  for (const d of docs) (byInc.get(d.id) ?? byInc.set(d.id, []).get(d.id)!).push(d);
+  const media = db.prepare(`SELECT incident_id AS id, first_reported_at AS t, zone_no AS zone, category_code AS cat, title,
+    ${has(db, "incidents", "place_text") ? "place_text" : "NULL"} AS place,
+    COALESCE(dead, 0) AS dead FROM incidents WHERE media_only = 1`).all() as Row[];
+
+  // 1. history columns and articles about long-past events
+  const archival = media.filter((i) => byInc.get(i.id)?.length && byInc.get(i.id)!.every((d) => isArchival(d.title, d.pub))).map((i) => String(i.id));
+  const gone = new Set(archival);
+
+  // 2. gas deaths read as disease
+  const ref = has(db, "ref_categories") ? db.prepare(`SELECT category_code, label, family, lead_dept FROM ref_categories WHERE category_code = 'DRAIN_WORKS_SAFETY'`).get() as Row | undefined : undefined;
+  const gas = ref ? media.filter((i) => i.cat === "VECTOR_DISEASE" && !gone.has(String(i.id))
+    && isGasNotDisease(i.title, ...(byInc.get(i.id) ?? []).flatMap((d) => [d.title, d.title_en]))).map((i) => String(i.id)) : [];
+
+  // 3. news-only incidents of one story
+  const stories = new Map<string, NewsIncident[]>();
+  for (const i of media) {
+    if (gone.has(String(i.id))) continue;
+    for (const s of new Set((byInc.get(i.id) ?? []).map((d) => d.story).filter(Boolean)))
+      (stories.get(s) ?? stories.set(s, []).get(s)!).push({ id: String(i.id), t: String(i.t), zone: i.zone ?? null, mediaOnly: true });
+  }
+  // an incident can be in two stories: the merges form groups (union-find), each kept as its earliest placed incident
+  const parent = new Map<string, string>();
+  const find = (x: string): string => { const p = parent.get(x) ?? x; if (p === x) return x; const r = find(p); parent.set(x, r); return r; };
+  const join = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  for (const [a, b] of storyMerges(stories)) join(a, b);
+  // 4. the same deaths at the same place reported under different stories
+  for (const [a, b] of casualtyMerges(media.filter((i) => !gone.has(String(i.id))).map((i) => ({ id: String(i.id), t: String(i.t),
+    zone: i.zone ?? null, place: placeKey(i.place), dead: Number(i.dead) })))) join(a, b);
+  const comps = new Map<string, string[]>();
+  for (const id of parent.keys()) (comps.get(find(id)) ?? comps.set(find(id), []).get(find(id))!).push(id);
+  const info = new Map(media.map((i) => [String(i.id), i]));
+  const groups = new Map<string, string[]>();
+  for (const ids of comps.values()) {
+    const all = [...new Set([...ids, ...ids.map(find)])].sort((a, b) => String(info.get(a)?.t).localeCompare(String(info.get(b)?.t)) || a.localeCompare(b));
+    if (new Set(all.map((id) => info.get(id)?.zone).filter((z) => z != null)).size > 1) continue; // two stories chained across zones
+    const keep = all.find((id) => info.get(id)?.zone != null) ?? all[0];
+    groups.set(keep, all.filter((id) => id !== keep));
+  }
+
+  tx(db, () => {
+    if (archival.length) dropIncidents(db, archival);
+    const setCat = db.prepare(`UPDATE incidents SET category_code = ?, category_label = ?${has(db, "incidents", "family") ? ", family = ?" : ""},
+      lead_dept = ? WHERE incident_id = ?`);
+    for (const id of gas) setCat.run(...[ref!.category_code, ref!.label, ...(has(db, "incidents", "family") ? [ref!.family] : []), ref!.lead_dept, id]);
+
+    const get = db.prepare(`SELECT incident_id AS id, first_reported_at AS t, last_update_at AS u, dead, injured, member_count AS m FROM incidents WHERE incident_id = ?`);
+    for (const [to, from] of groups) {
+      const all = [to, ...from].map((id) => get.get(id) as Row | undefined).filter(Boolean) as Row[];
+      if (all.length < 2) continue;
+      const max = (k: string) => { const v = all.map((r) => Number(r[k])).filter((x) => Number.isFinite(x) && x > 0); return v.length ? Math.max(...v) : null; };
+      for (const id of from) if (all.some((r) => r.id === id)) mergeInto(db, id, to);
+      const outlets = new Set([to, ...from].flatMap((id) => byInc.get(id) ?? []).map((d) => d.publisher).filter(Boolean)).size;
+      db.prepare(`UPDATE incidents SET dead = ?, injured = ?, first_reported_at = ?, last_update_at = ?, member_count = ?, outlet_count = ? WHERE incident_id = ?`)
+        .run(max("dead"), max("injured"), all.map((r) => String(r.t)).sort()[0], all.map((r) => String(r.u ?? r.t)).sort().pop()!,
+          all.reduce((s, r) => s + (Number(r.m) || 1), 0), Math.max(1, outlets), to);
+    }
+
+    // 5. a mass death toll from one outlet only: kept, not counted until confirmed
+    if (!has(db, "incidents", "dead_reported")) db.exec(`ALTER TABLE incidents ADD COLUMN dead_reported REAL`);
+    const hold = (db.prepare(`SELECT i.incident_id AS id, i.dead FROM incidents i WHERE i.media_only = 1 AND COALESCE(i.dead, 0) >= ?`).all(MASS_DEATHS) as Row[])
+      .filter((r) => new Set((db.prepare(`SELECT publisher FROM documents WHERE linked_incident_id = ?`).all(r.id) as Row[]).map((d) => d.publisher)).size < 2);
+    const review = has(db, "incidents", "needs_review") && has(db, "incidents", "review_reason");
+    for (const r of hold)
+      db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL${review ? ", needs_review = 1, review_reason = ?" : ""} WHERE incident_id = ?`)
+        .run(...(review ? [`${r.dead} deaths reported by one news outlet only: confirm before counting`, r.id] : [r.id]));
+    if (archival.length || gas.length || groups.size || hold.length)
+      console.log(`[derive] news: ${archival.length} history items left out, ${gas.length} gas deaths recategorised, `
+        + `${[...groups.values()].reduce((s, f) => s + f.length, 0)} same-event incidents merged into ${groups.size}, ${hold.length} death tolls held for confirmation`);
+  });
+}
+
 // --------------------------------------------------------------- clusters --
 
 function clusters(db: DB) {
@@ -351,4 +469,5 @@ onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@1", newsMedia);
-onBuild("incident-clusters@3", clusters);
+onBuild("news-sanity@4", newsSanity);
+onBuild("incident-clusters@4", clusters);

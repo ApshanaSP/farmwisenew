@@ -69,6 +69,7 @@ declare global {
     state: State | null; loading: Promise<State> | null; checking: boolean;
     durable: Durable | null; durableLoading: Promise<Durable> | null; lock: Lock; flushing: Promise<void>;
     reloading?: boolean; reference?: { id: string; doc: Doc };
+    /** the durable store alone, read until the first build is in (sign-in need not wait for the build) */ early?: { db: DB; file: string } | null;
     hooks?: Map<string, BuildHook>;
   } | undefined;
 }
@@ -424,9 +425,14 @@ function overlay(from: Durable, to: Durable): number {
 
 /** Deletes durable files nothing uses any more; one still open (by a build about to close) goes at the next sweep. */
 function sweep(keep: string): void {
-  for (const f of fs.readdirSync(CACHE_DIR))
-    if (/^durable(-\d+)?\.sqlite(-wal|-shm|-journal)?$/.test(f) && !f.startsWith(path.basename(keep)))
+  const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  for (const f of fs.readdirSync(CACHE_DIR)) {
+    // the file of another copy of the website (durable-p<pid>) goes only once that copy has stopped
+    const other = f.match(/^durable-p(\d+)\.sqlite(-wal|-shm|-journal)?$/);
+    const stale = other ? Number(other[1]) !== process.pid && !alive(Number(other[1])) : /^durable(-\d+)?\.sqlite(-wal|-shm|-journal)?$/.test(f);
+    if (stale && !f.startsWith(path.basename(keep)))
       try { fs.rmSync(path.join(CACHE_DIR, f), { force: true }); } catch { /* still open */ }
+  }
 }
 
 /** A copy that does not save: loads the durable store again, into a new file, and swaps it in with its own changes. */
@@ -474,7 +480,17 @@ async function durable(): Promise<Durable> {
         old.close();
       }
     }
-    const d = await fetchDurable(DURABLE_FILE);
+    let d: Loaded;
+    try {
+      d = await fetchDurable(DURABLE_FILE);
+    } catch (e) {
+      // another copy of the website on this PC (a second `npm run dev`, which Next.js moves to port 3001) holds
+      // durable.sqlite open, and Windows will not let it be replaced: this copy keeps its accounts in a file of its own
+      if (!/EBUSY|EPERM|locked|resource busy/i.test(String((e as Error).message))) throw e;
+      const own = path.join(CACHE_DIR, `durable-p${process.pid}.sqlite`);
+      console.warn(`[aws-store] ${path.basename(DURABLE_FILE)} is in use by another copy of the website; using ${path.basename(own)}`);
+      d = await fetchDurable(own);
+    }
     g.durable = d;
     sweep(d.file);
     setInterval(() => void flush(), RETRY_MS).unref();
@@ -632,11 +648,59 @@ function connection(db: () => Promise<DB>) {
   };
 }
 
+/**
+ * Until the first build is loaded (a minute or more on a fresh start: every table downloaded and the build hooks run),
+ * a read can be answered from the durable store alone: accounts, complaints, Collector and officer work. A read that
+ * needs a build table waits for the build as before; writes and transactions always do.
+ */
+async function early(): Promise<DB | null> {
+  if (g.state) return null;
+  const d = await durable();
+  if (g.state) return null;
+  if (g.early?.file !== d.file) {
+    try { g.early?.db.close(); } catch { /* already closed */ }
+    setDatabaseNames(DB_NAMES());
+    const db = new (sqlite().DatabaseSync)(":memory:");
+    registerFunctions(db);
+    db.exec("PRAGMA busy_timeout = 5000");
+    db.prepare("ATTACH DATABASE ? AS durable").run(d.file);
+    catalog(db);
+    g.early = { db, file: d.file };
+  }
+  return g.early.db;
+}
+
+/** Starts loading the store when the server starts (instrumentation.ts), so the first visitor does not wait for it. */
+export function warmUp(): void {
+  void current().then(() => {
+    try { g.early?.db.close(); } catch { /* already closed */ }
+    g.early = null;
+  }).catch((e) => console.warn(`[aws-store] loading at start failed (the first request tries again): ${e.message}`));
+}
+
 /** A stand-in for a mysql2 Pool over the AWS-backed store (the build plus the durable store). */
 export function awsPool(): any {
   const db = async () => (await current()).db;
+  const pool = connection(db);
+  const query = async (sql: any, params?: unknown[]) => {
+    const text: string = typeof sql === "string" ? sql : sql.sql;
+    if (!g.state && READ.test(text)) {
+      void current().catch(() => undefined); // the build keeps loading meanwhile
+      const e = await early().catch(() => null);
+      if (e) {
+        try {
+          return run(e, sql, params);
+        } catch (err) {
+          if ((err as { code?: string }).code !== "ER_NO_SUCH_TABLE") throw err;
+        }
+      }
+    }
+    return pool.query(sql, params);
+  };
   return {
-    ...connection(db),
+    ...pool,
+    query,
+    execute: query,
     // a connection stays on the build it started with, so a transaction never spans two builds
     getConnection: async () => { const d = await db(); return connection(async () => d); },
     end: async () => undefined

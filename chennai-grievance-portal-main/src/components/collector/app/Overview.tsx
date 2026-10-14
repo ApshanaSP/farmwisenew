@@ -683,6 +683,9 @@ function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
   const lvl = r.now != null ? rainLevel(r.now) : null;
   const b = d.bottom.rain;
   const days = r.times.slice(-10), vals = r.series.slice(-10);
+  // the latest reading's day: a reading days old must not read as "the last 24 hours"
+  const last = r.now != null && r.times.length ? r.times[r.times.length - 1] : null;
+  const behind = last ? Math.round((Date.parse(String(d.now).slice(0, 10)) - Date.parse(last.slice(0, 10))) / 864e5) : 0;
   return (
     <article className="card env" style={style}>
       <EnvHead icon="cloud" title="Rainfall" c={c} kind="rain" all={b.stations} />
@@ -695,7 +698,9 @@ function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env;
         </div>
         <Scale stops={RAIN_STOPS} value={r.now} max={160} />
         <div className="env-say">
-          {lvl ? <><b>{lvl[2]}</b> in the last 24 hours{r.now != null && r.times.length ? ` (IMD, ${fmtDate(r.times[r.times.length - 1])})` : ""}. </> : "No readings. "}
+          {lvl ? (behind > 1
+            ? <><b>{lvl[2]}</b> on {fmtDate(last!)}, the latest IMD reading ({behind} days ago; nothing newer has come in). </>
+            : <><b>{lvl[2]}</b> in the last 24 hours{last ? ` (IMD, ${fmtDate(last)})` : ""}. </>) : "No readings. "}
           {b.rainDays} rain day{b.rainDays === 1 ? "" : "s"} in the last {b.days.length} days ({b.prevRainDays} in the {b.days.length} days before).
         </div>
         {vals.some((v) => v > 0) ? <Chart kind="bar" vals={vals} labels={days.map((t) => fmtDate(t))} color="var(--live)" fmt={(v) => `${v} mm`} />

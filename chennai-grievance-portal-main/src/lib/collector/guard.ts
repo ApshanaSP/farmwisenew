@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getActiveSession } from "@/lib/auth";
+import { getActivePortalSession } from "@/lib/auth";
 import type { JwtPayload } from "@/types";
 
-/** The signed-in, active Collector, or a 401 response to return. */
+/** The signed-in, active Collector, or a 401 response to return (the Collector's own session, whatever page asked). */
 export async function collectorSession(): Promise<JwtPayload | NextResponse> {
-  const session = await getActiveSession();
+  const session = await getActivePortalSession("collector");
   if (!session || session.role !== "collector") {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

@@ -141,6 +141,43 @@ def stable_ids(comp: dict, first: dict, registry: Path | None = REGISTRY) -> dic
     return inc_of
 
 
+def join_dup_groups(uf: UnionFind, event_ids, groups) -> None:
+    """Joins each event to its within-source group. A group is named by one of its events (grievance / police / PWD dedup)
+    or by a news story (NEWS-<story_id>), which is no event's id: those events are joined to the group's first event. The
+    story case used to be missed, so a story's articles became as many incidents (one car accident 13 times, one death
+    counted three times on the briefing)."""
+    first_of: dict[str, str] = {}
+    for eid, g in zip(event_ids, groups):
+        if not isinstance(g, str) or g == eid:
+            continue
+        if g in uf.parent:
+            uf.union(eid, g)
+        else:
+            uf.union(eid, first_of.setdefault(g, eid))
+
+
+CASUALTY_HOURS = 48
+
+
+def join_casualties(uf: UnionFind, e: pd.DataFrame) -> None:
+    """News reports of the same deaths at the same named place, filed under different stories (five articles on two workers
+    killed by gas in Kodungaiyur fell into four stories): the same place, the same toll, within CASUALTY_HOURS of the
+    first report, are one incident, so the deaths count once. The website applies the same rule (newssanity.ts)."""
+    if not {"source", "dead", "place_text", "reported_at"} <= set(e.columns):
+        return
+    n = e[(e["source"] == "news") & (e["dead"].fillna(0) > 0)].copy()
+    n["_k"] = n["place_text"].fillna("").str.lower().str.replace(r"[^\w]+", " ", regex=True).str.strip()
+    n["_t"] = pd.to_datetime(n["reported_at"], errors="coerce", utc=True)
+    n = n[(n["_k"].str.len() >= 4) & (n["_k"] != "chennai") & n["_t"].notna()].sort_values("_t")
+    for _, g in n.groupby(["_k", "dead"]):
+        lead = None
+        for eid, t in zip(g["event_id"], g["_t"]):
+            if lead is None or t - lead[1] > pd.Timedelta(hours=CASUALTY_HOURS):
+                lead = (eid, t)
+            else:
+                uf.union(eid, lead[0])
+
+
 def _split(world_id: str) -> str:
     return "train" if int(hashlib.md5(world_id.encode()).hexdigest(), 16) % 2 == 0 else "test"
 
@@ -238,9 +275,8 @@ def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge
 
     # union-find over within-source groups + accepted cross-source links
     uf = UnionFind(e["event_id"])
-    for eid, g in zip(e["event_id"], e["dup_group_id"]):
-        if isinstance(g, str) and g in uf.parent:
-            uf.union(eid, g)
+    join_dup_groups(uf, e["event_id"], e["dup_group_id"])
+    join_casualties(uf, e)
     ids = L["event_id"].to_numpy()
     for a, b in zip(accept["a"], accept["b"]):
         uf.union(ids[a], ids[b])

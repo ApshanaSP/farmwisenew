@@ -174,6 +174,7 @@ const STATUS: Record<string, { tone: Tone; ic: typeof Check; label?: string }> =
   "In Progress": { tone: "high", ic: Wrench },
   "Completed - Pending Collector Verification": { tone: "live", ic: Clock3, label: "Awaiting Collector" },
   "Verified by Collector": { tone: "ok", ic: CheckCircle2 },
+  "Resolved by Department": { tone: "ok", ic: CheckCircle2 },
   Rejected: { tone: "critical", ic: XCircle },
   // officer stages
   new: { tone: "accent", ic: Inbox, label: "New" },

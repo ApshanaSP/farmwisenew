@@ -201,6 +201,8 @@ export interface Filters {
   sev?: string[] | null;
   dept?: string | null;
   openOnly?: boolean;
+  /** only incidents with deaths */
+  deadOnly?: boolean;
 }
 export interface Found { kind: Kind; id: string; score: number; sim: number | null; rec: Omit<Rec, "vector" | "thash" | "rhash"> }
 
@@ -215,6 +217,7 @@ function where(kind: Kind, f: Filters): string | undefined {
     if (f.sev?.length) w.push(`sev IN (${f.sev.map(quote).join(",")})`);
     if (f.dept) w.push(`dept = ${quote(f.dept)}`);
     if (f.openOnly) w.push("open = 1");
+    if (f.deadOnly) w.push("dead > 0");
   }
   return w.length ? w.join(" AND ") : undefined;
 }

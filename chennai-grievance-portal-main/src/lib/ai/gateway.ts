@@ -192,6 +192,13 @@ export interface JsonCall<T> {
   user: string;
   /** a provider to try first, when it is configured */
   prefer?: ProviderName;
+  /**
+   * Work no one is waiting on (briefings, story write-ups): it uses only `prefer` (or the fallback provider), never the
+   * main provider's small per-minute allowance, which is kept for the questions the Collector is waiting on.
+   */
+  background?: boolean;
+  /** this call's own deadline (ms), instead of the role's */
+  timeoutMs?: number;
 }
 
 export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
@@ -229,11 +236,16 @@ function retryAfterSeconds(e: APICallError): number | null {
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
-  const list = providers(c.prefer);
+  const all = providers(c.prefer);
+  const main = env("AI_PROVIDER") || "gemini";
+  // background work stays off the main provider while another one is configured
+  const list = c.background && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
   if (!list.length) throw new AiUnavailableError();
   if (!budgetLeft(c.user)) throw new AiBudgetError();
-  const state = { busyFor: null as number | null, lastError: null as unknown, attempts: 0 };
+  // all models together get one deadline (twice one call's): a question is answered from the data rather than wait longer
+  const state = { busyFor: null as number | null, lastError: null as unknown, attempts: 0, until: Date.now() + 2 * callTimeout(c) };
   for (const p of list) {
+    if (Date.now() >= state.until) break;
     if (p.json) {
       state.attempts++;
       try {
@@ -259,6 +271,7 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       // keep the preferred order while a model has room; models that would go over this minute's allowance go last
       const order = [...models].sort((a, b) => Number(room(b) < 0) - Number(room(a) < 0) || a.rank - b.rank);
       for (const m of order) {
+        if (Date.now() >= state.until) break;
         if (room(m) < 0 && order.some((x) => room(x) >= 0)) continue;
         const r = await tryModel(c, p, m.id, m.lm, state);
         if (r.result) return r.result;
@@ -281,6 +294,15 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
   throw state.lastError instanceof Error ? state.lastError : new Error("The AI call failed.");
 }
 
+/**
+ * How long one call may take before the next model is tried: a routing call (fast) answers in 1-3 s when the model is
+ * well, a write-up (reasoning) in 2-6 s (10 s allowed). AI_TIMEOUT_FAST_MS / AI_TIMEOUT_MS change them.
+ */
+function callTimeout(c: { role: Role; timeoutMs?: number }): number {
+  if (c.timeoutMs) return c.timeoutMs;
+  return c.role === "fast" ? Number(env("AI_TIMEOUT_FAST_MS")) || 8_000 : Number(env("AI_TIMEOUT_MS")) || 10_000;
+}
+
 /** Up to three tries on one model. `longBusy`: it is rate-limited for longer than is worth waiting. */
 /**
  * Models that just said "rate limited" or "overloaded", until when: skipped meanwhile, so a free tier that is out of its
@@ -299,16 +321,20 @@ function usedLastMinute(key: string): { requests: number; tokens: number } {
 const recordUse = (key: string, tokens: number) => { const l = usage.get(key) ?? []; l.push({ t: Date.now(), tokens }); usage.set(key, l); };
 
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
-  state: { busyFor: number | null; lastError: unknown; attempts: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
+  state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
   const key = `${p.name}/${id}`;
   if ((cooling.get(key) ?? 0) > Date.now()) return { longBusy: true };
   for (let attempt = 0; attempt < 3; attempt++) {
     state.attempts++;
     const t0 = Date.now();
+    // every call has a deadline: an overloaded model used to hold a question for minutes (a 193 s composer call)
+    const limit = Math.max(1500, Math.min(callTimeout(c), (state.until ?? Infinity) - Date.now()));
+    const deadline = AbortSignal.timeout(limit);
     try {
       const r = await generateText({
         model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: c.maxOutputTokens ?? 1200,
-        maxRetries: 0, abortSignal: c.abortSignal, output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
+        maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
+        output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
         inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
@@ -319,6 +345,13 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     } catch (e) {
       if (c.abortSignal?.aborted) throw e;
       state.lastError = e;
+      // too slow: this model rests a minute and the next one answers
+      if (deadline.aborted) {
+        console.warn(`[assistant] ${c.name} ${p.name}/${id} took over ${(limit / 1000).toFixed(1)} s; next model`);
+        cooling.set(key, Date.now() + 60_000);
+        state.busyFor = Math.max(state.busyFor ?? 0, 10);
+        return { longBusy: true };
+      }
       if (APICallError.isInstance(e)) {
         const draft = failedDraft(e);
         if (draft !== null) {

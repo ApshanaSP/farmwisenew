@@ -37,6 +37,24 @@ export function useFit<T extends HTMLElement>(key: unknown) {
   return [ref, hidden] as const;
 }
 
+// ------------------------------------------------------------ AI briefs --
+
+/**
+ * An AI write-up from /api/collector/brief. While the server is still writing it (`pending`), `got` receives null (the page
+ * shows its rules' text) and the write-up is asked for again every few seconds; then `got` receives it. Returns a stop
+ * function for the effect's cleanup.
+ */
+export function watchBrief<T>(url: string, got: (v: T | null) => void): () => void {
+  let live = true, tries = 0;
+  const go = () => fetch(url).then((r) => r.json()).then((j) => {
+    if (!live) return;
+    got(j.brief ?? null);
+    if (j.pending && ++tries < 8) setTimeout(go, 4000);
+  }).catch(() => { if (live) got(null); });
+  go();
+  return () => { live = false; };
+}
+
 // ---------------------------------------------------------------- time --
 
 /** Stored times are IST wall-clock strings ("2026-09-27 01:50:00"). */

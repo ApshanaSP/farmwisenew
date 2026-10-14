@@ -49,6 +49,23 @@ export function periodNamed(text: string): Period | null {
 }
 
 /** `decided`: the intent the router understood; without it (no model) the rules read the message. */
+/** A count said in Tamil or Tanglish; null for English. `where` is the English place phrase (" in Velachery (Adyar zone)"). */
+export function countInLanguage(lang: string, c: { n: number; prev: number; severe: number; open: number; dead: number; kind: string; period: string; where: string }):
+  { headline: string; text: string } | null {
+  if (lang !== "ta" && lang !== "tanglish") return null;
+  const place = c.where.replace(/^\s*in\s+/i, "").trim();
+  const days = c.period.match(/(\d+)\s*days?/)?.[1], hours = /24 hours/.test(c.period), yday = /previous day|yesterday/.test(c.period);
+  const f = (v: number) => v.toLocaleString("en-IN");
+  if (lang === "tanglish") {
+    const when = yday ? "netru" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
+    const text = `${place ? `${place}-la ` : ""}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
+    return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
+  }
+  const when = yday ? "நேற்று" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
+  const text = `${when}${place ? ` ${place} பகுதியில்` : ""} ${f(c.n)} ${c.kind} பதிவாகியுள்ளன${c.prev ? ` (முந்தைய காலத்தில் ${f(c.prev)})` : ""}: ${f(c.severe)} கடுமையானவை, ${f(c.open)} இன்னும் நிலுவையில்${c.dead ? `, ${f(c.dead)} உயிரிழப்பு` : ""}.`;
+  return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
+}
+
 export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOutput | null> {
   const d = decided ?? detectIntent(i.message, i.ctx);
   // pictures of an earlier incident list: the same incidents on a map or in a table
@@ -126,6 +143,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, by the console's priority score.`
             : `These are the ${words(r.items.length)} highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, ranked by the console's priority score.`
           : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} in the ${pl(r.period)}${sw}.`;
+      // a short list is named in the answer itself, with what makes each one stand out, not only shown below it
+      if (r.items.length && r.items.length <= 5 && i.lang === "en")
+        card.answerMarkdown += "\n\n" + r.items.map((x, k) => {
+          const where = [x.location, x.zone].filter(Boolean).filter((v, j, a) => a.indexOf(v) === j).join(", ");
+          const why = x.dead ? `${x.dead} ${x.dead === 1 ? "death" : "deaths"}` : x.priorityReasons[0] ?? "";
+          return `${k + 1}. **${x.title}**${where ? ` (${where})` : ""}: ${x.severity.toLowerCase()}, ${x.status.toLowerCase()}${why ? `; ${why.replace(/\.$/, "")}` : ""}.`;
+        }).join("\n");
       if (r.widened) card.caveats.push(`Fewer than ${n} in the ${pl(inc.period)}, so this covers the ${pl(r.period)}.`);
       listData(card, r.items);
       card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
@@ -161,6 +185,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.headline = `${c.n.toLocaleString("en-IN")} ${kind} · ${pl(inc.period)}`;
       card.answerMarkdown = `${c.n.toLocaleString("en-IN")} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${pl(inc.period)}${sw}`
         + `${c.prev ? ` (${c.prev.toLocaleString("en-IN")} in the period before)` : ""}: ${c.severe} severe, ${c.open} still open${c.dead ? `, ${c.dead} ${c.dead === 1 ? "death" : "deaths"}` : ""}.`;
+      // a question in Tamil or Tanglish is answered in it ("Velachery la indha week evlo accidents?")
+      const local = countInLanguage(i.lang, { n: c.n, prev: c.prev, severe: c.severe, open: c.open, dead: c.dead, kind, period: pl(inc.period), where: sw });
+      if (local) { card.headline = local.headline; card.answerMarkdown = local.text; card.voiceSummary = local.text; }
       card.kpis = [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
         { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
       card.context = { ...ctxBase, lastResponseType: "kpi" };

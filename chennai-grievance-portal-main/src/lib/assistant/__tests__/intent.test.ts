@@ -136,3 +136,13 @@ describe("tell me about = an explanation", () => {
     expect(detectIntent("what about last week", afterList).refinement).toBe(true);
   });
 });
+
+describe("killed on the road is a road accident", () => {
+  it("reads a pedestrian or rider killed as an accident, and the word murder as murder", async () => {
+    const { topicOf, tokens } = await import("@/lib/assistant/intent");
+    expect(topicOf(tokens("What happened to the pedestrian killed in Kodungaiyur in July?"))?.key).toBe("accident");
+    expect(topicOf(tokens("bike rider killed after lorry hit him"))?.key).toBe("accident");
+    expect(topicOf(tokens("man killed by his neighbour"))?.key).toBe("murder");
+    expect(topicOf(tokens("murder of a bus conductor"))?.key).toBe("murder");
+  });
+});

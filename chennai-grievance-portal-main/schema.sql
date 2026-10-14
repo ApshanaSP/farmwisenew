@@ -271,6 +271,7 @@ CREATE TABLE complaints (
     'In Progress',
     'Completed - Pending Collector Verification',
     'Verified by Collector',
+    'Resolved by Department',
     'Rejected'
   ) NOT NULL DEFAULT 'Complaint Filed',
   rejected_stage ENUM('Department Officer','Collector') NULL,

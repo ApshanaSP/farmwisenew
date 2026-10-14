@@ -10,10 +10,12 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   session: null as null | { userId: number; role: string },
+  /** other sign-ins the same browser holds (another portal's cookie) */
+  also: [] as { userId: number; role: string }[],
   complaints: [] as { media_path: string; user_id: number; department_id: number }[],
   users: [] as { id: number; department_id: number | null }[]
 }));
-vi.mock("@/lib/auth", () => ({ getActiveSession: async () => h.session }));
+vi.mock("@/lib/auth", () => ({ getActiveSessions: async () => [...h.also, ...(h.session ? [h.session] : [])] }));
 vi.mock("@/lib/db", () => ({
   default: {
     query: async (sql: string, params: unknown[]) => {
@@ -57,6 +59,12 @@ describe("private complaint media access (SEC-002)", () => {
     expect(await as({ userId: 21, role: "department_officer" })).toBe(404);
     expect(await as({ userId: 22, role: "department_officer" })).toBe(404);
     expect(await as(null)).toBe(401);
+  });
+  it("lets the Collector in a browser also signed in as an unrelated citizen open it (no Referer in a new tab)", async () => {
+    h.also = [{ userId: 12, role: "citizen" }];
+    expect(await as({ userId: 1, role: "collector" })).toBe(200);
+    expect(await as(null)).toBe(404);
+    h.also = [];
   });
   it("refuses names that are not upload names", async () => {
     for (const n of ["../../.env", `${NAME}.owner.json`, "c-20261012-00112233445566aa.html", "x.png"]) {

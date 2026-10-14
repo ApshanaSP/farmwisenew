@@ -73,7 +73,8 @@ export async function aiJson<T>(c: {
     for (let k = 0; k < 2; k++) {
       try {
         const r = await generateJson({ role: "fast", name: c.kind, schema: c.schema, system: c.system, temperature: k ? 0 : c.temperature ?? 0.2,
-          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user,
+          // background work: Gemini, never the chat's Groq allowance (pages show rule text until it is ready)
+          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user, prefer: "gemini", background: true, timeoutMs: 45_000,
           prompt: k ? `${c.facts}\n\nYour last answer used a number that is not in these facts, or left out what was asked. Use only numbers from the facts.` : c.facts });
         const o = r.object as T;
         if (!numbersHold(c.text(o), c.facts) || (c.ok && !c.ok(o))) continue;

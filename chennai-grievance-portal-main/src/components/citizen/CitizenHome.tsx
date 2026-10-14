@@ -20,7 +20,7 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
   const tiles = [
     { label: "Total filed", value: stats.total, icon: ClipboardList, kc: "var(--accent)", note: "Every complaint you have raised" },
     { label: "In progress", value: stats.open, icon: Loader, kc: "var(--high)", note: "With a department right now" },
-    { label: "Resolved", value: stats.resolved, icon: CheckCircle2, kc: "var(--ok)", note: "Verified by the Collector", ring: true }
+    { label: "Resolved", value: stats.resolved, icon: CheckCircle2, kc: "var(--ok)", note: "Work done and checked", ring: true }
   ];
   const actions = [
     { href: "/citizen/file-complaint", icon: FilePlus2, title: "File a complaint", text: "Report a civic issue with a photo and location", kc: "var(--accent)" },

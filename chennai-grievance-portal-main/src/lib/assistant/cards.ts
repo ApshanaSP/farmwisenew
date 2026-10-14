@@ -192,6 +192,32 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     const head = people.length === 1 ? `${people[0].name}${people[0].designation ? `, ${people[0].designation}` : ""}` : `${people.length} officials`;
     return { ...base, headline: head, answerMarkdown: who.join("\n"), voiceSummary: head };
   }
+  // why something changed, without a model: what rose and fell against the period before, where, rain, missed deadlines
+  const drivers = p.datasets.find((d) => d.id === "drivers")?.rows ?? [];
+  if (lang === "en" && drivers.length && kpis[0]?.prev != null) {
+    const n = Number(kpis[0].value), prev = Number(kpis[0].prev);
+    const num = (v: unknown) => fmtValue(Number(v));
+    const up = drivers.filter((r) => Number(r.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 3);
+    const down = drivers.filter((r) => Number(r.delta) < 0).sort((a, b) => Number(a.delta) - Number(b.delta)).slice(0, 3);
+    const mv = (r: Record<string, unknown>) => `${r.label} (${num(r.n_prev)} to ${num(r.n)})`;
+    const dir = n > prev ? "rose" : n < prev ? "fell" : "held";
+    const out = [`Reported incidents ${dir === "held" ? `held at **${num(n)}**` : `${dir} to **${num(n)}** from ${num(prev)}`} against the period before.`];
+    // the side that moved the total comes first
+    const lead = dir === "fell" ? down : up, other = dir === "fell" ? up : down;
+    if (lead.length) out.push(`${dir === "fell" ? "The fall came mostly from" : "The rise came mostly from"} ${lead.map(mv).join(", ")}.`);
+    if (other.length) out.push(`${dir === "fell" ? "Going the other way" : "Partly offset by"}: ${other.map(mv).join(", ")}.`);
+    const where = p.datasets.find((d) => d.id === "driver_places")?.rows.slice(0, 2) ?? [];
+    if (where.length) out.push(`Where: ${where.map((r) => `${r.place} (${String(r.category).toLowerCase()}, ${num(r.n_prev)} to ${num(r.n)})`).join("; ")}.`);
+    const rain = drivers.reduce((s, r) => s + (Number(r.rain) || 0), 0);
+    if (rain) out.push(`${num(rain)} of the ${num(n)} were linked to rain.`);
+    const late = (p.datasets.find((d) => d.id === "driver_depts")?.rows ?? []).filter((r) => Number(r.overdue) > 0).slice(0, 2);
+    if (late.length) out.push(`Open past deadline: ${late.map((r) => `${r.name} (${num(r.overdue)})`).join(", ")}.`);
+    const top = p.datasets.find((d) => d.id === "driver_top")?.rows[0];
+    if (top) out.push(`Act first on **${top.title}**${top.place ? ` at ${top.place}` : ""}.`);
+    const headline = dir === "held" ? `Reported incidents unchanged at ${num(n)}`
+      : `Incidents ${dir} to ${num(n)}${lead[0] ? `, ${dir === "fell" ? "mostly" : "led by"} ${String(lead[0].label).toLowerCase()}` : ""}`;
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
   // in English, sentences a staff officer would say: the period's key figures, what leads, and what to act on first
   if (lang === "en" && kpis.length) {
     const span = (base.scopeLine.split(" · ")[0] ?? "").trim();
@@ -222,15 +248,20 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
   const ds = c ? p.datasets.find((d) => d.id === c.dataset) : null;
   const yf = ds && c?.y[0] ? ds.fields.find((f) => f.key === c.y[0]) : null;
   const xf = ds && c?.x ? ds.fields.find((f) => f.key === c.x) : null;
+  let leader: string | null = null;
   if (c && ds && yf && xf && (xf.kind === "category" || xf.kind === "text")) {
     const low = c.sort === "asc";
-    const rows = ds.rows.filter((r) => r[yf.key] != null && Number.isFinite(Number(r[yf.key])))
+    // a "highest" list names those that have some: "Roads & Building Permissions (0)" says nothing
+    const rows = ds.rows.filter((r) => r[yf.key] != null && Number.isFinite(Number(r[yf.key])) && (low || Number(r[yf.key]) > 0))
       .sort((a, b) => (Number(b[yf.key]) - Number(a[yf.key])) * (low ? -1 : 1));
-    const top = rows.slice(0, Math.min(5, c.topN || 5)).map((r) => `${r[xf.key]} (${fmtValue(Number(r[yf.key]), yf.format ?? "integer", yf.unit ?? null)})`);
+    const val = (r: Record<string, unknown>) => fmtValue(Number(r[yf.key]), yf.format ?? "integer", yf.unit ?? null);
+    const top = rows.slice(0, Math.min(5, c.topN || 5)).map((r) => `${r[xf.key]} (${val(r)})`);
     if (top.length) lines.push(`${RANKED[lang](yf.label, low)}: ${top.join(", ")}.`);
+    // the finding as the headline, not the chart's title
+    if (rows.length && !kpis.length && lang === "en") leader = `${rows[0][xf.key]} ${low ? "has the fewest" : "leads"} with ${val(rows[0])} ${yf.label.toLowerCase()}`;
   }
   if (lines.length) {
-    const headline = lang === "en" ? lead : `${FRAME[lang]}: ${lead}`;
+    const headline = leader ?? (lang === "en" ? lead : `${FRAME[lang]}: ${lead}`);
     return { ...base, headline, answerMarkdown: lines.join("\n\n"), voiceSummary: headline };
   }
   // the most telling facts first: totals, the top three, changes; single rows of a long table last

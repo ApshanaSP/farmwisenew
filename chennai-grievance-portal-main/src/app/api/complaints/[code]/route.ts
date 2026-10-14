@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
+import { progressFor, withProgress } from "@/lib/complaint-progress";
 
 export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   const session = await getSessionFromCookies();
@@ -60,5 +61,19 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
     [complaint.id]
   );
 
-  return NextResponse.json({ complaint, history: historyRows });
+  // the officer's and the Collector's work on the incident the complaint became (complaint-progress.ts)
+  const progress = (await progressFor([{ code: complaint.complaint_code, createdAt: complaint.created_at }]).catch((e) => {
+    console.warn("complaint progress failed", e);
+    return new Map();
+  })).get(complaint.complaint_code);
+  if (progress) {
+    complaint.status = progress.status;
+    complaint.rejected_stage = progress.rejectedStage;
+    if (progress.remarks) complaint.remarks = progress.remarks;
+  }
+  return NextResponse.json({
+    complaint,
+    history: withProgress(historyRows as { status: string; created_at: unknown }[], progress),
+    progress: progress ? { checkedBy: progress.checkedBy, photos: progress.photos } : null
+  });
 }

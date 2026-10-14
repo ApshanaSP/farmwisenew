@@ -5,11 +5,14 @@ import type { Insights, PatternDetail } from "@/lib/collector/insights";
 import type { PatternBrief } from "@/lib/collector/aibrief";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
-import { Empty, SEV_HEX, SevChip, deptIcon, fmtDate, fmtShort, rel, sevTone, type Row } from "./lib";
+import { Empty, SEV_HEX, SevChip, deptIcon, fmtDate, fmtShort, rel, sevTone, watchBrief, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { itemWhen, itemWhere } from "./Added";
 import { StoriesCard } from "./Stories";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
+import { mdToHtml } from "@/lib/markdown";
+
+export { mdToHtml };
 
 const Loading = () => <div className="empty" style={{ margin: "auto" }}><I n="refresh" className="spin" />Preparing…</div>;
 
@@ -18,9 +21,7 @@ function useAi<T>(qs: string | null): T | null | undefined {
   const [s, set] = useState<{ qs: string; v: T | null } | null>(null);
   useEffect(() => {
     if (!qs) return;
-    let live = true;
-    fetch(`/api/collector/brief?${qs}`).then((r) => r.json()).then((j) => live && set({ qs, v: j.brief ?? null })).catch(() => live && set({ qs, v: null }));
-    return () => { live = false; };
+    return watchBrief<T>(`/api/collector/brief?${qs}`, (v) => set({ qs, v }));
   }, [qs]);
   return s && s.qs === qs ? s.v : undefined;
 }
@@ -951,20 +952,3 @@ export function download(name: string, text: string, type = "text/markdown;chars
   URL.revokeObjectURL(url);
 }
 
-/** Tiny Markdown renderer for saved briefings (headings, lists, bold, code); input is escaped first. */
-export function mdToHtml(md: string) {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const inline = (s: string) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/_(.+?)_/g, "<i>$1</i>");
-  const out: string[] = [];
-  let list: "ul" | "ol" | null = null;
-  const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
-  for (const line of md.split("\n")) {
-    const h = line.match(/^(#{1,3})\s+(.*)/), ul = line.match(/^\s*-\s+(.*)/), ol = line.match(/^\s*\d+\.\s+(.*)/);
-    if (h) { close(); out.push(`<h${h[1].length + 2}>${inline(h[2])}</h${h[1].length + 2}>`); }
-    else if (ul) { if (list !== "ul") { close(); out.push("<ul>"); list = "ul"; } out.push(`<li>${inline(ul[1])}</li>`); }
-    else if (ol) { if (list !== "ol") { close(); out.push("<ol>"); list = "ol"; } out.push(`<li>${inline(ol[1])}</li>`); }
-    else if (line.trim()) { close(); out.push(`<p>${inline(line)}</p>`); }
-  }
-  close();
-  return out.join("");
-}

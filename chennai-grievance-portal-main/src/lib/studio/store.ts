@@ -12,6 +12,7 @@
  *   board.json          panels pinned to the Studio board
  * Writes go to a temporary file first and are renamed into place, so a crash never leaves half a file.
  */
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import zlib from "zlib";
@@ -52,6 +53,31 @@ export function saveDataset(meta: DatasetMeta, rows: DRow[]) {
 }
 export function saveMeta(meta: DatasetMeta) { write(p(meta.id, ".json"), JSON.stringify(meta)); }
 export function saveSource(id: string, buf: Buffer) { write(p(id, ".src"), buf); }
+
+// each saved original's sha256, by id and modification time (a source fetched again is hashed again)
+const srcHashes = new Map<string, { mtime: number; sha: string }>();
+const sha256 = (buf: Buffer) => crypto.createHash("sha256").update(buf).digest("hex");
+
+/**
+ * A dataset already made from exactly these bytes (the same file, sample or downloaded link), so adding it again opens
+ * it rather than making a copy. Only finished datasets count: a run the Relevance gate stopped has no dataset yet.
+ */
+export function findBySource(buf: Buffer): DatasetMeta | null {
+  ensure();
+  const want = sha256(buf);
+  for (const f of fs.readdirSync(DIR)) {
+    const id = f.replace(/\.src$/, "");
+    if (!f.endsWith(".src") || !ID_RE.test(id)) continue;
+    try {
+      const st = fs.statSync(path.join(DIR, f));
+      if (st.size !== buf.length) continue;
+      let h = srcHashes.get(id);
+      if (!h || h.mtime !== st.mtimeMs) srcHashes.set(id, (h = { mtime: st.mtimeMs, sha: sha256(fs.readFileSync(path.join(DIR, f))) }));
+      if (h.sha === want) { const m = getMeta(id); if (m) return m; }
+    } catch { /* deleted meanwhile */ }
+  }
+  return null;
+}
 
 export function getMeta(id: string): DatasetMeta | null {
   try { return JSON.parse(fs.readFileSync(p(id, ".json"), "utf8")); } catch { return null; }

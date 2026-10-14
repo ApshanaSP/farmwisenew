@@ -144,3 +144,23 @@ export function contextNumbers(...texts: string[]): number[] {
   for (const re of [/\b(?:zone|ward|மண்டலம்)\s*(\d{1,3})/gi]) for (const t of texts) for (const m of String(t).matchAll(re)) out.push(Number(m[1]));
   return out;
 }
+
+/**
+ * A draft whose numbers fail the check twice used to be thrown away whole for a template. Most of it is usually right:
+ * only the sentences holding an unverified number go (`ok` checks one piece of text), the rest of the model's wording
+ * stays. The headline and voice line are kept or dropped whole (null when dropped). Null when no sentence survives.
+ */
+export function pruneUnverified(d: { headline: string; answerMarkdown: string; voiceSummary: string }, ok: (text: string) => boolean):
+  { headline: string | null; answerMarkdown: string; voiceSummary: string | null; dropped: number } | null {
+  let dropped = 0;
+  const lines = d.answerMarkdown.split("\n").map((line) => {
+    if (!line.trim()) return line;
+    const lead = line.match(/^\s*(?:[-*]|\d+\.)\s+/)?.[0] ?? "";
+    const parts = line.slice(lead.length).split(/(?<=[.!?।])\s+/);
+    const kept = parts.filter((s) => (ok(s) ? true : (dropped++, false)));
+    return kept.length ? lead + kept.join(" ") : null;
+  }).filter((l): l is string => l !== null);
+  const md = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  if (!md) return null;
+  return { headline: ok(d.headline) ? d.headline : null, answerMarkdown: md, voiceSummary: ok(d.voiceSummary) ? d.voiceSummary : null, dropped };
+}

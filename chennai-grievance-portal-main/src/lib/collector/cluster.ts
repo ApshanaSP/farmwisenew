@@ -54,7 +54,7 @@ export const CLUSTER_DEFAULTS: ClusterOptions = { radiusM: 300, placeRadiusM: 15
 
 /** A place name as a key: lower case, letters and digits; "" for a name too general to group by. */
 export function placeKey(p: string | null | undefined): string {
-  const k = String(p ?? "").normalize("NFC").toLowerCase().replace(/(st|rd)\.?/g, (m) => (m.startsWith("s") ? "street" : "road"))
+  const k = String(p ?? "").normalize("NFC").toLowerCase().replace(/\b(st|rd)\b\.?/g, (m) => (m.startsWith("s") ? "street" : "road"))
     .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   return k.length < 4 || CITY_ONLY.test(k) ? "" : k;
 }

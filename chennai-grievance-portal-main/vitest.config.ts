@@ -5,5 +5,6 @@ import { defineConfig } from "vitest/config";
 // compiler and catalog tests run on the committed schema snapshot.
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
-  test: { include: ["src/**/*.test.ts"], environment: "node" }
+  // 15 s: a test's first dynamic import of the assistant modules can take over 5 s when every file runs in parallel
+  test: { include: ["src/**/*.test.ts"], environment: "node", testTimeout: 15_000 }
 });

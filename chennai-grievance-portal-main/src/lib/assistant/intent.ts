@@ -123,8 +123,20 @@ export function topicWords(key: string): string[] {
   return TOPICS.find((t) => t.key === key)?.words ?? [];
 }
 
+/** Words of the road: "the pedestrian killed in Kodungaiyur" was searched as a murder. */
+const ROAD = ["pedestrian", "pedestrians", "accident", "accidents", "crash", "collision", "lorry", "truck", "bus", "bike", "motorcycle", "two-wheeler",
+  "two wheeler", "vehicle", "car", "auto", "run over", "hit by", "mowed down", "motorist", "rider", "cyclist", "விபத்து", "vibathu"];
+const MURDER_ONLY = ["murder", "murders", "murdered", "hacked to death", "stabbed to death", "கொலை", "kolai"];
+
 export function topicOf(toks: string[]): Topic | null {
-  for (const t of TOPICS) if (any(toks, t.words)) return { key: t.key, label: t.label, cats: t.cats, narrow: t.narrow };
+  for (const t of TOPICS) if (any(toks, t.words)) {
+    // "killed" on the road is a road accident; it names a murder only with no road words, or with the word murder itself
+    if (t.key === "murder" && any(toks, ROAD) && !any(toks, MURDER_ONLY)) {
+      const a = TOPICS.find((x) => x.key === "accident")!;
+      return { key: a.key, label: a.label, cats: a.cats, narrow: a.narrow };
+    }
+    return { key: t.key, label: t.label, cats: t.cats, narrow: t.narrow };
+  }
   return null;
 }
 

@@ -23,6 +23,7 @@ import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
 import { NEXT_STEP, STAGE_LABEL, TAB_STAGES, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
+import { syncComplaints } from "@/lib/complaint-progress";
 
 type Row = Record<string, any>;
 
@@ -575,6 +576,8 @@ export async function recordStep(
         JSON.stringify({ step_id: res.insertId, step, report_id: reportId, photos: report?.photos.length ?? 0 })]
     );
     await conn.commit();
+    // the residents whose complaints are in this grievance see the step on their tracker
+    await syncComplaints([id], actor.userId);
     return { stage: step === "approve" ? "approved" : step === "close" ? "verified" : "sent", reportId };
   } catch (err) {
     await conn.rollback().catch(() => undefined);

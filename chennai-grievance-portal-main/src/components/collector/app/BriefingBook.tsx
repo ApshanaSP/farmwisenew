@@ -5,7 +5,7 @@ import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import type { Story } from "@/lib/collector/storyai";
 import { I, type IconName } from "./icons";
-import { SEV_HEX, deptIcon, fmtDate, rel, useFit, type Row } from "./lib";
+import { SEV_HEX, deptIcon, fmtDate, rel, useFit, watchBrief, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 
@@ -255,15 +255,14 @@ type DeptAi = { brief: string; watch: string; at: string } | null;
 function DeptRow({ x, on, toggle, c }: { x: Dept; on: boolean; toggle: () => void; c: Console }) {
   const [ai, setAi] = useState<DeptAi | undefined>(undefined);
   const p = c.periodLabel.toLowerCase();
+  // asked when the row is opened (the server remembers a write-up, so opening it again is quick)
   useEffect(() => {
-    if (!on || ai !== undefined) return;
-    let live = true;
+    if (!on) return;
     const qs = new URLSearchParams({ kind: "dept", code: x.code, period: c.period });
     if (c.zone) qs.set("zone", String(c.zone));
     if (c.taluk) qs.set("taluk", c.taluk);
-    fetch(`/api/collector/brief?${qs}`).then((r) => r.json()).then((j) => live && setAi(j.brief ?? null)).catch(() => live && setAi(null));
-    return () => { live = false; };
-  }, [on, ai, x.code, c.period, c.zone, c.taluk]);
+    return watchBrief<DeptAi>(`/api/collector/brief?${qs}`, setAi);
+  }, [on, x.code, c.period, c.zone, c.taluk]);
   const items = x.items.filter((i) => !x.deaths.some((d) => d.id === i.id)).slice(0, 3);
   return (
     <li data-code={x.code} className={on ? "on" : ""}>

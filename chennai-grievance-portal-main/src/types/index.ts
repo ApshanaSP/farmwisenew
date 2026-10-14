@@ -85,6 +85,8 @@ export type ComplaintStatus =
   | "In Progress"
   | "Completed - Pending Collector Verification"
   | "Verified by Collector"
+  /** closed by the department itself (work that is not severe); the Collector verifies severe work only */
+  | "Resolved by Department"
   | "Rejected";
 
 export interface ComplaintRow {

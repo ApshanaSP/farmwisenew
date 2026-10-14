@@ -22,8 +22,17 @@ export const STATUS_CHAIN: ComplaintStatus[] = [
   "Verified by Collector"
 ];
 const LABEL: Record<string, string> = {
-  "Completed - Pending Collector Verification": "Completed – pending Collector verification"
+  "Completed - Pending Collector Verification": "Completed – pending Collector verification",
+  "Resolved by Department": "Resolved – checked by the department"
 };
+
+/**
+ * The stages of this complaint: work the department closes itself (not severe) ends there, without the Collector's
+ * check; severe work goes on to the Collector.
+ */
+export function chainFor(status: ComplaintStatus): ComplaintStatus[] {
+  return status === "Resolved by Department" ? [...STATUS_CHAIN.slice(0, 4), "Resolved by Department"] : STATUS_CHAIN;
+}
 
 const when = (s: string) =>
   new Date(s).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
@@ -36,11 +45,12 @@ export default function StatusTracker({ status, rejectedStage, remarks, history 
   const last = (s: string) => [...history].reverse().find((h) => h.status === s);
   const rejected = status === "Rejected";
   // a rejection stops the chain after the stage that rejected it
-  const stopAt = rejected ? (rejectedStage === "Collector" ? 4 : 1) : STATUS_CHAIN.indexOf(status);
+  const chain = chainFor(status);
+  const stopAt = rejected ? (rejectedStage === "Collector" ? 4 : 1) : chain.indexOf(status);
   const cur = stopAt < 0 ? 0 : stopAt;
-  const done = status === "Verified by Collector";
+  const done = status === "Verified by Collector" || status === "Resolved by Department";
 
-  const items: TimelineItem[] = STATUS_CHAIN.slice(0, rejected ? cur + 1 : undefined).map((s, i) => {
+  const items: TimelineItem[] = chain.slice(0, rejected ? cur + 1 : undefined).map((s, i) => {
     const h = last(s);
     const state: TimelineItem["state"] = rejected ? "done" : i < cur || (done && i === cur) ? "done" : i === cur ? "now" : "todo";
     return { state, title: LABEL[s] ?? s, time: h ? when(h.created_at) : undefined, body: h?.remarks || undefined };
@@ -61,10 +71,10 @@ export default function StatusTracker({ status, rejectedStage, remarks, history 
 export function MiniProgress({ status }: { status: ComplaintStatus }) {
   const idx: Record<string, number> = {
     "Complaint Filed": 0, "Pending Approval": 0, "Approved by Department Officer": 1, "In Progress": 2,
-    "Completed - Pending Collector Verification": 2, "Verified by Collector": 3, Rejected: -1
+    "Completed - Pending Collector Verification": 2, "Verified by Collector": 3, "Resolved by Department": 3, Rejected: -1
   };
   const at = idx[status] ?? 0;
-  const steps = ["Filed", "Approved", "In progress", "Verified"];
+  const steps = ["Filed", "Approved", "In progress", status === "Resolved by Department" ? "Resolved" : "Verified"];
   return (
     <div className="flex items-center gap-1" aria-label={`Progress: ${at < 0 ? "rejected" : steps[at]}`} role="img">
       {steps.map((s, i) => (
