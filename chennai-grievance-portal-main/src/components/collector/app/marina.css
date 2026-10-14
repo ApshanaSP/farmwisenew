@@ -118,7 +118,17 @@
 .dic .hero .kpi-d em{height:18px;padding:0 6px;background:rgba(255,255,255,.12);color:#fff}
 .dic .hero .kpi-d.good em{background:rgba(124,232,179,.18);color:#9CF0C6}
 .dic .hero .kpi-d.bad em{background:rgba(255,156,140,.2);color:#FFC2B6}
-.dic .hero .spk{width:74px;height:34px;flex:none}
+/* round 24: no sparkline; the change in words beside the number, and the number's breakdown under a hairline */
+.dic .kpi-r{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-width:0}
+.dic .kpi-d{min-width:0;overflow:hidden}
+.dic .kpi-d{flex-direction:column;align-items:flex-start;gap:1px}
+.dic .kpi-d em{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+.dic .kpi-d small{font-size:11px;font-weight:500;padding-left:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dic .hero .kpi-d small{color:var(--band-ink-2)}
+.dic .kpi-sub{display:block;margin-top:5px;padding-top:5px;border-top:1px solid var(--line-2);font:600 11.5px/1.3 var(--font-ui);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .hero .kpi-r{align-items:center;justify-content:flex-start;gap:10px}
+.dic .hero .kpi-n,.dic .hero .kpi-n.c-sev{margin:2px 0 1px}
+.dic .hero .kpi-sub{border-top-color:var(--band-line);color:var(--band-ink-2)}
 /* the snapshot: one line per fact, stacked */
 .dic .hsnap{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0}
 .dic .hsnap .snap-t{flex:none;min-width:0;min-height:0;display:block}
@@ -277,3 +287,8 @@
 .dic .tbrand .twm{height:38px}
 .dic .tbrand .tsub{display:block;padding-left:12px;border-left:1px solid var(--line);font:600 11.5px/1.25 var(--font-ui);color:var(--text-3);white-space:nowrap}
 .dic:not(.fit) .tbrand .twm{height:32px}
+
+/* round 24: Latest news has four tabs (News, Differ, Next door, Added); they share the card's width */
+.dic .a-brief .btabs{gap:0;margin-left:10px;margin-right:10px}
+.dic .a-brief .btabs button{flex:1 1 auto;min-width:0;padding:5px 5px 6px;font-size:12px}
+.dic .a-brief .btabs .tab-n{padding:0 5px;margin-left:1px;font-size:10.5px}
