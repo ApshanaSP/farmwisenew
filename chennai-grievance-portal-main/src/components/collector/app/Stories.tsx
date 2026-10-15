@@ -19,7 +19,7 @@ const where = (t: Thread, c: Console) => t.place ?? (t.zones.length === 1 ? c.zo
 /** Stage chips in order: "First report 27 Sep → Arrest 27 Sep → Death 28 Sep". */
 function StageStrip({ t, max = 4 }: { t: Thread; max?: number }) {
   const st = t.stages.length > max ? [...t.stages.slice(0, max - 1), t.stages[t.stages.length - 1]] : t.stages;
-  const updates = t.days.reduce((a, d) => a + d.steps.filter((s) => s.stage === "Update").length, 0);
+  const updates = t.updates ?? t.days.reduce((a, d) => a + d.steps.filter((s) => s.stage === "Update").length, 0);
   return (
     <span className="thr-steps">
       {st.map((s, k) => (

@@ -933,7 +933,8 @@ export async function overview(period: Period, zone: number | null, dept: string
       const r = sevAll.find((x) => x.sev === k);
       return { sev: k, n: Number(r?.n ?? 0), open: Number(r?.open ?? 0) };
     }),
-    stories,
+    // the card shows titles, stages and an update count: each day's reports (most of the payload) stay with the Stories view
+    stories: { ...stories, threads: stories.threads.map((t) => ({ ...t, days: [], updates: t.days.reduce((a, d) => a + d.steps.filter((s) => s.stage === "Update").length, 0) })) },
     added,
     // a quarter holds over a thousand stories (1 MB): the newest 250 are sent, with the full count
     allNews: allNews ? allNews.slice(0, 250) : null,

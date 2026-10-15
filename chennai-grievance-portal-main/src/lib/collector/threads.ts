@@ -135,6 +135,8 @@ export interface Thread {
   id: string; title: string; place: string | null; cat: string | null; catLabel: string | null; zones: number[]; depts: string[]; taluks: string[];
   incidents: string[]; sev: string | null; open: boolean | null; first: string; last: string; hours: number; reports: number; outlets: string[];
   added: number; stages: { stage: string; t: string }[]; days: { day: string; steps: ThreadStep[] }[]; latest: ThreadStep;
+  /** the overview sends this count instead of every day's reports (the Stories view loads those itself) */
+  updates?: number;
 }
 
 /** Bump when the threading rules change, so a cached result is not reused. */
