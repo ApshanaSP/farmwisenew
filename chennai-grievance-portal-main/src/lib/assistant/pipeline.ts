@@ -827,6 +827,10 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       // plain readings the rules get right every time: "this month vs last month", "road deaths today" (the router once sent
       // these to the planner: 22 s and three models for a count the store gives at once)
       || (exact.intent === "INCIDENT_COUNT" && (exact.vsPrevious || exact.measure === "deaths"))
+      // "incidents in ward 120 this month": the store filters by the ward number; the router once matched "Ward 120" as a
+      // place name in titles and answered zero beside 24 recorded
+      || (placeData?.ward_asked === true && (exact.intent === "INCIDENT_LIST" || exact.intent === "INCIDENT_COUNT") && !exact.topic
+        && message.length <= 100 && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|chart|map)\b/i.test(message))
       || !aiStatus().available)) {
     const r = await fast(consoleScope);
     if (r) return r;
