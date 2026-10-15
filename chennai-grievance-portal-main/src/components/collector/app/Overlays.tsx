@@ -30,7 +30,9 @@ const STATUS_OPTS: [string, string][] = [
 
 export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
   const [f, setF] = useState({ dept: c.dept ?? "", sev: "", status: "", q: "", sort: "t", dir: -1, page: 0, scope: "period", ...preset });
-  const [data, setData] = useState<{ rows: Row[]; total: number; complaints: number } | null>(null);
+  const [data, setData] = useState<{ rows: Row[]; total: number; incidents?: number; complaints: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   const [text, setText] = useState(f.q);
   useEffect(() => {
     const t = setTimeout(() => setF((x) => (x.q === text ? x : { ...x, q: text, page: 0 })), 250);
@@ -41,9 +43,16 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
     const p = new URLSearchParams({ period: c.period, sort: String(f.sort), dir: String(f.dir), page: String(f.page), scope: String(f.scope) });
     if (c.zone && !f.anyZone) p.set("zone", String(c.zone));
     for (const k of ["dept", "sev", "status", "q", "cat", "taluk", "place"] as const) if ((f as Record<string, unknown>)[k]) p.set(k, String((f as Record<string, unknown>)[k]));
-    fetch(`/api/collector/list?${p}`).then((r) => r.json()).then((j) => live && setData(j));
+    setError(null);
+    fetch(`/api/collector/list?${p}`)
+      .then(async (r) => {
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !j || !Array.isArray(j.rows)) throw new Error(j?.error ?? "The list could not be loaded.");
+        if (live) setData(j);
+      })
+      .catch((e) => live && setError(e instanceof Error && e.message !== "Failed to fetch" ? e.message : "The list could not be loaded. Check the connection."));
     return () => { live = false; };
-  }, [f, c.period, c.zone, c.reloadKey]);
+  }, [f, c.period, c.zone, c.reloadKey, retry]);
 
   const set = (k: string, v: unknown) => setF((x) => ({ ...x, [k]: v, page: 0 }));
   const pages = data ? Math.max(1, Math.ceil(data.total / 12)) : 1;
@@ -71,7 +80,10 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
         </select>
       </div>
       <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 8 }}>
-        {data ? `${data.total.toLocaleString("en-IN")} incidents (similar reports in one area grouped) · ${c.zoneName ?? "District-wide"} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}` : "Loading…"}
+        {error ? <span role="alert">{error} <button className="lnk" onClick={() => setRetry((n) => n + 1)}>Retry</button></span>
+          : data ? `${(data.incidents ?? data.total).toLocaleString("en-IN")} incidents${data.incidents != null && data.incidents !== data.total
+            ? ` in ${data.total.toLocaleString("en-IN")} rows (similar reports in one area grouped)` : ""} · ${c.zoneName ?? "District-wide"} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}`
+          : "Loading…"}
       </div>
       <div className="tbl-wrap">
         <table>
