@@ -65,7 +65,7 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
   // "what about Anna Nagar?" after a count or a list: the same answer (its topic, filters and kind) for the new place or period,
   // not an overview of the place
   const last = ctx?.lastIntent as Detected["intent"] | undefined;
-  const followUp = route.intent === "plan_edit" || (message.length <= 60 && /^\s*(and|what about|how about|same (for|in)|now (for|in)|also|then)\b/i.test(message));
+  const followUp = route.intent === "plan_edit" || (message.length <= 60 && /^\s*(and|what about|how about|same (for|in)|now (for|in)|also|then|only|just)\b/i.test(message));
   if (followUp && last && Object.values(FAST_OF).includes(last) && !["NEWS_DETAIL", "INCIDENT_TIMELINE", "INCIDENT_RELATED"].includes(last)
     && ["area_summary", "other", "incident_count", "incident_list", "priority_list", "category_ranking"].includes(d.answer))
     return { fast: { ...base, intent: last, refinement: true, n: base.n ?? ctx?.n ?? null } };

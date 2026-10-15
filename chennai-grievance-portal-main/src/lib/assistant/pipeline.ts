@@ -22,7 +22,7 @@ import { audit, collectionStatus } from "@/lib/collector/sources";
 import { feedsForAnswer, freshnessLine } from "@/lib/collector/freshness";
 import { EXAMPLES, TEXT, detectLanguage, hasTamilScript, requestedCount, wantsNoVisual, wantsTable, wantsVisual, wantsVisualByNature, type Lang, type LangChoice } from "@/lib/assistant/lang";
 import { ScopeSchema, describeScope, fmtAsOf, refNames, type RefNames } from "@/lib/assistant/scope";
-import { ToolError, listTools, runTool } from "@/lib/assistant/tools";
+import { ToolError, listTools, runTool, unknownSubject } from "@/lib/assistant/tools";
 import { ENV_METRICS } from "@/lib/assistant/queries";
 import { applyTopN, presentAll, spec, type Presentation } from "@/lib/assistant/datasets";
 import { correctSpelling } from "@/lib/assistant/spell";
@@ -232,6 +232,9 @@ async function contactDept(message: string, n: RefNames): Promise<string | null>
 
 /** "reset", "start over", "new chat", "clear the conversation", "forget that": the whole message asks to start again. */
 const RESET = /^\s*(reset|restart|start (over|again|afresh|fresh)|new (chat|conversation|topic)|clear( the| this)? (chat|conversation|history|context)|forget (that|everything|it)|மீண்டும் தொடங்கு|புதிதாக தொடங்கு)\s*[.!]?\s*$/i;
+
+/** A question about a period or a count ("any … this week", "how many … today"): what a records search can answer. */
+const ASKS_WHEN_OR_HOW_MANY = /\b(how many|any|count|number of|today|yesterday|this (week|month)|last (week|month|\d+ days?)|recent(ly)?|reported)\b|எத்தனை|evlo/i;
 
 /** The turns after the last "reset" answer in the chat (all of them when there was none). */
 export function sinceReset<T extends { role?: string; context?: unknown }>(turns: T[]): T[] {
@@ -820,7 +823,11 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // exact requests need no understanding: a question naming an incident id, or the previous list as a map or table
   const exact = detectIntent(message, ctx);
   if (!i.pinId && !i.insightKey && ((exact.intent === "INCIDENT_DETAIL" && /\bINC-[A-Z0-9-]{4,}/i.test(message) && message.length <= 120)
-      || ((exact.intent === "MAP" || exact.intent === "TABLE") && exact.refinement) || !aiStatus().available)) {
+      || ((exact.intent === "MAP" || exact.intent === "TABLE" || exact.intent === "CHART") && exact.refinement)
+      // plain readings the rules get right every time: "this month vs last month", "road deaths today" (the router once sent
+      // these to the planner: 22 s and three models for a count the store gives at once)
+      || (exact.intent === "INCIDENT_COUNT" && (exact.vsPrevious || exact.measure === "deaths"))
+      || !aiStatus().available)) {
     const r = await fast(consoleScope);
     if (r) return r;
   }
@@ -866,6 +873,15 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (direct.name === "change_drivers" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zone);
     route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: direct.name, args: { scope: s, ...direct.args } }],
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: [`Read as: ${direct.because}.`], offline: false };
+  }
+  // a kind of event the district's data has no word for ("earthquakes this week"): its words are searched in the records, and
+  // "none recorded" is said plainly; the router once listed every incident of the week for it
+  if (!route && !i.pinId && !i.insightKey && !exact.topic && !placeData && !deptFromWords(message, names) && !turns.length
+      && ["INCIDENT_LIST", "INCIDENT_COUNT", "PRIORITY_INCIDENT_LIST", "GENERAL_DISTRICT_QUERY"].includes(exact.intent) && ASKS_WHEN_OR_HOW_MANY.test(message)
+      && unknownSubject(message, names).length) {
+    const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
+    route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: "search_records", args: { text: message, scope: s } }],
+      chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: ["Not a kind of incident the console files: its words were searched in the records."], offline: false };
   }
   if (!route) route = cached<Route>(routeKey);
   if (!route) {

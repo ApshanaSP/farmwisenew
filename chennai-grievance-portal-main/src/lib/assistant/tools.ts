@@ -63,6 +63,34 @@ export function keywordsOf(text: string): string[] {
     .map((w) => (/[a-z]/.test(w) ? w.replace(/(ies)$/, "y").replace(/(?<!s)s$/, "") : w)))].slice(0, 4);
 }
 
+/** Words a question uses to ask, not to say what happened ("severe", "open", "top", "total"). */
+const ASKING = new Set(["severe", "serious", "critical", "high", "medium", "minor", "major", "open", "pending", "overdue", "top", "priority", "latest", "newest",
+  "important", "resolved", "closed", "unresolved", "complaint", "grievance", "problem", "issue", "news", "zone", "ward", "taluk", "department", "total",
+  "people", "death", "died", "dead", "killed", "people", "person", "worst", "most", "least", "status", "update", "situation", "today", "yesterday", "week",
+  "month", "quarter", "area", "areas", "place", "places", "event", "report", "happen", "happened", "happening", "going", "ranking", "rank",
+  "need", "needs", "attention", "thank", "thanks", "hello", "kindly", "focus", "change", "changed", "compare", "versus", "trend", "chart", "table", "summary"]);
+
+/**
+ * The subject words of a short question when none of them is something the district's data knows: not a place, a
+ * department, a category, a topic or an asking word ("earthquakes this week" -> ["earthquake"]). Empty otherwise: the
+ * question goes to the console's own tools.
+ */
+export function unknownSubject(text: string, n: Awaited<ReturnType<typeof refNames>>): string[] {
+  if (text.split(/\s+/).length > 10) return [];
+  const known = new Set<string>();
+  const add = (s: string) => { for (const w of keywordsOf(s)) known.add(w); };
+  for (const z of n.zones.values()) add(z.name);
+  for (const t of n.taluks.values()) add(t.name);
+  for (const d of n.depts.values()) add(d.name);
+  for (const c of n.cats.values()) add(c.label);
+  const words = keywordsOf(text).filter((w) => !ASKING.has(w) && !known.has(w) && !hasPhrase(tokens(w), "incident"));
+  // a word the topic list knows ("murder", "flooding", "dengue") is the console's subject too
+  return words.length && words.every((w) => !TOPIC_WORDS.has(w)) ? words : [];
+}
+const TOPIC_WORDS = new Set(["murder", "accident", "crash", "flood", "flooding", "waterlogging", "garbage", "waste", "dengue", "fever", "theft", "robbery",
+  "fire", "protest", "drain", "drainage", "sewage", "pothole", "streetlight", "suicide", "rape", "harassment", "missing", "drug", "ganja", "liquor", "collapse",
+  "stray", "dog", "water", "power", "crime", "asphyxiation", "gas", "lake", "bund"]);
+
 /** Incidents whose title or place contains every word, newest first (the search's fallback when the meaning index is not ready). */
 async function keywordIncidents(words: string[], since: number | null, until: number, zone: number | null, cat: string | null, dept: string | null): Promise<Row[]> {
   const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -499,8 +527,13 @@ export const TOOLS = [
           caveats: [`Searched the incident records for the words ${words.map((w) => `"${w}"`).join(", ") || "in the question"}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`],
           untrusted: ["title", "incidents"] };
       }
-      // a match: in the keyword results, or close in meaning
-      const keep = <T extends { sim: number | null; score: number }>(xs: T[] | null) => (xs ?? []).filter((x) => x.sim == null || x.sim >= 0.8);
+      // a match: in the keyword results, or close in meaning. A subject the district's data has no word for ("earthquakes")
+      // matches only records that name it: the nearest records in meaning are something else, and were once reported as
+      // "three earthquakes recorded"
+      const unknown = unknownSubject(a.text, await refNames());
+      const names = (title: unknown) => unknown.some((w) => String(title ?? "").toLowerCase().includes(w));
+      const keep = <T extends { sim: number | null; score: number; rec: { title?: unknown } }>(xs: T[] | null) =>
+        (xs ?? []).filter((x) => (x.sim == null || x.sim >= 0.8) && (!unknown.length || names(x.rec.title)));
       const incidents = keep(inc).map((x) => ({ id: x.id, title: x.rec.title, type: x.rec.cat_label, zone_name: x.rec.zone, place: x.rec.place,
         sev: x.rec.sev, status: x.rec.status, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
         match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
