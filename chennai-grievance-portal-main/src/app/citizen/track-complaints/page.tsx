@@ -236,7 +236,8 @@ export default function TrackComplaintsPage() {
                         {[
                           { icon: Building2, label: "Department", value: sel.department_name },
                           { icon: Tag, label: "Type", value: sel.complaint_type_name },
-                          { icon: MapPin, label: "Location", value: `${sel.locality_name}, ${sel.zone_name}` },
+                          // a complaint on a street typed in by hand has no listed locality: its street, else just the zone (never "null")
+                          { icon: MapPin, label: "Location", value: [sel.locality_name ?? detail?.street_name, sel.zone_name].filter(Boolean).join(", ") || "Not recorded" },
                           { icon: CalendarDays, label: "Filed on", value: fmtDate(sel.created_at) }
                         ].map(({ icon: Icon, label, value }) => (
                           <div key={label} className="flex min-w-0 items-start gap-2">

@@ -503,7 +503,7 @@ export function ReviewBody({ ins, c }: { ins: Insights | null; c: Console }) {
               <b>{i.title || i.type}</b>
               <small>{tab === "missing"
                 ? [i.type, rel(i.t, ins.now), i.loc_verdict?.how, i.also?.length ? `${i.also.length + 1} reports` : null].filter(Boolean).join(" · ")
-                : [`${i.place}${i.zone_name && i.zone_name !== i.place ? `, ${i.zone_name}` : ""}`, i.how, i.type, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small>
+                : [i.place ? `${i.place}${i.zone_name && i.zone_name !== i.place ? `, ${i.zone_name}` : ""}` : i.zone_name, i.how, i.type, rel(i.t, ins.now)].filter(Boolean).join(" · ")}</small>
             </button>
             {tab === "placed" && <button className="btn sm plain" onClick={() => c.locate(i)} title="Show it on the map"><I n="target" />Map</button>}
             <button className="btn sm" onClick={() => c.openInc(i.id)}>Open<I n="chevr" /></button>
