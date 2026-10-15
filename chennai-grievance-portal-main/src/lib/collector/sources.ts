@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import type { PoolConnection } from "mysql2/promise";
 import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
@@ -30,11 +31,42 @@ async function exec(sql: string, params: unknown[] = []) {
   return r;
 }
 
+type Runner = Pick<PoolConnection, "query">;
+
+const auditSql = () =>
+  `INSERT INTO ${ops("audit_log")} (at, actor, action, table_name, record_id, before_value, after_value) VALUES (NOW(), ?, ?, ?, ?, ?, ?)`;
+const auditArgs = (actor: string, action: string, table: string, recordId: string | number | null, before: unknown, after: unknown) =>
+  [actor, action, table, recordId == null ? null : String(recordId), before == null ? null : JSON.stringify(before), after == null ? null : JSON.stringify(after)];
+
+/**
+ * An audit row for a read or a convenience action (an export, a pin, an opened workspace): a failure must not stop what
+ * the user asked for, so it is logged with what it was for and the action goes on. A change to the district's data
+ * writes its audit row in the same transaction instead (auditIn), so the change and its record stand or fall together.
+ */
 export async function audit(actor: string, action: string, table: string, recordId: string | number | null, before: unknown, after: unknown) {
-  await exec(
-    `INSERT INTO ${ops("audit_log")} (at, actor, action, table_name, record_id, before_value, after_value) VALUES (NOW(), ?, ?, ?, ?, ?, ?)`,
-    [actor, action, table, recordId == null ? null : String(recordId), before == null ? null : JSON.stringify(before), after == null ? null : JSON.stringify(after)]
-  ).catch((e) => console.warn("audit failed", e.message));
+  await exec(auditSql(), auditArgs(actor, action, table, recordId, before, after))
+    .catch((e) => console.error(`[audit] could not record ${action} on ${table} ${recordId ?? ""} by ${actor}: ${e.message}`));
+}
+
+/** The audit row inside the caller's transaction: if it cannot be written, the change is rolled back. */
+export async function auditIn(conn: Runner, actor: string, action: string, table: string, recordId: string | number | null, before: unknown, after: unknown) {
+  await conn.query(auditSql(), auditArgs(actor, action, table, recordId, before, after));
+}
+
+/** Runs `fn` in one transaction on the store. */
+export async function inTransaction<T>(fn: (conn: PoolConnection) => Promise<T>): Promise<T> {
+  const conn = await intelPool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const out = await fn(conn);
+    await conn.commit();
+    return out;
+  } catch (e) {
+    await conn.rollback().catch(() => undefined);
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 // --------------------------------------------------------------- listing --
@@ -102,13 +134,16 @@ export async function addSource(s: NewSource, actor: string) {
   if (s.loginUrl) await assertPublicUrl(new URL(s.loginUrl));
   let kind = s.kind && s.kind !== "auto" ? s.kind : null;
   if (!kind) kind = await detectKind(s.url);
-  const r = await exec(
-    `INSERT INTO ${ops("sources")} (name, url, kind, auth, login_url, user_field, pass_field, username, secret_enc, refresh_minutes, created_by, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
-    [s.name.slice(0, 128), s.url, kind, s.auth ?? "none", s.loginUrl || null, s.userField || null, s.passField || null,
-      s.username || null, s.secret ? encryptSecret(s.secret) : null, Math.max(15, Math.min(1440, s.refreshMinutes ?? 60)), actor]
-  );
-  await audit(actor, "source:add", "sources", r.insertId, null, { name: s.name, url: s.url, kind, auth: s.auth ?? "none" });
+  const r = await inTransaction(async (conn) => {
+    const [res] = await conn.query<ResultSetHeader>(
+      `INSERT INTO ${ops("sources")} (name, url, kind, auth, login_url, user_field, pass_field, username, secret_enc, refresh_minutes, created_by, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
+      [s.name.slice(0, 128), s.url, kind, s.auth ?? "none", s.loginUrl || null, s.userField || null, s.passField || null,
+        s.username || null, s.secret ? encryptSecret(s.secret) : null, Math.max(15, Math.min(1440, s.refreshMinutes ?? 60)), actor]
+    );
+    await auditIn(conn, actor, "source:add", "sources", res.insertId, null, { name: s.name, url: s.url, kind, auth: s.auth ?? "none" });
+    return res;
+  });
   const run = await runSource(r.insertId, actor);
   return { id: r.insertId, kind, run };
 }
@@ -116,17 +151,21 @@ export async function addSource(s: NewSource, actor: string) {
 export async function updateSource(id: number, patch: { enabled?: boolean; refreshMinutes?: number }, actor: string) {
   const [before] = await q(`SELECT enabled, refresh_minutes FROM ${ops("sources")} WHERE source_id = ?`, [id]);
   if (!before) throw new Error("Source not found.");
-  if (patch.enabled !== undefined) await exec(`UPDATE ${ops("sources")} SET enabled = ? WHERE source_id = ?`, [patch.enabled ? 1 : 0, id]);
-  if (patch.refreshMinutes) await exec(`UPDATE ${ops("sources")} SET refresh_minutes = ? WHERE source_id = ?`, [Math.max(15, Math.min(1440, patch.refreshMinutes)), id]);
-  await audit(actor, "source:update", "sources", id, before, patch);
+  await inTransaction(async (conn) => {
+    if (patch.enabled !== undefined) await conn.query(`UPDATE ${ops("sources")} SET enabled = ? WHERE source_id = ?`, [patch.enabled ? 1 : 0, id]);
+    if (patch.refreshMinutes) await conn.query(`UPDATE ${ops("sources")} SET refresh_minutes = ? WHERE source_id = ?`, [Math.max(15, Math.min(1440, patch.refreshMinutes)), id]);
+    await auditIn(conn, actor, "source:update", "sources", id, before, patch);
+  });
 }
 
 export async function removeSource(id: number, actor: string) {
   const [s] = await q(`SELECT name, kind, created_by FROM ${ops("sources")} WHERE source_id = ?`, [id]);
   if (!s) throw new Error("Source not found.");
   if (["pipeline", "agmarknet", "ocr"].includes(s.kind)) throw new Error("Built-in sources can be paused but not removed.");
-  await exec(`DELETE FROM ${ops("sources")} WHERE source_id = ?`, [id]);
-  await audit(actor, "source:remove", "sources", id, s, null);
+  await inTransaction(async (conn) => {
+    await conn.query(`DELETE FROM ${ops("sources")} WHERE source_id = ?`, [id]);
+    await auditIn(conn, actor, "source:remove", "sources", id, s, null);
+  });
 }
 
 // ------------------------------------------------------------------ run --

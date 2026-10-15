@@ -18,7 +18,7 @@ import { z } from "zod";
 import intelPool, { ops } from "@/lib/collector/db";
 import { encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
-import { audit, runSource } from "@/lib/collector/sources";
+import { auditIn, inTransaction, runSource } from "@/lib/collector/sources";
 import { AiBudgetError, AiBusyError, AiUnavailableError, generateJson } from "@/lib/ai/gateway";
 import {
   SAMPLE, applyMapping, nearChennai, extractRecords, feedLink, fieldsOf, guessMapping, loginForm,
@@ -373,13 +373,16 @@ export async function approve(a: Approval, actor: string) {
   const [dup] = await intelPool.query<any[]>(`SELECT source_id FROM ${ops("sources")} WHERE url = ? AND kind = ?`, [a.url, a.kind]);
   if ((dup as any[]).length) throw new OnboardError("This link is already connected.");
   const au = a.auth;
-  const [r] = await intelPool.query<any>(
-    `INSERT INTO ${ops("sources")} (name, url, kind, description, auth, login_url, user_field, pass_field, username, secret_enc, refresh_minutes, created_by, status, mapping)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
-    [a.name.slice(0, 128), a.url, a.kind, a.about.slice(0, 500) || null, au?.mode ?? "none", au?.loginUrl || null, au?.userField || null, au?.passField || null,
-      au?.username || null, au?.secret ? encryptSecret(au.secret) : null, Math.max(60, Math.min(1440, a.refreshMinutes)), actor, JSON.stringify(stored)]);
-  const id = Number(r.insertId);
-  await audit(actor, "source:onboard", "sources", id, null, { name: a.name, url: a.url, kind: a.kind, detected: a.detected, mapping: a.mapping });
+  const id = await inTransaction(async (conn) => {
+    const [r] = await conn.query<any>(
+      `INSERT INTO ${ops("sources")} (name, url, kind, description, auth, login_url, user_field, pass_field, username, secret_enc, refresh_minutes, created_by, status, mapping)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
+      [a.name.slice(0, 128), a.url, a.kind, a.about.slice(0, 500) || null, au?.mode ?? "none", au?.loginUrl || null, au?.userField || null, au?.passField || null,
+        au?.username || null, au?.secret ? encryptSecret(au.secret) : null, Math.max(60, Math.min(1440, a.refreshMinutes)), actor, JSON.stringify(stored)]);
+    const newId = Number(r.insertId);
+    await auditIn(conn, actor, "source:onboard", "sources", newId, null, { name: a.name, url: a.url, kind: a.kind, detected: a.detected, mapping: a.mapping });
+    return newId;
+  });
   const run = await runSource(id, actor);
   return { id, run };
 }
