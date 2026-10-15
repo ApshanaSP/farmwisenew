@@ -62,11 +62,18 @@ database credentials stay in sync automatically:
 | `SMTP_PASS` | your SMTP password / API key |
 | `SMTP_FROM` | `"District Collectorate - Chennai" <no-reply@your-domain>` |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | optional — omit to use the OpenStreetMap fallback |
+| `TRUST_PROXY_HOPS` | `1` on Railway (one proxy in front). Sign-in limits per IP read `X-Forwarded-For` only when this is set; without it every client shares one larger bucket |
+| `DB_SSL_CA` | optional — the database provider's CA certificate (PEM text or a file path) when it is not a public CA |
+| `DB_SSL_INSECURE` | leave unset. `true` turns off the database certificate check (only for a provider whose certificate cannot be verified) |
 
 `src/lib/db.ts` and `scripts/db-config.js` accept either `DATABASE_URL` /
 `MYSQL_URL` **or** the discrete `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/
 `DB_NAME` variables, so either style works. TLS is enabled automatically for
-URL-based connections, which managed MySQL requires.
+URL-based connections, which managed MySQL requires, and the server's
+certificate is verified (see `DB_SSL_CA` / `DB_SSL_INSECURE` above).
+
+In production the server will not start when `JWT_SECRET` (or
+`AADHAAR_ENCRYPTION_KEY`, when set) is missing or shorter than 32 bytes.
 
 ### SMTP is optional
 

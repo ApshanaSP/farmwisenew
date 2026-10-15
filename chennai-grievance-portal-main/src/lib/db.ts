@@ -1,9 +1,23 @@
+import fs from "fs";
 import mysql, { Pool, PoolConnection } from "mysql2/promise";
 import { awsPool } from "@/lib/aws/store";
 
 declare global {
   // eslint-disable-next-line no-var
   var __mysqlPool: Pool | undefined;
+}
+
+/**
+ * TLS for a URL connection. The server's certificate is checked (an unchecked one lets anyone on the path read the
+ * traffic); DB_SSL_CA (the provider's CA certificate, as PEM text or a file path) for a provider's own CA, and
+ * DB_SSL_INSECURE=true turns the check off only when someone opts in. ?ssl=false in the URL: no TLS.
+ */
+export function tlsFor(u: URL): { rejectUnauthorized: boolean; ca?: string } | undefined {
+  if (u.searchParams.get("ssl") === "false") return undefined;
+  if (process.env.DB_SSL_INSECURE === "true") return { rejectUnauthorized: false };
+  const ca = process.env.DB_SSL_CA?.trim();
+  if (!ca) return { rejectUnauthorized: true };
+  return { rejectUnauthorized: true, ca: ca.includes("BEGIN CERTIFICATE") ? ca : fs.readFileSync(ca, "utf8") };
 }
 
 /**
@@ -22,10 +36,7 @@ export function connectionSettings() {
       password: decodeURIComponent(u.password),
       database: u.pathname.replace(/^\//, ""),
       // Managed MySQL generally requires TLS.
-      ssl:
-        u.searchParams.get("ssl") === "false"
-          ? undefined
-          : { rejectUnauthorized: false }
+      ssl: tlsFor(u)
     };
   }
   return {

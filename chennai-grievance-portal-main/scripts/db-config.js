@@ -11,6 +11,7 @@
  * supporting both means the same code runs locally and in production without
  * a second config path.
  */
+const fs = require("fs");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
@@ -22,11 +23,18 @@ function fromUrl(raw) {
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database: u.pathname.replace(/^\//, ""),
-    // Managed MySQL almost always requires TLS. `rejectUnauthorized: false`
-    // accepts the provider's certificate chain, which is what their own
-    // connection strings assume.
-    ssl: u.searchParams.get("ssl") === "false" ? undefined : { rejectUnauthorized: false }
+    // Managed MySQL almost always requires TLS; same rules as tlsFor() in src/lib/db.ts
+    ssl: tlsFor(u)
   };
+}
+
+/** The server certificate is checked; DB_SSL_CA adds the provider's CA, DB_SSL_INSECURE=true opts out. */
+function tlsFor(u) {
+  if (u.searchParams.get("ssl") === "false") return undefined;
+  if (process.env.DB_SSL_INSECURE === "true") return { rejectUnauthorized: false };
+  const ca = (process.env.DB_SSL_CA || "").trim();
+  if (!ca) return { rejectUnauthorized: true };
+  return { rejectUnauthorized: true, ca: ca.includes("BEGIN CERTIFICATE") ? ca : fs.readFileSync(ca, "utf8") };
 }
 
 function getDbConfig() {
