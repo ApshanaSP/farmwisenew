@@ -27,7 +27,7 @@ import { judgeLocation, landmark, outsidePlace, type Ward } from "@/lib/collecto
 import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsrel";
 import { cleanTitle } from "@/lib/collector/threads";
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
-import { MASS_DEATHS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
+import { MASS_DEATHS, animalDeathsOnly, casualtyMerges, isArchival, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -360,8 +360,9 @@ export function newsSanity(db: DB) {
     ${has(db, "incidents", "place_text") ? "place_text" : "NULL"} AS place,
     COALESCE(dead, 0) AS dead FROM incidents WHERE media_only = 1`).all() as Row[];
 
-  // 1. history columns and articles about long-past events
-  const archival = media.filter((i) => byInc.get(i.id)?.length && byInc.get(i.id)!.every((d) => isArchival(d.title, d.pub))).map((i) => String(i.id));
+  // 1. history columns and articles about long-past events; horoscopes and obituaries of natural deaths (news, not incidents)
+  const archival = media.filter((i) => byInc.get(i.id)?.length && byInc.get(i.id)!.every((d) => isArchival(d.title, d.pub) || notAnIncident(d.title)))
+    .map((i) => String(i.id));
   const gone = new Set(archival);
 
   // 2. gas deaths read as disease
@@ -413,16 +414,21 @@ export function newsSanity(db: DB) {
           all.reduce((s, r) => s + (Number(r.m) || 1), 0), Math.max(1, outlets), to);
     }
 
-    // 5. a mass death toll from one outlet only: kept, not counted until confirmed
+    // 5. deaths of animals ("17 stray dogs found dead"): the incident stays, the animals are not counted as people who died
     if (!has(db, "incidents", "dead_reported")) db.exec(`ALTER TABLE incidents ADD COLUMN dead_reported REAL`);
+    const animals = (db.prepare(`SELECT incident_id AS id, title FROM incidents WHERE media_only = 1 AND COALESCE(dead, 0) > 0`).all() as Row[])
+      .filter((r) => animalDeathsOnly(r.title, ...(byInc.get(r.id) ?? []).flatMap((d) => [d.title, d.title_en])));
+    for (const r of animals) db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL WHERE incident_id = ?`).run(r.id);
+
+    // 6. a mass death toll from one outlet only: kept, not counted until confirmed
     const hold = (db.prepare(`SELECT i.incident_id AS id, i.dead FROM incidents i WHERE i.media_only = 1 AND COALESCE(i.dead, 0) >= ?`).all(MASS_DEATHS) as Row[])
       .filter((r) => new Set((db.prepare(`SELECT publisher FROM documents WHERE linked_incident_id = ?`).all(r.id) as Row[]).map((d) => d.publisher)).size < 2);
     const review = has(db, "incidents", "needs_review") && has(db, "incidents", "review_reason");
     for (const r of hold)
       db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL${review ? ", needs_review = 1, review_reason = ?" : ""} WHERE incident_id = ?`)
         .run(...(review ? [`${r.dead} deaths reported by one news outlet only: confirm before counting`, r.id] : [r.id]));
-    if (archival.length || gas.length || groups.size || hold.length)
-      console.log(`[derive] news: ${archival.length} history items left out, ${gas.length} gas deaths recategorised, `
+    if (archival.length || gas.length || groups.size || hold.length || animals.length)
+      console.log(`[derive] news: ${archival.length} history, horoscope or obituary items left out, ${gas.length} gas deaths recategorised, ${animals.length} animal deaths not counted as people, `
         + `${[...groups.values()].reduce((s, f) => s + f.length, 0)} same-event incidents merged into ${groups.size}, ${hold.length} death tolls held for confirmation`);
   });
 }
@@ -469,5 +475,5 @@ onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@1", newsMedia);
-onBuild("news-sanity@4", newsSanity);
+onBuild("news-sanity@5", newsSanity);
 onBuild("incident-clusters@4", clusters);

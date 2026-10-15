@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STORY_HOURS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident } from "./newssanity";
+import { STORY_HOURS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident, animalDeathsOnly, notAnIncident } from "./newssanity";
 
 describe("history columns are not today's incidents", () => {
   it("drops Dinamani's 'this day' item (95 killed in a 1976 Bombay air crash, published 13 Oct 2026)", () => {
@@ -74,5 +74,32 @@ describe("the same deaths at the same place, filed under different stories", () 
     expect(casualtyMerges([c("A", "2026-10-12 08:00:00", 4, "", 2), c("B", "2026-10-12 09:00:00", 4, "", 2)]).size).toBe(0);
     expect(casualtyMerges([c("A", "2026-10-12 08:00:00", null, "kodungaiyur", 2), c("B", "2026-10-12 09:00:00", null, "kodungaiyur", 2)]).size).toBe(0);
     expect(casualtyMerges([c("A", "2026-10-10 08:00:00", 4, "kodungaiyur", 2), c("B", "2026-10-12 09:00:00", 4, "kodungaiyur", 2)]).size).toBe(0);
+  });
+});
+
+describe("deaths of animals are not deaths of people", () => {
+  it("does not count the stray dogs or the deer (real headlines from the store)", () => {
+    expect(animalDeathsOnly("17 stray dogs found dead in Madambakkam; IT employee arrested for poisoning")).toBe(true);
+    expect(animalDeathsOnly("Spotted deer mauled by stray dogs in Madhavaram dies")).toBe(true);
+    expect(animalDeathsOnly("மின்சாரம் தாக்கி 3 மாடுகள் உயிரிழப்பு")).toBe(true);
+  });
+  it("still counts people, even when animals are named", () => {
+    expect(animalDeathsOnly("Man killed after stray dog chase on two-wheeler")).toBe(false);
+    expect(animalDeathsOnly("Two workers die of asphyxiation while cleaning sump in Chennai")).toBe(false);
+    expect(animalDeathsOnly("நாய் துரத்தியதில் விழுந்து இளைஞர் உயிரிழப்பு")).toBe(false);
+    expect(animalDeathsOnly("Woman dies after falling through gap in elevated section of Mylapore MRTS station")).toBe(false);
+  });
+});
+
+describe("horoscopes and obituaries are news, not incidents", () => {
+  it("drops natural-death obituaries and horoscope columns (real obituary headlines from the store)", () => {
+    expect(notAnIncident("Veteran filmmaker Singeetham Srinivasa Rao passes away at 94 in a Chennai hospital")).toBe(true);
+    expect(notAnIncident("Spiritual Guru Kalki Bhagavan Passes Away In Chennai At 77, Final Rites To Be Conducted On Saturday")).toBe(true);
+    expect(notAnIncident("இன்றைய ராசி பலன் - மேஷம் முதல் மீனம் வரை")).toBe(true);
+  });
+  it("keeps a death that is an incident, however it is worded", () => {
+    expect(notAnIncident("Youth passes away after bike accident on OMR")).toBe(false);
+    expect(notAnIncident("Worker passed away after falling into stormwater drain")).toBe(false);
+    expect(notAnIncident("Two killed in accident on Maduravoyal bypass road")).toBe(false);
   });
 });

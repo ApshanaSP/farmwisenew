@@ -57,6 +57,31 @@ export function isGasNotDisease(...texts: (string | null | undefined)[]): boolea
   return GAS.test(t) && !DISEASE.test(t);
 }
 
+const ANIMAL = String.raw`(?:stray\s+)?(?:dogs?|pupp(?:y|ies)|cows?|cattle|calf|calves|bulls?|buffalo(?:es)?|goats?|sheep|elephants?|monkeys?|cats?|horses?|deer|peacocks?|birds?|crows?|fish|crocodiles?|snakes?|leopards?)`;
+const DIED = String.raw`(?:found\s+dead|dead|die[sd]?|killed|poisoned|mauled|electrocuted|drowned|perish(?:ed)?)`;
+/** deaths said of animals: "17 stray dogs found dead", "spotted deer mauled by stray dogs dies", "cows electrocuted" */
+const ANIMAL_DEATH = new RegExp(String.raw`\b(?:\d+|two|three|four|five|six|seven|eight|nine|ten|several|many)?\s*${ANIMAL}\b.{0,30}\b${DIED}\b|\b${DIED}\b.{0,15}\b${ANIMAL}\b`, "i");
+const ANIMAL_TA = /(நாய்|மாடு|பசு|ஆடு|யானை|குரங்கு|மான்|மயில்|பூனை|குதிரை|பாம்பு)[^.]{0,30}(உயிரிழ|பலி|இறந்|செத்த)/;
+/** deaths said of people: "man killed", "2 workers die", "woman found dead" */
+const PERSON_DEATH = new RegExp(String.raw`\b(?:men|man|woman|women|boy|girl|child|children|youth|youths|workers?|persons?|people|students?|drivers?|riders?|pedestrians?|residents?|labou?rers?|elderly|victims?|employee|wife|husband|son|daughter|mother|father|couple)\b.{0,25}\b(?:found\s+dead|dead|die[sd]?|killed|drowned|electrocuted|murdered|charred)\b`, "i");
+const PERSON_TA = /(ஒருவர்|பேர்|நபர்|சிறுவன்|சிறுமி|பெண்|இளைஞர்|தொழிலாளி|மாணவ|முதியவர்|ஓட்டுநர்)[^.]{0,30}(உயிரிழ|பலி|இறந்|கொலை)/;
+
+/** The deaths in these headlines are of animals, not people: they must not reach a death count. */
+export function animalDeathsOnly(...titles: (string | null | undefined)[]): boolean {
+  const t = titles.filter(Boolean).join(" \n ");
+  return (ANIMAL_DEATH.test(t) || ANIMAL_TA.test(t)) && !PERSON_DEATH.test(t) && !PERSON_TA.test(t);
+}
+
+const HOROSCOPE = /\b(horoscope|rasi ?palan|astrology|zodiac|panchang(?:am)?|nalla neram|rahu kalam|raghu kalam)\b|ராசி ?பலன்|இன்றைய ராசி|பஞ்சாங்கம்|ராகு காலம்|நல்ல நேரம்/i;
+const OBITUARY = /\b(obituary|passes away|passed away|breathes? (?:his|her) last|demise|condolences?|last rites|final rites|funeral)\b|காலமானார்|இயற்கை எய்தினார்|இரங்கல்/i;
+const NOT_NATURAL = /\b(accident|crash|collision|murder|murdered|stabbed|hacked|attack|fire|blaze|drown\w*|electrocut\w*|fell|fall|falls|falling|fallen|collapse\w*|suicide|assault|gas|explosion|run over|hit by|killed|drain|sewer|manhole|injur\w*)\b|விபத்து|கொலை|தீ விபத்து|மூழ்கி|தற்கொலை|தாக்குதல்/i;
+
+/** A horoscope column or the obituary of a natural death: news, but not an incident anyone has to act on. */
+export function notAnIncident(title: string | null | undefined): boolean {
+  const t = String(title ?? "");
+  return HOROSCOPE.test(t) || (OBITUARY.test(t) && !NOT_NATURAL.test(t));
+}
+
 export interface NewsIncident {
   id: string;
   /** first reported, "YYYY-MM-DD HH:MM:SS" IST */
