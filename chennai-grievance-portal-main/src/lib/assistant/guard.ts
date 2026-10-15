@@ -31,7 +31,7 @@ const TOPICS: [RegExp, string][] = [
   [/\b(recipe|how to cook|cooking)\b/i, "cooking"],
   [/\b(homework|assignment|exam paper|syllabus|solve (this|the|my) (equation|problem|sum))\b/i, "homework"],
   [/\b(which party|vote for|election result|opinion on (the )?(government|minister|cm|pm))\b/i, "politics"],
-  [/\b(bangalore|bengaluru|mumbai|delhi|hyderabad|kolkata|pune|coimbatore|madurai|trichy|tiruchirappalli|salem|tirunelveli|kerala|karnataka|andhra|telangana|another district|other districts?)\b/i, "elsewhere"]
+  [/\b(bangalore|bengaluru|mumbai|delhi|hyderabad|kolkata|pune|coimbatore|madurai|trichy|tiruchirappalli|salem|tirunelveli|vellore|thanjavur|erode|tiruppur|puducherry|pondicherry|kochi|mysuru|mysore|vizag|visakhapatnam|kerala|karnataka|andhra|telangana|another district|other districts?|london|new york|singapore|dubai|paris|tokyo|sydney|colombo|sri lanka|usa|america|abroad|other countr(y|ies))\b/i, "elsewhere"]
 ];
 /** Words that tie a message to the console's data: with one of these, the router decides, never this list. */
 const DATA_WORDS = /\b(incidents?|complaints?|grievances?|zones?|wards?|taluks?|departments?|dept|lakes?|reservoirs?|hospitals?|beds?|aqi|air quality|rain(fall)?|flood(s|ing|ed)?|waterlogg\w*|warnings?|imd|mandi|vegetables?|tomato(es)?|onions?|potato(es)?|brinjal|uzhavar|koyambedu|chennai|gcc|police|severe|briefing|verif\w*|officers?|officials?|news|developing|hotspots?|dashboard|console|trend|accidents?|crimes?|theft|fires?|drains?|garbage|water|power|roads?|dengue|cases|reports?|district)\b|சம்பவ|புகார்|மண்டல|வார்டு|ஏரி|மழை|மருத்துவமனை|விலை|சென்னை/i;
@@ -128,7 +128,9 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   // one specific incident, as a story (before "what is ..." is read as a help question)
   if (/\b(what (is|was) (this|that|the)|tell me (more )?about|explain|details? (of|about)|what happened)\b|enna aachu|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)/.test(t)
     && /\b(case|incident|murder|accident|fire|theft|robbery|snatching|collapse|death|attack|assault)\b|inc-|கொலை|விபத்து/.test(t)) return r("incident_story", { text: message });
-  if (/test data|what does|what is|how (do|to)|meaning/.test(t)) return { intent: "help", tools: [], period, actions: [] };
+  // "what is happening in Velachery" is about the place, not about the assistant: help only for questions about how it works
+  if (/test data|what does .{0,40}mean|meaning of|what can you do|how (do|can|should) (i|we) (use|ask)|^\s*help\b/.test(t)) return { intent: "help", tools: [], period, actions: [] };
+  if (/what('s| is) (happening|going on)|situation|overview|status of/.test(t)) return r("overview_kpis");
   if (/\bfilter\b|வடிகட்டு/.test(t)) {
     const taluk = [...names.taluks.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));
     const zone = [...names.zones.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));

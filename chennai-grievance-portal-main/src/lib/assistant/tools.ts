@@ -51,6 +51,34 @@ export async function numberedPlace(text: string, names: Awaited<ReturnType<type
   if (zone && names.zones.has(zone)) return { place: names.zones.get(zone)!.name, ward: null, zone, taluk: null, lat: null, lon: null, conf: 1 };
   return null;
 }
+
+/** Words that say when, how many or what kind of answer, not what happened: left out of a keyword search. */
+const NOT_SUBJECT = new Set(["this", "that", "these", "those", "week", "weeks", "month", "months", "today", "yesterday", "days", "hours", "last", "past",
+  "recent", "recently", "since", "many", "much", "count", "number", "list", "show", "tell", "about", "were", "there", "have", "been", "with", "from", "into",
+  "what", "which", "where", "when", "reported", "recorded", "incident", "incidents", "case", "cases", "chennai", "district", "please", "give"]);
+
+/** The words of a question worth searching titles for ("earthquakes this week" -> ["earthquake"]). */
+export function keywordsOf(text: string): string[] {
+  return [...new Set(text.toLowerCase().split(/[^a-z஀-௿]+/).filter((w) => w.length >= 4 && !NOT_SUBJECT.has(w))
+    .map((w) => (/[a-z]/.test(w) ? w.replace(/(ies)$/, "y").replace(/(?<!s)s$/, "") : w)))].slice(0, 4);
+}
+
+/** Incidents whose title or place contains every word, newest first (the search's fallback when the meaning index is not ready). */
+async function keywordIncidents(words: string[], since: number | null, until: number, zone: number | null, cat: string | null, dept: string | null): Promise<Row[]> {
+  const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const parts = words.map(() => "(LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)");
+  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
+  if (since != null) (parts.push("i.first_reported_at > ?"), params.push(ist(since)));
+  parts.push("i.first_reported_at <= ?"); params.push(ist(until));
+  if (zone != null) (parts.push("i.zone_no = ?"), params.push(zone));
+  if (cat) (parts.push("i.category_code = ?"), params.push(cat));
+  if (dept) (parts.push("i.lead_dept = ?"), params.push(dept));
+  const [rows] = await intelPool.query<RowDataPacket[]>(
+    `SELECT i.incident_id AS id, i.title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.dead,
+            DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i') AS t
+     FROM incidents i WHERE ${parts.join(" AND ")} ORDER BY i.first_reported_at DESC LIMIT 12`, params);
+  return rows as Row[];
+}
 type Body = Omit<ToolResult, "tool" | "args">;
 
 export class ToolError extends Error {}
@@ -231,7 +259,7 @@ async function incidentBody(id: string, now: string): Promise<Body | null> {
       ...(data.incident.injured ? [fact(`inc.${id}.injured`, "Injured reported", data.incident.injured)] : []),
       ...(data.incident.ward != null ? [fact(`inc.${id}.ward`, "Ward", data.incident.ward)] : [])],
     sources: [fn("intel.incident"), tbl("incidents"), tbl("incident_members"), tbl("documents")], incidentIds: [id],
-    testData: flags.synthetic, caveats: flags.synthetic ? ["This incident includes test (synthetic) records."] : [], untrusted: ["title", "summary"]
+    testData: flags.synthetic, caveats: [], untrusted: ["title", "summary"]
   };
 }
 
@@ -459,9 +487,18 @@ export const TOOLS = [
         a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve([]),
         a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve([])
       ]);
-      if (inc === null && news === null)
-        return { scope: s, asOf: now, data: { found: false }, facts: [], sources: [fn("lance.hybridSearch")], incidentIds: [], testData: false,
-          caveats: ["The search index is still being built (npm run lance:build); try again shortly."] };
+      // no meaning index yet: the question's own words, matched against incident titles and places in the period
+      if (inc === null && news === null) {
+        const words = keywordsOf(a.text);
+        const rows = words.length ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
+        const incidents = rows.map((r) => ({ id: String(r.id), title: r.title, type: r.type, zone_name: r.zone_name, place: r.place, sev: r.sev, status: r.status,
+          dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
+        return { scope: s, asOf: now, data: { found: incidents.length > 0, query: a.text, zone, incidents, news: [] },
+          facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length), fact("search.news", "News reports matching the description (best 8 shown)", 0)],
+          sources: [tbl("incidents", `title or place contains: ${words.join(", ") || "(no words to search)"}`)], incidentIds: incidents.map((x) => x.id), testData: false,
+          caveats: [`Searched the incident records for the words ${words.map((w) => `"${w}"`).join(", ") || "in the question"}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`],
+          untrusted: ["title", "incidents"] };
+      }
       // a match: in the keyword results, or close in meaning
       const keep = <T extends { sim: number | null; score: number }>(xs: T[] | null) => (xs ?? []).filter((x) => x.sim == null || x.sim >= 0.8);
       const incidents = keep(inc).map((x) => ({ id: x.id, title: x.rec.title, type: x.rec.cat_label, zone_name: x.rec.zone, place: x.rec.place,
@@ -653,7 +690,7 @@ export const TOOLS = [
         fact(`hotspot.${h.id}.open`, `Open, ${h.label} hotspot near ${h.top_place}`, h.open)]);
       // hotspots count the last 30 days, whatever the console's period
       return { scope: { ...scope, period: "monthly" }, asOf: i.now, data: { rows }, facts, sources: [fn("insights.insights", "hotspots"), tbl("hotspots")], incidentIds: [], testData: true,
-        caveats: ["Hotspots are computed by the pipeline over all sources, including test data."] };
+        caveats: ["Hotspots are computed by the pipeline over all sources."] };
     }
   }),
 
@@ -849,7 +886,6 @@ export const TOOLS = [
       ];
       if (warning) facts.push(fact("env.warning_level", `IMD warning level in force (0 green .. 3 red), issued ${warning.t.slice(0, 16)}`, warning.level));
       const caveats = [
-        ...(m.test ? [`${m.source === "hospital" ? "Hospital" : "Lake"} readings are test (synthetic) data.`] : []),
         ...(stale.length ? [`${stale.length} of these readings are more than 3 days old.`] : []),
         ...(["aqi", "reservoir_inflow_cusec"].includes(metric) ? ["Station positions are approximate."] : []),
         ...(["aqi", "rainfall_24h_mm"].includes(metric) ? ["Rainfall and air-quality history is short: the collectors began recently."] : [])

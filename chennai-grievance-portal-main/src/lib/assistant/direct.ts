@@ -40,6 +40,11 @@ const BACKLOG = /\bbacklogs?\b|\b(oldest|longest|slowest|most delayed|most pendi
 const MULTI = /\b(more than one|multiple|several|many|two or more|2 or more|at least (two|2)|2\+)\s+(news ?papers?|papers|outlets?|media|news (sources?|outlets?)|publications?)\b/i;
 const NO_RECORD = /\b(missing|not (in|on|recorded|logged|registered)|no (department(al)?|record)|absent|without|unrecorded|not yet in)\b.{0,50}\b(department(al)?|app(lication)?|records?|system)\b/i;
 
+/** "What changed since last week?", "anything new today?": what moved against the period before. */
+const CHANGED = /\bwhat('s| has| have|s)? (changed|new)\b|\banything new\b|\bchanges? (since|from|over|in the last)\b|என்ன மாற்றம்/i;
+/** "What should I focus on today?", "what needs my attention?": the change-drivers card ends with what to act on first. */
+const FOCUS = /\bwhat should (i|we) (focus|look|concentrate|act|work) on\b|\bwhere should (i|we) (focus|start|look)\b|\bwhat needs my attention\b|\b(my|today'?s) priorities\b|\bprioriti[sz]e (today|this week)\b/i;
+
 /** The one tool that answers `message`, or null to let the router decide. */
 export function directTool(message: string): DirectTool | null {
   const t = message.toLowerCase();
@@ -50,6 +55,8 @@ export function directTool(message: string): DirectTool | null {
     if (BY_TALUK.test(t)) return { name: "taluks", args: {}, because: "asks for the figures taluk by taluk" };
   }
   if (WHY_CHANGE.test(t)) return { name: "change_drivers", args: {}, because: "asks why something rose or fell (what changed, where, and what drove it)" };
+  if (CHANGED.test(t)) return { name: "change_drivers", args: {}, because: "asks what changed against the period before" };
+  if (FOCUS.test(t)) return { name: "change_drivers", args: {}, because: "asks what to focus on: what moved, what is late, and what to act on first" };
   // "which department has the oldest pending work / the biggest backlog / is slowest": the backlog card, not a list
   if (DEPT.test(t) && BACKLOG.test(t)) return { name: "dept_backlog", args: {}, because: "asks which department's open work is oldest (the backlog card)" };
   if (MULTI.test(t) && NO_RECORD.test(t)) return { name: "news_gaps", args: { minOutlets: 2 }, because: "news reported by more than one outlet with no department record" };

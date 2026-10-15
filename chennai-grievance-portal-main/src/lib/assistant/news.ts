@@ -85,7 +85,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   const deptName = new Map(depts.map((d) => [d.code, d.name]));
   const cat = new Map(categories().map((c) => [c.code, c]));
 
-  const stories: (NewsStory & { score: number; zones: number[]; cats: string[] })[] = [];
+  const stories: (NewsStory & { score: number; zones: number[]; cats: string[]; tally: Record<string, number> })[] = [];
   for (const [storyId, ds] of groups) {
     const linked = ds.map((d) => inc.get(d.linked_incident_id)).filter(Boolean) as Row[];
     const li = linked.sort((a, b) => num(b.priority) - num(a.priority))[0] ?? null;
@@ -93,6 +93,11 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
     const publishers = [...new Set(ds.map((d) => String(d.publisher ?? "").trim()).filter(Boolean))];
     const sourceCount = Math.max(1, publishers.length);
     const cats = [...new Set([...ds.map((d) => d.category_code), li?.cat].filter(Boolean) as string[])];
+    // what the story is about, by its articles: how many were filed under each kind (one or two mis-filed articles, or a
+    // mis-filed linked incident, must not put a station fall under "flooding")
+    const tally: Record<string, number> = {};
+    for (const d of ds) if (d.category_code && d.category_code !== "OTHER") tally[String(d.category_code)] = (tally[String(d.category_code)] ?? 0) + 1;
+    if (li?.cat && !Object.keys(tally).length) tally[String(li.cat)] = 1;
     const ageH = Math.min(...ds.map((d) => num(d.age_min))) / 60;
     // the briefing's AI digest line, else the linked incident's AI summary (both written from facts, numbers checked)
     const ai = ds.map((d) => aiLine.get(String(d.doc_id))).find(Boolean) ?? (li?.ai_summary ? String(li.ai_summary) : null);
@@ -120,7 +125,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
       category: li?.label ?? c?.label ?? null, department: li?.dept_name ?? (c ? deptName.get(c.lead) ?? null : null), sourceCount,
       sources: ds.slice(0, 8).map((d) => ({ publisher: d.publisher ?? null, title: String(d.title), url: d.url ?? null, t: d.t ?? null })),
       matchedIncidentId: li?.id ?? null, departmentRecordFound: !!li && !newsOnly, whyRelevant: why.slice(0, 4),
-      score, zones: linked.map((r) => r.zone).filter((z) => z != null).map(num), cats
+      score, zones: linked.map((r) => r.zone).filter((z) => z != null).map(num), cats, tally
     });
     // a story can be about a place no linked incident records (or link no incident at all): the articles' own places count
     if (f.zone && !stories[stories.length - 1].zones.includes(f.zone)) {
@@ -133,11 +138,16 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
 
   // topic: by the story's category or its headline's words (whole words, Tamil included); zone: any linked incident's, or an article's place
   const topicWords = f.topic ? topicPhrases(f.topic) : [];
-  const keep = stories.filter((s) => (!f.topic || s.cats.some((x) => f.topic!.cats.includes(x)) || s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))))
+  // a story is about the topic when at least half of its filed articles are in the topic's kinds, or a headline names it
+  const share = (s: { tally: Record<string, number> }, cats: string[]) => {
+    const all = Object.values(s.tally).reduce((a, n) => a + n, 0);
+    return all ? Object.entries(s.tally).filter(([c]) => cats.includes(c)).reduce((a, [, n]) => a + n, 0) / all : 0;
+  };
+  const keep = stories.filter((s) => (!f.topic || share(s, f.topic.cats) >= 0.5 || s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))))
     && (!f.zone || s.zones.includes(f.zone)) && (!f.gapsOnly || (!s.departmentRecordFound && s.matchedIncidentId != null)));
   keep.sort((a, b) => b.score - a.score);
   const merged = storyIds?.length ? keep : await mergeSameEvent(keep.slice(0, Math.max(n * 4, 24)));
-  return { stories: merged.slice(0, n).map(({ score: _s, zones: _z, cats: _c, ...s }) => s), candidates: keep.length - (Math.min(keep.length, Math.max(n * 4, 24)) - merged.length) };
+  return { stories: merged.slice(0, n).map(({ score: _s, zones: _z, cats: _c, tally: _t, ...s }) => s), candidates: keep.length - (Math.min(keep.length, Math.max(n * 4, 24)) - merged.length) };
 }
 
 /**

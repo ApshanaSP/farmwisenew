@@ -11,7 +11,7 @@ import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, detectIntent, topicByKey, type Detected, type Topic } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, anySynthetic, categoryRanking, countIncidents, countResolved, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
@@ -99,7 +99,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   // pictures of an earlier incident list: the same incidents on a map or in a table
   if ((d.intent === "MAP" || d.intent === "TABLE") && i.ctx?.resultIds?.length && ["incident_list", "map", "table"].includes(String(i.ctx.lastResponseType)))
     return pictureOfList(i, d);
-  if (!HANDLED.includes(d.intent)) return null;
+  // "show it as a chart" after a count: the same count, zone by zone (or kind by kind within one zone)
+  const countChart = d.intent === "CHART" && i.ctx?.lastIntent === "INCIDENT_COUNT" && i.ctx?.lastResponseType === "kpi";
+  if (!HANDLED.includes(d.intent) && !countChart) return null;
 
   // filters: a refinement starts from the previous answer's; a new question from the console's; the question's own words win
   const prev = d.refinement ? i.ctx?.activeFilters ?? null : null;
@@ -125,13 +127,13 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const topic: Topic | null = d.topic ?? (f.topic && prev ? topicByKey(f.topic) ?? { key: f.topic, label: f.topic, cats: catsOf(f, i) ?? [] } : null);
   // the question's own window ("last 10 days") and a locality inside the zone ("Velachery"), never rounded to the console's
   // period or widened to the whole zone
-  const custom = customWindow(i.message);
+  const custom = customWindow(i.message, i.now);
   const zoneName = f.zone != null ? i.names.zones.get(f.zone)?.name ?? null : null;
   const locality = i.place?.place && !i.place?.asked_for_taluk && f.zone != null && String(i.place.place).toLowerCase() !== (zoneName ?? "").toLowerCase()
     ? String(i.place.place) : null;
   const inc: IncidentFilters = { period: (custom?.period ?? f.period) as Period, zone: f.zone, taluk: f.taluk, dept: f.dept, cats: topic?.cats ?? (f.cat ? [f.cat] : null),
     sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly, hours: custom?.hours ?? null, place: ward ? null : locality, offset: custom?.offset ?? 0, overdue: !!f.overdue,
-    ward };
+    ward, range: custom?.range ?? null };
   const scope: Scope = { period: inc.period, zone: f.zone ?? null, dept: f.dept ?? null, cat: f.cat ?? null, taluk: f.taluk ?? null };
   const card = baseCard(i.lang, scope, describeScope(scope, i.names, i.lang, i.now), i.now);
   // what the answer calls the place: a ward by its number, a locality by its name
@@ -148,7 +150,10 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     card.caveats.push(deptNamed.alt.note);
     card.chips = [...deptNamed.alt.chips, ...(card.chips ?? [])].slice(0, 4);
   }
+  if (custom?.note) card.caveats.push(custom.note);
   const pl = (p: Period) => custom?.label ?? periodLabel(p);
+  // "in the last 7 days", "in September 2026", "since 1 Oct 2026"
+  const inP = (p: Period) => { const l = pl(p); return /^since\b/i.test(l) ? l : /^(last|previous|past)\b/i.test(l) ? `in the ${l}` : `in ${l}`; };
   const sw = spot ? ` in ${spot}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names);
   card.intent = d.intent;
   card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
@@ -175,15 +180,15 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.scope = { ...scope, period: r.period };
         card.scopeLine = describeScope(card.scope, i.names, i.lang, i.now);
       }
-      const kind = `${f.overdue ? "overdue " : f.openOnly ? "open " : ""}${d.sev === "Severe" ? "severe " : ""}${what ? `${what} ` : ""}incident${r.items.length === 1 ? "" : "s"}`;
+      const kind = `${f.overdue ? "overdue " : f.openOnly ? "open " : ""}${d.sev === "Severe" ? "severe " : ""}${countNoun(what, r.items.length)}`;
       card.responseType = "incident_list";
       card.incidents = r.items;
       card.headline = d.intent === "PRIORITY_INCIDENT_LIST" ? `Top ${r.items.length} priority ${kind} · ${pl(r.period)}` : `${cap(kind)} · ${pl(r.period)}`;
-      card.answerMarkdown = !r.items.length ? `No ${kind} in the ${pl(r.period)}${sw}.`
+      card.answerMarkdown = !r.items.length ? `No ${kind} ${inP(r.period)}${sw}.`
         : d.intent === "PRIORITY_INCIDENT_LIST"
-          ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, by the console's priority score.`
-            : `These are the ${words(r.items.length)} highest-priority ${kind} recorded in the ${pl(r.period)}${sw}, ranked by the console's priority score.`
-          : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} in the ${pl(r.period)}${sw}.`;
+          ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded ${inP(r.period)}${sw}, by the console's priority score.`
+            : `These are the ${words(r.items.length)} highest-priority ${kind} recorded ${inP(r.period)}${sw}, ranked by the console's priority score.`
+          : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} ${inP(r.period)}${sw}.`;
       // a short list is named in the answer itself, with what makes each one stand out, not only shown below it
       if (r.items.length && r.items.length <= 5 && i.lang === "en")
         card.answerMarkdown += "\n\n" + r.items.map((x, k) => {
@@ -191,7 +196,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           const why = x.dead ? `${x.dead} ${x.dead === 1 ? "death" : "deaths"}` : x.priorityReasons[0] ?? "";
           return `${k + 1}. **${x.title}**${where ? ` (${where})` : ""}: ${x.severity.toLowerCase()}, ${x.status.toLowerCase()}${why ? `; ${why.replace(/\.$/, "")}` : ""}.`;
         }).join("\n");
-      if (r.widened) card.caveats.push(`Fewer than ${n} in the ${pl(inc.period)}, so this covers the ${pl(r.period)}.`);
+      if (r.widened) card.caveats.push(`Fewer than ${n} ${inP(inc.period)}, so this covers the ${pl(r.period)}.`);
       listData(card, r.items);
       card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
         storyIds: undefined, storyTitles: undefined, selectedIncidentId: r.items.length === 1 ? r.items[0].incidentId : null,
@@ -208,7 +213,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.display = "kpi";
         card.visualAsked = true;
         card.headline = `${r.n.toLocaleString("en-IN")} ${kind} resolved · ${pl(inc.period)}`;
-        card.answerMarkdown = `${r.n.toLocaleString("en-IN")} ${kind} ${r.n === 1 ? "was" : "were"} closed as resolved in the ${pl(inc.period)}${sw}`
+        card.answerMarkdown = `${r.n.toLocaleString("en-IN")} ${kind} ${r.n === 1 ? "was" : "were"} closed as resolved ${inP(inc.period)}${sw}`
           + `${` (${r.prev.toLocaleString("en-IN")} in the period before)`}${r.severe ? `, ${r.severe} of them severe` : ""}`
           + `${r.late ? `; ${r.late} ${r.late === 1 ? "was" : "were"} closed after the deadline` : ""}.`;
         card.kpis = [{ label: "Resolved", value: r.n, prev: r.prev, tone: "low" }, ...(r.severe ? [{ label: "Severe", value: r.severe, tone: "sev" as const }] : []),
@@ -232,20 +237,20 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         const of = what || "incidents";
         card.headline = `${fmt(c.dead)} ${c.dead === 1 ? "death" : "deaths"} in ${of} · ${P}`;
         card.answerMarkdown = c.dead
-          ? `**${fmt(c.dead)}** ${c.dead === 1 ? "person died" : "people died"} in ${of} reported in the ${P}${sw} (${change(c.dead, c.prevDead)}).`
+          ? `**${fmt(c.dead)}** ${c.dead === 1 ? "person died" : "people died"} in ${of} reported ${inP(inc.period)}${sw} (${change(c.dead, c.prevDead)}).`
             + `\n\n- ${fmt(c.n)} ${kind} in all${c.injured ? `, ${fmt(c.injured)} injured` : ""}\n- ${rest}`
-          : `No deaths were recorded in ${of} in the ${P}${sw}${c.prevDead ? ` (${fmt(c.prevDead)} in the period before)` : ""}. ${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported.`;
+          : `No deaths were recorded in ${of} ${inP(inc.period)}${sw}${c.prevDead ? ` (${fmt(c.prevDead)} in the period before)` : ""}. ${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported.`;
         card.caveats.push("Deaths are counted once per incident, as the department records and confirmed news reports give them; a toll that only one outlet reports is held until confirmed.");
       } else if (d.measure === "complaints") {
         const open = d.openOnly;
         const v = open ? c.openComplaints : c.complaints;
         card.headline = `${fmt(v)} ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} · ${P}`;
-        card.answerMarkdown = `**${fmt(v)}** ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} in the ${P}${sw}`
+        card.answerMarkdown = `**${fmt(v)}** ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} ${inP(inc.period)}${sw}`
           + `${!open && d.vsPrevious ? ` (${change(c.complaints, c.prevComplaints)})` : ""}.`
           + `\n\n- They are about ${fmt(c.n)} ${kind}${d.vsPrevious ? ` (${change(c.n, c.prev)})` : ""}\n- ${rest}`;
       } else {
         card.headline = `${fmt(c.n)} ${kind} · ${P}`;
-        card.answerMarkdown = `${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${P}${sw}`
+        card.answerMarkdown = `${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported ${inP(inc.period)}${sw}`
           + `${c.prev ? ` (${d.vsPrevious ? change(c.n, c.prev) : `${fmt(c.prev)} in the period before`})` : ""}: ${rest}.`;
       }
       // a question in Tamil or Tanglish is answered in it ("Velachery la indha week evlo accidents?")
@@ -295,7 +300,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.headline = next ? (lead.n === next.n ? `${lead.label} and ${next.label} level: ${lead.n.toLocaleString("en-IN")} ${kind} each`
         : `${lead.label}: ${lead.n.toLocaleString("en-IN")} ${kind}, against ${next.n.toLocaleString("en-IN")}`) : `${lead.label}: ${lead.n.toLocaleString("en-IN")} ${kind}`;
       card.answerMarkdown = [
-        next && lead.n !== next.n ? `${lead.label} had more ${kind} than ${next.label} in the ${pl(inc.period)}.` : next ? `The places are level in the ${pl(inc.period)}.` : "",
+        next && lead.n !== next.n ? `${lead.label} had more ${kind} than ${next.label} ${inP(inc.period)}.` : next ? `The places are level ${inP(inc.period)}.` : "",
         ...rows.map(line),
         out.length ? `${out.map((s) => s.asked.replace(/^./, (c) => c.toUpperCase())).join(" and ")} ${out.length === 1 ? "is" : "are"} not a place in Chennai district${out.some((s) => /tambaram|avadi|chengalpattu|kanchipuram|tiruvallur|poonamallee/i.test(s.asked)) ? " (it falls in a neighbouring district)" : ""}, so ${out.length === 1 ? "it is" : "they are"} not covered by this data.` : ""
       ].filter(Boolean).join("\n\n");
@@ -303,6 +308,29 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       if (out.length) card.caveats.push(`Not in Chennai district: ${out.map((s) => s.asked).join(", ")}.`);
       card.context = { ...ctxBase, lastResponseType: "chart" };
       card.sources.tools.push({ name: "compare_places", args: { ...inc, sides: d.sides }, ms: 0 });
+      break;
+    }
+    case "CHART": {
+      const byKind = inc.zone != null || !!inc.taluk || !!inc.place || !!inc.ward;
+      const rows = byKind
+        ? (await categoryRanking(inc, i.now, 10)).map((r) => ({ label: r.label, n: r.n, n_prev: r.prev, severe: r.severe }))
+        : (await countByZone(inc, i.now)).map((r) => ({ label: r.name, n: r.n, n_prev: r.prev, severe: r.severe }));
+      const kind = what ? cap(what) : "Incidents";
+      card.responseType = "chart";
+      card.display = "chart";
+      card.visualAsked = true;
+      card.datasets = [{ id: "split", title: `${kind} by ${byKind ? "kind" : "zone"}`, tab: byKind ? "Kinds" : "Zones", hasPrev: true,
+        fields: [{ key: "label", label: byKind ? "Kind" : "Zone", kind: "category" }, { key: "n", label: "Reported", kind: "value", format: "integer" },
+          { key: "n_prev", label: "Period before", kind: "value", format: "integer" }, { key: "severe", label: "Severe", kind: "value", format: "integer" }],
+        rows }];
+      card.chart = spec({ type: "horizontal_bar", dataset: "split", x: "label", y: ["n"], compare: true, sort: "desc", highlight: "max",
+        title: rows[0] ? `${rows[0].label} has the most: ${rows[0].n.toLocaleString("en-IN")}` : "None in this period" });
+      card.headline = rows[0] ? `${kind} by ${byKind ? "kind" : "zone"} · ${pl(inc.period)}: ${rows[0].label} has the most` : `No ${what || "incidents"} ${inP(inc.period)}${sw}`;
+      card.answerMarkdown = rows.length
+        ? rows.slice(0, 5).map((r, k) => `${k + 1}. **${r.label}**: ${r.n.toLocaleString("en-IN")} (${r.n_prev.toLocaleString("en-IN")} the period before)`).join("\n")
+        : `No ${what || "incidents"} ${inP(inc.period)}${sw}.`;
+      card.context = { ...ctxBase, lastIntent: "INCIDENT_COUNT", lastResponseType: "kpi" };
+      card.sources.tools.push({ name: byKind ? "category_ranking" : "count_by_zone", args: { ...inc }, ms: 0 });
       break;
     }
     case "CATEGORY_RANKING": {
@@ -320,7 +348,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         title: rows[0] ? `${rows[0].label} leads with ${rows[0].n.toLocaleString("en-IN")}` : "No incidents" });
       card.headline = `Top ${rows.length} ${what ? `${what} ` : ""}kinds · ${pl(inc.period)}`;
       card.answerMarkdown = rows.length ? rows.map((r, k) => `${k + 1}. **${r.label}**: ${r.n.toLocaleString("en-IN")} (${r.prev.toLocaleString("en-IN")} the period before)`).join("\n")
-        : `No ${what || "incidents"} in the ${pl(inc.period)}.`;
+        : `No ${what || "incidents"} ${inP(inc.period)}.`;
       card.context = { ...ctxBase, lastResponseType: "category_ranking" };
       card.sources.tools.push({ name: "category_ranking", args: { ...inc, n }, ms: 0 });
       break;
@@ -503,9 +531,72 @@ function listData(card: AnswerCard, items: IncidentItem[]) {
  * A window the question states in its own words: "last 10 days", "past 3 weeks", "last 48 hours", "கடந்த 10 நாட்கள்".
  * Null when it is one of the console's periods (24 hours, 7, 30 or 90 days) or not stated. At most the store's 180 days.
  */
-export function customWindow(text: string): { hours: number; label: string; period: Period; offset?: number } | null {
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** Days a Collector counts from, as observed in Tamil Nadu (dates, IST). */
+const HOLIDAYS: [RegExp, string, string[]][] = [
+  [/\b(diwali|deepavali|deepawali)\b|தீபாவளி/i, "Deepavali", ["2025-10-20", "2026-11-08"]],
+  [/\bpongal\b|பொங்கல்/i, "Pongal", ["2026-01-15"]],
+  [/\bnew year\b|புத்தாண்டு/i, "New Year", ["2026-01-01"]],
+  [/\bchristmas\b/i, "Christmas", ["2025-12-25"]],
+  [/\brepublic day\b/i, "Republic Day", ["2026-01-26"]],
+  [/\bindependence day\b/i, "Independence Day", ["2026-08-15"]]
+];
+/** The store keeps about 180 days: a window reaching further back is cut there (and the answer says so). */
+const MAX_HOURS = 180 * 24;
+
+/**
+ * A window the question names in its own words, when it is not one of the console's periods: "last 10 days", "yesterday",
+ * "in September" (the month, to its end or to now), "since 1 October", "since Diwali". `range`: the window's exact calendar bounds
+ * (IST, from inclusive, to exclusive), for windows that are not "the last N hours". `now` is the store's as-of time (IST).
+ */
+export function customWindow(text: string, now?: string): { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string } | null {
   // yesterday: the day before the last 24 hours (the previous day's window, compared with the day before it)
   if (/\b(yesterday|nethu|neththu|nethaiki)\b|நேற்று/i.test(text) && !/\b(since|from) yesterday\b/i.test(text)) return { hours: 24, label: "previous day", period: "daily", offset: 1 };
+  const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
+  const periodOf = (h: number): Period => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
+  const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const day = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  if (Number.isFinite(nowMs)) {
+    // "since 1 October", "since Oct 1", "since Diwali": from that day to now
+    const since = text.match(/\b(?:since|from)\s+(?:(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})|([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?)\b/i);
+    const holiday = /\b(since|from|after)\b/i.test(text) ? HOLIDAYS.find(([re]) => re.test(text)) : undefined;
+    let start: number | null = null, label = "";
+    if (since) {
+      const d = Number(since[1] ?? since[4]), mi = MONTHS.indexOf(String(since[2] ?? since[3]).slice(0, 3).toLowerCase());
+      if (mi >= 0 && d >= 1 && d <= 31) {
+        const y = new Date(nowMs + 330 * 60_000).getUTCFullYear();
+        start = Date.parse(`${y}-${String(mi + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}T00:00:00+05:30`);
+        if (start > nowMs) start = Date.parse(`${y - 1}-${String(mi + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}T00:00:00+05:30`);
+        label = `since ${day(start)}`;
+      }
+    } else if (holiday) {
+      const past = holiday[2].map((x) => Date.parse(`${x}T00:00:00+05:30`)).filter((t) => t <= nowMs).sort((a, b) => b - a)[0];
+      if (past != null) { start = past; label = `since ${holiday[1]} (${day(past)})`; }
+    }
+    if (start != null && start < nowMs) {
+      const want = Math.ceil((nowMs - start) / 3600_000), hours = Math.min(want, MAX_HOURS);
+      // up to and including now (the store's as-of second)
+      return { hours, label, period: periodOf(hours), range: { from: ist(nowMs - hours * 3600_000), to: ist(nowMs + 1000) },
+        note: want > hours ? "The records go back about 180 days, so this counts from then." : undefined };
+    }
+    // "in September", "September 2026", "for Aug": that calendar month (to now if it is this month)
+    const mm = text.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b(?:\s+(20\d{2}))?/i);
+    if (mm && !(mm[1].toLowerCase() === "may" && !mm[2] && !/\bin may\b/i.test(text))) {
+      const mi = MONTHS.indexOf(mm[1].slice(0, 3).toLowerCase());
+      const cur = new Date(nowMs + 330 * 60_000);
+      let y = mm[2] ? Number(mm[2]) : cur.getUTCFullYear();
+      if (!mm[2] && (y > cur.getUTCFullYear() || mi > cur.getUTCMonth())) y -= 1;
+      const s = Date.parse(`${y}-${String(mi + 1).padStart(2, "0")}-01T00:00:00+05:30`);
+      const e = Math.min(nowMs, Date.parse(`${mi === 11 ? y + 1 : y}-${String(mi === 11 ? 1 : mi + 2).padStart(2, "0")}-01T00:00:00+05:30`));
+      if (s < nowMs && nowMs - s <= MAX_HOURS * 3600_000 + 31 * 864e5) {
+        const from = Math.max(s, nowMs - MAX_HOURS * 3600_000);
+        const hours = Math.round((e - from) / 3600_000);
+        return { hours, label: `${MONTH_NAMES[mi]} ${y}${e === nowMs ? " (to date)" : ""}`, period: "monthly", range: { from: ist(from), to: ist(e === nowMs ? e + 1000 : e) },
+          note: from > s ? "The records go back about 180 days, so the start of this month is not covered." : undefined };
+      }
+    }
+  }
   const m = text.match(/\b(?:last|past|previous|kadandha|kadaisi)\s+(\d{1,3})\s*(hours?|hrs?|days?|weeks?|months?|naal|naatkal)\b/i)
     ?? text.match(/(?:கடந்த|கடைசி)\s*(\d{1,3})\s*(மணி|நாட்கள்|நாள்|வாரங்கள்|வாரம்|மாதங்கள்|மாதம்)/);
   if (!m) return null;

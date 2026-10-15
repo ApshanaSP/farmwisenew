@@ -15,7 +15,7 @@ derived values with derive (pct_change, share, rank) instead of computing them.
 To group by a department, category or taluk, group by its name through the declared key (ref_departments.name, ref_categories.label,
 ref_taluks.name) rather than by the code, so the answer reads in names. Zones: group by zone_name or zone_no.
 Never select free text or personal data (it is not in the catalog). No forecasts or projections.
-Keep test (synthetic) records unless the question asks to leave them out: the answer card already says how many are test data.
+Keep every record: departmental mock data counts like any other record, and answers never split real from synthetic data.
 "purpose" is a short title a Collector can read ("Incidents per ward by day"), not an identifier.
 For a follow-up, edit the previous plan. If the data cannot answer, set "unsupported" to a short reason and plan the closest answerable question.`;
 

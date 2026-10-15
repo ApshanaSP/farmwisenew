@@ -184,6 +184,20 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     const head = parts.length > 1 ? parts.map((r) => r.part).join(", ") : `${parts[0].part}, by category`;
     return { ...base, headline: head, answerMarkdown: lines.join("\n"), voiceSummary: head };
   }
+  // a search for a kind of event: say plainly how many records match, or that none do (never "Here are the figures")
+  const sInc = facts.find((f) => f.id === "search.incidents"), sNews = facts.find((f) => f.id === "search.news");
+  if (sInc && sNews) {
+    const span = (base.scopeLine.split(" · ")[0] ?? "").trim().toLowerCase();
+    const when = /^(last|previous)/.test(span) ? ` in the ${span}` : "";
+    const ni = Number(sInc.value), nn = Number(sNews.value);
+    const head = ni + nn === 0
+      ? L(`No incidents or news reports match that${when}`, `இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை${when}`, `Idhukku match aagura incidents illa news illa${when}`)[lang]
+      : L(`${ni} matching incident${ni === 1 ? "" : "s"}${nn ? ` and ${nn} news report${nn === 1 ? "" : "s"}` : ""}${when}`,
+        `${ni} பொருந்தும் சம்பவங்கள்${nn ? `, ${nn} செய்திகள்` : ""}${when}`, `${ni} matching incidents${nn ? `, ${nn} news` : ""}${when}`)[lang];
+    const list = p.datasets.find((d) => /incident/i.test(d.id) && d.rows.some((r) => r.title))?.rows ?? [];
+    const lines = list.slice(0, 5).map((r) => `- **${r.title}**${r.place || r.zone_name ? ` (${[r.place, r.zone_name].filter(Boolean).join(", ")})` : ""}${r.t ? `, ${r.t}` : ""}`);
+    return { ...base, headline: head, answerMarkdown: [head + ".", ...lines].join("\n"), voiceSummary: head };
+  }
   // one incident: its story from the record itself (what, where, when, status, who), then how it was reported
   const rec = p.datasets.find((d) => d.id === "incident")?.rows[0];
   if (rec) {

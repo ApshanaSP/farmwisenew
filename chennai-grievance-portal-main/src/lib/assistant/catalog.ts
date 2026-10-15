@@ -128,7 +128,7 @@ export const POLICY: Record<string, TableSpec> = {
   observations: {
     db: "intel", d: "Readings over time: hospital capacity and cases, lake storage, IMD rainfall/temperature/warnings, CPCB air quality, CFM gauges and reservoir inflows.",
     grain: "one row per reading", time: "observed_at", test: "is_synthetic = 1",
-    note: "The unit depends on the metric. Hospital readings are test data; lake readings are the six CMWSSB reservoirs on the AWS store, test data otherwise. CPCB and CFM station positions are approximate; rainfall and air-quality history is short.",
+    note: "The unit depends on the metric. Lake readings are the six CMWSSB reservoirs on the AWS store. CPCB and CFM station positions are approximate; rainfall and air-quality history is short.",
     cols: {
       metric: ["dim", "what was measured", { values: ["aqi", "rainfall_24h_mm", "temp_max_c", "temp_min_c", "temp_departure_c", "humidity_pct", "imd_warning_level",
         "reservoir_inflow_cusec", "gauge_level_m", "lake_pct_full", "lake_storage_mcft", "lake_outflow_cusec", "bed_occupancy_pct", "occupied_beds", "total_beds",

@@ -44,6 +44,8 @@ export interface IncidentFilters {
   overdue?: boolean;
   /** one GCC ward ("ward 106") */
   ward?: number | null;
+  /** exact calendar bounds (IST "YYYY-MM-DD HH:MM:SS", from inclusive, to exclusive): "in September", "since Diwali" */
+  range?: { from: string; to: string } | null;
 }
 
 const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
@@ -56,7 +58,10 @@ const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, 
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
 function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at") {
-  const w = periodWindow(f.period, now, col, off + (f.offset ?? 0), hours ?? f.hours ?? undefined);
+  const h = hours ?? f.hours ?? null;
+  const k = off + (f.offset ?? 0);
+  // a calendar window (a month, "since 1 October"): its exact bounds; the window before it has the same length
+  const w = f.range ? rangeWindow(f.range, k, col) : periodWindow(f.period, now, col, k, h ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
   if (f.ward) (parts.push("i.ward_no = ?"), params.push(f.ward));
@@ -69,6 +74,13 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
   if (f.overdue) parts.push("i.sla_breached = 1");
   return { sql: parts.join(" AND "), params };
+}
+
+function rangeWindow(r: { from: string; to: string }, back: number, col: string) {
+  const ms = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`);
+  const ist = (t: number) => new Date(t + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const a = ms(r.from), b = ms(r.to), len = b - a;
+  return { sql: `${col} >= ? AND ${col} < ?`, params: [ist(a - len * back), ist(b - len * back)] as unknown[] };
 }
 
 const SOURCE_LABEL: Record<string, string> = { news: "News report", police: "Police record", grievance: "Citizen complaint", pwd: "PWD record",
@@ -207,6 +219,19 @@ export async function countResolved(f: IncidentFilters, now: string) {
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
+}
+
+/** The same count zone by zone (for "show it as a chart" after a count), with the period before. */
+export async function countByZone(f: IncidentFilters, now: string) {
+  const w = where(f, now), p = where(f, now, undefined, 1);
+  const [rows, prev] = await Promise.all([
+    q(`SELECT i.zone_no AS zone, i.zone_name AS name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead,
+              SUM(COALESCE(i.citizen_complaints, 0)) AS complaints
+       FROM incidents i WHERE ${w.sql} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY n DESC`, w.params),
+    q(`SELECT i.zone_no AS zone, COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND i.zone_no IS NOT NULL GROUP BY i.zone_no`, p.params)]);
+  const before = new Map(prev.map((r) => [num(r.zone), num(r.n)]));
+  return rows.map((r) => ({ zone: num(r.zone), name: String(r.name), n: num(r.n), severe: num(r.severe), dead: num(r.dead), complaints: num(r.complaints),
+    prev: before.get(num(r.zone)) ?? 0 }));
 }
 
 /** Kinds of incident ranked by how many, against the period before. */

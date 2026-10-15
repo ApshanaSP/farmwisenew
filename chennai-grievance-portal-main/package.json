@@ -32,7 +32,9 @@
     "eval:assistant": "node scripts/eval-assistant.cjs",
     "lance:build": "node scripts/build-lance.cjs",
     "ai:key": "node scripts/set-ai-key.js",
-    "ai:check": "node scripts/set-ai-key.js --check"
+    "ai:check": "node scripts/set-ai-key.js --check",
+    "eval:golden": "vitest run --config vitest.golden.config.ts",
+    "eval:freeze": "node scripts/freeze-eval-store.cjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.87",

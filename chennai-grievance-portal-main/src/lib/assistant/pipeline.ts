@@ -39,13 +39,15 @@ import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, ty
 import { helpFor, isHelpQuestion } from "@/lib/assistant/help";
 import { insightByKey } from "@/lib/assistant/insightcards";
 import { editFromText, isBareEdit } from "@/lib/assistant/edits";
-import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
+import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, resetCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
 import { customWindow, fastPath } from "@/lib/assistant/fastpath";
 import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
+import { LIST_DATASETS, datasetAnswerCard, datasetNamed, datasetsListCard } from "@/lib/assistant/studiolink";
+import { ask as studioAsk } from "@/lib/studio/pipeline";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
 import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
@@ -226,6 +228,18 @@ async function contactDept(message: string, n: RefNames): Promise<string | null>
   const names = [...new Set([...gcc, ...deptsNamed(message, n)])];
   for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(orEmpty("pipeline:225"))).length) return code;
   return names[0] ?? null;
+}
+
+/** "reset", "start over", "new chat", "clear the conversation", "forget that": the whole message asks to start again. */
+const RESET = /^\s*(reset|restart|start (over|again|afresh|fresh)|new (chat|conversation|topic)|clear( the| this)? (chat|conversation|history|context)|forget (that|everything|it)|மீண்டும் தொடங்கு|புதிதாக தொடங்கு)\s*[.!]?\s*$/i;
+
+/** The turns after the last "reset" answer in the chat (all of them when there was none). */
+export function sinceReset<T extends { role?: string; context?: unknown }>(turns: T[]): T[] {
+  for (let k = turns.length - 1; k >= 0; k--) {
+    const c = turns[k].context as { lastIntent?: string } | null | undefined;
+    if (turns[k].role === "assistant" && c?.lastIntent === "reset") return turns.slice(k + 1);
+  }
+  return turns;
 }
 
 /** The period an answer covers when the question names none: the whole quarter, not just the console's last 24 hours. */
@@ -498,9 +512,16 @@ function placeAsScope(route: Route, p: Row, n: RefNames): Route {
     ...(!askedTaluk && named && named.code !== p.taluk ? [`${named.name} is also a revenue taluk${named.note ? ` (${named.note})` : ""}; ask for "${named.name} taluk" to see it.`] : [])] };
 }
 
-function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false): Route {
+function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false, place: Row | null = null): Route {
   const o = offlineRoute(message, n);
-  const scope = o.period ? { ...base, period: o.period } : { ...base };
+  // "what is happening in Velachery": the place's own summary (its zone's snapshot, or the locality's breakdown), not district totals
+  if (hasPlace && place?.zone != null && o.intent === "tool_question" && o.tools[0]?.name === "overview_kpis" && !/how many|evlo|count|number of|எத்தனை/i.test(message)) {
+    const zoneName = n.zones.get(Number(place.zone))?.name ?? "";
+    o.tools = String(place.place ?? "").toLowerCase() === zoneName.toLowerCase() ? [{ name: "zone_profile", args: { zone: Number(place.zone) } }] : [{ name: "place_breakdown", args: {} }];
+  }
+  const scope: Scope = o.period ? { ...base, period: o.period } : { ...base };
+  // "yesterday": the previous day's window, for these tools as for the lists
+  if (/\b(yesterday|nethu|neththu)\b|நேற்று/i.test(message) && !/\b(since|from) yesterday\b/i.test(message)) (scope.period = "daily", scope.offset = 1);
   const zn = Number(message.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1]);
   if (zn && n.zones.has(zn)) scope.zone = zn;
   // a category named in the question ("road accident trend"), by the console's own keyword classifier
@@ -512,6 +533,12 @@ function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false)
     o.intent = "tool_question";
     const count = /how many|evlo|evvalo|evvalavu|count|number of|\blist\b|எத்தனை|எவ்வளவு/i.test(message);
     o.tools = [{ name: /trend|over time|per day|graph|chart/i.test(message) ? "incident_series" : hasPlace && !count ? "place_breakdown" : "incidents", args: {} }];
+  }
+  // "earthquakes this week", "any building fire in Adyar today?": no rule names it, but it asks about something that happens in a
+  // period: the records are searched for its words, and "none recorded" is said plainly when nothing matches
+  if (o.intent === "unknown" && /[a-z\u0B80-\u0BFF]{4,}/i.test(message) && (o.period || /\b(how many|any|count|number of|recorded|reported)\b|எத்தனை/i.test(message))) {
+    o.intent = "tool_question";
+    o.tools = [{ name: "search_records", args: { text: message } }];
   }
   return {
     intent: o.intent === "unknown" ? "unknown" : o.intent, language: null, normalized: message, scope, scopeRaw: {},
@@ -696,7 +723,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // console's zone, department, category and taluk filters still apply
   const consoleScope = ScopeSchema.parse({ ...(i.lockDept ? { ...i.scope, dept: i.lockDept } : i.scope), period: DEFAULT_PERIOD });
   const sessionId = await ensureSession(i.user, i.sessionId, typed);
-  const turns = await recentTurns(i.user, sessionId, 10);
+  // a "reset" in this chat cuts its memory: follow-ups read only the turns after it
+  const turns = sinceReset(await recentTurns(i.user, sessionId, 10));
   const models: CallInfo[] = [];
   const notes: string[] = [];
   let route: Route | null = null;
@@ -717,6 +745,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     // no automatic follow-up questions: the Collector asks what they want next
     if (card.kind === "answer" || card.kind === "action") card.followUps = [];
     // every answer saves the conversation state the next question's follow-ups resolve against
+    // a question back, a refusal or an error answers nothing new: the chat keeps the previous answer's state, so the next
+    // follow-up ("and last month?") still refers to it
+    if (!card.context && ["clarify", "refusal", "error"].includes(card.kind) && lastContext(turns)) card.context = lastContext(turns)!;
     if (!card.context) {
       const prevCtx = lastContext(turns);
       const ds = card.datasets.find((d) => d.idField && d.rows.some((r) => /^INC-/.test(String(r[d.idField!]))));
@@ -756,9 +787,23 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // plainly off-topic ("who won the IPL?"): answered at once, no model, no tokens
   if (guard?.kind === "off_topic") return finish(refusalCard(card0(null), null, guard.topic), { intent: "out_of_scope", guard: guard.topic });
 
+  // "reset", "start over", "clear the chat": the conversation's memory starts again
+  if (RESET.test(message)) return finish(resetCard(card0(null)), { intent: "reset" });
+
+  // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
+  if (!i.lockDept && !i.pinId && !i.insightKey) {
+    if (LIST_DATASETS.test(message)) return finish(datasetsListCard(card0(null)), { intent: "studio_list" });
+    const ds = datasetNamed(message);
+    if (ds) {
+      i.stage("fetching");
+      const r = await studioAsk(ds.id, message, i.user).catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });
+      if (r) return finish(datasetAnswerCard(card0(null), ds, { ...r, kind: r.kind } as Parameters<typeof datasetAnswerCard>[2]), { intent: "studio_query", dataset: ds.id });
+    }
+  }
+
   // 2. understand
   i.stage("understanding");
-  const placeData = await runTool("resolve_place", { text: message }).then((r) => r.data as Row | null).catch(orNull("pipeline:767"));
+  const placeData = await runTool("resolve_place", { text: message.slice(0, 120) }).then((r) => r.data as Row | null).catch(orNull("pipeline:767"));
   const place = placeData ? JSON.stringify(placeData) : "";
   const ctx = lastContext(turns);
   // answers from the store (lists, counts, one incident's facts, news): `decided` is the router's understanding; without
@@ -838,13 +883,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
           const r = await fast(consoleScope);
           if (r) { r.card.sources.limits.push(...notes); r.card.offline = true; return r; }
         }
-        route = rulesRoute(message, consoleScope, names, placeData?.zone != null);
+        route = rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
       }
     } else {
       const problem = aiStatus().problem;
-      notes.push(problem ? `${problem}: this was answered from the data by rules, without the language model. Paste fresh AWS keys into the portal's .env.`
-        : "No AI provider is configured (the AWS keys for Amazon Bedrock), so this was answered by simple rules, without the language model.");
-      route = rulesRoute(message, consoleScope, names, placeData?.zone != null);
+      notes.push(problem ? `${problem}: this was answered from the data by rules, without the language model.`
+        : "The AI service is not available right now, so this was answered from the data by rules, without the language model.");
+      route = rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
     }
   }
   // "needs attention now": with no period of its own, "now" is the last 7 days, not the default 90 (the router keeps the default)
@@ -994,12 +1039,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
         : /delet|chang|modif|updat|data change/i.test(route.refusal ?? "") ? "data change" : /email|mail/i.test(route.refusal ?? "") ? "email outside the official directory"
           : /instruction|prompt|rule/i.test(route.refusal ?? "") ? "instructions" : null), plan);
     case "smalltalk":
-      return finish(smalltalkCard(card0(null)), plan);
+      return finish(smalltalkCard(card0(null), message), plan);
     case "email_followup":
       return finish(notYetCard(card0(null)), plan);
     case "unknown":
-      return finish(clarifyCard(card0(null), { en: "I could not work that out without the language model. Try one of these:", ta: "மொழி மாதிரி இல்லாமல் இதைப் புரிந்துகொள்ள முடியவில்லை. இவற்றில் ஒன்றைக் கேளுங்கள்:",
-        tanglish: "Language model illama idhu puriyala. Idhula onnu kelunga:" }[lang]), plan);
+      return finish(clarifyCard(card0(null), { en: "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+        ta: "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அல்லது இவற்றில் ஒன்றை முயலுங்கள்:",
+        tanglish: "Idhu puriyala. Incidents, complaints, news, places illa departments pathi kelunga, illa idhula onnu try pannunga:" }[lang]), plan);
     case "console_action": {
       const acts = validActions(route.actions, names, lang, []);
       return finish(actionCard(card0(route.scope), acts), plan);
