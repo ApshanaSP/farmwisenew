@@ -73,7 +73,17 @@ export async function POST(req: NextRequest) {
 
     await conn.beginTransaction();
     const saved: { incident_id: string; decision_id: number; escalated_to_level: string | null }[] = [];
+    // a double click sends the same decision twice: the one just made by the same person on the same incident is kept,
+    // not recorded (and audited) a second time
+    const [recent] = await conn.query<RowDataPacket[]>(
+      `SELECT incident_id, decision_id FROM ${ops("collector_decisions")} WHERE incident_id IN (?) AND decision = ? AND decided_by = ?
+       AND decided_at >= NOW() - INTERVAL 2 MINUTE`, [d.incidentIds, d.decision, session.email]);
+    const again = new Map(recent.map((r) => [String(r.incident_id), Number(r.decision_id)]));
     for (const inc of incs) {
+      if (d.decision !== "note" && again.has(String(inc.incident_id))) {
+        saved.push({ incident_id: inc.incident_id, decision_id: again.get(String(inc.incident_id))!, escalated_to_level: null });
+        continue;
+      }
       const level = d.decision === "escalate" && !d.escalateTo ? nextLevel(inc.route) : null;
       const note = d.note || (level ? `Escalated to ${level}` : null);
       const [res] = await conn.query<ResultSetHeader>(
