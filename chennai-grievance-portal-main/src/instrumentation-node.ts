@@ -4,6 +4,10 @@
  * first, so the first build is adjusted before it is served.
  */
 import { warmUp } from "@/lib/aws/store";
+import { assertSecrets } from "@/lib/secrets";
 import "@/lib/collector/derive";
+
+// production stops here when JWT_SECRET (or the encryption key) is missing or weak, not on the first sign-in
+if (process.env.NEXT_PHASE !== "phase-production-build") assertSecrets();
 
 if (process.env.DATA_BACKEND === "aws") warmUp();
