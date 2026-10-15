@@ -163,7 +163,13 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const falling = catNow.map((r) => ({ label: r.label as string, now: n(r.n), prev: prevCat.get(r.cat) ?? 0 }))
     .filter((r) => r.prev >= 5 && r.now < r.prev).sort((a, b) => (a.now - a.prev) / a.prev - (b.now - b.prev) / b.prev).slice(0, 3);
 
-  const situation = daily && whole ? ai("situation") : null;
+  // the pipeline wrote its opening for the data of its own run ("110 matters await your verification"); once the live
+  // figures beside it have moved on (128), it is not shown: the rules' opening, always current, is used instead
+  const written = daily && whole ? ai("situation") : null;
+  const live = new Set([reported, Math.abs(change ?? 0), severe, deaths, n(T.injured), n(awaiting[0]?.n), n(T.news_only), critical.length, 24]);
+  const stale = written ? (String((written as { en?: string }).en ?? "").match(/\b\d[\d,]*\b/g) ?? []).map((x) => Number(x.replace(/,/g, ""))).filter((v) => !live.has(v)) : [];
+  if (stale.length) console.info(`[briefbook] AI opening not shown: its figures ${stale.join(", ")} no longer match the live briefing`);
+  const situation = stale.length ? null : written;
   return {
     status: { level, reasons, warning },
     glance: { ai: situation, opening: situation ? null : opening,
