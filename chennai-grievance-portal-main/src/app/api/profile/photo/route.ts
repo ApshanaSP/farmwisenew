@@ -4,6 +4,7 @@ import path from "path";
 import pool from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
+import { sniff } from "@/lib/officer/photos";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -27,14 +28,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File must be 2MB or smaller." }, { status: 400 });
   }
 
+  // the file's own bytes decide what it is (the browser's type is only what the file name says): a page or a script
+  // renamed .png is refused before anything is written under public/
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const kind = sniff(buffer);
+  if (kind !== "jpg" && kind !== "png") {
+    return NextResponse.json({ error: "Only JPG and PNG images are allowed." }, { status: 400 });
+  }
+
   const uploadDir = path.join(process.cwd(), "public", "uploads", "profile");
   await mkdir(uploadDir, { recursive: true });
 
-  const ext = file.type === "image/png" ? "png" : "jpg";
+  const ext = kind;
   const filename = `user-${session.userId}-${Date.now()}.${ext}`;
   const filePath = path.join(uploadDir, filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filePath, buffer);
 
   const publicPath = `/uploads/profile/${filename}`;
