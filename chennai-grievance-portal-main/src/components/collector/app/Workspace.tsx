@@ -28,7 +28,17 @@ export function WorkspaceBody({ c }: { c: Console }) {
   const [list, setList] = useState<{ name: string; versions: Row[] }[] | null>(null);
   const [name, setName] = useState(c.workspaceName ?? "Collector's Daily Briefing");
   const [busy, setBusy] = useState(false);
-  const load = () => fetch("/api/collector/workspaces").then((r) => r.json()).then((j) => setList(j.workspaces ?? [])).catch(() => setList([]));
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
+    fetch("/api/collector/workspaces")
+      .then(async (r) => {
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(j?.workspaces)) throw new Error();
+        setList(j.workspaces);
+      })
+      .catch(() => setFailed(true));
+  };
   useEffect(() => { load(); }, []);
   const save = async () => {
     setBusy(true);
@@ -45,7 +55,8 @@ export function WorkspaceBody({ c }: { c: Console }) {
       </div>
       <p className="sub">A version stores the period, zone, department, category and taluk filters, your dashboard layout, and a frozen copy of the
         briefing as it reads right now, so you can reopen last week&apos;s version exactly as it was.</p>
-      {!list ? <div className="empty">Loading…</div> : list.length ? list.map((w) => (
+      {failed && !list ? <div className="empty" role="alert">Your saved workspaces could not be loaded. <button className="lnk" onClick={load}>Retry</button></div>
+        : !list ? <div className="empty">Loading…</div> : list.length ? list.map((w) => (
         <div key={w.name} className="wlist">
           <h4>{w.name}</h4>
           <div className="wv">

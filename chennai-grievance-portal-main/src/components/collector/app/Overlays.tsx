@@ -253,7 +253,10 @@ export function ExportBody({ c }: { c: Console }) {
   const csv = async () => {
     setBusy("csv");
     try {
-      const j = await fetch(`/api/collector/export?${q()}`).then((r) => r.json());
+      const r = await fetch(`/api/collector/export?${q()}`);
+      const j = await r.json().catch(() => null);
+      // a failed export used to download a file reading "undefined" and say it worked
+      if (!r.ok || typeof j?.csv !== "string") throw new Error(j?.error ?? "export failed");
       const url = URL.createObjectURL(new Blob(["﻿" + j.csv], { type: "text/csv;charset=utf-8" }));
       const a = document.createElement("a");
       a.href = url;
