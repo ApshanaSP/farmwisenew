@@ -7,6 +7,7 @@
  */
 import dynamic from "next/dynamic";
 import { useMemo, useRef, useState } from "react";
+import { csvCell } from "@/lib/csv";
 import type * as Echarts from "echarts/core";
 import { allowedTypes, alternatives, defaultSpec, fmtValue, switchType } from "@/lib/assistant/chartspec";
 import type { AnswerCard as Card, ChartSpec, ChartType, ConsoleAction, Dataset } from "@/lib/assistant/answer";
@@ -94,7 +95,7 @@ export function FigureResponse({ card, geo, onAction, expanded, onExpand, onAsk 
     const d = tableView ? tableDs : ds;
     if (!d) return;
     const cols = d.fields.filter((f) => f.kind !== "geo");
-    const cell = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const cell = (v: unknown) => csvCell(v);
     const body = "﻿" + [cols.map((f) => cell(f.label)).join(","), ...d.rows.map((r) => cols.map((f) => cell(r[f.key])).join(","))].join("\n");
     save(URL.createObjectURL(new Blob([body], { type: "text/csv;charset=utf-8" })), `district-iq-${slug(d.title)}.csv`);
   };

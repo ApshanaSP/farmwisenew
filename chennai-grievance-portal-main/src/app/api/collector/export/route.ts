@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
+import { csvCell } from "@/lib/csv";
 import { exportRows, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     const rows = await exportRows(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
       { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) });
-    const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const cell = (v: unknown) => csvCell(v, true);
     const csv = [COLS.join(","), ...rows.map((r: Record<string, unknown>) => COLS.map((c) => cell(r[c])).join(","))].join("\n");
     return NextResponse.json({ csv, count: rows.length });
   } catch (err) {

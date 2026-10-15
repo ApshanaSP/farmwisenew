@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { csvCell } from "@/lib/csv";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
@@ -59,13 +60,8 @@ async function exportCsv(id: string, extra: Filter[]) {
   const rows = extra.length ? filterRows(all, { id: "x", title: "", chart: "table", agg: "count", col: null, by: "none", byCol: null, unit: null, filters: extra, sort: "desc", limit: 0 }, namesOf(await refs())) : all;
   const cols = meta.spec.columns.filter((c) => c.role !== "ignore");
   const derived: [string, string][] = [["_z", "Zone (matched)"], ["_w", "Ward (matched)"], ["_t", "Taluk (matched)"], ["_p", "Place (matched)"]];
-  const q = (v: unknown) => {
-    if (v == null) return "";
-    const s = String(v);
-    // a cell that starts with = + - @ would run as a formula in Excel: written as text
-    const safe = /^[=+\-@]/.test(s) && !/^-?\d/.test(s) ? `'${s}` : s;
-    return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
+  // a cell that starts with = + - @ would run as a formula in Excel: written as text (lib/csv.ts)
+  const q = (v: unknown) => csvCell(v);
   const lines = [[...cols.map((c) => c.header), ...derived.map(([, h]) => h)].map(q).join(",")];
   for (const r of rows) lines.push([...cols.map((c) => (c.role === "person" ? "" : r[c.key])), ...derived.map(([k]) => r[k])].map(q).join(","));
   const name = meta.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_").slice(0, 60) || "dataset";

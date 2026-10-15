@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { failed } from "@/lib/collector/guard";
+import { csvCell } from "@/lib/csv";
 import { assistantSession } from "@/lib/assistant/access";
 import { audit } from "@/lib/collector/sources";
 import { exportRows, parseDept, parsePeriod, parseZone } from "@/lib/collector/intel";
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     const all = await exportRows(period, zone, dept);
     const rows = all.slice(0, LIMITS.exportRows);
     const cols = ["id", "event", "area", "location", "department", "severity", "status", "complaints", "reported"];
-    const cell = (v: unknown) => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const cell = (v: unknown) => csvCell(v);
     const csv = "﻿" + [cols.join(","), ...rows.map((r) => cols.map((c) => cell((r as Record<string, unknown>)[c])).join(","))].join("\n");
     await audit(s.email, "assistant:export", "incidents", null, null, { period, zone, dept, rows: rows.length, of: all.length });
     return new NextResponse(csv, { headers: { "Content-Type": "text/csv; charset=utf-8",
