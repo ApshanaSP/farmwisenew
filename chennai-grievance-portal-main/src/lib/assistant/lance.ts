@@ -16,7 +16,7 @@ import path from "path";
 import crypto from "crypto";
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
-import { embed } from "@/lib/assistant/embed";
+import { ModelNotReady, embed } from "@/lib/assistant/embed";
 
 const DIR = path.join(process.cwd(), "data", "lancedb");
 const MODEL = (process.env.AI_EMBED_MODEL ?? "").trim() || "Xenova/multilingual-e5-base";
@@ -232,7 +232,11 @@ export async function hybridSearch(kind: Kind, query: string, f: Filters = {}, k
   const L = await lib();
   const w = where(kind, f);
   const pool = Math.max(k * 4, 40);
-  const qv = Array.from((await embed([`query: ${query.slice(0, 300)}`])).vecs);
+  let qv: number[];
+  try { qv = Array.from((await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs); } catch (e) {
+    if (e instanceof ModelNotReady) return null; // keyword search answers until the model is ready
+    throw e;
+  }
   const cols = ["id", "text", "title", "cat", "cat_label", "zone_no", "zone", "place", "taluk", "dept", "sev", "status", "open", "t", "dead", "source", "url", "story", "incident"];
   let vq = tbl.vectorSearch(qv).distanceType("cosine").limit(pool).select([...cols, "_distance"]);
   if (w) vq = vq.where(w);

@@ -10,7 +10,7 @@ vi.mock("@/lib/ai/gateway", async (orig) => {
 });
 vi.mock("@/lib/assistant/lance", () => ({ hybridSearch: async () => null, holdSync: () => () => undefined, lanceWarm: () => undefined,
   currentIncidentIds: async () => [], lanceReady: async () => false, lanceStatus: async () => ({}) }));
-vi.mock("@/lib/assistant/embed", () => ({ warmUp: () => undefined, embed: async () => { throw new Error("no model"); },
+vi.mock("@/lib/assistant/embed", () => ({ ModelNotReady: class extends Error {}, warmUp: () => undefined, embed: async () => { throw new Error("no model"); },
   semanticSearch: async () => [], embedStatus: () => ({ ready: false }) }));
 
 import fs from "fs";

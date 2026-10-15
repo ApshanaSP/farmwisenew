@@ -32,7 +32,8 @@ type Extractor = (texts: string[], o: { pooling: "mean"; normalize: boolean }) =
 export interface Meta { zone: number | null; cat: string | null; t: number; sev: string | null; place: string; words: string }
 interface Index { dim: number; ids: string[]; hash: string[]; vecs: Float32Array; pos: Map<string, number>; meta: Map<string, Meta>; asOf: string | null }
 interface State { extractor: Promise<Extractor> | null; threads: number; index: Index | null; building: Promise<void> | null; progress: { done: number; total: number } | null;
-  error: string | null; pending: number; fileMtime: number; /** the model runs on the worker thread */ worker?: boolean }
+  error: string | null; pending: number; fileMtime: number; /** the model runs on the worker thread */ worker?: boolean;
+  /** the model is loaded (not still downloading or starting) */ ready?: boolean }
 
 declare global {
   // eslint-disable-next-line no-var
@@ -66,7 +67,7 @@ function extractor(): Promise<Extractor> {
     const fe = await given.pipeline("feature-extraction", MODEL, { dtype: "q8", session_options: { intraOpNumThreads: S.threads, interOpNumThreads: 1 } });
     console.info(`[assistant] embedding model ${MODEL} ready in ${Date.now() - t0} ms (${S.threads} threads)`);
     return fe as unknown as Extractor;
-  })().catch((e) => { S.extractor = null; throw e; });
+  })().then((fe) => { S.ready = true; return fe; }, (e) => { S.extractor = null; S.ready = false; throw e; });
   return S.extractor;
 }
 
@@ -105,8 +106,18 @@ function workerExtractor(entry: string, cacheDir: string): Promise<Extractor> {
 }
 
 /** Embeds texts with the shared model ("passage: ..." for records, "query: ..." for questions); lance.ts uses it too. */
-export async function embed(texts: string[]): Promise<{ vecs: Float32Array; dim: number }> {
-  const fe = await extractor();
+/** Thrown by a question-time embed while the model is still downloading or starting (it keeps loading meanwhile). */
+export class ModelNotReady extends Error {
+  constructor() { super("the embedding model is still loading"); }
+}
+
+/** How long a question waits for a model that is still starting; a first download (about 280 MB) is never waited for. */
+const QUICK_WAIT_MS = 1500;
+
+export async function embed(texts: string[], opts: { quick?: boolean } = {}): Promise<{ vecs: Float32Array; dim: number }> {
+  const loading = extractor();
+  const fe = !opts.quick || S.ready ? await loading
+    : await Promise.race([loading, sleep(QUICK_WAIT_MS).then((): never => { throw new ModelNotReady(); })]);
   const out = await fe(texts, { pooling: "mean", normalize: true });
   return { vecs: out.data, dim: out.dims[1] };
 }
@@ -266,7 +277,11 @@ export async function semanticSearch(query: string, filter: { zone?: number | nu
   boost?: (m: Meta) => number): Promise<Hit[] | null> {
   const ix = S.index;
   if (!ix || !ix.ids.length) return null;
-  const q = (await embed([`query: ${query.slice(0, 300)}`])).vecs;
+  let q: Float32Array;
+  try { q = (await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs; } catch (e) {
+    if (e instanceof ModelNotReady) return null; // keyword search answers until the model is ready
+    throw e;
+  }
   const cats = filter.cats?.length ? new Set(filter.cats) : null;
   const hits: Hit[] = [];
   for (let i = 0; i < ix.ids.length; i++) {

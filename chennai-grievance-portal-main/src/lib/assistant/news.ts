@@ -159,7 +159,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
 async function mergeSameEvent<S extends NewsStory & { score: number; cats: string[] }>(stories: S[]): Promise<S[]> {
   if (stories.length < 2) return stories;
   let vecs: Float32Array, dim: number;
-  try { ({ vecs, dim } = await embed(stories.map((s) => `query: ${s.headline.slice(0, 200)}`))); } catch { return stories; }
+  try { ({ vecs, dim } = await embed(stories.map((s) => `query: ${s.headline.slice(0, 200)}`), { quick: true })); } catch { return stories; }
   const v = (i: number) => vecs.subarray(i * dim, (i + 1) * dim);
   const cos = (a: Float32Array, b: Float32Array) => { let s = 0; for (let k = 0; k < a.length; k++) s += a[k] * b[k]; return s; };
   const t = (s: S) => (s.publishedAt ? Date.parse(s.publishedAt.replace(" ", "T") + "+05:30") : NaN);

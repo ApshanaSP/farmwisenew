@@ -49,7 +49,7 @@ export const EXAMPLES: Example[] = [
 ];
 
 let bank: Promise<Float32Array[]> | null = null;
-const vectors = () => (bank ??= embed(EXAMPLES.map((e) => `query: ${e.q}`)).then(({ vecs, dim }) =>
+const vectors = () => (bank ??= embed(EXAMPLES.map((e) => `query: ${e.q}`), { quick: true }).then(({ vecs, dim }) =>
   EXAMPLES.map((_, k) => vecs.subarray(k * dim, (k + 1) * dim))).catch((e) => { bank = null; throw e; }));
 
 const cos = (a: Float32Array, b: Float32Array) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
@@ -57,7 +57,7 @@ const cos = (a: Float32Array, b: Float32Array) => { let s = 0; for (let i = 0; i
 /** The `k` worked examples closest in meaning to the question, as lines for the router's prompt ("" when the model is not ready). */
 export async function examplesFor(question: string, k = 4): Promise<string> {
   try {
-    const [vs, q] = await Promise.all([vectors(), embed([`query: ${question.slice(0, 300)}`])]);
+    const [vs, q] = await Promise.all([vectors(), embed([`query: ${question.slice(0, 300)}`], { quick: true })]);
     const qv = q.vecs;
     return vs.map((v, i) => ({ i, s: cos(v, qv) })).sort((a, b) => b.s - a.s).slice(0, k)
       .map(({ i }) => `- "${EXAMPLES[i].q}" -> ${EXAMPLES[i].a}`).join("\n");
