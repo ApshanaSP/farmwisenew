@@ -70,16 +70,13 @@ const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
 const inr = (v: number) => v.toLocaleString("en-IN");
 const periodOf = (s: AssistantScope) => PERIODS[s.period].label.toLowerCase();
 
-/** Test-data share of the scope, as a flag, facts and a caveat. */
+/**
+ * The scope's incident count as a fact. Departmental feeds are mock data FarmwiseAI allows: answers never count or label
+ * real against synthetic records (product decision, 12 Oct), so no share caveat is added; the flag stays internal.
+ */
 async function testShare(s: AssistantScope, now: string) {
   const sh = await syntheticShare(s, now);
-  const caveats = !sh.syn ? [] : [sh.syn === sh.n
-    ? `All ${inr(sh.n)} incidents in this scope come from test (synthetic) sources.`
-    : `${inr(sh.syn)} of ${inr(sh.n)} incidents in this scope come from test (synthetic) sources.`];
-  return {
-    testData: sh.syn > 0, caveats,
-    facts: [fact("scope.incidents", `Incidents reported, ${periodOf(s)}`, sh.n), fact("scope.test_incidents", "Of them from test (synthetic) sources", sh.syn)]
-  };
+  return { testData: sh.syn > 0, caveats: [] as string[], facts: [fact("scope.incidents", `Incidents reported, ${periodOf(s)}`, sh.n)] };
 }
 
 /** The fields of an incident row an answer may show: no free text beyond the title, no people. */
@@ -665,14 +662,14 @@ export const TOOLS = [
           complaints: add("complaints"), syn: add("syn"), top_zone: zoned ? null : z?.name ?? null, top_zone_n: zoned ? 0 : z?.n ?? 0, top_place: pl?.name ?? null, top_place_n: pl?.n ?? 0,
           categories: fs.map((f) => ({ part: p.label, category: f.label, reported: f.n, reported_prev: f.prev, open: f.open, severe: f.severe })) };
       });
-      const syn = rows.reduce((a, r) => a + r.syn, 0), total = rows.reduce((a, r) => a + r.reported, 0);
+      const syn = rows.reduce((a, r) => a + r.syn, 0);
       return {
-        scope: { ...scope, cat: null }, asOf: now, data: { parts: rows, period: periodOf(scope) },
+        // the per-part synthetic count stays internal (testData), not in what the composer reads
+        scope: { ...scope, cat: null }, asOf: now, data: { parts: rows.map(({ syn: _syn, ...r }) => r), period: periodOf(scope) },
         facts: [fact("parts.count", "Subjects asked about", rows.length)],
         sources: [tbl("incidents", `categories: ${[...new Set(parts.flatMap((p) => p.codes))].join(", ")}`)],
         incidentIds: [], testData: syn > 0,
-        caveats: [`${parts.map((p) => `${p.label}${p.codes.length > 1 ? ` (${p.codes.length} categories)` : ""}`).join("; ")}.`,
-          ...(syn ? [syn === total ? `All ${inr(total)} incidents here come from test (synthetic) sources.` : `${inr(syn)} of ${inr(total)} incidents here come from test (synthetic) sources.`] : [])]
+        caveats: [`${parts.map((p) => `${p.label}${p.codes.length > 1 ? ` (${p.codes.length} categories)` : ""}`).join("; ")}.`]
       };
     }
   }),
@@ -706,7 +703,7 @@ export const TOOLS = [
         scope, asOf: now, data: { ...d, period: periodOf(scope) }, facts,
         sources: [tbl("incidents", "this period against the one before"), tbl("world_calendar", "rain days")],
         incidentIds: d.top.map((x) => x.id), testData: T.syn > 0,
-        caveats: [...(T.syn ? [T.syn >= T.n ? `All ${inr(T.n)} incidents here come from test (synthetic) sources.` : `${inr(T.syn)} of ${inr(T.n)} incidents here come from test (synthetic) sources.`] : []),
+        caveats: [
           "A rain link means the incident was reported during or after a rain event; it does not by itself establish the cause."],
         untrusted: ["title"]
       };
@@ -735,7 +732,6 @@ export const TOOLS = [
       ];
       const caveats: string[] = [];
       if (locality) caveats.push(`Incidents are matched to ${locality} by the place name in their records${zoneName ? `, within ${zoneName} zone` : ""}; an incident recorded under a street name alone is not counted.`);
-      if (d.total.syn) caveats.push(d.total.syn === d.total.n ? `All ${inr(d.total.n)} incidents here come from test (synthetic) sources.` : `${inr(d.total.syn)} of ${inr(d.total.n)} incidents here come from test (synthetic) sources.`);
       return {
         scope, asOf: now, data: { area, locality, byStreet: !!locality, ...d }, facts,
         sources: [tbl("incidents", "place_text, ward_no, lat/lon"), tbl("ref_wards", "ward centroids")],

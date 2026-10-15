@@ -1122,7 +1122,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (topN) p = applyTopN(p, topN, question);
     facts = [...adhocFacts(adhoc.results), ...buildFacts([], p.datasets)];
     testData = adhoc.results.some((r) => r.testData);
-    caveats = [...adhoc.results.flatMap((r) => r.notes), ...(testData ? ["Includes test (synthetic) data."] : [])];
+    // departmental mock data is allowed: answers do not label or count it (product decision, 12 Oct)
+    caveats = adhoc.results.flatMap((r) => r.notes);
     base.sources.sql = adhoc.results.flatMap((r) => r.sql.map((s) => ({ text: s.text, params: s.params })));
     base.sources.plan = adhoc.plan;
     base.sources.rows = adhoc.results.reduce((a, r) => a + r.rows.length, 0);
@@ -1232,10 +1233,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     .some((n) => Math.abs(n.value - lead.value) < 0.01 || Math.abs(n.value - lead.value) <= Math.abs(lead.value) * 0.005)
     || (Number.isInteger(lead.value) && lead.value >= 0 && lead.value < LEAD_WORDS.length
       && new RegExp(`\\b${LEAD_WORDS[lead.value]}\\b`, "i").test(`${d.headline} ${d.answerMarkdown}`));
-  const all = facts.find((f) => f.id === "scope.incidents")?.value, syn = facts.find((f) => f.id === "scope.test_incidents")?.value;
-  // the counts stay out of the prompt: the card's caveat states them, and a draft that repeats them crowds the answer
-  const testLine = !c.testData ? "no" : "yes (already shown on the card as a caveat: do not mention it)";
-  void all; void syn;
+  // whether records are synthetic is never part of an answer (departmental mock data is allowed; no real/synthetic counts)
+  const testLine = "not relevant: never mention test, synthetic or real data";
   const ctx = {
     question: c.message, normalized: c.route.normalized, scopeLine: base.scopeLine, asOf: base.asOf, testData: testLine, caveats: c.caveats,
     facts: factLines(promptFacts(facts, p)), lead: lead ? `${lead.label} = ${lead.value}` : "", datasets: datasetsText(p.datasets, [p.chart?.dataset, p.table]), suggested: p.chart ? JSON.stringify(p.chart) : p.display === "kpi" ? "kpi tiles" : "none",

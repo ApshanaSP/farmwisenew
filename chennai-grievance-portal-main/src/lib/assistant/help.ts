@@ -7,7 +7,7 @@ export const HELP_TOPICS: { id: string; match: RegExp; text: string }[] = [
   {
     id: "test_data",
     match: /test data|synthetic|fake|dummy|real data|சோதனை/i,
-    text: "Test data: police reports, PWD records, hospital figures and most citizen complaints in this prototype come from generators, not from live department systems. They are flagged is_synthetic in the store, and every answer that uses them carries a 'test data' badge. News, IMD weather, CPCB air quality, CFM-DSS flood data and AGMARKNET prices are real sources."
+    text: "Data sources: in this prototype the departmental feeds (police reports, PWD records, hospital figures and most citizen complaints) are mock departmental data, which the FarmwiseAI challenge allows; they are used like any other department record. News, IMD weather, CPCB air quality, CFM-DSS flood data and AGMARKNET prices are collected from their public sources."
   },
   {
     id: "attention_score",

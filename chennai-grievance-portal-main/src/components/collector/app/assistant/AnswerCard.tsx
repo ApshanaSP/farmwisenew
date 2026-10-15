@@ -74,7 +74,6 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       <header className="aq-card-h">
         <h3>{card.headline}</h3>
         <div className="aq-badges">
-          {card.testData && <span className="aq-badge test" title={t.testTip}><I n="alert" />{t.testData}</span>}
           {card.offline && <span className="aq-badge off" title={t.offlineTip}>{t.offline}</span>}
         </div>
       </header>
@@ -145,7 +144,6 @@ function EvidenceDrawer({ card, t, onOpen }: { card: Card; t: (typeof T)["en"]; 
         {s.rows > 0 && <><dt>{t.rows}</dt><dd>{s.rows.toLocaleString("en-IN")}</dd></>}
         {s.incidentIds.length > 0 && <><dt>{t.incidents}</dt><dd className="ids">{s.incidentIds.slice(0, 12).map((id) => <button key={id} onClick={() => onOpen(id)}>{id}</button>)}
           {s.incidentIds.length > 12 ? ` +${s.incidentIds.length - 12}` : ""}</dd></>}
-        <dt>{t.testData}</dt><dd>{card.testData ? t.testYes : t.testNo}</dd>
         {s.models.length > 0 && <><dt>{t.models}</dt><dd>{s.models.map((m) => `${m.step}: ${m.provider}/${m.model} (${m.ms} ms, ${m.inTokens != null ? `${m.inTokens} in + ${m.outTokens} out` : `${m.tokens}`} tokens)`).join(" · ")}</dd></>}
         <dt>{t.numbers}</dt><dd>{s.verifier.template ? t.template : s.verifier.checked ? t.verified(s.verifier.checked, s.verifier.regenerated) : t.noNumbers}</dd>
         {s.assumptions.length > 0 && <><dt>{t.assumptions}</dt><dd><ul>{s.assumptions.map((a, i) => <li key={i}>{a}</li>)}</ul></dd></>}

@@ -98,8 +98,8 @@ fact names the items above zero; otherwise say nothing about the rest.
 The card already prints the scope and as-of line under the headline: do not repeat it; name the period only where a sentence needs it.
 The data covers exactly SCOPE. If the question asks for something narrower or different (a category, place or period the SCOPE does not
 show), do not claim it: say what the figures cover.
-TEST DATA: the card already shows it as a caveat, so do not mention test data in the headline, answerMarkdown or voiceSummary; never call
-test records unreal, empty or meaningless, and never discount the findings because of them. Include the other caveats that matter.
+Never mention test, synthetic, mock or "real" data, and never discount a finding because of where its records came from: every
+department record counts the same. Include the caveats that matter.
 Never mention fact ids in words (the {{id}} placeholders are replaced by their values).
 PREVIOUS ANSWER, when given, is the conversation so far: read the question as its continuation, and where it helps say how this answer
 relates to the previous one (the same measure for another zone, a narrower period), but take every number from FACTS, never from it.
@@ -139,7 +139,7 @@ export function composerPrompt(c: ComposerContext): string {
   return [
     `QUESTION: ${c.question}`,
     `NORMALIZED: ${c.normalized}`,
-    `SCOPE: ${c.scopeLine}. AS OF: ${c.asOf}. TEST DATA: ${c.testData}. VISUAL ASKED: ${c.visual ?? "yes"}.`,
+    `SCOPE: ${c.scopeLine}. AS OF: ${c.asOf}. VISUAL ASKED: ${c.visual ?? "yes"}.`,
     c.caveats.length ? `CAVEATS:\n- ${c.caveats.join("\n- ")}` : "CAVEATS: none",
     `FACTS:\n${c.facts || "none"}`,
     `LEAD FACT: ${c.lead || "none"}`,

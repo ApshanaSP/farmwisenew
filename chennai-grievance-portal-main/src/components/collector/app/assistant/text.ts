@@ -7,9 +7,9 @@ interface Strings {
   title: string; subtitle: string; placeholder: string; send: string; stop: string; close: string; maximize: string; restore: string;
   language: string; auto: string; stages: Record<"understanding" | "fetching" | "drawing", string>; tryAsking: string; newChat: string;
   fresh: (asOf: string, ok: number, total: number) => string; aiOff: string;
-  testData: string; testTip: string; offline: string; offlineTip: string; prev: string; vsPrev: string; chartTools: string; types: Types; table: string;
+  offline: string; offlineTip: string; prev: string; vsPrev: string; chartTools: string; types: Types; table: string;
   png: string; csv: string; expand: string; shrink: string; usual: string; showing: (n: number, total: number) => string; next: string; helpful: string;
-  yes: string; no: string; sources: string; asOf: string; tools: string; data: string; rows: string; incidents: string; testYes: string; testNo: string;
+  yes: string; no: string; sources: string; asOf: string; tools: string; data: string; rows: string; incidents: string;
   models: string; numbers: string; template: string; verified: (n: number, again: boolean) => string; noNumbers: string; assumptions: string; notes: string;
   none: string; more: string; busy: string; failed: string; cancelled: string; you: string;
   /** shown when typos were corrected: "Understood as: tomato price" */
@@ -31,13 +31,11 @@ export const T: Record<Lang, Strings> = {
     title: "Ask District IQ", subtitle: "Answers from the district's live data", placeholder: "Ask about incidents, complaints, weather, prices…", send: "Send", stop: "Stop",
     close: "Close", maximize: "Maximise", restore: "Restore", language: "Reply language", auto: "Auto",
     stages: { understanding: "Understanding", fetching: "Fetching data", drawing: "Drawing the answer" }, tryAsking: "Try asking", newChat: "New conversation",
-    fresh: (a, ok, n) => `Data as of ${a} · ${ok} of ${n} feeds up to date`, aiOff: "AI provider not configured: answering by rules",
-    testData: "Test data", testTip: "Includes synthetic records (police, PWD, hospital, most complaints)", offline: "Without AI",
+    fresh: (a, ok, n) => `Data as of ${a} · ${ok} of ${n} feeds up to date`, aiOff: "AI provider not configured: answering by rules", offline: "Without AI",
     offlineTip: "Answered from the data by rules, without the language model", prev: "previous", vsPrev: "vs previous", chartTools: "Chart tools", types: typesEn,
     table: "Table", png: "Download as image", csv: "Download data (CSV)", expand: "Bigger", shrink: "Smaller", usual: "Usual range",
     showing: (n, total) => `Showing ${n.toLocaleString("en-IN")} of ${total.toLocaleString("en-IN")}.`, next: "Ask next", helpful: "Helpful?", yes: "Yes", no: "No",
-    sources: "Sources and how this was calculated", asOf: "Data as of", tools: "Console functions", data: "Data from", rows: "Rows used", incidents: "Incidents",
-    testYes: "Yes: some records are synthetic", testNo: "No: real sources only", models: "AI steps", numbers: "Numbers",
+    sources: "Sources and how this was calculated", asOf: "Data as of", tools: "Console functions", data: "Data from", rows: "Rows used", incidents: "Incidents", models: "AI steps", numbers: "Numbers",
     template: "Written by a template from the data (the AI draft was not used)", verified: (n, again) => `${n} checked against the data${again ? " (second draft)" : ""}`,
     noNumbers: "No numbers stated", assumptions: "Assumptions", notes: "Notes", none: "No rows.", more: "Show more (up to 100)",
     busy: "The assistant is busy. Please try again in a moment.", failed: "Something went wrong. Please try again.", cancelled: "Stopped.", you: "You",
@@ -54,14 +52,12 @@ export const T: Record<Lang, Strings> = {
     title: "District IQ-இடம் கேளுங்கள்", subtitle: "மாவட்டத்தின் நேரடித் தரவிலிருந்து பதில்கள்", placeholder: "சம்பவங்கள், புகார்கள், வானிலை, விலைகள் பற்றி கேளுங்கள்…", send: "அனுப்பு",
     stop: "நிறுத்து", close: "மூடு", maximize: "பெரிதாக்கு", restore: "சிறிதாக்கு", language: "பதில் மொழி", auto: "தானியங்கி",
     stages: { understanding: "புரிந்துகொள்கிறது", fetching: "தரவைப் பெறுகிறது", drawing: "பதிலை வரைகிறது" }, tryAsking: "இப்படிக் கேளுங்கள்", newChat: "புதிய உரையாடல்",
-    fresh: (a, ok, n) => `தரவு நேரம் ${a} · ${n} மூலங்களில் ${ok} புதுப்பிக்கப்பட்டவை`, aiOff: "AI வழங்குநர் அமைக்கப்படவில்லை: விதிகளால் பதில்",
-    testData: "சோதனைத் தரவு", testTip: "செயற்கைப் பதிவுகள் அடங்கும் (காவல், பொதுப்பணி, மருத்துவமனை, பெரும்பாலான புகார்கள்)", offline: "AI இல்லாமல்",
+    fresh: (a, ok, n) => `தரவு நேரம் ${a} · ${n} மூலங்களில் ${ok} புதுப்பிக்கப்பட்டவை`, aiOff: "AI வழங்குநர் அமைக்கப்படவில்லை: விதிகளால் பதில்", offline: "AI இல்லாமல்",
     offlineTip: "மொழி மாதிரி இல்லாமல் தரவிலிருந்து விதிகளால் பதில்", prev: "முந்தையது", vsPrev: "முந்தைய காலத்துடன்", chartTools: "விளக்கப்படக் கருவிகள்",
     types: { ...typesEn, horizontal_bar: "பட்டை வரைபடம்", line: "கோட்டு வரைபடம்", donut: "வட்ட வரைபடம்", map_zones: "மண்டல வரைபடம்", table: "அட்டவணை" },
     table: "அட்டவணை", png: "படமாகப் பதிவிறக்கு", csv: "தரவைப் பதிவிறக்கு (CSV)", expand: "பெரிதாக", shrink: "சிறிதாக", usual: "வழக்கமான வரம்பு",
     showing: (n, total) => `${total.toLocaleString("en-IN")} இல் ${n.toLocaleString("en-IN")} காட்டப்படுகின்றன.`, next: "அடுத்து கேளுங்கள்", helpful: "பயனுள்ளதா?", yes: "ஆம்", no: "இல்லை",
-    sources: "மூலங்களும் கணக்கிட்ட முறையும்", asOf: "தரவு நேரம்", tools: "கன்சோல் செயல்பாடுகள்", data: "தரவு மூலம்", rows: "பயன்படுத்திய வரிசைகள்", incidents: "சம்பவங்கள்",
-    testYes: "ஆம்: சில பதிவுகள் செயற்கையானவை", testNo: "இல்லை: உண்மையான மூலங்கள் மட்டும்", models: "AI படிகள்", numbers: "எண்கள்",
+    sources: "மூலங்களும் கணக்கிட்ட முறையும்", asOf: "தரவு நேரம்", tools: "கன்சோல் செயல்பாடுகள்", data: "தரவு மூலம்", rows: "பயன்படுத்திய வரிசைகள்", incidents: "சம்பவங்கள்", models: "AI படிகள்", numbers: "எண்கள்",
     template: "தரவிலிருந்து வார்ப்புருவால் எழுதப்பட்டது", verified: (n, again) => `${n} எண்கள் தரவுடன் சரிபார்க்கப்பட்டன${again ? " (இரண்டாம் வரைவு)" : ""}`,
     noNumbers: "எண்கள் இல்லை", assumptions: "அனுமானங்கள்", notes: "குறிப்புகள்", none: "வரிசைகள் இல்லை.", more: "மேலும் காட்டு (100 வரை)",
     busy: "உதவியாளர் பரபரப்பாக உள்ளது. சற்று நேரத்தில் மீண்டும் முயலவும்.", failed: "ஏதோ தவறு நடந்தது. மீண்டும் முயலவும்.", cancelled: "நிறுத்தப்பட்டது.", you: "நீங்கள்",
@@ -78,13 +74,11 @@ export const T: Record<Lang, Strings> = {
     title: "District IQ kitta kelunga", subtitle: "District-oda live data-la irundhu answers", placeholder: "Incidents, complaints, weather, prices pathi kelunga…", send: "Send",
     stop: "Stop", close: "Close", maximize: "Perusa", restore: "Chinnadha", language: "Reply language", auto: "Auto",
     stages: { understanding: "Purinjukittu irukku", fetching: "Data edukkudhu", drawing: "Answer ready aagudhu" }, tryAsking: "Ippadi kelunga", newChat: "Pudhu conversation",
-    fresh: (a, ok, n) => `Data as of ${a} · ${n} feeds-la ${ok} up to date`, aiOff: "AI provider set pannala: rules vachu answer",
-    testData: "Test data", testTip: "Synthetic records irukku (police, PWD, hospital, most complaints)", offline: "AI illama",
+    fresh: (a, ok, n) => `Data as of ${a} · ${n} feeds-la ${ok} up to date`, aiOff: "AI provider set pannala: rules vachu answer", offline: "AI illama",
     offlineTip: "Language model illama, data-la irundhu rules vachu answer", prev: "munnadi", vsPrev: "munnadi period-oda", chartTools: "Chart tools", types: typesEn,
     table: "Table", png: "Image-a download", csv: "Data download (CSV)", expand: "Perusa", shrink: "Chinnadha", usual: "Usual range",
     showing: (n, total) => `${total.toLocaleString("en-IN")}-la ${n.toLocaleString("en-IN")} kaattudhu.`, next: "Adutha kelvi", helpful: "Useful-a?", yes: "Aamaa", no: "Illa",
-    sources: "Sources, epdi calculate pannom", asOf: "Data as of", tools: "Console functions", data: "Data from", rows: "Rows", incidents: "Incidents",
-    testYes: "Aamaa: sila records synthetic", testNo: "Illa: real sources mattum", models: "AI steps", numbers: "Numbers",
+    sources: "Sources, epdi calculate pannom", asOf: "Data as of", tools: "Console functions", data: "Data from", rows: "Rows", incidents: "Incidents", models: "AI steps", numbers: "Numbers",
     template: "Data-la irundhu template vachu ezhudhinadhu", verified: (n, again) => `${n} numbers data-oda check pannom${again ? " (second draft)" : ""}`,
     noNumbers: "Numbers illa", assumptions: "Assumptions", notes: "Notes", none: "Rows illa.", more: "Innum kaattu (100 varai)",
     busy: "Assistant busy-a irukku. Konja neram kazhichu try pannunga.", failed: "Edho thappu nadandhuchu. Thirumba try pannunga.", cancelled: "Stop pannitom.", you: "Neenga",
