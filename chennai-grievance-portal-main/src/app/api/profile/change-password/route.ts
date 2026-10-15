@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
-import { getSessionFromCookies } from "@/lib/auth";
+import { getSessionFromCookies, resolvePortal, revokeSessions, setAuthCookie } from "@/lib/auth";
+import { signToken } from "@/lib/jwt";
+import { roleToPortal } from "@/lib/session-cookies";
 import { changePasswordSchema } from "@/lib/validators";
 import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
@@ -33,5 +35,13 @@ export async function POST(req: NextRequest) {
   const newHash = await bcrypt.hash(newPassword, 10);
   await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, session.userId]);
 
-  return NextResponse.json({ message: "Password changed successfully." });
+  // every other device is signed out; this browser gets a fresh session so the user stays signed in here
+  const tv = await revokeSessions(session.userId);
+  const res = NextResponse.json({ message: "Password changed successfully. Other devices have been signed out." });
+  const portal = resolvePortal() ?? roleToPortal(session.role);
+  if (portal) {
+    const { userId, email, role, departmentId } = session;
+    setAuthCookie(res, await signToken({ userId, email, role, departmentId, tv }), portal);
+  }
+  return res;
 }

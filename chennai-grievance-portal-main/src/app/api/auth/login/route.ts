@@ -59,7 +59,9 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
-      departmentId: user.department_id
+      departmentId: user.department_id,
+      // signing out or changing the password raises the account's version and ends this session (lib/auth.ts)
+      tv: Number((user as UserRow & { token_version?: unknown }).token_version) || 0
     });
 
     let redirectTo = "/login";

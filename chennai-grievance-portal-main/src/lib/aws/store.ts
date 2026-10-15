@@ -286,7 +286,8 @@ const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
 const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k) => `${row}.${k === "rowid" ? "rowid" : q(k)}`).join(", ")})`;
 
 /** Durable columns added by the website itself, created on every load so the queries that use them always work. */
-const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"] };
+// users.token_version: raised on sign-out / password change, so old tokens are refused (lib/auth.ts, migration 013)
+const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"] };
 
 /** Creates the tables of `doc` with their rows; `track` adds the triggers that note every change in _changes. */
 function fill(db: DB, doc: Doc, track: boolean): void {

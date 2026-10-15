@@ -36,9 +36,56 @@ async function readSession(cookieName: string, portal: Portal): Promise<JwtPaylo
   return session && session.role === portalRole(portal) ? session : null;
 }
 
-/** The signed-in session of one portal (its own cookie, or a not-yet-migrated legacy cookie). */
+/** A query that names users.token_version failed because the column is not there yet (migration 013 not run). */
+function missingColumn(err: unknown): boolean {
+  const e = err as { code?: string; message?: string };
+  return e?.code === "ER_BAD_FIELD_ERROR" || /no such column|Unknown column/i.test(String(e?.message ?? ""));
+}
+
+/** The account as it is now: still active, and the token version a session must carry (0 before migration 013). */
+async function accountNow(userId: number): Promise<{ active: boolean; tokenVersion: number } | null> {
+  let rows: RowDataPacket[];
+  try {
+    [rows] = await pool.query<RowDataPacket[]>("SELECT is_active, token_version FROM users WHERE id = ? LIMIT 1", [userId]);
+  } catch (err) {
+    if (!missingColumn(err)) throw err;
+    [rows] = await pool.query<RowDataPacket[]>("SELECT is_active, 0 AS token_version FROM users WHERE id = ? LIMIT 1", [userId]);
+  }
+  if (!rows.length) return null;
+  return { active: !!Number(rows[0].is_active), tokenVersion: Number(rows[0].token_version) || 0 };
+}
+
+/**
+ * A signed token is only half the check: the account must still be active, and the token must carry the account's
+ * current version. Signing out, changing or resetting the password raise the version (revokeSessions), so a copied
+ * or stolen cookie stops working at once instead of living out its 7 days.
+ */
+async function stillValid(session: JwtPayload | null): Promise<JwtPayload | null> {
+  if (!session) return null;
+  const now = await accountNow(session.userId);
+  if (!now || !now.active) return null;
+  return (Number(session.tv) || 0) === now.tokenVersion ? session : null;
+}
+
+/** The current token version of an account, for a new token (0 before migration 013). */
+export async function tokenVersion(userId: number): Promise<number> {
+  return (await accountNow(userId))?.tokenVersion ?? 0;
+}
+
+/** Ends every session of the account (all devices). Returns the new version, for a fresh token in this browser. */
+export async function revokeSessions(userId: number): Promise<number> {
+  try {
+    await pool.query("UPDATE users SET token_version = COALESCE(token_version, 0) + 1 WHERE id = ?", [userId]);
+  } catch (err) {
+    if (!missingColumn(err)) throw err;
+    console.warn("[auth] users.token_version is missing (run npm run migrate): sessions cannot be revoked");
+  }
+  return tokenVersion(userId);
+}
+
+/** The signed-in session of one portal (its own cookie, or a not-yet-migrated legacy cookie), checked against the account. */
 export async function getPortalSession(portal: Portal): Promise<JwtPayload | null> {
-  return (
+  return stillValid(
     (await readSession(PORTAL_COOKIE_NAMES[portal], portal)) ??
     (await readSession(LEGACY_COOKIE_NAME, portal))
   );
@@ -99,14 +146,11 @@ export function requireRole(session: JwtPayload | null, roles: UserRole[]): bool
 }
 
 /**
- * Session for a route that may only serve an account allowed to act.
- *
- * Re-checks the account against the database rather than trusting the token,
- * so deactivating a user takes effect immediately instead of waiting for the
- * 7-day token to expire.
+ * Session for a route that may only serve an account allowed to act. Every session read is checked against the
+ * database (stillValid), so deactivating a user or signing them out takes effect immediately.
  */
 export async function getActiveSession(): Promise<JwtPayload | null> {
-  return active(await getSessionFromCookies());
+  return getSessionFromCookies();
 }
 
 /**
@@ -115,7 +159,7 @@ export async function getActiveSession(): Promise<JwtPayload | null> {
  * citizen's session first and was refused with "Not authenticated" in a browser signed in to both.
  */
 export async function getActivePortalSession(portal: Portal): Promise<JwtPayload | null> {
-  return active(await getPortalSession(portal));
+  return getPortalSession(portal);
 }
 
 /** Every active session this browser holds (collector, officer, citizen), for a resource any of them may open. */
@@ -124,14 +168,3 @@ export async function getActiveSessions(): Promise<JwtPayload[]> {
   return all.filter((s): s is JwtPayload => !!s);
 }
 
-async function active(session: JwtPayload | null): Promise<JwtPayload | null> {
-  if (!session) return null;
-
-  const [rows] = await pool.query<RowDataPacket[]>(
-    "SELECT is_active FROM users WHERE id = ? LIMIT 1",
-    [session.userId]
-  );
-  if (rows.length === 0 || !rows[0].is_active) return null;
-
-  return session;
-}

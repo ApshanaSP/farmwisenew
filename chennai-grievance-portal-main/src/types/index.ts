@@ -5,6 +5,8 @@ export interface JwtPayload {
   email: string;
   role: UserRole;
   departmentId: number | null;
+  /** the account's token_version when the token was issued; a lower one is a revoked session */
+  tv?: number;
 }
 
 export interface UserRow {

@@ -4,6 +4,7 @@ import pool from "@/lib/db";
 import { forgotPasswordResetSchema } from "@/lib/validators";
 import { verifyOtp, consumeOtp } from "@/lib/otp";
 import { RowDataPacket } from "mysql2";
+import { revokeSessions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,6 +33,8 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, rows[0].id]);
+    // whoever held the old password is signed out everywhere
+    await revokeSessions(Number(rows[0].id));
 
     await consumeOtp(email, "password_reset");
 
