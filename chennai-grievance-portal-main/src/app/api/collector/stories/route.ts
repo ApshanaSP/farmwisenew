@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
+import { jsonWithEtag } from "@/lib/etag";
 import { PERIODS, asOf, parseCat, parseDept, parsePeriod, parseTaluk, parseZone, periodSince } from "@/lib/collector/intel";
 import { stories } from "@/lib/collector/storyai";
 
@@ -13,8 +14,8 @@ export async function GET(req: NextRequest) {
   try {
     const period = parsePeriod(p.get("period"));
     const now = await asOf();
-    return NextResponse.json(await stories({ hours: PERIODS[period].hours, zone: parseZone(p.get("zone")), dept: parseDept(p.get("dept")),
-      cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")), since: periodSince(period, now) }, now, s.email));
+    return jsonWithEtag(req, await stories({ hours: PERIODS[period].hours, zone: parseZone(p.get("zone")), dept: parseDept(p.get("dept")),
+      cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")), since: periodSince(period, now) }, now, s.email), { "Cache-Control": "private, no-cache" });
   } catch (err) {
     return failed(err, "the developing stories");
   }

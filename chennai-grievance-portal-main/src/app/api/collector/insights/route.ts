@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
+import { jsonWithEtag } from "@/lib/etag";
 import { parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 import { insights, parsePart } from "@/lib/collector/insights";
 
@@ -11,8 +12,8 @@ export async function GET(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
   try {
-    return NextResponse.json(await insights(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
-      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }, parsePart(p.get("part"))));
+    return jsonWithEtag(req, await insights(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
+      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }, parsePart(p.get("part"))), { "Cache-Control": "private, no-cache" });
   } catch (err) {
     return failed(err, "the briefing");
   }
