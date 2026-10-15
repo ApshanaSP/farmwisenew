@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
 import { filterRows, runPlan } from "@/lib/studio/engine";
 import { note, stream } from "@/lib/studio/http";
-import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, runDueRefreshes, setSchedule, view } from "@/lib/studio/pipeline";
+import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, setSchedule, view } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { deleteDataset, dropPending, getBoard, getMeta, getPending, getRows, saveBoard, saveMeta, validId } from "@/lib/studio/store";
 import { ROLES, type Filter, type Plan, type Role } from "@/lib/studio/types";
@@ -22,7 +22,6 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   if (s instanceof NextResponse) return s;
   if (!validId(params.id)) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
   try {
-    runDueRefreshes();
     const extra = filtersOf(req.nextUrl.searchParams.get("f"));
     if (req.nextUrl.searchParams.get("export") === "csv") return exportCsv(params.id, extra);
     if (req.nextUrl.searchParams.get("rows") === "1") {

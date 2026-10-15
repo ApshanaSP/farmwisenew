@@ -6,7 +6,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { runPlan } from "@/lib/studio/engine";
 import { MAX_BYTES } from "@/lib/studio/fetchurl";
 import { note, stream } from "@/lib/studio/http";
-import { ingest, ingestLink, namesOf, runDueRefreshes } from "@/lib/studio/pipeline";
+import { ingest, ingestLink, namesOf } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { availableSamples, sampleFile } from "@/lib/studio/samples";
 import { getBoard, getMeta, getRows, listDatasets } from "@/lib/studio/store";
@@ -19,7 +19,6 @@ export async function GET() {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   try {
-    runDueRefreshes();
     const names = namesOf(await refs());
     const board = getBoard().flatMap((pin) => {
       const meta = getMeta(pin.datasetId);
