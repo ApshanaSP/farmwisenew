@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
+  if (!/^\d{1,9}$/.test(params.id)) return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
   try {
     const w = await openWorkspace(s.email, Number(params.id));
     return w ? NextResponse.json(w) : NextResponse.json({ error: "Workspace not found." }, { status: 404 });
