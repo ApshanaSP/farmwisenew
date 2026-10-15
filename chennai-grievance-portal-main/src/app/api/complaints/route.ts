@@ -10,8 +10,26 @@ import { appendComplaintToDataset } from "@/lib/dataset/append";
 import { progressFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
+import { oneAtATime } from "@/lib/serial";
+
+/** The same citizen's identical complaint (title, details, ward) filed in the last two minutes, if any. */
+async function sameComplaintJustFiled(userId: number, title: string, description: string, ward: number) {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT c.id, c.complaint_code, d.name AS department_name, COALESCE(cs.label, ct.name) AS type_name, cc.name AS category_name
+       FROM complaints c
+       LEFT JOIN departments d ON d.id = c.department_id
+       LEFT JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id
+       LEFT JOIN complaint_categories cc ON cc.id = cs.category_id
+       LEFT JOIN complaint_types ct ON ct.id = c.complaint_type_id
+      WHERE c.user_id = ? AND c.title = ? AND c.description = ? AND c.ward_number = ? AND c.created_at >= NOW() - INTERVAL 2 MINUTE
+      ORDER BY c.id DESC LIMIT 1`,
+    [userId, title, description, ward]
+  );
+  return rows[0] ?? null;
+}
 
 export async function POST(req: NextRequest) {
+  let release: (() => void) | null = null;
   try {
     const session = await getActiveSession();
     if (!session) {
@@ -27,6 +45,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
     const data = parsed.data;
+
+    // one filing at a time per citizen: a double click (or a retry after a slow network) registered the same complaint
+    // twice; the second request now waits for the first, finds it and gets the same complaint number back
+    release = await oneAtATime(`complaint:${session.userId}`);
+    const same = await sameComplaintJustFiled(session.userId, data.title, data.description, data.wardNumber);
+    if (same) {
+      return NextResponse.json({
+        message: "This complaint was already registered a moment ago. Use your complaint number to check its status.",
+        complaintCode: same.complaint_code, complaintId: same.id, department: same.department_name ?? null, departmentPending: false,
+        complaintType: same.type_name ?? null, complaintCategory: same.category_name ?? null, wardNumber: data.wardNumber, duplicate: true
+      });
+    }
 
     // A private upload can be attached only by the citizen who uploaded it.
     const mediaName = privateMediaName(data.mediaPath);
@@ -269,6 +299,8 @@ export async function POST(req: NextRequest) {
       { error: "Something went wrong while submitting your complaint. Please try again." },
       { status: 500 }
     );
+  } finally {
+    release?.();
   }
 }
 

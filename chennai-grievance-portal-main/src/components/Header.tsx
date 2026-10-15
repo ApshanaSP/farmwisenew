@@ -78,7 +78,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
                 const active = href === activeHref;
                 return (
                   <Link key={href} href={href} data-key={href} aria-current={active ? "page" : undefined}
-                    className={`relative z-[1] rounded-[7px] px-3.5 py-1.5 text-[13.5px] font-medium transition-colors duration-150 ${active ? "text-white" : "text-ink-subtle hover:text-ink"}`}>
+                    className={`relative z-[1] whitespace-nowrap rounded-[7px] px-3.5 py-1.5 text-[13.5px] font-medium transition-colors duration-150 ${active ? "text-white" : "text-ink-subtle hover:text-ink"}`}>
                     {label}
                   </Link>
                 );
@@ -86,7 +86,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
             </nav>
           )}
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <a href="tel:1913" className="diq-tbtn hidden md:inline-flex" title="GCC helpline, 24x7 (tap to call)">
               <Phone className="h-4 w-4 text-navy-500" aria-hidden="true" />
               Helpline <b className="font-mono text-ink">1913</b>
@@ -97,7 +97,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
                 <button type="button" onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen}
                   className="flex items-center gap-2 rounded-[10px] py-1 pl-1 pr-2 text-[13px] font-semibold text-ink transition hover:bg-canvas-sunken focus-visible:ring-4 focus-visible:ring-navy-600/20">
                   <Avatar name={userName || "U"} />
-                  <span className="hidden max-w-[160px] truncate sm:inline">{userName || "My Account"}</span>
+                  <span className="hidden max-w-[160px] truncate xl:inline">{userName || "My Account"}</span>
                   <ChevronDown aria-hidden="true" className={`h-4 w-4 text-ink-subtle transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>
 

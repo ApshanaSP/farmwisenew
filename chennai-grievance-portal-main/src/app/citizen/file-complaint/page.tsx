@@ -194,6 +194,7 @@ export default function FileComplaintPage() {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [result, setResult] = useState<{ complaintCode: string; department: string; complaintType: string } | null>(null);
 
   const selectedWard = wards.find((w) => String(w.wardNumber) === wardNumber) || null;
@@ -460,6 +461,8 @@ export default function FileComplaintPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    // a second click before the first re-renders (state is not yet "submitting") must not file the complaint twice
+    if (submittingRef.current) return;
     setSubmitError(null);
 
     if (!title.trim()) {
@@ -471,6 +474,7 @@ export default function FileComplaintPage() {
       return;
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       let mediaPath: string | undefined;
@@ -532,6 +536,7 @@ export default function FileComplaintPage() {
     } catch {
       setSubmitError("Something went wrong. Please try again.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
