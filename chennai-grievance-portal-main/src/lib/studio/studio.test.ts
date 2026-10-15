@@ -197,6 +197,16 @@ describe("the Analyst's plan is checked", () => {
     expect(q.filters).toEqual([{ col: "_z", op: "in", values: ["Adyar"] }, { col: "_w", op: "in", values: ["170"] }]);
     expect(q.limit).toBeGreaterThanOrEqual(8); // a ranking, not one bar
   });
+  it("reads a per-day table (beds every day) in its latest period, not summed over every day", () => {
+    const panel = { ...spec, panelBy: spec.columns[1].key };
+    const sum = { ...base, kind: "query" as const, agg: "sum" as const, col: null, filters: [] };
+    expect(checkPlan(sum, panel, "q").filters).toEqual([{ col: "_d", op: "latest", values: [] }]);
+    // a trend over time and a question that names its own dates keep every day
+    expect(checkPlan({ ...sum, by: "time" }, panel, "q").filters).toEqual([]);
+    expect(checkPlan({ ...sum, filters: [{ col: "_d", op: "recent_days", values: ["30"] }] }, panel, "q").filters.map((f) => f.op)).toEqual(["recent_days"]);
+    // one row per thing: nothing added
+    expect(checkPlan(sum, spec, "q").filters).toEqual([]);
+  });
 });
 
 describe("a district x year table", () => {
