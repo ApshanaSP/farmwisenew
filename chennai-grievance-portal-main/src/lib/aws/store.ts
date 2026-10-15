@@ -34,8 +34,8 @@ const CACHE_DIR = path.join(process.cwd(), "data", "aws-cache");
 const CHECK_MS = 5 * 60_000;
 
 type Kind = "text" | "int" | "bool" | "float" | "date" | "datetime";
-interface TableInfo { sha: string; rows: number; bytes: number; key: string; url: string }
-interface Manifest {
+export interface TableInfo { sha: string; rows: number; bytes: number; key: string; url: string }
+export interface Manifest {
   build_id: string;
   built_at: string;
   exported_at: string;
@@ -45,7 +45,7 @@ interface Manifest {
   keys: Record<string, string[]>;
   indexes: Record<string, string[]>;
 }
-interface Snapshot { table: string; columns: [string, Kind][]; rows: unknown[][] }
+export interface Snapshot { table: string; columns: [string, Kind][]; rows: unknown[][] }
 
 interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number; durableFile: string;
   /** build hooks already applied to this build, and the run in progress */ hooksDone?: Set<string>; hooking?: Promise<void> | null }
@@ -173,14 +173,23 @@ function compat(db: DB, snaps: { table: string; columns: [string, Kind][] }[]): 
 
 /** A fresh in-memory database holding one complete build. */
 async function build(m: Manifest): Promise<State> {
-  setDatabaseNames(DB_NAMES());
   const durableFile = (await durable()).file;
+  const db = await buildDb(m, table, durableFile);
+  return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now(), durableFile };
+}
+
+/**
+ * One build in a fresh in-memory database, its tables read by `load` (the S3 download here; a frozen copy for the chatbot's
+ * golden questions, scripts/freeze-eval-store.cjs), with `durableFile` attached as the durable store.
+ */
+export async function buildDb(m: Manifest, load: (name: string, t: TableInfo) => Promise<Snapshot>, durableFile: string): Promise<DB> {
+  setDatabaseNames(DB_NAMES());
   const db = new (sqlite().DatabaseSync)(":memory:");
   registerFunctions(db);
   db.exec("PRAGMA busy_timeout = 5000");
   db.prepare("ATTACH DATABASE ? AS durable").run(durableFile);
   const names = Object.keys(m.tables);
-  const snaps = await Promise.all(names.map((n) => table(n, m.tables[n])));
+  const snaps = await Promise.all(names.map((n) => load(n, m.tables[n])));
   db.exec("BEGIN");
   for (const s of snaps) {
     const pk = m.keys[s.table];
@@ -203,7 +212,18 @@ async function build(m: Manifest): Promise<State> {
   db.exec("COMMIT");
   db.exec("ANALYZE");
   catalog(db);
-  return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now(), durableFile };
+  return db;
+}
+
+/** Applies the registered build steps (lib/collector/derive.ts) to a database built by buildDb. */
+export async function applyBuildHooks(db: DB): Promise<void> {
+  await runHooks({ db, buildId: "frozen", builtAt: "", loadedAt: 0, checkedAt: 0, durableFile: "" });
+}
+
+/** A mysql2-like pool over one fixed database (a frozen build): the same SQL translation and transactions as the live store. */
+export function poolOver(db: DB): any {
+  const c = connection(async () => db);
+  return { ...c, getConnection: async () => connection(async () => db), end: async () => undefined };
 }
 
 /** Points a build at another durable file (after a reload). Call with the write lock held: no transaction is open. */
