@@ -48,7 +48,8 @@ node scripts/import-gcc-reference.js --streets
 node scripts/import-ward-boundaries.js
 node scripts/seed-gcc-reference.js
 
-# 6. (Optional) Seed 3 sample accounts — one per role, password: Passw0rd!
+# 6. (Optional) Seed 3 sample accounts — one per role. The password is
+#    SEED_PASSWORD, or a random one the script prints once.
 node scripts/seed-users.js
 
 # 7. Run the dev server
@@ -64,11 +65,15 @@ to `/login` if you're not signed in, or to your role's home page if you are.
 
 ### Sample accounts (after running `scripts/seed-users.js`)
 
-| Role | Email | Password |
-|---|---|---|
-| Collector | collector@chennai.gov.in | Passw0rd! |
-| Department Officer (Electrical) | officer.electrical@chennai.gov.in | Passw0rd! |
-| Citizen | citizen@example.com | Passw0rd! |
+| Role | Email |
+|---|---|
+| Collector | collector@chennai.gov.in |
+| Department Officer (Electrical) | officer.electrical@chennai.gov.in |
+| Citizen | citizen@example.com |
+
+All three use the password the seed script printed (or `SEED_PASSWORD`).
+Accounts seeded by older versions of the script used a published password:
+change it, or deactivate those accounts, on any shared or public copy.
 
 You can also just register fresh accounts via `/register`.
 
@@ -148,7 +153,7 @@ client.
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"citizen@example.com","password":"Passw0rd!"}'
+  -d '{"email":"citizen@example.com","password":"<seeded password>"}'
 ```
 ```json
 { "message": "Login successful", "redirectTo": "/citizen", "role": "citizen" }
