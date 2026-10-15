@@ -36,8 +36,15 @@ const Body = z.object({
 export async function POST(req: NextRequest) {
   const s = await assistantSession();
   if (s instanceof NextResponse) return s;
-  const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Send { message, consoleScope }." }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const parsed = Body.safeParse(body);
+  if (!parsed.success) {
+    // said in words the Collector can act on (the dialog shows this text)
+    const m = typeof body?.message === "string" ? body.message.trim() : "";
+    const error = !m ? "Type a question first." : m.length > LIMITS.messageChars
+      ? `That question is too long: keep it under ${LIMITS.messageChars.toLocaleString("en-IN")} characters.` : "That question could not be read. Please try again.";
+    return NextResponse.json({ error }, { status: 400 });
+  }
   const gate = admit(String(s.userId));
   if (!gate.ok) {
     const msg = gate.reason === "day" ? "Today's question limit is reached." : `Too many questions in a minute. Try again in ${gate.retryAfter} s.`;
