@@ -93,6 +93,13 @@ export async function aiJson<T>(c: {
   return run as Promise<{ o: T; model: string; at: string } | null>;
 }
 
+/**
+ * The write-ups are made for the hour ("to 12:00 PM"), not the minute: the store's as-of time follows the clock, and a
+ * minute in the facts changed the cache key every minute, so each view of the Briefing asked Gemini for a new write-up
+ * (about 2,900 tokens and 7 s) and the page stayed on "pending". New data still makes a new write-up.
+ */
+export const briefHour = (now: string) => `${now.slice(0, 13)}:00:00`;
+
 const STYLE = `Use only the facts given. Every number, name, place and date you write must appear in the facts; never estimate or
 add figures, and never invent a cause. Plain, formal Indian English for a senior officer: short complete sentences, no markdown,
 no bullet symbols, no IDs or department codes in the text (use names). Write dates as the facts do ("6 Oct"), never 2026-10-06.
@@ -155,7 +162,7 @@ ref: the incident id in square brackets in the facts that the point is mainly ab
 headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order.`;
 
 async function dayFacts(s: BriefScope) {
-  const now = await asOf();
+  const now = briefHour(await asOf());
   const f = filters(s);
   const win = periodWindow(s.period, now), prev = periodWindow(s.period, now, "i.first_reported_at", 1);
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
@@ -255,7 +262,7 @@ watch: one sentence on what the Collector should watch or ask the department to 
 problems, deaths), only if the facts support it; else empty.`;
 
 export async function deptBrief(s: BriefScope, dept: string, user: string): Promise<DeptBrief | null> {
-  const now = await asOf();
+  const now = briefHour(await asOf());
   const win = periodWindow(s.period, now);
   const f = filters({ ...s, dept });
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
@@ -299,7 +306,7 @@ falling: one sentence on what fell, or empty.
 next: 1 to 3 suggested next steps, each a department or office and one concrete action that answers the rise.`;
 
 export async function trendBrief(user: string): Promise<TrendBrief | null> {
-  const now = await asOf();
+  const now = briefHour(await asOf());
   const MON = "(DATE(?) - INTERVAL WEEKDAY(?) DAY)";
   const [cats, zones] = await Promise.all([
     q(`SELECT i.category_code AS cat, i.category_label AS label, SUM(i.first_reported_at >= ${MON} - INTERVAL 28 DAY) AS recent,
