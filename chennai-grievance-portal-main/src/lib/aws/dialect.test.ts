@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
-import { registerFunctions, translate } from "./dialect";
+import { registerFunctions, sqlDate, translate } from "./dialect";
 
 function db() {
   const d = new DatabaseSync(":memory:");
@@ -33,5 +33,11 @@ describe("dialect functions", () => {
     expect(ids).not.toContain(4);
     // the daily one is due only after 6:00 AM IST
     expect(ids.includes(1)).toBe(Number((one(d, "SELECT HOUR(NOW())") as number)) >= 6);
+  });
+
+  it("a Date parameter is IST wall-clock, whatever zone the server runs in", () => {
+    // 18:30 UTC is midnight IST the next day
+    expect(sqlDate(new Date("2026-10-14T18:30:00Z"))).toBe("2026-10-15 00:00:00");
+    expect(sqlDate(new Date("2026-10-15T06:00:00Z"))).toBe("2026-10-15 11:30:00");
   });
 });

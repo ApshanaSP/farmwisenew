@@ -292,9 +292,12 @@ function insideCast(out: Tok[]): boolean {
 // ------------------------------------------------------------- parameters --
 
 const pad = (n: number) => String(n).padStart(2, "0");
-/** A Date as local wall-clock "YYYY-MM-DD HH:MM:SS" (mysql2's default `timezone: 'local'`). */
+/**
+ * A Date as IST wall-clock "YYYY-MM-DD HH:MM:SS": every time in the store is IST (NOW() below too). It used the server's
+ * own zone, which put a parameter 5.5 hours behind NOW() on a server running in UTC.
+ */
 export function sqlDate(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return new Date(d.getTime() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
 }
 
 function scalar(v: unknown): unknown {

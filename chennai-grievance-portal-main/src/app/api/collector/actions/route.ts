@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import { istNow } from "@/lib/collector/freshness";
 import { collectorSession } from "@/lib/collector/guard";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       a.actionId
         ? [a.actionId, a.incidentId, null, null, null, a.status, null, session.email]
         : [null, a.incidentId, inc[0].lead_dept, inc[0].officer || inc[0].lead_dept, a.text, "Not started",
-            new Date(Date.now() + 24 * 3600 * 1000), session.email]
+            istNow(Date.now() + 24 * 3600 * 1000), session.email]
     );
     await conn.query(
       `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value)
