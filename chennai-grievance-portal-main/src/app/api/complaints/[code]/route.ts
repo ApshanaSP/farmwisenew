@@ -51,9 +51,10 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
 
   const complaint = rows[0];
 
-  // Enforce ownership: a citizen may only view their own complaints.
-  if (complaint.user_id !== session.userId) {
-    return NextResponse.json({ error: "You do not have access to this complaint." }, { status: 403 });
+  // Enforce ownership: a citizen may only view their own complaints. Someone else's gets the same "not found" as a
+  // code that does not exist, so codes cannot be probed.
+  if (Number(complaint.user_id) !== Number(session.userId)) {
+    return NextResponse.json({ error: "Complaint not found." }, { status: 404 });
   }
 
   const [historyRows] = await pool.query<RowDataPacket[]>(
