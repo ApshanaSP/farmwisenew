@@ -584,6 +584,15 @@ export default function CollectorApp({ initial, allDepts, user }: {
     r.zones.forEach((z: Row) => out.push({ g: "Zones", ic: "pin", l: z.name, s: `${z.open} open incidents`, run: () => c.setZone(z.zone) }));
     r.depts.forEach((d: Row) => out.push({ g: "Departments", ic: deptIcon(d.code), l: d.name, s: d.org, run: () => c.setDept(d.code) }));
     r.incidents.forEach((i: Row) => out.push({ g: "Incidents", ic: deptIcon(i.dept), l: fullTitle(i), s: `${i.zone_name ?? "Chennai"} · ${rel(i.t, ov.now)}`, run: () => c.openInc(i.id) }));
+    // a citizen's complaint number opens the incident it was filed into
+    (r.complaints ?? []).forEach((x: Row) => out.push({ g: "Complaint number", ic: "chat", l: `${x.code}: ${x.title ?? "incident"}`, s: "The incident this complaint was filed into", run: () => c.openInc(x.id) }));
+    // a news report opens its incident when it has one, else the article itself
+    (r.news ?? []).forEach((n: Row) => out.push({ g: "News", ic: "news", l: String(n.title), s: `${n.publisher ?? "News"} · ${rel(n.t, ov.now)}`,
+      run: () => (n.incident ? c.openInc(n.incident) : n.url ? window.open(String(n.url), "_blank", "noopener") : c.openNewsAll()) }));
+    (r.sources ?? []).forEach((x: Row) => out.push({ g: "Data sources", ic: "sensor", l: String(x.name), s: String(x.kind ?? ""), run: c.openFeeds }));
+    // a Data Studio dataset opens on the Data Studio page (Studio remembers which dataset to show)
+    (r.datasets ?? []).forEach((d: Row) => out.push({ g: "Data Studio", ic: "spark", l: String(d.name), s: `${Number(d.rows).toLocaleString("en-IN")} rows`,
+      run: () => { try { localStorage.setItem("diq-studio-sel", String(d.id)); } catch { /* not saved */ } setPage("studio"); } }));
     return out;
   };
 

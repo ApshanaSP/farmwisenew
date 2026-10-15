@@ -260,7 +260,7 @@ export function Palette({ open, onClose, actions, search, ask }: {
             initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={spring.snappy}>
             <div className="pal-in">
               <I n="search" />
-              <input ref={input} id="dic-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search incidents, zones, departments… or type a command"
+              <input ref={input} id="dic-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search incidents, zones, departments, news, sources, datasets, complaint numbers… or a command"
                 aria-label="Search" autoComplete="off" spellCheck={false}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowDown") { setIdx((i) => Math.min(hits.length - 1, i + 1)); e.preventDefault(); }

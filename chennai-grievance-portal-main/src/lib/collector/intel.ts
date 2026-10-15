@@ -1388,7 +1388,16 @@ export async function search(text: string) {
       [like, like, like]
     )
   ]);
-  return { zones, depts, incidents: incs };
+  // news reports, connected sources and a citizen's complaint number (the incident it was filed into) are found here too
+  const code = text.trim().toUpperCase().match(/^\d{4}-[A-Z0-9]{6}$/)?.[0] ?? null;
+  const [news, sources, filed] = await Promise.all([
+    q(`SELECT doc_id AS id, title, publisher, url, linked_incident_id AS incident, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
+       FROM documents WHERE title LIKE ? ORDER BY published_at DESC LIMIT 4`, [like]).catch(orEmpty("intel:search-news")),
+    q(`SELECT source_id AS id, name, kind FROM ${ops("sources")} WHERE name LIKE ? ORDER BY source_id LIMIT 3`, [like]).catch(orEmpty("intel:search-sources")),
+    code ? q(`SELECT e.incident_id AS id, ${TITLE} AS title FROM events e JOIN incidents i ON i.incident_id = e.incident_id
+       WHERE e.source = 'grievance' AND e.source_record_id = ? LIMIT 1`, [code]).catch(orEmpty("intel:search-complaint")) : Promise.resolve([] as Row[])
+  ]);
+  return { zones, depts, incidents: incs, news, sources, complaints: filed.map((f) => ({ ...f, code })) };
 }
 
 // ---------------------------------------------------------------- export --
