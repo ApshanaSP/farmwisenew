@@ -23,6 +23,7 @@ import pool from "@/lib/db";
 import { incident, type Plain } from "@/lib/collector/intel";
 import { generateJson } from "@/lib/ai/gateway";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 
@@ -80,7 +81,7 @@ async function recipients(dept: string | null, contacts: Row[]): Promise<{ to: R
     const [u] = await q(
       `SELECT u.id, u.email, p.first_name, p.last_name FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id
        WHERE u.role = 'department_officer' AND u.dept_code = ? AND u.is_active = 1 ORDER BY u.id LIMIT 1`, [dept], pool as typeof intelPool
-    ).catch(() => [] as Row[]);
+    ).catch(orEmpty("actionmail:83"));
     if (u) {
       const name = [u.first_name, u.last_name].filter(Boolean).join(" ").trim();
       to = { kind: "officer", id: Number(u.id), name: name || "Department officer", role: `Department officer, ${dept}`, email: String(u.email) };
@@ -179,7 +180,7 @@ export async function draftAction(id: string, user: string): Promise<ActionDraft
 
   const officer = to?.name && to.name !== "Department officer" ? to.name : `Officer, ${i.dept_name ?? i.dept}`;
   // the category's standard steps (ref_categories.playbook), so the instruction asks for what the department normally does
-  const [cat] = await q(`SELECT playbook FROM ref_categories WHERE category_code = ?`, [i.cat_code]).catch(() => [] as Row[]);
+  const [cat] = await q(`SELECT playbook FROM ref_categories WHERE category_code = ?`, [i.cat_code]).catch(orEmpty("actionmail:182"));
   const playbook = String(cat?.playbook ?? "").split("|").map((x) => x.trim()).filter(Boolean);
   let draft = template(i, why, officer, deptReport, playbook);
   let ai: ActionDraft["ai"] = null;

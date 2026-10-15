@@ -24,6 +24,7 @@ import { OFFICER, deptConfig } from "./departments";
 import { NEXT_STEP, STAGE_LABEL, TAB_STAGES, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
 import { syncComplaints } from "@/lib/complaint-progress";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 
@@ -244,7 +245,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     exportMeta(),
     q(`SELECT source, status, ${fmt("newest_record_at")} AS newest FROM source_health
        ORDER BY FIELD(source, 'grievance', 'police', 'pwd', 'hospital', 'news', 'imd', 'cpcb', 'cfm')`),
-    contactsFor(dept.code, s.zone).catch(() => [] as Row[]),
+    contactsFor(dept.code, s.zone).catch(orEmpty("data:247")),
     // the open grievance waiting longest, for the officer's priorities
     q(`${b.sql} SELECT ${ROW} FROM w WHERE ${win.sql} AND w.stage IN ${OPEN_STAGES} ORDER BY w.first_reported_at, w.incident_id LIMIT 1`, [...b.params, ...win.params]),
     deptBoard(dept.code, s),
@@ -459,7 +460,7 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
        FROM ${ops("officer_reports")} WHERE incident_id = ? AND dept_code = ? ORDER BY sent_at DESC, report_id DESC`, [id, dept.code]),
     // instructions the Collector sent about it (Take action on a severe incident)
     q(`SELECT email_id AS id, subject, body, ${fmt("created_at")} AS t FROM ${ops("outbound_emails")} WHERE incident_id = ?
-       ORDER BY created_at DESC, email_id DESC LIMIT 5`, [id]).catch(() => [] as Row[])
+       ORDER BY created_at DESC, email_id DESC LIMIT 5`, [id]).catch(orEmpty("data:462"))
   ]);
 
   const kindOf = (step: string) => (/resolved|verified/i.test(step) ? "fin" : /reject|lapsed|return|escalat/i.test(step) ? "esc" : "");

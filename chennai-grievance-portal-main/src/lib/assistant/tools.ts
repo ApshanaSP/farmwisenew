@@ -29,6 +29,7 @@ import {
   warningToday, zoneAttention, type EnvMetric
 } from "@/lib/assistant/queries";
 import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
+import { orNull } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 type Body = Omit<ToolResult, "tool" | "args">;
@@ -144,7 +145,7 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
     + (catHint && m.cat === catHint ? 0.03 : 0);
   // the search index (LanceDB): meaning and keywords together, typo-tolerant; the zone and type narrow it, relaxed in turn
   const hy = (f: { zone?: number | null; cats?: string[] | null }) => hybridSearch("incidents", text, { zone: f.zone ?? null, cats: f.cats ?? null }, 12);
-  let found = await hy({ zone, cats }).catch(() => null);
+  let found = await hy({ zone, cats }).catch(orNull("tools:147"));
   if (found && !found.length && cats) found = await hy({ zone });
   if (found && !found.length && zone != null) found = await hy({ cats });
   // "the Kodungaiyur gas deaths": among the many records of a locality the words alone miss the one whose title says
@@ -152,7 +153,7 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   // among incidents with deaths, the order of that search (meaning and words, deaths only) decides
   const deathRank = new Map<string, number>();
   if (found && aboutDeaths) {
-    const dead = (await hybridSearch("incidents", text, { zone, cats, deadOnly: true }, 6).catch(() => null)) ?? [];
+    const dead = (await hybridSearch("incidents", text, { zone, cats, deadOnly: true }, 6).catch(orNull("tools:155"))) ?? [];
     dead.forEach((h, k) => deathRank.set(h.id, k));
     const seen = new Set(found.map((h) => h.id));
     found = [...found, ...dead.filter((h) => !seen.has(h.id))];
@@ -435,7 +436,7 @@ export const TOOLS = [
       const s = a.scope;
       const now = await asOf();
       const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
-      const place = s.zone == null ? await resolvePlace(a.text).catch(() => null) : null;
+      const place = s.zone == null ? await resolvePlace(a.text).catch(orNull("tools:438")) : null;
       const zone = s.zone ?? (place?.zone != null ? Number(place.zone) : null);
       const f = { since: a.allTime ? null : nowT - PERIODS[s.period].hours * 3600, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
       const [inc, news] = await Promise.all([

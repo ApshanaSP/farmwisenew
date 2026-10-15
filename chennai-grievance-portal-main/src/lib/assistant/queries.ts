@@ -13,6 +13,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { PERIODS, exportMeta, scopeWhere } from "@/lib/collector/intel";
 import type { AssistantScope } from "@/lib/assistant/scope";
+import { orEmpty } from "@/lib/fallback";
 
 const REAL_LAKES = process.env.DATA_BACKEND === "aws";
 
@@ -369,7 +370,7 @@ export async function addedSources(): Promise<Row[]> {
     `SELECT source_id AS id, name, kind, pipeline_key, enabled, status, refresh_minutes, items_total,
             DATE_FORMAT(last_ok_at, '%Y-%m-%d %H:%i:%s') AS last_ok_at, DATE_FORMAT(last_run_at, '%Y-%m-%d %H:%i:%s') AS last_run_at
      FROM ${ops("sources")} ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'ocr', 'rss', 'html', 'json'), source_id`
-  ).catch(() => []);
+  ).catch(orEmpty("queries:372"));
 }
 
 // ---------------------------------------------------------- change drivers --
@@ -414,7 +415,7 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 3`, w.params),
     q(`SELECT COALESCE(SUM(date > DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS cur,
          COALESCE(SUM(date <= DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS prev
-       FROM world_calendar WHERE date > DATE(?) - INTERVAL ? DAY AND date <= DATE(?)`, [now, days, now, days, now, days * 2, now]).catch(() => [] as Row[])
+       FROM world_calendar WHERE date > DATE(?) - INTERVAL ? DAY AND date <= DATE(?)`, [now, days, now, days, now, days * 2, now]).catch(orEmpty("queries:417"))
   ]);
   const t = tot[0] ?? {}, tp = totPrev[0] ?? {};
   const prevBy = new Map(catsPrev.map((r) => [String(r.code), r]));

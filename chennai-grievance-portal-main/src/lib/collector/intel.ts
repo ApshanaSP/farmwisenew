@@ -17,6 +17,7 @@ import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
 import { decisionEffect, effectiveSql } from "@/lib/collector/effective";
+import { orEmpty, orNull } from "@/lib/fallback";
 export { PINNABLE, PLACE_FILTERS, parsePlace, type PlaceFilter } from "@/lib/collector/mapplace";
 
 type Row = Record<string, any>;
@@ -351,7 +352,7 @@ async function actedOn(ids: string[]): Promise<Record<string, { t: string; n: nu
   const r = await q(
     `SELECT incident_id AS id, DATE_FORMAT(MAX(created_at), '%Y-%m-%d %H:%i:%s') AS t, COUNT(*) AS n
      FROM ${ops("outbound_emails")} WHERE incident_id IN (?) GROUP BY incident_id`, [ids]
-  ).catch(() => [] as Row[]);
+  ).catch(orEmpty("intel:354"));
   return Object.fromEntries(r.map((x) => [x.id, { t: String(x.t), n: Number(x.n) }]));
 }
 
@@ -362,7 +363,7 @@ export async function actionEmails(ids: string[]): Promise<Row[]> {
     `SELECT email_id AS id, incident_id, subject, body, mode, status, delivered_to, owner, to_contact_ids AS rcpt,
             DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS t
      FROM ${ops("outbound_emails")} WHERE incident_id IN (?) ORDER BY created_at DESC, email_id DESC LIMIT 20`, [ids]
-  ).catch(() => [] as Row[]); // a store without the table: nothing sent yet
+  ).catch(orEmpty("intel:365")); // a store without the table: nothing sent yet
   return rows.map(({ rcpt, ...x }) => {
     let to = null;
     try { to = JSON.parse(String(rcpt))?.[0] ?? null; } catch { /* not JSON */ }
@@ -1048,7 +1049,7 @@ async function environment(period: Period, now: string) {
       [now, days]
     ),
     // Chennai Metro Water's published reservoir storage (the store's lake figures are simulated): see lakes.ts
-    cmwssbLakes(now, Math.max(days, 10)).catch(() => null)
+    cmwssbLakes(now, Math.max(days, 10)).catch(orNull("intel:1051"))
   ]);
   const group = (rows: Row[]) => {
     const m = new Map<string, Row>();

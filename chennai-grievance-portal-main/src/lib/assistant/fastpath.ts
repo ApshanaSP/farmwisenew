@@ -18,6 +18,7 @@ import { PERIODS } from "@/lib/collector/intel";
 import { resolveSides } from "@/lib/assistant/compare";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
+import { orNull } from "@/lib/fallback";
 
 type Period = Scope["period"];
 const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -124,7 +125,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // a refinement ("only Adyar") keeps the number the previous question asked for
       const n = d.n ?? (d.refinement ? i.ctx?.n ?? null : null) ?? (d.intent === "INCIDENT_LIST" ? 8 : 5);
       // a topic narrower than its category ("murder" within violent crime): the incidents that are about it, by meaning
-      const nar = topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(() => null) : null;
+      const nar = topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(orNull("fastpath:127")) : null;
       if (nar) {
         card.sources.tools.push({ name: "search_records", args: { text: topic!.narrow, ...inc }, ms: 0 });
         card.sources.assumptions.push(`"${topic!.label}" is narrower than its category, so the incidents were found by meaning and keywords within it, or by a recorded death.`);
@@ -302,7 +303,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       if (d.intent === "NEWS_DETAIL" && !d.storyId && d.find) {
         const hours = d.period ? NEWS_HOURS[d.period] : 168;
         const nowSec = Date.parse(i.now.replace(" ", "T") + "+05:30") / 1000;
-        const found = (await hybridSearch("news", d.find, { since: nowSec - hours * 3600 }, 8).catch(() => null)) ?? [];
+        const found = (await hybridSearch("news", d.find, { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
         const keys = await storiesOfDocs(found.map((x) => String(x.id)));
         if (!keys.length) {
           card.responseType = "news_list";

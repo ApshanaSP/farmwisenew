@@ -11,6 +11,7 @@ import { categories, resolvePlace } from "@/lib/collector/nlp";
 import { hasPhrase, tokens, topicWords, type Topic } from "@/lib/assistant/intent";
 import type { NewsStory } from "@/lib/assistant/answer";
 import { embed } from "@/lib/assistant/embed";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -76,7 +77,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
                               i.citizen_complaints AS complaints, i.dead, i.category_code AS cat, i.category_label AS label, i.zone_no AS zone,
                               i.zone_name, i.place_text AS loc, i.lead_dept AS dept, dp.name AS dept_name, i.status_std AS status, i.ai_summary
                        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE i.incident_id IN (?)`, [incIds]) : Promise.resolve([] as Row[]),
-    q(`SELECT item_key, text_en, extra FROM briefing_notes WHERE section = 'news'`).catch(() => [] as Row[]),
+    q(`SELECT item_key, text_en, extra FROM briefing_notes WHERE section = 'news'`).catch(orEmpty("news:79")),
     q(`SELECT code, name FROM ref_departments`)
   ]);
   const inc = new Map(incs.map((r) => [r.id, r]));

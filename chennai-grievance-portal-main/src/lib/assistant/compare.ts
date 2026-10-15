@@ -5,6 +5,7 @@
  * district) is said plainly, never quietly dropped. No model: the numbers and the words come from the store.
  */
 import { resolvePlace } from "@/lib/collector/nlp";
+import { orNull } from "@/lib/fallback";
 
 export interface Side { asked: string; place: string | null; zone: number | null; locality: string | null; outside: boolean }
 
@@ -28,7 +29,7 @@ export async function resolveSides(sides: string[]): Promise<Side[]> {
   return Promise.all(sides.map(async (asked) => {
     const zoneNo = asked.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1];
     if (zoneNo && Number(zoneNo) >= 1 && Number(zoneNo) <= 15) return { asked, place: `Zone ${zoneNo}`, zone: Number(zoneNo), locality: null, outside: false };
-    const p = await resolvePlace(asked).catch(() => null);
+    const p = await resolvePlace(asked).catch(orNull("compare:31"));
     if (!p || p.zone == null) return { asked, place: p?.place ?? null, zone: null, locality: null, outside: true };
     // a locality narrower than its zone ("Velachery" in Adyar zone) is matched on the incident's place
     return { asked, place: p.place, zone: Number(p.zone), locality: p.ward ? p.place : null, outside: false };

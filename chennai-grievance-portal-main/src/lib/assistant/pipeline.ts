@@ -49,6 +49,7 @@ import { planFromDecision, type Decision } from "@/lib/assistant/decide";
 import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
+import { orEmpty, orNull } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -183,7 +184,7 @@ export async function inOurNews(message: string, now: string): Promise<boolean> 
   const words = message.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length >= 4 && !NEWS_STOP.has(w));
   if (!words.length) return false;
   const since = Date.parse(now.replace(" ", "T") + "+05:30") / 1000 - 168 * 3600;
-  const found = await hybridSearch("news", message, { since }, 5).catch(() => null);
+  const found = await hybridSearch("news", message, { since }, 5).catch(orNull("pipeline:186"));
   return !!found?.some((f) => {
     const title = String(f.rec.title ?? "").toLowerCase();
     const hits = words.filter((w) => title.includes(w));
@@ -222,7 +223,7 @@ async function contactDept(message: string, n: RefNames): Promise<string | null>
       .filter((w) => new RegExp(`\\b${w}`).test(said)).length }))
     .filter((x) => x.score).sort((a, b) => b.score - a.score).map((x) => x.code);
   const names = [...new Set([...gcc, ...deptsNamed(message, n)])];
-  for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(() => [])).length) return code;
+  for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(orEmpty("pipeline:225"))).length) return code;
   return names[0] ?? null;
 }
 
@@ -764,7 +765,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
 
   // 2. understand
   i.stage("understanding");
-  const placeData = await runTool("resolve_place", { text: message }).then((r) => r.data as Row | null).catch(() => null);
+  const placeData = await runTool("resolve_place", { text: message }).then((r) => r.data as Row | null).catch(orNull("pipeline:767"));
   const place = placeData ? JSON.stringify(placeData) : "";
   const ctx = lastContext(turns);
   // answers from the store (lists, counts, one incident's facts, news): `decided` is the router's understanding; without

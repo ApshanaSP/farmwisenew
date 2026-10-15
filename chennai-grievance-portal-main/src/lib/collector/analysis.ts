@@ -12,6 +12,7 @@ import { generateJson } from "@/lib/ai/gateway";
 import intelPool from "@/lib/collector/db";
 import { incident, newsArticles, newsDoc, type Plain } from "@/lib/collector/intel";
 import { fullText } from "@/lib/collector/fulltext";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 
@@ -142,7 +143,7 @@ export async function analyseIncident(id: string, user: string): Promise<Analysi
   const deptReports = d.deptReports as Row[];
   const emails = d.emails as Row[];
   const [cat] = await intelPool.query(`SELECT playbook FROM ref_categories WHERE category_code = ?`, [i.cat_code])
-    .then((r) => r[0] as Row[]).catch(() => [] as Row[]);
+    .then((r) => r[0] as Row[]).catch(orEmpty("analysis:145"));
   const facts = [
     `Incident ${i.id}: ${i.title}`,
     `Category: ${i.type}. Severity: ${i.sev} (${String(i.severity_reasons ?? "").replace(/\|/g, "; ")}). Status: ${i.status}.`,

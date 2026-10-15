@@ -18,6 +18,7 @@ import { classify, resolvePlace } from "@/lib/collector/nlp";
 import { applyMapping, extractRecords, nearChennai, readStored, type FetchKind } from "@/lib/collector/sourcemap";
 import { istNow, staleFeeds } from "@/lib/collector/freshness";
 import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard prototype)";
@@ -696,7 +697,7 @@ const MARKET_CATEGORIES = [3]; // Farmer Consumer Market (Uzhavar Sandhai); no C
 async function collectMandiMarkets() {
   let seen = 0, added = 0, calls = 0;
   const have = new Set((await q(`SELECT DISTINCT DATE_FORMAT(date, '%Y-%m-%d') AS d FROM ${ops("mandi_market_prices")}
-    WHERE date > CURDATE() - INTERVAL 15 DAY`).catch(() => [] as Row[])).map((r) => r.d));
+    WHERE date > CURDATE() - INTERVAL 15 DAY`).catch(orEmpty("sources:699"))).map((r) => r.d));
   for (let back = 1; back <= 14; back++) {
     const day = iso(new Date(Date.now() - back * 864e5));
     if (back > 3 && have.has(day)) continue;
@@ -746,7 +747,7 @@ export async function mandiMarkets() {
             MIN(min_price) AS lo, MAX(max_price) AS hi, SUM(arrival) AS arrival
      FROM ${ops("mandi_market_prices")} WHERE date > (SELECT MAX(date) FROM ${ops("mandi_market_prices")}) - INTERVAL 14 DAY
      GROUP BY date, market, commodity ORDER BY commodity, market, date`
-  ).catch(() => [] as Row[]);
+  ).catch(orEmpty("sources:749"));
   const dates = [...new Set(rows.map((r) => r.d as string))].sort();
   const latest = dates[dates.length - 1] ?? null;
   const cell = new Map<string, Row[]>();
@@ -793,7 +794,7 @@ export async function mandiWeekly(scope: "chennai_region" | "tamil_nadu") {
   const rows = await q(
     `SELECT DATE_FORMAT(week_start, '%Y-%m-%d') AS w, week_label, commodity, price, districts, chg_week, chg_month, chg_year
      FROM ${ops("mandi_weekly")} WHERE scope = ? ORDER BY commodity, week_start`, [scope]
-  ).catch(() => [] as Row[]);
+  ).catch(orEmpty("sources:796"));
   const by = new Map<string, Row[]>();
   for (const r of rows) (by.get(r.commodity) ?? by.set(r.commodity, []).get(r.commodity)!).push(r);
   return WATCH.map(([name]) => name).filter((n) => by.has(n)).map((commodity) => {
@@ -813,7 +814,7 @@ export async function mandi(scope: "chennai_markets" | "tamil_nadu") {
     `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, commodity, cmdt_group, price, arrival, msp FROM ${ops("mandi_prices")}
      WHERE scope = ? AND date > (SELECT MAX(date) FROM ${ops("mandi_prices")} WHERE scope = ?) - INTERVAL 31 DAY ORDER BY commodity, date`,
     [scope, scope]
-  ).catch(() => [] as Row[]);
+  ).catch(orEmpty("sources:816"));
   const by = new Map<string, Row[]>();
   for (const r of rows) (by.get(r.commodity) ?? by.set(r.commodity, []).get(r.commodity)!).push(r);
   const out = [...by.entries()].map(([commodity, s]) => {

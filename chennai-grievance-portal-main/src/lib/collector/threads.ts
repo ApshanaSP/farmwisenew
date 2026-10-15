@@ -25,6 +25,7 @@ import crypto from "crypto";
 import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { categories } from "@/lib/collector/nlp";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -156,7 +157,7 @@ async function load(now: string, days: number): Promise<Doc[]> {
        FROM ${ops("source_items")} i JOIN ${ops("sources")} s ON s.source_id = i.source_id
        WHERE s.kind IN ('rss', 'html', 'json', 'ocr') AND (i.published_at IS NOT NULL OR i.origin = 'ocr')
          AND COALESCE(i.published_at, i.fetched_at) > (? - INTERVAL ? DAY)
-         AND COALESCE(i.published_at, i.fetched_at) <= ? + INTERVAL 1 DAY`, [now, days, now]).catch(() => [] as Row[]),
+         AND COALESCE(i.published_at, i.fetched_at) <= ? + INTERVAL 1 DAY`, [now, days, now]).catch(orEmpty("threads:159")),
     wards()
   ]);
   const cats = new Map(categories().map((c) => [c.code, c.lead]));
@@ -337,7 +338,7 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
 
 /** The pipeline build the stories were threaded from: they only change when a new build is published. */
 async function buildStamp(): Promise<string> {
-  const [r] = await q(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).catch(() => [] as Row[]);
+  const [r] = await q(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).catch(orEmpty("threads:340"));
   return String(r?.v ?? "");
 }
 

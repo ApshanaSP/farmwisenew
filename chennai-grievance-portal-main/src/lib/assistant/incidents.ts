@@ -9,6 +9,7 @@ import intelPool, { TITLE } from "@/lib/collector/db";
 import { explain, incident as incidentFull, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -207,7 +208,7 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
   const [[r], full, steps] = await Promise.all([
     q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
     incidentFull(id),
-    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(() => [] as Row[])
+    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210"))
   ]);
   if (!r || !full) return null;
   const why = explain(r);

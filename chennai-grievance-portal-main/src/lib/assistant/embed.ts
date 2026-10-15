@@ -19,6 +19,7 @@ import crypto from "crypto";
 import { pathToFileURL } from "url";
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
+import { orEmpty } from "@/lib/fallback";
 
 const MODEL = (process.env.AI_EMBED_MODEL ?? "").trim() || "Xenova/multilingual-e5-base";
 const DIR = path.join(process.cwd(), "data", "embeddings");
@@ -238,7 +239,7 @@ export function warmUp(_now?: string) {
   S.building = (async () => {
     // once per data build: the clock time ("now") moves every 30 seconds, and keying on it re-ran the whole update
     // on almost every question
-    const [r] = await intelPool.query<RowDataPacket[]>(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).then(([x]) => x).catch(() => [] as RowDataPacket[]);
+    const [r] = await intelPool.query<RowDataPacket[]>(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).then(([x]) => x).catch(orEmpty("embed:241"));
     const build = String(r?.v ?? "");
     // an index held from before the keyword field existed is refreshed (metadata only: its vectors are reused)
     const current = !!S.index && S.index.meta.values().next().value?.words !== undefined;

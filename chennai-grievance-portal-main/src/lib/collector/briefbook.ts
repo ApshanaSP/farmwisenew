@@ -7,13 +7,15 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import { PERIODS, explain, periodWindow, type Period } from "@/lib/collector/intel";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
   const [r] = await intelPool.query<RowDataPacket[]>(sql, params);
   return r as unknown as T[];
 }
-const safe = <T>(p: Promise<T[]>) => p.catch(() => [] as T[]);
+// an optional table may be missing; any other failure is logged (lib/fallback.ts)
+const safe = <T>(p: Promise<T[]>) => p.catch(orEmpty("briefbook")) as Promise<T[]>;
 const n = (v: unknown) => Number(v ?? 0);
 
 export interface BookScope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }

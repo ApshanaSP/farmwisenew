@@ -19,6 +19,7 @@ import { PERIODS, asOf, newsStories, periodWindow, type Period } from "@/lib/col
 import { categories } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
+import { orEmpty } from "@/lib/fallback";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -175,11 +176,11 @@ async function dayFacts(s: BriefScope) {
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.awaiting_collector = 1${f.sql}`, f.params),
     q(`SELECT dp.name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe ${FROM} WHERE ${W} GROUP BY dp.name ORDER BY n DESC LIMIT 5`, WP),
     q(`SELECT a.category_code AS cat, a.zone_no AS zone, a.observed, a.ratio, a.kind, a.rise_days, DATE_FORMAT(a.date, '%Y-%m-%d') AS day
-       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 3 DAY ${s.zone ? "AND a.zone_no = ?" : ""} ORDER BY a.ratio DESC LIMIT 4`, s.zone ? [now, s.zone] : [now]).catch(() => [] as Row[]),
-    q(`SELECT value, detail FROM observation_signals WHERE metric = 'imd_warning_level' ORDER BY value DESC LIMIT 1`).catch(() => [] as Row[]),
+       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 3 DAY ${s.zone ? "AND a.zone_no = ?" : ""} ORDER BY a.ratio DESC LIMIT 4`, s.zone ? [now, s.zone] : [now]).catch(orEmpty("aibrief:178")),
+    q(`SELECT value, detail FROM observation_signals WHERE metric = 'imd_warning_level' ORDER BY value DESC LIMIT 1`).catch(orEmpty("aibrief:179")),
     q(`SELECT metric, ROUND(AVG(value), 1) AS v FROM (
          SELECT o.metric, o.place_id, o.value, ROW_NUMBER() OVER (PARTITION BY o.metric, o.place_id ORDER BY o.observed_at DESC) rn
-         FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(() => [] as Row[]),
+         FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(orEmpty("aibrief:182")),
     scopeLabel(s)
   ]);
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));

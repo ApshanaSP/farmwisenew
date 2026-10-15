@@ -11,6 +11,7 @@ import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from 
 import { briefingBook } from "@/lib/collector/briefbook";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
+import { orEmpty } from "@/lib/fallback";
 
 /** An empty price table, for the parts that do not show prices. */
 const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
@@ -201,10 +202,10 @@ export async function insights(period: Period, zone: number | null, dept: string
   // only for the whole district: a zone or department view has its own figures
   const whole = !zone && !dept && !s.cat && !s.taluk;
   const [brief] = whole && B ? await q(`SELECT ai_summary, ai_summary_ta FROM briefings WHERE period = ? ORDER BY as_of DESC LIMIT 1`, [period])
-    .catch(() => [] as Row[]) : [];
+    .catch(orEmpty("insights:204")) : [];
   const opening = brief?.ai_summary ? { en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null } : null;
   // how "most urgent first" is ordered: hand-set priority weights, or weights learned from the Collector's decisions
-  const [pl] = B ? await q(`SELECT value FROM metrics WHERE metric = 'priority_learning'`).catch(() => [] as Row[]) : [];
+  const [pl] = B ? await q(`SELECT value FROM metrics WHERE metric = 'priority_learning'`).catch(orEmpty("insights:207")) : [];
   const ranking = rankingOf(pl?.value);
   // page 2: the Collector's daily briefing, every section
   const book = B ? await briefingBook(s, now, opening) : null;
@@ -238,10 +239,10 @@ export async function insights(period: Period, zone: number | null, dept: string
       const days = a.kind === "slow_rise" ? Math.max(1, Number(a.rise_days) || 1) : 1;
       return q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i
         WHERE i.category_code = ? AND i.zone_no = ? AND DATE(i.first_reported_at) > DATE(?) - INTERVAL ? DAY AND DATE(i.first_reported_at) <= DATE(?)
-        ORDER BY i.first_reported_at DESC LIMIT 12`, [a.cat, a.zone, a.day, days, a.day]).catch(() => [] as Row[]);
+        ORDER BY i.first_reported_at DESC LIMIT 12`, [a.cat, a.zone, a.day, days, a.day]).catch(orEmpty("insights:241"));
     })),
     Promise.all(hotspots.slice(0, 20).map((h) => q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i WHERE i.hotspot_id = ?
-      ORDER BY i.first_reported_at DESC LIMIT 12`, [h.id]).catch(() => [] as Row[])))
+      ORDER BY i.first_reported_at DESC LIMIT 12`, [h.id]).catch(orEmpty("insights:244"))))
   ]);
   const exampleOf = (rows: Row[]) => ({
     example: rows[0]?.title ? String(rows[0].title) : null,
@@ -346,7 +347,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const placedRows = T ? await q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.zone_name, i.lat, i.lon, p.place, p.how,
       DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
     FROM _placed p JOIN incidents i ON i.incident_id = p.incident_id WHERE ${rw.sql} AND i.is_open = 1
-    ORDER BY i.first_reported_at DESC LIMIT 120`, rw.params).catch(() => [] as Row[]) : [];
+    ORDER BY i.first_reported_at DESC LIMIT 120`, rw.params).catch(orEmpty("insights:349")) : [];
   const wards: Ward[] = wardRows.map((r) => ({ ward_no: Number(r.ward_no), zone_no: Number(r.zone_no), lat: Number(r.lat), lon: Number(r.lon) }));
   const places = T ? reviewLocations(unplaced, wards, await placeResolver().catch(() => () => null)) : null;
   // Items from sources the Collector added: civic issues first, then the newest.
