@@ -27,6 +27,8 @@ export const MAX_ROWS = 50_000;
 export const MAX_COLS = 60;
 
 export class ParseError extends Error {}
+/** A message for the Collector ("This link is already being fetched."): shown as it is, never as an internal failure. */
+export class UserError extends Error {}
 
 /** Read a file's bytes. `name` decides the format when the bytes do not. */
 export function parseFile(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Table {

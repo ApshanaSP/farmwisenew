@@ -13,7 +13,7 @@ import { answerText, describeFilter, runPlan, type Names } from "@/lib/studio/en
 import { drill } from "@/lib/studio/drill";
 import { computeInsights } from "@/lib/studio/insights";
 import { LINK_VERSION, crossLink } from "@/lib/studio/link";
-import { parseFile, type Table } from "@/lib/studio/parse";
+import { UserError, parseFile, type Table } from "@/lib/studio/parse";
 import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
 import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
@@ -113,7 +113,7 @@ export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   if (table.caption) emit({ t: "log", text: `Title above the table kept as context: "${table.caption.slice(0, 120)}"` });
   if (table.sheets.length > 1) emit({ t: "log", text: `Workbook has ${table.sheets.length} sheets; read the largest, "${table.sheet}".` });
   if (table.truncated) emit({ t: "log", text: `Only the first ${table.rows.length.toLocaleString("en-IN")} rows were read (${table.truncated.toLocaleString("en-IN")} more in the file).` });
-  if (!table.rows.length) throw new Error("The file has a header but no rows.");
+  if (!table.rows.length) throw new UserError("The file has a header but no rows.");
   saveSource(id, inp.buf);
   return run({ id, table, source, name: inp.name ?? null, user: inp.user, prior: null, steps: [readLog], sample: inp.kind === "sample", force: inp.force }, emit);
 }
@@ -152,7 +152,7 @@ function tableOf(meta: DatasetMeta): Table {
   const c = cands.find((f) => f.cand.id === meta.source.connect?.choice) ?? cands[0];
   if (c) return withTopics(c.table);
   const buf = getSource(meta.id);
-  if (!buf) throw new Error("This dataset's original file is no longer here.");
+  if (!buf) throw new UserError("This dataset's original file is no longer here.");
   return withTopics(parseFile(buf, meta.source.file, "", meta.source.url ?? undefined));
 }
 const sameHeaders = (t: Table, meta: DatasetMeta) => t.headers.length === meta.profile.length && t.headers.every((h, i) => h === meta.profile[i]?.header);
@@ -160,7 +160,7 @@ const sameHeaders = (t: Table, meta: DatasetMeta) => t.headers.length === meta.p
 /** The same file again with the Collector's corrections to what columns mean. */
 export async function remap(id: string, changes: { key: string; role: Role; label?: string }[], user: string, emit: Emit): Promise<string> {
   const meta = getMeta(id);
-  if (!meta) throw new Error("This dataset's original file is no longer here.");
+  if (!meta) throw new UserError("This dataset's original file is no longer here.");
   const table = tableOf(meta);
   emit({ t: "step", step: "read", state: "done", detail: rowsCols(table), by: "code", ms: 0 });
   const prior = respec(meta.spec, meta.profile, changes);
@@ -170,9 +170,9 @@ export async function remap(id: string, changes: { key: string; role: Role; labe
 /** Another of the link's candidates (another table on the page, the file it links): the agents read it afresh. */
 export async function chooseCandidate(id: string, candId: string, user: string, emit: Emit): Promise<string> {
   const meta = getMeta(id);
-  if (!meta?.source.connect) throw new Error("Only a dataset added from a link has other tables to choose.");
+  if (!meta?.source.connect) throw new UserError("Only a dataset added from a link has other tables to choose.");
   const found = getCandidates(id).find((f) => f.cand.id === candId);
-  if (!found) throw new Error("That table is no longer on the saved page. Fetch the link again.");
+  if (!found) throw new UserError("That table is no longer on the saved page. Fetch the link again.");
   const table = withTopics(found.table);
   emit({ t: "step", step: "read", state: "done", detail: `${rowsCols(table)} · ${found.cand.label}`, by: "code", ms: 0 });
   const connect: ConnectInfo = { ...meta.source.connect, choice: candId, via: found.cand.label, hash: tableHash(found.table) };
@@ -183,7 +183,7 @@ export async function chooseCandidate(id: string, candId: string, user: string, 
 /** "Use anyway": a run the Relevance gate stopped, resumed past the gate with the reading it already had. */
 export async function forceIngest(id: string, user: string, emit: Emit): Promise<string> {
   const p = getPending(id);
-  if (!p) throw new Error("That stopped run is no longer waiting. Add the data again.");
+  if (!p) throw new UserError("That stopped run is no longer waiting. Add the data again.");
   emit({ t: "step", step: "read", state: "done", detail: rowsCols(p.table), by: "code", ms: 0 });
   dropPending(id);
   return run({ id, table: p.table, source: p.source, name: p.name, user, prior: p.spec, steps: [], sample: p.sample, force: true }, emit);
@@ -198,8 +198,8 @@ const running = new Set<string>();
  */
 export async function refreshDataset(id: string, user: string, emit: Emit): Promise<string> {
   const meta = getMeta(id);
-  if (!meta?.source.url) throw new Error("Only data added by a link can be fetched again.");
-  if (running.has(id)) throw new Error("This link is already being fetched.");
+  if (!meta?.source.url) throw new UserError("Only data added by a link can be fetched again.");
+  if (running.has(id)) throw new UserError("This link is already being fetched.");
   running.add(id);
   const prev = meta.source.connect ?? null;
   const vault = getVault(id);
@@ -251,7 +251,7 @@ export async function refreshDataset(id: string, user: string, emit: Emit): Prom
 /** How often a link refreshes by itself (minutes; null: only by hand). */
 export function setSchedule(id: string, every: number | null) {
   const meta = getMeta(id);
-  if (!meta?.source.connect) throw new Error("Only data added by a link can refresh on its own.");
+  if (!meta?.source.connect) throw new UserError("Only data added by a link can refresh on its own.");
   saveMeta({ ...meta, source: { ...meta.source, connect: { ...meta.source.connect, every } } });
 }
 
@@ -452,7 +452,7 @@ async function writeBrief(ins: Insight[], spec: Spec, rows: number, window: Data
 /** The insights and brief computed again over the stored rows (a dataset added before the brief existed, or "re-analyse"). */
 export async function analyse(id: string, user: string): Promise<Brief> {
   const meta = getMeta(id);
-  if (!meta) throw new Error("Unknown dataset.");
+  if (!meta) throw new UserError("Unknown dataset.");
   const rows = getRows(id);
   const names = namesOf(await loadRefs());
   const ins = computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names);
@@ -513,14 +513,14 @@ async function relink(meta: DatasetMeta, rows: DRow[], refs: Refs, names: Names)
 /** One mark of a chart opened (see drill.ts). */
 export async function drillInto(id: string, plan: Plan, key: string | number | null, extra: Filter[]) {
   const meta = getMeta(id);
-  if (!meta) throw new Error("Unknown dataset.");
+  if (!meta) throw new UserError("Unknown dataset.");
   return drill(meta, getRows(id), plan, key, extra, namesOf(await loadRefs()));
 }
 
 /** A draft note to the department about a drilled finding. */
 export async function draftNote(id: string, plan: Plan, key: string | number | null, extra: Filter[], user: string) {
   const meta = getMeta(id);
-  if (!meta) throw new Error("Unknown dataset.");
+  if (!meta) throw new UserError("Unknown dataset.");
   const d = await drill(meta, getRows(id), plan, key, extra, namesOf(await loadRefs()));
   return noteAI({ spec: meta.spec, label: d.label === plan.title ? plan.title : `${d.label} (${plan.title.toLowerCase()})`, facts: d.facts, user });
 }
@@ -528,7 +528,7 @@ export async function draftNote(id: string, plan: Plan, key: string | number | n
 /** A question to one dataset: the AI's plan (or the rules'), run by the engine. */
 export async function ask(id: string, question: string, user: string) {
   const meta = getMeta(id);
-  if (!meta) throw new Error("Unknown dataset.");
+  if (!meta) throw new UserError("Unknown dataset.");
   const rows = getRows(id);
   const refs = await loadRefs();
   const names = namesOf(refs);
