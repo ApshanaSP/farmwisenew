@@ -59,7 +59,7 @@ function fresh() {
 
 const S = { period: "daily" as const, zone: null, dept: null, cat: null, taluk: null };
 const L = { period: "daily" as const, zone: null, dept: null, sev: null, cat: null, taluk: null, place: null, q: null,
-  sort: "t" as const, dir: -1, page: 0, scope: "period" as const };
+  sort: "t" as const, dir: -1 as const, page: 0, scope: "period" as const };
 
 describe("tiles, lists and snapshot agree on one scope", () => {
   beforeEach(() => { h.db = fresh(); });
