@@ -45,6 +45,7 @@ import { LIMITS, forModel } from "@/lib/assistant/limits";
 import { customWindow, fastPath } from "@/lib/assistant/fastpath";
 import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
+import { deptFromWords } from "@/lib/assistant/deptwords";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
 import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
@@ -425,19 +426,11 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   }
   // a department the message names by its usual short name, when the router left the filter empty ("PWD pending works list")
   if (!scope.dept && !base.dept && (o.intent === "tool_question" || o.intent === "plan_edit")) {
-    const ALIAS: [RegExp, string[]][] = [[/\bpwd\b/i, ["PWD-WRD", "PWD-BLD"]], [/\b(metro ?water|cmwssb)\b/i, ["CMWSSB"]], [/\bswd\b|storm ?water drain(s|age)? (dept|department|wing)/i, ["GCC-SWD"]],
-      [/\bswm\b|solid waste management/i, ["GCC-SWM"]], [/\btnpcb\b|pollution control board/i, ["TNPCB"]], [/\bpolice\b(?! station)/i, ["POL-GCP"]]];
-    const hit = ALIAS.find(([re]) => re.test(message));
-    const codes = hit ? hit[1].filter((c) => n.depts.has(c)) : [];
-    // "PWD buildings" / "PWD water": the one named
-    const pick = codes.find((c) => (/build/i.test(message) && /BLD/.test(c)) || (/water|lake|tank|canal|river/i.test(message) && /WRD/.test(c))) ?? codes[0];
-    if (pick) {
-      scope.dept = pick;
-      o.scope.dept = pick;
-      const others = codes.filter((c) => c !== pick);
-      if (others.length && pick === codes[0] && !/build|water|lake|tank|canal|river/i.test(message))
-        deptAlt = { note: `"PWD" can mean ${codes.map((c) => n.depts.get(c)?.name ?? c).join(" or ")}: this covers ${n.depts.get(pick)?.name}.`,
-          chips: others.map((c) => message.replace(/\bpwd\b/i, n.depts.get(c)?.name ?? c)) };
+    const named = deptFromWords(message, n);
+    if (named) {
+      scope.dept = named.code;
+      o.scope.dept = named.code;
+      if (named.alt) deptAlt = named.alt;
     }
   }
   // A category the question names must narrow the data, or the answer would claim it without covering it.

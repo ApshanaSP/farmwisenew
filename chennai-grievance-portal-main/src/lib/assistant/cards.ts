@@ -69,9 +69,24 @@ export function clarifyCard(base: AnswerCard, question: string): AnswerCard {
   return { ...base, kind: "clarify", display: "text", headline: question, answerMarkdown: question, voiceSummary: question, chips: EXAMPLES[base.language].slice(0, 3) };
 }
 
-export function smalltalkCard(base: AnswerCard): AnswerCard {
-  const t = TEXT.greeting[base.language];
-  return { ...base, display: "text", headline: t, answerMarkdown: t, voiceSummary: t, chips: EXAMPLES[base.language], scope: null, scopeLine: "" };
+export function smalltalkCard(base: AnswerCard, message = ""): AnswerCard {
+  // thanks is answered as thanks, not with a greeting; goodbye as goodbye
+  const thanks = /\b(thanks|thank you|thx|nandri)\b|நன்றி/i.test(message);
+  const bye = !thanks && /\b(bye|goodbye|good night)\b/i.test(message);
+  const t = thanks ? L("You're welcome. Ask me anything else about the district's data.", "நன்றி. மாவட்டத் தரவு பற்றி வேறு எதையும் கேளுங்கள்.",
+    "Welcome. Vera edhaachu district data pathi kelunga.")[base.language]
+    : bye ? L("Goodbye. The conversation is saved; open it again any time.", "சென்று வாருங்கள். உரையாடல் சேமிக்கப்பட்டுள்ளது.", "Bye. Conversation save aagirukku.")[base.language]
+      : TEXT.greeting[base.language];
+  return { ...base, display: "text", headline: t, answerMarkdown: t, voiceSummary: t, chips: thanks || bye ? [] : EXAMPLES[base.language], scope: null, scopeLine: "" };
+}
+
+/** "reset", "start over": the conversation's memory is cleared (the next question starts with no follow-up context). */
+export function resetCard(base: AnswerCard): AnswerCard {
+  const t = L("Done: starting fresh. Earlier questions in this chat no longer carry over.", "சரி: புதிதாகத் தொடங்குகிறோம். முந்தைய கேள்விகள் இனி தொடராது.",
+    "Sari: pudhusa start pannrom. Munnadi questions ini carry aagadhu.")[base.language];
+  return { ...base, display: "text", headline: t, answerMarkdown: t, voiceSummary: t, chips: EXAMPLES[base.language], scope: null, scopeLine: "",
+    context: { lastIntent: "reset", activeFilters: {}, resultIds: [], resultTitles: [], storyIds: [], storyTitles: [], selectedIncidentId: null, selectedTitle: null,
+      selectedNewsStoryId: null, lastVisualization: null } };
 }
 
 export function notYetCard(base: AnswerCard): AnswerCard {

@@ -9,6 +9,7 @@ import { baseCard } from "@/lib/assistant/cards";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, detectIntent, topicByKey, type Detected, type Topic } from "@/lib/assistant/intent";
+import { deptFromWords } from "@/lib/assistant/deptwords";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
 import { actionsFor, anySynthetic, categoryRanking, countIncidents, countResolved, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
@@ -51,7 +52,8 @@ export function periodNamed(text: string): Period | null {
 
 /** `decided`: the intent the router understood; without it (no model) the rules read the message. */
 /** A count said in Tamil or Tanglish; null for English. `where` is the English place phrase (" in Velachery (Adyar zone)"). */
-export function countInLanguage(lang: string, c: { n: number; prev: number; severe: number; open: number; dead: number; kind: string; period: string; where: string }):
+export function countInLanguage(lang: string, c: { n: number; prev: number; severe: number; open: number; dead: number; kind: string; period: string; where: string;
+  measure?: "deaths" | "complaints" | null; complaints?: number; openOnly?: boolean }):
   { headline: string; text: string } | null {
   if (lang !== "ta" && lang !== "tanglish") return null;
   const place = c.where.replace(/^\s*in\s+/i, "").trim();
@@ -59,12 +61,37 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
   const f = (v: number) => v.toLocaleString("en-IN");
   if (lang === "tanglish") {
     const when = yday ? "netru" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
-    const text = `${place ? `${place}-la ` : ""}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
+    const at = place ? `${place}-la ` : "";
+    if (c.measure === "deaths")
+      return { headline: `${f(c.dead)} per uyirizhappu · ${when}`, text: `${at}${when} ${c.kind}-la ${f(c.dead)} per uyirizhandhaanga (${f(c.n)} ${c.kind}, ${f(c.severe)} severe).` };
+    if (c.measure === "complaints")
+      return { headline: `${f(c.complaints ?? 0)} ${c.openOnly ? "open " : ""}complaints · ${when}`,
+        text: `${at}${when} ${f(c.complaints ?? 0)} ${c.openOnly ? "open " : ""}citizen complaints irukku (${f(c.n)} ${c.kind}; ${f(c.open)} innum open).` };
+    const text = `${at}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
     return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
   }
   const when = yday ? "நேற்று" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
-  const text = `${when}${place ? ` ${place} பகுதியில்` : ""} ${f(c.n)} ${c.kind} பதிவாகியுள்ளன${c.prev ? ` (முந்தைய காலத்தில் ${f(c.prev)})` : ""}: ${f(c.severe)} கடுமையானவை, ${f(c.open)} இன்னும் நிலுவையில்${c.dead ? `, ${f(c.dead)} உயிரிழப்பு` : ""}.`;
-  return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
+  const kind = tamilKind(c.kind);
+  const at = place ? ` ${place} பகுதியில்` : "";
+  if (c.measure === "deaths")
+    return { headline: `${f(c.dead)} உயிரிழப்பு · ${when}`, text: `${when}${at} ${kind} காரணமாக ${f(c.dead)} பேர் உயிரிழந்துள்ளனர் (${f(c.n)} ${kind}, ${f(c.severe)} கடுமையானவை).` };
+  if (c.measure === "complaints")
+    return { headline: `${f(c.complaints ?? 0)} ${c.openOnly ? "நிலுவையிலுள்ள " : ""}புகார்கள் · ${when}`,
+      text: `${when}${at} ${f(c.complaints ?? 0)} ${c.openOnly ? "நிலுவையிலுள்ள " : ""}குடிமக்கள் புகார்கள் உள்ளன (${f(c.n)} ${kind}; ${f(c.open)} இன்னும் நிலுவையில்).` };
+  const text = `${when}${at} ${f(c.n)} ${kind} பதிவாகியுள்ளன${c.prev ? ` (முந்தைய காலத்தில் ${f(c.prev)})` : ""}: ${f(c.severe)} கடுமையானவை, ${f(c.open)} இன்னும் நிலுவையில்${c.dead ? `, ${f(c.dead)} உயிரிழப்பு` : ""}.`;
+  return { headline: `${f(c.n)} ${kind} · ${when}`, text };
+}
+
+/** The incident kind in Tamil, for the common topics; anything else stays as written. */
+const TA_KIND: [RegExp, string][] = [
+  [/road accidents?/, "சாலை விபத்துகள்"], [/murders?/, "கொலைகள்"], [/fires?/, "தீ விபத்துகள்"], [/flooding incidents?|flooding/, "வெள்ள பாதிப்புகள்"],
+  [/garbage incidents?|garbage/, "குப்பை புகார்கள்"], [/theft and robbery( incidents?)?/, "திருட்டு, கொள்ளை சம்பவங்கள்"], [/crime( incidents?)?/, "குற்றச் சம்பவங்கள்"],
+  [/drinking water( incidents?)?/, "குடிநீர் பிரச்சினைகள்"], [/drainage and sewage( incidents?)?/, "கழிவுநீர் பிரச்சினைகள்"], [/dengue and disease( incidents?)?/, "டெங்கு, நோய் பாதிப்புகள்"],
+  [/^incidents?$/, "சம்பவங்கள்"]
+];
+function tamilKind(kind: string): string {
+  const k = kind.toLowerCase().trim();
+  return TA_KIND.find(([re]) => re.test(k))?.[1] ?? kind;
 }
 
 export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOutput | null> {
@@ -89,7 +116,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   if (i.place?.zone != null && !i.place?.asked_for_taluk) (f.zone = Number(i.place.zone), f.taluk = null);
   if (i.place?.asked_for_taluk && i.place?.taluk_named?.code) (f.taluk = String(i.place.taluk_named.code), f.zone = null);
   if (/\b(whole district|all zones|district[- ]wide|everywhere)\b/i.test(i.message)) (f.zone = null, f.taluk = null);
+  // a department the question names ("open complaints for Metrowater", "police cases this week"); never over an officer's own
+  const deptNamed = !i.lockDept ? deptFromWords(i.message, i.names) : null;
+  if (deptNamed) f.dept = deptNamed.code;
   if (i.lockDept) f.dept = i.lockDept;
+  // one ward ("ward 106"): narrower than its zone
+  const ward = i.place?.ward_asked && i.place?.ward != null ? Number(i.place.ward) : null;
   const topic: Topic | null = d.topic ?? (f.topic && prev ? topicByKey(f.topic) ?? { key: f.topic, label: f.topic, cats: catsOf(f, i) ?? [] } : null);
   // the question's own window ("last 10 days") and a locality inside the zone ("Velachery"), never rounded to the console's
   // period or widened to the whole zone
@@ -98,18 +130,26 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const locality = i.place?.place && !i.place?.asked_for_taluk && f.zone != null && String(i.place.place).toLowerCase() !== (zoneName ?? "").toLowerCase()
     ? String(i.place.place) : null;
   const inc: IncidentFilters = { period: (custom?.period ?? f.period) as Period, zone: f.zone, taluk: f.taluk, dept: f.dept, cats: topic?.cats ?? (f.cat ? [f.cat] : null),
-    sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly, hours: custom?.hours ?? null, place: locality, offset: custom?.offset ?? 0, overdue: !!f.overdue };
+    sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly, hours: custom?.hours ?? null, place: ward ? null : locality, offset: custom?.offset ?? 0, overdue: !!f.overdue,
+    ward };
   const scope: Scope = { period: inc.period, zone: f.zone ?? null, dept: f.dept ?? null, cat: f.cat ?? null, taluk: f.taluk ?? null };
   const card = baseCard(i.lang, scope, describeScope(scope, i.names, i.lang, i.now), i.now);
-  if (custom || locality) {
+  // what the answer calls the place: a ward by its number, a locality by its name
+  const spot = ward ? `Ward ${ward}` : locality;
+  if (custom || spot) {
     const segs = card.scopeLine.split(" · ");
     if (custom) segs[0] = cap(custom.label);
-    if (locality && zoneName) segs[1] = `${locality}, in ${segs[1] ?? `${zoneName} zone`}`;
+    if (spot && zoneName) segs[1] = `${spot}, in ${segs[1] ?? `${zoneName} zone`}`;
     card.scopeLine = segs.join(" · ");
-    if (locality) card.sources.assumptions.push(`"${locality}" is a locality in ${zoneName} zone: incidents whose place names it.`);
+    if (ward) card.sources.assumptions.push(`Ward ${ward} is in ${zoneName} zone: incidents recorded in that ward.`);
+    else if (locality) card.sources.assumptions.push(`"${locality}" is a locality in ${zoneName} zone: incidents whose place names it.`);
+  }
+  if (deptNamed?.alt) {
+    card.caveats.push(deptNamed.alt.note);
+    card.chips = [...deptNamed.alt.chips, ...(card.chips ?? [])].slice(0, 4);
   }
   const pl = (p: Period) => custom?.label ?? periodLabel(p);
-  const sw = locality ? ` in ${locality}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names);
+  const sw = spot ? ` in ${spot}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names);
   card.intent = d.intent;
   card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
   card.sources.assumptions.push(`Read as ${d.intent.toLowerCase().replace(/_/g, " ")}: ${d.because}.`);
@@ -180,17 +220,46 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       const c = await countIncidents(inc, i.now);
       const kind = countNoun(what, c.n);
+      const fmt = (v: number) => v.toLocaleString("en-IN");
+      const P = pl(inc.period);
       card.responseType = "kpi";
       card.display = "kpi";
       card.visualAsked = true;
-      card.headline = `${c.n.toLocaleString("en-IN")} ${kind} · ${pl(inc.period)}`;
-      card.answerMarkdown = `${c.n.toLocaleString("en-IN")} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${pl(inc.period)}${sw}`
-        + `${c.prev ? ` (${c.prev.toLocaleString("en-IN")} in the period before)` : ""}: ${c.severe} severe, ${c.open} still open${c.dead ? `, ${c.dead} ${c.dead === 1 ? "death" : "deaths"}` : ""}.`;
+      // the one-line answer to what was asked first (deaths, complaints, or this period against the one before), then the rest
+      const change = (now: number, before: number) => (before ? `${now >= before ? "up" : "down"} from ${fmt(before)} in the period before` : "none in the period before");
+      const rest = `${c.severe} severe, ${fmt(c.open)} still open${c.dead && d.measure !== "deaths" ? `, ${c.dead} ${c.dead === 1 ? "death" : "deaths"}` : ""}`;
+      if (d.measure === "deaths") {
+        const of = what || "incidents";
+        card.headline = `${fmt(c.dead)} ${c.dead === 1 ? "death" : "deaths"} in ${of} · ${P}`;
+        card.answerMarkdown = c.dead
+          ? `**${fmt(c.dead)}** ${c.dead === 1 ? "person died" : "people died"} in ${of} reported in the ${P}${sw} (${change(c.dead, c.prevDead)}).`
+            + `\n\n- ${fmt(c.n)} ${kind} in all${c.injured ? `, ${fmt(c.injured)} injured` : ""}\n- ${rest}`
+          : `No deaths were recorded in ${of} in the ${P}${sw}${c.prevDead ? ` (${fmt(c.prevDead)} in the period before)` : ""}. ${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported.`;
+        card.caveats.push("Deaths are counted once per incident, as the department records and confirmed news reports give them; a toll that only one outlet reports is held until confirmed.");
+      } else if (d.measure === "complaints") {
+        const open = d.openOnly;
+        const v = open ? c.openComplaints : c.complaints;
+        card.headline = `${fmt(v)} ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} · ${P}`;
+        card.answerMarkdown = `**${fmt(v)}** ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} in the ${P}${sw}`
+          + `${!open && d.vsPrevious ? ` (${change(c.complaints, c.prevComplaints)})` : ""}.`
+          + `\n\n- They are about ${fmt(c.n)} ${kind}${d.vsPrevious ? ` (${change(c.n, c.prev)})` : ""}\n- ${rest}`;
+      } else {
+        card.headline = `${fmt(c.n)} ${kind} · ${P}`;
+        card.answerMarkdown = `${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported in the ${P}${sw}`
+          + `${c.prev ? ` (${d.vsPrevious ? change(c.n, c.prev) : `${fmt(c.prev)} in the period before`})` : ""}: ${rest}.`;
+      }
       // a question in Tamil or Tanglish is answered in it ("Velachery la indha week evlo accidents?")
-      const local = countInLanguage(i.lang, { n: c.n, prev: c.prev, severe: c.severe, open: c.open, dead: c.dead, kind, period: pl(inc.period), where: sw });
+      const local = countInLanguage(i.lang, { n: c.n, prev: c.prev, severe: c.severe, open: c.open, dead: c.dead, kind, period: P, where: sw,
+        measure: d.measure ?? null, complaints: d.openOnly ? c.openComplaints : c.complaints, openOnly: d.openOnly });
       if (local) { card.headline = local.headline; card.answerMarkdown = local.text; card.voiceSummary = local.text; }
-      card.kpis = [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
-        { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
+      card.kpis = d.measure === "deaths"
+        ? [{ label: "Deaths", value: c.dead, prev: c.prevDead, tone: c.dead ? "sev" : undefined }, { label: "Incidents", value: c.n, prev: c.prev, tone: "info" },
+          ...(c.injured ? [{ label: "Injured", value: c.injured }] : [])]
+        : d.measure === "complaints"
+          ? [{ label: d.openOnly ? "Open complaints" : "Complaints", value: d.openOnly ? c.openComplaints : c.complaints, prev: d.openOnly ? undefined : c.prevComplaints, tone: "info" },
+            { label: "Incidents", value: c.n, prev: c.prev }, { label: "Still open", value: c.open }]
+          : [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
+            { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
       card.context = { ...ctxBase, lastResponseType: "kpi" };
       card.sources.tools.push({ name: "count_incidents", args: { ...inc }, ms: 0 });
       break;
@@ -451,7 +520,7 @@ export function customWindow(text: string): { hours: number; label: string; peri
 }
 
 function scopeWords(s: Scope, n: RefNames): string {
-  const parts = [s.zone != null ? `in ${n.zones.get(s.zone)?.name ?? `Zone ${s.zone}`} zone` : null, s.taluk ? `in ${s.taluk} taluk` : null,
+  const parts = [s.zone != null ? `in ${n.zones.get(s.zone)?.name ?? `Zone ${s.zone}`} zone` : null, s.taluk ? `in ${n.taluks.get(s.taluk)?.name ?? s.taluk} taluk` : null,
     s.dept ? `for ${n.depts.get(s.dept)?.name ?? s.dept}` : null].filter(Boolean);
   return parts.length ? ` ${parts.join(" ")}` : "";
 }

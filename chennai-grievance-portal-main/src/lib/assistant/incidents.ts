@@ -5,7 +5,8 @@
  * number-checked AI summary when it exists, else the rule-based summary.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool, { TITLE } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { explain, incident as incidentFull, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
@@ -17,6 +18,12 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
   return r as unknown as T[];
 }
 const num = (v: unknown) => Number(v ?? 0);
+/**
+ * Open and status as the console shows them: the pipeline's values with the Collector's latest decision on top (a resolved
+ * incident is no longer "still open" here either), so an answer and the KPI tile it matches agree.
+ */
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 export interface IncidentFilters {
   period: Period;
@@ -35,11 +42,13 @@ export interface IncidentFilters {
   offset?: number;
   /** only open incidents past their deadline */
   overdue?: boolean;
+  /** one GCC ward ("ward 106") */
+  ward?: number | null;
 }
 
 const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, i.status_std AS status,
-  i.is_open AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, ${EFF.status} AS status,
+  ${OPEN} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
   i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, i.verified,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due,
@@ -50,13 +59,14 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   const w = periodWindow(f.period, now, col, off + (f.offset ?? 0), hours ?? f.hours ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
+  if (f.ward) (parts.push("i.ward_no = ?"), params.push(f.ward));
   if (f.place) (parts.push("i.place_text LIKE ?"), params.push(`%${f.place.replace(/[%_]/g, "")}%`));
   if (f.taluk) (parts.push("i.taluk_code = ?"), params.push(f.taluk));
   if (f.dept) (parts.push("i.lead_dept = ?"), params.push(f.dept));
   if (f.cats?.length) (parts.push("i.category_code IN (?)"), params.push(f.cats));
   if (f.sev === "Severe") parts.push("i.severity_level = 'Severe'");
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
-  if (f.openOnly || f.overdue) parts.push("i.is_open = 1");
+  if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
   if (f.overdue) parts.push("i.sla_breached = 1");
   return { sql: parts.join(" AND "), params };
 }
@@ -134,7 +144,7 @@ const WIDER: Period[] = ["daily", "weekly", "monthly", "quarterly"];
  * period holds fewer than `n`, the window widens one step at a time (said on the card), so "top 3" shows three.
  */
 export async function rankedIncidents(f: IncidentFilters, now: string, n: number, order: "priority" | "recent" = "priority") {
-  const by = order === "priority" ? "i.is_open DESC, i.priority_score DESC, i.first_reported_at DESC" : "i.first_reported_at DESC";
+  const by = order === "priority" ? `${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC` : "i.first_reported_at DESC";
   let period = f.period, rows: Row[] = [], total = 0;
   for (let k = WIDER.indexOf(f.period); k < WIDER.length; k++) {
     period = WIDER[Math.max(0, k)];
@@ -151,8 +161,8 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
 /** The raw records of a window, most important first, with the window's open and complaint totals (a zone on a given day). */
 export async function windowRows(f: IncidentFilters, now: string, n: number): Promise<{ rows: Row[]; total: number; open: number; complaints: number }> {
   const w = where(f, now);
-  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY i.is_open DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
-    q(`SELECT COUNT(*) AS total, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints FROM incidents i WHERE ${w.sql}`, w.params)]);
+  const [rows, [t]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT ?`, [...w.params, n]),
+    q(`SELECT COUNT(*) AS total, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(CASE WHEN ${OPEN} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints FROM incidents i WHERE ${w.sql}`, w.params)]);
   return { rows, total: num(t?.total), open: num(t?.open), complaints: num(t?.complaints) };
 }
 
@@ -172,20 +182,27 @@ export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
   return ids.map((id) => by.get(id)).filter(Boolean).map((r) => itemOf(r!, ev.get(String(r!.id)) ?? []));
 }
 
-/** How many, with severe, open and deaths, against the period before. */
+/**
+ * How many, with severe, open, deaths, injuries and citizen complaints (all and still open), against the period before
+ * (incidents, deaths and complaints, so "deaths this week" and "complaints vs last month" compare like with like).
+ */
 export async function countIncidents(f: IncidentFilters, now: string) {
   const w = where(f, now), p = where(f, now, undefined, 1);
+  const cols = `COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open, SUM(COALESCE(i.dead, 0)) AS dead,
+    SUM(COALESCE(i.injured, 0)) AS injured, SUM(COALESCE(i.citizen_complaints, 0)) AS complaints,
+    SUM(CASE WHEN ${OPEN} = 1 THEN COALESCE(i.citizen_complaints, 0) ELSE 0 END) AS open_complaints`;
   const [[a], [b]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open, SUM(COALESCE(i.dead, 0)) AS dead FROM incidents i WHERE ${w.sql}`, w.params),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql}`, p.params)]);
-  return { n: num(a?.n), severe: num(a?.severe), open: num(a?.open), dead: num(a?.dead), prev: num(b?.n) };
+    q(`SELECT ${cols} FROM incidents i WHERE ${w.sql}`, w.params),
+    q(`SELECT ${cols} FROM incidents i WHERE ${p.sql}`, p.params)]);
+  return { n: num(a?.n), severe: num(a?.severe), open: num(a?.open), dead: num(a?.dead), injured: num(a?.injured), complaints: num(a?.complaints),
+    openComplaints: num(a?.open_complaints), prev: num(b?.n), prevDead: num(b?.dead), prevComplaints: num(b?.complaints) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
 export async function countResolved(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
   const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
-  const done = "i.is_open = 0 AND i.status_std = 'Resolved'";
+  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);

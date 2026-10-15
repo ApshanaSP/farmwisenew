@@ -30,8 +30,27 @@ import {
 } from "@/lib/assistant/queries";
 import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
 import { orNull } from "@/lib/fallback";
+import intelPool from "@/lib/collector/db";
+import type { RowDataPacket } from "mysql2";
 
 type Row = Record<string, any>;
+
+/**
+ * A zone or ward named by number: "zone 9" / "மண்டலம் 9" (1-15), "ward 106" / "வார்டு 106" (the GCC's 200 wards), with
+ * the ward's zone, taluk and centre from ref_wards. Null when the text names neither.
+ */
+export async function numberedPlace(text: string, names: Awaited<ReturnType<typeof refNames>>): Promise<Row | null> {
+  const ward = Number(text.match(/\bward\s*(?:no\.?|number|#)?\s*(\d{1,3})\b/i)?.[1] ?? text.match(/வார்டு\s*(\d{1,3})/)?.[1]);
+  if (ward >= 1 && ward <= 200) {
+    const [rows] = await intelPool.query<RowDataPacket[]>(
+      `SELECT ward_no, zone_no, taluk_code, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards WHERE ward_no = ? LIMIT 1`, [ward]);
+    const w = rows[0];
+    if (w) return { place: `Ward ${ward}`, ward, ward_asked: true, zone: Number(w.zone_no), taluk: w.taluk_code ?? null, lat: Number(w.lat), lon: Number(w.lon), conf: 1 };
+  }
+  const zone = Number(text.match(/\bzone\s*(?:no\.?|number|#)?\s*-?\s*(\d{1,2})\b/i)?.[1] ?? text.match(/மண்டலம்\s*(\d{1,2})/)?.[1]);
+  if (zone && names.zones.has(zone)) return { place: names.zones.get(zone)!.name, ward: null, zone, taluk: null, lat: null, lon: null, conf: 1 };
+  return null;
+}
 type Body = Omit<ToolResult, "tool" | "args">;
 
 export class ToolError extends Error {}
@@ -918,7 +937,10 @@ export const TOOLS = [
     description: "Turn a place name in English or Tamil (a locality, GCC area, zone or taluk) into its ward, zone and taluk, from the news monitor's gazetteer and the GCC area list. Also reports a revenue taluk named in the text (some names, such as Kolathur, are both a locality and a taluk).",
     args: z.object({ text: z.string().trim().min(2).max(120) }),
     async run({ text }) {
-      const [p, names, now] = await Promise.all([resolvePlace(text), refNames(), asOf()]);
+      const [names, now] = await Promise.all([refNames(), asOf()]);
+      // "zone 9", "ward 106" (and Tamil மண்டலம் 9, வார்டு 106): by number, which the gazetteer of names cannot find
+      const byNumber = await numberedPlace(text, names);
+      const p = byNumber ?? await resolvePlace(text);
       const taluk = p?.taluk ? names.taluks.get(p.taluk) : null;
       // The resolver prefers the most specific place, so "Kolathur" becomes the locality in Ayanavaram taluk;
       // a taluk named in the text is reported as well, with its note (Kolathur taluk is not coded by the sources).
