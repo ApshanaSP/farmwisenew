@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
 
     // Rate limit by IP and by email to slow down brute force / credential
     // stuffing without letting one IP lock out a legitimate user forever.
-    const ipLimit = checkRateLimit(`login-ip:${ip}`, ipLimit(ip, 20), 60 * 15);
+    const ipCheck = checkRateLimit(`login-ip:${ip}`, ipLimit(ip, 20), 60 * 15);
     const emailLimit = checkRateLimit(`login-email:${email}`, 8, 60 * 15);
 
-    if (!ipLimit.allowed || !emailLimit.allowed) {
+    if (!ipCheck.allowed || !emailLimit.allowed) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait a few minutes and try again." },
         { status: 429 }
