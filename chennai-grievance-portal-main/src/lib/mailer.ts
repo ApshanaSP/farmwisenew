@@ -1,8 +1,8 @@
 import fs from "fs";
 import tls from "tls";
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: Transporter | null = null;
 
 export function isSmtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -23,7 +23,7 @@ function trustedCa(): string[] | undefined {
   }
 }
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): Transporter | null {
   if (!isSmtpConfigured()) return null;
   if (!transporter) {
     const ca = trustedCa();
