@@ -57,3 +57,13 @@ def test_the_same_deaths_under_different_stories_are_one_incident():
     assert uf.find("NEWS-etv") == uf.find("NEWS-toi") == uf.find("NEWS-tnm")
     assert uf.find("NEWS-mdv") != uf.find("NEWS-toi")
     assert uf.find("NEWS-later") != uf.find("NEWS-toi")
+
+
+def test_horoscopes_and_natural_obituaries_are_not_incidents():
+    from dintel.loaders.news import not_an_incident
+    t = pd.Series(["Veteran filmmaker Singeetham Srinivasa Rao passes away at 94 in a Chennai hospital",
+                   "Spiritual Guru Kalki Bhagavan Passes Away In Chennai At 77, Final Rites To Be Conducted On Saturday",
+                   "இன்றைய ராசி பலன் - மேஷம் முதல் மீனம் வரை",
+                   "Youth passes away after bike accident on OMR", "Worker passed away after falling into stormwater drain",
+                   "Two killed in accident on Maduravoyal bypass road"])
+    assert not_an_incident(t).tolist() == [True, True, True, False, False, False]

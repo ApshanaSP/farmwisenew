@@ -113,6 +113,20 @@ def archival(titles: pd.Series, published: pd.Series) -> pd.Series:
     return pd.Series([one(str(t or ""), p) for t, p in zip(titles, pub)], index=titles.index, dtype=bool)
 
 
+# A horoscope column, or the obituary of a natural death, is news but not an incident (the website's newssanity.ts
+# notAnIncident: the same words).
+HOROSCOPE = re.compile(r"\b(horoscope|rasi ?palan|astrology|zodiac|panchang(?:am)?|nalla neram|rahu kalam|raghu kalam)\b|ராசி ?பலன்|இன்றைய ராசி|பஞ்சாங்கம்|ராகு காலம்|நல்ல நேரம்", re.I)
+OBITUARY = re.compile(r"\b(obituary|passes away|passed away|breathes? (?:his|her) last|demise|condolences?|last rites|final rites|funeral)\b|காலமானார்|இயற்கை எய்தினார்|இரங்கல்", re.I)
+NOT_NATURAL = re.compile(r"\b(accident|crash|collision|murder|murdered|stabbed|hacked|attack|fire|blaze|drown\w*|electrocut\w*|fell|fall|falls|falling|fallen|"
+                         r"collapse\w*|suicide|assault|gas|explosion|run over|hit by|killed|drain|sewer|manhole|injur\w*)\b|விபத்து|கொலை|தீ விபத்து|மூழ்கி|தற்கொலை|தாக்குதல்", re.I)
+
+
+def not_an_incident(titles: pd.Series) -> pd.Series:
+    """True for a horoscope column or the obituary of a natural death."""
+    t = titles.fillna("").astype(str)
+    return t.str.contains(HOROSCOPE) | (t.str.contains(OBITUARY) & ~t.str.contains(NOT_NATURAL))
+
+
 # Workers overcome by gas in a drain, sewer or tank were read as vector-borne disease (விஷ, poison, is in both).
 GAS = re.compile(r"\b(?:gas|fumes?|toxic|asphyxia\w*|suffocat\w*|manhole|septic|sewer|sewage tank|stormwater well|poisonous)\b|விஷவாயு|விஷ வாயு|கழிவுநீர்த் ?தொட்டி|மூச்சுத் ?திணற", re.I)
 DISEASE = re.compile(r"\b(?:dengue|malaria|chikungunya|cholera|typhoid|fever|mosquito|diarr\w*|jaundice|hepatitis|leptospir\w*|outbreak|infection|virus|viral|cases)\b|டெங்கு|காய்ச்சல்|கொசு|மலேரியா", re.I)
@@ -762,6 +776,7 @@ def to_events(d: pd.DataFrame, ref: Reference, snap: str | None) -> pd.DataFrame
     """Incident articles become events (severity capped at High until confirmed)."""
     x = d[(d["is_incident"] == 1) & d["category_code"].notna() & (d["category_code"] != "OTHER")].copy()
     x = x[~archival(x["title"], x["published_at"]).to_numpy()]
+    x = x[~not_an_incident(x["title"]).to_numpy()]
     gas_text = x["title"].fillna("") + " " + (x["title_en"].fillna("") if "title_en" in x else "")
     gas = (x["category_code"] == "VECTOR_DISEASE") & gas_text.str.contains(GAS) & ~gas_text.str.contains(DISEASE)
     if "DRAIN_WORKS_SAFETY" in ref.cat:
