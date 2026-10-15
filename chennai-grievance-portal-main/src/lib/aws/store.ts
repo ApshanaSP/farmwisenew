@@ -178,6 +178,17 @@ async function build(m: Manifest): Promise<State> {
   return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now(), durableFile };
 }
 
+let sinceBreath = 0;
+/**
+ * Lets waiting requests run every 2,000 inserted rows. A build or a reload fills a database nothing else uses yet, so
+ * pausing mid-transaction is safe, and the website keeps answering instead of freezing for the seconds a full load takes.
+ */
+export function breathe(): Promise<void> | void {
+  if (++sinceBreath < 2000) return;
+  sinceBreath = 0;
+  return new Promise((r) => setImmediate(r));
+}
+
 /**
  * One build in a fresh in-memory database, its tables read by `load` (the S3 download here; a frozen copy for the chatbot's
  * golden questions, scripts/freeze-eval-store.cjs), with `durableFile` attached as the durable store.
@@ -199,7 +210,7 @@ export async function buildDb(m: Manifest, load: (name: string, t: TableInfo) =>
     db.exec(`CREATE TABLE ${q(s.table)} (${cols.join(", ")})${pk?.length ? " WITHOUT ROWID" : ""}`);
     if (s.rows.length) {
       const ins = db.prepare(`INSERT INTO ${q(s.table)} VALUES (${s.columns.map(() => "?").join(", ")})`);
-      for (const r of s.rows) ins.run(...(r as any[]));
+      for (const r of s.rows) { ins.run(...(r as any[])); await breathe(); }
     }
     for (const c of m.indexes[s.table] ?? [])
       if (s.columns.some(([n]) => n === c)) db.exec(`CREATE INDEX ${q(`ix_${s.table}_${c}`)} ON ${q(s.table)} (${q(c)})`);
@@ -310,7 +321,7 @@ const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k)
 const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"] };
 
 /** Creates the tables of `doc` with their rows; `track` adds the triggers that note every change in _changes. */
-function fill(db: DB, doc: Doc, track: boolean): void {
+async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
   const inserts = new Map<string, ReturnType<DB["prepare"]>>();
   for (const [t, s] of Object.entries(doc.schema)) {
     for (const ddl of s.ddl) db.exec(ddl);
@@ -328,6 +339,7 @@ function fill(db: DB, doc: Doc, track: boolean): void {
         }
       if (!inserts.has(sig)) inserts.set(sig, db.prepare(`INSERT INTO ${q(t)} (${cols.map(q).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`));
       inserts.get(sig)!.run(...(cols.map((c) => toSql(row[c])) as any[]));
+      await breathe();
     }
     if (!track) continue;
     const name = (op: string) => q(`_changes_${t}_${op}`);
@@ -396,8 +408,8 @@ async function fetchDurable(file: string): Promise<Loaded> {
   conn.exec("BEGIN");
   conn.exec("CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)");
   conn.exec("CREATE TABLE _keys (t TEXT PRIMARY KEY, key TEXT NOT NULL)");
-  if (ref) fill(conn, ref, false);
-  fill(conn, rows, true);
+  if (ref) await fill(conn, ref, false);
+  await fill(conn, rows, true);
   const keys = Object.fromEntries(Object.entries(rows.schema).map(([t, s]) => [t, s.key]));
   const k = conn.prepare("INSERT INTO _keys VALUES (?, ?)");
   for (const [t, key] of Object.entries(keys)) k.run(t, JSON.stringify(key));
