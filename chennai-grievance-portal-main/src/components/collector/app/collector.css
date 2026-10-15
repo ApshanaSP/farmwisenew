@@ -645,6 +645,11 @@
 .dic .wsave label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--text-2)}
 .dic .wlist{margin-top:12px}
 .dic .wlist h4{margin:0 0 6px;font:800 15px var(--dic-display),sans-serif}
+.dic .wlist-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.dic .wlist-h h4{margin:0;flex:1}
+.dic .wren,.dic .wdel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1}
+.dic .wren input{flex:1;min-width:160px}
+.dic .btn.danger{background:var(--sev)}
 .dic .wv{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .dic .wv-i{display:flex;flex-direction:column;gap:2px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--raise);text-align:left}
 .dic .wv-i:hover{border-color:var(--accent);background:var(--accent-soft)}

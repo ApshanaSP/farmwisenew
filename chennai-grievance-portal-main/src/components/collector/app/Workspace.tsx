@@ -29,6 +29,22 @@ export function WorkspaceBody({ c }: { c: Console }) {
   const [name, setName] = useState(c.workspaceName ?? "Collector's Daily Briefing");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** the workspace being renamed (its new name), or asked to be deleted */
+  const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const change = async (method: "PATCH" | "DELETE", url: string, body: unknown, ok: string) => {
+    setBusy(true);
+    try {
+      const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(j?.error ?? "That did not work. Please try again.");
+      c.toast(ok);
+      setRenaming(null); setDeleting(null);
+      load();
+    } catch (e) {
+      c.toast((e as Error).message, "alert");
+    } finally { setBusy(false); }
+  };
   const load = () => {
     setFailed(false);
     fetch("/api/collector/workspaces")
@@ -58,7 +74,26 @@ export function WorkspaceBody({ c }: { c: Console }) {
       {failed && !list ? <div className="empty" role="alert">Your saved workspaces could not be loaded. <button className="lnk" onClick={load}>Retry</button></div>
         : !list ? <div className="empty">Loading…</div> : list.length ? list.map((w) => (
         <div key={w.name} className="wlist">
-          <h4>{w.name}</h4>
+          <div className="wlist-h">
+            {renaming?.from === w.name ? (
+              <form className="wren" onSubmit={(e) => { e.preventDefault(); void change("PATCH", "/api/collector/workspaces", renaming, `Renamed to "${renaming.to.trim()}".`); }}>
+                <input autoFocus aria-label="New name" value={renaming.to} maxLength={100} onChange={(e) => setRenaming({ from: w.name, to: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setRenaming(null); } }} />
+                <button className="btn sm" disabled={busy || renaming.to.trim().length < 2}>Save</button>
+                <button type="button" className="btn plain sm" onClick={() => setRenaming(null)}>Cancel</button>
+              </form>
+            ) : deleting === w.name ? (
+              <span className="wdel" role="alert">Delete all {w.versions.length} version{w.versions.length === 1 ? "" : "s"} of “{w.name}”?
+                <button className="btn sm danger" disabled={busy} onClick={() => void change("DELETE", `/api/collector/workspaces?name=${encodeURIComponent(w.name)}`, null, `Deleted "${w.name}".`)}>Delete</button>
+                <button className="btn plain sm" onClick={() => setDeleting(null)}>Keep</button></span>
+            ) : (
+              <>
+                <h4>{w.name}</h4>
+                <button className="lnk" onClick={() => { setDeleting(null); setRenaming({ from: w.name, to: w.name }); }} aria-label={`Rename ${w.name}`}>Rename</button>
+                <button className="lnk" onClick={() => { setRenaming(null); setDeleting(w.name); }} aria-label={`Delete ${w.name}`}>Delete</button>
+              </>
+            )}
+          </div>
           <div className="wv">
             {w.versions.map((v) => {
               const f = v.filters ?? {};

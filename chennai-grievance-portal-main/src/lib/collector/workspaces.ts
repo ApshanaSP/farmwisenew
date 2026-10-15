@@ -4,7 +4,7 @@
  */
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
-import { audit } from "@/lib/collector/sources";
+import { audit, auditIn, inTransaction } from "@/lib/collector/sources";
 
 type Row = Record<string, any>;
 const parse = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v ?? null);
@@ -70,6 +70,33 @@ export async function openWorkspace(owner: string, id: number) {
   }
   await audit(owner, "workspace:open", "workspaces", id, null, { name: w.name, version: w.version });
   return { ...w, filters, layout: parse(w.layout), briefing };
+}
+
+export class WorkspaceError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
+/** Renames every version of one of the owner's workspaces (refused when the new name is taken). */
+export async function renameWorkspace(owner: string, from: string, to: string) {
+  if (from === to) return { name: to };
+  return inTransaction(async (conn) => {
+    const [[taken]] = await conn.query<RowDataPacket[]>(`SELECT COUNT(*) AS n FROM ${ops("workspaces")} WHERE owner = ? AND name = ?`, [owner, to]);
+    if (Number(taken.n)) throw new WorkspaceError(409, `You already have a workspace called "${to}".`);
+    const [r] = await conn.query<ResultSetHeader>(`UPDATE ${ops("workspaces")} SET name = ? WHERE owner = ? AND name = ?`, [to, owner, from]);
+    if (!r.affectedRows) throw new WorkspaceError(404, "Workspace not found.");
+    await auditIn(conn, owner, "workspace:rename", "workspaces", null, { name: from }, { name: to, versions: r.affectedRows });
+    return { name: to };
+  });
+}
+
+/** Deletes every version of one of the owner's workspaces (the frozen briefings stay in the archive). */
+export async function deleteWorkspace(owner: string, name: string) {
+  return inTransaction(async (conn) => {
+    const [r] = await conn.query<ResultSetHeader>(`DELETE FROM ${ops("workspaces")} WHERE owner = ? AND name = ?`, [owner, name]);
+    if (!r.affectedRows) throw new WorkspaceError(404, "Workspace not found.");
+    await auditIn(conn, owner, "workspace:delete", "workspaces", null, { name, versions: r.affectedRows }, null);
+    return { deleted: r.affectedRows };
+  });
 }
 
 export async function auditLog(limit = 200) {
