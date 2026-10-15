@@ -196,7 +196,7 @@ function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
     <>
       <div className="ch">
         <svg className="ic" viewBox="0 0 24 24" style={{ color: "var(--sev)" }} aria-hidden="true"><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18h.01" /></svg>
-        <h3 title="Open incidents by severity">By severity</h3>
+        <h3 title="Open incidents by severity (the Severe events tile counts every severe event reported in the period)">Open, by severity</h3>
         <button className="more" onClick={() => c.openList({ status: "open", sev: tab, sort: "sev", dir: 1 }, `${tab} incidents`)}>See all<I n="right" /></button>
       </div>
       <SevMix counts={counts} tab={tab} onPick={(s) => c.setSevTab(s)} />
