@@ -3,7 +3,7 @@ import pool from "@/lib/db";
 import { forgotPasswordRequestSchema } from "@/lib/validators";
 import { createOtp, devOtpForResponse } from "@/lib/otp";
 import { sendMail, otpEmailHtml } from "@/lib/mailer";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
 import { RowDataPacket } from "mysql2";
 
 const GENERIC_MESSAGE =
@@ -12,7 +12,7 @@ const GENERIC_MESSAGE =
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(`fp-request:${ip}`, 10, 60 * 15);
+    const rl = checkRateLimit(`fp-request:${ip}`, ipLimit(ip, 10), 60 * 15);
     if (!rl.allowed) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }

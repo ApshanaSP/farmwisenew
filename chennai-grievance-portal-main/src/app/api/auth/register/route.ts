@@ -3,12 +3,12 @@ import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { registerSchema } from "@/lib/validators";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(`register:${ip}`, 10, 60 * 15);
+    const rl = checkRateLimit(`register:${ip}`, ipLimit(ip, 10), 60 * 15);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Too many registration attempts. Please try again later." },

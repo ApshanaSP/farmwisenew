@@ -5,7 +5,7 @@ import { loginSchema } from "@/lib/validators";
 import { signToken } from "@/lib/jwt";
 import { migrateLegacyCookie, setAuthCookie } from "@/lib/auth";
 import { roleToPortal } from "@/lib/session-cookies";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
 import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     // Rate limit by IP and by email to slow down brute force / credential
     // stuffing without letting one IP lock out a legitimate user forever.
-    const ipLimit = checkRateLimit(`login-ip:${ip}`, 20, 60 * 15);
+    const ipLimit = checkRateLimit(`login-ip:${ip}`, ipLimit(ip, 20), 60 * 15);
     const emailLimit = checkRateLimit(`login-email:${email}`, 8, 60 * 15);
 
     if (!ipLimit.allowed || !emailLimit.allowed) {
