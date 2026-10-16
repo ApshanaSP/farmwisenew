@@ -8,6 +8,7 @@ import { OfficerCard } from "./Overview";
 import { MEDIA_KIND, SOURCE_KIND, deptIcon, fmtDay, fmtShort, fmtTime, fullTitle, ms, plural, rel, sourceItems, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { SentNote, TakeAction } from "./TakeAction";
+import { ConflictBox, useStoryConflicts } from "./Conflicts";
 
 const CHANNEL: Record<string, string> = {
   citizen_app: "Citizen app", citizen_grievance: "Grievance portal", control_room_112: "Control room 112", fir_walk_in: "Police station",
@@ -102,6 +103,10 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
     return () => { live = false; };
   }, [id, c.reloadKey, reload]);
   const ana = useAnalysis(data ? `/api/collector/incidents/${encodeURIComponent(id)}/analysis` : null, `${reload}|${!!data}`);
+  // where the news outlets covering it disagree (2 or more outlets)
+  const news = ((data?.reports ?? []) as Row[]).filter((r) => r.source === "news" && r.docId);
+  const newsIds = new Set(news.map((r) => r.publisher)).size >= 2 ? [...new Set(news.map((r) => String(r.docId)))] : [];
+  const diffs = useStoryConflicts(c, newsIds, String((data?.incident as Row | undefined)?.title ?? ""), null);
 
   const i = data?.incident as Row | undefined;
   if (!data || !i || i.id !== id) {
@@ -172,6 +177,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
       <div className="iv-b">
         <section className="iv-col">
           <Explained a={ana.a} busy={ana.busy} rules={why} open={open} deptName={i.dept_name ?? "The department"} />
+          {diffs && <ConflictBox items={diffs} />}
           {emails.length > 0 && <SentNote e={emails[0]} now={c.now} />}
           {deptReports.length > 0
             ? <DeptReport r={deptReports[0]} earlier={deptReports.length - 1} />

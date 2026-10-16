@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { I } from "./icons";
 import { Explained, NewsDetails, useAnalysis } from "./Detail";
 import { OfficerCard } from "./Overview";
+import { ConflictBox, useStoryConflicts } from "./Conflicts";
 import { MEDIA_KIND, deptIcon, fmtDay, fmtShort, fmtTime, plural, rel, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import type { Story } from "./Overview";
@@ -22,6 +23,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
   const [sel, setSel] = useState(0);
   const [full, setFull] = useState<Record<string, Full>>({});
   const ana = useAnalysis(`/api/collector/news/analysis?ids=${encodeURIComponent(s.docIds.join(","))}`, s.id);
+  const diffs = useStoryConflicts(c, s.outletNames.length === 1 ? [] : s.docIds, s.title, s.id);
 
   useEffect(() => {
     let live = true;
@@ -107,6 +109,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
         <section className="iv-col">
           <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" />
           {ana.a?.handled && !ana.a.why.length && <div className="iv-ok"><I n="checkc" /><span>{ana.a.handled}</span></div>}
+          {diffs && <ConflictBox items={diffs} />}
           <div>
             <div className="iv-t"><I n="doc" />Key facts</div>
             <div className="facts">

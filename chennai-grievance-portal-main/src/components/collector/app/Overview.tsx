@@ -5,13 +5,15 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { I, type IconName } from "./icons";
 import SatMap, { type MapStation } from "./SatMap";
 import {
-  CAT_COL, Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, Spark, deptIcon, fmtDate, fmtTime, fullTitle,
+  CAT_COL, Chart, Cnt, Empty, HBars, SEVS, SEV_HEX, Sources, deptIcon, fmtDate, fmtTime, fullTitle,
   fmtShort, ms, plural, rel, sevTone, sum, type Row
 } from "./lib";
 import type { Console } from "./CollectorApp";
 import type { Insights } from "@/lib/collector/insights";
 import { MarketsCard } from "./Insights";
 import { AddedRow } from "./Added";
+import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
+import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useState } from "react";
 
 // =================================================================== page 1 ==
@@ -24,25 +26,31 @@ function useKpis(d: OverviewData, c: Console) {
   // With a department selected, open complaints and ongoing incidents are nearly the same
   // things counted twice (each complaint is usually one incident), so they become one tile.
   const merged = !!c.dept;
+  const K = d.kpi.cur as Record<string, number>;
   const KPIS: Record<string, React.ReactNode> = {
     severe: <Kpi key="severe" k="severe" icon="bell" tone="t-sev" label="Severe events" v={d.kpi.cur.severe} p={d.kpi.prev.severe}
-      goodDown series={d.kpi.series.severe} prevLabel={P.prev} style={iv()} onClick={() => c.openList({ sev: "Severe" }, "Severe events")}
+      goodDown prevLabel={P.prev} style={iv()} onClick={() => c.openList({ sev: "Severe" }, "Severe events")} sub={split(K.severe_open, "still open", K.severe - K.severe_open, "closed")}
       tip="Incidents rated severe (danger to life, major damage or many people affected), reported in the period, open or closed." />,
     complaints: merged ? null : <Kpi key="complaints" k="complaints" icon="chat" tone="t-high" label="Open complaints" v={d.kpi.cur.complaints}
-      p={d.kpi.prev.complaints} goodDown series={d.kpi.series.complaints} prevLabel={P.prev} style={iv()}
+      p={d.kpi.prev.complaints} goodDown prevLabel={P.prev} style={iv()} sub={`on ${plural(K.complaint_inc, "open incident")}`}
       onClick={() => c.openList({ status: "open", sort: "c" }, "Open complaints")}
       tip="Citizen complaints on incidents that are still open. One incident can have several complaints." />,
     ongoing: <Kpi key="ongoing" k="ongoing" icon="doc" tone="t-info" label={merged ? "Open incidents" : "Ongoing incidents"} v={d.kpi.cur.ongoing} p={d.kpi.prev.ongoing}
-      goodDown series={d.kpi.series.ongoing} prevLabel={P.prev} style={iv()} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
+      goodDown prevLabel={P.prev} style={iv()} sub={`${fmtN(K.urgent)} of them severe or high`} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
       tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
     resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={period1(c) ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
-      p={d.kpi.prev.resolved} series={d.kpi.series.resolved} prevLabel={P.prev} style={iv()}
+      p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `${Math.round((100 * K.resolved) / K.reported)}% of ${fmtN(K.reported)} reported` : undefined}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
       tip="Incidents reported in the period that the department has already resolved." />
   };
   return c.layout.kpis.filter((k) => KPIS[k]).map((k) => KPIS[k]);
 }
+
+const fmtN = (n: number) => Number(n ?? 0).toLocaleString("en-IN");
+/** "5 still open · 4 closed": a tile's number split in two (a part that is 0 is left out). */
+const split = (a: number, al: string, b: number, bl: string) =>
+  [a ? `${fmtN(a)} ${al}` : "", b ? `${fmtN(b)} ${bl}` : ""].filter(Boolean).join(" · ") || undefined;
 
 /** Page 1's ocean band, under the greeting: the four counts, and the snapshot beside them. The briefing lives on page 2. */
 export function HeroBody({ d, c }: { d: OverviewData; c: Console }) {
@@ -73,22 +81,11 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
   const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
     .filter(([, on]) => on).map(([k]) => k as string);
-  // Command Centre composition: with both My Tasks and the news on, they share the right column (tasks above, news
-  // below) so the map, the centrepiece, gets the width; otherwise one row of the panels that are on.
-  const stack = cols.includes("tasks") && cols.includes("brief");
-  const left = cols.filter((k) => k !== "tasks" && k !== "brief");
-  const LW: Record<string, string> = { map: "1.62fr", sev: "1fr" };
-  const grid: React.CSSProperties = stack
-    ? {
-        gridTemplateColumns: [...left.map((k) => `minmax(0,${LW[k]})`), "minmax(0,1.08fr)"].join(" "),
-        gridTemplateRows: "minmax(0,.8fr) minmax(0,1.2fr)",
-        gridTemplateAreas: `"${[...left, "tasks"].join(" ")}" "${[...left, "brief"].join(" ")}"`
-      }
-    : {
-        gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
-        gridTemplateRows: "minmax(0,1fr)",
-        gridTemplateAreas: `"${cols.join(" ")}"`
-      };
+  const grid: React.CSSProperties = {
+    gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
+    gridTemplateRows: "minmax(0,1fr)",
+    gridTemplateAreas: `"${cols.join(" ")}"`
+  };
   const LAYERS = [
     ["severe", "Severe", CAT_COL.severe, d.map.layerCounts.severe], ["complaint", "Complaints", CAT_COL.complaint, d.map.layerCounts.complaint],
     ["other", "Other", CAT_COL.other, d.map.layerCounts.other]
@@ -152,28 +149,31 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   );
 }
 
-export function Kpi({ k, icon, tone, label, v, p, goodDown, series, prevLabel, style, onClick, tip, note }: {
+export function Kpi({ k, icon, tone, label, v, p, goodDown, prevLabel, style, onClick, tip, note, sub }: {
   k: string; icon: IconName; tone: string; label: string; v: number; p: number; goodDown?: boolean;
-  series: number[]; prevLabel: string; style: React.CSSProperties; onClick: () => void;
+  /** no longer drawn (the tiles say the change in words); kept so callers need not change */ series?: number[];
+  prevLabel: string; style: React.CSSProperties; onClick: () => void;
   /** what the number counts, in plain words (hover) */ tip?: string; /** a second fact shown after the label */ note?: string;
+  /** the breakdown under the number: "5 still open · 4 closed" */ sub?: string;
 }) {
   const diff = v - p;
   const same = diff === 0;
   const cls = same ? "" : (goodDown ? diff < 0 : diff > 0) ? "good" : "bad";
+  const than = prevLabel.replace(/^prev\. /, "the previous ");
   return (
     <button className="kpi" style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick} title={tip ? `${tip} Click for the list.` : undefined}>
       <span className={`kpi-ic ${tone}`}><I n={icon} /></span>
       <span className="kpi-b">
         <span className="kpi-l">{label}{note && <em className="kpi-note">· {note}</em>}</span>
         <span className="kpi-r">
-          <span>
-            <span className={`kpi-n ${k === "severe" ? "c-sev" : ""}`}><Cnt v={v} /></span>
-            <span className={`kpi-d ${cls}`}>
-              <em>{same ? "–" : <I n={diff > 0 ? "up" : "down"} />}{same ? "0" : Math.abs(diff).toLocaleString("en-IN")}</em>vs. {prevLabel}
-            </span>
+          <span className={`kpi-n ${k === "severe" ? "c-sev" : ""}`}><Cnt v={v} /></span>
+          <span className={`kpi-d ${cls}`} title={`${v.toLocaleString("en-IN")} now, ${p.toLocaleString("en-IN")} ${prevLabel}`}>
+            {same ? <em>No change</em>
+              : <em><I n={diff > 0 ? "up" : "down"} />{Math.abs(diff).toLocaleString("en-IN")} {diff > 0 ? "more" : "fewer"}</em>}
+            <small>{same ? `from ${than}` : `than ${than}`}</small>
           </span>
-          <Spark vals={series} color={KC[tone] ?? "var(--accent)"} />
         </span>
+        {sub && <span className="kpi-sub">{sub}</span>}
       </span>
     </button>
   );
@@ -451,23 +451,33 @@ function DeptSnap({ d, c }: { d: OverviewData; c: Console }) {
 const shortName = (n: string) => String(n ?? "").replace(/\s*\(.*\)\s*$/, "");
 const shortInit = (s: string) => String(s ?? "").split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
 
-/** Latest news: news the monitor linked to incidents, or items from sources the Collector added. */
+/**
+ * Latest news: the news (every outlet's article merged), the stories whose outlets disagree, the neighbouring districts'
+ * news that could reach Chennai ("Next door"), and items from sources the Collector added.
+ */
 function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
-  const [tab, setTab] = useState<"news" | "added">("news");
+  const [tab, setTab] = useState<"news" | "differ" | "door" | "added">("news");
   const when = c.period === "daily" ? "last 24 hours" : `last ${d.added.days} days`;
+  const differ = c.conflicts?.stories.filter((s) => s.items.some((x) => x.kind === "conflict")).length ?? 0;
   return (
     <>
       <div className="ch"><I n="news" /><h3>Latest news</h3>
-        <button className="more" onClick={() => (tab === "news" ? c.openNewsAll() : c.openAdded())}>See more<I n="right" /></button>
+        {tab !== "differ" && <button className="more" onClick={() => (tab === "news" ? c.openNewsAll() : tab === "door" ? c.openNextDoor() : c.openAdded())}>See more<I n="right" /></button>}
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
         <button role="tab" aria-selected={tab === "news"} className={tab === "news" ? "on" : ""} onClick={() => setTab("news")}>
           News{d.allNews && <> <b className="tab-n">{d.allNewsTotal || d.allNews.length}</b></>}</button>
+        <button role="tab" aria-selected={tab === "differ"} className={`${tab === "differ" ? "on" : ""}${differ ? " warn" : ""}`} onClick={() => setTab("differ")}
+          title="Stories where the outlets report the same event differently (deaths, age, place...): confirm before quoting">
+          Differ{c.conflicts && <> <b className="tab-n">{c.conflicts.stories.length}</b></>}</button>
+        <button role="tab" aria-selected={tab === "door"} className={tab === "door" ? "on" : ""} onClick={() => setTab("door")}
+          title="News from Tiruvallur, Kancheepuram and Chengalpattu that could reach Chennai: what to prepare for and what to watch">
+          Next door{c.nearby && <> <b className="tab-n">{nextDoorCount(c.nearby)}</b></>}</button>
         <button role="tab" aria-selected={tab === "added"} className={tab === "added" ? "on" : ""} onClick={() => setTab("added")}
-          title={`Items from sources you added, ${when}`}>From added sources <b className="tab-n">{d.added.count}</b></button>
+          title={`Items from sources you added, ${when}`}>Added <b className="tab-n">{d.added.count}</b></button>
       </div>
-      <div className={tab === "news" && d.allNews ? "fitlist scroll" : "fitlist"}>
-        {tab === "news"
+      <div className={(tab === "news" && d.allNews) || tab === "differ" || tab === "door" ? "fitlist scroll" : "fitlist"}>
+        {tab === "differ" ? <ConflictList c={c} now={d.now} /> : tab === "door" ? <NextDoorList c={c} now={d.now} /> : tab === "news"
           ? d.allNews
             ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
             : d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
@@ -494,13 +504,14 @@ export type Story = NonNullable<OverviewData["allNews"]>[number];
  * "How it unfolded" shows the articles and the citizen grievances together; news alone opens the article.
  */
 export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) {
+  const diff = c.conflicts?.stories.find((s) => s.id === i.id || s.docIds.includes(i.id));
   return (
     <button className="brief" onClick={() => c.openStory(i)} title={i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report"}>
       <span className={`bic ${i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
         <b title={i.original ?? undefined}>{i.title}</b>
         <span className="loc">{outletLine(i)} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
-        <StoryLink i={i} />
+        {diff && hasConflict(diff) ? <DiffBadge s={diff} /> : <StoryLink i={i} />}
       </span>
     </button>
   );

@@ -6,6 +6,8 @@ import type { Overview as OverviewData, Period } from "@/lib/collector/intel";
 import type { Insights } from "@/lib/collector/insights";
 import type { Stories } from "@/lib/collector/storyai";
 import type { DayBrief } from "@/lib/collector/aibrief";
+import type { PeriodConflicts, StoryConflicts } from "@/lib/collector/conflicts";
+import type { Nearby, NearbyEvent } from "@/lib/collector/nearby";
 import type { MapGeo } from "@/lib/collector/geo";
 import { PAGE_FEEDS, freshnessLine } from "@/lib/collector/freshness";
 import { Wordmark } from "@/components/Logo";
@@ -20,6 +22,8 @@ import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
 import { StoriesBody } from "./Stories";
 import { NewsView } from "./NewsPreview";
+import { NearbyEventBody, NextDoorAll } from "./Nearby";
+import { ConflictView } from "./Conflicts";
 import type { Story } from "./Overview";
 import { MarketsFull } from "./Insights";
 import { CustomizeBody, DEFAULT_LAYOUT, WorkspaceBody, normalizeLayout, type Layout } from "./Workspace";
@@ -35,6 +39,7 @@ import "./marina.css";
 import "./news.css";
 import "./action.css";
 import "./analysis.css";
+import "./nearby.css";
 import "./motionfx.css";
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
 // "./command.css" and "./command-bold.css" here and add "cc" to the root's className below.
@@ -72,7 +77,10 @@ type ModalState =
   | { kind: "markets"; title: string }
   | { kind: "pattern"; title: string; pattern: Pattern }
   | { kind: "gaps"; title: string }
-  | { kind: "review"; title: string };
+  | { kind: "review"; title: string }
+  | { kind: "nearby"; title: string; event: NearbyEvent }
+  | { kind: "nextdoor"; title: string }
+  | { kind: "conflict"; title: string; story: StoryConflicts };
 interface Toast { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
 export interface Archived { name: string; version: number; markdown: string; as_of: string; issued_at: string }
 
@@ -141,6 +149,17 @@ export interface Console {
   stories: Stories | null;
   /** the key points of the period and scope, written by AI: null while loading, { brief: null } when no model answered */
   dayBrief: { brief: DayBrief | null } | null;
+  /** the period's news stories whose outlets disagree (conflicts.ts): null while loading */
+  conflicts: PeriodConflicts | null;
+  /** a story whose outlets disagree: its incident or its reports, with the disagreements on top */
+  openConflict: (s: StoryConflicts) => void;
+  /** the reports of a story whose outlets disagree (its news pop-up) */
+  openConflictStory: (s: StoryConflicts) => void;
+  /** an event from a neighbouring district: its reports, why it matters for Chennai, the precaution */
+  openNearby: (e: NearbyEvent) => void;
+  /** the neighbouring districts' news that matters for Chennai (Latest news, "Next door"): null while loading */
+  nearby: Nearby | null;
+  openNextDoor: () => void;
   zoneTip: (z: number) => string;
   zoneNameOf: (z: number) => string | null;
   talukName: (code: string | null) => string | null;
@@ -331,6 +350,22 @@ export default function CollectorApp({ initial, allDepts, user }: {
     return () => { live = false; stop(); };
   }, [qs, reloadKey]);
 
+  // where outlets disagree about the same event: the period's news only (the zone and department filters do not apply)
+  const [conflictState, setConflicts] = useState<{ key: string; d: PeriodConflicts } | null>(null);
+  useEffect(() => {
+    let live = true;
+    api(`/api/collector/conflicts?period=${period}`).then((j) => live && setConflicts({ key: period, d: j }))
+      .catch(() => live && setConflicts({ key: period, d: { stories: [], checked: 0, ai: false } }));
+    return () => { live = false; };
+  }, [period, reloadKey]);
+  // the neighbouring districts' news (Latest news, "Next door"): read once the console is up, again on reload
+  const [nearbyState, setNearby] = useState<{ key: number; d: Nearby } | null>(null);
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(() => api("/api/collector/nearby").then((j) => live && setNearby({ key: reloadKey, d: j })).catch(() => {}), 1500);
+    return () => { live = false; clearTimeout(t); };
+  }, [reloadKey]);
+
   useEffect(() => {
     if (!anim) return;
     const t = setTimeout(() => setAnim(false), 1200);
@@ -506,6 +541,17 @@ export default function CollectorApp({ initial, allDepts, user }: {
     openReview: () => setModal({ kind: "review", title: "Locations needing review" }),
     stories: storiesState?.key === qs ? storiesState.d : null,
     dayBrief: dayState?.key === qs ? dayState.d : null,
+    conflicts: conflictState?.key === period ? conflictState.d : null,
+    openConflict: (s) => { setInc(null); setModal({ kind: "conflict", title: "Reports differ", story: s }); },
+    openConflictStory: (s) => {
+      const st = ov.allNews?.find((x) => x.id === s.id || x.docIds.some((d) => s.docIds.includes(d)));
+      const t = s.items.flatMap((d) => d.claims.map((x) => x.t)).sort().slice(-1)[0] ?? ov.now;
+      c.openStory(st ?? { id: s.id, title: s.title, original: null, url: null, loc: null, t, incident: s.incident, sev: null, grievances: 0, complaints: 0,
+        outletNames: [], docIds: s.docIds, headlines: 1, topic: null } as unknown as Story);
+    },
+    openNearby: (e) => { setInc(null); setModal({ kind: "nearby", title: `Next door · ${e.district}`, event: e }); },
+    nearby: nearbyState?.d ?? null,
+    openNextDoor: () => { setInc(null); setModal({ kind: "nextdoor", title: "Next door · Tiruvallur, Kancheepuram, Chengalpattu" }); },
     zoneTip: (z) => {
       const r = ov.zoneTable.find((x) => x.zone === z);
       if (!r) return `<b>Zone ${z}</b>`;
@@ -708,7 +754,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
         {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
         {modal && modal.kind !== "story" && (
-          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story", "review"].includes(modal.kind)}>
+          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story", "review", "nearby", "nextdoor", "conflict"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
                 : modal.kind === "depts" ? <DeptsBody c={c} />
@@ -725,7 +771,10 @@ export default function CollectorApp({ initial, allDepts, user }: {
                                       : modal.kind === "markets" ? <MarketsFull ins={ins} c={c} />
                                         : modal.kind === "pattern" ? <PatternBody key={JSON.stringify(modal.pattern)} p={modal.pattern} c={c} />
                                           : modal.kind === "gaps" ? <GapsBody ins={ins} c={c} />
-                                            : modal.kind === "review" ? <ReviewBody ins={ins} c={c} /> : null}
+                                            : modal.kind === "review" ? <ReviewBody ins={ins} c={c} />
+                                              : modal.kind === "nearby" ? <NearbyEventBody e={modal.event} c={c} />
+                                                : modal.kind === "nextdoor" ? <NextDoorAll c={c} />
+                                                  : modal.kind === "conflict" ? <ConflictView s={modal.story} c={c} /> : null}
           </Modal>
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />

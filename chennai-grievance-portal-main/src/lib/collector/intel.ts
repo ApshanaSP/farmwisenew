@@ -691,8 +691,12 @@ export async function kpiBlock(s: Scope, now: string) {
   const p = PERIODS[s.period];
   const cur = scopeWhere(s, now);
   const prev = scopeWhere({ ...s, offset: 1 }, now);
+  // the breakdowns under each tile (severe still open, incidents behind the complaints, severe or high among the ongoing,
+  // all reported) use the same effective status as the tiles
   const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN ${EFF.open} = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
-    SUM(${EFF.open} = 1 AND NOT ${ROUTED}) AS ongoing, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved`;
+    SUM(${EFF.open} = 1 AND NOT ${ROUTED}) AS ongoing, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved,
+    SUM(i.severity_level = 'Severe' AND ${EFF.open} = 1) AS severe_open, SUM(${EFF.open} = 1 AND i.citizen_complaints > 0) AS complaint_inc,
+    SUM(${EFF.open} = 1 AND NOT ${ROUTED} AND (i.severity_level = 'Severe' OR i.severity_level = 'High')) AS urgent, COUNT(*) AS reported`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
   const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
   const [c, pv, series] = await Promise.all([
