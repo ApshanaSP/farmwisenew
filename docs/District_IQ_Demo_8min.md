@@ -90,7 +90,7 @@ about Velachery crime"*. Then one question in Tamil.
 > **Measured:** see the accuracy slide. We separate numbers measured on real news from numbers measured on the
 > simulation's answer key, and we say which is which.
 >
-> **Next:** connect one real department system, label more real news, and let the priority ranking learn from the
+> **What the real labels taught us:** the department records are simulated, so no real news story can truly match one; the linker was joining them on place and time alone. Requiring the same kind of incident removed most of those false joins. **Next:** connect one real department system, label more real news, and let the priority ranking learn from the
 > Collector's decisions (it is built; it needs 30 decisions).
 
 ## Accuracy slide (fill in from `district_intel/output/reports/evaluation.md` after the team's labels)
@@ -98,7 +98,7 @@ about Velachery crime"*. Then one question in Tamil.
 | What | Measured on | Number |
 |---|---|---|
 | Same-incident linking across sources | simulation answer key (held-out half) | F1 ≈ 0.84 |
-| Same-incident linking, news vs records | **real pairs marked by the team** | fill in after `LABELLING_GUIDE.md` step 1 |
+| Same-incident linking, news vs records | **141 real pairs reviewed by the team** | false joins cut from 32 to 9 by requiring the same category; F1 on the simulation unchanged (0.84) |
 | News incident filter | 300 hand-labelled real articles | F1 ≈ 0.63 (finds about 6 in 10) |
 | Duplicate grouping within a source | simulation answer key | B-cubed F1 ≈ 0.99 |
 | Chatbot golden questions (AI off) | 75 questions, numbers checked by SQL | 75 / 75 |

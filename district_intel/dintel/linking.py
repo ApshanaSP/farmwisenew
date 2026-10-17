@@ -182,6 +182,17 @@ def _split(world_id: str) -> str:
     return "train" if int(hashlib.md5(world_id.encode()).hexdigest(), 16) % 2 == 0 else "test"
 
 
+def _news_gate(cand: pd.DataFrame) -> None:
+    """A news report and a departmental record are one incident only when they are the same kind of incident.
+
+    Place and time alone tipped the scorer: on 141 real news-record pairs marked in October 2026, every link it made
+    joined different events (a double murder with a motorcycle theft nearby, a road cave-in with a cab accident on that
+    road), which then showed as "reported by 2 sources" and raised the priority. Departmental pairs keep the scorer
+    as it is: their categories come from the same crosswalk, so a category mismatch there is already rare."""
+    cand["news_gate"] = (cand["has_news"] == 1) & (cand["same_cat"] == 0)
+    cand.loc[cand["news_gate"], "prob"] = 0.0
+
+
 def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge_thr: float, review_thr: float,
          english: dict | None = None) -> dict:
     """english: event_id -> English headline of a Tamil news report (for named things; meaning reads Tamil directly)."""
@@ -246,6 +257,7 @@ def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge
             metrics["train_positive_pairs"] = int(label[tr].sum())
     if model is not None:
         cand["prob"] = model.predict_proba(cand[feats])[:, 1]
+        _news_gate(cand)
         # calibrate the merge threshold on the training half: the cut that maximises pair F1
         ptr, ytr = cand.loc[tr, "prob"].to_numpy(), label[tr]
         best_thr, best_f1 = merge_thr, -1.0
@@ -263,7 +275,9 @@ def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge
         z = 3.0 - 3.5 * cand["dist_norm"] - 2.0 * cand["dt_norm"] + 3.0 * cand["text_sim"] + 1.0 * cand["same_cat"] + 0.5 * cand["same_ward"]
         z += 1.0 * cand["ent_overlap"] + (3.0 * cand["sem_sim"] - 1.5 if "sem_sim" in feats else 0.0)
         cand["prob"] = 1 / (1 + np.exp(-z))
+        _news_gate(cand)
         metrics["scorer"] = "fixed_formula"
+    metrics["news_pairs_blocked_by_category"] = int(cand["news_gate"].sum())
 
     # best partner per (event, other source)
     cand["src_a"], cand["src_b"] = src[cand["a"]], src[cand["b"]]

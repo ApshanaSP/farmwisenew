@@ -317,9 +317,11 @@ def _reports(dir_, metrics, S, B, as_of) -> None:
           f"- Linked pairs {lk.get('linked_pairs')}, review band {lk.get('review_pairs')}, multi-source incidents {lk.get('multi_source_incidents')}",
           f"- Coefficients: {json.dumps(lk.get('scorer_coefficients'))}", ""]
     er = lk.get("eval_real_pairs") or {}
-    L += ["## Cross-source linking on real pairs (news vs departmental records, marked by a person)",
-          f"- Real candidate pairs this build: {json.dumps(lk.get('real_candidate_pairs'))}",
-          (f"- Marked {er.get('marked')} ({er.get('marked_same')} same incident; {er.get('found_in_build')} still in this build): "
+    L += ["## Cross-source linking on real pairs (news vs departmental records, marked by hand)",
+          f"- Real candidate pairs this build: {json.dumps(lk.get('real_candidate_pairs'))}; "
+          f"news pairs blocked for a different category: {lk.get('news_pairs_blocked_by_category')}",
+          (f"- Marked by {', '.join(er.get('by') or ['unknown'])}: "
+           f"{er.get('marked')} ({er.get('marked_same')} same incident; {er.get('found_in_build')} still in this build): "
            f"precision {er.get('precision')}, recall {er.get('recall')}, F1 {er.get('f1')}, accuracy {er.get('accuracy')} "
            f"(band-weighted); wrong links {er.get('wrong_links')}, missed links {er.get('missed_links')}"
            if er.get("marked") else "- No marked pairs yet: `python run_pipeline.py link-labels`, then fill `same_incident` in "
