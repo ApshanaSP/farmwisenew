@@ -1,3 +1,5 @@
+> **Superseded (17 Oct 2026):** use [District_IQ_Demo_8min.md](District_IQ_Demo_8min.md). This script still shows MySQL Workbench and collect Lambdas, which the hourly GitHub + AWS S3/DynamoDB setup replaced, and its numbers are from 2 Oct.
+
 # District IQ: Review Script
 
 **Who speaks:** Speaker 1 (intro + 4-slide deck) → Speaker 2 (live demo, start to end)
