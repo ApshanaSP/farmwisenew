@@ -69,6 +69,10 @@ pipeline:
   hotspot_eps_m: 250
   hotspot_min_samples: 5
 
+wording:
+  # Natural wording for the simulated police and PWD records (dintel/realism.py); facts are never changed.
+  enabled: true
+
 priority_learning:
   # The priority weights learn from the Collector's decisions (dintel/priority.py). The website saves each decision
   # with the incident's facts at that moment; once enough count, the weights are refitted around the hand-set ones.

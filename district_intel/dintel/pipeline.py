@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-from . import PIPELINE_VERSION, analytics, briefai, classify, dedup, geolocate, incidents, linking, newsllm, priority, store, world
+from . import PIPELINE_VERSION, analytics, briefai, classify, dedup, geolocate, incidents, linking, newsllm, priority, realism, store, world
 from .agents import briefing, steward, workers
 from .agents.llm import LLM
 from .geo import WardIndex
@@ -88,6 +88,11 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     docs = N["documents"]
 
     base = pd.concat([G["events"], P["events"], W["events"], H["events"], E["events"]], ignore_index=True)
+    # natural wording for the simulated police and PWD records (facts untouched), before the category model learns from them
+    wording = settings.raw.get("wording", {}).get("enabled", True)
+    metrics["wording_before"] = realism.report(base)
+    if wording:
+        realism.apply(base)
     model = classify.daily_model(base)
     metrics["category_classifier"] = model.metrics
     classify.apply(base, docs, model)
@@ -123,7 +128,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     hosp_fac["in_district"] = wards.locate(hosp_fac["lat"].to_numpy(), hosp_fac["lon"].to_numpy()) > 0
     if settings.raw["overlay"].get("enabled", True):
         O = world.build(settings, ref, wards, events, docs, W["offices"], hosp_fac[hosp_fac["in_district"]], as_of)
-        oe = O["events"]
+        oe = realism.apply(O["events"]) if wording else O["events"]
         oe["category_family"] = oe["category_code"].map(ref.family)
         oe["support_depts"] = oe["category_code"].map(lambda c: "|".join(ref.cat.get(c, ref.cat["OTHER"]).get("support") or []))
         oe = geolocate.resolve(oe, wards, ward_taluk, settings.pipe["snap_outside_points_m"], tables)
@@ -136,6 +141,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
         metrics["flood_day_correlation_after_overlay"] = _flood_corr(events)
     else:
         calendar, info = world.build_calendar(world.Ctx(settings, ref, wards, np.random.default_rng(0), as_of, {}), events)
+    metrics["wording"] = realism.report(events)
 
     # ----------------------------------------------------------------- dedup --
     gg, ginfo = dedup.grievances(events)
