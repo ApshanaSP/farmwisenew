@@ -241,10 +241,12 @@ class Fetcher:
             status, text, err = self._with_retries(self._via_requests, url)
             # The server omits its intermediate certificate: browsers recover via AIA,
             # requests cannot. Verification is never disabled; the browser path is used instead.
-            if status == 403 or (status is None and "SSLError" in err):
+            # A connection that fails outright (timeout, reset, refused) also goes to the browser: from GitHub's
+            # machines plain requests have failed this way since 14 Oct 2026 while the site itself was up.
+            if status == 403 or status is None:
                 self.requests_blocked = True
-                log.info("%s via requests on %s; switching to Playwright",
-                         "HTTP 403" if status == 403 else "TLS chain unverifiable", path)
+                why = "HTTP 403" if status == 403 else "TLS chain unverifiable" if "SSLError" in err else err[:160]
+                log.info("%s via requests on %s; switching to Playwright", why, path)
             else:
                 return self._finish(url, status, text, err, "requests")
         status, text, err = self._with_retries(self._via_playwright, url)

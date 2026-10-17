@@ -62,5 +62,5 @@
   {"intent":"GENERAL_DISTRICT_QUERY","q":"Severe incidents this week by department"},
   {"intent":"GENERAL_DISTRICT_QUERY","q":"complaints zone wise this month"},
   {"intent":"INCIDENT_LIST","q":"any murder case in last 24 hours"},
-  {"intent":"INCIDENT_LIST","q":"tell me about velachery crime"}
+  {"intent":"GENERAL_DISTRICT_QUERY","q":"tell me about velachery crime"}
 ]

@@ -1,7 +1,8 @@
 """
-Send this PC's CPCB files to the `cpcb` branch of the dataload repo (github.com/ApshanaSP/farmwisenew-dataload),
-where GitHub's hourly build picks them up. CPCB is the one feed GitHub's machines cannot reach, so the PC collects
-it (scripts/run_intel.bat) and GitHub builds the store from every feed and uploads it to AWS.
+Send this PC's CPCB and CFM-DSS files to the `cpcb` branch of the dataload repo (github.com/ApshanaSP/farmwisenew-dataload),
+where GitHub's hourly build picks them up. GitHub's machines cannot reach these two sites (CPCB never; CFM-DSS since
+14 Oct 2026), so the PC collects them (scripts/run_intel.bat) and GitHub builds the store from every feed and uploads
+it to AWS. The branch keeps its old name so the workflow's existing step finds it.
 
 Uses this PC's own git login. The branch holds a single commit, replaced on every push; this repo's branches,
 index and working tree are not touched. Nothing is sent when the files have not changed since the last push.
@@ -18,7 +19,7 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-DATA = REPO / "cpcb_air_quality_collector" / "data"
+DATA = [REPO / "cpcb_air_quality_collector" / "data", REPO / "cfm_dss_collector" / "data"]  # the CSVs only, not raw_cache
 URL = "https://github.com/ApshanaSP/farmwisenew-dataload.git"
 LAST = REPO / "district_intel" / "output" / "state" / "cpcb_pushed.txt"  # tree id of the last push
 
@@ -32,9 +33,9 @@ def git(*args: str, env: dict | None = None, timeout: int = 60) -> str:
 
 def main() -> int:
     stamp = time.strftime("%d %b %Y %H:%M")
-    files = sorted(p.relative_to(REPO).as_posix() for p in DATA.glob("*.csv"))
+    files = sorted(p.relative_to(REPO).as_posix() for d in DATA for p in d.glob("*.csv"))
     if not files:
-        print(f"{stamp} push_cpcb: no CPCB files in {DATA}")
+        print(f"{stamp} push_cpcb: no CPCB or CFM-DSS files")
         return 1
     with tempfile.TemporaryDirectory() as tmp:  # a throwaway index, so the repo's own staging area stays as it is
         env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
@@ -43,7 +44,7 @@ def main() -> int:
     if LAST.exists() and LAST.read_text(encoding="utf-8").strip() == tree:
         print(f"{stamp} push_cpcb: unchanged since the last push")
         return 0
-    commit = git("commit-tree", tree, "-m", f"CPCB files from the PC, {stamp}")
+    commit = git("commit-tree", tree, "-m", f"CPCB and CFM-DSS files from the PC, {stamp}")
     # never wait for a login prompt: this runs from Task Scheduler with nobody at the screen
     quiet = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "never"}
     git("push", "--force", "--quiet", URL, f"{commit}:refs/heads/cpcb", env=quiet, timeout=180)
