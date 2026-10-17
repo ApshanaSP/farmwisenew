@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
-import { forward, haveStore, loadFrozen } from "./harness";
+import { forward, haveStore, holder, loadFrozen } from "./harness";
 
 // With a model available, questions the store answers exactly must not go to the router (it once read "Ward 120" as a
 // place name and answered zero beside 24 incidents recorded in that ward).
@@ -16,9 +16,11 @@ vi.mock("@/lib/assistant/lance", () => ({ hybridSearch: async () => null, holdSy
 vi.mock("@/lib/assistant/embed", () => ({ ModelNotReady: class extends Error {}, warmUp: () => undefined, embed: async () => { throw new Error("no model"); },
   semanticSearch: async () => [], embedStatus: () => ({ ready: false }) }));
 
+let frozenAt = new Date();
 beforeAll(async () => {
   if (!haveStore()) return;
   const f = await loadFrozen();
+  frozenAt = f.frozenAt;
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(f.frozenAt);
 });
@@ -28,7 +30,12 @@ it("answers a ward-number list or count from the store, without the model", asyn
   if (!haveStore()) return;
   void forward;
   const { ask } = await import("@/lib/assistant/pipeline");
-  for (const [message, want] of [["incidents in ward 120 this month", /\b24 incidents\b/], ["how many incidents in ward 120 this month", /^24 incidents/]] as const) {
+  // the store's own count (the console's monthly period is the last 30 days), so the test holds on every freeze
+  const since = new Date(frozenAt.getTime() + 5.5 * 3600_000 - 30 * 86400_000).toISOString().slice(0, 19).replace("T", " ");
+  const n = Number((holder.db!.prepare("SELECT COUNT(*) AS n FROM incidents WHERE ward_no = 120 AND first_reported_at >= ?").get(since) as { n: number }).n);
+  expect(n).toBeGreaterThan(0);
+  for (const [message, want] of [["incidents in ward 120 this month", new RegExp(`\\b${n} incidents\\b`)],
+                                 ["how many incidents in ward 120 this month", new RegExp(`^${n} incidents`)]] as const) {
     calls.length = 0;
     const r = await ask({ user: "golden@test", sessionId: null, message, inputMode: "text", language: "auto",
       scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null }, replyTo: null, stage: () => undefined });

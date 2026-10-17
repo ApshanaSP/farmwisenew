@@ -74,8 +74,11 @@ async function reservoirs(db: DB) {
     }
     if (has(db, "alerts")) {
       db.prepare(`DELETE FROM alerts WHERE type = 'lake_level'`).run();
-      const add = db.prepare(`INSERT INTO alerts (alert_id, type, severity, title, message, explanation, place, zone_no, date, category_code, incident_ids, created_at, status)
-        VALUES (?, 'lake_level', ?, ?, ?, ?, ?, NULL, ?, NULL, NULL, ?, 'open')`);
+      // only the columns this build's alerts table has: an export leaves out a column that is empty in every row
+      // (category_code was, and the whole insert failed, so no lake alert reached the console)
+      const optional = ["zone_no", "category_code", "incident_ids"].filter((c) => has(db, "alerts", c));
+      const add = db.prepare(`INSERT INTO alerts (alert_id, type, severity, title, message, explanation, place, date, created_at, status${optional.map((c) => `, ${c}`).join("")})
+        VALUES (?, 'lake_level', ?, ?, ?, ?, ?, ?, ?, 'open'${optional.map(() => ", NULL").join("")})`);
       for (const s of l.stations) {
         const v = s.series[s.series.length - 1];
         if (v < 85) continue;
