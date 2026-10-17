@@ -145,7 +145,7 @@ function AddSource({ c, done }: { c: Console; done: () => void }) {
   };
   return (
     <form className="addf" onSubmit={submit}>
-      <p className="sub" style={{ color: "var(--accent-2)" }}><I n="scan" /> Faster: paste the link into <b>Add a source</b> in the top bar. The onboarding agent works out the type, maps the fields and shows a preview before anything is saved.</p>
+      <p className="sub" style={{ color: "var(--accent-2)" }}><I n="scan" /> For a one-off table or file, paste the link into <b>Add data</b> on the <b>Data Studio</b> page instead: it works out the type, maps the fields and shows a preview before anything is saved.</p>
       <p className="sub">Paste the link of a feed, web page or API. District IQ reads it on a schedule, finds incidents (category and place) and adds them to the store. Credentials are stored encrypted and used only for this site&apos;s own login.</p>
       <label>Name<input required value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. GCC press releases" /></label>
       <label>Link<input required type="url" value={f.url} onChange={(e) => set("url", e.target.value)} placeholder="https://…" /></label>
