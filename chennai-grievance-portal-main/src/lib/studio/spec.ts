@@ -73,7 +73,7 @@ export function rulesSpec(profile: ColumnProfile[], file: string, caption: strin
   const dept = DEPT_RULES.find(([re]) => re.test(all))?.[1] ?? null;
   const entity = ENTITY_RULES.find(([re]) => re.test(`${file} ${caption ?? ""}`))?.[1] ?? ENTITY_RULES.find(([re]) => re.test(all))?.[1] ?? "record";
   const columns: ColumnSpec[] = profile.map((p) => ({
-    key: p.key, header: p.header, label: niceCase(p.header).slice(0, 40), role: p.guess, type: p.type, unit: p.unit,
+    key: p.key, header: p.header, label: niceCase(p.header.replace(/_+/g, " ").trim()).slice(0, 40), role: p.guess, type: p.type, unit: p.unit,
     agg: p.guess === "measure" ? defaultAgg(p.header, p.unit) : null, conf: 0.7, why: "Read from the column's name and values."
   }));
   const status = columns.find((c) => c.role === "status");

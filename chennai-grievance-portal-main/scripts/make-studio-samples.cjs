@@ -181,3 +181,13 @@ const flood = (from, to, zone) => incidents.filter((i) => (i.fam === "FLOOD" || 
   fs.writeFileSync(path.join(OUT, "PDS_Ration_Shop_Stock_Oct2026.csv"), "﻿" + lines.map((r) => r.map((c) => (/[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c)).join(",")).join("\r\n"));
   console.log(`PDS stock: ${lines.length - 1} shops`);
 })();
+
+// ------------------------------------------------- hospital beds, daily --
+// The hospital generator's own export (chennai_hospital_data, synthetic): one row per hospital per day, so the Studio
+// has a per-day table to read at its latest date ("beds by zone") or as a trend.
+(() => {
+  const src = path.join(ROOT, "..", "chennai_hospital_data", "chennai_hospital_health_data.csv");
+  if (!fs.existsSync(src)) return console.log("Hospital beds: chennai_hospital_data/chennai_hospital_health_data.csv not found, skipped");
+  fs.copyFileSync(src, path.join(OUT, "Hospital_Beds_Daily_2026.csv"));
+  console.log(`Hospital beds: ${fs.readFileSync(src, "utf8").trim().split(/\r?\n/).length - 1} rows`);
+})();

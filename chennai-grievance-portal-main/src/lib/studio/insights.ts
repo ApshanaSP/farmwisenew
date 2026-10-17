@@ -416,12 +416,17 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
   }
 
   // ------------------------------------------------------------ a snapshot: one row per item (a lake, a hospital, a shop)
-  const itemCol = spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && (() => {
+  const distinctEnough = (c: { key: string }) => {
     const vals = now.map((r) => r[c.key]).filter((v) => v != null).map(String);
     return vals.length >= 3 && new Set(vals).size >= vals.length * 0.8;
-  })());
+  };
+  // in a per-day table the item is the column that names the row (the hospital), read at the latest date; another
+  // category ("specialties") is only a property of it
+  const itemCol = (panel && end && distinctEnough(panel) ? panel : undefined)
+    ?? spec.columns.find((c) => (c.role === "category" || c.role === "place") && c.key !== spec.panelBy && distinctEnough(c));
   if (itemCol && now.length >= 3 && now.length <= 300) {
-    const items = itemCol.label.toLowerCase();
+    // "Hospital name" names a hospital: the items are hospitals
+    const items = itemCol.label.toLowerCase().replace(/[\s_]+name$/, "") || itemCol.label.toLowerCase();
     const nameOf = (r: DRow) => String(r[itemCol.key]);
     const val = (r: DRow, k: string) => (typeof r[k] === "number" && Number.isFinite(r[k] as number) ? (r[k] as number) : null);
     const fm = (c: { key: string }, v: number) => {
@@ -468,6 +473,31 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
           text: `${cur.label} is ${fm(cur, A)} of a ${cap.label.toLowerCase()} of ${fm(cap, B)} (${all}%); ${each[0].n} is the lowest at ${each[0].p}% and ${each[each.length - 1].n} the highest at ${each[each.length - 1].p}%.`,
           bars: each.slice(0, 5).map((x, k) => ({ label: x.n, value: x.p, hi: k === 0, fmt: `${x.p}%` })),
           plan: itemPlan(cur, "sum"), key: each[0].n });
+      }
+    }
+    // how loaded: an amount in use against the total it can take (occupied beds of total beds), where high is the
+    // danger, unlike storage above. Paired by a shared word ("beds"), so beds are compared with beds.
+    const IN_USE = /occupied|occupancy|in\s*use|admitted|utili[sz]ed|engaged|booked/i;
+    const TOTAL = /total|capacity|sanction|available|strength/i;
+    const stem = (h: string) => h.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 3 && !IN_USE.test(w) && !TOTAL.test(w));
+    const used = measures.find((c) => IN_USE.test(c.header) && c.unit !== "%" && !PREV.test(c.header) && !/rate|percent|ratio/i.test(c.header));
+    const of = used && measures.find((c) => c.key !== used.key && TOTAL.test(c.header) && !IN_USE.test(c.header) && c.unit === used.unit
+      && stem(c.header).some((w) => stem(used.header).includes(w)));
+    if (used && of && !cap) {
+      const each = now.map((r) => ({ n: nameOf(r), a: val(r, used.key), b: val(r, of.key) }))
+        .filter((x): x is { n: string; a: number; b: number } => x.a != null && x.b != null && x.b > 0)
+        .map((x) => ({ ...x, p: r1((x.a / x.b) * 100) })).sort((x, y) => y.p - x.p);
+      if (each.length >= 3) {
+        const A = each.reduce((s, x) => s + x.a, 0), B = each.reduce((s, x) => s + x.b, 0), all = r1((A / B) * 100);
+        const over = each.filter((x) => x.p >= 90), top = each[0];
+        const thing = stem(of.header)[0] ?? "places";
+        add({ label: "Capacity", tone: top.p >= 95 ? "sev" : top.p >= 85 ? "high" : "info", score: top.p >= 95 ? 82 : top.p >= 90 ? 76 : top.p >= 85 ? 66 : 48, owner: dept,
+          title: over.length ? `${n(over.length)} ${items}${over.length > 1 ? "s" : ""} over 90% full` : `${top.n} the fullest at ${top.p}%`,
+          metric: { value: `${top.p}%`, caption: `${used.label.toLowerCase()} of ${of.label.toLowerCase()}, ${top.n}` },
+          text: `${top.n} is the fullest at ${top.p}% (${fm(used, top.a)} of ${fm(of, top.b)} ${thing})${over.length > 1 ? `; ${n(over.length)} of ${n(each.length)} ${items}s are over 90%` : ""}; ` +
+            `across all ${n(each.length)} it is ${all}% (${fm(used, A)} of ${fm(of, B)}).`,
+          bars: each.slice(0, 5).map((x, k) => ({ label: x.n, value: x.p, hi: k === 0, fmt: `${x.p}%` })),
+          plan: itemPlan(used, "sum"), key: top.n });
       }
     }
     // against the same column a year (or a week) before

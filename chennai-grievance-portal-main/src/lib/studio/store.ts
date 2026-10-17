@@ -20,7 +20,8 @@ import type { DRow } from "@/lib/studio/clean";
 import type { Table } from "@/lib/studio/parse";
 import type { Candidate, DatasetCard, DatasetMeta, Pin, Spec } from "@/lib/studio/types";
 
-const DIR = path.join(process.cwd(), "data", "studio");
+// STUDIO_DIR: another folder (the golden questions load the samples into a temporary one)
+const DIR = process.env.STUDIO_DIR || path.join(process.cwd(), "data", "studio");
 const ID_RE = /^ds_[a-z0-9]{6,24}$/;
 
 declare global {
@@ -140,3 +141,30 @@ export function getBoard(): Pin[] {
   try { return JSON.parse(fs.readFileSync(path.join(DIR, "board.json"), "utf8")); } catch { return []; }
 }
 export function saveBoard(pins: Pin[]) { write(path.join(DIR, "board.json"), JSON.stringify(pins.slice(0, 24))); }
+
+/** A dataset's most pressing findings, for the Briefing ("From your datasets"): read from its saved brief, no model. */
+export interface WatchItem {
+  id: string; name: string; sample: boolean; updatedAt: string; department: string | null;
+  verdict: string; act: number;
+  top: { headline: string; priority: "act" | "watch" | "note"; metric: string; caption: string; label: string }[];
+}
+
+const RANK = { act: 0, watch: 1, note: 2 } as const;
+
+export function watchList(max = 6): WatchItem[] {
+  const out: WatchItem[] = [];
+  for (const d of listDatasets()) {
+    const m = getMeta(d.id);
+    const b = m?.brief;
+    if (!m || !b?.items?.length) continue;
+    const items = [...b.items].sort((x, y) => RANK[x.priority] - RANK[y.priority] || y.score - x.score);
+    out.push({
+      id: m.id, name: m.name, sample: m.sample, updatedAt: m.updatedAt, department: m.spec.deptName, verdict: b.verdict,
+      act: items.filter((x) => x.priority === "act").length,
+      top: items.filter((x) => x.priority !== "note").slice(0, 2).map((x) => ({
+        headline: x.headline || x.title, priority: x.priority, metric: x.metric?.value ?? "", caption: x.metric?.caption ?? "", label: x.label }))
+    });
+  }
+  // what needs acting on first, then the freshest
+  return out.sort((a, b) => Number(b.act > 0) - Number(a.act > 0) || b.updatedAt.localeCompare(a.updatedAt)).slice(0, max);
+}

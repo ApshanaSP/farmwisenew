@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { describe, expect, it, vi } from "vitest";
 import { clean } from "@/lib/studio/clean";
-import { designDashboard, panelColumn } from "@/lib/studio/dashboard";
+import { designDashboard, panelColumn, periodicWeight } from "@/lib/studio/dashboard";
 import { answerText, keyFilters, runPlan, type Names } from "@/lib/studio/engine";
 import { attention } from "@/lib/studio/drill";
 import { feedLinkIn, parseFile } from "@/lib/studio/parse";
@@ -385,5 +385,37 @@ describe("insights and the brief", () => {
     const { openPhrase } = await import("@/lib/studio/types");
     expect(openPhrase({ openWord: "needs attention" })).toEqual({ adj: "needing attention", are: "need attention" });
     expect(openPhrase({ openWord: "still pending" })).toEqual({ adj: "still pending", are: "are still pending" });
+  });
+});
+
+describe("the hospital beds sample (one row per hospital per day)", () => {
+  const file = path.join(SAMPLES, "Hospital_Beds_Daily_2026.csv");
+  it.runIf(fs.existsSync(file))("reads hospitals at the latest date and leads with how full they are", async () => {
+    const t = parseFile(fs.readFileSync(file), "beds.csv");
+    const spec = rulesSpec(profileTable(t), "Hospital_Beds_Daily_2026.csv", null, refs);
+    expect(spec.columns.find((c) => /occupied/i.test(c.header))!.label).toBe("Occupied Beds");
+    const c = clean(t, spec);
+    // as the pipeline does after cleaning (its place step, which needs the store, would set the date the same way)
+    const dk = spec.columns.find((x) => x.role === "date")!.key;
+    for (const r of c.rows) r._d = typeof r[dk] === "string" ? String(r[dk]).slice(0, 10) : null;
+    spec.weight = periodicWeight(c.rows, spec);
+    spec.panelBy = panelColumn(c.rows, spec);
+    if (spec.panelBy && !spec.weight && spec.primary && !spec.openValues.length) spec.weight = spec.primary;
+    const dates = c.rows.map((r) => r._d).filter((d): d is string => typeof d === "string").sort();
+    const end = dates[dates.length - 1];
+    const { computeInsights } = await import("@/lib/studio/insights");
+    const ins = computeInsights(c.rows, spec, { before: 90, after: 95, rowsIn: c.rows.length, rowsOut: c.rows.length, issues: [], placed: 0, unplaced: [] } as any,
+      null, { from: dates[0], to: end }, names);
+    const load = ins.find((x) => x.label === "Capacity")!;
+    expect(load).toBeTruthy();
+    // the fullest hospital at the latest date, computed here from the rows
+    const latest = c.rows.filter((r) => r._d === end);
+    const occ = spec.columns.find((x) => /occupied/i.test(x.header))!.key, tot = spec.columns.find((x) => /total_beds/i.test(x.header))!.key;
+    const name = spec.columns.find((x) => /hospital_name/i.test(x.header))!.key;
+    const top = latest.map((r) => ({ n: String(r[name]), p: Math.round(((r[occ] as number) / (r[tot] as number)) * 1000) / 10 })).sort((a, b) => b.p - a.p)[0];
+    expect(load.key).toBe(top.n);
+    expect(load.metric.value).toBe(`${top.p}%`);
+    // the items are hospitals, not their specialties
+    expect(load.title + load.text).not.toMatch(/specialt|hospital_name/i);
   });
 });

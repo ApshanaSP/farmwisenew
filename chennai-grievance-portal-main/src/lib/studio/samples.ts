@@ -14,7 +14,9 @@ export const SAMPLES: SampleInfo[] = [
   { key: "fever", file: "Fever_Surveillance_Weekly_2026.csv", title: "Fever & dengue surveillance", dept: "Government Hospitals",
     blurb: "Weekly cases per hospital: links with flooding week by week", icon: "health", format: "CSV" },
   { key: "pds", file: "PDS_Ration_Shop_Stock_Oct2026.csv", title: "Ration shop stock (Tamil headers)", dept: "Civil Supplies",
-    blurb: "Tamil and English headers, mixed date formats", icon: "leaf", format: "CSV" }
+    blurb: "Tamil and English headers, mixed date formats", icon: "leaf", format: "CSV" },
+  { key: "beds", file: "Hospital_Beds_Daily_2026.csv", title: "Hospital beds and OPD, daily", dept: "Government Hospitals",
+    blurb: "One row per hospital per day: beds, occupancy, OPD, alerts", icon: "health", format: "CSV" }
 ];
 
 export function sampleFile(key: string): { buf: Buffer; info: SampleInfo } | null {

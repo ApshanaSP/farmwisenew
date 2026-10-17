@@ -11,6 +11,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { expand, translate } from "@/lib/aws/dialect";
 
 export const STORE = path.join(process.cwd(), "eval", "store");
+// The Data Studio questions run on the committed samples in a folder of their own, never on this PC's own datasets
+process.env.STUDIO_DIR ||= fs.mkdtempSync(path.join(os.tmpdir(), "golden-studio-"));
 export const haveStore = () => fs.existsSync(path.join(STORE, "manifest.json"));
 
 /** The shared pool the mocked database modules forward to, set once the frozen build is loaded. */
@@ -38,7 +40,20 @@ export async function loadFrozen(): Promise<Frozen> {
   // the build steps the live server applies (readable headlines, news sanity, clusters ...)
   await import("@/lib/collector/derive");
   await applyBuildHooks(db);
+  await loadStudioSamples(["fever", "beds"]);
   return { db, frozenAt: new Date(m.frozen_at) };
+}
+
+/** The Studio samples the questions ask about, read by the Studio's own pipeline (rules only: no model in the golden run). */
+async function loadStudioSamples(keys: string[]) {
+  const { sampleFile } = await import("@/lib/studio/samples");
+  const { ingest } = await import("@/lib/studio/pipeline");
+  const { listDatasets } = await import("@/lib/studio/store");
+  if (listDatasets().length) return;
+  for (const k of keys) {
+    const s = sampleFile(k);
+    if (s) await ingest({ buf: s.buf, file: s.info.file, kind: "sample", url: null, name: s.info.title, user: "golden@test", force: true }, () => undefined);
+  }
 }
 
 /** One value from the frozen store (for expected numbers). */

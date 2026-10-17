@@ -8,6 +8,8 @@ import { I, type IconName } from "./icons";
 import { SEV_HEX, deptIcon, fmtDate, rel, useFit, watchBrief, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
+import { api } from "./studio/client";
+import type { WatchItem } from "@/lib/studio/store";
 
 type Book = NonNullable<Insights["book"]>;
 type Dept = Book["departments"][number];
@@ -30,6 +32,7 @@ export function BriefingBook({ ins, c }: { ins: Insights; d?: OverviewData; c: C
       <Brief ins={ins} b={b} c={c} />
       <Departments b={b} c={c} />
       <div className="bb-col">
+        <FromDatasets c={c} />
         <Developing ins={ins} c={c} />
         <NewsOnly ins={ins} c={c} />
       </div>
@@ -360,6 +363,45 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
           })}
         </ul>
       ) : <div className="bb-fit"><Calm>No story developed further in this period.</Calm></div>}
+    </section>
+  );
+}
+
+/**
+ * The Collector's own datasets (Data Studio) beside the district's: each one's most pressing finding from its saved
+ * brief (no model is asked here), opening the dataset in the Studio. Shown only when there are datasets.
+ */
+function FromDatasets({ c }: { c: Console }) {
+  const [list, setList] = useState<WatchItem[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    api<{ datasets: WatchItem[] }>("/api/collector/studio/watch").then((r) => live && setList(r.datasets), () => live && setList([]));
+    return () => { live = false; };
+  }, []);
+  if (!list?.length) return null;
+  const open = (id: string) => {
+    try { localStorage.setItem("diq-studio-sel", id); } catch { /* not saved in this browser */ }
+    c.setPage("studio");
+  };
+  const acting = list.filter((d) => d.act > 0).length;
+  return (
+    <section className="bb-card bb-ds">
+      <Head ic="spark" title="From your datasets" n={list.length} note={acting ? `${acting} need${acting === 1 ? "s" : ""} action` : undefined} more={() => c.setPage("studio")} />
+      <ul className="bb-fit">
+        {list.slice(0, 3).map((d) => {
+          const t = d.top[0];
+          return (
+            <li key={d.id}>
+              <button className="bb-item" onClick={() => open(d.id)} title={`Open "${d.name}" in the Data Studio`}>
+                <i style={{ background: t?.priority === "act" ? SEV_HEX.High : t?.priority === "watch" ? SEV_HEX.Medium : SEV_HEX.Low }} />
+                <b>{t?.headline ?? d.verdict}</b>
+                <small>{[d.name, t?.metric ? (t.headline.includes(t.metric) ? t.caption : `${t.metric} ${t.caption}`.trim()) : null,
+                  d.sample ? "sample data" : null].filter(Boolean).join(" · ")}</small>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
