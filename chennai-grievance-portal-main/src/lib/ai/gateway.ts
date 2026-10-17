@@ -130,13 +130,17 @@ function openai(): Provider | null {
   };
 }
 
+/** A provider setting may name several, in order: AI_PROVIDER=bedrock,gemini. */
+const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+
 /**
- * Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); only those
+ * Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); each may
+ * list several ("bedrock,gemini": Bedrock while the team's AWS keys are valid, Gemini once they expire). Only those
  * configured. `prefer` goes first when it is configured (the source onboarding agent asks for Gemini).
  */
 function providers(prefer?: ProviderName): Provider[] {
   const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai };
-  const order = [...(prefer ? [prefer] : []), env("AI_PROVIDER") || "gemini", env("AI_FALLBACK_PROVIDER") || "none"];
+  const order = [...(prefer ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -237,7 +241,8 @@ function retryAfterSeconds(e: APICallError): number | null {
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
   const all = providers(c.prefer);
-  const main = env("AI_PROVIDER") || "gemini";
+  // the main provider is the first configured one named in AI_PROVIDER
+  const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
   // background work stays off the main provider while another one is configured
   const list = c.background && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
   if (!list.length) throw new AiUnavailableError();
