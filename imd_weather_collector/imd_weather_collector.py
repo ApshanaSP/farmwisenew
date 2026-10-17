@@ -807,6 +807,11 @@ class Collector:
             labels = {int(n): datetime.strptime(s, "%b %d, %Y").date()
                       for n, s in re.findall(r'for="rb(\d)">\s*([A-Z][a-z]{2} \d{1,2}, \d{4})\s*<', page.text())}
             codes = dict(re.findall(r"'(\d+)','(#[0-9A-Fa-f]{6})'", legend.text()))
+            if not codes:  # the style's JSON legend since 5 Oct 2026: rules titled "... - <code>" with a polygon fill
+                codes = {m.group(1): sym["Polygon"]["fill"]
+                         for rule in legend.json()["Legend"][0]["rules"]
+                         if (m := re.search(r"-\s*(\d+)\s*$", str(rule.get("title", ""))))
+                         for sym in rule.get("symbolizers", [])[:1] if "Polygon" in sym}
             feats = [x["properties"] for x in wfs.json()["features"]
                      if str(x["properties"].get("District", "")).upper() == IMD_DISTRICT]
             if not (categories and codes and feats):

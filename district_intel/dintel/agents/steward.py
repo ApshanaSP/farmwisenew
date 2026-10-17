@@ -38,6 +38,12 @@ def _refresh_runs(settings: Settings) -> dict[str, tuple[pd.Timestamp | None, pd
             if not k.startswith("_") and isinstance(v, dict)}
 
 
+# Endpoints that are closed to this project by their owner, every hour (login, captcha, key we do not hold, wrong
+# scale, no timestamps, not needed): they are listed in the detail but do not make the feed "degraded", or a feed whose
+# every open endpoint works would never show as healthy. A failure of an endpoint that is open still counts.
+CLOSED_TO_US = r"access_restricted|http_401|http_403|not_needed|no_observation_time|ok_unparsed|no-api-key|captcha|rejected"
+
+
 def source_health(settings: Settings, events: pd.DataFrame, obs: pd.DataFrame, docs_raw_rows: int, now: pd.Timestamp) -> pd.DataFrame:
     every = {r["name"]: r["every_minutes"] for r in settings.raw.get("refresh", [])}
     rows = []
@@ -67,9 +73,10 @@ def source_health(settings: Settings, events: pd.DataFrame, obs: pd.DataFrame, d
         last = lg[lg["run_at"] == lg["run_at"].max()]
         ok = last["fetch_status"].eq("ok")
         bad = "; ".join(f"{s}: {f}" for s, f in zip(last.loc[~ok, "source"], last.loc[~ok, "fetch_status"]))
+        usable = ~last["fetch_status"].astype(str).str.contains(CLOSED_TO_US)
         add("imd", "live collector", lg["run_at"].max(), lg.loc[lg["fetch_status"].eq("ok"), "run_at"].max(),
             obs.loc[(obs["source"] == "imd") & (obs["metric"] != "imd_warning_level"), "observed_at"].max(), int((obs["source"] == "imd").sum()),
-            f"Unavailable endpoints (not bypassed): {bad}" if bad else "All endpoints ok", (int(ok.sum()), len(last)))
+            f"Unavailable endpoints (not bypassed): {bad}" if bad else "All endpoints ok", (int((ok & usable).sum()), int(usable.sum())))
     # CPCB
     p = settings.src("cpcb", "dir") / "cpcb_air_quality_run_log.csv"
     if p.exists():
@@ -77,9 +84,10 @@ def source_health(settings: Settings, events: pd.DataFrame, obs: pd.DataFrame, d
         lg["run_started_at"] = mixed_to_ist(lg["run_started_at"])
         last = lg[lg["run_started_at"] == lg["run_started_at"].max()]
         ok = pd.to_numeric(last["rows_fetched"], errors="coerce").fillna(0) > 0
+        usable = ~last["http_status"].astype(str).str.contains(CLOSED_TO_US)
         add("cpcb", "live collector", lg["run_started_at"].max(), lg.loc[pd.to_numeric(lg["rows_fetched"], errors="coerce").fillna(0) > 0, "run_started_at"].max(),
             obs.loc[obs["source"] == "cpcb", "observed_at"].max(), int((obs["source"] == "cpcb").sum()),
-            "; ".join(f"{s}: {h}" for s, h in zip(last["source"], last["http_status"])), (int(ok.sum()), len(last)))
+            "; ".join(f"{s}: {h}" for s, h in zip(last["source"], last["http_status"])), (int((ok & usable).sum()), int(usable.sum())))
     # CFM
     p = settings.src("cfm", "dir") / "cfm_dss_run_log.csv"
     if p.exists():
