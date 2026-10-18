@@ -23,7 +23,7 @@ export type BedrockRole = "fast" | "reasoning";
 const env = (k: string) => (process.env[k] ?? "").trim();
 
 /** Which keys are in .env now (a new paste changes it). */
-const keyId = () => `${env("AWS_REGION")}|${env("AWS_ACCESS_KEY_ID")}|${env("AWS_SESSION_TOKEN").slice(-24)}`;
+const keyId = () => `${env("AWS_REGION")}|${env("AWS_ACCESS_KEY_ID")}|${env("AWS_SESSION_TOKEN").slice(-24)}|${env("AWS_BEARER_TOKEN_BEDROCK").slice(-24)}`;
 
 /**
  * Keys AWS has refused (temporary keys expire after a few hours): not tried again until .env holds different keys, so
@@ -57,7 +57,7 @@ function client(): BedrockRuntimeClient {
   const region = env("AWS_REGION") || env("AWS_DEFAULT_REGION") || "ap-south-1";
   const id = env("AWS_ACCESS_KEY_ID"), secret = env("AWS_SECRET_ACCESS_KEY"), token = env("AWS_SESSION_TOKEN");
   // rebuilt when the region or the keys change (temporary keys are replaced every few hours)
-  const key = `${region}|${id}|${token.slice(-24)}`;
+  const key = `${region}|${id}|${token.slice(-24)}|${env("AWS_BEARER_TOKEN_BEDROCK").slice(-24)}`;
   if (global.__bedrock?.key !== key) {
     global.__bedrock = {
       key,

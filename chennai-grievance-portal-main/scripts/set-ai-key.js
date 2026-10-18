@@ -96,7 +96,9 @@ async function main() {
   const v = parse(text);
   const vals = {};
   if (v.AWS_ACCESS_KEY_ID || v.AWS_BEARER_TOKEN_BEDROCK) {
-    Object.assign(vals, { AI_PROVIDER: "bedrock" });
+    // keep a provider chain such as "bedrock,gemini" when it already starts with bedrock
+    const chain = ((fs.existsSync(ENV) ? fs.readFileSync(ENV, "utf8") : "").match(/^AI_PROVIDER=(.*)$/m)?.[1] ?? "").trim();
+    Object.assign(vals, { AI_PROVIDER: /^bedrock\b/.test(chain) ? chain : "bedrock" });
     for (const k of ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_BEARER_TOKEN_BEDROCK", "AI_BEDROCK_MODEL"]) if (v[k]) vals[k] = v[k];
     vals.AWS_REGION = v.AWS_REGION || process.env.AWS_REGION || "ap-south-1";
     if (v.AWS_ACCESS_KEY_ID && !v.AWS_SECRET_ACCESS_KEY) return console.log("The secret access key is missing: paste the whole block.");
