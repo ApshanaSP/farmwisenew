@@ -65,17 +65,15 @@ export const registerSchema = z
       .trim()
       .min(1, "First name is required")
       .max(100),
-    lastName: z.string().trim().max(100).optional().default(""),
-    role: z.enum(["collector", "department_officer", "citizen"]),
-    departmentId: z.number().int().positive().nullable().optional()
+    lastName: z.string().trim().max(100).optional().default("")
+    // No role or department here: self-registration is for citizens only.
+    // Collector and officer accounts are issued by the Collector's office
+    // (scripts/seed-users.js, scripts/seed-officers.js). Any role sent in
+    // the body is stripped by zod and never reaches the database.
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"]
-  })
-  .refine((data) => (data.role === "department_officer" ? !!data.departmentId : true), {
-    message: "Department is required for a Department Officer",
-    path: ["departmentId"]
   });
 
 export const loginSchema = z.object({

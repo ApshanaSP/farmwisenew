@@ -121,10 +121,13 @@ function LoginForm() {
       </p>
 
       <p className="mt-5 text-center text-[15px] text-ink-muted">
-        New to District IQ?{" "}
+        Citizen and new here?{" "}
         <Link href="/register" className="font-semibold text-navy-500 transition hover:underline">
           Create an account
         </Link>
+      </p>
+      <p className="mt-1.5 text-center text-[13px] text-ink-subtle">
+        Officer and Collector accounts are issued by the Collector&apos;s office.
       </p>
     </div>
   );

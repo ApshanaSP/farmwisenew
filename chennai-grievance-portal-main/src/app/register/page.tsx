@@ -2,46 +2,23 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, FormEvent } from "react";
-import { AlertCircle, ArrowRight, Building2, Check, Eye, EyeOff, Loader2, User, Wrench } from "lucide-react";
+import { useState, FormEvent } from "react";
+import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import AuthShell from "@/components/AuthShell";
 import { authError, authLeave } from "@/components/auth/AuthCard";
 import { checkPasswordRules, passwordStrengthScore } from "@/lib/validators";
 
-interface Department {
-  id: number;
-  name: string;
-}
-
-type Role = "" | "collector" | "department_officer" | "citizen";
-
-const ROLE_OPTIONS = [
-  { value: "citizen", label: "Citizen", icon: User },
-  { value: "department_officer", label: "Dept. officer", icon: Wrench },
-  { value: "collector", label: "Collector", icon: Building2 }
-] as const;
-
 export default function RegisterPage() {
   const router = useRouter();
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<Role>("");
-  const [departmentId, setDepartmentId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/departments")
-      .then((r) => r.json())
-      .then((d) => setDepartments(d.departments || []))
-      .catch(() => setDepartments([]));
-  }, []);
 
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
@@ -50,8 +27,6 @@ export default function RegisterPage() {
     setError(null);
 
     const fail = (m: string) => { setError(m); authError(); };
-    if (!role) return fail("Please choose who you are.");
-    if (role === "department_officer" && !departmentId) return fail("Please select your department.");
     if (!firstName.trim()) return fail("Please enter your first name.");
     if (password !== confirmPassword) return fail("Passwords do not match.");
 
@@ -65,9 +40,7 @@ export default function RegisterPage() {
           password,
           confirmPassword,
           firstName,
-          lastName,
-          role,
-          departmentId: role === "department_officer" ? Number(departmentId) : null
+          lastName
         })
       });
       const data = await res.json();
@@ -87,10 +60,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell headline={<>One account. The right dashboard for your role.</>}>
+    <AuthShell headline={<>Raise a complaint. Follow it to the end.</>}>
       <div className="mx-auto w-full max-w-[480px]">
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-ink">Create your account</h1>
-        <p className="mt-1 text-[15px] text-ink-muted">Takes under a minute. Choose who you are to begin.</p>
+        <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-ink">Create a citizen account</h1>
+        <p className="mt-1 text-[15px] text-ink-muted">Takes under a minute. File complaints and track every step.</p>
 
         {error && (
           <div role="alert" className="alert-error mt-3 animate-scale-in py-2.5">
@@ -100,28 +73,6 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="mt-4 space-y-3.5">
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="I am a">
-            {ROLE_OPTIONS.map(({ value, label, icon: Icon }) => {
-              const active = role === value;
-              return (
-                <button key={value} type="button" role="radio" aria-checked={active} onClick={() => setRole(value)}
-                  className={`relative flex h-11 items-center justify-center gap-2 rounded-[8px] border px-2 text-[14px] font-semibold transition-all duration-150 ease-spring active:scale-[.97] ${
-                    active
-                      ? "border-navy-500 bg-navy-50 text-navy-700 shadow-glow"
-                      : "border-canvas-border bg-canvas-sunken text-ink-muted hover:border-navy-300 hover:text-ink"
-                  }`}>
-                  <Icon className="h-[18px] w-[18px] flex-none" aria-hidden="true" />
-                  <span className="truncate">{label}</span>
-                  {active && (
-                    <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-navy-500 text-white ring-2 ring-canvas-raised">
-                      <Check className="h-3 w-3" strokeWidth={3.5} />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="firstName" className="auth-label">First name</label>
@@ -135,21 +86,10 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className={role === "department_officer" ? "grid grid-cols-2 gap-3" : ""}>
-            <div>
-              <label htmlFor="email" className="auth-label">Email address</label>
-              <input id="email" type="email" required autoComplete="email" className="auth-input" placeholder="you@example.com"
-                value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            {role === "department_officer" && (
-              <div className="animate-fade-in">
-                <label htmlFor="department" className="auth-label">Department</label>
-                <select id="department" required className="auth-input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-                  <option value="">Select</option>
-                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
-            )}
+          <div>
+            <label htmlFor="email" className="auth-label">Email address</label>
+            <input id="email" type="email" required autoComplete="email" className="auth-input" placeholder="you@example.com"
+              value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -199,6 +139,11 @@ export default function RegisterPage() {
         <p className="mt-4 text-center text-[15px] text-ink-muted">
           Already have an account?{" "}
           <Link href="/login" className="font-semibold text-navy-500 transition hover:underline">Sign in</Link>
+        </p>
+
+        <p className="mt-4 flex items-start gap-2 rounded-[10px] border border-canvas-border bg-canvas-sunken/60 px-3.5 py-2.5 text-[13px] text-ink-muted">
+          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-emerald-600" aria-hidden="true" />
+          <span>Department officers and the Collector&apos;s office don&apos;t register here. Their accounts are issued by the Collector&apos;s office; just <Link href="/login" className="font-semibold text-navy-500 hover:underline">sign in</Link>.</span>
         </p>
       </div>
     </AuthShell>

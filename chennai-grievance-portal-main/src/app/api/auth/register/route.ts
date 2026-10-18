@@ -22,7 +22,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
-    const { email, password, firstName, lastName, role, departmentId } = parsed.data;
+    const { email, password, firstName, lastName } = parsed.data;
+
+    // Staff accounts cannot be self-made. Refuse a request that asks for one
+    // outright instead of quietly turning it into a citizen account.
+    if (body && typeof body === "object" && "role" in body && body.role !== "citizen") {
+      return NextResponse.json(
+        { error: "Only citizens can create an account here. Officer and Collector accounts are issued by the Collector's office." },
+        { status: 403 }
+      );
+    }
 
     const [existing] = await pool.query<RowDataPacket[]>(
       "SELECT id FROM users WHERE email = ? LIMIT 1",
@@ -35,26 +44,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (role === "department_officer" && departmentId) {
-      const [dept] = await pool.query<RowDataPacket[]>(
-        "SELECT id FROM departments WHERE id = ? LIMIT 1",
-        [departmentId]
-      );
-      if (dept.length === 0) {
-        return NextResponse.json({ error: "Selected department is invalid." }, { status: 400 });
-      }
-    }
-
     const passwordHash = await bcrypt.hash(password, 10);
-    const finalDepartmentId = role === "department_officer" ? departmentId ?? null : null;
 
     // Email verification is disabled, so the account is usable immediately.
     // email_verification_exempt records WHY it may sign in without a verified
     // address; email_verified_at stays NULL because nobody ever confirmed it.
+    // The role is fixed server-side: a sign-up is always a citizen.
     const [ins] = await pool.query<ResultSetHeader>(
       `INSERT INTO users (email, password_hash, role, department_id, email_verification_exempt)
-       VALUES (?, ?, ?, ?, 1)`,
-      [email, passwordHash, role, finalDepartmentId]
+       VALUES (?, ?, 'citizen', NULL, 1)`,
+      [email, passwordHash]
     );
 
     // Store the name straight away so the complaint form can prefill it and

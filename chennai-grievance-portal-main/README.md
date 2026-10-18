@@ -140,7 +140,7 @@ client.
 
 | Method | Endpoint | Body | Notes |
 |---|---|---|---|
-| POST | `/api/auth/register` | `{ email, password, confirmPassword, role, departmentId? }` | `departmentId` required only when `role = "department_officer"` |
+| POST | `/api/auth/register` | `{ email, password, confirmPassword, firstName, lastName? }` | Citizens only: the account is always saved as `citizen`; a request asking for any other role gets 403. Officer and Collector accounts come from `scripts/seed-users.js` / `scripts/seed-officers.js` |
 | POST | `/api/auth/login` | `{ email, password }` | Sets the session cookie; response includes `redirectTo` based on role |
 | POST | `/api/auth/logout` | — | Clears the session cookie |
 | GET | `/api/auth/me` | — | Returns the logged-in user's basic info |
