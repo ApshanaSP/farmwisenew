@@ -26,3 +26,12 @@ export function isBareEdit(message: string): boolean {
   const words = message.toLowerCase().replace(/[^\p{L}\p{M}\s-]/gu, " ").split(/[\s-]+/).filter(Boolean);
   return words.length > 0 && words.every((w) => EDIT_WORDS.has(w) || EDIT_TA.test(w));
 }
+
+const N_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+/** "only top 3", "just the top five", "top 3 only", "show first 5": the previous answer cut to its first N, or null. */
+export function topNFromText(message: string): number | null {
+  const m = message.toLowerCase().match(/^\s*(?:only|just|show(?: me)?|give(?: me)?|keep)?\s*(?:the\s+)?(?:top|first|highest)\s+(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:only|mattum|alone|please)?\s*[.!?]*\s*$/);
+  if (!m) return null;
+  const n = /^\d+$/.test(m[1]) ? Number(m[1]) : N_WORDS[m[1]];
+  return n >= 1 && n <= 20 ? n : null;
+}

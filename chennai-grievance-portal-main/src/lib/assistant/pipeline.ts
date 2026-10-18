@@ -30,7 +30,7 @@ import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { contextNumbers, extractNumbers, fillFacts, pruneUnverified, verifyNumbers } from "@/lib/assistant/verify";
+import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, pruneUnverified, verifyNumbers, type EntityNames } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
@@ -38,7 +38,7 @@ import { loadCatalog, renderCatalog } from "@/lib/assistant/catalog";
 import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, type QueryResult } from "@/lib/assistant/compile";
 import { helpFor, isHelpQuestion } from "@/lib/assistant/help";
 import { insightByKey } from "@/lib/assistant/insightcards";
-import { editFromText, isBareEdit } from "@/lib/assistant/edits";
+import { editFromText, isBareEdit, topNFromText } from "@/lib/assistant/edits";
 import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, resetCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
@@ -251,21 +251,38 @@ const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "l
 
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
-const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
+const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
 /** The period the question's own words name, or null. */
 export function periodFromWords(m: string): Scope["period"] | null {
-  if (/\b(today'?s?|24 ?h(ou)?rs?|last day)\b|இன்று|innaiki/i.test(m)) return "daily";
-  if (/\b(this week|last week|weekly|7 days|seven days)\b|இந்த வாரம்|indha vaaram/i.test(m)) return "weekly";
+  // "open for more than 7 days", "pending over 30 days": how long something has been open, not the period asked about
+  m = m.replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi, " ");
+  // "what changed since yesterday": the last day against the day before
+  if (/\bsince (yesterday|last night)\b/i.test(m)) return "daily";
+  if (/\b(today'?s?|24 ?h(ou)?rs?|last day)\b|இன்று|இன்றைய|innaiki/i.test(m)) return "daily";
+  if (/\b(this week|last week|weekly|7 days|seven days|indha week|intha week|pona week)\b|இந்த வாரம்|indha vaaram/i.test(m)) return "weekly";
   if (/\b(this month|last month|monthly|30 days|thirty days)\b|இந்த மாதம்|maasam/i.test(m)) return "monthly";
   if (/\b(quarter|quarterly|90 days|three months)\b|காலாண்டு/i.test(m)) return "quarterly";
   return null;
 }
+/** "why?", "but why", "reason?", "yen?", "ஏன்?": the whole message asks why, about the previous answer */
+const BARE_WHY = /^\s*(but |and |so )?(why|why so|why is that|why is it so|why that|how come|reason|reasons|the reason|what is the reason|what's the reason|what are the reasons|en|yen|yenna reason|ஏன்)\s*[?.!]*\s*$/i;
+/**
+ * "why did that go up?", "adhu en increase aachu", "why is it so high": a short why that points back at the previous answer
+ * and names no new place, period or kind of incident (it once lost the previous answer's week and explained the quarter).
+ */
+function whyAboutThat(m: string, namesPlace: boolean): boolean {
+  if (namesPlace || m.split(/\s+/).length > 8 || PERIOD_WORDS.test(m) || classify(m)) return false;
+  // ("en ivlo adhigam", "why so many": "this much" points back too)
+  return /\b(why|yen|en|reason|how come)\b|ஏன்/i.test(m) && /\b(it|that|this|these|those|adhu|athu|idhu|ithu|so|ivlo|ivvalavu|evlo|this much|so many|so much)\b|அது|இது|இவ்வளவு/i.test(m);
+}
+/** prices and readings are the console's own data ("onion price today" was once searched for in the incident records) */
+const PRICE_OR_READING = /\b(price|prices|rate|rates|cost|market|mandi|per kg|aqi|air quality|rain|rainfall|lake|lakes|reservoir|beds?|occupancy|temperature|humidity|weather)\b|விலை|மழை|ஏரி/i;
 /** "Which zone needs attention now?": now / currently / right now, with no other period, is the last 7 days, not 90. */
 const NOW_WORDS = /\b(now|right now|currently|at (the moment|present)|these days|latest situation)\b|இப்போது|ippo/i;
 
 /** A question about one specific incident ("what is this murder case", "tell me about the fire at", "Adyar murder enna aachu"). */
-const STORY = /\b(what (is|was|are) (this|that|the)|tell me (more )?about|explain|details? (of|about|on)|what happened|story of|about (this|that|the) (case|incident)|update on (the|this|that))\b|enna (aachu|nadandhuchu|nadanthuchu|case)|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi|patthi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)|பற்றி (சொல்|விளக்கு)/i;
-const STORY_THING = /\b(case|incident|murder|killing|killed|accident|crash|fire|blaze|theft|robbery|snatching|burglary|collapse|death|died|attack|assault|stabbing|drowning|drowned|missing|explosion|clash|protest)\b|INC-[A-Z0-9]|கொலை|விபத்து|தீ விபத்து|வழக்கு/i;
+const STORY = /\b(what (is|was|are) (this|that|the)|when (was|did) the|what time (was|did) the|tell me (more )?about|explain|details? (of|about|on)|what happened|story of|about (this|that|the) (case|incident)|update on (the|this|that))\b|enna (aachu|nadandhuchu|nadanthuchu|case)|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi|patthi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)|பற்றி (சொல்|விளக்கு)/i;
+const STORY_THING = /\b(case|incident|murder|killing|killed|accident|crash|fire|blaze|breach|breached|cave-in|damage|damaged|cracks|cracked|theft|robbery|snatching|burglary|collapse|death|died|attack|assault|stabbing|drowning|drowned|missing|explosion|clash|protest)\b|INC-[A-Z0-9]|கொலை|விபத்து|தீ விபத்து|வழக்கு/i;
 
 /**
  * A follow-up that only changes where or when ("only Adyar zone", "what about last month?", "same for Zone 9", "for the whole
@@ -294,7 +311,7 @@ function needsPicture(question: string, results: ToolResult[], routerSays: boole
 }
 
 /** Tools whose rule match is specific enough to beat the planner. */
-const PREFER_TOOL = new Set(["departments", "zones", "dept_backlog", "verification_queue", "environment", "mandi_prices", "hotspots", "news_gaps",
+const PREFER_TOOL = new Set(["departments", "zones", "dept_backlog", "resolution_times", "verification_queue", "environment", "mandi_prices", "hotspots", "news_gaps",
   "developing_stories", "source_health", "taluks", "incident_series", "place_breakdown"]);
 
 function applyScope(base: Scope, r: Row, n: RefNames): Scope {
@@ -326,6 +343,7 @@ const BRIEF: Record<string, string> = {
   severity: "open incidents by severity, severity mix, top open incidents",
   verification_queue: "citizen complaints awaiting the Collector's verification",
   dept_backlog: "slowest departments by average age of open incidents",
+  resolution_times: "how fast incidents are resolved: per department, resolved in the period, average hours/days from report to closing, share within the deadline",
   incidents: "list incidents (sev; status open|awaiting|unverified|verified|critical; q keyword; allTime)",
   incident_detail: "one incident by id (INC-...)",
   incident_story: "explain ONE specific incident described in words (text = the description: 'the murder case in Adyar', 'fire in Guindy yesterday'): what happened, when, status, reports",
@@ -389,7 +407,8 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   const placed = place ? (JSON.parse(place) as Row) : null;
   // the conversation counts only for a follow-up, or a question that points back ("there", "same zone"); a new question
   // does not inherit the last answer's zone
-  const backRef = o.intent === "plan_edit" || /\b(there|that (zone|area|place|taluk)|same (zone|area|place|taluk)|this (zone|area)|over there)\b|அங்கே|அங்கு|anga\b/i.test(message);
+  // ("which one is most serious" after a list of Adyar's floods once lost Adyar: "which one", "these", "them" point back too)
+  const backRef = o.intent === "plan_edit" || /\b(there|that (zone|area|place|taluk)|same (zone|area|place|taluk)|this (zone|area)|over there|which (one|of (these|them|those))|among (these|them|those)|of (these|them|those)|these|those)\b|அங்கே|அங்கு|anga\b|ithula|idhula|adhula|athula/i.test(message);
   const talk = `${message} ${backRef ? turns.slice(-4).map((t) => `${t.content_text ?? ""} ${JSON.stringify(t.plan?.tools ?? [])}`).join(" ") : ""}`.toLowerCase();
   if (scope.zone != null && scope.zone !== base.zone) {
     const z = n.zones.get(scope.zone);
@@ -736,7 +755,19 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const finish = async (card: AnswerCard, plan: unknown): Promise<ChatOutput> => {
     card.sources.models = models.map((m) => ({ step: m.step, provider: m.provider, model: m.model, ms: m.ms, tokens: m.inputTokens + m.outputTokens,
       inTokens: m.inputTokens, outTokens: m.outputTokens }));
-    card.sources.assumptions = [...new Set([...(route?.assumptions ?? []), ...card.sources.assumptions])];
+    // one caveat said twice in other words (the tool's and the composer's "Porur has no filter of its own") is said once
+    const seenCaveat = new Set<string>();
+    card.caveats = card.caveats.filter((c) => {
+      const k = String(c).toLowerCase().replace(/[^a-z0-9஀-௿ ]+/g, " ").split(/\s+/).filter((w) => w && !/^(was|is|are|were|the|a|an|of|in|on|for|to|and|its|has|have|been)$/.test(w)).slice(0, 5).join(" ");
+      return !seenCaveat.has(k) && !!seenCaveat.add(k);
+    });
+    card.sources.assumptions = [...new Set([...(route?.assumptions ?? []), ...card.sources.assumptions])]
+      // a note about a period the answer did not end up covering ("covers the last 90 days" on a 24-hour answer) only confuses
+      .filter((a) => !card.scope?.period || !((/^No period was named/.test(a) && card.scope.period !== "quarterly")
+        || (/^“Now” read as the last 7 days/.test(a) && card.scope.period !== "weekly")))
+      // an answer about one incident (its story, its next steps) has no zone or period of its own to explain
+      .filter((a) => !(["actions", "incident_detail"].includes(String(card.responseType)) && card.sources.incidentIds.length === 1
+        && /^(Zone \d+ was not named|No period was named|“Now” read as)/.test(a)));
     card.sources.limits = [...new Set([...notes, ...card.sources.limits])];
     // a department console has no department filter to switch
     if (i.lockDept) {
@@ -796,7 +827,11 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
   if (!i.lockDept && !i.pinId && !i.insightKey) {
     if (LIST_DATASETS.test(message)) return finish(datasetsListCard(card0(null)), { intent: "studio_list" });
-    const ds = datasetNamed(message);
+    // hospital beds over a threshold or right now are the console's live readings ("hospital beds above 90% occupancy" was once
+    // answered "3 of 1,620" rows of an upload); a breakdown by zone or over time is the uploaded dataset's
+    const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest)\b/i.test(message)
+      && !/\b(by|per|each)\s+(zone|taluk|ward|month|week|day)|\b(trend|over time)\b/i.test(message);
+    const ds = live ? null : datasetNamed(message);
     if (ds) {
       i.stage("fetching");
       const r = await studioAsk(ds.id, message, i.user).catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });
@@ -824,14 +859,26 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const exact = detectIntent(message, ctx);
   if (!i.pinId && !i.insightKey && ((exact.intent === "INCIDENT_DETAIL" && /\bINC-[A-Z0-9-]{4,}/i.test(message) && message.length <= 120)
       || ((exact.intent === "MAP" || exact.intent === "TABLE" || exact.intent === "CHART") && exact.refinement)
+      // "which one is most serious?" after a list: the top of that list, on its filters
+      || (exact.intent === "PRIORITY_INCIDENT_LIST" && exact.refinement && exact.n === 1)
       // plain readings the rules get right every time: "this month vs last month", "road deaths today" (the router once sent
       // these to the planner: 22 s and three models for a count the store gives at once)
       || (exact.intent === "INCIDENT_COUNT" && (exact.vsPrevious || exact.measure === "deaths"))
+      // "how many garbage complaints in Kodambakkam in the last 10 days": a count of one kind in one place is the store's; the
+      // router once sent it to the planner, which failed, and the answer fell back to district-wide figures for 30 days
+      || (exact.intent === "INCIDENT_COUNT" && !!exact.topic && placeData?.zone != null && message.length <= 110
+        && !/\b(why|trend|compare|vs\.?|versus|rising|increas\w*|decreas\w*|chart|map|by|per|each|average|avg|percent\w*|rate|share)\b/i.test(message))
       // "incidents in ward 120 this month": the store filters by the ward number; the router once matched "Ward 120" as a
       // place name in titles and answered zero beside 24 recorded
       || (placeData?.ward_asked === true && (exact.intent === "INCIDENT_LIST" || exact.intent === "INCIDENT_COUNT") && !exact.topic
         && message.length <= 100 && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|chart|map)\b/i.test(message))
-      || !aiStatus().available)) {
+      // no model: the rules answer, except a question one console tool plainly answers ("which ward has the most garbage
+      // complaints", "average resolution time"), which takes that tool as it does with a model
+      || (!aiStatus().available && !(directTool(message) && !(turns.length && isRefinement(message, !!placeData)))
+        // (one incident described in words, "when was the Porur bund breach reported", is told as its story below)
+        // (places compared side by side are counted the same way each, below)
+        && !sidesOf(message)
+        && !(STORY.test(message) && STORY_THING.test(message) && !/\bINC-/i.test(message))))) {
     const r = await fast(consoleScope);
     if (r) return r;
   }
@@ -870,11 +917,45 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   }
   // a question plainly answered by one console tool (the verification queue, the department backlog, news with no
   // department record): that tool, decided in code; the composer still writes the answer from its facts
+  // a bare "why?" / "reason?" after an answer: what drove the previous answer's figures, on its scope (period, place, category);
+  // it was once answered "I didn't understand that"
+  // (an answer from the store keeps no tools in its plan: its card's scope says what it covered)
+  const lastAnswer = turns.findLast((t) => t.role === "assistant");
+  const prevScope = ((lastAnswer?.plan?.tools as { args?: { scope?: Scope } }[] | undefined)?.find((t) => t.args?.scope)?.args?.scope)
+    ?? (lastAnswer?.scope && typeof lastAnswer.scope === "object" && (lastAnswer.scope as Scope).period ? lastAnswer.scope as Scope : undefined);
+  if (!route && !i.pinId && !i.insightKey && prevScope && (BARE_WHY.test(message) || whyAboutThat(message, !!placeData))) {
+    const s = ScopeSchema.parse(prevScope);
+    route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: "change_drivers", args: { scope: s } }],
+      chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: ["Read as: why the previous answer's figures are what they are (what changed, where, and what drove it)."], offline: false };
+  }
+  // "is it getting worse?" after the air quality or a price: the same readings again, against their usual level (the 28-day mean
+  // or the previous report), not the incidents; after anything else, what changed and why
+  const prevTools = (lastAnswer?.plan?.tools ?? []) as { name: string; args: Record<string, unknown> }[];
+  if (!route && !i.pinId && !i.insightKey && prevScope && message.length <= 50 && /^\s*(is|are|has|have)\s+(it|that|this|they|these|those)\b/i.test(message)
+    && /\b(getting|got|becoming) (better|worse)|\b(improv|worsen)(ing|ed)\b|\b(rising|falling|going up|going down)\b/i.test(message)) {
+    const reading = prevTools.find((t) => t.name === "environment" || t.name === "mandi_prices");
+    const s = ScopeSchema.parse(prevScope);
+    route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: reading ? [reading] : [{ name: "change_drivers", args: { scope: s } }],
+      chartEdit: null, actions: [], clarify: null, refusal: null, offline: false,
+      assumptions: [reading ? "Read as: the same readings, against their usual level." : "Read as: whether the previous answer's figures are rising or falling, and why."] };
+  }
   const direct = !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
   if (direct) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
+    // "which ward has the most garbage complaints": the ranking counts only the kind the question names
+    if (["zones", "taluks", "departments", "place_breakdown"].includes(direct.name) && !s.cat) {
+      const c = classify(message);
+      if (c && c.conf >= 0.6 && names.cats.has(c.code)) s.cat = c.code;
+    }
+    // "average resolution time for Metrowater": that department's pace (its row and the district's, side by side)
+    if (direct.name === "resolution_times" && !s.dept) {
+      const d = deptFromWords(message, names);
+      if (d) s.dept = d.code;
+    }
     // "why did flooding rise in Adyar?": the place the question names narrows the explanation to its zone
     if (direct.name === "change_drivers" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zone);
+    // "what happened in Velachery this week": the briefing for that zone
+    if (direct.name === "briefing" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zone);
     route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: direct.name, args: { scope: s, ...direct.args } }],
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: [`Read as: ${direct.because}.`], offline: false };
   }
@@ -882,7 +963,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // "none recorded" is said plainly; the router once listed every incident of the week for it
   if (!route && !i.pinId && !i.insightKey && !exact.topic && !placeData && !deptFromWords(message, names) && !turns.length
       && ["INCIDENT_LIST", "INCIDENT_COUNT", "PRIORITY_INCIDENT_LIST", "GENERAL_DISTRICT_QUERY"].includes(exact.intent) && ASKS_WHEN_OR_HOW_MANY.test(message)
-      && unknownSubject(message, names).length) {
+      && !PRICE_OR_READING.test(message) && unknownSubject(message, names).length) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
     route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: "search_records", args: { text: message, scope: s } }],
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: ["Not a kind of incident the console files: its words were searched in the records."], offline: false };
@@ -901,7 +982,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
         // the model is out: the keyword rules answer what they can from the store
         if (!i.pinId && !i.insightKey) {
           const r = await fast(consoleScope);
-          if (r) { r.card.sources.limits.push(...notes); r.card.offline = true; return r; }
+          // (finish already added `notes` to the card's limits: pushing them again showed the note twice)
+          if (r) { r.card.offline = true; return r; }
         }
         route = rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
       }
@@ -942,7 +1024,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       if (r) return r;
     }
     if (p?.tools) route = { ...route, intent: "tool_question", tools: p.tools,
-      assumptions: [...route.assumptions, route.decision.answer === "area_summary" ? "Read as a question about the place or topic as a whole." : "Read as a question about one incident."] };
+      assumptions: [...route.assumptions, route.decision.answer === "area_summary" ? "Read as a question about the place or topic as a whole."
+        : p.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail") ? "Read as a question about one incident."
+          : p.tools.some((t) => t.name === "change_drivers") ? "Read as a question about what changed and why." : "Read as a question the console's tools answer."] };
   }
   // Tools first: when the router sends a question to the planner but a console tool clearly answers it, the tool wins
   // (its numbers are the console's); the planner stays for groupings no tool offers.
@@ -985,11 +1069,27 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   }
   // a place is a filter, not a keyword: "Velachery" searched as text finds only incidents whose title says so
   if (placeData && (placeData.zone != null || placeData.asked_for_taluk) && route.intent === "tool_question") route = placeAsScope(route, placeData, names);
+  // a department's name is not a category: "how is the Storm Water Drain department performing" was filtered to "Drain works site
+  // safety". The category stays only when the words left after the department's name still name it.
+  if (route.scope.cat && !i.pinId && !i.insightKey) {
+    const dn = deptFromWords(message, names);
+    const deptName = dn ? names.depts.get(dn.code)?.name ?? "" : "";
+    if (dn) {
+      const rest = message.replace(new RegExp(deptName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), " ").replace(/\b(department|dept)\b/gi, " ");
+      const still = classify(rest);
+      if (!still || still.code !== route.scope.cat || still.conf < 0.6) {
+        const cat = route.scope.cat;
+        const drop = (s: Scope): Scope => (s.cat === cat ? { ...s, cat: null } : s);
+        route = { ...route, scope: drop(route.scope), tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: drop(t.args.scope as Scope) } } : t)),
+          assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `"${deptName || dn.code}" read as the department, not as a kind of incident.`] };
+      }
+    }
+  }
   // smalltalk is greetings and thanks; "what does test data mean?" is a help question
   if (route.intent === "smalltalk" && !SMALLTALK.test(message) && isHelpQuestion(message)) route = { ...route, intent: "help" };
   // a short "make it a pie" / "show on map" after an answer is a chart edit, whatever the router called it
   if (route.intent !== "chart_edit" && !["out_of_scope", "unsafe"].includes(route.intent) && turns.some((t) => t.role === "assistant")
-    && message.length <= 40 && editFromText(message) && isBareEdit(message)) route = { ...route, intent: "chart_edit" };
+    && message.length <= 40 && ((editFromText(message) && isBareEdit(message)) || topNFromText(message) != null)) route = { ...route, intent: "chart_edit" };
   // "what is this murder case in Adyar?": one specific incident, told as a story, whatever list the router picked
   // ("tell me about the Anna Nagar incident" names only a place and the word "incident": that is the place's summary)
   const onlyPlace = placeData?.zone != null && !/INC-[A-Z0-9]/i.test(message)
@@ -1078,6 +1178,11 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (route.intent === "chart_edit") {
     const edited = await chartEdit(i, route, lang, names, now, sessionId);
     if (edited) return finish(edited.card, { ...plan, intent: "chart_edit", tools: edited.tools });
+    // "make it a donut" after a list of incidents: there is nothing to redraw, so say so (it once said "I could not fetch data")
+    if (!route.tools.length) return finish(clarifyCard(card0(null), {
+      en: "The last answer has no figures to chart (it is a list or a single record). Ask for counts, for example by zone or by department, and I'll chart them.",
+      ta: "கடைசி பதிலில் வரைபடமாக்கக்கூடிய எண்ணிக்கைகள் இல்லை. மண்டல வாரியாக அல்லது துறை வாரியாக எண்ணிக்கைகளைக் கேளுங்கள்.",
+      tanglish: "Last answer-la chart panna figures illa. Zone-wise illa department-wise counts kelunga, chart pannidren." }[lang]), { ...plan, intent: "chart_edit" });
   }
   let tools = route.tools;
   // what the answer is about: a follow-up ("only Zone 13") is read as the question it edits
@@ -1285,7 +1390,9 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   // the card's main figure: the answer must state it, not another fact's value in its place ("0 accidents" when 4 match)
   // (an explanation of a change leads with the change and its drivers, not with the period's total)
   const explaining = c.results.some((r) => r.tool === "change_drivers");
-  const lead = !explaining && p.kpis[0] && Number.isFinite(Number(p.kpis[0].value)) ? { label: p.kpis[0].label, value: Number(p.kpis[0].value) } : null;
+  // ("which ward has the most complaints?" is answered by the leader, not by the place's total: no lead fact for a ranking)
+  const ranking = /\bwhich\b.{0,60}\b(most|highest|least|lowest|fewest|worst|best)\b/i.test(c.message);
+  const lead = !explaining && !ranking && p.kpis[0] && Number.isFinite(Number(p.kpis[0].value)) ? { label: p.kpis[0].label, value: Number(p.kpis[0].value) } : null;
   // a small figure may be written as a word ("three complaints await you"), as people write it
   const LEAD_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
   const statesLead = (d: ComposerOutput) => !lead || extractNumbers(`${d.headline} ${d.answerMarkdown}`, quotable)
@@ -1304,6 +1411,9 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   const need = { area: ["zone_profile", "place_breakdown", "overview_kpis", "severity", "briefing", "taluks", "zones"].some((t) => used.has(t)), why: explaining,
     story: used.has("incident_story") || used.has("incident_detail"), visual: !!c.visual };
   let draft: ComposerOutput | null = null;
+  const factIds = new Set(facts.map((f) => f.id));
+  const entityNames: EntityNames = { zone: new Map([...c.names.zones].map(([k, v]) => [String(k), v.name])),
+    dept: new Map([...c.names.depts].map(([k, v]) => [k, v.name])), taluk: new Map([...c.names.taluks].map(([k, v]) => [k, v.name])) };
   let verdict = { ok: false, checked: 0, unmatched: [] as string[] };
   let regenerated = false;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -1312,10 +1422,20 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
         temperature: 0.2, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal });
       c.models.push(r.info);
       draft = r.object;
+      // a figure placed against the wrong zone or department ("Royapuram ... {{zone.8.open}}", Anna Nagar's) is asked again once
+      const raw = `${draft.headline}\n${draft.answerMarkdown}`;
+      const misbound = [...misboundFacts(raw, entityNames), ...mismeasuredFacts(raw, facts)];
+      if (misbound.length && attempt === 0) {
+        console.warn(`[assistant] draft put figures against the wrong place: ${misbound.join("; ")}`);
+        verdict = { ok: false, checked: 0, unmatched: misbound };
+        ctx.repair = `Figures were put against the wrong place or measure: ${misbound.join("; ")}. Each figure must be the fact of the zone, department or taluk its sentence names, and of the measure its words name (complaints or incidents).`;
+        regenerated = true;
+        continue;
+      }
       // grounded citations: {{fact_id}} placeholders become the facts' exact values before anything is checked or shown
       const unknown: string[] = [];
       // a placeholder the model wrote half of ("{{departments.top") is as unknown as a wrong id: it must never reach the card
-      const fill = (s: string) => { const f = fillFacts(s, facts); unknown.push(...f.unknown); if (/\{\{|\}\}/.test(f.text)) unknown.push(f.text.match(/\{\{[^\s}]*/)?.[0]?.slice(2) || "malformed placeholder"); return f.text; };
+      const fill = (s: string) => { const f = fillFacts(aliasRowIds(s, factIds), facts); unknown.push(...f.unknown); if (/\{\{|\}\}/.test(f.text)) unknown.push(f.text.match(/\{\{[^\s}]*/)?.[0]?.slice(2) || "malformed placeholder"); return f.text; };
       draft = { ...draft, headline: fill(draft.headline), answerMarkdown: fill(draft.answerMarkdown), voiceSummary: fill(draft.voiceSummary),
         caveats: draft.caveats.map(fill), chart: draft.chart ? { ...draft.chart, title: fill(draft.chart.title), subtitle: draft.chart.subtitle ? fill(draft.chart.subtitle) : draft.chart.subtitle } : null };
       if (unknown.length) {
@@ -1348,7 +1468,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     }
     // "which zone has the most open incidents?" answered without a single figure ("Anna Nagar tops the list"): asked again once
     if (verdict.ok && verdict.checked === 0 && attempt === 0 && facts.length
-      && /\b(how many|most|highest|lowest|least|fewest|top|count|number of|which|compare|vs\.?|versus)\b|எத்தனை|evlo|ethana/i.test(c.message)) {
+      // ("why is Royapuram so high?" was once explained with no figure at all)
+      && /\b(how many|most|highest|lowest|least|fewest|top|count|number of|which|compare|vs\.?|versus|why|explain|reasons?|so (high|low|bad)|worse|better|rise|rising|fall|falling|drop)\b|எத்தனை|evlo|ethana|ஏன்/i.test(c.message)) {
       console.warn("[assistant] draft states no figure: asking again");
       ctx.repair = "The answer states no figure. Give the key figure (the leader's value, and the next ones where they matter) using {{fact_id}} placeholders.";
       regenerated = true;
@@ -1391,6 +1512,17 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
     return t;
   }
 
+  // a draft cut off mid-sentence ("…the most frequently reported type, with 9 cases,"): ends at its last complete sentence;
+  // a line that only captions the chart ("**Chart**: Incidents by ward") goes, since the card draws it
+  {
+    const md = draft.answerMarkdown.split("\n").filter((l) => !/^\s*[*_]*(chart|graph|map|visual)[*_]*\s*:/i.test(l)).join("\n").replace(/\n{3,}/g, "\n\n").trimEnd();
+    if (md !== draft.answerMarkdown.trimEnd()) draft = { ...draft, answerMarkdown: md };
+    const cut = md.search(/[.!?।)*\]]["”']?\s+[^.!?।]*$/);
+    // (a prose last line with no closing punctuation, "…with 49% closed on or", is cut off too; a list item may end bare)
+    const last = md.split("\n").pop() ?? "";
+    const unfinished = /[,;:\-–(]$/.test(md) || (!/^\s*([-*•]|\d+\.)\s/.test(last) && !/[.!?)"”'*\]]$/.test(md));
+    if (unfinished && cut > 40) draft = { ...draft, answerMarkdown: md.slice(0, cut + 1).trimEnd() };
+  }
   // a ranking or trend the code drew stays on the card when the model picks plain text: the picture is the evidence
   const keepCode = (draft.display === "text" || (draft.display === "kpi" && !p.kpis.length)) && !!p.chart && (p.display === "chart" || p.display === "map");
   const wantsChart = draft.display === "chart" || draft.display === "map" || keepCode;
@@ -1487,6 +1619,21 @@ async function chartEdit(i: ChatInput, route: Route, lang: Lang, names: RefNames
   const base: AnswerCard = { ...card, id: "", language: lang, sources: { ...card.sources, models: [], tools: card.sources.tools }, autoActions: [], download: null };
   const from = card.chart ?? (card.table ? { ...spec({ type: "table", dataset: card.table, title: card.headline }) } : null);
   if (!from) return null;
+  // "only top 3": the previous answer's chart or table cut to its N largest, nothing asked again; it was once "I didn't understand"
+  const topN = topNFromText(i.message);
+  const topDs = topN ? card.datasets.find((d) => d.id === from.dataset) : null;
+  const topY = from.y?.[0];
+  if (topN && topDs && topY && topDs.rows.length > topN) {
+    const rows = [...topDs.rows].sort((a, b) => Number(b[topY] ?? 0) - Number(a[topY] ?? 0)).slice(0, topN);
+    const yLabel = topDs.fields.find((f) => f.key === topY)?.label ?? topY;
+    const xKey = from.x ?? topDs.fields.find((f) => f.kind === "category" || f.kind === "text")?.key ?? null;
+    const headline = { en: `Top ${topN} by ${yLabel.toLowerCase()}`, ta: `${yLabel}: முதல் ${topN}`, tanglish: `${yLabel}: top ${topN}` }[lang];
+    const list = rows.map((r, k) => `${k + 1}. **${xKey ? String(r[xKey] ?? "") : `#${k + 1}`}**: ${Number(r[topY] ?? 0).toLocaleString("en-IN")}`).join("\n");
+    const out: AnswerCard = { ...base, kind: "answer", datasets: card.datasets.map((d) => (d.id === topDs.id ? { ...d, rows, total: rows.length } : d)),
+      chart: from.type === "table" ? null : { ...from, title: headline }, table: from.type === "table" ? from.dataset : card.table,
+      display: from.type === "table" ? "table" : card.display === "map" ? "map" : "chart", headline, answerMarkdown: list, voiceSummary: headline, visualAsked: true };
+    return { card: out, tools: prev?.plan?.tools ?? [] };
+  }
   let target: ChartType | null = edit.type;
   if (edit.showOnMap) {
     const geoDs = card.datasets.find((d) => allowedTypes(d).some((t) => t.startsWith("map")));

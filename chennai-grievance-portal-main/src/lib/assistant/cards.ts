@@ -247,6 +247,73 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
       : `Incidents ${dir} to ${num(n)}${lead[0] ? `, ${dir === "fell" ? "mostly" : "led by"} ${String(lead[0].label).toLowerCase()}` : ""}`;
     return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
   }
+  // one incident's story without the model: what, where, when, how serious, who has it, and its reports (it once said only
+  // "Here are the figures")
+  const inc = p.datasets.find((d) => d.id === "incident")?.rows[0];
+  if (lang === "en" && inc) {
+    const when = String(inc.t ?? "").slice(0, 16);
+    const reports = p.datasets.find((d) => d.id === "reports")?.rows ?? [];
+    const out = [`**${inc.title}**${inc.place ? ` at ${inc.place}` : ""}${inc.zone_name ? ` (${inc.zone_name} zone)` : ""}, first reported ${when}.`
+      + ` ${String(inc.sev ?? "").replace(/^./, (c) => c.toUpperCase())}, ${String(inc.status ?? "").toLowerCase()}${inc.dept_name ? `; ${inc.dept_name} handles it` : ""} (${inc.id}).`];
+    if (inc.summary) out.push(String(inc.summary));
+    if (reports.length) out.push(`${reports.length === 1 ? "One report" : `${reports.length} reports`} on record, the first ${String(reports[0].t ?? "").slice(0, 16)} (${reports[0].what ?? "report"}).`);
+    const headline = String(inc.title ?? "The incident").slice(0, 120);
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
+  // "which zone improved the most?": the zones whose reports fell most against the period before, and those that rose
+  const zoneRows = p.chart?.compare && p.chart.dataset === "zones" ? (p.datasets.find((d) => d.id === "zones")?.rows ?? []).filter((r) => r.n_prev != null) : [];
+  if (lang === "en" && zoneRows.length) {
+    const moved = zoneRows.map((r) => ({ name: String(r.name), n: Number(r.n), prev: Number(r.n_prev), d: Number(r.n) - Number(r.n_prev) }));
+    const fell = moved.filter((r) => r.d < 0).sort((a, b) => a.d - b.d).slice(0, 3);
+    const rose = moved.filter((r) => r.d > 0).sort((a, b) => b.d - a.d).slice(0, 3);
+    const mv = (r: { name: string; n: number; prev: number }) => `${r.name} (${fmtValue(r.prev)} to ${fmtValue(r.n)})`;
+    const out = [fell.length ? `**${fell[0].name}** improved the most: incidents reported fell from ${fmtValue(fell[0].prev)} to ${fmtValue(fell[0].n)} against the period before.`
+      : "No zone had fewer incidents reported than in the period before."];
+    if (fell.length > 1) out.push(`Also down: ${fell.slice(1).map(mv).join(", ")}.`);
+    if (rose.length) out.push(`Rose most: ${rose.map(mv).join(", ")}.`);
+    const headline = fell.length ? `${fell[0].name} improved the most: ${fmtValue(fell[0].prev)} to ${fmtValue(fell[0].n)} incidents` : "No zone improved against the period before";
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
+  // the weather: IMD's warning in force and the days ahead, in IMD's words (the console makes no forecast of its own)
+  const warn = p.datasets.find((d) => d.id === "warning")?.rows[0];
+  if (lang === "en" && warn) {
+    const colour = ["green", "yellow", "orange", "red"][Number(warn.level)] ?? "";
+    const day = (s: unknown) => new Date(`${String(s)}T00:00:00+05:30`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+    const ahead = p.datasets.find((d) => d.id === "warnings_ahead")?.rows ?? [];
+    const out = [`IMD's warning in force is **level ${warn.level}${colour ? ` (${colour})` : ""}**${warn.warning ? `: ${warn.warning}` : ""}.`];
+    if (ahead.length) out.push(ahead.map((a) => `- **${day(a.date)}**: level ${a.level}${a.text ? `, ${a.text}` : ""}`).join("\n"));
+    out.push("These are IMD's district warnings; the console makes no rain forecast of its own.");
+    const headline = `IMD warning level ${warn.level}${colour ? ` (${colour})` : ""}${ahead.length ? ` · ${ahead.length} day${ahead.length === 1 ? "" : "s"} of warnings ahead` : ""}`;
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
+  // how fast work is closed: the fastest and slowest, or one department's pace
+  const resDs = p.datasets.find((d) => d.id === "resolution");
+  const res = resDs?.rows ?? [];
+  if (lang === "en" && resDs && !res.length) {
+    const span = (base.scopeLine.split(" · ")[0] ?? "").trim().toLowerCase();
+    const who = base.scope?.dept ? base.scopeLine.split(" · ")[2] ?? "this department" : "any department";
+    const text = `Fewer than 3 incidents of ${who} were closed as resolved in the ${span}, too few to give an average time to resolve. Try a longer period, or ask how many are still open.`;
+    return { ...base, headline: `Too few resolved to give an average · ${span}`, answerMarkdown: text, voiceSummary: text };
+  }
+  if (lang === "en" && res.length) {
+    const span = (base.scopeLine.split(" · ")[0] ?? "").trim().toLowerCase();
+    const pace = (r: Record<string, unknown>) => `${r.name} (${fmtValue(Number(r.days), "decimal1")} days, ${fmtValue(Number(r.n))} resolved, ${r.onTimePct}% on time)`;
+    const out: string[] = [];
+    let headline: string;
+    if (res.length === 1) {
+      const r = res[0];
+      headline = `${r.name}: ${fmtValue(Number(r.days), "decimal1")} days on average to resolve`;
+      out.push(`In the ${span}, **${r.name}** resolved **${fmtValue(Number(r.n))}** incidents, taking **${fmtValue(Number(r.days), "decimal1")} days** on average from the first report to closing; ${r.onTimePct}% were closed within their deadline.`);
+    } else {
+      const total = res.reduce((s, r) => s + Number(r.n), 0);
+      const avg = total ? res.reduce((s, r) => s + Number(r.days) * Number(r.n), 0) / total : 0;
+      headline = `${fmtValue(avg, "decimal1")} days on average to resolve · fastest: ${res[0].name}`;
+      out.push(`In the ${span}, **${fmtValue(total)}** incidents were resolved, taking **${fmtValue(avg, "decimal1")} days** on average from the first report to closing.`);
+      out.push(`Fastest: ${res.slice(0, 3).map(pace).join("; ")}.`);
+      out.push(`Slowest: ${res.slice(-3).reverse().map(pace).join("; ")}.`);
+    }
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
   // in English, sentences a staff officer would say: the period's key figures, what leads, and what to act on first
   if (lang === "en" && kpis.length) {
     const span = (base.scopeLine.split(" · ")[0] ?? "").trim();

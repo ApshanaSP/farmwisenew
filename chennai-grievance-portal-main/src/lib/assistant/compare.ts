@@ -18,7 +18,16 @@ export function sidesOf(message: string): string[] | null {
   let body: string | null = null;
   const a = m.match(/\bcompare\s+(.+)$/i) ?? m.match(/\bcomparison (?:of|between)\s+(.+)$/i) ?? m.match(/\bdifference between\s+(.+)$/i);
   if (a) body = a[1];
-  else if (/\b(vs\.?|versus)\b/i.test(m)) body = m.replace(/^.*?\b(?:how (?:does|do|is|are)|which is worse|which is better|what about)\b\s*/i, "");
+  else if (/\b(vs\.?|versus)\b/i.test(m)) body = m.replace(/^.*?\b(?:how (?:does|do|is|are)|which is worse|which is better|what about)\b\s*/i, "")
+    // "give me numbers for Zone 9 vs Zone 10 vs Zone 13": the request words before the sides are not a side
+    .replace(/^\s*(?:(?:please\s+)?(?:give|show|get|tell)(?:\s+me)?|what are)?\s*(?:the\s+)?(?:numbers?|figures?|stats?|statistics|data|counts?|details?|situation|status)\s+(?:for|of|in|on)\s+/i, "");
+  // "how many open complaints does Anna Nagar have compared to Teynampet": the place before "compared to" and the one after it
+  // (not "compared to last month", which is a period against the one before)
+  const cmp = !body ? m.match(/^(.*?)\s+compared\s+(?:to|with)\s+(.+)$/i) : null;
+  if (cmp && !/^(the\s+)?(last|previous|prior|this|past)\b/i.test(cmp[2])) {
+    const left = cmp[1].replace(/^.*\b(?:does|do|is|are|has|in|for|of|at)\s+/i, "").replace(/\s+(?:have|has|had|got|is|are)$/i, "").trim();
+    if (left && left.split(/\s+/).length <= 4) body = `${left} and ${cmp[2]}`;
+  }
   if (!body) return null;
   const parts = body.replace(TAIL, "").split(/\s*(?:,|\band\b|\bvs\.?\b|\bversus\b|\bwith\b|\bto\b|&)\s*/i).map((s) => s.replace(/\b(zone|area|the)\b/gi, (w) => (/zone/i.test(w) ? w : "")).trim()).filter((s) => s.length >= 2);
   return parts.length >= 2 ? parts.slice(0, 3) : null;

@@ -362,6 +362,23 @@ export async function warningToday(now: string): Promise<{ t: string; level: num
   return r ? { t: String(r.t), level: Number(r.value), text: r.detail ?? null } : null;
 }
 
+/** IMD's district warnings for today and the days ahead (the alerts the pipeline keeps), soonest first: the "forecast" the
+ * console has, in IMD's words. Empty when the build has no alerts table. */
+export async function warningsAhead(now: string): Promise<{ date: string; level: number; severity: string; text: string }[]> {
+  const rows = await q(
+    `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, severity, title, message FROM alerts
+     WHERE type = 'weather_warning' AND date >= DATE(?) ORDER BY date LIMIT 15`, [now]).catch(orEmpty("queries:warningsAhead"));
+  // one line per day (a day can carry several bulletins): its highest level, and that bulletin's words
+  const byDay = new Map<string, { date: string; level: number; severity: string; text: string }>();
+  for (const r of rows) {
+    const w = { date: String(r.d), level: Number(String(r.title ?? "").match(/level\s*(\d)/i)?.[1] ?? 0), severity: String(r.severity ?? ""),
+      text: String(r.message ?? "").slice(0, 160) };
+    const had = byDay.get(w.date);
+    if (!had || w.level > had.level || (w.level === had.level && w.text.length > had.text.length)) byDay.set(w.date, w);
+  }
+  return [...byDay.values()];
+}
+
 // ----------------------------------------------------------------- sources --
 
 /** Sources the Collector added or the console runs itself, without URLs, logins or secrets. */

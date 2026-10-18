@@ -8,10 +8,10 @@
 import { baseCard } from "@/lib/assistant/cards";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
-import { HANDLED, detectIntent, topicByKey, type Detected, type Topic } from "@/lib/assistant/intent";
+import { HANDLED, PICK_FROM_LIST, detectIntent, topicByKey, topicWords, type Detected, type Topic } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, incidentDetail, incidentsByIds, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, incidentDetail, incidentsByIds, incidentsWithWords, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
@@ -40,11 +40,18 @@ export interface FastInput {
 }
 export interface FastOutput { card: AnswerCard; plan: Record<string, unknown> }
 
+/** "the 10 oldest open complaints", "pending the longest": first reported first */
+const OLDEST = /\b(oldest|earliest|longest (pending|open|unresolved)|pending (the )?longest|open (the )?longest)\b/i;
+
+/** "is it resolved?", "has it been closed?": a question answered yes or no ("what is the status?" is not) */
+const YES_NO = /^\s*(is|are|has|have|was|were|did|does|do)\b|\b(yet|or not)\s*\??\s*$/i;
+
 /** The period a question names, else null. */
 export function periodNamed(text: string): Period | null {
-  const t = text.toLowerCase();
-  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|yesterday|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|நேற்று/.test(t)) return "daily";
-  if (/\b(this|last|past) week\b|\b7 days\b|\bweekly\b|vaaram|வாரம்/.test(t)) return "weekly";
+  // "open for more than 7 days": how long something has been open, not the period asked about
+  const t = text.toLowerCase().replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/g, " ");
+  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|yesterday|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|இன்றைய|நேற்று|நேற்றைய/.test(t)) return "daily";
+  if (/\b(this|last|past|indha|intha|pona) week\b|\b7 days\b|\bweekly\b|vaaram|வாரம்/.test(t)) return "weekly";
   if (/\b(this|last|past) month\b|\b30 days\b|\bmonthly\b|maasam|மாதம்/.test(t)) return "monthly";
   if (/\b(this|last|past) quarter\b|\b90 days\b|\bquarterly\b/.test(t)) return "quarterly";
   return null;
@@ -53,7 +60,7 @@ export function periodNamed(text: string): Period | null {
 /** `decided`: the intent the router understood; without it (no model) the rules read the message. */
 /** A count said in Tamil or Tanglish; null for English. `where` is the English place phrase (" in Velachery (Adyar zone)"). */
 export function countInLanguage(lang: string, c: { n: number; prev: number; severe: number; open: number; dead: number; kind: string; period: string; where: string;
-  measure?: "deaths" | "complaints" | null; complaints?: number; openOnly?: boolean }):
+  measure?: "deaths" | "complaints" | "injured" | null; complaints?: number; openOnly?: boolean; zoneTa?: string | null }):
   { headline: string; text: string } | null {
   if (lang !== "ta" && lang !== "tanglish") return null;
   const place = c.where.replace(/^\s*in\s+/i, "").trim();
@@ -72,7 +79,9 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
   }
   const when = yday ? "நேற்று" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
   const kind = tamilKind(c.kind);
-  const at = place ? ` ${place} பகுதியில்` : "";
+  // "Adyar zone" in a Tamil sentence: the zone's Tamil name ("அடையாறு மண்டல"), when the place is just the zone
+  const zoneTa = c.zoneTa && /^[A-Za-z .-]+ zone$/.test(place) ? `${c.zoneTa} மண்டல` : null;
+  const at = zoneTa ? ` ${zoneTa} பகுதியில்` : place ? ` ${place} பகுதியில்` : "";
   if (c.measure === "deaths")
     return { headline: `${f(c.dead)} உயிரிழப்பு · ${when}`, text: `${when}${at} ${kind} காரணமாக ${f(c.dead)} பேர் உயிரிழந்துள்ளனர் (${f(c.n)} ${kind}, ${f(c.severe)} கடுமையானவை).` };
   if (c.measure === "complaints")
@@ -105,7 +114,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
 
   // filters: a refinement starts from the previous answer's; a new question from the console's; the question's own words win
   const prev = d.refinement ? i.ctx?.activeFilters ?? null : null;
-  const named = d.period ?? periodNamed(i.message);
+  // "open for more than a week" names an age, not a period: the router's "week" is dropped unless the words name a period too
+  const named = d.minOpenDays && !periodNamed(i.message) ? null : d.period ?? periodNamed(i.message);
   const f: ActiveFilters = {
     ...(prev ?? filtersOf(i.scope)),
     // news without a period: the last 7 days (the whole quarter would bury this week's stories); everything else: the scope's period (the quarter)
@@ -131,11 +141,30 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const zoneName = f.zone != null ? i.names.zones.get(f.zone)?.name ?? null : null;
   const locality = i.place?.place && !i.place?.asked_for_taluk && f.zone != null && String(i.place.place).toLowerCase() !== (zoneName ?? "").toLowerCase()
     ? String(i.place.place) : null;
+  const card0Notes: string[] = [];
   const inc: IncidentFilters = { period: (custom?.period ?? f.period) as Period, zone: f.zone, taluk: f.taluk, dept: f.dept, cats: topic?.cats ?? (f.cat ? [f.cat] : null),
     sev: f.sev as IncidentFilters["sev"], openOnly: f.openOnly, hours: custom?.hours ?? null, place: ward ? null : locality, offset: custom?.offset ?? 0, overdue: !!f.overdue,
-    ward, range: custom?.range ?? null };
-  const scope: Scope = { period: inc.period, zone: f.zone ?? null, dept: f.dept ?? null, cat: f.cat ?? null, taluk: f.taluk ?? null };
+    ward, range: custom?.range ?? null, minOpenDays: d.minOpenDays ?? null };
+  // "accidents on OMR": a main road across zones, matched on the incident's place and title
+  const road = roadNamed(i.message);
+  if (road) (inc.roads = road.like, card0Notes.push(`${road.label}: incidents whose place or title names the road.`));
+  if (d.minOpenDays) card0Notes.push(`Only incidents still open more than ${d.minOpenDays} days after they were first reported.`);
+  // the scope line names what was counted: a topic's own category when it has one, else the topic itself ("Drain works site
+  // safety" once headed a count of 859 drainage incidents, the router's category beside the topic the rules counted)
+  const scopeCat = topic ? (topic.cats.length === 1 ? topic.cats[0] : null) : f.cat ?? null;
+  const scope: Scope = { period: inc.period, zone: f.zone ?? null, dept: f.dept ?? null, cat: scopeCat, taluk: f.taluk ?? null };
   const card = baseCard(i.lang, scope, describeScope(scope, i.names, i.lang, i.now), i.now);
+  if (road) {
+    const segs = card.scopeLine.split(" · ");
+    segs[1] = road.label;
+    card.scopeLine = segs.join(" · ");
+  }
+  if (topic && topic.cats.length > 1) {
+    const segs = card.scopeLine.split(" · ");
+    segs.splice(Math.max(1, segs.length - 1), 0, cap(topic.label));
+    card.scopeLine = segs.join(" · ");
+  }
+  card.sources.assumptions.push(...card0Notes);
   // what the answer calls the place: a ward by its number, a locality by its name
   const spot = ward ? `Ward ${ward}` : locality;
   if (custom || spot) {
@@ -154,9 +183,22 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const pl = (p: Period) => custom?.label ?? periodLabel(p);
   // "in the last 7 days", "in September 2026", "since 1 Oct 2026"
   const inP = (p: Period) => { const l = pl(p); return /^since\b/i.test(l) ? l : /^(last|previous|past)\b/i.test(l) ? `in the ${l}` : `in ${l}`; };
-  const sw = spot ? ` in ${spot}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names);
+  const sw = (road ? ` on ${road.label}` : "")
+    + (spot ? ` in ${spot}${zoneName ? ` (${zoneName} zone)` : ""}${scopeWords({ ...scope, zone: null }, i.names)}` : scopeWords(scope, i.names));
   card.intent = d.intent;
   card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
+  // a taluk outside Chennai district ("power cuts in Tambaram"): said plainly, not "no incidents in Tambaram taluk"
+  const outside = f.taluk ? i.names.taluks.get(f.taluk)
+    : i.place?.zone == null ? [...i.names.taluks.values()].find((t) => t.inDistrict === false && new RegExp(`\\b${t.name.replace(/[^A-Za-z ]/g, "")}\\b`, "i").test(i.message)) ?? null : null;
+  if (outside && outside.inDistrict === false && ["INCIDENT_LIST", "INCIDENT_COUNT", "PRIORITY_INCIDENT_LIST", "CATEGORY_RANKING"].includes(d.intent)) {
+    card.headline = `${outside.name} is outside Chennai district`;
+    card.answerMarkdown = `${outside.name} is not in Chennai district${outside.note ? ` (${outside.note.replace(/\.$/, "")})` : ""}, so the console holds no records for it. Ask about a place in Chennai district, or the whole district.`;
+    card.voiceSummary = card.answerMarkdown;
+    card.display = "text";
+    card.responseType = "text";
+    card.scopeLine = "";
+    return { card, plan: { intent: d.intent, fastPath: true, filters: f, outside: f.taluk } };
+  }
   card.sources.assumptions.push(`Read as ${d.intent.toLowerCase().replace(/_/g, " ")}: ${d.because}.`);
   const what = topic?.label ?? "";
   const ctxBase: ConversationContext = { lastIntent: d.intent, activeFilters: f, resultIds: i.ctx?.resultIds, storyIds: i.ctx?.storyIds,
@@ -170,17 +212,24 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // a refinement ("only Adyar") keeps the number the previous question asked for
       const n = d.n ?? (d.refinement ? i.ctx?.n ?? null : null) ?? (d.intent === "INCIDENT_LIST" ? 8 : 5);
       // a topic narrower than its category ("murder" within violent crime): the incidents that are about it, by meaning
-      const nar = topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(orNull("fastpath:127")) : null;
-      if (nar) {
+      // "which one is most serious?": the highest priority among the incidents the last answer listed, not a new search (it once
+      // added "severe", found none in the week and widened to a month, naming an incident that was not in the list)
+      const picked = d.because === PICK_FROM_LIST && i.ctx?.resultIds?.length
+        ? [...await incidentsByIds(i.ctx.resultIds)].sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0)).slice(0, n) : null;
+      const nar = picked ? { items: picked, total: picked.length, period: inc.period, widened: false }
+        : topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(orNull("fastpath:127")) : null;
+      if (nar && !picked) {
         card.sources.tools.push({ name: "search_records", args: { text: topic!.narrow, ...inc }, ms: 0 });
         card.sources.assumptions.push(`"${topic!.label}" is narrower than its category, so the incidents were found by meaning and keywords within it, or by a recorded death.`);
       }
-      const r = nar ?? await rankedIncidents(inc, i.now, n, d.intent === "PRIORITY_INCIDENT_LIST" ? "priority" : "recent");
+      const oldest = d.intent === "INCIDENT_LIST" && OLDEST.test(i.message);
+      const r = nar ?? await rankedIncidents(inc, i.now, n, d.intent === "PRIORITY_INCIDENT_LIST" ? "priority" : oldest ? "oldest" : "recent");
       if (r.widened) {
         card.scope = { ...scope, period: r.period };
         card.scopeLine = describeScope(card.scope, i.names, i.lang, i.now);
       }
-      const kind = `${f.overdue ? "overdue " : f.openOnly ? "open " : ""}${d.sev === "Severe" ? "severe " : ""}${countNoun(what, r.items.length)}`;
+      const aged = d.minOpenDays ? ` open for more than ${d.minOpenDays} days` : "";
+      const kind = `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${d.sev === "Severe" ? "severe " : ""}${countNoun(what, r.items.length)}${aged}`;
       card.responseType = "incident_list";
       card.incidents = r.items;
       card.headline = d.intent === "PRIORITY_INCIDENT_LIST" ? `Top ${r.items.length} priority ${kind} · ${pl(r.period)}` : `${cap(kind)} · ${pl(r.period)}`;
@@ -188,7 +237,25 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         : d.intent === "PRIORITY_INCIDENT_LIST"
           ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded ${inP(r.period)}${sw}, by the console's priority score.`
             : `These are the ${words(r.items.length)} highest-priority ${kind} recorded ${inP(r.period)}${sw}, ranked by the console's priority score.`
-          : `The ${r.items.length === r.total ? "" : `${words(r.items.length)} newest of ${r.total.toLocaleString("en-IN")} `}${kind} ${inP(r.period)}${sw}.`;
+          // all of them fit: say how many ("The flooding incidents in Adyar zone" left the count out)
+          : `The ${r.items.length === r.total ? (r.total === 1 ? "only " : `${words(r.total)} `) : `${words(r.items.length)} ${oldest ? "oldest" : "newest"} of ${r.total.toLocaleString("en-IN")} `}${kind} ${inP(r.period)}${sw}.`;
+      if (picked?.length && i.lang === "en") {
+        card.headline = `Most serious of the ${words(i.ctx!.resultIds!.length)} listed: ${picked[0].title}`.slice(0, 160);
+        card.answerMarkdown = `Of the ${words(i.ctx!.resultIds!.length)} incidents in the last answer, this one ranks highest by the console's priority score.`;
+      }
+      // a Tamil or Tanglish question, answered in it when the model is out ("இன்றைய முக்கிய பிரச்சனைகள்" once got the English template)
+      if (i.lang !== "en") {
+        const when = { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
+          monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[r.period as Period]?.[i.lang] ?? pl(r.period);
+        const top = d.intent === "PRIORITY_INCIDENT_LIST";
+        const kindTa = tamilKind(countNoun(what, r.items.length));
+        card.headline = i.lang === "ta" ? `${top ? "முக்கியமான " : ""}${r.items.length} ${kindTa} · ${when}` : `${top ? "Mukkiyamaana " : ""}${r.items.length} ${countNoun(what, r.items.length)} · ${when}`;
+        card.answerMarkdown = !r.items.length ? (i.lang === "ta" ? `${when} ${kindTa} எதுவும் பதிவாகவில்லை.` : `${when} ${countNoun(what, 2)} edhuvum record aagala.`)
+          : i.lang === "ta" ? `${when} பதிவான ${top ? "மிக முக்கியமான " : "புதிய "}${r.items.length} ${kindTa}${r.total > r.items.length ? ` (மொத்தம் ${r.total.toLocaleString("en-IN")})` : ""}:\n\n`
+            + r.items.map((x, k) => `${k + 1}. **${x.title}** (${[x.location, x.zone].filter(Boolean).join(", ")})`).join("\n")
+          : `${when} report aana ${top ? "romba mukkiyamaana " : "pudhu "}${r.items.length} ${countNoun(what, r.items.length)}${r.total > r.items.length ? ` (motham ${r.total.toLocaleString("en-IN")})` : ""}:\n\n`
+            + r.items.map((x, k) => `${k + 1}. **${x.title}** (${[x.location, x.zone].filter(Boolean).join(", ")})`).join("\n");
+      }
       // a short list is named in the answer itself, with what makes each one stand out, not only shown below it
       if (r.items.length && r.items.length <= 5 && i.lang === "en")
         card.answerMarkdown += "\n\n" + r.items.map((x, k) => {
@@ -198,6 +265,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         }).join("\n");
       if (r.widened) card.caveats.push(`Fewer than ${n} ${inP(inc.period)}, so this covers the ${pl(r.period)}.`);
       listData(card, r.items);
+      // "show me the map of severe incidents this week": the same list, drawn where they are
+      if (/\bmaps?\b|on the map|வரைபட/i.test(i.message) && r.items.some((x) => x.lat != null)) {
+        card.display = "map";
+        card.visualAsked = true;
+        card.chart = spec({ type: "map_points", dataset: "incidents", x: "title", y: ["priority"], title: card.headline, sort: "none", highlight: "none" });
+      }
       card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
         storyIds: undefined, storyTitles: undefined, selectedIncidentId: r.items.length === 1 ? r.items[0].incidentId : null,
         selectedTitle: r.items.length === 1 ? r.items[0].title : null, n, activeFilters: { ...f, period: r.period } };
@@ -231,7 +304,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.display = "kpi";
       card.visualAsked = true;
       // the one-line answer to what was asked first (deaths, complaints, or this period against the one before), then the rest
-      const change = (now: number, before: number) => (before ? `${now >= before ? "up" : "down"} from ${fmt(before)} in the period before` : "none in the period before");
+      const change = (now: number, before: number) => (!before ? "none in the period before" : now === before ? `the same as in the period before`
+        : `${now > before ? "up" : "down"} from ${fmt(before)} in the period before`);
       const rest = `${c.severe} severe, ${fmt(c.open)} still open${c.dead && d.measure !== "deaths" ? `, ${c.dead} ${c.dead === 1 ? "death" : "deaths"}` : ""}`;
       if (d.measure === "deaths") {
         const of = what || "incidents";
@@ -241,13 +315,27 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
             + `\n\n- ${fmt(c.n)} ${kind} in all${c.injured ? `, ${fmt(c.injured)} injured` : ""}\n- ${rest}`
           : `No deaths were recorded in ${of} ${inP(inc.period)}${sw}${c.prevDead ? ` (${fmt(c.prevDead)} in the period before)` : ""}. ${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported.`;
         card.caveats.push("Deaths are counted once per incident, as the department records and confirmed news reports give them; a toll that only one outlet reports is held until confirmed.");
+      } else if (d.measure === "injured") {
+        const of = what || "incidents";
+        card.headline = `${fmt(c.injured)} injured in ${of} · ${P}`;
+        card.answerMarkdown = `**${fmt(c.injured)}** ${c.injured === 1 ? "person was" : "people were"} injured in ${of} reported ${inP(inc.period)}${sw}`
+          + `${c.dead ? `; ${fmt(c.dead)} ${c.dead === 1 ? "person" : "people"} died` : ""}.\n\n- ${fmt(c.n)} ${kind} in all\n- ${rest}`;
       } else if (d.measure === "complaints") {
         const open = d.openOnly;
         const v = open ? c.openComplaints : c.complaints;
-        card.headline = `${fmt(v)} ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} · ${P}`;
-        card.answerMarkdown = `**${fmt(v)}** ${open ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""} ${inP(inc.period)}${sw}`
+        // "pending for more than 30 days": said in the answer, not only in the filter
+        const aged = inc.minOpenDays ? ` still open after more than ${inc.minOpenDays} days` : "";
+        const label = `${open && !aged ? "open " : ""}citizen ${v === 1 ? "complaint" : "complaints"}${what ? ` about ${what}` : ""}${aged}`;
+        card.headline = `${fmt(v)} ${label} · ${P}`;
+        card.answerMarkdown = `**${fmt(v)}** ${label} ${inP(inc.period)}${sw}`
           + `${!open && d.vsPrevious ? ` (${change(c.complaints, c.prevComplaints)})` : ""}.`
           + `\n\n- They are about ${fmt(c.n)} ${kind}${d.vsPrevious ? ` (${change(c.n, c.prev)})` : ""}\n- ${rest}`;
+      } else if (inc.openOnly || inc.overdue) {
+        // "how many are still pending": the open ones, said as open (it once read "1,010 incidents were reported ... 1,010 still open")
+        const late = inc.overdue ? "past their deadline" : inc.minOpenDays ? `still open after more than ${inc.minOpenDays} days` : "still open";
+        card.headline = `${fmt(c.n)} ${kind} ${late} · ${P}`;
+        card.answerMarkdown = `**${fmt(c.n)}** ${kind} reported ${inP(inc.period)}${sw} ${c.n === 1 ? "is" : "are"} ${late}`
+          + `${c.severe ? `, ${c.severe} of them severe` : ""}${c.dead ? `; ${c.dead} ${c.dead === 1 ? "death" : "deaths"} recorded in them` : ""}.`;
       } else {
         card.headline = `${fmt(c.n)} ${kind} · ${P}`;
         card.answerMarkdown = `${fmt(c.n)} ${kind} ${c.n === 1 ? "was" : "were"} reported ${inP(inc.period)}${sw}`
@@ -255,11 +343,15 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       // a question in Tamil or Tanglish is answered in it ("Velachery la indha week evlo accidents?")
       const local = countInLanguage(i.lang, { n: c.n, prev: c.prev, severe: c.severe, open: c.open, dead: c.dead, kind, period: P, where: sw,
+        zoneTa: f.zone != null ? i.names.zones.get(f.zone)?.nameTa ?? null : null,
         measure: d.measure ?? null, complaints: d.openOnly ? c.openComplaints : c.complaints, openOnly: d.openOnly });
       if (local) { card.headline = local.headline; card.answerMarkdown = local.text; card.voiceSummary = local.text; }
       card.kpis = d.measure === "deaths"
         ? [{ label: "Deaths", value: c.dead, prev: c.prevDead, tone: c.dead ? "sev" : undefined }, { label: "Incidents", value: c.n, prev: c.prev, tone: "info" },
           ...(c.injured ? [{ label: "Injured", value: c.injured }] : [])]
+        : d.measure === "injured"
+          ? [{ label: "Injured", value: c.injured, tone: c.injured ? "high" as const : undefined }, { label: "Incidents", value: c.n, prev: c.prev, tone: "info" as const },
+            ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])]
         : d.measure === "complaints"
           ? [{ label: d.openOnly ? "Open complaints" : "Complaints", value: d.openOnly ? c.openComplaints : c.complaints, prev: d.openOnly ? undefined : c.prevComplaints, tone: "info" },
             { label: "Incidents", value: c.n, prev: c.prev }, { label: "Still open", value: c.open }]
@@ -282,25 +374,35 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         const label = locality ? `${locality} (${zn} zone)` : `${zn} zone`;
         return { label, ...c };
       }));
-      const kind = `${what ? `${what} ` : ""}incidents`;
-      const sorted = [...rows].sort((a, b) => b.n - a.n);
+      // the measure asked: citizen complaints ("open complaints in Anna Nagar compared to Teynampet") or incidents; open ones
+      // when the question says open (it once printed "211 reported (21 in the period before)" for open counts)
+      const complaints = d.measure === "complaints", open = !!inc.openOnly;
+      const v = (r: (typeof rows)[number]) => (complaints ? (open ? r.openComplaints : r.complaints) : r.n);
+      const kind = complaints ? `${open ? "open " : ""}citizen complaints` : `${open ? "open " : ""}${what ? `${what} ` : ""}incidents`;
+      const sorted = [...rows].sort((a, b) => v(b) - v(a));
       const lead = sorted[0], next = sorted[1];
       const out = sides.filter((s) => s.outside);
-      const line = (r: (typeof rows)[number]) => `**${r.label}**: ${r.n.toLocaleString("en-IN")} reported (${r.prev.toLocaleString("en-IN")} in the period before), ${r.open.toLocaleString("en-IN")} still open, ${r.severe} severe${r.dead ? `, ${r.dead} ${r.dead === 1 ? "death" : "deaths"}` : ""}`;
+      const fmtN = (x: number) => x.toLocaleString("en-IN");
+      const line = (r: (typeof rows)[number]) => (complaints
+        ? `**${r.label}**: ${fmtN(v(r))} ${kind}; they are about ${fmtN(r.n)} incidents, ${fmtN(r.open)} still open`
+        : open ? `**${r.label}**: ${fmtN(r.n)} still open, ${r.severe} severe`
+          : `**${r.label}**: ${fmtN(r.n)} reported (${fmtN(r.prev)} in the period before), ${fmtN(r.open)} still open, ${r.severe} severe`)
+        + `${r.dead ? `, ${r.dead} ${r.dead === 1 ? "death" : "deaths"}` : ""}`;
+      const withPrev = !complaints && !open;
       card.responseType = "chart";
       card.display = "chart";
       card.visualAsked = true;
-      card.datasets = [{ id: "sides", title: `${cap(kind)} by place`, tab: "Places", hasPrev: true,
-        fields: [{ key: "label", label: "Place", kind: "category" }, { key: "n", label: "Reported", kind: "value", format: "integer" },
-          { key: "n_prev", label: "Period before", kind: "value", format: "integer" }, { key: "open", label: "Still open", kind: "value", format: "integer" },
-          { key: "severe", label: "Severe", kind: "value", format: "integer" }],
-        rows: rows.map((r) => ({ label: r.label, n: r.n, n_prev: r.prev, open: r.open, severe: r.severe })) }];
-      card.chart = spec({ type: rows.length <= 3 ? "bar" : "horizontal_bar", dataset: "sides", x: "label", y: ["n"], compare: true, highlight: "max",
-        title: next ? (lead.n === next.n ? "Level with each other" : `${lead.label} has more`) : `${lead.label}` });
-      card.headline = next ? (lead.n === next.n ? `${lead.label} and ${next.label} level: ${lead.n.toLocaleString("en-IN")} ${kind} each`
-        : `${lead.label}: ${lead.n.toLocaleString("en-IN")} ${kind}, against ${next.n.toLocaleString("en-IN")}`) : `${lead.label}: ${lead.n.toLocaleString("en-IN")} ${kind}`;
+      card.datasets = [{ id: "sides", title: `${cap(kind)} by place`, tab: "Places", hasPrev: withPrev,
+        fields: [{ key: "label", label: "Place", kind: "category" }, { key: "v", label: cap(kind), kind: "value", format: "integer" },
+          ...(withPrev ? [{ key: "v_prev", label: "Period before", kind: "value" as const, format: "integer" as const }] : []),
+          { key: "open", label: "Still open", kind: "value", format: "integer" }, { key: "severe", label: "Severe", kind: "value", format: "integer" }],
+        rows: rows.map((r) => ({ label: r.label, v: v(r), ...(withPrev ? { v_prev: r.prev } : {}), open: r.open, severe: r.severe })) }];
+      card.chart = spec({ type: rows.length <= 3 ? "bar" : "horizontal_bar", dataset: "sides", x: "label", y: ["v"], compare: withPrev, highlight: "max",
+        title: next ? (v(lead) === v(next) ? "Level with each other" : `${lead.label} has more`) : `${lead.label}` });
+      card.headline = next ? (v(lead) === v(next) ? `${lead.label} and ${next.label} level: ${fmtN(v(lead))} ${kind} each`
+        : `${lead.label}: ${fmtN(v(lead))} ${kind}, against ${fmtN(v(next))}`) : `${lead.label}: ${fmtN(v(lead))} ${kind}`;
       card.answerMarkdown = [
-        next && lead.n !== next.n ? `${lead.label} had more ${kind} than ${next.label} ${inP(inc.period)}.` : next ? `The places are level ${inP(inc.period)}.` : "",
+        next && v(lead) !== v(next) ? `${lead.label} had more ${kind} than ${next.label} ${inP(inc.period)}.` : next ? `The places are level ${inP(inc.period)}.` : "",
         ...rows.map(line),
         out.length ? `${out.map((s) => s.asked.replace(/^./, (c) => c.toUpperCase())).join(" and ")} ${out.length === 1 ? "is" : "are"} not a place in Chennai district${out.some((s) => /tambaram|avadi|chengalpattu|kanchipuram|tiruvallur|poonamallee/i.test(s.asked)) ? " (it falls in a neighbouring district)" : ""}, so ${out.length === 1 ? "it is" : "they are"} not covered by this data.` : ""
       ].filter(Boolean).join("\n\n");
@@ -344,7 +446,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.datasets = [ds];
       card.display = "chart";
       card.visualAsked = true;
-      card.chart = spec({ type: "horizontal_bar", dataset: "kinds", x: "label", y: ["n"], compare: true, sort: "desc", highlight: "max",
+      // "as a pie chart": shares of the whole, when there are few enough slices to read
+      const pie = /\b(pie|donut|doughnut|share|shares|proportion)\b|வட்ட/i.test(i.message) && rows.length <= 6;
+      card.chart = spec({ type: pie ? "donut" : "horizontal_bar", dataset: "kinds", x: "label", y: ["n"], compare: !pie, sort: "desc", highlight: "max",
         title: rows[0] ? `${rows[0].label} leads with ${rows[0].n.toLocaleString("en-IN")}` : "No incidents" });
       card.headline = `Top ${rows.length} ${what ? `${what} ` : ""}kinds · ${pl(inc.period)}`;
       card.answerMarkdown = rows.length ? rows.map((r, k) => `${k + 1}. **${r.label}**: ${r.n.toLocaleString("en-IN")} (${r.prev.toLocaleString("en-IN")} the period before)`).join("\n")
@@ -366,7 +470,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.headline = d.intent === "INCIDENT_TIMELINE" ? `How it unfolded: ${x.title}` : x.title;
       card.answerMarkdown = d.focus === "where" ? `It happened at ${[x.location, x.ward != null ? `Ward ${x.ward}` : null, x.zone ? `${x.zone} zone` : null, x.taluk ? `${x.taluk} taluk` : null].filter(Boolean).join(", ") || "an unrecorded place"}.`
         : d.focus === "when" ? `It was first reported on ${x.occurredAt ?? "an unrecorded date"}.`
-          : d.focus === "status" ? `${/resolved|closed|verified|completed/i.test(x.status) ? "Yes" : "No"}, it is ${x.status.toLowerCase()}${x.deadlineMissed ? ", and **past its deadline**" : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
+          : d.focus === "status" ? `${YES_NO.test(i.message) ? `${/resolved|closed|verified|completed/i.test(x.status) ? "Yes" : "No"}, it is` : "It is"} ${x.status.toLowerCase()}${x.deadlineMissed ? ", and **past its deadline**" : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
             : d.focus === "who" ? `${x.department ?? "The department"} is responsible${x.officials.length ? `: ${x.officials.map((o) => `${o.name}${o.designation ? `, ${o.designation}` : ""}`).join("; ")}` : ""}.`
               : x.whatHappened;
       card.context = { ...ctxBase, lastResponseType: "incident_detail", selectedIncidentId: id, selectedNewsStoryId: null, selectedTitle: x.title };
@@ -386,6 +490,12 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         ? `${cap(words(r.items.length))} ${r.sameKind ? r.anchor.category.toLowerCase() : "related"} incident${r.items.length === 1 ? "" : "s"} ${r.byZone ? `in ${r.anchor.zone ?? "the same zone"}` : `within ${r.km} km of ${r.anchor.location ?? "it"}`} in the 60 days around it, closest first.`
         : `No ${r.anchor.category.toLowerCase()} incident ${r.byZone ? "in the same zone" : `within ${r.km} km`} in the 60 days around it.`;
       listData(card, r.items);
+      // "show me the map of severe incidents this week": the same list, drawn where they are
+      if (/\bmaps?\b|on the map|வரைபட/i.test(i.message) && r.items.some((x) => x.lat != null)) {
+        card.display = "map";
+        card.visualAsked = true;
+        card.chart = spec({ type: "map_points", dataset: "incidents", x: "title", y: ["priority"], title: card.headline, sort: "none", highlight: "none" });
+      }
       card.context = { ...ctxBase, lastResponseType: "incident_list", resultIds: r.items.map((x) => x.incidentId), resultTitles: r.items.map((x) => x.title),
         selectedIncidentId: id, selectedTitle: r.anchor.title };
       card.sources.tools.push({ name: "related_incidents", args: { id }, ms: 0 });
@@ -451,8 +561,18 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.responseType = "actions";
       card.actions = groups;
       card.headline = d.incidentId ? `What to do: ${groups[0]?.title ?? d.incidentId}` : "What needs action now";
-      card.answerMarkdown = groups.length ? (d.incidentId ? "The steps on record for this incident, open ones first." : "The steps on record for the three highest-priority open incidents.")
-        : "No open step is on record.";
+      // the steps themselves, not only a pointer to them: who does what, by when (the card lists them all below)
+      // a due date as people write it ("due 22 Sep", "overdue since 22 Sep"), not "2026-09-22 00:00:00"
+      const due = (t: string | null) => {
+        if (!t || !/^\d{4}-\d{2}-\d{2}/.test(t)) return t;
+        const day = new Date(`${t.slice(0, 10)}T00:00:00+05:30`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+        return t.slice(0, 10) < i.now.slice(0, 10) ? `overdue since ${day}` : `due ${day}`;
+      };
+      const step = (a: { text: string; owner: string | null; due: string | null }) => `${a.text.replace(/\.$/, "")}${a.owner ? ` (${a.owner}${a.due ? `, ${due(a.due)}` : ""})` : a.due ? ` (${due(a.due)})` : ""}`;
+      card.answerMarkdown = !groups.length ? "No open step is on record."
+        : d.incidentId ? `${groups[0].items.length ? `First: **${step(groups[0].items[0])}**.` : "No step is recorded for this incident yet."}${groups[0].items.length > 1
+          ? `\n\nThen:\n${groups[0].items.slice(1, 4).map((a) => `- ${step(a)}`).join("\n")}` : ""}`
+          : `The three highest-priority open incidents and the first step for each:\n${groups.map((g) => `- **${g.title}**: ${g.items[0] ? step(g.items[0]) : "no step recorded yet"}`).join("\n")}`;
       card.context = { ...ctxBase, lastResponseType: "text" };
       card.sources.incidentIds = ids;
       card.sources.tools.push({ name: "actions", args: { ids }, ms: 0 });
@@ -481,7 +601,13 @@ async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: numb
   const until = nowT - (inc.offset ?? 0) * hours * 3600;
   const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since: until - hours * 3600, until, zone: inc.zone ?? null,
     cats: topic.cats, dept: inc.dept ?? null, openOnly: !!inc.openOnly }, 40);
-  if (!hits) return null;
+  if (!hits) {
+    // the meaning index is not ready: the topic's own words in the titles (and a recorded death, for a murder), never the
+    // whole category ("188 murders" was every violent crime)
+    const words = topicWords(topic.key).filter((w) => w.length >= 4 || /[஀-௿]/.test(w));
+    const r = await incidentsWithWords({ ...inc, cats: topic.cats }, now, words, topic.key === "murder", n);
+    return { items: await incidentsByIds(r.ids), total: r.total, period: inc.period, widened: false };
+  }
   // a recorded death makes a violent crime a murder; for anything else only a close match in meaning (or a keyword hit) counts
   const keep = hits.filter((h) => (topic.key === "murder" && Number(h.rec.dead) > 0) || h.sim == null || h.sim >= (topic.key === "murder" ? 0.83 : 0.86));
   const all = await incidentsByIds(await currentIncidentIds(keep));
@@ -626,4 +752,24 @@ export function countNoun(what: string, n: number): string {
   const m = what.match(/^(.*?)(accident|case|complaint|fire|theft|murder|death|protest|snatching|incident)s?$/i);
   if (m) return `${m[1]}${m[2]}${one ? "" : "s"}`;
   return `${what ? `${what} ` : ""}incident${one ? "" : "s"}`;
+}
+
+/** Chennai's main roads by their common names: a road is a strip across zones, matched on the incident's place and title. */
+const ROADS: { label: string; re: RegExp; like: string[] }[] = [
+  { label: "OMR (Rajiv Gandhi Salai)", re: /\b(omr|old mahabalipuram road|rajiv gandhi salai|it corridor)\b/i, like: ["omr", "old mahabalipuram", "rajiv gandhi salai"] },
+  { label: "ECR", re: /\b(ecr|east coast road)\b/i, like: ["ecr", "east coast road"] },
+  { label: "GST Road", re: /\b(gst road|grand southern trunk)\b/i, like: ["gst road", "g.s.t road", "grand southern trunk"] },
+  { label: "Anna Salai", re: /\b(anna salai|mount road)\b/i, like: ["anna salai", "mount road"] },
+  { label: "Poonamallee High Road", re: /\b(poonamallee high road|ph road)\b/i, like: ["poonamallee high road", "p.h. road", "ph road"] },
+  { label: "Inner Ring Road", re: /\binner ring road\b/i, like: ["inner ring road"] },
+  { label: "Outer Ring Road", re: /\bouter ring road\b/i, like: ["outer ring road"] },
+  { label: "100 Feet Road", re: /\b100 (feet|ft) road\b/i, like: ["100 feet road", "100 ft road"] },
+  { label: "Kamarajar Salai", re: /\b(kamarajar salai|beach road)\b/i, like: ["kamarajar salai", "beach road"] },
+  { label: "Arcot Road", re: /\barcot road\b/i, like: ["arcot road"] },
+  { label: "Velachery Main Road", re: /\bvelachery main road\b/i, like: ["velachery main road"] },
+  { label: "Sardar Patel Road", re: /\bsardar patel road\b/i, like: ["sardar patel road"] },
+  { label: "Periyar EVR Salai", re: /\b(evr salai|periyar salai|poonamallee road)\b/i, like: ["evr salai", "periyar salai"] }
+];
+export function roadNamed(text: string): { label: string; like: string[] } | null {
+  return ROADS.find((r) => r.re.test(text)) ?? null;
 }

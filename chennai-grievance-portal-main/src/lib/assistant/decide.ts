@@ -98,7 +98,8 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
       return { fast: { ...base, intent: "ACTION_REQUEST", incidentId: incidentId ?? (ctx?.selectedIncidentId && /\b(it|this|that)\b/i.test(message) ? ctx.selectedIncidentId : null) } };
     default: {
       // "top 3 severe", "the worst ones": the most important, not the newest
-      const ranked = d.answer === "incident_list" && /\b(top|most|worst|biggest|highest|serious|important|critical|major)\b|முக்கிய/i.test(message);
+      // ("any emergencies right now?" too: the most serious open, not the newest)
+      const ranked = d.answer === "incident_list" && /\b(top|most|worst|biggest|highest|serious|important|critical|major|emergenc\w*|urgent\w*|crisis|alarming)\b|முக்கிய|அவசர/i.test(message);
       const intent = ranked ? "PRIORITY_INCIDENT_LIST" : FAST_OF[d.answer];
       if (intent) return { fast: { ...base, intent } };
       // "what about last week?" after a list or news answer: the same answer, with the change

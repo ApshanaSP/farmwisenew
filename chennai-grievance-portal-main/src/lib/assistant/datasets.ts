@@ -44,6 +44,7 @@ function measure(q: string, options: Record<string, RegExp>, dflt: string): stri
   return dflt;
 }
 const SEVERE = /severe|serious|கடுமை/i, COMPLAINT = /complain|grievance|புகார்/i, OPEN = /open|pending|unresolved|backlog|நிலுவை/i;
+const CHANGE_WORDS = /\b(improv\w*|better|worse|worsen\w*|chang\w*|compared?|vs\.?|versus|last (week|month)|previous|fell|rose|drop\w*|ris\w*|increas\w*|decreas\w*)\b/i;
 
 /** "30 Aug" for daily buckets, "18:43" for 2-hour buckets, "w/e 5 Jul" for weeks. */
 function bucketLabel(to: string, unit: string): string {
@@ -78,9 +79,14 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
         id: "zones", title: "Zones", drill: { field: "zone", action: "filter_zone" },
         // the attention score only orders the rows (they come ranked): the card shows the counts it rests on
         fields: [F.cat("name", "Zone"), F.id("zone", "Zone number"), F.int("severe", "Severe incidents"),
-          F.int("high", "High incidents"), F.int("n", "Incidents reported"), F.int("open", "Open incidents"), F.int("complaints", "Open complaints")],
-        rows: ranks.map((z) => pick(z, ["name", "zone", "severe", "high", "n", "open", "complaints"]))
+          F.int("high", "High incidents"), F.int("n", "Incidents reported"), F.int("open", "Open incidents"), F.int("complaints", "Open complaints"),
+          ...(ranks.some((z) => z.n_prev != null) ? [F.int("n_prev", "Incidents reported, the period before")] : [])],
+        rows: ranks.map((z) => pick(z, ["name", "zone", "severe", "high", "n", "open", "complaints", "n_prev"]))
       };
+      // "which zone improved the most?": reported now against the period before, zone by zone
+      if (r.tool === "zones" && ranks.some((z) => z.n_prev != null) && CHANGE_WORDS.test(question))
+        return { datasets: [ds], chart: spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: ["n"], compare: true, title: "Zones: incidents reported against the period before",
+          subtitle: period }), kpis: [], table: null, display: "chart" };
       const y = measure(question, { severe: SEVERE, complaints: COMPLAINT, open: OPEN }, "open");
       if (r.tool === "zones") {
         const what = y === "severe" ? "severe incidents" : y === "complaints" ? "open complaints" : "open incidents";
@@ -131,6 +137,18 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
           F.text("action_step", "Officer reported"), F.text("action_at", "Reported at")],
         rows: (d.rows as Row[]).map((i) => pick(i, ["id", "title", "zone_name", "dept_name", "sev", "action_step", "action_at"])) };
       return { datasets: [ds], chart: null, kpis: [{ label: "Awaiting your verification", value: Number(d.count), tone: "high" }], table: "tasks", display: "table" };
+    }
+
+    case "resolution_times": {
+      const ds: Dataset = { id: "resolution", title: "Average time to resolve", drill: { field: "code", action: "filter_dept" },
+        fields: [F.cat("name", "Department"), F.id("code", "Code"), F.dec("days", "Average days to resolve", "days"), F.dec("hours", "Average hours to resolve", "hours"),
+          F.int("n", "Resolved"), F.int("onTime", "Within deadline"), F.int("onTimePct", "Within deadline (%)", "%")],
+        rows: (d.rows as Row[]).map((x) => pick(x, ["name", "code", "days", "hours", "n", "onTime", "onTimePct"])) };
+      return { datasets: [ds], chart: ds.rows.length > 1 ? spec({ type: "horizontal_bar", dataset: "resolution", x: "name", y: ["days"],
+        title: "Average days from report to resolution", subtitle: "Fastest first; departments with 3 or more resolved" }) : null,
+        // the average time leads: it is what the question asks ("average resolution time"); the resolved count is its base
+        kpis: [{ label: "Average days to resolve", value: Math.round(Number(d.avgHours) / 2.4) / 10 }, { label: "Resolved", value: Number(d.closed) }],
+        table: ds.rows.length > 1 ? null : "resolution", display: ds.rows.length > 1 ? "chart" : "kpi" };
     }
 
     case "dept_backlog": {
@@ -311,7 +329,11 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
         // the warning in force, with IMD's own words and the time it was issued
         const wd: Dataset = { id: "warning", title: "IMD warning in force", fields: [F.text("issued", "Issued"), F.int("level", "Level (0 green .. 3 red)"),
           F.text("warning", "Warning")], rows: [{ issued: w.t, level: Number(w.level), warning: w.text ? String(w.text).slice(0, 200) : null }] };
-        return { datasets: [wd], chart: null, table: null, display: "kpi",
+        // IMD's warnings for the days ahead: what "will it rain tomorrow?" can be answered with
+        const ahead = (d.ahead as Row[] | undefined) ?? [];
+        const ad: Dataset | null = ahead.length ? { id: "warnings_ahead", title: "IMD warnings, today and ahead", tab: "Days ahead",
+          fields: [F.text("date", "Day"), F.int("level", "Level (0 green .. 3 red)"), F.text("text", "Warning")], rows: ahead.map((a) => ({ date: a.date, level: a.level, text: a.text })) } : null;
+        return { datasets: ad ? [wd, ad] : [wd], chart: null, table: ad ? "warnings_ahead" : null, display: "kpi",
           kpis: [{ label: "IMD warning level (0 green .. 3 red)", value: Number(w.level), tone: Number(w.level) >= 2 ? "sev" : Number(w.level) === 1 ? "high" : "low" }] };
       }
       if (d.metric === "imd_warning_level" || ds.rows.length <= 1) {
