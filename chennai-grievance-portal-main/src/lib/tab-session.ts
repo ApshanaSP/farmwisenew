@@ -22,6 +22,9 @@ const script = function () {
     // the slot this tab's requests use; "-" = the unslotted cookies
     var active = mine || served || "-";
     var moving = false;
+    // the tab's requests wait while it moves to its own slot, so a quick sign-in is never written to the
+    // slot it is leaving (another tab's, or the unslotted cookies the move clears)
+    var ready: Promise<unknown> = Promise.resolve();
 
     var mark = function () {
       if (active !== "-") document.cookie = "dcd_tab=" + active + "; path=/; SameSite=Lax";
@@ -29,34 +32,41 @@ const script = function () {
     var moveTo = function (to: string) {
       if (moving) return;
       moving = true;
-      nativeFetch("/api/auth/tab", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ from: active, to: to }),
-        credentials: "same-origin"
-      })
-        .then(function (r) {
-          if (!r.ok) return;
-          active = to;
-          store.setItem(KEY, to);
-          if (!document.hidden) mark();
+      var attempt = function (left: number): Promise<unknown> {
+        return nativeFetch("/api/auth/tab", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ from: active, to: to }),
+          credentials: "same-origin"
         })
-        .catch(function () {})
-        .then(function () {
-          moving = false;
-        });
+          .then(function (r) {
+            if (!r.ok) throw new Error("tab " + r.status);
+            active = to;
+            store.setItem(KEY, to);
+            if (!document.hidden) mark();
+          })
+          .catch(function () {
+            // a dev server still compiling the route: try again shortly, then carry on as before
+            if (left > 0) return new Promise(function (res) { setTimeout(res, 1500); }).then(function () { return attempt(left - 1); });
+          });
+      };
+      ready = attempt(3).then(function () {
+        moving = false;
+      });
     };
 
     window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+      var same = false;
       try {
         var url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-        if (new URL(url, location.href).origin === location.origin) {
-          var headers = new Headers(init && init.headers ? init.headers : input instanceof Request ? input.headers : undefined);
-          headers.set("x-dcd-tab", active);
-          init = Object.assign({}, init, { headers: headers });
-        }
+        same = new URL(url, location.href).origin === location.origin;
       } catch (e) {}
-      return nativeFetch(input, init);
+      if (!same) return nativeFetch(input, init);
+      return ready.then(function () {
+        var headers = new Headers(init && init.headers ? init.headers : input instanceof Request ? input.headers : undefined);
+        headers.set("x-dcd-tab", active);
+        return nativeFetch(input, Object.assign({}, init, { headers: headers }));
+      });
     };
 
     if (!mine) moveTo(newSlot());
