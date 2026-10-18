@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import {
   LEGACY_COOKIE_NAME,
-  PORTAL_COOKIE_NAMES,
   PORTAL_FALLBACK_ORDER,
   PORTAL_HEADER,
   Portal,
+  SLOT_INDEX_COOKIE,
+  TAB_COOKIE,
+  TAB_HEADER,
+  portalCookieName,
   portalFromPath,
-  portalRole
+  portalRole,
+  rememberSlot,
+  requestSlot,
+  slotStale
 } from "@/lib/session-cookies";
 import { JwtPayload } from "@/types";
 
 // The department officer console and the Collector console each sign in
 // separately; every portal has its own session cookie, so all three can be
-// signed in at the same time in one browser.
+// signed in at the same time in one browser. Every tab keeps its own cookies (its slot), so tabs sign in
+// and out independently: three tabs can hold three different logins.
 
 const PUBLIC_ONLY_PREFIXES = ["/register", "/forgot-password"];
 
@@ -24,10 +31,15 @@ async function readSession(request: NextRequest, cookieName: string, portal: Por
   return session && session.role === portalRole(portal) ? session : null;
 }
 
+function tabSlot(request: NextRequest): string | null {
+  return requestSlot(request.headers.get(TAB_HEADER), request.cookies.get(TAB_COOKIE)?.value);
+}
+
 async function portalSession(request: NextRequest, portal: Portal): Promise<JwtPayload | null> {
+  const slot = tabSlot(request);
   return (
-    (await readSession(request, PORTAL_COOKIE_NAMES[portal], portal)) ??
-    (await readSession(request, LEGACY_COOKIE_NAME, portal))
+    (await readSession(request, portalCookieName(portal, slot), portal)) ??
+    (slot ? null : await readSession(request, LEGACY_COOKIE_NAME, portal))
   );
 }
 
@@ -71,7 +83,14 @@ export async function middleware(request: NextRequest) {
   }
   // /login is always reachable, so another role can sign in alongside existing sessions.
 
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  // a signed-in tab in use: note it (at most every 10 minutes) so its cookies are the last to be dropped
+  const slot = tabSlot(request);
+  const index = request.cookies.get(SLOT_INDEX_COOKIE)?.value;
+  if (portal && slot && slotStale(index, slot, 600)) {
+    rememberSlot(res, request.cookies.getAll().map((c) => c.name), index, slot);
+  }
+  return res;
 }
 
 export const config = {

@@ -9,6 +9,7 @@ import "@/components/collector/app/tokens.css";
 import "@/components/ui/ui.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { TAB_SESSION_SCRIPT } from "@/lib/tab-session";
 
 const THEME_SCRIPT =
   "try{if(localStorage.getItem('diq-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}";
@@ -31,6 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* apply the saved theme before the first paint (shared with the Collector and Officer consoles) */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {/* every tab signs in and out on its own (lib/tab-session.ts); runs before the app's first fetch */}
+        <script dangerouslySetInnerHTML={{ __html: TAB_SESSION_SCRIPT }} />
       </head>
       <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
