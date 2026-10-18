@@ -50,9 +50,11 @@ export interface Detected {
   /** the period the question itself names (set by the router); else the rules' reading of the words */
   period?: "daily" | "weekly" | "monthly" | "quarterly" | null;
   /** what a count is of: deaths ("road deaths today"), citizen complaints ("how many grievances"), else incidents */
-  measure?: "deaths" | "complaints" | null;
+  measure?: "deaths" | "complaints" | "injured" | null;
   /** compares the period with the one before ("this month vs last month"), not places */
   vsPrevious?: boolean;
+  /** only incidents still open after this many days ("severe incidents open for more than 7 days") */
+  minOpenDays?: number | null;
 }
 
 // ------------------------------------------------------------------ tokens --
@@ -99,16 +101,19 @@ const TOPICS: (Topic & { words: string[] })[] = [
   { key: "theft", label: "theft and robbery", cats: ["CRIME_PROPERTY"], words: ["theft", "thefts", "robbery", "snatching", "burglary", "fraud", "திருட்டு", "கொள்ளை", "thiruttu", "kollai"] },
   { key: "crime", label: "crime", cats: ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "DRUGS_LIQUOR", "MISSING_PERSON", "POLICE_OTHER"],
     words: ["crime", "crimes", "criminal", "law and order", "குற்றம்", "kuttram"] },
+  // before road accidents: a "fire accident" is a fire, not a road accident
+  { key: "fire", label: "fires", cats: ["FIRE_EXPLOSION"], words: ["fire", "fires", "blaze", "explosion", "தீ", "theeppidi"] },
   { key: "accident", label: "road accidents", cats: ["ROAD_ACCIDENT"], words: ["accident", "accidents", "road accident", "road death", "road deaths", "road fatality",
     "road fatalities", "hit and run", "crash", "collision", "விபத்து", "vibathu", "vibaththu"] },
   // workers overcome by gas in a drain, sewer or tank: the news check files them under drainage (derive.ts), never as disease
   { key: "gas", label: "gas and asphyxiation", cats: ["DRAINAGE_SEWAGE", "DRAIN_WORKS_SAFETY"], narrow: "workers died of poisonous gas or asphyxiation in a drain, sewer, manhole or septic tank",
     words: ["gas poisoning", "poisonous gas", "toxic gas", "toxic fumes", "asphyxiation", "asphyxiated", "suffocated", "manhole death", "manhole deaths",
       "septic tank", "sewer death", "sewer deaths", "விஷவாயு", "விஷ வாயு"] },
-  { key: "fire", label: "fires", cats: ["FIRE_EXPLOSION"], words: ["fire", "fires", "blaze", "explosion", "தீ", "theeppidi"] },
   { key: "flood", label: "flooding", cats: ["FLOOD_WATERLOGGING", "FLOOD_RELIEF", "WATERBODY_INFRA", "FLOOD_RISK_SIGNAL"],
-    words: ["flood", "flooding", "waterlogging", "waterlogged", "inundation", "lake", "bund", "வெள்ளம்", "மழைநீர்", "vellam"] },
-  { key: "disease", label: "dengue and disease", cats: ["VECTOR_DISEASE"], words: ["dengue", "fever", "malaria", "disease", "cholera", "டெங்கு", "காய்ச்சல்"] },
+    // "மழைநீர் தேக்கம்" (rainwater standing) is waterlogging; "மழைநீர்" alone also starts "மழைநீர் வடிகால்", the storm-water drain
+    // (a sump death once led "news about flooding")
+    words: ["flood", "flooding", "waterlogging", "waterlogged", "inundation", "lake", "bund", "வெள்ளம்", "வெள்ளப்", "மழைநீர் தேக்க", "மழைநீர் தேங்", "தண்ணீர் தேங்", "vellam"] },
+  { key: "disease", label: "dengue and disease", cats: ["VECTOR_DISEASE"], words: ["dengue", "fever", "malaria", "disease", "cholera", "mosquito", "mosquitoes", "mosquito breeding", "fogging", "larvae", "கொசு", "kosu", "டெங்கு", "காய்ச்சல்"] },
   { key: "garbage", label: "garbage", cats: ["SOLID_WASTE"], words: ["garbage", "waste", "trash", "குப்பை", "kuppai"] },
   { key: "water", label: "drinking water", cats: ["WATER_SUPPLY"], words: ["drinking water", "water supply", "water shortage", "குடிநீர்"] },
   { key: "drainage", label: "drainage and sewage", cats: ["DRAINAGE_SEWAGE"], words: ["drainage", "sewage", "drain", "கழிவுநீர்"] },
@@ -144,6 +149,11 @@ export function topicOf(toks: string[]): Topic | null {
       const a = TOPICS.find((x) => x.key === "accident")!;
       return { key: a.key, label: a.label, cats: a.cats, narrow: a.narrow };
     }
+    // "two killed in a house fire" is a fire, not a murder
+    if (t.key === "murder" && any(toks, ["fire", "fires", "blaze", "explosion", "burnt", "burned"]) && !any(toks, MURDER_ONLY)) {
+      const f = TOPICS.find((x) => x.key === "fire")!;
+      return { key: f.key, label: f.label, cats: f.cats, narrow: f.narrow };
+    }
     return { key: t.key, label: t.label, cats: t.cats, narrow: t.narrow };
   }
   return null;
@@ -154,15 +164,19 @@ export function topicOf(toks: string[]): Topic | null {
 const NEWS = ["news", "headline", "headlines", "press", "media", "newspaper", "newspapers", "reported in the news", "story", "stories", "செய்தி", "seithi"];
 const NEWS_ONLY = ["only in the news", "news only", "news-only", "no department record", "not in any department", "missing from department", "not recorded by"];
 const INCIDENT_NOUNS = ["incident", "incidents", "case", "cases", "event", "events", "issue", "issues", "complaint", "complaints", "problem", "problems",
-  "grievance", "grievances", "petition", "petitions", "pending work", "pending works", "open work", "backlog", "சம்பவம்", "புகார்", "வழக்கு"];
+  "grievance", "grievances", "petition", "petitions", "pending work", "pending works", "open work", "backlog", "emergency", "emergencies", "crisis", "prachanai", "pirachanai", "prechanai", "சம்பவம்", "புகார்", "வழக்கு", "பிரச்சனை"];
 /** a count of citizens' complaints, not of incidents */
 const COMPLAINT_WORDS = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்"];
 /** a count of people who died */
 const DEATH_WORDS = ["death", "deaths", "died", "dead", "fatal", "fatality", "fatalities", "lives lost", "lost their lives", "killed", "உயிரிழ", "இறந்", "பலி", "uyirizhappu"];
 /** "this month vs last month", "compared with last week": the period against the one before */
-const VS_PREVIOUS = /\b(vs\.?|versus|compared? (to|with)|against)\s+(the\s+)?(last|previous|prior|past)\s+(day|week|month|quarter|period)\b|\b(than|from)\s+(last|the previous)\s+(week|month|quarter)\b/i;
-const RANKING = ["types", "type of", "kinds", "kind of", "categories", "category", "most common", "which type", "which kind", "breakdown", "by category", "by type"];
+// ("compare this month and last month for street light complaints" too)
+const VS_PREVIOUS = /\b(vs\.?|versus|compared? (to|with)|against)\s+(the\s+)?(last|previous|prior|past)\s+(day|week|month|quarter|period)\b|\b(than|from)\s+(last|the previous)\s+(week|month|quarter)\b|\b(this|current)\s+(week|month|quarter)\s+(and|with|to|vs\.?|versus)\s+(the\s+)?(last|previous|prior)\s+(week|month|quarter)\b|\bcompare\b.{0,40}\b(with|to|and)\s+(the\s+)?(last|previous)\s+(week|month|quarter)\b/i;
+const RANKING = ["types", "type of", "kinds", "kind of", "categories", "category", "most common", "which type", "which kind", "breakdown", "by category", "by type",
+  // Tanglish "enna prachanai adhigama irukku": which kinds are most frequent
+  "adhigama", "athigama", "adhigam", "athigam", "அதிகமா"];
 const PRIORITY = ["top", "priority", "most important", "important", "most serious", "serious", "severe", "critical", "worst", "biggest", "urgent", "major",
+  "emergency", "emergencies", "crisis", "crises", "red flag", "red flags", "alarming", "அவசர",
   "முக்கிய", "mukkiya", "gambhir"];
 const COUNT = ["how many", "number of", "count", "total", "evlo", "evvalo", "எத்தனை", "எவ்வளவு"];
 const LIST = ["show", "list", "give me", "what are", "tell me", "display", "any", "kaattu", "sollu", "காட்டு"];
@@ -170,7 +184,7 @@ const ACTION = ["what should we do", "what should i do", "what do we do", "what 
   "action items", "action item", "what action", "which action", "next steps", "next step", "how should we respond", "how do we handle", "recommend", "recommendation"];
 const RELATED = ["similar", "related", "nearby", "near by", "around there", "around it", "same area", "same place", "close to", "other such", "like this", "like that"];
 const TIMELINE = ["timeline", "how did it unfold", "how it unfolded", "sequence", "what happened next", "history of", "step by step"];
-const DETAIL = ["explain", "more about", "tell me more", "details", "detail", "what happened", "what is this", "describe", "elaborate", "enna aachu", "என்ன நடந்தது"];
+const DETAIL = ["explain", "more about", "tell me about", "about it", "about this", "about that", "more on", "what is it", "what was it", "tell me more", "details", "detail", "what happened", "what is this", "describe", "elaborate", "enna aachu", "என்ன நடந்தது"];
 /** asks for an explanation of a place or topic, not a list: the model writes it from the tools' facts */
 const EXPLAIN = ["explain", "why", "tell me about", "tell about", "tell me more about", "summarise", "summarize", "summary", "overview", "situation", "what is going on", "what's going on",
   "whats going on", "what is happening", "what's happening", "analyse", "analyze", "analysis", "brief me", "describe", "elaborate", "yen", "ஏன்", "விளக்கு"];
@@ -187,6 +201,7 @@ const CHART = ["chart", "graph", "pie", "bar chart", "donut", "visualise", "visu
 const TABLE = ["as a table", "in a table", "table"];
 /** past the deadline: "overdue", "missed deadline", "delayed", "beyond the SLA" (Tanglish "late aagudhu") */
 export const OVERDUE = /\b(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadline|deadline (missed|crossed|passed)|beyond (the )?(sla|deadline)|sla breach(ed)?|breached|delayed|late aag)/i;
+const AGED = /\b(?:open|opened|pending|unresolved|unsolved|stuck|lying|not (?:resolved|closed)|old)\b.{0,45}?\b(?:for\s+)?(?:more than|longer than|over|beyond|older than|at least)\s+(\d{1,3}|an?|one|two|three)\s+(days?|weeks?|months?)\b/i;
 const OPEN_ONLY = ["pending", "unresolved", "still open", "open ones", "not resolved", "not closed", "open complaints", "open complaint",
   "open grievances", "open incidents", "open cases", "open issues", "open work", "backlog", "நிலுவை"];
 /** closed work: "resolved", "closed", "completed", "fixed", "solved", "disposed of" (not "unresolved" / "not closed") */
@@ -202,7 +217,7 @@ export function countAsked(text: string): number | null {
   const t = text.toLowerCase();
   // "last 3 days" is a period, not a count
   const m = t.match(/\b(?:top|first|best|worst|latest|last|most)\s*-?\s*(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|moonu|rendu|anju)\b(?!\s*(?:days?|hours?|hrs?|h\b|weeks?|months?|years?|mins?|minutes?))/)
-    ?? t.match(/\b(\d{1,2}|three|five|ten)\s+(?:most|top|highest|priority|serious|severe|important|worst|latest|recent|big)/);
+    ?? t.match(/\b(\d{1,2}|three|five|ten)\s+(?:most|top|highest|priority|serious|severe|important|worst|latest|recent|big|oldest|newest|earliest|longest)/);
   if (!m) return null;
   const v = /^\d+$/.test(m[1]) ? Number(m[1]) : WORD_N[m[1]] ?? null;
   return v && v >= 1 && v <= 20 ? v : null;
@@ -213,6 +228,9 @@ function ordinal(toks: string[]): number | null {
   const m = toks.join(" ").match(/\b(?:number|no|#)\s*(\d{1,2})\b/);
   return m ? Number(m[1]) - 1 : null;
 }
+
+/** why a "which one is most serious?" after a list reads the list itself (the fast path picks from its incidents) */
+export const PICK_FROM_LIST = "picks the most important from the previous list";
 
 // ----------------------------------------------------------------- detect --
 
@@ -228,13 +246,20 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const topic = topicOf(toks);
   const n = countAsked(message);
   const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High" : null;
-  const openOnly = any(toks, OPEN_ONLY);
+  // "open for more than 7 days", "pending over 30 days", "unresolved longer than 2 weeks": open, and at least that old
+  const age = message.match(AGED);
+  // "older than a week" = 7, "two months" = 60
+  const ageN = age ? (/^\d+$/.test(age[1]) ? Number(age[1]) : ({ a: 1, an: 1, one: 1, two: 2, three: 3 } as Record<string, number>)[age[1].toLowerCase()] ?? 1) : 0;
+  const minOpenDays = age ? ageN * (/week/i.test(age[2]) ? 7 : /month/i.test(age[2]) ? 30 : 1) : null;
+  const openOnly = any(toks, OPEN_ONLY) || minOpenDays != null;
   const overdue = OVERDUE.test(message);
   const resolved = !openOnly && !overdue && RESOLVED.test(message) && !/\b(un|not |n't )(resolved|closed|completed|fixed|solved)/i.test(message);
   const deaths = any(toks, DEATH_WORDS) && !any(toks, ["death threat", "death threats"]);
-  const measure: Detected["measure"] = deaths ? "deaths" : any(toks, COMPLAINT_WORDS) ? "complaints" : null;
+  // "how many people were injured in road accidents": the injured, not the incidents
+  const injured = !deaths && any(toks, ["injured", "injuries", "injury", "hurt", "wounded", "காயம்", "kaayam"]);
+  const measure: Detected["measure"] = deaths ? "deaths" : injured ? "injured" : any(toks, COMPLAINT_WORDS) ? "complaints" : null;
   const base = { n, topic, sev: sev as Detected["sev"], openOnly, overdue, resolved, incidentId: null, storyId: null, focus: "all" as Detected["focus"], refinement: false,
-    measure };
+    measure, minOpenDays };
   const mk = (intent: Intent, because: string, extra: Partial<Detected> = {}): Detected => ({ ...base, intent, because, ...extra });
   const explicitId = message.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase() ?? null;
 
@@ -248,7 +273,9 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const selected = explicitId ?? (lastWasNews ? null : fromList) ?? (pointsBack && !lastWasNews ? ctx?.selectedIncidentId ?? null : null);
 
   // 1. asked for action: recommendations only then
-  if (any(toks, ACTION)) return mk("ACTION_REQUEST", "asks what to do", { incidentId: selected ?? (pointsBack ? ctx?.selectedIncidentId ?? null : null) });
+  // ("what should I do" right after an answer about one incident is about that incident)
+  if (any(toks, ACTION)) return mk("ACTION_REQUEST", "asks what to do", { incidentId: selected
+    ?? ((pointsBack || (short && (ctx?.lastResponseType === "incident_detail" || ctx?.resultIds?.length === 1))) ? ctx?.selectedIncidentId ?? null : null) });
 
   // 2. news
   const newsWord = any(toks, NEWS);
@@ -270,6 +297,11 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   if (any(toks, RELATED) && ctx?.selectedIncidentId && short)
     return mk("INCIDENT_RELATED", "similar incidents near the selected one", { incidentId: ctx.selectedIncidentId });
 
+  // "which one is the most serious?", "which of these is worst?" after a list: the top of that same list (its place, period and
+  // kind), not a new district-wide question
+  if (ctx?.resultIds?.length && short && /\b(which (one|of (these|them|those))|among (these|them|those))\b|\b(ithula|idhula|adhula|athula)\b/i.test(t))
+    return mk("PRIORITY_INCIDENT_LIST", PICK_FROM_LIST, { n: 1, refinement: true, sev: null });
+
   // 4. pictures of the previous answer
   if (short && ctx && any(toks, MAP) && !topic) return mk("MAP", "the previous answer on a map", { refinement: true });
   if (short && ctx && any(toks, CHART) && !topic) return mk("CHART", "the previous answer as a chart", { refinement: true });
@@ -287,11 +319,14 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   if ((incidenty || deaths) && VS_PREVIOUS.test(message)) return mk("INCIDENT_COUNT", "compares the period with the one before", { vsPrevious: true });
   if (incidenty && any(toks, COUNT)) return mk("INCIDENT_COUNT", "asks how many");
   // "road deaths today", "gas poisoning deaths this week": how many people died (a list word still lists the incidents)
-  if (deaths && (topic || incidenty || any(toks, ["people", "persons", "workers", "road"])) && !any(toks, LIST))
+  // ("any dengue deaths?" asks whether anyone died: a count, though "any" is a list word)
+  if (deaths && (topic || incidenty || any(toks, ["people", "persons", "workers", "road"])) && !any(toks, LIST.filter((w) => w !== "any")))
     return mk("INCIDENT_COUNT", "asks how many people died");
   if (any(toks, HOTSPOT)) return mk("HOTSPOT", "asks where incidents cluster");
   if (any(toks, TREND)) return mk("TREND", "asks how a count moves over time");
   if (any(toks, COMPARE)) return mk("COMPARISON", "asks for a comparison");
+  // "the 10 oldest open complaints": a list in age order, not the top 10 by priority
+  if (incidenty && any(toks, ["oldest", "earliest", "longest pending", "pending longest", "open longest"])) return mk("INCIDENT_LIST", "asks for the oldest");
   if (incidenty && (n != null || any(toks, PRIORITY))) return mk("PRIORITY_INCIDENT_LIST", "asks for the most important incidents themselves");
   if (incidenty && any(toks, LIST)) return mk("INCIDENT_LIST", "asks to see incidents");
 

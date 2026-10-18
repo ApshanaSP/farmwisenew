@@ -20,17 +20,17 @@ import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { pickIncident } from "@/lib/assistant/rerank";
-import { windowRows } from "@/lib/assistant/incidents";
+import { countByZone, resolutionTimes, windowRows } from "@/lib/assistant/incidents";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
   ENV_METRICS, addedSources, categoryFigures, changeDrivers, deptBacklog, envSignals, feeds, incidentFlags, incidentSeries, incidentsByIds, newsGapTotal, placeBreakdown, seriesNormal,
   syntheticShare,
-  warningToday, zoneAttention, type EnvMetric
+  warningToday, warningsAhead, zoneAttention, type EnvMetric
 } from "@/lib/assistant/queries";
 import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
-import { orNull } from "@/lib/fallback";
-import intelPool from "@/lib/collector/db";
+import { orEmpty, orNull } from "@/lib/fallback";
+import intelPool, { TITLE } from "@/lib/collector/db";
 import type { RowDataPacket } from "mysql2";
 
 type Row = Record<string, any>;
@@ -68,7 +68,12 @@ const ASKING = new Set(["severe", "serious", "critical", "high", "medium", "mino
   "important", "resolved", "closed", "unresolved", "complaint", "grievance", "problem", "issue", "news", "zone", "ward", "taluk", "department", "total",
   "people", "death", "died", "dead", "killed", "people", "person", "worst", "most", "least", "status", "update", "situation", "today", "yesterday", "week",
   "month", "quarter", "area", "areas", "place", "places", "event", "report", "happen", "happened", "happening", "going", "ranking", "rank",
-  "need", "needs", "attention", "thank", "thanks", "hello", "kindly", "focus", "change", "changed", "compare", "versus", "trend", "chart", "table", "summary"]);
+  "need", "needs", "attention", "thank", "thanks", "hello", "kindly", "focus", "change", "changed", "compare", "versus", "trend", "chart", "table", "summary",
+  // "any emergencies right now?": the most serious open incidents, never a search for the word "emergency"
+  "emergency", "emergencies", "urgent", "crisis", "right", "now", "currently", "today", "anything", "something",
+  // Tanglish asking words ("indha week enna nadandhuchu" was searched for as if they were the subject)
+  "indha", "intha", "enna", "yenna", "nadandhuchu", "nadanthuchu", "nadandhadhu", "aachu", "irukku", "iruku", "evlo", "evvalo", "pathi", "patthi",
+  "sollu", "kaattu", "ippo", "innaiki", "vaaram", "maasam", "naal", "week", "weeks"]);
 
 /**
  * The subject words of a short question when none of them is something the district's data knows: not a place, a
@@ -181,6 +186,30 @@ const STORY_STOP = new Set(["what", "this", "that", "case", "incident", "tell", 
   "which", "when", "where", "with", "from", "enna", "aachu", "pathi", "sollu", "yesterday", "today", "last", "week", "month", "recent", "latest", "show",
   "give", "please", "near", "area", "zone", "ward"]);
 
+/**
+ * Incidents ranked by how many of `words` their title and place hold, every `must` word (the place) among them, at least two
+ * words in all (or the only one asked); most hits first, then newest. The keyword fallback while the meaning index is not ready.
+ */
+async function bestByWords(words: string[], must: string[], dept: string | null): Promise<Row[]> {
+  // the title or the place holds the word (plain SQL both stores run: no CONCAT, no HAVING without GROUP BY)
+  // the readable headline and the raw title both ("Parapet wall of Basin Bridge damaged" is a headline over another title)
+  const has = `(LOWER(COALESCE(${TITLE}, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)`;
+  const like = (w: string) => `%${w.toLowerCase().replace(/[%_]/g, "")}%`;
+  const two = (w: string) => [like(w), like(w), like(w)];
+  const score = words.map(() => `(CASE WHEN ${has} THEN 1 ELSE 0 END)`).join(" + ");
+  const parts = [...must.map(() => has), ...(dept ? ["i.lead_dept = ?"] : [])];
+  const [rows] = await intelPool.query<RowDataPacket[]>(
+    `SELECT id, hits FROM (SELECT i.incident_id AS id, i.first_reported_at AS t, i.priority_score AS p, (${score}) AS hits FROM incidents i
+       ${parts.length ? `WHERE ${parts.join(" AND ")}` : ""}) x
+     WHERE hits >= ? ORDER BY hits DESC, p DESC, t DESC LIMIT 8`,
+    [...words.flatMap(two), ...must.flatMap(two), ...(dept ? [dept] : []), Math.min(2, words.length)]);
+  return rows as Row[];
+}
+
+/** words that say nothing about which incident is meant ("the Porur lake bund issue") */
+const GENERIC_WORDS = new Set(["time", "first", "when", "date", "still", "latest", "last", "issue", "issues", "problem", "problems", "matter", "situation", "status", "update", "news", "report", "reports", "reported",
+  "incident", "incidents", "case", "cases", "complaint", "complaints", "going", "happening", "regarding", "related", "know", "want", "could", "would", "should"]);
+
 const NEWS_CAVEAT = "News answers rest on headlines: about 98% of news rows are headline snippets, and the news incident filter scores F1 0.63.";
 
 /**
@@ -230,7 +259,8 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
     const seen = new Set(found.map((h) => h.id));
     found = [...found, ...dead.filter((h) => !seen.has(h.id))];
   }
-  if (found) {
+  // (an empty result is no answer: the keywords below still look, "the Porur bund breach" has a Tamil headline)
+  if (found?.length) {
     // recency, the named locality and severity break near-ties, as below
     const ranked = found.map((h) => ({ id: h.id, sim: h.sim, rec: h.rec, words: `${h.rec.cat_label} ${h.rec.title} ${h.rec.place}`.toLowerCase(),
       dead: Number(h.rec.dead) > 0,
@@ -252,12 +282,17 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   let hits = await semanticSearch(text, { zone, cats }, 12, boost);
   if (hits && !hits.length && cats) hits = await semanticSearch(text, { zone }, 12, boost);
   if (hits && !hits.length && zone != null) hits = await semanticSearch(text, { cats }, 12, boost);
-  if (hits) {
+  if (hits?.length) {
     // sure only when the question's key words are in the record, or the meaning is very close
     const top = hits[0];
     return { found: hits.map((h) => ({ id: h.id, score: h.score })), how: "meaning", confident: !top || !keys.length || lexOf(top.meta.words) > 0 || top.sim >= 0.86 };
   }
-  // the meaning index is still being built: the console's keyword search
+  // the meaning index is still being built: the incidents whose title or place hold most of the question's own words (the
+  // place first: "porur" + "lake", "bund"), so a word the record does not use ("time", "breach" for a Tamil headline) does not
+  // hide it; the console's text search took the whole question as one phrase and found nothing
+  const words = [...new Set([...placeWords, ...keys])].filter((w) => w.length >= 4 && !GENERIC_WORDS.has(w)).slice(0, 8);
+  const best = words.length ? await bestByWords(words, [...placeWords].filter((w) => w.length >= 4), scope.dept ?? null).catch(orEmpty("tools:findIncidents")) : [];
+  if (best.length) return { found: best.slice(0, 8).map((r, k) => ({ id: String(r.id), score: 1 - k / 100 })), how: "keywords", confident: Number(best[0].hits) >= Math.ceil(words.length * 0.6) };
   return { found: (await search(text)).incidents.slice(0, 8).map((i, k) => ({ id: String(i.id), score: 1 - k / 100 })), how: "keywords", confident: true };
 }
 
@@ -340,16 +375,30 @@ export const TOOLS = [
       const now = await asOf();
       const s = { ...scope, zone: null };
       const rows = await zoneAttention(s, now);
+      // the period before, zone by zone: "which zone improved the most?" needs it ("comparison with last month is not recorded" was
+      // once the answer)
+      const before = new Map((await countByZone({ period: s.period, dept: s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk, offset: s.offset }, now)
+        .catch(orEmpty("tools:zones prev"))).map((z) => [z.zone, z.prev]));
       const facts = rows.flatMap((r, k) => [
+        ...(before.has(r.zone) ? [fact(`zone.${r.zone}.prev`, `Incidents reported in ${r.name}, the period before`, before.get(r.zone)),
+          fact(`zone.${r.zone}.change`, `Change in incidents reported in ${r.name} against the period before (negative = fewer)`, r.n - before.get(r.zone)!)] : []),
         // the attention score only orders the zones: the composer gets the counts it rests on, never the score itself
         fact(`zone.${r.zone}.rank`, `Rank of ${r.name} by severe and high incidents`, k + 1),
         fact(`zone.${r.zone}.severe`, `Severe incidents in ${r.name}`, r.severe), fact(`zone.${r.zone}.high`, `High incidents in ${r.name}`, r.high),
         fact(`zone.${r.zone}.n`, `Incidents reported in ${r.name}`, r.n), fact(`zone.${r.zone}.open`, `Open incidents in ${r.name}`, r.open),
         fact(`zone.${r.zone}.complaints`, `Open citizen complaints in ${r.name}`, r.complaints)
       ]);
+      // the biggest fall and rise as headline facts: with 15 zones the per-zone facts outrun what the composer is shown, and it
+      // once said "comparison with last month is not recorded" for "which zone improved the most?"
+      const moved = rows.filter((r) => before.has(r.zone)).map((r) => ({ r, d: r.n - before.get(r.zone)! }));
+      const fell = [...moved].sort((a, b) => a.d - b.d)[0], rose = [...moved].sort((a, b) => b.d - a.d)[0];
+      if (fell && fell.d < 0) facts.push(fact("kpi.zone_fell_most_change", `Fall in incidents reported in ${fell.r.name}: the zone that IMPROVED the most, with fewer incidents than the period before (${before.get(fell.r.zone)} to ${fell.r.n})`, fell.d),
+        fact("kpi.zone_fell_most_now", `Incidents reported in ${fell.r.name} now`, fell.r.n), fact("kpi.zone_fell_most_prev", `Incidents reported in ${fell.r.name} the period before`, before.get(fell.r.zone)));
+      if (rose && rose.d > 0) facts.push(fact("kpi.zone_rose_most_change", `Rise in incidents reported in ${rose.r.name}: the zone that WORSENED the most, with more incidents than the period before (${before.get(rose.r.zone)} to ${rose.r.n}); never call it an improvement`, rose.d),
+        fact("kpi.zone_rose_most_now", `Incidents reported in ${rose.r.name} now`, rose.r.n), fact("kpi.zone_rose_most_prev", `Incidents reported in ${rose.r.name} the period before`, before.get(rose.r.zone)));
       const t = await testShare(s, now);
       return {
-        scope: s, asOf: now, data: { rows, formula: "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only" },
+        scope: s, asOf: now, data: { rows: rows.map((r) => ({ ...r, n_prev: before.get(r.zone) ?? null })), formula: "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only" },
         facts: [...facts, ...t.facts], sources: [fn("intel.scopeWhere"), tbl("incidents"), tbl("ref_wards")], incidentIds: [],
         testData: t.testData, caveats: t.caveats
       };
@@ -440,6 +489,43 @@ export const TOOLS = [
         scope, asOf: d.now, data: { count: d.tasks.count, rows }, facts: [fact("tasks.count", "Complaints awaiting your verification", d.tasks.count), ...t.facts],
         sources: [fn("intel.overview", "My Tasks"), tbl("incidents"), tbl("incident_timeline")], incidentIds: rows.map((r) => r.id),
         testData: t.testData, caveats: t.caveats, untrusted: ["title", "action_note"]
+      };
+    }
+  }),
+
+  tool({
+    name: "resolution_times",
+    description: "How fast work is closed: department by department, the incidents closed as resolved in the period (counted by when they were closed), the average hours (and days) from the first report to closing, how many were closed within their deadline, and the average in the period before. Fastest first. For 'average resolution time', 'how quickly does Metrowater resolve complaints', 'which department resolves fastest / slowest'.",
+    args: scopeOnly,
+    async run({ scope }) {
+      const now = await asOf();
+      const rows = await resolutionTimes({ period: scope.period, zone: scope.zone, dept: scope.dept, cats: scope.cat ? [scope.cat] : null, taluk: scope.taluk,
+        offset: scope.offset }, now);
+      const closed = rows.reduce((a, r) => a + r.n, 0), onTime = rows.reduce((a, r) => a + r.onTime, 0);
+      const avg = closed ? rows.reduce((a, r) => a + r.hours * r.n, 0) / closed : 0;
+      const facts = [
+        fact("resolution.closed", `Incidents closed as resolved, ${periodOf(scope)}`, closed),
+        fact("resolution.avg_hours", "Average hours from first report to closing", round(avg), "hours"),
+        fact("resolution.avg_days", "Average days from first report to closing", round(avg / 24), "days"),
+        fact("resolution.on_time", "Closed within the deadline", onTime),
+        fact("resolution.on_time_pct", "Share closed within the deadline", closed ? Math.round((onTime / closed) * 100) : 0, "%"),
+        ...rows.flatMap((r, k) => [
+          // a rank among one department is no rank ("ranking first across the district" was once written for a filtered answer)
+          ...(rows.length > 1 ? [fact(`resolution.${r.code}.rank`, `Rank of ${r.name} by speed among ${rows.length} departments (1 = fastest)`, k + 1)] : []),
+          fact(`resolution.${r.code}.hours`, `Average hours to resolve, ${r.name}`, round(r.hours), "hours"),
+          fact(`resolution.${r.code}.days`, `Average days to resolve, ${r.name}`, round(r.hours / 24), "days"),
+          fact(`resolution.${r.code}.n`, `Incidents resolved, ${r.name}`, r.n),
+          fact(`resolution.${r.code}.on_time`, `Resolved within the deadline, ${r.name}`, r.onTime),
+          // in days, like the figure it is compared with ("15.9 days, up from 296.4 hours" mixed the units)
+          ...(r.prevHours != null ? [fact(`resolution.${r.code}.prev_days`, `Average days to resolve in the period before, ${r.name}`, round(r.prevHours / 24), "days")] : [])
+        ])
+      ];
+      return {
+        scope, asOf: now,
+        data: { rows: rows.map((r) => ({ ...r, hours: round(r.hours), days: round(r.hours / 24), prevHours: r.prevHours == null ? null : round(r.prevHours),
+          onTimePct: r.n ? Math.round((r.onTime / r.n) * 100) : 0 })), closed, avgHours: round(avg), onTime },
+        facts, sources: [fn("incidents.resolutionTimes"), tbl("incidents", "first_reported_at, closed_at, sla_breached")], incidentIds: [], testData: false,
+        caveats: ["Counted by when each incident was closed as resolved; time is from the first report to closing. Departments with fewer than 3 closed are left out."]
       };
     }
   }),
@@ -909,6 +995,7 @@ export const TOOLS = [
       const all = await envSignals(metric, now);
       const rows = all.filter((r) => (above == null || r.value > above) && (below == null || r.value < below));
       const warning = metric === "imd_warning_level" ? await warningToday(now) : null;
+      const ahead = metric === "imd_warning_level" ? await warningsAhead(now) : [];
       const ageDays = (t: string) => (Date.parse(now.replace(" ", "T") + "+05:30") - Date.parse(t.replace(" ", "T") + "+05:30")) / 864e5;
       const stale = rows.filter((r) => ageDays(r.t) > 3);
       const facts = [
@@ -918,13 +1005,16 @@ export const TOOLS = [
           ...(r.mean28 != null ? [fact(`env.${r.place_id}.mean28`, `28-day mean, ${r.place}`, round(r.mean28), m.unit)] : [])])
       ];
       if (warning) facts.push(fact("env.warning_level", `IMD warning level in force (0 green .. 3 red), issued ${warning.t.slice(0, 16)}`, warning.level));
+      for (const a of ahead) facts.push(fact(`env.warning.${a.date}`, `IMD warning level for ${a.date} (0 green .. 3 red): ${a.text}`, a.level));
       const caveats = [
+        // "0 lakes meeting the threshold out of 0 reporting" is no answer: say the readings are missing
+        ...(!all.length && !warning ? [`No ${m.label.toLowerCase()} readings are in the data right now, so this cannot be answered from it; check the source's status on the Sources page.`] : []),
         ...(stale.length ? [`${stale.length} of these readings are more than 3 days old.`] : []),
         ...(["aqi", "reservoir_inflow_cusec"].includes(metric) ? ["Station positions are approximate."] : []),
         ...(["aqi", "rainfall_24h_mm"].includes(metric) ? ["Rainfall and air-quality history is short: the collectors began recently."] : [])
       ];
       return {
-        scope: null, asOf: now, data: { metric, label: m.label, unit: m.unit, above, below, rows, warning }, facts,
+        scope: null, asOf: now, data: { metric, label: m.label, unit: m.unit, above, below, rows, warning, ahead }, facts,
         sources: [tbl("observation_signals"), ...(warning ? [tbl("observations", "IMD warning text")] : [])], incidentIds: [], testData: m.test, caveats,
         untrusted: ["detail"]
       };

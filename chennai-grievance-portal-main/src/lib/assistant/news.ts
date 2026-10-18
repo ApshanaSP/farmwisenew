@@ -145,7 +145,10 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   };
   const keep = stories.filter((s) => (!f.topic || share(s, f.topic.cats) >= 0.5 || s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))))
     && (!f.zone || s.zones.includes(f.zone)) && (!f.gapsOnly || (!s.departmentRecordFound && s.matchedIncidentId != null)));
-  keep.sort((a, b) => b.score - a.score);
+  // a story whose headline names the topic comes before one kept only by its articles' filed kinds ("news about flooding" once
+  // led with a sump asphyxiation and a plane fire, filed as flood risk by the news classifier)
+  const named = (s: { sources: { title: string }[] }) => (topicWords.length && s.sources.some((x) => topicWords.some((w) => hasPhrase(tokens(x.title), w))) ? 1 : 0);
+  keep.sort((a, b) => named(b) - named(a) || b.score - a.score);
   const merged = storyIds?.length ? keep : await mergeSameEvent(keep.slice(0, Math.max(n * 4, 24)));
   return { stories: merged.slice(0, n).map(({ score: _s, zones: _z, cats: _c, tally: _t, ...s }) => s), candidates: keep.length - (Math.min(keep.length, Math.max(n * 4, 24)) - merged.length) };
 }

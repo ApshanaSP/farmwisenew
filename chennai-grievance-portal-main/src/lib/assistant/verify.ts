@@ -164,3 +164,72 @@ export function pruneUnverified(d: { headline: string; answerMarkdown: string; v
   if (!md) return null;
   return { headline: ok(d.headline) ? d.headline : null, answerMarkdown: md, voiceSummary: ok(d.voiceSummary) ? d.voiceSummary : null, dropped };
 }
+
+/** The places and departments a fact id can belong to, by family: zone number, department code, taluk code -> name. */
+export type EntityNames = Partial<Record<"zone" | "dept" | "taluk", Map<string, string>>>;
+const FAMILY: Record<string, keyof EntityNames> = { zone: "zone", dept: "dept", backlog: "dept", resolution: "dept", taluk: "taluk" };
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * A figure written against the wrong place: "Royapuram ... (104 open incidents)" where 104 is {{zone.8.open}}, Anna Nagar's.
+ * The number check passes (104 is a fact), so this checks the binding: in each sentence, a placeholder of a zone's,
+ * department's or taluk's fact must not sit in a sentence that names another one of the same kind and not its own.
+ * A sentence that names none ("it has {{zone.5.open}} open") is not judged. Returns one line per misplaced figure.
+ */
+export function misboundFacts(text: string, names: EntityNames): string[] {
+  const out: string[] = [];
+  for (const sentence of String(text ?? "").split(/(?<=[.!?;])\s+|\n+/)) {
+    const plain = sentence.replace(/\{\{[^}]*\}\}/g, " ").toLowerCase();
+    const has = (n: string) => new RegExp(`(^|[^a-z])${esc(n.toLowerCase())}($|[^a-z])`).test(plain);
+    for (const m of sentence.matchAll(/\{\{\s*([a-z_]+)\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_.]+\s*\}\}/g)) {
+      const map = FAMILY[m[1]] ? names[FAMILY[m[1]]] : undefined;
+      const own = map?.get(m[2]);
+      if (!map || !own || has(own)) continue;
+      const other = [...map.entries()].find(([k, n]) => k !== m[2] && n.length >= 4 && has(n));
+      if (other) out.push(`${m[0].replace(/\s+/g, "")} is ${own}'s figure, but its sentence is about ${other[1]}`);
+    }
+  }
+  return [...new Set(out)];
+}
+
+/** Dataset rows the composer sometimes cites as if they were facts, and the facts that hold the same figures. */
+const ROW_ALIAS: Record<string, string> = { drivers: "type", driver_places: "place", driver_depts: "dept", driver_top: "top" };
+const FIELD_ALIAS: Record<string, string> = { n: "now", n_prev: "prev", prev: "prev", delta: "change", overdue: "overdue", open: "open", dead: "deaths",
+  injured: "injured", severe: "severe", rain: "rain" };
+
+/**
+ * "{{driver_places.0.n}}" for the first place's count: a row of a dataset written as a fact id. Rewritten to the fact that
+ * holds that figure ("{{place1.now}}") when it exists; anything else is left for the unknown-id check.
+ */
+export function aliasRowIds(text: string, factIds: Set<string>): string {
+  return String(text ?? "").replace(/\{\{\s*([a-z_]+)\.(\d+)\.([a-z_]+)\s*\}\}/g, (m, ds: string, row: string, field: string) => {
+    const prefix = ROW_ALIAS[ds], f = FIELD_ALIAS[field];
+    const id = prefix && f ? `${prefix}${Number(row) + 1}.${f}` : null;
+    return id && factIds.has(id) ? `{{${id}}}` : m;
+  });
+}
+
+/**
+ * A figure written as the wrong measure of the right place: "Teynampet has the most open citizen complaints at 199", where 199
+ * is {{zone.9.open}} (open incidents; its complaints are 112). The word right after the placeholder (or just before it)
+ * says complaints or incidents; the fact's label must say the same when the place has a fact for the other one.
+ */
+export function mismeasuredFacts(text: string, facts: Fact[]): string[] {
+  const by = new Map(facts.map((f) => [f.id, f]));
+  const out: string[] = [];
+  const s = String(text ?? "");
+  for (const m of s.matchAll(/\{\{\s*([A-Za-z0-9_.:-]+)\s*\}\}/g)) {
+    const f = by.get(m[1]);
+    const prefix = m[1].replace(/\.[^.]+$/, ".");
+    if (!f || !/^(zone|dept|taluk)\./.test(m[1])) continue;
+    const after = s.slice(m.index! + m[0].length, m.index! + m[0].length + 40).split("{{")[0];
+    const before = s.slice(Math.max(0, m.index! - 40), m.index!).split("}}").pop() ?? "";
+    const word = after.match(/^[\s*_]*(?:open\s+|citizen\s+|open citizen\s+|still open\s+)?(complaints?|incidents?|cases?)\b/i)?.[1]
+      ?? before.match(/\b(complaints?|incidents?|cases?)\b[^.\d{]{0,22}$/i)?.[1];
+    if (!word) continue;
+    const saysComplaint = /^complaint/i.test(word), isComplaint = /complaint/i.test(f.label);
+    const sibling = facts.some((x) => x.id.startsWith(prefix) && x.id !== f.id && /complaint/i.test(x.label) !== isComplaint);
+    if (saysComplaint !== isComplaint && sibling) out.push(`${m[0]} is "${f.label}" but the text calls it ${word}`);
+  }
+  return [...new Set(out)];
+}

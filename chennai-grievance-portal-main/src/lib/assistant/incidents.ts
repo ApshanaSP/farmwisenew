@@ -44,6 +44,10 @@ export interface IncidentFilters {
   overdue?: boolean;
   /** one GCC ward ("ward 106") */
   ward?: number | null;
+  /** a main road ("OMR"): incidents whose place or title names it, by any of these spellings */
+  roads?: string[] | null;
+  /** only incidents still open after this many days */
+  minOpenDays?: number | null;
   /** exact calendar bounds (IST "YYYY-MM-DD HH:MM:SS", from inclusive, to exclusive): "in September", "since Diwali" */
   range?: { from: string; to: string } | null;
 }
@@ -73,6 +77,11 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
   if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
   if (f.overdue) parts.push("i.sla_breached = 1");
+  if (f.roads?.length) {
+    parts.push(`(${f.roads.map(() => "LOWER(COALESCE(i.place_text, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ?").join(" OR ")})`);
+    for (const r of f.roads) params.push(`%${r}%`, `%${r}%`);
+  }
+  if (f.minOpenDays) (parts.push(`${OPEN} = 1`, "i.first_reported_at <= (? - INTERVAL ? HOUR)"), params.push(now, f.minOpenDays * 24));
   return { sql: parts.join(" AND "), params };
 }
 
@@ -155,8 +164,9 @@ const WIDER: Period[] = ["daily", "weekly", "monthly", "quarterly"];
  * The top `n` incidents for the filters, by the pipeline's priority score (open ones first) or newest first. When the
  * period holds fewer than `n`, the window widens one step at a time (said on the card), so "top 3" shows three.
  */
-export async function rankedIncidents(f: IncidentFilters, now: string, n: number, order: "priority" | "recent" = "priority") {
-  const by = order === "priority" ? `${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC` : "i.first_reported_at DESC";
+export async function rankedIncidents(f: IncidentFilters, now: string, n: number, order: "priority" | "recent" | "oldest" = "priority") {
+  // "the 10 oldest open complaints": first reported first (it once listed the ten newest)
+  const by = order === "priority" ? `${OPEN} DESC, i.priority_score DESC, i.first_reported_at DESC` : order === "oldest" ? "i.first_reported_at ASC" : "i.first_reported_at DESC";
   let period = f.period, rows: Row[] = [], total = 0;
   for (let k = WIDER.indexOf(f.period); k < WIDER.length; k++) {
     period = WIDER[Math.max(0, k)];
@@ -164,7 +174,7 @@ export async function rankedIncidents(f: IncidentFilters, now: string, n: number
     [rows, [{ total }]] = await Promise.all([q(`SELECT ${COLS} ${FROM} WHERE ${w.sql} ORDER BY ${by} LIMIT ?`, [...w.params, n]),
       q<{ total: number }>(`SELECT COUNT(*) AS total FROM incidents i WHERE ${w.sql}`, w.params)]);
     // a window the question names ("last 10 days") is never widened silently
-    if (rows.length >= n || order === "recent" || f.hours || f.offset) break;
+    if (rows.length >= n || order !== "priority" || f.hours || f.offset) break;
   }
   const ev = await evidenceFor(rows.map((r) => String(r.id)));
   return { items: rows.map((r) => itemOf(r, ev.get(String(r.id)) ?? [])), total: num(total), period, widened: period !== f.period };
@@ -219,6 +229,44 @@ export async function countResolved(f: IncidentFilters, now: string) {
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
+}
+
+/**
+ * How fast work is closed, department by department: incidents closed as resolved in the window (by when they were closed),
+ * the average hours from the first report to closing, and how many were closed within their deadline. Departments with
+ * fewer than 3 closed are left out (one quick case is not a pace). Fastest first.
+ */
+export async function resolutionTimes(f: IncidentFilters, now: string) {
+  const g = { ...f, openOnly: false, overdue: false };
+  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
+  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND i.closed_at >= i.first_reported_at`;
+  const hrs = "TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60";
+  const [rows, prev] = await Promise.all([
+    q(`SELECT i.lead_dept AS code, COALESCE(dp.name, i.lead_dept) AS name, COUNT(*) AS n, AVG(${hrs}) AS hours,
+              SUM(COALESCE(i.sla_breached, 0) = 0) AS on_time
+       FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
+       WHERE ${w.sql} AND ${done} AND i.lead_dept IS NOT NULL GROUP BY i.lead_dept, dp.name HAVING COUNT(*) >= 3 ORDER BY hours`, w.params),
+    q(`SELECT i.lead_dept AS code, AVG(${hrs}) AS hours FROM incidents i WHERE ${p.sql} AND ${done} AND i.lead_dept IS NOT NULL
+       GROUP BY i.lead_dept HAVING COUNT(*) >= 3`, p.params)]);
+  const before = new Map(prev.map((r) => [String(r.code), num(r.hours)]));
+  return rows.map((r) => ({ code: String(r.code), name: String(r.name), n: num(r.n), hours: num(r.hours), onTime: num(r.on_time),
+    prevHours: before.has(String(r.code)) ? before.get(String(r.code))! : null }));
+}
+
+/**
+ * Incidents of a narrow kind found by the words of their titles ("murder", "hacked to death", கொலை), and, for a murder, a
+ * recorded death among violent crimes: the fallback while the meaning index is not ready (without it "murders this month"
+ * once counted every violent crime, 188 of them). Highest priority first, with how many match in all.
+ */
+export async function incidentsWithWords(f: IncidentFilters, now: string, words: string[], orDead: boolean, n: number) {
+  const w = where(f, now);
+  const like = words.map(() => "LOWER(COALESCE(i.title, '')) LIKE ?");
+  const match = `(${[...like, ...(orDead ? ["COALESCE(i.dead, 0) > 0"] : [])].join(" OR ") || "1 = 0"})`;
+  const params = [...w.params, ...words.map((x) => `%${x.toLowerCase().replace(/[%_]/g, "")}%`)];
+  const [ids, [t]] = await Promise.all([
+    q(`SELECT i.incident_id AS id FROM incidents i WHERE ${w.sql} AND ${match} ORDER BY i.priority_score DESC LIMIT ?`, [...params, n]),
+    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND ${match}`, params)]);
+  return { ids: ids.map((r) => String(r.id)), total: num(t?.n) };
 }
 
 /** The same count zone by zone (for "show it as a chart" after a count), with the period before. */

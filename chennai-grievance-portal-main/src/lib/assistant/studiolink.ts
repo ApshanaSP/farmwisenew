@@ -19,7 +19,13 @@ const GENERIC = new Set(["chennai", "data", "list", "details", "daily", "sample"
   "total", "count", "date", "name", "number", "status", "type", "report", "record", "records", "tamil", "headers", "details", "value", "notes"]);
 /** Words of the console's own data (stemmed): never enough on their own to send a question to an uploaded file. */
 const DISTRICT_WORDS = new Set(["complaint", "grievance", "incident", "news", "issue", "civic", "flood", "flooding", "drain", "drainage", "garbage", "road",
-  "accident", "police", "zone", "ward", "department", "case", "open", "pending", "citizen", "chennai", "water", "health", "disaster", "management", "plan"]);
+  "accident", "police", "zone", "ward", "department", "case", "open", "pending", "citizen", "chennai", "water", "health", "disaster", "management", "plan",
+  // a department's name ("Storm Water Drain department") is the console's, not an uploaded "Storm-water drain desilting register"
+  "storm", "sewage", "street", "light", "electrical",
+  // market prices are AGMARKNET's, in the console ("onion price today" was once "onion is not present in this dataset")
+  "price", "prices", "rate", "rates", "market", "markets", "commodity", "commodities", "mandi", "vegetable", "vegetables",
+  // dengue and fever are console topics (incidents, deaths): "any dengue deaths" was once "the dataset does not contain deaths"
+  "dengue", "fever", "malaria", "disease", "diseases", "death", "deaths"]);
 const words = (s: string) => s.toLowerCase().split(/[^a-z0-9஀-௿]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
 const stem = (w: string) => w.replace(/(ies)$/, "y").replace(/(?<!s)s$/, "");
 
