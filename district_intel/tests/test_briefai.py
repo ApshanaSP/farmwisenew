@@ -40,4 +40,7 @@ def test_each_job_uses_its_own_provider():
         chain = LLM(cfg, role).chain
         if not chain:
             pytest.skip("no Groq or Gemini key on this machine (district_intel/.env)")
+        # news_llm.force (Bedrock Nova for now) goes first; the job's own provider follows as the backup
+        if cfg.get("force") and chain[0] == tuple(cfg["force"]):
+            chain = chain[1:]
         assert chain and {p for p, _ in chain} == {provider}, role

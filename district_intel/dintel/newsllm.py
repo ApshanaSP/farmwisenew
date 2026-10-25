@@ -19,6 +19,7 @@ import re
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import pandas as pd
 import requests
@@ -26,10 +27,13 @@ import requests
 from .refdata import Reference
 from .util import INTEL_DIR, IST, log
 
-PROVIDERS = {  # both speak the OpenAI chat API, strict JSON schema included
+PROVIDERS = {  # groq and gemini speak the OpenAI chat API, strict JSON schema included
     "groq": {"url": "https://api.groq.com/openai/v1/chat/completions", "key_env": "GROQ_API_KEY"},
     "gemini": {"url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "key_env": "GEMINI_API_KEY"},
+    # Amazon Bedrock (Nova): its Converse API with a Bedrock API key; the schema goes in as a forced tool
+    "bedrock": {"url": "https://bedrock-runtime.{region}.amazonaws.com/model/{model}/converse", "key_env": "AWS_BEARER_TOKEN_BEDROCK"},
 }
+BEDROCK_MAX_OUTPUT = 10000  # Nova Lite's output limit
 PROMPT_VERSION = "news-v2"     # v2: also people, organisations, deaths/injured, status and the place phrase
 OLD_VERSIONS = ("news-v1",)     # their labels still count; only the extra details are missing
 TRANSLATE_VERSION = "tr-v1"
@@ -62,11 +66,15 @@ class LLM:
         self.cfg = cfg
         keys = _keys(cfg) if cfg.get("enabled", True) else {}
         if model:  # one model asked for by name (label-news --model)
-            chain = [("gemini" if model.startswith("gemini") else "groq", model)]
+            chain = [("gemini" if model.startswith("gemini") else "bedrock" if "nova" in model else "groq", model)]
         else:
             chain = [tuple(x) for x in cfg.get("chains", {}).get(role, DEFAULT_CHAINS[role])]
+            # news_llm.force: one [provider, model] pair tried first for every job (the others stay as backups)
+            if cfg.get("force"):
+                chain = [tuple(cfg["force"])] + [x for x in chain if x != tuple(cfg["force"])]
         self.chain = [(p, m) for p, m in chain if keys.get(p)]
         self.keys = keys
+        self.region = _region(cfg)
         self.calls = 0
         self.tokens = 0
         self.failed = 0        # consecutive failures; three in a row stop the run
@@ -99,13 +107,18 @@ class LLM:
         tries = busy = 0
         while time.time() < deadline and self.chain:
             provider, model = self.chain[0]
-            body = {"model": model, "temperature": 0, "reasoning_effort": "low",
-                    # Gemini's thinking counts against max_tokens: leave it room so the JSON is not cut off
-                    "max_tokens": max(max_tokens, 8000) if provider == "gemini" else max_tokens,
-                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                    "response_format": {"type": "json_schema", "json_schema": {"name": "out", "strict": True, "schema": schema}}}
+            if provider == "bedrock":
+                url = PROVIDERS[provider]["url"].format(region=self.region, model=quote(model, safe=""))
+                body = _converse_body(system, user, schema, min(max_tokens, BEDROCK_MAX_OUTPUT))
+            else:
+                url = PROVIDERS[provider]["url"]
+                body = {"model": model, "temperature": 0, "reasoning_effort": "low",
+                        # Gemini's thinking counts against max_tokens: leave it room so the JSON is not cut off
+                        "max_tokens": max(max_tokens, 8000) if provider == "gemini" else max_tokens,
+                        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                        "response_format": {"type": "json_schema", "json_schema": {"name": "out", "strict": True, "schema": schema}}}
             try:
-                r = requests.post(PROVIDERS[provider]["url"], headers={"Authorization": f"Bearer {self.keys[provider]}"}, json=body, timeout=150)
+                r = requests.post(url, headers={"Authorization": f"Bearer {self.keys[provider]}"}, json=body, timeout=150)
             except requests.Timeout:
                 if self._next("timed out"):  # a model that hangs is treated like an overloaded one
                     continue
@@ -148,12 +161,18 @@ class LLM:
                 return None
             j = r.json()
             self.calls += 1
-            self.tokens += int((j.get("usage") or {}).get("total_tokens") or 0)
+            usage = j.get("usage") or {}
+            self.tokens += int(usage.get("total_tokens") or usage.get("totalTokens") or 0)
             try:
-                out = json.loads(j["choices"][0]["message"]["content"])
+                out = _converse_object(j) if provider == "bedrock" else json.loads(j["choices"][0]["message"]["content"])
+                if provider == "bedrock" and not _fits(out, schema):
+                    if tries == 0:  # Nova left out a field or broke the schema once: ask again
+                        tries += 1
+                        continue
+                    raise ValueError("off-schema")
                 self.failed = 0
                 return out
-            except (KeyError, TypeError, json.JSONDecodeError):
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
                 self.failed += 1
                 return None
         self.stopped = True
@@ -167,6 +186,60 @@ def _keys(cfg: dict[str, Any]) -> dict[str, str]:
     path = INTEL_DIR / cfg.get("key_file", ".env")
     vals = dotenv_values(path) if path.exists() else {}
     return {p: (vals.get(v["key_env"]) or "").strip() for p, v in PROVIDERS.items()}
+
+
+def _region(cfg: dict[str, Any]) -> str:
+    """Bedrock's region: AWS_REGION in the key file, else ap-south-1 (where the team's Nova Lite runs)."""
+    from dotenv import dotenv_values
+
+    path = INTEL_DIR / cfg.get("key_file", ".env")
+    vals = dotenv_values(path) if path.exists() else {}
+    return (vals.get("AWS_REGION") or "ap-south-1").strip()
+
+
+def _converse_body(system: str, user: str, schema: dict, max_tokens: int) -> dict:
+    """A Bedrock Converse request whose only way to answer is the `submit` tool, with the job's schema as its input."""
+    return {"system": [{"text": system + "\n\nDeliver your result only by calling the `submit` tool once, every field filled."}],
+            "messages": [{"role": "user", "content": [{"text": user}]}],
+            "toolConfig": {"tools": [{"toolSpec": {"name": "submit", "description": "Returns the result. Call it exactly once.",
+                                                    "inputSchema": {"json": schema}}}],
+                           "toolChoice": {"tool": {"name": "submit"}}},
+            # Amazon recommends greedy decoding for Nova's tool calls
+            "inferenceConfig": {"maxTokens": max_tokens, "temperature": 0}}
+
+
+def _converse_object(j: dict) -> dict:
+    """The `submit` tool's input from a Converse reply (a small model sometimes sends it as a JSON string)."""
+    for block in j["output"]["message"]["content"]:
+        if "toolUse" in block:
+            out = block["toolUse"]["input"]
+            return json.loads(out) if isinstance(out, str) else out
+    raise KeyError("no tool call")
+
+
+def _fits(value: Any, schema: dict) -> bool:
+    """Enough of a JSON-schema check for our strict schemas: types, required keys, enums, array items."""
+    t = schema.get("type")
+    if "enum" in schema and value not in schema["enum"]:
+        return False
+    if t == "object":
+        if not isinstance(value, dict) or any(k not in value for k in schema.get("required", [])):
+            return False
+        props = schema.get("properties", {})
+        return all(_fits(v, props[k]) for k, v in value.items() if k in props)
+    if t == "array":
+        return isinstance(value, list) and all(_fits(v, schema.get("items", {})) for v in value)
+    if t == "string":
+        return isinstance(value, str)
+    if t == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if t == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if t == "boolean":
+        return isinstance(value, bool)
+    if isinstance(t, list):
+        return any(_fits(value, {**schema, "type": x}) for x in t)
+    return True
 
 
 def _cache_read(path: Path, version: str, older: tuple[str, ...] = ()) -> dict[str, dict]:

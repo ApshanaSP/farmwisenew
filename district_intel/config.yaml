@@ -99,7 +99,9 @@ news_llm:
   # used for this and nothing else. Answers are cached in output/state/; each run spends at most the minutes below,
   # newest articles first, and the local SetFit model (news_model) labels whatever the LLM has not reached yet.
   enabled: true
-  key_file: .env                        # GROQ_API_KEY and GEMINI_API_KEY
+  key_file: .env                        # GROQ_API_KEY, GEMINI_API_KEY, AWS_BEARER_TOKEN_BEDROCK (+ AWS_REGION)
+  # Tried first for every job below; the chains stay as backups (a Bedrock API key expires). Remove to go back.
+  force: [bedrock, apac.amazon.nova-lite-v1:0]
   # Each job tries these [provider, model] pairs in order; one out of quota, overloaded or retired hands over to the next.
   chains:
     # Groq: news classification and incident explanations. Gemini: strictly the page 2 briefing.
