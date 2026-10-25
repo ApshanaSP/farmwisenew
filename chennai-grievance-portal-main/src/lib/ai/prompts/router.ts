@@ -80,6 +80,9 @@ Intents:
 - adhoc_question: only when the question needs a grouping or filter no tool offers (by ward, by channel or source, a custom date range).
   tools = [].
 - insight_request / briefing: "insights for today", "prepare today's briefing" (weekly/monthly/quarterly too). Use the briefing tool.
+  A question that names one case, person, event or story and says "brief me", "give me a brief" or "summary" ("youtuber harish case
+  brief me", "SIR protest summary") is about that story, not the district briefing: decision.answer = "news_story" or the incident
+  story, with find = the words that name it.
 - chart_edit: change the previous answer's picture ("make it a pie", "as a table", "show on map"). Fill chartEdit.
 - plan_edit: the previous answer again with another filter or period ("only Zone 13", "just Adyar", "for last month", "compare with last
   month"). Fill scope with only what changes; tools may stay empty (the previous tools are repeated).

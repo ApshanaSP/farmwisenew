@@ -21,6 +21,7 @@ import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { pickIncident } from "@/lib/assistant/rerank";
 import { countByZone, resolutionTimes, windowRows } from "@/lib/assistant/incidents";
+import { docArticles } from "@/lib/assistant/news";
 import { classify } from "@/lib/collector/nlp";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
 import {
@@ -147,6 +148,24 @@ const fact = (id: string, label: string, value: unknown, unit?: string): Fact =>
 const fn = (name: string, detail?: string): SourceRef => ({ kind: "function", name, ...(detail ? { detail } : {}) });
 const tbl = (name: string, detail?: string): SourceRef => ({ kind: "table", name, ...(detail ? { detail } : {}) });
 const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-10-02 07:40:48" (stored in IST) as "2 Oct 2026, 7:40 AM": the composer once copied the raw timestamp into an answer */
+export function readableTime(t: unknown): string | null {
+  if (t == null) return null;
+  // a time with a zone ("...Z") is moved to IST first; one without is IST already
+  const raw = String(t), at = /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw) ? new Date(raw) : null;
+  const ist = at && !Number.isNaN(at.getTime()) ? new Date(at.getTime() + 5.5 * 3_600_000).toISOString() : raw;
+  const m = ist.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!m) return raw;
+  const day = `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+  if (m[4] == null) return day;
+  const h = Number(m[4]);
+  return `${day}, ${h % 12 || 12}:${m[5]} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** 310.9 hours as "13 days" (a Collector reads days, not hours, past two days) */
+const openFor = (hours: number | null) => hours == null ? null : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
 const inr = (v: number) => v.toLocaleString("en-IN");
 const periodOf = (s: AssistantScope) => PERIODS[s.period].label.toLowerCase();
 
@@ -239,7 +258,11 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   const qWords = tokens(text);
   const local = Object.entries(INCIDENT_WORDS).filter(([k]) => hasPhrase(qWords, k)).map(([, v]) => v);
   const keys = [...new Set([...(low.match(/[a-z]{4,}/g) ?? []), ...local])].filter((w) => !STORY_STOP.has(w) && !placeWords.has(w));
-  const lexOf = (words: string | undefined) => keys.filter((w) => (words ?? "").includes(w)).length;
+  // an acronym written in capitals ("the SIR protest", "NEET", "CAA") is a key word however short, matched as a whole word: "tell
+  // me about the SIR protest" once kept only "protest" and told a road roko's story
+  const acronyms = [...new Set((text.match(/\b[A-Z]{2,6}\b/g) ?? []).filter((a) => a !== "INC").map((a) => a.toLowerCase()))];
+  const acronymHits = (words: string | undefined) => acronyms.filter((a) => new RegExp(`\\b${a}\\b`).test(words ?? "")).length;
+  const lexOf = (words: string | undefined) => keys.filter((w) => (words ?? "").includes(w)).length + acronymHits(words);
   // the word the question names ("murder") outweighs small differences in meaning between near-identical police records
   const boost = (m: Meta) => Math.min(0.14, 0.07 * lexOf(m.words)) + 0.03 * Math.exp(-Math.max(0, nowT - m.t) / (30 * 86400))
     + (locality && m.place.includes(locality) ? 0.02 : 0) + (m.sev === "Severe" ? 0.01 : 0)
@@ -266,17 +289,21 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
       dead: Number(h.rec.dead) > 0,
       score: h.score + 0.002 * Math.exp(-Math.max(0, nowT - Number(h.rec.t)) / (30 * 86400)) + (locality && h.rec.place.toLowerCase().includes(locality) ? 0.002 : 0)
         + (h.rec.sev === "Severe" ? 0.001 : 0) + (catHint && h.rec.cat === catHint ? 0.004 : 0)
+        // the acronym the question names, in the title: above any near match in meaning alone (fused ranks score about 0.016 a list)
+        + 0.02 * Math.min(1, acronymHits(`${h.rec.cat_label} ${h.rec.title} ${h.rec.place}`.toLowerCase()))
         // fused ranks score about 0.016 per list: a death the question asks about outranks a near match in meaning alone
         + (deathRank.has(h.id) ? 0.05 - 0.002 * deathRank.get(h.id)! : aboutDeaths && Number(h.rec.dead) > 0 ? 0.012 : 0) })).sort((a, b) => b.score - a.score);
     // the model reads the best candidates side by side and picks the one meant (rerank.ts); the search order otherwise
     const head = ranked.slice(0, 8);
     const pick = await pickIncident(text, head.map((h) => ({ id: h.id, title: String(h.rec.title ?? ""), place: String(h.rec.place ?? ""), type: String(h.rec.cat_label || h.rec.cat || ""),
       when: new Date(Number(h.rec.t) * 1000 + 330 * 60_000).toISOString(), dead: Number(h.rec.dead) || 0, severity: String(h.rec.sev ?? "") })));
-    if (pick?.index != null && pick.index > 0) ranked.unshift(...ranked.splice(pick.index, 1));
+    // (not away from the one that names the question's acronym to one that does not)
+    const keepsAcronym = acronyms.length > 0 && acronymHits(ranked[0]?.words) > 0;
+    if (pick?.index != null && pick.index > 0 && !(keepsAcronym && !acronymHits(ranked[pick.index]?.words))) ranked.unshift(...ranked.splice(pick.index, 1));
     const top = ranked[0];
     return { found: ranked.map((h) => ({ id: h.id, score: h.score })), how: pick?.index != null ? "meaning, checked" : "meaning",
-      confident: pick?.index != null ? pick.sure || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86
-        : !top || !keys.length || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86 || (aboutDeaths && top.dead) };
+      confident: pick?.index != null ? pick.sure || (!keys.length && !acronyms.length) || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86
+        : !top || (!keys.length && !acronyms.length) || lexOf(top.words) > 0 || (top.sim ?? 0) >= 0.86 || (aboutDeaths && top.dead) };
   }
   // the older in-memory index while the search index is being built
   let hits = await semanticSearch(text, { zone, cats }, 12, boost);
@@ -285,7 +312,7 @@ export async function findIncidents(text: string, scope: Partial<AssistantScope>
   if (hits?.length) {
     // sure only when the question's key words are in the record, or the meaning is very close
     const top = hits[0];
-    return { found: hits.map((h) => ({ id: h.id, score: h.score })), how: "meaning", confident: !top || !keys.length || lexOf(top.meta.words) > 0 || top.sim >= 0.86 };
+    return { found: hits.map((h) => ({ id: h.id, score: h.score })), how: "meaning", confident: !top || (!keys.length && !acronyms.length) || lexOf(top.meta.words) > 0 || top.sim >= 0.86 };
   }
   // the meaning index is still being built: the incidents whose title or place hold most of the question's own words (the
   // place first: "porur" + "lake", "bund"), so a word the record does not use ("time", "breach" for a Tamil headline) does not
@@ -307,22 +334,26 @@ async function incidentBody(id: string, now: string): Promise<Body | null> {
   const data = {
     incident: { ...incRow(i), why: i.why, summary: i.summary ?? null, place: i.loc ?? null, closed_at: i.closed_at ?? null, sla_due: i.sla_due ?? null,
       hours_open: i.hours_open == null ? null : round(Number(i.hours_open)), dead: Number(i.dead ?? 0), injured: Number(i.injured ?? 0), taluk: i.taluk_name ?? null,
-      dept_head: i.dept_head ?? null, src: i.src ?? null },
+      dept_head: i.dept_head ?? null, src: i.src ?? null, first_reported: readableTime(i.t), open_for: openFor(i.hours_open == null ? null : Number(i.hours_open)) },
     // report titles, sources and times; complaint text stays in the console
-    reports: d.reports.map((r) => ({ t: r.t, source: r.source, what: r.what, title: r.title ?? null, publisher: r.publisher ?? null, url: r.url ?? null, first: r.first })),
+    reports: d.reports.map((r) => ({ t: readableTime(r.t), source: r.source, what: r.what, title: r.title ?? null, publisher: r.publisher ?? null, url: r.url ?? null, first: r.first })),
     officials: d.contacts.map((c) => ({ name: c.name, designation: c.designation, office: c.office, dept_code: c.dept_code, zone_no: c.zone_no })),
     assigned: d.assigned ? { dept_code: d.assigned.dept_code, designation: d.assigned.officer_designation, status: d.assigned.status, at: d.assigned.assigned_at } : null,
-    decisions: d.decisions.map((x) => ({ decision: x.decision, t: x.t }))
+    decisions: d.decisions.map((x) => ({ decision: x.decision, t: x.t })),
+    // what its news articles say (full pages first): the story is told from them, not from headlines in another language
+    articles: await docArticles(d.reports.filter((r) => r.source === "news" && r.docId).map((r) => String(r.docId)), 8, 700).catch(orEmpty("tools:articles"))
   };
   return {
     scope: null, asOf: now, data,
     facts: [fact(`inc.${id}.complaints`, "Citizen complaints linked", i.complaints), fact(`inc.${id}.reports`, "Linked reports", d.reports.length),
-      fact(`inc.${id}.hours_open`, "Hours open", data.incident.hours_open ?? 0, "hours"), fact(`inc.${id}.priority`, "Priority score", data.incident.priority ?? 0),
+      fact(`inc.${id}.hours_open`, "Hours open", data.incident.hours_open ?? 0, "hours"),
+      ...((data.incident.hours_open ?? 0) >= 48 ? [fact(`inc.${id}.days_open`, "Days open", Math.round(data.incident.hours_open! / 24), "days")] : []),
+      fact(`inc.${id}.priority`, "Priority score", data.incident.priority ?? 0),
       ...(data.incident.dead ? [fact(`inc.${id}.dead`, "Deaths reported", data.incident.dead)] : []),
       ...(data.incident.injured ? [fact(`inc.${id}.injured`, "Injured reported", data.incident.injured)] : []),
       ...(data.incident.ward != null ? [fact(`inc.${id}.ward`, "Ward", data.incident.ward)] : [])],
     sources: [fn("intel.incident"), tbl("incidents"), tbl("incident_members"), tbl("documents")], incidentIds: [id],
-    testData: flags.synthetic, caveats: [], untrusted: ["title", "summary"]
+    testData: flags.synthetic, caveats: [], untrusted: ["title", "summary", "articles"]
   };
 }
 
@@ -503,10 +534,12 @@ export const TOOLS = [
         offset: scope.offset }, now);
       const closed = rows.reduce((a, r) => a + r.n, 0), onTime = rows.reduce((a, r) => a + r.onTime, 0);
       const avg = closed ? rows.reduce((a, r) => a + r.hours * r.n, 0) / closed : 0;
+      // (said outright: "the slowest department is the same as the district-wide average" was once written from an unlabelled average)
+      const all = rows.length > 1 ? ", all departments together" : "";
       const facts = [
         fact("resolution.closed", `Incidents closed as resolved, ${periodOf(scope)}`, closed),
-        fact("resolution.avg_hours", "Average hours from first report to closing", round(avg), "hours"),
-        fact("resolution.avg_days", "Average days from first report to closing", round(avg / 24), "days"),
+        fact("resolution.avg_hours", `Average hours from first report to closing${all}`, round(avg), "hours"),
+        fact("resolution.avg_days", `Average days from first report to closing${all}`, round(avg / 24), "days"),
         fact("resolution.on_time", "Closed within the deadline", onTime),
         fact("resolution.on_time_pct", "Share closed within the deadline", closed ? Math.round((onTime / closed) * 100) : 0, "%"),
         ...rows.flatMap((r, k) => [
@@ -627,13 +660,15 @@ export const TOOLS = [
         incident: x.rec.incident || null, dead: x.rec.dead, t: new Date(Number(x.rec.t) * 1000).toISOString().slice(0, 16).replace("T", " "),
         match: x.sim == null ? "keywords" : `meaning ${x.sim.toFixed(2)}` }));
       return {
-        scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles },
+        // what the matching articles say (full pages first): the story is told from them
+        scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles,
+          articles: await docArticles(articles.map((x) => String(x.id)), 8, 700).catch(orEmpty("tools:search articles")) },
         facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length),
           fact("search.news", "News reports matching the description (best 8 shown)", articles.length)],
         sources: [fn("lance.hybridSearch", "multilingual-e5 meaning + BM25 keywords, fused by rank"), tbl("incidents"), tbl("documents")],
         incidentIds: await currentIncidentIds(keep(inc)), testData: true,
         caveats: [`Matches are found by meaning and keywords, not counted from the store: ${incidents.length + articles.length ? "these are the closest records" : "nothing close enough was found"}${a.allTime ? "" : ` in the ${periodOf(s)}`}.`],
-        untrusted: ["title", "incidents", "news"]
+        untrusted: ["title", "incidents", "news", "articles"]
       };
     }
   }),

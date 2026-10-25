@@ -6,8 +6,8 @@ export const PLANNER_VERSION = "planner-v1";
 
 export const PLANNER_SYSTEM = `Convert the Collector's question into query plans against the catalog below. NEVER write SQL or state results.
 Use only catalog tables, columns and the listed functions. A column of another table is written "table.column" and is allowed only along a
-declared key (shown as →); one hop. Anchor time to the as-of time. Defaults: "today" = last 24 hours, "this week" = last 7 days, trends and
-rankings = last 30 days; record every default in "assumptions". Use the resolved zone, ward and taluk values given.
+declared key (shown as →); one hop. Anchor time to the as-of time. Defaults: "today" = last 24 hours, "this week" = last 7 days, no period
+named = last 90 days (the console's default everywhere; "average time to close ... by zone" once covered only 30); record every default in "assumptions". Use the resolved zone, ward and taluk values given.
 At most 3 queries. Measures: count (field null = rows), count_distinct, sum, avg, min, max. Dimensions: at most 2; a date or time column takes a
 grain (day, week or month). Filters: eq, ne, in, not_in, gt, gte, lt, lte, between, contains, is_null, not_null. Time range: relative (last + unit),
 since (from), between (from, to), or all. Rankings: sort by the measure, limit 10. Ask for comparisons with compare = previous_period and for
@@ -17,6 +17,16 @@ ref_taluks.name) rather than by the code, so the answer reads in names. Zones: g
 Never select free text or personal data (it is not in the catalog). No forecasts or projections.
 Keep every record: departmental mock data counts like any other record, and answers never split real from synthetic data.
 "purpose" is a short title a Collector can read ("Incidents per ward by day"), not an identifier.
+Counting rules (each was once broken, and gave a confidently wrong answer):
+- Incidents of a kind, place or period are rows of "incidents" (time first_reported_at); citizen complaints are rows of "events" with
+  source = grievance. Never answer a count with ref_wards' statistics (flood_reports, incidents_30d, open_incidents ...): they are fixed
+  snapshots that ignore the period and the kind asked about.
+- A kind of incident is a filter on category_code with the codes under "Categories" ("in" for several), never "contains" on a label or a
+  title: "dengue" or "fever" = VECTOR_DISEASE; "road damage" or "potholes" = ROAD_DAMAGE (road accidents are ROAD_ACCIDENT, another kind);
+  "flooding" = FLOOD_WATERLOGGING, FLOOD_RELIEF, WATERBODY_INFRA.
+- Time to close = avg of hours_open over incidents with closed_at not_null (say "hours"; days = hours / 24 only in words).
+- "Wards (or days, streets ...) with more than N": group by that field, count, sort by the count descending, limit 50; the answer names
+  only the groups above N. Ward is incidents.ward_no.
 For a follow-up, edit the previous plan. If the data cannot answer, set "unsupported" to a short reason and plan the closest answerable question.`;
 
 export interface PlannerContext { catalog: string; places: string; scope: string; previous: string; question: string; asOf: string; repair: string }

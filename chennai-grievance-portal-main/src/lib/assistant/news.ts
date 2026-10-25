@@ -49,6 +49,54 @@ export async function storiesOfDocs(docIds: string[]): Promise<string[]> {
   return [...new Set(docIds.map((id) => by.get(id)).filter(Boolean) as string[])];
 }
 
+/**
+ * What the articles of each story say, for the AI writer: per story up to `perStory` articles, full pages first (the pipeline
+ * keeps the publisher's text for about a third of them; the rest are headlines and Google News snippets), each as
+ * "title (outlet, time): text" cut to `chars`. Keyed by story id, in the order given.
+ */
+export async function storyArticles(storyIds: string[], perStory = 3, chars = 1200): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  if (!storyIds.length) return out;
+  const docIds = storyIds.filter((k) => k.startsWith("doc:")).map((k) => k.slice(4));
+  const rows = await q(
+    `SELECT doc_id, story_id, title, title_en, publisher, body, body_status, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i') AS t
+     FROM documents WHERE source_kind = 'news' AND (story_id IN (?) OR doc_id IN (?))`, [storyIds, docIds.length ? docIds : ["-"]]);
+  const full = (r: Row) => /^full/.test(String(r.body_status ?? "")) && String(r.body ?? "").length > 200;
+  for (const k of storyIds) {
+    const mine = rows.filter((r) => (k.startsWith("doc:") ? String(r.doc_id) === k.slice(4) : String(r.story_id) === k))
+      .sort((a, b) => Number(full(b)) - Number(full(a)) || String(b.t).localeCompare(String(a.t)));
+    out.set(k, mine.slice(0, perStory).map((r) => {
+      const title = String(r.title_en || r.title || "").trim();
+      const text = String(r.body ?? "").replace(/\s+/g, " ").trim();
+      return `${title} (${r.publisher ?? "news"}, ${r.t ?? "time not recorded"})${text && text !== title ? `: ${text.slice(0, chars)}` : ""}`;
+    }));
+  }
+  return out;
+}
+
+/** The same for given articles (an incident's news reports): up to `n`, full pages first. */
+export async function docArticles(docIds: string[], n = 3, chars = 1000): Promise<string[]> {
+  if (!docIds.length) return [];
+  const rows = await q(
+    `SELECT doc_id, title, title_en, publisher, body, body_status, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i') AS t FROM documents WHERE doc_id IN (?)`, [docIds]);
+  const full = (r: Row) => /^full/.test(String(r.body_status ?? "")) && String(r.body ?? "").length > 200;
+  // the same report syndicated or re-headlined by several outlets is read once: a headline sharing most of its words with
+  // one already kept is left out (an incident with 14 reports often carries 4 or 5 distinct ones)
+  const wordsOf = (r: Row) => new Set(String(r.title_en || r.title || "").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 3));
+  const kept: { r: Row; w: Set<string> }[] = [];
+  for (const r of rows.sort((a, b) => Number(full(b)) - Number(full(a)) || String(b.t).localeCompare(String(a.t)))) {
+    const w = wordsOf(r);
+    const dup = kept.some((k) => { const shared = [...w].filter((x) => k.w.has(x)).length; return shared >= 0.6 * Math.min(w.size, k.w.size) && shared > 0; });
+    if (!dup) kept.push({ r, w });
+    if (kept.length >= n) break;
+  }
+  return kept.map(({ r }) => {
+    const title = String(r.title_en || r.title || "").trim();
+    const text = String(r.body ?? "").replace(/\s+/g, " ").trim();
+    return `${title} (${r.publisher ?? "news"}, ${r.t ?? "time not recorded"})${text && text !== title ? `: ${text.slice(0, chars)}` : ""}`;
+  });
+}
+
 /** Stories for the filters, best first; `storyIds` narrows to given stories (a follow-up on one). */
 export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: string[]): Promise<{ stories: NewsStory[]; candidates: number }> {
   const docs = await q(

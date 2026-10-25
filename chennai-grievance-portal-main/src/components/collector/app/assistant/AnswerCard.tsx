@@ -65,16 +65,20 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
   const openInc = (id: string) => onAction({ action: "open_incident", label: "", id });
   // no page redirects from the chat (answers saved before this rule may still carry them)
   const actions = card.consoleActions.filter((a) => a.action !== "open_briefing" && a.action !== "save_briefing");
-  // the story components already show the full text: the short answer above them only when it adds something
+  // the story components already show the full text: the short answer above them only when it adds something (a news story's
+  // answer written from its articles comes first, the story and its sources under it; its plain snippet is not repeated)
   const showMd = !!card.answerMarkdown && card.answerMarkdown !== card.headline
-    && !(rt === "incident_detail" && card.incident?.focus === "all") && rt !== "news_detail";
+    && !(rt === "incident_detail" && card.incident?.focus === "all") && !(rt === "news_detail" && card.answerMarkdown === card.stories?.[0]?.summary);
 
   return (
     <article className={`aq-card aq-${kind}${rt ? ` aq-rt-${rt}` : ""}`} aria-live="polite">
       <header className="aq-card-h">
         <h3>{card.headline}</h3>
         <div className="aq-badges">
-          {card.offline && <span className="aq-badge off" title={t.offlineTip}>{t.offline}</span>}
+          {card.offline || card.sources?.verifier?.template
+            ? (kind === "answer" && <span className="aq-badge off" title={t.offlineTip}><I n="layers" />{t.offline}</span>)
+            : kind === "answer" && (card.sources?.verifier?.checked ?? 0) > 0
+              && <span className="aq-badge ok" title={t.checkedTip}><I n="checkc" />{t.checked(card.sources.verifier.checked)}</span>}
         </div>
       </header>
       {card.understood && <p className="aq-understood"><I n="info" />{t.understood}: <q>{card.understood}</q></p>}
@@ -94,7 +98,8 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       {card.caveats.length > 0 && <ul className="aq-cav">{card.caveats.map((c, i) => <li key={i}><I n="info" />{c}</li>)}</ul>}
       {card.chips.length > 0 && <div className="aq-chips">{card.chips.map((q) => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>}
       {actions.length > 0 && (
-        <div className="aq-acts">{actions.map((a, i) => <button key={i} className="btn sm" onClick={() => onAction(a)}><I n={actionIcon(a)} />{a.label}</button>)}</div>
+        <div className="aq-acts">{actions.map((a, i) => <button key={i} className="btn sm" onClick={() => onAction(a)} title={a.label}>
+          <I n={actionIcon(a)} />{a.action === "open_incident" ? t.openIncident : a.label}</button>)}</div>
       )}
       {card.followUps.length > 0 && (
         <div className="aq-follow"><small>{t.next}</small>{card.followUps.map((q) => <button key={q} onClick={() => onAsk(q)}><I n="right" />{q}</button>)}</div>

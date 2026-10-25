@@ -47,6 +47,8 @@ interface Provider {
   pool?: (role: Role) => { id: string; lm: LanguageModel }[];
   /** the free tier's per-minute limits for one model of this provider */
   limits?: { tpm: number; rpm: number };
+  /** the most output tokens one request to this model may ask for (a free tier's per-minute output cap), when it has one */
+  maxOut?: (id: string) => number | undefined;
   options: (role: Role, id?: string) => Record<string, Record<string, string | boolean | Record<string, string>>>;
   /** providers called through their own SDK rather than the AI SDK (Bedrock's Converse API) */
   json?: <T>(c: JsonCall<T>) => Promise<JsonResult<T>>;
@@ -101,6 +103,16 @@ function groq(): Provider | null {
   const apiKey = env("GROQ_API_KEY");
   if (!apiKey) return null;
   const p = createGroq({ apiKey });
+  // more keys (GROQ_API_KEY_2 ... GROQ_API_KEY_5) bring their own allowance: each key's models join the pool after the one
+  // before, so they answer once those are rate-limited or out for the day. Their model ids carry "#2", "#3"... (logs, cooling,
+  // per-minute use). A key given twice counts once.
+  const seen = new Set([apiKey]);
+  const more = [2, 3, 4, 5].flatMap((k) => {
+    const key = env(`GROQ_API_KEY_${k}`);
+    if (!key || seen.has(key)) return [];
+    seen.add(key);
+    return [{ tag: `#${k}`, p: createGroq({ apiKey: key }) }];
+  });
   // three free models, 8,000 tokens a minute each (about 1 s a call when not rate-limited); qwen also writes strict JSON
   const ids = {
     fast: listEnv("AI_MODEL_FAST", ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"]),
@@ -109,8 +121,10 @@ function groq(): Provider | null {
   return {
     name: "groq",
     model: (role) => ({ id: ids[role][0], lm: p(ids[role][0]) }),
-    pool: (role) => ids[role].map((id) => ({ id, lm: p(id) })),
+    pool: (role) => [...ids[role].map((id) => ({ id, lm: p(id) })), ...more.flatMap((x) => ids[role].map((id) => ({ id: `${id}${x.tag}`, lm: x.p(id) })))],
     limits: { tpm: 8_000, rpm: 30 },
+    // qwen's free tier allows 1,000 output tokens a minute: a request asking for more is refused outright (429 "Request too large")
+    maxOut: (id) => (id.startsWith("qwen/") ? Number(env("AI_QWEN_MAX_OUT")) || 900 : undefined),
     // gpt-oss thinks before it answers: keep that short (speed, and the free tier's tokens per minute); qwen takes no effort setting
     options: (_role, id) => ({ groq: { structuredOutputs: true, strictJsonSchema: true, reasoningFormat: "hidden",
       ...(id && !id.startsWith("openai/") ? {} : { reasoningEffort: env("AI_REASONING_EFFORT") || "low" }) } })
@@ -137,10 +151,14 @@ const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) =
  * Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); each may
  * list several ("bedrock,gemini": Bedrock while the team's AWS keys are valid, Gemini once they expire). Only those
  * configured. `prefer` goes first when it is configured (the source onboarding agent asks for Gemini).
+ * AI_FORCE_PROVIDER (e.g. bedrock) goes before `prefer`, for every call, background work included.
+ * AI_CHAT_PROVIDER (e.g. groq, or groq,bedrock) is the whole list for Ask District IQ's own calls (`chat`): only those, in
+ * that order; when they are all busy the question is answered from the data by rules.
  */
-function providers(prefer?: ProviderName): Provider[] {
+function providers(prefer?: ProviderName, chat = false): Provider[] {
   const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai };
-  const order = [...(prefer ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
+  const order = chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
+    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -151,7 +169,7 @@ function providers(prefer?: ProviderName): Provider[] {
 
 /** What the assistant can use right now (for the dialog's status line and the sources panel). */
 export function aiStatus() {
-  const list = providers();
+  const list = providers(undefined, true);
   return {
     available: list.length > 0,
     /** why the model is not being used ("AWS keys expired"), when that is known */
@@ -203,6 +221,8 @@ export interface JsonCall<T> {
   background?: boolean;
   /** this call's own deadline (ms), instead of the role's */
   timeoutMs?: number;
+  /** a step of Ask District IQ answering a question: AI_CHAT_PROVIDER's order, when set */
+  chat?: boolean;
 }
 
 export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
@@ -231,20 +251,25 @@ function failedDraft(e: APICallError): unknown | null {
   }
 }
 
-function retryAfterSeconds(e: APICallError): number | null {
+export function retryAfterSeconds(e: APICallError): number | null {
   const h = e.responseHeaders ?? {};
   const v = h["retry-after"] ?? h["Retry-After"];
   const n = v == null ? NaN : Number(v);
-  return Number.isFinite(n) ? Math.max(1, Math.ceil(n)) : null;
+  if (Number.isFinite(n)) return Math.max(1, Math.ceil(n));
+  // Groq says it in the message too: "Please try again in 7.535s" (or "1m2.5s", or "1h3m5s" for a daily limit)
+  const m = /try again in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?/i.exec(e.message);
+  const secs = m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : 0;
+  return secs > 0 ? Math.max(1, Math.ceil(secs)) : null;
 }
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
-  const all = providers(c.prefer);
+  const all = providers(c.prefer, c.chat);
   // the main provider is the first configured one named in AI_PROVIDER
   const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
-  // background work stays off the main provider while another one is configured
-  const list = c.background && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
+  // background work stays off the main provider while another one is configured (not when a provider is forced)
+  const forced = names("AI_FORCE_PROVIDER", "").length > 0;
+  const list = c.background && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
   if (!list.length) throw new AiUnavailableError();
   if (!budgetLeft(c.user)) throw new AiBudgetError();
   // all models together get one deadline (twice one call's): a question is answered from the data rather than wait longer
@@ -282,6 +307,17 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
         if (r.result) return r.result;
         if (r.longBusy) console.warn(`[assistant] ${c.name}: ${m.key} is busy or rate-limited; next model`);
       }
+      // every model is out of this minute's allowance, but one frees up within seconds: waiting for it beats a template answer
+      const soonest = p.pool(c.role).map((m) => ({ ...m, key: `${p.name}/${m.id}`, at: cooling.get(`${p.name}/${m.id}`) ?? 0 }))
+        .filter((m) => m.at > Date.now()).sort((a, b) => a.at - b.at)[0];
+      const waitMs = soonest ? soonest.at - Date.now() : Infinity;
+      if (soonest && waitMs <= SHORT_WAIT_MS && soonest.at + 3000 < state.until) {
+        console.info(`[assistant] ${c.name}: every ${p.name} model is at its per-minute limit; waiting ${(waitMs / 1000).toFixed(1)} s for ${soonest.key}`);
+        await sleep(waitMs, c.abortSignal);
+        cooling.delete(soonest.key);
+        const r = await tryModel(c, p, soonest.id, soonest.lm, state);
+        if (r.result) return r.result;
+      }
       continue;
     }
     // each model has its own rate limits: when one is out for a long while (a daily cap) or overloaded, the provider's other model answers
@@ -314,6 +350,19 @@ function callTimeout(c: { role: Role; timeoutMs?: number }): number {
  * per-minute (or daily) allowance does not cost every question a refused call before the next model answers.
  */
 const cooling = new Map<string, number>();
+/**
+ * How many times in a row a model was too slow or overloaded: each time it rests twice as long (1, 2, 4... minutes, at most 10).
+ * One blip costs a minute (a fixed 5 minutes once left no model at all); a model that stays overloaded stops costing a timeout
+ * on every question (one minute's rest did: 9 s lost each time).
+ */
+const strikes = new Map<string, number>();
+const restFor = (key: string) => {
+  const k = (strikes.get(key) ?? 0) + 1;
+  strikes.set(key, k);
+  return Math.min(10 * 60_000, 60_000 * 2 ** (k - 1));
+};
+/** How long a question may wait for a free tier's per-minute allowance to refill (AI_SHORT_WAIT_MS) rather than fall back to rules. */
+const SHORT_WAIT_MS = Number(env("AI_SHORT_WAIT_MS")) || 12_000;
 
 /** Tokens and requests each model used in the last minute (this server's calls; the free tiers count per minute). */
 const usage = new Map<string, { t: number; tokens: number }[]>();
@@ -337,7 +386,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     const deadline = AbortSignal.timeout(limit);
     try {
       const r = await generateText({
-        model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: c.maxOutputTokens ?? 1200,
+        model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: Math.min(c.maxOutputTokens ?? 1200, p.maxOut?.(id) ?? Infinity),
         maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
         output: Output.object({ schema: c.schema, name: c.name }), providerOptions: p.options(c.role, id)
       });
@@ -345,15 +394,16 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
       charge(c.user, info.inputTokens + info.outputTokens);
       recordUse(key, info.inputTokens + info.outputTokens);
+      strikes.delete(key);
       console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
       return { result: { object: r.output as T, info }, longBusy: false };
     } catch (e) {
       if (c.abortSignal?.aborted) throw e;
       state.lastError = e;
-      // too slow: this model rests a minute and the next one answers
+      // too slow: this model rests (longer each time in a row) and the next one answers
       if (deadline.aborted) {
         console.warn(`[assistant] ${c.name} ${p.name}/${id} took over ${(limit / 1000).toFixed(1)} s; next model`);
-        cooling.set(key, Date.now() + 60_000);
+        cooling.set(key, Date.now() + restFor(key));
         state.busyFor = Math.max(state.busyFor ?? 0, 10);
         return { longBusy: true };
       }
@@ -383,7 +433,10 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         // a daily quota ("exceeded your current quota") rests longer than a per-minute limit
         const wait = APICallError.isInstance(e) ? retryAfterSeconds(e) : null;
         const daily = /quota|per day|RPD|TPD/i.test((e as Error).message);
-        cooling.set(key, Date.now() + 1000 * (daily ? 15 * 60 : Math.min(120, Math.max(20, wait ?? 60))));
+        // a per-minute limit with a known reset rests exactly that long (a few seconds, often): the pool may wait for it;
+        // a 503 "high demand" rests longer each time in a row (it was asked again every minute and refused each time)
+        cooling.set(key, Date.now() + (daily ? 1000 * Math.max(15 * 60, wait ?? 0) : status === 503 && wait == null ? restFor(key)
+          : 1000 * Math.min(120, wait != null ? wait + 1 : 60)));
         return { longBusy: true };
       }
       if (busy) {

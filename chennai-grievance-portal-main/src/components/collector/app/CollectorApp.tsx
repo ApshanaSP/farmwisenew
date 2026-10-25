@@ -12,7 +12,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { PAGE_FEEDS, freshnessLine } from "@/lib/collector/freshness";
 import { Wordmark } from "@/components/Logo";
 import { I, type IconName } from "./icons";
-import { BrandMark } from "./assistant/Brand";
+import { AskIcon } from "./assistant/Brand";
 import { EnvPage, HeroBody, Page1 } from "./Overview";
 import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
@@ -779,8 +779,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        <button className="ask-fab" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
-          <BrandMark size={30} className="ask-mark" /><span>Ask District IQ</span>
+        <button className="ask-fab ask-fab-v2" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
+          <i className="ask-ico"><AskIcon size={22} /></i><span className="ask-label">Ask District IQ<kbd>Ctrl K</kbd></span>
           {insightCount > 0 && !ask && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
         </button>
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} />}

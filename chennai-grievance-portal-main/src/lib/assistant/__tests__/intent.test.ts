@@ -76,6 +76,14 @@ describe("follow-up references", () => {
     expect(d.storyId).toBe("S2");
   });
   it("an incident id named outright", () => expect(detectIntent("what happened in INC-20261003-47BC9C").incidentId).toBe("INC-20261003-47BC9C"));
+  it("'the latest one' after a newest-first list is its first item; after a priority list the router decides", () => {
+    const recent: ConversationContext = { ...afterList, lastIntent: "INCIDENT_LIST" };
+    const d = detectIntent("where was the latest one?", recent);
+    expect(d.intent).toBe("INCIDENT_DETAIL");
+    expect(d.incidentId).toBe("INC-A");
+    expect(d.focus).toBe("where");
+    expect(detectIntent("where was the latest one?", afterList).incidentId).toBeNull();
+  });
   it("no context: 'the second one' does not invent an incident", () => expect(detectIntent("explain the second one").incidentId).toBeNull());
   it("'the last 24 hours' is a period, not 'the last one'", () => {
     const d = detectIntent("How many crimes happened in the last 24 hours?", afterDetail);

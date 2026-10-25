@@ -111,6 +111,8 @@ export interface PlaceBreakdown {
  */
 // (the plain "Chennai" is what a report says when it names no locality: never ranked as a place)
 const LOCALITY = `NULLIF(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(i.place_text, ' (', 1), ',', -1)), '')`;
+/** a record placed only as "Chennai" (or the state) names no locality: "which road has the most?" once answered "Chennai leads" */
+const NOT_A_LOCALITY = `LOWER(k) NOT IN ('chennai', 'chennai city', 'chennai district', 'greater chennai', 'tamil nadu', 'tamilnadu', 'india', 'சென்னை')`;
 
 /**
  * Where the scope's incidents happened: by locality, by ward (with the ward's centroid), by incident
@@ -129,7 +131,7 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
   const [total, localities, wards, types, points, wardPlaces] = await Promise.all([
     q(`SELECT ${counts}, COALESCE(SUM(i.is_synthetic_any), 0) AS syn FROM incidents i WHERE ${where}`, params),
     q(`SELECT ${key} AS k, ${counts}, AVG(i.lat) AS lat, AVG(i.lon) AS lon, MIN(i.zone_name) AS zone_name
-       FROM incidents i WHERE ${where} GROUP BY k HAVING k IS NOT NULL ORDER BY n DESC, severe DESC, k LIMIT 25`, params),
+       FROM incidents i WHERE ${where} GROUP BY k HAVING k IS NOT NULL AND ${NOT_A_LOCALITY} ORDER BY n DESC, severe DESC, k LIMIT 25`, params),
     q(`SELECT i.ward_no AS ward, ${counts}, MIN(rw.centroid_lat) AS lat, MIN(rw.centroid_lon) AS lon, MIN(i.zone_name) AS zone_name
        FROM incidents i LEFT JOIN ref_wards rw ON rw.ward_no = i.ward_no
        WHERE ${where} AND i.ward_no IS NOT NULL GROUP BY i.ward_no ORDER BY n DESC, severe DESC, i.ward_no LIMIT 25`, params),
@@ -142,7 +144,7 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 400`, params),
     // wards have numbers, not names: each is labelled by its busiest locality
     q(`SELECT i.ward_no AS ward, ${LOCALITY} AS k, COUNT(*) AS n FROM incidents i WHERE ${where} AND i.ward_no IS NOT NULL
-       GROUP BY i.ward_no, k HAVING k IS NOT NULL ORDER BY n DESC LIMIT 2000`, params)
+       GROUP BY i.ward_no, k HAVING k IS NOT NULL AND ${NOT_A_LOCALITY} ORDER BY n DESC LIMIT 2000`, params)
   ]);
   const wardName = new Map<number, string>();
   for (const r of wardPlaces) if (!wardName.has(n(r.ward))) wardName.set(n(r.ward), String(r.k));

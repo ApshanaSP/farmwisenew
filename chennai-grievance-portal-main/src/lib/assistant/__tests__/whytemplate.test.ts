@@ -20,11 +20,11 @@ describe("without a model, a why-question is still answered with the reasons", (
     const c = templateCard(base, p, [], (p as { kpis: never[] }).kpis);
     expect(c.headline).toBe("Incidents fell to 119, mostly garbage & solid waste");
     expect(c.answerMarkdown).toContain("Reported incidents fell to **119** from 131");
-    expect(c.answerMarkdown).toContain("The fall came mostly from Garbage & solid waste (27 to 8), Flooding & waterlogging (18 to 6).");
-    expect(c.answerMarkdown).toContain("Going the other way: Protests & public nuisance (8 to 12).");
-    expect(c.answerMarkdown).toContain("Where: Shenoy Nagar (flooding & waterlogging, 7 to 2).");
-    expect(c.answerMarkdown).toContain("5 of the 119 were linked to rain.");
-    expect(c.answerMarkdown).toContain("Open past deadline: PWD Water Resources (9).");
-    expect(c.answerMarkdown).toContain("Act first on **Waterlogging on Thiruvalluvar 4th Avenue** at Madhavaram.");
+    expect(c.answerMarkdown).toContain("- **Mostly from:** Garbage & solid waste (27 → 8), Flooding & waterlogging (18 → 6)");
+    expect(c.answerMarkdown).toContain("- **Going the other way:** Protests & public nuisance (8 → 12)");
+    expect(c.answerMarkdown).toContain("- **Where:** Shenoy Nagar (flooding & waterlogging, 7 → 2)");
+    expect(c.answerMarkdown).toContain("- **Rain:** 5 of the 119 were linked to rain");
+    expect(c.answerMarkdown).toContain("- **Past deadline:** PWD Water Resources (9)");
+    expect(c.answerMarkdown).toContain("**Act first on:** Waterlogging on Thiruvalluvar 4th Avenue at Madhavaram.");
   });
 });

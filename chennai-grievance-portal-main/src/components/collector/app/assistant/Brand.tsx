@@ -7,6 +7,20 @@
  */
 import { useId } from "react";
 
+/**
+ * The launcher's icon: a speech bubble with the AI spark inside, drawn in white on the launcher's green (crisp at any size,
+ * unlike the bitmap mark shrunk into a coral circle it replaced).
+ */
+export function AskIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg className="ask-icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none">
+      <path d="M12 3.2c5 0 8.8 3.3 8.8 7.6S17 18.4 12 18.4c-.9 0-1.8-.1-2.6-.3L5 20.4l1.1-3.9C4.3 15.1 3.2 13.1 3.2 10.8 3.2 6.5 7 3.2 12 3.2Z"
+        stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M12 6.9c.4 2 1.2 2.8 3.2 3.2-2 .4-2.8 1.2-3.2 3.2-.4-2-1.2-2.8-3.2-3.2 2-.4 2.8-1.2 3.2-3.2Z" fill="#FFB199" />
+    </svg>
+  );
+}
+
 export function BrandMark({ size = 32, className = "" }: { size?: number; className?: string }) {
   const g = `dq${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (

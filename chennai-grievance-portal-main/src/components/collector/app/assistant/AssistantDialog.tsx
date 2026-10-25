@@ -66,6 +66,8 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   const thread = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
   const restored = useRef(false);
+  /** a question was asked in this dialog (the restored conversation must not replace or cancel it) */
+  const asked = useRef(false);
 
   // the interface follows the chosen language, else the language of the last question
   const lastUser = [...items].reverse().find((x) => x.role === "user") as { text: string } | undefined;
@@ -95,8 +97,10 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   /** Open a saved conversation: its questions and answers, and its context for follow-ups (kept on the server). */
   const loadSession = useCallback((id: string, replace = true) => {
     fetch(`/api/collector/assistant/sessions/${id}`).then((r) => (r.ok ? r.json() : null)).then((j) => {
-      if (!j?.messages?.length || (!replace && session.current)) return;
-      ctl.current?.abort();
+      // the last conversation, brought back after a refresh, gives way to a question asked while it loaded: it once arrived
+      // after the first question had been sent, cancelled it, and the first question was never answered
+      if (!j?.messages?.length || (!replace && (session.current || asked.current))) return;
+      if (replace) ctl.current?.abort();
       session.current = id;
       try { localStorage.setItem(SESSION_KEY, id); } catch { /* storage blocked */ }
       const back: Item[] = (j.messages as { id: string; role: string; text: string; card: Card | null }[]).slice(-40).map((m) =>
@@ -165,6 +169,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   const ask = useCallback(async (q: string, inputMode: "text" | "voice" = "text", extra: Extra = {}) => {
     const message = q.trim();
     if (!message) return;
+    asked.current = true;
     ctl.current?.abort();
     const ac = new AbortController();
     ctl.current = ac;
@@ -270,7 +275,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
     stop(); setItems([]); session.current = null; lastAnswer.current = null; input.current?.focus();
     try { localStorage.removeItem(SESSION_KEY); } catch { /* storage blocked */ }
   };
-  const scopeChips = [t.defaultPeriod, c.zoneName ?? "All zones", c.deptName ?? "All departments", c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
+  const scopeChips = [t.defaultPeriod, c.zoneName ?? t.allZones, c.deptName ?? t.allDepts, c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
   const fresh = status ? t.fresh(status.asOf.slice(0, 16), status.feedsOk, status.feedsTotal) : "";
   const hour = new Date().getHours();
   const part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
@@ -282,13 +287,13 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
   if (!open) return null;
   return (
     <div className="aq-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <aside ref={box} className={`aq${wide ? " wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby="aq-title" onKeyDown={trap}>
+      <aside ref={box} className={`aq v2${wide ? " wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby="aq-title" onKeyDown={trap}>
         {wide && <Sidebar t={t} past={past} find={find} setFind={setFind} current={session.current} onNew={reset} onOpen={(id) => loadSession(id)} />}
         <div className="aq-main">
         <header className="aq-h">
           <BrandMark size={34} />
           <div className="aq-ht">
-            <b id="aq-title">District IQ</b>
+            <b id="aq-title">{lang === "en" ? t.title : "District IQ"}</b>
             <span className={`aq-live${status && status.feedsOk < status.feedsTotal ? " warn" : ""}${status && !status.ai.available ? " off" : ""}`}
               title={[fresh, status && !status.ai.available ? t.aiOff : ""].filter(Boolean).join("\n")}>
               <i />{status && !status.ai.available ? status.ai.problem ?? t.aiOff : `${t.live}${status ? ` · ${status.asOf.slice(11, 16)}` : ""}`}

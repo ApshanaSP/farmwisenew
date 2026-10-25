@@ -56,14 +56,18 @@ declare global {
 function client(): BedrockRuntimeClient {
   const region = env("AWS_REGION") || env("AWS_DEFAULT_REGION") || "ap-south-1";
   const id = env("AWS_ACCESS_KEY_ID"), secret = env("AWS_SECRET_ACCESS_KEY"), token = env("AWS_SESSION_TOKEN");
+  // a Bedrock API key wins over the AWS keys, which stay in .env for the data store
+  const bearer = env("AWS_BEARER_TOKEN_BEDROCK");
   // rebuilt when the region or the keys change (temporary keys are replaced every few hours)
-  const key = `${region}|${id}|${token.slice(-24)}|${env("AWS_BEARER_TOKEN_BEDROCK").slice(-24)}`;
+  const key = `${region}|${id}|${token.slice(-24)}|${bearer.slice(-24)}`;
   if (global.__bedrock?.key !== key) {
     global.__bedrock = {
       key,
       client: new BedrockRuntimeClient({
         region, maxAttempts: 3,
-        ...(id && secret ? { credentials: { accessKeyId: id, secretAccessKey: secret, ...(token ? { sessionToken: token } : {}) } } : {})
+        ...(bearer
+          ? { token: { token: bearer }, authSchemePreference: ["httpBearerAuth"] }
+          : id && secret ? { credentials: { accessKeyId: id, secretAccessKey: secret, ...(token ? { sessionToken: token } : {}) } } : {})
       })
     };
   }

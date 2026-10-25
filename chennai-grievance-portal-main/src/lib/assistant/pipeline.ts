@@ -27,10 +27,10 @@ import { ENV_METRICS } from "@/lib/assistant/queries";
 import { applyTopN, presentAll, spec, type Presentation } from "@/lib/assistant/datasets";
 import { correctSpelling } from "@/lib/assistant/spell";
 import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
-import { multiPart } from "@/lib/assistant/parts";
+import { multiPart, questionParts } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, pruneUnverified, verifyNumbers, type EntityNames } from "@/lib/assistant/verify";
+import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, pruneUnverified, dedupeCaveats, selfCorrections, verifyNumbers, withoutEchoedNumbers, withoutSelfCorrections, type EntityNames } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
@@ -49,6 +49,9 @@ import { deptFromWords } from "@/lib/assistant/deptwords";
 import { LIST_DATASETS, datasetAnswerCard, datasetNamed, datasetsListCard } from "@/lib/assistant/studiolink";
 import { ask as studioAsk } from "@/lib/studio/pipeline";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
+import { agentSchemas, agentSystem, narrowToNamed, onlyNumbersFrom, runAgent, type AgentOutcome } from "@/lib/assistant/agent";
+import { PolishSchema, checkPolish, polishPrompt, polishSystem } from "@/lib/assistant/polish";
+import { storyArticles } from "@/lib/assistant/news";
 import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
@@ -95,10 +98,19 @@ interface Route {
   offline: boolean;
   /** the router read the message as asking for a picture (chart, graph, map), in whatever words */
   visual?: boolean;
+  /** sent to the query planner in code (a breakdown no tool offers): the tool overrides leave it alone */
+  forcedQuery?: boolean;
   /** what kind of answer the router understood (router-v2); absent from the rules */
   decision?: Decision;
 }
 
+
+// -------------------------------------------------------------- agent mode --
+
+/** AI_CHAT_MODE=agent: the model calls tools and reads them before the composer writes (agent.ts); otherwise the router picks one answer kind. */
+const agentMode = () => (process.env.AI_CHAT_MODE ?? "").trim().toLowerCase() === "agent";
+/** The agent plans with the larger model by default (AI_AGENT_ROLE=fast for the smaller, quicker one). */
+const agentRole = (): "fast" | "reasoning" => ((process.env.AI_AGENT_ROLE ?? "").trim() === "fast" ? "fast" : "reasoning");
 
 // ------------------------------------------------------------------ caches --
 
@@ -187,7 +199,7 @@ export async function inOurNews(message: string, now: string): Promise<boolean> 
   const words = message.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length >= 4 && !NEWS_STOP.has(w));
   if (!words.length) return false;
   const since = Date.parse(now.replace(" ", "T") + "+05:30") / 1000 - 168 * 3600;
-  const found = await hybridSearch("news", message, { since }, 5).catch(orNull("pipeline:186"));
+  const found = await hybridSearch("news", message, { since }, 5).catch(orNull("pipeline:inOurNews"));
   return !!found?.some((f) => {
     const title = String(f.rec.title ?? "").toLowerCase();
     const hits = words.filter((w) => title.includes(w));
@@ -197,7 +209,7 @@ export async function inOurNews(message: string, now: string): Promise<boolean> 
 
 /** Asks whom to contact: an officer, a phone number or the person in charge (of a department or zone, never of a citizen). */
 // (phrases, not single words: "number of accidents" or "not confirmed by an officer" are not contact questions)
-export const CONTACT = /\b(contacts?( (of|for|details|number))?|phone (number|no)|helpline|whom to (call|contact)|who (handles|is (the )?(head|officer|incharge|in[- ]charge))|(officers?|officials?|head|in[- ]?charge) (of|for|in)\b)|(?<!\bby (?:an? |the )?)\b(officers?|officials?|contacts?)\s*\??\s*$|தொடர்பு|அதிகாரி/i;
+export const CONTACT = /\b(contacts?( (of|for|details|number))?|phone (number|no)|helpline|whom to (call|contact)|who (handles|is (the )?(head|officer|incharge|in[- ]charge))|(which|what) (officer|official)s?\b|officers? (handles?|handling|responsible)|who('s| is)? responsible|responsible (officer|official|department|person)|(officers?|officials?|head|in[- ]?charge) (of|for|in)\b)|(?<!\bby (?:an? |the )?)\b(officers?|officials?|contacts?)\s*\??\s*$|தொடர்பு|அதிகாரி/i;
 
 /** The departments a message names, best match first, by the words of their names ("health department" -> every health one). */
 export function deptsNamed(message: string, n: RefNames): string[] {
@@ -226,7 +238,7 @@ async function contactDept(message: string, n: RefNames): Promise<string | null>
       .filter((w) => new RegExp(`\\b${w}`).test(said)).length }))
     .filter((x) => x.score).sort((a, b) => b.score - a.score).map((x) => x.code);
   const names = [...new Set([...gcc, ...deptsNamed(message, n)])];
-  for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(orEmpty("pipeline:225"))).length) return code;
+  for (const code of names.slice(0, 6)) if ((await contactsFor(code, null).catch(orEmpty("pipeline:contactDept"))).length) return code;
   return names[0] ?? null;
 }
 
@@ -250,6 +262,8 @@ export const DEFAULT_PERIOD = "quarterly" as const;
 const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" } as const;
 
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
+/** the whole message is a greeting, thanks or goodbye (not "hi, how many accidents today?"); "ok" stays with the router */
+export const ONLY_SMALLTALK = /^\s*(hi+|hello|hey|thanks|thank you( so much| very much)?|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|bye|goodbye|வணக்கம்|நன்றி)(\s+(sir|madam|mam|there|all|team))?\s*[.!?]*\s*$/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
 const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
 /** The period the question's own words name, or null. */
@@ -282,6 +296,96 @@ const NOW_WORDS = /\b(now|right now|currently|at (the moment|present)|these days
 
 /** A question about one specific incident ("what is this murder case", "tell me about the fire at", "Adyar murder enna aachu"). */
 const STORY = /\b(what (is|was|are) (this|that|the)|when (was|did) the|what time (was|did) the|tell me (more )?about|explain|details? (of|about|on)|what happened|story of|about (this|that|the) (case|incident)|update on (the|this|that))\b|enna (aachu|nadandhuchu|nadanthuchu|case)|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi|patthi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)|பற்றி (சொல்|விளக்கு)/i;
+/**
+ * "youtuber harish case what happened", "tell me about the Jason Samuel arrest": a story named by words the console has no
+ * category or place for. Without a model its words are searched in the records and the news (search_records), never
+ * answered with the newest incidents, which it once did: eight unrelated incidents for the YouTuber Harish case.
+ */
+const STORY_ASK = /\b(what|wat|enna)\b.{0,25}\b(happen\w*|hapen\w*|hapend|aachu|achu|nadandh?\w*|nadanth\w*)|\b(tell me|explain|details?|update)\b.{0,30}\b(case|story|about|on)\b|\b(case|story|issue)\b.{0,30}\b(what|tell|explain|update|enna|brief|summary|summari[sz]e|details?|give)\b|\b(brief|summary|summari[sz]e)\b.{0,30}\b(case|story|issue)\b|என்ன நடந்தது|பற்றி/i;
+const ASK_WORDS = /\b(what|wat|happen\w*|hapen\w*|hapend|tell|me|explain|about|the|is|was|this|that|case|story|issue|enna|aachu|achu|nadandh?\w*|nadanth\w*|details?|update|on|of|please|pls|news|regarding|give|brief|summary|summari[sz]e)\b/gi;
+
+const STORY_GENERIC = new Set(["new", "news", "latest", "recent", "recently", "today", "todays", "yesterday", "week", "month", "update", "updates", "happening",
+  "going", "issue", "issues", "problem", "problems", "situation", "current", "currently", "now", "hapend", "happend", "hapened", "tell", "explain", "detail", "details"]);
+
+const LIST_REF = /\b(first|second|third|fourth|fifth|last|\d+(st|nd|rd|th)|that one|this one|the one|same one|above|previous|it)\b/i;
+
+/** The words to search for a story question (the question minus its asking words), or null when it is not one. */
+export function storySearchText(message: string, n: RefNames): string | null {
+  // ("latest news about flooding" names no story: its only unknown word is "news", a word of asking)
+  // (a capitalised acronym names a story the console has no word for, "what happened in the SIR protest?", unless it is a department's)
+  const deptWords = new Set([...n.depts.entries()].flatMap(([code, d]) => [code.toUpperCase(), ...d.name.toUpperCase().split(/[^A-Z]+/)]));
+  const acronyms = (message.match(/\b[A-Z]{2,6}\b/g) ?? []).filter((a) => a !== "INC" && !deptWords.has(a));
+  const named = [...unknownSubject(message, n).filter((w) => !STORY_GENERIC.has(w)), ...acronyms];
+  // ("tell me about the second one" points at the previous list, and "what did the news say about the rains" asks for news)
+  if (!STORY_ASK.test(message) || !named.length || LIST_REF.test(message) || /\bnews\b|செய்தி/i.test(message)) return null;
+  const text = message.replace(ASK_WORDS, " ").replace(/[?!.,]+/g, " ").replace(/\s+/g, " ").trim();
+  return text.length >= 3 ? text : null;
+}
+
+/**
+ * The one subject a question names, and the category to narrow to: the subject's only kind ("road accidents"), or the kind its
+ * words point to inside a broader subject ("dengue" in Health, "flooding" in Flooding); a broad subject the words do not narrow
+ * ("crime", "health") has no category of its own: cat null.
+ */
+function oneSubject(message: string, n: RefNames): { cat: string | null; part: { label: string; codes: string[] } } | null {
+  const ps = questionParts(message);
+  if (ps.length !== 1 || !ps[0].codes.length) return null;
+  const p = ps[0];
+  if (p.codes.length === 1) return n.cats.has(p.codes[0]) ? { cat: p.codes[0], part: p } : null;
+  const c = classify(message);
+  return { cat: c && c.conf >= 0.6 && p.codes.includes(c.code) && n.cats.has(c.code) ? c.code : null, part: p };
+}
+
+/**
+ * A question only a query answers: a grouping no console view has (by ward, week by week, by channel or source, by station,
+ * hospital or street), a threshold on groups ("wards with more than 10"), or an average or total of a time or score by some
+ * grouping. Zone, department and taluk counts stay with the console's own views, which the tools serve exactly.
+ */
+const QUERY_GROUP = /\b(per|by|each|every|for each|in each)\s+(the\s+)?(ward|channel|source|day|date|week|month|hour|weekday|street|road|locality|station|hospital|market|category|type)s?\b|\b(ward|channel|source|day|week|month|hour)[- ]?wise\b|\b(week|month|day) by (week|month|day)\b|\bweekly trend by\b|\bthrough each\b|\b(channels?|sources?) (of|for)\b/i;
+const QUERY_THRESHOLD = /\b(wards?|streets?|localit(y|ies)|stations?|hospitals?|zones?|departments?|days?|weeks?)\b.{0,40}\b(more|fewer|less|over|above|under|at least)\s+than\s+\d+|\b(wards?|streets?|localit(y|ies)|stations?|days?|weeks?)\b.{0,30}\b(with|having)\b.{0,15}\b(over|above|at least|more than)\s+\d+/i;
+const QUERY_MEASURE = /\b(average|avg|mean|median|total|sum)\b.{0,40}\b(hours?|days?|time|age|priority|score|delay|duration)\b.{0,40}\b(by|per|each|across|for each|in each)\b/i;
+export function needsQuery(message: string): boolean {
+  // a department's pace is the resolution-times view ("average time to resolve by department")
+  if (/\bby (department|dept)s?\b/i.test(message) && /\b(resol\w*|clos\w*)\b/i.test(message)) return false;
+  return QUERY_GROUP.test(message) || QUERY_THRESHOLD.test(message) || QUERY_MEASURE.test(message);
+}
+
+const POSITION: Record<string, number> = { first: 1, top:1, "1st": 1, leader: 1, highest: 1, second: 2, "2nd": 2, third: 3, "3rd": 3 };
+
+/** "the first one", "the second": the zone at that place in the previous answer's ranking, in the order it was shown, or null. */
+export function zoneAtRank(card: Partial<AnswerCard> | null | undefined, message: string): number | null {
+  const m = message.toLowerCase().match(/\b(first|top|1st|leader|highest|second|2nd|third|3rd)\b/);
+  if (!m || !card?.datasets?.length) return null;
+  const id = card.chart?.dataset ?? card.table ?? card.datasets[0].id;
+  const ds = card.datasets.find((d) => d.id === id) ?? card.datasets[0];
+  if (!ds.rows.some((r) => r.zone != null)) return null;
+  const y = card.chart?.dataset === ds.id ? card.chart.y?.[0] : undefined;
+  const rows = y ? [...ds.rows].sort((a, b) => Number(b[y] ?? 0) - Number(a[y] ?? 0)) : ds.rows;
+  const z = Number(rows[POSITION[m[1]] - 1]?.zone);
+  return Number.isInteger(z) && z >= 1 && z <= 15 ? z : null;
+}
+
+async function zoneAtPosition(user: string, sessionId: string, message: string): Promise<number | null> {
+  if (!/\b(first|top|1st|leader|highest|second|2nd|third|3rd)\b/i.test(message)) return null;
+  const prev = await lastCardWithData(user, sessionId).catch(orNull("pipeline:zoneAtPosition"));
+  return zoneAtRank(prev?.payload as Partial<AnswerCard> | undefined, message);
+}
+
+/** The locality a question names inside a zone ("Velachery" in Adyar zone), or null for a zone, a taluk asked for, or no place. */
+function localityOf(p: Row | null, n: RefNames): string | null {
+  if (!p?.place || p.zone == null || p.asked_for_taluk) return null;
+  const zoneName = n.zones.get(Number(p.zone))?.name ?? "";
+  return String(p.place).toLowerCase() === zoneName.toLowerCase() ? null : String(p.place);
+}
+
+function storyRoute(message: string, scope: Scope, n: RefNames): Route | null {
+  const text = storySearchText(message, n);
+  return text ? { intent: "tool_question", language: null, normalized: message, scope, scopeRaw: {}, tools: [{ name: "search_records", args: { text, scope } }],
+    // (the AI writes the story from what was found while it is up; only without it is this the rules' answer)
+    chartEdit: null, actions: [], clarify: null, refusal: null, offline: !aiStatus().available,
+    assumptions: [`Read as a question about one story: "${text}" was searched in the records and the news.`] } : null;
+}
+
 const STORY_THING = /\b(case|incident|murder|killing|killed|accident|crash|fire|blaze|breach|breached|cave-in|damage|damaged|cracks|cracked|theft|robbery|snatching|burglary|collapse|death|died|attack|assault|stabbing|drowning|drowned|missing|explosion|clash|protest)\b|INC-[A-Z0-9]|கொலை|விபத்து|தீ விபத்து|வழக்கு/i;
 
 /**
@@ -394,7 +498,7 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   const examples = await examplesFor(message);
   const r = await generateJson({
     role: "fast", name: "router", schema: schemas.strict, lenient: schemas.lenient, system, temperature: 0, maxOutputTokens: 1400, user: i.user,
-    abortSignal: i.signal,
+    abortSignal: i.signal, chat: true,
     prompt: routerPrompt({ message, detected, scopeLine: describeScope(base, n, "en"), scopeJson: JSON.stringify(base), summary: summaryOf(turns), place, category, asOf: now,
       previous: contextForRouter(lastContext(turns)), examples,
       typed: i.message.replace(/\s+/g, " ").trim() !== message ? i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars) : undefined })
@@ -636,8 +740,10 @@ function tablesFor(q: string): string[] {
 function resultDataset(r: QueryResult): Dataset {
   const c = r.compiled;
   const fields: Field[] = [
-    ...c.dims.map((d) => ({ key: d.alias, label: d.col.d, kind: d.time ? ("time" as const) : ("category" as const) })),
-    ...c.measures.map((m) => ({ key: m.alias, label: m.col ? `${m.fn} of ${m.col.d}` : "count", kind: "value" as const, unit: m.col?.unit ?? null,
+    // readable names: "Ward" (its rows read "Ward 85"), "Incidents" for a count of incidents ("85 leads with 17 count" once headed an answer)
+    ...c.dims.map((d) => ({ key: d.alias, label: d.col.name === "ward_no" ? "Ward" : d.col.d, kind: d.time ? ("time" as const) : ("category" as const) })),
+    ...c.measures.map((m) => ({ key: m.alias, label: m.col ? `${m.fn} of ${m.col.d}` : c.table.name === "incidents" ? "Incidents" : c.table.name === "events" ? "Records" : "Count",
+      kind: "value" as const, unit: m.col?.unit ?? null,
       format: m.fn === "avg" ? ("decimal1" as const) : ("integer" as const) })),
     ...c.measures.filter(() => !!c.previous).map((m) => ({ key: `${m.alias}_prev`, label: `${m.alias}, previous period`, kind: "value" as const, format: "integer" as const }))
   ];
@@ -650,7 +756,8 @@ function resultDataset(r: QueryResult): Dataset {
   title = title.charAt(0).toUpperCase() + title.slice(1);
   return {
     id: r.id, title, fields: zoneDim ? [...fields, { key: "zone", label: "Zone", kind: "id" }] : fields,
-    rows: r.rows.map((x) => ({ ...(x as DataRow), ...notRecorded(c.dims, x), ...(zoneDim ? { zone: Number(x[zoneDim.alias]) } : {}) })), total: r.total, hasPrev: !!c.previous,
+    rows: r.rows.map((x) => ({ ...(x as DataRow), ...notRecorded(c.dims, x), ...(zoneDim ? { zone: Number(x[zoneDim.alias]) } : {}),
+      ...Object.fromEntries(c.dims.filter((d) => d.col.name === "ward_no" && x[d.alias] != null).map((d) => [d.alias, `Ward ${x[d.alias]}`])) })), total: r.total, hasPrev: !!c.previous,
     drill: zoneDim ? { field: "zone", action: "filter_zone" } : null
   };
 }
@@ -709,6 +816,310 @@ function adhocPeriod(plan: QueryPlan, lang: Lang): string | null {
   return null;
 }
 
+// ------------------------------------------------------------ corrections --
+
+/** What a correction to the router's reading can see: the question, the conversation, the place it names. */
+interface FixCtx {
+  i: ChatInput;
+  message: string;
+  names: RefNames;
+  now: string;
+  placeData: Row | null;
+  turns: Row[];
+  ctx: ConversationContext | null;
+  exact: Detected;
+  guard: Awaited<ReturnType<typeof codeGuard>>;
+  notes: string[];
+  /** a typed question (not a pinned chart re-run or an insight opened from the console) */
+  typed: boolean;
+  /** the conversation has an earlier answer with data, that a follow-up can change */
+  prevAnswer: boolean;
+  /** the question names a place and the word "incident", not one incident ("tell me about the Anna Nagar incident") */
+  onlyPlace: boolean;
+  /** an answer from the store, for a correction that answers the question itself */
+  fast: (scope: Scope, decided?: Detected) => Promise<ChatOutput | null>;
+  finish: (card: AnswerCard, plan: unknown) => Promise<ChatOutput>;
+  card0: (scope: Scope | null) => AnswerCard;
+}
+
+/** The corrected route; or `done`, the finished answer (the correction answered the question itself); or null: it does not apply. */
+type FixResult = Route | { done: ChatOutput } | null;
+
+interface RouteFix {
+  /** kept with the turn's plan when it applied, so a wrong answer can be traced to the correction that made it */
+  name: string;
+  run: (route: Route, c: FixCtx) => FixResult | Promise<FixResult>;
+}
+
+const NOT_ANSWERED = ["out_of_scope", "unsafe"];
+
+/**
+ * The code's corrections to the router's reading, in the order they run. Each is a mistake a model made in a live test, or a
+ * rule the console's figures need; the comment on each says which.
+ */
+const ROUTE_FIXES: RouteFix[] = [
+  {
+    // "needs attention now": with no period of its own, "now" is the last 7 days, not the default 90 (the router keeps the default)
+    name: "now-is-7-days",
+    run: (route, { message, typed }) => {
+      if (!(NOW_WORDS.test(message) && !PERIOD_WORDS.test(message) && route.scope?.period === DEFAULT_PERIOD && typed)) return null;
+      const now7 = (s: Scope): Scope => (s.period === DEFAULT_PERIOD ? { ...s, period: "weekly" } : s);
+      return { ...route, scope: now7(route.scope),
+        tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: now7(t.args.scope as Scope) } } : t)),
+        assumptions: [...route.assumptions, "“Now” read as the last 7 days."] };
+    }
+  },
+  {
+    // "export all complaints": the code's guard saw a bulk request, whatever the router called it
+    name: "bulk-request",
+    run: (route, { guard }) => (guard?.kind === "bulk" && ![...NOT_ANSWERED, "email_followup"].includes(route.intent) ? { ...route, intent: "bulk_request" } : null)
+  },
+  {
+    // "what is the Black Flag March?" reads like general knowledge to a router that cannot see the day's news: before refusing,
+    // the district's own news is searched, and a story the question's words name is answered instead of refused
+    name: "in-our-news",
+    run: async (route, { message, now, typed }) => {
+      if (!(route.intent === "out_of_scope" && !route.offline && typed && await inOurNews(message, now))) return null;
+      return { ...route, intent: "tool_question", refusal: null,
+        decision: { answer: "news_story", incidentId: null, storyId: null, find: message, count: null, focus: "all", openOnly: false, severity: null, options: [] },
+        assumptions: [...route.assumptions, "Not general knowledge: it is in the district's news, so it was answered from there."] };
+    }
+  },
+  {
+    // "tomato price today": the router asked "which market?", which its instructions forbid (all Chennai markets answer it)
+    name: "price-without-market",
+    run: (route, { message, names, typed }) => {
+      if (!((route.clarify || route.decision?.answer === "clarify") && /\b(price|prices|rate|rates|cost)\b|விலை|vilai/i.test(message) && typed)) return null;
+      const rp = rulesRoute(message, route.scope, names);
+      return rp.tools[0]?.name === "mandi_prices" ? { ...rp, offline: false, language: route.language,
+        assumptions: ["No market was named, so every Chennai market that reported is shown."] } : null;
+    }
+  },
+  {
+    // "youtuber harish case brief me": a named case is that case's story; the router once read "brief" as the district's
+    // briefing ("14,705 incidents reported district-wide")
+    name: "named-case-not-briefing",
+    run: (route, { message, names, typed }) => {
+      if (!(typed && (["briefing", "insight_request"].includes(route.intent) || route.tools.some((t) => ["briefing", "overview_kpis"].includes(t.name))))) return null;
+      if (!storySearchText(message, names)) return null;
+      const r = storyRoute(message, route.scope, names);
+      return r ? { ...r, language: route.language, assumptions: [...r.assumptions, "Read as a question about the case it names, not the district briefing."] } : null;
+    }
+  },
+  {
+    // "TNPCB issues": one department named, and the router ranked every department (Police first, TNPCB nowhere): that
+    // department's own incidents, most important first
+    name: "one-department",
+    run: async (route, { message, names, i, exact, fast, typed }) => {
+      if (!(route.intent === "tool_question" && route.tools.length === 1 && route.tools[0].name === "departments" && typed
+        && !/\b(rank\w*|compare|vs\.?|versus|which|all|each|every|most|least|top|worst|best|slowest|fastest|by department|department[- ]?wise|other)\b/i.test(message))) return null;
+      const d = deptFromWords(message, names);
+      if (!d || i.lockDept) return null;
+      const r = await fast({ ...route.scope, dept: d.code }, { ...exact, intent: "PRIORITY_INCIDENT_LIST", refinement: false, because: "one department's own incidents" });
+      return r ? { done: r } : null;
+    }
+  },
+  {
+    // the router's understanding decides the kind of answer: one incident explained, an area overview, a list, a story, a question back
+    name: "router-decision",
+    run: async (route, { message, ctx, placeData, names, typed, fast, finish, card0 }) => {
+      if (!(route.decision && typed && ![...NOT_ANSWERED, "bulk_request", "smalltalk", "help", "chart_edit", "console_action", "email_followup"].includes(route.intent))) return null;
+      const p = planFromDecision(route, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null, localityOf(placeData, names));
+      if (p?.clarify) {
+        const c = clarifyCard(card0(route.scope), p.clarify.question);
+        c.chips = p.clarify.options;
+        return { done: await finish(c, { intent: "clarify", router: true, options: p.clarify.options }) };
+      }
+      if (p?.fast) {
+        const r = await fast(route.scope, { ...p.fast, refinement: p.fast.refinement || route.intent === "plan_edit" });
+        if (r) return { done: r };
+      }
+      if (!p?.tools) return null;
+      return { ...route, intent: "tool_question", tools: p.tools,
+        assumptions: [...route.assumptions, route.decision.answer === "area_summary" ? "Read as a question about the place or topic as a whole."
+          : p.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail") ? "Read as a question about one incident."
+            : p.tools.some((t) => t.name === "change_drivers") ? "Read as a question about what changed and why." : "Read as a question the console's tools answer."] };
+    }
+  },
+  {
+    // Tools first: when the router sends a question to the planner but a console tool clearly answers it, the tool wins
+    // (its numbers are the console's); the planner stays for groupings no tool offers.
+    name: "tool-before-planner",
+    run: (route, { message, names, placeData }) => {
+      if (!(route.intent === "adhoc_question" && !route.offline && !route.forcedQuery && !/\b(ward|channel|source|per day|daily|hourly|by hour|between|from \d)/i.test(message))) return null;
+      // the rules' pick, on the router's scope: a specific tool, or the incidents list for a question naming a category or a place
+      const rules = rulesRoute(message, route.scope, names, placeData?.zone != null);
+      const t = rules.tools[0];
+      const countOrList = /how many|evlo|evvalo|evvalavu|count|number of|\bany\b|\blist\b|\bshow\b|எத்தனை|எவ்வளவு/i.test(message)
+        && !/\b(average|avg|mean|median|resolution time|per|by (zone|department|category|month|week|day))\b/i.test(message);
+      return rules.intent === "tool_question" && t && (PREFER_TOOL.has(t.name) || (t.name === "incidents" && countOrList))
+        ? { ...route, intent: "tool_question", scope: rules.scope, tools: [t], assumptions: [...route.assumptions, `Answered with the console's ${t.name} data.`] } : null;
+    }
+  },
+  {
+    // "only Adyar zone", "what about last month?", "same for Zone 9": a short follow-up that changes only where or when re-asks the
+    // previous answer with that change (the conversation's memory), whatever new question the router read into it
+    name: "follow-up-changes-scope",
+    run: (route, { message, placeData, prevAnswer }) => {
+      if (!(prevAnswer && isRefinement(message, !!placeData) && ![...NOT_ANSWERED, "chart_edit", "console_action", "help", "smalltalk"].includes(route.intent))) return null;
+      const raw: Row = { ...route.scopeRaw };
+      if (placeData?.zone != null && raw.zone == null) raw.zone = placeData.zone;
+      return { ...route, intent: "plan_edit", tools: [], scopeRaw: raw, assumptions: [...route.assumptions, "Read as a follow-up: the previous answer, with this change."] };
+    }
+  },
+  {
+    // "only Zone 13" after an answer re-asks that answer for Zone 13; changing the console itself needs the message to say so
+    name: "filter-is-follow-up",
+    run: (route, { message, prevAnswer }) => {
+      if (!(route.intent === "console_action" && prevAnswer && !/\b(console|dashboard|screen|page|open)\b|கன்சோல்|டாஷ்போர்டு/i.test(message))) return null;
+      const raw: Row = { ...route.scopeRaw };
+      for (const a of route.actions) {
+        if (a.action === "filter_zone" && a.zone != null) raw.zone = a.zone;
+        if (a.action === "filter_taluk" && a.taluk) raw.taluk = a.taluk;
+        if (a.action === "filter_dept" && a.dept) raw.dept = a.dept;
+        if (a.action === "filter_cat" && a.cat) raw.cat = a.cat;
+        if (a.action === "set_period" && a.period) raw.period = a.period;
+      }
+      return { ...route, intent: "plan_edit", scopeRaw: raw, actions: [], tools: [] };
+    }
+  },
+  {
+    // "road accident trend": one category over time is incident_series; category_trends is for comparing categories
+    name: "one-category-trend",
+    run: (route, { message }) => (route.intent === "tool_question" && route.scope.cat && route.tools.length === 1 && route.tools[0].name === "category_trends"
+      && !/\b(categor|compare|vs\.?|versus|types?|each|all)\b|வகை/i.test(message)
+      ? { ...route, tools: [{ name: "incident_series", args: { scope: route.scope } }],
+        assumptions: [...route.assumptions, "One category over time: answered with its incident series and usual range."] } : null)
+  },
+  {
+    // a place is a filter, not a keyword: "Velachery" searched as text finds only incidents whose title says so
+    name: "place-as-filter",
+    run: (route, { placeData, names }) => (placeData && (placeData.zone != null || placeData.asked_for_taluk) && route.intent === "tool_question" ? placeAsScope(route, placeData, names) : null)
+  },
+  {
+    // a department's name is not a category: "how is the Storm Water Drain department performing" was filtered to "Drain works site
+    // safety". The category stays only when the words left after the department's name still name it.
+    name: "department-not-category",
+    run: (route, { message, names, typed }) => {
+      if (!(route.scope.cat && typed)) return null;
+      const dn = deptFromWords(message, names);
+      if (!dn) return null;
+      const deptName = names.depts.get(dn.code)?.name ?? "";
+      const rest = message.replace(new RegExp(deptName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), " ").replace(/\b(department|dept)\b/gi, " ");
+      const still = classify(rest);
+      if (still && still.code === route.scope.cat && still.conf >= 0.6) return null;
+      const cat = route.scope.cat;
+      const drop = (s: Scope): Scope => (s.cat === cat ? { ...s, cat: null } : s);
+      return { ...route, scope: drop(route.scope), tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: drop(t.args.scope as Scope) } } : t)),
+        assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `"${deptName || dn.code}" read as the department, not as a kind of incident.`] };
+    }
+  },
+  {
+    // smalltalk is greetings and thanks; "what does test data mean?" is a help question
+    name: "help-not-smalltalk",
+    run: (route, { message }) => (route.intent === "smalltalk" && !SMALLTALK.test(message) && isHelpQuestion(message) ? { ...route, intent: "help" } : null)
+  },
+  {
+    // a short "make it a pie" / "show on map" after an answer is a chart edit, whatever the router called it
+    name: "short-chart-edit",
+    run: (route, { message, turns }) => (route.intent !== "chart_edit" && !NOT_ANSWERED.includes(route.intent) && turns.some((t) => t.role === "assistant")
+      && message.length <= 40 && ((editFromText(message) && isBareEdit(message)) || topNFromText(message) != null) ? { ...route, intent: "chart_edit" } : null)
+  },
+  {
+    // "what is this murder case in Adyar?": one specific incident, told as a story, whatever list the rules picked (a keyword
+    // override for the rules only: the router's decision already says one incident or a whole place)
+    name: "one-incident-story",
+    run: (route, { message, onlyPlace }) => (!route.decision && ["tool_question", "adhoc_question"].includes(route.intent) && STORY.test(message) && STORY_THING.test(message) && !onlyPlace
+      && !route.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail")
+      ? { ...route, intent: "tool_question", tools: [{ name: "incident_story", args: { text: message, scope: route.scope } }],
+        assumptions: [...route.assumptions, "Read as a question about one incident: its story."] } : null)
+  },
+  {
+    // "tell me about the Anna Nagar incident" names only a place and the word "incident": that is the place's summary
+    name: "place-not-story",
+    run: (route, { onlyPlace, placeData }) => (!route.decision && onlyPlace && route.tools.some((t) => t.name === "incident_story")
+      ? { ...route, intent: "tool_question", tools: [{ name: "zone_profile", args: { scope: route.scope, zone: Number(placeData!.zone) } }],
+        assumptions: ["Read as a question about the place, not one incident: its snapshot."] } : null)
+  },
+  {
+    // "contact of health department", "who is the officer for PWD in Adyar": the officials' directory, never the incidents of a
+    // subject the department's name happens to share ("health")
+    name: "officials-to-contact",
+    run: async (route, { message, names, placeData }) => {
+      if (!(CONTACT.test(message) && !route.tools.some((t) => t.name === "contacts") && !NOT_ANSWERED.includes(route.intent))) return null;
+      const dept = await contactDept(message, names);
+      const zone = placeData?.zone != null ? Number(placeData.zone) : route.scope.zone ?? null;
+      return dept || zone ? { ...route, intent: "tool_question", tools: [{ name: "contacts", args: { dept, zone } }], decision: undefined,
+        assumptions: [...route.assumptions, "Read as a request for the officials to contact."] } : null;
+    }
+  },
+  {
+    // several subjects in one question ("road accidents, flooding and public-infrastructure complaints"): every part is answered,
+    // side by side, instead of the data being narrowed to the one subject a single category filter can hold
+    name: "several-subjects",
+    run: (route, { message }) => {
+      const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent) && !route.forcedQuery
+        && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts", "change_drivers"].includes(t.name)) ? multiPart(message) : null;
+      return parts ? { ...route, intent: "tool_question", scope: { ...route.scope, cat: null }, tools: [{ name: "category_summary", args: { scope: { ...route.scope, cat: null }, parts } }],
+        assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `Answered part by part: ${parts.map((x) => x.label).join("; ")}.`] } : null;
+    }
+  },
+  {
+    // "why did flooding rise in Adyar?": the explanation of a change, narrowed to the one subject it names (its main category),
+    // not a side-by-side summary that gives the figures but no reasons. (After several-subjects, which never takes a
+    // change_drivers question, so the two never both apply.)
+    name: "why-one-subject",
+    run: (route, { message, names }) => {
+      if (!(!route.scope.cat && route.tools.length === 1 && route.tools[0].name === "change_drivers")) return null;
+      // (questionParts, not multiPart: multiPart returns a single subject only when it is a broad group, so "why did road
+      // accidents go up?" was explained with every incident and answered "road accidents did not go up")
+      const one = oneSubject(message, names);
+      if (one?.cat) {
+        const scope = { ...route.scope, cat: one.cat };
+        return { ...route, scope, tools: [{ name: "change_drivers", args: { ...route.tools[0].args, scope } }],
+          assumptions: [...route.assumptions, `Narrowed to ${names.cats.get(one.cat)?.label ?? one.part.label}.`] };
+      }
+      if (!one) return null;
+      // a subject of several kinds ("is crime going up?"): the whole group, kind by kind, against the period before (it was once
+      // narrowed to its first kind, theft, and answered as if that were all of crime)
+      const scope = { ...route.scope, cat: null };
+      return { ...route, scope, tools: [{ name: "category_summary", args: { scope, parts: [one.part] } }],
+        assumptions: [...route.assumptions, `Answered for every kind of ${one.part.label.toLowerCase()}, against the period before.`] };
+    }
+  },
+  {
+    // "how many road accidents": a keyword that only repeats the category filter would search titles for "road accidents"
+    // (they say "Road accident") and find none; the category already narrows the list. A severity or status filter only when
+    // the question names one ("how many road accidents" is all of them, not the severe ones).
+    name: "only-asked-filters",
+    run: (route, { message, names }) => {
+      const tools = route.tools.map((t) => {
+        if (t.args.sev && !/\b(severe|serious|critical|high|medium|low|minor|major|grave)\b|கடுமை|தீவிர/i.test(message)) t = { ...t, args: { ...t.args, sev: null } };
+        if (t.args.status && !/\b(open|pending|unresolved|ongoing|in progress|closed|resolved|awaiting|verif\w*|unverified|critical|lapsed)\b|நிலுவை/i.test(message)) t = { ...t, args: { ...t.args, status: null } };
+        const q = typeof t.args.q === "string" ? t.args.q.trim() : "";
+        const cat = (t.args.scope as Scope | undefined)?.cat;
+        if (!q || !cat) return t;
+        const label = (names.cats.get(cat)?.label ?? "").toLowerCase();
+        const stem = (w: string) => w.toLowerCase().replace(/(es|s)\b/g, "").replace(/[^a-z ]+/g, " ").trim();
+        const repeats = classify(q)?.code === cat || (!!label && (stem(label).includes(stem(q)) || stem(q).includes(stem(label))));
+        return repeats ? { ...t, args: { ...t.args, q: null } } : t;
+      });
+      return tools.some((t, k) => t !== route.tools[k]) ? { ...route, tools } : null;
+    }
+  },
+  {
+    // a story needs the words that describe the incident: the question itself when the router gave none
+    name: "story-words",
+    run: (route, { message }) => (route.tools.some((t) => t.name === "incident_story" && !String(t.args.text ?? "").trim())
+      ? { ...route, tools: route.tools.map((t) => (t.name === "incident_story" && !String(t.args.text ?? "").trim() ? { ...t, args: { ...t.args, text: message } } : t)) } : null)
+  },
+  {
+    // a department's own console answers for that department only
+    name: "department-console",
+    run: (route, { i, notes }) => (i.lockDept ? { ...route, scope: { ...route.scope, dept: i.lockDept }, tools: lockTools(route.tools, i.lockDept, route.scope, notes) } : null)
+  }
+];
+
 // ------------------------------------------------------------------- main --
 
 /** Caveats for feeds an answer drew on that are behind (freshness.ts), e.g. "News last collected 6 hours ago; ...". */
@@ -737,7 +1148,10 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // `typed` is kept as the Collector wrote it; everything below reads `message`, with typos corrected toward the
   // district's vocabulary ("tomatoe prifce" -> "tomato price", "incidnets in adyr" -> "incidents in adyar")
   const typed = i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars);
-  const spelled = await correctSpelling(typed).catch(() => ({ text: typed, fixes: [] as { from: string; to: string }[] }));
+  const spelled = await correctSpelling(typed).catch((e) => {
+    console.warn("[assistant] spelling correction failed; the words are read as typed:", (e as Error).message);
+    return { text: typed, fixes: [] as { from: string; to: string }[] };
+  });
   const message = spelled.text;
   const detected = detectLanguage(typed);
   let lang: Lang = i.language !== "auto" ? i.language : detected.lang;
@@ -756,11 +1170,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     card.sources.models = models.map((m) => ({ step: m.step, provider: m.provider, model: m.model, ms: m.ms, tokens: m.inputTokens + m.outputTokens,
       inTokens: m.inputTokens, outTokens: m.outputTokens }));
     // one caveat said twice in other words (the tool's and the composer's "Porur has no filter of its own") is said once
-    const seenCaveat = new Set<string>();
-    card.caveats = card.caveats.filter((c) => {
-      const k = String(c).toLowerCase().replace(/[^a-z0-9஀-௿ ]+/g, " ").split(/\s+/).filter((w) => w && !/^(was|is|are|were|the|a|an|of|in|on|for|to|and|its|has|have|been)$/.test(w)).slice(0, 5).join(" ");
-      return !seenCaveat.has(k) && !!seenCaveat.add(k);
-    });
+    // (the composer often says a code caveat again in its own words: "Incidents matched by place name within Adyar zone" beside
+    // "Incidents are matched to Velachery by the place name in their records, within Adyar zone": most of the words are shared)
+    card.caveats = dedupeCaveats(card.caveats);
     card.sources.assumptions = [...new Set([...(route?.assumptions ?? []), ...card.sources.assumptions])]
       // a note about a period the answer did not end up covering ("covers the last 90 days" on a 24-hour answer) only confuses
       .filter((a) => !card.scope?.period || !((/^No period was named/.test(a) && card.scope.period !== "quarterly")
@@ -824,12 +1236,16 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // "reset", "start over", "clear the chat": the conversation's memory starts again
   if (RESET.test(message)) return finish(resetCard(card0(null)), { intent: "reset" });
 
+  // a message that is only a greeting, thanks or goodbye ("hi", "thank you!", "வணக்கம்") is answered at once: "hi" once took 5 s
+  // (a router call, the place lookup and the search index, all for a greeting)
+  if (ONLY_SMALLTALK.test(typed)) return finish(smalltalkCard(card0(null), message), { intent: "smalltalk", instant: true });
+
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
   if (!i.lockDept && !i.pinId && !i.insightKey) {
     if (LIST_DATASETS.test(message)) return finish(datasetsListCard(card0(null)), { intent: "studio_list" });
     // hospital beds over a threshold or right now are the console's live readings ("hospital beds above 90% occupancy" was once
     // answered "3 of 1,620" rows of an upload); a breakdown by zone or over time is the uploaded dataset's
-    const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest)\b/i.test(message)
+    const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest|overload\w*|over-?crowd\w*|crowded|full|capacity|shortage|available)\b/i.test(message)
       && !/\b(by|per|each)\s+(zone|taluk|ward|month|week|day)|\b(trend|over time)\b/i.test(message);
     const ds = live ? null : datasetNamed(message);
     if (ds) {
@@ -841,7 +1257,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
 
   // 2. understand
   i.stage("understanding");
-  const placeData = await runTool("resolve_place", { text: message.slice(0, 120) }).then((r) => r.data as Row | null).catch(orNull("pipeline:767"));
+  // (a one-letter message names no place: the tool refuses it, and the refusal was logged as a failure)
+  const placeData = message.trim().length < 2 ? null
+    : await runTool("resolve_place", { text: message.slice(0, 120) }).then((r) => r.data as Row | null).catch(orNull("pipeline:resolve_place"));
   const place = placeData ? JSON.stringify(placeData) : "";
   const ctx = lastContext(turns);
   // answers from the store (lists, counts, one incident's facts, news): `decided` is the router's understanding; without
@@ -853,10 +1271,191 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (!fp) return null;
     console.info(`[assistant] ${fp.card.intent} answered from the store in ${Date.now() - tf} ms (${Date.now() - started} ms since the question)${decided ? " (router)" : " (rules)"}`);
     if (spelled.fixes.length) fp.card.understood = message;
+    // every answer written by the AI: the store's exact answer is the draft, the model writes it as a reply, and only the numbers
+    // already in it pass (otherwise the store's wording stands). The store's answer is already right, so the writer gets 5 s per
+    // model (it takes 0.4-1.5 s; a 9 s limit once held an answer for 11 s on an overloaded model)
+    if (aiStatus().available && fp.card.kind === "answer" && !i.signal?.aborted) {
+      try {
+        // a news answer is written from what its articles say, not their headlines ("what is the protest about?" was answered
+        // with the headline alone): one story, its four best articles; a list, the lead article of each of the first five
+        const stories = fp.card.stories ?? [];
+        const one = fp.card.responseType === "news_detail";
+        const byStory = stories.length ? await storyArticles(stories.slice(0, one ? 1 : 5).map((s) => s.storyId), one ? 4 : 1, one ? 1200 : 450)
+          .catch((e) => { console.warn("[assistant] news articles not read:", (e as Error).message); return new Map<string, string[]>(); }) : new Map<string, string[]>();
+        const articles = stories.slice(0, one ? 1 : 5).map((s) => byStory.get(s.storyId) ?? []);
+        const r = await generateJson({ role: "reasoning", name: "writer", schema: PolishSchema, system: polishSystem(lang), prompt: polishPrompt(message, fp.card, articles),
+          temperature: 0.3, maxOutputTokens: 700, user: i.user, abortSignal: i.signal, chat: true, timeoutMs: 5_000 });
+        models.push(r.info);
+        const ok = checkPolish(r.object, message, fp.card, articles);
+        if ("text" in ok) {
+          Object.assign(fp.card, { headline: ok.text.headline, answerMarkdown: ok.text.answerMarkdown, voiceSummary: ok.text.voiceSummary, offline: false });
+          fp.card.sources.verifier = { checked: ok.checked, unmatched: [], regenerated: false, template: false };
+        } else console.warn(`[assistant] writer: draft rejected (${ok.rejected}); the store's wording stands`);
+      } catch (e) {
+        if (i.signal?.aborted) throw e;
+        console.warn(`[assistant] writer unavailable (${(e as Error).message.slice(0, 120)}); the store's wording stands`);
+      }
+    }
     return finish(fp.card, { ...fp.plan, router: !!decided });
   };
   // exact requests need no understanding: a question naming an incident id, or the previous list as a map or table
   const exact = detectIntent(message, ctx);
+  // agent mode: the model calls the tools, reads what they return and looks further before the composer writes. The rules
+  // keep only exact requests (an incident id, the previous list as a map or table), and answer when the model is out.
+  let agentFailed = false;
+  if (agentMode() && !i.pinId && !i.insightKey && aiStatus().available) {
+    if (((exact.intent === "MAP" || exact.intent === "TABLE" || exact.intent === "CHART") && exact.refinement)
+      || (exact.intent === "INCIDENT_DETAIL" && /\bINC-[A-Z0-9-]{4,}/i.test(message) && message.length <= 120)) {
+      const r = await fast(consoleScope);
+      if (r) return r;
+    }
+    if (SMALLTALK.test(message) && message.length <= 30) return finish(smalltalkCard(card0(null), message), { intent: "smalltalk", agent: true });
+    const agentTools = listTools({ llmOnly: true });
+    const schemas = agentSchemas(agentTools.map((t) => t.name) as [string, ...string[]], Object.keys(ENV_METRICS) as [string, ...string[]]);
+    const system = agentSystem(agentTools.map((t) => `${t.name}(${t.args.join(", ")}): ${BRIEF[t.name] ?? t.description}`).join("\n"), codes(names));
+    const cw = customWindow(message);
+    // each call's own filters on the console's; a window in the message's words ("yesterday") sets the period it names
+    const callScope = (c: { period: Scope["period"] | null; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }): Scope => {
+      const s = applyScope(consoleScope, { period: c.period, zone: c.zone, dept: c.dept, cat: c.cat, taluk: c.taluk }, names);
+      if (!c.period && cw) s.period = cw.period;
+      else if (!c.period && NOW_WORDS.test(message) && !PERIOD_WORDS.test(message)) s.period = "weekly";
+      if (cw?.offset && s.period === cw.period) s.offset = cw.offset;
+      if (i.lockDept) s.dept = i.lockDept;
+      return s;
+    };
+    // the one kind of incident the question names ("why is flooding high in Adyar?"): explanations and series cover it only
+    const named = questionParts(message);
+    const namedCat = oneSubject(message, names)?.cat ?? null;
+    let narrowed = false;
+    const typedClean = i.message.replace(/\s+/g, " ").trim().slice(0, LIMITS.messageChars);
+    let outcome: AgentOutcome;
+    try {
+      outcome = await runAgent({
+        message, typed: typedClean !== message ? typedClean : undefined, asOf: now, scopeLine: describeScope(consoleScope, names, "en"),
+        summary: summaryOf(turns), previous: contextForRouter(ctx), place, detected: detected.lang, system,
+        window: cw ? `${cw.label} (period ${cw.period}${cw.offset ? ", the window before the latest" : ""})` : "",
+        llm: async (name, prompt) => {
+          const r = await generateJson({ role: agentRole(), name, schema: schemas.strict, lenient: schemas.lenient, system, prompt, temperature: 0,
+            maxOutputTokens: 1200, user: i.user, abortSignal: i.signal, chat: true });
+          models.push(r.info);
+          return r.object;
+        },
+        run: async (asked) => {
+          const c = narrowToNamed(asked, namedCat);
+          if (c !== asked) narrowed = true;
+          const scope = callScope(c);
+          let calls = [{ name: c.tool as string, args: toolArgs(c.tool, c, scope) }];
+          if (i.lockDept) calls = lockTools(calls, i.lockDept, scope, notes);
+          const t = calls[0];
+          const r = await runTool(t.name, t.args);
+          if (i.lockDept && otherDeptsIncident(r, i.lockDept)) throw new ToolError("that incident is handled by another department");
+          return { name: t.name, args: t.args, result: r };
+        },
+        signal: i.signal, log: (m) => console.info(`[assistant] agent ${m}`)
+      });
+    } catch (e) {
+      if (i.signal?.aborted) throw e;
+      if (e instanceof AiBudgetError) return finish(errorCard(card0(null), e.message), { intent: "error" });
+      if (!(e instanceof AiBusyError)) console.warn("[assistant] agent failed; the rules answer:", (e as Error).message);
+      notes.push(e instanceof AiBusyError ? `The AI service was busy (retry in ${e.retryAfter} s), so this was answered from the data without it.`
+        : `The AI step failed (${(e as Error).message.slice(0, 200)}), so this was answered from the data without it.`);
+      agentFailed = true;
+      outcome = null as unknown as AgentOutcome;
+    }
+    if (outcome) {
+      if (i.language === "auto") lang = detected.lang !== "en" ? detected.lang : outcome.language === "tanglish" || (outcome.language === "ta" && !hasTamilScript(message)) ? "tanglish" : outcome.language === "ta" ? "ta" : "en";
+      const agentPlan = { intent: `agent:${outcome.kind}`, normalized: outcome.question, agent: outcome.steps, errors: outcome.errors };
+      const asRoute = (scope: Scope, extra: Partial<Route> = {}): Route => ({ intent: "tool_question", language: outcome.language, normalized: outcome.question, scope, scopeRaw: {},
+        tools: [], chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: [], offline: false, visual: outcome.visual, ...extra });
+      // a figure the model wrote into its reading of the question would pass the number check: only the Collector's own stay
+      const question = outcome.question && outcome.question.toLowerCase() !== message.toLowerCase() ? `${message} (${onlyNumbersFrom(outcome.question, message)})` : message;
+      const composeRuns = async (runs: { name: string; args: Record<string, unknown>; result: ToolResult; ms: number }[]) => {
+        const results = runs.map((r) => r.result);
+        const toolLog = runs.map((r) => ({ name: r.name, args: r.args, ms: r.ms }));
+        route = asRoute(results.find((r) => r.scope)?.scope ?? consoleScope, { tools: runs.map((r) => ({ name: r.name, args: r.args })),
+          assumptions: narrowed && namedCat ? [`Narrowed to ${names.cats.get(namedCat)?.label ?? named[0].label} (named in the question).`] : [],
+          normalized: outcome.brief ? `${onlyNumbersFrom(outcome.question, message)}\nAnalyst's reading (words only; every figure comes from FACTS): ${outcome.brief}` : onlyNumbersFrom(outcome.question, message) });
+        const card = await composeStage(i, { route, results, toolLog, adhoc: null, question, message, lang, names, now, placeData, insight: null, pin: null, models, turns });
+        // places compared side by side: the scope line names every side, not only the first
+        const zones = [...new Set(results.map((r) => r.scope?.zone).filter((z): z is number => z != null))];
+        const zoneText = (z: number) => `${names.zones.get(z)?.name ?? `Zone ${z}`} (Zone ${z})`;
+        if (zones.length >= 2 && card.scopeLine.includes(zoneText(zones[0]))) card.scopeLine = card.scopeLine.replace(zoneText(zones[0]), zones.map(zoneText).join(" vs "));
+        return finish(card, { ...agentPlan, scope: route.scope, tools: toolLog.map((t) => ({ name: t.name, args: t.args })) });
+      };
+      switch (outcome.kind) {
+        case "compose":
+          return composeRuns(outcome.runs);
+        case "refuse": {
+          // "what is the Black Flag March?" can be the district's own news, not general knowledge
+          if (await inOurNews(message, now)) {
+            const r = await fast(consoleScope, { ...exact, intent: "NEWS_DETAIL", find: message, refinement: false, because: "in the district's news" });
+            if (r) return r;
+          }
+          const why = outcome.refusal ?? "";
+          return finish(refusalCard(card0(null), /personal|phone|address|aadhaa?r|name/i.test(why) ? "personal data" : /delet|chang|modif|updat|data change/i.test(why) ? "data change"
+            : /instruction|prompt|rule/i.test(why) ? "instructions" : null), agentPlan);
+        }
+        case "smalltalk":
+          if (!SMALLTALK.test(message) && isHelpQuestion(message)) return finish(await helpAnswer(i, asRoute(consoleScope), message, lang, names, now, models), agentPlan);
+          return finish(smalltalkCard(card0(null), message), agentPlan);
+        case "help":
+          return finish(await helpAnswer(i, asRoute(consoleScope), message, lang, names, now, models), agentPlan);
+        case "chart_edit": {
+          const edited = await chartEdit(i, asRoute(consoleScope, { intent: "chart_edit", chartEdit: { type: outcome.chartType, showOnMap: !!outcome.chartType?.startsWith("map") } }),
+            lang, names, now, sessionId);
+          if (edited) return finish(edited.card, { ...agentPlan, intent: "chart_edit", tools: edited.tools });
+          break;
+        }
+        case "clarify":
+          if (outcome.clarify?.question) {
+            const c = clarifyCard(card0(consoleScope), outcome.clarify.question);
+            if (outcome.clarify.options.length >= 2) c.chips = outcome.clarify.options;
+            return finish(c, { ...agentPlan, options: outcome.clarify.options });
+          }
+          break;
+        case "query": {
+          route = asRoute(consoleScope, { intent: "adhoc_question" });
+          try {
+            const adhoc = await planAndRun(i, route, message, now, models);
+            const card = await composeStage(i, { route, results: [], toolLog: [], adhoc, question, message, lang, names, now, placeData, insight: null, pin: null, models, turns });
+            return finish(card, { ...agentPlan, adhoc: adhoc.plan });
+          } catch (e) {
+            if (i.signal?.aborted) throw e;
+            if (!(e instanceof CompileError)) console.warn("[assistant] agent query failed:", (e as Error).message);
+            notes.push("The query planner could not build a query for this; it was answered from the console's own data instead.");
+          }
+          break;
+        }
+        case "show": {
+          const sh = outcome.show;
+          if (!sh) break;
+          const scope = callScope(sh);
+          const like = asRoute(scope, { scopeRaw: { period: sh.period },
+            decision: { answer: sh.kind, incidentId: sh.incidentId?.trim().toUpperCase() || null, storyId: sh.storyId?.trim() || null, find: sh.find?.trim() || null,
+              count: sh.count != null && sh.count >= 1 && sh.count <= 20 ? Math.round(sh.count) : null, focus: "all", openOnly: sh.openOnly, overdueOnly: sh.overdueOnly,
+              severity: sh.severity, options: [] } });
+          const p = planFromDecision(like, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null, localityOf(placeData, names));
+          if (p?.fast) {
+            const r = await fast(scope, p.fast);
+            if (r) return r;
+          }
+          if (p?.tools) {
+            const runs: { name: string; args: Record<string, unknown>; result: ToolResult; ms: number }[] = [];
+            for (const t of i.lockDept ? lockTools(p.tools, i.lockDept, scope, notes) : p.tools) {
+              const t0 = Date.now();
+              try { runs.push({ name: t.name, args: t.args, result: await runTool(t.name, t.args), ms: Date.now() - t0 }); }
+              catch (e) { if (!(e instanceof ToolError)) throw e; notes.push(`Skipped ${t.name}: ${e.message}`); }
+            }
+            if (runs.length) return composeRuns(runs);
+          }
+          break;
+        }
+      }
+      // nothing the agent chose could answer: the console's own reading of the message does, without another model call
+      route = null;
+      agentFailed = true;
+    }
+  }
   if (!i.pinId && !i.insightKey && ((exact.intent === "INCIDENT_DETAIL" && /\bINC-[A-Z0-9-]{4,}/i.test(message) && message.length <= 120)
       || ((exact.intent === "MAP" || exact.intent === "TABLE" || exact.intent === "CHART") && exact.refinement)
       // "which one is most serious?" after a list: the top of that list, on its filters
@@ -877,20 +1476,23 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       || (!aiStatus().available && !(directTool(message) && !(turns.length && isRefinement(message, !!placeData)))
         // (one incident described in words, "when was the Porur bund breach reported", is told as its story below)
         // (places compared side by side are counted the same way each, below)
-        && !sidesOf(message)
+        && !sidesOf(message) && !storySearchText(message, names) && !CONTACT.test(message)
         && !(STORY.test(message) && STORY_THING.test(message) && !/\bINC-/i.test(message))))) {
     const r = await fast(consoleScope);
     if (r) return r;
   }
   // places compared side by side: split, resolved and counted the same way each, without a model
-  const sides = !i.pinId && !i.insightKey ? sidesOf(message) : null;
+  // the AI reads every question while it is up: the keyword shortcuts below answer only when it is not (exact requests, pinned
+  // charts and the AI query planner stay)
+  const rulesOnly = !aiStatus().available;
+  const sides = rulesOnly && !i.pinId && !i.insightKey ? sidesOf(message) : null;
   if (sides) {
     const r = await fast(consoleScope, { ...exact, intent: "COMPARISON", sides, refinement: false, because: "a comparison of places, side by side" });
     if (r) return r;
   }
   // a named kind of case ("any murder in the past 24 hrs", "rape cases this month in Anna Nagar"): the matching cases listed,
   // searched by meaning in department records and the news linked to them, or "none recorded" said plainly
-  if (!sides && !i.pinId && !i.insightKey && exact.topic?.narrow && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|how many|count|number of|per (zone|ward|month))\b/i.test(message)) {
+  if (rulesOnly && !sides && !i.pinId && !i.insightKey && exact.topic?.narrow && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|how many|count|number of|per (zone|ward|month))\b/i.test(message)) {
     const r = await fast(consoleScope, { ...exact, intent: exact.intent === "PRIORITY_INCIDENT_LIST" ? exact.intent : "INCIDENT_LIST", refinement: false,
       because: `a named kind of case (${exact.topic.label}): the matching cases` });
     if (r) {
@@ -923,15 +1525,18 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const lastAnswer = turns.findLast((t) => t.role === "assistant");
   const prevScope = ((lastAnswer?.plan?.tools as { args?: { scope?: Scope } }[] | undefined)?.find((t) => t.args?.scope)?.args?.scope)
     ?? (lastAnswer?.scope && typeof lastAnswer.scope === "object" && (lastAnswer.scope as Scope).period ? lastAnswer.scope as Scope : undefined);
-  if (!route && !i.pinId && !i.insightKey && prevScope && (BARE_WHY.test(message) || whyAboutThat(message, !!placeData))) {
-    const s = ScopeSchema.parse(prevScope);
+  if (rulesOnly && !route && !i.pinId && !i.insightKey && prevScope && (BARE_WHY.test(message) || whyAboutThat(message, !!placeData))) {
+    // "why is the first one so high?" after a ranking of zones: that zone, as the Collector saw it (it was once explained with
+    // the whole district, and answered "garbage is 100% of reports")
+    const picked = await zoneAtPosition(i.user, sessionId, message);
+    const s = ScopeSchema.parse(picked != null ? { ...prevScope, zone: picked } : prevScope);
     route = { intent: "tool_question", language: null, normalized: message, scope: s, scopeRaw: {}, tools: [{ name: "change_drivers", args: { scope: s } }],
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: ["Read as: why the previous answer's figures are what they are (what changed, where, and what drove it)."], offline: false };
   }
   // "is it getting worse?" after the air quality or a price: the same readings again, against their usual level (the 28-day mean
   // or the previous report), not the incidents; after anything else, what changed and why
   const prevTools = (lastAnswer?.plan?.tools ?? []) as { name: string; args: Record<string, unknown> }[];
-  if (!route && !i.pinId && !i.insightKey && prevScope && message.length <= 50 && /^\s*(is|are|has|have)\s+(it|that|this|they|these|those)\b/i.test(message)
+  if (rulesOnly && !route && !i.pinId && !i.insightKey && prevScope && message.length <= 50 && /^\s*(is|are|has|have)\s+(it|that|this|they|these|those)\b/i.test(message)
     && /\b(getting|got|becoming) (better|worse)|\b(improv|worsen)(ing|ed)\b|\b(rising|falling|going up|going down)\b/i.test(message)) {
     const reading = prevTools.find((t) => t.name === "environment" || t.name === "mandi_prices");
     const s = ScopeSchema.parse(prevScope);
@@ -939,13 +1544,31 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       chartEdit: null, actions: [], clarify: null, refusal: null, offline: false,
       assumptions: [reading ? "Read as: the same readings, against their usual level." : "Read as: whether the previous answer's figures are rising or falling, and why."] };
   }
-  const direct = !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
+  // a breakdown or a calculation no console tool offers ("dengue per ward week by week since 1 September", "complaints through
+  // each channel", "wards with more than 10 flooding incidents", "average hours to close road damage by zone"): the model plans the
+  // query, code compiles and runs it read-only. The rules below once took all four and answered "not recorded".
+  if (!route && !i.pinId && !i.insightKey && aiStatus().available && needsQuery(message)) {
+    // ("week by week" or "per month" is a grouping, not the period: it once limited "since 1 September" to the last 7 days)
+    const periodWords = message.replace(/\b(week|month|day) by (week|month|day)\b|\b(per|by|each|every)\s+(day|week|month|hour)s?\b|\b(day|week|month)[- ]?wise\b/gi, " ");
+    route = { intent: "adhoc_question", language: null, normalized: message, scope: { ...consoleScope, period: customWindow(periodWords)?.period ?? periodFromWords(periodWords) ?? consoleScope.period }, scopeRaw: {},
+      tools: [], chartEdit: null, actions: [], clarify: null, refusal: null, offline: false, forcedQuery: true,
+      assumptions: ["A breakdown no console view offers: the figures were computed with a query on the records."] };
+  }
+  // a named case or story ("youtuber harish case give me brief") is that story, before any keyword rule: "brief" once
+  // answered it with the whole district's briefing
+  if (rulesOnly && !route && !i.pinId && !i.insightKey && storySearchText(message, names)) route = storyRoute(message, consoleScope, names);
+  const direct = rulesOnly && !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
   if (direct) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
     // "which ward has the most garbage complaints": the ranking counts only the kind the question names
     if (["zones", "taluks", "departments", "place_breakdown"].includes(direct.name) && !s.cat) {
       const c = classify(message);
       if (c && c.conf >= 0.6 && names.cats.has(c.code)) s.cat = c.code;
+      // "which road has the most?" after "road accidents this month": the ranking counts what the previous answer counted
+      else if (prevScope?.cat && message.length <= 60 && names.cats.has(prevScope.cat)) {
+        s.cat = prevScope.cat;
+        if (prevScope.period && !PERIOD_WORDS.test(message)) s.period = prevScope.period;
+      }
     }
     // "average resolution time for Metrowater": that department's pace (its row and the district's, side by side)
     if (direct.name === "resolution_times" && !s.dept) {
@@ -961,7 +1584,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   }
   // a kind of event the district's data has no word for ("earthquakes this week"): its words are searched in the records, and
   // "none recorded" is said plainly; the router once listed every incident of the week for it
-  if (!route && !i.pinId && !i.insightKey && !exact.topic && !placeData && !deptFromWords(message, names) && !turns.length
+  if (rulesOnly && !route && !i.pinId && !i.insightKey && !exact.topic && !placeData && !deptFromWords(message, names) && !turns.length
       && ["INCIDENT_LIST", "INCIDENT_COUNT", "PRIORITY_INCIDENT_LIST", "GENERAL_DISTRICT_QUERY"].includes(exact.intent) && ASKS_WHEN_OR_HOW_MANY.test(message)
       && !PRICE_OR_READING.test(message) && unknownSubject(message, names).length) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
@@ -969,6 +1592,15 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       chartEdit: null, actions: [], clarify: null, refusal: null, assumptions: ["Not a kind of incident the console files: its words were searched in the records."], offline: false };
   }
   if (!route) route = cached<Route>(routeKey);
+  if (!route && agentFailed) {
+    // the agent was tried and could not answer: the rules, without a second wait on the model
+    route = !i.pinId && !i.insightKey ? storyRoute(message, consoleScope, names) : null;
+    if (!route && !i.pinId && !i.insightKey) {
+      const r = await fast(consoleScope);
+      if (r) { r.card.offline = true; return r; }
+    }
+    route ??= rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
+  }
   if (!route) {
     if (aiStatus().available) {
       try {
@@ -977,179 +1609,42 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       } catch (e) {
         if (i.signal?.aborted) throw e;
         if (e instanceof AiBudgetError) return finish(errorCard(card0(null), e.message), { intent: "error" });
+        if (!(e instanceof AiBusyError)) console.warn("[assistant] router failed; the rules answer:", (e as Error).message);
         notes.push(e instanceof AiBusyError ? `The AI service was busy (retry in ${e.retryAfter} s), so this was answered from the data without it.`
           : `The AI step failed (${(e as Error).message.slice(0, 200)}), so this was answered from the data without it.`);
         // the model is out: the keyword rules answer what they can from the store
-        if (!i.pinId && !i.insightKey) {
+        // ("youtuber harish case what happened": a story named in words is searched for, not answered with the newest incidents)
+        route = !i.pinId && !i.insightKey ? storyRoute(message, consoleScope, names) : null;
+        if (!route && !i.pinId && !i.insightKey) {
           const r = await fast(consoleScope);
           // (finish already added `notes` to the card's limits: pushing them again showed the note twice)
           if (r) { r.card.offline = true; return r; }
         }
-        route = rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
+        route ??= rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
       }
     } else {
       const problem = aiStatus().problem;
       notes.push(problem ? `${problem}: this was answered from the data by rules, without the language model.`
         : "The AI service is not available right now, so this was answered from the data by rules, without the language model.");
-      route = rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
+      route = (!i.pinId && !i.insightKey ? storyRoute(message, consoleScope, names) : null) ?? rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
     }
-  }
-  // "needs attention now": with no period of its own, "now" is the last 7 days, not the default 90 (the router keeps the default)
-  if (NOW_WORDS.test(message) && !PERIOD_WORDS.test(message) && route.scope?.period === DEFAULT_PERIOD && !i.pinId && !i.insightKey) {
-    const now7 = (s: Scope): Scope => (s.period === DEFAULT_PERIOD ? { ...s, period: "weekly" } : s);
-    route = { ...route, scope: now7(route.scope),
-      tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: now7(t.args.scope as Scope) } } : t)),
-      assumptions: [...route.assumptions, "“Now” read as the last 7 days."] };
   }
   // the reply language: the chip, else Tamil script, else the rules' or the router's Tanglish
   if (i.language === "auto") lang = detected.lang !== "en" ? detected.lang : route.language === "tanglish" || (route.language === "ta" && !hasTamilScript(message)) ? "tanglish" : route.language === "ta" ? "ta" : "en";
-  if (guard?.kind === "bulk" && !["out_of_scope", "unsafe", "email_followup"].includes(route.intent)) route = { ...route, intent: "bulk_request" };
-  // "what is the Black Flag March?" reads like general knowledge to a router that cannot see the day's news: before refusing,
-  // the district's own news is searched, and a story the question's words name is answered instead of refused
-  if (route.intent === "out_of_scope" && !route.offline && !i.pinId && !i.insightKey && await inOurNews(message, now)) {
-    route = { ...route, intent: "tool_question", refusal: null,
-      decision: { answer: "news_story", incidentId: null, storyId: null, find: message, count: null, focus: "all", openOnly: false, severity: null, options: [] },
-      assumptions: [...route.assumptions, "Not general knowledge: it is in the district's news, so it was answered from there."] };
+  // the code's corrections to the router's reading (ROUTE_FIXES), in order; the ones that applied are kept with the plan
+  const fixCtx: FixCtx = { i, message, names, now, placeData, turns, ctx, exact, guard, notes, fast, finish, card0, typed: !i.pinId && !i.insightKey,
+    prevAnswer: turns.some((t) => t.role === "assistant" && t.plan?.tools?.length),
+    onlyPlace: placeData?.zone != null && !/INC-[A-Z0-9]/i.test(message) && !STORY_THING.test(message.replace(/\b(case|cases|incident|incidents)\b/gi, " ")) };
+  const fixes: string[] = [];
+  for (const fix of ROUTE_FIXES) {
+    const r = await fix.run(route, fixCtx);
+    if (!r) continue;
+    if ("done" in r) return r.done;
+    route = r;
+    fixes.push(fix.name);
   }
-  // the router's understanding decides the kind of answer: one incident explained, an area overview, a list, a story, a question back
-  if (route.decision && !i.pinId && !i.insightKey && !["out_of_scope", "unsafe", "bulk_request", "smalltalk", "help", "chart_edit", "console_action", "email_followup"].includes(route.intent)) {
-    const p = planFromDecision(route, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null);
-    if (p?.clarify) {
-      const c = clarifyCard(card0(route.scope), p.clarify.question);
-      c.chips = p.clarify.options;
-      return finish(c, { intent: "clarify", router: true, options: p.clarify.options });
-    }
-    if (p?.fast) {
-      const r = await fast(route.scope, { ...p.fast, refinement: p.fast.refinement || route.intent === "plan_edit" });
-      if (r) return r;
-    }
-    if (p?.tools) route = { ...route, intent: "tool_question", tools: p.tools,
-      assumptions: [...route.assumptions, route.decision.answer === "area_summary" ? "Read as a question about the place or topic as a whole."
-        : p.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail") ? "Read as a question about one incident."
-          : p.tools.some((t) => t.name === "change_drivers") ? "Read as a question about what changed and why." : "Read as a question the console's tools answer."] };
-  }
-  // Tools first: when the router sends a question to the planner but a console tool clearly answers it, the tool wins
-  // (its numbers are the console's); the planner stays for groupings no tool offers.
-  if (route.intent === "adhoc_question" && !route.offline && !/\b(ward|channel|source|per day|daily|hourly|by hour|between|from \d)/i.test(message)) {
-    // the rules' pick, on the router's scope: a specific tool, or the incidents list for a question naming a category or a place
-    const rules = rulesRoute(message, route.scope, names, placeData?.zone != null);
-    const t = rules.tools[0];
-    const countOrList = /how many|evlo|evvalo|evvalavu|count|number of|\bany\b|\blist\b|\bshow\b|எத்தனை|எவ்வளவு/i.test(message)
-      && !/\b(average|avg|mean|median|resolution time|per|by (zone|department|category|month|week|day))\b/i.test(message);
-    if (rules.intent === "tool_question" && t && (PREFER_TOOL.has(t.name) || (t.name === "incidents" && countOrList))) {
-      route = { ...route, intent: "tool_question", scope: rules.scope, tools: [t], assumptions: [...route.assumptions, `Answered with the console's ${t.name} data.`] };
-    }
-  }
-  // "only Adyar zone", "what about last month?", "same for Zone 9": a short follow-up that changes only where or when re-asks the
-  // previous answer with that change (the conversation's memory), whatever new question the router read into it
-  const prevAnswer = turns.some((t) => t.role === "assistant" && t.plan?.tools?.length);
-  if (prevAnswer && isRefinement(message, !!placeData) && !["out_of_scope", "unsafe", "chart_edit", "console_action", "help", "smalltalk"].includes(route.intent)) {
-    const raw: Row = { ...route.scopeRaw };
-    if (placeData?.zone != null && raw.zone == null) raw.zone = placeData.zone;
-    route = { ...route, intent: "plan_edit", tools: [], scopeRaw: raw, assumptions: [...route.assumptions, "Read as a follow-up: the previous answer, with this change."] };
-  }
-  // "only Zone 13" after an answer re-asks that answer for Zone 13; changing the console itself needs the message to say so
-  if (route.intent === "console_action" && turns.some((t) => t.role === "assistant" && t.plan?.tools?.length)
-    && !/\b(console|dashboard|screen|page|open)\b|கன்சோல்|டாஷ்போர்டு/i.test(message)) {
-    const raw: Row = { ...route.scopeRaw };
-    for (const a of route.actions) {
-      if (a.action === "filter_zone" && a.zone != null) raw.zone = a.zone;
-      if (a.action === "filter_taluk" && a.taluk) raw.taluk = a.taluk;
-      if (a.action === "filter_dept" && a.dept) raw.dept = a.dept;
-      if (a.action === "filter_cat" && a.cat) raw.cat = a.cat;
-      if (a.action === "set_period" && a.period) raw.period = a.period;
-    }
-    route = { ...route, intent: "plan_edit", scopeRaw: raw, actions: [], tools: [] };
-  }
-  // "road accident trend": one category over time is incident_series; category_trends is for comparing categories
-  if (route.intent === "tool_question" && route.scope.cat && route.tools.length === 1 && route.tools[0].name === "category_trends"
-    && !/\b(categor|compare|vs\.?|versus|types?|each|all)\b|வகை/i.test(message)) {
-    route = { ...route, tools: [{ name: "incident_series", args: { scope: route.scope } }],
-      assumptions: [...route.assumptions, "One category over time: answered with its incident series and usual range."] };
-  }
-  // a place is a filter, not a keyword: "Velachery" searched as text finds only incidents whose title says so
-  if (placeData && (placeData.zone != null || placeData.asked_for_taluk) && route.intent === "tool_question") route = placeAsScope(route, placeData, names);
-  // a department's name is not a category: "how is the Storm Water Drain department performing" was filtered to "Drain works site
-  // safety". The category stays only when the words left after the department's name still name it.
-  if (route.scope.cat && !i.pinId && !i.insightKey) {
-    const dn = deptFromWords(message, names);
-    const deptName = dn ? names.depts.get(dn.code)?.name ?? "" : "";
-    if (dn) {
-      const rest = message.replace(new RegExp(deptName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), " ").replace(/\b(department|dept)\b/gi, " ");
-      const still = classify(rest);
-      if (!still || still.code !== route.scope.cat || still.conf < 0.6) {
-        const cat = route.scope.cat;
-        const drop = (s: Scope): Scope => (s.cat === cat ? { ...s, cat: null } : s);
-        route = { ...route, scope: drop(route.scope), tools: route.tools.map((t) => (t.args?.scope ? { ...t, args: { ...t.args, scope: drop(t.args.scope as Scope) } } : t)),
-          assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `"${deptName || dn.code}" read as the department, not as a kind of incident.`] };
-      }
-    }
-  }
-  // smalltalk is greetings and thanks; "what does test data mean?" is a help question
-  if (route.intent === "smalltalk" && !SMALLTALK.test(message) && isHelpQuestion(message)) route = { ...route, intent: "help" };
-  // a short "make it a pie" / "show on map" after an answer is a chart edit, whatever the router called it
-  if (route.intent !== "chart_edit" && !["out_of_scope", "unsafe"].includes(route.intent) && turns.some((t) => t.role === "assistant")
-    && message.length <= 40 && ((editFromText(message) && isBareEdit(message)) || topNFromText(message) != null)) route = { ...route, intent: "chart_edit" };
-  // "what is this murder case in Adyar?": one specific incident, told as a story, whatever list the router picked
-  // ("tell me about the Anna Nagar incident" names only a place and the word "incident": that is the place's summary)
-  const onlyPlace = placeData?.zone != null && !/INC-[A-Z0-9]/i.test(message)
-    && !STORY_THING.test(message.replace(/\b(case|cases|incident|incidents)\b/gi, " "));
-  // (keyword overrides for the rules only: the router's decision already says one incident or a whole place)
-  if (!route.decision && ["tool_question", "adhoc_question"].includes(route.intent) && STORY.test(message) && STORY_THING.test(message) && !onlyPlace
-    && !route.tools.some((t) => t.name === "incident_story" || t.name === "incident_detail")) {
-    route = { ...route, intent: "tool_question", tools: [{ name: "incident_story", args: { text: message, scope: route.scope } }],
-      assumptions: [...route.assumptions, "Read as a question about one incident: its story."] };
-  }
-  if (!route.decision && onlyPlace && route.tools.some((t) => t.name === "incident_story")) {
-    route = { ...route, intent: "tool_question", tools: [{ name: "zone_profile", args: { scope: route.scope, zone: Number(placeData!.zone) } }],
-      assumptions: ["Read as a question about the place, not one incident: its snapshot."] };
-  }
-  // "contact of health department", "who is the officer for PWD in Adyar": the officials' directory, never the incidents of a
-  // subject the department's name happens to share ("health")
-  if (CONTACT.test(message) && !route.tools.some((t) => t.name === "contacts") && !["out_of_scope", "unsafe"].includes(route.intent)) {
-    const dept = await contactDept(message, names);
-    const zone = placeData?.zone != null ? Number(placeData.zone) : route.scope.zone ?? null;
-    if (dept || zone) {
-      route = { ...route, intent: "tool_question", tools: [{ name: "contacts", args: { dept, zone } }], decision: undefined,
-        assumptions: [...route.assumptions, "Read as a request for the officials to contact."] };
-    }
-  }
-  // several subjects in one question ("road accidents, flooding and public-infrastructure complaints"): every part is answered,
-  // side by side, instead of the data being narrowed to the one subject a single category filter can hold
-  const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent)
-    && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts", "change_drivers"].includes(t.name)) ? multiPart(message) : null;
-  // "why did flooding rise in Adyar?": the explanation of a change, narrowed to the one subject it names (its main category),
-  // not a side-by-side summary that gives the figures but no reasons
-  if (!parts && !route.scope.cat && route.tools.length === 1 && route.tools[0].name === "change_drivers") {
-    const one = multiPart(message);
-    if (one?.length === 1 && one[0].codes.length) {
-      const scope = { ...route.scope, cat: one[0].codes[0] };
-      route = { ...route, scope, tools: [{ name: "change_drivers", args: { ...route.tools[0].args, scope } }],
-        assumptions: [...route.assumptions, `Narrowed to ${one[0].label}.`] };
-    }
-  }
-  if (parts) {
-    route = { ...route, intent: "tool_question", scope: { ...route.scope, cat: null }, tools: [{ name: "category_summary", args: { scope: { ...route.scope, cat: null }, parts } }],
-      assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `Answered part by part: ${parts.map((x) => x.label).join("; ")}.`] };
-  }
-  // "how many road accidents": a keyword that only repeats the category filter would search titles for "road accidents"
-  // (they say "Road accident") and find none; the category already narrows the list
-  route = { ...route, tools: route.tools.map((t) => {
-    // a severity or status filter only when the question names one ("how many road accidents" is all of them, not the severe ones)
-    if (t.args.sev && !/\b(severe|serious|critical|high|medium|low|minor|major|grave)\b|கடுமை|தீவிர/i.test(message)) t = { ...t, args: { ...t.args, sev: null } };
-    if (t.args.status && !/\b(open|pending|unresolved|ongoing|in progress|closed|resolved|awaiting|verif\w*|unverified|critical|lapsed)\b|நிலுவை/i.test(message)) t = { ...t, args: { ...t.args, status: null } };
-    const q = typeof t.args.q === "string" ? t.args.q.trim() : "";
-    const cat = (t.args.scope as Scope | undefined)?.cat;
-    if (!q || !cat) return t;
-    const label = (names.cats.get(cat)?.label ?? "").toLowerCase();
-    const stem = (w: string) => w.toLowerCase().replace(/(es|s)\b/g, "").replace(/[^a-z ]+/g, " ").trim();
-    const repeats = classify(q)?.code === cat || (!!label && (stem(label).includes(stem(q)) || stem(q).includes(stem(label))));
-    return repeats ? { ...t, args: { ...t.args, q: null } } : t;
-  }) };
-  // a story needs the words that describe the incident: the question itself when the router gave none
-  route = { ...route, tools: route.tools.map((t) => (t.name === "incident_story" && !String(t.args.text ?? "").trim() ? { ...t, args: { ...t.args, text: message } } : t)) };
-  if (i.lockDept) route = { ...route, scope: { ...route.scope, dept: i.lockDept }, tools: lockTools(route.tools, i.lockDept, route.scope, notes) };
-  const plan = { intent: route.intent, normalized: route.normalized, scope: route.scope, tools: route.tools, chartEdit: route.chartEdit, offline: route.offline };
+  if (fixes.length) console.info(`[assistant] corrections: ${fixes.join(", ")}`);
+  const plan = { intent: route.intent, normalized: route.normalized, scope: route.scope, tools: route.tools, chartEdit: route.chartEdit, offline: route.offline, fixes };
 
   switch (route.intent) {
     case "out_of_scope":
@@ -1214,7 +1709,9 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // tools first: a tool question the router named no tool for, or a planner question a console tool clearly answers
   // ("tomato price"), takes the rules' pick; the planner is for groupings no tool offers, and is slower and less certain
   const rulesPick = usePlanner ? rulesRoute(message, route.scope, names, placeData?.zone != null) : null;
-  if (rulesPick && rulesPick.intent === "tool_question" && rulesPick.tools.length
+  // (a breakdown sent to the planner in code keeps it: "average hours to close road damage by zone" was answered with the zone
+  // counts, which hold no times, and said "not recorded"; the rules' pick stays the fallback when the planner fails)
+  if (rulesPick && rulesPick.intent === "tool_question" && rulesPick.tools.length && !route.forcedQuery
     && ((!tools.length && route.intent === "tool_question") || PREFER_TOOL.has(rulesPick.tools[0].name))) {
     tools = rulesPick.tools;
     usePlanner = false;
@@ -1227,6 +1724,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     } catch (e) {
       if (i.signal?.aborted) throw e;
       if (e instanceof AiBusyError || e instanceof AiUnavailableError) return finish(errorCard(card0(route.scope), (e as Error).message), plan);
+      console.warn(`[assistant] planner could not build a query: ${(e as Error).message.slice(0, 300)}`);
       // the planner could not build a query: the console's own data for the question, when the rules find some
       if (rulesPick && rulesPick.intent === "tool_question" && rulesPick.tools.length) {
         tools = rulesPick.tools;
@@ -1261,6 +1759,15 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   }
 
   // 4. compose
+  const card = await composeStage(i, { route, results, toolLog, adhoc, question, message, lang, names, now, placeData, insight, pin, models, turns });
+  return finish(card, { ...plan, tools: toolLog.map((t) => ({ name: t.name, args: t.args })), adhoc: adhoc?.plan ?? null });
+}
+
+/** Step 4: the answer card from the tools' results (or the ad-hoc query's rows), written by the composer and checked. */
+async function composeStage(i: ChatInput, s: { route: Route; results: ToolResult[]; toolLog: AnswerCard["sources"]["tools"]; adhoc: { plan: QueryPlan; results: QueryResult[] } | null;
+  question: string; message: string; lang: Lang; names: RefNames; now: string; placeData: Row | null; insight: Awaited<ReturnType<typeof insightByKey>>;
+  pin: Row | null; models: CallInfo[]; turns: Row[] }): Promise<AnswerCard> {
+  const { route, results, toolLog, adhoc, question, message, lang, names, now, placeData, insight, pin, models, turns } = s;
   i.stage("drawing");
   // readings, prices and directories are not period-bound: their card says "Latest data", not the console's period
   const scope = adhoc ? route.scope : results[0]?.scope ?? null;
@@ -1335,7 +1842,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (c) card = { ...card, chart: c, display: c.type.startsWith("map") ? "map" : c.type === "table" ? "table" : "chart" };
   }
   if (route.intent === "bulk_request") card = bulkFinish(card, route, names, lang, message, p);
-  return finish(card, { ...plan, tools: toolLog.map((t) => ({ name: t.name, args: t.args })), adhoc: adhoc?.plan ?? null });
+  return card;
 }
 
 // ---------------------------------------------------------------- compose --
@@ -1360,7 +1867,16 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   base.testData = c.testData;
   const quotable = p.datasets.flatMap((d) => d.rows.flatMap((r) => Object.values(r).filter((v): v is string => typeof v === "string" && v.length > 12)));
   // the caveats are written by the code from the data (e.g. "1,080 of 1,228 incidents …"): a draft that repeats them is not inventing numbers
-  const context = contextNumbers(c.message, base.scopeLine, c.route.normalized, ...c.caveats);
+  // ward and zone numbers in the rows ("Ward 147") name a place, not a figure: the checker knows them
+  const placeNumbers = p.datasets.flatMap((d) => d.fields.filter((f) => f.kind !== "value").flatMap((f) => d.rows.flatMap((r) => {
+    const v = r[f.key];
+    return typeof v === "number" && /zone|ward/i.test(f.key) ? [v] : typeof v === "string" ? (v.match(/^(?:Ward|Zone)\s+(\d{1,3})$/i)?.slice(1).map(Number) ?? []) : [];
+  })));
+  // an incident's news articles, as their text says it (incident_story): the story is told from them, and the figures they
+  // state may be quoted ("detained four hours into a 24-hour agitation")
+  const articles = c.results.flatMap((r) => ["incident_story", "incident_detail", "search_records"].includes(r.tool) ? ((r.data as { articles?: string[] }).articles ?? []) : []);
+  const context = [...contextNumbers(c.message, base.scopeLine, c.route.normalized, ...c.caveats, ...articles), ...placeNumbers];
+  quotable.push(...articles);
   const fallback = (why: string | null): AnswerCard => {
     const t = templateCard({ ...base, table: p.table, display: p.display, chart: p.chart ? checkChart(p.chart, p.datasets).spec : null, caveats: c.caveats }, p, facts, p.kpis);
     t.followUps = EXAMPLES[lang].slice(0, 3);
@@ -1403,7 +1919,8 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   const testLine = "not relevant: never mention test, synthetic or real data";
   const ctx = {
     question: c.message, normalized: c.route.normalized, scopeLine: base.scopeLine, asOf: base.asOf, testData: testLine, caveats: c.caveats,
-    facts: factLines(promptFacts(facts, p)), lead: lead ? `${lead.label} = ${lead.value}` : "", datasets: datasetsText(p.datasets, [p.chart?.dataset, p.table]), suggested: p.chart ? JSON.stringify(p.chart) : p.display === "kpi" ? "kpi tiles" : "none",
+    facts: factLines(promptFacts(facts, p)), lead: lead ? `${lead.label} = ${lead.value}` : "", datasets: datasetsText(p.datasets, [p.chart?.dataset, p.table])
+      + (articles.length ? `\n\nnews articles about this incident (different reports of it; read them all and tell ONE story from them, each fact once, the latest development last; where reports differ on a figure or name, say so):\n${articles.map((a) => `- ${a}`).join("\n")}` : ""), suggested: p.chart ? JSON.stringify(p.chart) : p.display === "kpi" ? "kpi tiles" : "none",
     actions: allowedActionsText(p, c.results, base.scope?.period ?? null, i.scope.period), previous: c.previous, repair: "", count: c.count, parts: c.parts, visual: (c.visual ? "yes" : "no") as "yes" | "no"
   };
   // only the instructions this answer needs (fewer tokens against the free tiers' per-minute limits)
@@ -1419,7 +1936,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const r = await generateJson({ role: "reasoning", name: "composer", schema: ComposerSchema, lenient: ComposerLenient, system: composerSystem(lang, need), prompt: composerPrompt(ctx),
-        temperature: 0.2, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal });
+        temperature: 0.2, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal, chat: true });
       c.models.push(r.info);
       draft = r.object;
       // a figure placed against the wrong zone or department ("Royapuram ... {{zone.8.open}}", Anna Nagar's) is asked again once
@@ -1436,13 +1953,28 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       const unknown: string[] = [];
       // a placeholder the model wrote half of ("{{departments.top") is as unknown as a wrong id: it must never reach the card
       const fill = (s: string) => { const f = fillFacts(aliasRowIds(s, factIds), facts); unknown.push(...f.unknown); if (/\{\{|\}\}/.test(f.text)) unknown.push(f.text.match(/\{\{[^\s}]*/)?.[0]?.slice(2) || "malformed placeholder"); return f.text; };
-      draft = { ...draft, headline: fill(draft.headline), answerMarkdown: fill(draft.answerMarkdown), voiceSummary: fill(draft.voiceSummary),
+      // ("one person was reported injured 1": a figure the draft already said as a word loses its repeated digits)
+      draft = { ...draft, headline: fill(draft.headline), answerMarkdown: withoutEchoedNumbers(fill(draft.answerMarkdown)), voiceSummary: withoutEchoedNumbers(fill(draft.voiceSummary)),
         caveats: draft.caveats.map(fill), chart: draft.chart ? { ...draft.chart, title: fill(draft.chart.title), subtitle: draft.chart.subtitle ? fill(draft.chart.subtitle) : draft.chart.subtitle } : null };
       if (unknown.length) {
         verdict = { ok: false, checked: 0, unmatched: unknown.map((u) => `{{${u}}}`) };
         ctx.repair = `These fact ids do not exist: ${[...new Set(unknown)].join(", ")}. Use only ids listed in FACTS.`;
         regenerated = true;
         continue;
+      }
+      // a draft that corrects itself ("453 vs 487 is incorrect, Royapuram is 487") passes the number check, every figure
+      // being real: asked again once; a second one loses those sentences, and a headline that does it is not shown
+      const corrections = selfCorrections(`${draft.headline}\n${draft.answerMarkdown}`);
+      if (corrections.length) {
+        console.warn(`[assistant] draft corrects itself: ${corrections[0].slice(0, 120)}`);
+        if (attempt === 0) {
+          verdict = { ok: false, checked: 0, unmatched: ["self-correction in the draft"] };
+          ctx.repair = `The draft corrects itself ("${corrections[0].slice(0, 100)}"). State each figure once, correctly, with no corrections or remarks about the draft.`;
+          regenerated = true;
+          continue;
+        }
+        if (selfCorrections(draft.headline).length) return fallback("The draft corrected itself twice, so a template wrote this answer.");
+        draft = { ...draft, answerMarkdown: withoutSelfCorrections(draft.answerMarkdown).text, voiceSummary: withoutSelfCorrections(draft.voiceSummary).text };
       }
     } catch (e) {
       if (i.signal?.aborted) throw e;
@@ -1714,7 +2246,7 @@ async function helpAnswer(i: ChatInput, route: Route, message: string, lang: Lan
   try {
     const r = await generateJson({
       role: "fast", name: "help", schema: ComposerSchema, lenient: ComposerLenient, system: composerSystem(lang), temperature: 0.2, maxOutputTokens: 900, user: i.user,
-      abortSignal: i.signal,
+      abortSignal: i.signal, chat: true,
       prompt: composerPrompt({ question: message, normalized: route.normalized, scopeLine: "not applicable", asOf: now, testData: "no", caveats: [], lead: "",
         facts: "none (explain from the help text in DATASETS; state no numbers that are not in it)", datasets: `help:\n${topics.join("\n")}`, suggested: "none (display text)",
         actions: "", previous: "", repair: "" })
@@ -1727,6 +2259,7 @@ async function helpAnswer(i: ChatInput, route: Route, message: string, lang: Lan
       followUps: d.followUps.slice(0, 3), consoleActions: validActions(d.consoleActions, names, lang, []) };
   } catch (e) {
     if (i.signal?.aborted) throw e;
+    console.warn("[assistant] help answer: the model's reply was not used; the help text is shown:", (e as Error).message);
     return { ...base, display: "text", headline: topics[0].split(":")[0], answerMarkdown: topics.join("\n\n"), voiceSummary: topics[0].slice(0, 300), followUps: EXAMPLES[lang].slice(0, 3) };
   }
 }
@@ -1735,12 +2268,14 @@ async function helpAnswer(i: ChatInput, route: Route, message: string, lang: Lan
 
 async function planAndRun(i: ChatInput, route: Route, message: string, now: string, models: CallInfo[]): Promise<{ plan: QueryPlan; results: QueryResult[] }> {
   const cat = await loadCatalog();
-  const catalog = renderCatalog(cat, tablesFor(`${message} ${route.normalized}`));
+  // the category codes a kind of incident is filtered on ("contains 'Road'" once counted road accidents as road damage)
+  const n = await refNames();
+  const catalog = `${renderCatalog(cat, tablesFor(`${message} ${route.normalized}`))}\n\nCategories (category_code: name): ${[...n.cats].map(([k, v]) => `${k}: ${v.label}`).join("; ")}`;
   let repair = "";
   let last: Error | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     const r = await generateJson({
-      role: "reasoning", name: "planner", schema: PlanSchema, system: PLANNER_SYSTEM, temperature: 0, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal,
+      role: "reasoning", name: "planner", schema: PlanSchema, system: PLANNER_SYSTEM, temperature: 0, maxOutputTokens: 1400, user: i.user, abortSignal: i.signal, chat: true,
       prompt: plannerPrompt({ catalog, places: "", scope: JSON.stringify(route.scope), previous: "", question: route.normalized, asOf: now, repair })
     });
     models.push(r.info);

@@ -7,12 +7,16 @@
  */
 
 export interface DirectTool { name: "verification_queue" | "dept_backlog" | "news_gaps" | "environment" | "change_drivers" | "departments" | "zones" | "taluks" | "briefing"
-  | "place_breakdown" | "resolution_times"; args: Record<string, unknown>; because: string }
+  | "place_breakdown" | "resolution_times" | "unusual_rises"; args: Record<string, unknown>; because: string }
 
 /** a question about incidents or complaints of that kind ("air pollution complaints"), not about the readings themselves */
 const INCIDENT_WORDS = /\b(complaints?|incidents?|cases?|reports?|grievances?|petitions?)\b|புகார்|சம்பவ/i;
 const AQI = /\b(aqi|air quality|air pollution level|pollution levels?)\b|காற்று(த்)? தரம்/i;
-const LAKES = /\b(lakes?|reservoirs?|tanks?)\b.{0,40}\b(full|storage|level|capacity|filled)\b|\b(full|storage|level|capacity)\b.{0,30}\b(lakes?|reservoirs?)\b|ஏரி/i;
+const LAKES = /\b(lakes?|reservoirs?|tanks?)\b.{0,40}\b(full|storage|levels?|capacity|filled)\b|\b(full|storage|levels?|capacity)\b.{0,30}\b(lakes?|reservoirs?)\b|ஏரி/i;
+/** "which hospitals are overloaded?", "hospital beds available now": the live bed readings, not an uploaded dataset or incidents */
+const HOSPITALS = /\b(hospitals?|beds?)\b.{0,40}\b(overload\w*|over-?crowd\w*|crowded|full|capacity|occupancy|occupied|available|availability|shortage|vacant)\b|\b(overload\w*|over-?crowd\w*)\b.{0,20}\bhospitals?\b|மருத்துவமனை.{0,20}(படுக்கை|நிரம்ப)/i;
+/** "unusual spikes this week", "any anomalies?", "sudden rise anywhere?": the console's own check for unusual rises */
+const UNUSUAL = /\b(unusual|abnormal|anomal\w*|spikes?|sudden (rise|jump|increase|surge)s?|outbreaks?)\b/i;
 const RAIN = /\b(how much|rainfall|rain fell|rained|mm of rain)\b.{0,30}\b(rain|rainfall|today|yesterday|24 hours?|mm)\b|\bhow much rain\b|மழை அளவு/i;
 const FORECAST = /\b(forecast|forecasts|will it rain|is it going to rain|rain (alert|warning)s?|weather (warning|alert|update|report|outlook|today|tomorrow|this week|next)\w*|imd)\b|வானிலை|மழை (எச்சரிக்கை|முன்னறிவிப்பு)/i;
 /** "more than 90%", "above 85 %", "over 90 percent": the threshold a reading must pass */
@@ -52,7 +56,7 @@ const FOCUS = /\bwhat should (i|we) (focus|look|concentrate|act|work) on\b|\bwhe
  * departments, not a list of the newest incidents (the rules once listed eight garbage incidents for it).
  */
 const WHICH_MOST = (unit: string) => new RegExp(`\\b(which|what|top|highest|worst)\\s+(\\d+\\s+)?${unit}s?\\b.{0,60}\\b(most|highest|maximum|max|more|biggest|largest|top|worst|leads?|leading)\\b`, "i");
-const MOST_DEPT = WHICH_MOST("(department|dept)"), MOST_ZONE = WHICH_MOST("zone"), MOST_TALUK = WHICH_MOST("taluk"), MOST_WARD = WHICH_MOST("(ward|area|locality)");
+const MOST_DEPT = WHICH_MOST("(department|dept)"), MOST_ZONE = WHICH_MOST("zone"), MOST_TALUK = WHICH_MOST("taluk"), MOST_WARD = WHICH_MOST("(ward|area|locality|road|street|spot|place|location|junction)");
 /** "average resolution time", "how quickly does Metrowater resolve complaints", "which department resolves fastest": time to close */
 const RESOLUTION = /\b(average|avg|mean|median|typical)\s+(time\s+(to|for)\s+(resolve|resolution|close|closing|fix)\w*|(resolution|closing|closure|turnaround|response)\s+time)\b|\b(resolution|closure|turnaround)\s+times?\b|\bhow (fast|quickly|long)\b.{0,40}\b(resolve|resolved|resolving|close|closed|closing|fix|fixed|fixing|clear|cleared|clearing)\b|\bresolves? (the )?(fastest|quickest|slowest)\b|\b(fastest|quickest|slowest) (to )?resolv\w*|\bresolv\w*\b.{0,30}\b(fastest|quickest|slowest|fast|quickly|slowly)\b|\b(fastest|quickest|slowest)\b.{0,15}\b(clos|resolv|fix|clear|dispos)\w*|\b(clos|dispos)\w*\b.{0,30}\b(fastest|quickest|slowest)\b/i;
 const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|missed (the |their )?deadline|sla)\b/i;
@@ -62,9 +66,24 @@ const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|misse
  */
 const HAPPENED = /^\s*(so\s+)?what('s| has| all| all has)?\s*(happened|been happening)\s*(today|yesterday|this week|this month|last week|last month|so far|recently|in the last \d+ (hours|days))?\s*[?.!]*\s*$|^\s*(indha|intha|inniki|innaiki|nethu|today|this|last)?\s*(week|maasam|month|vaaram)?\s*enna\s*(ellam\s*)?nada(n?d|n?t)h\w*\s*[?.!]*\s*$|^\s*(இந்த வாரம்|இன்று|நேற்று)?\s*என்ன நடந்த\S*\s*[?]*\s*$/i;
 /** "is the garbage situation in Tondiarpet getting better?", "is flooding improving?": the period against the one before, and why */
-const TREND_Q = /\b(getting|got|becoming|is it|are they) (better|worse)\b|\b(improv|worsen)(ing|ed)\b|\bon the (rise|decline)\b/i;
+const TREND_Q = /\b(getting|got|becoming|is it|are they) (better|worse)\b|\b(improv|worsen)(ing|ed)\b|\bon the (rise|decline)\b|\b(is|are)\b.{0,30}\b(going|gone) (up|down)\b|\b(is|are)\b.{0,30}\b(increasing|decreasing|rising|falling)\b/i;
 /** "brief me", "summary for today's meeting with the commissioner", "talking points for the review": the briefing */
-const BRIEF = /\bbrief me\b|\b(summary|summarise|summarize|brief(ing)?|notes?|talking points|points)\b.{0,40}\b(meeting|review|commissioner|minister|secretary|cm|press)\b|\b(prepare|give me|draft)\b.{0,20}\b(brief(ing)?|daily summary|situation report|sitrep)\b|\bsitrep\b/i;
+const BRIEF = /\bbrief me\b|\b(summary|summarise|summarize|brief(ing)?|notes?|talking points|points)\b.{0,40}\b(meeting|review|commissioner|minister|secretary|cm|press)\b|\b(prepare|give me|draft)\b.{0,20}\b(brief(ing)?|daily summary|situation report|sitrep)\b|\bsitrep\b|\bwhat (should|shall|do|can) i (tell|say to|report to|present to|update|brief)\b.{0,40}\b(commissioner|minister|secretary|cm|meeting|review|press|media|government|chief)\b|\b(tell|report to|update|brief)\b.{0,12}\b(the )?(commissioner|minister|chief secretary|cm)\b/i;
+
+/**
+ * "how is the Storm Water Drain department doing?", "Metrowater performance": one department's record, not its incidents
+ * (it was once answered with eight drainage incidents, "Drain" read as the category)
+ */
+const DEPT_DOING = /\bhow (is|are|has|have) (the )?[a-z&\s.-]{2,40}\b(department|dept|wing|division|board|corporation|police|metrowater|pwd|swd|swm|tnpcb|tangedco)\b.{0,20}\b(doing|performing|faring|done|performed|working)\b|\b(performance|track record|efficiency) of (the )?[a-z&\s.-]{2,40}\b(department|dept|wing|board|police|metrowater|pwd|swd|swm|tnpcb)\b|\b(department|dept|metrowater|pwd|swd|swm|tnpcb|police)('s)? performance\b/i;
+/**
+ * "good morning, what's the situation in the district today?", "give me 3 action points for today": the briefing (both were
+ * once searched for as words in the records and answered "no incidents match")
+ */
+const OVERVIEW = /\b(situation|overview|big picture|overall status|status update)\b.{0,30}\b(district|chennai|city|today|now|this morning|overall)\b|\b(district|chennai|city)('s)? (situation|status|overview)\b|\baction (points?|items?)\b|\bto-?do (list )?(for )?today\b|\bwhat should (i|we) do (today|first|now)\b/i;
+/** "why is Teynampet high?", "why so many complaints in Adyar?": why a figure is high, explained by what moved */
+const WHY_HIGH = /\bwhy\b.{0,50}\b(high|so (high|many|much|bad)|bad|worst|leads?|leading|on top|top)\b/i;
+/** "compare this week with last week", "today vs yesterday": the period against the one before */
+const COMPARE_PREV = /\bcompare\b.{0,25}\b(this|today|the current)\b.{0,15}\b(week|month|day|quarter)?\b.{0,10}\b(with|to|vs\.?|versus|and)\b.{0,12}\b(last|previous|prior|yesterday)\b|\b(this|today)('s)? (week|month|day)?\b.{0,8}\b(vs\.?|versus|compared (to|with))\b.{0,10}\b(last|previous|yesterday)\b/i;
 
 /** The one tool that answers `message`, or null to let the router decide. */
 export function directTool(message: string): DirectTool | null {
@@ -84,10 +103,11 @@ export function directTool(message: string): DirectTool | null {
     if (MOST_DEPT.test(t) && (BACKLOG.test(t) || LATE.test(t))) return { name: "dept_backlog", args: {}, because: "asks which department has the most overdue or oldest open work" };
     if (MOST_DEPT.test(t)) return { name: "departments", args: {}, because: "asks which department has the most" };
   }
-  if (BRIEF.test(t)) return { name: "briefing", args: {}, because: "asks for a briefing or a summary for a meeting" };
+  if (BRIEF.test(t) || OVERVIEW.test(t)) return { name: "briefing", args: {}, because: "asks for a briefing or a summary for a meeting" };
   if (HAPPENED.test(t)) return { name: "briefing", args: {}, because: "asks what happened in the period" };
-  if (WHY_CHANGE.test(t)) return { name: "change_drivers", args: {}, because: "asks why something rose or fell (what changed, where, and what drove it)" };
-  if (CHANGED.test(t)) return { name: "change_drivers", args: {}, because: "asks what changed against the period before" };
+  if (WHY_CHANGE.test(t) || WHY_HIGH.test(t)) return { name: "change_drivers", args: {}, because: "asks why something rose or fell (what changed, where, and what drove it)" };
+  if (CHANGED.test(t) || COMPARE_PREV.test(t)) return { name: "change_drivers", args: {}, because: "asks what changed against the period before" };
+  if (UNUSUAL.test(t) && !INCIDENT_WORDS.test(t.replace(/\b(spikes?|outbreaks?)\b/g, ""))) return { name: "unusual_rises", args: {}, because: "asks for unusual rises (the console's spike check)" };
   // (a bare "is it getting worse?" is about the previous answer, whatever it measured: the pipeline reads it from there)
   // (a reading's trend, "is the air quality getting worse?", stays with the readings below)
   if (TREND_Q.test(t) && !/^\s*(is|are|has|have)\s+(it|that|this|they|these|those)\b/.test(t) && !AQI.test(t) && !LAKES.test(t) && !RAIN.test(t)
@@ -99,6 +119,7 @@ export function directTool(message: string): DirectTool | null {
     : /^zone/.test(top[3]) ? { name: "zones", args: {}, because: "asks for the top zones" } : { name: "taluks", args: {}, because: "asks for the top taluks" };
   if (FOCUS.test(t)) return { name: "change_drivers", args: {}, because: "asks what to focus on: what moved, what is late, and what to act on first" };
   if (RESOLUTION.test(t)) return { name: "resolution_times", args: {}, because: "asks how fast incidents are resolved (time from report to closing)" };
+  if (DEPT_DOING.test(t)) return { name: "resolution_times", args: {}, because: "asks how a department is doing: its pace, work within the deadline and backlog" };
   // "which department has the oldest pending work / the biggest backlog / is slowest": the backlog card, not a list
   if (DEPT.test(t) && BACKLOG.test(t)) return { name: "dept_backlog", args: {}, because: "asks which department's open work is oldest (the backlog card)" };
   if (MULTI.test(t) && NO_RECORD.test(t)) return { name: "news_gaps", args: { minOutlets: 2 }, because: "news reported by more than one outlet with no department record" };
@@ -106,6 +127,7 @@ export function directTool(message: string): DirectTool | null {
   if (!INCIDENT_WORDS.test(t)) {
     if (AQI.test(t)) return { name: "environment", args: { metric: "aqi", above: above(t) }, because: "asks for the air-quality readings" };
     if (LAKES.test(t)) return { name: "environment", args: { metric: "lake_pct_full", above: above(t) }, because: "asks how full the reservoirs are" };
+    if (HOSPITALS.test(t)) return { name: "environment", args: { metric: "bed_occupancy_pct", above: above(t) }, because: "asks how full the hospitals are" };
     if (RAIN.test(t)) return { name: "environment", args: { metric: "rainfall_24h_mm" }, because: "asks how much rain fell" };
     // "rain forecast for this week", "will it rain tomorrow?": IMD's district warnings for the coming days (the assistant
     // makes no forecast of its own); the records search once answered "no incidents match"

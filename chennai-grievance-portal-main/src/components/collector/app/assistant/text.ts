@@ -19,6 +19,7 @@ interface Strings {
   suggest: [string, string, string, string]; scopeNow: string; insightsNow: string;
   history: string; noHistory: string; question1: string; questionN: string;
   searchChats: string; today: string; earlier: string; regenerate: string; editQ: string; hideSide: string; defaultPeriod: string; periodTip: string;
+  allZones: string; allDepts: string; checked: (n: number) => string; checkedTip: string; openIncident: string;
 }
 
 const typesEn: Types = { horizontal_bar: "Bar chart", bar: "Column chart", line: "Line chart", area: "Area chart", donut: "Donut chart", grouped_bar: "Grouped bars",
@@ -31,8 +32,8 @@ export const T: Record<Lang, Strings> = {
     title: "Ask District IQ", subtitle: "Answers from the district's live data", placeholder: "Ask about incidents, complaints, weather, prices…", send: "Send", stop: "Stop",
     close: "Close", maximize: "Maximise", restore: "Restore", language: "Reply language", auto: "Auto",
     stages: { understanding: "Understanding", fetching: "Fetching data", drawing: "Drawing the answer" }, tryAsking: "Try asking", newChat: "New conversation",
-    fresh: (a, ok, n) => `Data as of ${a} · ${ok} of ${n} feeds up to date`, aiOff: "AI provider not configured: answering by rules", offline: "Without AI",
-    offlineTip: "Answered from the data by rules, without the language model", prev: "previous", vsPrev: "vs previous", chartTools: "Chart tools", types: typesEn,
+    fresh: (a, ok, n) => `Data as of ${a} · ${ok} of ${n} feeds up to date`, aiOff: "AI provider not configured: answering by rules", offline: "From the data",
+    offlineTip: "Answered straight from the data by rules: the AI model was busy or not needed. Every figure is exact.", prev: "previous", vsPrev: "vs previous", chartTools: "Chart tools", types: typesEn,
     table: "Table", png: "Download as image", csv: "Download data (CSV)", expand: "Bigger", shrink: "Smaller", usual: "Usual range",
     showing: (n, total) => `Showing ${n.toLocaleString("en-IN")} of ${total.toLocaleString("en-IN")}.`, next: "Ask next", helpful: "Helpful?", yes: "Yes", no: "No",
     sources: "Sources and how this was calculated", asOf: "Data as of", tools: "Console functions", data: "Data from", rows: "Rows used", incidents: "Incidents", models: "AI steps", numbers: "Numbers",
@@ -46,13 +47,15 @@ export const T: Record<Lang, Strings> = {
     live: "Live data", hello: (p) => `Good ${p}, Collector`, helpLine: "Ask about incidents, places, departments, weather, lakes, hospitals or market prices. In English, தமிழ் or Tanglish.",
     suggest: ["Where to focus", "Severe incidents", "Lakes & reservoirs", "Today's briefing"], scopeNow: "Answering for", insightsNow: "Today's insights",
     history: "Conversation history", noHistory: "No earlier conversations yet.", question1: "question", questionN: "questions",
-    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view", defaultPeriod: "Last 90 days", periodTip: "Answers cover the last 90 days unless the question names a period (today, this week, this month)"
+    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view", defaultPeriod: "Last 90 days", periodTip: "Answers cover the last 90 days unless the question names a period (today, this week, this month)",
+    allZones: "All zones", allDepts: "All departments", checked: (n) => `${n} figure${n === 1 ? "" : "s"} checked`,
+    checkedTip: "Every figure in this answer was checked against the data before it was shown", openIncident: "Open incident"
   },
   ta: {
     title: "District IQ-இடம் கேளுங்கள்", subtitle: "மாவட்டத்தின் நேரடித் தரவிலிருந்து பதில்கள்", placeholder: "சம்பவங்கள், புகார்கள், வானிலை, விலைகள் பற்றி கேளுங்கள்…", send: "அனுப்பு",
     stop: "நிறுத்து", close: "மூடு", maximize: "பெரிதாக்கு", restore: "சிறிதாக்கு", language: "பதில் மொழி", auto: "தானியங்கி",
     stages: { understanding: "புரிந்துகொள்கிறது", fetching: "தரவைப் பெறுகிறது", drawing: "பதிலை வரைகிறது" }, tryAsking: "இப்படிக் கேளுங்கள்", newChat: "புதிய உரையாடல்",
-    fresh: (a, ok, n) => `தரவு நேரம் ${a} · ${n} மூலங்களில் ${ok} புதுப்பிக்கப்பட்டவை`, aiOff: "AI வழங்குநர் அமைக்கப்படவில்லை: விதிகளால் பதில்", offline: "AI இல்லாமல்",
+    fresh: (a, ok, n) => `தரவு நேரம் ${a} · ${n} மூலங்களில் ${ok} புதுப்பிக்கப்பட்டவை`, aiOff: "AI வழங்குநர் அமைக்கப்படவில்லை: விதிகளால் பதில்", offline: "தரவிலிருந்து",
     offlineTip: "மொழி மாதிரி இல்லாமல் தரவிலிருந்து விதிகளால் பதில்", prev: "முந்தையது", vsPrev: "முந்தைய காலத்துடன்", chartTools: "விளக்கப்படக் கருவிகள்",
     types: { ...typesEn, horizontal_bar: "பட்டை வரைபடம்", line: "கோட்டு வரைபடம்", donut: "வட்ட வரைபடம்", map_zones: "மண்டல வரைபடம்", table: "அட்டவணை" },
     table: "அட்டவணை", png: "படமாகப் பதிவிறக்கு", csv: "தரவைப் பதிவிறக்கு (CSV)", expand: "பெரிதாக", shrink: "சிறிதாக", usual: "வழக்கமான வரம்பு",
@@ -68,13 +71,15 @@ export const T: Record<Lang, Strings> = {
     live: "நேரடித் தரவு", hello: () => "வணக்கம், ஆட்சியர் அவர்களே", helpLine: "சம்பவங்கள், இடங்கள், துறைகள், வானிலை, ஏரிகள், மருத்துவமனைகள், சந்தை விலைகள் பற்றி கேளுங்கள்.",
     suggest: ["கவனம் தேவைப்படும் இடம்", "கடுமையான சம்பவங்கள்", "ஏரிகள்", "இன்றைய அறிக்கை"], scopeNow: "இதற்கான பதில்", insightsNow: "இன்றைய தகவல்கள்",
     history: "உரையாடல் வரலாறு", noHistory: "முந்தைய உரையாடல்கள் இல்லை.", question1: "கேள்வி", questionN: "கேள்விகள்",
-    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு", defaultPeriod: "கடந்த 90 நாட்கள்", periodTip: "கேள்வியில் காலம் சொல்லாவிட்டால் கடந்த 90 நாட்களுக்கான பதில் (இன்று, இந்த வாரம், இந்த மாதம் என்று சொல்லலாம்)"
+    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு", defaultPeriod: "கடந்த 90 நாட்கள்", periodTip: "கேள்வியில் காலம் சொல்லாவிட்டால் கடந்த 90 நாட்களுக்கான பதில் (இன்று, இந்த வாரம், இந்த மாதம் என்று சொல்லலாம்)",
+    allZones: "அனைத்து மண்டலங்கள்", allDepts: "அனைத்துத் துறைகள்", checked: (n) => `${n} எண்கள் சரிபார்க்கப்பட்டன`,
+    checkedTip: "இந்தப் பதிலில் உள்ள ஒவ்வொரு எண்ணும் காட்டும் முன் தரவுடன் சரிபார்க்கப்பட்டது", openIncident: "சம்பவத்தைத் திற"
   },
   tanglish: {
     title: "District IQ kitta kelunga", subtitle: "District-oda live data-la irundhu answers", placeholder: "Incidents, complaints, weather, prices pathi kelunga…", send: "Send",
     stop: "Stop", close: "Close", maximize: "Perusa", restore: "Chinnadha", language: "Reply language", auto: "Auto",
     stages: { understanding: "Purinjukittu irukku", fetching: "Data edukkudhu", drawing: "Answer ready aagudhu" }, tryAsking: "Ippadi kelunga", newChat: "Pudhu conversation",
-    fresh: (a, ok, n) => `Data as of ${a} · ${n} feeds-la ${ok} up to date`, aiOff: "AI provider set pannala: rules vachu answer", offline: "AI illama",
+    fresh: (a, ok, n) => `Data as of ${a} · ${n} feeds-la ${ok} up to date`, aiOff: "AI provider set pannala: rules vachu answer", offline: "Data-la irundhu",
     offlineTip: "Language model illama, data-la irundhu rules vachu answer", prev: "munnadi", vsPrev: "munnadi period-oda", chartTools: "Chart tools", types: typesEn,
     table: "Table", png: "Image-a download", csv: "Data download (CSV)", expand: "Perusa", shrink: "Chinnadha", usual: "Usual range",
     showing: (n, total) => `${total.toLocaleString("en-IN")}-la ${n.toLocaleString("en-IN")} kaattudhu.`, next: "Adutha kelvi", helpful: "Useful-a?", yes: "Aamaa", no: "Illa",
@@ -89,7 +94,9 @@ export const T: Record<Lang, Strings> = {
     live: "Live data", hello: () => "Vanakkam, Collector", helpLine: "Incidents, places, departments, weather, lakes, hospitals, market prices pathi kelunga.",
     suggest: ["Enga focus pannanum", "Severe incidents", "Lakes", "Innaikku briefing"], scopeNow: "Indha scope-ku", insightsNow: "Innaikku insights",
     history: "Pazhaya conversations", noHistory: "Munnadi conversations illa.", question1: "kelvi", questionN: "kelvigal",
-    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu", defaultPeriod: "Last 90 naal", periodTip: "Kelviyila period sollalana last 90 naal-ku answer varum (innaikku, indha vaaram, indha maasam nu sollalam)"
+    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu", defaultPeriod: "Last 90 naal", periodTip: "Kelviyila period sollalana last 90 naal-ku answer varum (innaikku, indha vaaram, indha maasam nu sollalam)",
+    allZones: "Ella zones", allDepts: "Ella departments", checked: (n) => `${n} numbers check pannom`,
+    checkedTip: "Indha answer-la ovvoru number-um data-oda check panni dhaan kaattinom", openIncident: "Incident-a open pannu"
   }
 };
 

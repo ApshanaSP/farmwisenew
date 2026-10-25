@@ -233,3 +233,56 @@ export function mismeasuredFacts(text: string, facts: Fact[]): string[] {
   }
   return [...new Set(out)];
 }
+
+/**
+ * A draft that argues with itself, the model's own correction left in the answer ("453 vs 487 is incorrect, Royapuram
+ * is 487"): every number in it can be a real fact, so the number check passes it. Returns the sentences that do it.
+ */
+const SELF_CORRECTION = /\b(is|was|are|were) (incorrect|wrong|a mistake|a typo)\b|\b(correction:|i mean\b|let me (correct|rephrase|fix)|my (mistake|apologies|bad)|sorry\b|scratch that|oops)|\bwait,|\bactually,? (no|that|it'?s not)\b/i;
+const sentencesOf = (line: string) => line.split(/(?<=[.!?])\s+/);
+
+export function selfCorrections(text: string): string[] {
+  return text.split("\n").flatMap(sentencesOf).filter((x) => SELF_CORRECTION.test(x));
+}
+
+/** The text without its self-correcting sentences (each line keeps its other sentences; a line left empty goes). */
+export function withoutSelfCorrections(text: string): { text: string; dropped: number } {
+  let dropped = 0;
+  const kept: string[] = [];
+  for (const line of text.split("\n")) {
+    const parts = sentencesOf(line);
+    const ok = parts.filter((x) => !SELF_CORRECTION.test(x));
+    dropped += parts.length - ok.length;
+    if (ok.length === parts.length) kept.push(line);
+    else if (ok.length) kept.push(ok.join(" "));
+  }
+  return { text: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(), dropped };
+}
+
+/** Caveats without those that repeat an earlier one: the same opening words, or most of the shorter one's words. */
+export function dedupeCaveats(caveats: string[]): string[] {
+  const STOP = /^(was|is|are|were|the|a|an|of|in|on|for|to|and|its|has|have|been|by|their|this|that|not|no|it|be|as|with|within|only)$/;
+  const words = (c: string) => String(c).toLowerCase().replace(/[^a-z0-9஀-௿ ]+/g, " ").split(/\s+/).filter((w) => w && !STOP.test(w)).map((w) => w.replace(/(es|ed|s)$/, ""));
+  const kept: { text: string; w: string[] }[] = [];
+  for (const c of caveats) {
+    const w = words(c);
+    const repeats = kept.some((k) => {
+      if (w.slice(0, 5).join(" ") === k.w.slice(0, 5).join(" ")) return true;
+      const [small, big] = w.length <= k.w.length ? [w, new Set(k.w)] : [k.w, new Set(w)];
+      return small.length >= 4 && small.filter((x) => big.has(x)).length / small.length >= 0.7;
+    });
+    if (!repeats) kept.push({ text: c, w });
+  }
+  return kept.map((k) => k.text);
+}
+
+/**
+ * A figure written twice, as a word and then as digits ("one person was reported injured 1.", "no citizen complaints have
+ * been logged 0."): the model filled a placeholder after already saying the number. The digits go when they repeat the word.
+ */
+const NUMBER_WORDS: Record<string, number> = { no: 0, zero: 0, none: 0, one: 1, a: 1, an: 1, single: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10 };
+export function withoutEchoedNumbers(text: string): string {
+  return text.replace(/\b(no|zero|none|one|single|two|three|four|five|six|seven|eight|nine|ten)\b([^.\n\d]{1,80}?)\s+(\d{1,2})(?=\s*[.,;:)]|\s*$|\s+(?:and|but|with|while|so|as|after)\b)/gi,
+    (all, word: string, middle: string, digits: string) => (NUMBER_WORDS[word.toLowerCase()] === Number(digits) ? `${word}${middle}` : all));
+}

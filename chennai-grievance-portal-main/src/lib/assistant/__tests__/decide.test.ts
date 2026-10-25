@@ -21,6 +21,14 @@ describe("“Explain about the Anna Nagar issue”", () => {
     expect(p?.tools?.[0].args.zone).toBe(8);
     expect(p?.fast).toBeUndefined();
   });
+
+  it("a locality inside a zone gets its own breakdown, not the zone's profile", () => {
+    const p = planFromDecision(route({ answer: "area_summary" }), "what is happening in Velachery", null, 13, "Velachery");
+    expect(p?.tools?.[0].name).toBe("place_breakdown");
+    expect(p?.tools?.[0].args).toMatchObject({ place: "Velachery", scope: { zone: 13 } });
+    // the zone itself named: its profile, as before
+    expect(planFromDecision(route({ answer: "area_summary" }), "what is happening in Adyar", null, 13, null)?.tools?.[0].name).toBe("zone_profile");
+  });
   it("with a selected incident, explains that incident", () => {
     const p = planFromDecision(route({ answer: "incident_explain", incidentId: "INC-B2" }), "explain that issue", selected, 8);
     expect(p?.tools?.[0]).toMatchObject({ name: "incident_story", args: { text: "INC-B2" } });

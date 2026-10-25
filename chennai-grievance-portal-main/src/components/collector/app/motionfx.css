@@ -72,3 +72,31 @@
   .dic .modal,.dic .modal.grow{animation:fx-fade .12s both!important}
   .dic #view.busy{filter:none}
 }
+
+/* Ask District IQ launcher, v2: a deep-green pill with a crisp bubble-and-spark icon and its name always shown on wide screens
+   (the coral circle with a shrunken bitmap mark read as a notification, not the assistant). Wins over the older .ask-fab rules. */
+.dic .ask-fab.ask-fab-v2{position:fixed;right:20px;bottom:20px;z-index:70;display:inline-flex;align-items:center;gap:10px;height:48px;min-width:48px;
+  padding:0 16px 0 6px;border-radius:24px;border:1px solid rgba(255,255,255,.14);overflow:visible;cursor:pointer;
+  background:linear-gradient(135deg,#0F5A3A 0%,#0A3E28 100%);color:#fff;font:650 14px/1 var(--font-ui,system-ui);letter-spacing:0;
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 28px -10px rgba(6,40,25,.55),0 2px 6px rgba(6,40,25,.18);
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,background .18s;animation:none}
+.dic .ask-fab.ask-fab-v2 .ask-ico{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;flex:none;font-style:normal;
+  background:rgba(255,255,255,.12);box-shadow:0 0 0 1px rgba(255,255,255,.16) inset}
+.dic .ask-fab.ask-fab-v2 .ask-label{display:inline-flex;align-items:center;gap:8px;max-width:none;padding:0;overflow:visible;white-space:nowrap}
+.dic .ask-fab.ask-fab-v2 .ask-label kbd{font:600 11px/1 var(--font-num,ui-monospace,monospace);padding:4px 6px;border-radius:6px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.85)}
+.dic .ask-fab.ask-fab-v2:hover{transform:translateY(-2px);background:linear-gradient(135deg,#126B45 0%,#0B472E 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 16px 34px -12px rgba(6,40,25,.6),0 2px 8px rgba(6,40,25,.2)}
+.dic .ask-fab.ask-fab-v2:active{transform:translateY(0) scale(.98)}
+.dic .ask-fab.ask-fab-v2:focus-visible{outline:none;box-shadow:0 0 0 3px var(--bg,#fff),0 0 0 5px #1E9E6A,0 10px 28px -10px rgba(6,40,25,.55)}
+.dic .ask-fab.ask-fab-v2[aria-expanded="true"]{opacity:0;pointer-events:none;transform:translateY(8px)}
+.dic .ask-fab.ask-fab-v2 .ask-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:grid;place-items:center;
+  font:700 11px/1 var(--font-num,system-ui);font-style:normal;background:#F0603F;color:#fff;box-shadow:0 0 0 2px var(--bg,#fff)}
+.dic:not(.fit) .ask-fab.ask-fab-v2{bottom:20px}
+@media (max-width:760px){
+  .dic .ask-fab.ask-fab-v2{padding:0 6px;right:14px;bottom:14px}
+  .dic .ask-fab.ask-fab-v2 .ask-label{display:none}
+}
+:root[data-theme="dark"] .dic .ask-fab.ask-fab-v2,.dic.dark .ask-fab.ask-fab-v2{border-color:rgba(255,255,255,.18);
+  box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 12px 30px -10px rgba(0,0,0,.7)}
+@media (prefers-reduced-motion:reduce){.dic .ask-fab.ask-fab-v2{transition:none}.dic .ask-fab.ask-fab-v2:hover{transform:none}}

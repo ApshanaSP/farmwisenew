@@ -47,7 +47,7 @@ export const FAST_OF: Partial<Record<AnswerKind, Detected["intent"]>> = {
  * never one it made up. Returns what to run: a fast answer from the store (lists, counts, news, one incident's facts),
  * tools for the composer (explanations, area overviews), or a clarifying question.
  */
-export function planFromDecision(route: RouteLike, message: string, ctx: ConversationContext | null, placeZone: number | null):
+export function planFromDecision(route: RouteLike, message: string, ctx: ConversationContext | null, placeZone: number | null, locality: string | null = null):
   { fast?: Detected; tools?: RouteLike["tools"]; clarify?: { question: string; options: string[] } } | null {
   const d = route.decision;
   if (!d) return null;
@@ -82,6 +82,9 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
       // a zone's snapshot holds what an overview needs: its rank, the top open incidents with the reasons they matter, the officer
       const zone = route.scope.zone ?? placeZone;
       const extra = route.tools.filter((t) => !["zone_profile", "place_breakdown", "incidents", "search"].includes(t.name)).slice(0, 1);
+      // a locality inside a zone ("what is happening in Velachery"): its own incidents, not the zone's profile, which was
+      // answered as "Adyar ranks 1st of 15 zones" without naming Velachery once
+      if (zone && locality && placeZone === zone) return { tools: [{ name: "place_breakdown", args: { scope: { ...route.scope, zone, taluk: null }, place: locality } }, ...extra] };
       if (zone) return { tools: [{ name: "zone_profile", args: { scope: { ...route.scope, zone }, zone } }, ...extra] };
       if (route.tools.length) return { tools: route.tools };
       return { tools: [{ name: "overview_kpis", args: { scope: route.scope } }, { name: "severity", args: { scope: route.scope } }] };

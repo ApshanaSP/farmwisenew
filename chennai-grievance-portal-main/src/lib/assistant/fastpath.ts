@@ -229,7 +229,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.scopeLine = describeScope(card.scope, i.names, i.lang, i.now);
       }
       const aged = d.minOpenDays ? ` open for more than ${d.minOpenDays} days` : "";
-      const kind = `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${d.sev === "Severe" ? "severe " : ""}${countNoun(what, r.items.length)}${aged}`;
+      // (the filters in force, not only the follow-up's own words: "only in Adyar" after "severe incidents today" kept severe but its headline dropped it)
+      const kindOf = (n: number) => `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${f.sev === "Severe" ? "severe " : ""}${countNoun(what, n)}${aged}`;
+      const kind = kindOf(r.items.length);
       card.responseType = "incident_list";
       card.incidents = r.items;
       card.headline = d.intent === "PRIORITY_INCIDENT_LIST" ? `Top ${r.items.length} priority ${kind} · ${pl(r.period)}` : `${cap(kind)} · ${pl(r.period)}`;
@@ -238,7 +240,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           ? r.items.length === 1 ? `This is the highest-priority ${kind} recorded ${inP(r.period)}${sw}, by the console's priority score.`
             : `These are the ${words(r.items.length)} highest-priority ${kind} recorded ${inP(r.period)}${sw}, ranked by the console's priority score.`
           // all of them fit: say how many ("The flooding incidents in Adyar zone" left the count out)
-          : `The ${r.items.length === r.total ? (r.total === 1 ? "only " : `${words(r.total)} `) : `${words(r.items.length)} ${oldest ? "oldest" : "newest"} of ${r.total.toLocaleString("en-IN")} `}${kind} ${inP(r.period)}${sw}.`;
+          // (the total first: "The eight newest of 9 murders" was read by the AI writer as "eight of nine murders this week")
+          : r.items.length === r.total ? `The ${r.total === 1 ? "only " : `${words(r.total)} `}${kind} ${inP(r.period)}${sw}.`
+            : `${r.total.toLocaleString("en-IN")} ${kindOf(r.total)} ${inP(r.period)}${sw}; the ${words(r.items.length)} ${oldest ? "oldest" : "newest"} are listed.`;
       if (picked?.length && i.lang === "en") {
         card.headline = `Most serious of the ${words(i.ctx!.resultIds!.length)} listed: ${picked[0].title}`.slice(0, 160);
         card.answerMarkdown = `Of the ${words(i.ctx!.resultIds!.length)} incidents in the last answer, this one ranks highest by the console's priority score.`;
@@ -585,7 +589,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   card.sources.incidentIds = card.sources.incidentIds.length ? card.sources.incidentIds : (card.incidents ?? []).map((x) => x.incidentId);
   card.sources.refs = [{ kind: "table", name: "incidents" }, ...(card.stories ? [{ kind: "table", name: "documents" }] : [])];
   // the "Test data" label from the records shown (news articles are real; a story's linked incident may not be)
-  card.testData = await anySynthetic([...new Set([...card.sources.incidentIds, ...(card.incident ? [card.incident.incidentId] : [])])]).catch(() => true);
+  // (when the check fails the answer is labelled test data: the safe side)
+  card.testData = await anySynthetic([...new Set([...card.sources.incidentIds, ...(card.incident ? [card.incident.incidentId] : [])])])
+    .catch((e) => { console.warn("[assistant] test-data check failed; labelled test data:", (e as Error).message); return true; });
   return { card, plan };
 }
 

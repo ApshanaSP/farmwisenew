@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
   test: {
     include: ["src/**/*.live.ts"], environment: "node", testTimeout: 3_600_000, hookTimeout: 300_000, fileParallelism: false,
-    env: { ...env, DATA_BACKEND: "aws", AWS_STORE_SAVE: "" }
+    // AI_* set in the shell win over .env (AI_CHAT_MODE=agent, AI_PROVIDER=none to keep background calls off the free tier)
+    env: { ...env, ...Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith("AI_")) as [string, string][]), DATA_BACKEND: "aws", AWS_STORE_SAVE: "" }
   }
 });

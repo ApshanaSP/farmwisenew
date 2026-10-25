@@ -228,24 +228,26 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     const num = (v: unknown) => fmtValue(Number(v));
     const up = drivers.filter((r) => Number(r.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 3);
     const down = drivers.filter((r) => Number(r.delta) < 0).sort((a, b) => Number(a.delta) - Number(b.delta)).slice(0, 3);
-    const mv = (r: Record<string, unknown>) => `${r.label} (${num(r.n_prev)} to ${num(r.n)})`;
+    const mv = (r: Record<string, unknown>) => `${r.label} (${num(r.n_prev)} → ${num(r.n)})`;
     const dir = n > prev ? "rose" : n < prev ? "fell" : "held";
-    const out = [`Reported incidents ${dir === "held" ? `held at **${num(n)}**` : `${dir} to **${num(n)}** from ${num(prev)}`} against the period before.`];
-    // the side that moved the total comes first
+    const first = `Reported incidents ${dir === "held" ? `held at **${num(n)}**` : `${dir} to **${num(n)}** from ${num(prev)}`} against the period before.`;
+    // the reasons as a short list with bold labels (six one-line paragraphs read as a wall of fragments); the side that moved
+    // the total comes first
+    const points: string[] = [];
     const lead = dir === "fell" ? down : up, other = dir === "fell" ? up : down;
-    if (lead.length) out.push(`${dir === "fell" ? "The fall came mostly from" : "The rise came mostly from"} ${lead.map(mv).join(", ")}.`);
-    if (other.length) out.push(`${dir === "fell" ? "Going the other way" : "Partly offset by"}: ${other.map(mv).join(", ")}.`);
+    if (lead.length) points.push(`- **Mostly from:** ${lead.map(mv).join(", ")}`);
+    if (other.length) points.push(`- **${dir === "fell" ? "Going the other way" : "Partly offset by"}:** ${other.map(mv).join(", ")}`);
     const where = p.datasets.find((d) => d.id === "driver_places")?.rows.slice(0, 2) ?? [];
-    if (where.length) out.push(`Where: ${where.map((r) => `${r.place} (${String(r.category).toLowerCase()}, ${num(r.n_prev)} to ${num(r.n)})`).join("; ")}.`);
+    if (where.length) points.push(`- **Where:** ${where.map((r) => `${r.place} (${String(r.category).toLowerCase()}, ${num(r.n_prev)} → ${num(r.n)})`).join("; ")}`);
     const rain = drivers.reduce((s, r) => s + (Number(r.rain) || 0), 0);
-    if (rain) out.push(`${num(rain)} of the ${num(n)} were linked to rain.`);
+    if (rain) points.push(`- **Rain:** ${num(rain)} of the ${num(n)} were linked to rain`);
     const late = (p.datasets.find((d) => d.id === "driver_depts")?.rows ?? []).filter((r) => Number(r.overdue) > 0).slice(0, 2);
-    if (late.length) out.push(`Open past deadline: ${late.map((r) => `${r.name} (${num(r.overdue)})`).join(", ")}.`);
+    if (late.length) points.push(`- **Past deadline:** ${late.map((r) => `${r.name} (${num(r.overdue)})`).join(", ")}`);
     const top = p.datasets.find((d) => d.id === "driver_top")?.rows[0];
-    if (top) out.push(`Act first on **${top.title}**${top.place ? ` at ${top.place}` : ""}.`);
+    const out = [first, ...(points.length ? [points.join("\n")] : []), ...(top ? [`**Act first on:** ${top.title}${top.place ? ` at ${top.place}` : ""}.`] : [])];
     const headline = dir === "held" ? `Reported incidents unchanged at ${num(n)}`
       : `Incidents ${dir} to ${num(n)}${lead[0] ? `, ${dir === "fell" ? "mostly" : "led by"} ${String(lead[0].label).toLowerCase()}` : ""}`;
-    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+    return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: first.replace(/\*\*/g, "") };
   }
   // one incident's story without the model: what, where, when, how serious, who has it, and its reports (it once said only
   // "Here are the figures")
@@ -336,6 +338,11 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     }
     const headline = kpis.slice(0, 3).map((k) => `${kpiText(k)} ${k.label.toLowerCase()}`).join(" · ");
     return { ...base, headline, answerMarkdown: out.join("\n\n"), voiceSummary: out[0].replace(/\*\*/g, "") };
+  }
+  // nothing to show (a reading no station has reported yet, "lake levels now" before the lakes are collected): say so plainly
+  if (!kpis.length && p.datasets.every((d) => !d.rows.length)) {
+    const none = L("No data has been reported for this yet", "இதற்கான தரவு இன்னும் பதிவாகவில்லை", "Idhukku innum data report aagala")[lang];
+    return { ...base, headline: none, answerMarkdown: `${none}${base.scopeLine ? ` (${base.scopeLine})` : ""}.`, voiceSummary: none };
   }
   const lead = kpis[0] ? `${kpis[0].label}: ${kpiText(kpis[0])}` : p.chart?.title ?? FRAME[lang];
   const lines: string[] = [];

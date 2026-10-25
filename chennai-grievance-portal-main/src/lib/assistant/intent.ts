@@ -210,6 +210,8 @@ const ORDINALS: [string[], number][] = [[["first", "1st", "top one", "முத�
   // "the last 24 hours" is a period: only "the last one" / "last incident" point at the end of a list
   [["fourth", "4th"], 3], [["fifth", "5th"], 4], [["last one", "last incident", "last case", "last story", "bottom one"], -1]];
 
+const LATEST_ONE = ["latest one", "newest one", "most recent one", "recent one", "latest incident", "latest case", "latest murder", "most recent incident"];
+
 const WORD_N: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, moonu: 3, rendu: 2, anju: 5 };
 
 /** "top 3", "3 most serious", "top three": the number asked for. */
@@ -264,7 +266,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const explicitId = message.match(/\bINC-[A-Z0-9-]{4,40}\b/i)?.[0]?.toUpperCase() ?? null;
 
   // a pointer at an earlier result: "the second one", "this incident", "there"
-  const ord = ordinal(toks);
+  // "the latest one" after a newest-first list is its first item (a priority list is not in time order, so the router decides there)
+  const ord = ordinal(toks) ?? (ctx?.lastIntent === "INCIDENT_LIST" && any(toks, LATEST_ONE) ? 0 : null);
   const short = toks.length <= 14;
   const pointsBack = short && (any(toks, THIS) || ord != null);
   const fromList = ord != null && ctx?.resultIds?.length ? ctx.resultIds[ord === -1 ? ctx.resultIds.length - 1 : ord] ?? null : null;

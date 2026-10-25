@@ -23,7 +23,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 beforeAll(async () => {
   if (!haveStore()) return;
   const f = await loadFrozen();
-  vi.useFakeTimers({ toFake: ["Date"] });
+  // the clock starts at the freeze and keeps ticking: the gateway times rate-limit rests and per-minute token use with it,
+  // and a stopped clock left the first rate-limited model resting for the whole run
+  vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
   vi.setSystemTime(f.frozenAt);
 });
 afterAll(() => vi.useRealTimers());

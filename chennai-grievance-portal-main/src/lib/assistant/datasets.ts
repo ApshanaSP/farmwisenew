@@ -101,8 +101,9 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
         datasets: [ds, top],
         chart: spec({ type: "horizontal_bar", dataset: "zones", x: "name", y: ["open"], highlight: String(d.name), title: `${d.name} ranks ${d.rank} of ${d.of} zones on severe and high incidents`,
           subtitle: `${d.formula}; ${period}`, topN: 15 }),
-        kpis: [{ label: `Rank (of ${d.of} zones)`, value: Number(d.rank), tone: "info" }, { label: "Incidents reported", value: Number(row?.n ?? 0) },
-          { label: "Severe", value: Number(row?.severe ?? 0), tone: "sev" }, { label: "High", value: Number(row?.high ?? 0), tone: "high" }],
+        // the rank goes last: the first tile is the answer's lead figure, and "2 rank (of 15 zones)" once headed "top 3 issues in Royapuram"
+        kpis: [{ label: "Incidents reported", value: Number(row?.n ?? 0) }, { label: "Severe", value: Number(row?.severe ?? 0), tone: "sev" },
+          { label: "High", value: Number(row?.high ?? 0), tone: "high" }, { label: `Rank (of ${d.of} zones)`, value: Number(d.rank), tone: "info" }],
         table: "zone_top", display: "chart"
       };
     }

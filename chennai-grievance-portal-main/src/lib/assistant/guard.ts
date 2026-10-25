@@ -142,7 +142,8 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   if (/brief|summar/.test(t)) return { intent: "briefing", tools: [{ name: "briefing", args: {} }], period, actions: [] };
   if (/verif|waiting|my tasks/.test(t)) return r("verification_queue");
   if (/slow|backlog|oldest|delay/.test(t)) return r("dept_backlog");
-  if (/hospital|bed/.test(t)) return r("environment", { metric: "bed_occupancy_pct", above: Number(t.match(/(\d{2})\s*%/)?.[1]) || null });
+  // (whole words: "onion price in Koyambedu" was once answered with hospital beds)
+  if (/\bhospitals?\b|\bbeds?\b/.test(t)) return r("environment", { metric: "bed_occupancy_pct", above: Number(t.match(/(\d{2})\s*%/)?.[1]) || null });
   if (/lake|reservoir|ஏரி/.test(t)) return r("environment", { metric: "lake_pct_full", above: Number(t.match(/(\d{2})\s*%/)?.[1]) || null });
   if (/warning|alert|imd/.test(t)) return r("environment", { metric: "imd_warning_level" });
   if (/rain|மழை/.test(t)) return r("environment", { metric: "rainfall_24h_mm" });

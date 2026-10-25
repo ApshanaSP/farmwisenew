@@ -33,7 +33,7 @@ export async function pickIncident(question: string, candidates: Candidate[], si
   if (candidates.length < 2) return undefined;
   try {
     const r = await generateJson({ role: "fast", name: "incident-pick", schema: Pick, system: SYSTEM, prompt: rerankPrompt(question, candidates),
-      temperature: 0, maxOutputTokens: 300, user: "assistant:rerank", timeoutMs: 6_000, abortSignal: signal });
+      temperature: 0, maxOutputTokens: 300, user: "assistant:rerank", timeoutMs: 6_000, abortSignal: signal, chat: true });
     const n = r.object.pick;
     return { index: n >= 1 && n <= candidates.length ? n - 1 : null, sure: r.object.sure };
   } catch (e) {
