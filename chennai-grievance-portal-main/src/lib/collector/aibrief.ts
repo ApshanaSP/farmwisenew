@@ -15,7 +15,8 @@ import { z } from "zod";
 import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE } from "@/lib/collector/db";
-import { PERIODS, asOf, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { pctChange } from "@/lib/reference/metrics";
 import { categories } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
@@ -180,7 +181,8 @@ async function dayFacts(s: BriefScope) {
        GROUP BY 1 ORDER BY n DESC LIMIT 3`, WP),
     q(`SELECT ${INC} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.sla_breached = 1 AND i.citizen_complaints > 0${f.sql}`, f.params),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.awaiting_collector = 1${f.sql}`, f.params),
+    // My Tasks' figure (metrics.ts awaiting_check), not every open item flagged for the Collector
+    awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT dp.name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe ${FROM} WHERE ${W} GROUP BY dp.name ORDER BY n DESC LIMIT 5`, WP),
     q(`SELECT a.category_code AS cat, a.zone_no AS zone, a.observed, a.ratio, a.kind, a.rise_days, DATE_FORMAT(a.date, '%Y-%m-%d') AS day
        FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 3 DAY ${s.zone ? "AND a.zone_no = ?" : ""} ORDER BY a.ratio DESC LIMIT 4`, s.zone ? [now, s.zone] : [now]).catch(orEmpty("aibrief:178")),
@@ -193,7 +195,7 @@ async function dayFacts(s: BriefScope) {
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));
   const catLabel = new Map(categories().map((c) => [c.code, c.label]));
   const T = tot[0] ?? {};
-  const ch = n(before[0]?.n) ? Math.round(((n(T.n) - n(before[0]?.n)) / n(before[0]?.n)) * 100) : null;
+  const ch = pctChange(n(T.n), n(before[0]?.n)); // none on a small base (metrics.ts)
   const envV = Object.fromEntries(env.map((e) => [e.metric, Number(e.v)]));
   const news = whole ? (await newsStories(s.period, now).catch(() => [] as Awaited<ReturnType<typeof newsStories>>))
     .sort((a, b) => b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 8) : [];
@@ -217,7 +219,7 @@ async function dayFacts(s: BriefScope) {
     [warn[0] && n(warn[0].value) >= 1 ? `IMD warning: ${one(warn[0].detail, 200)}` : "No IMD warning.",
       envV.rainfall_24h_mm != null ? `Rain in 24 h: ${envV.rainfall_24h_mm} mm.` : "", envV.aqi != null ? `Air quality: AQI ${Math.round(envV.aqi)}.` : "",
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
-    `Completed works waiting for the Collector's verification: ${n(awaiting[0]?.n)}.`
+    `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
   ].filter(Boolean);
   return { facts: lines.join("\n"), ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
 }

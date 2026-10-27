@@ -11,6 +11,7 @@ import { itemWhen, itemWhere } from "./Added";
 import { StoriesCard } from "./Stories";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 import { mdToHtml } from "@/lib/markdown";
+import { METRICS, caption, pctChange, shortWindow, windowText } from "@/lib/reference/metrics";
 
 export { mdToHtml };
 
@@ -143,8 +144,8 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
               <Stat l="Reported" v={b.stats.reported} sub={b.stats.change == null ? "no earlier data" : b.stats.change === 0 ? "same as before" : `${b.stats.change > 0 ? "▲" : "▼"} ${Math.abs(b.stats.change)}% vs. ${c.period === "daily" ? "yesterday" : "previous period"}`}
                 tone={b.stats.change != null && b.stats.change > 0 ? "bad" : "ok"} />
               <Stat l="Still open" v={b.stats.open} sub="incidents not yet closed" />
-              <Stat l="Past deadline" v={b.stats.overdue} sub="open beyond the service deadline" tone={b.stats.overdue ? "bad" : "ok"} />
-              <Stat l="Severe" v={b.stats.severe} sub="severe events reported" tone={b.stats.severe ? "bad" : "ok"} />
+              <Stat l={`Past deadline · ${shortWindow(c.period)}`} v={b.stats.overdue} sub={caption("past_deadline", c.period)} tone={b.stats.overdue ? "bad" : "ok"} />
+              <Stat l="Severe" v={b.stats.severe} sub={caption("severe", c.period)} tone={b.stats.severe ? "bad" : "ok"} />
             </div>
 
             <div className="bf2-cond">
@@ -365,11 +366,11 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
         <div className="tk-head"><span>Taluk</span><span>Open incidents</span><span title="Reports in the last 30 days against the 30 days before">Change</span></div>
         <div className="fitlist">
           {ins.taluks.filter((x) => x.open > 0).map((x) => {
-            const d = x.prev ? Math.round(((x.reported - x.prev) / x.prev) * 100) : null;
+            const d = pctChange(x.reported, x.prev); // none on a small base (metrics.ts)
             return (
               <button key={x.code} className="tk" onClick={() => c.openList({ status: "open", taluk: x.code, cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, `Still open in ${x.name} taluk, reported in the last 30 days`)}
                 title={`See the open incidents in ${x.name} taluk`}>
-                <span className="tk-l"><b>{x.name}</b><small>{x.severe ? `${x.severe} severe · ` : ""}{x.overdue} past deadline</small></span>
+                <span className="tk-l"><b>{x.name}</b><small title={`${METRICS.past_deadline.measure} · ${windowText("reported", "monthly")}`}>{x.severe ? `${x.severe} severe · ` : ""}{x.overdue} past deadline (30 days)</small></span>
                 <span className="tk-b"><i style={{ width: `${(x.open / maxT) * 100}%` }} /></span>
                 <b className="tk-v">{x.open}</b>
                 <span className={`tk-d ${d != null && d > 0 ? "up" : d != null && d < 0 ? "down" : ""}`}

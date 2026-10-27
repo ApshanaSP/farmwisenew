@@ -9,7 +9,8 @@ vi.mock("@/lib/collector/db", async (orig) => ({ ...(await orig<object>()), defa
 vi.mock("@/lib/ai/gateway", async (orig) => {
   const m = await orig<typeof import("@/lib/ai/gateway")>();
   return { ...m, aiStatus: () => ({ available: true, problem: null, providers: ["test"], stt: "" }),
-    generateJson: async (o: { kind?: string }) => { calls.push(String(o?.kind ?? "model")); throw new m.AiUnavailableError(); } };
+    // the writer (9123cf9) only rewords an answer the store already gave; no model may decide it (router, planner)
+    generateJson: async (o: { kind?: string; name?: string }) => { if (o?.name !== "writer") calls.push(String(o?.kind ?? o?.name ?? "model")); throw new m.AiUnavailableError(); } };
 });
 vi.mock("@/lib/assistant/lance", () => ({ hybridSearch: async () => null, holdSync: () => () => undefined, lanceWarm: () => undefined,
   currentIncidentIds: async () => [], lanceReady: async () => false, lanceStatus: async () => ({}) }));

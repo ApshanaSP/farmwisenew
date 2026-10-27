@@ -56,6 +56,7 @@ import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
+import { isWarningQuestion, warningCard, warningsNow } from "@/lib/assistant/warnings";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1239,6 +1240,14 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // a message that is only a greeting, thanks or goodbye ("hi", "thank you!", "வணக்கம்") is answered at once: "hi" once took 5 s
   // (a router call, the place lookup and the search index, all for a greeting)
   if (ONLY_SMALLTALK.test(typed)) return finish(smalltalkCard(card0(null), message), { intent: "smalltalk", instant: true });
+
+  // weather warnings and alerts ("is there a cyclone warning?", "புயல் எச்சரிக்கை உள்ளதா?"): the alerts lane, whatever the router
+  // would say (it once called the cyclone question out of scope, LT-15)
+  if (!i.pinId && !i.insightKey && (isWarningQuestion(typed) || isWarningQuestion(message))) {
+    i.stage("fetching");
+    const w = await warningsNow(now).catch(orNull("pipeline:warnings"));
+    if (w) return finish(warningCard(card0(null), w), { intent: "warnings", tool: "alerts_lane" });
+  }
 
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
   if (!i.lockDept && !i.pinId && !i.insightKey) {

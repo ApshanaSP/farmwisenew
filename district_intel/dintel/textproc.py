@@ -119,34 +119,72 @@ def repeat_claim(text: str) -> bool:
     return bool(REPEAT.search(text or ""))
 
 
+# The count must sit next to the casualty word: at most two words between them, none of them a number, a verb of
+# saying or "and" ("Class 12 student killed and four injured" is one death, not twelve). Words are whole words
+# ("die" is not inside "diesel").
 CASUALTY_EN = re.compile(
-    _NUM + r"\s+(?:\w+\s+){0,3}?(?:were\s+|was\s+|are\s+|have been\s+|got\s+)?(killed|dead|died|dies|die|injured|hurt|wounded|electrocuted)", re.I)
+    r"\b" + _NUM + r"\b(?![-\s]*(?:year|yr|month|day|week|hour)s?[-\s]*old)(?!\s*(?:th|st|nd|rd)\b)(?![-\s]*(?:years?|yrs?|%|per\s?cent|km|kms|crore|lakh|rupees?)\b)"
+    r"\s+((?:(?!and\b|or\b|but\b|\d)[a-z'-]+\s+){0,2}?)(?:were\s+|was\s+|are\s+|have\s+been\s+|has\s+been\s+|got\s+)?"
+    r"(killed|dead|died|dies|die|injured|hurt|wounded|electrocuted|drowned|drown)\b", re.I)
 CASUALTY_TA = re.compile(r"(\d+)\s*(?:பேர்|நபர்கள்|பேருக்கு)?\s*(பலி|உயிரிழ|காயம்|படுகாய)")
-DEATH_WORDS = {"killed", "dead", "died", "dies", "die", "electrocuted", "பலி", "உயிரிழ"}
+DEATH_WORDS = {"killed", "dead", "died", "dies", "die", "electrocuted", "drowned", "drown", "பலி", "உயிரிழ"}
+# A number that labels something rather than counting people: "Class 12", "Std 10", "Route 21G", "Ward 45", "No. 5",
+# "Rs 87", "aged 19", "Platform 2", "Gate 3", "NH 48"; Tamil வகுப்பு (class), வார்டு (ward)
+NOT_A_COUNT = re.compile(
+    r"(?:\b(?:class|std|standard|grade|form|route|bus|ward|no|number|platform|gate|sector|block|phase|plot|door|flat|"
+    r"aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street)\.?"
+    r"|₹|#|வகுப்பு|வார்டு)\s*$", re.I)
+# numbers used as labels in a text ("Class 12", "Route 21", "aged 19", "17-year-old"), to check an LLM's death count
+LABEL_NUMBERS = re.compile(
+    r"(?:\b(?:class|std|standard|grade|route|bus|ward|no|platform|aged|age)\.?\s*(\d{1,3})\b)|(?:\b(\d{1,3})[-\s]years?[-\s]old\b)", re.I)
+# a singular person after a count above one: "12 student killed" is "Class 12 student", not twelve students
+SINGULAR = re.compile(r"^(?:student|boy|girl|man|woman|child|youth|worker|person|labourer|driver|rider|pedestrian|"
+                      r"resident|teen|teenager|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|"
+                      r"employee|guard|constable|officer|fisherman|farmer|patient)\b", re.I)
 
 
 def casualties(text: str) -> tuple[int, int]:
-    """(dead, injured) numbers mentioned in a news text; 0 when none."""
+    """(dead, injured) numbers mentioned in a news text; 0 when none. A number counts only when it sits next to the
+    casualty word and is not a label (class, route, ward, age, price)."""
     dead = injured = 0
-    for m in CASUALTY_EN.finditer(text or ""):
+    s = text or ""
+    for m in CASUALTY_EN.finditer(s):
         n = _num(m.group(1))
-        if n > 200:
+        if n > 200 or NOT_A_COUNT.search(s[max(0, m.start() - 14):m.start()]):
             continue
-        if m.group(2).lower() in DEATH_WORDS:
+        if n > 1 and SINGULAR.match(m.group(2) or ""):
+            continue
+        if m.group(3).lower() in DEATH_WORDS:
             dead = max(dead, n)
         else:
             injured = max(injured, n)
-    for m in CASUALTY_TA.finditer(text or ""):
+    for m in CASUALTY_TA.finditer(s):
         n = int(m.group(1))
-        if n > 200:
+        if n > 200 or NOT_A_COUNT.search(s[max(0, m.start() - 14):m.start()]):
             continue
         if m.group(2) in DEATH_WORDS:
             dead = max(dead, n)
         else:
             injured = max(injured, n)
-    if not dead and re.search(r"\b(man|woman|boy|girl|youth|worker|person|labourer|student)\s+(was\s+)?(killed|dies|died|electrocuted|drowned)\b", text or "", re.I):
+    # "Two Class 10 students drown": the count before the class label
+    for m in COUNT_BEFORE_LABEL.finditer(s):
+        n = _num(m.group(1))
+        if n <= 200:
+            dead = max(dead, n) if m.group(2).lower() in DEATH_WORDS else dead
+    if not dead and (ONE_DEATH_EN.search(s) or ONE_DEATH_TA.search(s)):
         dead = 1
     return dead, injured
+
+
+COUNT_BEFORE_LABEL = re.compile(
+    r"\b" + _NUM + r"\s+(?:class|std|standard|grade)\s+\d+\w*\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?"
+    r"(killed|dead|died|dies|drowned|drown|electrocuted)\b", re.I)
+# one person died, said without a count: "student killed", "17-year-old killed", "driver dies", "girl found dead"
+ONE_DEATH_EN = re.compile(
+    r"\b(?:man|woman|boy|girl|youth|worker|person|labourer|student|driver|rider|pedestrian|resident|teen|teenager|child|"
+    r"toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|employee|guard|constable|fisherman|patient|"
+    r"elderly|techie|\d{1,3}[-\s]year[-\s]old)\s+(?:was\s+|is\s+)?(?:found\s+)?(?:killed|dies|died|dead|electrocuted|drowns|drowned)\b", re.I)
+ONE_DEATH_TA = re.compile(r"(?:மாணவர்|மாணவி|மாணவன்|இளைஞர்|பெண்|சிறுவன்|சிறுமி|தொழிலாளி|முதியவர்|ஓட்டுநர்|குழந்தை)\s*(?:பலி|உயிரிழ)")
 
 
 # ------------------------------------------------------------------ entities --

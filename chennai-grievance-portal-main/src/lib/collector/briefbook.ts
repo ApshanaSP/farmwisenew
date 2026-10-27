@@ -6,8 +6,10 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE } from "@/lib/collector/db";
-import { PERIODS, explain, periodWindow, type Period } from "@/lib/collector/intel";
+import { PERIODS, awaitingCheck, explain, periodWindow, type Period } from "@/lib/collector/intel";
 import { orEmpty } from "@/lib/fallback";
+import { alertLane } from "@/lib/collector/alerts";
+import { pctChange } from "@/lib/reference/metrics";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -50,11 +52,12 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const wk = periodWindow(s.period, now, "i.first_reported_at", 0, 168), pwk = periodWindow(s.period, now, "i.first_reported_at", 1, 168);
 
   const [tiles, tilesPrev, awaiting, critical, deptRows, deptItems, zones, zoneKinds, notes, warn, beds, law, lawPrev, kinds, oldest,
-    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows] = await Promise.all([
+    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows, lane] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(i.media_only) AS news_only FROM incidents i WHERE ${W}`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${P}`, PP),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.awaiting_collector = 1${f.sql}`, f.params),
+    // the same rule as My Tasks (metrics.ts awaiting_check, LT-07): "128 waiting" beside "My Tasks 0" was two definitions
+    awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT ${INC} ${FROM} WHERE ${cw.sql}${f.sql} AND i.is_open = 1 AND i.severity_level = 'Severe'
        ORDER BY COALESCE(i.dead, 0) DESC, i.priority_score DESC LIMIT 4`, [...cw.params, ...f.params]),
     // departments: only what came in during the period
@@ -85,7 +88,8 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT i.zone_name AS zone, COUNT(*) AS n FROM incidents i WHERE ${wk.sql}${f.sql} AND i.category_code = 'VECTOR_DISEASE'
        AND i.zone_name IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 3`, [...wk.params, ...f.params]),
     // every incident with a death in the period: the department rows say what happened
-    q(`SELECT ${INC} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP)
+    q(`SELECT ${INC} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP),
+    alertLane(now).catch((e) => (console.warn(`[briefbook] alerts lane: ${(e as Error).message}`), null))
   ]);
 
   // ---- AI notes (the pipeline's, district-wide, last 24 hours)
@@ -98,21 +102,24 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   // ---- the day in numbers (only four)
   const T = tiles[0] ?? {};
   const reported = n(T.n), before = n(tilesPrev[0]?.n);
-  const change = before ? Math.round(((reported - before) / before) * 100) : null;
+  const change = pctChange(reported, before); // none on a small base (metrics.ts)
   const deaths = n(T.dead), severe = n(T.severe);
   const warning = warn[0] && n(warn[0].value) >= 1 ? { level: n(warn[0].value), text: String(warn[0].detail ?? "") } : null;
 
-  // ---- district status, by fixed rules (not the AI)
+  // ---- district status, by fixed rules (not the AI). Warnings come from the alerts lane (IMD, NDMA SACHET and the
+  // news side by side, alerts.ts): "no IMD warning" alone hid a cyclone eleven outlets were reporting (LT-01).
   const reasons: string[] = [];
   let level: "normal" | "watchful" | "alert" = "normal";
-  if (warning && warning.level >= 2) (level = "alert", reasons.push(`IMD ${warning.level >= 3 ? "red" : "orange"} warning`));
+  if (lane?.status.level === "alert") (level = "alert", reasons.push(...lane.status.reasons));
   if (deaths >= 3) (level = "alert", reasons.push(`${deaths} deaths`));
   if (severe >= 15) (level = "alert", reasons.push(`${severe} severe incidents`));
   if (level !== "alert") {
     if (deaths >= 1) (level = "watchful", reasons.push(`${deaths} death${deaths === 1 ? "" : "s"}`));
     if (severe >= 5) (level = "watchful", reasons.push(`${severe} severe incidents`));
-    if (warning?.level === 1) (level = "watchful", reasons.push("IMD yellow warning"));
+    if (lane?.status.level === "watchful") (level = "watchful", reasons.push(...lane.status.reasons));
   }
+  // without the lane (it failed), the IMD reading as before
+  if (!lane && warning) (level = warning.level >= 2 ? "alert" : level === "normal" ? "watchful" : level, reasons.push(`IMD ${["", "yellow", "orange", "red"][Math.min(3, warning.level)]} warning`));
 
   // ---- departments: what came in, with the incidents themselves
   const departments = deptRows.map((d) => ({
@@ -172,8 +179,10 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const situation = stale.length ? null : written;
   return {
     status: { level, reasons, warning },
+    // what each source says about warnings for Chennai, and whether they agree (alerts.ts)
+    alerts: lane ? { sources: lane.sources, agreement: lane.agreement, agreementText: lane.agreementText, stale: lane.stale, fallback: lane.fallback } : null,
     glance: { ai: situation, opening: situation ? null : opening,
-      tiles: { reported, change, severe, deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n), newsOnly: n(T.news_only) } },
+      tiles: { reported, change, severe, deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n), leftToDepts: n(awaiting[0]?.left), newsOnly: n(T.news_only) } },
     critical: critical.map((i) => ({ ...i, why: explain(i), dead: n(i.dead), injured: n(i.injured) }) as Row & { why: ReturnType<typeof explain>; dead: number; injured: number }),
     departments, where, news, newsAi: newsIds.length > 0,
     health: { ai: ai("health"), beds: beds.map((b) => ({ name: String(b.name), pct: Math.round(n(b.value)) })),

@@ -15,6 +15,9 @@
  *   unconfirmed   a death toll of MASS_DEATHS or more from a single news outlet, with no department record, is
  *                 kept on the incident as dead_reported but not counted until a second source or a person
  *                 confirms it (needs_review).
+ *   death counts  the pipeline's pattern count read labels as tolls ("Class 12 student killed" → 12, "19 year old
+ *                 dies" → 19, "diesel" → "die"): counted again here by casualties(), the same rule as district_intel
+ *                 textproc.casualties; a lower count replaces the old one when the LLM gave none.
  */
 
 export const STORY_HOURS = 72;
@@ -80,6 +83,49 @@ const NOT_NATURAL = /\b(accident|crash|collision|murder|murdered|stabbed|hacked|
 export function notAnIncident(title: string | null | undefined): boolean {
   const t = String(title ?? "");
   return HOROSCOPE.test(t) || (OBITUARY.test(t) && !NOT_NATURAL.test(t));
+}
+
+// ------------------------------------------------------------ death counts --
+// The same rule as district_intel/dintel/textproc.py casualties(): keep the two in step.
+
+const NUM_WORDS: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+  ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20, several: 3, few: 2 };
+const NUM = String.raw`(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|several|few)`;
+const toNum = (t: string) => (/^\d+$/.test(t) ? Number(t) : NUM_WORDS[t.toLowerCase()] ?? 1);
+const DEATH = new Set(["killed", "dead", "died", "dies", "die", "electrocuted", "drowned", "drown", "பலி", "உயிரிழ"]);
+/** the count next to the casualty word: at most two words between, no number, no "and" */
+const CASUALTY_EN = new RegExp(String.raw`\b${NUM}\b(?![-\s]*(?:year|yr|month|day|week|hour)s?[-\s]*old)(?!\s*(?:th|st|nd|rd)\b)` +
+  String.raw`(?![-\s]*(?:years?|yrs?|%|per\s?cent|km|kms|crore|lakh|rupees?)\b)\s+((?:(?!and\b|or\b|but\b|\d)[a-z'-]+\s+){0,2}?)` +
+  String.raw`(?:were\s+|was\s+|are\s+|have\s+been\s+|has\s+been\s+|got\s+)?(killed|dead|died|dies|die|injured|hurt|wounded|electrocuted|drowned|drown)\b`, "gi");
+const CASUALTY_TA = /(\d+)\s*(?:பேர்|நபர்கள்|பேருக்கு)?\s*(பலி|உயிரிழ|காயம்|படுகாய)/g;
+/** a number that labels something ("Class 12", "Route 21", "Rs 87", "aged 19", வகுப்பு 12), not a count of people */
+const NOT_A_COUNT = /(?:\b(?:class|std|standard|grade|form|route|bus|ward|no|number|platform|gate|sector|block|phase|plot|door|flat|aged|age|nh|sh|zone|division|unit|batch|room|seat|bay|pier|berth|section|sec|rs|inr|km|chapter|lane|cross|street)\.?|₹|#|வகுப்பு|வார்டு)\s*$/i;
+const SINGULAR = /^(?:student|boy|girl|man|woman|child|youth|worker|person|labourer|driver|rider|pedestrian|resident|teen|teenager|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|employee|guard|constable|officer|fisherman|farmer|patient)\b/i;
+const COUNT_BEFORE_LABEL = new RegExp(String.raw`\b${NUM}\s+(?:class|std|standard|grade)\s+\d+\w*\s+(?:[a-z]+\s+){0,1}?(?:were\s+|was\s+)?(killed|dead|died|dies|drowned|drown|electrocuted)\b`, "gi");
+const ONE_DEATH_EN = /\b(?:man|woman|boy|girl|youth|worker|person|labourer|student|driver|rider|pedestrian|resident|teen|teenager|child|toddler|infant|baby|son|daughter|wife|husband|mother|father|victim|employee|guard|constable|fisherman|patient|elderly|techie|\d{1,3}[-\s]year[-\s]old)\s+(?:was\s+|is\s+)?(?:found\s+)?(?:killed|dies|died|dead|electrocuted|drowns|drowned)\b/i;
+const ONE_DEATH_TA = /(?:மாணவர்|மாணவி|மாணவன்|இளைஞர்|பெண்|சிறுவன்|சிறுமி|தொழிலாளி|முதியவர்|ஓட்டுநர்|குழந்தை)\s*(?:பலி|உயிரிழ)/;
+
+/** [dead, injured] said in a news text; a number counts only next to the casualty word and when it is not a label. */
+export function casualties(text: string | null | undefined): [number, number] {
+  const s = String(text ?? "");
+  let dead = 0, injured = 0;
+  const labelled = (at: number) => NOT_A_COUNT.test(s.slice(Math.max(0, at - 14), at));
+  for (const m of s.matchAll(CASUALTY_EN)) {
+    const n = toNum(m[1]);
+    if (n > 200 || labelled(m.index!) || (n > 1 && SINGULAR.test(m[2] ?? ""))) continue;
+    if (DEATH.has(m[3].toLowerCase())) dead = Math.max(dead, n); else injured = Math.max(injured, n);
+  }
+  for (const m of s.matchAll(CASUALTY_TA)) {
+    const n = Number(m[1]);
+    if (n > 200 || labelled(m.index!)) continue;
+    if (DEATH.has(m[2])) dead = Math.max(dead, n); else injured = Math.max(injured, n);
+  }
+  for (const m of s.matchAll(COUNT_BEFORE_LABEL)) {
+    const n = toNum(m[1]);
+    if (n <= 200 && DEATH.has(m[2].toLowerCase())) dead = Math.max(dead, n);
+  }
+  if (!dead && (ONE_DEATH_EN.test(s) || ONE_DEATH_TA.test(s))) dead = 1;
+  return [dead, injured];
 }
 
 export interface NewsIncident {

@@ -5,7 +5,7 @@ from dintel.util import load_settings
 
 
 def _pack():
-    return {"facts": {"deaths": 2, "citizen_complaints": 14, "deadline_hours": 24, "first_reported": "03 Oct 2026, 04:19 PM"}, "reports": []}
+    return {"facts": {"deaths": 2, "citizen_complaints": 14, "deadline_hours": 24, "deadline_missed": True, "first_reported": "03 Oct 2026, 04:19 PM"}, "reports": []}
 
 
 def _out(**kw):
@@ -41,3 +41,13 @@ def test_taxonomy_has_the_new_categories():
     assert ref.cmap["police"]["MURDER"] == "CRIME_VIOLENT"
     schema = newsllm._classify_schema(list(ref.cat))
     assert set(schema["properties"]["items"]["items"]["properties"]["category"]["enum"]) == set(ref.cat)
+
+
+def test_no_missed_deadline_before_it():
+    # LT-11: the model wrote "Deadline missed" while the deadline was still ahead; such a write-up is refused
+    from dintel.newsllm import _on_time
+    out = {"summary": "No water in Adyar.", "summary_ta": "", "next_step": "Send a tanker.", "attention": ["Deadline missed for the repair"]}
+    assert not _on_time(out, {"facts": {"deadline_missed": False, "deadline_due": "26 Oct 2026, 05:06 PM"}})
+    assert _on_time(out, {"facts": {"deadline_missed": True}})
+    ok = {**out, "attention": ["Due by 26 Oct 2026, 05:06 PM", "Two families have no water"]}
+    assert _on_time(ok, {"facts": {"deadline_missed": False}})

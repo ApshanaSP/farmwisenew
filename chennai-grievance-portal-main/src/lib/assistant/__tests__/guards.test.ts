@@ -76,12 +76,16 @@ describe("code guard", () => {
 describe("facts", () => {
   it("derives change, share and rank in code", () => {
     const r: ToolResult = { tool: "t", args: {}, scope: null, asOf: "", data: null, sources: [], incidentIds: [], testData: false, caveats: [],
-      facts: [{ id: "kpi.severe", label: "Severe", value: 12 }, { id: "kpi.severe.prev", label: "Severe prev", value: 16 }] };
+      facts: [{ id: "kpi.severe", label: "Severe", value: 30 }, { id: "kpi.severe.prev", label: "Severe prev", value: 40 },
+        { id: "kpi.news", label: "News", value: 26 }, { id: "kpi.news.prev", label: "News prev", value: 3 }] };
     const ds = { id: "d", title: "D", fields: [{ key: "k", label: "K", kind: "category" as const }, { key: "v", label: "V", kind: "value" as const, format: "integer" as const }],
       rows: [{ k: "a", v: 30 }, { k: "b", v: 10 }] };
     const facts = buildFacts([r], [ds]);
     const get = (id: string) => facts.find((f) => f.id === id)?.value;
     expect(get("kpi.severe.change_pct")).toBe(-25);
+    // no percentage on a small base ("+767%" on 3, LT-10): the difference only
+    expect(get("kpi.news.change_pct")).toBeUndefined();
+    expect(get("kpi.news.diff")).toBe(23);
     expect(get("d.v.a.share")).toBe(75);
     expect(get("d.v.b.rank")).toBe(2);
     expect(get("d.v.total")).toBe(40);

@@ -33,6 +33,7 @@ import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import type { RowDataPacket } from "mysql2";
+import { MIN_PCT_BASE } from "@/lib/reference/metrics";
 
 type Row = Record<string, any>;
 
@@ -895,14 +896,16 @@ export const TOOLS = [
       const pct = (a: number, b: number) => (b ? round(((a - b) / b) * 100, 1) : 0);
       const facts: Fact[] = [
         fact("reported.now", `Incidents reported, ${periodOf(scope)}`, T.n), fact("reported.prev", "Incidents reported, the period before", T.prev),
-        fact("reported.change", "Change in incidents reported", T.n - T.prev), fact("reported.change_pct", "Change in incidents reported, percent", pct(T.n, T.prev), "%"),
+        fact("reported.change", "Change in incidents reported", T.n - T.prev),
+        // a percentage only on a base big enough for it (metrics.ts MIN_PCT_BASE): "+767%" on 3 incidents misleads
+        ...(T.prev >= MIN_PCT_BASE ? [fact("reported.change_pct", "Change in incidents reported, percent", pct(T.n, T.prev), "%")] : []),
         fact("severe.now", "Severe incidents", T.severe), fact("severe.prev", "Severe incidents, the period before", T.severePrev),
         fact("open.now", "Incidents still open", T.open), fact("open.overdue", "Open incidents past their deadline", T.overdue),
         fact("deaths.total", "Deaths recorded", T.dead), fact("injuries.total", "People injured", T.injured),
         fact("rain.linked", "Incidents linked to rain", T.rainLinked), fact("rain.days", "Rain days in the period", d.rainDays),
         fact("rain.days_prev", "Rain days in the period before", d.rainDaysPrev),
         ...d.categories.slice(0, 6).flatMap((c, k) => [fact(`type${k + 1}.now`, `${c.label}: reported`, c.n), fact(`type${k + 1}.prev`, `${c.label}: reported the period before`, c.prev),
-          fact(`type${k + 1}.change`, `${c.label}: change`, c.delta), ...(c.prev ? [fact(`type${k + 1}.change_pct`, `${c.label}: change, percent`, pct(c.n, c.prev), "%")] : []),
+          fact(`type${k + 1}.change`, `${c.label}: change`, c.delta), ...(c.prev >= MIN_PCT_BASE ? [fact(`type${k + 1}.change_pct`, `${c.label}: change, percent`, pct(c.n, c.prev), "%")] : []),
           fact(`type${k + 1}.open`, `${c.label}: still open`, c.open),
           fact(`type${k + 1}.severe`, `${c.label}: severe`, c.severe), fact(`type${k + 1}.rain`, `${c.label}: linked to rain`, c.rain)]),
         ...d.places.flatMap((p, k) => [fact(`place${k + 1}.now`, `${p.category} at ${p.place}: reported`, p.n), fact(`place${k + 1}.prev`, `${p.category} at ${p.place}: reported the period before`, p.prev)]),

@@ -333,7 +333,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.headline = `${fmt(v)} ${label} · ${P}`;
         card.answerMarkdown = `**${fmt(v)}** ${label} ${inP(inc.period)}${sw}`
           + `${!open && d.vsPrevious ? ` (${change(c.complaints, c.prevComplaints)})` : ""}.`
-          + `\n\n- They are about ${fmt(c.n)} ${kind}${d.vsPrevious ? ` (${change(c.n, c.prev)})` : ""}\n- ${rest}`;
+          // one measure (LT-10): the incidents these complaints are about, and how many of those are open; not every
+          // incident in the scope ("106 complaints involve 208 incidents" mixed complaints with police and news reports)
+          + `\n\n- They are about ${fmt(c.complaintIncidents)} ${c.complaintIncidents === 1 ? "incident" : "incidents"}, ${fmt(c.complaintOpen)} of them still open`;
       } else if (inc.openOnly || inc.overdue) {
         // "how many are still pending": the open ones, said as open (it once read "1,010 incidents were reported ... 1,010 still open")
         const late = inc.overdue ? "past their deadline" : inc.minOpenDays ? `still open after more than ${inc.minOpenDays} days` : "still open";
@@ -346,7 +348,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           + `${c.prev ? ` (${d.vsPrevious ? change(c.n, c.prev) : `${fmt(c.prev)} in the period before`})` : ""}: ${rest}.`;
       }
       // a question in Tamil or Tanglish is answered in it ("Velachery la indha week evlo accidents?")
-      const local = countInLanguage(i.lang, { n: c.n, prev: c.prev, severe: c.severe, open: c.open, dead: c.dead, kind, period: P, where: sw,
+      const cm = d.measure === "complaints"; // a complaints answer counts the incidents the complaints are about
+      const local = countInLanguage(i.lang, { n: cm ? c.complaintIncidents : c.n, prev: c.prev, severe: c.severe, open: cm ? c.complaintOpen : c.open, dead: c.dead, kind, period: P, where: sw,
         zoneTa: f.zone != null ? i.names.zones.get(f.zone)?.nameTa ?? null : null,
         measure: d.measure ?? null, complaints: d.openOnly ? c.openComplaints : c.complaints, openOnly: d.openOnly });
       if (local) { card.headline = local.headline; card.answerMarkdown = local.text; card.voiceSummary = local.text; }
@@ -358,7 +361,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
             ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])]
         : d.measure === "complaints"
           ? [{ label: d.openOnly ? "Open complaints" : "Complaints", value: d.openOnly ? c.openComplaints : c.complaints, prev: d.openOnly ? undefined : c.prevComplaints, tone: "info" },
-            { label: "Incidents", value: c.n, prev: c.prev }, { label: "Still open", value: c.open }]
+            { label: "Incidents with complaints", value: c.complaintIncidents, prev: d.openOnly ? undefined : c.prevComplaintIncidents }, { label: "Of them open", value: c.complaintOpen }]
           : [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
             { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
       card.context = { ...ctxBase, lastResponseType: "kpi" };

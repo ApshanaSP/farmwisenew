@@ -7,9 +7,12 @@
  */
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import type { Dataset } from "@/lib/assistant/answer";
+import { MIN_PCT_BASE } from "@/lib/reference/metrics";
 
 const round = (v: number, d = 1) => Math.round(v * 10 ** d) / 10 ** d;
-const pctChange = (cur: number, prev: number) => (prev ? round(((cur - prev) / prev) * 100) : null);
+// no percentage on a small base ("+767%" on 3 incidents, LT-10): the counts themselves are the facts then, and the
+// verifier refuses a percentage that is not a fact
+const pctChange = (cur: number, prev: number) => (prev >= MIN_PCT_BASE ? round(((cur - prev) / prev) * 100) : null);
 
 /** Facts from the tools plus the derived ones, de-duplicated by id. */
 export function buildFacts(results: ToolResult[], datasets: Dataset[]): Fact[] {

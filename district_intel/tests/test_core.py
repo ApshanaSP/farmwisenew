@@ -125,6 +125,24 @@ def test_text_cues():
     assert not tp.is_junk("Garbage not cleared near the bus stop for three days")
 
 
+def test_casualty_counts_ignore_labels_ages_and_prices():
+    # LT-04: a class, route, age or price is not a death toll; the count must sit next to the death word
+    cases = {
+        "Class 12 student killed and four injured in accident on Tambaram-Maduravoyal bypass": (1, 4),
+        "Car driven by minor crashes on Maduravoyal bypass, 17-year-old killed": (1, 0),
+        "19 year old dies after finger surgery at Chennai Hospital, family stages protest": (1, 0),
+        "Check out petrol and diesel prices in Chennai on October 26, 2026. Petrol Rs 101.87, diesel Rs 93.4": (0, 0),
+        "Five killed in four separate accidents across Chennai": (5, 0),
+        "Two Class 10 students drown in Puzhal Lake near Chennai": (2, 0),
+        "Bus route 21 driver dies of heart attack": (1, 0),
+        "3 people were killed in the fire": (3, 0),
+        "வகுப்பு 12 மாணவர் பலி": (1, 0),
+        "3 பேர் பலி": (3, 0),
+    }
+    for text, want in cases.items():
+        assert tp.casualties(text) == want, text
+
+
 def test_briefing_verifier_catches_invented_numbers():
     facts = {"kpi": {"incidents": 42, "severe": 5}}
     assert verify("42 incidents, 5 severe.", facts) == []

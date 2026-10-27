@@ -17,6 +17,7 @@ import { EnvPage, HeroBody, Page1 } from "./Overview";
 import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
+import { AlertBar } from "./AlertBar";
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
@@ -692,6 +693,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
 
         <div className="body">
+          {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys (on every page) */}
+          <AlertBar now={ov.now} />
           {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
           <section className={`band${page === "overview" ? " hero" : ""}`}>
             <div className="band-row">

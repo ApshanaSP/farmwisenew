@@ -28,6 +28,8 @@ from ..refdata import Reference
 from ..schema import DOC_COLUMNS, EVENT_COLUMNS, conform
 from ..util import INTEL_DIR, IST, REF_DIR, Settings, UnionFind, epoch_hours, log, mixed_to_ist, sha256_file
 
+from ..reporttype import NON_INCIDENT_KINDS, report_kind
+
 NON_INCIDENT_TYPES = ["service_notice", "announcement", "court", "politics", "entertainment_sport", "business"]
 
 TR_SAME_PLACE, TR_ONE_PLACE = 0.90, 0.94   # translated Tamil headline vs English headline (e5 cosine), see _embed_stories
@@ -426,7 +428,14 @@ def load(settings: Settings, ref: Reference, extra_places: pd.DataFrame) -> dict
              how, int((d["geo_level"] != "district").sum()), len(d))
     _ai_places(d, rf, gaz, order)
     cas = [tp.casualties(t) for t in text]
-    # the LLM's counts (read in context) where it gave them, else the pattern counts
+    # the LLM's counts (read in context) where it gave them, else the pattern counts. An LLM death count that is only a
+    # label in the text ("Class 12", "Route 21", "aged 19") and that the pattern count does not confirm is not used.
+    ai_dead = pd.to_numeric(d["ai_dead"], errors="coerce")
+    label_n = [{int(a or b) for a, b in tp.LABEL_NUMBERS.findall(t)} for t in text]
+    bad = [pd.notna(a) and a > 1 and int(a) in ln and int(a) != c[0] for a, ln, c in zip(ai_dead, label_n, cas)]
+    if any(bad):
+        log.info("news: %d LLM death counts were a class, route or age number and are not used", sum(bad))
+        d["ai_dead"] = ai_dead.mask(pd.Series(bad, index=d.index))
     d["dead"] = pd.to_numeric(d["ai_dead"], errors="coerce").fillna(pd.Series([c[0] for c in cas], index=d.index)).astype(int)
     d["injured"] = pd.to_numeric(d["ai_injured"], errors="coerce").fillna(pd.Series([c[1] for c in cas], index=d.index)).astype(int)
 
@@ -544,7 +553,11 @@ def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Seri
     outside = (d["mentioned_taluks"].fillna("[]").eq("[]") & d["mentioned_localities"].fillna("[]").eq("[]")
                & outside_headline(d["title"])).to_numpy()
     in_chennai = lab["in_chennai"].astype(bool).to_numpy() & ~outside
-    incident =lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES).to_numpy()
+    # the headline's kind (dintel/reporttype.py, LT-03): a forecast, government work, a rescue, a roundup, an opinion or a
+    # promotion is news, not an incident, whatever the model said
+    kinds = [report_kind(en if isinstance(en, str) else None, t) for en, t in zip(d.get("title_en", pd.Series(None, index=d.index)), d["title"])]
+    lab["report_type"] = [k if k in NON_INCIDENT_KINDS else rt for k, rt in zip(kinds, lab["report_type"])]
+    incident =lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES + NON_INCIDENT_KINDS).to_numpy()
     d["report_type"] = lab["report_type"].to_numpy()
     d["is_district"] = in_chennai.astype(int)
     d["statewide_dateline"] = (~in_chennai).astype(int)

@@ -88,7 +88,9 @@ function rulePoints(ins: Insights, b: Book, period: string): string[] {
   if (z && whole) out.push(`${z.name} had the most reports (${z.n})${z.kinds.length ? `, mainly ${z.kinds.map(lc).join(" and ")}` : ""}.`);
   const k = b.citizens.kinds;
   if (k.length) out.push(`Citizens complained most about ${k.slice(0, 2).map((x) => `${lc(x.label)} (${x.n})`).join(" and ")}.`);
-  if (t.awaiting) out.push(`${num(t.awaiting)} completed work${t.awaiting === 1 ? " waits" : "s wait"} for verification.`);
+  // the My Tasks figure (metrics.ts awaiting_check): severe closures and officers' reports, one per group
+  if (t.awaiting || t.leftToDepts) out.push(`${t.awaiting ? `${num(t.awaiting)} closed piece${t.awaiting === 1 ? " of work waits" : "s of work wait"} for your check in My Tasks` : "Nothing waits for your check in My Tasks"}`
+    + `${t.leftToDepts ? `; ${num(t.leftToDepts)} other closure${t.leftToDepts === 1 ? " is" : "s are"} verified by the departments` : ""}.`);
   return out;
 }
 
@@ -120,8 +122,8 @@ function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
     ? day.points.map((p) => ({ text: ta ? p.ta! : p.text, topic: p.topic, ref: p.ref }))
     : (ta ? sentences(story!.ta!) : story?.en ? sentences(story.en) : rulePoints(ins, b, c.periodLabel)).map((text) => ({ text }));
   const headline = day ? (ta ? day.headlineTa : day.headline) : null;
-  // the IMD warning has its own line, so the status does not repeat it
-  const reasons = b.status.reasons.filter((r) => !(b.status.warning && /IMD/.test(r)));
+  // the warnings have their own line (every source side by side); without it, the IMD line, which the status does not repeat
+  const reasons = b.alerts ? b.status.reasons : b.status.reasons.filter((r) => !(b.status.warning && /IMD/.test(r)));
   const status = `${STATUS[b.status.level]}${reasons.length ? ` · ${reasons.join(", ")}` : ""}`;
   const listen = () => {
     if (talking) { stopSpeaking(); setTalking(false); return; }
@@ -150,7 +152,7 @@ function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
         </span>
       </Head>
       <div className="bb-body kp">
-        <p className={`bb-status lv-${b.status.level}`} title="District status, by fixed rules: deaths, severe incidents, IMD warnings">
+        <p className={`bb-status lv-${b.status.level}`} title="District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news">
           <i /><b>{STATUS[b.status.level]}</b><span>{reasons.length ? reasons.join(" · ") : b.status.warning ? "IMD warning in force" : "Nothing unusual in this period"}</span>
         </p>
         <div className="kp-scroll">
@@ -190,7 +192,12 @@ function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
             </div>
           )}
           <div className="bb-watch">
-            {b.status.warning && <p className="bb-fact warn" title={b.status.warning.text}><I n="cloud" /><b>IMD warning</b><span>{b.status.warning.text}</span></p>}
+            {b.alerts && b.alerts.agreement !== "none" ? (
+              <p className="bb-fact warn" title={b.alerts.sources.map((x) => `${x.label}: ${x.says}`).join("\n")}>
+                <I n="cloud" /><b>Warnings</b>
+                <span>{b.alerts.agreementText}{b.alerts.stale.length ? ` ${b.alerts.stale.map((x) => x.label).join(", ")} not reporting.` : ""}</span>
+              </p>
+            ) : !b.alerts && b.status.warning ? <p className="bb-fact warn" title={b.status.warning.text}><I n="cloud" /><b>IMD warning</b><span>{b.status.warning.text}</span></p> : null}
             {old && (
               <button className="bb-fact" onClick={() => c.openInc(old.id)} title={`${old.title}${old.zone ? `, ${old.zone}` : ""}. Click to open.`}>
                 <I n="clock" /><b>Oldest open complaint</b><span>{old.days} days · {old.title}</span><I n="chevr" />

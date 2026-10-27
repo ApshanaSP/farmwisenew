@@ -212,12 +212,15 @@ export async function countIncidents(f: IncidentFilters, now: string) {
   const w = where(f, now), p = where(f, now, undefined, 1);
   const cols = `COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open, SUM(COALESCE(i.dead, 0)) AS dead,
     SUM(COALESCE(i.injured, 0)) AS injured, SUM(COALESCE(i.citizen_complaints, 0)) AS complaints,
-    SUM(CASE WHEN ${OPEN} = 1 THEN COALESCE(i.citizen_complaints, 0) ELSE 0 END) AS open_complaints`;
+    SUM(CASE WHEN ${OPEN} = 1 THEN COALESCE(i.citizen_complaints, 0) ELSE 0 END) AS open_complaints,
+    SUM(COALESCE(i.citizen_complaints, 0) > 0) AS complaint_incidents, SUM(COALESCE(i.citizen_complaints, 0) > 0 AND ${OPEN} = 1) AS complaint_open`;
   const [[a], [b]] = await Promise.all([
     q(`SELECT ${cols} FROM incidents i WHERE ${w.sql}`, w.params),
     q(`SELECT ${cols} FROM incidents i WHERE ${p.sql}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), open: num(a?.open), dead: num(a?.dead), injured: num(a?.injured), complaints: num(a?.complaints),
-    openComplaints: num(a?.open_complaints), prev: num(b?.n), prevDead: num(b?.dead), prevComplaints: num(b?.complaints) };
+    openComplaints: num(a?.open_complaints), prev: num(b?.n), prevDead: num(b?.dead), prevComplaints: num(b?.complaints),
+    // the incidents the complaints are about (metrics.ts complaint_incidents): a complaints answer counts these, not every incident
+    complaintIncidents: num(a?.complaint_incidents), complaintOpen: num(a?.complaint_open), prevComplaintIncidents: num(b?.complaint_incidents) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */

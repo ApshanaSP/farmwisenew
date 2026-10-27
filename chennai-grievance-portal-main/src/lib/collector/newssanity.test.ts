@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STORY_HOURS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident, animalDeathsOnly, notAnIncident } from "./newssanity";
+import { STORY_HOURS, casualtyMerges, isArchival, isGasNotDisease, storyMerges, type NewsIncident, animalDeathsOnly, notAnIncident, casualties } from "./newssanity";
 
 describe("history columns are not today's incidents", () => {
   it("drops Dinamani's 'this day' item (95 killed in a 1976 Bombay air crash, published 13 Oct 2026)", () => {
@@ -102,4 +102,20 @@ describe("horoscopes and obituaries are news, not incidents", () => {
     expect(notAnIncident("Worker passed away after falling into stormwater drain")).toBe(false);
     expect(notAnIncident("Two killed in accident on Maduravoyal bypass road")).toBe(false);
   });
+});
+
+describe("death counts: a label is not a toll (LT-04)", () => {
+  const cases: [string, [number, number]][] = [
+    ["Class 12 student killed and four injured in accident on Tambaram-Maduravoyal bypass", [1, 4]],
+    ["Car driven by minor crashes on Maduravoyal bypass, 17-year-old killed", [1, 0]],
+    ["19 year old dies after finger surgery at Chennai Hospital, family stages protest", [1, 0]],
+    ["Check out petrol and diesel prices in Chennai on October 26, 2026. Petrol Rs 101.87, diesel Rs 93.4", [0, 0]],
+    ["Five killed in four separate accidents across Chennai", [5, 0]],
+    ["Two Class 10 students drown in Puzhal Lake near Chennai", [2, 0]],
+    ["Bus route 21 driver dies of heart attack", [1, 0]],
+    ["3 people were killed in the fire", [3, 0]],
+    ["வகுப்பு 12 மாணவர் பலி", [1, 0]],
+    ["3 பேர் பலி", [3, 0]]
+  ];
+  for (const [text, want] of cases) it(text, () => expect(casualties(text)).toEqual(want));
 });

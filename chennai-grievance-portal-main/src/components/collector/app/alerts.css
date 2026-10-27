@@ -1,0 +1,38 @@
+/* AlertBar.tsx: one slim line per banner at the top of the console; details open below. */
+.dic .alb { display: grid; gap: 6px; margin: 0 0 8px; }
+.dic .alb-row { --c: var(--medium); --s: var(--medium-soft); --l: var(--medium-line);
+  border: 1px solid var(--l); background: var(--s); border-radius: 12px; overflow: hidden; }
+.dic .alb-row.t-red { --c: var(--critical); --s: var(--critical-soft); --l: var(--critical-line); }
+.dic .alb-row.t-orange { --c: var(--high); --s: var(--high-soft); --l: var(--high-line); }
+.dic .alb-row.t-yellow, .dic .alb-row.t-watch { --c: var(--medium); --s: var(--medium-soft); --l: var(--medium-line); }
+.dic .alb-row.t-admin { --c: var(--text-2); --s: var(--surface-2, var(--bg-2)); --l: var(--line-3); }
+.dic .alb-h { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 6px 12px; border: 0; background: none;
+  color: var(--text); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
+.dic .alb-h.static { cursor: default; }
+.dic .alb-h > svg:first-child { color: var(--c); flex: none; width: 16px; height: 16px; }
+.dic .alb-h > b { color: var(--c); white-space: nowrap; font-weight: 650; }
+.dic .alb-h > span { color: var(--text-2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dic .alb-row.open .alb-h > span { white-space: normal; }
+.dic .alb-h > svg:last-child { flex: none; width: 14px; height: 14px; color: var(--text-3); }
+.dic .alb-x { margin-left: auto; border: 0; background: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; }
+.dic .alb-d { padding: 0 12px 10px 36px; display: grid; gap: 8px; font-size: 12.5px; }
+.dic .alb-src { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dic .alb-src li { display: grid; grid-template-columns: 150px 1fr auto; gap: 10px; align-items: baseline; padding-left: 10px; border-left: 3px solid var(--line-3); }
+.dic .alb-src li.lv-yellow { border-color: var(--medium); }
+.dic .alb-src li.lv-orange { border-color: var(--high); }
+.dic .alb-src li.lv-red { border-color: var(--critical); }
+.dic .alb-src b { color: var(--text); font-weight: 600; }
+.dic .alb-src span { color: var(--text-2); }
+.dic .alb-src small, .dic .alb-news small { color: var(--text-3); white-space: nowrap; }
+.dic .alb-fb { display: flex; gap: 8px; margin: 0; color: var(--text-2); }
+.dic .alb-fb svg { color: var(--c); flex: none; width: 15px; height: 15px; }
+.dic .alb-news { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.dic .alb-news li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.dic .alb-news a, .dic .alb-news span { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.dic .alb-news a:hover { text-decoration: underline; }
+@media (max-width: 700px) {
+  .dic .alb-src li { grid-template-columns: 1fr; gap: 2px; }
+  .dic .alb-h > b { white-space: normal; flex: 1; min-width: 0; }
+  .dic .alb-h > span { display: none; }
+  .dic .alb-row.open .alb-h > span { display: block; }
+}

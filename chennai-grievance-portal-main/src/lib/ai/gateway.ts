@@ -17,6 +17,7 @@ import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
+import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 
 export type Role = "fast" | "reasoning";
 export type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
@@ -395,6 +396,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       charge(c.user, info.inputTokens + info.outputTokens);
       recordUse(key, info.inputTokens + info.outputTokens);
       strikes.delete(key);
+      keyWorks(p.name);
       console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
       return { result: { object: r.output as T, info }, longBusy: false };
     } catch (e) {
@@ -426,6 +428,8 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
+      // a refused or expired key is remembered for the console's admin banner (keyhealth.ts), not only logged
+      if (isKeyRefusal(status, (e as Error).message ?? "") || /refused the AWS keys/.test((e as Error).message ?? "")) keyRefused(p.name, status ?? (e as Error).name, (e as Error).message);
       // 503 "high demand" or 429 "rate limited": waiting keeps the Collector waiting; hand over to the other model (then the
       // next provider) at once. Free tiers cap tokens per minute, and one question can use most of a minute's allowance.
       if (status === 503 || status === 429) {

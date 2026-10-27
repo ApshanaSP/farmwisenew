@@ -15,6 +15,7 @@ import { AddedRow } from "./Added";
 import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useState } from "react";
+import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
 
 // =================================================================== page 1 ==
 
@@ -359,8 +360,8 @@ function CommonTiles({ s, c }: { s: { overdue: number }; c: Console }) {
   // "Severe or high, still open" is not repeated here: the severity card beside it counts the same incidents
   return (
     <>
-      <Tile l="Past deadline, still open" v={<Cnt v={s.overdue} />} tone={s.overdue ? "var(--high)" : undefined}
-        title={`Open incidents that have missed their resolution deadline, reported in the ${p}. Click for the list.`}
+      <Tile l={`Past deadline, still open · ${shortWindow(c.period)}`} v={<Cnt v={s.overdue} />} tone={s.overdue ? "var(--high)" : undefined}
+        title={`${labelled("past_deadline", c.period)}: ${METRICS.past_deadline.measure}. Click for the list.`}
         onClick={() => c.openList({ status: "overdue", sort: "sev", dir: 1 }, "Open and past deadline")} />
     </>
   );

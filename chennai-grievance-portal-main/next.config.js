@@ -39,6 +39,10 @@ const nextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   reactStrictMode: true,
+  // No page uses next/image (the logo is a plain <img>), so the Image Optimization API (/_next/image) is off: it is where
+  // Next 14's critical advisories GHSA-2xp9-vwfh-vxw4 and GHSA-2464-fhr4-w9xw (remote code execution via AVIF/SVG) and
+  // its image DoS advisories live. docs/SECURITY_AUDIT.md lists the rest and what an upgrade to Next 16 would close.
+  images: { unoptimized: true },
   // a second dev server in the same folder (another port) needs its own build folder: NEXT_DIST_DIR=.next-studio
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // LanceDB (Ask District IQ's search index) ships native binaries: Node loads it as is, the bundler leaves it out

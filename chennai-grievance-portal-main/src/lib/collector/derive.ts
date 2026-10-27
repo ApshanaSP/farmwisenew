@@ -15,6 +15,10 @@
  *   news media   an incident known only from the news, and only from sites that are not news media (property blogs,
  *                trading apps, aggregators, content farms: newsrel.isNewsMedia), is taken out of the build, so the
  *                console's counts, map, lists and assistant follow official news media only.
+ *   report kinds a news article that is a forecast, government work, a rescue, a roundup, an opinion or a promotion
+ *                (reporttype.ts) is news, not an incident: its news-only incident leaves the build (LT-03).
+ *   news sanity  history items, gas deaths, one story filed as many incidents, death counts said again by the
+ *                fixed rule (LT-04), animal deaths, one-outlet death tolls (newssanity.ts).
  *   clusters     incidents that are the same problem in the same area (neighbouring streets, the same street or
  *                locality, the same citizen again, days apart, or one event covered by many outlets) share incidents.cluster_id (cluster.ts), so the console lists each group once
  *                with all its sources. Runs after places, so an incident placed from its reports groups by its place.
@@ -26,8 +30,9 @@ import { placeResolver, type Placed } from "@/lib/collector/nlp";
 import { judgeLocation, landmark, outsidePlace, type Ward } from "@/lib/collector/locreview";
 import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsrel";
 import { cleanTitle } from "@/lib/collector/threads";
+import { NON_INCIDENT_KINDS, reportKind, type ReportKind } from "@/lib/collector/reporttype";
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
-import { MASS_DEATHS, animalDeathsOnly, casualtyMerges, isArchival, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
+import { MASS_DEATHS, animalDeathsOnly, casualties, casualtyMerges, isArchival, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -353,8 +358,76 @@ function mergeInto(db: DB, from: string, to: string) {
   db.prepare(`DELETE FROM incidents WHERE incident_id = ?`).run(from);
 }
 
+// ------------------------------------------------------------ report kinds --
+
+/**
+ * Each news article's kind from its headline (reporttype.ts): a forecast, government work, a rescue, a roundup, an
+ * opinion or a promotion is news, not an incident. The article keeps its place in the news lists with report_type set
+ * to that kind and is_incident = 0 (alerts reach the alerts lane through it); a news-only incident whose every article
+ * is such a report is taken out of the build, so only incidents carry a severity and reach the counts.
+ */
+export function reportKinds(db: DB) {
+  if (!has(db, "documents", "report_type") || !has(db, "documents", "is_incident")) return;
+  const en = has(db, "documents", "title_en") ? "title_en" : "NULL";
+  const docs = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title, ${en} AS en FROM documents WHERE source_kind = 'news'`).all() as Row[];
+  const kinds = new Map<string, ReportKind>();
+  for (const d of docs) {
+    const k = reportKind(d.en, d.title);
+    if (k && NON_INCIDENT_KINDS.includes(k)) kinds.set(String(d.id), k);
+  }
+  const byInc = new Map<string, Row[]>();
+  for (const d of docs) if (d.inc) (byInc.get(d.inc) ?? byInc.set(d.inc, []).get(d.inc)!).push(d);
+  const media = has(db, "incidents", "media_only")
+    ? (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[]).map((r) => String(r.id)) : [];
+  const notIncidents = media.filter((id) => byInc.get(id)?.length && byInc.get(id)!.every((d) => kinds.has(String(d.id))));
+  tx(db, () => {
+    const up = db.prepare(`UPDATE documents SET report_type = ?, is_incident = 0 WHERE doc_id = ?`);
+    for (const [id, k] of kinds) up.run(k, id);
+    if (notIncidents.length) dropIncidents(db, notIncidents);
+  });
+  const by = [...kinds.values()].reduce<Record<string, number>>((a, k) => ((a[k] = (a[k] ?? 0) + 1), a), {});
+  console.log(`[derive] news kinds: ${Object.entries(by).map(([k, n]) => `${n} ${k}`).join(", ") || "none"}; `
+    + `${notIncidents.length} news-only incidents that were not incidents taken out`);
+}
+
+/**
+ * 0. death counts said again by the fixed rule (newssanity.casualties): an article's pattern count that read a label
+ * ("Class 12", "19 year old", "diesel") is lowered, and a news-only incident takes the largest corrected count of its
+ * articles. Counts only go down here; an LLM count stays unless it is one of the text's label numbers.
+ */
+function recountDeaths(db: DB): number {
+  if (!has(db, "documents", "dead")) return 0;
+  const aiCol = has(db, "documents", "ai_dead") ? "ai_dead" : "NULL";
+  const enCol = has(db, "documents", "title_en") ? "title_en" : "NULL";
+  const rows = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, dead, ${aiCol} AS ai, title, ${enCol} AS en, summary, body
+    FROM documents WHERE COALESCE(dead, 0) > 0`).all() as Row[];
+  const LABEL = /\b(?:class|std|standard|grade|route|bus|ward|no|platform|aged|age)\.?\s*(\d{1,3})\b|\b(\d{1,3})[-\s]years?[-\s]old\b/gi;
+  const fixed = new Map<string, number>();
+  for (const r of rows) {
+    const text = [r.title, r.en, r.summary, String(r.body ?? "").slice(0, 4000)].filter(Boolean).join(". ");
+    const now = Number(r.dead), ai = r.ai == null ? null : Number(r.ai);
+    const labels = new Set([...text.matchAll(LABEL)].map((m) => Number(m[1] ?? m[2])));
+    const said = casualties(text)[0];
+    const want = ai != null && Number.isFinite(ai) && !(ai > 1 && labels.has(ai) && ai !== said) ? ai : Math.min(now, said);
+    if (want < now) fixed.set(String(r.id), want);
+  }
+  if (!fixed.size) return 0;
+  tx(db, () => {
+    const up = db.prepare(`UPDATE documents SET dead = ? WHERE doc_id = ?`);
+    for (const [id, v] of fixed) up.run(v, id);
+    // a news-only incident: the largest count its articles now give
+    const incs = [...new Set(rows.filter((r) => fixed.has(String(r.id)) && r.inc).map((r) => String(r.inc)))];
+    const most = db.prepare(`SELECT MAX(COALESCE(dead, 0)) AS d FROM documents WHERE linked_incident_id = ?`);
+    const set = db.prepare(`UPDATE incidents SET dead = ? WHERE incident_id = ? AND media_only = 1 AND COALESCE(dead, 0) > ?`);
+    for (const id of incs) { const d = Number((most.get(id) as Row | undefined)?.d ?? 0); set.run(d || null, id, d); }
+  });
+  return fixed.size;
+}
+
 export function newsSanity(db: DB) {
   if (!has(db, "incidents", "media_only") || !has(db, "documents", "linked_incident_id")) return;
+  const recounted = recountDeaths(db);
+  if (recounted) console.log(`[derive] news: ${recounted} article death counts lowered (a class, age, route or price read as a toll)`);
   const docs = db.prepare(`SELECT linked_incident_id AS id, story_id AS story, title, ${has(db, "documents", "title_en") ? "title_en" : "NULL AS title_en"},
     published_at AS pub, publisher FROM documents WHERE linked_incident_id IS NOT NULL`).all() as Row[];
   const byInc = new Map<string, Row[]>();
@@ -478,5 +551,6 @@ onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@1", newsMedia);
-onBuild("news-sanity@5", newsSanity);
+onBuild("report-kinds@1", reportKinds);
+onBuild("news-sanity@6", newsSanity);
 onBuild("incident-clusters@4", clusters);

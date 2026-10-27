@@ -18,6 +18,11 @@ import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
 import { decisionEffect, effectiveSql } from "@/lib/collector/effective";
 import { orEmpty, orNull } from "@/lib/fallback";
+import { deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "@/lib/reference/metrics";
+import { searchGroups } from "@/lib/collector/searchwords";
+
+/** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
+const istWall = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
 export { PINNABLE, PLACE_FILTERS, parsePlace, type PlaceFilter } from "@/lib/collector/mapplace";
 
 type Row = Record<string, any>;
@@ -461,6 +466,8 @@ const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
  * record, deaths); everything else is left to the department and shows no reasons.
  */
 export function explain(r: Row): Plain {
+  // where it stands against its deadline now (metrics.ts): the due time when the row has it, else the store's flag
+  const dl = deadlineState(r.sla_due ?? null, istWall(), r.breached ?? r.sla_breached);
   const notes = String(r.severity_reasons ?? "").split(";").map((s) => s.replace(/\s*\([^)]*\)\s*$/, "").trim()).filter(Boolean);
   const pr = String(r.priority_reasons ?? "").split(";").slice(1).map((s) => s.trim().toLowerCase()).filter(Boolean);
   const flags = String(r.attention_reason ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -525,20 +532,21 @@ export function explain(r: Row): Plain {
     else if (f.includes("only in the news")) add(70, "In the news, but no department has a record of it");
     else if (f.includes("not verified") && serious) add(75, "No officer has confirmed it on the ground yet");
     else if (f.includes("spreading")) add(65, "More reports are still coming in");
-    else if (f.includes("deadline") && !why.some(([, x]) => /deadline/.test(x))) add(60, "Past its deadline");
+    else if (f.includes("deadline") && dl.overdue && !why.some(([, x]) => /deadline/.test(x))) add(60, "Past its deadline");
   }
-  if (Number(r.breached ?? r.sla_breached) && !why.some(([, x]) => /deadline/.test(x))) add(60, "Past its deadline");
+  if (dl.overdue && !why.some(([, x]) => /deadline/.test(x))) add(60, "Past its deadline");
   why.sort((a, b) => b[0] - a[0]);
   const open = Number(r.open ?? 1) === 1;
   const needsYou = open && why.length > 0 && (serious || why[0][0] >= 70);
   const shortFacts = facts.slice(0, 4);
   // The pipeline's LLM text (written only from this incident's computed facts, every number checked) replaces the
   // template wording; whether the incident needs the Collector is still decided by the rules above.
-  const aiWhy = parseList(r.ai_attention);
+  // ...but never a missed deadline before the deadline (LT-11): the AI wrote from the build's facts; the state is computed now
+  const aiWhy = parseList(r.ai_attention).filter((x) => !falseDeadlineClaims(x, dl).length);
   const ai = Boolean(r.ai_summary) && aiWhy.length > 0;
-  const text = ai ? String(r.ai_summary) : summary;
+  const text = ai ? withoutFalseDeadline(String(r.ai_summary), dl) : summary;
   const attention = needsYou ? (ai ? aiWhy.slice(0, 3) : why.slice(0, 3).map(([, s]) => s)) : [];
-  const next = needsYou && ai && r.ai_next_step ? String(r.ai_next_step) : null;
+  const next = needsYou && ai && r.ai_next_step ? withoutFalseDeadline(String(r.ai_next_step), dl) || null : null;
   return { summary: text, facts: shortFacts, attention, needsYou, what: [text, ...shortFacts], why: attention, next, ai };
 }
 
@@ -717,6 +725,26 @@ export async function kpiBlock(s: Scope, now: string) {
   };
 }
 
+/**
+ * My Tasks' count (metrics.ts awaiting_check), the one figure for "waiting for your check" on every page (LT-07): citizen
+ * complaints whose department reported the work done in the period (last_update_at), still open and with no Collector
+ * decision, on severe incidents (FOR_COLLECTOR); plus every completion report an officer sent from the officer console.
+ * One per group of the same problem in the same area (CLUSTER). `leftToDepts`: the other closures, which departments
+ * verify themselves (metrics.ts left_to_departments).
+ */
+export async function awaitingCheck(s: Scope, now: string): Promise<{ n: number; leftToDepts: number }> {
+  const tw = periodWindow(s.period, now, "i.last_update_at");
+  const sent = await sentByOfficer();
+  const scope = [s.zone ? "AND i.zone_no = ?" : "", s.dept ? "AND i.lead_dept = ?" : "", s.cat ? "AND i.category_code = ?" : "", s.taluk ? "AND i.taluk_code = ?" : ""].join(" ");
+  const params = [...(s.zone ? [s.zone] : []), ...(s.dept ? [s.dept] : []), ...(s.cat ? [s.cat] : []), ...(s.taluk ? [s.taluk] : [])];
+  const core = `${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
+    AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}`;
+  const [r] = await q(`SELECT COUNT(DISTINCT CASE WHEN (${core} AND ${FOR_COLLECTOR}) OR ${sent} THEN ${CLUSTER} END) AS n,
+              COUNT(DISTINCT CASE WHEN ${core} AND NOT ${FOR_COLLECTOR} AND NOT ${sent} THEN ${CLUSTER} END) AS left_to_depts
+       FROM incidents i WHERE 1 = 1 ${scope}`, [...tw.params, ...tw.params, ...params]);
+  return { n: Number(r?.n ?? 0), leftToDepts: Number(r?.left_to_depts ?? 0) };
+}
+
 /** Everything on the console's first pages. Read-only: routing news complaints is a job (routeNewsComplaints). */
 export async function overview(period: Period, zone: number | null, dept: string | null = null, focus: Focus = {}) {
   const now = await asOf();
@@ -783,9 +811,7 @@ export async function overview(period: Period, zone: number | null, dept: string
     q(`SELECT * FROM (SELECT ${ROW}, ${sent} AS officer_sent, ${CLUSTER} AS grp, COUNT(*) OVER (PARTITION BY ${CLUSTER}) AS grouped,
          ROW_NUMBER() OVER (PARTITION BY ${CLUSTER} ORDER BY ${sent} DESC, i.last_update_at ASC) AS g_rn
        ${FROM} WHERE ${qWhere}) x WHERE g_rn = 1 ORDER BY officer_sent DESC, updated ASC LIMIT 12`, qParams),
-    q(`SELECT COUNT(DISTINCT CASE WHEN (${awaitCore} AND ${FOR_COLLECTOR}) OR ${sent} THEN ${CLUSTER} END) AS n,
-              COUNT(DISTINCT CASE WHEN ${awaitCore} AND NOT ${FOR_COLLECTOR} AND NOT ${sent} THEN ${CLUSTER} END) AS left_to_depts
-       FROM incidents i WHERE 1 = 1 ${inScope}`, [...tw.params, ...tw.params, ...scopeParams]),
+    awaitingCheck(s, now).then((t) => [{ n: t.n, left_to_depts: t.leftToDepts }]),
     // By severity: one row per group (CLUSTER), shown under the group's most severe level, the 12 most urgent each
     q(
       `SELECT * FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY x.sev ORDER BY x.priority DESC, x.t DESC) AS rn FROM (
@@ -1387,17 +1413,31 @@ export async function search(text: string) {
       `SELECT code, name, org FROM ref_departments WHERE action_owner = 1 AND (name LIKE ? OR code LIKE ?) LIMIT 3`,
       [like, like]
     ),
-    q(
-      `SELECT ${ROW} ${FROM} WHERE ${TITLE} LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ?
-       ORDER BY i.is_open DESC, i.first_reported_at DESC LIMIT 7`,
-      [like, like, like]
-    )
+    // every word, in any order, in the title, place, zone or category (searchwords.ts, LT-36); or the incident's id
+    (() => {
+      const groups = searchGroups(text);
+      const cols = [TITLE, "i.place_text", "i.zone_name", "i.category_label"];
+      const each = groups.map((g) => `(${g.flatMap(() => cols.map((c) => `${c} LIKE ?`)).join(" OR ")})`);
+      // (the words are letters, digits and hyphens only: nothing to escape)
+      const params = groups.flatMap((g) => g.flatMap((x) => cols.map(() => `%${x}%`)));
+      return q(
+        `SELECT ${ROW} ${FROM} WHERE (${each.length ? each.join(" AND ") : "1 = 0"}) OR i.incident_id LIKE ?
+         ORDER BY i.is_open DESC, i.first_reported_at DESC LIMIT 7`,
+        [...params, like]
+      );
+    })()
   ]);
   // news reports, connected sources and a citizen's complaint number (the incident it was filed into) are found here too
   const code = text.trim().toUpperCase().match(/^\d{4}-[A-Z0-9]{6}$/)?.[0] ?? null;
+  // news headlines: every word too (in the English translation of a Tamil headline as well)
+  const ng = searchGroups(text);
+  const newsWhere = ng.length
+    ? { sql: ng.map((g) => `(${g.map(() => "(title LIKE ? OR title_en LIKE ?)").join(" OR ")})`).join(" AND "),
+        params: ng.flatMap((g) => g.flatMap((x) => [`%${x}%`, `%${x}%`])) }
+    : { sql: "title LIKE ?", params: [like] };
   const [news, sources, filed] = await Promise.all([
     q(`SELECT doc_id AS id, title, publisher, url, linked_incident_id AS incident, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
-       FROM documents WHERE title LIKE ? ORDER BY published_at DESC LIMIT 4`, [like]).catch(orEmpty("intel:search-news")),
+       FROM documents WHERE ${newsWhere.sql} ORDER BY published_at DESC LIMIT 4`, newsWhere.params).catch(orEmpty("intel:search-news")),
     q(`SELECT source_id AS id, name, kind FROM ${ops("sources")} WHERE name LIKE ? ORDER BY source_id LIMIT 3`, [like]).catch(orEmpty("intel:search-sources")),
     code ? q(`SELECT e.incident_id AS id, ${TITLE} AS title FROM events e JOIN incidents i ON i.incident_id = e.incident_id
        WHERE e.source = 'grievance' AND e.source_record_id = ? LIMIT 1`, [code]).catch(orEmpty("intel:search-complaint")) : Promise.resolve([] as Row[])

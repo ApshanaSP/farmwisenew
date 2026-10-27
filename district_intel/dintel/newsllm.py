@@ -39,7 +39,7 @@ OLD_VERSIONS = ("news-v1",)     # their labels still count; only the extra detai
 TRANSLATE_VERSION = "tr-v1"
 STATUSES = ["ongoing", "under_investigation", "action_taken", "resolved", "not_stated"]
 DETAILS = ("people", "organisations", "dead", "injured", "status", "place")
-NARRATIVE_VERSION = "narr-v3"   # v2: no numbers beyond the facts; v3: number words checked too, no exaggeration
+NARRATIVE_VERSION = "narr-v3"   # v2: no numbers beyond the facts; v3: number words checked too, no exaggeration (a missed deadline before it is refused by _on_time; cached texts are filtered by the website)
 REPORT_TYPES = ["incident", "crime", "civic_complaint", "service_notice", "announcement", "court", "politics",
                 "entertainment_sport", "business", "opinion_feature", "other"]
 
@@ -423,7 +423,8 @@ Write:
   to this incident (who is at risk, what is missing, what could happen next), not generic. Base every reason on FACTS.
 - next_step: one concrete action and which department or officer should take it, at most 25 words.
 Rules: use only numbers that appear in FACTS (write them as digits); never invent names, causes, figures or time limits
-(no "within 2 hours" unless FACTS give that deadline); never make it sound worse than FACTS (damage is not a collapse)
+(no "within 2 hours" unless FACTS give that deadline); say a deadline was missed only when FACTS.deadline_missed is true (else it is
+due by FACTS.deadline_due); never make it sound worse than FACTS (damage is not a collapse)
 and never add places, people or risks FACTS do not name (no "residential areas" unless FACTS say so); if FACTS
 show it is only in the news and no department has a record, say so; do not repeat the summary in the reasons."""
 
@@ -448,7 +449,10 @@ def _facts(r, reports: list[str], dept_names: dict[str, str]) -> dict:
          "police_reports": int(r.police_reports), "confirmed_by_an_officer": bool(r.verified),
          "in_a_department_record": bool(r.has_official_record), "lead_department": dept_names.get(r.lead_dept, r.lead_dept),
          "departments_involved": [dept_names.get(d, d) for d in str(r.depts_involved).split("|") if d],
-         "deadline_hours": int(r.sla_hours), "deadline_missed": bool(r.sla_breached), "new_reports_last_24h": int(r.growth_24h),
+         "deadline_hours": int(r.sla_hours), "deadline_missed": bool(r.sla_breached),
+         # when the deadline falls, so the text can say "due by ..." and never "missed" before it (LT-11)
+         **({"deadline_due": f"{r.sla_due_at.tz_convert(IST):%d %b %Y, %I:%M %p}"} if pd.notna(getattr(r, "sla_due_at", None)) else {}),
+         "new_reports_last_24h": int(r.growth_24h),
          "similar_incidents_here_last_90_days": int(r.recurrence_90d), "during_rain": bool(r.rain_coupled),
          "dashboard_flags": r.attention_reason or None}
     return {"facts": {k: v for k, v in f.items() if v not in (None, "", [])}, "reports": reports[:4]}
@@ -465,10 +469,24 @@ def _numbers(s: str) -> set[float]:
     return {float(x.replace(",", "")) for x in _NUM.findall(s)} | {float(_WORDS[w.lower()]) for w in _WORD.findall(s)}
 
 
+# a sentence saying the deadline has passed (the website's src/lib/reference/metrics.ts MISSED_CLAIM)
+MISSED_CLAIM = re.compile(r"\b(deadline (was |has been |had been |has |had |is )?(missed|passed|breached|lapsed|exceeded|crossed|over)|"
+                          r"missed (its|the|their) (\d+[- ]hour )?deadline|past (its|the|their) (\d+[- ]hour )?deadline|beyond (its|the) deadline|"
+                          r"overdue|sla (breach|breached)|deadline breach)\b|காலக்கெடு\s*(தாண்டி|கடந்த|முடிந்த)", re.I)
+
+
+def _on_time(out: dict, pack: dict) -> bool:
+    """No missed deadline unless the facts say it was missed (the model once wrote "Deadline missed" hours before it)."""
+    if pack.get("facts", {}).get("deadline_missed"):
+        return True
+    text = " ".join([out["summary"], out["summary_ta"], out["next_step"], *out["attention"]])
+    return not MISSED_CLAIM.search(text)
+
+
 def _grounded(out: dict, pack: dict) -> bool:
     allowed = _numbers(json.dumps(pack, ensure_ascii=False))
     said = _numbers(" ".join([out["summary"], out["summary_ta"], out["next_step"], *out["attention"]]))
-    return said <= allowed and 1 <= len(out["attention"]) <= 3 and bool(out["summary"].strip())
+    return said <= allowed and 1 <= len(out["attention"]) <= 3 and bool(out["summary"].strip()) and _on_time(out, pack)
 
 
 _BRIEF_SYSTEM = """You write the opening of the Chennai District Collector's briefing: the story of the period in 3 sentences,
