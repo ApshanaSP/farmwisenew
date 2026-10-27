@@ -30,7 +30,7 @@ import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart, questionParts } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, pruneUnverified, dedupeCaveats, selfCorrections, verifyNumbers, withoutEchoedNumbers, withoutSelfCorrections, type EntityNames } from "@/lib/assistant/verify";
+import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, overclaims, pruneUnverified, dedupeCaveats, selfCorrections, verifyNumbers, withoutEchoedNumbers, withoutOverclaims, withoutSelfCorrections, type EntityNames } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
@@ -1994,6 +1994,22 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
         }
         if (selfCorrections(draft.headline).length) return fallback("The draft corrected itself twice, so a template wrote this answer.");
         draft = { ...draft, answerMarkdown: withoutSelfCorrections(draft.answerMarkdown).text, voiceSummary: withoutSelfCorrections(draft.voiceSummary).text };
+      }
+      // an incident id in the prose, or rain given as the cause beside a "timing, not cause" caveat (R-12): asked again once,
+      // then taken out by rule
+      const allCaveats = [...c.caveats, ...draft.caveats];
+      const over = overclaims(`${draft.headline}
+${draft.answerMarkdown}`, allCaveats);
+      if (over.length) {
+        console.warn(`[assistant] draft overclaims: ${over.join("; ")}`);
+        if (attempt === 0) {
+          verdict = { ok: false, checked: 0, unmatched: over };
+          ctx.repair = `Fix these: ${over.join("; ")}. Name incidents by what happened and where, never by id. Say rain coincided with the rise; never that it caused it.`;
+          regenerated = true;
+          continue;
+        }
+        draft = { ...draft, headline: withoutOverclaims(draft.headline, allCaveats), answerMarkdown: withoutOverclaims(draft.answerMarkdown, allCaveats),
+          voiceSummary: withoutOverclaims(draft.voiceSummary, allCaveats) };
       }
     } catch (e) {
       if (i.signal?.aborted) throw e;

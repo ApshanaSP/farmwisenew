@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
   const mobileParsed = mobileSchema.safeParse(body.mobileNumber);
   const otpParsed = otpSchema.safeParse(body.otp);
   if (!mobileParsed.success || !otpParsed.success) {

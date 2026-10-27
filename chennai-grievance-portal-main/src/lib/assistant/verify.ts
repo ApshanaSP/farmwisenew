@@ -286,3 +286,28 @@ export function withoutEchoedNumbers(text: string): string {
   return text.replace(/\b(no|zero|none|one|single|two|three|four|five|six|seven|eight|nine|ten)\b([^.\n\d]{1,80}?)\s+(\d{1,2})(?=\s*[.,;:)]|\s*$|\s+(?:and|but|with|while|so|as|after)\b)/gi,
     (all, word: string, middle: string, digits: string) => (NUMBER_WORDS[word.toLowerCase()] === Number(digits) ? `${word}${middle}` : all));
 }
+
+/**
+ * Claims a draft may not make (R-12, 27 Oct 2026: "Complaints rose because … all linked to rain" beside the caveat "Rain link
+ * indicates timing, not proven cause", and "address first is **INC-20261022-66346E** in Perambur"):
+ * - an incident id in the prose (ids belong in the chips; the prose names what happened and where);
+ * - a causal word about rain when a caveat says the link is timing, not cause.
+ */
+const RAW_ID = /\*{0,2}\bINC-[A-Z0-9]{6,}(?:-[A-Z0-9]+)*\b\*{0,2}/g;
+const CAUSAL = /\b(because( of)?|caused by|due to|driven by|owing to|as a result of|led to|resulting from|attributable to)\b[^.!?\n]{0,80}\brain/i;
+const RAIN_TIMING = (caveats: string[]) => caveats.some((c) => /timing,? not (a )?(proven )?cause|not (a )?proven cause/i.test(c));
+export function overclaims(text: string, caveats: string[]): string[] {
+  const out: string[] = [];
+  const ids = text.match(RAW_ID);
+  if (ids?.length) out.push(`incident id in the text (${ids[0].replace(/\*/g, "")})`);
+  if (RAIN_TIMING(caveats) && CAUSAL.test(text)) out.push("rain given as the cause, though the caveat says the link is timing only");
+  return out;
+}
+/** The last resort when a redraft still overclaims: ids taken out of the prose, causal words about rain made a timing link. */
+export function withoutOverclaims(text: string, caveats: string[]): string {
+  let t = text.replace(/\s*\(\s*\*{0,2}INC-[A-Z0-9-]+\*{0,2}\s*\)/g, "").replace(/\b(incident|is|was)\s+\*{0,2}INC-[A-Z0-9-]+\*{0,2}\s+/g, "$1 ")
+    .replace(RAW_ID, "this incident");
+  if (RAIN_TIMING(caveats))
+    t = t.replace(/\b(because( of)?|caused by|due to|driven by|owing to|as a result of|led to|resulting from|attributable to)\b(?=[^.!?\n]{0,80}\brain)/gi, "at the same time as");
+  return t;
+}
