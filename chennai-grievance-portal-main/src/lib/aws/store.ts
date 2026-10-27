@@ -68,7 +68,7 @@ declare global {
   var __awsStore: {
     state: State | null; loading: Promise<State> | null; checking: boolean;
     durable: Durable | null; durableLoading: Promise<Durable> | null; lock: Lock; flushing: Promise<void>;
-    reloading?: boolean; reference?: { id: string; doc: Doc };
+    reloading?: boolean; reference?: { id: string; gz: Buffer };
     /** the durable store alone, read until the first build is in (sign-in need not wait for the build) */ early?: { db: DB; file: string } | null;
     hooks?: Map<string, BuildHook>;
   } | undefined;
@@ -119,21 +119,23 @@ async function manifest(): Promise<Manifest> {
   return (await r.json()) as Manifest;
 }
 
-async function table(name: string, t: TableInfo): Promise<Snapshot> {
+/** Puts one table's compressed file in the cache (downloaded only when its sha changed); returns its path. */
+async function download(name: string, t: TableInfo): Promise<string> {
   const file = path.join(CACHE_DIR, `${name}-${t.sha}.json.gz`);
-  let gz: Buffer;
-  if (fs.existsSync(file)) gz = fs.readFileSync(file);
-  else {
-    const r = await fetch(t.url, { cache: "no-store" });
-    if (!r.ok) throw new Error(`AWS table ${name}: HTTP ${r.status}`);
-    gz = Buffer.from(await r.arrayBuffer());
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(file, gz);
-    for (const old of fs.readdirSync(CACHE_DIR)) // keep only the current version of each table
-      if (old.startsWith(`${name}-`) && old !== path.basename(file) && /^[a-z0-9_]+-[0-9a-f]{64}\.json\.gz$/.test(old))
-        fs.rmSync(path.join(CACHE_DIR, old), { force: true });
-  }
-  return JSON.parse(zlib.gunzipSync(gz).toString("utf8")) as Snapshot;
+  if (fs.existsSync(file)) return file;
+  const r = await fetch(t.url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`AWS table ${name}: HTTP ${r.status}`);
+  const gz = Buffer.from(await r.arrayBuffer());
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+  fs.writeFileSync(file, gz);
+  for (const old of fs.readdirSync(CACHE_DIR)) // keep only the current version of each table
+    if (old.startsWith(`${name}-`) && old !== path.basename(file) && /^[a-z0-9_]+-[0-9a-f]{64}\.json\.gz$/.test(old))
+      fs.rmSync(path.join(CACHE_DIR, old), { force: true });
+  return file;
+}
+
+async function table(name: string, t: TableInfo): Promise<Snapshot> {
+  return JSON.parse(zlib.gunzipSync(fs.readFileSync(await download(name, t))).toString("utf8")) as Snapshot;
 }
 
 const q = (s: string) => `"${s.replace(/"/g, '""')}"`;
@@ -174,6 +176,8 @@ function compat(db: DB, snaps: { table: string; columns: [string, Kind][] }[]): 
 /** A fresh in-memory database holding one complete build. */
 async function build(m: Manifest): Promise<State> {
   const durableFile = (await durable()).file;
+  // the compressed files download side by side (small); buildDb then reads and inserts them one at a time
+  await Promise.all(Object.entries(m.tables).map(([n, t]) => download(n, t)));
   const db = await buildDb(m, table, durableFile);
   return { db, buildId: m.build_id, builtAt: m.built_at, loadedAt: Date.now(), checkedAt: Date.now(), durableFile };
 }
@@ -199,10 +203,13 @@ export async function buildDb(m: Manifest, load: (name: string, t: TableInfo) =>
   registerFunctions(db);
   db.exec("PRAGMA busy_timeout = 5000");
   db.prepare("ATTACH DATABASE ? AS durable").run(durableFile);
-  const names = Object.keys(m.tables);
-  const snaps = await Promise.all(names.map((n) => load(n, m.tables[n])));
+  // One table at a time: its parsed JSON is dropped once its rows are in, so the heap holds one table, not the whole
+  // build (R-01: all at once added ~305 MB on the live build and ran a 7 GB PC out of memory during the hourly swap)
+  const shapes: { table: string; columns: [string, Kind][] }[] = [];
   db.exec("BEGIN");
-  for (const s of snaps) {
+  for (const name of Object.keys(m.tables)) {
+    const s = await load(name, m.tables[name]);
+    shapes.push({ table: s.table, columns: s.columns });
     const pk = m.keys[s.table];
     const cols = s.columns.map(([c, k]) => `${q(c)} ${SQL_TYPE[k] ?? "TEXT"}`);
     if (pk?.length) cols.push(`PRIMARY KEY (${pk.map(q).join(", ")})`);
@@ -215,7 +222,7 @@ export async function buildDb(m: Manifest, load: (name: string, t: TableInfo) =>
     for (const c of m.indexes[s.table] ?? [])
       if (s.columns.some(([n]) => n === c)) db.exec(`CREATE INDEX ${q(`ix_${s.table}_${c}`)} ON ${q(s.table)} (${q(c)})`);
   }
-  compat(db, snaps);
+  compat(db, shapes);
   db.exec("CREATE TABLE _export_meta (k TEXT PRIMARY KEY, v TEXT)");
   const meta = db.prepare("INSERT INTO _export_meta VALUES (?, ?)");
   for (const [k, v] of Object.entries({ ...m.meta, build_id: m.build_id, store: "aws" })) meta.run(k, String(v));
@@ -387,13 +394,20 @@ function flush(): Promise<void> {
   return g.flushing;
 }
 
-/** The reference tables do not change between loads: a copy that reloads keeps them in memory. */
+/**
+ * The reference tables do not change between loads: a copy that reloads keeps their compressed file, not the parsed
+ * rows, so they do not sit in the JS heap between reloads (R-01).
+ */
 async function reference(url: string): Promise<Doc> {
   const id = new URL(url).pathname;
-  if (g.reference?.id === id) return g.reference.doc;
-  const doc = await gzJson<Doc>(url);
-  if (DRY_RUN) g.reference = { id, doc };
-  return doc;
+  if (g.reference?.id !== id || !g.reference.gz) { // (no gz: kept by an older version of this module, dev hot reload)
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`AWS download: HTTP ${r.status}`);
+    const gz = Buffer.from(await r.arrayBuffer());
+    if (!DRY_RUN) return JSON.parse(zlib.gunzipSync(gz).toString("utf8")) as Doc;
+    g.reference = { id, gz };
+  }
+  return JSON.parse(zlib.gunzipSync(g.reference!.gz).toString("utf8")) as Doc;
 }
 
 type Loaded = Durable & { tables: number; rows: number; refTables: number };
@@ -552,13 +566,14 @@ async function current(): Promise<State> {
     const s = g.state;
     s.hooking = runHooks(s).finally(() => { s.hooking = null; });
   }
-  if (DRY_RUN && g.durable && Date.now() - (g.durable.loadedAt ?? 0) > RELOAD_MS && !g.reloading) {
+  // the durable reload and the build check never run together: each has its own peak while the old copy is still open (R-01)
+  if (DRY_RUN && g.durable && Date.now() - (g.durable.loadedAt ?? 0) > RELOAD_MS && !g.reloading && !g.checking) {
     g.reloading = true;
     reloadDurable()
       .catch((e) => console.warn(`[aws-store] reload from AWS failed, keeping the loaded data: ${e.message}`))
       .finally(() => { g.reloading = false; if (g.durable) g.durable.loadedAt = Date.now(); });
   }
-  if (Date.now() - g.state.checkedAt > CHECK_MS && !g.checking) {
+  if (Date.now() - g.state.checkedAt > CHECK_MS && !g.checking && !g.reloading) {
     g.checking = true;
     g.state.checkedAt = Date.now();
     manifest()

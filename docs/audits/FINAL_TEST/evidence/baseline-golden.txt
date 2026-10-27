@@ -1,0 +1,767 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mD:/farm/chennai-grievance-portal-main[39m
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build frozen in 26 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] readable-headlines@3 applied to build frozen in 699 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] news-headlines@1 applied to build frozen in 31 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] places-from-reports@2 applied to build frozen in 1002 ms
+[derive] 290 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] news-media-only@1 applied to build frozen in 29 ms
+[derive] news kinds: 1842 government_action, 57 roundup, 430 alert, 238 opinion, 55 resolution, 177 other; 76 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] report-kinds@1 applied to build frozen in 676 ms
+[derive] news: 88 article death counts lowered (a class, age, route or price read as a toll)
+[derive] news: 1 history, horoscope or obituary items left out, 2 gas deaths recategorised, 1 animal deaths not counted as people, 205 same-event incidents merged into 97, 0 death tolls held for confirmation
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] news-sanity@6 applied to build frozen in 1384 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[aws-store] incident-clusters@4 applied to build frozen in 1231 ms
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/exact.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] writer unavailable (No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.); the store's wording stands
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] writer unavailable (No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.); the store's wording stands
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/exact.golden.ts[2m > [22m[2manswers a ward-number list or count from the store, without the model
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+ [32m✓[39m src/lib/assistant/__tests__/golden/exact.golden.ts [2m([22m[2m1 test[22m[2m)[22m[33m 13395[2mms[22m[39m
+   [33m[2m✓[22m[39m answers a ward-number list or count from the store, without the model [33m 1576[2mms[22m[39m
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build frozen in 26 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] readable-headlines@3 applied to build frozen in 603 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] news-headlines@1 applied to build frozen in 24 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] places-from-reports@2 applied to build frozen in 974 ms
+[derive] 290 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] news-media-only@1 applied to build frozen in 39 ms
+[derive] news kinds: 1842 government_action, 57 roundup, 430 alert, 238 opinion, 55 resolution, 177 other; 76 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] report-kinds@1 applied to build frozen in 637 ms
+[derive] news: 88 article death counts lowered (a class, age, route or price read as a toll)
+[derive] news: 1 history, horoscope or obituary items left out, 2 gas deaths recategorised, 1 animal deaths not counted as people, 205 same-event incidents merged into 97, 0 death tolls held for confirmation
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] news-sanity@6 applied to build frozen in 1306 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[aws-store] incident-clusters@4 applied to build frozen in 1124 ms
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/golden.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: why-one-subject
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[briefbook] AI opening not shown: its figures 108 no longer match the live briefing
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: why-one-subject
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: now-is-7-days
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter, officials-to-contact
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter, officials-to-contact
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] NEWS_TOP answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_DETAIL answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] COMPARISON answered from the store in 0 ms (0 ms since the question) (router)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_DETAIL answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] NEWS_TOP answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] NEWS_TOP answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] NEWS_ONLY_GAPS answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] CHART answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] CHART answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] MAP answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/map template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] TABLE answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/table template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] NEWS_TOP answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): refusal/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): clarify/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): clarify/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): clarify/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter, several-subjects
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: place-as-filter, officials-to-contact
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/table
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[studio] analyst fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[studio] analyst fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] corrections: now-is-7-days
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/golden.golden.ts[2m > [22m[2mAsk District IQ golden questions (frozen data, no AI)[2m > [22m[2manswers at least 95% correctly
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+ [32m✓[39m src/lib/assistant/__tests__/golden/golden.golden.ts [2m([22m[2m1 test[22m[2m)[22m[33m 29095[2mms[22m[39m
+   [33m[2m✓[22m[39m Ask District IQ golden questions (frozen data, no AI)[2m > [22manswers at least 95% correctly [33m 19135[2mms[22m[39m
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build frozen in 35 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] readable-headlines@3 applied to build frozen in 863 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] news-headlines@1 applied to build frozen in 27 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] places-from-reports@2 applied to build frozen in 1073 ms
+[derive] 290 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] news-media-only@1 applied to build frozen in 33 ms
+[derive] news kinds: 1842 government_action, 57 roundup, 430 alert, 238 opinion, 55 resolution, 177 other; 76 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] report-kinds@1 applied to build frozen in 667 ms
+[derive] news: 88 article death counts lowered (a class, age, route or price read as a toll)
+[derive] news: 1 history, horoscope or obituary items left out, 2 gas deaths recategorised, 1 animal deaths not counted as people, 205 same-event incidents merged into 97, 0 death tolls held for confirmation
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] news-sanity@6 applied to build frozen in 1467 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[aws-store] incident-clusters@4 applied to build frozen in 1374 ms
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts[2m > [22m[2magent mode fixes (scripted model, frozen store)[2m > [22m[2mnarrows change_drivers to the named category and drops a self-correcting draft
+[22m[39m[assistant] agent round 0: tools change_drivers(period=monthly, zone=13) done=true
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts[2m > [22m[2magent mode fixes (scripted model, frozen store)[2m > [22m[2mnarrows change_drivers to the named category and drops a self-correcting draft
+[22m[39m[assistant] draft corrects itself: Saying 28 is incorrect, it is 32.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/agentfix.golden.ts[2m > [22m[2magent mode fixes (scripted model, frozen store)[2m > [22m[2mnarrows change_drivers to the named category and drops a self-correcting draft
+[22m[39m[assistant] answered in 0 ms (models 3 ms, other -3 ms): answer/text
+
+ [32m✓[39m src/lib/assistant/__tests__/golden/agentfix.golden.ts [2m([22m[2m1 test[22m[2m)[22m[33m 11721[2mms[22m[39m
+   [33m[2m✓[22m[39m agent mode fixes (scripted model, frozen store)[2m > [22mnarrows change_drivers to the named category and drops a self-correcting draft [33m 656[2mms[22m[39m
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build frozen in 22 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] readable-headlines@3 applied to build frozen in 594 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] news-headlines@1 applied to build frozen in 24 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] places-from-reports@2 applied to build frozen in 883 ms
+[derive] 290 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] news-media-only@1 applied to build frozen in 28 ms
+[derive] news kinds: 1842 government_action, 57 roundup, 430 alert, 238 opinion, 55 resolution, 177 other; 76 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] report-kinds@1 applied to build frozen in 548 ms
+[derive] news: 88 article death counts lowered (a class, age, route or price read as a toll)
+[derive] news: 1 history, horoscope or obituary items left out, 2 gas deaths recategorised, 1 animal deaths not counted as people, 205 same-event incidents merged into 97, 0 death tolls held for confirmation
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] news-sanity@6 applied to build frozen in 1254 ms
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[aws-store] incident-clusters@4 applied to build frozen in 1134 ms
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstderr[2m | src/lib/assistant/__tests__/golden/explore.golden.ts
+[22m[39m[studio] profiler fell back to rules: No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts[2m > [22m[2mexplore
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts[2m > [22m[2mexplore
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts[2m > [22m[2mexplore
+[22m[39m[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+[90mstdout[2m | src/lib/assistant/__tests__/golden/explore.golden.ts[2m > [22m[2mexplore
+[22m[39m[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+ [32m✓[39m src/lib/assistant/__tests__/golden/explore.golden.ts [2m([22m[2m1 test[22m[2m)[22m[33m 10050[2mms[22m[39m
+   [33m[2m✓[22m[39m explore [33m 603[2mms[22m[39m
+ [2m[90m↓[39m[22m src/lib/assistant/__tests__/golden/fixture.golden.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (5)[39m
+[2m      Tests [22m [1m[32m4 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (5)[39m
+[2m   Start at [22m 15:50:17
+[2m   Duration [22m 66.95s[2m (transform 1.64s, setup 0ms, collect 371ms, tests 64.26s, environment 1ms, prepare 561ms)[22m
+
+EXIT 0
