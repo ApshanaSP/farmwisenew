@@ -154,7 +154,7 @@ the Collector must know: one consolidated report of everything that came in (inc
 water), so the Collector needs to read nothing else.
 ${STYLE}
 headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing). When the
-facts start with an "Active alert", the headline names it (its name or hazard) and says what the official sources say.
+facts start with a "Weather alert" line, the headline names that alert (its name or hazard) and says what the official sources say.
 points: 4 to 7, the most important first. An active alert is the first point (topic Weather & water). Then: lives lost and severe incidents (say what happened and where), then anything
 spreading or unusual, then what citizens complained about most and where, then what the news is reporting that matters to the
 district, then weather or water risk if any, then what waits for the Collector. Merge related facts into one point; never repeat a
@@ -172,7 +172,7 @@ the facts give for it; a place with none is written by its English name's sound 
 export function alertFacts(lane: AlertLane | null): { lines: string[]; must: string[] } {
   if (!lane?.banner) return { lines: [], must: [] };
   const hazard = lane.event?.hazard ? lane.event.hazard.replace("_", " ") : null;
-  const lines = [`Active alert (lead with this): ${one(lane.banner.title, 120)}. ${one(lane.agreementText, 300)}`];
+  const lines = [`Weather alert: ${one(lane.banner.title, 120)}. ${one(lane.agreementText, 300)}`];
   for (const st of lane.stale)
     lines.push(`Not reporting during the alert: ${st.label}${st.hours != null ? `, silent ${Math.round(st.hours)} hours` : ""}.`);
   const must = [lane.event?.name, hazard].filter((w): w is string => !!w && w.length > 2);
@@ -191,15 +191,18 @@ export function tamilGlossary(facts: string, names = tamilNames()): string {
 }
 
 /**
- * A Tamil text that names a gazetteer place its English text does not (R-17: "Periamet" became பாரிமுனை, Parrys, and
- * "Pattaravakkam" பட்டாபிராமம்): a wrong place, so that Tamil text is not shown (the English one is).
+ * A Tamil text that names a gazetteer place the facts never name (R-17: "Periamet" became பாரிமுனை, Parrys, and
+ * "Pattaravakkam" பட்டாபிராமம்): a wrong place, so that Tamil text is not shown (the English one is). Checked against all
+ * the facts, not the point alone: the Tamil may add the zone the facts give, or spell a place another way.
  */
-export function wrongTamilPlace(en: string, ta: string, names = tamilNames()): string | null {
+export function wrongTamilPlace(known: string, ta: string, names = tamilNames()): string | null {
   // matched on the stem: a name ending in -ம் takes case endings without it (பட்டாபிராமம் → பட்டாபிராமத்தில்)
   const stem = (t: string) => (t.length > 4 ? t.replace(/ம்$/, "") : t);
-  for (const n of names) if (n.ta.some((t) => ta.includes(stem(t))) && !n.en.some((e) => hasWord(en, e))) return n.en[0];
+  for (const n of names) if (n.ta.some((t) => ta.includes(stem(t))) && !n.en.some((e) => hasWord(known, e))) return n.en[0];
   return null;
 }
+
+export const noIds = (t: string) => t.replace(/\s*[[(]?\bINC-[A-Z0-9]+(?:-[A-Z0-9]+)*\b[\])]?/g, "").replace(/\s+([.,;])/g, "$1").trim();
 
 async function dayFacts(s: BriefScope) {
   const now = briefHour(await asOf());
@@ -286,10 +289,12 @@ export async function dayBrief(s: BriefScope, user: string): Promise<DayBrief | 
   if (!r) return null;
   const ta = r.o.points_ta.length === r.o.points.length ? r.o.points_ta : null;
   // a Tamil text naming a place its English text does not is left out; the English one is shown (R-17)
-  const taOk = (en: string, t: string | undefined) => (t?.trim() && !wrongTamilPlace(en, t) ? t.trim() : null);
+  const taOk = (en: string, t: string | undefined) => (t?.trim() && !wrongTamilPlace(`${facts}
+${en}`, t) ? t.trim() : null);
   return {
     headline: r.o.headline.trim(), headlineTa: ta ? taOk(r.o.headline, r.o.headline_ta) : null,
-    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: p.text.trim(), ta: taOk(p.text, ta?.[k]),
+    // an incident id in the text ("… broad daylight. [INC-20261027-D07F21]") goes: the point's ref links the incident
+    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: noIds(p.text), ta: taOk(p.text, ta?.[k]) && noIds(taOk(p.text, ta?.[k])!),
       ref: ids.has(p.ref.replace(/[[\]]/g, "").trim()) ? p.ref.replace(/[[\]]/g, "").trim() : null })),
     model: r.model, at: r.at
   };

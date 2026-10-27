@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AlertLane } from "./alerts";
-import { alertFacts, namesAlert, tamilGlossary, wrongTamilPlace } from "./aibrief";
+import { alertFacts, namesAlert, noIds, tamilGlossary, wrongTamilPlace } from "./aibrief";
 
 // R-02 (27 Oct 2026, Cyclone Arnab day 2): the AI key points led with "The period was busier than before with 192
 // incidents…" and never named the cyclone; the brief's facts held only "No IMD warning".
@@ -17,7 +17,7 @@ const arnab: AlertLane = {
 describe("the day brief leads with an active alert (R-02)", () => {
   it("puts the alert first in the facts, with the silent feeds", () => {
     const { lines, must } = alertFacts(arnab);
-    expect(lines[0]).toMatch(/^Active alert \(lead with this\): Cyclone Arnab/);
+    expect(lines[0]).toMatch(/^Weather alert: Cyclone Arnab/);
     expect(lines[0]).toContain("neither IMD nor NDMA has a warning for Chennai");
     expect(lines[1]).toBe("Not reporting during the alert: CFM-DSS flood gauges, silent 177 hours.");
     expect(must).toEqual(["Arnab", "cyclone"]);
@@ -55,5 +55,13 @@ describe("Tamil place names come from the gazetteer (R-17)", () => {
     expect(wrongTamilPlace("a dowry harassment case in Periamet", "பாரிமுனையில் வரதட்சணை புகார்", names)).toBe("Parrys");
     expect(wrongTamilPlace("a family dispute in Pattaravakkam", "பட்டாபிராமத்தில் குடும்ப தகராறு", names)).toBe("Pattabiram");
     expect(wrongTamilPlace("a bund cut in Arumbakkam", "அரும்பாக்கத்தில் கரை உடைப்பு", names)).toBeNull();
+  });
+});
+
+// 27 Oct 2026, production build: a key point ended "… shot dead in broad daylight. [INC-20261027-D07F21]"
+describe("no incident ids in the key points", () => {
+  it("takes the id out, keeps the sentence", () => {
+    expect(noIds("In Adyar today, a man was shot dead in broad daylight. [INC-20261027-D07F21]")).toBe("In Adyar today, a man was shot dead in broad daylight.");
+    expect(noIds("The bund breach (INC-20261027-2ED814) needs pumps.")).toBe("The bund breach needs pumps.");
   });
 });
