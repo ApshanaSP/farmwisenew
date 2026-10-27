@@ -65,3 +65,23 @@ describe("the AI writes the store's answer", () => {
     expect(withoutEchoedNumbers("Two wards had 3 and more.")).toBe("Two wards had 3 and more.");
   });
 });
+
+// R-11 (27 Oct 2026): "The eight newest severe incidents in Royapuram zone are:" listed six beside eight cards
+describe("a list written out names every card (R-11)", () => {
+  const inc = (k: number) => ({ ...(card.incidents as any[])[0], incidentId: `INC-${k}`, title: `Severe incident ${k} in Royapuram` });
+  const eight = { ...card, headline: "Severe incidents · last 7 days", answerMarkdown: "The 8 newest severe incidents in Royapuram zone.",
+    incidents: Array.from({ length: 8 }, (_, k) => inc(k + 1)) } as unknown as AnswerCard;
+  const bullets = (n: number) => Array.from({ length: n }, (_, k) => `- **Severe incident ${k + 1}** in Royapuram`).join("\n");
+  it("six bullets beside eight cards is rejected; all eight, or none, pass", () => {
+    expect(checkPolish({ headline: "Severe incidents in Royapuram", answerMarkdown: `The 8 newest:\n${bullets(6)}`, voiceSummary: "Severe incidents." }, "what are those severe ones", eight))
+      .toEqual({ rejected: "lists 6 of the 8 incidents shown" });
+    expect(checkPolish({ headline: "Severe incidents in Royapuram", answerMarkdown: `The 8 newest:\n${bullets(8)}`, voiceSummary: "Severe incidents." }, "what are those severe ones", eight))
+      .toHaveProperty("text");
+    expect(checkPolish({ headline: "Severe incidents in Royapuram", answerMarkdown: "The 8 newest severe incidents in Royapuram zone are shown below.", voiceSummary: "Severe incidents." }, "what are those severe ones", eight))
+      .toHaveProperty("text");
+  });
+  it("an incident id in the prose is rejected (R-12)", () => {
+    expect(checkPolish({ headline: "79 road accidents", answerMarkdown: "79 road accidents; act first on **INC-20261022-66346E**.", voiceSummary: "79." }, q, card))
+      .toHaveProperty("rejected");
+  });
+});
