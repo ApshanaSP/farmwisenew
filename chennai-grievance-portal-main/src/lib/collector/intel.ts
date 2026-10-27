@@ -1373,9 +1373,10 @@ export async function list(f: ListFilter) {
     where.push(`${EFF.open} = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`);
   else if (st) (where.push(`${EFF.status} = ?`), params.push(st));
   if (f.q) {
-    where.push(`(${TITLE} LIKE ? OR i.place_text LIKE ? OR i.incident_id LIKE ? OR i.zone_name LIKE ? OR i.category_label LIKE ?)`);
-    const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
-    params.push(like, like, like, like, like);
+    // every word in any order, as in the search box (the list once matched "velachery flooding" as one phrase: 0 rows)
+    const w = wordsWhere(f.q);
+    where.push(w.sql);
+    params.push(...w.params);
   }
   // one row per group of incidents that are the same problem in the same area (CLUSTER): its most severe member
   const order = {
@@ -1404,9 +1405,20 @@ export async function list(f: ListFilter) {
 
 // ---------------------------------------------------------------- search --
 
+/** Every word of a search, in any order, in an incident's title, place, zone or category (searchwords.ts); or its id. */
+export function wordsWhere(text: string): { sql: string; params: string[] } {
+  const groups = searchGroups(text);
+  const cols = [TITLE, "i.place_text", "i.zone_name", "i.category_label"];
+  const each = groups.map((g) => `(${g.flatMap(() => cols.map((c) => `${c} LIKE ?`)).join(" OR ")})`);
+  // (the words are letters, digits and hyphens only: nothing to escape)
+  const params = groups.flatMap((g) => g.flatMap((x) => cols.map(() => `%${x}%`)));
+  const like = `%${text.trim().replace(/[%_\\]/g, (m) => "\\" + m)}%`;
+  return { sql: `((${each.length ? each.join(" AND ") : "1 = 0"}) OR i.incident_id LIKE ?)`, params: [...params, like] };
+}
+
 export async function search(text: string) {
   const like = `%${text.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
-  const [zones, depts, incs] = await Promise.all([
+  const [zones, depts, [incs, incTotal]] = await Promise.all([
     q(
       `SELECT w.zone_no AS zone, w.zone_name AS name, (SELECT COUNT(*) FROM incidents i WHERE i.zone_no = w.zone_no AND ${EFF.open} = 1) AS open
        FROM (SELECT DISTINCT zone_no, zone_name FROM ref_wards) w WHERE w.zone_name LIKE ? ORDER BY w.zone_no LIMIT 4`,
@@ -1416,18 +1428,19 @@ export async function search(text: string) {
       `SELECT code, name, org FROM ref_departments WHERE action_owner = 1 AND (name LIKE ? OR code LIKE ?) LIMIT 3`,
       [like, like]
     ),
-    // every word, in any order, in the title, place, zone or category (searchwords.ts, LT-36); or the incident's id
+    // every word, in any order, in the title, place, zone or category (searchwords.ts, LT-36); or the incident's id.
+    // Words in the title first, then open, then priority (R-21: a newer chat message that only mentioned the words came
+    // second for "velachery flooding"), with the total for "N more"
     (() => {
+      const w = wordsWhere(text);
       const groups = searchGroups(text);
-      const cols = [TITLE, "i.place_text", "i.zone_name", "i.category_label"];
-      const each = groups.map((g) => `(${g.flatMap(() => cols.map((c) => `${c} LIKE ?`)).join(" OR ")})`);
-      // (the words are letters, digits and hyphens only: nothing to escape)
-      const params = groups.flatMap((g) => g.flatMap((x) => cols.map(() => `%${x}%`)));
-      return q(
-        `SELECT ${ROW} ${FROM} WHERE (${each.length ? each.join(" AND ") : "1 = 0"}) OR i.incident_id LIKE ?
-         ORDER BY i.is_open DESC, i.first_reported_at DESC LIMIT 7`,
-        [...params, like]
-      );
+      const inTitle = groups.length ? groups.map((g) => `(CASE WHEN ${g.map(() => `${TITLE} LIKE ?`).join(" OR ")} THEN 1 ELSE 0 END)`).join(" + ") : "0";
+      const titleParams = groups.flatMap((g) => g.map((x) => `%${x}%`));
+      return Promise.all([
+        q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, i.is_open DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
+          [...w.params, ...titleParams]),
+        q(`SELECT COUNT(*) AS n ${FROM} WHERE ${w.sql}`, w.params)
+      ]);
     })()
   ]);
   // news reports, connected sources and a citizen's complaint number (the incident it was filed into) are found here too
@@ -1445,7 +1458,7 @@ export async function search(text: string) {
     code ? q(`SELECT e.incident_id AS id, ${TITLE} AS title FROM events e JOIN incidents i ON i.incident_id = e.incident_id
        WHERE e.source = 'grievance' AND e.source_record_id = ? LIMIT 1`, [code]).catch(orEmpty("intel:search-complaint")) : Promise.resolve([] as Row[])
   ]);
-  return { zones, depts, incidents: incs, news, sources, complaints: filed.map((f) => ({ ...f, code })) };
+  return { zones, depts, incidents: incs, incidentsTotal: Number(incTotal[0]?.n ?? incs.length), news, sources, complaints: filed.map((f) => ({ ...f, code })) };
 }
 
 // ---------------------------------------------------------------- export --

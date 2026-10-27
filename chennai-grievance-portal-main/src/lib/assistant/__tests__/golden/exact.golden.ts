@@ -57,3 +57,16 @@ it("an open-complaints count does not show 'Of them open'", async () => {
   expect(labels).toContain("Open complaints");
   expect(labels).not.toContain("Of them open");
 });
+
+// R-21 / LT-36 (27 Oct 2026): search showed 7 with no "more", ranked a newer chat message above flooding incidents, and the
+// full list matched "velachery flooding" as one phrase (0 rows)
+it("search ranks title matches first and gives the total; the full list finds every word", async () => {
+  if (!haveStore()) return;
+  const { search, list } = await import("@/lib/collector/intel");
+  const r = await search("velachery flooding");
+  expect(r.incidents.length).toBeGreaterThan(0);
+  expect(r.incidentsTotal).toBeGreaterThanOrEqual(r.incidents.length);
+  expect(String(r.incidents[0].title)).toMatch(/flood|velachery/i);
+  const l = await list({ period: "quarterly", zone: null, dept: null, sev: null, status: null, q: "velachery flooding", sort: "t", dir: -1, page: 0 } as any);
+  expect(l.incidents).toBeGreaterThan(0);
+});

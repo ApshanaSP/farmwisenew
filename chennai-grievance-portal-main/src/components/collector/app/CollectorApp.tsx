@@ -631,6 +631,10 @@ export default function CollectorApp({ initial, allDepts, user }: {
     r.zones.forEach((z: Row) => out.push({ g: "Zones", ic: "pin", l: z.name, s: `${z.open} open incidents`, run: () => c.setZone(z.zone) }));
     r.depts.forEach((d: Row) => out.push({ g: "Departments", ic: deptIcon(d.code), l: d.name, s: d.org, run: () => c.setDept(d.code) }));
     r.incidents.forEach((i: Row) => out.push({ g: "Incidents", ic: deptIcon(i.dept), l: fullTitle(i), s: `${i.zone_name ?? "Chennai"} · ${rel(i.t, ov.now)}`, run: () => c.openInc(i.id) }));
+    // more matches than shown: the full list with the same words (R-21)
+    if (Number(r.incidentsTotal) > r.incidents.length)
+      out.push({ g: "Incidents", ic: "table", l: `${Number(r.incidentsTotal) - r.incidents.length} more matching incidents`, s: "Open them all in the list",
+        run: () => c.openList({ q, anyZone: true }, `Incidents matching “${q}”`) });
     // a citizen's complaint number opens the incident it was filed into
     (r.complaints ?? []).forEach((x: Row) => out.push({ g: "Complaint number", ic: "chat", l: `${x.code}: ${x.title ?? "incident"}`, s: "The incident this complaint was filed into", run: () => c.openInc(x.id) }));
     // a news report opens its incident when it has one, else the article itself
