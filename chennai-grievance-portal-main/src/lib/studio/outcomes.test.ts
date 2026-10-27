@@ -59,7 +59,7 @@ async function run(f: Fixture) {
 const manifest: Fixture[] = (() => {
   const src = fs.readFileSync(path.join(process.cwd(), "scripts", "studio-fixtures", "server.mjs"), "utf8");
   const body = src.slice(src.indexOf("export const FIXTURES = ["), src.indexOf("// ---------------------------------------------------------------- routes --"));
-  return [...body.matchAll(/\{ id: "([^"]+)", url: ([^,]+), expect: "([a-z]+)"(.*?)\},?\n/g)].map((m) => ({ id: m[1], url: "", expect: m[3] as Outcome["kind"], what: "", todo: /todo:/.test(m[4]) ? "todo" : undefined }));
+  return [...body.matchAll(/\{ id: "([^"]+)", url: ([^,]+), expect: "([a-z]+)"(.*?)\},?\r?\n/g)].map((m) => ({ id: m[1], url: "", expect: m[3] as Outcome["kind"], what: "", todo: /todo:/.test(m[4]) ? "todo" : undefined }));
 })();
 
 describe("9.1 the outcome of every link fixture", () => {
@@ -82,6 +82,9 @@ describe("9.1 the outcome of every link fixture", () => {
         expect(r.outcome.checked.length + (f.expect === "choose" ? 1 : 0)).toBeGreaterThan(0);
         if (f.expect !== "choose") expect(r.outcome.next.length).toBeGreaterThan(0);
       }
+      // 9.11 the bad-text scan: no undefined, NaN, null, [object Object] or Invalid Date in anything said
+      const said = [r.outcome.why, ...r.outcome.checked, ...r.outcome.next.map((n) => n.label), ...(r.outcome.pick?.cards.flatMap((c) => [c.name, c.why]) ?? [])].join("\n");
+      expect(said).not.toMatch(/\bundefined\b|\bNaN\b|\bnull\b|\[object Object\]|Invalid Date/);
       // only DATA picks a table; nothing else reaches the agents
       if (["nodata", "blocked", "error"].includes(f.expect)) expect(r.chosen).toBeNull();
       if (f.expect === "data") {
@@ -199,6 +202,44 @@ describe("9.4 every DATA fixture's dashboard breaks no chart rule", () => {
       }
     }
     expect(panels).toBeGreaterThan(40);
+  }, 60_000);
+});
+
+describe("9.7 numbers: every headline and bar recomputed from the raw rows", () => {
+  it("each KPI and each by-column bar equals an independent sum over the raw file", async () => {
+    const refs = { wards: new Map(), zones: new Map(), taluks: new Map(), categories: [], depts: [], families: new Map() };
+    const names = { zone: (z: number) => `Zone ${z}`, taluk: (t: string) => t, zoneOf: () => null };
+    const toNum = (v: unknown) => (typeof v === "number" ? v : v == null ? null : Number.isFinite(Number(String(v).replace(/[,₹\s]/g, ""))) && String(v).trim() !== "" ? Number(String(v).replace(/[,₹\s]/g, "")) : null);
+    let checked = 0;
+    for (const f of FIXTURES.filter((x) => x.expect === "data" && !x.todo)) {
+      const r = await resolveLink(f.url, none, { log });
+      if (r.outcome.kind !== "data") continue;
+      const t = r.chosen!.table;
+      const raw = usableRows(t);
+      const spec = rulesSpec(profileTable(t), f.url, t.caption, refs as never) as Spec;
+      const c = clean(t, spec);
+      // only where cleaning changed no row (else the raw file and the cleaned rows rightly differ)
+      if (c.rows.length !== raw.length) continue;
+      for (const p of designDashboard(c.rows, spec, c.window)) {
+        if (p.filters.length || (p.agg !== "count" && p.agg !== "sum")) continue;
+        const idx = (key: string | null) => (key ? Number(key.slice(1)) : -1);
+        const col = idx(p.col);
+        const sumOf = (rows: typeof raw) => (p.agg === "count" ? rows.length : rows.reduce((s, x) => s + (toNum(x[col]) ?? 0), 0));
+        const drawn = renderPanel(c.rows, spec, p, names, c.window);
+        if (p.chart === "kpi") { expect({ f: f.id, p: p.id, v: drawn.kpi!.value }).toEqual({ f: f.id, p: p.id, v: sumOf(raw) }); checked++; }
+        else if (p.by === "col" && p.byCol && drawn.chart !== "table") {
+          const by = idx(p.byCol);
+          drawn.labels.forEach((l, i) => {
+            if (drawn.keys[i] === "Others") return;
+            const k = drawn.keys[i];
+            const mine = sumOf(raw.filter((x) => String(x[by] ?? "(blank)").trim() === String(k).trim()));
+            expect({ f: f.id, p: p.id, label: l, v: drawn.values[i] }).toEqual({ f: f.id, p: p.id, label: l, v: mine });
+            checked++;
+          });
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
   }, 60_000);
 });
 

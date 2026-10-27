@@ -5,7 +5,7 @@
  */
 import zlib from "zlib";
 import { describe, expect, it } from "vitest";
-import { linksIn, scriptJsonUrls, type Found } from "@/lib/studio/connect/discover";
+import { choose, linksIn, schemaHash, scriptJsonUrls, type Found } from "@/lib/studio/connect/discover";
 import { quickRelevance, furniture } from "@/lib/studio/connect/gate";
 import { dateIn, findSeries } from "@/lib/studio/connect/series";
 import { classify } from "@/lib/studio/connect/platforms";
@@ -83,6 +83,18 @@ describe("U2 readiness tiers (9.3)", () => {
   });
   it("the guards are where the tests expect them", () => {
     expect(GUARD).toMatchObject({ minTrendPeriods: 3, minMapPlaces: 5, minMapPlacedShare: 0.2, minPctBase: 20, maxDonutParts: 5, factRows: 5, smallRows: 20 });
+  });
+});
+
+describe("9.2 the choice is remembered", () => {
+  it("a refresh finds the chosen table by its columns, not by its place on the page", () => {
+    const mk = (id: string, headers: string[]): Found => ({ cand: { id, kind: "file", label: id, rows: 30, cols: headers.length, headers, score: 60, why: "", schema: schemaHash(headers) }, table: tbl(headers, [[1, 2]]) });
+    const water = mk("file-2", ["Zone", "Ward", "Water complaints"]);
+    const roads = mk("file-1", ["Zone", "Ward", "Road cuts"]);
+    // the page now lists the files in another order: the same choice (water) is found by its schema
+    const now = [{ ...roads, cand: { ...roads.cand, id: "file-2" } }, { ...water, cand: { ...water.cand, id: "file-5" } }];
+    expect(choose(now, { choice: "file-2", candidates: [water.cand, roads.cand] }).cand.label).toBe("file-2");
+    expect(choose(now, { choice: "file-2", candidates: [water.cand, roads.cand] }).table.headers).toContain("Water complaints");
   });
 });
 

@@ -232,6 +232,8 @@ function route(req, res) {
   // ---- site-wide
   if (p === "/robots.txt") return send(res, 200, "User-agent: *\nDisallow: /private/\n", "text/plain");
   if (p === "/sitemap.xml") return send(res, 404, "not found", "text/plain");
+  // axe-core, for the accessibility check of the Studio's screens (a test helper)
+  if (p === "/axe.js") return send(res, 200, fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "node_modules", "axe-core", "axe.min.js")), "text/javascript", { "Access-Control-Allow-Origin": "*" });
   // ---- DATA
   if (p === "/d/table40") return send(res, 200, page("Ward-wise water complaints, Greater Chennai Corporation", `${NAV}<h1>Water supply complaints by ward</h1>${tableHtml(COMPLAINT_H, complaints(40))}`));
   if (p === "/d/paged") {

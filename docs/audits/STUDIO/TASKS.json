@@ -1,0 +1,17 @@
+[
+  { "id": "U1", "session": 1, "title": "Link engine: six honest outcomes, strict gate", "acceptance": ["9.1 60/60", "0 dashboards for nodata/notrelevant/blocked/error", "what-was-checked and next step on every screen"], "passes": true, "evidence": "outcomes.test.ts: 66/66 (+2 OCR todo)" },
+  { "id": "U1-adapters", "session": 1, "title": "CKAN, Socrata, ArcGIS, DCAT, OGD, Sheets/GitHub/Dropbox/Drive, Tableau/Power BI", "acceptance": ["fixtures green"], "passes": true, "evidence": "c-ckan, d-socrata, d-arcgis, c-dcat, b-ogd, d-gsheet, d-github, d-dropbox, b-tableau, b-powerbi; OneDrive/SharePoint not done" },
+  { "id": "U1-files", "session": 1, "title": "File kinds", "acceptance": ["PDF, DOCX, KML/KMZ, GeoJSON, XML, ZIP, sheets, UTF-16, legacy Tamil"], "passes": true, "evidence": "outcomes.test.ts, engine.safety.test.ts; OCR blocked (owner question)" },
+  { "id": "U1b", "session": 1, "title": "Picker", "acceptance": ["9.2 grouping, series card, combine, remembered choice", "browser 390/1440 EN/TA"], "passes": true, "evidence": "outcomes.test.ts 9.2, engine.safety.test.ts, browser check (S-009 fixed)" },
+  { "id": "U2", "session": 1, "title": "Sufficiency tiers", "acceptance": ["9.3 tiers", "enrichment buttons"], "passes": false, "evidence": "chartlint.test.ts 9.3 green; enrichment buttons not built" },
+  { "id": "U3", "session": 1, "title": "Chart Doctor", "acceptance": ["one test per hard rule", "0 violations on samples and fixtures", "guard test"], "passes": true, "evidence": "chartlint.test.ts, outcomes.test.ts 9.4; chooser gaps listed in PROGRESS" },
+  { "id": "T9.7", "session": 1, "title": "Numbers recomputed from raw rows", "acceptance": ["equal"], "passes": true, "evidence": "outcomes.test.ts 9.7" },
+  { "id": "T9.8", "session": 1, "title": "UI e2e for the new screens", "acceptance": ["no console errors", "axe 0 serious", "keyboard-only"], "passes": false, "evidence": "manual browser checks only; axe blocked by CSP" },
+  { "id": "T9.9", "session": 1, "title": "Security on new fetch paths", "acceptance": ["SSRF", "robots", "rate", "injection"], "passes": true, "evidence": "outcomes.test.ts e-*, b-robots, polite; engine.safety.test.ts" },
+  { "id": "T9.10", "session": 1, "title": "Performance", "acceptance": ["list < 2 s", "open < 2 s", "picker < 3 s", "50k ingest < 20 s"], "passes": false, "evidence": "not measured" },
+  { "id": "U5", "session": 2, "title": "Live Connectors", "acceptance": ["9.5"], "passes": false, "evidence": "" },
+  { "id": "U4", "session": 2, "title": "Insight engine 2.0", "acceptance": ["9.6"], "passes": false, "evidence": "" },
+  { "id": "U7", "session": 2, "title": "Data card and change log", "acceptance": ["tests", "browser"], "passes": false, "evidence": "" },
+  { "id": "U6", "session": 2, "title": "Collector's lens: families", "acceptance": ["family fixtures"], "passes": false, "evidence": "" },
+  { "id": "U8", "session": 2, "title": "Ask with Chart Doctor, brief PDF, export, gating", "acceptance": ["tests"], "passes": false, "evidence": "" }
+]
