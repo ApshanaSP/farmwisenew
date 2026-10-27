@@ -138,3 +138,22 @@ describe("“What are today's important problems?” is the most serious open in
     expect(asked("category_ranking", "Which category has the most complaints?")).toBe("CATEGORY_RANKING");
   });
 });
+
+describe("“important problems” overrides any general route (R-03, live re-check on the production build)", () => {
+  const asked = (answer: Decision["answer"], q: string) => planFromDecision(route({ answer }), q, null, null)?.fast?.intent;
+  it("an overview or 'other' reading is still the priority list", () => {
+    expect(asked("area_summary", "இன்று முக்கியமான பிரச்சனைகள் என்ன?")).toBe("PRIORITY_INCIDENT_LIST");
+    expect(asked("other", "இன்று முக்கியமான பிரச்சனைகள் என்ன?")).toBe("PRIORITY_INCIDENT_LIST");
+  });
+  it("a why, an action or one incident keeps its own route", () => {
+    expect(planFromDecision(route({ answer: "explain_why" }), "why are the important problems rising?", null, null)?.tools?.[0].name).toBe("change_drivers");
+  });
+});
+
+describe("“important problems” without the AI router (R-03)", () => {
+  it("the rules read it as the priority list too", async () => {
+    const { detectIntent } = await import("@/lib/assistant/intent");
+    for (const q of ["இன்று முக்கியமான பிரச்சனைகள் என்ன?", "What are the important problems today?", "inniki mukkiyamaana prachanai enna?"])
+      expect([q, detectIntent(q, null).intent]).toEqual([q, "PRIORITY_INCIDENT_LIST"]);
+  });
+});

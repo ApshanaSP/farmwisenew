@@ -47,8 +47,11 @@ export const FAST_OF: Partial<Record<AnswerKind, Detected["intent"]>> = {
  * when the router reads it as news or a category count (R-03 / LT-19: it was answered from the news, crimes first, with a
  * minister's state-wide death tally as if it were Chennai's). A question about the news itself stays news.
  */
+const followUpOf = (message: string) => message.length <= 60 && /^\s*(and|what about|how about|same (for|in)|now (for|in)|also|then|only|just)\b/i.test(message);
+
 export function importantProblems(message: string, answer: string): boolean {
-  if (!["news_list", "category_ranking", "incident_list"].includes(answer)) return false;
+  // one incident, one story, an action or a "why" keep their own route; any general reading (news, counts, an overview) does not
+  if (["incident_explain", "incident_related", "incident_timeline", "news_story", "actions", "explain_why", "clarify"].includes(answer)) return false;
   const important = /\b(important|serious|urgent|critical|biggest|major|pressing|key)\b|முக்கிய|அவசர|தீவிர|mukkiya/i.test(message);
   const problems = /\b(problems?|issues?|matters?|concerns?)\b|பிரச்ச?னை|பிரச்சினை|prachana|pirachan/i.test(message);
   const news = /\b(news|newspapers?|papers?|outlets?|media|headlines?|reported in|articles?)\b|செய்தி|seidhi/i.test(message);
@@ -75,6 +78,8 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
     // a period only when the words name one (or a follow-up changes it): the router copying the chat's default 90 days into
     // "recent news" is not the Collector asking for 90 days
     period: route.scopeRaw?.period && (NAMES_PERIOD.test(message) || route.intent === "plan_edit") ? route.scopeRaw.period : null };
+  // "what are today's important problems?": the most serious open incidents, whatever general answer the router picked (R-03)
+  if (importantProblems(message, d.answer) && !followUpOf(message)) return { fast: { ...base, intent: "PRIORITY_INCIDENT_LIST" } };
   // "what about Anna Nagar?" after a count or a list: the same answer (its topic, filters and kind) for the new place or period,
   // not an overview of the place
   const last = ctx?.lastIntent as Detected["intent"] | undefined;

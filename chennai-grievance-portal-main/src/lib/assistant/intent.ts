@@ -177,7 +177,7 @@ const RANKING = ["types", "type of", "kinds", "kind of", "categories", "category
   "adhigama", "athigama", "adhigam", "athigam", "அதிகமா"];
 const PRIORITY = ["top", "priority", "most important", "important", "most serious", "serious", "severe", "critical", "worst", "biggest", "urgent", "major",
   "emergency", "emergencies", "crisis", "crises", "red flag", "red flags", "alarming", "அவசர",
-  "முக்கிய", "mukkiya", "gambhir"];
+  "முக்கிய", "முக்கியமான", "முக்கியமானவை", "mukkiya", "mukkiyamaana", "mukkiyamana", "gambhir"];
 const COUNT = ["how many", "number of", "count", "total", "evlo", "evvalo", "எத்தனை", "எவ்வளவு"];
 const LIST = ["show", "list", "give me", "what are", "tell me", "display", "any", "kaattu", "sollu", "காட்டு"];
 const ACTION = ["what should we do", "what should i do", "what do we do", "what needs action", "what requires action", "needs action", "requires action",
