@@ -11,7 +11,8 @@ import { validId } from "@/lib/studio/store";
 import type { AuthInput, AuthMode } from "@/lib/studio/types";
 import type { Credentials } from "@/lib/studio/fetchurl";
 
-const DIR = path.join(process.cwd(), "data", "studio");
+// STUDIO_DIR: the same folder as the datasets (store.ts), so a test copy keeps its sign-ins apart
+const DIR = process.env.STUDIO_DIR || path.join(process.cwd(), "data", "studio");
 const file = (id: string) => {
   if (!validId(id)) throw new Error("Unknown dataset.");
   return path.join(DIR, `${id}.auth`);

@@ -355,6 +355,17 @@ export interface Candidate {
   /** how much it looks like the data asked for (0..100), and why */
   score: number;
   why: string;
+  /** where it came from: the file's own address, and the page it was found on */
+  url?: string | null;
+  source?: string | null;
+  type?: "csv" | "xlsx" | "pdf" | "json" | "api" | "map" | "html" | "docx" | "xml" | "zip" | "feed";
+  bytes?: number | null;
+  /** the date the site says it was last changed (YYYY-MM-DD) */
+  updated?: string | null;
+  /** the shape's fingerprint (its column names), so a choice is remembered by what it is, not where it was */
+  schema?: string;
+  /** a series of files that differ only by date ("Reservoir_Levels_{DD-MM-YYYY}.xlsx"): one card for all */
+  series?: { pattern: string; files: { url: string; date: string; name: string }[]; from: string; to: string } | null;
 }
 
 export interface RefreshRun { at: string; ok: boolean; rows: number | null; changed: boolean; note: string }
@@ -440,13 +451,75 @@ export interface DatasetCard {
 export interface Pin { id: string; datasetId: string; datasetName: string; plan: Plan; at: string }
 
 /** Events streamed while a dataset is processed (NDJSON). */
+// ------------------------------------------------------------------ outcomes --
+
+/**
+ * What a link (or a file) ended in. Every link ends in exactly one of these, and only "data" (or a choice made in the
+ * picker) builds a dashboard; "duplicate" offers the copy already here.
+ */
+export type OutcomeKind = "data" | "choose" | "nodata" | "notrelevant" | "blocked" | "error" | "duplicate";
+
+export interface OutcomeAction {
+  label: string;
+  /** what the button does on the page */
+  act: "retry" | "vault" | "news" | "useAnyway" | "open" | "refresh" | "file" | "link" | "close";
+  href?: string | null;
+}
+
+export interface Outcome {
+  kind: OutcomeKind;
+  /** a short code for the reason ("news", "menu", "login", "captcha", "robots", "key", "404", "timeout", "size", ...) */
+  reason: string;
+  /** the plain reason, in a sentence */
+  why: string;
+  /** what was looked at ("Read the page: 2 tables, 0 data files, 0 feeds") */
+  checked: string[];
+  /** the best next steps, the first is the primary */
+  next: OutcomeAction[];
+  url: string | null;
+  /** NOT RELEVANT: the stopped run waiting for "Use anyway"; DUPLICATE: the dataset already here */
+  pendingId?: string | null;
+  dupOf?: { id: string; name: string; addedAt: string; link: boolean } | null;
+  /** a few rows of what was found (NOT RELEVANT, a thin table) */
+  preview?: { headers: string[]; rows: (string | number | null)[][] } | null;
+  /** CHOOSE: the picker's token and cards */
+  pick?: PickSet | null;
+}
+
+export type PickGroup = "recommended" | "series" | "other" | "notchennai" | "unreadable";
+
+export interface PickCard {
+  id: string;
+  name: string;
+  type: NonNullable<Candidate["type"]>;
+  source: string | null;
+  url: string | null;
+  rows: number;
+  cols: number;
+  headers: string[];
+  dateRange: { from: string; to: string } | null;
+  chennaiRows: number | null;
+  updated: string | null;
+  bytes: number | null;
+  group: PickGroup;
+  /** why it is in its group ("Chennai rows found · updated 27 Oct"), or why it could not be read */
+  why: string;
+  schema: string | null;
+  tier: "empty" | "fact" | "small" | "full";
+  series?: { files: number; from: string; to: string; pattern: string; title: string } | null;
+}
+
+export interface PickSet { token: string; url: string; title: string; cards: PickCard[]; at: string }
+
 export type RunEvent =
   | { t: "step"; step: StepKey; state: "run" | "done" | "skip"; detail: string; by?: "ai" | "rules" | "code"; model?: string | null; ms?: number }
   | { t: "log"; text: string }
   | { t: "done"; id: string }
   | { t: "error"; message: string }
   /** the Relevance gate stopped the run: the data does not read as the district's; "Use anyway" resumes it */
-  | { t: "blocked"; id: string; why: string; signals: string[] };
+  | { t: "blocked"; id: string; why: string; signals: string[] }
+  /** the link ended in an outcome other than a dashboard (or a choice to make): shown as its own screen */
+  | { t: "outcome"; outcome: Outcome };
 
 // ------------------------------------------------------------------ helpers --
 

@@ -7,7 +7,8 @@
  * with * and $ in paths. An unreachable or missing robots.txt allows everything; one that answers 401/403 is read as
  * "keep out" (RFC 9309, 2.3.1.3).
  */
-import { UA, UA_TOKEN } from "@/lib/studio/fetchurl";
+import { safeFetch } from "@/lib/netsafe";
+import { UA, UA_TOKEN, allowed, mirrored, politeTurn } from "@/lib/studio/fetchurl";
 
 interface Group { agents: string[]; rules: { allow: boolean; path: string }[] }
 const cache = new Map<string, { at: number; groups: Group[] | "all" | "none" }>();
@@ -59,9 +60,13 @@ export async function robotsAllow(raw: string): Promise<boolean> {
   if (!c || Date.now() - c.at > 3600_000) {
     let groups: Group[] | "all" | "none" = "all";
     try {
-      const r = await fetch(`${u.origin}/robots.txt`, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(8000), redirect: "follow" });
+      // through the same guard as every other read (lib/netsafe.ts): checked hops, polite rate, size cap
+      const target = mirrored(new URL(`${u.origin}/robots.txt`));
+      await politeTurn(target.host);
+      const got = await safeFetch(target, { allow: allowed, timeout: 8000, maxHops: 4, maxBytes: 500_000, headers: { "User-Agent": UA } });
+      const r = got.res;
       if (r.status === 401 || r.status === 403) groups = "none";
-      else if (r.ok && /text|octet/i.test(r.headers.get("content-type") ?? "text/plain")) groups = parseRobots((await r.text()).slice(0, 500_000));
+      else if (r.ok && /text|octet/i.test(r.headers.get("content-type") ?? "text/plain")) groups = parseRobots(got.buf.toString("utf8"));
     } catch { /* unreachable: allowed */ }
     c = { at: Date.now(), groups };
     cache.set(key, c);

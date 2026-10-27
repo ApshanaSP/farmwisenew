@@ -7,6 +7,7 @@ import type { RunEvent } from "@/lib/studio/types";
 import { LinkError } from "@/lib/studio/fetchurl";
 import { ParseError, UserError } from "@/lib/studio/parse";
 import { BlockedError } from "@/lib/studio/pipeline";
+import { OutcomeStop } from "@/lib/studio/connect/resolve";
 
 export function stream(work: (emit: (e: RunEvent) => void) => Promise<string>): Response {
   const enc = new TextEncoder();
@@ -21,7 +22,13 @@ export function stream(work: (emit: (e: RunEvent) => void) => Promise<string>): 
         const id = await work(emit);
         emit({ t: "done", id });
       } catch (e) {
-        if (e instanceof BlockedError) { emit({ t: "blocked", id: e.id, why: e.why, signals: e.signals }); return; }
+        if (e instanceof OutcomeStop) { emit({ t: "outcome", outcome: e.outcome }); return; }
+        // the Relevance gate in the run (the AI's reading): NOT RELEVANT, waiting for "Use anyway"
+        if (e instanceof BlockedError) {
+          emit({ t: "outcome", outcome: { kind: "notrelevant", reason: "unrelated", why: `This is real data, but not about Chennai. ${e.why}`, checked: e.signals, url: null, pendingId: e.id,
+            next: [{ label: "Use anyway", act: "useAnyway" }, { label: "Discard", act: "close" }] } });
+          return;
+        }
         const known = e instanceof ParseError || e instanceof LinkError || e instanceof UserError;
         if (!known) console.error("[studio] run failed", e);
         emit({ t: "error", message: known ? (e as Error).message : `Something went wrong while reading the data: ${((e as Error).message ?? "").slice(0, 140)}` });

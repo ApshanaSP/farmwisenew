@@ -18,7 +18,7 @@ import path from "path";
 import zlib from "zlib";
 import type { DRow } from "@/lib/studio/clean";
 import type { Table } from "@/lib/studio/parse";
-import type { Candidate, DatasetCard, DatasetMeta, Pin, Spec } from "@/lib/studio/types";
+import type { AuthInput, Candidate, DatasetCard, DatasetMeta, Pin, PickSet, Spec } from "@/lib/studio/types";
 
 // STUDIO_DIR: another folder (the golden questions load the samples into a temporary one)
 const DIR = process.env.STUDIO_DIR || path.join(process.cwd(), "data", "studio");
@@ -80,6 +80,12 @@ export function findBySource(buf: Buffer): DatasetMeta | null {
   return null;
 }
 
+/** Every dataset's id (no cards built: a quick look for duplicates). */
+export function datasetIds(): string[] {
+  ensure();
+  return fs.readdirSync(DIR).filter((f) => f.endsWith(".json") && ID_RE.test(f.slice(0, -5))).map((f) => f.slice(0, -5));
+}
+
 export function getMeta(id: string): DatasetMeta | null {
   try { return JSON.parse(fs.readFileSync(p(id, ".json"), "utf8")); } catch { return null; }
 }
@@ -103,8 +109,9 @@ export function getCandidates(id: string): { cand: Candidate; table: Table }[] {
   try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".cand.json.gz"))).toString("utf8")); } catch { return []; }
 }
 
-/** A run stopped by the Relevance gate: what is needed to resume it with "Use anyway". */
-export interface Pending { id: string; table: Table; source: DatasetMeta["source"]; name: string | null; sample: boolean; spec: Spec; why: string; signals: string[]; at: string }
+/** A run stopped by the Relevance gate: what is needed to resume it with "Use anyway" (no reading yet when the link
+ *  engine stopped it before the agents ran). */
+export interface Pending { id: string; table: Table; source: DatasetMeta["source"]; name: string | null; sample: boolean; spec: Spec | null; why: string; signals: string[]; at: string }
 export function savePending(x: Pending) { write(p(x.id, ".pending.json"), JSON.stringify(x)); }
 export function getPending(id: string): Pending | null {
   try { return JSON.parse(fs.readFileSync(p(id, ".pending.json"), "utf8")); } catch { return null; }
@@ -113,6 +120,13 @@ export function dropPending(id: string, all = false) {
   fs.rmSync(p(id, ".pending.json"), { force: true });
   // a dataset that was never kept leaves nothing behind
   if (all) for (const ext of [".src", ".cand.json.gz", ".auth"]) fs.rmSync(p(id, ext), { force: true });
+}
+
+/** A link that held several datasets, waiting for the Collector's choice in the picker. */
+export interface SavedPick { pick: PickSet; found: { cand: Candidate; table: Table }[]; auth: AuthInput["mode"]; every: number | null; name: string | null; buf: string; contentType: string; pageUrl: string; method: "http" | "browser" }
+export function savePick(id: string, x: SavedPick) { write(p(id, ".pick.json.gz"), zlib.gzipSync(JSON.stringify(x))); }
+export function getPick(id: string): SavedPick | null {
+  try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".pick.json.gz"))).toString("utf8")); } catch { return null; }
 }
 
 export function deleteDataset(id: string) {

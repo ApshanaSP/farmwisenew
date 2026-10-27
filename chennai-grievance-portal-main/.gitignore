@@ -3,6 +3,7 @@ node_modules/
 .next-*/
 # Data Studio: the Collector's own datasets (the samples in data/studio-samples are committed)
 data/studio/
+data/studio-test/
 out/
 build/
 .env

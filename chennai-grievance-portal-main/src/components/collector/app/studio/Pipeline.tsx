@@ -8,7 +8,7 @@
  */
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { STEPS, type StepKey } from "@/lib/studio/types";
+import { STEPS, type Outcome, type StepKey } from "@/lib/studio/types";
 import { I, type IconName } from "../icons";
 
 export type NodeState = "wait" | "run" | "done" | "error";
@@ -23,6 +23,8 @@ export interface RunState {
   id: string | null;
   /** the Relevance gate stopped the run */
   blocked: { id: string; why: string; signals: string[] } | null;
+  /** the link ended without a dashboard (no data, not relevant, blocked, an error, a duplicate) or with a choice */
+  outcome: Outcome | null;
 }
 
 export const AGENT_ICON: Record<StepKey, IconName> = { read: "doc", understand: "spark", clean: "shield", place: "pin", design: "grid", link: "compare", story: "bulb" };
@@ -40,7 +42,7 @@ const ABOUT: Record<StepKey, { what: string; how: string }> = {
 
 export function emptyRun(title: string, kind: RunState["kind"]): RunState {
   const steps = Object.fromEntries(STEPS.map((s) => [s.key, { state: "wait" as NodeState, detail: s.doing }])) as RunState["steps"];
-  return { title, kind, steps, logs: [], startedAt: Date.now(), doneAt: null, error: null, id: null, blocked: null };
+  return { title, kind, steps, logs: [], startedAt: Date.now(), doneAt: null, error: null, id: null, blocked: null, outcome: null };
 }
 
 const KIND_TEXT: Record<RunState["kind"], string> = { file: "Uploaded file", link: "From a link", sample: "Sample data", remap: "Re-reading with your corrections", refresh: "Fetched again", choose: "Reading another table", force: "Added anyway" };

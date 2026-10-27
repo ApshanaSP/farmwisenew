@@ -1,6 +1,8 @@
 /**
- * Any table file to rows: Excel (.xlsx, .xls, .ods through SheetJS), CSV / TSV (delimiter sniffed, UTF-8 or
- * Windows-1252), and JSON (the first array of records, nested fields flattened one level).
+ * Any table file to rows: Excel (.xlsx, .xls, .ods through SheetJS), CSV / TSV (delimiter sniffed; UTF-8, UTF-16 or
+ * Windows-1252), JSON (the largest array of records, nested fields flattened) and GeoJSON, KML / KMZ, XML, the
+ * tables of a Word file or a text PDF, and ZIP archives of these (formats.ts). parseAll() gives every table a file
+ * holds (each sheet, each archive entry); parseFile() the main one.
  *
  * Department exports are rarely clean tables: a title or two above the header ("GREATER CHENNAI CORPORATION ...
  * AS ON 30.09.2026"), merged cells (a zone written once for its block of rows), a two-row header, Excel day numbers
@@ -8,6 +10,7 @@
  * become YYYY-MM-DD, so every later step sees one plain table.
  */
 import * as XLSX from "xlsx";
+import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipKind } from "@/lib/studio/formats";
 import { excelDate, tidy } from "@/lib/studio/values";
 
 export type Cell = string | number | null;
@@ -18,9 +21,13 @@ export interface Table {
   sheet: string | null;
   sheets: string[];
   caption: string | null;
-  format: "excel" | "csv" | "json" | "feed" | "html";
+  format: "excel" | "csv" | "json" | "feed" | "html" | "pdf" | "docx" | "geo" | "xml";
   /** rows past the limit that were not read */
   truncated: number;
+  /** which part of the file: a sheet, an entry of a ZIP, a table of a PDF */
+  part?: string | null;
+  /** what the reader noticed and the Collector should know (an old Tamil font encoding, cells read from a PDF) */
+  notes?: string[];
 }
 
 export const MAX_ROWS = 50_000;
@@ -30,23 +37,87 @@ export class ParseError extends Error {}
 /** A message for the Collector ("This link is already being fetched."): shown as it is, never as an internal failure. */
 export class UserError extends Error {}
 
-/** Read a file's bytes. `name` decides the format when the bytes do not. */
+/** Read a file's bytes: its main table. `name` decides the format when the bytes do not. */
 export function parseFile(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Table {
+  const all = parseAll(buf, name, contentType, base);
+  // the largest table is the main one (an archive's or a workbook's others stay listed)
+  return all.length === 1 ? all[0] : [...all].sort((a, b) => b.rows.length * b.headers.length - a.rows.length * a.headers.length)[0];
+}
+
+/** Every table a file holds: each sheet of a workbook, each file in a ZIP, each table of a Word file or PDF. */
+export function parseAll(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/", depth = 0): Table[] {
+  try {
+    return readAll(buf, name, contentType, base, depth);
+  } catch (e) {
+    if (e instanceof FormatError) throw new ParseError(e.message);
+    throw e;
+  }
+}
+
+function readAll(buf: Buffer, name: string, contentType: string, base: string, depth: number): Table[] {
   const ext = (name.match(/\.([a-z0-9]+)$/i)?.[1] ?? "").toLowerCase();
   const head = buf.subarray(0, 8);
-  const zip = head[0] === 0x50 && head[1] === 0x4b; // xlsx / ods
   const ole = head[0] === 0xd0 && head[1] === 0xcf; // legacy .xls
-  if (zip || ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excel(buf);
-  const text = decode(buf);
+  if (!buf.length) throw new ParseError("The file is empty.");
+  if (isZip(buf)) {
+    const kind = ["xlsx", "xlsm", "ods", "xlsb"].includes(ext) ? "xlsx" : ext === "docx" ? "docx" : zipKind(buf);
+    if (kind === "xlsx" || kind === "ods") return excelAll(buf);
+    if (kind === "docx") return grids(docxTables(buf), "docx", "Word table", "This Word file has no tables in it.");
+    if (kind === "kmz") {
+      const k = unzip(buf).find((e) => /\.kml$/i.test(e.name));
+      if (k) return [{ ...shape(kmlGrid(decodeText(k.data).text), 0), sheet: null, sheets: [], format: "geo" }];
+    }
+    if (depth > 0) throw new ParseError("A ZIP inside a ZIP is not opened.");
+    // an archive: every file in it that reads as a table
+    const out: Table[] = [];
+    const skipped: string[] = [];
+    for (const e of unzip(buf)) {
+      if (!/\.(csv|tsv|txt|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|docx|pdf)$/i.test(e.name)) { skipped.push(e.name); continue; }
+      try {
+        for (const t of readAll(e.data, e.name, "", base, depth + 1)) out.push({ ...t, part: t.part ? `${e.name} · ${t.part}` : e.name });
+      } catch { skipped.push(e.name); }
+    }
+    if (!out.length) throw new ParseError(`The ZIP holds no table the Studio can read${skipped.length ? ` (${skipped.slice(0, 4).join(", ")})` : ""}.`);
+    return out;
+  }
+  if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf);
+  if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf);
+  const dec = decodeText(buf);
+  const text = dec.text;
+  const notes = dec.encoding === "UTF-16" ? ["Read as UTF-16 text."] : [];
+  if (legacyTamil(text)) notes.push("Some text looks typed in an old Tamil font (TAB, TSCII or Bamini): it cannot be read as Tamil letters. Save the file again in Unicode (UTF-8) for correct Tamil.");
   const t = text.trimStart();
-  if (ext === "json" || /json/i.test(contentType) || t.startsWith("{") || t.startsWith("[")) return json(text);
+  const withNotes = (x: Table): Table[] => [notes.length ? { ...x, notes: [...(x.notes ?? []), ...notes] } : x];
+  if (ext === "json" || ext === "geojson" || /json/i.test(contentType) || t.startsWith("{") || t.startsWith("[")) return withNotes(json(text));
   // a news feed (RSS or Atom): one row per article
-  if (/^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i.test(t) || (/xml/i.test(contentType) && /<(item|entry)\b/i.test(t))) return feed(text);
-  if (/pdf/i.test(contentType) || t.startsWith("%PDF")) throw new ParseError("That link is a PDF. Tables inside PDFs cannot be read yet: open it, download the table as Excel or CSV, and drop that file here.");
+  if (/^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i.test(t) || (/xml/i.test(contentType) && /<(item|entry)\b/i.test(t) && !/<Placemark\b/i.test(t))) return withNotes(feed(text));
+  if (ext === "kml" || /<kml\b/i.test(t.slice(0, 2000))) return withNotes({ ...shape(kmlGrid(text), 0), sheet: null, sheets: [], format: "geo" });
   // a web page: its largest table, else the headlines it lists
-  if (/^<(!doctype|html|head|body|div|meta)/i.test(t) || /html/i.test(contentType)) return htmlPage(text, base);
-  if (t.startsWith("<")) throw new ParseError("This XML is not a news feed or a table the Studio can read. Save it as CSV or Excel and drop it here.");
-  return csv(text);
+  if (/^<(!doctype|html|head|body|div|meta)/i.test(t) || /html/i.test(contentType)) return withNotes(htmlPage(text, base));
+  if (t.startsWith("<")) {
+    const g = xmlGrid(text);
+    if (!g) throw new ParseError("This XML is not a news feed or a list of records the Studio can read. Save it as CSV or Excel and drop it here.");
+    return withNotes({ ...shape(g, 0), sheet: null, sheets: [], format: "xml" });
+  }
+  if (!t.trim()) throw new ParseError("The file is empty.");
+  return withNotes(csv(text));
+}
+
+/** Grids found in a document (Word, PDF) as tables, largest first. */
+function grids(g: Cell[][][], format: Table["format"], what: string, none: string): Table[] {
+  const out: Table[] = [];
+  g.forEach((grid, i) => {
+    try { out.push({ ...shape(grid), sheet: null, sheets: [], format, part: g.length > 1 ? `${what} ${i + 1} of ${g.length}` : null }); } catch { /* not a table */ }
+  });
+  if (!out.length) throw new ParseError(none);
+  return out;
+}
+
+function pdf(buf: Buffer): Table[] {
+  const r = pdfTables(buf);
+  if (r.scanned) throw new ParseError(`This PDF is a scan (pictures of pages, ${r.pages} ${r.pages === 1 ? "page" : "pages"}), so its text cannot be read without OCR. Ask the department for the Excel or CSV file.`);
+  if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" : "pages"}) but no table in it.`);
+  return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers against the original."] }));
 }
 
 // -------------------------------------------------------------------- feed --
@@ -185,17 +256,10 @@ export function feedLinkIn(html: string, base: string): string | null {
   return null;
 }
 
-function decode(buf: Buffer): string {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(buf).replace(/^﻿/, "");
-  } catch {
-    return new TextDecoder("windows-1252").decode(buf);
-  }
-}
-
 // ------------------------------------------------------------------- excel --
 
-function excel(buf: Buffer): Table {
+/** Every sheet of a workbook that holds a table, the largest first. */
+function excelAll(buf: Buffer): Table[] {
   let wb: XLSX.WorkBook;
   try {
     wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });
@@ -206,7 +270,15 @@ function excel(buf: Buffer): Table {
   if (!sheets.length) throw new ParseError("The workbook has no data.");
   // the sheet with the most filled cells is the data; the others are listed
   const size = (n: string) => Object.keys(wb.Sheets[n]).filter((k) => k[0] !== "!").length;
-  const sheet = [...sheets].sort((a, b) => size(b) - size(a))[0];
+  const out: Table[] = [];
+  for (const sheet of [...sheets].sort((a, b) => size(b) - size(a))) {
+    try { out.push({ ...excelSheet(wb, sheet), sheets, part: sheets.length > 1 ? `Sheet "${sheet}"` : null }); } catch { /* an empty or notes-only sheet */ }
+  }
+  if (!out.length) throw new ParseError("The workbook has no data.");
+  return out;
+}
+
+function excelSheet(wb: XLSX.WorkBook, sheet: string): Table {
   const ws = wb.Sheets[sheet];
   const range = XLSX.utils.decode_range(ws["!ref"]!);
   const grid: Cell[][] = [];
@@ -227,7 +299,7 @@ function excel(buf: Buffer): Table {
       if (row && c - range.s.c < row.length && row[c - range.s.c] == null) row[c - range.s.c] = v;
     }
   }
-  return { ...shape(grid), sheet, sheets, format: "excel" };
+  return { ...shape(grid), sheet, sheets: [sheet], format: "excel" };
 }
 
 function cellValue(cell: XLSX.CellObject | undefined): Cell {
@@ -336,16 +408,17 @@ function json(text: string): Table {
     for (const x of Object.values(v as object)) { const f = columnar(x, depth + 1); if (f) return f; }
     return null;
   };
-  const recs = find(data) ?? columnar(data);
+  const recs = geojsonRecords(data) ?? find(data) ?? columnar(data);
   if (!recs?.length) throw new ParseError("No list of records was found in the JSON.");
-  const flat = recs.slice(0, MAX_ROWS).map((o) => {
-    const r: Record<string, Cell> = {};
+  // nested objects flattened to dotted names ("address.ward.no"), three levels deep
+  const flatten = (o: Record<string, unknown>, pre: string, r: Record<string, Cell>, depth: number) => {
     for (const [k, v] of Object.entries(o)) {
-      if (v && typeof v === "object" && !Array.isArray(v)) for (const [k2, v2] of Object.entries(v as object)) r[`${k}.${k2}`] = scalar(v2);
-      else r[k] = scalar(v);
+      if (v && typeof v === "object" && !Array.isArray(v) && depth < 3) flatten(v as Record<string, unknown>, `${pre}${k}.`, r, depth + 1);
+      else r[`${pre}${k}`] = scalar(v);
     }
     return r;
-  });
+  };
+  const flat = recs.slice(0, MAX_ROWS).map((o) => flatten(o, "", {}, 0));
   const keys: string[] = [];
   for (const r of flat.slice(0, 500)) for (const k of Object.keys(r)) if (!keys.includes(k)) keys.push(k);
   const cols = keys.slice(0, MAX_COLS);

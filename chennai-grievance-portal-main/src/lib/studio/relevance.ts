@@ -43,6 +43,8 @@ export function keepChennai(t: Table, index: number): Table {
 export function judge(p: {
   spec: Spec; rows: DRow[]; table: Table; source: { url: string | null; file: string; caption: string | null };
   filtered: Relevance["filtered"]; forced: boolean;
+  /** the link engine's verdict by rules over the raw rows (connect/gate.ts): "unrelated" only reaches here forced */
+  pre?: "district" | "partly" | "unrelated" | null;
 }): { relevance: Relevance; block: boolean } {
   const { spec, rows } = p;
   const n = rows.length || 1;
@@ -59,9 +61,11 @@ export function judge(p: {
   const ai = spec.by === "ai" ? spec.aiRelevance ?? null : null;
   if (ai) signals.push(`AI reading: ${ai.verdict}${ai.why ? ` (${ai.why})` : ""}`);
 
-  const evidence = placed >= 0.3 || (named && placed >= 0.05) || !!p.filtered;
+  if (p.pre === "district") signals.push("The link's rows name Chennai's places (checked before reading)");
+  const evidence = placed >= 0.3 || (named && placed >= 0.05) || !!p.filtered || p.pre === "district";
   let verdict: Relevance["verdict"];
   if (p.filtered) verdict = "partly";
+  else if (p.pre === "unrelated" && !evidence) verdict = "unrelated";
   else if (evidence) verdict = "district";
   else if (ai) verdict = ai.verdict === "district" && !named && !spec.deptName && placed < 0.05 ? "partly" : ai.verdict;
   else verdict = named || spec.deptName || placed > 0 ? "district" : "partly";

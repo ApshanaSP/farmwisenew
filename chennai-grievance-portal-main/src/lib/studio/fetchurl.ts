@@ -16,7 +16,7 @@ export const MAX_BYTES = 15 * 1024 * 1024;
 export const UA = "DistrictIQ/1.0 (Chennai District Collectorate; data studio)";
 export const UA_TOKEN = "DistrictIQ";
 
-export type LinkErrorCode = "invalid" | "private" | "network" | "timeout" | "auth" | "forbidden" | "limited" | "missing" | "http" | "size" | "robots" | "login" | "browser" | "empty";
+export type LinkErrorCode = "invalid" | "private" | "network" | "timeout" | "auth" | "forbidden" | "limited" | "missing" | "http" | "size" | "robots" | "login" | "browser" | "empty" | "redirects" | "corrupt";
 export class LinkError extends Error {
   constructor(message: string, public code: LinkErrorCode = "http", public status: number | null = null) { super(message); }
 }
@@ -39,10 +39,39 @@ export function directUrl(raw: string): string {
   return u.toString();
 }
 
+/** The test fixture server (scripts/studio-fixtures/server.mjs): allowed only with STUDIO_FIXTURES=1, and only this host and port. */
+export const FIXTURE_HOST = "127.0.0.1:4599";
+const fixtures = () => process.env.STUDIO_FIXTURES === "1";
+
 /** Hosts (host or host:port) the administrator allows although they are private: a demo department app on this PC. */
-function allowed(u: URL): boolean {
+export function allowed(u: URL): boolean {
+  if (fixtures() && u.protocol === "http:" && u.host === FIXTURE_HOST) return true;
   const list = (process.env.STUDIO_ALLOW_HOSTS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   return list.includes(u.host.toLowerCase()) || list.includes(u.hostname.toLowerCase());
+}
+
+/**
+ * In fixture mode only, the share-link sites (Google Sheets, GitHub, Dropbox, data.gov.in) are answered by the fixture
+ * server under /mirror/<host>/..., so their link rewrites are tested end to end without the internet.
+ */
+const MIRRORED = /^(docs\.google\.com|drive\.google\.com|github\.com|raw\.githubusercontent\.com|(www\.)?dropbox\.com|(tn\.)?data\.gov\.in|api\.data\.gov\.in)$/i;
+export function mirrored(u: URL): URL {
+  if (!fixtures() || !MIRRORED.test(u.hostname)) return u;
+  return new URL(`http://${FIXTURE_HOST}/mirror/${u.hostname}${u.pathname}${u.search}`);
+}
+
+/**
+ * Polite reading: at most one request a second to the same host (STUDIO_HOST_GAP_MS changes the gap; the tests
+ * shorten it). Requests to one host wait their turn; other hosts are not held up.
+ */
+const nextSlot = new Map<string, number>();
+export async function politeTurn(host: string) {
+  const gap = Number(process.env.STUDIO_HOST_GAP_MS ?? 1000);
+  if (!(gap > 0)) return;
+  const now = Date.now();
+  const at = Math.max(now, nextSlot.get(host) ?? 0);
+  nextSlot.set(host, at + gap);
+  if (at > now) await new Promise((r) => setTimeout(r, at - now));
 }
 
 const hostOk = new Map<string, { ok: boolean; at: number }>();
@@ -51,7 +80,7 @@ function linkErrorOf(e: unknown): unknown {
   if (!(e instanceof UnsafeUrlError)) return e;
   if (e.code === "private") return new LinkError("That address is on a private network and cannot be read.", "private");
   if (e.code === "dns") return new LinkError(e.message.replace("The site", "The address").replace(" (DNS)", ""), "network");
-  if (e.code === "redirects") return new LinkError("The link redirected too many times.", "http");
+  if (e.code === "redirects") return new LinkError("The link redirects in a loop (or too many times), so nothing could be read.", "redirects");
   return new LinkError(e.message.includes("user name") ? "Put the user name and password in the sign-in fields, not in the link." : "Only http and https links can be read.", "invalid");
 }
 
@@ -94,10 +123,14 @@ export function statusError(status: number, signedIn: boolean): LinkError {
 export async function fetchOnce(raw: string, cred?: Credentials | null, accept?: string, timeoutMs = 25_000): Promise<Fetched> {
   let url: URL;
   try { url = new URL(directUrl(raw)); } catch { throw new LinkError("That is not a valid link.", "invalid"); }
+  if (url.protocol !== "http:" && url.protocol !== "https:") throw new LinkError("Only http and https links can be read.", "invalid");
+  url = mirrored(url);
   let got: Awaited<ReturnType<typeof safeFetch>>;
+  const limit = Number(process.env.STUDIO_FETCH_TIMEOUT_MS) || timeoutMs;
+  await politeTurn(url.host);
   try {
     got = await safeFetch(url, {
-      allow: allowed, maxHops: 8, timeout: timeoutMs, maxBytes: MAX_BYTES,
+      allow: allowed, maxHops: 8, timeout: Math.min(timeoutMs, limit), maxBytes: MAX_BYTES,
       onTooLarge: () => new LinkError("The file is larger than 15 MB.", "size"),
       headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9", Accept: accept ?? "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5" },
       // the sign-in goes to the host it was given for, on whichever hop reaches it
@@ -111,7 +144,7 @@ export async function fetchOnce(raw: string, cred?: Credentials | null, accept?:
   } catch (e) {
     if (e instanceof LinkError) throw e;
     if (e instanceof UnsafeUrlError) throw linkErrorOf(e);
-    throw /timeout|abort/i.test(String(e)) ? new LinkError("The link took too long to answer.", "timeout") : new LinkError("The link could not be reached.", "network");
+    throw /timeout|abort/i.test(String((e as Error)?.name)) || /timeout|abort/i.test(String(e)) ? new LinkError("The link took too long to answer.", "timeout") : new LinkError("The link could not be reached.", "network");
   }
   const { res } = got;
   if (!res.ok) throw statusError(res.status, !!cred);

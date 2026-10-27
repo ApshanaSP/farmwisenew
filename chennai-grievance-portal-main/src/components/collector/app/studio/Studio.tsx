@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SampleInfo } from "@/lib/studio/samples";
-import type { DatasetCard, PanelData, Pin, Role, RunEvent } from "@/lib/studio/types";
+import type { DatasetCard, Outcome, OutcomeAction, PanelData, Pin, Role, RunEvent } from "@/lib/studio/types";
 import type { Console } from "../CollectorApp";
 import { I } from "../icons";
 import { api, runStream } from "./client";
@@ -17,6 +17,7 @@ import Pipeline, { emptyRun, type RunState } from "./Pipeline";
 import Hero from "./Hero";
 import Dataset from "./Dataset";
 import Connect, { type ConnectRequest } from "./Connect";
+import { OutcomeView, Picker } from "./Outcome";
 import "./studio.css";
 import "./studio-command.css";
 
@@ -26,7 +27,7 @@ const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: ()
 type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" };
 interface ListResp { datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
 
-const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json";
+const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json,.geojson,.kml,.kmz,.xml,.zip,.pdf,.docx";
 const KEY = "diq-studio-sel";
 
 export default function Studio({ c }: { c: Console }) {
@@ -38,6 +39,8 @@ export default function Studio({ c }: { c: Console }) {
   const [connecting, setConnecting] = useState(false);
   const fileIn = useRef<HTMLInputElement>(null);
   const lastStart = useRef<(() => void) | null>(null);
+  // datasets chosen in the picker, added one after another (each with its own run)
+  const pickQueue = useRef<{ token: string; ids: string[]; title: string }[]>([]);
   // the console object is rebuilt on every render of the shell: read it through a ref, so loading runs once
   const cRef = useRef(c);
   cRef.current = c;
@@ -97,10 +100,17 @@ export default function Studio({ c }: { c: Console }) {
         for (const k of Object.keys(steps) as (keyof RunState["steps"])[]) if (steps[k].state === "run") steps[k] = { ...steps[k], state: "error" };
         return { ...r, steps, error: e.message };
       }
+      if (e.t === "outcome") {
+        const steps = { ...r.steps };
+        for (const k of Object.keys(steps) as (keyof RunState["steps"])[]) if (steps[k].state === "run") steps[k] = { ...steps[k], state: "done" };
+        return { ...r, steps, outcome: e.outcome };
+      }
       return { ...r, id: e.id, doneAt: Date.now() };
     });
     if (e.t === "done") {
-      load().then(() => setTimeout(() => setMode({ k: "dataset", id: e.id }), 1100));
+      const next = pickQueue.current.shift();
+      if (next) load().then(() => setTimeout(() => startPick(next.token, next.ids, "each", next.title), 900));
+      else load().then(() => setTimeout(() => setMode({ k: "dataset", id: e.id }), 1100));
     }
   }, [load]);
   const drain = useCallback(() => {
@@ -159,7 +169,33 @@ export default function Studio({ c }: { c: Console }) {
     start(name, "remap", `/api/collector/studio/${id}`, json({ columns: changes }, "PATCH"));
   const refresh = (id: string, name: string) => () => start(name, "refresh", `/api/collector/studio/${id}`, json({ action: "refresh" }));
 
-  const busy = mode.k === "run" && !!run && !run.doneAt && !run.error && !run.blocked;
+  const startPick = (token: string, ids: string[], how: "each" | "combine" | "latest" | "all" | "connector", title: string) =>
+    start(title, "choose", "/api/collector/studio/pick", json({ token, ids, mode: how }));
+  /** the picker's choice: several datasets one after another, or one run (combined, a series) */
+  const addPicked = (ids: string[], how: "each" | "combine" | "latest" | "all" | "connector") => {
+    const pick = run?.outcome?.pick;
+    if (!pick || !ids.length) return;
+    const name = (id: string) => pick.cards.find((x) => x.id === id)?.name ?? "Dataset";
+    if (how === "each" && ids.length > 1) {
+      pickQueue.current = ids.slice(1).map((id, i) => ({ token: pick.token, ids: [id], title: `${name(id)} (${i + 2} of ${ids.length})` }));
+      startPick(pick.token, [ids[0]], "each", `${name(ids[0])} (1 of ${ids.length})`);
+    } else startPick(pick.token, ids, how, how === "combine" ? `${ids.length} datasets combined` : name(ids[0]));
+  };
+  const back = () => setMode(current ? { k: "dataset", id: current.id } : datasets[0] ? { k: "dataset", id: datasets[0].id } : { k: "home" });
+  /** a button on an outcome screen */
+  const onOutcome = (a: OutcomeAction, o: Outcome) => {
+    if (a.act === "retry") lastStart.current?.();
+    else if (a.act === "useAnyway" && o.pendingId) force(o.pendingId);
+    else if (a.act === "open" && o.dupOf) { setRun(null); setMode({ k: "dataset", id: o.dupOf.id }); }
+    else if (a.act === "refresh" && o.dupOf) start(o.dupOf.name, "refresh", `/api/collector/studio/${o.dupOf.id}`, json({ action: "refresh" }));
+    else if (a.act === "file") fileIn.current?.click();
+    else if (a.act === "vault") { setLink(o.url ?? ""); setConnecting(true); }
+    else if (a.act === "link") { setLink(a.href ?? ""); back(); }
+    else if (a.act === "news") { c.toast("Add it under News sources on the Overview page: news is followed there, not charted.", "ok"); c.setPage("overview"); }
+    else { if (o.pendingId) discard(o.pendingId); else { setRun(null); back(); } }
+  };
+
+  const busy = mode.k === "run" && !!run && !run.doneAt && !run.error && !run.blocked && !run.outcome;
   const datasets = list?.datasets ?? [];
   const current = mode.k === "dataset" ? datasets.find((d) => d.id === mode.id) : null;
 
@@ -204,7 +240,7 @@ export default function Studio({ c }: { c: Console }) {
               <span className="ds-li-ic"><I n="bookmark" /></span>
               <span className="ds-li-b"><b>Studio board</b><small>{list?.board.length ? `${list.board.length} pinned ${list.board.length === 1 ? "chart" : "charts"}` : "Pin charts from any dataset"}</small></span>
             </button>
-            {run && mode.k !== "run" && (run.doneAt == null && !run.error && !run.blocked) && (
+            {run && mode.k !== "run" && (run.doneAt == null && !run.error && !run.blocked && !run.outcome) && (
               <button className="ds-li running" onClick={() => setMode({ k: "run" })}>
                 <span className="ds-li-ic"><span className="ds-spin sm" /></span><span className="ds-li-b"><b>{run.title}</b><small>Agents at work…</small></span>
               </button>
@@ -226,7 +262,13 @@ export default function Studio({ c }: { c: Console }) {
         </section>
       </aside>
 
-      {mode.k === "run" && run ? (
+      {mode.k === "run" && run?.outcome ? (
+        <section className="ds-span card ds-run-wrap">
+          {run.outcome.kind === "choose" && run.outcome.pick
+            ? <Picker pick={run.outcome.pick} onAdd={addPicked} onCancel={() => { setRun(null); back(); }} />
+            : <OutcomeView outcome={run.outcome} onAction={onOutcome} onBack={() => { if (run.outcome?.pendingId) discard(run.outcome.pendingId); else { setRun(null); back(); } }} />}
+        </section>
+      ) : mode.k === "run" && run ? (
         <section className="ds-span card ds-run-wrap">
           <Pipeline run={run} onBack={() => setMode(run.id ? { k: "dataset", id: run.id } : current ? { k: "dataset", id: current.id } : datasets[0] ? { k: "dataset", id: datasets[0].id } : { k: "home" })}
             onRetry={lastStart.current ?? undefined} onForce={force} onDiscard={discard} />

@@ -18,14 +18,17 @@ import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
 import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
 import { mergeSpec, respec, rulesSpec } from "@/lib/studio/spec";
-import { dropPending, findBySource, getCandidates, getMeta, getPending, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, saveSource } from "@/lib/studio/store";
-import { connectLink, type Connected } from "@/lib/studio/connect";
-import { choose, tableHash, type Found } from "@/lib/studio/connect/discover";
+import { dropPending, findBySource, getCandidates, getMeta, getPending, getPick, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, savePick, saveSource } from "@/lib/studio/store";
+import { type Connected } from "@/lib/studio/connect";
+import { choose, schemaHash, tableHash, type Found } from "@/lib/studio/connect/discover";
+import { OutcomeStop, duplicateOutcome, findDuplicate, readLink, resolveLink } from "@/lib/studio/connect/resolve";
+import { fetchOnce } from "@/lib/studio/fetchurl";
+import { readiness } from "@/lib/studio/readiness";
 import { cleanAuth, getVault, saveSession, saveVault } from "@/lib/studio/connect/vault";
 import { LinkError } from "@/lib/studio/fetchurl";
 import { judge, keepChennai, stateWide } from "@/lib/studio/relevance";
 import { buildFacts, rulesStory } from "@/lib/studio/story";
-import { AUTH_LABEL, ROLE_LABEL, STEPS, type AuthInput, type Brief, type ConnectInfo, type DatasetMeta, type Insight, type RefreshRun, type Relevance, type Filter, type PanelData, type Plan, type Role, type RunEvent, type SourceInfo, type Spec, type StepKey, type StepLog } from "@/lib/studio/types";
+import { AUTH_LABEL, ROLE_LABEL, STEPS, type AuthInput, type Outcome, type Brief, type ConnectInfo, type DatasetMeta, type Insight, type RefreshRun, type Relevance, type Filter, type PanelData, type Plan, type Role, type RunEvent, type SourceInfo, type Spec, type StepKey, type StepLog } from "@/lib/studio/types";
 import { fmtDay, normKey } from "@/lib/studio/values";
 import type { AiBusyError } from "@/lib/ai/gateway";
 
@@ -80,6 +83,8 @@ export interface IngestInput {
   /** the Relevance gate is passed over ("Use anyway") */
   force?: boolean;
   id?: string;
+  /** the link engine's verdict on relevance, by rules over the raw rows (connect/gate.ts) */
+  pre?: "district" | "partly" | "unrelated" | null;
 }
 
 /** Thrown when the Relevance gate stops a run; the stream turns it into a "blocked" event. */
@@ -87,11 +92,17 @@ export class BlockedError extends Error {
   constructor(public id: string, public why: string, public signals: string[]) { super(why); }
 }
 
-/** The same bytes were added before: that dataset is opened, not copied. */
-function alreadyAdded(meta: DatasetMeta, emit: Emit): string {
-  emit({ t: "step", step: "read", state: "done", detail: `Already added on ${fmtDay(meta.createdAt.slice(0, 10))} as "${meta.name}": opening it`, by: "code", ms: 0 });
-  emit({ t: "log", text: `This file is the same as "${meta.name}", so no copy was made. Delete that dataset first to read it afresh.` });
-  return meta.id;
+/** The same data was added before: no copy is made; the Collector opens it (or refreshes it) instead. */
+function alreadyAdded(meta: DatasetMeta, emit: Emit, url: string | null): never {
+  emit({ t: "step", step: "read", state: "done", detail: `Already added on ${fmtDay(meta.createdAt.slice(0, 10))} as "${meta.name}"`, by: "code", ms: 0 });
+  throw new OutcomeStop(duplicateOutcome({ id: meta.id, name: meta.name, addedAt: meta.createdAt, link: !!meta.source.url }, url));
+}
+
+/** A file whose table has no usable rows ends as NO DATA, never a dashboard. */
+function nothingIn(table: Table, file: string): Outcome {
+  const r = readiness(table);
+  return { kind: "nodata", reason: "empty", url: null, why: r.cols ? `"${file}" has its column names but no rows of data.` : `"${file}" has no rows of data.`,
+    checked: [`Read ${file}: ${r.summary}.`], next: [{ label: "Ask the department for the full file", act: "file" }] };
 }
 
 const rowsCols = (t: Table) => `${t.rows.length.toLocaleString("en-IN")} rows · ${t.headers.length} columns`;
@@ -100,7 +111,7 @@ const rowsCols = (t: Table) => `${t.rows.length.toLocaleString("en-IN")} rows ·
 export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   if (!inp.id) {
     const same = findBySource(inp.buf);
-    if (same) return alreadyAdded(same, emit);
+    if (same) alreadyAdded(same, emit, inp.url);
   }
   const id = inp.id ?? newId();
   const t0 = Date.now();
@@ -113,9 +124,9 @@ export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   if (table.caption) emit({ t: "log", text: `Title above the table kept as context: "${table.caption.slice(0, 120)}"` });
   if (table.sheets.length > 1) emit({ t: "log", text: `Workbook has ${table.sheets.length} sheets; read the largest, "${table.sheet}".` });
   if (table.truncated) emit({ t: "log", text: `Only the first ${table.rows.length.toLocaleString("en-IN")} rows were read (${table.truncated.toLocaleString("en-IN")} more in the file).` });
-  if (!table.rows.length) throw new UserError("The file has a header but no rows.");
+  if (readiness(table).tier === "empty") throw new OutcomeStop(nothingIn(table, inp.file));
   saveSource(id, inp.buf);
-  return run({ id, table, source, name: inp.name ?? null, user: inp.user, prior: null, steps: [readLog], sample: inp.kind === "sample", force: inp.force }, emit);
+  return run({ id, table, source, name: inp.name ?? null, user: inp.user, prior: null, steps: [readLog], sample: inp.kind === "sample", force: inp.force, pre: inp.pre ?? null }, emit);
 }
 
 /** The ConnectInfo for a link just read: how, what was found, which one is used, and the refresh plan. */
@@ -127,23 +138,115 @@ function connectInfo(c: Connected, chosen: Found, auth: AuthInput, every: number
   };
 }
 
-/** A new dataset from a link (with its sign-in, where the Collector is allowed one): connect, then the seven agents. */
+/**
+ * A new dataset from a link (with its sign-in, where the Collector is allowed one): the link engine decides the
+ * outcome (connect/resolve.ts); only DATA runs the seven agents. CHOOSE saves the candidates for the picker; NOT
+ * RELEVANT keeps the run waiting for "Use anyway"; every other outcome is said as it is.
+ */
 export async function ingestLink(p: { url: string; auth: AuthInput | null; every: number | null; name: string | null; user: string }, emit: Emit): Promise<string> {
   const auth = cleanAuth(p.auth);
   if ((auth.mode === "login" || auth.mode === "basic") && (!auth.username || !auth.password)) throw new LinkError("Enter both the user name and the password.", "invalid");
   if (auth.mode === "apikey" && !auth.key) throw new LinkError("Enter the API key.", "invalid");
   emit({ t: "step", step: "read", state: "run", detail: auth.mode === "none" ? "Connecting to the link" : `Connecting with ${AUTH_LABEL[auth.mode].toLowerCase()}` });
   const log = (text: string) => emit({ t: "log", text });
-  const c = await connectLink(p.url, auth, { log });
-  const same = findBySource(c.buf);
-  if (same) return alreadyAdded(same, emit);
-  const chosen = choose(c.found);
+  const r = await resolveLink(p.url, auth, { log });
+  const o = r.outcome, c = r.connected;
+  if (o.kind === "choose" && c && o.pick) {
+    const token = newId();
+    savePick(token, { pick: { ...o.pick, token }, found: r.found, auth: auth.mode, every: p.every, name: p.name, buf: c.buf.toString("base64"), contentType: c.contentType, pageUrl: c.url, method: c.method });
+    if (auth.mode !== "none") saveVault(token, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString() : null });
+    emit({ t: "step", step: "read", state: "done", detail: o.why, by: "code", ms: 0 });
+    throw new OutcomeStop({ ...o, pick: { ...o.pick, token } });
+  }
+  if (o.kind === "notrelevant" && c && r.chosen) {
+    const id = newId();
+    saveSource(id, c.buf);
+    saveCandidates(id, r.found);
+    if (auth.mode !== "none") saveVault(id, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString() : null });
+    const info = connectInfo(c, r.chosen, auth, p.every);
+    const t = withTopics(r.chosen.table);
+    savePending({ id, table: t, name: p.name, sample: false, spec: null, why: o.why, signals: o.checked, at: new Date().toISOString(),
+      source: { kind: "link", file: c.name, url: p.url, sheet: t.sheet, sheets: t.sheets, bytes: c.buf.length, caption: t.caption, connect: info } });
+    emit({ t: "step", step: "read", state: "done", detail: "Real data, but not Chennai's", by: "code", ms: 0 });
+    throw new OutcomeStop({ ...o, pendingId: id });
+  }
+  if (o.kind !== "data" || !c || !r.chosen) {
+    emit({ t: "step", step: "read", state: "done", detail: o.why.slice(0, 120), by: "code", ms: 0 });
+    throw new OutcomeStop(o);
+  }
+  const chosen = r.chosen;
+  for (const line of o.checked) log(line);
   const id = newId();
-  saveCandidates(id, c.found);
+  saveCandidates(id, r.found);
   if (auth.mode !== "none") saveVault(id, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString() : null });
   const info = connectInfo(c, chosen, auth, p.every);
   info.history = [{ at: info.fetchedAt, ok: true, rows: chosen.table.rows.length, changed: true, note: `Connected · ${chosen.cand.label}` }];
-  return ingest({ id, buf: c.buf, file: c.name, kind: "link", url: p.url, contentType: c.contentType, base: c.url, name: p.name, user: p.user, table: chosen.table, connect: info }, emit);
+  return ingest({ id, buf: c.buf, file: c.name, kind: "link", url: p.url, contentType: c.contentType, base: c.url, name: p.name, user: p.user, table: chosen.table, connect: info, pre: o.reason as IngestInput["pre"] }, emit);
+}
+
+/** The Collector's choice in the picker: one candidate, several combined, or a series (latest, all, kept updating). */
+export interface PickChoice { ids: string[]; mode: "each" | "combine" | "latest" | "all" | "connector"; name?: string | null }
+
+/** Tables with the same columns, one under the other, with the file each row came from. */
+export function combineTables(parts: { label: string; table: Table }[], col = "Source file"): Table {
+  const first = parts[0].table;
+  const key = schemaHash(first.headers);
+  if (parts.some((x) => schemaHash(x.table.headers) !== key)) throw new UserError("These datasets have different columns, so they cannot be combined into one. Add them one by one instead.");
+  return { ...first, headers: [...first.headers, col], rows: parts.flatMap((x) => x.table.rows.map((r) => [...r, x.label])), part: `${parts.length} combined`,
+    caption: first.caption, truncated: 0 };
+}
+
+export async function ingestPick(token: string, choice: PickChoice, user: string, emit: Emit): Promise<string> {
+  const saved = getPick(token);
+  if (!saved) throw new UserError("That list of datasets is no longer here. Add the link again.");
+  const picked = choice.ids.map((id) => saved.found.find((f) => f.cand.id === id)).filter((f): f is Found => !!f);
+  if (!picked.length) throw new UserError("Choose at least one dataset.");
+  // each dataset is its own run (the page adds them one after another)
+  if (choice.mode === "each" && picked.length > 1) throw new UserError("Add the datasets one at a time, or combine them into one.");
+  const log = (text: string) => emit({ t: "log", text });
+  const vault = getVault(token);
+  const auth = vault?.auth ?? ({ mode: saved.auth } as AuthInput);
+  let chosen: Found = picked[0];
+  let every = saved.every;
+  emit({ t: "step", step: "read", state: "run", detail: picked.length > 1 ? `Combining ${picked.length} datasets` : `Reading ${chosen.cand.label}` });
+  if (choice.mode === "combine" && picked.length > 1) {
+    const table = combineTables(picked.map((f) => ({ label: f.cand.label, table: f.table })));
+    chosen = { cand: { ...picked[0].cand, id: `combined-${schemaHash(table.headers)}`, label: `${picked.length} datasets combined`, rows: table.rows.length, headers: table.headers.slice(0, 30) }, table };
+  } else if (chosen.cand.series && (choice.mode === "all" || choice.mode === "connector")) {
+    const s = chosen.cand.series;
+    if (choice.mode === "all") {
+      log(`Reading all ${s.files.length} files of the series, politely (one a second).`);
+      const parts: { label: string; table: Table }[] = [];
+      for (const f of s.files.slice(-60)) {
+        try {
+          const got = await fetchOnce(f.url, null, undefined, 20_000);
+          const t = parseFile(got.buf, got.name, got.contentType, got.url);
+          if (schemaHash(t.headers) === schemaHash(chosen.table.headers)) parts.push({ label: f.date, table: t });
+          else log(`${f.name} has other columns: left out.`);
+        } catch (e) { log(`${f.name} could not be read: ${(e as Error).message.slice(0, 80)}`); }
+      }
+      if (!parts.length) throw new UserError("None of the series' files could be read.");
+      const table = combineTables(parts, "File date");
+      chosen = { cand: { ...chosen.cand, id: `series-all-${schemaHash(table.headers)}`, label: `${chosen.cand.label} (all ${parts.length} files)`, rows: table.rows.length, headers: table.headers.slice(0, 30) }, table };
+    } else {
+      // kept updating: the newest file now, and a daily refresh that finds the next one (Live Connectors)
+      every = every ?? 1440;
+      log("Kept updating: the newest file now; each day the Studio looks for the next file of the series.");
+    }
+  }
+  const page = { buf: Buffer.from(saved.buf, "base64"), name: `${new URL(saved.pageUrl).hostname}.html`, contentType: saved.contentType, url: saved.pageUrl, method: saved.method,
+    found: saved.found, session: vault?.session ?? null, signedIn: "none" } as Connected;
+  const dup = findDuplicate(saved.pick.url, null, chosen.table);
+  if (dup) alreadyAdded(getMeta(dup.id)!, emit, saved.pick.url);
+  const id = newId();
+  saveCandidates(id, saved.found.some((f) => f.cand.id === chosen.cand.id) ? saved.found : [chosen, ...saved.found]);
+  if (vault) saveVault(id, vault);
+  const info = connectInfo(page, chosen, auth, every);
+  info.history = [{ at: info.fetchedAt, ok: true, rows: chosen.table.rows.length, changed: true, note: `Chosen in the picker · ${chosen.cand.label}` }];
+  const card = saved.pick.cards.find((x) => x.id === picked[0].cand.id);
+  const pre = card?.group === "notchennai" ? "unrelated" : card?.chennaiRows ? "district" : "partly";
+  return ingest({ id, buf: page.buf, file: page.name, kind: "link", url: saved.pick.url, contentType: page.contentType, base: page.url, name: choice.name ?? saved.name,
+    user, table: chosen.table, connect: info, pre, force: pre === "unrelated" }, emit);
 }
 
 /** The table a dataset was read from: its chosen candidate (a link), else its original file read again. */
@@ -186,7 +289,7 @@ export async function forceIngest(id: string, user: string, emit: Emit): Promise
   if (!p) throw new UserError("That stopped run is no longer waiting. Add the data again.");
   emit({ t: "step", step: "read", state: "done", detail: rowsCols(p.table), by: "code", ms: 0 });
   dropPending(id);
-  return run({ id, table: p.table, source: p.source, name: p.name, user, prior: p.spec, steps: [], sample: p.sample, force: true }, emit);
+  return run({ id, table: p.table, source: p.source, name: p.name, user, prior: p.spec, steps: [], sample: p.sample, force: true, pre: p.spec ? null : "unrelated" }, emit);
 }
 
 const running = new Set<string>();
@@ -216,7 +319,7 @@ export async function refreshDataset(id: string, user: string, emit: Emit): Prom
     emit({ t: "step", step: "read", state: "run", detail: "Fetching the link again" });
     let c: Connected;
     try {
-      c = await connectLink(meta.source.url, auth, { session: vault?.session ?? null, log });
+      c = await readLink(meta.source.url, auth, { session: vault?.session ?? null, log });
     } catch (e) {
       const msg = (e as Error).message;
       record({ at: new Date().toISOString(), ok: false, rows: null, changed: false, note: msg.slice(0, 200) }, { lastError: msg.slice(0, 300) });
@@ -281,6 +384,8 @@ export function runDueRefreshes() {
 interface RunCtx {
   id: string; table: Table; source: SourceInfo; name: string | null; user: string; prior: Spec | null; steps: StepLog[]; sample: boolean;
   createdAt?: string; rules?: DatasetMeta["rules"]; force?: boolean;
+  /** the link engine's rules verdict on relevance (connect/gate.ts) */
+  pre?: "district" | "partly" | "unrelated" | null;
 }
 
 async function run(ctx: RunCtx, emit: Emit): Promise<string> {
@@ -364,7 +469,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   else if (spec.weight) emit({ t: "log", text: `A periodic return: one row per place per report date, so "${spec.columns.find((c) => c.key === spec.weight)?.label}" is counted, not the rows.` });
 
   // ---- the Relevance gate: is this the district's data?
-  const gate = judge({ spec, rows, table, source: ctx.source, filtered, forced: !!ctx.force });
+  const gate = judge({ spec, rows, table, source: ctx.source, filtered, forced: !!ctx.force, pre: ctx.pre ?? null });
   emit({ t: "log", text: `Relevance: ${gate.relevance.verdict === "district" ? "Chennai district data" : gate.relevance.verdict === "partly" ? "wider data that concerns Chennai" : "does not read as Chennai district data"} · ${gate.relevance.why}` });
   if (gate.block) {
     savePending({ id: ctx.id, table: fullTable, source: ctx.source, name: ctx.name, sample: ctx.sample, spec, why: gate.relevance.why, signals: gate.relevance.signals, at: new Date().toISOString() });
