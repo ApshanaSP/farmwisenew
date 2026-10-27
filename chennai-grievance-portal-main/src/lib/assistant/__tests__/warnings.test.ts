@@ -49,3 +49,21 @@ describe("the answer comes from the alerts lane", () => {
     expect(warningAnswer(o, "en").headline).toBe("Orange warning for Chennai");
   });
 });
+
+// R-10 (27 Oct 2026): "What should we prepare?" got only the generic playbook, naming no ward, drain or bund
+describe("what to prepare comes from the data (R-10)", () => {
+  it("lists the open flood problems to clear first, and where most are", async () => {
+    const { prepLines } = await import("@/lib/assistant/warnings");
+    const lines = prepLines([
+      { title: "Bund cut in Cooum River Bund, water entering VOC St", loc: "Arumbakkam", zone: "Anna Nagar", sev: "Severe", overdue: true },
+      { title: "Muthamizh Nagar 1st Road flooded", loc: "Thiruvottiyur", zone: "Thiruvottiyur", sev: "High", overdue: false }
+    ], [{ name: "Royapuram", n: 12 }, { name: "Anna Nagar", n: 9 }]).join("\n");
+    expect(lines).toContain("1. Bund cut in Cooum River Bund, water entering VOC St (Arumbakkam, Anna Nagar): severe, past its deadline");
+    expect(lines).toContain("2. Muthamizh Nagar 1st Road flooded (Thiruvottiyur): high");
+    expect(lines).toContain("**Most open flood problems:** Royapuram 12, Anna Nagar 9.");
+  });
+  it("nothing when nothing is open", async () => {
+    const { prepLines } = await import("@/lib/assistant/warnings");
+    expect(prepLines([], [])).toEqual([]);
+  });
+});
