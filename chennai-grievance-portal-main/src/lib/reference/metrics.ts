@@ -138,16 +138,3 @@ export function dataAge(day: string | null | undefined, now: string): { days: nu
  */
 export const MIN_UNUSUAL = 5;
 export const unusualEnough = (a: { observed?: unknown }) => Number(a.observed ?? 0) >= MIN_UNUSUAL;
-
-/**
- * What a confidence figure rests on (LT-13: "100%" for 4 reports, all from one department, with nothing beside it): the
- * reports and the separate sources behind it.
- */
-export function confidenceBasis(src: Record<string, unknown> | null | undefined): string | null {
-  if (!src) return null;
-  const kinds = ["grievance", "police", "pwd", "hospital", "imd", "news"];
-  const total = Number(src.total ?? 0);
-  const sources = kinds.filter((k) => Number(src[k] ?? 0) > 0).length;
-  if (!total) return null;
-  return `${total} ${total === 1 ? "report" : "reports"} · ${sources} ${sources === 1 ? "source" : "sources"}`;
-}

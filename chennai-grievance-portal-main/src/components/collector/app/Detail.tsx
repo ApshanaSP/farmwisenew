@@ -9,7 +9,6 @@ import { MEDIA_KIND, SOURCE_KIND, deptIcon, fmtDay, fmtShort, fmtTime, fullTitle
 import type { Console } from "./CollectorApp";
 import { SentNote, TakeAction } from "./TakeAction";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
-import { confidenceBasis } from "@/lib/reference/metrics";
 
 const CHANNEL: Record<string, string> = {
   citizen_app: "Citizen app", citizen_grievance: "Grievance portal", control_room_112: "Control room 112", fir_walk_in: "Police station",
@@ -194,8 +193,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
               <div><small>Field officer</small><b title={i.officer ?? undefined}>{i.officer || "—"}</b></div>
               <div><small>Taluk</small><b>{i.taluk_name ?? "Not resolved"}</b></div>
               <div title={confidenceNote(i)}><small>Confidence</small><b style={{ color: Number(i.confidence) < 0.7 ? "var(--high)" : undefined }}>
-                {i.confidence == null ? "—" : `${Math.round(Number(i.confidence) * 100)}%`}{Number(i.needs_review) ? " · review" : ""}</b>
-                {confidenceBasis(i.src) ? <small>{confidenceBasis(i.src)}</small> : null}</div>
+                {i.confidence == null ? "—" : `${Math.round(Number(i.confidence) * 100)}%`}{Number(i.needs_review) ? " · review" : ""}</b></div>
             </div>
           </div>
         </section>
