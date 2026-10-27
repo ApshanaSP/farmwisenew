@@ -17,7 +17,7 @@ first, then a broad sweep. This is **not** the full 21-layer run of the prompt; 
 | Search and lists | Production build + golden tests | 0 / 2 / 0 | 2 | 0 |
 | Incident detail | Production build | 0 / 3 / 0 | 3 | 0 |
 | Trends | Production build | 0 / 1 / 0 | 1 part | Kolathur map (owner) |
-| Security (L3 subset) | 36 probe checks, XSS, SSRF, secrets, access | 0 / 0 / 1 | 1 | 0 |
+| Security (L3 subset) | 36 probe checks, 6 XSS payloads, 13 SSRF addresses, bundle secrets, collector→officer access | 0 / 0 / 1 | 1 | 0 |
 | Accessibility | Map pins, logo link | 0 / 1 / 1 | 2 | axe not run |
 | Phone width | 375 px, all pages | 0 / 1 / 0 | 1 | 0 |
 | Officer and citizen portals | Pages load, refuse without a session | 0 | 0 | journeys need test logins |
@@ -37,7 +37,7 @@ first, then a broad sweep. This is **not** the full 21-layer run of the prompt; 
 | R-21 + B-005 | Search capped at 7 with chatter ranked 2nd; the full list found 0 for "velachery flooding" | Title matches first, "N more" opens the list, and the list finds every word |
 | B-003 | The banner read "Heavy rain Arnab" when the newest report was about its rain | "Cyclone Arnab" |
 
-Also fixed: R-09, R-12, R-13, R-14, R-19, R-24, R-25, LT-12, LT-13, LT-44 (map pins), B-002 (malformed request bodies
+Also fixed: R-09, R-12, R-13, R-14, R-19, R-24, R-25, LT-12, LT-44 (152 map pins named), B-002 (malformed request bodies
 gave 500s on 10 routes), B-004, B-006, and the phone number tiles.
 
 Every fix has a regression test that failed before the fix and passes after it.
@@ -46,7 +46,7 @@ Every fix has a regression test that failed before the fix and passes after it.
 
 | Check | Before | Now |
 |---|---|---|
-| vitest | 806 | 854+ passed (1 skipped) |
+| vitest | 806 | 875 passed (1 skipped) |
 | golden, no AI (frozen real data) | 4 | 6 passed (1 skipped) |
 | pytest | 131 | 136 passed |
 | tsc | clean | clean |
@@ -74,8 +74,15 @@ Every fix has a regression test that failed before the fix and passes after it.
 - The 60-minute soak with 3 forced reloads: a shorter soak was run (see 6).
 - Uploads (photos, Studio files) and OTP limits: need a citizen account.
 
-## 6. Memory soak
-(filled in below once the hourly build swap has been observed)
+## 6. Memory soak (production build, 127.0.0.1:3005)
+- 47 minutes of server time, about 7,100 requests (Overview, search, alerts, Briefing and Trends data, Studio, map),
+  **0 errors**. Two responses took 3.5–4 s, both while other tests ran on the same PC.
+- Private memory after start-up held between **1,393 and 1,448 MB**, with no upward trend (105 samples, every 30 s,
+  evidence/memory.csv). Start-up peak 1,667 MB.
+- The 5-minute data reloads ran during the soak without a problem.
+- **Not observed live:** an hourly *build* swap (the exact moment of the old crash). No new build arrived from AWS
+  between 16:20 and 17:25. That path is covered by the measurement (+305 MB → +80 MB) and the regression test; check it
+  on demo day by leaving the console open over an hour.
 
 ## 7. How to re-run what exists
 ```

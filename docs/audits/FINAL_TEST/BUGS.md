@@ -36,6 +36,8 @@ Status: open / fixing / fixed / verified / owner-decision / accepted. Details fo
 | B-005 | P1 | Incident list | The full list's text filter matched "velachery flooding" as one phrase (0 rows) | fixed (30bb5c3) |
 | B-006 | P2 | Sign-in pages | The logo link had no accessible name | fixed (1cdf4ff) |
 | B-007 | P1 | Chatbot (Tamil) | Incident titles stay in English inside a Tamil answer (LT-17) | open |
+| B-008 | P2 | Phone | The four number tiles cut every label at 375 px | fixed (6819fe3, final commit) |
+| B-009 | P2 | Overview | A new zone + period: tiles in 0.22 s, stories panel 1.5–1.8 s (budget 1 s) | open |
 
 ## R-01 Out of memory during the hourly reload
 - **Steps:** dev server (`npm run dev`, DATA_BACKEND=aws) on a 7.2 GB PC with a second dev server running; leave it 6
