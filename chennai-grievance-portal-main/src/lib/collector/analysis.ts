@@ -134,6 +134,17 @@ export const when = (t: unknown) => {
 const SRC: Record<string, string> = { grievance: "citizen complaint", police: "police report", pwd: "PWD field record", hospital: "hospital report",
   news: "news report", imd: "IMD warning" };
 
+/** The departments involved besides the lead, by name, each once (a code with no name is left out, never shown). */
+export function otherDepts(codes: string[], lead: string, names: Map<string, string>, leadName = ""): string[] {
+  const out: string[] = [];
+  for (const c of codes) {
+    const n = names.get(c);
+    if (!n || c === lead || n === leadName || out.includes(n)) continue;
+    out.push(n);
+  }
+  return out;
+}
+
 export async function analyseIncident(id: string, user: string): Promise<Analysis | null> {
   const d = await incident(id);
   if (!d) return null;
@@ -144,11 +155,16 @@ export async function analyseIncident(id: string, user: string): Promise<Analysi
   const emails = d.emails as Row[];
   const [cat] = await intelPool.query(`SELECT playbook FROM ref_categories WHERE category_code = ?`, [i.cat_code])
     .then((r) => r[0] as Row[]).catch(orEmpty("analysis:145"));
+  // the other departments by name, the lead and repeats left out (LT-12: "PWD Water Resources, GCC-SWD, POL-GCP, and PWD-WRD")
+  const codes = String(i.depts_involved ?? "").split("|").filter(Boolean);
+  const deptRows = codes.length ? await intelPool.query(`SELECT code, name FROM ref_departments WHERE code IN (?)`, [codes])
+    .then((r) => r[0] as Row[]).catch(orEmpty("analysis:depts")) : [];
+  const others = otherDepts(codes, String(i.dept ?? ""), new Map(deptRows.map((r) => [String(r.code), String(r.name)])), String(i.dept_name ?? ""));
   const facts = [
     `Incident ${i.id}: ${i.title}`,
     `Category: ${i.type}. Severity: ${i.sev} (${String(i.severity_reasons ?? "").replace(/\|/g, "; ")}). Status: ${i.status}.`,
     `Place: ${[i.loc, i.zone_name ? `${i.zone_name} zone` : null, i.ward ? `ward ${i.ward}` : null, i.taluk_name ? `${i.taluk_name} taluk` : null].filter(Boolean).join(", ") || "Chennai"}.`,
-    `Lead department: ${i.dept_name ?? i.dept}${i.depts_involved ? `; departments involved: ${String(i.depts_involved).replace(/\|/g, ", ")}` : ""}. Field officer: ${i.officer ?? "not named"}.`,
+    `Lead department: ${i.dept_name ?? i.dept}${others.length ? `; also involved: ${others.join(", ")}` : ""}. Field officer: ${i.officer ?? "not named"}.`,
     `First reported ${when(i.t)}; open for ${Math.round(Number(i.hours_open) || 0)} hours. Deadline ${i.sla_due ? when(i.sla_due) : "none"}${Number(i.breached) ? " (missed)" : ""}.`,
     [i.dead ? `${i.dead} dead` : "", i.injured ? `${i.injured} injured` : "", i.persons_affected ? `about ${i.persons_affected} people affected` : "",
       i.vulnerable ? `vulnerable: ${String(i.vulnerable).replace(/\|/g, ", ")}` : ""].filter(Boolean).join("; "),

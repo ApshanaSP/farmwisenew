@@ -298,7 +298,9 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
   const newsChennai = group.filter((n) => n.chennaiUnder);
   const newsLevelChennai = newsChennai.reduce<Level>((a, n) => Math.max(a, n.level ?? 1) as Level, 0);
   const newsLevelAny = group.reduce<Level>((a, n) => Math.max(a, n.level ?? 0) as Level, 0);
-  const event = main ? { hazard: group[0]?.hazard ?? null, name: group.find((n) => n.name)?.name ?? null } : null;
+  // a named storm is a cyclone when any of its reports says so: the newest one may be about its rain ("Heavy rain Arnab", 27 Oct)
+  const named = group.find((n) => n.name)?.name ?? null;
+  const event = main ? { hazard: named && group.some((n) => n.hazard === "cyclone") ? "cyclone" as Hazard : group[0]?.hazard ?? null, name: named } : null;
   const eventName = event ? (event.name ? `${event.hazard === "cyclone" || !event.hazard ? "Cyclone" : HAZARD_NAME[event.hazard]} ${event.name}` : HAZARD_NAME[event.hazard ?? "other"]) : null;
   const elsewhere = group.filter((n) => n.level && !n.chennaiUnder && (n.districts.length || n.districtCount));
   const newsSays = !group.length ? "nothing" : [

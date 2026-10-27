@@ -16,11 +16,12 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
-import { pctChange } from "@/lib/reference/metrics";
-import { categories } from "@/lib/collector/nlp";
+import { pctChange, unusualEnough } from "@/lib/reference/metrics";
+import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
 import { orEmpty } from "@/lib/fallback";
+import { alertLane, type AlertLane } from "@/lib/collector/alerts";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -152,15 +153,56 @@ const DAY_SYSTEM = `You are the chief of staff to the District Collector of Chen
 the Collector must know: one consolidated report of everything that came in (incidents, citizen grievances, news, weather and
 water), so the Collector needs to read nothing else.
 ${STYLE}
-headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing).
-points: 4 to 7, the most important first. Order: lives lost and severe incidents (say what happened and where), then anything
+headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing). When the
+facts start with a "Weather alert" line, the headline names that alert (its name or hazard) and says what the official sources say.
+points: 4 to 7, the most important first. An active alert is the first point (topic Weather & water). Then: lives lost and severe incidents (say what happened and where), then anything
 spreading or unusual, then what citizens complained about most and where, then what the news is reporting that matters to the
 district, then weather or water risk if any, then what waits for the Collector. Merge related facts into one point; never repeat a
 fact in two points; leave out what is routine. Each point names the places and what happened, with the numbers from the facts.
 topic: Lives lost (deaths), Safety (crime, accidents, fire), Grievances (citizen complaints), News, Civic services (water, power,
 roads, garbage, drains), Weather & water, Rising (spikes and trends), For you (verification, decisions).
 ref: the incident id in square brackets in the facts that the point is mainly about, else empty.
-headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order.`;
+headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order. Write each place with the Tamil name
+the facts give for it; a place with none is written by its English name's sound in Tamil letters, never as another place.`;
+
+/**
+ * The alerts lane as the brief's first facts (R-02: on Cyclone Arnab's second day the key points never named it, because
+ * the brief saw only "No IMD warning"). `must` holds the words the headline has to carry: the event's name, else its hazard.
+ */
+export function alertFacts(lane: AlertLane | null): { lines: string[]; must: string[] } {
+  if (!lane?.banner) return { lines: [], must: [] };
+  const hazard = lane.event?.hazard ? lane.event.hazard.replace("_", " ") : null;
+  const lines = [`Weather alert: ${one(lane.banner.title, 120)}. ${one(lane.agreementText, 300)}`];
+  for (const st of lane.stale)
+    lines.push(`Not reporting during the alert: ${st.label}${st.hours != null ? `, silent ${Math.round(st.hours)} hours` : ""}.`);
+  const must = [lane.event?.name, hazard].filter((w): w is string => !!w && w.length > 2);
+  return { lines, must };
+}
+/** Whether a headline carries the alert (case-insensitive, whole word). */
+export const namesAlert = (text: string, must: string[]) =>
+  !must.length || must.some((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(text));
+
+const hasWord = (text: string, w: string) => new RegExp(`(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}])`, "iu").test(text);
+
+/** The gazetteer's Tamil names for the places the facts name, for the Tamil text (R-17). */
+export function tamilGlossary(facts: string, names = tamilNames()): string {
+  const used = names.filter((n) => n.en.some((e) => hasWord(facts, e)));
+  return used.length ? `Tamil names of the places (use exactly these in the Tamil text): ${used.map((n) => `${n.en[0]} = ${n.ta[0]}`).join("; ")}.` : "";
+}
+
+/**
+ * A Tamil text that names a gazetteer place the facts never name (R-17: "Periamet" became பாரிமுனை, Parrys, and
+ * "Pattaravakkam" பட்டாபிராமம்): a wrong place, so that Tamil text is not shown (the English one is). Checked against all
+ * the facts, not the point alone: the Tamil may add the zone the facts give, or spell a place another way.
+ */
+export function wrongTamilPlace(known: string, ta: string, names = tamilNames()): string | null {
+  // matched on the stem: a name ending in -ம் takes case endings without it (பட்டாபிராமம் → பட்டாபிராமத்தில்)
+  const stem = (t: string) => (t.length > 4 ? t.replace(/ம்$/, "") : t);
+  for (const n of names) if (n.ta.some((t) => ta.includes(stem(t))) && !n.en.some((e) => hasWord(known, e))) return n.en[0];
+  return null;
+}
+
+export const noIds = (t: string) => t.replace(/\s*[[(]?\bINC-[A-Z0-9]+(?:-[A-Z0-9]+)*\b[\])]?/g, "").replace(/\s+([.,;])/g, "$1").trim();
 
 async function dayFacts(s: BriefScope) {
   const now = briefHour(await asOf());
@@ -192,6 +234,7 @@ async function dayFacts(s: BriefScope) {
          FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(orEmpty("aibrief:182")),
     scopeLabel(s)
   ]);
+  const alert = alertFacts(await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null)));
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));
   const catLabel = new Map(categories().map((c) => [c.code, c.label]));
   const T = tot[0] ?? {};
@@ -201,6 +244,7 @@ async function dayFacts(s: BriefScope) {
     .sort((a, b) => b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 8) : [];
   const lines = [
     `Scope: ${scopeName}. Period: ${PERIODS[s.period].label.toLowerCase()} (to ${when(now)}).`,
+    ...alert.lines,
     `Incidents reported: ${n(T.n)}${ch == null ? "" : ` (${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} the period before, which had ${n(before[0]?.n)})`}.` +
       ` Severe: ${n(T.severe)}. Deaths: ${n(T.dead)}. Injured: ${n(T.injured)}. Still open: ${n(T.open)}. Seen only in the news, no department record: ${n(T.news_only)}.`,
     serious.length ? "Deaths and severe incidents:" : "No death or severe incident.",
@@ -211,7 +255,7 @@ async function dayFacts(s: BriefScope) {
     ...(gTop.length ? ["Grievances with the most complaints:", ...gTop.map(incLine)] : []),
     `Open grievances past their deadline (any date): ${n(overdue[0]?.n)}.`,
     depts.length ? `By department: ${depts.map((d) => `${d.name ?? "unassigned"} ${n(d.n)}${n(d.severe) ? ` (${n(d.severe)} severe)` : ""}`).join("; ")}.` : "",
-    spikes.length ? `Unusual rises: ${spikes.map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
+    spikes.filter(unusualEnough).length ? `Unusual rises: ${spikes.filter(unusualEnough).map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
       `${a.kind === "slow_rise" ? `in ${n(a.rise_days)} days to ${when(a.day)}` : `on ${when(a.day)}`}, ${Math.round(n(a.ratio))} times the usual`).join("; ")}.` : "",
     news.length ? "In the news (district-relevant stories, most covered first):" : "",
     ...news.map((x) => `- ${one(x.title, 150)} · ${x.outletNames.length} outlet${x.outletNames.length === 1 ? "" : "s"}${x.loc ? ` · ${x.loc}` : ""}` +
@@ -221,7 +265,9 @@ async function dayFacts(s: BriefScope) {
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
     `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
   ].filter(Boolean);
-  return { facts: lines.join("\n"), ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
+  const facts = lines.join("\n");
+  const glossary = tamilGlossary(facts);
+  return { facts: glossary ? `${facts}\n${glossary}` : facts, mustName: alert.must, ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
 }
 
 async function scopeLabel(s: BriefScope) {
@@ -233,17 +279,22 @@ async function scopeLabel(s: BriefScope) {
 }
 
 export async function dayBrief(s: BriefScope, user: string): Promise<DayBrief | null> {
-  const { facts, ids } = await dayFacts(s);
+  const { facts, ids, mustName } = await dayFacts(s);
   const r = await aiJson({
     kind: "day2", system: DAY_SYSTEM, facts, schema: DaySchema, user, maxOutputTokens: 2600,
     text: (o) => [o.headline, ...o.points.map((p) => p.text)].join(" "),
-    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20
+    // an active alert leads: the headline names it, or the write-up is asked again
+    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20 && namesAlert(o.headline, mustName)
   });
   if (!r) return null;
   const ta = r.o.points_ta.length === r.o.points.length ? r.o.points_ta : null;
+  // a Tamil text naming a place its English text does not is left out; the English one is shown (R-17)
+  const taOk = (en: string, t: string | undefined) => (t?.trim() && !wrongTamilPlace(`${facts}
+${en}`, t) ? t.trim() : null);
   return {
-    headline: r.o.headline.trim(), headlineTa: ta && r.o.headline_ta.trim() ? r.o.headline_ta.trim() : null,
-    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: p.text.trim(), ta: ta?.[k]?.trim() || null,
+    headline: r.o.headline.trim(), headlineTa: ta ? taOk(r.o.headline, r.o.headline_ta) : null,
+    // an incident id in the text ("… broad daylight. [INC-20261027-D07F21]") goes: the point's ref links the incident
+    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: noIds(p.text), ta: taOk(p.text, ta?.[k]) && noIds(taOk(p.text, ta?.[k])!),
       ref: ids.has(p.ref.replace(/[[\]]/g, "").trim()) ? p.ref.replace(/[[\]]/g, "").trim() : null })),
     model: r.model, at: r.at
   };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contextNumbers, extractNumbers, fillFacts, verifyNumbers } from "@/lib/assistant/verify";
+import { overclaims, withoutOverclaims } from "@/lib/assistant/verify";
 import type { Fact } from "@/lib/assistant/types";
 
 const f = (id: string, value: number): Fact => ({ id, label: id, value });
@@ -99,5 +100,38 @@ describe("a percentage must come from a percent fact", () => {
   });
   it("a percentage the question itself named may be repeated", () => {
     expect(verifyNumbers(["No hospital is above 85%"], [], [85]).ok).toBe(true);
+  });
+});
+
+// R-12 (27 Oct 2026): "Why did flooding complaints rise?" said "because … linked to rain" beside the caveat "Rain link
+// indicates timing, not proven cause", and named "**INC-20261022-66346E** in Perambur" in the prose
+describe("no ids in the prose, no rain as the cause beside a timing caveat (R-12)", () => {
+  const caveats = ["Rain link indicates timing, not proven cause."];
+  const draft = "Complaints rose because reports jumped in Korukkupet, all linked to rain. The top open incident to address first is **INC-20261022-66346E** in Perambur.";
+  it("finds both", () => {
+    expect(overclaims(draft, caveats)).toEqual(["incident id in the text (INC-20261022-66346E)", "rain given as the cause, though the caveat says the link is timing only"]);
+  });
+  it("a causal word about rain is fine without that caveat; a timing link is fine with it", () => {
+    expect(overclaims("Waterlogging rose due to heavy rain.", [])).toEqual([]);
+    expect(overclaims("The rise came in the same weeks as 26 rain days.", caveats)).toEqual([]);
+  });
+  it("the rule fallback takes the id out and makes the link a timing one", () => {
+    const t = withoutOverclaims(draft, caveats);
+    expect(t).not.toMatch(/INC-/);
+    expect(t).toContain("first is in Perambur");
+    expect(t).not.toMatch(/\bbecause\b/);
+    expect(overclaims(t, caveats)).toEqual([]);
+  });
+});
+
+// R-25 (27 Oct 2026): "Royapuram … (15 severe and 159 total). Its open count tops the district at 15 severe and 159 total"
+describe("the same figures said twice (R-25)", () => {
+  it("is caught", () => {
+    const t = "Royapuram is the zone demanding focus, with the highest open incidents (**15 severe** and **159 total**). Its open count tops the district at **15** severe incidents and **159** total incidents.";
+    expect(overclaims(t, [], t)).toEqual(["the same figures said twice (15, 159)"]);
+  });
+  it("one shared figure is fine", () => {
+    const ok = "Royapuram has 15 severe incidents. Anna Nagar has 15 open ones and 40 in all.";
+    expect(overclaims(ok, [], ok)).toEqual([]);
   });
 });

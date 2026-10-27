@@ -13,7 +13,7 @@ const GENERIC_ERROR = "Invalid email or password.";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {

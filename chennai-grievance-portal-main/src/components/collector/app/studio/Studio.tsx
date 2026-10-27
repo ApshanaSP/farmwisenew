@@ -24,7 +24,7 @@ const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading
 const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });
 
 type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" };
-interface ListResp { datasets: DatasetCard[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
+interface ListResp { datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
 
 const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json";
 const KEY = "diq-studio-sel";
@@ -214,13 +214,14 @@ export default function Studio({ c }: { c: Console }) {
                 <span className={`ds-li-ic k-${d.kind}`}><I n={d.kind === "link" ? "ext" : d.kind === "sample" ? "spark" : "table"} /></span>
                 <span className="ds-li-b">
                   <b>{d.name}</b>
-                  <small>{d.rows.toLocaleString("en-IN")} rows · health {d.health}{d.department ? ` · ${d.department}` : ""}</small>
+                  <small>{d.rows.toLocaleString("en-IN")} rows · health {d.health}{(d.departments?.length ? ` · ${d.departments.join(", ")}` : d.department ? ` · ${d.department}` : "")}{(d.copies ?? 1) > 1 ? ` · same file added ${d.copies} times` : ""}</small>
                 </span>
                 {d.every ? <span className={`ds-li-sync${d.failing ? " bad" : ""}`} title={d.failing ? "The last automatic refresh failed" : `Refreshes ${d.every >= 1440 ? "daily" : d.every >= 360 ? "every 6 hours" : "hourly"}`}><I n={d.failing ? "alert" : "refresh"} /></span> : null}
                 {d.link && d.link !== "none" && <span className={`ds-li-link s-${d.link}`} title={`${d.link} link with district incidents`}><I n="compare" /></span>}
               </button>
             ))}
             {list && !datasets.length && <p className="ds-muted pad">Nothing added yet. Drop a file above or try a sample.</p>}
+            {list?.hidden?.length ? <p className="ds-muted pad" title={list.hidden.map((h) => h.name).join(", ")}>{list.hidden.length} {list.hidden.length === 1 ? "file" : "files"} not shown: no Chennai rows ({list.hidden.map((h) => h.name).join(", ")})</p> : null}
           </div>
         </section>
       </aside>

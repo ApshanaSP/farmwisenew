@@ -4,6 +4,8 @@
     { "name": "grievance-portal", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "chennai-grievance-portal-main", "run", "dev"], "port": 3000 },
     { "name": "grievance-portal-3001", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "chennai-grievance-portal-main", "run", "dev", "--", "-p", "3001"], "port": 3001 },
     { "name": "portal-local-build-3001", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set DATA_BACKEND=mysql&& set NEXT_DIST_DIR=.next-local&& npm --prefix chennai-grievance-portal-main run dev -- -p 3001"], "port": 3001 },
-    { "name": "studio-3002", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set NEXT_DIST_DIR=.next-studio&& npm --prefix chennai-grievance-portal-main run dev -- -p 3002"], "port": 3002 }
+    { "name": "studio-3002", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set NEXT_DIST_DIR=.next-studio&& npm --prefix chennai-grievance-portal-main run dev -- -p 3002"], "port": 3002 },
+    { "name": "final-test-3005", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set NEXT_DIST_DIR=.next-finaltest&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& set AI_PROVIDER=none&& set AI_CHAT_PROVIDER=none&& npm --prefix chennai-grievance-portal-main run start -- -H 127.0.0.1 -p 3005"], "port": 3005, "autoPort": false },
+    { "name": "final-test-3005-ai", "runtimeExecutable": "cmd", "runtimeArgs": ["/c", "set NEXT_DIST_DIR=.next-finaltest&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& npm --prefix chennai-grievance-portal-main run start -- -H 127.0.0.1 -p 3005"], "port": 3005, "autoPort": false }
   ]
 }

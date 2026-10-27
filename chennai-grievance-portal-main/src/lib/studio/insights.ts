@@ -241,7 +241,9 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
     const sum = g.reduce((s, x) => s + x.v, 0), mean = sum / Math.max(1, g.length);
     if (g.length >= 4 && g[0].v >= 5) {
       const ratio = r1(g[0].v / mean), top3 = pct(g.slice(0, 3).reduce((s, x) => s + x.v, 0), sum);
-      add({ label: "Hotspot", tone: ratio >= 2 ? "sev" : ratio >= 1.4 ? "high" : "info", score: 44 + Math.min(26, (ratio - 1) * 18), owner: "Zonal officers",
+      // without an open status the rows are things (stations, facilities), not problems: where most of them are is a note, never
+      // an action (R-19: "Valasaravakkam hosts 8 metro stations" was counted among the Briefing's "need action")
+      add({ label: "Hotspot", tone: !hasOpen ? "info" : ratio >= 2 ? "sev" : ratio >= 1.4 ? "high" : "info", score: hasOpen ? 44 + Math.min(26, (ratio - 1) * 18) : 30, owner: "Zonal officers",
         title: `${zd.name(g[0].k)} carries the heaviest load`, metric: { value: hasOpen ? n(g[0].v) : fv(g[0].v), caption: `${word} in ${zd.name(g[0].k)}` },
         text: `${zd.name(g[0].k)} has the most ${word}: ${hasOpen ? n(g[0].v) : fq(g[0].v)}, ${ratio}× the average zone; the top 3 zones (${g.slice(0, 3).map((x) => zd.name(x.k)).join(", ")}) hold ${top3}%.`,
         bars: g.slice(0, 5).map((x, i) => ({ label: zd.name(x.k), value: x.v, hi: i === 0, fmt: hasOpen ? n(x.v) : fq(x.v) })),

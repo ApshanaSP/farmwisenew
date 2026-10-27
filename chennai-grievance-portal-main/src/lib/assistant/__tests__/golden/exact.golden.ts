@@ -45,3 +45,28 @@ it("answers a ward-number list or count from the store, without the model", asyn
     expect(`${r.card.headline} ${r.card.answerMarkdown}`).toMatch(want);
   }
 });
+
+// R-13 (27 Oct 2026): "How many open grievances are there in Adyar?" showed "Of them open: 85" beside "Incidents with
+// complaints: 85" (true by definition for open complaints), and the answer read it as "all 85 remain open, no closure recorded"
+it("an open-complaints count does not show 'Of them open'", async () => {
+  if (!haveStore()) return;
+  const { ask } = await import("@/lib/assistant/pipeline");
+  const r = await ask({ user: "golden@test", sessionId: null, message: "How many open grievances are there in Adyar?", inputMode: "text", language: "auto",
+    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null }, replyTo: null, stage: () => undefined });
+  const labels = (r.card.kpis ?? []).map((k) => k.label);
+  expect(labels).toContain("Open complaints");
+  expect(labels).not.toContain("Of them open");
+});
+
+// R-21 / LT-36 (27 Oct 2026): search showed 7 with no "more", ranked a newer chat message above flooding incidents, and the
+// full list matched "velachery flooding" as one phrase (0 rows)
+it("search ranks title matches first and gives the total; the full list finds every word", async () => {
+  if (!haveStore()) return;
+  const { search, list } = await import("@/lib/collector/intel");
+  const r = await search("velachery flooding");
+  expect(r.incidents.length).toBeGreaterThan(0);
+  expect(r.incidentsTotal).toBeGreaterThanOrEqual(r.incidents.length);
+  expect(String(r.incidents[0].title)).toMatch(/flood|velachery/i);
+  const l = await list({ period: "quarterly", zone: null, dept: null, sev: null, status: null, q: "velachery flooding", sort: "t", dir: -1, page: 0 } as any);
+  expect(l.incidents).toBeGreaterThan(0);
+});

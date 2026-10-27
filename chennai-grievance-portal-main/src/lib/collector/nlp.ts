@@ -175,3 +175,11 @@ export async function placeResolver(): Promise<(text: string) => Placed | null> 
     };
   };
 }
+
+/** The gazetteer's places and taluks with their Tamil names: English names first, then the Tamil ones (R-17). */
+export function tamilNames(): { en: string[]; ta: string[] }[] {
+  const r = reference();
+  const out = (r.places ?? []).filter((p) => p.aliases_ta?.length).map((p) => ({ en: [p.name, ...(p.aliases_en ?? [])], ta: p.aliases_ta }));
+  for (const t of r.taluks) if (t.name_ta && !out.some((o) => o.en[0] === t.name)) out.push({ en: [t.name], ta: [t.name_ta] });
+  return out;
+}

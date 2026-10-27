@@ -246,7 +246,7 @@ export default function SatMap(props: Props) {
       const html = `<div class="mpin${open ? "" : " faded"}${open && p.sev === "Severe" ? " pulse" : ""}" style="--s:${size}px;background:${color};--mc:${color}"></div>`;
       s.L.marker([Number(p.lat), Number(p.lon)], {
         icon: s.L.divIcon({ className: "", html, iconSize: [0, 0], iconAnchor: [0, 0] }),
-        zIndexOffset: p.sev === "Severe" ? 500 : 0
+        zIndexOffset: p.sev === "Severe" ? 500 : 0, title: `${p.sev}: ${p.title ?? "Incident"}, ${p.status}`
       })
         .on("click", () => cb.current.onPin(p.id))
         .bindTooltip(`<b>${esc(p.title ?? "Incident")}</b>${esc(p.sev)} · ${esc(p.status)}`, { className: "dtip", direction: "top", offset: [0, -8] })
@@ -268,7 +268,7 @@ export default function SatMap(props: Props) {
       const lat = Number(i.lat) + (n ? 0.0012 * Math.sin(n * 2.1) : 0), lon = Number(i.lon) + (n ? 0.0012 * Math.cos(n * 2.1) : 0);
       s.L.marker([lat, lon], {
         icon: s.L.divIcon({ className: "", html: `<div class="madd${i.is_incident ? "" : " gen"}"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
-        zIndexOffset: 300
+        zIndexOffset: 300, title: `${i.title}, from ${i.source}`
       })
         .on("click", () => cb.current.onItem(i))
         .bindTooltip(`<b>${esc(i.title)}</b>${esc(i.source)} · ${esc(i.place ?? i.zone_name ?? "")}<br><span style="opacity:.7">From an added source · click to open</span>`,
@@ -298,7 +298,8 @@ export default function SatMap(props: Props) {
     for (const x of stations) {
       const sty = STATION_STYLE[x.kind];
       s.L.marker([x.lat, x.lon], {
-        icon: s.L.divIcon({ className: "", html: `<div class="mst" style="background:${sty.color};color:#0B1020">${sty.letter}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] })
+        icon: s.L.divIcon({ className: "", html: `<div class="mst" style="background:${sty.color};color:#0B1020">${sty.letter}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        title: `${sty.title}: ${x.name}, ${x.label}`
       })
         .on("click", () => cb.current.onStation(x))
         .bindTooltip(`<b>${esc(x.name)}</b>${sty.title} · ${esc(x.label)}`, { className: "dtip", direction: "top", offset: [0, -10] })

@@ -9,6 +9,8 @@ import { alertLane, LEVEL_NAME, type AlertLane } from "@/lib/collector/alerts";
 import { categories } from "@/lib/collector/nlp";
 import type { Fact } from "@/lib/assistant/types";
 import type { AnswerCard } from "@/lib/assistant/answer";
+import type { RowDataPacket } from "mysql2";
+import intelPool, { TITLE } from "@/lib/collector/db";
 
 /** A question about warnings or alerts for the weather (not "alerts" on the console, not a list of flooded streets). */
 export const WARNING_Q = new RegExp([
@@ -66,10 +68,40 @@ export function warningAnswer(l: AlertLane, lang: "en" | "ta" | "tanglish" = "en
   return { headline, markdown: lines.join("\n"), facts, playbook };
 }
 
-/** For the tool: the lane at the store's time. */
+/** An open flood-family problem to clear before the weather arrives. */
+export interface PrepItem { title: string; loc: string | null; zone: string | null; sev: string; overdue: boolean }
+
+/**
+ * "What should we prepare?" from the data (R-10: the answer was the generic five-step playbook, naming no ward, drain or bund):
+ * the most serious open flood problems to clear first, and the zones that hold the most of them.
+ */
+export function prepLines(items: PrepItem[], zones: { name: string; n: number }[]): string[] {
+  if (!items.length) return [];
+  return ["", "**Clear first, before the weather arrives (open flood problems):**",
+    ...items.map((x, k) => `${k + 1}. ${x.title}${[x.loc, x.zone].filter(Boolean).length ? ` (${[...new Set([x.loc, x.zone].filter(Boolean))].join(", ")})` : ""}: ` +
+      `${x.sev.toLowerCase()}${x.overdue ? ", past its deadline" : ""}`),
+    ...(zones.length ? ["", `**Most open flood problems:** ${zones.map((z) => `${z.name} ${z.n}`).join(", ")}.`] : [])];
+}
+
+async function prepNow(): Promise<{ items: PrepItem[]; zones: { name: string; n: number }[] }> {
+  const codes = categories().filter((c) => c.family === "FLOOD").map((c) => c.code);
+  if (!codes.length) return { items: [], zones: [] };
+  const [rows] = await intelPool.query<RowDataPacket[]>(
+    `SELECT ${TITLE} AS title, i.place_text AS loc, i.zone_name AS zone, i.severity_level AS sev, i.sla_breached AS overdue FROM incidents i
+     WHERE i.is_open = 1 AND i.category_code IN (?) AND i.severity_level IN ('Severe', 'High') ORDER BY i.priority_score DESC LIMIT 5`, [codes]);
+  const [zones] = await intelPool.query<RowDataPacket[]>(
+    `SELECT i.zone_name AS name, COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.category_code IN (?) AND i.zone_name IS NOT NULL
+     GROUP BY i.zone_name ORDER BY n DESC LIMIT 3`, [codes]);
+  return { items: rows.map((r) => ({ title: String(r.title), loc: r.loc ? String(r.loc) : null, zone: r.zone ? String(r.zone) : null, sev: String(r.sev), overdue: !!Number(r.overdue) })),
+    zones: zones.map((z) => ({ name: String(z.name), n: Number(z.n) })) };
+}
+
+/** For the tool: the lane at the store's time, with the open flood problems to clear first when there is an alert. */
 export async function warningsNow(now: string) {
   const l = await alertLane(now);
-  return { lane: l, ...warningAnswer(l) };
+  const a = warningAnswer(l);
+  const prep = a.playbook.length ? await prepNow().catch(() => ({ items: [], zones: [] })) : { items: [], zones: [] };
+  return { lane: l, ...a, markdown: [a.markdown, ...prepLines(prep.items, prep.zones)].join("\n") };
 }
 
 /** The answer card: what each source says, the playbook, and the figures as KPIs. */
@@ -92,4 +124,24 @@ export function warningCard(base: AnswerCard, w: ReturnType<typeof warningAnswer
       refs: [{ kind: "table", name: "observations", detail: "IMD warning level" }, { kind: "table", name: "documents", detail: "warning news" },
         { kind: "url", name: "NDMA SACHET CAP feed", detail: "https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml" }] as AnswerCard["sources"]["refs"] }
   };
+}
+
+/** Asking what the news says about the weather event ("what are newspapers saying about Cyclone Arnab?"). */
+export const NEWS_ASKED = /\b(news|newspapers?|papers?|press|media|outlets?|reports?|reporting|saying|headlines?)\b|செய்தி|pathirikai|seidhi/i;
+
+/**
+ * What the papers report about the event, newest first, one line each with its outlet (R-09: the question got only the
+ * alerts summary). Headlines in Tamil are given in their English translation for an English question.
+ */
+export function newsLines(l: AlertLane, lang: "en" | "ta" | "tanglish" = "en", max = 5): string[] {
+  const seen = new Set<string>();
+  const items = l.news.filter((n) => {
+    const k = (n.titleEn ?? n.title).toLowerCase().slice(0, 60);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, max);
+  if (!items.length) return [];
+  return ["", lang === "ta" ? "**செய்திகள் சொல்வது:**" : "**What the papers report:**",
+    ...items.map((n) => `- ${lang === "en" ? n.titleEn ?? n.title : n.title} (${n.publisher ?? "news"}, ${when(n.t)})`)];
 }

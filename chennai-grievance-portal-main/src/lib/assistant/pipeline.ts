@@ -30,7 +30,7 @@ import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart, questionParts } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
-import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, pruneUnverified, dedupeCaveats, selfCorrections, verifyNumbers, withoutEchoedNumbers, withoutSelfCorrections, type EntityNames } from "@/lib/assistant/verify";
+import { aliasRowIds, contextNumbers, extractNumbers, fillFacts, misboundFacts, mismeasuredFacts, overclaims, pruneUnverified, dedupeCaveats, selfCorrections, verifyNumbers, withoutEchoedNumbers, withoutOverclaims, withoutSelfCorrections, type EntityNames } from "@/lib/assistant/verify";
 import { allowedTypes, bestType, checkChart } from "@/lib/assistant/chartspec";
 import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
@@ -56,7 +56,7 @@ import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
-import { isWarningQuestion, warningCard, warningsNow } from "@/lib/assistant/warnings";
+import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1246,7 +1246,12 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (!i.pinId && !i.insightKey && (isWarningQuestion(typed) || isWarningQuestion(message))) {
     i.stage("fetching");
     const w = await warningsNow(now).catch(orNull("pipeline:warnings"));
-    if (w) return finish(warningCard(card0(null), w), { intent: "warnings", tool: "alerts_lane" });
+    if (w) {
+      const card = warningCard(card0(null), w);
+      // "what are newspapers saying about it?": what the papers report, with their outlets (R-09)
+      if (NEWS_ASKED.test(message)) card.answerMarkdown = [card.answerMarkdown, ...newsLines(w.lane, lang === "ta" ? "ta" : lang === "tanglish" ? "tanglish" : "en")].join("\n");
+      return finish(card, { intent: "warnings", tool: "alerts_lane" });
+    }
   }
 
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
@@ -1303,6 +1308,16 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       } catch (e) {
         if (i.signal?.aborted) throw e;
         console.warn(`[assistant] writer unavailable (${(e as Error).message.slice(0, 120)}); the store's wording stands`);
+      }
+    }
+    // "what are today's important problems?" district-wide during an alert: the alert leads, after the writer, so it is never
+    // dropped (R-03: on Cyclone Arnab's second day the answer listed crimes and never named the cyclone)
+    if (fp.card.intent === "PRIORITY_INCIDENT_LIST" && !scope.zone && !scope.taluk && !scope.dept) {
+      const w = await warningsNow(now).catch(orNull("pipeline:priority-alert"));
+      if (w?.lane.banner) {
+        const lead = lang === "en" ? `**Active alert: ${warningAnswer(w.lane, "en").headline}.** ${w.lane.agreementText}`
+          : `**${warningAnswer(w.lane, lang === "ta" ? "ta" : "tanglish").headline}.**`;
+        fp.card.answerMarkdown = `${lead}\n\n${fp.card.answerMarkdown}`;
       }
     }
     return finish(fp.card, { ...fp.plan, router: !!decided });
@@ -1984,6 +1999,21 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
         }
         if (selfCorrections(draft.headline).length) return fallback("The draft corrected itself twice, so a template wrote this answer.");
         draft = { ...draft, answerMarkdown: withoutSelfCorrections(draft.answerMarkdown).text, voiceSummary: withoutSelfCorrections(draft.voiceSummary).text };
+      }
+      // an incident id in the prose, or rain given as the cause beside a "timing, not cause" caveat (R-12): asked again once,
+      // then taken out by rule
+      const allCaveats = [...c.caveats, ...draft.caveats];
+      const over = overclaims(`${draft.headline}\n${draft.answerMarkdown}`, allCaveats, draft.answerMarkdown);
+      if (over.length) {
+        console.warn(`[assistant] draft overclaims: ${over.join("; ")}`);
+        if (attempt === 0) {
+          verdict = { ok: false, checked: 0, unmatched: over };
+          ctx.repair = `Fix these: ${over.join("; ")}. Name incidents by what happened and where, never by id. Say rain coincided with the rise; never that it caused it.`;
+          regenerated = true;
+          continue;
+        }
+        draft = { ...draft, headline: withoutOverclaims(draft.headline, allCaveats), answerMarkdown: withoutOverclaims(draft.answerMarkdown, allCaveats),
+          voiceSummary: withoutOverclaims(draft.voiceSummary, allCaveats) };
       }
     } catch (e) {
       if (i.signal?.aborted) throw e;

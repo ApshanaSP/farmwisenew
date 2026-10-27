@@ -6,7 +6,7 @@
 import { z } from "zod";
 import type { AnswerCard } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
-import { contextNumbers, selfCorrections, verifyNumbers, withoutEchoedNumbers } from "@/lib/assistant/verify";
+import { contextNumbers, overclaims, selfCorrections, verifyNumbers, withoutEchoedNumbers } from "@/lib/assistant/verify";
 
 export const PolishSchema = z.object({ headline: z.string(), answerMarkdown: z.string(), voiceSummary: z.string() });
 export type Polished = z.infer<typeof PolishSchema>;
@@ -84,5 +84,12 @@ export function checkPolish(draft: Polished, question: string, card: AnswerCard,
   const ctx = [...contextNumbers(...allowed.map((t) => ` ${t}`)), ...allowed.flatMap((t) => [...String(t).matchAll(/\d[\d,]*(?:\.\d+)?/g)].map((m) => Number(m[0].replace(/,/g, ""))))];
   const v = verifyNumbers([headline, md, draft.voiceSummary], [], ctx, quotable);
   if (!v.ok) return { rejected: `numbers not in the answer: ${v.unmatched.slice(0, 4).join(", ")}` };
+  // a list written out names every card or none (R-11: "the eight newest severe incidents" listed six beside eight cards)
+  const items = md.split("\n").filter((l) => /^\s*(?:[-*•]|\d+[.)])\s+\S/.test(l)).length;
+  const cards = card.incidents?.length ?? 0;
+  if (cards >= 2 && items >= 2 && items !== cards) return { rejected: `lists ${items} of the ${cards} incidents shown` };
+  // no incident ids in the prose, no rain as the cause beside a "timing, not cause" caveat (R-12)
+  const over = overclaims(`${headline}\n${md}`, card.caveats, md);
+  if (over.length) return { rejected: over[0] };
   return { text: { headline: headline.slice(0, 140), answerMarkdown: md.slice(0, 1800), voiceSummary: draft.voiceSummary.trim().slice(0, 400) || headline }, checked: v.checked };
 }

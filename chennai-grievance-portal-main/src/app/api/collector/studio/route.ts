@@ -9,7 +9,7 @@ import { note, stream } from "@/lib/studio/http";
 import { ingest, ingestLink, namesOf } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { availableSamples, sampleFile } from "@/lib/studio/samples";
-import { getBoard, getMeta, getRows, listDatasets } from "@/lib/studio/store";
+import { getBoard, getMeta, getRows, hiddenDatasets, listDatasets } from "@/lib/studio/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -31,7 +31,7 @@ export async function GET() {
     });
     const ai = aiStatus();
     return NextResponse.json({
-      datasets: listDatasets(), board, samples: availableSamples(),
+      datasets: listDatasets(), hidden: hiddenDatasets(), board, samples: availableSamples(),
       ai: { available: ai.available, providers: ai.providers.map((p) => p.name), problem: ai.problem }
     });
   } catch (err) {

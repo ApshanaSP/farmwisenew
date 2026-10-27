@@ -159,3 +159,15 @@ describe("a question about Chennai after an alert for other districts (seen live
     ["Chennai on orange alert as cyclone nears", true]
   ])("%s", (text, want) => expect(chennaiUnder(readHeadline(text))).toBe(want));
 });
+
+// 27 Oct 2026: the newest Arnab report was about its rain, and the banner read "Heavy rain Arnab"
+describe("a named storm stays a cyclone when its newest report is about rain", () => {
+  it("names it Cyclone Arnab", () => {
+    const rain = { id: "doc-rain", publisher: "Dinamalar", t: "2026-10-26 23:00:00", title: "அர்னாப் புயல் காரணமாக சென்னையில் பனிப்பொழிவு புகை மண்டலம் போல் காணப்பட்டன.", titleEn: "Snowfall in Chennai seen as smoke cloud due to Arnab storm" };
+    // the AI read it as heavy rain from the named storm (the hazard on the live 27 Oct reading)
+    const reads = new Map([["doc-rain", { hazard: "heavy_rain", name: "Arnab", level: null, districts: [], districtCount: null, when: null }]]);
+    const l = lane({ now: NOW, imd: IMD_NONE, sachet: [], news: [rain, ...ARNAB], feeds: FRESH, fallback: FALLBACK, reads } as any);
+    expect(l.event).toEqual({ hazard: "cyclone", name: "Arnab" });
+    expect(l.banner?.title).toMatch(/^Cyclone Arnab/);
+  });
+});

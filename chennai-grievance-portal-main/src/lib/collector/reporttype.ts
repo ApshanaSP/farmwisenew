@@ -84,6 +84,14 @@ const PROMO = rx([
   String.raw`^\s*on behalf of\b`
 ]);
 
+/**
+ * A running tally given by an official or for a season or the state ("14 deaths so far due to monsoon… Minister
+ * Sengottaiyan", R-04): statistics, not one event in the district. A tally at one place ("2 dead so far as building
+ * collapses") stays an incident.
+ */
+const TALLY = rx([String.raw`\b(so far|till date|to date|this (monsoon|season|year)|since the (monsoon|season))\b`, "இதுவரை"]);
+const TALLY_WIDE = new RegExp(String.raw`\b${SPEAKER}\b|\b(monsoon|season|rain[- ]related|rain damage|statewide|state-wide|across the state|tamil nadu)\b|பருவமழை|தமிழகம்`, "i");
+
 /** damage the weather has already done */
 const IMPACT = /\b(stranded|uprooted|collaps\w*|waterlogg\w*|inundat\w*|flooded|submerged|outage|power cut|blackout|potholes?|caved|damaged)\b/i;
 /** "to prevent collapse", "to face monsoon", "against rabies": the thing named did not happen */
@@ -104,6 +112,7 @@ export function reportKind(...texts: (string | null | undefined)[]): ReportKind 
   // a missing person found is the end of the event, not a new one
   const hurt = HARM.test(said.replace(/\bmissing\b/gi, " "));
   if (ROUNDUP.test(t)) return "roundup";
+  if (harm && TALLY.test(t) && TALLY_WIDE.test(t) && !EVENT.test(said)) return "roundup";
   if (OPINION.test(t) && !(harm && !/left her|left him|rebuild/i.test(t))) return "opinion";
   if (STATEMENT.test(t) && !harm && !/\b(arrest\w*|held|detained|booked|raid\w*)\b/i.test(t)) return "opinion";
   if (BUSINESS.test(t) && !harm) return "other";
