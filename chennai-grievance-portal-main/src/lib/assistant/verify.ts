@@ -296,12 +296,29 @@ export function withoutEchoedNumbers(text: string): string {
 const RAW_ID = /\*{0,2}\bINC-[A-Z0-9]{6,}(?:-[A-Z0-9]+)*\b\*{0,2}/g;
 const CAUSAL = /\b(because( of)?|caused by|due to|driven by|owing to|as a result of|led to|resulting from|attributable to)\b[^.!?\n]{0,80}\brain/i;
 const RAIN_TIMING = (caveats: string[]) => caveats.some((c) => /timing,? not (a )?(proven )?cause|not (a )?proven cause/i.test(c));
-export function overclaims(text: string, caveats: string[]): string[] {
+export function overclaims(text: string, caveats: string[], body?: string): string[] {
   const out: string[] = [];
   const ids = text.match(RAW_ID);
   if (ids?.length) out.push(`incident id in the text (${ids[0].replace(/\*/g, "")})`);
   if (RAIN_TIMING(caveats) && CAUSAL.test(text)) out.push("rain given as the cause, though the caveat says the link is timing only");
+  // (the body only: a headline restates the body's figures by design)
+  const twice = body != null ? repeatedFigures(body) : null;
+  if (twice) out.push(`the same figures said twice (${twice})`);
   return out;
+}
+
+/**
+ * Two sentences that state the same two or more figures (R-25: "the highest open incidents (15 severe and 159 total). Its open
+ * count tops the district at 15 severe and 159 total"). Returns the figures, or null.
+ */
+export function repeatedFigures(text: string): string | null {
+  const sentences = text.replace(/\*\*/g, "").split(/(?<=[.!?])\s+|\n+/).map((x) => [...new Set(x.match(/\d[\d,]*(?:\.\d+)?/g) ?? [])]);
+  for (let a = 0; a < sentences.length; a++)
+    for (let b = a + 1; b < sentences.length; b++) {
+      const same = sentences[a].filter((n) => sentences[b].includes(n));
+      if (same.length >= 2) return same.join(", ");
+    }
+  return null;
 }
 /** The last resort when a redraft still overclaims: ids taken out of the prose, causal words about rain made a timing link. */
 export function withoutOverclaims(text: string, caveats: string[]): string {

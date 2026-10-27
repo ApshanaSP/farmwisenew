@@ -2003,8 +2003,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
       // an incident id in the prose, or rain given as the cause beside a "timing, not cause" caveat (R-12): asked again once,
       // then taken out by rule
       const allCaveats = [...c.caveats, ...draft.caveats];
-      const over = overclaims(`${draft.headline}
-${draft.answerMarkdown}`, allCaveats);
+      const over = overclaims(`${draft.headline}\n${draft.answerMarkdown}`, allCaveats, draft.answerMarkdown);
       if (over.length) {
         console.warn(`[assistant] draft overclaims: ${over.join("; ")}`);
         if (attempt === 0) {

@@ -89,7 +89,7 @@ export function checkPolish(draft: Polished, question: string, card: AnswerCard,
   const cards = card.incidents?.length ?? 0;
   if (cards >= 2 && items >= 2 && items !== cards) return { rejected: `lists ${items} of the ${cards} incidents shown` };
   // no incident ids in the prose, no rain as the cause beside a "timing, not cause" caveat (R-12)
-  const over = overclaims(`${headline}\n${md}`, card.caveats);
+  const over = overclaims(`${headline}\n${md}`, card.caveats, md);
   if (over.length) return { rejected: over[0] };
   return { text: { headline: headline.slice(0, 140), answerMarkdown: md.slice(0, 1800), voiceSummary: draft.voiceSummary.trim().slice(0, 400) || headline }, checked: v.checked };
 }

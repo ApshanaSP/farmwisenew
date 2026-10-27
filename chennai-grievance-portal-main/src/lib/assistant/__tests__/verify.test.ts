@@ -123,3 +123,15 @@ describe("no ids in the prose, no rain as the cause beside a timing caveat (R-12
     expect(overclaims(t, caveats)).toEqual([]);
   });
 });
+
+// R-25 (27 Oct 2026): "Royapuram … (15 severe and 159 total). Its open count tops the district at 15 severe and 159 total"
+describe("the same figures said twice (R-25)", () => {
+  it("is caught", () => {
+    const t = "Royapuram is the zone demanding focus, with the highest open incidents (**15 severe** and **159 total**). Its open count tops the district at **15** severe incidents and **159** total incidents.";
+    expect(overclaims(t, [], t)).toEqual(["the same figures said twice (15, 159)"]);
+  });
+  it("one shared figure is fine", () => {
+    const ok = "Royapuram has 15 severe incidents. Anna Nagar has 15 open ones and 40 in all.";
+    expect(overclaims(ok, [], ok)).toEqual([]);
+  });
+});
