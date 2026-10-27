@@ -32,7 +32,8 @@ beforeAll(async () => {
   fs.mkdirSync(process.env.STUDIO_DIR!, { recursive: true });
   const mod = await import("../../../scripts/studio-fixtures/server.mjs");
   FIXTURES = mod.FIXTURES as Fixture[];
-  stop = await mod.start();
+  // the fixture server may already be running (for the browser check): the same fixtures, so it is used as it is
+  stop = await mod.start().catch((e: NodeJS.ErrnoException) => { if (e.code === "EADDRINUSE") return null; throw e; });
 }, 30_000);
 afterAll(async () => { await stop?.(); });
 
