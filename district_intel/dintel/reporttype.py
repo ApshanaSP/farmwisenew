@@ -28,7 +28,9 @@ ROUNDUP = _rx([
     r"morning (news|briefing)", r"evening (news|briefing)", r"#gallery", r"where was the highest rainfall",
     r"rainfall (recorded|figures|data) (across|in) ", r"storage (status|position|level)s? of", r"current water storage",
     r"(water|storage) levels? (in|of) (chennai'?s )?(major )?(lakes|reservoirs)", r"\bdeep dive\b", r"\bnews update\b.*\|.*\|",
-    r"\b(water|storage) (inflow|level|levels|storage)\b.{0,60}\b(rises?|rose|decreas\w*|increas\w*|dips?|drops?|falls?)\b", r"\bwater inflow\b",
+    r"\b(water|storage) (inflow|level|levels|storage)\b.{0,100}\b(rises?|rose|decreas\w*|increas\w*|dips?|drops?|falls?)\b", r"\bwater inflow\b",
+    r"\b(adds?|added)\b.{0,30}\bdays of (drinking )?water\b", r"\bwater reserves?\b",
+    r"\bwater (stock|storage)\b.{0,40}\b(low|high|rises?|falls?|up|down)\b", "நீர் இருப்பு",
     "இன்றைய முக்கிய செய்திகள்", "செய்தி தொகுப்பு"])
 OPINION = _rx([
     r"\bopinion\b", r"\beditorial\b", r"\bcolumn\b", r"\bexplainer\b", r"\bexplained\b", r"vox pop",
@@ -39,7 +41,11 @@ _SPEAKER = (r"(minister|mayor|mla|mp|cm|chief minister|leader|chief|party|dmk|ai
             r"mdmk|ramadoss|anbumani|stalin|seeman|velmurugan|annamalai|vijay|palaniswami|eps|ops|udhayanidhi|governor)")
 STATEMENT = re.compile(
     rf"\b{_SPEAKER}\b.{{0,80}}\b(accuses?|accused|insists?|slams?|blames?|demands?|urges?|criticis\w*|criticiz\w*|asks|questions|hits out|lashes out|alleges?|warns|condemns?|says|said|claims?|vows?|promises?|responds?|ready to respond|reacts?)\b"
-    r"|\b(accuses?|insists?|slams?|demands?|urges?|criticis\w*|alleges?|condemns?)\b.{0,40}[!:]?\s*$|asks barrage of questions", re.I)
+    r"|\b(accuses?|insists?|slams?|demands?|urges?|criticis\w*|alleges?|condemns?)\b.{0,40}[!:]?\s*$|asks barrage of questions"
+    # a quoted line with its speaker: "Rainwater drainage works were not completed in the last 5 years" Minister KAS
+    rf"|[\"“][^\"”]{{10,}}[\"”]\s*[:\-–|]?\s*{_SPEAKER}\b", re.I)
+# market and trade news: "Unsold vegetables pile up at Koyambedu market as festival trade slows"
+BUSINESS = re.compile(r"\b(trade|prices?|sales?|business|demand|arrivals?)\b.{0,30}\b(slows?|slowed|dips?|dipped|falls?|fell|soars?|rises?|rose|picks? up|drops?)\b", re.I)
 RESOLVED = _rx([
     r"\b(rescued|rescues|traced|found safe|found alive|reunited|restored|resumed|reopen\w*|back to normal|escape[sd]? (safely|unhurt|unharmed)|safe(ly)? rescued|recovered|retrieved|returned safely|sentenced|convicted|acquitted|gets? \d+(\.\d+)?[- ]years?|jail term|life term|life imprisonment)\b",
     "மீட்பு", "மீட்கப்பட்ட", "சீரானது"])
@@ -52,11 +58,13 @@ ALERT = _rx([
     r"\bflash flood risk\b", r"\bmonsoon (update|onset|forecast)\b", r"\b(no|direct) impact on chennai\b", r"\bnowcast\b",
     "எச்சரிக்கை", "புயல்", "வானிலை", "மழை (பெய்யும்|வாய்ப்பு)", "கனமழை"])
 GOV_ACTION = _rx([
-    r"\bmore (boats|pumps|motors|staff|workers|buses|personnel)\b",
+    r"\bmore (boats|pumps|motors|staff|workers|buses|personnel)\b", r"\bclean-?ups?\b", r"\bclears? (lines|drains|\d+ streets)\b", r"\b(vaccine|vaccines) administered\b|\badministered\b.{0,30}\bvaccin", r"\bcovers? \d+ (streets|wards|roads|areas)\b",
     r"\b(removed|removal|cleared|clearance|desilt\w*|deployed|deploys?|on standby|kept ready|ready to|boats? ready|readied|inspect\w*|launch\w*|inaugurat\w*|tender\w*|projects?|scheme|plans?|to build|to construct|construction of|sanction\w*|allocat\w*|funds?|crore|vaccinat\w*|drive|campaign|awareness|order(s|ed)?|directs?|directed|instructs?|instructed|starts? work|work (is )?underway|underway|special officers?|monitoring|preparedness|precaution\w*|measures?|relief camps?|set up|opens?|opened|holiday declared|declares holiday|advised|advises|advisory|appeal\w*|helpline|control room|to ease|to reduce|upgrade|portal|app launched)\b",
     "நடவடிக்கை", "ஆய்வு", "அகற்றம்", "அகற்றப்பட்ட", "தயார் நிலை", "திட்டம்", "முகாம்"])
 PROMO = _rx([
-    r"\b(robotic|knee (joint )?replacement|surgery at .* hospital|awareness event|world \w+ day|celebrat\w*|festival|concert|exhibition|expo|launch of .* (store|showroom|outlet)|offers?|discount|admission(s)? open|webinar|conclave|summit)\b"])
+    r"\b(robotic|knee (joint )?replacement|surgery at .* hospital|awareness event|world \w+ day|celebrat\w*|festival|concert|exhibition|expo|launch of .* (store|showroom|outlet)|offers?|discount|admission(s)? open|webinar|conclave|summit)\b",
+    # a ceremony or meeting at an office: "On behalf of ... Water Supply Department at ... headquarters"
+    r"^\s*on behalf of\b"])
 IMPACT = re.compile(r"\b(stranded|uprooted|collaps\w*|waterlogg\w*|inundat\w*|flooded|submerged|outage|power cut|blackout|potholes?|caved|damaged)\b", re.I)
 PREVENTED = re.compile(r"\b(?:to\s+)?(?:prevent\w*|avoid\w*|face|tackle|fight|combat|curb|check|reduce|ease|stop|against|ahead of|in view of)\s+(?:\w+\s+){0,3}?\w+", re.I)
 SERVICES = re.compile(r"\bfire\s*(?:personnel|service\w*|fighters?|and rescue|tenders?|station|brigade|department|safety)\b|\bfirefighters?\b|"
@@ -78,6 +86,8 @@ def report_kind(*texts: str | None) -> str | None:
         return "opinion"
     if STATEMENT.search(t) and not harm and not _ARRESTED.search(t):
         return "opinion"
+    if BUSINESS.search(t) and not harm:
+        return "other"
     if RESOLVED.search(t) and not hurt and not event:
         return "resolution"
     if ALERT.search(t) and not harm and not IMPACT.search(said):

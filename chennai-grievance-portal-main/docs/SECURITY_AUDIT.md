@@ -27,11 +27,10 @@ Everything left needs a **major upgrade**, and that is the owner's decision: Nex
 **It applies:** the site runs on this Windows PC, and `next dev` listens on **all network interfaces** (`0.0.0.0:3000`),
 so anyone on the same Wi-Fi or LAN can reach it.
 
-Until Next is upgraded, do one of these:
-- Listen on this PC only: change the `dev` script in `package.json` to `next dev -H 127.0.0.1` (and the same `-H` in
-  `.claude/launch.json`). Phones and other PCs on the network can then no longer open the site.
-- Or block inbound TCP 3000 to 3002 in Windows Defender Firewall on public and untrusted networks.
-- Or upgrade (below), which closes it properly.
+**Applied 27 Oct:** `npm run dev` and `npm start` now listen on this PC only (`-H 127.0.0.1`), so other machines on
+the network cannot reach the server. When phones or other PCs on the Wi-Fi must open the site (a demo), run
+`npm run dev:lan` (or `npm run start:lan`) for that session only, on a trusted network, and stop it afterwards. The
+upgrade below closes the advisory properly.
 
 ## next 14.2.35: 24 advisories
 

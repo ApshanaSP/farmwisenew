@@ -27,6 +27,17 @@ CASES = [
     ("Former DMK Minister Anbil Mahesh Poyyamozhi arrested in ₹100-crore private schools fraud case", "incident"),
     ("Residents flag safety risk as silt removed from canals piles up along city roads", "incident"),
     ("Chennai: Two jailbreaks at Puzhal prison within 24 hours", "incident"),
+    # routed to officers as complaints on 27 Oct before the website's corrections ran
+    ("Water level in Pondicherry Lake, which supplies drinking water to Chennai, has decreased", "roundup"),
+    ("Nine days of rain add 28 days of drinking water to Chennai’s reserves", "roundup"),
+    ("Chennai Sewage Cleanup Covers 227 Streets Ahead of Rain", "government_action"),
+    ('Chennai Rain|Sengottaiyan |"Rainwater drainage works were not completed in the last 5 years" Minister KAS', "opinion"),
+    ("On behalf of Chennai Municipal Administration and Water Supply Department at Chennai Chepauk headquarters", "other"),
+    ("Unsold vegetables pile up at Koyambedu market as festival trade slows", "other"),
+    ("Tambaram-Velachery Road in Chennai riddled with potholes; ambulance overturns, two injured", "incident"),
+    ("Will the Northeast monsoon help? Water stock low in Chennai's drinking water lakes!", "roundup"),
+    ("Chennai Metrowater Clears 227 Streets, Boosts Sewage Response", "government_action"),
+    ("Anti-rabies vaccine administered to 1.50 lakh stray dogs: Chennai Corporation information", "government_action"),
 ]
 
 

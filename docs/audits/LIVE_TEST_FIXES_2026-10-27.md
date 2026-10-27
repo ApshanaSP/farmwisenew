@@ -15,16 +15,22 @@ console (localhost:3000).
 | LT-11 | The deadline state is computed when the text is shown; "deadline missed" is dropped before the due time. The pipeline refuses such write-ups | `metrics.ts` (`deadlineState`), `intel.ts` `explain()`; `newsllm.py` `_on_time` | `metrics.test.ts` (not said before 17:06), `test_newsllm.py`. Live: the 5 remaining claims are all past due |
 | LT-15 | Weather and alert questions go to the alerts lane and the flood-warning playbook, before the router | `assistant/warnings.ts`, `pipeline.ts` | `warnings.test.ts`, EN / TA / Tanglish (25 tests). Live: no longer "outside the data" |
 | LT-29 | A refused or expired AI key shows an admin banner with how to renew it | `src/lib/ai/keyhealth.ts`, `gateway.ts`, `docs/AI_KEY_ROTATION.md` | Simulated 403 in `keyhealth.test.ts`. Live: the PC's Bedrock key had expired |
-| LT-32 | Dated workspace versions for the demo | — | **Not done: it writes to the live AWS store; waiting for the owner's OK** |
+| LT-32 | Dated workspace versions for the demo (with the owner's OK, 27 Oct): "Demo – 27 Oct 2026" v1 (24 hours, Overview) and v2 (7 days, Briefing), each with a frozen copy of its briefing | Saved through the console's own save (`POST /api/collector/workspaces`) | Both versions show in the Workspaces panel |
 | LT-36 | Search: every word in any order, by stem and synonyms, across title, place, zone and category | `src/lib/collector/searchwords.ts`, `intel.ts` `search` | `searchwords.test.ts`. Live: "velachery flooding" 0 → 7, "garbage adyar" 0 → 7 |
 | LT-37 | One severe definition: the tile, the list, the Briefing and Ask District IQ agree | `metrics.ts`, `glossary.sqlite.test.ts` | Live: 8 / 80 / 258 / 562 everywhere |
-| LT-42 | Non-breaking patches (nodemailer, undici, vite); image optimizer switched off; a mitigation for each remaining advisory | `package-lock.json`, `next.config.js`, `chennai-grievance-portal-main/docs/SECURITY_AUDIT.md` | 13 → 9 advisories. **Next 16 / zod 4 is the owner's decision**; the Windows RCE advisory applies while the dev server listens on 0.0.0.0 |
+| LT-42 | Non-breaking patches (nodemailer, undici, vite); image optimizer switched off; a mitigation for each remaining advisory | `package-lock.json`, `next.config.js`, `chennai-grievance-portal-main/docs/SECURITY_AUDIT.md` | 13 → 9 advisories. The dev server now listens on this PC only (27 Oct), which keeps the Windows RCE advisory off the network; **Next 16 / zod 4 is still the owner's decision** |
 
-## Left for the owner
+## Done after the owner's OK (27 Oct)
 
-1. LT-32: OK to save dated workspace versions to the AWS store.
-2. LT-42: upgrade to Next 16, or bind the dev server to 127.0.0.1 (see SECURITY_AUDIT.md).
-3. Run the route-news job once. It withdraws news roundups that were routed to officers as complaints before LT-03, for
-   example the CMWSSB items "Water level in 5 lakes…". It writes to the AWS store.
-4. Renew the Bedrock key: `npm run ai:key`.
-5. Push to main (code only). The pipeline fixes (LT-03, LT-04, LT-11) reach the hourly build only after the push.
+- LT-32 workspace versions (above).
+- Dev server bound to this PC (`npm run dev` / `npm start` use `-H 127.0.0.1`; `npm run dev:lan` for a demo on trusted Wi-Fi).
+- Route-news job run three times as the rules were tightened: 47 news items that were not complaints were withdrawn from
+  departments (lake levels, a sewage clean-up drive, a dog vaccination drive, political statements). 7 real complaints
+  stay with departments (potholes on Tambaram-Velachery Road, silt piled on roads, a canal worker without protective gear,
+  delayed airport drainage, defunct drinking-water plants, Koyambedu produce dumped as garbage).
+
+## Still for the owner
+
+1. LT-42: upgrade to Next 16 (see SECURITY_AUDIT.md).
+2. Renew the Bedrock key: `npm run ai:key`.
+3. Schedule the route-news job (`POST /api/collector/jobs/route-news` with the job key), so it keeps up without a manual run.
