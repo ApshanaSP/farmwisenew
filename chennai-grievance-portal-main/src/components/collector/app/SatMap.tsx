@@ -48,6 +48,9 @@ const HEAT = [
   { c: "#F0414F", o: 0.38 }
 ];
 /** taluks: one coordinated set of tones, so neighbours stand apart */
+/** Gives a clickable marker a name for screen readers (LT-44: 153 map pins were read as a bare "button"). */
+const named = (label: string) => (e: { target: { getElement?: () => HTMLElement | undefined } }) => e.target.getElement?.()?.setAttribute("aria-label", label);
+
 const TALUK_COL = ["#22B8D0", "#3B82F6", "#34D399", "#F2C94C", "#F0414F", "#FF8466", "#FFA24C", "#F472B6", "#A3E635"];
 
 interface State {
@@ -250,6 +253,7 @@ export default function SatMap(props: Props) {
       })
         .on("click", () => cb.current.onPin(p.id))
         .bindTooltip(`<b>${esc(p.title ?? "Incident")}</b>${esc(p.sev)} · ${esc(p.status)}`, { className: "dtip", direction: "top", offset: [0, -8] })
+        .on("add", named(`${p.sev}: ${p.title ?? "Incident"}, ${p.status}`))
         .addTo(s.pins);
     }
   }, [ready, pins, layers]);
@@ -273,6 +277,7 @@ export default function SatMap(props: Props) {
         .on("click", () => cb.current.onItem(i))
         .bindTooltip(`<b>${esc(i.title)}</b>${esc(i.source)} · ${esc(i.place ?? i.zone_name ?? "")}<br><span style="opacity:.7">From an added source · click to open</span>`,
           { className: "dtip", direction: "top", offset: [0, -8] })
+        .on("add", named(`${i.title}, from ${i.source}`))
         .addTo(s.added);
     }
   }, [ready, added, layers.added]);
@@ -302,6 +307,7 @@ export default function SatMap(props: Props) {
       })
         .on("click", () => cb.current.onStation(x))
         .bindTooltip(`<b>${esc(x.name)}</b>${sty.title} · ${esc(x.label)}`, { className: "dtip", direction: "top", offset: [0, -10] })
+        .on("add", named(`${sty.title}: ${x.name}, ${x.label}`))
         .addTo(s.stations);
     }
   }, [ready, stations, layers.stations]);
