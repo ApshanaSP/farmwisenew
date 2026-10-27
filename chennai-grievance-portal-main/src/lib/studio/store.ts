@@ -122,19 +122,75 @@ export function deleteDataset(id: string) {
   saveBoard(b.filter((x) => x.datasetId !== id));
 }
 
+/** The sha256 of a dataset's saved original (cached by modification time), or null when it has none. */
+function sourceSha(id: string): string | null {
+  try {
+    const f = p(id, ".src");
+    const st = fs.statSync(f);
+    let h = srcHashes.get(id);
+    if (!h || h.mtime !== st.mtimeMs) srcHashes.set(id, (h = { mtime: st.mtimeMs, sha: sha256(fs.readFileSync(f)) }));
+    return h.sha;
+  } catch { return null; }
+}
+
+const CHENNAI = /\b(chennai|madras)\b|சென்னை/i;
+const outsideCache = new Map<string, boolean>();
+/**
+ * Data with nothing of Chennai in it ("Country Population Over Years", R-06): the Relevance gate's verdict when the dataset
+ * has one; for one added before the gate, no row placed on Chennai's map and Chennai named nowhere. A dataset the
+ * Collector kept anyway ("Use anyway") stays listed.
+ */
+export function outsideDistrict(m: DatasetMeta, rows?: () => DRow[]): boolean {
+  if (m.relevance) return m.relevance.verdict === "unrelated" && !m.relevance.forced;
+  const key = `${m.id}|${m.updatedAt}`;
+  if (!outsideCache.has(key)) {
+    const named = CHENNAI.test([m.name, m.spec.title, m.spec.summary, m.source.file, m.source.url ?? ""].join(" "));
+    let placed = false;
+    if (!named && !m.spec.deptName) try { placed = (rows ?? (() => getRows(m.id)))().some((r) => r._z != null || r._w != null || r._t != null); } catch { placed = true; }
+    outsideCache.set(key, !named && !m.spec.deptName && !placed);
+  }
+  return outsideCache.get(key)!;
+}
+
+/**
+ * The Collector's datasets, newest first: one card per original file (R-06: the same 16,113-row grievance export was listed
+ * 8 times under different names and departments). The copies stay on disk, untouched; the card says how many there are and
+ * every department they were filed under. Data with nothing of Chennai in it is left out of the list (also kept on disk).
+ */
 export function listDatasets(): DatasetCard[] {
+  return listAll().cards;
+}
+/** The datasets left out of the list as not about Chennai, for the line that says so. */
+export function hiddenDatasets(): { id: string; name: string }[] {
+  return listAll().hidden;
+}
+function listAll(): { cards: DatasetCard[]; hidden: { id: string; name: string }[] } {
   ensure();
-  const out: DatasetCard[] = [];
+  const all: { card: DatasetCard; sha: string | null }[] = [], hidden: { id: string; name: string }[] = [];
   for (const f of fs.readdirSync(DIR)) {
     const id = f.replace(/\.json$/, "");
     if (!f.endsWith(".json") || !ID_RE.test(id)) continue;
     const m = getMeta(id);
     if (!m) continue;
-    out.push({ id: m.id, name: m.name, kind: m.source.kind, file: m.source.file, rows: m.rows, health: m.detective.after, department: m.spec.deptName,
-      updatedAt: m.updatedAt, link: m.link?.strength ?? null, sample: m.sample,
-      every: m.source.connect?.every ?? null, failing: !!m.source.connect?.lastError, auth: m.source.connect?.auth ?? "none" });
+    if (outsideDistrict(m)) { hidden.push({ id: m.id, name: m.name }); continue; }
+    all.push({ sha: sourceSha(id), card: { id: m.id, name: m.name, kind: m.source.kind, file: m.source.file, rows: m.rows, health: m.detective.after,
+      department: m.spec.deptName, updatedAt: m.updatedAt, link: m.link?.strength ?? null, sample: m.sample,
+      every: m.source.connect?.every ?? null, failing: !!m.source.connect?.lastError, auth: m.source.connect?.auth ?? "none" } });
   }
-  return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  all.sort((a, b) => b.card.updatedAt.localeCompare(a.card.updatedAt));
+  const bySha = new Map<string, DatasetCard>(), cards: DatasetCard[] = [];
+  for (const { card, sha } of all) {
+    const first = sha ? bySha.get(sha) : undefined;
+    if (!first) {
+      if (sha) bySha.set(sha, card);
+      cards.push(card);
+      continue;
+    }
+    first.copies = (first.copies ?? 1) + 1;
+    const depts = new Set([first.department, ...(first.departments ?? []), card.department].filter((d): d is string => !!d));
+    first.departments = [...depts];
+  }
+  return { cards, hidden };
 }
 
 export function getBoard(): Pin[] {

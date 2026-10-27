@@ -432,6 +432,9 @@ export interface DatasetCard {
   every?: number | null;
   failing?: boolean;
   auth?: AuthMode;
+  /** copies of the same original file (R-06), counting this one, and every department they were filed under */
+  copies?: number;
+  departments?: string[];
 }
 
 export interface Pin { id: string; datasetId: string; datasetName: string; plan: Plan; at: string }
