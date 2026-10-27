@@ -1718,3 +1718,10 @@
 .dic .map-leg2 button.unloc{font-weight:500}
 .dic .map-leg2 button.unloc i.ring{background:transparent;box-shadow:none;border:1.5px dashed var(--text-3)}
 .dic .mk-stale{color:var(--high);font-weight:600}
+/* phones: the four tiles two by two had every label cut ("Severe e…", "Open co…", "on 104 op…"); the icon gives way and the
+   words wrap (FINAL TEST, 375 px) */
+@media (max-width:480px){
+  .dic .kpi .kpi-ic{display:none}
+  .dic .kpi{padding:8px 10px}
+  .dic .kpi .kpi-l,.dic .kpi .kpi-sub,.dic .kpi small{white-space:normal;overflow:visible;text-overflow:clip}
+}
