@@ -57,6 +57,10 @@ GOV_ACTION = _rx([
     "நடவடிக்கை", "ஆய்வு", "அகற்றம்", "அகற்றப்பட்ட", "தயார் நிலை", "திட்டம்", "முகாம்"])
 PROMO = _rx([
     r"\b(robotic|knee (joint )?replacement|surgery at .* hospital|awareness event|world \w+ day|celebrat\w*|festival|concert|exhibition|expo|launch of .* (store|showroom|outlet)|offers?|discount|admission(s)? open|webinar|conclave|summit)\b"])
+# A running tally given by an official or for a season or the state ("14 deaths so far due to monsoon... Minister
+# Sengottaiyan", R-04): statistics, not one event. A tally at one place ("2 dead so far as building collapses") stays an incident.
+TALLY = _rx([r"\b(so far|till date|to date|this (monsoon|season|year)|since the (monsoon|season))\b", "இதுவரை"])
+TALLY_WIDE = re.compile(rf"\b{_SPEAKER}\b|\b(monsoon|season|rain[- ]related|rain damage|statewide|state-wide|across the state|tamil nadu)\b|பருவமழை|தமிழகம்", re.I)
 IMPACT = re.compile(r"\b(stranded|uprooted|collaps\w*|waterlogg\w*|inundat\w*|flooded|submerged|outage|power cut|blackout|potholes?|caved|damaged)\b", re.I)
 PREVENTED = re.compile(r"\b(?:to\s+)?(?:prevent\w*|avoid\w*|face|tackle|fight|combat|curb|check|reduce|ease|stop|against|ahead of|in view of)\s+(?:\w+\s+){0,3}?\w+", re.I)
 SERVICES = re.compile(r"\bfire\s*(?:personnel|service\w*|fighters?|and rescue|tenders?|station|brigade|department|safety)\b|\bfirefighters?\b|"
@@ -73,6 +77,8 @@ def report_kind(*texts: str | None) -> str | None:
     harm, event = bool(HARM.search(said)), bool(EVENT.search(said))
     hurt = bool(HARM.search(re.sub(r"\bmissing\b", " ", said, flags=re.I)))
     if ROUNDUP.search(t):
+        return "roundup"
+    if harm and TALLY.search(t) and TALLY_WIDE.search(t) and not EVENT.search(said):
         return "roundup"
     if OPINION.search(t) and not (harm and not re.search(r"left her|left him|rebuild", t, re.I)):
         return "opinion"

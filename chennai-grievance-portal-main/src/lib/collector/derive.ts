@@ -551,6 +551,6 @@ onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@1", newsMedia);
-onBuild("report-kinds@1", reportKinds);
+onBuild("report-kinds@2", reportKinds); // @2: season death tallies are roundups (R-04)
 onBuild("news-sanity@6", newsSanity);
 onBuild("incident-clusters@4", clusters);

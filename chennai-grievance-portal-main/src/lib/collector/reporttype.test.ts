@@ -32,6 +32,11 @@ const CASES: [string, ReportKind | null][] = [
   ["Chennai Latest News Today on October 26th, 2026: Cyclone Arnab, Heavy Rains & Water Levels Rise", "roundup"],
   ["Chennai Latest News Today on October 24th, 2026: Monsoon Vigil, Power Outages & Electoral Protests", "roundup"],
   ["Crime Corner: Chennai", "roundup"],
+  // a minister's season tally is statistics, not a death in Chennai today (R-04, 26–27 Oct 2026)
+  ["14 deaths due to monsoon so far.... Minister Sengottaiyan information regarding rain damage", "roundup"],
+  ["14 deaths so far due to monsoon.... Minister Sengottaiyan information regarding rain damage", "roundup"],
+  ["Death toll in Ennore gas leak rises to 3 so far", "incident"],
+  ["2 dead so far as building collapses in Chennai during monsoon", "incident"],
   ["Current water storage status of Chennai's major lakes: A detailed look!", "roundup"],
   ["Deep Dive| Scary rain, floods.. Are you from this area in Chennai? You must be cautious", "roundup"],
   // opinion, features, politics

@@ -122,3 +122,19 @@ describe("“recent” is the last day, not the chat's default 90 days", () => {
     expect(p?.fast?.period).toBe("monthly");
   });
 });
+
+// R-03 (27 Oct 2026): the router read the Tamil "important problems today" as a news list; the answer led with crimes and a
+// minister's state-wide death tally, and never named Cyclone Arnab or the Cooum bund breach
+describe("“What are today's important problems?” is the most serious open incidents (R-03)", () => {
+  const asked = (answer: Decision["answer"], q: string) => planFromDecision(route({ answer }), q, null, null)?.fast?.intent;
+  it("in Tamil, English and Tanglish, whatever the router called it", () => {
+    expect(asked("news_list", "இன்று முக்கியமான பிரச்சனைகள் என்ன?")).toBe("PRIORITY_INCIDENT_LIST");
+    expect(asked("category_ranking", "What are the important problems today?")).toBe("PRIORITY_INCIDENT_LIST");
+    expect(asked("incident_list", "inniki mukkiyamaana prachanai enna?")).toBe("PRIORITY_INCIDENT_LIST");
+  });
+  it("a question about the news stays news; a plain category count stays a count", () => {
+    expect(asked("news_list", "What are the important news stories today?")).toBe("NEWS_TOP");
+    expect(asked("news_list", "இன்றைய முக்கிய செய்திகள் என்ன?")).toBe("NEWS_TOP");
+    expect(asked("category_ranking", "Which category has the most complaints?")).toBe("CATEGORY_RANKING");
+  });
+});

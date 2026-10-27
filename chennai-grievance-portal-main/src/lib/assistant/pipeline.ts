@@ -56,7 +56,7 @@ import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
-import { isWarningQuestion, warningCard, warningsNow } from "@/lib/assistant/warnings";
+import { isWarningQuestion, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1303,6 +1303,16 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       } catch (e) {
         if (i.signal?.aborted) throw e;
         console.warn(`[assistant] writer unavailable (${(e as Error).message.slice(0, 120)}); the store's wording stands`);
+      }
+    }
+    // "what are today's important problems?" district-wide during an alert: the alert leads, after the writer, so it is never
+    // dropped (R-03: on Cyclone Arnab's second day the answer listed crimes and never named the cyclone)
+    if (fp.card.intent === "PRIORITY_INCIDENT_LIST" && !scope.zone && !scope.taluk && !scope.dept) {
+      const w = await warningsNow(now).catch(orNull("pipeline:priority-alert"));
+      if (w?.lane.banner) {
+        const lead = lang === "en" ? `**Active alert: ${warningAnswer(w.lane, "en").headline}.** ${w.lane.agreementText}`
+          : `**${warningAnswer(w.lane, lang === "ta" ? "ta" : "tanglish").headline}.**`;
+        fp.card.answerMarkdown = `${lead}\n\n${fp.card.answerMarkdown}`;
       }
     }
     return finish(fp.card, { ...fp.plan, router: !!decided });

@@ -21,6 +21,7 @@ import { categories } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
 import { orEmpty } from "@/lib/fallback";
+import { alertLane, type AlertLane } from "@/lib/collector/alerts";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -152,8 +153,9 @@ const DAY_SYSTEM = `You are the chief of staff to the District Collector of Chen
 the Collector must know: one consolidated report of everything that came in (incidents, citizen grievances, news, weather and
 water), so the Collector needs to read nothing else.
 ${STYLE}
-headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing).
-points: 4 to 7, the most important first. Order: lives lost and severe incidents (say what happened and where), then anything
+headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing). When the
+facts start with an "Active alert", the headline names it (its name or hazard) and says what the official sources say.
+points: 4 to 7, the most important first. An active alert is the first point (topic Weather & water). Then: lives lost and severe incidents (say what happened and where), then anything
 spreading or unusual, then what citizens complained about most and where, then what the news is reporting that matters to the
 district, then weather or water risk if any, then what waits for the Collector. Merge related facts into one point; never repeat a
 fact in two points; leave out what is routine. Each point names the places and what happened, with the numbers from the facts.
@@ -161,6 +163,23 @@ topic: Lives lost (deaths), Safety (crime, accidents, fire), Grievances (citizen
 roads, garbage, drains), Weather & water, Rising (spikes and trends), For you (verification, decisions).
 ref: the incident id in square brackets in the facts that the point is mainly about, else empty.
 headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order.`;
+
+/**
+ * The alerts lane as the brief's first facts (R-02: on Cyclone Arnab's second day the key points never named it, because
+ * the brief saw only "No IMD warning"). `must` holds the words the headline has to carry: the event's name, else its hazard.
+ */
+export function alertFacts(lane: AlertLane | null): { lines: string[]; must: string[] } {
+  if (!lane?.banner) return { lines: [], must: [] };
+  const hazard = lane.event?.hazard ? lane.event.hazard.replace("_", " ") : null;
+  const lines = [`Active alert (lead with this): ${one(lane.banner.title, 120)}. ${one(lane.agreementText, 300)}`];
+  for (const st of lane.stale)
+    lines.push(`Not reporting during the alert: ${st.label}${st.hours != null ? `, silent ${Math.round(st.hours)} hours` : ""}.`);
+  const must = [lane.event?.name, hazard].filter((w): w is string => !!w && w.length > 2);
+  return { lines, must };
+}
+/** Whether a headline carries the alert (case-insensitive, whole word). */
+export const namesAlert = (text: string, must: string[]) =>
+  !must.length || must.some((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(text));
 
 async function dayFacts(s: BriefScope) {
   const now = briefHour(await asOf());
@@ -192,6 +211,7 @@ async function dayFacts(s: BriefScope) {
          FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(orEmpty("aibrief:182")),
     scopeLabel(s)
   ]);
+  const alert = alertFacts(await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null)));
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));
   const catLabel = new Map(categories().map((c) => [c.code, c.label]));
   const T = tot[0] ?? {};
@@ -201,6 +221,7 @@ async function dayFacts(s: BriefScope) {
     .sort((a, b) => b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 8) : [];
   const lines = [
     `Scope: ${scopeName}. Period: ${PERIODS[s.period].label.toLowerCase()} (to ${when(now)}).`,
+    ...alert.lines,
     `Incidents reported: ${n(T.n)}${ch == null ? "" : ` (${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} the period before, which had ${n(before[0]?.n)})`}.` +
       ` Severe: ${n(T.severe)}. Deaths: ${n(T.dead)}. Injured: ${n(T.injured)}. Still open: ${n(T.open)}. Seen only in the news, no department record: ${n(T.news_only)}.`,
     serious.length ? "Deaths and severe incidents:" : "No death or severe incident.",
@@ -221,7 +242,7 @@ async function dayFacts(s: BriefScope) {
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
     `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
   ].filter(Boolean);
-  return { facts: lines.join("\n"), ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
+  return { facts: lines.join("\n"), mustName: alert.must, ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
 }
 
 async function scopeLabel(s: BriefScope) {
@@ -233,11 +254,12 @@ async function scopeLabel(s: BriefScope) {
 }
 
 export async function dayBrief(s: BriefScope, user: string): Promise<DayBrief | null> {
-  const { facts, ids } = await dayFacts(s);
+  const { facts, ids, mustName } = await dayFacts(s);
   const r = await aiJson({
     kind: "day2", system: DAY_SYSTEM, facts, schema: DaySchema, user, maxOutputTokens: 2600,
     text: (o) => [o.headline, ...o.points.map((p) => p.text)].join(" "),
-    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20
+    // an active alert leads: the headline names it, or the write-up is asked again
+    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20 && namesAlert(o.headline, mustName)
   });
   if (!r) return null;
   const ta = r.o.points_ta.length === r.o.points.length ? r.o.points_ta : null;

@@ -43,6 +43,19 @@ export const FAST_OF: Partial<Record<AnswerKind, Detected["intent"]>> = {
 };
 
 /**
+ * "What are today's important problems?" (இன்று முக்கியமான பிரச்சனைகள் என்ன?) asks for the most serious open incidents, even
+ * when the router reads it as news or a category count (R-03 / LT-19: it was answered from the news, crimes first, with a
+ * minister's state-wide death tally as if it were Chennai's). A question about the news itself stays news.
+ */
+export function importantProblems(message: string, answer: string): boolean {
+  if (!["news_list", "category_ranking", "incident_list"].includes(answer)) return false;
+  const important = /\b(important|serious|urgent|critical|biggest|major|pressing|key)\b|முக்கிய|அவசர|தீவிர|mukkiya/i.test(message);
+  const problems = /\b(problems?|issues?|matters?|concerns?)\b|பிரச்ச?னை|பிரச்சினை|prachana|pirachan/i.test(message);
+  const news = /\b(news|newspapers?|papers?|outlets?|media|headlines?|reported in|articles?)\b|செய்தி|seidhi/i.test(message);
+  return important && problems && !news;
+}
+
+/**
  * The router's decision, checked against the conversation: an id it names must be one the Collector was shown (or wrote),
  * never one it made up. Returns what to run: a fast answer from the store (lists, counts, news, one incident's facts),
  * tools for the composer (explanations, area overviews), or a clarifying question.
@@ -102,7 +115,8 @@ export function planFromDecision(route: RouteLike, message: string, ctx: Convers
     default: {
       // "top 3 severe", "the worst ones": the most important, not the newest
       // ("any emergencies right now?" too: the most serious open, not the newest)
-      const ranked = d.answer === "incident_list" && /\b(top|most|worst|biggest|highest|serious|important|critical|major|emergenc\w*|urgent\w*|crisis|alarming)\b|முக்கிய|அவசர/i.test(message);
+      const ranked = (d.answer === "incident_list" && /\b(top|most|worst|biggest|highest|serious|important|critical|major|emergenc\w*|urgent\w*|crisis|alarming)\b|முக்கிய|அவசர/i.test(message))
+        || importantProblems(message, d.answer);
       const intent = ranked ? "PRIORITY_INCIDENT_LIST" : FAST_OF[d.answer];
       if (intent) return { fast: { ...base, intent } };
       // "what about last week?" after a list or news answer: the same answer, with the change
