@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataAge, unusualEnough, deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "./metrics";
+import { confidenceBasis, dataAge, unusualEnough, deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "./metrics";
 import { explain } from "@/lib/collector/intel";
 
 // LT-11: the AI wrote "Deadline missed" before the deadline. The state is computed when the text is shown; a claim of a
@@ -65,5 +65,14 @@ describe("an unusual rise needs enough reports (R-18)", () => {
     expect(unusualEnough({ observed: 3, ratio: 41 } as any)).toBe(false);
     expect(unusualEnough({ observed: 5, ratio: 3 } as any)).toBe(true);
     expect(unusualEnough({} as any)).toBe(false);
+  });
+});
+
+// LT-13: the Cooum bund breach showed "Confidence 100%" with 4 reports, all from PWD, and nothing beside it
+describe("what confidence rests on (LT-13)", () => {
+  it("says the reports and the separate sources", () => {
+    expect(confidenceBasis({ grievance: 0, police: 0, pwd: 4, hospital: 0, imd: 0, news: 0, outlets: [], total: 4 })).toBe("4 reports · 1 source");
+    expect(confidenceBasis({ grievance: 2, news: 3, total: 5 })).toBe("5 reports · 2 sources");
+    expect(confidenceBasis(null)).toBeNull();
   });
 });
