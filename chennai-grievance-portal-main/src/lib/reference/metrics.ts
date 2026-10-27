@@ -131,3 +131,10 @@ export function dataAge(day: string | null | undefined, now: string): { days: nu
   if (!Number.isFinite(days)) return { days: null, stale: true, label: "date unknown" };
   return { days, stale: days > STALE_DAYS, label: days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days old` };
 }
+
+/**
+ * An "unusual rise" needs enough reports to mean something (R-18: "3 tree and park complaints … 41× usual"). A one-day spike
+ * counts from MIN_UNUSUAL reports; a slow rise over several days already needs many.
+ */
+export const MIN_UNUSUAL = 5;
+export const unusualEnough = (a: { observed?: unknown }) => Number(a.observed ?? 0) >= MIN_UNUSUAL;

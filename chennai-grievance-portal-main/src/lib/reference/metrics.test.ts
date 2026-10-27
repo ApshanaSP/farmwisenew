@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataAge, deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "./metrics";
+import { dataAge, unusualEnough, deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "./metrics";
 import { explain } from "@/lib/collector/intel";
 
 // LT-11: the AI wrote "Deadline missed" before the deadline. The state is computed when the text is shown; a claim of a
@@ -56,5 +56,14 @@ describe("one figure for people affected (R-14)", () => {
       priority_reasons: "", attention_reason: "", sev: "Severe", open: 1 } as any);
     expect(p.facts).toContain("About 1,000 people affected");
     expect(p.facts.join(" ")).not.toMatch(/\b500 people/);
+  });
+});
+
+// R-18 (27 Oct 2026): Trends listed "3 tree and park complaints in Ambattur … 41× usual"
+describe("an unusual rise needs enough reports (R-18)", () => {
+  it("3 reports are not unusual, whatever the ratio; 5 are", () => {
+    expect(unusualEnough({ observed: 3, ratio: 41 } as any)).toBe(false);
+    expect(unusualEnough({ observed: 5, ratio: 3 } as any)).toBe(true);
+    expect(unusualEnough({} as any)).toBe(false);
   });
 });

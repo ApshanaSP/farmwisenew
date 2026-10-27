@@ -12,6 +12,7 @@ import { briefingBook } from "@/lib/collector/briefbook";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
+import { unusualEnough } from "@/lib/reference/metrics";
 
 /** An empty price table, for the parts that do not show prices. */
 const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
@@ -113,7 +114,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   // locations needing review: open incidents of the last 30 days (or the period, if longer) with no zone
   const rw = where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) });
 
-  const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomalies, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
+  const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomaliesAll, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open,
               SUM(i.is_open = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints,
               SUM(i.source_count > 1) AS multi, SUM(i.media_only) AS news_only
@@ -184,6 +185,7 @@ export async function insights(period: Period, zone: number | null, dept: string
        FROM incidents i WHERE ${tw.sql} AND ${PLACE_FILTERS.notaluk}`, tw.params)
     : [];
 
+  const anomalies = anomaliesAll.filter(unusualEnough); // too few reports to call unusual (R-18)
   const zn = new Map<number, string>();
   const wardZone = new Map<number, number>();
   for (const z of zoneNames) { zn.set(Number(z.zone_no), z.zone_name); wardZone.set(Number(z.ward_no), Number(z.zone_no)); }

@@ -16,7 +16,7 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
-import { pctChange } from "@/lib/reference/metrics";
+import { pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
@@ -232,7 +232,7 @@ async function dayFacts(s: BriefScope) {
     ...(gTop.length ? ["Grievances with the most complaints:", ...gTop.map(incLine)] : []),
     `Open grievances past their deadline (any date): ${n(overdue[0]?.n)}.`,
     depts.length ? `By department: ${depts.map((d) => `${d.name ?? "unassigned"} ${n(d.n)}${n(d.severe) ? ` (${n(d.severe)} severe)` : ""}`).join("; ")}.` : "",
-    spikes.length ? `Unusual rises: ${spikes.map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
+    spikes.filter(unusualEnough).length ? `Unusual rises: ${spikes.filter(unusualEnough).map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
       `${a.kind === "slow_rise" ? `in ${n(a.rise_days)} days to ${when(a.day)}` : `on ${when(a.day)}`}, ${Math.round(n(a.ratio))} times the usual`).join("; ")}.` : "",
     news.length ? "In the news (district-relevant stories, most covered first):" : "",
     ...news.map((x) => `- ${one(x.title, 150)} · ${x.outletNames.length} outlet${x.outletNames.length === 1 ? "" : "s"}${x.loc ? ` · ${x.loc}` : ""}` +
