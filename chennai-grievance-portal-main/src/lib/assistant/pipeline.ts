@@ -56,7 +56,7 @@ import { examplesFor } from "@/lib/assistant/examples";
 import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset, Field, Scope } from "@/lib/assistant/answer";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
-import { isWarningQuestion, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
+import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1246,7 +1246,12 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (!i.pinId && !i.insightKey && (isWarningQuestion(typed) || isWarningQuestion(message))) {
     i.stage("fetching");
     const w = await warningsNow(now).catch(orNull("pipeline:warnings"));
-    if (w) return finish(warningCard(card0(null), w), { intent: "warnings", tool: "alerts_lane" });
+    if (w) {
+      const card = warningCard(card0(null), w);
+      // "what are newspapers saying about it?": what the papers report, with their outlets (R-09)
+      if (NEWS_ASKED.test(message)) card.answerMarkdown = [card.answerMarkdown, ...newsLines(w.lane, lang === "ta" ? "ta" : lang === "tanglish" ? "tanglish" : "en")].join("\n");
+      return finish(card, { intent: "warnings", tool: "alerts_lane" });
+    }
   }
 
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)

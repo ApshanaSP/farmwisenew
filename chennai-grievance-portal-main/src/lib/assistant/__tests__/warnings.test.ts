@@ -67,3 +67,18 @@ describe("what to prepare comes from the data (R-10)", () => {
     expect(prepLines([], [])).toEqual([]);
   });
 });
+
+// R-09 (27 Oct 2026): "What are newspapers saying about Cyclone Arnab?" got the alerts summary only
+describe("what the papers report (R-09)", () => {
+  it("a news question gets the headlines with their outlets, newest first, no repeats", async () => {
+    const { NEWS_ASKED, newsLines } = await import("@/lib/assistant/warnings");
+    expect(NEWS_ASKED.test("What are newspapers saying about Cyclone Arnab?")).toBe(true);
+    expect(NEWS_ASKED.test("Is there a cyclone warning for Chennai today?")).toBe(false);
+    const l = lane({ now: NOW, imd: [{ day: "2026-10-26", level: 0, text: "No Warning" }], sachet: [], news: NEWS, feeds: FEEDS, fallback: null });
+    const lines = newsLines(l);
+    expect(lines[1]).toBe("**What the papers report:**");
+    expect(lines.length).toBeGreaterThan(2);
+    expect(lines[2]).toMatch(/^- .+ \(.+, \d{1,2} Oct, \d\d:\d\d\)$/);
+    expect(new Set(lines).size).toBe(lines.length);
+  });
+});

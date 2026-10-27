@@ -125,3 +125,23 @@ export function warningCard(base: AnswerCard, w: ReturnType<typeof warningAnswer
         { kind: "url", name: "NDMA SACHET CAP feed", detail: "https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml" }] as AnswerCard["sources"]["refs"] }
   };
 }
+
+/** Asking what the news says about the weather event ("what are newspapers saying about Cyclone Arnab?"). */
+export const NEWS_ASKED = /\b(news|newspapers?|papers?|press|media|outlets?|reports?|reporting|saying|headlines?)\b|செய்தி|pathirikai|seidhi/i;
+
+/**
+ * What the papers report about the event, newest first, one line each with its outlet (R-09: the question got only the
+ * alerts summary). Headlines in Tamil are given in their English translation for an English question.
+ */
+export function newsLines(l: AlertLane, lang: "en" | "ta" | "tanglish" = "en", max = 5): string[] {
+  const seen = new Set<string>();
+  const items = l.news.filter((n) => {
+    const k = (n.titleEn ?? n.title).toLowerCase().slice(0, 60);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, max);
+  if (!items.length) return [];
+  return ["", lang === "ta" ? "**செய்திகள் சொல்வது:**" : "**What the papers report:**",
+    ...items.map((n) => `- ${lang === "en" ? n.titleEn ?? n.title : n.title} (${n.publisher ?? "news"}, ${when(n.t)})`)];
+}
