@@ -45,3 +45,15 @@ it("answers a ward-number list or count from the store, without the model", asyn
     expect(`${r.card.headline} ${r.card.answerMarkdown}`).toMatch(want);
   }
 });
+
+// R-13 (27 Oct 2026): "How many open grievances are there in Adyar?" showed "Of them open: 85" beside "Incidents with
+// complaints: 85" (true by definition for open complaints), and the answer read it as "all 85 remain open, no closure recorded"
+it("an open-complaints count does not show 'Of them open'", async () => {
+  if (!haveStore()) return;
+  const { ask } = await import("@/lib/assistant/pipeline");
+  const r = await ask({ user: "golden@test", sessionId: null, message: "How many open grievances are there in Adyar?", inputMode: "text", language: "auto",
+    scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null }, replyTo: null, stage: () => undefined });
+  const labels = (r.card.kpis ?? []).map((k) => k.label);
+  expect(labels).toContain("Open complaints");
+  expect(labels).not.toContain("Of them open");
+});

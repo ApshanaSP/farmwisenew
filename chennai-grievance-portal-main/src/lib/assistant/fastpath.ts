@@ -361,7 +361,10 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
             ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])]
         : d.measure === "complaints"
           ? [{ label: d.openOnly ? "Open complaints" : "Complaints", value: d.openOnly ? c.openComplaints : c.complaints, prev: d.openOnly ? undefined : c.prevComplaints, tone: "info" },
-            { label: "Incidents with complaints", value: c.complaintIncidents, prev: d.openOnly ? undefined : c.prevComplaintIncidents }, { label: "Of them open", value: c.complaintOpen }]
+            { label: "Incidents with complaints", value: c.complaintIncidents, prev: d.openOnly ? undefined : c.prevComplaintIncidents },
+            // open complaints are about open incidents by definition: "Of them open" there read as a finding ("all 85 remain open,
+            // no closure recorded", R-13), so it is shown only when every complaint was counted
+            ...(d.openOnly ? [] : [{ label: "Of them open", value: c.complaintOpen }])]
           : [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
             { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
       card.context = { ...ctxBase, lastResponseType: "kpi" };
