@@ -1723,5 +1723,5 @@
 @media (max-width:480px){
   .dic .kpi .kpi-ic{display:none}
   .dic .kpi{padding:8px 10px}
-  .dic .kpi .kpi-l,.dic .kpi .kpi-sub,.dic .kpi small{white-space:normal;overflow:visible;text-overflow:clip}
+  .dic .kpi .kpi-l,.dic .kpi .kpi-sub,.dic .kpi small,.dic .kpi .kpi-d{white-space:normal;overflow:visible;text-overflow:clip}
 }
