@@ -11,7 +11,7 @@ import { itemWhen, itemWhere } from "./Added";
 import { StoriesCard } from "./Stories";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 import { mdToHtml } from "@/lib/markdown";
-import { METRICS, caption, pctChange, shortWindow, windowText } from "@/lib/reference/metrics";
+import { METRICS, caption, dataAge, pctChange, shortWindow, windowText } from "@/lib/reference/metrics";
 
 export { mdToHtml };
 
@@ -672,6 +672,12 @@ function PatChart({ d }: { d: PatternDetail }) {
 
 // ================================================================= markets ==
 
+/** "21 days old" on prices that are not current (R-05). */
+function PriceAge({ day, now }: { day: string | null | undefined; now: string }) {
+  const a = dataAge(day, now);
+  return a.stale ? <b className="mk-stale" title={`AGMARKNET has no newer prices; these are ${a.label}`}> · {a.label}</b> : null;
+}
+
 /** Rs per quintal to ₹ per kg: whole rupees from ₹10 up, one decimal below. */
 const kg = (v: number | null | undefined, dec?: number) => (v == null ? "—" : `₹${(v / 100).toFixed(dec ?? (v >= 1000 ? 0 : 1))}`);
 
@@ -683,10 +689,12 @@ const kg = (v: number | null | undefined, dec?: number) => (v == null ? "—" : 
 export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console; full?: boolean }) {
   const [scope, setScope] = useState<"list" | "markets" | "chennai" | "tamilNadu">(full ? "markets" : "list");
   const [market, setMarket] = useState<string | null>(null);
+  // prices older than a few days are the latest there are, never "today" (R-05)
+  const age = ins ? dataAge(ins.markets.byMarket.latest, ins.now) : null;
   const head = (
     <div className="ch"><I n="chart" /><h3>Vegetable and fruit prices</h3>
       <div className="seg sm" style={{ marginLeft: "auto" }}>
-        <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">Prices today</button>
+        <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">{age?.stale ? "Latest prices" : "Prices today"}</button>
         <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Chennai market side by side (Uzhavar Sandhai farmer markets)">Compare markets</button>
         <button className={scope === "chennai" ? "on" : ""} onClick={() => setScope("chennai")} title="Weekly average over Thiruvallur, Kancheepuram and Chengalpattu">Around Chennai</button>
         <button className={scope === "tamilNadu" ? "on" : ""} onClick={() => setScope("tamilNadu")}>Tamil Nadu</button>
@@ -699,8 +707,8 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
     <>
       {head}
       <div className={`cb mk-cb${full ? " mk-full" : ""}`}>
-        {scope === "list" ? <PriceList m={ins.markets.byMarket} />
-          : scope === "markets" ? <ByMarket m={ins.markets.byMarket} c={c} full={full} market={market} setMarket={setMarket} />
+        {scope === "list" ? <PriceList m={ins.markets.byMarket} now={ins.now} />
+          : scope === "markets" ? <ByMarket m={ins.markets.byMarket} now={ins.now} c={c} full={full} market={market} setMarket={setMarket} />
             : <Weekly ins={ins} scope={scope} />}
       </div>
     </>
@@ -711,7 +719,7 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
  * The simple view: one line per vegetable or fruit sold in two or more Chennai markets: the average price, how it moved
  * since the last report, where it is cheapest and dearest, and its last two weeks. Searchable, sortable by movement.
  */
-function PriceList({ m }: { m: ByM }) {
+function PriceList({ m, now }: { m: ByM; now: string }) {
   const [find, setFind] = useState("");
   const [sort, setSort] = useState<"name" | "up" | "down">("name");
   if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run AGMARKNET.</Empty>;
@@ -738,7 +746,7 @@ function PriceList({ m }: { m: ByM }) {
           <button className={sort === "up" ? "on" : ""} onClick={() => setSort("up")} title="Biggest price rises first">Rising first{up ? ` (${up})` : ""}</button>
           <button className={sort === "down" ? "on" : ""} onClick={() => setSort("down")} title="Biggest price falls first">Falling first{down ? ` (${down})` : ""}</button>
         </div>
-        <span className="mk-date" title="AGMARKNET, Uzhavar Sandhai farmer markets">₹ per kg{m.latest ? ` · ${fmtDate(m.latest + " 00:00:00")}` : ""} · {m.markets.length} farmer markets · AGMARKNET</span>
+        <span className="mk-date" title="AGMARKNET, Uzhavar Sandhai farmer markets">₹ per kg{m.latest ? ` · ${fmtDate(m.latest + " 00:00:00")}` : ""}<PriceAge day={m.latest} now={now} /> · {m.markets.length} farmer markets · AGMARKNET</span>
       </div>
       <div className="mk-scroll">
         <table className="mk pl">
@@ -769,7 +777,7 @@ export function MarketsFull({ ins, c }: { ins: Insights | null; c: Console }) {
 
 type ByM = Insights["markets"]["byMarket"];
 
-function ByMarket({ m, c, full, market, setMarket }: { m: ByM; c: Console; full?: boolean; market: string | null; setMarket: (k: string | null) => void }) {
+function ByMarket({ m, now, c, full, market, setMarket }: { m: ByM; now: string; c: Console; full?: boolean; market: string | null; setMarket: (k: string | null) => void }) {
   const [find, setFind] = useState("");
   if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run AGMARKNET.</Empty>;
   const one = market ? m.markets.find((x) => x.key === market) : null;
@@ -778,7 +786,7 @@ function ByMarket({ m, c, full, market, setMarket }: { m: ByM; c: Console; full?
     <div className="mk-bar">
       <label className="mk-find"><I n="search" /><input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a vegetable or fruit…" aria-label="Find a commodity" /></label>
       {!one && <span className="mk-key"><i className="lo" />Cheapest market<i className="hi" />Dearest market</span>}
-      <span className="mk-date">₹ per kg{m.latest ? ` · prices of ${fmtDate(m.latest + " 00:00:00")}` : ""} · Uzhavar Sandhai farmer markets</span>
+      <span className="mk-date">₹ per kg{m.latest ? ` · prices of ${fmtDate(m.latest + " 00:00:00")}` : ""}<PriceAge day={m.latest} now={now} /> · Uzhavar Sandhai farmer markets</span>
     </div>
   );
   if (one) {

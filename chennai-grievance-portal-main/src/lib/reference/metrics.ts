@@ -119,3 +119,15 @@ export function withoutFalseDeadline(text: string, s: DeadlineState): string {
   const bad = new Set(falseDeadlineClaims(text, s));
   return bad.size ? String(text).split(/(?<=[.!?])\s+|\n+/).filter((x) => !bad.has(x)).join(" ").trim() : text;
 }
+
+/**
+ * How old a day's figures are against the store's time. Older than STALE_DAYS is stale: never shown as "today" (R-05:
+ * vegetable prices of 6 Oct sat under "Prices today" on 27 Oct).
+ */
+export const STALE_DAYS = 3;
+export function dataAge(day: string | null | undefined, now: string): { days: number | null; stale: boolean; label: string } {
+  if (!day) return { days: null, stale: true, label: "date unknown" };
+  const days = Math.floor((Date.parse(now.slice(0, 10) + "T00:00:00Z") - Date.parse(day.slice(0, 10) + "T00:00:00Z")) / 86_400_000);
+  if (!Number.isFinite(days)) return { days: null, stale: true, label: "date unknown" };
+  return { days, stale: days > STALE_DAYS, label: days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days old` };
+}

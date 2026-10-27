@@ -1717,3 +1717,4 @@
 /* map legend: incidents not drawn as pins (no exact place); a hollow ring, never a layer toggle */
 .dic .map-leg2 button.unloc{font-weight:500}
 .dic .map-leg2 button.unloc i.ring{background:transparent;box-shadow:none;border:1.5px dashed var(--text-3)}
+.dic .mk-stale{color:var(--high);font-weight:600}
