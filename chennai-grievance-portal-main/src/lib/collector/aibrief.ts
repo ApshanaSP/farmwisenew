@@ -17,7 +17,7 @@ import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
 import { pctChange, unusualEnough } from "@/lib/reference/metrics";
-import { categories } from "@/lib/collector/nlp";
+import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
 import { orEmpty } from "@/lib/fallback";
@@ -162,7 +162,8 @@ fact in two points; leave out what is routine. Each point names the places and w
 topic: Lives lost (deaths), Safety (crime, accidents, fire), Grievances (citizen complaints), News, Civic services (water, power,
 roads, garbage, drains), Weather & water, Rising (spikes and trends), For you (verification, decisions).
 ref: the incident id in square brackets in the facts that the point is mainly about, else empty.
-headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order.`;
+headline_ta and points_ta: the same in Tamil, one Tamil text for each point, in the same order. Write each place with the Tamil name
+the facts give for it; a place with none is written by its English name's sound in Tamil letters, never as another place.`;
 
 /**
  * The alerts lane as the brief's first facts (R-02: on Cyclone Arnab's second day the key points never named it, because
@@ -180,6 +181,25 @@ export function alertFacts(lane: AlertLane | null): { lines: string[]; must: str
 /** Whether a headline carries the alert (case-insensitive, whole word). */
 export const namesAlert = (text: string, must: string[]) =>
   !must.length || must.some((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(text));
+
+const hasWord = (text: string, w: string) => new RegExp(`(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}])`, "iu").test(text);
+
+/** The gazetteer's Tamil names for the places the facts name, for the Tamil text (R-17). */
+export function tamilGlossary(facts: string, names = tamilNames()): string {
+  const used = names.filter((n) => n.en.some((e) => hasWord(facts, e)));
+  return used.length ? `Tamil names of the places (use exactly these in the Tamil text): ${used.map((n) => `${n.en[0]} = ${n.ta[0]}`).join("; ")}.` : "";
+}
+
+/**
+ * A Tamil text that names a gazetteer place its English text does not (R-17: "Periamet" became பாரிமுனை, Parrys, and
+ * "Pattaravakkam" பட்டாபிராமம்): a wrong place, so that Tamil text is not shown (the English one is).
+ */
+export function wrongTamilPlace(en: string, ta: string, names = tamilNames()): string | null {
+  // matched on the stem: a name ending in -ம் takes case endings without it (பட்டாபிராமம் → பட்டாபிராமத்தில்)
+  const stem = (t: string) => (t.length > 4 ? t.replace(/ம்$/, "") : t);
+  for (const n of names) if (n.ta.some((t) => ta.includes(stem(t))) && !n.en.some((e) => hasWord(en, e))) return n.en[0];
+  return null;
+}
 
 async function dayFacts(s: BriefScope) {
   const now = briefHour(await asOf());
@@ -242,7 +262,9 @@ async function dayFacts(s: BriefScope) {
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
     `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
   ].filter(Boolean);
-  return { facts: lines.join("\n"), mustName: alert.must, ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
+  const facts = lines.join("\n");
+  const glossary = tamilGlossary(facts);
+  return { facts: glossary ? `${facts}\n${glossary}` : facts, mustName: alert.must, ids: new Set([...serious, ...gTop].map((i) => String(i.id)).concat(news.map((x) => x.incident).filter(Boolean) as string[])) };
 }
 
 async function scopeLabel(s: BriefScope) {
@@ -263,9 +285,11 @@ export async function dayBrief(s: BriefScope, user: string): Promise<DayBrief | 
   });
   if (!r) return null;
   const ta = r.o.points_ta.length === r.o.points.length ? r.o.points_ta : null;
+  // a Tamil text naming a place its English text does not is left out; the English one is shown (R-17)
+  const taOk = (en: string, t: string | undefined) => (t?.trim() && !wrongTamilPlace(en, t) ? t.trim() : null);
   return {
-    headline: r.o.headline.trim(), headlineTa: ta && r.o.headline_ta.trim() ? r.o.headline_ta.trim() : null,
-    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: p.text.trim(), ta: ta?.[k]?.trim() || null,
+    headline: r.o.headline.trim(), headlineTa: ta ? taOk(r.o.headline, r.o.headline_ta) : null,
+    points: r.o.points.slice(0, 7).map((p, k) => ({ topic: p.topic, text: p.text.trim(), ta: taOk(p.text, ta?.[k]),
       ref: ids.has(p.ref.replace(/[[\]]/g, "").trim()) ? p.ref.replace(/[[\]]/g, "").trim() : null })),
     model: r.model, at: r.at
   };

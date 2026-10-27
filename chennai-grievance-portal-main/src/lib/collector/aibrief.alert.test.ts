@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AlertLane } from "./alerts";
-import { alertFacts, namesAlert } from "./aibrief";
+import { alertFacts, namesAlert, tamilGlossary, wrongTamilPlace } from "./aibrief";
 
 // R-02 (27 Oct 2026, Cyclone Arnab day 2): the AI key points led with "The period was busier than before with 192
 // incidents…" and never named the cyclone; the brief's facts held only "No IMD warning".
@@ -40,5 +40,20 @@ describe("the day brief leads with an active alert (R-02)", () => {
     const { must } = alertFacts({ ...arnab, event: { hazard: "heavy_rain", name: null }, stale: [] });
     expect(must).toEqual(["heavy rain"]);
     expect(namesAlert("Heavy rain warning for Chennai today.", must)).toBe(true);
+  });
+});
+
+// R-17 (27 Oct 2026): the Tamil key points wrote Periamet as பாரிமுனை (Parrys) and Pattaravakkam as பட்டாபிராமம்
+describe("Tamil place names come from the gazetteer (R-17)", () => {
+  const names = [{ en: ["Parrys", "Parry's Corner"], ta: ["பாரிமுனை"] }, { en: ["Arumbakkam"], ta: ["அரும்பாக்கம்"] }, { en: ["Pattabiram"], ta: ["பட்டாபிராமம்"] }];
+  it("the facts carry the Tamil name of each place they name", () => {
+    expect(tamilGlossary("A bund cut in Arumbakkam; dowry case in Periamet.", names))
+      .toBe("Tamil names of the places (use exactly these in the Tamil text): Arumbakkam = அரும்பாக்கம்.");
+    expect(tamilGlossary("Nothing named here.", names)).toBe("");
+  });
+  it("a Tamil text naming a place the English does not is caught", () => {
+    expect(wrongTamilPlace("a dowry harassment case in Periamet", "பாரிமுனையில் வரதட்சணை புகார்", names)).toBe("Parrys");
+    expect(wrongTamilPlace("a family dispute in Pattaravakkam", "பட்டாபிராமத்தில் குடும்ப தகராறு", names)).toBe("Pattabiram");
+    expect(wrongTamilPlace("a bund cut in Arumbakkam", "அரும்பாக்கத்தில் கரை உடைப்பு", names)).toBeNull();
   });
 });
