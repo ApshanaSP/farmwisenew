@@ -126,6 +126,7 @@ export function buildFacts(rows: DRow[], spec: Spec, det: Detective, link: LinkR
     const { format, unit } = formatOf(spec, p0);
     const sum = now.reduce((s, r) => s + (typeof r[prim.key] === "number" ? (r[prim.key] as number) : 0), 0);
     if (sum > 0) {
+      // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
       const res = runPlan(rows, spec, p0, names);
       const lead = res.values[0] ? ` ${res.labels[0]} accounts for ${fmtNum(res.values[0], format, unit)} (${pct(res.values[0], sum)}%).` : "";
       add("measure", `Total ${prim.label.toLowerCase()}${when}: ${fmtNum(sum, format, unit)}.${lead}`, "info", p0);

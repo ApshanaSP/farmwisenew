@@ -97,6 +97,7 @@ function titleFor(o: AskOut, spec: Spec): string {
 
 /** Which groups cross a standing alert's line right now. */
 export function checkRule(rule: Rule, rows: DRow[], spec: Spec, names: Names): RuleStatus {
+  // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
   const res = runPlan(rows, spec, { ...rule.plan, limit: 300, chart: rule.plan.by === "none" ? "kpi" : "hbar" }, names);
   const cmp = (v: number) => (rule.op === "gt" ? v > rule.threshold : rule.op === "gte" ? v >= rule.threshold : rule.op === "lt" ? v < rule.threshold : v <= rule.threshold);
   const hits = res.kpi ? (cmp(res.kpi.value) ? [{ label: rule.plan.title, value: res.kpi.value }] : [])

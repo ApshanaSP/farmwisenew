@@ -86,3 +86,11 @@
   .dic .ds-pick-f .ds-btn{flex:1 1 100%}
   .dic .ds-out-acts .ds-btn,.dic .ds-out-acts .ds-ghost{flex:1 1 100%;justify-content:center}
 }
+
+/* ---------- the Chart Doctor on each panel ---------- */
+.dic .ds-p-why{display:flex;align-items:flex-start;gap:6px;margin:0;padding:6px 12px 9px;font-size:11.5px;line-height:1.4;color:var(--text-3)}
+.dic .ds-p-why .ic{width:13px;height:13px;flex:none;margin-top:1px}
+/* a small table: the measure's cells drawn as bars from zero */
+.dic .ds-table td.ds-cellbar{background:linear-gradient(90deg,var(--accent-soft) 0 var(--w),transparent var(--w));background-repeat:no-repeat}
+/* a chart's title and subtitle wrap at words (two lines at most) rather than being cut: the Chart Doctor's title rule */
+.dic .ds-p-t h4,.dic .ds-p-t small{white-space:normal;overflow:hidden;text-overflow:clip;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word}

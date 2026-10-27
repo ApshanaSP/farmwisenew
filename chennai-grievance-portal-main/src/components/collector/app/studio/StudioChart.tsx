@@ -131,10 +131,12 @@ function build(p: PanelData, ink: Ink, compact: boolean, highlight: string | num
     type: "category" as const, data: p.labels, inverse: horizontal, boundaryGap: !isLine, axisTick: { show: false },
     axisLine: { show: !horizontal, lineStyle: { color: ink.axis } },
     axisLabel: { color: ink.text2, fontSize: dense ? fs - 1.5 : fs, hideOverlap: !horizontal, interval: horizontal ? 0 : "auto",
-      width: horizontal ? (compact ? 86 : 120) : undefined, overflow: horizontal ? "truncate" : undefined }
+      // a long name wraps at its words (the Chart Doctor's rule: never cut mid-word)
+      width: horizontal ? (compact ? 86 : 120) : undefined, overflow: horizontal ? "break" : undefined, lineHeight: horizontal ? fs + 3 : undefined }
   };
   const val = {
-    type: "value" as const, splitLine: { lineStyle: { color: ink.grid } }, axisLine: { show: false }, axisTick: { show: false },
+    // bars and areas start at zero (the Chart Doctor sets panel.zero)
+    type: "value" as const, ...(p.zero && Math.min(...p.values) >= 0 ? { min: 0 } : {}), splitLine: { lineStyle: { color: ink.grid } }, axisLine: { show: false }, axisTick: { show: false },
     axisLabel: { show: !horizontal, color: ink.text3, fontSize: fs - 0.5, formatter: (x: number) => short(x, p) }
   };
   if (isLine) {

@@ -9,6 +9,7 @@
 import type { DRow } from "@/lib/studio/clean";
 import { unitFor } from "@/lib/studio/engine";
 import { openPhrase, type Plan, type Spec } from "@/lib/studio/types";
+import { GUARD, type Tier } from "@/lib/studio/readiness";
 import { addDays, daysBetween, fmtDay, niceCase } from "@/lib/studio/values";
 
 export function plan(p: Partial<Plan> & Pick<Plan, "id" | "title" | "chart">): Plan {
@@ -86,7 +87,35 @@ export function typeColumn(rows: DRow[], spec: Spec) {
   }).filter((x) => x.ok).sort((a, b) => b.s - a.s)[0]?.c ?? null;
 }
 
+/**
+ * How much the cleaned rows can honestly show (readiness.ts): a fact card (1-5 rows), a small table (6-20), or the
+ * dashboard. A file with no measure, date, place or type to group by stays a table however long it is.
+ */
+export function tierOfRows(rows: DRow[], spec: Spec): Tier {
+  const n = rows.length;
+  if (!n) return "empty";
+  if (n <= GUARD.factRows) return "fact";
+  if (n <= GUARD.smallRows) return "small";
+  const structured = spec.columns.some((c) => ["measure", "date", "zone", "ward", "place", "taluk", "category", "status", "lat"].includes(c.role));
+  return structured ? "full" : "small";
+}
+
 export function designDashboard(rows: DRow[], spec: Spec, window: { from: string | null; to: string | null }): Plan[] {
+  const full = designFull(rows, spec, window);
+  const tier = tierOfRows(rows, spec);
+  if (tier === "full" || tier === "empty") return full;
+  const kpis = full.filter((p) => p.chart === "kpi").slice(0, 3);
+  const prim = spec.columns.find((c) => c.key === spec.primary && c.role === "measure") ?? spec.columns.find((c) => c.role === "measure") ?? null;
+  // the rows themselves, the largest first, with bars in the measure's cells
+  const table = plan({ id: "rows", title: tier === "fact" ? "The figures" : prim ? `${spec.entityPlural.charAt(0).toUpperCase() + spec.entityPlural.slice(1)} by ${prim.label.toLowerCase()}` : "The rows",
+    chart: "table", col: prim?.key ?? null, sort: "desc", limit: GUARD.smallRows });
+  if (tier === "fact") return [...kpis, table];
+  // a small table: at most one sorted bar, and only for a clear ranking (a category or place, and a measure)
+  const ranking = full.find((p) => (p.chart === "hbar" || p.chart === "bar") && p.by !== "time" && p.by !== "none");
+  return [...kpis, table, ...(ranking ? [{ ...ranking, chart: "hbar" as const }] : [])];
+}
+
+function designFull(rows: DRow[], spec: Spec, window: { from: string | null; to: string | null }): Plan[] {
   const out: Plan[] = [];
   const n = rows.length || 1;
   const placed = rows.filter((r) => r._z != null).length;
@@ -118,13 +147,15 @@ export function designDashboard(rows: DRow[], spec: Spec, window: { from: string
   else if (!hasOpen && date && window.to && !years && span >= 56) out.push(plan({ id: "k3", title: "Last 28 days", chart: "kpi", ...measure, filters: [{ col: "_d", op: "recent_days", values: ["28"] }] }));
 
   // ---- evidence: the map (or zones), the trend, the main type, the status; at most four
-  const mapped = placed / n >= 0.2 || pointed / n >= 0.2;
+  // a map needs 5 places and a fifth of the rows placed (readiness.ts GUARD)
+  const zonesSeen = new Set(rows.map((r) => r._z).filter((z) => z != null)).size;
+  const mapped = (placed / n >= GUARD.minMapPlacedShare && zonesSeen >= GUARD.minMapPlaces) || (pointed / n >= GUARD.minMapPlacedShare && pointed >= GUARD.minMapPlaces);
   if (mapped) {
     const places = new Set(rows.map((r) => r._p).filter(Boolean)).size;
     const by = spec.columns.some((c) => c.role === "place") && places >= 6 && pointed / n >= 0.3 ? "place" : wardLevel / n >= 0.5 ? "ward" : "zone";
     out.push(plan({ id: "map", title: (hasOpen ? `Where ${q.word} ${are}` : `Where the ${q.word} are`) + when, chart: "map", by, ...measure, filters: [...openF, ...latest], limit: 300 }));
   }
-  if (date && window.from && window.to && new Set(rows.map((r) => r._d).filter(Boolean)).size >= 3)
+  if (date && window.from && window.to && new Set(rows.map((r) => r._d).filter(Boolean)).size >= GUARD.minTrendPeriods)
     out.push(plan({ id: "trend", title: `${cap(q.word)} over time`, chart: years ? "bar" : "area", by: "time", ...measure, unit, sort: "key", limit: 60 }));
   // the leaders of a period table (top countries, top districts)
   if (panel) {
@@ -149,13 +180,13 @@ export function designDashboard(rows: DRow[], spec: Spec, window: { from: string
       agg: m.agg === "avg" || m.unit === "%" ? "avg" : m.agg === "max" ? "max" : "sum", col: m.key, filters: latest, limit: 15 })));
   } else if (cat) {
     const d = new Set(rows.map((r) => r[cat.key]).filter((v) => v != null)).size;
-    out.push(plan({ id: "cat", title: `${hasOpen ? `${cap(q.word)} ${ow}` : cap(q.word)} by ${cat.label.toLowerCase()}${when}`, chart: d <= 5 ? "donut" : "hbar", by: "col", byCol: cat.key, ...measure, filters: [...openF, ...latest], limit: d <= 5 ? 6 : 8 }));
+    out.push(plan({ id: "cat", title: `${hasOpen ? `${cap(q.word)} ${ow}` : cap(q.word)} by ${cat.label.toLowerCase()}${when}`, chart: d <= GUARD.maxDonutParts ? "donut" : "hbar", by: "col", byCol: cat.key, ...measure, filters: [...openF, ...latest], limit: d <= 5 ? 6 : 8 }));
   }
   if (placed / n >= 0.2 && !mapped) out.push(plan({ id: "zone", title: `${cap(what)} by zone${when}`, chart: "hbar", by: "zone", ...measure, filters: [...openF, ...latest], limit: 8 }));
   const status = spec.columns.find((c) => c.role === "status");
   if (status && out.filter((p) => p.chart !== "kpi").length < 4) {
     const d = new Set(rows.map((r) => r[status.key]).filter((v) => v != null)).size;
-    if (d >= 2) out.push(plan({ id: "status", title: niceCase(status.label), chart: d <= 6 ? "donut" : "hbar", by: "col", byCol: status.key, limit: 8 }));
+    if (d >= 2) out.push(plan({ id: "status", title: niceCase(status.label), chart: d <= GUARD.maxDonutParts ? "donut" : "hbar", by: "col", byCol: status.key, limit: 8 }));
   }
   return out;
 }

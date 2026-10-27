@@ -162,8 +162,13 @@ export interface PanelData {
   format: Format;
   unit: string | null;
   kpi: { value: number; label: string; sub: string; spark: number[]; delta: number | null; tone: Tone } | null;
-  table: { cols: { key: string; label: string }[]; rows: Record<string, string | number | null>[] } | null;
+  table: { cols: { key: string; label: string }[]; rows: Record<string, string | number | null>[]; /** the column drawn as in-cell bars */ bar?: string | null } | null;
   note: string | null;
+  /** set by the Chart Doctor (chartlint.ts): the value axis starts at 0, why this chart, alt text, what was fixed */
+  zero?: boolean;
+  why?: string;
+  alt?: string;
+  lint?: string[];
 }
 
 export type Tone = "sev" | "high" | "info" | "low" | "violet" | "teal";

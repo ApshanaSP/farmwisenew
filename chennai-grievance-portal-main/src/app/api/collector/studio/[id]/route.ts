@@ -4,6 +4,7 @@ import { csvCell } from "@/lib/csv";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
+import { renderPanel } from "@/lib/studio/chartlint";
 import { filterRows, runPlan } from "@/lib/studio/engine";
 import { note, stream } from "@/lib/studio/http";
 import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, setSchedule, view } from "@/lib/studio/pipeline";
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     if (req.nextUrl.searchParams.get("rows") === "1") {
       const meta = getMeta(params.id);
       if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
+      // the rows themselves, as a table (not drawn as a chart)
       const p = runPlan(getRows(params.id), meta.spec, { id: "rows", title: "Rows", chart: "table", agg: "count", col: null, by: "none", byCol: null, unit: null,
         filters: [], sort: "desc", limit: 300 }, namesOf(await refs()));
       return NextResponse.json({ table: p.table });
@@ -168,7 +170,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       }
       case "preview": {
         const names = namesOf(await refs());
-        return NextResponse.json({ panel: runPlan(getRows(meta.id), meta.spec, { ...(a.plan as Plan), limit: Math.max(a.plan.limit, a.plan.chart === "map" ? 300 : 12) }, names) });
+        return NextResponse.json({ panel: renderPanel(getRows(meta.id), meta.spec, { ...(a.plan as Plan), limit: Math.max(a.plan.limit, a.plan.chart === "map" ? 300 : 12) }, names, meta.window) });
       }
       case "drill":
         return NextResponse.json(await drillInto(meta.id, a.plan as Plan, a.key, a.filters as Filter[]));
@@ -187,7 +189,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
         saveMeta({ ...meta, panels: [...meta.panels.filter((p) => p.id !== plan.id), plan], updatedAt: new Date().toISOString() });
         await note(s.email, "studio:add-panel", meta.id, { panel: plan.title });
         const names = namesOf(await refs());
-        return NextResponse.json({ ok: true, panel: runPlan(getRows(meta.id), meta.spec, plan, names) });
+        return NextResponse.json({ ok: true, panel: renderPanel(getRows(meta.id), meta.spec, plan, names, meta.window) });
       }
       case "remove-panel": {
         saveMeta({ ...meta, panels: meta.panels.filter((p) => p.id !== a.planId), updatedAt: new Date().toISOString() });

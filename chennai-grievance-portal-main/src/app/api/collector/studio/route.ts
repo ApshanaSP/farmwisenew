@@ -3,7 +3,7 @@ import { z } from "zod";
 import { aiStatus } from "@/lib/ai/gateway";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { runPlan } from "@/lib/studio/engine";
+import { renderPanel } from "@/lib/studio/chartlint";
 import { MAX_BYTES } from "@/lib/studio/fetchurl";
 import { note, stream } from "@/lib/studio/http";
 import { ingest, ingestLink, namesOf } from "@/lib/studio/pipeline";
@@ -24,7 +24,7 @@ export async function GET() {
       const meta = getMeta(pin.datasetId);
       if (!meta) return [];
       try {
-        return [{ pin, panel: runPlan(getRows(pin.datasetId), meta.spec, pin.plan, names), dataset: { id: meta.id, name: meta.name } }];
+        return [{ pin, panel: renderPanel(getRows(pin.datasetId), meta.spec, pin.plan, names, meta.window), dataset: { id: meta.id, name: meta.name } }];
       } catch {
         return [];
       }

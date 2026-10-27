@@ -15,6 +15,10 @@ import { describeFilter, filterRows, formatOf, keyFilters, runPlan, unitFor, typ
 import { incidentsFor } from "@/lib/studio/link";
 import { fmtNum, type AttentionItem, type DatasetMeta, type DrillResult, type Filter, type PanelData, type Plan } from "@/lib/studio/types";
 import { addDays, median } from "@/lib/studio/values";
+import { lint, renderPanel } from "@/lib/studio/chartlint";
+
+/** A breakdown chart, drawn: through the Chart Doctor like every other panel. */
+const lintIt = renderPanel;
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -35,13 +39,14 @@ export async function drill(meta: DatasetMeta, rows: DRow[], plan: Plan, key: st
   const base: Plan = { ...plan, filters: [...extra, ...plan.filters] };
   const filters = [...extra, ...keyFilters(plan, key)];
   // the subset's own measure (the chart's measure, for these rows)
+  // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
   const one = runPlan(rows, spec, { ...plan, id: "d-one", by: "none", byCol: null, chart: "kpi", filters }, names);
   const value = one.kpi?.value ?? one.total;
   const { format, unit } = formatOf(spec, plan);
   // how the mark compares with the other marks of its chart
   let share: number | null = null, vsAvg: number | null = null, rank: DrillResult["rank"] = null;
   if (key != null && plan.by !== "none") {
-    const all = runPlan(rows, spec, { ...base, id: "d-all", limit: 300, chart: plan.chart === "map" ? "hbar" : plan.chart }, names);
+    const all = lint(runPlan(rows, spec, { ...base, id: "d-all", limit: 300, chart: plan.chart === "map" ? "hbar" : plan.chart }, names));
     const vals = all.values;
     if (vals.length > 1) {
       const sum = vals.reduce((a, b) => a + b, 0), mean = sum / vals.length;
@@ -58,14 +63,15 @@ export async function drill(meta: DatasetMeta, rows: DRow[], plan: Plan, key: st
   const measure = plan.agg === "count" ? { agg: q.agg, col: q.col } : { agg: plan.agg, col: plan.col };
   const dated = sel.filter((r) => typeof r._d === "string").map((r) => String(r._d)).sort();
   if (plan.by !== "time" && dated.length >= 5 && new Set(dated).size >= 3)
-    breakdowns.push(runPlan(rows, spec, mk({ id: "b-time", title: "Over time", chart: "area", by: "time", ...measure, unit: unitFor(dated[0], dated[dated.length - 1]), filters, sort: "key", limit: 60 }), names));
+    breakdowns.push(lintIt(rows, spec, mk({ id: "b-time", title: "Over time", chart: "area", by: "time", ...measure, unit: unitFor(dated[0], dated[dated.length - 1]), filters, sort: "key", limit: 60 }), names));
   if (plan.by !== "zone" && new Set(sel.map((r) => r._z).filter((z) => z != null)).size >= 2)
-    breakdowns.push(runPlan(rows, spec, mk({ id: "b-zone", title: "By zone", chart: "hbar", by: "zone", ...measure, filters, limit: 8 }), names));
+    breakdowns.push(lintIt(rows, spec, mk({ id: "b-zone", title: "By zone", chart: "hbar", by: "zone", ...measure, filters, limit: 8 }), names));
   for (const c of spec.columns.filter((x) => (x.role === "category" || x.role === "status") && x.key !== plan.byCol && x.key !== spec.panelBy)) {
     if (breakdowns.length >= 3) break;
     const d = new Set(sel.map((r) => r[c.key]).filter((v) => v != null)).size;
-    if (d >= 2 && d <= 40) breakdowns.push(runPlan(rows, spec, mk({ id: `b-${c.key}`, title: `By ${c.label.toLowerCase()}`, chart: d <= 6 ? "donut" : "hbar", by: "col", byCol: c.key, ...measure, filters, limit: 8 }), names));
+    if (d >= 2 && d <= 40) breakdowns.push(lintIt(rows, spec, mk({ id: `b-${c.key}`, title: `By ${c.label.toLowerCase()}`, chart: d <= 6 ? "donut" : "hbar", by: "col", byCol: c.key, ...measure, filters, limit: 8 }), names));
   }
+  // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
   const table = runPlan(rows, spec, mk({ id: "d-rows", title: "Rows", chart: "table", filters, sort: plan.sort === "asc" ? "asc" : "desc", limit: 150 }), names).table;
   // the district's incidents where these rows are
   const zc = new Map<number, number>();
@@ -110,6 +116,7 @@ export function attention(meta: DatasetMeta, rows: DRow[], extra: Filter[], name
   const zoneFocused = extra.some((f) => f.col === "_z" || f.col === "_w");
   if (placed >= Math.max(10, rows.length * 0.2) && !zoneFocused) {
     const zp = mk({ id: "a-zone", title: `${cap(word)} by zone`, chart: "hbar", by: "zone", ...measure, filters: [...extra, ...openF, ...latest], limit: 15 });
+    // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
     const r = runPlan(rows, spec, zp, names);
     const mean = r.values.length ? r.values.reduce((a, b) => a + b, 0) / 15 : 0;
     r.labels.slice(0, 3).forEach((l, i) => {
@@ -137,7 +144,9 @@ export function attention(meta: DatasetMeta, rows: DRow[], extra: Filter[], name
     const a0 = addDays(end, -27), b0 = addDays(end, -55);
     const dim = placed >= rows.length * 0.3 ? { by: "zone" as const, byCol: null } : (() => { const c = spec.columns.find((x) => x.role === "category"); return c ? { by: "col" as const, byCol: c.key } : null; })();
     if (dim) {
+      // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
       const recent = runPlan(rows, spec, mk({ id: "r1", title: "", chart: "hbar", ...dim, ...measure, filters: [...extra, { col: "_d", op: "gte", values: [a0] }], limit: 50 }), names);
+      // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
       const before = runPlan(rows, spec, mk({ id: "r0", title: "", chart: "hbar", ...dim, ...measure, filters: [...extra, { col: "_d", op: "gte", values: [b0] }, { col: "_d", op: "lte", values: [addDays(a0, -1)] }], limit: 50 }), names);
       const prev = new Map(before.keys.map((k, i) => [k, before.values[i]]));
       const rises = recent.keys.map((k, i) => ({ k, l: recent.labels[i], a: recent.values[i], b: prev.get(k) ?? 0 })).filter((x) => x.a >= 5 && x.b >= 3 && x.a >= x.b * 1.3)
@@ -174,6 +183,7 @@ export function attention(meta: DatasetMeta, rows: DRow[], extra: Filter[], name
   // 6. a type that dominates (news topics, complaint kinds)
   const cat = spec.columns.find((c) => c.role === "category" && c.key !== spec.panelBy);
   if (cat && items.length < 5) {
+    // numbers or rows for the page, not drawn as a chart (drawn panels go through chartlint.ts renderPanel)
     const r = runPlan(rows, spec, mk({ id: "a-cat", title: `By ${cat.label.toLowerCase()}`, chart: "hbar", by: "col", byCol: cat.key, ...measure, filters: [...extra, ...openF, ...latest], limit: 10 }), names);
     if (r.values.length >= 3 && r.total && r.values[0] / r.total >= 0.3)
       items.push({ id: `cat-${r.keys[0]}`, kind: "share", tone: "info", title: `${r.labels[0]}: ${pct(r.values[0], r.total)}% of ${word}`,

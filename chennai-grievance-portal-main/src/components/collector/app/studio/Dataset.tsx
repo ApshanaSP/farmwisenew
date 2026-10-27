@@ -294,13 +294,23 @@ function Spark({ vals }: { vals: number[] }) {
 function renderChart(p: PanelData, c: Console, zone: number | null, onPick: (key: string | number) => void, height: number | string) {
   if (!p.rows || (!p.values.length && !p.table)) return <div className="ds-nodata"><I n="info" />Nothing to show{p.note ? `: ${p.note}` : "."}</div>;
   if (p.chart === "map") return <StudioMap geo={c.geo} panel={p} focusZone={zone} onZone={(z) => onPick(z)} />;
-  if (p.chart === "table") return <DataTable cols={p.table!.cols} rows={p.table!.rows} />;
+  if (p.chart === "table") return <DataTable cols={p.table!.cols} rows={p.table!.rows} bar={p.table!.bar ?? null} />;
   return <StudioChart panel={p} height={height} highlight={p.geo === "zone" ? zone : null} onPick={(k) => onPick(k)} />;
 }
 
-function PanelCard({ p, i, c, zone, onPick, pinned, onPin, onExpand, onRemove }: {
+/** A chart's own numbers as a table (the Chart Doctor's "Show as table"). */
+export function asRows(p: PanelData): PanelData {
+  if (p.chart === "table" || p.chart === "kpi") return p;
+  const label = p.plan.by === "time" ? "Period" : p.plan.by === "zone" ? "Zone" : p.plan.by === "ward" ? "Ward" : "Item";
+  return { ...p, chart: "table", table: { cols: [{ key: "l", label }, { key: "v", label: p.subtitle.split(" · ")[0] || "Value" }], rows: p.labels.map((l, i) => ({ l, v: p.values[i] })), bar: "v" } };
+}
+
+function PanelCard({ p: drawn, i, c, zone, onPick, pinned, onPin, onExpand, onRemove }: {
   p: PanelData; i: number; c: Console; zone: number | null; onPick: (key: string | number) => void; pinned: boolean; onPin: (on: boolean) => void; onExpand: () => void; onRemove?: () => void;
 }) {
+  const [rowsView, setRowsView] = useState(false);
+  const canTable = drawn.chart !== "table" && drawn.chart !== "kpi" && drawn.values.length > 0;
+  const p = rowsView && canTable ? asRows(drawn) : drawn;
   const hint = p.chart === "map" ? " · click an area to open it" : p.chart === "table" ? "" : ` · click a ${p.chart === "donut" || p.chart === "treemap" ? "slice" : p.plan.by === "time" ? "point" : "bar"} to open it`;
   return (
     <article className={`ds-panel${p.chart === "map" ? " is-map" : ""}`} style={{ ["--i" as string]: i }}>
@@ -308,18 +318,21 @@ function PanelCard({ p, i, c, zone, onPick, pinned, onPin, onExpand, onRemove }:
         <span className="ds-p-ic"><I n={CHART_IC[p.chart] ?? "chart"} /></span>
         <div className="ds-p-t"><h4>{p.title}</h4><small>{p.subtitle}{hint}</small></div>
         <div className="ds-p-acts">
+          {canTable && <button className={rowsView ? "on" : ""} aria-pressed={rowsView} onClick={() => setRowsView((x) => !x)} title={rowsView ? "Show as a chart" : "Show as a table"} aria-label={rowsView ? "Show as a chart" : "Show as a table"}><I n={rowsView ? "chart" : "table"} /></button>}
           <button className={pinned ? "on" : ""} onClick={() => onPin(!pinned)} title={pinned ? "Unpin from the board" : "Pin to the Studio board"} aria-label="Pin"><I n="bookmark" /></button>
           <button onClick={onExpand} title="Open large" aria-label="Open large"><I n="expand" /></button>
           {onRemove && <button onClick={onRemove} title="Remove from this dashboard" aria-label="Remove"><I n="x" /></button>}
         </div>
       </header>
-      <div className="ds-p-b">{renderChart(p, c, zone, onPick, "100%")}</div>
+      <div className="ds-p-b" role="img" aria-label={drawn.alt ?? p.title}>{renderChart(p, c, zone, onPick, "100%")}</div>
+      {drawn.why && <p className="ds-p-why" title={drawn.lint?.length ? `Checked: ${drawn.lint.join("; ")}` : "Checked by the Chart Doctor: no rule broken"}><I n="info" />{drawn.why}</p>}
       {p.note && p.chart !== "map" && <footer className="ds-p-note" title={p.note}>{p.note}</footer>}
     </article>
   );
 }
 
-export function DataTable({ cols, rows, search }: { cols: { key: string; label: string }[]; rows: Record<string, string | number | null>[]; search?: string }) {
+export function DataTable({ cols, rows, search, bar = null }: { cols: { key: string; label: string }[]; rows: Record<string, string | number | null>[]; search?: string; bar?: string | null }) {
+  const top = bar ? Math.max(0, ...rows.map((r) => (typeof r[bar] === "number" ? (r[bar] as number) : 0))) : 0;
   const q = (search ?? "").toLowerCase().trim();
   const shown = q ? rows.filter((r) => cols.some((c) => String(r[c.key] ?? "").toLowerCase().includes(q))) : rows;
   return (
@@ -328,7 +341,7 @@ export function DataTable({ cols, rows, search }: { cols: { key: string; label: 
         <thead><tr>{cols.map((c) => <th key={c.key}>{c.label}</th>)}</tr></thead>
         <tbody>
           {shown.slice(0, 300).map((r, i) => (
-            <tr key={i}>{cols.map((c) => { const v = r[c.key]; return <td key={c.key} className={typeof v === "number" ? "n" : ""}>{v == null ? <span className="ds-null">—</span> : typeof v === "number" ? v.toLocaleString("en-IN")
+            <tr key={i}>{cols.map((c) => { const v = r[c.key]; return <td key={c.key} className={typeof v === "number" ? `n${c.key === bar && top > 0 ? " ds-cellbar" : ""}` : ""} style={c.key === bar && typeof v === "number" && top > 0 ? { ["--w" as string]: `${Math.max(2, (Math.max(0, v) / top) * 100)}%` } : undefined}>{v == null ? <span className="ds-null">—</span> : typeof v === "number" ? v.toLocaleString("en-IN")
               : /^https?:\/\//.test(String(v)) ? <a className="ds-tlink" href={String(v)} target="_blank" rel="noopener noreferrer">Open<I n="ext" /></a> : String(v)}</td>; })}</tr>
           ))}
         </tbody>

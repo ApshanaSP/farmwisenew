@@ -22,7 +22,12 @@ import { tableHash } from "@/lib/studio/connect/discover";
 import { politeTurn } from "@/lib/studio/fetchurl";
 import { usableRows } from "@/lib/studio/readiness";
 import { combineTables } from "@/lib/studio/pipeline";
-import type { Outcome } from "@/lib/studio/types";
+import type { Outcome, Spec } from "@/lib/studio/types";
+import { renderPanel, violations } from "@/lib/studio/chartlint";
+import { clean } from "@/lib/studio/clean";
+import { designDashboard } from "@/lib/studio/dashboard";
+import { profileTable } from "@/lib/studio/profile";
+import { rulesSpec } from "@/lib/studio/spec";
 
 type Fixture = { id: string; url: string; expect: Outcome["kind"]; what: string; reason?: string; rows?: number; cards?: number; usable?: number; todo?: string; flagOff?: boolean };
 let FIXTURES: Fixture[] = [];
@@ -175,6 +180,26 @@ describe("duplicates", () => {
     expect(again.outcome.why).toMatch(/already have this.*22 Oct/);
     fs.rmSync(path.join(dir, "ds_dupcheck01.json"));
   });
+});
+
+describe("9.4 every DATA fixture's dashboard breaks no chart rule", () => {
+  it("0 hard violations over every panel", async () => {
+    const refs = { wards: new Map(), zones: new Map(), taluks: new Map(), categories: [], depts: [], families: new Map() };
+    const names = { zone: (z: number) => `Zone ${z}`, taluk: (t: string) => t, zoneOf: () => null };
+    let panels = 0;
+    for (const f of FIXTURES.filter((x) => x.expect === "data" && !x.todo)) {
+      const r = await resolveLink(f.url, none, { log });
+      if (r.outcome.kind !== "data") continue;
+      const t = r.chosen!.table;
+      const spec = rulesSpec(profileTable(t), f.url, t.caption, refs as never) as Spec;
+      const c = clean(t, spec);
+      for (const p of designDashboard(c.rows, spec, c.window)) {
+        panels++;
+        expect({ f: f.id, p: p.id, v: violations(renderPanel(c.rows, spec, p, names, c.window)) }).toEqual({ f: f.id, p: p.id, v: [] });
+      }
+    }
+    expect(panels).toBeGreaterThan(40);
+  }, 60_000);
 });
 
 describe("9.9 guards", () => {

@@ -9,7 +9,8 @@ import { rulesAsk } from "@/lib/studio/ask";
 import { rulesBrief } from "@/lib/studio/brief";
 import { clean, type DRow } from "@/lib/studio/clean";
 import { designDashboard, panelColumn, periodicWeight } from "@/lib/studio/dashboard";
-import { answerText, describeFilter, runPlan, type Names } from "@/lib/studio/engine";
+import { answerText, describeFilter, type Names } from "@/lib/studio/engine";
+import { renderPanel } from "@/lib/studio/chartlint";
 import { drill } from "@/lib/studio/drill";
 import { computeInsights } from "@/lib/studio/insights";
 import { LINK_VERSION, crossLink } from "@/lib/studio/link";
@@ -601,7 +602,7 @@ export async function view(id: string, extra: Filter[]): Promise<DatasetView | n
   const refs = await loadRefs();
   const names = namesOf(refs);
   if ((meta.linkVersion ?? 1) < LINK_VERSION) meta = await relink(meta, rows, refs, names);
-  const panels = meta.panels.map((p) => runPlan(rows, meta.spec, { ...p, filters: [...p.filters, ...(p.chart === "map" ? extra.filter((f) => f.col !== "_z") : extra)] }, names));
+  const panels = meta.panels.map((p) => renderPanel(rows, meta.spec, { ...p, filters: [...p.filters, ...(p.chart === "map" ? extra.filter((f) => f.col !== "_z") : extra)] }, names, meta.window));
   const brief = meta.brief ?? rulesBrief(computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names), meta.spec);
   return { meta, panels, focus: { filters: extra, chips: extra.map((f) => describeFilter(meta.spec, f, names)) }, brief, briefStale: !meta.brief };
 }
@@ -660,7 +661,7 @@ export async function ask(id: string, question: string, user: string) {
   }
   if (out.kind === "unsupported") return { kind: "unsupported" as const, note: out.note || "These columns cannot answer that.", by, model };
   const plan: Plan = checkPlan(out, meta.spec, `q_${Date.now().toString(36)}`);
-  const panel = runPlan(rows, meta.spec, plan, names);
+  const panel = renderPanel(rows, meta.spec, plan, names, meta.window);
   return {
     kind: out.kind, plan, panel, answer: answerText(panel, meta.spec), note: out.note && !/\d/.test(out.note) ? out.note.slice(0, 200) : null, by, model,
     watch: out.kind === "watch" && out.watch_op && out.watch_threshold != null ? { op: out.watch_op, threshold: out.watch_threshold } : null,

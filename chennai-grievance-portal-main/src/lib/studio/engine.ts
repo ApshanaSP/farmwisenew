@@ -6,6 +6,7 @@
 import type { DRow } from "@/lib/studio/clean";
 import { fmtNum, openPhrase, type Filter, type Format, type PanelData, type Plan, type Spec, type Tone } from "@/lib/studio/types";
 import { addDays, daysBetween, fmtDay, normKey, sameValue } from "@/lib/studio/values";
+import { GUARD } from "@/lib/studio/readiness";
 
 export interface Names {
   zone: (z: number) => string;
@@ -128,9 +129,11 @@ export function runPlan(rows: DRow[], spec: Spec, plan: Plan, names: Names): Pan
     const cols = spec.columns.filter((c) => c.role !== "person" && c.role !== "ignore" && !(c.role === "id" && /^(s\.?\s?no\.?|sl\.?\s?no\.?|sr\.?\s?no\.?|serial( no\.?)?|#|no\.?|row( no\.?)?)$/i.test(c.header.trim())))
       .slice(0, 8).map((c) => ({ key: c.key, label: c.label }));
     const withPlace = cols.some((c) => spec.columns.find((x) => x.key === c.key)?.role === "zone") ? cols : [...cols, { key: "_z", label: "Zone" }];
-    // newest first; "asc" lists the oldest first (what has waited longest)
-    const sorted = [...sel].sort((a, b) => (plan.sort === "asc" ? -1 : 1) * String(b._d ?? "").localeCompare(String(a._d ?? "")));
+    // a measure given: largest first, drawn as bars in its cells (a small table); else newest first ("asc": oldest first)
+    const num = (r: DRow) => (typeof r[plan.col ?? ""] === "number" ? (r[plan.col ?? ""] as number) : -Infinity);
+    const sorted = [...sel].sort(plan.col ? (a, b) => num(b) - num(a) : (a, b) => (plan.sort === "asc" ? -1 : 1) * String(b._d ?? "").localeCompare(String(a._d ?? "")));
     base.table = {
+      bar: plan.col && withPlace.some((c) => c.key === plan.col) ? plan.col : null,
       cols: withPlace,
       rows: sorted.slice(0, Math.min(200, plan.limit || 200)).map((r) => Object.fromEntries(withPlace.map((c) => [c.key, c.key === "_z" ? (typeof r._z === "number" ? names.zone(r._z) : null) : r[c.key] ?? null])))
     };
@@ -153,7 +156,8 @@ export function runPlan(rows: DRow[], spec: Spec, plan: Plan, names: Names): Pan
       spark = keys.filter((k) => k >= first).map((k) => aggregate(weeks.get(k) ?? [], plan));
       if ((plan.agg === "count" || plan.agg === "sum") && spark.length >= 2) {
         const a = spark[spark.length - 1], b = spark[spark.length - 2];
-        delta = b ? Math.round(((a - b) / b) * 100) : null;
+        // a % change on a base under 20 says more about chance than change (readiness.ts GUARD)
+        delta = b >= GUARD.minPctBase ? Math.round(((a - b) / b) * 100) : null;
       }
     }
     const tone: Tone = plan.filters.some((f) => f.op === "open") ? "high" : plan.agg === "sum" ? "teal" : "info";
