@@ -20,7 +20,7 @@ import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
 import { mergeSpec, respec, rulesSpec } from "@/lib/studio/spec";
 import { dropPending, findBySource, getCandidates, getMeta, getPending, getPick, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, savePick, saveSource } from "@/lib/studio/store";
 import { type Connected } from "@/lib/studio/connect";
-import { choose, schemaHash, tableHash, type Found } from "@/lib/studio/connect/discover";
+import { choose, safeDecode, schemaHash, tableHash, type Found } from "@/lib/studio/connect/discover";
 import { OutcomeStop, duplicateOutcome, findDuplicate, readLink, resolveLink } from "@/lib/studio/connect/resolve";
 import { fetchOnce } from "@/lib/studio/fetchurl";
 import { readiness } from "@/lib/studio/readiness";
@@ -129,6 +129,15 @@ export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   return run({ id, table, source, name: inp.name ?? null, user: inp.user, prior: null, steps: [readLog], sample: inp.kind === "sample", force: inp.force, pre: inp.pre ?? null }, emit);
 }
 
+/**
+ * What is kept as a link dataset's original: the file as sent when the link held one table, else the chosen table
+ * itself, so datasets chosen from one page are not one file to the list (R-06 shows one card per original).
+ */
+function sourceOf(c: Connected, chosen: Found): Buffer {
+  if (c.found.length <= 1 && !c.html) return c.buf;
+  return Buffer.from(JSON.stringify({ from: chosen.cand.url ?? c.url, label: chosen.cand.label, headers: chosen.table.headers, rows: chosen.table.rows }));
+}
+
 /** The ConnectInfo for a link just read: how, what was found, which one is used, and the refresh plan. */
 function connectInfo(c: Connected, chosen: Found, auth: AuthInput, every: number | null, prev?: ConnectInfo | null): ConnectInfo {
   return {
@@ -181,7 +190,7 @@ export async function ingestLink(p: { url: string; auth: AuthInput | null; every
   if (auth.mode !== "none") saveVault(id, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString() : null });
   const info = connectInfo(c, chosen, auth, p.every);
   info.history = [{ at: info.fetchedAt, ok: true, rows: chosen.table.rows.length, changed: true, note: `Connected · ${chosen.cand.label}` }];
-  return ingest({ id, buf: c.buf, file: c.name, kind: "link", url: p.url, contentType: c.contentType, base: c.url, name: p.name, user: p.user, table: chosen.table, connect: info, pre: o.reason as IngestInput["pre"] }, emit);
+  return ingest({ id, buf: sourceOf(c, chosen), file: c.name, kind: "link", url: p.url, contentType: c.contentType, base: c.url, name: p.name, user: p.user, table: chosen.table, connect: info, pre: o.reason as IngestInput["pre"] }, emit);
 }
 
 /** The Collector's choice in the picker: one candidate, several combined, or a series (latest, all, kept updating). */
@@ -245,7 +254,8 @@ export async function ingestPick(token: string, choice: PickChoice, user: string
   info.history = [{ at: info.fetchedAt, ok: true, rows: chosen.table.rows.length, changed: true, note: `Chosen in the picker · ${chosen.cand.label}` }];
   const card = saved.pick.cards.find((x) => x.id === picked[0].cand.id);
   const pre = card?.group === "notchennai" ? "unrelated" : card?.chennaiRows ? "district" : "partly";
-  return ingest({ id, buf: page.buf, file: page.name, kind: "link", url: saved.pick.url, contentType: page.contentType, base: page.url, name: choice.name ?? saved.name,
+  const own = sourceOf(page, chosen);
+  return ingest({ id, buf: own, file: (chosen.cand.url ? safeDecode(new URL(chosen.cand.url).pathname.split("/").pop() || "") : "") || page.name, kind: "link", url: saved.pick.url, contentType: "application/json", base: page.url, name: choice.name ?? saved.name,
     user, table: chosen.table, connect: info, pre, force: pre === "unrelated" }, emit);
 }
 
@@ -339,7 +349,7 @@ export async function refreshDataset(id: string, user: string, emit: Emit): Prom
     const table = withTopics(chosen.table);
     const same = sameHeaders(table, meta);
     if (prev && !same) log("The table's columns have changed since the last fetch: the agents read it afresh.");
-    saveSource(id, c.buf);
+    saveSource(id, sourceOf(c, chosen));
     saveCandidates(id, c.found);
     const connect: ConnectInfo = { ...connectInfo(c, chosen, auth, prev?.every ?? null, prev), history: [{ at: now, ok: true, rows: table.rows.length, changed: true,
       note: `${(table.rows.length - meta.rows) >= 0 ? "+" : ""}${(table.rows.length - meta.rows).toLocaleString("en-IN")} rows${same ? "" : " · columns changed"}` }, ...(prev?.history ?? [])].slice(0, 20) };

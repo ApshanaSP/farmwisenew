@@ -148,7 +148,7 @@ export function pickCards(found: Found[], gates: Map<string, GateInfo>, checked:
     const group: PickGroup = g.rel.verdict === "unrelated" ? "notchennai" : s ? "series" : g.ok && (g.rel.chennaiRows > 0 || g.rel.verdict === "district") ? "recommended" : "other";
     const why = group === "notchennai" ? g.rel.why
       : !earns(g.r.tier) ? `Only ${plural(g.r.rows, "row")}: too few for charts (a fact card)`
-      : [g.rel.chennaiRows ? `${plural(g.rel.chennaiRows, "Chennai row")}` : g.rel.why.replace(/\.$/, ""), c.updated ? `updated ${fmtDay(c.updated)}` : range ? `data to ${fmtDay(range.to)}` : ""].filter(Boolean).join(" · ");
+      : g.rel.why.replace(/\.$/, "");
     cards.push({
       id: c.id, name: s ? `${seriesTitle({ pattern: s.pattern, step: "day" })}` : c.label, type: c.type ?? "csv", source: c.source ?? page, url: c.url ?? null,
       rows: c.rows, cols: c.cols, headers: c.headers.slice(0, 12), dateRange: range, chennaiRows: g.rel.chennaiRows, updated: c.updated ?? null, bytes: c.bytes ?? null,
@@ -295,7 +295,7 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
   const g = gates.get(one.cand.id)!;
   if (!earns(g.r.tier)) return done(noData(found, gates, connected, url, checked, explored), found, gates, connected);
   if (g.rel.verdict === "unrelated") return done({ kind: "notrelevant", reason: "unrelated", url, checked: [...lines, `Checked for Chennai: ${g.rel.why}`], preview: preview(one.table),
-    why: `This is real data, but not about Chennai. ${g.rel.why}`, next: [{ label: "Use anyway", act: "useAnyway" }, { label: "Paste another link", act: "link" }] }, found, gates, connected, one);
+    why: `This is real data, but not about Chennai: ${g.rel.why.charAt(0).toLowerCase()}${g.rel.why.slice(1)}`, next: [{ label: "Use anyway", act: "useAnyway" }, { label: "Paste another link", act: "link" }] }, found, gates, connected, one);
   const dup = findDuplicate(url, connected.html ? null : connected.buf, one.table);
   if (dup) return done(duplicateOutcome(dup, url), found, gates, connected, one);
   return done({ kind: "data", reason: g.rel.verdict, url, checked: [...lines, `Checked for Chennai: ${g.rel.why}`, `Enough to chart: ${g.r.summary}.`], why: "", next: [] }, found, gates, connected, one);

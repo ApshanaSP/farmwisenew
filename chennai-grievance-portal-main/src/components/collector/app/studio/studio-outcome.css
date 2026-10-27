@@ -12,8 +12,9 @@
 .dic .ds-out.k-error .ds-out-ic{background:var(--critical-soft);color:var(--critical);border-color:var(--critical-line)}
 .dic .ds-out.k-duplicate .ds-out-ic{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
 .dic .ds-out-ic.k-choose{background:var(--ai-soft);color:var(--ai);border-color:var(--ai-line)}
-.dic .ds-out-ht{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.dic .ds-out-ht h2{margin:0;font:700 18px/1.3 var(--dic-display,var(--dic-sans)),sans-serif;color:var(--text);overflow-wrap:anywhere}
+.dic .ds-out-ht{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:3px}
+/* words wrap whole (a Tamil word is never cut in the middle) */
+.dic .ds-out-ht h2{margin:0;font:700 18px/1.35 var(--dic-display,var(--dic-sans)),sans-serif;color:var(--text);overflow-wrap:break-word;word-break:normal}
 .dic .ds-out-url{color:var(--text-3);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .dic .ds-out-why{margin:0;font-size:14px;line-height:1.55;color:var(--text);max-width:70ch}
 .dic .ds-out-sec{display:flex;flex-direction:column;gap:8px}
@@ -29,6 +30,8 @@
 .dic .ds-out-prev th{position:sticky;top:0;background:var(--surface-2);color:var(--text-2);font-weight:650}
 .dic .ds-out-prev:focus-visible,.dic .ds-pick button:focus-visible,.dic .ds-pick input:focus-visible,.dic .ds-pick select:focus-visible,.dic .ds-out button:focus-visible{outline:2px solid var(--line-focus,var(--accent));outline-offset:2px}
 .dic .ds-lang{flex:none}
+.dic .ds-warnbar{display:flex;gap:8px;align-items:flex-start;margin:0 14px 8px;padding:9px 12px;border-radius:10px;background:var(--high-soft);border:1px solid var(--high-line);color:var(--text);font-size:12.5px;line-height:1.45}
+.dic .ds-warnbar .ic{width:16px;height:16px;flex:none;margin-top:1px;color:var(--high)}
 .dic .ds-lang button{min-width:44px;min-height:32px}
 
 /* ---------- the picker ---------- */
@@ -60,6 +63,7 @@
 .dic .ds-pcard-m{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text-2);padding-left:78px;font-variant-numeric:tabular-nums}
 .dic .ds-pcard-m .src{color:var(--text-3)}
 .dic .ds-pcard-cols{display:flex;flex-wrap:wrap;gap:5px;padding-left:78px}
+.dic .ds-pcard-cols .ds-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-pill,999px);background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);font-size:11.5px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .dic .ds-pcard-cols .ds-tag.more{opacity:.7}
 .dic .ds-pcard .ds-lnk{align-self:flex-start;margin-left:78px;min-height:32px}
 .dic .ds-pcard .ds-out-prev,.dic .ds-pcard .ds-skel{margin-left:78px;width:auto}
@@ -69,6 +73,8 @@
   background:linear-gradient(180deg,transparent,var(--surface) 30%)}
 .dic .ds-pick-f .ds-btn,.dic .ds-pick-f .ds-ghost{min-height:44px;height:auto}
 .dic .ds-pick-f small{margin-right:auto}
+/* room for the console's floating "Ask District IQ" button on wide screens */
+@media (min-width:701px){.dic .ds-pick-f{padding-right:150px}}
 .dic .ds-ghost.wide{justify-content:center;width:100%;min-height:40px}
 
 @media (max-width:700px){

@@ -116,6 +116,9 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
       <section className="ds-ws card">
         <Head data={data} tab={tab} setTab={setTab} issuesN={issuesN} c={c} onRefresh={onRefresh} onDeleted={onDeleted} onRenamed={refresh} />
         <SourceBar meta={m as DatasetData["meta"]} c={c} onChoose={onChoose} onRefresh={onRefresh} onChanged={() => { refresh(); onPinned(); }} />
+        {m.relevance?.forced && (
+          <p className="ds-warnbar" role="note"><I n="alert" /><span><b>Not Chennai&apos;s data: added anyway.</b> {m.relevance.why} Its numbers are not the district&apos;s; read them as outside data.</span></p>
+        )}
         <div className="ds-ws-b" key={tab}>
           {tab === "dash" && (
             <div className="ds-dash">

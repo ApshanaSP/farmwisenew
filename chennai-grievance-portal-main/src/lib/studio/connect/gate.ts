@@ -141,7 +141,7 @@ export function quickRelevance(t: Table, ctx: { url: string | null; title?: stri
     if (sw.chennai > 0) return { verdict: "partly", why: `A Tamil Nadu table by ${sw.label.toLowerCase()}: Chennai's ${sw.chennai} of ${rows.length} rows are kept.`, chennaiRows: sw.chennai, stateWide: sw };
     return { verdict: "unrelated", why: `A table of Tamil Nadu's districts without a row for Chennai.`, chennaiRows: 0, stateWide: sw };
   }
-  if (offTopic && chennaiRows / n < 0.3) return { verdict: "unrelated", why: `Real data, but ${offTopic.what}, not the district's.`, chennaiRows, stateWide: null };
+  if (offTopic && chennaiRows / n < 0.3) return { verdict: "unrelated", why: `It holds ${offTopic.what}, not the district's data.`, chennaiRows, stateWide: null };
   if (chennaiRows / n >= 0.3) return { verdict: "district", why: `${Math.round((chennaiRows / n) * 100)}% of its rows name places in Chennai.`, chennaiRows, stateWide: null };
   if (named && (chennaiRows >= 1 || wardCol)) return { verdict: "district", why: "It names Chennai, and its rows name Chennai's places, wards or zones.", chennaiRows, stateWide: null };
   if (named) return { verdict: "partly", why: "The source names Chennai, though its rows name no place.", chennaiRows, stateWide: null };

@@ -124,6 +124,8 @@ async function viaBrowser(url: string, auth: AuthInput, opts: { session?: string
   log(`The browser finished the page${v.title ? ` "${v.title.slice(0, 70)}"` : ""}; it loaded ${v.json.length} data ${v.json.length === 1 ? "response" : "responses"}.`);
   const buf = Buffer.from(v.html, "utf8");
   const found = await discover({ buf, name: `${host(v.url)}.html`, contentType: "text/html", url: v.url, html: v.html, json: v.json, title: v.title }, log, undefined, checked);
+  // the same page, read again in the browser: one page read, not two
+  if (before.length || checked.pages > 1) checked.pages = Math.max(1, checked.pages - 1);
   // keep anything the plain page had that the browser did not show again
   for (const f of before) if (!found.some((g) => g.cand.label === f.cand.label && g.cand.rows === f.cand.rows)) found.push(f);
   found.sort((a, b) => b.cand.score - a.cand.score);
