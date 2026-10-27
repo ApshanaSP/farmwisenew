@@ -338,6 +338,18 @@ describe("insights and the brief", () => {
   const z: Names = { zone: (k) => (k === 13 ? "Adyar" : `Zone ${k}`), taluk: (t) => t, zoneOf: (v) => Number(v) || null };
   const det = { before: 90, after: 95, rowsIn: 600, rowsOut: 600, issues: [], placed: 600, unplaced: [] };
 
+  // R-19 (27 Oct 2026): "Valasaravakkam hosts 8 metro stations" was counted among the Briefing's "need action"
+  it("a list of things with no open status (stations, facilities) gets a zone note, never an action", async () => {
+    const { computeInsights } = await import("@/lib/studio/insights");
+    const { priorityOf } = await import("@/lib/studio/brief");
+    const things = { ...spec, entity: "metro station", entityPlural: "metro stations", openValues: [], openWord: "",
+      columns: spec.columns.filter((c: any) => c.role !== "status") };
+    const ins = computeInsights(rows.map(({ c2, _o, ...r }) => r), things as any, det, null, { from: "2026-07-09", to: "2026-09-30" }, z);
+    const hot = ins.find((x) => x.label === "Hotspot");
+    expect(hot).toBeTruthy();
+    expect(priorityOf(hot!)).toBe("note");
+  });
+
   it("finds the backlog, the waits, the lagging type and the hotspot, in plain grammar", async () => {
     const { computeInsights } = await import("@/lib/studio/insights");
     const ins = computeInsights(rows, spec, det, null, { from: "2026-07-09", to: "2026-09-30" }, z);

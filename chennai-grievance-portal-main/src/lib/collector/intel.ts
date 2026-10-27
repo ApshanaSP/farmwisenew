@@ -478,7 +478,10 @@ export function explain(r: Row): Plain {
     const n = raw.toLowerCase();
     if ((m = n.match(/^(\d+) fatalit/))) facts.push(`${m[1]} ${m[1] === "1" ? "death" : "deaths"}`);
     else if ((m = n.match(/^(\d+) injured/))) facts.push(`${m[1]} ${m[1] === "1" ? "person" : "people"} injured`);
-    else if ((m = n.match(/^about (\d+) people affected/))) facts.push(`About ${Number(m[1]).toLocaleString("en-IN")} people affected`);
+    // the incident's own figure (the most any of its reports gave), not the one report the note was scored on (R-14: "About
+    // 500 people affected" beside persons_affected 1000)
+    else if ((m = n.match(/^about (\d+) people affected/)))
+      facts.push(`About ${Math.max(Number(m[1]), Number(r.persons_affected) || 0).toLocaleString("en-IN")} people affected`);
     else if ((m = n.match(/^road blocked (\d+) min/))) facts.push(`Road blocked for ${m[1]} minutes`);
     else if (n === "full service disruption") facts.push("Service fully cut off");
     else if (n === "partial service disruption") facts.push("Service partly disrupted");

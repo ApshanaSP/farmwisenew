@@ -213,7 +213,10 @@ export function watchList(max = 6): WatchItem[] {
     const m = getMeta(d.id);
     const b = m?.brief;
     if (!m || !b?.items?.length) continue;
-    const items = [...b.items].sort((x, y) => RANK[x.priority] - RANK[y.priority] || y.score - x.score);
+    // a brief saved before R-19 may rank a zone count of things (no open status) as an action: it is a note
+    const things = !m.spec.columns?.some((c) => c.role === "status");
+    const items = b.items.map((x) => (things && x.label === "Hotspot" && x.priority !== "note" ? { ...x, priority: "note" as const } : x))
+      .sort((x, y) => RANK[x.priority] - RANK[y.priority] || y.score - x.score);
     out.push({
       id: m.id, name: m.name, sample: m.sample, updatedAt: m.updatedAt, department: m.spec.deptName, verdict: b.verdict,
       act: items.filter((x) => x.priority === "act").length,

@@ -1114,7 +1114,7 @@
 .dic .a-sev .sevtab{padding:4px 7px;border-radius:9px}
 .dic .a-sev .sevtab b{font-size:16px}
 .dic .a-sev .sevtab span{font-size:11px;gap:4px}
-.dic .task-rule span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .task-rule span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden} /* wraps at a word, never cut mid-word (R-24) */
 .dic .task-f{justify-content:flex-end}
 
 /* page 3: which problems are rising (two bars per problem: before vs now) */

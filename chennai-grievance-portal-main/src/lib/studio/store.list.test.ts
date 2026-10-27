@@ -57,3 +57,16 @@ describe("Data Studio's list (R-06)", () => {
     }
   });
 });
+
+describe("the Briefing's dataset findings (R-19)", () => {
+  it("a saved brief's zone count of things is a note, not an action", () => {
+    const m = meta("ds_eeeeee1", "Chennai Metro Stations List", null, "2026-10-26T10:00:00Z", {
+      brief: { verdict: "Metro stations by zone", items: [
+        { label: "Hotspot", priority: "act", score: 70, title: "Valasaravakkam carries the heaviest load", headline: "Valasaravakkam hosts 8 metro stations",
+          metric: { value: "8", caption: "metro stations in Valasaravakkam" } }] }
+    });
+    put(m, "station,zone\nA,11");
+    const w = store.watchList().find((x) => x.id === "ds_eeeeee1");
+    expect(w?.act).toBe(0);
+  });
+});

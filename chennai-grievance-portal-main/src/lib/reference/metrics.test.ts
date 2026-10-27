@@ -47,3 +47,14 @@ describe("data age (R-05)", () => {
     expect(dataAge(null, "2026-10-27 15:30:00").stale).toBe(true);
   });
 });
+
+// R-14 (27 Oct 2026): the Cooum bund breach said "About 500 people affected" (one report's note) beside persons_affected
+// 1000 (the most any report gave), and the AI analysis said 1000
+describe("one figure for people affected (R-14)", () => {
+  it("the facts use the incident's figure", () => {
+    const p = explain({ severity_reasons: "bund breach (+60); Full service disruption (+15); About 500 people affected (+15)", persons_affected: 1000,
+      priority_reasons: "", attention_reason: "", sev: "Severe", open: 1 } as any);
+    expect(p.facts).toContain("About 1,000 people affected");
+    expect(p.facts.join(" ")).not.toMatch(/\b500 people/);
+  });
+});
