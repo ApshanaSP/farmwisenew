@@ -37,6 +37,7 @@ import "./tokens.css";
 import "./collector.css";
 import { MotionConfig } from "motion/react";
 import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
+import Thunai, { type ThunaiHost } from "./thunai/Thunai";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
 import "./marina.css";
@@ -649,6 +650,24 @@ export default function CollectorApp({ initial, allDepts, user }: {
     [60, 900].forEach((ms) => setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), ms));
   };
 
+  // Thunai, the voice pilot: it presses these same controls; a sentence's filters land in one render and one undo
+  const thunaiHost: ThunaiHost = {
+    c, ov, ins, inc, modal: modal?.kind ?? null, ask, theme, toggleTheme, openExport, openCustomize, openPalette: () => setPalette(true), askWith,
+    applyView: (v) => {
+      if (v.zone !== undefined) { setZoneState(v.zone); setEnvSelState({ rain: "auto", aqi: "auto", lake: "auto" }); }
+      if (v.dept !== undefined) setDeptState(v.dept);
+      if (v.cat !== undefined) setCatState(v.cat);
+      if (v.taluk !== undefined) setTalukState(v.taluk);
+      if (v.sev) setSevTab(v.sev);
+      if (v.zone !== undefined || v.dept !== undefined || v.taluk !== undefined) closeAll();
+    },
+    snapshot: () => ({ page, period, zone, dept, cat, taluk, sev: sevTab, mapMode, layers }),
+    restore: (s) => {
+      setPageState(s.page); setPeriod(s.period); setZoneState(s.zone); setDeptState(s.dept); setCatState(s.cat); setTalukState(s.taluk);
+      setSevTab(s.sev); setMapMode(s.mapMode); setLayers(s.layers); closeAll();
+    }
+  };
+
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
@@ -828,6 +847,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
           {insightCount > 0 && !ask && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
         </button>
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} />}
+        <Thunai host={thunaiHost} />
       </div>
     </div>
     </MotionConfig>

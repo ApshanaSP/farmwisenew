@@ -24,6 +24,8 @@ export const ZONES: Record<number, { en: string[]; ta: string[] }> = {
   15: { en: ["sholinganallur", "sholinganalur", "solinganallur", "shozhinganallur"], ta: ["சோழிங்கநல்லூர்"] }
 };
 export const ZONE_TA_NAME: Record<number, string> = Object.fromEntries(Object.entries(ZONES).map(([n, z]) => [n, z.ta[0]]));
+export const ZONE_NAMES = ["Thiruvottiyur", "Manali", "Madhavaram", "Tondiarpet", "Royapuram", "Thiru-Vi-Ka Nagar", "Ambattur", "Anna Nagar",
+  "Teynampet", "Kodambakkam", "Valasaravakkam", "Alandur", "Adyar", "Perungudi", "Sholinganallur"];
 
 /** department code -> extra spoken names (the console's own names are added at runtime) */
 export const DEPT_ALIASES: Record<string, string[]> = {

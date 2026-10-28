@@ -1,0 +1,123 @@
+/* Thunai: calm, not sci-fi. Motion explains, sound confirms, nothing flashes. Rendered on <body>, outside the console's
+   scaled canvas, so its own colour tokens follow <html data-theme>. */
+.thunai {
+  --th-bg: #ffffff; --th-fg: #14213d; --th-muted: #5b6474; --th-line: rgba(20, 33, 61, .14); --th-orb: #3b5bdb; --th-orb2: #5c7cfa;
+  --th-brass: #b8923d; --th-red: #b83a32; --th-green: #2f9e6e; --th-shadow: 0 10px 30px rgba(20, 33, 61, .18);
+  font-family: Inter, "Noto Sans Tamil", system-ui, sans-serif; color: var(--th-fg);
+}
+html[data-theme="dark"] .thunai {
+  --th-bg: #111a2e; --th-fg: #e8ecf5; --th-muted: #a5b0c4; --th-line: rgba(232, 236, 245, .16); --th-orb: #4c6ef5; --th-orb2: #748ffc;
+  --th-brass: #d8b65f; --th-red: #e0574f; --th-green: #4dbb8d; --th-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+.thunai button { font: inherit; cursor: pointer; }
+
+/* the orb: above Ask District IQ, out of the map's controls */
+.thunai .th-orb { position: fixed; right: 26px; bottom: 82px; z-index: 2147483000; width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0;
+  background: radial-gradient(circle at 35% 30%, var(--th-orb2), var(--th-orb)); box-shadow: var(--th-shadow); display: grid; place-items: center;
+  opacity: .55; transition: transform .2s ease, opacity .2s ease, box-shadow .2s ease; }
+.thunai.on .th-orb { opacity: 1; }
+.thunai .th-orb:hover, .thunai .th-orb:focus-visible { transform: scale(1.06); outline: 2px solid var(--th-orb2); outline-offset: 3px; }
+.thunai .th-orb .core { width: 16px; height: 16px; border-radius: 50%; background: rgba(255, 255, 255, .9); transition: transform .3s ease; }
+.thunai .th-orb.ready .core { animation: th-breathe 4s ease-in-out infinite; }
+.thunai .th-orb.listening .core { transform: scale(1.25); }
+.thunai .th-orb.thinking .core { animation: th-turn 1s linear infinite; border-radius: 4px; }
+.thunai .th-orb.speaking .core { animation: th-wave .8s ease-in-out infinite; }
+.thunai .th-orb.asking, .thunai .th-orb.waiting { background: radial-gradient(circle at 35% 30%, #e9c46a, var(--th-brass)); }
+.thunai .th-orb.blocked { background: radial-gradient(circle at 35% 30%, #e07a74, var(--th-red)); }
+.thunai .th-orb.pulse { animation: th-pulse .4s ease; }
+.thunai .th-orb .mic { position: absolute; top: 2px; right: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--th-red); border: 2px solid var(--th-bg); }
+.thunai .th-orb .count { position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--th-brass); color: #fff;
+  font: 600 11px/18px Inter, system-ui; font-style: normal; text-align: center; padding: 0 4px; }
+@keyframes th-breathe { 0%, 100% { transform: scale(.85); opacity: .75; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes th-turn { to { transform: rotate(360deg); } }
+@keyframes th-wave { 0%, 100% { transform: scaleY(.7); } 50% { transform: scaleY(1.2); } }
+@keyframes th-pulse { 50% { transform: scale(1.15); } }
+
+/* the command bar under the orb */
+.thunai .th-bar { position: fixed; right: 80px; bottom: 82px; z-index: 2147482999; display: flex; flex-direction: column; gap: 6px; width: min(420px, calc(100vw - 110px)); }
+.thunai .th-bar input { height: 40px; border-radius: 12px; border: 1px solid var(--th-line); background: var(--th-bg); color: var(--th-fg); padding: 0 12px; box-shadow: var(--th-shadow); font-size: 14px; }
+.thunai .th-bar input:focus { outline: 2px solid var(--th-orb2); outline-offset: 1px; }
+.thunai .th-tools { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.thunai .th-tools button { height: 26px; padding: 0 9px; border-radius: 13px; border: 1px solid var(--th-line); background: var(--th-bg); color: var(--th-muted); font-size: 12px; }
+.thunai .th-tools button.on { color: var(--th-fg); border-color: var(--th-orb2); }
+
+/* subtitles and the step strip */
+.thunai .th-dock { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2147482998; max-width: min(760px, calc(100vw - 32px));
+  background: var(--th-bg); border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); padding: 8px 14px; text-align: center; }
+.thunai .th-heard { margin: 2px 0; font-size: 15px; color: var(--th-fg); }
+.thunai .th-heard.interim { color: var(--th-muted); font-style: italic; }
+.thunai .th-reply { margin: 2px 0; font-size: 14px; color: var(--th-muted); }
+.thunai .th-chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; align-items: center; margin-bottom: 4px; }
+.thunai .th-chip { font-size: 12.5px; padding: 3px 9px; border-radius: 10px; border: 1px solid var(--th-line); color: var(--th-muted); }
+.thunai .th-chip i { font-style: normal; margin-left: 6px; color: var(--th-muted); }
+.thunai .th-chip.running { color: var(--th-fg); border-color: var(--th-orb2); }
+.thunai .th-chip.done { color: var(--th-green); border-color: color-mix(in srgb, var(--th-green) 40%, transparent); }
+.thunai .th-chip.failed { color: var(--th-red); }
+.thunai .th-undo, .thunai .th-wrong { margin-left: 6px; height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--th-line); background: transparent; color: var(--th-fg); font-size: 12px; }
+.thunai .th-wrong { margin-top: 4px; border-color: var(--th-brass); }
+
+/* one question, one-tap cards, the approval tray */
+.thunai .th-card, .thunai .th-tray { position: fixed; right: 80px; bottom: 170px; z-index: 2147483001; width: min(360px, calc(100vw - 110px)); background: var(--th-bg);
+  border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); padding: 12px 14px; }
+.thunai .th-card.amber, .thunai .th-tray { border-color: var(--th-brass); }
+.thunai .th-card p { margin: 0 0 10px; font-size: 14.5px; }
+.thunai .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.thunai .row button { height: 32px; padding: 0 14px; border-radius: 16px; border: 1px solid var(--th-line); background: transparent; color: var(--th-fg); }
+.thunai .row button.primary { background: var(--th-orb); border-color: var(--th-orb); color: #fff; }
+.thunai .th-tray header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.thunai .th-tray header span { background: var(--th-brass); color: #fff; border-radius: 10px; padding: 0 8px; font-size: 12px; }
+.thunai .th-tray ol { margin: 0 0 8px; padding-left: 18px; max-height: 180px; overflow: auto; font-size: 13px; }
+.thunai .th-tray li small { display: block; color: var(--th-muted); }
+.thunai .th-tray .hint { margin: 0 0 8px; font-size: 12.5px; color: var(--th-muted); }
+
+/* memory, trail, help */
+.thunai .th-panel { position: fixed; right: 18px; top: 70px; bottom: 140px; z-index: 2147483001; width: min(380px, calc(100vw - 36px)); background: var(--th-bg);
+  border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); display: flex; flex-direction: column; }
+.thunai .th-panel header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--th-line); }
+.thunai .th-panel header button { border: 0; background: transparent; color: var(--th-muted); font-size: 20px; }
+.thunai .th-panel .body { padding: 10px 14px; overflow: auto; font-size: 13.5px; }
+.thunai .th-panel h4 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--th-muted); }
+.thunai .th-panel ul { list-style: none; margin: 0; padding: 0; }
+.thunai .th-panel li { display: flex; gap: 8px; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px dashed var(--th-line); }
+.thunai .th-panel li button { border: 0; background: transparent; color: var(--th-red); font-size: 12px; }
+.thunai .th-panel .danger { margin-top: 12px; border: 1px solid var(--th-red); color: var(--th-red); background: transparent; border-radius: 14px; height: 28px; padding: 0 12px; }
+.thunai .th-panel .muted { color: var(--th-muted); }
+.thunai .th-panel .ok { color: var(--th-green); } .thunai .th-panel .bad { color: var(--th-red); }
+.thunai .th-panel ol.trail { margin: 0; padding: 0; list-style: none; }
+.thunai .th-panel ol.trail li { display: grid; grid-template-columns: auto auto 1fr; gap: 6px; align-items: baseline; }
+.thunai .th-panel ol.trail time { color: var(--th-muted); font-size: 11.5px; }
+.thunai .th-panel ol.trail small { grid-column: 3; color: var(--th-muted); }
+.thunai .risk { font-size: 11px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--th-line); }
+.thunai .risk.rB { border-color: var(--th-brass); } .thunai .risk.rC { border-color: var(--th-red); color: var(--th-red); }
+.thunai .help { display: flex; flex-wrap: wrap; gap: 6px; }
+.thunai .help button { border: 1px solid var(--th-line); background: transparent; color: var(--th-fg); border-radius: 14px; padding: 4px 10px; font-size: 13px; }
+
+/* the ghost pointer: a translucent ring that never takes real input */
+.thunai .th-pointer { position: fixed; left: 0; top: 0; z-index: 2147483002; pointer-events: none; transition: transform .32s cubic-bezier(.2, .7, .2, 1); }
+.thunai .th-pointer .ring { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--th-orb2);
+  background: color-mix(in srgb, var(--th-orb2) 18%, transparent); }
+.thunai .th-pointer.ripple .ring { animation: th-ripple .45s ease-out; }
+.thunai .th-pointer b { position: absolute; left: 18px; top: 10px; white-space: nowrap; font: 600 11.5px Inter, system-ui; color: #fff; background: var(--th-orb);
+  border-radius: 8px; padding: 2px 7px; }
+@keyframes th-ripple { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--th-orb2) 55%, transparent); } to { box-shadow: 0 0 0 18px transparent; } }
+
+/* "show numbers" */
+.thunai .th-badge { position: fixed; z-index: 2147483003; pointer-events: none; background: #111827; color: #fff; font: 700 11px/16px Inter, system-ui;
+  padding: 0 5px; border-radius: 8px; box-shadow: 0 0 0 2px #fde047; white-space: nowrap; }
+
+/* the spotlight on the card holding the number being spoken */
+body.thunai-dim .card:not(.thunai-spot), body.thunai-dim .bb-card:not(.thunai-spot) { opacity: .7; transition: opacity .25s ease; }
+.thunai-spot { outline: 2px solid #5c7cfa !important; outline-offset: 2px; transition: outline .2s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .thunai .th-pointer { transition: none; }
+  .thunai .th-orb .core, .thunai .th-pointer.ripple .ring { animation: none !important; }
+}
+/* phone: the bar spans the width above the orb; the dock sits at the top so the map stays visible */
+@media (max-width: 700px) {
+  .thunai .th-orb { right: 16px; bottom: 80px; width: 52px; height: 52px; }
+  .thunai .th-bar { right: 16px; left: 16px; width: auto; bottom: 140px; }
+  .thunai .th-dock { bottom: auto; top: 12px; }
+  .thunai .th-card, .thunai .th-tray { right: 16px; left: 16px; width: auto; bottom: 210px; }
+  .thunai .th-panel { left: 16px; right: 16px; width: auto; top: 12px; bottom: 210px; }
+}
