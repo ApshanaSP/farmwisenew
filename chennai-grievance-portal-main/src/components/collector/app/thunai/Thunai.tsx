@@ -121,7 +121,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   const orbRef = useRef<HTMLButtonElement>(null);
   const stopListen = useRef<(() => void) | null>(null);
-  const undoStack = useRef<{ label: string; snap: Snap }[]>([]);
+  const undoStack = useRef<{ steps: Step[]; snap: Snap }[]>([]);
   const lastSteps = useRef<Step[]>([]);
   const lastSpoken = useRef<{ text: string; lang: Lang } | null>(null);
   const lastFilter = useRef<ScreenState["lastFilter"]>(null);
@@ -211,8 +211,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const loadMemory = useCallback(async () => {
     try { const r = await fetch("/api/collector/thunai/memory"); if (r.ok) setMemory(await r.json()); } catch { /* offline */ }
   }, []);
-  const changeMemory = async (op: Record<string, unknown>) => {
-    try { setMemory(await post("/api/collector/thunai/memory", op)); } catch { /* shown by the caller */ }
+  /** true when the server saved the change (a failure is never reported as "remembered") */
+  const changeMemory = async (op: Record<string, unknown>): Promise<boolean> => {
+    try { setMemory(await post("/api/collector/thunai/memory", op)); return true; } catch { return false; }
   };
 
   // --------------------------------------------------------------- the pointer --
@@ -412,11 +413,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         } catch { return line("noWorkspace", lang, { name: step.name }); }
       }
       case "undo": {
-        let snap: Snap | null = null; let label = "";
-        for (let k = 0; k < step.n && undoStack.current.length; k++) { const u = undoStack.current.pop()!; snap = u.snap; label = u.label; }
+        let snap: Snap | null = null; let undone: Step[] = [];
+        for (let k = 0; k < step.n && undoStack.current.length; k++) { const u = undoStack.current.pop()!; snap = u.snap; undone = u.steps; }
         if (!snap) return line("nothingToUndo", lang);
         h.restore(snap);
-        return line("undone", lang, { what: label });
+        return line("undone", lang, { what: undone.map((s) => describeStep(s, worldRef.current, lang)).join(", ") });
       }
       case "stop": stopSpeaking(); abortMission.current = true; return null;
       case "off": switchOff(); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -446,10 +447,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       case "scroll": scroll(step.dir); return null;
       case "type": typeInto(step.text); return null;
       case "clearText": typeInto("", true); return null;
-      case "remember": await changeMemory({ op: "note", text: step.text }); return line("remembered", lang);
+      case "remember": return (await changeMemory({ op: "note", text: step.text })) ? line("remembered", lang) : line("memoryFail", lang);
       case "recall": await loadMemory(); setPanel("memory"); return null;
-      case "forget": await changeMemory(step.all ? { op: "forget", all: true } : { op: "forget" }); return line(step.all ? "forgottenAll" : "forgotten", lang);
-      case "remind": await changeMemory({ op: "remind", text: step.text, at: step.at }); return line("reminder", lang, { when: whenOf(step.at) });
+      case "forget": return (await changeMemory(step.all ? { op: "forget", all: true } : { op: "forget" })) ? line(step.all ? "forgottenAll" : "forgotten", lang) : line("memoryFail", lang);
+      case "remind": return (await changeMemory({ op: "remind", text: step.text, at: step.at })) ? line("reminder", lang, { when: whenOf(step.at) }) : line("memoryFail", lang);
       case "send": {
         if (tray.length) return line("sendGate", lang, { n: tray.length });
         const id = buildState().incident;
@@ -473,7 +474,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!steps.length) { setPhase("ready"); return; }
     const changes = steps.some((s) => VIEW_CHANGING.has(s.a) && !(s.a === "workspace" && s.op === "save"));
     if (changes) {
-      undoStack.current.push({ label: steps.map((s) => describeStep(s, worldRef.current, lang)).join(", "), snap: hostRef.current.snapshot() });
+      undoStack.current.push({ steps, snap: hostRef.current.snapshot() });
       if (undoStack.current.length > 20) undoStack.current.shift();
     }
     const ids = steps.map(() => ++chipId.current);
@@ -519,7 +520,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!said) return;
     lastUserSpeech.current = Date.now();
     lastHeardAt.current = Date.now();
-    setHeard(said); setInterim(""); setWrong(null);
+    setHeard(said); setInterim(""); setWrong(null); setReply("");
     // an answer to the one question
     if (askOnce) {
       const t = said.toLowerCase();

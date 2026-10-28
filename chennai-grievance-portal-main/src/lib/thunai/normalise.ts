@@ -158,6 +158,8 @@ export function taMatch(tok: string, name: string): boolean {
   const last = ch[n - 1], prev = ch[n - 2];
   let stem: string;
   let restOk = (_: string) => true;
+  // a word that carries the whole name and more is a compound, not a case ending: போக்குவரத்து (traffic) is not போக்கு (trend)
+  if ((last === "ு" || last === "ூ") && tok.startsWith(name)) return /^(க்கு|க்குள்|ல|ல்|ம்|வும்|டன்|க்கும்)$/.test(tok.slice(name.length));
   if (last === "ு" || last === "ூ") stem = ch.slice(0, -2).join("");
   else if (last === "்" && prev === "ம") { stem = ch.slice(0, -2).join(""); restOk = (r) => /^[தஙம]/.test(r); }
   else if (last === "்") stem = ch.slice(0, -1).join("");

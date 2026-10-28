@@ -123,11 +123,12 @@ function reservoirDict(world: World): [string, string][] {
 
 const b = (en: string, ta: string): Bilingual => ({ en, ta });
 const QUESTION = /^(how many|how much|which|why|what is|whats|what are|who|when|where|is there|are there|did|does|do we|has|have)\b|எத்தனை|ஏன்|யார்|எப்போது|evlo|evvalavu|ethana|yen\b|\?\s*$/;
-const SPATIAL = /\b(within|near|nearest|nearby|around|km|kilometres?|kilometers?|metres?|meters?|along|hotspots?|on the map|map la|radius|distance|closest)\b|அருகில்|அருகே|அருகிலுள்ள|கிலோமீட்ட|கி\.மீ|வரைபடத்தில்|மேப்ல|சுற்றி/;
+const SPATIAL = /\b(within|near|nearest|nearby|around|km|kilometres?|kilometers?|metres?|meters?|along|hotspots?|on the map|map la|radius|distance|closest|close to|next to)\b|அருகில்|அருகே|அருகிலுள்ள|கிலோமீட்ட|கி\.மீ|வரைபடத்தில்|மேப்ல|சுற்றி/;
 const WARD = /\bward (\d{1,3})\b|வார்டு (\d{1,3})|(\d{1,3}) வார்டு/;
 
-function stateZoneName(world: World, n: number): string {
-  return world.zones.find((z) => z.n === n)?.name ?? `Zone ${n}`;
+function stateZoneName(world: World, n: number, lang: Lang = "en"): string {
+  const z = world.zones.find((x) => x.n === n);
+  return (lang === "ta" ? z?.ta ?? ZONES[n]?.ta[0] : z?.name) ?? z?.name ?? `Zone ${n}`;
 }
 
 /** "remind me friday at 10 to …": a local time from words, else null. */
@@ -313,6 +314,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/^(zoom|zoom in|zoom there|zoom in there|zoom here|idha zoom pannu|zoom pannu|அங்கே பெரிதாக்கு|பெரிதாக்கு)$|^zoom (in )?(there|here|to it|on it)$/.test(s)) {
     return done([{ a: "zoom", target: state.incident ? null : state.lastPlace }], 1, state.incident || state.lastPlace ? 0.9 : 0.6);
   }
+
+  // a question about the data ("which wards had the most complaints last week") goes to Ask District IQ even when it
+  // mentions a period or a place: answering is the assistant's job, not a filter change
+  if (/^(how many|how much|which|why|who|when|is there|are there|did|does|do we|has|have)\b|^(எத்தனை|ஏன்|யார்|எப்போது)/.test(s)) return done([{ a: "ask", q: heard }]);
 
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
@@ -508,7 +513,7 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "view": {
       const v = step.view;
       const parts: string[] = [];
-      if (v.zone !== undefined) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone)}`);
+      if (v.zone !== undefined) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
       if (v.taluk !== undefined) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
       if (v.dept !== undefined) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
       if (v.cat !== undefined) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
@@ -544,7 +549,14 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "confirm": return `${ta ? "உறுதி" : "Confirm"} ${step.n ?? ""}`.trim();
     case "mission": return step.name === "brief" ? (ta ? "காலை சுருக்கம்" : "Morning brief") : (ta ? "மழை தயார்நிலை" : "Rain readiness");
     case "read": return step.what === "reservoir" ? (ta ? "ஏரி நிலவரம்" : "Reservoir level") : step.what === "rain" ? (ta ? "மழை அளவு" : "Rainfall") : step.what === "air" ? (ta ? "காற்றின் தரம்" : "Air quality") : (ta ? "மோசமான மண்டலம்" : "Worst zone");
-    default: return step.a;
+    case "whereAmI": return ta ? "திரையில் என்ன" : "What's on screen";
+    case "explain": return ta ? "விளக்கம்" : "Explain";
+    case "whatDid": return ta ? "செய்தது" : "What I did";
+    case "repeat": return ta ? "மறுபடி" : "Repeat";
+    case "stop": return ta ? "நிறுத்து" : "Stop";
+    case "off": return ta ? "துணை அணை" : "Thunai off";
+    case "help": return ta ? "உதவி" : "Help";
+    default: return (step as Step).a;
   }
 }
 

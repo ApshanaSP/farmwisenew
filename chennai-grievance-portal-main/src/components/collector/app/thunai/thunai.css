@@ -34,7 +34,7 @@ html[data-theme="dark"] .thunai {
 @keyframes th-pulse { 50% { transform: scale(1.15); } }
 
 /* the command bar under the orb */
-.thunai .th-bar { position: fixed; right: 80px; bottom: 82px; z-index: 2147482999; display: flex; flex-direction: column; gap: 6px; width: min(420px, calc(100vw - 110px)); }
+.thunai .th-bar { position: fixed; right: 80px; bottom: 140px; z-index: 2147482999; display: flex; flex-direction: column; gap: 6px; width: min(420px, calc(100vw - 110px)); }
 .thunai .th-bar input { height: 40px; border-radius: 12px; border: 1px solid var(--th-line); background: var(--th-bg); color: var(--th-fg); padding: 0 12px; box-shadow: var(--th-shadow); font-size: 14px; }
 .thunai .th-bar input:focus { outline: 2px solid var(--th-orb2); outline-offset: 1px; }
 .thunai .th-tools { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
@@ -42,7 +42,7 @@ html[data-theme="dark"] .thunai {
 .thunai .th-tools button.on { color: var(--th-fg); border-color: var(--th-orb2); }
 
 /* subtitles and the step strip */
-.thunai .th-dock { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2147482998; max-width: min(760px, calc(100vw - 32px));
+.thunai .th-dock { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2147482998; width: max-content; max-width: min(760px, calc(100vw - 32px));
   background: var(--th-bg); border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); padding: 8px 14px; text-align: center; }
 .thunai .th-heard { margin: 2px 0; font-size: 15px; color: var(--th-fg); }
 .thunai .th-heard.interim { color: var(--th-muted); font-style: italic; }
@@ -57,7 +57,7 @@ html[data-theme="dark"] .thunai {
 .thunai .th-wrong { margin-top: 4px; border-color: var(--th-brass); }
 
 /* one question, one-tap cards, the approval tray */
-.thunai .th-card, .thunai .th-tray { position: fixed; right: 80px; bottom: 170px; z-index: 2147483001; width: min(360px, calc(100vw - 110px)); background: var(--th-bg);
+.thunai .th-card, .thunai .th-tray { position: fixed; right: 80px; bottom: 228px; z-index: 2147483001; width: min(360px, calc(100vw - 110px)); background: var(--th-bg);
   border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); padding: 12px 14px; }
 .thunai .th-card.amber, .thunai .th-tray { border-color: var(--th-brass); }
 .thunai .th-card p { margin: 0 0 10px; font-size: 14.5px; }
@@ -71,7 +71,7 @@ html[data-theme="dark"] .thunai {
 .thunai .th-tray .hint { margin: 0 0 8px; font-size: 12.5px; color: var(--th-muted); }
 
 /* memory, trail, help */
-.thunai .th-panel { position: fixed; right: 18px; top: 70px; bottom: 140px; z-index: 2147483001; width: min(380px, calc(100vw - 36px)); background: var(--th-bg);
+.thunai .th-panel { position: fixed; right: 18px; top: 70px; bottom: 228px; z-index: 2147483001; width: min(380px, calc(100vw - 36px)); background: var(--th-bg);
   border: 1px solid var(--th-line); border-radius: 14px; box-shadow: var(--th-shadow); display: flex; flex-direction: column; }
 .thunai .th-panel header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--th-line); }
 .thunai .th-panel header button { border: 0; background: transparent; color: var(--th-muted); font-size: 20px; }
@@ -117,7 +117,7 @@ body.thunai-dim .card:not(.thunai-spot), body.thunai-dim .bb-card:not(.thunai-sp
 @media (max-width: 700px) {
   .thunai .th-orb { right: 16px; bottom: 80px; width: 52px; height: 52px; }
   .thunai .th-bar { right: 16px; left: 16px; width: auto; bottom: 140px; }
-  .thunai .th-dock { bottom: auto; top: 12px; }
+  .thunai .th-dock { bottom: auto; top: 12px; left: 16px; right: 16px; transform: none; width: auto; max-width: none; }
   .thunai .th-card, .thunai .th-tray { right: 16px; left: 16px; width: auto; bottom: 210px; }
   .thunai .th-panel { left: 16px; right: 16px; width: auto; top: 12px; bottom: 210px; }
 }

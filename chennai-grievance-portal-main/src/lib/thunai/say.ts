@@ -59,6 +59,7 @@ const T: Record<string, { en: string; ta: string }> = {
   onLine: { en: "Thunai is on. Hold Alt and Space, or the orb, to talk.", ta: "துணை இயக்கத்தில் உள்ளது. பேச Alt + Space அல்லது வட்டத்தை அழுத்திப் பிடியுங்கள்." },
   offLine: { en: "Thunai is off.", ta: "துணை அணைக்கப்பட்டது." },
   aiThinking: { en: "Thinking…", ta: "யோசிக்கிறேன்…" },
+  memoryFail: { en: "I could not save that to memory. Nothing was changed.", ta: "நினைவில் சேமிக்க முடியவில்லை. எதுவும் மாறவில்லை." },
   offline: { en: "Speech recognition needs the network. Type instead.", ta: "குரல் அறிதலுக்கு இணையம் தேவை. தட்டச்சு செய்யுங்கள்." },
   noMic: { en: "This browser cannot listen. Type the command instead.", ta: "இந்த உலாவி கேட்க முடியாது. கட்டளையைத் தட்டச்சு செய்யுங்கள்." },
   staleData: { en: "{what} data is {age} old.", ta: "{what} தரவு {age} பழையது." },
