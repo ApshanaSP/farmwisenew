@@ -25,6 +25,7 @@ import { choose, safeDecode, schemaHash, tableHash, type Found } from "@/lib/stu
 import { OutcomeStop, duplicateOutcome, findDuplicate, readLink, resolveLink } from "@/lib/studio/connect/resolve";
 import { fetchOnce } from "@/lib/studio/fetchurl";
 import { readiness } from "@/lib/studio/readiness";
+import { diffTables } from "@/lib/studio/datacard";
 import { createConnector, getConnector, getTable, isDue, listConnectors, readSource, runConnector, type Connector, type Deps, type Every, type Mode as ConnMode } from "@/lib/studio/connectors";
 import { cleanAuth, getVault, saveSession, saveVault } from "@/lib/studio/connect/vault";
 import { LinkError } from "@/lib/studio/fetchurl";
@@ -358,10 +359,14 @@ export async function refreshDataset(id: string, user: string, emit: Emit): Prom
     }
     const table = withTopics(chosen.table);
     const same = sameHeaders(table, meta);
+    // what this refresh changed, row by row, for the change log
+    const before = getCandidates(id).find((f) => f.cand.id === prev?.choice)?.table ?? null;
+    const prim = meta.spec.columns.find((x) => x.key === meta.spec.primary)?.header ?? null;
+    const diff = diffTables(before, chosen.table, prim);
     if (prev && !same) log("The table's columns have changed since the last fetch: the agents read it afresh.");
     saveSource(id, sourceOf(c, chosen));
     saveCandidates(id, c.found);
-    const connect: ConnectInfo = { ...connectInfo(c, chosen, auth, prev?.every ?? null, prev), history: [{ at: now, ok: true, rows: table.rows.length, changed: true,
+    const connect: ConnectInfo = { ...connectInfo(c, chosen, auth, prev?.every ?? null, prev), history: [{ at: now, ok: true, rows: table.rows.length, changed: true, ...diff,
       note: `${(table.rows.length - meta.rows) >= 0 ? "+" : ""}${(table.rows.length - meta.rows).toLocaleString("en-IN")} rows${same ? "" : " · columns changed"}` }, ...(prev?.history ?? [])].slice(0, 20) };
     emit({ t: "step", step: "read", state: "done", detail: `${rowsCols(table)} (fetched again)`, by: "code", ms: 0 });
     return await run({ id, table, source: { ...meta.source, bytes: c.buf.length, caption: table.caption, connect }, name: meta.name, user, prior: same ? meta.spec : null, steps: [],
@@ -412,8 +417,12 @@ async function rebuildFromConnector(c: Connector, table: Table, note: string) {
   const t = withTopics(table);
   const now = new Date().toISOString();
   const prev = meta.source.connect;
+  const before = getCandidates(c.id).find((f) => f.cand.id === prev?.choice)?.table ?? null;
+  const prim = meta.spec.columns.find((x) => x.key === meta.spec.primary)?.header ?? null;
   const connect = prev ? { ...prev, hash: tableHash(t), fetchedAt: now, lastOkAt: now, lastError: null,
-    history: [{ at: now, ok: true, rows: t.rows.length, changed: true, note: `Live Connector · ${note}` }, ...prev.history].slice(0, 20) } : null;
+    history: [{ at: now, ok: true, rows: t.rows.length, changed: true, ...diffTables(before, t, prim), note: `Live Connector · ${note}` }, ...prev.history].slice(0, 20) } : null;
+  // the connector's table becomes the dataset's chosen candidate, so the next diff starts from it
+  if (prev) saveCandidates(c.id, [{ cand: { id: prev.choice || "live", kind: "file", label: "Live Connector table", rows: t.rows.length, cols: t.headers.length, headers: t.headers.slice(0, 30), score: 60, why: "", schema: schemaHash(t.headers) }, table: t }, ...getCandidates(c.id).filter((f) => f.cand.id !== prev.choice)]);
   saveSource(c.id, Buffer.from(JSON.stringify({ from: c.url, headers: t.headers, rows: t.rows })));
   await run({ id: c.id, table: t, source: { ...meta.source, caption: t.caption ?? meta.source.caption, connect }, name: meta.name, user: "connector",
     prior: sameHeaders(t, meta) ? meta.spec : null, steps: [], sample: meta.sample, createdAt: meta.createdAt, rules: meta.rules, force: true }, () => {});
@@ -601,7 +610,8 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   // ---- Insight Analyst: every angle computed, then the AI picks what matters and writes the brief
   const story = rulesStory(buildFacts(rows, spec, cleaned.detective, link, cleaned.window, names), spec, link);
   const brief = await step("story", "Mining backlogs, delays, gaps, hotspots and trends", async () => {
-    const ins = computeInsights(rows, spec, cleaned.detective, link, cleaned.window, names, getMeta(ctx.id)?.brief ?? null);
+    const was = getMeta(ctx.id);
+    const ins = computeInsights(rows, spec, cleaned.detective, link, cleaned.window, names, was?.brief ?? null, was?.family?.key ?? null);
     emit({ t: "log", text: `${ins.length} insights computed: ${[...new Set(ins.map((x) => x.label))].slice(0, 6).join(", ")}` });
     const b = await writeBrief(ins, spec, rows.length, cleaned.window, ctx.user, (m) => emit({ t: "log", text: m }));
     const detail = `${b.items.length} insights chosen from ${ins.length}${b.by === "ai" ? ` · every number checked${b.dropped ? ` · ${b.dropped} dropped` : ""}` : " · by rules"}`;
@@ -613,7 +623,9 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   const meta: DatasetMeta = {
     id: ctx.id, name: ctx.name || spec.title, source: ctx.source, createdAt: ctx.createdAt ?? now, updatedAt: now,
     rows: rows.length, cols: table.headers.length, window: cleaned.window, spec, profile, detective: cleaned.detective, panels, link, linkVersion: LINK_VERSION, story, brief,
-    relevance: gate.relevance, rules: ctx.rules ?? [], steps, sample: ctx.sample
+    relevance: gate.relevance, rules: ctx.rules ?? [], steps, sample: ctx.sample,
+    // the family the Collector set survives every refresh and re-reading
+    family: getMeta(ctx.id)?.family ?? null
   };
   saveDataset(meta, rows);
   dropPending(ctx.id);
@@ -655,7 +667,7 @@ export async function analyse(id: string, user: string): Promise<Brief> {
   if (!meta) throw new UserError("Unknown dataset.");
   const rows = getRows(id);
   const names = namesOf(await loadRefs());
-  const ins = computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names, meta.brief ?? null);
+  const ins = computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names, meta.brief ?? null, meta.family?.key ?? null);
   const brief = await writeBrief(ins, meta.spec, rows.length, meta.window, user, (m) => console.info(`[studio] ${m}`));
   // the leaner dashboard, for a dataset designed before it (panels the Collector added are kept)
   const panels = [...designDashboard(rows, meta.spec, meta.window), ...meta.panels.filter((p) => p.id.startsWith("q_"))];

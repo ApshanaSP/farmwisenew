@@ -16,11 +16,17 @@ import Analyst from "./Analyst";
 import Drill from "./Drill";
 import { BriefCard, InsightGrid } from "./Insights";
 import SourceBar from "./Source";
+import DataCardTab from "./DataCard";
+import type { DataCard as DataCardT } from "@/lib/studio/datacard";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
 const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });
 
-export interface DatasetData extends DatasetView { alerts: RuleStatus[]; pinned: string[] }
+export interface DatasetData extends DatasetView {
+  alerts: RuleStatus[]; pinned: string[];
+  card?: DataCardT;
+  family?: { key: string; name: string; confidence: number; by: string; confirm: boolean; questions: string[] } | null;
+}
 
 const CHART_IC: Record<string, IconName> = { map: "map", area: "line", line: "line", hbar: "barH", bar: "chart", donut: "donut", treemap: "grid", table: "table", kpi: "target" };
 const KPI_IC: IconName[] = ["table", "clock", "chart", "pin"];
@@ -34,7 +40,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
   const [data, setData] = useState<DatasetData | null>(null);
   // the dashboard's filters, each added by focusing on a mark (a zone, a type, a week); every panel follows them
   const [chips, setChips] = useState<Chip[]>([]);
-  const [tab, setTab] = useState<"dash" | "detective" | "mapping" | "rows">("dash");
+  const [tab, setTab] = useState<"dash" | "detective" | "mapping" | "rows" | "card">("dash");
   const [reload, setReload] = useState(0);
   const [spot, setSpot] = useState<{ panel: PanelData; answer?: string } | null>(null);
   const [drill, setDrill] = useState<{ plan: Plan; key: string | number | null; n: number } | null>(null);
@@ -149,6 +155,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
           {tab === "detective" && <DetectiveTab d={m.detective} id={id} rows={m.rows} cols={m.cols} masked={m.spec.columns.filter((x) => x.role === "person").map((x) => x.label)} />}
           {tab === "mapping" && <MappingTab data={data} onRemap={onRemap} />}
           {tab === "rows" && <RowsTab id={id} />}
+          {tab === "card" && data.card && <DataCardTab id={id} card={data.card} fam={data.family ?? null} c={c} onChanged={refresh} />}
         </div>
         {spot && (
           <div className="ds-spot" role="dialog" aria-label={spot.panel.title}>
@@ -179,7 +186,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
 // ------------------------------------------------------------------ header --
 
 function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }: {
-  data: DatasetData; tab: string; setTab: (t: "dash" | "detective" | "mapping" | "rows") => void; issuesN: number; c: Console;
+  data: DatasetData; tab: string; setTab: (t: "dash" | "detective" | "mapping" | "rows" | "card") => void; issuesN: number; c: Console;
   onRefresh: () => void; onDeleted: () => void; onRenamed: () => void;
 }) {
   const m = data.meta;
@@ -222,7 +229,7 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
       </div>
       </div>
       <nav className="ds-tabs" role="tablist">
-        {([["dash", "Insights", "bulb"], ["detective", "Data Detective", "shield"], ["mapping", "AI reading", "spark"], ["rows", "Rows", "table"]] as const).map(([k, t, ic]) => (
+        {([["dash", "Insights", "bulb"], ["detective", "Data Detective", "shield"], ["mapping", "AI reading", "spark"], ["rows", "Rows", "table"], ["card", "Data card", "doc"]] as const).map(([k, t, ic]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
             <I n={ic} />{t}{k === "detective" && <em className={m.detective.after >= 85 ? "ok" : "warn"}>{m.detective.after}</em>}
             {k === "detective" && issuesN > 0 && <span className="ds-sr">{issuesN} issues</span>}

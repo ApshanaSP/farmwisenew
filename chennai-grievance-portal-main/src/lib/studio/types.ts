@@ -381,7 +381,11 @@ export interface Candidate {
   series?: { pattern: string; files: { url: string; date: string; name: string }[]; from: string; to: string } | null;
 }
 
-export interface RefreshRun { at: string; ok: boolean; rows: number | null; changed: boolean; note: string }
+export interface RefreshRun {
+  at: string; ok: boolean; rows: number | null; changed: boolean; note: string;
+  /** what changed (datacard.ts diffTables): rows added and removed by content, columns, a big jump in the main measure */
+  added?: number; removed?: number; columns?: { added: string[]; removed: string[] } | null; jump?: string | null;
+}
 
 export interface ConnectInfo {
   /** "http": read as sent; "browser": opened in a real browser (the page builds itself with JavaScript, or a sign-in) */
@@ -438,6 +442,8 @@ export interface DatasetMeta {
   rules: Rule[];
   steps: StepLog[];
   sample: boolean;
+  /** the family the Collector set (family.ts); without it the rules' reading is used */
+  family?: { key: "progress" | "works" | "service" | "health" | "supplies" | "water" | "facility" | "period"; by: "you" } | null;
 }
 
 /** A dataset in the list (no rows, no profile). */

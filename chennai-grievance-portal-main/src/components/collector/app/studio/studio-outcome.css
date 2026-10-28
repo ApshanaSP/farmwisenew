@@ -136,3 +136,29 @@
 /* an insight's evidence: n, method, window */
 .dic .ds-iconf{display:flex;gap:6px;align-items:flex-start;margin:0;font-size:11.5px;color:var(--text-3);line-height:1.4}
 .dic .ds-iconf .ic{width:13px;height:13px;flex:none;margin-top:1px}
+
+/* ---------- the data card ---------- */
+.dic .ds-card-w{display:flex;flex-direction:column;gap:12px;padding:14px;overflow:auto}
+.dic .ds-card-top{display:flex;justify-content:flex-end}
+.dic .ds-card-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.dic .ds-card-s{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:12.5px;color:var(--text-2);min-width:0}
+.dic .ds-card-s p{margin:0;line-height:1.45;overflow-wrap:break-word}
+.dic .ds-card-s h3{display:flex;align-items:center;gap:6px;margin:0 0 2px;font:700 10.5px var(--dic-sans),sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.dic .ds-card-s h3 .ic{width:14px;height:14px}
+.dic .ds-card-s b{color:var(--text)}
+.dic .ds-card-url{color:var(--accent-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .ds-card-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dic .ds-card-flow span{display:flex;flex-direction:column}
+.dic .ds-card-flow b{font-size:18px;font-variant-numeric:tabular-nums}
+.dic .ds-card-flow small{color:var(--text-3)}
+.dic .ds-card-flow .ic{width:14px;height:14px;color:var(--text-3)}
+.dic .ds-card-l{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
+.dic .ds-card-l em{font-style:normal;font-weight:650;color:var(--text)}
+.dic .ds-card-checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dic .ds-card-checks li{display:flex;gap:6px;align-items:flex-start}
+.dic .ds-card-checks li .ic{width:14px;height:14px;flex:none;margin-top:2px;color:var(--ok)}
+.dic .ds-card-checks li.bad .ic{color:var(--critical)}
+.dic .ds-card-warn{color:var(--high)}
+.dic .ds-card-fams{display:flex;flex-wrap:wrap;gap:6px}
+.dic .ds-card-fams button{min-height:36px}
+.dic .ds-card-s.wide{grid-column:1 / -1}

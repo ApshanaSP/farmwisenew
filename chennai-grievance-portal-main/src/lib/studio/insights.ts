@@ -28,6 +28,7 @@ import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type Ins
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
 import { computeInsights2 } from "@/lib/studio/insights2";
 import { rankInsights } from "@/lib/studio/rank";
+import { detectFamily, familyBoost, type FamilyKey } from "@/lib/studio/family";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-IN");
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
@@ -67,7 +68,7 @@ interface Group { k: string | number; w: number; c: number; o: number; ages: num
  * what it rests on. A previous brief's titles count as "said before" (novelty).
  */
 export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names,
-  prev?: { items?: { label: InsightLabel; title: string }[] } | null): Insight[] {
+  prev?: { items?: { label: InsightLabel; title: string }[] } | null, family?: FamilyKey | null): Insight[] {
   const base = rows.length < 3 ? [] : computeInsights1(rows, spec, det, link, window, names);
   // STUDIO_TODAY: a fixed "today" for the tests' goldens (data age, days to a deadline)
   const today = process.env.STUDIO_TODAY || undefined;
@@ -77,7 +78,8 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
     .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
   const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
   const seen = new Set((prev?.items ?? []).map((x) => `${x.label}|${x.title}`));
-  return rankInsights(all, { rows: rows.length, to: window.to, seen, things, today });
+  const fam = family ?? detectFamily(spec).key;
+  return rankInsights(all, { rows: rows.length, to: window.to, seen, things, today, boost: (l) => familyBoost(fam, l) });
 }
 
 function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {

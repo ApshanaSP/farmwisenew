@@ -34,8 +34,9 @@ export const significanceOf = (n: number) => Math.max(0, Math.min(1, Math.log10(
 /** Data age to a weight: within 7 days 1, 30 days 0.8, 90 days 0.6, older 0.4. */
 export const freshnessOf = (age: number | null) => (age == null ? 0.7 : age <= 7 ? 1 : age <= 30 ? 0.8 : age <= 90 ? 0.6 : 0.4);
 
-export function rankOne(x: Insight & { n?: number }, ctx: { rows: number; to: string | null; today?: string; seen?: Set<string>; things?: boolean }): Rank {
-  const impact = Math.max(0, Math.min(1, x.score / 80));
+export function rankOne(x: Insight & { n?: number }, ctx: { rows: number; to: string | null; today?: string; seen?: Set<string>; things?: boolean; boost?: (l: InsightLabel) => number }): Rank {
+  // the family's own questions count more (family.ts familyBoost)
+  const impact = Math.max(0, Math.min(1, (x.score / 80) * (ctx.boost?.(x.label) ?? 1)));
   const significance = significanceOf(x.n ?? ctx.rows);
   // a zone count of things (no status, nothing waiting) is a note, never an action (R-19)
   let actionability = ACTIONABLE[x.label] ?? 0.4;
@@ -49,6 +50,6 @@ export function rankOne(x: Insight & { n?: number }, ctx: { rows: number; to: st
 }
 
 /** Every insight ranked, the most useful first. */
-export function rankInsights<T extends Insight & { n?: number }>(xs: T[], ctx: { rows: number; to: string | null; today?: string; seen?: Set<string>; things?: boolean }): (T & { rank: Rank })[] {
+export function rankInsights<T extends Insight & { n?: number }>(xs: T[], ctx: { rows: number; to: string | null; today?: string; seen?: Set<string>; things?: boolean; boost?: (l: InsightLabel) => number }): (T & { rank: Rank })[] {
   return xs.map((x) => ({ ...x, rank: rankOne(x, ctx) })).sort((a, b) => b.rank.usefulness - a.rank.usefulness);
 }

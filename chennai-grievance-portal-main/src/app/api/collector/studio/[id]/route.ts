@@ -5,6 +5,10 @@ import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
 import { renderPanel } from "@/lib/studio/chartlint";
+import { getConnector } from "@/lib/studio/connectors";
+import { dataCard } from "@/lib/studio/datacard";
+import type { DatasetMeta } from "@/lib/studio/types";
+import { familyOf } from "@/lib/studio/family";
 import { filterRows, runPlan } from "@/lib/studio/engine";
 import { note, stream } from "@/lib/studio/http";
 import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, setSchedule, view } from "@/lib/studio/pipeline";
@@ -40,7 +44,8 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     const rows = getRows(params.id);
     const alerts = v.meta.rules.map((r) => checkRule(r, rows, v.meta.spec, names));
     const pinned = getBoard().filter((p) => p.datasetId === params.id).map((p) => p.plan.id);
-    return NextResponse.json({ ...v, alerts, pinned });
+    const card = dataCard(v.meta as DatasetMeta, { conn: getConnector(params.id), panels: v.panels.length, lintFixes: v.panels.reduce((s, p) => s + (p.lint?.length ?? 0), 0), family: familyOf(v.meta as DatasetMeta) });
+    return NextResponse.json({ ...v, alerts, pinned, card, family: familyOf(v.meta as DatasetMeta) });
   } catch (err) {
     return failed(err, "the dataset");
   }
@@ -130,7 +135,8 @@ const Action = z.discriminatedUnion("action", [
   z.object({ action: z.literal("refresh") }),
   z.object({ action: z.literal("analyse") }),
   z.object({ action: z.literal("choose"), candidate: z.string().max(40) }),
-  z.object({ action: z.literal("schedule"), every: z.number().int().min(30).max(10080).nullable() })
+  z.object({ action: z.literal("schedule"), every: z.number().int().min(30).max(10080).nullable() }),
+  z.object({ action: z.literal("family"), family: z.enum(["progress", "works", "service", "health", "supplies", "water", "facility", "period"]) })
 ]);
 /** Actions on a run the Relevance gate stopped (no dataset yet): resume it anyway, or drop it. */
 const PendingAction = z.object({ action: z.enum(["force", "discard"]) });
@@ -226,6 +232,13 @@ export async function POST(req: NextRequest, { params }: Ctx) {
           await note(s.email, "studio:choose", id, { candidate: a.candidate });
           return id;
         });
+      case "family": {
+        // the Collector's correction of what kind of data this is: kept, and the brief re-ranked by it
+        saveMeta({ ...meta, family: { key: a.family, by: "you" }, updatedAt: new Date().toISOString() });
+        await analyse(meta.id, s.email);
+        await note(s.email, "studio:family", meta.id, { family: a.family });
+        return NextResponse.json({ ok: true });
+      }
       case "schedule": {
         setSchedule(meta.id, a.every);
         await note(s.email, "studio:schedule", meta.id, { every: a.every });
