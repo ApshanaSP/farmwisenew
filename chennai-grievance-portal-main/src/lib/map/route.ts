@@ -174,6 +174,8 @@ interface Parsed {
   k: number | null;
   places: Found[];
   verb: Verb;
+  /** "near schools", "school pakkathula": something near the facility, not the facility itself ("schools in Adyar") */
+  facNear: boolean;
   shape: { countBy: "ward" | "zone" | "taluk" | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; brief: boolean };
 }
 
@@ -196,6 +198,16 @@ export function unreadWords(rest: string[], classified: string[]): string[] {
     ...FACILITIES.flatMap((f) => f.words)].flatMap((w) => tokens(w)));
   return [...new Set(rest.filter((t) => t.length >= 3 && !/^\d/.test(t) && !FILLER.has(t) && !known.has(t) && !allWords.has(t) && !topicOf([t])
     && !/^(by|per|ward|zone|taluk|hotspot|cluster|compare|vs|versus|nearest|closest|farthest|furthest|summary|happening|clustering|wise|vaariyaga|வாரியாக)/i.test(t)))];
+}
+
+const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Is a facility the thing measured from ("near schools", "within 300 m of hospitals", "பள்ளி அருகே") rather than the thing asked for? */
+function facilityIsNear(text: string, facWords: string[]): boolean {
+  if (!facWords.length) return false;
+  const fw = facWords.map(reEsc).join("|");
+  const before = new RegExp(`(\\bnear(by)?|\\baround|\\bclose to|\\bnext to|\\bbeside|\\bsurrounding|\\bwithin\\s+[\\d.]+\\s*(m|km|kms|metres?|meters?)?\\s+(of|from)|\\bwithin\\s+(a|one|half a)\\s+km\\s+(of|from)|\\bwithin)\\s+(the\\s+|a\\s+|an\\s+|any\\s+|all\\s+)?(government\\s+|govt\\s+)?(${fw})`, "i");
+  const after = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(அருகே|அருகில்|அருகிலுள்ள|அருகாமையில்|பக்கத்தில்|பக்கம்|சுற்றி|pakkathula|pakkathil|pakkam|kitta|kitte|arugil|arugey|aruge|arukil)`, "i");
+  return before.test(text) || after.test(text);
 }
 
 /** Removes the words a phrase covers, so "lakes" in "incidents near lakes" is a facility, never the flood topic. */
@@ -267,6 +279,7 @@ export function parse(text: string, env: RouteEnv): Parsed {
   return {
     unread: unreadWords(rtoks, classified),
     lang, toks, facilities, cats, family, citizen, news, severity, status, period: periodOf(text), dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
+    facNear: facilityIsNear(free, facWords),
     shape: {
       countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       compare: COMPARE.test(text) && !CHANGE.test(text), change: CHANGE.test(text), brief: BRIEF.test(text)
@@ -276,7 +289,7 @@ export function parse(text: string, env: RouteEnv): Parsed {
 
 // ----------------------------------------------------------------- build --
 
-const DEFAULT_PERIOD: Period = { kind: "last_days", days: 30, offset: 0 };
+const DEFAULT_PERIOD: Period = { kind: "last_days", days: 7, offset: 0 };
 
 function incidentFilter(p: Parsed, defaults: string[], opts: { status?: "open" | "any"; period?: Period | null } = {}): Filter {
   // what was in the news is asked about whether or not it is still open
@@ -330,6 +343,18 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
     steps.push({ op: "farthest", as: "far", areas: /\bzones?\b|மண்டல/i.test(p.toks.join(" ")) ? "zone" : "ward", from: "f1", beyond_m: p.meters });
     return done("far");
+  }
+
+  // the places themselves: "schools in Valasaravakkam", "police stations near Adyar", "hospitals" (never incidents near them)
+  const pointFac = p.facilities.filter((f) => f.layer !== "water_bodies" && f.layer !== "waterways");
+  if (pointFac.length && !subject && !p.facNear && !lines.length && !p.shape.hotspot && !p.shape.countBy && !p.shape.compare && !p.shape.change) {
+    const f = pointFac[0];
+    steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
+    if (!areas.length) return done("f1");
+    const area = placeArea(areas[0], p.meters)!;
+    if (area.kind === "point" && p.meters == null) defaults.push("radius");
+    steps.push({ op: "inside", as: "in", of: "f1", area });
+    return done("in");
   }
 
   const hot = p.shape.hotspot;

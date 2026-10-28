@@ -227,3 +227,14 @@ Homework: FarmwiseAI's Play Store apps (கள ஆய்வு / FIMMS Vellore, 
 - **Checks:** map unit 317 passed. Screenshots v2-1 … v2-6 (light) in docs/review-pdfs/ask-the-map/.
 - **Faster everywhere:** a filter's date window was worked out (with date parsing) once per incident, about 27,000 times per step; it is now worked out once per filter (execute.ts windowOf). The random-plan check went from p90 380 ms to 40 ms; insights that re-run the question (change on last period) got the same speed-up.
 - **Final checks:** golden 14 passed (p90 40 ms); map unit 317 passed; full unit run: the only failures are 2 Data Studio outcome tests that pass when run alone (timing under load, files not touched here).
+
+## Simpler answers and place questions (2026-10-29)
+
+- **Place questions answer with the places.** "schools in Valasaravakkam" used to become "open incidents within 500 m of a school in Zone 11", and the map drew every school near any incident in Chennai. Now the router reads a facility with no incident words, and no "near" before it, as the places themselves: take schools, keep those inside the area (by their ward for a ward, zone or taluk; by distance for a circle). Answer: "13 schools in Valasaravakkam (Zone 11). 1 is government. Including …"; the map draws only those 13; the panel lists them by name. "flooding near schools", "school pakkathula kuppai" and "பள்ளிகள் அருகே" still ask about incidents near schools.
+- **Near places trimmed to the answer.** A "within" step followed by an area used to keep every place it measured to; now only the places the final incidents are near are drawn.
+- **Default period 7 days** (was 30) when the question names none, in the rules and in the AI planner's prompt. Hotspots keep their 90 days.
+- **Removed the AI analyst and "What needs attention"** from the panel; insights are no longer computed per question (insights.ts and /api/map/insight stay, unused).
+- **Card trimmed:** the departments row is gone (the meaning sentence names the main one), tiles with 0 are hidden, live readings capped at 2, the as-of line is one short line (sources on hover). Meaning does not repeat the one zone asked about; "It is …" for one; "All are with …" when one department holds all.
+- **Filter line** says "Near schools" or "Within 300 m of schools", not "of Schools (OSM)". Area headlines keep the "within 500 m of a school" part.
+- **Hover lag:** hovering a list row set React state in the console shell, re-rendering the whole Collector console on every row; the hover now goes straight to the map pins. A row click reaches the next frame in about 100 ms in dev mode; the rest is the map's fly-to.
+- Tests: map unit 324 passed (new: places in an area, near vs places, 7-day default, near-place trimming); golden 14 passed, p90 43 ms; tsc clean. Screenshots v3-1…v3-4 in docs/review-pdfs/ask-the-map.

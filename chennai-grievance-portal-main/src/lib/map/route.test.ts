@@ -52,130 +52,130 @@ const route = (q: string) => {
 
 const FW = "inc:FLOOD_WATERLOGGING", FL = "inc:F:FLOOD", SW = "inc:SOLID_WASTE", RA = "inc:ROAD_ACCIDENT", TH = "inc:CRIME_PROPERTY";
 const EN: [string, string][] = [
-  ["waterlogging within 300 m of schools", `${FW}:open:30 | schools | within:300`],
-  ["garbage near hospitals", `${SW}:open:30 | hospitals | within:500`],
-  ["open complaints near Adyar", "inc:-:open:30:cit | in:pt:loc:Adyar:1000"],
-  ["accidents near Koyambedu bus stand", `${RA}:open:30 | in:pt:osm:n78:500`],
+  ["waterlogging within 300 m of schools", `${FW}:open:7 | schools | within:300`],
+  ["garbage near hospitals", `${SW}:open:7 | hospitals | within:500`],
+  ["open complaints near Adyar", "inc:-:open:7:cit | in:pt:loc:Adyar:1000"],
+  ["accidents near Koyambedu bus stand", `${RA}:open:7 | in:pt:osm:n78:500`],
   ["flooding in Zone 13 this week", `${FL}:open:7 | in:zone13`],
-  ["streetlight problems in ward 178", "inc:STREETLIGHT_ELECTRICAL:open:30 | in:ward178"],
-  ["Velachery taluk severe incidents", "inc:-:open:30:Severe | in:taluk:TLK-VLC"],
+  ["streetlight problems in ward 178", "inc:STREETLIGHT_ELECTRICAL:open:7 | in:ward178"],
+  ["Velachery taluk severe incidents", "inc:-:open:7:Severe | in:taluk:TLK-VLC"],
   ["thefts along Anna Salai this month", `${TH}:open:30 | along:road:anna-salai:75`],
-  ["thefts along Mount Road", `${TH}:open:30 | along:road:anna-salai:75`],
-  ["potholes on OMR", "inc:ROAD_DAMAGE:open:30 | along:road:rajiv-gandhi-salai:75"],
-  ["accidents on GST Road", `${RA}:open:30 | along:road:gst-road:75`],
-  ["incidents within 200 m of Buckingham Canal", "inc:-:open:30 | along:water:buckingham-canal:200"],
-  ["waterlogging near lakes", `${FW}:open:30 | water_bodies | within:500`],
-  ["nearest hospital to each open severe flooding case", `${FL}:open:30:Severe | hospitals | nearest:1`],
+  ["thefts along Mount Road", `${TH}:open:7 | along:road:anna-salai:75`],
+  ["potholes on OMR", "inc:ROAD_DAMAGE:open:7 | along:road:rajiv-gandhi-salai:75"],
+  ["accidents on GST Road", `${RA}:open:7 | along:road:gst-road:75`],
+  ["incidents within 200 m of Buckingham Canal", "inc:-:open:7 | along:water:buckingham-canal:200"],
+  ["waterlogging near lakes", `${FW}:open:7 | water_bodies | within:500`],
+  ["nearest hospital to each open severe flooding case", `${FL}:open:7:Severe | hospitals | nearest:1`],
   ["5 nearest police stations to Marina", "police | nearest:5@loc:Marina"],
   ["which ward is farthest from a hospital", "hospitals | far:ward:-"],
   ["areas with no fire station within 3 km", "fire_stations | far:ward:3000"],
-  ["garbage complaints by ward", `${SW}:open:30:cit | by:ward`],
+  ["garbage complaints by ward", `${SW}:open:7:cit | by:ward`],
   ["flooding zone wise this month", `${FL}:open:30 | by:zone`],
   ["where are garbage complaints clustering", `${SW}:any:90:cit | hot`],
   ["hotspots of road accidents", `${RA}:any:90 | hot`],
-  ["compare Adyar and Velachery flooding", `${FL}:open:30 | cmp:zone13:taluk:TLK-VLC`],
-  ["Zone 10 vs Zone 13 open cases", "inc:-:open:30 | cmp:zone10:zone13"],
+  ["compare Adyar and Velachery flooding", `${FL}:open:7 | cmp:zone13:taluk:TLK-VLC`],
+  ["Zone 10 vs Zone 13 open cases", "inc:-:open:7 | cmp:zone10:zone13"],
   ["flooding this week vs last week in Zone 13", `${FL}:any:7 | in:zone13 | chg:7`],
   ["did accidents on Anna Salai go down this month?", `${RA}:any:30 | along:road:anna-salai:75 | chg:30`],
-  ["past-deadline cases near hospitals", "inc:-:open:30:overdue | hospitals | within:500"],
-  ["SWD's open cases near schools", "inc:-:open:30:GCC-SWD | schools | within:500"],
-  ["open flooding within 500 m of hospitals", `${FL}:open:30 | hospitals | within:500`],
-  ["severe incidents within 1 km of Stanley Hospital", "inc:-:open:30:Severe | in:pt:osm:n77:1000"],
-  ["garbage within 2 km of T. Nagar", `${SW}:open:30 | in:pt:loc:T. Nagar:2000`],
+  ["past-deadline cases near hospitals", "inc:-:open:7:overdue | hospitals | within:500"],
+  ["SWD's open cases near schools", "inc:-:open:7:GCC-SWD | schools | within:500"],
+  ["open flooding within 500 m of hospitals", `${FL}:open:7 | hospitals | within:500`],
+  ["severe incidents within 1 km of Stanley Hospital", "inc:-:open:7:Severe | in:pt:osm:n77:1000"],
+  ["garbage within 2 km of T. Nagar", `${SW}:open:7 | in:pt:loc:T. Nagar:2000`],
   ["drainage complaints in Saidapet last 7 days", "inc:DRAINAGE_SEWAGE:open:7:cit | in:pt:loc:Saidapet:1000"],
-  ["dengue cases near schools", "inc:VECTOR_DISEASE:open:30 | schools | within:500"],
-  ["accidents near metro stations", `${RA}:open:30 | rail_metro | within:500`],
-  ["garbage near schools and colleges", `${SW}:open:30 | schools | colleges | within:500`],
-  ["waterlogging within half a km of government hospitals", `${FW}:open:30 | hospitals(gov) | within:500`],
+  ["dengue cases near schools", "inc:VECTOR_DISEASE:open:7 | schools | within:500"],
+  ["accidents near metro stations", `${RA}:open:7 | rail_metro | within:500`],
+  ["garbage near schools and colleges", `${SW}:open:7 | schools | colleges | within:500`],
+  ["waterlogging within half a km of government hospitals", `${FW}:open:7 | hospitals(gov) | within:500`],
   ["all incidents in Mylapore taluk today", "inc:-:any:1 | in:taluk:TLK-MYL"],
-  ["closed garbage complaints in zone 1", `${SW}:closed:30:cit | in:zone1`],
-  ["road accidents by zone", `${RA}:open:30 | by:zone`],
+  ["closed garbage complaints in zone 1", `${SW}:closed:7:cit | in:zone1`],
+  ["road accidents by zone", `${RA}:open:7 | by:zone`],
   ["theft hotspots", `${TH}:any:90 | hot`],
-  ["flooding near Adyar River", `${FL}:open:30 | along:water:adyar-river:200`]
+  ["flooding near Adyar River", `${FL}:open:7 | along:water:adyar-river:200`]
 ];
 const TA: [string, string][] = [
-  ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", `${FW}:open:30 | schools | within:500`],
-  ["அடையாறு அருகே திறந்த புகார்கள்", "inc:-:open:30:cit | in:pt:loc:Adyar:1000"],
+  ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", `${FW}:open:7 | schools | within:500`],
+  ["அடையாறு அருகே திறந்த புகார்கள்", "inc:-:open:7:cit | in:pt:loc:Adyar:1000"],
   ["மண்டலம் 13 இல் இந்த வாரம் வெள்ளம்", `${FL}:open:7 | in:zone13`],
-  ["வார்டு 178 இல் தெருவிளக்கு புகார்கள்", "inc:STREETLIGHT_ELECTRICAL:open:30:cit | in:ward178"],
-  ["அண்ணா சாலையில் திருட்டு", `${TH}:open:30 | along:road:anna-salai:75`],
-  ["மருத்துவமனைகள் அருகே குப்பை", `${SW}:open:30 | hospitals | within:500`],
-  ["300 மீட்டர் க்குள் பள்ளிகள் அருகே வெள்ளம்", `${FL}:open:30 | schools | within:300`],
-  ["வார்டு வாரியாக குப்பை புகார்கள்", `${SW}:open:30:cit | by:ward`],
-  ["மண்டல வாரியாக சாலை விபத்துகள்", `${RA}:open:30 | by:zone`],
-  ["வேளச்சேரி அருகே வெள்ளம்", `${FL}:open:30 | in:pt:loc:Velachery:1000`],
+  ["வார்டு 178 இல் தெருவிளக்கு புகார்கள்", "inc:STREETLIGHT_ELECTRICAL:open:7:cit | in:ward178"],
+  ["அண்ணா சாலையில் திருட்டு", `${TH}:open:7 | along:road:anna-salai:75`],
+  ["மருத்துவமனைகள் அருகே குப்பை", `${SW}:open:7 | hospitals | within:500`],
+  ["300 மீட்டர் க்குள் பள்ளிகள் அருகே வெள்ளம்", `${FL}:open:7 | schools | within:300`],
+  ["வார்டு வாரியாக குப்பை புகார்கள்", `${SW}:open:7:cit | by:ward`],
+  ["மண்டல வாரியாக சாலை விபத்துகள்", `${RA}:open:7 | by:zone`],
+  ["வேளச்சேரி அருகே வெள்ளம்", `${FL}:open:7 | in:pt:loc:Velachery:1000`],
   ["சைதாப்பேட்டையில் என்ன நடக்கிறது", "BRIEF:loc:Saidapet"],
-  ["ஏரிகள் அருகே நீர் தேக்கம்", `${FW}:open:30 | water_bodies | within:500`],
-  ["கடுமையான வெள்ளம் மண்டலம் 13", `${FL}:open:30:Severe | in:zone13`],
+  ["ஏரிகள் அருகே நீர் தேக்கம்", `${FW}:open:7 | water_bodies | within:500`],
+  ["கடுமையான வெள்ளம் மண்டலம் 13", `${FL}:open:7:Severe | in:zone13`],
   ["இந்த மாதம் திருட்டு கொத்து", `${TH}:any:30 | hot`],
-  ["தீயணைப்பு நிலையங்கள் அருகே தீ விபத்து", "inc:FIRE_EXPLOSION:open:30 | fire_stations | within:500"],
-  ["காவல் நிலையங்கள் அருகே திருட்டு", `${TH}:open:30 | police | within:500`],
+  ["தீயணைப்பு நிலையங்கள் அருகே தீ விபத்து", "inc:FIRE_EXPLOSION:open:7 | fire_stations | within:500"],
+  ["காவல் நிலையங்கள் அருகே திருட்டு", `${TH}:open:7 | police | within:500`],
   ["இன்று வெள்ளம் அடையாறு மண்டலம்", `${FL}:open:1 | in:zone13`],
   ["கடந்த 7 நாட்களில் குப்பை புகார்கள் வார்டு 170", `${SW}:open:7:cit | in:ward170`],
-  ["டெங்கு பள்ளிகள் அருகே", "inc:VECTOR_DISEASE:open:30 | schools | within:500"],
-  ["கழிவுநீர் புகார்கள் மருத்துவமனைகள் அருகே", "inc:DRAINAGE_SEWAGE:open:30:cit | hospitals | within:500"],
-  ["பக்கிங்ஹாம் கால்வாய் அருகே சம்பவங்கள்", "inc:-:open:30 | along:water:buckingham-canal:200"],
-  ["அடையாறு ஆறு அருகே வெள்ளம்", `${FL}:open:30 | along:water:adyar-river:200`],
-  ["தி.நகர் அருகே குப்பை", `${SW}:open:30 | in:pt:loc:T. Nagar:1000`],
-  ["அடையாறு மற்றும் வேளச்சேரி வெள்ளம் ஒப்பிடு", `${FL}:open:30 | cmp:zone13:taluk:TLK-VLC`],
-  ["மண்டலம் 10 மற்றும் மண்டலம் 13 ஒப்பீடு திறந்த புகார்கள்", "inc:-:open:30:cit | cmp:zone10:zone13"],
+  ["டெங்கு பள்ளிகள் அருகே", "inc:VECTOR_DISEASE:open:7 | schools | within:500"],
+  ["கழிவுநீர் புகார்கள் மருத்துவமனைகள் அருகே", "inc:DRAINAGE_SEWAGE:open:7:cit | hospitals | within:500"],
+  ["பக்கிங்ஹாம் கால்வாய் அருகே சம்பவங்கள்", "inc:-:open:7 | along:water:buckingham-canal:200"],
+  ["அடையாறு ஆறு அருகே வெள்ளம்", `${FL}:open:7 | along:water:adyar-river:200`],
+  ["தி.நகர் அருகே குப்பை", `${SW}:open:7 | in:pt:loc:T. Nagar:1000`],
+  ["அடையாறு மற்றும் வேளச்சேரி வெள்ளம் ஒப்பிடு", `${FL}:open:7 | cmp:zone13:taluk:TLK-VLC`],
+  ["மண்டலம் 10 மற்றும் மண்டலம் 13 ஒப்பீடு திறந்த புகார்கள்", "inc:-:open:7:cit | cmp:zone10:zone13"],
   ["கடந்த வாரத்தை விட இந்த வாரம் வெள்ளம் குறைந்ததா மண்டலம் 13", `${FL}:any:7 | in:zone13 | chg:7`],
   ["மெரினா மிக அருகில் உள்ள மருத்துவமனை", "hospitals | nearest:1@loc:Marina"],
   ["தீயணைப்பு நிலையத்திலிருந்து தொலைவில் உள்ள வார்டு", "fire_stations | far:ward:-"],
   ["குப்பை எங்கே அதிகம் குவிந்த", `${SW}:any:90 | hot`],
   ["சாலை விபத்துகள் கொத்து", `${RA}:any:90 | hot`],
-  ["மயிலாப்பூர் வட்டத்தில் கடுமையான சம்பவங்கள்", "inc:-:open:30:Severe | in:taluk:TLK-MYL"],
+  ["மயிலாப்பூர் வட்டத்தில் கடுமையான சம்பவங்கள்", "inc:-:open:7:Severe | in:taluk:TLK-MYL"],
   ["இன்று திறந்த சம்பவங்கள் மண்டலம் 1", "inc:-:open:1 | in:zone1"],
-  ["ரயில் நிலையங்கள் அருகே விபத்து", `${RA}:open:30 | rail_metro | within:500`],
-  ["1 கி.மீ க்குள் பள்ளிகள் அருகே குப்பை", `${SW}:open:30 | schools | within:1000`],
-  ["அரசு மருத்துவமனைகள் அருகே வெள்ளம்", `${FL}:open:30 | hospitals(gov) | within:500`],
-  ["கல்லூரிகள் அருகே திருட்டு", `${TH}:open:30 | colleges | within:500`],
-  ["காலக்கெடு தாண்டிய புகார்கள் பள்ளிகள் அருகே", "inc:-:open:30:cit:overdue | schools | within:500"],
+  ["ரயில் நிலையங்கள் அருகே விபத்து", `${RA}:open:7 | rail_metro | within:500`],
+  ["1 கி.மீ க்குள் பள்ளிகள் அருகே குப்பை", `${SW}:open:7 | schools | within:1000`],
+  ["அரசு மருத்துவமனைகள் அருகே வெள்ளம்", `${FL}:open:7 | hospitals(gov) | within:500`],
+  ["கல்லூரிகள் அருகே திருட்டு", `${TH}:open:7 | colleges | within:500`],
+  ["காலக்கெடு தாண்டிய புகார்கள் பள்ளிகள் அருகே", "inc:-:open:7:cit:overdue | schools | within:500"],
   ["வார்டு 178 சுருக்கம்", "BRIEF:ward178"],
-  ["கோயம்பேடு அருகே விபத்துகள்", `${RA}:open:30 | in:pt:loc:Koyambedu:1000`],
+  ["கோயம்பேடு அருகே விபத்துகள்", `${RA}:open:7 | in:pt:loc:Koyambedu:1000`],
   ["அனைத்து சம்பவங்கள் மண்டலம் 13 இந்த வாரம்", "inc:-:any:7 | in:zone13"]
 ];
 const TG: [string, string][] = [
-  ["school pakkathula water stagnation", `${FW}:open:30 | schools | within:500`],
-  ["adyar pakkathula open complaints", "inc:-:open:30:cit | in:pt:loc:Adyar:1000"],
-  ["hospital kitta kuppai", `${SW}:open:30 | hospitals | within:500`],
+  ["school pakkathula water stagnation", `${FW}:open:7 | schools | within:500`],
+  ["adyar pakkathula open complaints", "inc:-:open:7:cit | in:pt:loc:Adyar:1000"],
+  ["hospital kitta kuppai", `${SW}:open:7 | hospitals | within:500`],
   ["zone 13 la indha vaaram vellam", `${FL}:open:7 | in:zone13`],
-  ["ward 178 la street light complaints", "inc:STREETLIGHT_ELECTRICAL:open:30:cit | in:ward178"],
-  ["anna salai la thiruttu", `${TH}:open:30 | along:road:anna-salai:75`],
-  ["OMR la accidents evlo", `${RA}:open:30 | along:road:rajiv-gandhi-salai:75`],
-  ["velachery kitta vellam", `${FL}:open:30 | in:pt:loc:Velachery:1000`],
-  ["ward wise kuppai complaints", `${SW}:open:30:cit | by:ward`],
-  ["zone wise vibathu", `${RA}:open:30 | by:zone`],
+  ["ward 178 la street light complaints", "inc:STREETLIGHT_ELECTRICAL:open:7:cit | in:ward178"],
+  ["anna salai la thiruttu", `${TH}:open:7 | along:road:anna-salai:75`],
+  ["OMR la accidents evlo", `${RA}:open:7 | along:road:rajiv-gandhi-salai:75`],
+  ["velachery kitta vellam", `${FL}:open:7 | in:pt:loc:Velachery:1000`],
+  ["ward wise kuppai complaints", `${SW}:open:7:cit | by:ward`],
+  ["zone wise vibathu", `${RA}:open:7 | by:zone`],
   ["kuppai complaints enga adhigama irukku", `${SW}:any:90:cit | hot`],
-  ["lake pakkathula water stagnation", `${FW}:open:30 | water_bodies | within:500`],
-  ["300 m kulla school pakkathula vellam", `${FL}:open:30 | schools | within:300`],
-  ["1 km kulla hospital pakkathula kuppai", `${SW}:open:30 | hospitals | within:1000`],
+  ["lake pakkathula water stagnation", `${FW}:open:7 | water_bodies | within:500`],
+  ["300 m kulla school pakkathula vellam", `${FL}:open:7 | schools | within:300`],
+  ["1 km kulla hospital pakkathula kuppai", `${SW}:open:7 | hospitals | within:1000`],
   ["marina pakkathula irukura 5 police station", "police | nearest:5@loc:Marina"],
   ["saidapet la enna nadakkudhu", "BRIEF:loc:Saidapet"],
   ["ward 170 la enna nadakuthu", "BRIEF:ward170"],
-  ["adyar vs velachery vellam", `${FL}:open:30 | cmp:zone13:taluk:TLK-VLC`],
-  ["zone 10 vs zone 13 open complaints", "inc:-:open:30:cit | cmp:zone10:zone13"],
+  ["adyar vs velachery vellam", `${FL}:open:7 | cmp:zone13:taluk:TLK-VLC`],
+  ["zone 10 vs zone 13 open complaints", "inc:-:open:7:cit | cmp:zone10:zone13"],
   ["indha week vs last week vellam zone 13", `${FL}:any:7 | in:zone13 | chg:7`],
-  ["severe vellam zone 13 la", `${FL}:open:30:Severe | in:zone13`],
-  ["buckingham canal pakkathula incidents", "inc:-:open:30 | along:water:buckingham-canal:200"],
-  ["t nagar pakkathula kuppai", `${SW}:open:30 | in:pt:loc:T. Nagar:1000`],
-  ["koyambedu bus stand kitta accidents", `${RA}:open:30 | in:pt:osm:n78:500`],
-  ["dengue school kitta", "inc:VECTOR_DISEASE:open:30 | schools | within:500"],
-  ["fire station pakkathula fire accident", "inc:FIRE_EXPLOSION:open:30 | fire_stations | within:500"],
-  ["police station kitta thiruttu", `${TH}:open:30 | police | within:500`],
+  ["severe vellam zone 13 la", `${FL}:open:7:Severe | in:zone13`],
+  ["buckingham canal pakkathula incidents", "inc:-:open:7 | along:water:buckingham-canal:200"],
+  ["t nagar pakkathula kuppai", `${SW}:open:7 | in:pt:loc:T. Nagar:1000`],
+  ["koyambedu bus stand kitta accidents", `${RA}:open:7 | in:pt:osm:n78:500`],
+  ["dengue school kitta", "inc:VECTOR_DISEASE:open:7 | schools | within:500"],
+  ["fire station pakkathula fire accident", "inc:FIRE_EXPLOSION:open:7 | fire_stations | within:500"],
+  ["police station kitta thiruttu", `${TH}:open:7 | police | within:500`],
   ["innaiki vellam adyar zone", `${FL}:open:1 | in:zone13`],
-  ["mylapore taluk la severe incidents", "inc:-:open:30:Severe | in:taluk:TLK-MYL"],
-  ["metro station pakkathula vibathu", `${RA}:open:30 | rail_metro | within:500`],
-  ["closed kuppai complaints zone 1 la", `${SW}:closed:30:cit | in:zone1`],
-  ["evlo open complaints ward 178 la", "inc:-:open:30:cit | in:ward178"],
-  ["college pakkathula thiruttu", `${TH}:open:30 | colleges | within:500`],
-  ["govt hospital kitta vellam", `${FL}:open:30 | hospitals(gov) | within:500`],
-  ["adyar river pakkathula vellam", `${FL}:open:30 | along:water:adyar-river:200`],
-  ["half km kulla school pakkathula kuppai", `${SW}:open:30 | schools | within:500`],
+  ["mylapore taluk la severe incidents", "inc:-:open:7:Severe | in:taluk:TLK-MYL"],
+  ["metro station pakkathula vibathu", `${RA}:open:7 | rail_metro | within:500`],
+  ["closed kuppai complaints zone 1 la", `${SW}:closed:7:cit | in:zone1`],
+  ["evlo open complaints ward 178 la", "inc:-:open:7:cit | in:ward178"],
+  ["college pakkathula thiruttu", `${TH}:open:7 | colleges | within:500`],
+  ["govt hospital kitta vellam", `${FL}:open:7 | hospitals(gov) | within:500`],
+  ["adyar river pakkathula vellam", `${FL}:open:7 | along:water:adyar-river:200`],
+  ["half km kulla school pakkathula kuppai", `${SW}:open:7 | schools | within:500`],
   ["theft hotspot evlo", `${TH}:any:90 | hot`],
-  ["SWD open cases school pakkathula", "inc:-:open:30:GCC-SWD | schools | within:500"],
-  ["past deadline complaints hospital kitta", "inc:-:open:30:cit:overdue | hospitals | within:500"],
-  ["gst road la vibathu", `${RA}:open:30 | along:road:gst-road:75`]
+  ["SWD open cases school pakkathula", "inc:-:open:7:GCC-SWD | schools | within:500"],
+  ["past deadline complaints hospital kitta", "inc:-:open:7:cit:overdue | hospitals | within:500"],
+  ["gst road la vibathu", `${RA}:open:7 | along:road:gst-road:75`]
 ];
 
 const results: { q: string; ok: boolean }[] = [];
@@ -240,7 +240,7 @@ describe("follow-ups edit exactly one part of the plan", () => {
   const edit = (t: string) => { const r = editPlan(t, base, env); if (r?.kind !== "plan") throw new Error(`no edit for ${t}`); return r; };
   it("only severe", () => expect(diff(base, edit("only severe").plan)).toEqual([".steps.0.filter.severity"]));
   it("make it 500 m", () => expect(diff(base, edit("make it 500 m").plan)).toEqual([".steps.2.meters"]));
-  it("last 7 days", () => expect(diff(base, edit("last 7 days").plan)).toEqual([".steps.0.filter.period.days"]));
+  it("last 30 days", () => expect(diff(base, edit("last 30 days").plan)).toEqual([".steps.0.filter.period.days"]));
   it("add hospitals", () => {
     const p = edit("add hospitals").plan;
     expect(p.steps.map((s) => s.op)).toEqual(["take", "take", "take", "within"]);
@@ -278,12 +278,12 @@ describe("follow-ups edit exactly one part of the plan", () => {
 describe("in the news: a source, not a category", () => {
   it.each([
     ["flooding in the news this week", `${FL}:any:7:news`],
-    ["garbage complaints reported in the newspapers", `${SW}:any:30:cit:news`],
-    ["open accidents in the news near Adyar", `${RA}:open:30:news | in:pt:loc:Adyar:1000`],
+    ["garbage complaints reported in the newspapers", `${SW}:any:7:cit:news`],
+    ["open accidents in the news near Adyar", `${RA}:open:7:news | in:pt:loc:Adyar:1000`],
     ["what was in the news this month", "inc:-:any:30:news"],
-    ["news about waterlogging near schools", `${FW}:any:30:news | schools | within:500`],
-    ["செய்திகளில் வந்த வெள்ளம்", `${FL}:any:30:news`],
-    ["news la vandha kuppai", `${SW}:any:30:news`]
+    ["news about waterlogging near schools", `${FW}:any:7:news | schools | within:500`],
+    ["செய்திகளில் வந்த வெள்ளம்", `${FL}:any:7:news`],
+    ["news la vandha kuppai", `${SW}:any:7:news`]
   ])("%s", (q, want) => {
     expect(route(q)).toBe(want);
     const r = rulesRoute(q, null, env);
@@ -309,12 +309,33 @@ describe("in the news: a source, not a category", () => {
 describe("areas the district does not have", () => {
   it.each(["open cases in ward 999", "flooding in zone 22", "வார்டு 250 இல் குப்பை", "ward 0 garbage"])("%s is said plainly", (q) => expect(route(q)).toBe("SAY"));
   it("real ones still answer", () => {
-    expect(route("streetlight problems in ward 178")).toBe("inc:STREETLIGHT_ELECTRICAL:open:30 | in:ward178");
+    expect(route("streetlight problems in ward 178")).toBe("inc:STREETLIGHT_ELECTRICAL:open:7 | in:ward178");
     expect(route("flooding in Zone 13 this week")).toBe(`${FL}:open:7 | in:zone13`);
   });
   it("compare naming both sides after an answer is a new question", () => {
     const first = rulesRoute("garbage near hospitals", null, env);
     if (first?.kind !== "plan") throw new Error("first");
     expect(editPlan("compare zone 9 and zone 10", first.plan, env)).toBeNull();
+  });
+});
+
+describe("the places themselves, or incidents near them", () => {
+  it("schools in an area are the schools, not incidents near schools", () => {
+    expect(route("schools in zone 13")).toBe("schools | in:zone13");
+    expect(route("hospitals in Adyar")).toBe("hospitals | in:zone13");
+    expect(route("police stations near T. Nagar")).toBe("police | in:pt:loc:T. Nagar:1000");
+    expect(route("schools")).toBe("schools");
+    expect(route("Velachery பள்ளிகள்")).toBe("schools | in:pt:loc:Velachery:1000");
+  });
+  it("near a facility, or a topic, still asks about incidents", () => {
+    expect(route("near schools in zone 13")).toBe("inc:-:open:7 | schools | within:500 | in:zone13");
+    expect(route("flooding near schools in zone 13")).toBe(`${FL}:open:7 | schools | within:500 | in:zone13`);
+    expect(route("school pakkathula kuppai")).toBe(`${SW}:open:7 | schools | within:500`);
+    expect(route("பள்ளிகள் அருகே")).toBe("inc:-:open:7 | schools | within:500");
+  });
+  it("no period in the question: the last 7 days; a period said is used", () => {
+    expect(route("garbage complaints")).toBe(`${SW}:open:7:cit`);
+    expect(route("garbage complaints this month")).toBe(`${SW}:open:30:cit`);
+    expect(route("garbage complaints today")).toBe(`${SW}:open:1:cit`);
   });
 });

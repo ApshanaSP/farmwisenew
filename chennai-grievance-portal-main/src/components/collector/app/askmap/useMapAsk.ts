@@ -31,8 +31,10 @@ export interface MapAsk {
   /** incident ids the panel points at on the map (a trace step, a brief count, a cluster) */
   spot: { ids: string[]; label: string } | null;
   setSpot: (s: { ids: string[]; label: string } | null) => void;
+  /** the row under the mouse: not React state (a hover would re-render the whole console); the map listens instead */
   hover: string | null;
   setHover: (id: string | null) => void;
+  onHover: (f: (id: string | null) => void) => () => void;
   focus: string | null;
   setFocus: (id: string | null) => void;
   /** the Before · Now toggle of a change answer */
@@ -72,7 +74,14 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
   const [cue, setCue] = useState({ seq: 0, index: 0, move: true });
   const [tookOver, setTookOver] = useState(false);
   const [spot, setSpot] = useState<MapAsk["spot"]>(null);
-  const [hover, setHover] = useState<string | null>(null);
+  const hoverRef = useRef<string | null>(null);
+  const hoverSubs = useRef(new Set<(id: string | null) => void>());
+  const setHover = useCallback((id: string | null) => {
+    if (hoverRef.current === id) return;
+    hoverRef.current = id;
+    hoverSubs.current.forEach((f) => f(id));
+  }, []);
+  const onHover = useCallback((f: (id: string | null) => void) => { hoverSubs.current.add(f); return () => { hoverSubs.current.delete(f); }; }, []);
   const [focus, setFocus] = useState<string | null>(null);
   const [showBefore, setShowBefore] = useState(false);
   const [traceOpen, setTraceOpen] = useState(false);
@@ -133,7 +142,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
   }, []);
 
   return {
-    grown, setGrown, busy, error, resp, plan, history, cue, tookOver, setTookOver, spot, setSpot, hover, setHover, focus, setFocus,
+    grown, setGrown, busy, error, resp, plan, history, cue, tookOver, setTookOver, spot, setSpot, hover: hoverRef.current, setHover, onHover, focus, setFocus,
     showBefore, setShowBefore, traceOpen, setTraceOpen, uiCue, route, setRoute,
     replay: (index = 0) => { setTookOver(false); setCue({ seq: ++seq.current, index, move: true }); },
     ask: async (text: string) => {

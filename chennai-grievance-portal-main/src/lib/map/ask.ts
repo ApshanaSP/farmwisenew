@@ -10,7 +10,7 @@ import { AiUnavailableError, AiBudgetError, AiBusyError, aiStatus } from "@/lib/
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
 import { aiPlan, aiReword } from "./ai";
-import { insightsFor, type Insight } from "./insights";
+import type { Insight } from "./insights";
 import { conditionsNear, familiesOf, spreadOf, type Condition } from "./conditions";
 import { compose, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
@@ -295,9 +295,10 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     try { const s = await aiReword(answer.meaning, answer.facts, lang, input.user.email, input.signal); if (s) { answer.meaning = s; aiUsed = true; } } catch { /* the template stands */ }
   }
   const res = fill(out, plan, r, answer, w, ctx, data, defaults, places, edited, aiUsed);
-  res.insights = insightsFor(plan, r, w, ctx, lock);
+  // the panel shows the answer itself; findings (insights.ts) are no longer computed per question
+  res.insights = [];
   res.glance = glanceOf(r, w);
-  {
+  if (r.show.type !== "points") {
     const t = plan.steps.find((s) => s.op === "take" && s.layer === "incidents");
     const f = t?.op === "take" ? t.filter : null;
     const pts = r.hits.filter((h) => h.inc.pinnable).map((h) => ({ lat: h.inc.lat, lon: h.inc.lon }));

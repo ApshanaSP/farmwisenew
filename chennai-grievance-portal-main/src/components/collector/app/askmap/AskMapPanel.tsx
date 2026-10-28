@@ -167,12 +167,11 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                 </span>
               ))}
             </div>}
-            <Answer r={r} w={w} lang={lang} ask={ask} onDept={(code, ids) => ask.setSpot({ ids, label: r.answer!.depts.find((d) => d.code === code)?.name ?? code })} />
-            <Analyst r={r} lang={lang} onSend={actions.role === "collector" && actions.onSend ? (dept) => actions.onSend!(r, dept) : undefined} />
-            <Insights r={r} lang={lang} ask={ask} onSend={actions.role === "collector" && actions.onSend ? () => actions.onSend!(r, null) : undefined} onAsk={submit} />
+            <Answer r={r} w={w} lang={lang} ask={ask} />
             <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
             <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
             <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
+            <Places r={r} lang={lang} />
           </>
         )}
         {r?.kind === "brief" && r.brief && <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />}
@@ -205,7 +204,18 @@ function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; on
 /** The plan in one line ("Flooding · Last 7 days · Open"), and a button that opens its parts for changing. */
 function FilterLine({ r, lang, open, onToggle }: { r: AskResponse; lang: "en" | "ta"; open: boolean; onToggle: () => void }) {
   const said = r.chips.filter((c) => !c.isDefault);
-  const line = (said.length ? said : r.chips.slice(0, 2)).map((c) => (lang === "ta" ? c.ta : c.en)).join(" · ");
+  // "of Schools (OSM)" reads as "Near schools", or joins the distance said before it ("Within 300 m of schools")
+  const parts: string[] = [];
+  let prev: PlanChip | null = null;
+  for (const c of said.length ? said : r.chips.slice(0, 2)) {
+    if (lang !== "ta" && c.part === "facility") {
+      const what = c.en.replace(/\s*\((OSM|store)\)$/, "").replace(/^of /, "").toLowerCase();
+      if (prev?.part === "distance") parts[parts.length - 1] += ` of ${what}`;
+      else parts.push(`Near ${what}`);
+    } else parts.push(lang === "ta" ? c.ta : c.en);
+    prev = c;
+  }
+  const line = parts.join(" · ");
   return (
     <div className="amp-fl">
       <span title={line}><I n="sliders" />{line}</span>
@@ -224,7 +234,7 @@ function splitHead(h: string): { big: string | null; rest: string } {
 
 const COND_ICON = { weather: "cloud", rain: "drop", lakes: "drop", works: "cone", hospital: "health", air: "wind" } as const;
 
-function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk; onDept: (code: string, ids: string[]) => void }) {
+function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk }) {
   const a = r.answer!;
   const { big, rest } = splitHead(a.headline);
   const g = r.glance;
@@ -236,7 +246,7 @@ function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "
     g.open.n !== r.total ? { k: "open", n: g.open.n, ids: g.open.ids, en: "still open", ta: "திறந்தவை", tone: "" } : null,
     { k: "overdue", n: g.overdue.n, ids: g.overdue.ids, en: "past deadline", ta: "காலக்கெடு தாண்டியவை", tone: g.overdue.n ? "t-alert" : "t-good" },
     { k: "severe", n: g.severe.n, ids: g.severe.ids, en: "severe", ta: "கடுமையானவை", tone: g.severe.n ? "t-warn" : "t-good" }
-  ].filter((x): x is NonNullable<typeof x> => !!x) : [];
+  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0) : [];
   return (
     <div className="amp-card">
       <div className="amp-big" aria-live="polite">
@@ -256,18 +266,10 @@ function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "
           })}
         </div>
       )}
-      <Conditions r={r} lang={lang} />
-      {a.depts.length > 0 && (
-        <dl className="amp-ww">
-          {a.depts.length > 0 && <><dt>{ta ? "பொறுப்பு" : "With"}</dt><dd>{a.depts.slice(0, 3).map((d, i) => (
-            <span key={d.code}>{i > 0 && ", "}<button onClick={() => onDept(d.code, r.rows.filter((x) => x.dept === d.code).map((x) => x.id))} title={`${d.name}: ${d.n}`}>{d.name}</button> <em>{d.n.toLocaleString("en-IN")}</em></span>
-          ))}</dd></>}
-        </dl>
-      )}
-      {r.unplaced.length > 0 && <div className="amp-asof">{w.unplaced(r.unplaced.length)}</div>}
-      <div className="amp-asof">
-        {w.asOf}: {ta ? "சம்பவங்கள்" : "Incidents"} {fmtWhen(r.asOf.data || r.asOf.now)}
-        {layers.map((l) => ` · ${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("")}
+      <Conditions r={r} lang={lang} max={2} />
+      <div className="amp-asof" title={layers.map((l) => `${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("\n") || undefined}>
+        {w.asOf} {fmtWhen(r.asOf.data || r.asOf.now)}
+        {r.unplaced.length > 0 && ` · ${w.unplaced(r.unplaced.length)}`}
       </div>
       {ask.spot && <div className="amp-asof" style={{ color: "var(--accent-2)", fontWeight: 600 }}>{w.showing(ask.spot.label)} · <button style={{ all: "unset", cursor: "pointer", textDecoration: "underline" }} onClick={() => ask.setSpot(null)}>{w.clear}</button></div>}
     </div>
@@ -275,79 +277,12 @@ function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "
 }
 
 /** "On the ground now": the live readings that bear on the answer, each from a named place and time. */
-function Conditions({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
+function Conditions({ r, lang, max = 4 }: { r: AskResponse; lang: "en" | "ta"; max?: number }) {
   if (!r.conditions?.length) return null;
   return (
     <div className="amp-cond">
       <h5><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"}</h5>
-      <ul>{r.conditions.map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
-    </div>
-  );
-}
-
-const TONE_ICON = { alert: "alert", warn: "bolt", info: "info", good: "checkc" } as const;
-/** Findings the map computed about this answer; a click shows exactly their rows on the map. */
-function Insights({ r, lang, ask, onSend, onAsk }: { r: AskResponse; lang: "en" | "ta"; ask: MapAsk; onSend?: () => void; onAsk: (q: string) => void }) {
-  const [all, setAll] = useState(false);
-  if (!r.insights?.length) return null;
-  const list = all ? r.insights : r.insights.slice(0, 3);
-  return (
-    <div className="amp-ins" aria-label={lang === "ta" ? "கண்டறிதல்கள்" : "Insights"}>
-      <div className="amp-sec" style={{ cursor: "default" }}><I n="spark" />{lang === "ta" ? "கவனிக்க வேண்டியவை" : "What needs attention"}<span className="n">{r.insights.length}</span></div>
-      {list.map((i) => {
-        const on = ask.spot?.label === i.en || ask.spot?.label === i.ta;
-        return (
-          <div key={i.id} className={`amp-insight t-${i.tone}${on ? " on" : ""}`}>
-            <button className="amp-insight-b" disabled={!i.ids.length} onClick={() => (on ? ask.setSpot(null) : ask.setSpot({ ids: i.ids, label: lang === "ta" ? i.ta : i.en }))}
-              title={i.ids.length ? (lang === "ta" ? "இவற்றை வரைபடத்தில் காட்டு" : "Show these on the map") : undefined}>
-              <I n={TONE_ICON[i.tone]} /><span>{lang === "ta" ? i.ta : i.en}</span>
-            </button>
-            {i.next && (i.next.ask || (i.kind === "overdue" && onSend)) && (
-              <button className="amp-insight-n" onClick={() => (i.next!.ask ? onAsk(i.next!.ask) : onSend?.())}>{lang === "ta" ? i.next.ta : i.next.en}<I n="chevr" /></button>
-            )}
-          </div>
-        );
-      })}
-      {r.insights.length > 3 && <button className="amp-more-b" onClick={() => setAll((v) => !v)}>{all ? (lang === "ta" ? "குறைவாக" : "Fewer") : (lang === "ta" ? `மேலும் ${r.insights.length - 3}` : `${r.insights.length - 3} more`)}</button>}
-    </div>
-  );
-}
-
-interface AnalystOut { summary: string; actions: { text: string; dept: string | null }[]; watch: string | null; model: string; dropped: number }
-/** The AI analyst's reading, after the answer is drawn: what it means, up to three actions with owners, what to watch. */
-function Analyst({ r, lang, onSend }: { r: AskResponse; lang: "en" | "ta"; onSend?: (dept: string) => void }) {
-  const [state, setState] = useState<{ plan: string; out: AnalystOut | null; busy: boolean } | null>(null);
-  const key = JSON.stringify(r.plan);
-  useEffect(() => {
-    if (!r.plan || !r.total) { setState(null); return; }
-    const ac = new AbortController();
-    setState({ plan: key, out: null, busy: true });
-    fetch("/api/map/insight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: r.plan }), signal: ac.signal })
-      .then((x) => (x.ok ? x.json() : null)).then((j) => setState({ plan: key, out: j && !j.none ? j : null, busy: false }))
-      .catch(() => { if (!ac.signal.aborted) setState({ plan: key, out: null, busy: false }); });
-    return () => ac.abort();
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!state || state.plan !== key || (!state.busy && !state.out)) return null;
-  const deptName = (c: string) => r.answer?.depts.find((d) => d.code === c)?.name ?? c;
-  return (
-    <div className="amp-ai" aria-live="polite">
-      <div className="amp-ai-h"><I n="ai" />{lang === "ta" ? "AI பகுப்பாய்வாளர்" : "AI analyst"}{state.busy && <span className="amp-ai-dots" aria-label="reading"><i /><i /><i /></span>}</div>
-      {state.busy && <div className="amp-ai-sk"><i /><i /><i style={{ width: "62%" }} /></div>}
-      {state.out && (
-        <>
-          <p>{state.out.summary}</p>
-          {state.out.actions.length > 0 && (
-            <ol className="amp-ai-acts">{state.out.actions.map((a, k) => (
-              <li key={k}><span>{a.text}</span>
-                {a.dept && <em>{deptName(a.dept)}</em>}
-                {a.dept && onSend && <button onClick={() => onSend(a.dept!)} title={`Draft an email to ${deptName(a.dept)}`}><I n="send" /></button>}
-              </li>))}
-            </ol>
-          )}
-          {state.out.watch && <p className="amp-ai-w"><I n="clock" />{state.out.watch}</p>}
-          <small>{lang === "ta" ? "ஒவ்வொரு எண்ணும் வரைபடத்தின் கணக்குடன் சரிபார்க்கப்பட்டது" : "Every number checked against the map's own figures"} · {state.out.model}</small>
-        </>
-      )}
+      <ul>{r.conditions.slice(0, max).map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
     </div>
   );
 }
@@ -461,6 +396,29 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
         })}
       </ul>
       {more > 0 && <div className="amp-more">{w.more(more)} · {actions.onExport ? <button onClick={() => actions.onExport!(r)}>{w.exportAll}</button> : null}</div>}
+    </div>
+  );
+}
+
+/** "Schools in Valasaravakkam": the places, by name (each is a marker on the map). */
+function Places({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
+  const pts = r.context.points;
+  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas) return null;
+  const lw = LAYER_WORD[pts[0].layer];
+  return (
+    <div>
+      <div className="amp-sec" style={{ cursor: "default" }}>{lang === "ta" ? lw.ta : lw.en[0].toUpperCase() + lw.en.slice(1)}<span className="n">{pts.length.toLocaleString("en-IN")}</span></div>
+      <ul className="amp-list amp-places">
+        {pts.map((p) => (
+          <li key={p.id} className="amp-row">
+            <span className="dot" style={{ background: "#2E7D5B" }} />
+            <div style={{ minWidth: 0 }}>
+              <div className="t">{(lang === "ta" ? p.name_ta ?? p.name : p.name) ?? (lang === "ta" ? lw.ta_one : `Unnamed ${lw.one}`)}</div>
+              {p.government && <div className="s">{lang === "ta" ? "அரசு" : "Government"}</div>}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

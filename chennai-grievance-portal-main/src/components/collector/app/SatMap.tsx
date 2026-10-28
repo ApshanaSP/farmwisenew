@@ -430,7 +430,9 @@ export default function SatMap(props: Props) {
     });
     markPins(el.current!, ask?.hover ?? null, ask?.focus ?? null);
   }, [ready, resp, ask?.showBefore, ask?.spot, fanned, zoomTick]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (el.current) markPins(el.current, ask?.hover ?? null, ask?.focus ?? null); }, [ask?.hover, ask?.focus]);
+  useEffect(() => { if (el.current) markPins(el.current, ask?.hover ?? null, ask?.focus ?? null); }, [ask?.focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  // a list row under the mouse lights its pin, with no React render
+  useEffect(() => ask?.onHover((id) => { if (el.current) markPins(el.current, id, cb.current.ask?.focus ?? null); }), [ask?.onHover]); // eslint-disable-line react-hooks/exhaustive-deps
   // a list row or pin chosen: fly to it at zoom 16 and ring it
   useEffect(() => {
     const s = st.current;
