@@ -26,6 +26,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { categories } from "@/lib/collector/nlp";
 import { orEmpty } from "@/lib/fallback";
+import { roughKm } from "@/lib/map/geom";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -118,8 +119,7 @@ async function wards() {
 function nearestWard(ws: Row[], lat: number, lon: number) {
   let best: Row | null = null, bd = Infinity;
   for (const w of ws) {
-    const dy = (Number(w.lat) - lat) * 111.2, dx = (Number(w.lon) - lon) * 111.2 * Math.cos((lat * Math.PI) / 180);
-    const d = Math.hypot(dx, dy);
+    const d = roughKm(lat, lon, Number(w.lat), Number(w.lon));
     if (d < bd) { bd = d; best = w; }
   }
   return bd <= 2 ? best : null;

@@ -222,8 +222,10 @@ export interface Hit { g: string; ic: IconName; l: string; s?: string; run: () =
  * The command palette ("/"): type to search incidents, zones and departments, or to run an action ("Go to Trends",
  * "Export report", "Switch to light theme", "Open data sources"). Arrow keys move, Enter runs, Esc closes.
  */
-export function Palette({ open, onClose, actions, search, ask }: {
+export function Palette({ open, onClose, actions, search, ask, askMap }: {
   open: boolean; onClose: () => void; actions: Hit[]; search: (q: string) => Promise<Hit[]>; ask?: (q: string) => void;
+  /** Ask the Map: runs the typed text on the Overview's map */
+  askMap?: (q: string) => void;
 }) {
   const [q, setQ] = useState("");
   const [found, setFound] = useState<Hit[]>([]);
@@ -244,6 +246,7 @@ export function Palette({ open, onClose, actions, search, ask }: {
     const t = q.trim().toLowerCase();
     const acts = t ? actions.filter((a) => `${a.l} ${a.s ?? ""}`.toLowerCase().includes(t)) : actions;
     const out = [...acts, ...found];
+    if (t.length >= 3 && askMap) out.push({ g: "Ask", ic: "map", l: `Ask the map: “${q.trim()}”`, s: "Answers on the Overview's map", run: () => askMap(q.trim()) });
     if (t.length >= 3 && ask) out.push({ g: "Ask", ic: "chat", l: `Ask District IQ: “${q.trim()}”`, s: "Opens the assistant with this question", run: () => ask(q.trim()) });
     return out;
   }, [q, actions, found, ask]);

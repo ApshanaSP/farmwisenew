@@ -14,6 +14,7 @@
  * Rules only; every verdict says how it was reached.
  */
 import type { Placed } from "@/lib/collector/nlp";
+import { roughKm } from "@/lib/map/geom";
 
 type Row = Record<string, any>;
 export type LocKind = "missing" | "district" | "located" | "outside";
@@ -91,8 +92,7 @@ export function outsidePlace(t: string): string | null {
   return t.match(OUT_EN)?.[0] ?? t.match(OUT_TA)?.[0] ?? null;
 }
 
-const km = (aLat: number, aLon: number, bLat: number, bLon: number) =>
-  Math.hypot((aLat - bLat) * 111.2, (aLon - bLon) * 111.2 * Math.cos((aLat * Math.PI) / 180));
+const km = roughKm;
 
 function nearestWard(wards: Ward[], lat: number, lon: number) {
   let best: Ward | null = null, bd = Infinity;

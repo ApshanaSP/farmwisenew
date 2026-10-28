@@ -7,8 +7,11 @@
  * Collector console's own (its overview, filtered to this department), so the officer and the
  * Collector always see the same figures; the work queue adds the officer's steps.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SatMap from "@/components/collector/app/SatMap";
+import AskOverlay from "@/components/collector/app/askmap/AskOverlay";
+import { useMapChrome } from "@/components/collector/app/askmap/Chrome";
+import { useMapAsk } from "@/components/collector/app/askmap/useMapAsk";
 import { I, type IconName } from "@/components/collector/app/icons";
 import { Kpi, OfficerCard } from "@/components/collector/app/Overview";
 import { Cnt, Empty, SEVS, SEV_HEX, SevChip, deptIcon, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
@@ -69,19 +72,37 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
 function MapCard({ c, style }: { c: Ctx; style: React.CSSProperties }) {
   const d = c.ov.board;
   const [layers, setLayers] = useState<Record<string, boolean>>({ severe: true, complaint: true, other: true, added: false, stations: false });
+  // Ask the Map, locked to the officer's department by the server (the department comes from the database)
+  const ctx = useRef({ zone: c.zone, taluk: c.taluk });
+  ctx.current = { zone: c.zone, taluk: c.taluk };
+  const ask = useMapAsk(useCallback(() => ctx.current, []));
+  const chrome = useMapChrome(ask);
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // the map card grows over the officer's page, as on the Collector's Overview; Esc shrinks it back
+    box.current?.closest(".dic")?.classList.toggle("map-grown", ask.grown);
+    if (!ask.grown) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector(".scrim")) ask.setGrown(false); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [ask.grown]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { box.current?.closest(".dic")?.classList.remove("map-grown"); }, []);
   const pins = useMemo(() => d.map.pins, [d.map.pins]);
   const LAYERS = [
     ["severe", "Severe", "#F2555A", d.map.layerCounts.severe], ["complaint", "Complaints", "#FFA114", d.map.layerCounts.complaint],
     ["other", "Other", "#4D8DFF", d.map.layerCounts.other]
   ] as const;
   return (
-    <article className="card a-map" style={style}>
+    <article className="card a-map" style={style} ref={box}>
       <div className="ch"><I n="map" /><h3>{c.taluk ? `${c.talukName} taluk` : c.zoneName ?? `${c.dept.short} work in Chennai`}</h3></div>
       <div className="map-cb">
         <div className="map-wrap">
           <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={pins} zone={c.zone} layers={layers} stations={[]} added={[]}
             mode={c.taluk ? "taluks" : "zones"} taluk={c.taluk} focus={null} onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)}
-            onPin={(id) => c.openGrievance(id)} onStation={noop} onItem={noop} zoneTip={c.zoneTip} />
+            onPin={(id) => c.openGrievance(id)} onStation={noop} onItem={noop} zoneTip={c.zoneTip}
+            ask={ask} grown={ask.grown} extraTools={ask.grown ? chrome.tools : undefined} base={chrome.base} overlays={chrome.overlays}
+            drawCircle={chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openGrievance(id)} heat={chrome.heat} />
+          <AskOverlay ask={ask} role="officer" toast={c.toast} onOpen={(id) => c.openGrievance(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays} compact />
           {!c.taluk && <div className="map-heat"><span>Incidents by zone</span><div /><span><em>Fewer</em><em>More</em></span></div>}
         </div>
       </div>

@@ -268,3 +268,91 @@ function mailHtml(subject: string, body: string, banner: string | null) {
   <p style="color:#666;font-size:12px">Reply through the District IQ officer console with a completion report and site photos.</p>
 </div>`;
 }
+
+// ------------------------------------------------------- Ask the Map batch --
+
+/** Most cases one email lists; the rest are named as "and N more" (the full list is in the console). */
+export const BATCH_MAX = 25;
+const BatchSchema = z.object({
+  dept: z.string().regex(/^[A-Z0-9-]{2,20}$/),
+  ids: z.array(z.string().regex(/^[A-Za-z0-9-]{4,60}$/)).min(1).max(5000),
+  subject: z.string().trim().min(5).max(160),
+  body: z.string().trim().min(40).max(8000),
+  /** the map question's plan, kept in the audit log with the email */
+  plan: z.unknown()
+});
+
+/** One department's open cases among `ids`, worst first (re-read from the store: never taken from the browser). */
+async function deptCases(ids: string[], dept: string): Promise<Row[]> {
+  const out: Row[] = [];
+  for (let k = 0; k < ids.length; k += 500) {
+    const part = ids.slice(k, k + 500);
+    out.push(...await q(`SELECT i.incident_id AS id, COALESCE(i.headline, i.title) AS title, i.severity_level AS sev, i.place_text AS place, i.zone_name, i.ward_no AS ward,
+        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, i.priority_score AS priority, i.is_open AS open
+      FROM incidents i WHERE i.lead_dept = ? AND i.incident_id IN (${part.map(() => "?").join(", ")})`, [dept, ...part]).catch(orEmpty("actionmail:batch")));
+  }
+  return out.sort((a, b) => Number(b.priority) - Number(a.priority) || String(a.id).localeCompare(String(b.id)));
+}
+
+export interface BatchDraft { dept: string; deptName: string; ids: string[]; total: number; listed: number; subject: string; body: string; to: Recipient | null; delivery: Delivery }
+
+/**
+ * Ask the Map's "Send to department": one draft for one department, listing its cases from the answer (at most 25, the
+ * rest as "and N more"). A plain template, no AI: the cases are the facts. Nothing is sent until the Collector approves.
+ */
+export async function draftBatchAction(ids: string[], dept: string, deptName: string, question: string): Promise<BatchDraft> {
+  const cases = await deptCases(ids, dept);
+  const { to } = await recipients(dept, []);
+  const officer = to?.name ?? "Officer";
+  const listed = cases.slice(0, BATCH_MAX);
+  // the place once: a recorded place that only repeats the ward or the zone is left out
+  const where = (c: Row) => [...new Set([c.place && !/^ward\s*\d+$/i.test(String(c.place)) ? String(c.place) : null, c.zone_name ? String(c.zone_name) : null]
+    .filter(Boolean).map((x) => x!.trim()))].filter((x, k, a) => a.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === k).concat(c.ward ? [`ward ${c.ward}`] : []).join(", ") || "Chennai";
+  const line = (c: Row, k: number) => `${k + 1}. ${String(c.title).slice(0, 140)} (${c.id}): ${where(c)}; ${c.sev}; reported ${c.day}${Number(c.breached) === 1 ? "; past its deadline" : ""}`;
+  const subject = `Action needed: ${cases.length} ${cases.length === 1 ? "case" : "cases"} from the Collector's map (${question.slice(0, 60)})`.slice(0, 160);
+  const body = `Dear ${officer},\n\nThe Collector's map shows ${cases.length} open ${cases.length === 1 ? "case" : "cases"} for ${deptName} that ${cases.length === 1 ? "matches" : "match"} "${question.slice(0, 120)}". ` +
+    `Please inspect and act on them, the first ones first:\n\n${listed.map(line).join("\n")}` +
+    `${cases.length > listed.length ? `\n\nand ${cases.length - listed.length} more, listed in the District IQ officer console.` : ""}` +
+    `\n\nSend a completion report with site photos for each through the District IQ officer console within 24 hours.\n\nDistrict Collector, Chennai`;
+  return { dept, deptName, ids: cases.map((c) => String(c.id)), total: cases.length, listed: listed.length, subject, body: tidyEmail(body, officer), to, delivery: delivery(to?.email ?? null) };
+}
+
+/** The Collector approved a batch draft: send it under the same safety rule, set a follow-up per case (24 h), audit it with the plan. */
+export async function sendBatchAction(input: unknown, user: string): Promise<{ status: number; body: Row }> {
+  const parsed = BatchSchema.safeParse(input);
+  if (!parsed.success) return { status: 400, body: { error: "Write a subject and a message before sending." } };
+  const { dept, ids, subject, body, plan } = parsed.data;
+  const cases = await deptCases(ids, dept);
+  if (!cases.length) return { status: 404, body: { error: "None of these cases belongs to that department any more." } };
+  const { to } = await recipients(dept, []);
+  const dv = delivery(to?.email ?? null);
+  let status = "console_only", error: string | null = null, deliveredTo: string | null = null;
+  if (dv.to) {
+    const sandbox = dv.mode === "sandbox";
+    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null);
+    const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html);
+    if (r.ok) { status = "sent"; deliveredTo = dv.to; } else { status = "failed"; error = r.reason === "send_failed" ? r.detail : "not configured"; }
+  }
+  const [res] = await intelPool.query(
+    `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
+       approved_at, sent_at, delivered_to, body_hash, error)
+     VALUES (?, ?, NULL, ?, ?, ?, 'en', ?, ?, ?, ?, ?, ?, ?)`,
+    [user, JSON.stringify(to ? [to] : []), String(cases[0].id), subject, body, dv.mode, status, istNow(), status === "sent" ? istNow() : null, deliveredTo,
+      createHash("sha256").update(body).digest("hex"), error]
+  ) as unknown as [{ insertId: number }];
+  const emailId = Number(res?.insertId ?? 0);
+  // a follow-up for each case the email lists, due in 24 hours
+  for (const c of cases.slice(0, BATCH_MAX))
+    await intelPool.query(`INSERT INTO ${ops("followups")} (email_id, contact_id, incident_id, summary, due_date, status) VALUES (?, ?, ?, ?, ?, 'pending')`,
+      [emailId, to?.id ?? 0, String(c.id), `Completion report with photos (map send to ${dept})`, istNow(24)]);
+  await intelPool.query(
+    `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'ask_map:send', 'outbound_emails', ?, ?, ?)`,
+    [user, String(emailId), JSON.stringify({ plan }), JSON.stringify({ email_id: emailId, dept, cases: cases.length, listed: Math.min(cases.length, BATCH_MAX), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo })]
+  );
+  return {
+    status: 201,
+    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, followups: Math.min(cases.length, BATCH_MAX),
+      note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
+        : status === "failed" ? `The email could not be sent (${error}); the officer still sees the cases on the console.` : dv.note }
+  };
+}

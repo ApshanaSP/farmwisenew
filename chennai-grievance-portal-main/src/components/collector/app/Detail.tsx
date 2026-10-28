@@ -165,6 +165,11 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
           <span><I n={deptIcon(i.dept)} />{i.dept_name ?? i.dept}</span>
           <span><I n="clock" />First reported {fmtShort(i.t)} ({rel(i.t, c.now)})</span>
           {i.lat != null && <button className="iv-loc" onClick={() => c.locate(i)}><I n="target" />Show on map</button>}
+          {i.lat != null && c.askOnMap && (
+            <button className="iv-loc" onClick={() => c.askOnMap!({ incidentId: i.id })} title="Every incident within 500 m of this one in the last 30 days, any department, on the map">
+              <I n="search" />What else is near here?
+            </button>
+          )}
           {severe && open && (
             <button className={`btn ta-go${emails.length ? " done" : ""}`} onClick={() => setActing(true)}
               title="The AI agent drafts an instruction to the department officer; you approve it">

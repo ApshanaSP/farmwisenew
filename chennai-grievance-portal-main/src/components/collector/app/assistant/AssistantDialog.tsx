@@ -17,6 +17,7 @@ import { canListen, listen, speak, stopSpeaking } from "./speech";
 import { T, X } from "./text";
 import { EXAMPLES, detectLanguage, type Lang, type LangChoice } from "@/lib/assistant/lang";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
+import type { Plan } from "@/lib/map/plan";
 import "./assistant.css";
 
 type Stage = "understanding" | "fetching" | "drawing";
@@ -161,7 +162,10 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
           .then((r) => r.json()).then((j) => setItems((x) => [...x, { id: uid(), role: "error", text: j.ok ? `Saved as workspace "${j.name}".` : j.error ?? "Could not save." }]))
           .catch(() => {});
         return;
-      case "show_on_map": if (a.zone) c.setZone(a.zone); c.setPage("overview"); break;
+      case "show_on_map":
+        // a map answer runs its plan again on the Overview's map, at the same view
+        if (a.plan && c.askOnMap) { c.askOnMap({ plan: a.plan as Plan }); break; }
+        if (a.zone) c.setZone(a.zone); c.setPage("overview"); break;
     }
     if (!keepOpen) onClose();
   }, [c, onClose]);

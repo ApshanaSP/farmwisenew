@@ -15,6 +15,8 @@ import { AddedRow } from "./Added";
 import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useState } from "react";
+import AskOverlay from "./askmap/AskOverlay";
+import { useMapChrome } from "./askmap/Chrome";
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
 
 // =================================================================== page 1 ==
@@ -72,6 +74,7 @@ export function HeroBody({ d, c }: { d: OverviewData; c: Console }) {
 
 export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const env = useEnv(d, c.geo, c);
+  const chrome = useMapChrome(c.mapAsk ?? null);
   const L = c.layout;
   let ix = 4;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
@@ -110,7 +113,12 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                   added={addedPins} onItem={(i) => c.openItem(i)}
                   mode={c.mapMode} taluk={c.taluk} focus={c.focus}
                   onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)} onPin={(id) => c.openInc(id)} zoneTip={c.zoneTip}
-                  onStation={(st) => { c.setEnvSel(st.kind, st.id); c.setPage("environment"); c.toast(`${st.name} selected on the Environment page.`); }} />
+                  onStation={(st) => { c.setEnvSel(st.kind, st.id); c.setPage("environment"); c.toast(`${st.name} selected on the Environment page.`); }}
+                  ask={c.mapAsk} grown={!!c.mapAsk?.grown} extraTools={c.mapAsk?.grown ? chrome.tools : undefined} base={chrome.base} overlays={chrome.overlays}
+                  drawCircle={chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openInc(id)} heat={chrome.heat} />
+                {c.mapAsk && (
+                  <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => c.openInc(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays} />
+                )}
                 {c.mapMode === "zones"
                   ? <div className="map-heat"><span>Incidents by zone</span><div /><span><em>Fewer</em><em>More</em></span></div>
                   : <div className="map-heat"><span>Colour = revenue taluk</span></div>}

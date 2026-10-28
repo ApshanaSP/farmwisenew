@@ -87,6 +87,8 @@ export interface ConsoleAction {
   cat?: string | null;
   period?: Period | null;
   id?: string | null;
+  /** show_on_map from a map answer: Ask the Map's plan, run again on the console's map */
+  plan?: unknown;
 }
 
 // ------------------------------------------------------------------- cards --

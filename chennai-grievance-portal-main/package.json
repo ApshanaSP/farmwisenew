@@ -36,7 +36,8 @@
     "ai:key": "node scripts/set-ai-key.js",
     "ai:check": "node scripts/set-ai-key.js --check",
     "eval:golden": "vitest run --config vitest.golden.config.ts",
-    "eval:freeze": "node scripts/freeze-eval-store.cjs"
+    "eval:freeze": "node scripts/freeze-eval-store.cjs",
+    "layers:build": "node scripts/build-map-layers.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.87",

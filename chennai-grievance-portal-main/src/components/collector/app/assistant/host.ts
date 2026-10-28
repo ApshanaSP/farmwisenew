@@ -18,6 +18,8 @@ export interface AssistantHost {
   taluk: string | null;
   talukName(code: string | null): string | null;
   geo: MapGeo | null;
+  /** runs a map answer's plan on the console's own map (Ask the Map); absent where the host has no such map */
+  askOnMap?: (q: { plan: import("@/lib/map/plan").Plan }) => void;
   setZone(z: number | null): void;
   setDept(code: string | null): void;
   setTaluk(t: string | null): void;

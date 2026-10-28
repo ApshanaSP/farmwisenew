@@ -57,6 +57,7 @@ import type { AnswerCard, ChartSpec, ChartType, ConsoleAction, DataRow, Dataset,
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
 import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
+import { mapCard } from "@/lib/map/assistant";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -1252,6 +1253,14 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       if (NEWS_ASKED.test(message)) card.answerMarkdown = [card.answerMarkdown, ...newsLines(w.lane, lang === "ta" ? "ta" : lang === "tanglish" ? "tanglish" : "en")].join("\n");
       return finish(card, { intent: "warnings", tool: "alerts_lane" });
     }
+  }
+
+  // distance, road and nearest questions ("waterlogging within 300 m of schools"): Ask the Map's engine, so the chat and
+  // the console's map give the same number (lib/map/assistant.ts)
+  if (!i.pinId && !i.insightKey) {
+    i.stage("fetching");
+    const m = await mapCard(card0(null), message, i.user, i.lockDept ?? null).catch(orNull("pipeline:map"));
+    if (m) return finish(m, { intent: "map", tool: "ask_the_map" });
   }
 
   // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)

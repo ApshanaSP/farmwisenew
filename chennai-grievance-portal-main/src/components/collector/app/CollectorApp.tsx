@@ -14,6 +14,9 @@ import { Wordmark } from "@/components/Logo";
 import { I, type IconName } from "./icons";
 import { AskIcon } from "./assistant/Brand";
 import { EnvPage, HeroBody, Page1 } from "./Overview";
+import { useMapAsk, type MapAsk } from "./askmap/useMapAsk";
+import type { AskResponse } from "@/lib/map/ask";
+import type { Plan } from "@/lib/map/plan";
 import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
@@ -177,6 +180,11 @@ export interface Console {
   archived: Archived | null;
   closeArchived: () => void;
   showText: (title: string, md: string) => void;
+  /** Ask the Map on the Overview's map: its state, and the actions an answer can lead to */
+  mapAsk?: MapAsk;
+  mapActions?: { send?: (r: AskResponse, dept: string | null) => void; export?: (r: AskResponse) => void; save?: (r: AskResponse) => void };
+  /** ask the Overview's map from anywhere (the assistant, the palette, an incident's "What else is near here?") */
+  askOnMap?: (q: string | { incidentId: string } | { plan: Plan }) => void;
 }
 
 async function api(path: string, body?: unknown) {
@@ -265,6 +273,10 @@ export default function CollectorApp({ initial, allDepts, user }: {
     return n;
   });
   const [palette, setPalette] = useState(false);
+  // Ask the Map: one conversation per tab, on the Overview's map
+  const mapCtx = useRef<{ zone: number | null; taluk: string | null }>({ zone: null, taluk: null });
+  mapCtx.current = { zone, taluk };
+  const mapAsk = useMapAsk(useCallback(() => mapCtx.current, []));
   /** direction of travel between pages (1 = next), so the new page slides in from that side */
   const [pageDir, setPageDir] = useState(1);
   /** the shell assembles once after sign-in: top bar, rail, then cards */
@@ -487,6 +499,16 @@ export default function CollectorApp({ initial, allDepts, user }: {
     try {
       const w = await api(`/api/collector/workspaces/${id}`);
       const f = w.filters ?? {};
+      // a saved map view (Ask the Map): its plan runs again on today's data, on the Overview's map
+      if (f.askMap?.plan) {
+        closeAll();
+        setWorkspaceName(w.name);
+        setPage("overview");
+        mapAsk.setGrown(true);
+        mapAsk.run(f.askMap.plan);
+        toast(`Opened the map view "${w.name}" on today's data (saved ${fmtShort(w.created_at)}).`);
+        return;
+      }
       setPeriod(f.period ?? "daily");
       setZoneState(f.zone ?? null);
       setDeptState(f.dept ?? null);
@@ -566,7 +588,18 @@ export default function CollectorApp({ initial, allDepts, user }: {
     layout, setLayout, workspaceName,
     openWorkspace: () => setModal({ kind: "workspace", title: "Workspaces" }),
     saveWorkspace, openSavedWorkspace, archived, closeArchived: () => setArchived(null),
-    showText: (title, md) => setModal({ kind: "text", title, md })
+    showText: (title, md) => setModal({ kind: "text", title, md }),
+    mapAsk,
+    askOnMap: (q) => {
+      closeAll();
+      setAsk(false);
+      setPalette(false);
+      setPage("overview");
+      mapAsk.setGrown(true);
+      if (typeof q === "string") mapAsk.ask(q);
+      else if ("plan" in q) mapAsk.run(q.plan);
+      else mapAsk.draw({ incidentId: q.incidentId });
+    }
   };
 
   // --------------------------------------------------------- keyboard --
@@ -582,6 +615,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
       if (e.key === "Escape") {
         // the assistant sits above everything else, so it closes first
         if (palette) setPalette(false);
+        // the grown map shrinks back last, with its answer still drawn
+        else if (!ask && !inc && !modal && mapAsk.grown && page === "overview") mapAsk.setGrown(false);
         else if (ask) setAsk(false);
         else if (inc || modal) closeAll();
         setPop(null);
@@ -598,7 +633,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inc, modal, ask, palette, closeAll, page, pages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inc, modal, ask, palette, closeAll, page, pages, mapAsk.grown]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bellN = bellRead ? 0 : ov.bell.length;
   // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live
@@ -617,6 +652,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
+      run: () => { setPage("overview"); mapAsk.setGrown(true); } },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
     { g: "Actions", ic: "sensor", l: "Open data sources", s: "Feeds, OCR upload, audit log", run: c.openFeeds },
     { g: "Actions", ic: "layers", l: "Workspaces", s: "Save or reopen a view", run: c.openWorkspace },
@@ -649,7 +686,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${mapAsk.grown && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
@@ -784,7 +821,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
                                                   : modal.kind === "conflict" ? <ConflictView s={modal.story} c={c} /> : null}
           </Modal>
         )}
-        <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
+        <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} askMap={(q) => c.askOnMap?.(q)} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
         <button className="ask-fab ask-fab-v2" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
           <i className="ask-ico"><AskIcon size={22} /></i><span className="ask-label">Ask District IQ<kbd>Ctrl K</kbd></span>

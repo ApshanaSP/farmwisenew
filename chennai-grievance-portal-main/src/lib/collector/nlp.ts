@@ -11,6 +11,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
 import pool from "@/lib/db";
 import { hasPhrase, tokens } from "@/lib/assistant/intent";
+import { roughKm } from "@/lib/map/geom";
 
 interface Category { code: string; label: string; family: string; lead: string; base_severity: number; playbook: string[]; keywords_en: string[]; keywords_ta: string[] }
 interface Reference { categories: Category[]; taluks: { code: string; name: string; name_ta: string | null; in_district: boolean }[]; places?: Place[] }
@@ -44,7 +45,7 @@ export function classify(text: string): Classified | null {
 }
 
 interface Place { name: string; kind: "locality" | "zone" | "taluk"; lat: number; lon: number; zone: number | null; aliases_en: string[]; aliases_ta: string[] }
-interface Gaz {
+export interface Gaz {
   name: string; re: RegExp; ward: number | null; zone: number | null; taluk: string | null; kind: "area" | "zone" | "taluk";
   lat: number | null; lon: number | null;
 }
@@ -52,7 +53,7 @@ let gaz: { at: number; list: Gaz[] } | null = null;
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** English alias: whole words; spaces, dots and hyphens are interchangeable ("T. Nagar" = "T Nagar" = "T.Nagar"). */
-const enRe = (a: string) => new RegExp(`\\b${a.trim().split(/[\s.\-]+/).filter(Boolean).map(esc).join("[\\s.\\-]*")}\\b`, "i");
+export const enRe = (a: string) => new RegExp(`\\b${a.trim().split(/[\s.\-]+/).filter(Boolean).map(esc).join("[\\s.\\-]*")}\\b`, "i");
 /**
  * Tamil alias: must start a word; case endings may follow. Inflection changes a name's last letter, so the stem is
  * matched: -\u0BAE\u0BCD drops (\u0BAA\u0B9F\u0BCD\u0B9F\u0BBF\u0BA9\u0BAA\u0BCD\u0BAA\u0BBE\u0B95\u0BCD\u0B95\u0BAE\u0BCD -> \u0BAA\u0B9F\u0BCD\u0B9F\u0BBF\u0BA9\u0BAA\u0BCD\u0BAA\u0BBE\u0B95\u0BCD\u0B95\u0BA4\u0BCD\u0BA4\u0BBF\u0BB2\u0BCD), a final pulli or -u drops (\u0BAE\u0BBE\u0B99\u0BCD\u0B95\u0BBE\u0B9F\u0BC1 -> \u0BAE\u0BBE\u0B99\u0BCD\u0B95\u0BBE\u0B9F\u0BCD\u0B9F\u0BBF\u0BB2\u0BCD).
@@ -63,7 +64,7 @@ function taStem(a: string) {
   if ([...s].length < 4) s = a.endsWith("\u0BCD") ? a.slice(0, -1) : a; // a short name keeps its letters
   return s;
 }
-const taRe = (a: string) => new RegExp(`(^|[^\\u0B80-\\u0BFF])${esc(taStem(a))}`);
+export const taRe = (a: string) => new RegExp(`(^|[^\\u0B80-\\u0BFF])${esc(taStem(a))}`);
 
 async function gazetteer(): Promise<Gaz[]> {
   if (gaz && Date.now() - gaz.at < 6 * 3600_000) return gaz.list;
@@ -87,8 +88,7 @@ async function gazetteer(): Promise<Gaz[]> {
   const nearestWard = (lat: number, lon: number) => {
     let best: RowDataPacket | null = null, bd = Infinity;
     for (const w of wards) {
-      const dy = (Number(w.centroid_lat) - lat) * 111.2, dx = (Number(w.centroid_lon) - lon) * 111.2 * Math.cos((lat * Math.PI) / 180);
-      const d = Math.hypot(dx, dy);
+      const d = roughKm(lat, lon, Number(w.centroid_lat), Number(w.centroid_lon));
       if (d < bd) { bd = d; best = w; }
     }
     return bd <= 2 ? best : null;
@@ -138,6 +138,11 @@ async function gazetteer(): Promise<Gaz[]> {
   return list;
 }
 const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+/** The resolver's places with their patterns (localities, GCC areas, zones, taluks), for Ask the Map's resolver (lib/map/resolve.ts). */
+export async function gazetteerEntries(): Promise<readonly Gaz[]> {
+  return gazetteer();
+}
 
 /** Every place name the resolver knows (English), for the assistant's typo correction. */
 export async function placeNames(): Promise<string[]> {

@@ -11,6 +11,7 @@ import type { DRow } from "@/lib/studio/clean";
 import type { Refs } from "@/lib/studio/refs";
 import type { Detective, Spec } from "@/lib/studio/types";
 import { niceCase, normKey, sameValue, todayIST } from "@/lib/studio/values";
+import { roughKm } from "@/lib/map/geom";
 
 export async function placeRows(rows: DRow[], spec: Spec, refs: Refs, det: Detective, minDate = "2000-01-01"): Promise<{ placed: number; zones: number; wards: number }> {
   const col = (role: string) => spec.columns.filter((c) => c.role === role);
@@ -31,7 +32,7 @@ export async function placeRows(rows: DRow[], spec: Spec, refs: Refs, det: Detec
   const nearest = (la: number, lo: number) => {
     let best = null as (typeof wardList)[number] | null, bd = Infinity;
     for (const w of wardList) {
-      const d = Math.hypot((w.lat - la) * 111.2, (w.lon - lo) * 111.2 * Math.cos((la * Math.PI) / 180));
+      const d = roughKm(la, lo, w.lat, w.lon);
       if (d < bd) { bd = d; best = w; }
     }
     return bd <= 2 ? best : null;
