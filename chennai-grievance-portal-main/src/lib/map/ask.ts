@@ -275,7 +275,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   }
 
   // the same plan on the same data within a minute (a chip toggled back, a question asked again): the answer as it was
-  const cacheKey = `${lock ?? ""}|${w.dataAsOf}|${w.incidents.length}|${w.now.slice(0, 16)}|${input.reword && !aiUsed ? "r" : ""}|${unread.join(",")}|${JSON.stringify(plan)}`;
+  const cacheKey = `${edited === "depts" ? "depts|" : ""}${lock ?? ""}|${w.dataAsOf}|${w.incidents.length}|${w.now.slice(0, 16)}|${input.reword && !aiUsed ? "r" : ""}|${unread.join(",")}|${JSON.stringify(plan)}`;
   const cached = answerCache().get(cacheKey);
   if (cached && Date.now() - cached.at < 60_000) {
     const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used };
@@ -291,6 +291,14 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     note_en: `Not used from your question: ${unread.join(", ")}. The map answered the rest; rephrase to include them.`,
     note_ta: `கேள்வியில் பயன்படுத்தப்படாதவை: ${unread.join(", ")}. மீதியைக் கொண்டு பதில் தரப்பட்டது.` });
   const answer = compose(plan, r, w, ctx);
+  // "which department has the most?": the same answer, said by department
+  if (edited === "depts" && answer.depts.length) {
+    const [d, ...more] = answer.depts;
+    const n = (x: number) => x.toLocaleString("en-IN");
+    const ta = lang === "ta";
+    answer.headline = ta ? `${d.name} துறையிடம் அதிகம்: ${n(answer.count)} இல் ${n(d.n)}.` : `${d.name} has the most: ${n(d.n)} of ${n(answer.count)}.`;
+    answer.meaning = more.length ? (ta ? `அடுத்து ${more.slice(0, 3).map((x) => `${x.name} (${n(x.n)})`).join(", ")}.` : `Next: ${more.slice(0, 3).map((x) => `${x.name} (${n(x.n)})`).join(", ")}.`) : (ta ? "வேறு துறை இல்லை." : "No other department holds any.");
+  }
   if (input.reword && answer.meaning && !aiUsed) {
     try { const s = await aiReword(answer.meaning, answer.facts, lang, input.user.email, input.signal); if (s) { answer.meaning = s; aiUsed = true; } } catch { /* the template stands */ }
   }

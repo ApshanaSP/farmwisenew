@@ -58,8 +58,8 @@
 .dic .ampill svg{width:15px;height:15px;color:var(--accent)}
 .dic .ampill .ans{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 
-/* ---- the panel: 380 px glass over the map's left side */
-.dic .amp{position:absolute;left:12px;top:12px;bottom:12px;width:380px;z-index:560;display:flex;flex-direction:column;border-radius:var(--r);overflow:hidden;
+/* ---- the panel: 440 px glass over the map's left side (a third of a wide map) */
+.dic .amp{position:absolute;left:12px;top:12px;bottom:12px;width:clamp(380px,34%,460px);z-index:560;display:flex;flex-direction:column;border-radius:var(--r);overflow:hidden;
   background:var(--elev-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 0 0 1px var(--line-3),0 24px 60px -24px rgba(0,0,0,.55);color:var(--text);font:var(--fs-sm)/1.45 var(--font-ui);
   animation:amp-in .32s cubic-bezier(.2,.9,.3,1) both}
 @keyframes amp-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:none}}
@@ -317,3 +317,19 @@
 .dic .amlayers h6{margin:6px 8px 2px}
 .am-cond.dot{width:12px;height:12px;padding:0;justify-content:center;border-radius:3px;gap:0}
 .am-cond.dot i{width:6px;height:6px;border-radius:1px}
+
+/* ---- the conversation: earlier questions above, the current question as a bubble, what to ask next */
+.dic .amp-thread{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+.dic .amp-thread button{all:unset;box-sizing:border-box;width:100%;display:flex;flex-direction:column;align-items:flex-end;gap:3px;cursor:pointer;opacity:.78;transition:opacity .15s}
+.dic .amp-thread button:hover,.dic .amp-thread button:focus-visible{opacity:1}
+.dic .amp-thread .q{max-width:86%;padding:5px 10px;border-radius:12px 12px 3px 12px;background:var(--accent-soft);color:var(--accent-2);font:600 12px/1.35 var(--font-ui)}
+.dic .amp-thread .a{align-self:flex-start;max-width:92%;padding:5px 10px;border-radius:12px 12px 12px 3px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line);color:var(--text-2);font:500 11.5px/1.35 var(--font-ui);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .amp-thread button:focus-visible .q{box-shadow:0 0 0 2px var(--accent)}
+.dic .amp-q{display:flex;justify-content:flex-end;margin:2px 0 8px}
+.dic .amp-q span{max-width:88%;padding:7px 12px;border-radius:14px 14px 4px 14px;background:var(--accent);color:#fff;font:600 13px/1.4 var(--font-ui);box-shadow:0 6px 16px -10px var(--accent)}
+.dic .amp-next{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 4px}
+.dic .amp-next>span{font:700 10.5px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-right:2px}
+.dic .amp-next button{all:unset;box-sizing:border-box;padding:5px 10px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-2);cursor:pointer;font:600 12px var(--font-ui);color:var(--accent-2);transition:box-shadow .15s,background .15s}
+.dic .amp-next button:hover,.dic .amp-next button:focus-visible{box-shadow:0 0 0 1.5px var(--accent);background:var(--accent-soft)}
+.dic .amp-next button:disabled{opacity:.5;cursor:default}

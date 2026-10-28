@@ -23,6 +23,10 @@ export interface MapAsk {
   plan: Plan | null;
   /** questions asked in this tab, newest last (the Ask box's ↑) */
   history: string[];
+  /** this conversation: each question and the answer it got, oldest first (the panel shows them as a chat) */
+  turns: Turn[];
+  /** shows an earlier answer again, and makes it the one follow-ups edit */
+  restore: (id: number) => void;
   /** a new cue for the camera: the map plays the answer's shots when it changes */
   cue: { seq: number; index: number; move: boolean };
   replay: (index?: number) => void;
@@ -44,7 +48,7 @@ export interface MapAsk {
   traceOpen: boolean;
   setTraceOpen: (v: boolean) => void;
   ask: (text: string) => Promise<AskResponse | null>;
-  run: (plan: Plan) => Promise<AskResponse | null>;
+  run: (plan: Plan, label?: string) => Promise<AskResponse | null>;
   draw: (d: { lat: number; lon: number; r: number } | { ward: number } | { incidentId: string }) => Promise<AskResponse | null>;
   clear: () => void;
   /** a UI follow-up ("send these to SWD", "export"): the panel acts on it */
@@ -53,6 +57,9 @@ export interface MapAsk {
   route: Route | null;
   setRoute: (r: Route | null) => void;
 }
+
+export interface Turn { id: number; q: string; resp: AskResponse }
+const TURNS_MAX = 12;
 
 const HISTORY_KEY = "diq-map-history";
 const PLAN_KEY = "diq-map-plan";
@@ -87,12 +94,13 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
   const [traceOpen, setTraceOpen] = useState(false);
   const [uiCue, setUiCue] = useState<MapAsk["uiCue"]>(null);
   const [route, setRoute] = useState<Route | null>(null);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const seq = useRef(0);
   const planRef = useRef(plan);
   planRef.current = plan;
   const ctl = useRef<AbortController | null>(null);
 
-  const post = useCallback(async (body: Record<string, unknown>): Promise<AskResponse | null> => {
+  const post = useCallback(async (body: Record<string, unknown>, label: string): Promise<AskResponse | null> => {
     ctl.current?.abort();
     const ac = new AbortController();
     ctl.current = ac;
@@ -116,6 +124,7 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         return a;
       }
       setResp(a);
+      setTurns((t) => [...t, { id: ++seq.current, q: label, resp: a }].slice(-TURNS_MAX));
       setSpot(null);
       setFocus(null);
       setShowBefore(false);
@@ -137,22 +146,31 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
 
   const clearAll = useCallback(() => {
     ctl.current?.abort();
-    setResp(null); setPlan(null); setSpot(null); setFocus(null); setHover(null); setError(null); setTraceOpen(false); setShowBefore(false); setRoute(null);
+    setResp(null); setPlan(null); setTurns([]); setSpot(null); setFocus(null); setHover(null); setError(null); setTraceOpen(false); setShowBefore(false); setRoute(null);
     save(PLAN_KEY, null);
   }, []);
 
   return {
-    grown, setGrown, busy, error, resp, plan, history, cue, tookOver, setTookOver, spot, setSpot, hover: hoverRef.current, setHover, onHover, focus, setFocus,
+    grown, setGrown, busy, error, resp, plan, history, turns,
+    restore: (id: number) => {
+      const t = turns.find((x) => x.id === id);
+      if (!t) return;
+      setResp(t.resp); setSpot(null); setFocus(null); setShowBefore(false);
+      if (t.resp.plan) { setPlan(t.resp.plan); save(PLAN_KEY, t.resp.plan); }
+      setTookOver(false);
+      setCue({ seq: ++seq.current, index: 0, move: true });
+    }, cue, tookOver, setTookOver, spot, setSpot, hover: hoverRef.current, setHover, onHover, focus, setFocus,
     showBefore, setShowBefore, traceOpen, setTraceOpen, uiCue, route, setRoute,
     replay: (index = 0) => { setTookOver(false); setCue({ seq: ++seq.current, index, move: true }); },
     ask: async (text: string) => {
       const t = text.trim();
       if (!t) return null;
       setHistory((h) => { const n = [...h.filter((x) => x !== t), t].slice(-30); save(HISTORY_KEY, n); return n; });
-      return post({ text: t, prev: planRef.current });
+      return post({ text: t, prev: planRef.current }, t);
     },
-    run: (p: Plan) => post({ plan: p, prev: planRef.current }),
-    draw: (d) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } }),
+    run: (p: Plan, label?: string) => post({ plan: p, prev: planRef.current }, label ?? "Changed the question"),
+    draw: (d) => post({ text: null, context: "lat" in d ? { drawn: d } : "ward" in d ? { ward: d.ward } : { incidentId: d.incidentId } },
+      "lat" in d ? "What is inside the circle I drew?" : "ward" in d ? `What is happening in Ward ${d.ward}?` : "What else is near this incident?"),
     clear: clearAll
   };
 }

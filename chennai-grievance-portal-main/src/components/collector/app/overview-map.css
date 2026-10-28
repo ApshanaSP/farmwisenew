@@ -1,0 +1,64 @@
+/* The Overview leads with the map (2026-10-29). Loaded last, so it wins over the older layers.
+   The band is thinner (a smaller greeting, one-line count tiles); the map card fills the left of the grid (the grid
+   itself is set in Overview.tsx); the side cards are compact and scroll inside themselves. */
+
+/* ---- the band: a smaller greeting, thin counts */
+.dic .band.hero{padding:9px 16px 10px 20px}
+.dic .band.hero h1.roll{height:26px;font-size:20px;line-height:26px}
+.dic .hero-b{margin-top:8px;grid-template-columns:minmax(0,1fr) 300px;gap:8px}
+.dic .hero .kpis{gap:8px}
+.dic .hero .kpi{padding:6px 12px;gap:10px;border-radius:12px}
+.dic .hero .kpi-ic{width:30px;height:30px;border-radius:9px}
+.dic .hero .kpi-ic .ic{width:15px;height:15px}
+.dic .hero .kpi-l{font-size:11.5px;line-height:1.2}
+.dic .hero .kpi-r{gap:8px}
+.dic .hero .kpi-n,.dic .hero .kpi-n.c-sev{margin:0;font-size:22px;line-height:1.1}
+.dic .hero .kpi-d{flex-direction:row;align-items:center;gap:5px}
+.dic .hero .kpi-d em{height:17px;font-size:10.5px}
+.dic .hero .kpi-d small{font-size:10.5px}
+/* the breakdown under the number is in the tile's tooltip now */
+.dic .hero .kpi-sub{display:none}
+.dic .hsnap{gap:4px}
+.dic .hsnap .snap{gap:4px}
+.dic .hsnap .stile{padding:0 10px;min-height:0}
+
+/* ---- the grid: the map card first */
+.dic .p1{gap:12px}
+.dic .a-map .ch{padding:8px 12px 6px}
+.dic .a-map .map-cb{padding:0 10px 8px}
+.dic .a-map .map-leg2{padding:0 10px 8px;gap:4px 5px}
+.dic .a-map .map-leg2 button{height:24px;padding:0 8px;font-size:12px}
+/* side cards: compact headers; their lists scroll inside the card, never past it */
+.dic .p1>.card:not(.a-map) .ch{padding:9px 13px 6px}
+.dic .p1>.card:not(.a-map)>:last-child{min-height:0;overflow:auto}
+
+/* ---- a little more room for the map at 680 px tall: a slimmer greeting and snapshot */
+.dic .band.hero h1.roll{height:24px;font-size:18.5px;line-height:24px}
+.dic .hero .kpi{min-height:0}
+.dic .hsnap .stile b{font-size:14.5px}
+.dic .hsnap .stile b.txt{font-size:12px}
+.dic .hsnap .stile span{font-size:12px}
+/* alert bars: one thin line each */
+.dic .alb-h{min-height:30px;padding:4px 12px}
+
+/* ---- the map card has no header: the map starts at the top; its name and Zones/Taluks sit in the row under it */
+.dic .a-map .map-cb{padding:10px 10px 6px}
+.dic .a-map .map-leg2{align-items:center;flex-wrap:nowrap;overflow:hidden;padding:2px 10px 9px}
+.dic .a-map .map-title{flex:none;display:inline-flex;align-items:center;gap:6px;margin:0 6px 0 2px;font:750 13.5px/1 var(--font-ui);letter-spacing:-.01em;color:var(--text);white-space:nowrap}
+.dic .a-map .map-title .ic,.dic .a-map .map-title svg{width:15px;height:15px;color:var(--accent-2)}
+.dic .a-map .map-leg2 button{flex:none}
+.dic .a-map .map-seg{flex:none;margin-left:auto}
+.dic .a-map .map-seg button{height:22px;padding:0 9px;border:0;font-size:12px}
+@media (max-width:1100px){.dic .a-map .map-leg2{flex-wrap:wrap}}
+/* a narrow map card: the band already names the area, so the row under the map drops its title and tightens */
+.dic .a-map{container-type:inline-size;container-name:amap}
+@container amap (max-width:860px){
+  .dic .a-map .map-title{display:none}
+  .dic .a-map .map-leg2{gap:4px}
+  .dic .a-map .map-leg2 button{padding:0 7px;font-size:11.5px;gap:5px}
+}
+@container amap (max-width:720px){
+  .dic .a-map .map-leg2{gap:3px;padding-left:8px;padding-right:8px}
+  .dic .a-map .map-leg2 button{padding:0 6px;font-size:11px;gap:4px}
+  .dic .a-map .map-seg button{padding:0 7px;font-size:11.5px}
+}

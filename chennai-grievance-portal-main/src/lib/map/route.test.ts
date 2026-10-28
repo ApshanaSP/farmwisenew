@@ -339,3 +339,39 @@ describe("the places themselves, or incidents near them", () => {
     expect(route("garbage complaints today")).toBe(`${SW}:open:1:cit`);
   });
 });
+
+describe("follow-ups keep what they do not change", () => {
+  const plan = (q: string, prev: Plan | null = null) => { const r = rulesRoute(q, prev, env); if (r?.kind !== "plan") throw new Error(`${q}: ${r?.kind}`); return r.plan; };
+  const chain = (...qs: string[]) => { let p: Plan | null = null; for (const q of qs) p = plan(q, p); return sig(p!); };
+  it("a place alone moves the place and keeps the topic and the period", () => {
+    expect(chain("garbage complaints", "this month", "in zone 13")).toBe(`${SW}:open:30:cit | in:zone13`);
+    expect(chain("flooding in zone 13", "what about zone 10?")).toBe(`${FL}:open:7 | in:zone10`);
+    expect(chain("garbage near hospitals", "only in T. Nagar")).toBe(`${SW}:open:7 | hospitals | within:500 | in:pt:loc:T. Nagar:1000`);
+  });
+  it("a topic after 'and' or 'same for' keeps the place", () => {
+    expect(chain("thefts in zone 8", "and road accidents?")).toBe(`${RA}:open:7 | in:zone8`);
+    expect(chain("thefts in zone 8", "same for flooding")).toBe(`${FL}:open:7 | in:zone8`);
+  });
+  it("near a facility adds the distance to the last answer", () => {
+    expect(chain("flooding in zone 13", "near schools")).toBe(`${FL}:open:7 | schools | within:500 | in:zone13`);
+  });
+  it("overdue, which department, which zone", () => {
+    expect(chain("garbage complaints", "show the overdue ones")).toBe(`${SW}:open:7:cit:overdue`);
+    expect(chain("garbage complaints", "how many are past deadline?")).toBe(`${SW}:open:7:cit:overdue`);
+    const r = rulesRoute("which department has the most?", plan("garbage complaints"), env);
+    expect(r?.kind === "plan" && r.edited).toBe("depts");
+    expect(chain("garbage complaints", "which zone has the most?")).toBe(`${SW}:open:7:cit | by:zone`);
+  });
+  it("removing the only facility drops the distance step", () => {
+    expect(chain("flooding in zone 13", "near hospitals", "remove hospitals")).toBe(`${FL}:open:7 | in:zone13`);
+  });
+  it("places: there, another area, near them", () => {
+    expect(chain("schools in zone 13", "hospitals there")).toBe("hospitals | in:zone13");
+    expect(chain("schools in zone 13", "what about zone 10")).toBe("schools | in:zone10");
+    expect(chain("schools in zone 13", "open complaints near them")).toBe("inc:-:open:7:cit | schools | within:500 | in:zone13");
+  });
+  it("a full question is a new question, not bent to the last one", () => {
+    expect(chain("garbage complaints", "flooding in zone 13")).toBe(`${FL}:open:7 | in:zone13`);
+    expect(chain("garbage complaints in zone 13", "road accidents")).toBe(`${RA}:open:7`);
+  });
+});

@@ -223,7 +223,15 @@ export default function SatMap(props: Props) {
         if (!a || !cb.current.grown) return;
         a.draw({ lat: e.latlng.lat, lon: e.latlng.lng, r: 500 });
       });
-      ro = new ResizeObserver(() => map.invalidateSize());
+      // the box grows after the first paint (the layout settling, the panel growing): keep the whole district in view
+      // until the user moves the map or an answer or a chosen zone takes the camera
+      let moved = false;
+      for (const ev of ["wheel", "mousedown", "touchstart"]) box.addEventListener(ev, () => { moved = true; }, { passive: true });
+      ro = new ResizeObserver(() => {
+        map.invalidateSize();
+        const p = cb.current;
+        if (!moved && !p.ask?.resp && p.zone == null && !p.taluk && !p.focus) map.fitBounds(district, { padding: [8, 8], animate: false });
+      });
       ro.observe(el.current);
       setReady((n) => n + 1);
     })();
