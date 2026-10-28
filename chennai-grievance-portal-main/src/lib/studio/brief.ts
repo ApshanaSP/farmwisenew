@@ -8,7 +8,9 @@ import { shortlist } from "@/lib/studio/insights";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** Needs action only when the ranking says so (rank.ts); without a rank, by the insight's tone. */
 export function priorityOf(x: Insight): Priority {
+  if (x.rank) return x.rank.band === "act" ? "act" : x.rank.band === "watch" && x.rank.actionability >= 0.8 ? "watch" : "note";
   return x.tone === "sev" ? "act" : x.tone === "high" ? "watch" : "note";
 }
 
@@ -31,7 +33,16 @@ const WHY: Record<InsightLabel, (s: Spec) => string> = {
   "Data gap": () => "What the data leaves out cannot be monitored; fixing entry at source improves every figure.",
   Ranking: () => "The extremes show where the district is most exposed and where it is best placed.",
   Capacity: () => "How full the system is against what it can hold sets the margin for supply and for safety.",
-  Change: () => "The same day a year ago is the honest comparison: it shows whether the position is better or worse."
+  Change: () => "The same day a year ago is the honest comparison: it shows whether the position is better or worse.",
+  Drivers: () => "Knowing which categories made the change says where to look first, instead of treating the whole as one.",
+  "Unusual change": () => "A week outside the usual range is either a real event or a reporting error; both need checking early.",
+  "Change point": () => "A new level that holds is the new normal for planning, not a spike to wait out.",
+  "Steady share": () => "A stable share is predictable load: it can be planned for rather than reacted to.",
+  Seasonality: () => "A peak that comes every year can be prepared for months ahead.",
+  Correlation: () => "Two measures that move together may share a cause worth checking; on its own it proves neither drives the other.",
+  "Target gap": () => "The gap to target, unit by unit, shows where the deadline is at risk while there is time to act.",
+  "Outlier peer": () => "Compared fairly (by size), this unit is behind by more than chance explains.",
+  Freshness: () => "Old or missing reports look like quiet weeks; decisions need the current picture."
 };
 
 const ACTION: Record<InsightLabel, (x: Insight, s: Spec) => string | null> = {
@@ -53,11 +64,22 @@ const ACTION: Record<InsightLabel, (x: Insight, s: Spec) => string | null> = {
   "Data gap": () => "Ask the department to record the location and date on every entry.",
   Ranking: (x) => `Ask ${x.owner ?? "the department"} for the plan for the item at the bottom of this list.`,
   Capacity: (x) => `Ask ${x.owner ?? "the department"} for the outlook: how long the present level lasts, and the plan if it falls further.`,
-  Change: (x) => `Ask ${x.owner ?? "the department"} to explain the change from last year and what it means for the coming weeks.`
+  Change: (x) => `Ask ${x.owner ?? "the department"} to explain the change from last year and what it means for the coming weeks.`,
+  Drivers: (x) => `Ask ${x.owner ?? "the department"} about the categories driving the change, starting with the largest.`,
+  "Unusual change": (x) => `Ask ${x.owner ?? "the department"} to confirm last week's figure and explain it.`,
+  "Change point": () => "Plan for the new level and ask what changed in that week.",
+  "Steady share": () => null,
+  Seasonality: () => "Prepare crews and supplies before the peak months.",
+  Correlation: () => null,
+  "Target gap": (x) => `Review the laggards with ${x.owner ?? "the department"} and agree a week-by-week plan to the deadline.`,
+  "Outlier peer": (x) => `Review this unit with ${x.owner ?? "the zonal officer"}: what is open, since when, and why.`,
+  Freshness: (x) => `Ask ${x.owner ?? "the department"} for the missing or newer reports.`
 };
 
 /** A brief from the insights alone (the strongest first, at most two of a kind). */
-export function rulesBrief(insights: Insight[], spec: Spec): Brief {
+export function rulesBrief(all: Insight[], spec: Spec): Brief {
+  // ranked insights: the hidden ones stay out of the brief
+  const insights = all.some((x) => x.rank) ? all.filter((x) => x.rank?.band !== "hidden").sort((a, b) => (b.rank?.usefulness ?? 0) - (a.rank?.usefulness ?? 0)) : all;
   const strong = insights.filter((x) => x.score >= 30);
   const picked = shortlist(strong.length >= 3 ? strong : insights, 6);
   const items: BriefItem[] = picked.map((x) => ({ ...x, headline: x.title, why: WHY[x.label](spec), action: ACTION[x.label](x, spec), priority: priorityOf(x), by: "rules" }));
@@ -73,6 +95,6 @@ export function rulesBrief(insights: Insight[], spec: Spec): Brief {
   return {
     verdict: top ? cap(top.title) : `${cap(spec.entityPlural)} at a glance`,
     summary: picked.slice(0, 3).map((x) => x.text),
-    items, questions: qs.slice(0, 3), considered: insights.length, by: "rules", model: null, dropped: 0, at: new Date().toISOString()
+    items, questions: qs.slice(0, 3), considered: all.length, by: "rules", model: null, dropped: 0, at: new Date().toISOString()
   };
 }

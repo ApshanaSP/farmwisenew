@@ -601,7 +601,7 @@ async function run(ctx: RunCtx, emit: Emit): Promise<string> {
   // ---- Insight Analyst: every angle computed, then the AI picks what matters and writes the brief
   const story = rulesStory(buildFacts(rows, spec, cleaned.detective, link, cleaned.window, names), spec, link);
   const brief = await step("story", "Mining backlogs, delays, gaps, hotspots and trends", async () => {
-    const ins = computeInsights(rows, spec, cleaned.detective, link, cleaned.window, names);
+    const ins = computeInsights(rows, spec, cleaned.detective, link, cleaned.window, names, getMeta(ctx.id)?.brief ?? null);
     emit({ t: "log", text: `${ins.length} insights computed: ${[...new Set(ins.map((x) => x.label))].slice(0, 6).join(", ")}` });
     const b = await writeBrief(ins, spec, rows.length, cleaned.window, ctx.user, (m) => emit({ t: "log", text: m }));
     const detail = `${b.items.length} insights chosen from ${ins.length}${b.by === "ai" ? ` · every number checked${b.dropped ? ` · ${b.dropped} dropped` : ""}` : " · by rules"}`;
@@ -655,7 +655,7 @@ export async function analyse(id: string, user: string): Promise<Brief> {
   if (!meta) throw new UserError("Unknown dataset.");
   const rows = getRows(id);
   const names = namesOf(await loadRefs());
-  const ins = computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names);
+  const ins = computeInsights(rows, meta.spec, meta.detective, meta.link, meta.window, names, meta.brief ?? null);
   const brief = await writeBrief(ins, meta.spec, rows.length, meta.window, user, (m) => console.info(`[studio] ${m}`));
   // the leaner dashboard, for a dataset designed before it (panels the Collector added are kept)
   const panels = [...designDashboard(rows, meta.spec, meta.window), ...meta.panels.filter((p) => p.id.startsWith("q_"))];

@@ -238,7 +238,8 @@ export interface Story {
 /** What kind of finding an insight is: the label on its card. */
 export type InsightLabel =
   | "Backlog" | "Delay" | "Turnaround" | "Service gap" | "Bright spot" | "Hotspot" | "Rising" | "Falling" | "Local pattern"
-  | "Concentration" | "Magnitude" | "Anomaly" | "Linked" | "Growth" | "Pattern" | "Data gap" | "Ranking" | "Capacity" | "Change";
+  | "Concentration" | "Magnitude" | "Anomaly" | "Linked" | "Growth" | "Pattern" | "Data gap" | "Ranking" | "Capacity" | "Change"
+  | "Drivers" | "Unusual change" | "Change point" | "Steady share" | "Seasonality" | "Correlation" | "Target gap" | "Outlier peer" | "Freshness";
 
 /**
  * One finding computed from the rows by insights.ts: a sentence with its numbers, a headline number, a small picture
@@ -262,6 +263,13 @@ export interface Insight {
   key: string | number | null;
   /** who should act (a department or "the zonal officer") */
   owner: string | null;
+  /** the evidence behind it: how many rows or reports, and how it was found (insights2.ts) */
+  n?: number;
+  method?: string;
+  /** usefulness and its parts (rank.ts); band "act" is Needs action, "watch" Worth knowing */
+  rank?: { usefulness: number; impact: number; significance: number; actionability: number; novelty: number; freshness: number; band: "act" | "watch" | "hidden" };
+  /** "n = 412 · last 4 weeks vs the 4 before · 1 Oct – 27 Oct 2026" */
+  confidence?: string;
 }
 
 export type Priority = "act" | "watch" | "note";

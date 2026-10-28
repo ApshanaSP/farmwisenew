@@ -26,6 +26,8 @@ import { plan as mk, quantity, yearly } from "@/lib/studio/dashboard";
 import { formatOf, type Names } from "@/lib/studio/engine";
 import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type InsightLabel, type LinkResult, type Plan, type Spec, type Tone } from "@/lib/studio/types";
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
+import { computeInsights2 } from "@/lib/studio/insights2";
+import { rankInsights } from "@/lib/studio/rank";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-IN");
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
@@ -60,7 +62,25 @@ function dimensions(rows: DRow[], spec: Spec, names: Names): Dim[] {
 
 interface Group { k: string | number; w: number; c: number; o: number; ages: number[]; turn: number[]; m: number[] }
 
-export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {
+/**
+ * Every insight (the first set below and the 2.0 set in insights2.ts), ranked by usefulness (rank.ts), each with
+ * what it rests on. A previous brief's titles count as "said before" (novelty).
+ */
+export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names,
+  prev?: { items?: { label: InsightLabel; title: string }[] } | null): Insight[] {
+  const base = rows.length < 3 ? [] : computeInsights1(rows, spec, det, link, window, names);
+  // STUDIO_TODAY: a fixed "today" for the tests' goldens (data age, days to a deadline)
+  const today = process.env.STUDIO_TODAY || undefined;
+  const more = rows.length < 3 ? [] : computeInsights2({ rows, spec, window, names, today });
+  const span = window.from && window.to ? (window.from === window.to ? fmtDay(window.to) : `${fmtDay(window.from, false)} – ${fmtDay(window.to)}`) : null;
+  const all = [...base.map((x) => ({ ...x, n: x.n ?? rows.length, method: x.method ?? "Counted over the cleaned rows" })), ...more.map((x, i) => ({ ...x, id: `i${base.length + i + 1}` }))]
+    .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
+  const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
+  const seen = new Set((prev?.items ?? []).map((x) => `${x.label}|${x.title}`));
+  return rankInsights(all, { rows: rows.length, to: window.to, seen, things, today });
+}
+
+function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {
   const out: Insight[] = [];
   if (rows.length < 3) return out;
   let seq = 0;

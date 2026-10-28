@@ -13,9 +13,10 @@ import { I, type IconName } from "../icons";
 const LABEL_IC: Record<InsightLabel, IconName> = {
   Backlog: "tasks", Delay: "clock", Turnaround: "timer", "Service gap": "target", "Bright spot": "thumbUp", Hotspot: "pin", Rising: "up", Falling: "down",
   "Local pattern": "layers", Concentration: "donut", Magnitude: "barH", Anomaly: "alert", Linked: "compare", Growth: "line", Pattern: "pulse", "Data gap": "info",
-  Ranking: "barH", Capacity: "drop", Change: "compare"
+  Ranking: "barH", Capacity: "drop", Change: "compare", Drivers: "flow", "Unusual change": "alert", "Change point": "line", "Steady share": "donut", Seasonality: "cal",
+  Correlation: "compare", "Target gap": "target", "Outlier peer": "scan", Freshness: "clock"
 };
-const PRIO = { act: "Act now", watch: "Watch", note: "Note" } as const;
+const PRIO = { act: "Needs action", watch: "Worth knowing", note: "Note" } as const;
 
 export function BriefCard({ brief, stale, busy, c, onReanalyse }: { brief: Brief; stale: boolean; busy: boolean; c: Console; onReanalyse: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -86,8 +87,9 @@ function InsightCard({ x, i, onOpen }: { x: BriefItem; i: number; onOpen: (plan:
       <p className="ds-ifact">{x.text}</p>
       <div className="ds-iwhy"><small>Why it matters</small><p>{x.why}</p></div>
       {x.action && <div className="ds-iact"><I n="right" /><p>{x.action}</p></div>}
+      {x.confidence && <p className="ds-iconf" title={x.rank ? `Usefulness ${x.rank.usefulness} = impact ${x.rank.impact.toFixed(2)} × evidence ${x.rank.significance.toFixed(2)} × can act ${x.rank.actionability} × new ${x.rank.novelty} × fresh ${x.rank.freshness}` : undefined}><I n="info" />{x.confidence}</p>}
       <footer>
-        {x.owner && <span className="ds-iown"><I n="user" />{x.owner}</span>}
+        {x.owner && <span className="ds-iown" title="A suggested owner: nothing is sent to them"><I n="user" />{x.owner}</span>}
         {x.plan && <button className="ds-lnk" onClick={() => onOpen(x.plan!, x.key)}>See the records<I n="chevr" /></button>}
       </footer>
     </article>

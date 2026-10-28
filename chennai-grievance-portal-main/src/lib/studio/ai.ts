@@ -18,6 +18,7 @@ import type { Refs } from "@/lib/studio/refs";
 import { type AiSpec } from "@/lib/studio/spec";
 import { grounded, numbersIn } from "@/lib/studio/story";
 import { shortlist } from "@/lib/studio/insights";
+import { priorityOf } from "@/lib/studio/brief";
 import { ROLES, type Brief, type BriefItem, type ChartKind, type ColumnProfile, type DraftNote, type Fact, type Filter, type Finding, type Insight, type Plan, type Spec, type Story } from "@/lib/studio/types";
 import type { Cell } from "@/lib/studio/parse";
 
@@ -231,7 +232,8 @@ Rules: every number you write must appear, written the same way, in the candidat
 
 /** The brief written by the AI over the computed insights; anything whose numbers do not check is dropped. */
 export async function briefAI(p: { spec: Spec; insights: Insight[]; rules: Brief; rows: number; window: { from: string | null; to: string | null }; user: string }): Promise<Brief> {
-  const cands = shortlist(p.insights, 14);
+  // the AI orders and explains what the ranking kept (rank.ts); hidden insights are not offered
+  const cands = shortlist(p.insights.filter((x) => x.rank?.band !== "hidden"), 14);
   const byId = new Map(cands.map((x) => [x.id, x]));
   const allNums = cands.flatMap((x) => numbersIn(x.text));
   const cols = p.spec.columns.filter((c) => c.role !== "ignore" && c.role !== "person").slice(0, 24).map((c) => `${c.label} (${c.role})`).join("; ");
@@ -266,7 +268,12 @@ ${cands.map((x) => `${x.id} [${x.label}] ${x.text}`).join("\n")}`;
     }
     seen.add(x.id);
     const action = it.action && grounded(it.action, allNums) && !bad(it.action, x) ? clip(it.action, 200) : null;
-    items.push({ ...x, headline: clip(it.headline, 90), why: clip(it.why, 260), action, priority: it.priority, by: "ai" });
+    // the AI may lower a priority, never raise one above what the ranking allows ("Needs action" is earned in code)
+    const cap = priorityOf(x);
+    const order = { act: 0, watch: 1, note: 2 } as const;
+    const asked = it.priority as keyof typeof order;
+    const priority = x.rank ? (order[asked] < order[cap] ? cap : asked) : asked;
+    items.push({ ...x, headline: clip(it.headline, 90), why: clip(it.why, 260), action, priority, by: "ai" });
   }
   // the AI's picks first; the rules' strongest others fill the brief to five
   for (const x of p.rules.items) if (items.length < 5 && !items.some((y) => y.id === x.id)) items.push(x);

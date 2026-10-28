@@ -133,3 +133,6 @@
   .dic .ds-conn-m{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dic .ds-conn-hist li{grid-template-columns:1fr}
 }
+/* an insight's evidence: n, method, window */
+.dic .ds-iconf{display:flex;gap:6px;align-items:flex-start;margin:0;font-size:11.5px;color:var(--text-3);line-height:1.4}
+.dic .ds-iconf .ic{width:13px;height:13px;flex:none;margin-top:1px}
