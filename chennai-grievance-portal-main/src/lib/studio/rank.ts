@@ -41,7 +41,8 @@ export function rankOne(x: Insight & { n?: number }, ctx: { rows: number; to: st
   // a zone count of things (no status, nothing waiting) is a note, never an action (R-19)
   let actionability = ACTIONABLE[x.label] ?? 0.4;
   if (ctx.things && (x.label === "Hotspot" || x.label === "Concentration" || x.label === "Ranking" || x.label === "Magnitude" || x.label === "Linked")) actionability = Math.min(actionability, 0.3);
-  const novelty = ctx.seen?.has(`${x.label}|${x.title}`) ? 0.5 : 1;
+  // said before counts half, except what needs action: a backlog that persists stays in "Needs action"
+  const novelty = ctx.seen?.has(`${x.label}|${x.title}`) && (ACTIONABLE[x.label] ?? 0.4) < 0.8 ? 0.5 : 1;
   const age = ctx.to ? daysBetween(ctx.to.slice(0, 10), ctx.today ?? todayIST()) : null;
   const freshness = x.label === "Freshness" ? 1 : freshnessOf(age);
   const usefulness = Math.round(impact * significance * actionability * novelty * freshness * 1000) / 1000;

@@ -75,14 +75,19 @@ export function computeInsights2(c: Ctx): (Insight & { n: number; method: string
   const weeks = new Map<string, number>();
   for (const r of dated) { const k = weekStart(String(r._d).slice(0, 10)); weeks.set(k, (weeks.get(k) ?? 0) + val(r)); }
   const wk = [...weeks.keys()].sort();
-  // gaps are gaps: a week with nothing reported is zero only when the series is a count of events
-  const series = wk.length ? Array.from({ length: Math.max(1, Math.round(daysBetween(wk[0], wk[wk.length - 1]) / 7) + 1) }, (_, i) => weeks.get(addDays(wk[0], i * 7)) ?? 0) : [];
+  // a level (storage, stock, a rate) is not added up week by week: its series insights are left to the level's own views
+  const level = !!q.col && /level|storage|stock|balance|capacity|occupan|%|rate|percent/i.test(spec.columns.find((x) => x.key === q.col)?.header ?? "");
+  // a week with nothing reported counts as zero for events; the week the data ends in is left out when it is not whole
+  const whole = end ? (w: string) => addDays(w, 6) <= end.slice(0, 10) : () => true;
+  const full = level ? [] : wk.length ? Array.from({ length: Math.max(1, Math.round(daysBetween(wk[0], wk[wk.length - 1]) / 7) + 1) }, (_, i) => addDays(wk[0], i * 7)) : [];
+  const series = full.filter(whole).map((w) => weeks.get(w) ?? 0);
   const dims = spec.columns.filter((col) => col.role === "category" || col.role === "zone").slice(0, 3);
 
   // ---- Drivers and detractors: the last 4 weeks against the 4 before, by category
   if (series.length >= 8 && end) {
-    const cut = addDays(weekStart(end.slice(0, 10)), -21), prevCut = addDays(cut, -28);
-    const inA = (r: DRow) => String(r._d) >= prevCut && String(r._d) < cut, inB = (r: DRow) => String(r._d) >= cut;
+    // two equal windows of 28 days, ending on the data's last day
+    const cut = addDays(end.slice(0, 10), -27), prevCut = addDays(cut, -28);
+    const inA = (r: DRow) => String(r._d).slice(0, 10) >= prevCut && String(r._d).slice(0, 10) < cut, inB = (r: DRow) => String(r._d).slice(0, 10) >= cut && String(r._d).slice(0, 10) <= end.slice(0, 10);
     const A = dated.filter(inA).reduce((s, r) => s + val(r), 0), B = dated.filter(inB).reduce((s, r) => s + val(r), 0);
     if (A >= 20 && Math.abs(B - A) >= Math.max(5, A * 0.1)) {
       for (const d of dims) {
@@ -93,7 +98,7 @@ export function computeInsights2(c: Ctx): (Insight & { n: number; method: string
         const lead = B > A ? up : down;
         if (!lead.length || Math.abs(lead[0][1]) < Math.abs(B - A) * 0.25) continue;
         const word = B > A ? "rise" : "fall";
-        add({ label: "Drivers", tone: "high", score: 52, title: `${cap(lead[0][0])} accounts for most of the ${word}`, n: Math.round(A + B), method: "Last 4 weeks against the 4 before, change by category",
+        add({ label: "Drivers", tone: "high", score: 52, title: Math.abs(lead[0][1]) >= Math.abs(B - A) * 0.5 ? `${cap(lead[0][0])} accounts for most of the ${word}` : `${cap(lead[0][0])} is the largest part of the ${word}`, n: Math.round(A + B), method: "Last 4 weeks against the 4 before, change by category",
           metric: { value: `${B >= A ? "+" : "−"}${n(Math.abs(B - A))}`, caption: `${q.word}, last 4 weeks vs the 4 before` },
           text: `${cap(q.word)} went from ${n(A)} to ${n(B)} in the last 4 weeks. ${lead.map(([k, v]) => `${k} ${v >= 0 ? "+" : "−"}${n(Math.abs(v))}`).join(", ")} account for most of the ${word}${(B > A ? down : up).length ? `; ${(B > A ? down : up).map(([k, v]) => `${k} ${v >= 0 ? "+" : "−"}${n(Math.abs(v))}`).join(", ")} moved the other way` : ""}.`,
           bars: [...up, ...down].map(([label, value], i) => ({ label, value, hi: i === 0, fmt: `${value >= 0 ? "+" : "−"}${n(Math.abs(value))}` })),

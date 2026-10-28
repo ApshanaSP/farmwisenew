@@ -323,6 +323,15 @@ const running = new Set<string>();
 export async function refreshDataset(id: string, user: string, emit: Emit): Promise<string> {
   const meta = getMeta(id);
   if (!meta?.source.url) throw new UserError("Only data added by a link can be fetched again.");
+  // a dataset kept up to date by a Live Connector is fetched by it (a plain refresh would drop the history it gathered)
+  if (getConnector(id)) {
+    emit({ t: "step", step: "read", state: "run", detail: "Running the Live Connector" });
+    const r = await runConnector(id, connectorRuntime(), { manual: true });
+    emit({ t: "log", text: r.note });
+    emit({ t: "step", step: "read", state: "done", detail: r.note.slice(0, 120), by: "code", ms: 0 });
+    if (!r.ok) throw new UserError(r.note);
+    return id;
+  }
   if (running.has(id)) throw new UserError("This link is already being fetched.");
   running.add(id);
   const prev = meta.source.connect ?? null;

@@ -115,10 +115,12 @@ describe("the ranking", () => {
     for (const x of [{ ...ins("Hotspot", 90, "8 metro stations in Anna Nagar"), n: 106 }, { ...ins("Linked", 90, "152 open incidents in hotspot zones"), n: 152 }, { ...ins("Concentration", 90, "8 metro stations"), n: 106 }])
       expect(rankOne(x, { rows: 106, to: "2026-10-27", today: "2026-10-28", things: true }).band).not.toBe("act");
   });
-  it("said before counts half (novelty)", () => {
-    const a = rankOne(ins("Backlog", 80, "T"), { rows: 500, to: "2026-10-27", today: "2026-10-28" });
-    const b = rankOne(ins("Backlog", 80, "T"), { rows: 500, to: "2026-10-27", today: "2026-10-28", seen: new Set(["Backlog|T"]) });
+  it("said before counts half (novelty), except what needs action: a persisting backlog stays", () => {
+    const a = rankOne(ins("Magnitude", 80, "T"), { rows: 500, to: "2026-10-27", today: "2026-10-28" });
+    const b = rankOne(ins("Magnitude", 80, "T"), { rows: 500, to: "2026-10-27", today: "2026-10-28", seen: new Set(["Magnitude|T"]) });
     expect(b.usefulness).toBeCloseTo(a.usefulness / 2, 3);
+    const k = rankOne(ins("Backlog", 80, "T"), { rows: 500, to: "2026-10-27", today: "2026-10-28", seen: new Set(["Backlog|T"]) });
+    expect(k.band).toBe("act");
   });
 });
 

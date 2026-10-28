@@ -46,7 +46,26 @@ async function close() {
 export const isImage = (b: Buffer) =>
   (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) || (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) ||
   (b[0] === 0x49 && b[1] === 0x49 && b[2] === 0x2a) || (b[0] === 0x4d && b[1] === 0x4d && b[2] === 0x00 && b[3] === 0x2a) ||
-  (b[0] === 0x42 && b[1] === 0x4d) || (b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP");
+  // a bitmap: "BM", its size, then four zero bytes (so a CSV that starts "BMC Ward" is not taken for one)
+  (b.length > 26 && b[0] === 0x42 && b[1] === 0x4d && b.readUInt32LE(6) === 0 && b.readUInt32LE(2) <= b.length + 1024) ||
+  (b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP");
+
+/** At most 40 million pixels a picture (a 7,000 x 5,700 scan), and 60 seconds of reading. */
+export const OCR_MAX_PIXELS = 40_000_000;
+/** A picture's size from its header (PNG, JPEG, PNM), or null when it cannot be told. */
+export function pixels(b: Buffer): number | null {
+  if (b[0] === 0x89 && b[1] === 0x50 && b.length > 24) return b.readUInt32BE(16) * b.readUInt32BE(20);
+  if (b[0] === 0x50 && (b[1] === 0x35 || b[1] === 0x36)) { const m = b.subarray(0, 40).toString("latin1").match(/^P[56]\s+(\d+)\s+(\d+)/); return m ? Number(m[1]) * Number(m[2]) : null; }
+  if (b[0] === 0xff && b[1] === 0xd8) {
+    for (let i = 2; i + 9 < b.length && i < 2_000_000;) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const mk = b[i + 1];
+      if (mk >= 0xc0 && mk <= 0xcf && mk !== 0xc4 && mk !== 0xc8 && mk !== 0xcc) return b.readUInt16BE(i + 5) * b.readUInt16BE(i + 7);
+      i += 2 + b.readUInt16BE(i + 2);
+    }
+  }
+  return null;
+}
 
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : 0; };
 
@@ -98,8 +117,14 @@ export function wordsToGrid(words: Word[]): { grid: Cell[][]; low: string[] } {
 
 /** OCR of one image: its table as a grid, the cells to check, the mean confidence. */
 export async function ocrImage(img: Buffer): Promise<{ grid: Cell[][]; low: string[]; conf: number; words: number }> {
+  const px = pixels(img);
+  if (px != null && px > OCR_MAX_PIXELS) throw new Error(`This picture is too large to read (${Math.round(px / 1e6)} million pixels; the limit is ${OCR_MAX_PIXELS / 1e6} million).`);
   const w = await worker();
-  const { data } = await w.recognize(img, {}, { blocks: true });
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const { data } = await Promise.race([
+    w.recognize(img, {}, { blocks: true }),
+    new Promise<never>((_, no) => { timer = setTimeout(() => { void close(); no(new Error("Reading the picture took over 60 seconds: stopped.")); }, 60_000); })
+  ]).finally(() => { if (timer) clearTimeout(timer); });
   const words: Word[] = (data.blocks ?? []).flatMap((b) => b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words.map((x) => ({
     text: x.text, conf: x.confidence, x0: x.bbox.x0, y0: x.bbox.y0, x1: x.bbox.x1, y1: x.bbox.y1 })))));
   const { grid, low } = wordsToGrid(words);

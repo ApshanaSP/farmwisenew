@@ -5,7 +5,7 @@ import { collectorSession, failed } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
 import { renderPanel } from "@/lib/studio/chartlint";
-import { getConnector } from "@/lib/studio/connectors";
+import { deleteConnector, getConnector } from "@/lib/studio/connectors";
 import { changeLog, dataCard } from "@/lib/studio/datacard";
 import { briefHtml, htmlToPdf } from "@/lib/studio/briefpdf";
 import type { DatasetMeta } from "@/lib/studio/types";
@@ -151,6 +151,8 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
   const meta = validId(params.id) ? getMeta(params.id) : null;
   if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
   deleteDataset(params.id);
+  // its Live Connector goes with it (an orphan would keep reading the site for nothing)
+  deleteConnector(params.id);
   await note(s.email, "studio:delete", params.id, { name: meta.name });
   return NextResponse.json({ ok: true });
 }

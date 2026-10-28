@@ -107,7 +107,16 @@ function articleLike(html: string): boolean {
   return /<article\b/i.test(html) ? paras.length >= 3 : paras.length >= 6;
 }
 const loginPage = (html: string) => /<input\b[^>]*type\s*=\s*["']?password/i.test(html);
-const captchaPage = (html: string) => /g-recaptcha|h-captcha|hcaptcha\.com|cf-turnstile|challenges\.cloudflare\.com|challenge-platform|verify you are (a )?human|are you a robot|enter the (characters|text) (you see|shown)|captcha/i.test(html);
+/**
+ * A page that is a challenge, not content: a CAPTCHA widget or a "verify you are human" wall, on a page with little
+ * text of its own. The word "captcha" alone (in a script, a footer, an edit form) does not make a page a challenge.
+ */
+const captchaPage = (html: string) => {
+  const widget = /class=["'][^"']*\b(g-recaptcha|h-captcha|cf-turnstile)\b|challenges\.cloudflare\.com\/(turnstile|cdn-cgi)|\/cdn-cgi\/challenge-platform/i.test(html);
+  const wall = /verify (that )?you are (a )?human|are you a robot|enter the (characters|text) (you see|shown)|checking your browser before/i.test(html);
+  const text = html.replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
+  return (widget || wall) && text < 4000;
+};
 
 /** The Studio's datasets that hold the same table (by content), or the same link with the same columns. */
 export function findDuplicate(url: string | null, buf: Buffer | null, t: Table | null): Outcome["dupOf"] {
@@ -294,6 +303,12 @@ export async function resolveLink(url: string, auth: AuthInput, opts: ResolveOpt
   const one = passAll[0] ?? relevant[0] ?? [...passA].sort((x, y) => (earns(gates.get(y.cand.id)!.r.tier) ? 1 : 0) - (earns(gates.get(x.cand.id)!.r.tier) ? 1 : 0) || y.cand.score - x.cand.score)[0];
   const g = gates.get(one.cand.id)!;
   if (!earns(g.r.tier)) return done(noData(found, gates, connected, url, checked, explored), found, gates, connected);
+  // a news page whose only real table is something else (a market ticker, a score card) is still a news page
+  const newsPage = !!connected.html && found.some((f) => f.cand.kind === "headlines" && f.cand.rows >= 12);
+  if (g.rel.verdict === "unrelated" && newsPage && passA.every((f) => gates.get(f.cand.id)!.rel.verdict === "unrelated"))
+    return done({ kind: "nodata", reason: "news", url, checked: [...lines, `Not used: ${one.cand.label}: ${g.rel.why}`],
+      why: "This is a news page: its headlines are articles, and its one table is not the district's data.",
+      next: [{ label: "Add it to News instead", act: "news", href: url }, { label: "Try this site's Downloads or Data page", act: "link" }] }, found, gates, connected);
   if (g.rel.verdict === "unrelated") return done({ kind: "notrelevant", reason: "unrelated", url, checked: [...lines, `Checked for Chennai: ${g.rel.why}`], preview: preview(one.table),
     why: `This is real data, but not about Chennai: ${g.rel.why.charAt(0).toLowerCase()}${g.rel.why.slice(1)}`, next: [{ label: "Use anyway", act: "useAnyway" }, { label: "Paste another link", act: "link" }] }, found, gates, connected, one);
   const dup = findDuplicate(url, connected.html ? null : connected.buf, one.table);

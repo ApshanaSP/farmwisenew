@@ -130,7 +130,8 @@ export function nextSlot(s: Connector["schedule"], after: number): number {
   const d = new Date(after + IST);
   let t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), hh || 0, mm || 0) - IST;
   while (t <= after) t += 864e5;
-  if (s.every === "weekly") while (t - after > 7 * 864e5) t -= 7 * 864e5;
+  // weekly: the slot a week after the run (6 more days past the next daily slot)
+  if (s.every === "weekly") t += 6 * 864e5;
   return t;
 }
 
@@ -212,7 +213,9 @@ export function applyMode(c: Connector, prev: Table | null, inc: Incoming, today
     const day = inc.period || today;
     const si = colIndex(prev, "Snapshot date");
     const kept = prev.rows.filter((r) => r[si] !== day);
-    return { ...prev, rows: [...kept, ...t.rows.map((r) => [...r, day])] };
+    // each incoming column under the header of the same name (a new column waits for its own snapshot table)
+    const order = prev.headers.map((h, i) => (i === si ? -2 : colIndex(t, h)));
+    return { ...prev, rows: [...kept, ...t.rows.map((r) => order.map((k) => (k === -2 ? day : k >= 0 ? r[k] : null)))] };
   }
   // append: rows whose key is already there are not added again (a re-published file, an overlapping API answer)
   const keyIdx = (tt: Table) => (c.key.length ? c.key.map((k) => colIndex(tt, k)) : tt.headers.map((_, i) => i));
@@ -248,7 +251,19 @@ function setRanges(c: Connector, t: Table) {
 // ----------------------------------------------------------------------- run --
 
 /** One run: read what is new, check it, apply it by the mode, rebuild the dataset; health and history updated. */
-export async function runConnector(id: string, deps: Deps, opts: { manual?: boolean } = {}): Promise<ConnRun> {
+/** Connectors running now: a manual run, a backfill, an approval and the sweep never overlap on one connector. */
+const busy = new Set<string>();
+async function exclusive<T>(id: string, fn: () => Promise<T>): Promise<T> {
+  if (busy.has(id)) throw new Error("Only one run of a connector at a time: this one is running now. Try again in a moment.");
+  busy.add(id);
+  try { return await fn(); } finally { busy.delete(id); }
+}
+
+export function runConnector(id: string, deps: Deps, opts: { manual?: boolean } = {}): Promise<ConnRun> {
+  return exclusive(id, () => runConnector1(id, deps, opts));
+}
+
+async function runConnector1(id: string, deps: Deps, opts: { manual?: boolean } = {}): Promise<ConnRun> {
   const c = getConnector(id);
   if (!c) throw new Error("Unknown connector.");
   const now = deps.now();
@@ -277,7 +292,16 @@ export async function runConnector(id: string, deps: Deps, opts: { manual?: bool
     saveConnector(c);
     return run;
   }
-  const result = await apply(c, incoming, deps, now, opts.manual ? "Run by hand" : "");
+  let result: ConnRun;
+  try {
+    result = await apply(c, incoming, deps, now, opts.manual ? "Run by hand" : "");
+  } catch (e) {
+    // the dashboard could not be rebuilt: recorded and retried like a failed read (the gathered table is kept)
+    c.fails++;
+    c.retryAt = iso(now + RETRY[Math.min(c.fails - 1, RETRY.length - 1)]);
+    c.status = "failing";
+    result = record(c, { at: iso(now), kind: "error", ok: false, rowsAdded: null, rows: c.rows, note: `The new data was read but the dashboard could not be rebuilt: ${(e as Error).message.slice(0, 140)}` });
+  }
   saveConnector(c);
   return result;
 }
@@ -312,6 +336,7 @@ async function apply(c: Connector, incoming: Incoming[], deps: Deps, now: number
     const was = table?.rows.length ?? 0;
     table = retain(c, applyMode(c, table, inc, istDay(now)), now);
     added += Math.max(0, table.rows.length - was) || (c.mode === "replace" ? inc.table.rows.length : 0);
+    // the size of an incoming table, to see one fall by half (an append's increments are compared with increments)
     c.lastIn = inc.table.rows.length;
     setRanges(c, inc.table);
     if (inc.period && !c.seen.includes(inc.period)) c.seen = [...c.seen, inc.period].sort().slice(-400);
@@ -332,13 +357,17 @@ async function apply(c: Connector, incoming: Incoming[], deps: Deps, now: number
 }
 
 /** A person's answer to a self-heal proposal: the new columns mapped to the old names (or kept as new). */
-export async function approveProposal(id: string, deps: Deps, keepNew = false): Promise<ConnRun> {
+export function approveProposal(id: string, deps: Deps, keepNew = false): Promise<ConnRun> { return exclusive(id, () => approveProposal1(id, deps, keepNew)); }
+async function approveProposal1(id: string, deps: Deps, keepNew = false): Promise<ConnRun> {
   const c = getConnector(id);
   if (!c?.proposal) throw new Error("No proposal is waiting.");
   const now = deps.now();
   const p = c.proposal;
-  if (keepNew) { c.headers = p.next; c.schema = schemaHash(p.next); }
-  else for (const [n, o] of Object.entries(p.mapping)) if (o && o !== n) c.rename[n] = o;
+  if (!keepNew) for (const [n, o] of Object.entries(p.mapping)) if (o && o !== n) c.rename[n] = o;
+  // the columns as they now arrive (renamed where mapped) are the ones expected from here on, so it does not drift again
+  const now1 = keepNew ? p.next : p.next.map((h) => c.rename[h] ?? h);
+  c.headers = now1;
+  c.schema = schemaHash(now1);
   c.proposal = null;
   record(c, { at: iso(now), kind: "approved", ok: true, rowsAdded: null, rows: c.rows, note: keepNew ? "New columns accepted as they are." : `Mapping approved: ${Object.entries(p.mapping).filter(([n, o]) => o && o !== n).map(([n, o]) => `${n} → ${o}`).join(", ") || "no change"}.` });
   const held = getHeld(id);
@@ -349,7 +378,8 @@ export async function approveProposal(id: string, deps: Deps, keepNew = false): 
 }
 
 /** A person's answer to a quarantine: apply the held data, or drop it (the last good data stays). */
-export async function judgeQuarantine(id: string, deps: Deps, approve: boolean): Promise<ConnRun> {
+export function judgeQuarantine(id: string, deps: Deps, approve: boolean): Promise<ConnRun> { return exclusive(id, () => judgeQuarantine1(id, deps, approve)); }
+async function judgeQuarantine1(id: string, deps: Deps, approve: boolean): Promise<ConnRun> {
   const c = getConnector(id);
   if (!c?.quarantine) throw new Error("Nothing is in quarantine.");
   const now = deps.now();
@@ -360,8 +390,10 @@ export async function judgeQuarantine(id: string, deps: Deps, approve: boolean):
     record(c, { at: iso(now), kind: "approved", ok: true, rowsAdded: null, rows: c.rows, note: `Quarantined data approved: ${q.why}` });
     run = await apply(c, getHeld(id), deps, now, "Approved after quarantine", true);
   } else {
+    // the rejected period is not asked for again (the ones held after it are read on the next run)
+    const held = getHeld(id);
+    if (held[0]?.period && !c.seen.includes(held[0].period)) c.seen = [...c.seen, held[0].period].sort().slice(-400);
     saveHeld(id, null);
-    // the rejected period is not asked for again
     run = record(c, { at: iso(now), kind: "rejected", ok: true, rowsAdded: 0, rows: c.rows, note: `Quarantined data rejected: ${q.why} The last good data stays.` });
     c.status = "healthy";
   }
@@ -396,7 +428,9 @@ export function createConnector(p: { id: string; name: string; url: string; loca
   const c: Connector = {
     id: p.id, name: p.name, url: p.url, locate: p.locate, pattern: p.pattern, schedule, mode: p.mode ?? (p.locate === "newest-file-matching" || p.locate === "api-date-param" ? "append" : "replace"),
     key: p.key ?? guessKey(p.table), retention: p.retention ?? 400, status: "healthy", paused: false, headers: p.table.headers, schema: schemaHash(p.table.headers), rename: {},
-    seen: p.seen ?? [], lastRunAt: null, lastOkAt: iso(now), lastNewAt: iso(now), nextAt: iso(nextSlot(schedule, now)), fails: 0, retryAt: null, lastIn: p.table.rows.length, rows: p.table.rows.length,
+    seen: p.seen ?? [], lastRunAt: null, lastOkAt: iso(now), lastNewAt: iso(now), nextAt: iso(nextSlot(schedule, now)), fails: 0, retryAt: null,
+    // an append's first increment is not compared with the whole seed table
+    lastIn: (p.mode ?? (p.locate === "newest-file-matching" || p.locate === "api-date-param" ? "append" : "replace")) === "append" && p.locate !== "newest-file-matching" ? 0 : p.table.rows.length, rows: p.table.rows.length,
     ranges: {}, history: [], proposal: null, quarantine: null, createdAt: iso(now)
   };
   setRanges(c, p.table);
@@ -452,14 +486,17 @@ export async function readSource(c: Connector, auth: Parameters<typeof import("@
     const days: string[] = [];
     for (let d = new Date(`${last}T00:00:00Z`).getTime() + 864e5; istDay(d - IST) <= today && days.length < 30; d += 864e5) days.push(new Date(d).toISOString().slice(0, 10));
     const out: Incoming[] = [];
+    let gap = 0;
     for (const day of days) {
       try {
         const f = await fetchOnce(c.pattern.replace("{YYYY-MM-DD}", day), null, "application/json", 20_000);
         const t = await parseFileAsync(f.buf, `${day}.json`, f.contentType, f.url);
+        gap = 0;
         if (t.rows.length) out.push({ table: t, period: day, label: `the ${day} period` });
       } catch (e) {
         // a period not published yet ends the run quietly; any other failure is an error
-        if (e instanceof LinkError && (e.code === "missing" || e.code === "empty")) break;
+        // a period not published: skipped (a holiday), unless three in a row are missing (not published yet)
+        if (e instanceof LinkError && (e.code === "missing" || e.code === "empty")) { if (++gap >= 3) break; continue; }
         throw e;
       }
     }
