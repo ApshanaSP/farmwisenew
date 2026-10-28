@@ -115,6 +115,10 @@ export function drawAnswer(L: L, map: Leaflet.Map, a: AnswerLayers, r: AskRespon
       .bindTooltip(`<b>${esc(p.name ?? "Lake or pond")}</b>OpenStreetMap`, { className: "dtip", sticky: true }).addTo(a.areas);
   // facilities that matter to the answer: a glyph with a letter and a shape, named in words
   for (const p of r.context.points) facility(L, p.layer, p, ta).addTo(a.marks);
+  // "on the ground now": the readings behind the panel's conditions, at their places
+  for (const c of r.conditions ?? []) for (const p of c.pts) condMarker(L, { ...p, high: c.tone === "alert" || c.tone === "warn" }, "askMarks").addTo(a.marks);
+  // an "in the news" answer: each article at the locality it names (the others are counted in the panel)
+  for (const n of r.news?.pins ?? []) newsMarker(L, { id: n.id, name: n.title, lat: n.lat, lon: n.lon, url: n.url, sub: `${n.outlet} · ${n.at.slice(0, 10)}${n.place ? ` · ${n.place}` : ""}` }, "askMarks").addTo(a.marks);
 
   // nearest from a place: a line to each facility with its distance
   const nr = r.extra.nearest;
@@ -169,6 +173,32 @@ function facility(L: L, layer: LayerId, p: { id: string; name: string | null; na
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** keeps each corridor's drawn width true to its metres at the current zoom */
+export type NewsMarkerFeat = { id: string; name: string | null; lat?: number; lon?: number; url?: string | null; sub?: string | null };
+/** A news article at the locality it names: a small square "N" marker; the popup has the headline, the outlet and its link. */
+export function newsMarker(L: L, f: NewsMarkerFeat, pane?: string) {
+  const safe = f.url && /^https?:\/\//i.test(f.url) ? f.url : null;
+  return L.marker([f.lat!, f.lon!], {
+    ...(pane ? { pane } : {}), keyboard: false,
+    icon: L.divIcon({ className: "", html: `<span class="am-news">N</span>`, iconSize: [16, 16], iconAnchor: [8, 8] })
+  }).bindPopup(`<div class="am-newspop"><b>${esc(f.name ?? "News report")}</b>${f.sub ? `<span>${esc(f.sub)}</span>` : ""}`
+    + `${safe ? `<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">Read the report ↗</a>` : ""}</div>`, { className: "am-newspop-w", maxWidth: 280 })
+    .bindTooltip(esc(f.name ?? "News report"), { className: "dtip", direction: "top", offset: [0, -8] })
+    // the popup says it all: no tooltip behind it
+    .on("popupopen", (e) => (e.target as Leaflet.Marker).closeTooltip());
+}
+
+/** A live reading at its place: a small pill with the value ("98 %", "0 mm", "AQI 153"), coloured by feed and by level. */
+export function condMarker(L: L, p: { lat: number; lon: number; label: string; value: string; kind: string; high?: boolean; sub?: string | null }, pane?: string) {
+  return L.marker([p.lat, p.lon], {
+    ...(pane ? { pane } : {}), keyboard: false,
+    // works are many and their "% done" reads like a lake level: a dot, with the figures on hover
+    icon: L.divIcon({ className: "", html: p.kind === "works" ? `<span class="am-cond k-works dot${p.high ? " hi" : ""}"><i></i></span>`
+      : `<span class="am-cond k-${esc(p.kind)}${p.high ? " hi" : ""}"><i></i>${esc(p.value)}</span>`, iconSize: [0, 0], iconAnchor: [0, 10] })
+  }).bindTooltip(`<b>${esc(p.label)}</b>${esc(p.sub ?? p.value)}`, { className: "dtip", direction: "top", offset: [12, -12] });
+}
+const LIVE_KIND: Record<string, string> = { live_rain: "rain", live_lakes: "lakes", live_air: "air", live_hospitals: "hospital", live_works: "works" };
+export const liveKind = (layer: string) => LIVE_KIND[layer] ?? null;
+
 export function corridorWeights(map: Leaflet.Map, a: AnswerLayers) {
   const z = map.getZoom();
   for (const c of a.corridors) c.line.setStyle({ weight: Math.max(2, (2 * c.meters) / mpp(c.lat, z)) });

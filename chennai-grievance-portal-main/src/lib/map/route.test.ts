@@ -23,7 +23,7 @@ function sig(p: Plan): string {
         const f = s.filter!;
         const what = f.category?.join("+") ?? (f.family ? `F:${f.family.join("+")}` : "-");
         const per = f.period ? (f.period.kind === "last_days" ? String(f.period.days) : f.period.kind) : "all";
-        const flags = [f.citizen ? "cit" : "", f.severity?.join("+") ?? "", f.overdue ? "overdue" : "", f.dept?.join("+") ?? ""].filter(Boolean);
+        const flags = [f.citizen ? "cit" : "", f.news ? "news" : "", f.severity?.join("+") ?? "", f.overdue ? "overdue" : "", f.dept?.join("+") ?? ""].filter(Boolean);
         return ["inc", what, f.status, per, ...flags].join(":");
       }
       case "within": return `within:${s.meters}`;
@@ -272,5 +272,49 @@ describe("follow-ups edit exactly one part of the plan", () => {
     expect(applyChip(base, "d:near", "9000")).toBeNull();
     const sev = applyChip(base, "severity", "severe")!;
     expect(diff(base, sev)).toEqual([".steps.0.filter.severity"]);
+  });
+});
+
+describe("in the news: a source, not a category", () => {
+  it.each([
+    ["flooding in the news this week", `${FL}:any:7:news`],
+    ["garbage complaints reported in the newspapers", `${SW}:any:30:cit:news`],
+    ["open accidents in the news near Adyar", `${RA}:open:30:news | in:pt:loc:Adyar:1000`],
+    ["what was in the news this month", "inc:-:any:30:news"],
+    ["news about waterlogging near schools", `${FW}:any:30:news | schools | within:500`],
+    ["செய்திகளில் வந்த வெள்ளம்", `${FL}:any:30:news`],
+    ["news la vandha kuppai", `${SW}:any:30:news`]
+  ])("%s", (q, want) => {
+    expect(route(q)).toBe(want);
+    const r = rulesRoute(q, null, env);
+    expect(r?.kind === "plan" ? r.unread ?? [] : []).toEqual([]);
+  });
+  it("follow-ups: only in the news, then any source; the chip removes it", () => {
+    const first = rulesRoute("waterlogging within 300 m of schools", null, env);
+    if (first?.kind !== "plan") throw new Error("first plan");
+    for (const t of ["only in the news", "news only", "just the ones in the news", "செய்திகளில் வந்தவை மட்டும்"]) {
+      const e = editPlan(t, first.plan, env);
+      expect(e?.kind === "plan" && (e.plan.steps[0] as Extract<Step, { op: "take" }>).filter?.news, t).toBe(true);
+    }
+    const on = editPlan("only in the news", first.plan, env);
+    if (on?.kind !== "plan") throw new Error("edit");
+    const off = editPlan("all sources", on.plan, env);
+    expect(off?.kind === "plan" && JSON.stringify(off.plan)).toBe(JSON.stringify(first.plan));
+    const chip = planChips(on.plan, { cat: (c) => c, dept: (d) => d, area: () => ({ en: "", ta: "" }), line: () => ({ en: "", ta: "" }) }, []).find((c) => c.part === "news");
+    expect(chip?.en).toBe("In the news");
+    expect(JSON.stringify(applyChip(on.plan, "news", null))).toBe(JSON.stringify(first.plan));
+  });
+});
+
+describe("areas the district does not have", () => {
+  it.each(["open cases in ward 999", "flooding in zone 22", "வார்டு 250 இல் குப்பை", "ward 0 garbage"])("%s is said plainly", (q) => expect(route(q)).toBe("SAY"));
+  it("real ones still answer", () => {
+    expect(route("streetlight problems in ward 178")).toBe("inc:STREETLIGHT_ELECTRICAL:open:30 | in:ward178");
+    expect(route("flooding in Zone 13 this week")).toBe(`${FL}:open:7 | in:zone13`);
+  });
+  it("compare naming both sides after an answer is a new question", () => {
+    const first = rulesRoute("garbage near hospitals", null, env);
+    if (first?.kind !== "plan") throw new Error("first");
+    expect(editPlan("compare zone 9 and zone 10", first.plan, env)).toBeNull();
   });
 });

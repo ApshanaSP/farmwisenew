@@ -44,6 +44,7 @@ function system(cats: string[], depts: string[]): string {
     "Defaults: status open; period last 30 days (offset 0). Distances 10 to 5000 metres. Areas: ward 1-200, zone 1-15, taluk codes TLK-XXX,",
     "point refs are given to you as place refs in the prompt; use only those. A road or waterway is used only by a line id given in the prompt.",
     "language is en, ta (Tamil script) or tanglish (Tamil in Latin letters), as the question is written.",
+    "understood is false when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); then steps may be a single take of incidents.",
     "Examples:",
     "Each step is one flat object with every field; fields a step does not use are null. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
     ...EXAMPLES.map(([q, p]) => `Q: ${q}\nPLAN: ${JSON.stringify(toWire(p as Plan))}`)
@@ -57,6 +58,7 @@ const CONCEPTS = [
   "commuters, passengers, travellers -> layer rail_metro",
   "water bodies, tanks, ponds, eri -> layer water_bodies; rivers, canals, nullah -> layer waterways",
   "law and order, safety of women -> families CRIME; civic complaints -> citizen true",
+  "in the news, newspapers, press, media reports, headlines -> news true (incidents a news outlet reported; status any unless the question says open)",
   "by the sea, coast, beach, seashore -> the coastal zones (use count_by zone or inside one zone): 1 Thiruvottiyur, 4 Tondiarpet, 5 Royapuram, 9 Teynampet, 13 Adyar, 15 Sholinganallur",
   "north / central / south of the city -> zones by direction (see ZONES); a question about one direction may use count_by zone",
   "worst, most urgent -> severity Severe (or Severe and High); pending too long, overdue -> overdue true"
@@ -77,6 +79,8 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   let problems: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: system(ctx.cats, ctx.depts), prompt, temperature: 0, maxOutputTokens: 900, user: ctx.user, abortSignal: ctx.signal, chat: true });
+    // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
+    if (r.object.understood === false) return { problems: ["not a map question"] };
     const c = checkPlan(fromWire(r.object));
     if (c.ok) return { plan: c.plan };
     problems = c.problems;

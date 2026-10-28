@@ -9,7 +9,7 @@ const resolve = makeResolver(fixtureResolver());
 const QS = ["waterlogging within 300 m of schools", "garbage near schools and colleges", "open complaints near Adyar", "flooding in Zone 13 this week",
   "thefts along Anna Salai this month", "5 nearest police stations to Marina", "areas with no fire station within 3 km", "garbage complaints by ward",
   "where are garbage complaints clustering", "compare Adyar and Velachery flooding", "flooding this week vs last week in Zone 13", "Velachery taluk severe incidents",
-  "waterlogging within half a km of government hospitals", "nearest hospital to each open severe flooding case"];
+  "waterlogging within half a km of government hospitals", "nearest hospital to each open severe flooding case", "flooding in the news this week", "open accidents in the news near Adyar"];
 
 describe("the AI's flat form carries every plan exactly", () => {
   it.each(QS)("%s", (q) => {

@@ -72,7 +72,7 @@ function zonesOf(hits: Hit[], w: World) {
 /** What the incidents are, in words: "open Flooding & waterlogging reports" / Tamil. */
 function subject(plan: Plan, w: World, lang: Lang, n = 2): string {
   const s = subjectMany(plan, w, lang);
-  return n === 1 && lang !== "ta" ? s.replace(/complaints$/, "complaint").replace(/incidents$/, "incident") : s;
+  return n === 1 && lang !== "ta" ? s.replace(/complaints( in the news)?$/, "complaint$1").replace(/incidents( in the news)?$/, "incident$1") : s;
 }
 function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const t = take0(plan);
@@ -81,7 +81,7 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const cats = f?.category?.length ? f.category.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase())).join(", ") : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
   const st = f?.status === "open" ? (ta ? "திறந்த " : "open ") : f?.status === "closed" ? (ta ? "முடிந்த " : "closed ") : "";
   const sev = f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "";
-  const noun = f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents";
+  const noun = (f?.news ? (ta ? "செய்திகளில் வந்த " : "") : "") + (f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents") + (f?.news && !ta ? " in the news" : "");
   return ta ? `${st}${sev}${cats ? cats + " " : ""}${noun}` : `${st}${sev}${cats ? cats + " " : ""}${noun}`.replace(/\s+/g, " ").trim();
 }
 const periodTail = (plan: Plan, lang: Lang) => {
@@ -210,7 +210,10 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       fact("groups", g.length, "areas");
       if (g[0]) fact("top", g[0].n, "in the top area");
       const unit = show.by === "hex500" ? (ta ? "500 மீ கட்டங்கள்" : "500 m cells") : ta ? { ward: "வார்டுகள்", zone: "மண்டலங்கள்", taluk: "வட்டங்கள்" }[show.by] : `${show.by}s`;
+      const unitOne = ta ? { ward: "வார்டு", zone: "மண்டலம்", taluk: "வட்டம்", hex500: "கட்டம்" }[show.by] : show.by === "hex500" ? "500 m cell" : show.by;
       headline = !count ? (ta ? `${subj} எதுவும் இல்லை${per}.` : `No ${subj}${per}.`)
+        // every one of them lacks the area on record (often the case for news that names only the city)
+        : !g[0] ? (ta ? `${n(count)} ${subj}${per}; எதற்கும் ${unitOne} பதிவில் இல்லை · ${ready}.` : `${n(count)} ${subj}${per}; none has a ${unitOne} on record · ${ready}.`)
         : ta ? `${n(count)} ${subj}${per}, ${g.length} ${unit}; அதிகம் ${g[0].label_ta} (${n(g[0].n)}) · ${ready}.`
           : tg ? `${n(count)} ${subj}${per}, ${g.length} ${unit}-la; adhigam ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the most in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;

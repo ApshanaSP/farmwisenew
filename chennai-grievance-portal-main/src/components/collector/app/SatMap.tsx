@@ -6,8 +6,9 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { I } from "./icons";
 import { CAT_COL, type Row } from "./lib";
 import type { MapAsk } from "./askmap/useMapAsk";
-import { createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, markPins, type AnswerLayers } from "./askmap/answerLayers";
+import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
+import { hardenLeaflet } from "./askmap/leafletSafe";
 import "./askmap/askmap.css";
 
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
@@ -51,7 +52,7 @@ interface Props {
   /** base map */
   base?: "sat" | "streets";
   /** facility and water layers switched on from the Layers menu */
-  overlays?: { id: string; kind: string; features: { id: string; name: string | null; lat?: number; lon?: number; lines?: [number, number][][]; polys?: [number, number][][][] }[] }[];
+  overlays?: { id: string; kind: string; features: { id: string; name: string | null; lat?: number; lon?: number; lines?: [number, number][][]; polys?: [number, number][][][]; url?: string | null; sub?: string | null; value?: string | null; kind?: string | null }[] }[];
   /** the answer as a heat layer */
   heat?: boolean;
   /** the circle tool is on: drag a circle on the map */
@@ -117,6 +118,7 @@ export default function SatMap(props: Props) {
     (async () => {
       const L = (await import("leaflet")).default;
       if (dead || !el.current) return;
+      hardenLeaflet(L);
       const map = L.map(el.current, { zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, minZoom: 9, maxZoom: 18, attributionControl: true });
       map.attributionControl.setPrefix(false);
       // markers and zone names scale with the zoom: small over the whole district, larger as the Collector zooms in
@@ -516,6 +518,16 @@ export default function SatMap(props: Props) {
     s.overlay.clearLayers();
     const rend = s.L.canvas({ padding: 0.3 });
     for (const o of props.overlays ?? []) {
+      if (o.id === "news") {
+        for (const f of o.features) if (f.lat != null && f.lon != null) newsMarker(s.L, f as NewsMarkerFeat).addTo(s.overlay);
+        continue;
+      }
+      const lk = liveKind(o.id);
+      if (lk) {
+        for (const f of o.features) if (f.lat != null && f.lon != null)
+          condMarker(s.L, { lat: f.lat, lon: f.lon, label: f.name ?? "", value: f.value ?? "", kind: lk, high: f.kind === "high" || f.kind === "late", sub: f.sub }).addTo(s.overlay);
+        continue;
+      }
       for (const f of o.features) {
         if (f.lat != null && f.lon != null) s.L.circleMarker([f.lat, f.lon], { renderer: rend, radius: 4, color: "#fff", weight: 1, fillColor: OVERLAY_COL[o.id] ?? "#94A3B8", fillOpacity: 0.95 })
           .bindTooltip(`<b>${esc(f.name ?? "")}</b>${esc(o.id.replace(/_/g, " "))} · OpenStreetMap`, { className: "dtip" }).addTo(s.overlay);
@@ -523,7 +535,7 @@ export default function SatMap(props: Props) {
         else if (f.polys) for (const p of f.polys) s.L.polygon(p, { renderer: rend, color: "#60A5FA", weight: 1, fillOpacity: 0.25 }).bindTooltip(esc(f.name ?? ""), { className: "dtip", sticky: true }).addTo(s.overlay);
       }
     }
-    if (props.overlays?.length) s.map.attributionControl.addAttribution("© OpenStreetMap contributors (ODbL)");
+    if (props.overlays?.some((o) => o.id !== "news" && !liveKind(o.id))) s.map.attributionControl.addAttribution("© OpenStreetMap contributors (ODbL)");
   }, [ready, props.overlays]);
   // the circle tool: press, drag out the radius, release
   useEffect(() => {

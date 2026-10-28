@@ -191,3 +191,39 @@ Homework: FarmwiseAI's Play Store apps (கள ஆய்வு / FIMMS Vellore, 
   - the panel code loads when the pointer reaches the pill.
 - **Fixes:** a road named "(North)" no longer matches "north"; "Most affected" names only named facilities; "all incidents this quarter" is a new question, not a period edit.
 - **Checks:** 294 map unit tests; 8 map golden tests (property p90 257 ms); browser run with 0 console errors. Screenshots ai1–ai5 in docs/review-pdfs/ask-the-map/.
+
+## News on the map (2026-10-28, after the push)
+
+- **"In the news" filter:** incidents a news outlet reported (`incidents.outlet_count > 0`). Words: in the news, newspapers, press, media, headlines; செய்தி / செய்திகளில் / நாளிதழ் / பத்திரிகை; news la, paper la. The AI planner has a `news` field and a concept line. Default status is "any" for news questions (what was reported, open or not).
+- **Follow-ups and chips:** "only in the news", "news only", "செய்திகளில் வந்தவை மட்டும்" add it; "all sources" or the chip's × removes it. Plans saved before this still parse (the field is optional).
+- **Articles behind an answer:** an "in the news" answer pins each article at the locality it names (purple "N"). Its popup gives the headline, outlet, date and a link to the publisher. Articles that name only a taluk, zone or the district are counted in the panel ("counted, not pinned"), never placed at a guessed spot.
+- **Press links in the list:** every row with news coverage shows up to 3 outlets, each linking to its article.
+- **News layer:** Layers → Reports → "News reports, 30 days". Covers all incident articles in the district, including the ones the pipeline did not link to an incident. Live data on 28 Oct: 268 pins, 946 counted without a locality. An officer sees only their department's news.
+- **Insight:** "N of the M were reported in the news; K still open", with "Only the ones in the news" as the next step.
+- **Fix found by the property test:** "by ward/taluk" no longer fails when none of the results has that area on record; it says so (news-only incidents often name only the city).
+- **Checks:** map unit 307 passed; golden 8 passed (p90 211 ms); live: "flooding in the news this week" gives 8 incidents and 8 articles (3 pinned, 5 counted); browser run with 0 console errors. Screenshots news1–news3 in docs/review-pdfs/ask-the-map/.
+
+## Clearer answers, live feeds, crash fixes (2026-10-28 evening)
+
+- **Answer at a glance:** the panel now leads with the number in large type and what it counts ("160 · open flooding incidents · last 7 days"), with no "map layer ready". Under it: one sentence of meaning, then key-fact tiles (past deadline, severe, and still open when closed ones are counted). Each tile shows its own cases on the map when clicked.
+- **Filters folded:** the plan's parts are one line ("Flooding (all kinds) · Last 7 days") with a Change button; the chips open only when asked. Insights are renamed "What needs attention" and show 3, then "N more".
+- **On the ground now** (src/lib/map/conditions.ts): live feeds that have a place, read where the answer is.
+  - Flooding and drainage: the IMD district warning, the nearest station's 24 h rain (or "No rain …: standing water points to drains or pipes"), lakes over 85 % full in the area, and PWD water works under way and behind schedule. Building works are left out.
+  - Health: the nearest government hospitals' bed occupancy and emergencies.
+  - Pollution and fire: the nearest AQI station.
+  - An orange or red IMD warning is shown with every answer. Area briefs show conditions too.
+  - Each reading is drawn on the map as a value pill (works as small amber squares, figures on hover).
+- **Live layers:** Layers → "On the ground now": Rain (IMD), Lake levels (PWD), PWD works under way, Govt hospital beds (MIS), Air quality (CPCB). Sources are observation_signals (latest per place) and pwd_works. No new tables.
+- **Crash fixes:**
+  - Leaflet guards (askmap/leafletSafe.ts) stop the "Cannot read properties of null (_latLngToNewLayerPoint …)" family of errors when a new answer clears pins mid-zoom.
+  - The panel prefetch on hover no longer leaves a failed chunk load unhandled.
+  - The Send dialog survives a dropped connection.
+  - An aborted question no longer shows "could not answer".
+  - A 33-question headless run (follow-ups, chips, fast repeats) and an officer run showed 0 page errors.
+- **Answer fixes:**
+  - Gibberish ("asdf qwerty") is no longer answered with the whole district: the AI planner's flat plan has `understood`.
+  - "ward 999" and "zone 22" are said plainly.
+  - "compare zone 9 and zone 10" after an answer is a new question.
+- **Checks:** map unit 317 passed. Screenshots v2-1 … v2-6 (light) in docs/review-pdfs/ask-the-map/.
+- **Faster everywhere:** a filter's date window was worked out (with date parsing) once per incident, about 27,000 times per step; it is now worked out once per filter (execute.ts windowOf). The random-plan check went from p90 380 ms to 40 ms; insights that re-run the question (change on last period) got the same speed-up.
+- **Final checks:** golden 14 passed (p90 40 ms); map unit 317 passed; full unit run: the only failures are 2 Data Studio outcome tests that pass when run alone (timing under load, files not touched here).

@@ -35,7 +35,7 @@ beforeAll(async () => {
   const { ops } = await import("@/lib/collector/db");
   // the oracle's own copy of every incident, with the Collector's decisions and the department routing laid on top
   rows = await run(`SELECT incident_id, category_code, family, lead_dept, ward_no, zone_no, taluk_code, lat, lon, loc_precision_m, is_open, severity_level, sla_breached,
-    DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, citizen_complaints, place_text FROM incidents WHERE lat IS NOT NULL`);
+    DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, citizen_complaints, outlet_count, place_text FROM incidents WHERE lat IS NOT NULL`);
   const dec = await run(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => []);
   const last = new Map<string, string>(dec.map((d: any) => [String(d.incident_id), String(d.decision)]));
   const routed = new Set((await run(`SELECT incident_id FROM ${ops("dept_assignments")}`).catch(() => [])).map((r: any) => String(r.incident_id)));
@@ -61,6 +61,7 @@ function oFilter(r: Record<string, any>, f: Filter | null, now: string): boolean
   if (f.dept && !f.dept.includes(r.lead_dept)) return false;
   if (f.overdue && Number(r.sla_breached) !== 1) return false;
   if (f.citizen && !(Number(r.citizen_complaints) > 0)) return false;
+  if (f.news === true && !(Number(r.outlet_count) > 0)) return false;
   if (f.period?.kind === "last_days") {
     const from = wall(now, -24 * f.period.days * (f.period.offset + 1)), to = wall(now, -24 * f.period.days * f.period.offset);
     if (!(r.first > from && r.first <= to)) return false;
@@ -201,7 +202,7 @@ describe.skipIf(!haveStore())("Ask the Map on the frozen store", () => {
       const f: Filter = {
         category: rnd() < 0.6 ? [pick(cats)] : null, family: null, severity: rnd() < 0.3 ? [pick(["Severe", "High", "Medium", "Low"] as const)] : null,
         status: pick(["open", "closed", "any"] as const), dept: null, overdue: rnd() < 0.1 ? true : null, citizen: rnd() < 0.3 ? true : null,
-        period: rnd() < 0.85 ? { kind: "last_days", days: pick([1, 7, 30, 90, 180]), offset: rnd() < 0.15 ? 1 : 0 } : null, text: null
+        period: rnd() < 0.85 ? { kind: "last_days", days: pick([1, 7, 30, 90, 180]), offset: rnd() < 0.15 ? 1 : 0 } : null, text: null, ...(rnd() < 0.15 ? { news: true } : {})
       };
       const steps: Step[] = [{ op: "take", as: "a", layer: "incidents", filter: f, where: null }];
       const shape = pick(["take", "within", "inside_zone", "inside_ward", "inside_point", "along", "count_by", "compare"]);

@@ -19,6 +19,8 @@ import type { MapAsk } from "./useMapAsk";
 const AskMapPanel = dynamic(() => import("./AskMapPanel"), { ssr: false, loading: () => <aside className="amp" aria-busy="true"><div className="amp-busy" style={{ margin: 14 }} /></aside> });
 
 let suggestCache: string[] | null = null;
+/** loads the panel's code when the pointer reaches the pill; a failed load (a dev rebuild, a dropped connection) is retried on open */
+const prefetchPanel = () => { import("./AskMapPanel").catch(() => undefined); };
 
 export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overlays, compact }: {
   ask: MapAsk;
@@ -44,7 +46,7 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
     const label = r?.kind === "answer" ? r.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") : r?.kind === "brief" ? r.brief?.label.en : null;
     return (
       <button className="ampill" onClick={() => { setFocusBox(true); ask.setGrown(true); }} title="Ask the map a question, in English or Tamil" aria-label="Ask the map"
-        onMouseEnter={() => { import("./AskMapPanel"); }} onFocus={() => { import("./AskMapPanel"); }}>
+        onMouseEnter={prefetchPanel} onFocus={prefetchPanel}>
         <I n="search" />{label ? <span className="ans">{label}</span> : <span>{compact ? "Ask the map" : "Ask the map…"}</span>}
       </button>
     );
@@ -102,10 +104,10 @@ function SendDialog({ r, dept, question, onClose, toast }: { r: AskResponse; dep
   const send = async (d: Draft) => {
     setBusy(d.dept);
     const x = await fetch("/api/map/send", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "send", dept: d.dept, ids: d.ids, subject: d.subject, body: d.body, plan: r.plan }) });
-    const j = await x.json().catch(() => ({}));
+      body: JSON.stringify({ action: "send", dept: d.dept, ids: d.ids, subject: d.subject, body: d.body, plan: r.plan }) }).catch(() => null);
+    const j = x ? await x.json().catch(() => ({})) : {};
     setBusy(null);
-    if (!x.ok) { toast(j.error ?? "Not sent.", "alert"); return; }
+    if (!x?.ok) { toast(j.error ?? "Not sent: the server could not be reached.", "alert"); return; }
     setDone((m) => ({ ...m, [d.dept]: `${j.note} Follow-up set for ${j.followups} ${j.followups === 1 ? "case" : "cases"} (24 h).` }));
     toast(`${d.deptName}: ${j.note}`);
   };

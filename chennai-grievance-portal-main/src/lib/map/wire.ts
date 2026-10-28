@@ -15,6 +15,7 @@ export const WireStep = z.object({
   layer: z.enum(LAYER_IDS).nullable(),
   category: z.array(z.string()).nullable(), family: z.array(z.string()).nullable(), severity: z.array(z.enum(SEVS as [string, ...string[]])).nullable(),
   status: z.enum(["open", "closed", "any"]).nullable(), dept: z.array(z.string()).nullable(), overdue: z.boolean().nullable(), citizen: z.boolean().nullable(),
+  news: z.boolean().nullable().describe("true = only incidents a news outlet reported"),
   period_days: z.number().nullable().describe("last N days; null = any time"), period_offset: z.number().nullable().describe("0 = ending now, 1 = the window before"),
   government: z.boolean().nullable(), kinds: z.array(z.string()).nullable(),
   of: z.string().nullable(), near: z.array(z.string()).nullable(), meters: z.number().nullable(), line: z.string().nullable(),
@@ -25,11 +26,15 @@ export const WireStep = z.object({
   before_days: z.number().nullable(), before_offset: z.number().nullable()
 });
 export type WireStep = z.infer<typeof WireStep>;
-export const WirePlan = z.object({ steps: z.array(WireStep), show: z.string(), language: z.enum(["en", "ta", "tanglish"]) });
+export const WirePlan = z.object({
+  /** false when the text is not a question about incidents, places or facilities in Chennai (gibberish, chit-chat): no plan is run */
+  understood: z.boolean().describe("false when the text is not a question about the map: never guess a plan for it"),
+  steps: z.array(WireStep), show: z.string(), language: z.enum(["en", "ta", "tanglish"])
+});
 export type WirePlan = z.infer<typeof WirePlan>;
 
 const EMPTY: Omit<WireStep, "op" | "as"> = {
-  layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, period_days: null, period_offset: null,
+  layer: null, category: null, family: null, severity: null, status: null, dept: null, overdue: null, citizen: null, news: null, period_days: null, period_offset: null,
   government: null, kinds: null, of: null, near: null, meters: null, line: null, from: null, to: null, k: null, areas: null, beyond_m: null, by: null,
   area_kind: null, area_id: null, area_code: null, area_ref: null, area_radius_m: null, b_kind: null, b_id: null, b_code: null, b_ref: null, b_radius_m: null,
   before_days: null, before_offset: null
@@ -48,13 +53,13 @@ const periodOut = (p: Period | null) => (p && p.kind === "last_days" ? { period_
 
 export function toWire(plan: Plan): WirePlan {
   return {
-    show: plan.show, language: plan.language,
+    understood: true, show: plan.show, language: plan.language,
     steps: plan.steps.map((s: Step): WireStep => {
       const base = { ...EMPTY, op: s.op, as: s.as } as WireStep;
       switch (s.op) {
         case "take": {
           const f = s.filter;
-          return { ...base, layer: s.layer, ...(f ? { category: f.category, family: f.family, severity: f.severity, status: f.status, dept: f.dept, overdue: f.overdue, citizen: f.citizen, ...periodOut(f.period) } : {}),
+          return { ...base, layer: s.layer, ...(f ? { category: f.category, family: f.family, severity: f.severity, status: f.status, dept: f.dept, overdue: f.overdue, citizen: f.citizen, news: f.news ?? null, ...periodOut(f.period) } : {}),
             government: s.where?.government ?? null, kinds: s.where?.kinds ?? null };
         }
         case "within": return { ...base, of: s.of, near: s.near, meters: s.meters };
@@ -79,7 +84,7 @@ export function fromWire(w: WirePlan): Plan {
       case "take": {
         const layer = s.layer ?? "incidents";
         const filter: Filter | null = layer === "incidents" ? { category: s.category, family: s.family, severity: s.severity as Filter["severity"], status: s.status ?? "open", dept: s.dept,
-          overdue: s.overdue, citizen: s.citizen, period, text: null } : null;
+          overdue: s.overdue, citizen: s.citizen, ...(s.news != null ? { news: s.news } : {}), period, text: null } : null;
         return { op: "take", as: s.as, layer, filter, where: layer === "incidents" || (s.government == null && !s.kinds) ? null : { government: s.government, kinds: s.kinds } };
       }
       case "within": return { op: "within", as: s.as, of: s.of ?? "", near: s.near ?? [], meters: s.meters ?? 500 };

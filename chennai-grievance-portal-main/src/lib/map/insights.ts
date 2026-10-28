@@ -14,7 +14,7 @@ import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
 
 export interface Insight {
   id: string;
-  kind: "overdue" | "repeat" | "change" | "concentration" | "hot" | "facility" | "vulnerable" | "severe" | "citizen";
+  kind: "overdue" | "repeat" | "change" | "concentration" | "hot" | "facility" | "vulnerable" | "severe" | "citizen" | "news";
   tone: "alert" | "warn" | "info" | "good";
   en: string;
   ta: string;
@@ -141,6 +141,15 @@ export function insightsFor(plan: Plan, r: RunResult, w: World, ctx: Ctx, lockDe
     out.push({ id: "citizen", kind: "citizen", tone: "info", n: cit.length, ids: cit.map((h) => h.inc.id),
       en: `${n(cit.length)} of the ${n(total)} came with citizens' complaints (${pc(cit.length, total)} %).`, ta: `${n(total)} இல் ${n(cit.length)} குடிமக்கள் புகார்களுடன் (${pc(cit.length, total)}%).`,
       score: 12 + pc(cit.length, total) / 10 });
+  }
+  // in the news: what the public has read about (open ones first: those are the ones a reporter may follow up)
+  const inNews = hits.filter((h) => (h.inc.outlets ?? 0) > 0);
+  if (inNews.length && !f?.news && total >= 5) {
+    const openNews = inNews.filter((h) => h.inc.open && !h.inc.routed).length;
+    out.push({ id: "news", kind: "news", tone: openNews ? "warn" : "info", n: inNews.length, ids: inNews.map((h) => h.inc.id),
+      en: `${n(inNews.length)} of the ${n(total)} ${inNews.length === 1 ? "was" : "were"} reported in the news${openNews ? `; ${n(openNews)} still open` : ""}.`,
+      ta: `${n(total)} இல் ${n(inNews.length)} செய்திகளில் வந்தவை${openNews ? `; ${n(openNews)} இன்னும் திறந்தவை` : ""}.`,
+      next: { en: "Only the ones in the news", ta: "செய்திகளில் வந்தவை மட்டும்", ask: "only in the news" }, score: 20 + Math.min(25, openNews * 4) });
   }
   // each insight's rows in the list's order (priority, newest, id): the answer's own order, looked up once
   const rank = new Map(hits.map((h, k) => [h.inc.id, k]));

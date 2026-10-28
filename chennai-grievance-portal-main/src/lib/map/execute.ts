@@ -86,6 +86,16 @@ export function periodRange(p: Period, now: string): { from: string; to: string;
 
 // ------------------------------------------------------------ filters --
 
+/** a filter's window, worked out once per filter and "now" (not once per incident: date parsing was the take step's main cost) */
+const windows = new WeakMap<object, { now: string; r: ReturnType<typeof periodRange> }>();
+function windowOf(p: Period, now: string) {
+  const c = windows.get(p);
+  if (c && c.now === now) return c.r;
+  const r = periodRange(p, now);
+  windows.set(p, { now, r });
+  return r;
+}
+
 export function matches(i: Inc, f: Filter | null, now: string): boolean {
   if (!f) return true;
   if (f.category?.length && !f.category.includes(i.cat)) return false;
@@ -99,8 +109,10 @@ export function matches(i: Inc, f: Filter | null, now: string): boolean {
   if (f.overdue === false && i.breached) return false;
   if (f.citizen === true && !(i.citizen > 0)) return false;
   if (f.citizen === false && i.citizen > 0) return false;
+  if (f.news === true && !((i.outlets ?? 0) > 0)) return false;
+  if (f.news === false && (i.outlets ?? 0) > 0) return false;
   if (f.period) {
-    const r = periodRange(f.period, now);
+    const r = windowOf(f.period, now);
     if (r.fromOpen ? !(i.first > r.from) : !(i.first >= r.from)) return false;
     if (!(i.first <= r.to)) return false;
   }
@@ -126,6 +138,7 @@ export function filterWords(f: Filter | null, w: World, lang: Lang): string {
   if (what) parts.push(what);
   parts.push(f.citizen ? (ta ? "குடிமக்கள் புகார்கள்" : "citizen complaints") : ta ? "சம்பவங்கள்" : "incidents");
   const tail: string[] = [];
+  if (f.news) tail.push(ta ? "செய்திகளில் வந்தவை" : "reported in the news");
   if (f.overdue) tail.push(ta ? "காலக்கெடு தாண்டியவை" : "past their deadline");
   if (f.dept?.length) tail.push(f.dept.map((d) => w.depts.get(d)?.name ?? d).join(", ") + (ta ? " மட்டும்" : " only"));
   if (f.period) tail.push(periodWords(f.period, lang));
@@ -552,7 +565,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         const src = incHits(s.of);
         const take = plan.steps.find((x) => x.as === s.of && x.op === "take");
         const f = take?.op === "take" ? take.filter : null;
-        const storedOk = !lockDept && f && f.category?.length === 1 && !f.family && !f.severity && f.status === "any" && !f.dept && f.overdue == null && f.citizen == null && !f.text
+        const storedOk = !lockDept && f && f.category?.length === 1 && !f.family && !f.severity && f.status === "any" && !f.dept && f.overdue == null && f.citizen == null && f.news == null && !f.text
           && (!f.period || (f.period.kind === "last_days" && f.period.days === 90 && f.period.offset === 0));
         let clusters: Cluster[];
         let method: "stored" | "dbscan";

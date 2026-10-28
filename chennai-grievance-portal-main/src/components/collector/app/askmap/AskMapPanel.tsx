@@ -68,6 +68,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   const [sheet, setSheet] = useState<"peek" | "half" | "full">("half");
   const [traceOn, setTraceOn] = useState<string | null>(null);
   const [tour, setTour] = useState(-1);
+  // the plan's parts fold into one line; opened, each part is a chip that can be changed
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => { if (autoFocus) input.current?.focus(); }, [autoFocus]);
@@ -143,7 +145,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         )}
         {r?.kind === "answer" && r.answer && (
           <>
-            <div className="amp-chips" role="group" aria-label="The question, part by part">
+            <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+            {filtersOpen && <div className="amp-chips" role="group" aria-label="The question, part by part">
               {r.chips.map((c) => (
                 <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
                   <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
@@ -163,7 +166,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                   )}
                 </span>
               ))}
-            </div>
+            </div>}
             <Answer r={r} w={w} lang={lang} ask={ask} onDept={(code, ids) => ask.setSpot({ ids, label: r.answer!.depts.find((d) => d.code === code)?.name ?? code })} />
             <Analyst r={r} lang={lang} onSend={actions.role === "collector" && actions.onSend ? (dept) => actions.onSend!(r, dept) : undefined} />
             <Insights r={r} lang={lang} ask={ask} onSend={actions.role === "collector" && actions.onSend ? () => actions.onSend!(r, null) : undefined} onAsk={submit} />
@@ -199,29 +202,85 @@ function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; on
   );
 }
 
+/** The plan in one line ("Flooding · Last 7 days · Open"), and a button that opens its parts for changing. */
+function FilterLine({ r, lang, open, onToggle }: { r: AskResponse; lang: "en" | "ta"; open: boolean; onToggle: () => void }) {
+  const said = r.chips.filter((c) => !c.isDefault);
+  const line = (said.length ? said : r.chips.slice(0, 2)).map((c) => (lang === "ta" ? c.ta : c.en)).join(" · ");
+  return (
+    <div className="amp-fl">
+      <span title={line}><I n="sliders" />{line}</span>
+      <button onClick={onToggle} aria-expanded={open}>{open ? (lang === "ta" ? "மூடு" : "Done") : (lang === "ta" ? "மாற்று" : "Change")}<I n={open ? "chevd" : "chevr"} /></button>
+    </div>
+  );
+}
+
+const READY = / · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/;
+/** "160 open flooding incidents (last 7 days)" -> big "160", then "open flooding incidents · last 7 days" */
+function splitHead(h: string): { big: string | null; rest: string } {
+  const clean = h.replace(READY, "").replace(/\.$/, "").replace(/ \(([^()]+)\)$/, " · $1");
+  const m = clean.match(/^([\d,]+(?:\.\d+)?)\s+(.+)$/);
+  return m ? { big: m[1], rest: m[2] } : { big: null, rest: clean };
+}
+
+const COND_ICON = { weather: "cloud", rain: "drop", lakes: "drop", works: "cone", hospital: "health", air: "wind" } as const;
+
 function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk; onDept: (code: string, ids: string[]) => void }) {
   const a = r.answer!;
-  const ready = lang === "ta" ? "வரைபட அடுக்கு தயார்" : "map layer ready";
-  const [head, tail] = a.headline.includes(` · ${ready}`) ? [a.headline.split(` · ${ready}`)[0], ready] : [a.headline, null];
-  const deptIds = (code: string) => r.rows.filter((x) => x.dept === code).map((x) => x.id);
+  const { big, rest } = splitHead(a.headline);
+  const g = r.glance;
+  const ta = lang === "ta";
   const layers = r.asOf.layers.filter((l) => l.id !== "incidents");
+  const show = (ids: string[], label: string) => (ask.spot?.label === label ? ask.setSpot(null) : ask.setSpot({ ids, label }));
+  // the tiles say only what the headline does not: "open" is news only when the answer counts closed ones too
+  const tiles = g ? [
+    g.open.n !== r.total ? { k: "open", n: g.open.n, ids: g.open.ids, en: "still open", ta: "திறந்தவை", tone: "" } : null,
+    { k: "overdue", n: g.overdue.n, ids: g.overdue.ids, en: "past deadline", ta: "காலக்கெடு தாண்டியவை", tone: g.overdue.n ? "t-alert" : "t-good" },
+    { k: "severe", n: g.severe.n, ids: g.severe.ids, en: "severe", ta: "கடுமையானவை", tone: g.severe.n ? "t-warn" : "t-good" }
+  ].filter((x): x is NonNullable<typeof x> => !!x) : [];
   return (
     <div className="amp-card">
-      <p className="amp-head" aria-live="polite">
-        <button onClick={() => ask.setSpot(null)} title={w.clear}>{head}</button>{tail && <> · <span className="rd">{tail}</span></>}
-      </p>
+      <div className="amp-big" aria-live="polite">
+        {big && <button className="n" onClick={() => ask.setSpot(null)} title={w.clear}>{big}</button>}
+        <p className="amp-head">{rest}</p>
+      </div>
       {a.meaning && <p className="amp-mean">{a.meaning}</p>}
-      {a.depts.length > 0 && (
-        <div className="amp-depts" aria-label={w.depts}>
-          {a.depts.slice(0, 4).map((d) => <button key={d.code} onClick={() => onDept(d.code, deptIds(d.code))} title={`${d.name}: ${d.n}`}>{d.name}<b>{d.n.toLocaleString("en-IN")}</b></button>)}
+      {tiles.length > 0 && r.total > 0 && (
+        <div className="amp-tiles">
+          {tiles.map((t) => {
+            const label = ta ? t.ta : t.en;
+            return (
+              <button key={t.k} className={`amp-tile ${t.tone}${ask.spot?.label === label ? " on" : ""}`} disabled={!t.n} onClick={() => show(t.ids, label)} title={t.n ? (ta ? "வரைபடத்தில் காட்டு" : "Show these on the map") : undefined}>
+                <b>{t.n.toLocaleString("en-IN")}</b><span>{label}</span>
+              </button>
+            );
+          })}
         </div>
+      )}
+      <Conditions r={r} lang={lang} />
+      {a.depts.length > 0 && (
+        <dl className="amp-ww">
+          {a.depts.length > 0 && <><dt>{ta ? "பொறுப்பு" : "With"}</dt><dd>{a.depts.slice(0, 3).map((d, i) => (
+            <span key={d.code}>{i > 0 && ", "}<button onClick={() => onDept(d.code, r.rows.filter((x) => x.dept === d.code).map((x) => x.id))} title={`${d.name}: ${d.n}`}>{d.name}</button> <em>{d.n.toLocaleString("en-IN")}</em></span>
+          ))}</dd></>}
+        </dl>
       )}
       {r.unplaced.length > 0 && <div className="amp-asof">{w.unplaced(r.unplaced.length)}</div>}
       <div className="amp-asof">
-        {w.asOf}: {lang === "ta" ? "சம்பவங்கள்" : "Incidents"} {fmtWhen(r.asOf.data || r.asOf.now)}
-        {layers.map((l) => ` · ${lang === "ta" ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("")}
+        {w.asOf}: {ta ? "சம்பவங்கள்" : "Incidents"} {fmtWhen(r.asOf.data || r.asOf.now)}
+        {layers.map((l) => ` · ${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("")}
       </div>
       {ask.spot && <div className="amp-asof" style={{ color: "var(--accent-2)", fontWeight: 600 }}>{w.showing(ask.spot.label)} · <button style={{ all: "unset", cursor: "pointer", textDecoration: "underline" }} onClick={() => ask.setSpot(null)}>{w.clear}</button></div>}
+    </div>
+  );
+}
+
+/** "On the ground now": the live readings that bear on the answer, each from a named place and time. */
+function Conditions({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
+  if (!r.conditions?.length) return null;
+  return (
+    <div className="amp-cond">
+      <h5><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"}</h5>
+      <ul>{r.conditions.map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
     </div>
   );
 }
@@ -229,11 +288,13 @@ function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "
 const TONE_ICON = { alert: "alert", warn: "bolt", info: "info", good: "checkc" } as const;
 /** Findings the map computed about this answer; a click shows exactly their rows on the map. */
 function Insights({ r, lang, ask, onSend, onAsk }: { r: AskResponse; lang: "en" | "ta"; ask: MapAsk; onSend?: () => void; onAsk: (q: string) => void }) {
+  const [all, setAll] = useState(false);
   if (!r.insights?.length) return null;
+  const list = all ? r.insights : r.insights.slice(0, 3);
   return (
     <div className="amp-ins" aria-label={lang === "ta" ? "கண்டறிதல்கள்" : "Insights"}>
-      <div className="amp-sec" style={{ cursor: "default" }}><I n="spark" />{lang === "ta" ? "வரைபடம் கண்டவை" : "What the map found"}<span className="n">{r.insights.length}</span></div>
-      {r.insights.map((i) => {
+      <div className="amp-sec" style={{ cursor: "default" }}><I n="spark" />{lang === "ta" ? "கவனிக்க வேண்டியவை" : "What needs attention"}<span className="n">{r.insights.length}</span></div>
+      {list.map((i) => {
         const on = ask.spot?.label === i.en || ask.spot?.label === i.ta;
         return (
           <div key={i.id} className={`amp-insight t-${i.tone}${on ? " on" : ""}`}>
@@ -247,6 +308,7 @@ function Insights({ r, lang, ask, onSend, onAsk }: { r: AskResponse; lang: "en" 
           </div>
         );
       })}
+      {r.insights.length > 3 && <button className="amp-more-b" onClick={() => setAll((v) => !v)}>{all ? (lang === "ta" ? "குறைவாக" : "Fewer") : (lang === "ta" ? `மேலும் ${r.insights.length - 3}` : `${r.insights.length - 3} more`)}</button>}
     </div>
   );
 }
@@ -356,6 +418,13 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
   return (
     <div>
       <div className="amp-sec" style={{ cursor: "default" }}>{w.list}<span className="n">{(ask.spot ? ask.spot.ids.length : r.total).toLocaleString("en-IN")}</span></div>
+      {r.news && r.news.articles > 0 && (
+        <p className="amp-newsnote"><I n="news" />
+          {lang === "ta"
+            ? `${r.news.articles} செய்திகள்: ${r.news.pins.length} வரைபடத்தில் (பகுதி பெயருடன்)${r.news.unplaced ? `, ${r.news.unplaced} மாவட்ட/மண்டல அளவில் மட்டும் (எண்ணப்பட்டது, குறிக்கப்படவில்லை)` : ""}.`
+            : `${r.news.articles.toLocaleString("en-IN")} news ${r.news.articles === 1 ? "article" : "articles"}: ${r.news.pins.length.toLocaleString("en-IN")} on the map where they name a locality${r.news.unplaced ? `; ${r.news.unplaced.toLocaleString("en-IN")} name only a taluk, zone or the district (counted, not pinned)` : ""}.`}
+        </p>
+      )}
       <ul className="amp-list" ref={listRef} aria-label={w.list}>
         {rows.map((x) => {
           const age = Math.max(0, Math.round((nowMs - Date.parse(x.first.replace(" ", "T") + "Z")) / 86_400_000));
@@ -376,6 +445,16 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
                     : `from ${x.near.name ?? `a ${LAYER_WORD[x.near.layer].one}`}`} · </span>}
                   {age === 0 ? (lang === "ta" ? "இன்று" : "today") : lang === "ta" ? `${age} நாள் முன்` : `${age} d ago`} · {x.deptName}
                 </div>
+                {x.press?.length > 0 && (
+                  <div className="s amp-press">
+                    <I n="news" />
+                    {x.press.map((p, k) => (
+                      <span key={p.id}>{k > 0 && " · "}
+                        {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" title={p.title} onClick={(e) => e.stopPropagation()}>{p.outlet}</a> : <span title={p.title}>{p.outlet}</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </li>
           );
@@ -397,6 +476,7 @@ function BriefView({ r, w, lang, ask, actions }: { r: AskResponse; w: Words; lan
         <dt>{w.open}</dt><dd>{num(b.open.n, b.open.ids, w.open)}</dd>
         <dt>{w.citizen}</dt><dd>{num(b.citizen.n, b.citizen.ids, w.citizen)}</dd>
       </dl>
+      <Conditions r={r} lang={lang} />
       {b.byType.length > 0 && <><h5>{w.byType}</h5><dl>{b.byType.slice(0, 8).map((t) => <FragmentRow key={t.cat} label={lang === "ta" ? t.ta : t.en} n={num(t.n, t.ids, lang === "ta" ? t.ta : t.en)} />)}</dl></>}
       {b.worst.length > 0 && <><h5>{w.worst}</h5>
         <ul className="amp-list">{b.worst.map((x) => (

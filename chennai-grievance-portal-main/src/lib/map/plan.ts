@@ -30,6 +30,8 @@ export const FilterSchema = z.object({
   dept: z.array(z.string()).nullable(),
   overdue: z.boolean().nullable(),
   citizen: z.boolean().nullable(),
+  /** reported by a news outlet; optional, so plans saved before it (saved map views) still parse */
+  news: z.boolean().nullable().optional(),
   period: PeriodSchema.nullable(),
   text: z.string().nullable()
 });

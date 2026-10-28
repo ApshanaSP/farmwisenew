@@ -96,6 +96,8 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
         body: JSON.stringify({ ...body, context: { zone: c.zone, taluk: c.taluk, incidentId: null, ward: null, drawn: null, ...((body.context as object) ?? {}) } })
       });
       const j = await r.json().catch(() => null);
+      // a newer question took over while this one was arriving
+      if (ac.signal.aborted) return null;
       if (!r.ok || !j) { setError(j?.error ?? "The map could not answer that just now."); return null; }
       const a = j as AskResponse;
       if (a.kind === "ui") {

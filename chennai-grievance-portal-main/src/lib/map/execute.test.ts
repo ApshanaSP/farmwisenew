@@ -222,3 +222,28 @@ describe("officer lock, determinism and safety", () => {
     expect(checkPlan({ steps: [{ op: "take", as: "f1", layer: "schools", filter: null, where: null }, { op: "nearest", as: "n", from: "place:loc:X", to: "f1", k: 21 }], show: "n", language: "en" }).ok).toBe(false);
   });
 });
+
+describe("in the news", () => {
+  // the fixture has no news; mark three incidents as reported by an outlet
+  const wn = { ...w, incidents: w.incidents.map((i) => (["I01", "I08", "I12"].includes(i.id) ? { ...i, outlets: 2 } : i)) };
+  it("news true keeps only incidents an outlet reported; false leaves them out; null ignores it", () => {
+    const run = (f: Partial<Filter>) => ids(runMapPlan(plan([take({ period: null, status: "any", ...f })]), wn, ctx));
+    expect(run({ news: true })).toEqual(["I01", "I08", "I12"]);
+    expect(run({ news: false })).not.toContain("I01");
+    expect(run({ news: false }).length + 3).toBe(run({}).length);
+  });
+  it("the answer says so", () => {
+    const p = plan([take({ period: null, status: "any", news: true })]);
+    const a = compose(p, runMapPlan(p, wn, ctx), wn, ctx);
+    expect(a.headline).toMatch(/3 incidents in the news/);
+  });
+});
+
+describe("count by an area none of the results has", () => {
+  it("says so instead of failing", () => {
+    const wn = { ...w, incidents: w.incidents.map((i) => ({ ...i, taluk: null })) };
+    const p = plan([take({ period: null, status: "any" }), { op: "count_by", as: "by", of: "a", by: "taluk" }]);
+    const a = compose(p, runMapPlan(p, wn, ctx), wn, ctx);
+    expect(a.headline).toMatch(/none has a taluk on record/);
+  });
+});

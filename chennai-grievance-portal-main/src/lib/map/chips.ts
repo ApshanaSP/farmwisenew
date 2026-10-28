@@ -11,7 +11,7 @@ import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, periodWords } from "./words"
 export interface ChipOption { key: string; en: string; ta: string; on: boolean }
 export interface PlanChip {
   id: string;
-  part: "category" | "status" | "period" | "severity" | "distance" | "facility" | "place" | "dept" | "citizen" | "group" | "overdue" | "k";
+  part: "category" | "status" | "period" | "severity" | "distance" | "facility" | "place" | "dept" | "citizen" | "news" | "group" | "overdue" | "k";
   en: string;
   ta: string;
   isDefault: boolean;
@@ -60,6 +60,7 @@ export function planChips(plan: Plan, names: ChipNames, defaults: string[] = [])
       options: [["severe", "Severe only", "கடுமையானவை மட்டும்"], ["severe_high", "Severe or high", "கடுமையான / அதிக"], ["any", "Any severity", "எந்தத் தீவிரமும்"]]
         .map(([k, en, ta]) => ({ key: k, en, ta, on: svKey === k })) });
     if (f?.citizen) out.push({ id: "citizen", part: "citizen", en: "Citizen complaints", ta: "குடிமக்கள் புகார்கள்", isDefault: false, removable: true, options: [] });
+    if (f?.news) out.push({ id: "news", part: "news", en: "In the news", ta: "செய்திகளில் வந்தவை", isDefault: false, removable: true, options: [] });
     if (f?.overdue) out.push({ id: "overdue", part: "overdue", en: "Past deadline", ta: "காலக்கெடு தாண்டியவை", isDefault: false, removable: true, options: [] });
     if (f?.dept?.length) out.push({ id: "dept", part: "dept", en: f.dept.map(names.dept).join(", "), ta: f.dept.map(names.dept).join(", "), isDefault: false, removable: true, options: [] });
   }
@@ -127,6 +128,7 @@ export function applyChip(plan: Plan, chipId: string, option: string | null): Pl
     }
     case "severity": if (!t) return null; f().severity = option === "severe" ? ["Severe"] : option === "severe_high" ? ["Severe", "High"] : null; return p;
     case "citizen": if (t && option === null) { f().citizen = null; return p; } return null;
+    case "news": if (t && option === null) { delete f().news; return p; } return null;
     case "overdue": if (t && option === null) { f().overdue = null; return p; } return null;
     case "dept": if (t && option === null) { f().dept = null; return p; } return null;
     case "d": case "r": {

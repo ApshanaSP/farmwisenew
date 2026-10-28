@@ -11,6 +11,7 @@ import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
 import { aiPlan, aiReword } from "./ai";
 import { insightsFor, type Insight } from "./insights";
+import { conditionsNear, familiesOf, spreadOf, type Condition } from "./conditions";
 import { compose, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
@@ -21,7 +22,7 @@ import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { mapLang, rulesRoute, type RouteEnv } from "./route";
 import { world } from "./world";
-import type { LayerId, World } from "./types";
+import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
 import { LAYER_WORD, type Lang } from "./words";
 
 export interface AskInput {
@@ -40,9 +41,20 @@ export interface AskInput {
 export interface Row {
   id: string; title: string; sev: string; status: string; open: boolean; cat: string; catLabel: string; dept: string; deptName: string;
   ward: number | null; zone: number | null; zoneName: string | null; first: string; place: string | null; pinnable: boolean; prec: number | null;
-  priority: number; reasons: string | null; near: { name: string | null; m: number; layer: LayerId } | null; overdue: boolean; citizen: boolean
+  priority: number; reasons: string | null; near: { name: string | null; m: number; layer: LayerId } | null; overdue: boolean; citizen: boolean;
+  /** reported by a news outlet; `press` = its newest articles (headline, outlet, link: public reporting only) */
+  news: boolean; press: Press[]
 }
-export interface Feat { id: string; lat: number; lon: number; sev: string; open: boolean; cat: string; pinnable: boolean; prec: number | null; title: string; rank: number; citizen: boolean }
+export interface GlanceTile { n: number; ids: string[] }
+export interface Glance {
+  open: GlanceTile; overdue: GlanceTile; severe: GlanceTile;
+  where: (GlanceTile & { en: string; ta: string }) | null;
+  who: (GlanceTile & { code: string; name: string }) | null;
+}
+export interface Press { id: string; title: string; outlet: string; at: string; url: string | null }
+export interface Feat { id: string; lat: number; lon: number; sev: string; open: boolean; cat: string; pinnable: boolean; prec: number | null; title: string; rank: number; citizen: boolean; news: boolean }
+/** A news article drawn on the map: only articles that name a locality; the others are counted in `unplaced`. */
+export interface NewsPin { id: string; lat: number; lon: number; title: string; outlet: string; at: string; url: string | null; inc: string | null; place: string | null }
 
 export interface AskResponse {
   kind: "answer" | "brief" | "say" | "ui";
@@ -80,6 +92,12 @@ export interface AskResponse {
   shots: Shot[];
   /** computed findings about the answer (past deadline, repeat spots, change on the period before ...), each with its rows */
   insights: Insight[];
+  /** the answer at a glance: still open, past deadline, severe, where most are, who holds most; each with its rows */
+  glance: Glance | null;
+  /** "On the ground now": live feeds that bear on the answer, where it is (rain, lakes, PWD works, hospitals, air) */
+  conditions: Condition[];
+  /** an "in the news" answer: the articles behind its incidents, pinned where they name a locality */
+  news: { pins: NewsPin[]; unplaced: number; articles: number } | null;
   /** a change answer's earlier window, for the Before · Now toggle */
   before: Feat[];
   brief: Brief | null;
@@ -149,7 +167,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
   return {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
-    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], insights: [], brief: null, say: null, ui: null, uiDept: null,
+    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], insights: [], news: null, glance: null, conditions: [], brief: null, say: null, ui: null, uiDept: null,
     asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0
   };
 }
@@ -185,6 +203,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       out.brief = areaBrief(area, w, ctxD, lock);
       out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctxD), circle: area.kind === "drawn" ? { lat: c.drawn!.lat, lon: c.drawn!.lon, r: c.drawn!.r } : null }];
       const box = areaBox(area, w, ctxD);
+      if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
       return done(out);
     }
@@ -210,6 +229,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       const p = r.area.kind === "point" ? ctx.place(r.area.ref) : null;
       out.context.areas = [{ key: areaKey(r.area), ref: r.area, ...areaLabel(r.area, w, ctx), circle: p && r.area.kind === "point" ? { lat: p.lat, lon: p.lon, r: r.area.radius_m } : null }];
       const box = areaBox(r.area, w, ctx);
+      if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(r.area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
       return done(out);
     }
@@ -276,6 +296,15 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   }
   const res = fill(out, plan, r, answer, w, ctx, data, defaults, places, edited, aiUsed);
   res.insights = insightsFor(plan, r, w, ctx, lock);
+  res.glance = glanceOf(r, w);
+  {
+    const t = plan.steps.find((s) => s.op === "take" && s.layer === "incidents");
+    const f = t?.op === "take" ? t.filter : null;
+    const pts = r.hits.filter((h) => h.inc.pinnable).map((h) => ({ lat: h.inc.lat, lon: h.inc.lon }));
+    const place = r.context.places[0];
+    const spread = place && !pts.length ? { center: place, box: { s: place.lat - 0.01, n: place.lat + 0.01, w: place.lon - 0.01, e: place.lon + 0.01 }, wide: false } : spreadOf(pts, w.district);
+    res.conditions = conditionsNear(w, { fams: familiesOf(f?.category, f?.family, w), ...spread });
+  }
   const store = answerCache();
   store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);
@@ -322,10 +351,11 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     id: h.inc.id, title: h.inc.title, sev: h.inc.sev, status: h.inc.status, open: h.inc.open, cat: h.inc.cat, catLabel: w.cats.get(h.inc.cat)?.label ?? h.inc.cat,
     dept: h.inc.dept, deptName: deptName(h.inc.dept), ward: h.inc.ward, zone: h.inc.zone, zoneName: w.zones.find((z) => z.zone === h.inc.zone)?.name ?? null,
     first: h.inc.first, place: h.inc.place, pinnable: h.inc.pinnable, prec: h.inc.prec, priority: h.inc.priority, reasons: h.inc.reasons,
-    near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0
+    near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0,
+    news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
   }));
   const feat = (h: (typeof hits)[number], k: number): Feat => ({ id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat,
-    pinnable: h.inc.pinnable, prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0 });
+    pinnable: h.inc.pinnable, prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 });
   // the map draws at most 5,000 places (the highest priority first); the rest are counted, by ward, and said plainly
   const pinnedHits = hits.filter((h) => h.inc.pinnable);
   out.features = pinnedHits.slice(0, FEATURE_CAP).map(feat);
@@ -343,6 +373,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   }
   if (r.show.type === "change") out.before = r.show.before.hits.slice(0, FEATURE_CAP).map(feat);
   out.unplaced = hits.filter((h) => !h.inc.pinnable).map((h) => h.inc.id);
+  if (plan.steps.some((s) => s.op === "take" && s.filter?.news)) out.news = newsFor(w, hits.map((h) => h.inc.id));
 
   // context layers: only the facilities that matter to the answer
   out.context.points = r.context.points.slice(0, 400).map((p) => ({ id: p.id, layer: p.layer, name: p.name, name_ta: p.name_ta, lat: p.lat, lon: p.lon, kind: p.kind, government: !!p.government }));
@@ -408,6 +439,62 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   return out;
 }
 
+// ---------------------------------------------------------------- glance --
+
+const GLANCE_IDS = 5000;
+/** The answer's key facts, counted over every result (not the list's 200): each tile shows its own rows when clicked. */
+export function glanceOf(r: RunResult, w: World): Glance | null {
+  const t = r.show.type;
+  if (t === "nearest" || t === "areas" || !r.hits.length) return null;
+  const tile = (hs: typeof r.hits): GlanceTile => ({ n: hs.length, ids: hs.slice(0, GLANCE_IDS).map((h) => h.inc.id) });
+  const byZone = new Map<number, typeof r.hits>(), byDept = new Map<string, typeof r.hits>();
+  for (const h of r.hits) {
+    if (h.inc.zone != null) (byZone.get(h.inc.zone) ?? byZone.set(h.inc.zone, []).get(h.inc.zone)!).push(h);
+    if (h.inc.dept) (byDept.get(h.inc.dept) ?? byDept.set(h.inc.dept, []).get(h.inc.dept)!).push(h);
+  }
+  const z = [...byZone.entries()].sort((a, b) => b[1].length - a[1].length || a[0] - b[0])[0];
+  const d = [...byDept.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))[0];
+  const zn = z ? w.zones.find((x) => x.zone === z[0])?.name ?? `Zone ${z[0]}` : null;
+  return {
+    open: tile(r.hits.filter((h) => h.inc.open && !h.inc.routed)),
+    overdue: tile(r.hits.filter((h) => h.inc.open && h.inc.breached)),
+    severe: tile(r.hits.filter((h) => h.inc.sev === "Severe")),
+    // only when one zone or department stands out: "where" for a single-zone answer says nothing new
+    where: z && byZone.size > 1 ? { ...tile(z[1]), en: `${zn} (Zone ${z[0]})`, ta: `${zn} (மண்டலம் ${z[0]})` } : null,
+    who: d && byDept.size > 1 ? { ...tile(d[1]), code: d[0], name: w.depts.get(d[0])?.name ?? d[0] } : null
+  };
+}
+
+// ------------------------------------------------------------------ news --
+
+const byIncident = new WeakMap<NewsDoc[], Map<string, NewsDoc[]>>();
+/** The world's articles by linked incident, newest first (built once per world). */
+function newsIndex(w: World): Map<string, NewsDoc[]> {
+  const docs = w.news ?? [];
+  let m = byIncident.get(docs);
+  if (!m) {
+    m = new Map();
+    for (const d of docs) if (d.inc) (m.get(d.inc) ?? m.set(d.inc, []).get(d.inc)!).push(d);
+    byIncident.set(docs, m);
+  }
+  return m;
+}
+const PRESS_PER_ROW = 3;
+function pressFor(w: World, id: string): Press[] {
+  return (newsIndex(w).get(id) ?? []).slice(0, PRESS_PER_ROW).map((d) => ({ id: d.id, title: d.title_en || d.title, outlet: d.outlet, at: d.at, url: d.url }));
+}
+const NEWS_PIN_CAP = 500;
+/** The articles behind an answer's incidents: pinned where an article names a locality, counted otherwise. */
+export function newsFor(w: World, ids: string[]): { pins: NewsPin[]; unplaced: number; articles: number } {
+  const idx = newsIndex(w);
+  const docs = ids.flatMap((id) => idx.get(id) ?? []);
+  const placed = docs.filter((d) => d.level === NEWS_PIN_LEVEL && d.lat != null && d.lon != null);
+  return {
+    pins: placed.slice(0, NEWS_PIN_CAP).map((d) => ({ id: d.id, lat: d.lat!, lon: d.lon!, title: d.title_en || d.title, outlet: d.outlet, at: d.at, url: d.url, inc: d.inc, place: d.place })),
+    unplaced: docs.length - placed.length, articles: docs.length
+  };
+}
+
 /** One line per question for evaluation: no names, no email, only the role. Never committed (data/aws-cache is ignored). */
 function logQuestion(input: AskInput, r: AskResponse) {
   try {
@@ -431,10 +518,11 @@ export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ 
     id: h.inc.id, title: h.inc.title, sev: h.inc.sev, status: h.inc.status, open: h.inc.open, cat: h.inc.cat, catLabel: w.cats.get(h.inc.cat)?.label ?? h.inc.cat,
     dept: h.inc.dept, deptName: deptName(h.inc.dept), ward: h.inc.ward, zone: h.inc.zone, zoneName: w.zones.find((z) => z.zone === h.inc.zone)?.name ?? null,
     first: h.inc.first, place: h.inc.place, pinnable: h.inc.pinnable, prec: h.inc.prec, priority: h.inc.priority, reasons: h.inc.reasons,
-    near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0
+    near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0,
+    news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
   }));
   const feats = new Map(r.hits.map((h, k) => [h.inc.id, { id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat, pinnable: h.inc.pinnable,
-    prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0 }]));
+    prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 }]));
   return { rows, asOf: w.dataAsOf || w.now, feats };
 }
 
