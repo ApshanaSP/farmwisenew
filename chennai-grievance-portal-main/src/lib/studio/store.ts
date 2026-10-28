@@ -234,7 +234,8 @@ export function watchList(max = 6): WatchItem[] {
     out.push({
       id: m.id, name: m.name, sample: m.sample, updatedAt: m.updatedAt, department: m.spec.deptName, verdict: b.verdict,
       act: items.filter((x) => x.priority === "act").length,
-      top: items.filter((x) => x.priority !== "note").slice(0, 2).map((x) => ({
+      // only what needs action reaches the Briefing (U8 gating): what is worth knowing stays in the Studio
+      top: items.filter((x) => x.priority === "act").slice(0, 2).map((x) => ({
         headline: x.headline || x.title, priority: x.priority, metric: x.metric?.value ?? "", caption: x.metric?.caption ?? "", label: x.label }))
     });
   }

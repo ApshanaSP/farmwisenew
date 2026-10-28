@@ -213,3 +213,20 @@ export async function visit(url: string, opts: VisitOpts = {}): Promise<Visit> {
 export async function browserReady(): Promise<boolean> {
   try { await shared(); return true; } catch { return false; }
 }
+
+/**
+ * A page of the Studio's own (the dataset brief) printed to PDF. It is set as content (no address is opened) and no
+ * request leaves the page: everything it needs is inside it.
+ */
+export async function printPdf(html: string): Promise<Buffer> {
+  const browser = await shared();
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  try {
+    const page = await ctx.newPage();
+    await page.route("**/*", (r) => r.abort());
+    await page.setContent(html, { waitUntil: "load" });
+    return Buffer.from(await page.pdf({ format: "A4", printBackground: true, margin: { top: "16mm", bottom: "16mm", left: "14mm", right: "14mm" } }));
+  } finally {
+    await ctx.close().catch(() => {});
+  }
+}

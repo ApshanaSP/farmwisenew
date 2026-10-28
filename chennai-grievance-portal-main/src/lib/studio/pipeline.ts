@@ -31,7 +31,7 @@ import { cleanAuth, getVault, saveSession, saveVault } from "@/lib/studio/connec
 import { LinkError } from "@/lib/studio/fetchurl";
 import { judge, keepChennai, stateWide } from "@/lib/studio/relevance";
 import { buildFacts, rulesStory } from "@/lib/studio/story";
-import { AUTH_LABEL, ROLE_LABEL, STEPS, type AuthInput, type Outcome, type Brief, type ConnectInfo, type DatasetMeta, type Insight, type RefreshRun, type Relevance, type Filter, type PanelData, type Plan, type Role, type RunEvent, type SourceInfo, type Spec, type StepKey, type StepLog } from "@/lib/studio/types";
+import { AUTH_LABEL, ROLE_LABEL, STEPS, fmtNum, type AuthInput, type Outcome, type Brief, type ConnectInfo, type DatasetMeta, type Insight, type RefreshRun, type Relevance, type Filter, type PanelData, type Plan, type Role, type RunEvent, type SourceInfo, type Spec, type StepKey, type StepLog } from "@/lib/studio/types";
 import { fmtDay, normKey } from "@/lib/studio/values";
 import type { AiBusyError } from "@/lib/ai/gateway";
 
@@ -738,13 +738,32 @@ export async function draftNote(id: string, plan: Plan, key: string | number | n
 }
 
 /** A question to one dataset: the AI's plan (or the rules'), run by the engine. */
-export async function ask(id: string, question: string, user: string) {
+/** A question in Tamil is answered in Tamil (the words around the computed numbers). */
+const TAMIL = /[஀-௿]/;
+/** "Why did it go up?": answered from the drivers of the change (insights2.ts), said as what moved, never a cause. */
+const WHY = /\b(why|what (drove|caused|explains)|reason)\b.*\b(change|changed|rise|rose|risen|fall|fell|drop|dropped|increase|increased|decrease|decreased|go up|went up|go down|went down|jump|spike|high|low)\b|ஏன்/i;
+/** A follow-up ("and in Adyar?", "only the pending ones", "what about last month") keeps the previous answer's filters. */
+const FOLLOW = /^(and|also|only|just|now|what about|how about|same|those|them|of these|of those|in that|for that)\b|^(மேலும்|அதில்|அவற்றில்)/i;
+
+export async function ask(id: string, question: string, user: string, context?: { filters?: Filter[] } | null) {
   const meta = getMeta(id);
   if (!meta) throw new UserError("Unknown dataset.");
   const rows = getRows(id);
   const refs = await loadRefs();
   const names = namesOf(refs);
   const zones = [...refs.zones.values()].map((z) => z.name);
+  const ta = TAMIL.test(question);
+  const window = meta.window.from ? `${fmtDay(meta.window.from)} – ${fmtDay(meta.window.to)}` : null;
+  // why did it change: the drivers, computed, with the chart of the categories that moved
+  if (WHY.test(question)) {
+    const { computeInsights2 } = await import("@/lib/studio/insights2");
+    const why = computeInsights2({ rows, spec: meta.spec, window: meta.window, names }).find((x) => x.label === "Drivers" || x.label === "Unusual change" || x.label === "Change point");
+    if (why) {
+      const panel = why.plan ? renderPanel(rows, meta.spec, why.plan, names, meta.window) : null;
+      return { kind: "why" as const, plan: why.plan, panel, answer: why.text, note: "What moved, from the rows: an account of the change, not its cause.", by: "rules" as const, model: null, watch: null, window,
+        how: `${why.method ?? "Computed from the rows"} · ${(why.n ?? rows.length).toLocaleString("en-IN")} ${meta.spec.entityPlural}${window ? ` · ${window}` : ""}` };
+    }
+  }
   let out, by: "ai" | "rules" = "ai", model: string | null = null;
   try {
     const r = await askAI({ question, spec: meta.spec, profile: meta.profile, zones, user });
@@ -756,11 +775,27 @@ export async function ask(id: string, question: string, user: string) {
     by = "rules";
   }
   if (out.kind === "unsupported") return { kind: "unsupported" as const, note: out.note || "These columns cannot answer that.", by, model };
-  const plan: Plan = checkPlan(out, meta.spec, `q_${Date.now().toString(36)}`);
+  let plan: Plan = checkPlan(out, meta.spec, `q_${Date.now().toString(36)}`);
+  // a follow-up keeps what the last answer was narrowed to (unless it names the same column again)
+  if (context?.filters?.length && FOLLOW.test(question.trim())) plan = { ...plan, filters: [...context.filters.filter((f) => !plan.filters.some((g) => g.col === f.col)), ...plan.filters] };
   const panel = renderPanel(rows, meta.spec, plan, names, meta.window);
+  const scope = plan.filters.map((f) => describeFilter(meta.spec, f, names)).filter(Boolean).join(", ");
+  const answer = ta ? answerTa(panel, meta.spec) : answerText(panel, meta.spec);
   return {
-    kind: out.kind, plan, panel, answer: answerText(panel, meta.spec), note: out.note && !/\d/.test(out.note) ? out.note.slice(0, 200) : null, by, model,
+    kind: out.kind, plan, panel, answer, note: out.note && !/\d/.test(out.note) ? out.note.slice(0, 200) : null, by, model,
     watch: out.kind === "watch" && out.watch_op && out.watch_threshold != null ? { op: out.watch_op, threshold: out.watch_threshold } : null,
-    window: meta.window.from ? `${fmtDay(meta.window.from)} – ${fmtDay(meta.window.to)}` : null
+    window,
+    // how this was computed: the measure, the rows it counted, the scope, the window, and who read the question
+    how: `${panel.subtitle.split(" · ")[0]} over ${panel.rows.toLocaleString("en-IN")} ${panel.rows === 1 ? meta.spec.entity : meta.spec.entityPlural}${scope ? ` (${scope})` : ""}${window ? ` · ${window}` : ""} · counted by code; ${by === "ai" ? `the question read by ${model}` : "the question read by rules"}`
   };
+}
+
+/** The answer in Tamil: the computed figure and the leader, in Tamil words. */
+function answerTa(p: PanelData, spec: Spec): string {
+  const f = (v: number) => fmtNum(v, p.format, p.unit);
+  if (p.kpi) return `${p.title}: ${f(p.kpi.value)} (${p.rows.toLocaleString("en-IN")} வரிசைகளிலிருந்து கணக்கிடப்பட்டது).`;
+  if (!p.values.length) return "இந்தக் கேள்விக்குப் பொருந்தும் வரிசைகள் இல்லை.";
+  if (p.plan.by === "time") return `${p.title}: ${p.labels[0]} முதல் ${p.labels[p.labels.length - 1]} வரை ${p.values.length} காலங்கள்; கடைசியில் ${f(p.values[p.values.length - 1])}.`;
+  const i = p.values.indexOf(Math.max(...p.values));
+  return `${p.title}: அதிகம் ${p.labels[i]} (${f(p.values[i])}); மொத்தம் ${p.labels.length} குழுக்கள் (${spec.entityPlural}).`;
 }

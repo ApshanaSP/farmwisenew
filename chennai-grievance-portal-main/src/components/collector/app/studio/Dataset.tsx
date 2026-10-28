@@ -222,7 +222,10 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
       </div>
       <div className="ds-acts">
         {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again"><I n="refresh" /></button>}
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} title="Download the cleaned data (CSV)"><I n="download" /></a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
+        <a className="ds-icon" lang="ta" href={`/api/collector/studio/${m.id}?brief=pdf&lang=ta`} title="தரவுச் சுருக்கம் (PDF, தமிழ்)" aria-label="Dataset brief PDF in Tamil">த</a>
         {confirm ? (
           <span className="ds-confirm">Delete?<button onClick={del}>Yes</button><button onClick={() => setConfirm(false)}>No</button></span>
         ) : <button className="ds-icon" onClick={() => setConfirm(true)} title="Delete this dataset"><I n="trash" /></button>}

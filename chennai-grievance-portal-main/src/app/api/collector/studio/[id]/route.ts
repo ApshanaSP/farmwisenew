@@ -6,7 +6,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { checkRule } from "@/lib/studio/ask";
 import { renderPanel } from "@/lib/studio/chartlint";
 import { getConnector } from "@/lib/studio/connectors";
-import { dataCard } from "@/lib/studio/datacard";
+import { changeLog, dataCard } from "@/lib/studio/datacard";
+import { briefHtml, htmlToPdf } from "@/lib/studio/briefpdf";
 import type { DatasetMeta } from "@/lib/studio/types";
 import { familyOf } from "@/lib/studio/family";
 import { filterRows, runPlan } from "@/lib/studio/engine";
@@ -30,6 +31,22 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   try {
     const extra = filtersOf(req.nextUrl.searchParams.get("f"));
     if (req.nextUrl.searchParams.get("export") === "csv") return exportCsv(params.id, extra);
+    if (req.nextUrl.searchParams.get("export") === "xlsx") return exportXlsx(params.id);
+    if (req.nextUrl.searchParams.get("brief") === "pdf") {
+      const lang = req.nextUrl.searchParams.get("lang") === "ta" ? "ta" : "en";
+      const v = await view(params.id, []);
+      if (!v) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
+      const m = v.meta as DatasetMeta;
+      const fam = familyOf(m);
+      const card = dataCard(m, { conn: getConnector(params.id), panels: v.panels.length, lintFixes: v.panels.reduce((s, p) => s + (p.lint?.length ?? 0), 0), family: { name: fam.name, confidence: fam.confidence, by: fam.by } });
+      const html = briefHtml(m, v.brief, card, lang);
+      const pdf = await htmlToPdf(html);
+      const name = `${m.name.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_").slice(0, 60) || "dataset"}_brief_${lang}`;
+      await note(s.email, "studio:brief", params.id, { lang, pdf: !!pdf });
+      return pdf
+        ? new NextResponse(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="${name}.pdf"` } })
+        : new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    }
     if (req.nextUrl.searchParams.get("rows") === "1") {
       const meta = getMeta(params.id);
       if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
@@ -77,6 +94,31 @@ async function exportCsv(id: string, extra: Filter[]) {
   });
 }
 
+/** The cleaned rows as Excel, with a "What changed" sheet: the Data Detective's fixes and the change log of every refresh. */
+async function exportXlsx(id: string) {
+  const meta = getMeta(id);
+  if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
+  const XLSX = await import("xlsx");
+  const cols = meta.spec.columns.filter((c) => c.role !== "ignore");
+  const derived: [string, string][] = [["_z", "Zone (matched)"], ["_w", "Ward (matched)"], ["_t", "Taluk (matched)"], ["_p", "Place (matched)"]];
+  // a text cell that starts with = + - @ is written with a leading quote, so Excel never runs it as a formula
+  const safe = (v: unknown) => (typeof v === "string" && /^[=+\-@]/.test(v) ? `'${v}` : v ?? null);
+  const data = [[...cols.map((c) => c.header), ...derived.map(([, h]) => h)],
+    ...getRows(id).map((r) => [...cols.map((c) => (c.role === "person" ? null : safe(r[c.key]))), ...derived.map(([k]) => safe(r[k]))])];
+  const names = namesOf(await refs());
+  const zone = (z: unknown) => (typeof z === "number" ? names.zone(z) : z);
+  for (const row of data.slice(1)) row[cols.length] = zone(row[cols.length]) as never;
+  const changes = [["When (IST)", "What", "Detail"],
+    ...meta.detective.issues.filter((i) => i.action !== "info").map((i) => [meta.createdAt.slice(0, 16).replace("T", " "), i.action === "removed" ? "Removed" : i.action === "fixed" ? "Fixed" : "Flagged", `${i.label}: ${i.count}`]),
+    ...changeLog(meta, getConnector(id)).map((x) => [new Date(Date.parse(x.at) + 5.5 * 3600_000).toISOString().slice(0, 16).replace("T", " "), x.kind, x.text])];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data as unknown[][]), "Data");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(changes), "What changed");
+  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const name = meta.name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_").slice(0, 60) || "dataset";
+  return new NextResponse(new Uint8Array(buf), { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="${name}_cleaned.xlsx"` } });
+}
+
 const Patch = z.union([
   z.object({ name: z.string().trim().min(2).max(100) }),
   z.object({ columns: z.array(z.object({ key: z.string().regex(/^c\d{1,3}$/), role: z.enum(ROLES as [Role, ...Role[]]), label: z.string().max(40).optional() })).min(1).max(60) })
@@ -122,7 +164,7 @@ const PlanSchema = z.object({
   sort: z.enum(["desc", "asc", "key"]), limit: z.number().int().min(1).max(300)
 });
 const Action = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("ask"), question: z.string().trim().min(2).max(400) }),
+  z.object({ action: z.literal("ask"), question: z.string().trim().min(2).max(400), context: z.object({ filters: z.array(FilterSchema).max(8) }).nullable().optional() }),
   z.object({ action: z.literal("pin"), plan: PlanSchema }),
   z.object({ action: z.literal("preview"), plan: PlanSchema }),
   z.object({ action: z.literal("drill"), plan: PlanSchema, key: z.union([z.string().max(80), z.number()]).nullable(), filters: z.array(FilterSchema).max(8).default([]) }),
@@ -165,7 +207,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     switch (a.action) {
       case "ask": {
         if (!checkRateLimit(`studio-ask:${s.userId}`, 40, 300).allowed) return NextResponse.json({ error: "Too many questions in a few minutes. Try again shortly." }, { status: 429 });
-        return NextResponse.json(await ask(params.id, a.question, s.email));
+        return NextResponse.json(await ask(params.id, a.question, s.email, a.context ? { filters: a.context.filters as Filter[] } : null));
       }
       case "pin": {
         const board = getBoard().filter((p) => !(p.datasetId === meta.id && p.plan.id === a.plan.id));

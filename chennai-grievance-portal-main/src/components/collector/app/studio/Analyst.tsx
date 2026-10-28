@@ -21,7 +21,7 @@ const PairChart = dynamic(() => import("./StudioChart").then((m) => m.PairChart)
 const TimeChart = dynamic(() => import("./StudioChart").then((m) => m.TimeChart), { ssr: false, loading: () => <div className="ds-skel sm" /> });
 
 interface Answer {
-  kind: "query" | "watch" | "unsupported"; plan?: Plan; panel?: PanelData; answer?: string; note?: string | null; by: "ai" | "rules"; model: string | null;
+  kind: "query" | "watch" | "unsupported" | "why"; plan?: Plan | null; panel?: PanelData | null; answer?: string; note?: string | null; by: "ai" | "rules"; model: string | null; how?: string;
   watch?: { op: "gt" | "gte" | "lt" | "lte"; threshold: number } | null;
 }
 interface Msg { id: number; q: string; a: Answer | null; err: string | null; added?: boolean; pinned?: boolean; watched?: boolean }
@@ -125,7 +125,9 @@ function AskTab({ data, id, c, msgs, setMsgs, onSpot, onAdd, onPin, onWatched, s
     setMsgs((m) => [...m, { id: mid, q, a: null, err: null }]);
     setBusy(true);
     try {
-      const a = await api<Answer>(`/api/collector/studio/${id}`, { json: { action: "ask", question: q } });
+      // a follow-up keeps the last answer's filters ("and in Adyar?"): the server decides whether it is one
+      const last = [...msgs].reverse().find((x) => x.a?.plan)?.a?.plan;
+      const a = await api<Answer>(`/api/collector/studio/${id}`, { json: { action: "ask", question: q, context: last ? { filters: last.filters } : null } });
       setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, a } : x)));
       // "add ... to the dashboard": the answer joins the dashboard at once
       if (a.plan && a.kind === "query" && /\b(add|put|include)\b.*\b(dashboard|panels?)\b/i.test(q)) { onAdd(a.plan); setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, added: true } : x))); }
@@ -173,6 +175,7 @@ function AskTab({ data, id, c, msgs, setMsgs, onSpot, onAdd, onPin, onWatched, s
                     <p className="ds-a-t">{m.a.answer}</p>
                     {m.a.panel?.subtitle && <p className="ds-a-how"><I n="sliders" /><span><b>Counted:</b> {m.a.panel.subtitle}</span></p>}
                     {m.a.note && <p className="ds-muted">{m.a.note}</p>}
+                    {m.a.how && <p className="ds-iconf" title="How this was computed"><I n="info" />{m.a.how}</p>}
                     {m.a.panel && m.a.panel.chart !== "kpi" && m.a.panel.chart !== "table" && m.a.panel.values.length > 0 && m.a.panel.chart !== "map" && (
                       <div className="ds-a-c"><StudioChart panel={m.a.panel} height={150} compact /></div>
                     )}
