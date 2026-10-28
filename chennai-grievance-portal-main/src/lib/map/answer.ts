@@ -210,15 +210,17 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
       fact("groups", g.length, "areas");
       if (g[0]) fact("top", g[0].n, "in the top area");
       const unit = show.by === "hex500" ? (ta ? "500 மீ கட்டங்கள்" : "500 m cells") : ta ? { ward: "வார்டுகள்", zone: "மண்டலங்கள்", taluk: "வட்டங்கள்" }[show.by] : `${show.by}s`;
-      const unitOne = ta ? { ward: "வார்டு", zone: "மண்டலம்", taluk: "வட்டம்", hex500: "கட்டம்" }[show.by] : show.by === "hex500" ? "500 m cell" : show.by;
+      // results, but none of them has this area on record (a district-wide report): nothing to rank, said plainly
+      const areaTa = { ward: "வார்டு", zone: "மண்டலம்", taluk: "வட்டம்", hex500: "500 மீ கட்டம்" }[show.by];
       headline = !count ? (ta ? `${subj} எதுவும் இல்லை${per}.` : `No ${subj}${per}.`)
-        // every one of them lacks the area on record (often the case for news that names only the city)
-        : !g[0] ? (ta ? `${n(count)} ${subj}${per}; எதற்கும் ${unitOne} பதிவில் இல்லை · ${ready}.` : `${n(count)} ${subj}${per}; none has a ${unitOne} on record · ${ready}.`)
+        : !g.length ? (ta ? `${n(count)} ${subj}${per}; எதற்கும் ${areaTa} பதிவில் இல்லை.`
+          : tg ? `${n(count)} ${subj}${per}; edhukkum ${show.by} record-la illa.`
+            : `${n(count)} ${subj}${per}, but none has a ${show.by === "hex500" ? "500 m cell" : show.by} on record, so there is nothing to rank.`)
         : ta ? `${n(count)} ${subj}${per}, ${g.length} ${unit}; அதிகம் ${g[0].label_ta} (${n(g[0].n)}) · ${ready}.`
           : tg ? `${n(count)} ${subj}${per}, ${g.length} ${unit}-la; adhigam ${g[0].label} (${n(g[0].n)}) · ${ready}.`
             : `${n(count)} ${subj}${per} across ${g.length} ${unit}; the most in ${g[0].label} (${n(g[0].n)}) · ${ready}.`;
       if (g.length > 1) meaning = ta ? `அடுத்து ${g.slice(1, 3).map((x) => `${x.label_ta} (${n(x.n)})`).join(", ")}.` : `Next: ${g.slice(1, 3).map((x) => `${x.label} (${n(x.n)})`).join(", ")}.`;
-      if (show.unassigned.length) meaning = `${meaning ?? ""} ${ta ? `${show.unassigned.length} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned.length)} have no ${show.by} on record.`}`.trim();
+      if (show.unassigned.length && g.length) meaning = `${meaning ?? ""} ${ta ? `${show.unassigned.length} க்கு பதிவான பகுதி இல்லை.` : `${n(show.unassigned.length)} have no ${show.by} on record.`}`.trim();
       break;
     }
     case "hotspot": {

@@ -159,6 +159,19 @@ describe("count_by, hotspot, compare, change", () => {
     expect(r.show.groups.reduce((s, g) => s + g.n, 0) + r.show.unassigned.length).toBe(r.hits.length);
     expect(r.show.unassigned).toEqual(["I25"]);
   });
+  it("count by area when none of the results has that area on record: said plainly, no crash", () => {
+    // I25 is the only medium open waterlogging report of the last 3 days and has no ward, zone or taluk (district centroid)
+    for (const by of ["ward", "zone", "taluk"] as const) for (const lang of ["en", "ta"] as const) {
+      const pl = plan([take({ category: ["FLOOD_WATERLOGGING"], severity: ["Medium"], period: { kind: "last_days", days: 3, offset: 0 } }), { op: "count_by", as: "by", of: "a", by }]);
+      const r = runMapPlan(pl, w, { ...ctx, lang });
+      if (r.show.type !== "groups") throw new Error("groups");
+      expect(r.show.groups).toEqual([]);
+      expect(r.show.unassigned).toEqual(["I25"]);
+      const a = compose(pl, r, w, { ...ctx, lang });
+      expect(a.headline).not.toMatch(/undefined|NaN/);
+      if (lang === "en") expect(a.headline).toMatch(new RegExp(`none has a ${by} on record`));
+    }
+  });
   it("hex500 cells hold every pinnable point", () => {
     const r = runMapPlan(plan([take({ period: null }), { op: "count_by", as: "by", of: "a", by: "hex500" }]), w, ctx);
     if (r.show.type !== "groups") throw new Error("groups");
