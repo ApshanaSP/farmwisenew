@@ -41,7 +41,9 @@ const ROUNDUP = rx([
   String.raw`morning (news|briefing)`, String.raw`evening (news|briefing)`, String.raw`#gallery`, String.raw`where was the highest rainfall`,
   String.raw`rainfall (recorded|figures|data) (across|in) `, String.raw`storage (status|position|level)s? of`, String.raw`current water storage`,
   String.raw`(water|storage) levels? (in|of) (chennai'?s )?(major )?(lakes|reservoirs)`, String.raw`\bdeep dive\b`, String.raw`\bnews update\b.*\|.*\|`,
-  String.raw`\b(water|storage) (inflow|level|levels|storage)\b.{0,60}\b(rises?|rose|decreas\w*|increas\w*|dips?|drops?|falls?)\b`, String.raw`\bwater inflow\b`,
+  String.raw`\b(water|storage) (inflow|level|levels|storage)\b.{0,100}\b(rises?|rose|decreas\w*|increas\w*|dips?|drops?|falls?)\b`, String.raw`\bwater inflow\b`,
+  String.raw`\b(adds?|added)\b.{0,30}\bdays of (drinking )?water\b`, String.raw`\bwater reserves?\b`,
+  String.raw`\bwater (stock|storage)\b.{0,40}\b(low|high|rises?|falls?|up|down)\b`, "நீர் இருப்பு",
   "இன்றைய முக்கிய செய்திகள்", "செய்தி தொகுப்பு"
 ]);
 const OPINION = rx([
@@ -53,7 +55,11 @@ const OPINION = rx([
 /** a politician's or official's statement: someone said, accused, demanded */
 const SPEAKER = String.raw`(minister|mayor|mla|mp|cm|chief minister|leader|chief|party|dmk|aiadmk|bjp|pmk|tvk|vck|ntk|congress|cpi|cpm|dmdk|mdmk|ramadoss|anbumani|stalin|seeman|velmurugan|annamalai|vijay|palaniswami|eps|ops|udhayanidhi|governor)`;
 const STATEMENT = new RegExp(String.raw`\b${SPEAKER}\b.{0,80}\b(accuses?|accused|insists?|slams?|blames?|demands?|urges?|criticis\w*|criticiz\w*|asks|questions|hits out|lashes out|alleges?|warns|condemns?|says|said|claims?|vows?|promises?|responds?|ready to respond|reacts?)\b` +
-  String.raw`|\b(accuses?|insists?|slams?|demands?|urges?|criticis\w*|alleges?|condemns?)\b.{0,40}[!:]?\s*$|asks barrage of questions`, "i");
+  String.raw`|\b(accuses?|insists?|slams?|demands?|urges?|criticis\w*|alleges?|condemns?)\b.{0,40}[!:]?\s*$|asks barrage of questions` +
+  // a quoted line with its speaker: "Rainwater drainage works were not completed in the last 5 years" Minister KAS
+  String.raw`|["“][^"”]{10,}["”]\s*[:\-–|]?\s*${SPEAKER}\b`, "i");
+/** market and trade news: "Unsold vegetables pile up at Koyambedu market as festival trade slows" */
+const BUSINESS = /\b(trade|prices?|sales?|business|demand|arrivals?)\b.{0,30}\b(slows?|slowed|dips?|dipped|falls?|fell|soars?|rises?|rose|picks? up|drops?)\b/i;
 const RESOLVED = rx([
   String.raw`\b(rescued|rescues|traced|found safe|found alive|reunited|restored|resumed|reopen\w*|back to normal|escape[sd]? (safely|unhurt|unharmed)|safe(ly)? rescued|recovered|retrieved|returned safely|sentenced|convicted|acquitted|gets? \d+(\.\d+)?[- ]years?|jail term|life term|life imprisonment)\b`,
   "மீட்பு", "மீட்கப்பட்ட", "சீரானது"
@@ -68,11 +74,14 @@ const ALERT = rx([
   "எச்சரிக்கை", "புயல்", "வானிலை", "மழை (பெய்யும்|வாய்ப்பு)", "கனமழை"
 ]);
 const GOV_ACTION = rx([
-  String.raw`\bmore (boats|pumps|motors|staff|workers|buses|personnel)\b`, String.raw`\b(removed|removal|cleared|clearance|desilt\w*|deployed|deploys?|on standby|kept ready|ready to|boats? ready|readied|inspect\w*|launch\w*|inaugurat\w*|tender\w*|projects?|scheme|plans?|to build|to construct|construction of|sanction\w*|allocat\w*|funds?|crore|vaccinat\w*|drive|campaign|awareness|order(s|ed)?|directs?|directed|instructs?|instructed|starts? work|work (is )?underway|underway|special officers?|monitoring|preparedness|precaution\w*|measures?|relief camps?|set up|opens?|opened|holiday declared|declares holiday|advised|advises|advisory|appeal\w*|helpline|control room|to ease|to reduce|upgrade|portal|app launched)\b`,
+  String.raw`\bmore (boats|pumps|motors|staff|workers|buses|personnel)\b`, String.raw`\bclean-?ups?\b`, String.raw`\bclears? (lines|drains|\d+ streets)\b`, String.raw`\b(vaccine|vaccines) administered\b|\badministered\b.{0,30}\bvaccin`, String.raw`\bcovers? \d+ (streets|wards|roads|areas)\b`,
+  String.raw`\b(removed|removal|cleared|clearance|desilt\w*|deployed|deploys?|on standby|kept ready|ready to|boats? ready|readied|inspect\w*|launch\w*|inaugurat\w*|tender\w*|projects?|scheme|plans?|to build|to construct|construction of|sanction\w*|allocat\w*|funds?|crore|vaccinat\w*|drive|campaign|awareness|order(s|ed)?|directs?|directed|instructs?|instructed|starts? work|work (is )?underway|underway|special officers?|monitoring|preparedness|precaution\w*|measures?|relief camps?|set up|opens?|opened|holiday declared|declares holiday|advised|advises|advisory|appeal\w*|helpline|control room|to ease|to reduce|upgrade|portal|app launched)\b`,
   "நடவடிக்கை", "ஆய்வு", "அகற்றம்", "அகற்றப்பட்ட", "தயார் நிலை", "திட்டம்", "முகாம்"
 ]);
 const PROMO = rx([
-  String.raw`\b(robotic|knee (joint )?replacement|surgery at .* hospital|awareness event|world \w+ day|celebrat\w*|festival|concert|exhibition|expo|launch of .* (store|showroom|outlet)|offers?|discount|admission(s)? open|webinar|conclave|summit)\b`
+  String.raw`\b(robotic|knee (joint )?replacement|surgery at .* hospital|awareness event|world \w+ day|celebrat\w*|festival|concert|exhibition|expo|launch of .* (store|showroom|outlet)|offers?|discount|admission(s)? open|webinar|conclave|summit)\b`,
+  // a ceremony or meeting at an office: "On behalf of ... Water Supply Department at ... headquarters"
+  String.raw`^\s*on behalf of\b`
 ]);
 
 /**
@@ -106,6 +115,7 @@ export function reportKind(...texts: (string | null | undefined)[]): ReportKind 
   if (harm && TALLY.test(t) && TALLY_WIDE.test(t) && !EVENT.test(said)) return "roundup";
   if (OPINION.test(t) && !(harm && !/left her|left him|rebuild/i.test(t))) return "opinion";
   if (STATEMENT.test(t) && !harm && !/\b(arrest\w*|held|detained|booked|raid\w*)\b/i.test(t)) return "opinion";
+  if (BUSINESS.test(t) && !harm) return "other";
   // a rescue after something that happened (a car in a canal) is still that event
   if (RESOLVED.test(t) && !hurt && !event) return "resolution";
   // a forecast or warning, unless the weather already did damage ("boats stranded due to storm")

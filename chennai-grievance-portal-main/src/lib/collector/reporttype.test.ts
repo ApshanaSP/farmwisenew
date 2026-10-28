@@ -70,7 +70,22 @@ const CASES: [string, ReportKind | null][] = [
   ["Car plunges into canal - 5 people from Chennai escape safely", "incident"],
   ["Residents flag safety risk as silt removed from canals piles up along city roads", "incident"],
   ["Water inflow decreases into Chennai drinking water reservoirs", "roundup"],
-  ["Water level in 5 lakes supplying drinking water to Chennai city rises by 1 TMC in 10 days", "roundup"]
+  ["Water level in 5 lakes supplying drinking water to Chennai city rises by 1 TMC in 10 days", "roundup"],
+  // routed to officers as complaints on 27 Oct, before the on-load corrections ran
+  ["Water level in Pondicherry Lake, which supplies drinking water to Chennai, has decreased", "roundup"],
+  ["Nine days of rain add 28 days of drinking water to Chennai’s reserves", "roundup"],
+  ["Chennai Sewage Cleanup Covers 227 Streets Ahead of Rain", "government_action"],
+  ["Chennai Rain|Sengottaiyan |\"Rainwater drainage works were not completed in the last 5 years\" Minister KAS", "opinion"],
+  ["On behalf of Chennai Municipal Administration and Water Supply Department at Chennai Chepauk Tamil Nadu Water Supply and Drainage Board headquarters", "other"],
+  ["Unsold vegetables pile up at Koyambedu market as festival trade slows", "other"],
+  ["Amma Drinking Water Treatment Plants lying defunct in Chennai: TTV Dhinakaran condemns TVK government!", "opinion"],
+  // real complaints stay
+  ["Tambaram-Velachery Road in Chennai riddled with potholes; ambulance overturns, two injured", "incident"],
+  ["Potholes, chaotic turns snarl key link road in Zamin Royapettah", "incident"],
+  ["Will the Northeast monsoon help? Water stock low in Chennai's drinking water lakes!", "roundup"],
+  ["Chennai Metrowater Clears 227 Streets, Boosts Sewage Response", "government_action"],
+  ["Chennai sewerage board clears lines in 227 streets in a day", "government_action"],
+  ["Anti-rabies vaccine administered to 1.50 lakh stray dogs: Chennai Corporation information", "government_action"]
 ];
 
 describe("report kind from the headline (LT-03)", () => {
