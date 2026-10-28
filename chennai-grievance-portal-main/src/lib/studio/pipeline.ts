@@ -25,6 +25,7 @@ import { choose, safeDecode, schemaHash, tableHash, type Found } from "@/lib/stu
 import { OutcomeStop, duplicateOutcome, findDuplicate, readLink, resolveLink } from "@/lib/studio/connect/resolve";
 import { fetchOnce } from "@/lib/studio/fetchurl";
 import { readiness } from "@/lib/studio/readiness";
+import { createConnector, getConnector, getTable, isDue, listConnectors, readSource, runConnector, type Connector, type Deps, type Every, type Mode as ConnMode } from "@/lib/studio/connectors";
 import { cleanAuth, getVault, saveSession, saveVault } from "@/lib/studio/connect/vault";
 import { LinkError } from "@/lib/studio/fetchurl";
 import { judge, keepChennai, stateWide } from "@/lib/studio/relevance";
@@ -258,8 +259,14 @@ export async function ingestPick(token: string, choice: PickChoice, user: string
   const card = saved.pick.cards.find((x) => x.id === picked[0].cand.id);
   const pre = card?.group === "notchennai" ? "unrelated" : card?.chennaiRows ? "district" : "partly";
   const own = sourceOf(page, chosen);
-  return ingest({ id, buf: own, file: (chosen.cand.url ? safeDecode(new URL(chosen.cand.url).pathname.split("/").pop() || "") : "") || page.name, kind: "link", url: saved.pick.url, contentType: "application/json", base: page.url, name: choice.name ?? saved.name,
+  const made = await ingest({ id, buf: own, file: (chosen.cand.url ? safeDecode(new URL(chosen.cand.url).pathname.split("/").pop() || "") : "") || page.name, kind: "link", url: saved.pick.url, contentType: "application/json", base: page.url, name: choice.name ?? saved.name,
     user, table: chosen.table, connect: info, pre, force: pre === "unrelated" }, emit);
+  // "Keep updating daily": a Live Connector reads each new file of the series from now on
+  if (choice.mode === "connector") {
+    try { const c = await keepUpdated(made); emit({ t: "log", text: `Live Connector on: ${c.schedule.every} at ${c.schedule.at} IST, ${c.mode === "append" ? "new rows added" : "the table replaced"} each time.` }); }
+    catch (e) { emit({ t: "log", text: `The Live Connector could not be set up: ${(e as Error).message}` }); }
+  }
+  return made;
 }
 
 /** The table a dataset was read from: its chosen candidate (a link), else its original file read again. */
@@ -380,7 +387,9 @@ export function runDueRefreshes() {
   if (Date.now() - lastSweep < 60_000) return;
   lastSweep = Date.now();
   (async () => {
-    const due = listDatasets().filter((d) => d.kind === "link" && d.every).map((d) => getMeta(d.id)).filter((m): m is DatasetMeta => {
+    // a dataset with a Live Connector is kept up to date by it (runDueConnectors), not by the plain refresh
+    const live = new Set(listConnectors().map((c) => c.id));
+    const due = listDatasets().filter((d) => d.kind === "link" && d.every && !live.has(d.id)).map((d) => getMeta(d.id)).filter((m): m is DatasetMeta => {
       const c = m?.source.connect;
       if (!c?.every) return false;
       const last = Date.parse(c.history[0]?.at ?? c.fetchedAt);
@@ -392,6 +401,79 @@ export function runDueRefreshes() {
         .catch((e) => console.warn(`[studio] scheduled refresh of ${m.id} failed: ${(e as Error).message.slice(0, 160)}`));
     }
   })().catch((e) => console.warn("[studio] refresh sweep skipped:", (e as Error).message));
+}
+
+// ----------------------------------------------------------- Live Connectors --
+
+/** The dataset rebuilt from its connector's table: the seven agents, with the reading it already has when the columns hold. */
+async function rebuildFromConnector(c: Connector, table: Table, note: string) {
+  const meta = getMeta(c.id);
+  if (!meta) throw new Error("The connector's dataset is no longer here.");
+  const t = withTopics(table);
+  const now = new Date().toISOString();
+  const prev = meta.source.connect;
+  const connect = prev ? { ...prev, hash: tableHash(t), fetchedAt: now, lastOkAt: now, lastError: null,
+    history: [{ at: now, ok: true, rows: t.rows.length, changed: true, note: `Live Connector · ${note}` }, ...prev.history].slice(0, 20) } : null;
+  saveSource(c.id, Buffer.from(JSON.stringify({ from: c.url, headers: t.headers, rows: t.rows })));
+  await run({ id: c.id, table: t, source: { ...meta.source, caption: t.caption ?? meta.source.caption, connect }, name: meta.name, user: "connector",
+    prior: sameHeaders(t, meta) ? meta.spec : null, steps: [], sample: meta.sample, createdAt: meta.createdAt, rules: meta.rules, force: true }, () => {});
+}
+
+/** The dataset's watches after a run: the ones crossed, in words. */
+async function crossedWatches(c: Connector): Promise<string[]> {
+  const meta = getMeta(c.id);
+  if (!meta?.rules.length) return [];
+  const names = namesOf(await loadRefs());
+  const { checkRule } = await import("@/lib/studio/ask");
+  return meta.rules.map((r) => checkRule(r, getRows(c.id), meta.spec, names)).filter((x) => !x.ok)
+    .map((x) => `Watch: ${x.text} (${x.hits.slice(0, 3).map((h) => `${h.label} ${h.value.toLocaleString("en-IN")}`).join(", ")}${x.total > 3 ? ` and ${x.total - 3} more` : ""})`);
+}
+
+/** The real clock, reader and rebuild for connectors. */
+export function connectorRuntime(): Deps {
+  return {
+    now: () => Date.now(),
+    read: (c) => readSource(c, getVault(c.id)?.auth ?? { mode: "none" }),
+    rebuild: rebuildFromConnector,
+    watches: crossedWatches
+  };
+}
+
+/**
+ * A Live Connector for a dataset added from a link: a series keeps reading its newest dated file (appending), any
+ * other link its same table (replacing). The pattern is the one the picker found; the Collector can edit it.
+ */
+export async function keepUpdated(id: string, p: { every?: Every; at?: string; tolerance?: number; mode?: ConnMode; pattern?: string | null; key?: string[]; retention?: number } = {}): Promise<Connector> {
+  const meta = getMeta(id);
+  if (!meta?.source.url) throw new UserError("Only data added from a link can be kept up to date.");
+  if (getConnector(id)) throw new UserError("This dataset is already kept up to date.");
+  const cands = getCandidates(id);
+  const chosen = cands.find((f) => f.cand.id === meta.source.connect?.choice) ?? cands[0];
+  const series = chosen?.cand.series ?? null;
+  const table = getConnectorSeed(id, chosen?.table ?? null);
+  if (!table) throw new UserError("The dataset's table is no longer here: fetch the link again first.");
+  const pattern = p.pattern ?? series?.pattern?.replace(/\?.*$/, "") ?? null;
+  const c = createConnector({ id, name: meta.name, url: series ? (chosen?.cand.source ?? meta.source.url) : meta.source.url,
+    locate: series && pattern ? "newest-file-matching" : "same-table", pattern, table, every: p.every, at: p.at, tolerance: p.tolerance,
+    mode: p.mode, key: p.key, retention: p.retention, seen: series ? [series.to] : [] });
+  // the plain refresh hands over to the connector
+  if (meta.source.connect) saveMeta({ ...meta, source: { ...meta.source, connect: { ...meta.source.connect, every: null } } });
+  return c;
+}
+function getConnectorSeed(id: string, t: Table | null): Table | null { return t ?? getTable(id); }
+
+/** Connectors whose time has come, one at a time (so one site is never read twice at once), at most a sweep a minute. */
+let lastLive = 0;
+export function runDueConnectors() {
+  if (Date.now() - lastLive < 60_000) return;
+  lastLive = Date.now();
+  (async () => {
+    const deps = connectorRuntime();
+    for (const c of listConnectors().filter((x) => isDue(x, Date.now()))) {
+      await runConnector(c.id, deps).then((r) => console.info(`[studio] connector ${c.id}: ${r.kind} · ${r.note.slice(0, 120)}`))
+        .catch((e) => console.warn(`[studio] connector ${c.id} failed: ${(e as Error).message.slice(0, 160)}`));
+    }
+  })().catch((e) => console.warn("[studio] connector sweep skipped:", (e as Error).message));
 }
 
 interface RunCtx {

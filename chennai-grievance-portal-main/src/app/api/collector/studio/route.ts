@@ -9,6 +9,7 @@ import { note, stream } from "@/lib/studio/http";
 import { ingest, ingestLink, namesOf } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { availableSamples, sampleFile } from "@/lib/studio/samples";
+import { listConnectors } from "@/lib/studio/connectors";
 import { getBoard, getMeta, getRows, hiddenDatasets, listDatasets } from "@/lib/studio/store";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,9 @@ export async function GET() {
       }
     });
     const ai = aiStatus();
+    const live = listConnectors();
     return NextResponse.json({
+      connectors: { count: live.length, attention: live.filter((x) => x.status !== "healthy" && x.status !== "paused").length },
       datasets: listDatasets(), hidden: hiddenDatasets(), board, samples: availableSamples(),
       ai: { available: ai.available, providers: ai.providers.map((p) => p.name), problem: ai.problem }
     });

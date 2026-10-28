@@ -18,14 +18,15 @@ import Hero from "./Hero";
 import Dataset from "./Dataset";
 import Connect, { type ConnectRequest } from "./Connect";
 import { OutcomeView, Picker } from "./Outcome";
+import Connectors from "./Connectors";
 import "./studio.css";
 import "./studio-command.css";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
 const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: () => <div className="ds-skel" /> });
 
-type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" };
-interface ListResp { datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
+type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" } | { k: "connectors" };
+interface ListResp { connectors?: { count: number; attention: number }; datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
 
 const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json,.geojson,.kml,.kmz,.xml,.zip,.pdf,.docx,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp";
 const KEY = "diq-studio-sel";
@@ -240,6 +241,11 @@ export default function Studio({ c }: { c: Console }) {
               <span className="ds-li-ic"><I n="bookmark" /></span>
               <span className="ds-li-b"><b>Studio board</b><small>{list?.board.length ? `${list.board.length} pinned ${list.board.length === 1 ? "chart" : "charts"}` : "Pin charts from any dataset"}</small></span>
             </button>
+            <button className={`ds-li board${mode.k === "connectors" ? " on" : ""}`} onClick={() => setMode({ k: "connectors" })}>
+              <span className="ds-li-ic"><I n="refresh" /></span>
+              <span className="ds-li-b"><b>Live Connectors</b><small>{list?.connectors?.count ? `${list.connectors.count} kept up to date` : "Sites that publish daily"}</small></span>
+              {list?.connectors?.attention ? <span className="ds-li-sync bad" title={`${list.connectors.attention} need a look (late, failing or waiting for review)`} aria-label={`${list.connectors.attention} connectors need a look`}><I n="alert" /></span> : null}
+            </button>
             {run && mode.k !== "run" && (run.doneAt == null && !run.error && !run.blocked && !run.outcome) && (
               <button className="ds-li running" onClick={() => setMode({ k: "run" })}>
                 <span className="ds-li-ic"><span className="ds-spin sm" /></span><span className="ds-li-b"><b>{run.title}</b><small>Agents at work…</small></span>
@@ -278,6 +284,8 @@ export default function Studio({ c }: { c: Console }) {
           onRemap={remap(mode.id, current?.name ?? "Dataset")} onRefresh={refresh(mode.id, current?.name ?? "Dataset")} onChoose={choose(mode.id, current?.name ?? "Dataset")}
           onDeleted={() => { load().then((r) => setMode(r?.datasets[0] ? { k: "dataset", id: r.datasets[0].id } : { k: "home" })); }}
           onPinned={() => load()} />
+      ) : mode.k === "connectors" ? (
+        <Connectors c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : mode.k === "board" ? (
         <Board list={list} c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : (

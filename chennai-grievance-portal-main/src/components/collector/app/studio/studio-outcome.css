@@ -94,3 +94,42 @@
 .dic .ds-table td.ds-cellbar{background:linear-gradient(90deg,var(--accent-soft) 0 var(--w),transparent var(--w));background-repeat:no-repeat}
 /* a chart's title and subtitle wrap at words (two lines at most) rather than being cut: the Chart Doctor's title rule */
 .dic .ds-p-t h4,.dic .ds-p-t small{white-space:normal;overflow:hidden;text-overflow:clip;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word}
+
+/* ---------- Live Connectors ---------- */
+.dic .ds-conns{display:flex;flex-direction:column;gap:14px;padding:18px 20px;overflow:auto;min-height:0}
+.dic .ds-conn-l{display:flex;flex-direction:column;gap:10px}
+.dic .ds-conn{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.dic .ds-conn.h-failing{border-color:var(--critical-line)}
+.dic .ds-conn.h-review{border-color:var(--high-line)}
+.dic .ds-conn-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.dic .ds-conn-t{flex:1 1 220px;min-width:0;display:flex;flex-direction:column}
+.dic .ds-conn-t b{font-size:14px;color:var(--text)}
+.dic .ds-conn-t small{font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .ds-health{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:650;border:1px solid transparent}
+.dic .ds-health .ic{width:14px;height:14px}
+.dic .ds-health.h-healthy{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.dic .ds-health.h-late{background:var(--high-soft);color:var(--high);border-color:var(--high-line)}
+.dic .ds-health.h-failing{background:var(--critical-soft);color:var(--critical);border-color:var(--critical-line)}
+.dic .ds-health.h-paused{background:var(--surface-2);color:var(--text-2);border-color:var(--line)}
+.dic .ds-health.h-review{background:var(--violet-soft);color:var(--violet);border-color:var(--violet-line)}
+.dic .ds-conn-m{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.dic .ds-conn-m div{min-width:0}
+.dic .ds-conn-m dt{font:700 10px var(--dic-sans),sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.dic .ds-conn-m dd{margin:2px 0 0;font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums}
+.dic .ds-conn-spark{width:120px;height:26px;color:var(--accent)}
+.dic .ds-conn-note{margin:0;font-size:12.5px;color:var(--text-2);line-height:1.45}
+.dic .ds-conn-q{padding:10px 12px;border-radius:10px;background:var(--high-soft);border:1px solid var(--high-line);font-size:12.5px;display:flex;flex-direction:column;gap:8px}
+.dic .ds-conn-q ul{margin:0;padding-left:18px}
+.dic .ds-conn-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto;border-top:1px solid var(--line);padding-top:8px}
+.dic .ds-conn-hist li{display:grid;grid-template-columns:150px 1fr;gap:10px;font-size:12px;color:var(--text-2)}
+.dic .ds-conn-hist li.bad span{color:var(--critical)}
+.dic .ds-conn-hist time{color:var(--text-3);font-variant-numeric:tabular-nums}
+.dic .ds-conn-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.dic .ds-conn-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-2)}
+.dic .ds-conn-form select,.dic .ds-conn-form input{height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:0 10px;min-width:110px}
+.dic .ds-conns button{min-height:36px}
+@media (max-width:700px){
+  .dic .ds-conns{padding:14px 16px}
+  .dic .ds-conn-m{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dic .ds-conn-hist li{grid-template-columns:1fr}
+}

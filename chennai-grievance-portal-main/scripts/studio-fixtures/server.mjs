@@ -105,6 +105,16 @@ function pdfOf(kind) {
   return Buffer.from(doc.output("arraybuffer"));
 }
 
+/** The live site's state: today's day of October, days not published, a column renamed from a day, a day of few rows. */
+export const LIVE = { day: 1, missing: [], renameFrom: 0, dropOn: 0, failing: 0 };
+function liveFile(d) {
+  reset(300 + d);
+  const names = ["Poondi", "Cholavaram", "Puzhal", "Chembarambakkam", "Kannankottai Thervoy Kandigai", "Veeranam"];
+  const level = LIVE.renameFrom && d >= LIVE.renameFrom ? "Water level (ft)" : "Level (ft)";
+  const rows = names.map((n) => [n, int(10, 35), int(200, 3600), day(d)]).slice(0, LIVE.dropOn === d ? 1 : 6);
+  return xlsxOf([{ name: "Levels", aoa: [["Reservoir", level, "Storage (mcft)", "Date"], ...rows] }]);
+}
+
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), "assets");
 /** A scanned PDF: two pages that are only pictures of the printed table (a JPEG page and a bitmap page). */
 function scannedPdf() {
@@ -246,6 +256,30 @@ function route(req, res) {
   if (p === "/sitemap.xml") return send(res, 404, "not found", "text/plain");
   // axe-core, for the accessibility check of the Studio's screens (a test helper)
   if (p === "/axe.js") return send(res, 200, fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "node_modules", "axe-core", "axe.min.js")), "text/javascript", { "Access-Control-Allow-Origin": "*" });
+  // ---- LIVE: a site that publishes a file every day (the Live Connector simulation sets its day and faults)
+  if (p === "/live/_state") {
+    for (const k of ["day", "renameFrom", "dropOn", "failing"]) if (q.has(k)) LIVE[k] = Number(q.get(k));
+    if (q.has("missing")) LIVE.missing = q.get("missing").split(",").filter(Boolean).map(Number);
+    return send(res, 200, JSON.stringify(LIVE), "application/json");
+  }
+  if (p === "/live/reservoirs") {
+    if (LIVE.failing) return send(res, 500, page("Error", "<h1>Down for maintenance</h1>"));
+    const days = Array.from({ length: LIVE.day }, (_, i) => i + 1).filter((d) => !LIVE.missing.includes(d));
+    return send(res, 200, page("Chennai reservoir levels (live)", `<ul>${days.map((d) => `<li><a href="/live/files/Reservoir_Levels_${day(d)}.xlsx">Levels ${day(d)}</a></li>`).join("")}</ul>`));
+  }
+  const live = p.match(/^\/live\/files\/Reservoir_Levels_(\d{2})-10-2026\.xlsx$/);
+  if (live) {
+    const d = Number(live[1]);
+    if (d > LIVE.day || LIVE.missing.includes(d) || LIVE.failing) return send(res, 404, "not found", "text/plain");
+    return send(res, 200, liveFile(d), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  }
+  if (p === "/live/api/levels") {
+    const d = q.get("date") ?? "";
+    const n = Number(d.slice(8, 10));
+    if (!/^2026-10-\d{2}$/.test(d) || n > LIVE.day) return send(res, 404, JSON.stringify({ error: "not published" }), "application/json");
+    reset(500 + n);
+    return send(res, 200, JSON.stringify({ date: d, records: ["Poondi", "Cholavaram", "Puzhal", "Chembarambakkam"].map((r) => ({ reservoir: r, date: d, level_ft: int(10, 35), storage_mcft: int(200, 3600) })) }), "application/json");
+  }
   // ---- DATA
   if (p === "/d/table40") return send(res, 200, page("Ward-wise water complaints, Greater Chennai Corporation", `${NAV}<h1>Water supply complaints by ward</h1>${tableHtml(COMPLAINT_H, complaints(40))}`));
   if (p === "/d/paged") {

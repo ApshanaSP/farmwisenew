@@ -16,9 +16,11 @@ export function startJobs(): void {
   const tick = async () => {
     try {
       // loaded on the first tick, not at start-up: the sources and studio modules are large
-      const [{ runDueSources }, { runDueRefreshes }] = await Promise.all([import("@/lib/collector/sources"), import("@/lib/studio/pipeline")]);
+      const [{ runDueSources }, { runDueRefreshes, runDueConnectors }] = await Promise.all([import("@/lib/collector/sources"), import("@/lib/studio/pipeline")]);
       runDueSources();
       runDueRefreshes();
+      // Data Studio's Live Connectors: each at its own time (IST), missed runs caught up once
+      runDueConnectors();
     } catch (e) {
       console.warn(`[jobs] sweep skipped: ${(e as Error).message}`);
     }

@@ -24,12 +24,22 @@ function ago(iso: string | null | undefined): string {
   return h < 24 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
 }
 
+const LIVE_WORD: Record<string, string> = { healthy: "Healthy", late: "Late", failing: "Failing", paused: "Paused", review: "Needs review" };
+
 export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
   meta: DatasetMeta; c: Console; onChoose: (candidate: string) => void; onRefresh: () => void; onChanged: () => void;
 }) {
   const cx: ConnectInfo | null = meta.source.connect ?? null;
   const rel = meta.relevance ?? null;
   const [open, setOpen] = useState<null | "tables" | "sync">(null);
+  // the dataset's Live Connector, if it has one (its health shown beside the source)
+  const [live, setLive] = useState<{ status: string } | null>(null);
+  useEffect(() => {
+    if (!meta.source.url) return;
+    let on = true;
+    api<{ connectors: { id: string; status: string }[] }>("/api/collector/studio/connectors").then((r) => { if (on) setLive(r.connectors.find((x) => x.id === meta.id) ?? null); }).catch(() => {});
+    return () => { on = false; };
+  }, [meta.id, meta.source.url]);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -38,6 +48,13 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
     return () => window.removeEventListener("mousedown", off);
   }, [open]);
   if (!cx && !rel) return null;
+  const keep = async () => {
+    try {
+      const r = await api<{ connector: { schedule: { every: string; at: string }; mode: string } }>("/api/collector/studio/connectors", { json: { action: "create", id: meta.id } });
+      c.toast(`Live Connector on: ${r.connector.schedule.every} at ${r.connector.schedule.at} IST (${r.connector.mode}). See it under Live Connectors.`);
+      setLive({ status: "healthy" }); setOpen(null); onChanged();
+    } catch (e: any) { c.toast(e.message, "alert"); }
+  };
   const schedule = async (every: number | null) => {
     try { await api(`/api/collector/studio/${meta.id}`, { json: { action: "schedule", every } }); c.toast(every ? `Refreshes ${EVERY.find((e) => e.v === every)?.t.toLowerCase()}.` : "Refreshes only by hand now."); onChanged(); }
     catch (e: any) { c.toast(e.message, "alert"); }
@@ -61,6 +78,7 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
           <button className={`ds-src-chip btn${open === "tables" ? " on" : ""}`} onClick={() => setOpen(open === "tables" ? null : "tables")} title="What on the link is used">
             <I n={KIND_IC[cx.candidates.find((x) => x.id === cx.choice)?.kind ?? "table"] ?? "table"} />{cx.via}{cx.candidates.length > 1 && <em>{cx.candidates.length}</em>}<I n="chevd" />
           </button>
+          {live && <span className={`ds-health h-${live.status}`} title="Live Connector: see Live Connectors in the list"><I n="refresh" />Live · {LIVE_WORD[live.status] ?? live.status}</span>}
           <button className={`ds-src-chip btn${cx.lastError ? " bad" : ""}${open === "sync" ? " on" : ""}`} onClick={() => setOpen(open === "sync" ? null : "sync")} title={cx.lastError ?? "Refresh"}>
             <I n={cx.lastError ? "alert" : "refresh"} />{cx.lastError ? "Last refresh failed" : `Fetched ${ago(cx.history[0]?.at ?? cx.fetchedAt)}`}{cx.every ? <em>{EVERY.find((e) => e.v === cx.every)?.t ?? `${cx.every} min`}</em> : null}<I n="chevd" />
           </button>
@@ -87,6 +105,7 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
             <header><b>Keep it up to date</b><small>A refresh reads the link again with the same sign-in. Nothing is rebuilt when the data has not changed; a failed refresh keeps the last good data.</small></header>
             <div className="ds-seg wide">{EVERY.map((e) => <button key={String(e.v)} className={(cx.every ?? null) === e.v ? "on" : ""} onClick={() => schedule(e.v)}>{e.t}</button>)}</div>
             <button className="ds-btn wide" onClick={() => { setOpen(null); onRefresh(); }}><I n="refresh" />Fetch now</button>
+            {!live && <button className="ds-ghost wide" onClick={keep} title="A Live Connector reads the source on a schedule, adds what is new, says when data is late, and holds suspicious changes for your review"><I n="flow" />Keep this updated (Live Connector)</button>}
             {cx.lastError && <p className="ds-pop-err"><I n="alert" />{cx.lastError}</p>}
             <ol className="ds-hist">
               {cx.history.slice(0, 8).map((h, i) => (
