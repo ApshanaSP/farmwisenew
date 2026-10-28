@@ -33,9 +33,9 @@ const KPI_IC: IconName[] = ["table", "clock", "chart", "pin"];
 
 interface Chip { label: string; filters: Filter[] }
 
-export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted, onPinned }: {
+export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted, onPinned, onFindMore }: {
   id: string; c: Console; onRemap: (changes: { key: string; role: Role; label?: string }[]) => void; onRefresh: () => void; onChoose: (candidate: string) => void;
-  onDeleted: () => void; onPinned: () => void;
+  onDeleted: () => void; onPinned: () => void; onFindMore?: (url: string) => void;
 }) {
   const [data, setData] = useState<DatasetData | null>(null);
   // the dashboard's filters, each added by focusing on a mark (a zone, a type, a week); every panel follows them
@@ -128,6 +128,16 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
         <div className="ds-ws-b" key={tab}>
           {tab === "dash" && (
             <div className="ds-dash">
+              {m.rows <= 20 && (
+                <div className="ds-enrich" role="group" aria-label="Make a small dataset more useful">
+                  <span><I n="info" />{m.rows <= 5 ? "A few figures: shown as numbers, not charts." : "A small table: shown sorted, with at most one chart."} Make it more useful:</span>
+                  <button className="ds-ghost" onClick={() => setTab("card")}><I n="clock" />Compare with the last refresh</button>
+                  <button className="ds-ghost" onClick={() => setSeed({ q: "Is there a link with district incidents by zone?", n: Date.now() })}><I n="compare" />Compare with district incidents</button>
+                  {m.source.url && <button className="ds-ghost" onClick={() => onFindMore?.(m.source.url!)}><I n="search" />Find more on this site</button>}
+                  <button className="ds-ghost" disabled title="Needs ward and zone population: the district reference does not hold it yet"><I n="social" />Per 1,000 people (needs population)</button>
+                  <button className="ds-ghost" onClick={() => setSeed({ q: "What should these figures be compared with?", n: Date.now() })}><I n="target" />What should this be compared with?</button>
+                </div>
+              )}
               {chips.length > 0 && (
                 <div className="ds-focus">
                   <I n="target" /><span>Every chart shows</span>

@@ -162,3 +162,8 @@
 .dic .ds-card-fams{display:flex;flex-wrap:wrap;gap:6px}
 .dic .ds-card-fams button{min-height:36px}
 .dic .ds-card-s.wide{grid-column:1 / -1}
+/* the honest ways to make a small dataset more useful */
+.dic .ds-enrich{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border:1px dashed var(--line-3,var(--line));border-radius:10px;font-size:12.5px;color:var(--text-2)}
+.dic .ds-enrich>span{display:flex;align-items:center;gap:6px;flex:1 1 100%}
+.dic .ds-enrich>span .ic{width:14px;height:14px}
+.dic .ds-enrich button{min-height:36px}

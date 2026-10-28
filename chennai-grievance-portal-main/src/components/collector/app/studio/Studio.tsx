@@ -283,7 +283,9 @@ export default function Studio({ c }: { c: Console }) {
         <Dataset key={mode.id} id={mode.id} c={c}
           onRemap={remap(mode.id, current?.name ?? "Dataset")} onRefresh={refresh(mode.id, current?.name ?? "Dataset")} onChoose={choose(mode.id, current?.name ?? "Dataset")}
           onDeleted={() => { load().then((r) => setMode(r?.datasets[0] ? { k: "dataset", id: r.datasets[0].id } : { k: "home" })); }}
-          onPinned={() => load()} />
+          onPinned={() => load()}
+          // the site's home page, explored for its other datasets (the link engine's picker)
+          onFindMore={(u) => { try { addLink({ url: `${new URL(u).origin}/`, name: null, auth: null, every: null }); } catch { /* not a link */ } }} />
       ) : mode.k === "connectors" ? (
         <Connectors c={c} onOpen={(id) => setMode({ k: "dataset", id })} onChanged={() => load()} />
       ) : mode.k === "board" ? (
