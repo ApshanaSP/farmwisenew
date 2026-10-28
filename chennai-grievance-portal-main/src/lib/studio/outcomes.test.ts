@@ -137,6 +137,22 @@ describe("what the outcomes say", () => {
   });
 });
 
+describe("OCR: a picture of a table and a scanned PDF", () => {
+  it("reads 90%+ of the cells right, and says it was read by OCR and how sure it is", async () => {
+    const expected = JSON.parse(fs.readFileSync(path.join(process.cwd(), "scripts", "studio-fixtures", "assets", "table.expected.json"), "utf8")) as { headers: string[]; rows: string[][] };
+    for (const id of ["d-ocr-image", "d-ocr-scan"]) {
+      const r = await resolveLink(FIXTURES.find((f) => f.id === id)!.url, none, { log });
+      const t = r.chosen!.table;
+      expect(t.headers.map((h) => h.toLowerCase())).toEqual(expected.headers.map((h) => h.toLowerCase()));
+      let right = 0, all = 0;
+      expected.rows.forEach((row, i) => row.forEach((v, j) => { all++; if (String(t.rows[i]?.[j] ?? "").trim() === v) right++; }));
+      expect({ id, share: right / all }).toEqual({ id, share: expect.any(Number) });
+      expect(right / all).toBeGreaterThanOrEqual(0.9);
+      expect(t.notes?.join(" ")).toMatch(/Read by OCR.*confidence/);
+    }
+  }, 60_000);
+});
+
 describe("9.2 the picker", () => {
   it("groups a site's 14 files: recommended, one series card, other, not Chennai's, could not read", async () => {
     const r = await resolveLink(FIXTURES.find((f) => f.id === "c-portal")!.url, none, { log });

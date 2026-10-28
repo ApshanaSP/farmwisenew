@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const file = form.get("file");
     if (!(file instanceof File)) return NextResponse.json({ error: "Choose a file." }, { status: 400 });
     if (file.size > MAX_BYTES) return NextResponse.json({ error: "The file is larger than 15 MB." }, { status: 413 });
-    if (!/\.(xlsx|xlsm|xls|ods|csv|tsv|txt|json)$/i.test(file.name)) return NextResponse.json({ error: "Use an Excel (.xlsx, .xls), CSV or JSON file." }, { status: 400 });
+    if (!/\.(xlsx|xlsm|xls|ods|csv|tsv|txt|json|geojson|kml|kmz|xml|zip|pdf|docx|png|jpe?g|tiff?|bmp|webp)$/i.test(file.name)) return NextResponse.json({ error: "Use Excel, CSV, JSON, PDF, Word, KML, a ZIP of these, or a picture of a table." }, { status: 400 });
     const buf = Buffer.from(await file.arrayBuffer());
     const name = String(form.get("name") ?? "").trim().slice(0, 100) || null;
     return stream(async (emit) => {

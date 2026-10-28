@@ -47,7 +47,7 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // LanceDB (Ask District IQ's search index) ships native binaries: Node loads it as is, the bundler leaves it out
   experimental: {
-    serverComponentsExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core"],
+    serverComponentsExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core", "tesseract.js", "tesseract.js-core"],
     // src/instrumentation.ts: the AWS store starts loading when the server starts
     instrumentationHook: true
   },

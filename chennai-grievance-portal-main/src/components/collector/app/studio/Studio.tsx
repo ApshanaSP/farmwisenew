@@ -27,7 +27,7 @@ const StudioMap = dynamic(() => import("./StudioMap"), { ssr: false, loading: ()
 type Mode = { k: "home" } | { k: "run" } | { k: "dataset"; id: string } | { k: "board" };
 interface ListResp { datasets: DatasetCard[]; hidden?: { id: string; name: string }[]; board: { pin: Pin; panel: PanelData; dataset: { id: string; name: string } }[]; samples: SampleInfo[]; ai: { available: boolean; providers: string[]; problem: string | null } }
 
-const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json,.geojson,.kml,.kmz,.xml,.zip,.pdf,.docx";
+const ACCEPT = ".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.json,.geojson,.kml,.kmz,.xml,.zip,.pdf,.docx,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp";
 const KEY = "diq-studio-sel";
 
 export default function Studio({ c }: { c: Console }) {
@@ -212,7 +212,7 @@ export default function Studio({ c }: { c: Console }) {
           <button className={`ds-drop${drag ? " over" : ""}`} onClick={() => fileIn.current?.click()} disabled={busy} aria-label="Choose a file to add">
             <span className="ds-drop-ic"><I n="download" /></span>
             <b>{drag ? "Drop to analyse" : "Drop a file or browse"}</b>
-            <small>Excel · CSV · JSON · up to 15 MB</small>
+            <small>Excel · CSV · PDF · a photo of a table · up to 15 MB</small>
           </button>
           <input ref={fileIn} type="file" accept={ACCEPT} hidden onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ""; }} />
           <form className="ds-linkf" onSubmit={(e) => { e.preventDefault(); addLink(); }}>

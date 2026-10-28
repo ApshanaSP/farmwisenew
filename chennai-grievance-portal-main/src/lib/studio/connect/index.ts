@@ -17,7 +17,7 @@ import { add, discover, isHtml, jsShell, newChecked, scoreTable, type Checked, t
 import { adapterFor } from "@/lib/studio/connect/adapters";
 import { robotsAllow } from "@/lib/studio/connect/robots";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
-import { parseAll, ParseError } from "@/lib/studio/parse";
+import { parseAllAsync, ParseError } from "@/lib/studio/parse";
 import type { AuthInput } from "@/lib/studio/types";
 
 export interface Connected {
@@ -69,7 +69,7 @@ export async function connectLink(url: string, auth: AuthInput, opts: { session?
     if (!isHtml(got.buf, got.contentType)) {
       log(`Received ${(got.buf.length / 1024).toFixed(0)} KB (${got.contentType.split(";")[0] || "a file"}).`);
       let tables;
-      try { tables = parseAll(got.buf, got.name, got.contentType, got.url); } catch (e) { if (e instanceof ParseError) throw fileError(e); throw e; }
+      try { tables = await parseAllAsync(got.buf, got.name, got.contentType, got.url); } catch (e) { if (e instanceof ParseError) throw fileError(e); throw e; }
       const found: Found[] = [];
       for (const t of tables) {
         const feed = t.format === "feed";

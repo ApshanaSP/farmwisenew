@@ -14,7 +14,7 @@ import { renderPanel } from "@/lib/studio/chartlint";
 import { drill } from "@/lib/studio/drill";
 import { computeInsights } from "@/lib/studio/insights";
 import { LINK_VERSION, crossLink } from "@/lib/studio/link";
-import { UserError, parseFile, type Table } from "@/lib/studio/parse";
+import { UserError, parseFileAsync, type Table } from "@/lib/studio/parse";
 import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
 import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
@@ -117,12 +117,14 @@ export async function ingest(inp: IngestInput, emit: Emit): Promise<string> {
   const id = inp.id ?? newId();
   const t0 = Date.now();
   emit({ t: "step", step: "read", state: "run", detail: `Opening ${inp.file}` });
-  const table = withTopics(inp.table ?? parseFile(inp.buf, inp.file, inp.contentType, inp.base ?? inp.url ?? undefined));
+  if (!inp.table && /.(png|jpe?g|tiff?|bmp|webp|pdf)$/i.test(inp.file)) emit({ t: "log", text: "A picture or a PDF: tables in pictures are read with OCR (English and Tamil); this takes a few seconds a page." });
+  const table = withTopics(inp.table ?? await parseFileAsync(inp.buf, inp.file, inp.contentType, inp.base ?? inp.url ?? undefined));
   const source: SourceInfo = { kind: inp.kind, file: inp.file, url: inp.url, sheet: table.sheet, sheets: table.sheets, bytes: inp.buf.length, caption: table.caption, connect: inp.connect ?? null };
   const readLog: StepLog = { step: "read", ms: Date.now() - t0, by: "code", model: null,
     detail: `${rowsCols(table)}${table.sheet ? ` · sheet "${table.sheet}"` : ""}${inp.connect ? ` · ${inp.connect.method === "browser" ? "read in a browser" : "downloaded"}` : ""}` };
   emit({ t: "step", step: "read", state: "done", detail: readLog.detail, by: "code", ms: readLog.ms });
   if (table.caption) emit({ t: "log", text: `Title above the table kept as context: "${table.caption.slice(0, 120)}"` });
+  for (const n of table.notes ?? []) emit({ t: "log", text: n });
   if (table.sheets.length > 1) emit({ t: "log", text: `Workbook has ${table.sheets.length} sheets; read the largest, "${table.sheet}".` });
   if (table.truncated) emit({ t: "log", text: `Only the first ${table.rows.length.toLocaleString("en-IN")} rows were read (${table.truncated.toLocaleString("en-IN")} more in the file).` });
   if (readiness(table).tier === "empty") throw new OutcomeStop(nothingIn(table, inp.file));
@@ -230,7 +232,7 @@ export async function ingestPick(token: string, choice: PickChoice, user: string
       for (const f of s.files.slice(-60)) {
         try {
           const got = await fetchOnce(f.url, null, undefined, 20_000);
-          const t = parseFile(got.buf, got.name, got.contentType, got.url);
+          const t = await parseFileAsync(got.buf, got.name, got.contentType, got.url);
           if (schemaHash(t.headers) === schemaHash(chosen.table.headers)) parts.push({ label: f.date, table: t });
           else log(`${f.name} has other columns: left out.`);
         } catch (e) { log(`${f.name} could not be read: ${(e as Error).message.slice(0, 80)}`); }
@@ -261,13 +263,13 @@ export async function ingestPick(token: string, choice: PickChoice, user: string
 }
 
 /** The table a dataset was read from: its chosen candidate (a link), else its original file read again. */
-function tableOf(meta: DatasetMeta): Table {
+async function tableOf(meta: DatasetMeta): Promise<Table> {
   const cands = meta.source.connect ? getCandidates(meta.id) : [];
   const c = cands.find((f) => f.cand.id === meta.source.connect?.choice) ?? cands[0];
   if (c) return withTopics(c.table);
   const buf = getSource(meta.id);
   if (!buf) throw new UserError("This dataset's original file is no longer here.");
-  return withTopics(parseFile(buf, meta.source.file, "", meta.source.url ?? undefined));
+  return withTopics(await parseFileAsync(buf, meta.source.file, "", meta.source.url ?? undefined));
 }
 const sameHeaders = (t: Table, meta: DatasetMeta) => t.headers.length === meta.profile.length && t.headers.every((h, i) => h === meta.profile[i]?.header);
 
@@ -275,7 +277,7 @@ const sameHeaders = (t: Table, meta: DatasetMeta) => t.headers.length === meta.p
 export async function remap(id: string, changes: { key: string; role: Role; label?: string }[], user: string, emit: Emit): Promise<string> {
   const meta = getMeta(id);
   if (!meta) throw new UserError("This dataset's original file is no longer here.");
-  const table = tableOf(meta);
+  const table = await tableOf(meta);
   emit({ t: "step", step: "read", state: "done", detail: rowsCols(table), by: "code", ms: 0 });
   const prior = respec(meta.spec, meta.profile, changes);
   return run({ id, table, source: meta.source, name: meta.name, user, prior, steps: [], sample: meta.sample, createdAt: meta.createdAt, rules: meta.rules, force: true }, emit);

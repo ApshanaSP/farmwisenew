@@ -11,6 +11,7 @@
  */
 import * as XLSX from "xlsx";
 import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipKind } from "@/lib/studio/formats";
+import { isImage } from "@/lib/studio/ocr";
 import { excelDate, tidy } from "@/lib/studio/values";
 
 export type Cell = string | number | null;
@@ -36,6 +37,10 @@ export const MAX_COLS = 60;
 export class ParseError extends Error {}
 /** A message for the Collector ("This link is already being fetched."): shown as it is, never as an internal failure. */
 export class UserError extends Error {}
+/** A picture of a table (an image, a scanned PDF): parseAllAsync() reads it with OCR (ocr.ts). */
+export class NeedsOcr extends ParseError {
+  constructor(public kind: "image" | "scan", message: string) { super(message); }
+}
 
 /** Read a file's bytes: its main table. `name` decides the format when the bytes do not. */
 export function parseFile(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Table {
@@ -59,6 +64,7 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
   const head = buf.subarray(0, 8);
   const ole = head[0] === 0xd0 && head[1] === 0xcf; // legacy .xls
   if (!buf.length) throw new ParseError("The file is empty.");
+  if (isImage(buf)) throw new NeedsOcr("image", "This is a picture: its table is read with OCR.");
   if (isZip(buf)) {
     const kind = ["xlsx", "xlsm", "ods", "xlsb"].includes(ext) ? "xlsx" : ext === "docx" ? "docx" : zipKind(buf);
     if (kind === "xlsx" || kind === "ods") return excelAll(buf);
@@ -115,7 +121,7 @@ function grids(g: Cell[][][], format: Table["format"], what: string, none: strin
 
 function pdf(buf: Buffer): Table[] {
   const r = pdfTables(buf);
-  if (r.scanned) throw new ParseError(`This PDF is a scan (pictures of pages, ${r.pages} ${r.pages === 1 ? "page" : "pages"}), so its text cannot be read without OCR. Ask the department for the Excel or CSV file.`);
+  if (r.scanned) throw new NeedsOcr("scan", `This PDF is a scan (pictures of pages, ${r.pages} ${r.pages === 1 ? "page" : "pages"}), so its text cannot be read without OCR. Ask the department for the Excel or CSV file.`);
   if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" : "pages"}) but no table in it.`);
   return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers against the original."] }));
 }
@@ -506,4 +512,45 @@ function shapeFrom(headerCells: string[], body: Cell[][], caption: string | null
   const rows = body.slice(0, MAX_ROWS).map((r) => keep.map((c) => r[c] ?? null));
   if (!headers.length) throw new ParseError("No columns were found.");
   return { headers, rows, caption, truncated: Math.max(0, body.length - MAX_ROWS) };
+}
+
+/**
+ * Every table a file holds, reading pictures too: an image, or a scanned PDF page by page, through OCR (ocr.ts,
+ * English and Tamil). The cells OCR was unsure of are listed in the table's notes for the Collector to check.
+ */
+export async function parseAllAsync(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Promise<Table[]> {
+  try {
+    return parseAll(buf, name, contentType, base);
+  } catch (e) {
+    if (!(e instanceof NeedsOcr)) throw e;
+    const { ocrImage, pdfImages } = await import("@/lib/studio/ocr");
+    const pages = e.kind === "image" ? { images: [buf], skipped: 0 } : pdfImages(buf);
+    if (!pages.images.length) throw new ParseError(`This PDF is a scan whose pictures the Studio cannot open (${pages.skipped} in a format OCR does not read). Ask the department for the Excel or CSV file.`);
+    const grid: Cell[][] = [];
+    const low: string[] = [];
+    let conf = 0, words = 0, head: string | null = null;
+    for (const img of pages.images) {
+      const r = await ocrImage(img);
+      conf += r.conf * r.words; words += r.words;
+      low.push(...r.low);
+      // a table that runs over pages repeats its header: kept once
+      for (const row of r.grid) {
+        const k = row.map((c) => String(c ?? "").toLowerCase()).join("|");
+        if (grid.length && k === head) continue;
+        if (!grid.length) head = k;
+        grid.push(row);
+      }
+    }
+    if (grid.length < 2) throw new ParseError(`OCR read ${words.toLocaleString("en-IN")} words in this ${e.kind === "image" ? "picture" : "scan"} but no table in them.`);
+    const t = shape(grid);
+    const mean = words ? Math.round(conf / words) : 0;
+    return [{ ...t, sheet: null, sheets: [], format: e.kind === "image" ? "html" : "pdf", part: e.kind === "image" ? "read from a picture" : `read from ${pages.images.length} scanned ${pages.images.length === 1 ? "page" : "pages"}`,
+      notes: [`Read by OCR (English and Tamil), ${mean}% average confidence: check the numbers against the original.`,
+        ...(low.length ? [`${low.length} ${low.length === 1 ? "cell was" : "cells were"} read with low confidence: ${low.slice(0, 8).join(", ")}${low.length > 8 ? "…" : ""}`] : [])] }];
+  }
+}
+
+export async function parseFileAsync(buf: Buffer, name: string, contentType = "", base = "https://example.invalid/"): Promise<Table> {
+  const all = await parseAllAsync(buf, name, contentType, base);
+  return all.length === 1 ? all[0] : [...all].sort((a, b) => b.rows.length * b.headers.length - a.rows.length * a.headers.length)[0];
 }
