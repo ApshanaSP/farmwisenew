@@ -1,5 +1,7 @@
 # Data Studio masterclass: progress
 
+**Status (28 Oct 2026, end of session 2): all U-items built; see REPORT.md for results and what is left.** Session 2 added OCR, U5 Live Connectors, U4 insights 2.0, U7 data card, U6 families, U8 Ask/brief/export, and the bug hunt fixes. vitest 1,044 passed, tsc clean.
+
 Branch `studio/masterclass` (from `main` at aefa724). Nothing pushed.
 
 ## Baseline (session 1 start, 28 Oct 2026)
