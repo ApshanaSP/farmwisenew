@@ -22,6 +22,7 @@ import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
 import { AlertBar } from "./AlertBar";
 import { RainBand, type RehearsalOpen } from "./rehearsal/RainBand";
+import { DEV_RAIN_API, LIVE_RAIN_API, type RainApi, type RainStart } from "./rehearsal/rainLayer";
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
@@ -55,8 +56,6 @@ import "./overview-map.css";
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
 // Page 5 (Data Studio) loads only when it is opened
 const Studio = dynamic(() => import("./studio/Studio"), { ssr: false, loading: () => <div className="empty" style={{ margin: "auto" }}>Opening the Data Studio…</div> });
-// Rain Rehearsal (the map before the rain) loads only when it is opened
-const RainRehearsal = dynamic(() => import("./rehearsal/RainRehearsal"), { ssr: false });
 
 const PERIOD_KEYS: Period[] = ["daily", "weekly", "monthly", "quarterly"];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
@@ -185,6 +184,8 @@ export interface Console {
   archived: Archived | null;
   closeArchived: () => void;
   showText: (title: string, md: string) => void;
+  /** Rain & flooding on the Overview's map (rehearsal/RainView.tsx): open on a rain or on all rains, or closed */
+  rainView?: { open: RainStart | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null>; api: RainApi };
   /** Ask the Map on the Overview's map: its state, and the actions an answer can lead to */
   mapAsk?: MapAsk;
   mapActions?: { send?: (r: AskResponse, dept: string | null) => void; export?: (r: AskResponse) => void; save?: (r: AskResponse) => void };
@@ -217,8 +218,10 @@ function spotlight(e: React.PointerEvent<HTMLDivElement>) {
   card.style.setProperty("--my", `${e.clientY - r.top}px`);
 }
 
-export default function CollectorApp({ initial, allDepts, user }: {
+export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   initial: OverviewData; allDepts: { code: string; name: string; head: string | null }[]; user: string;
+  /** the dev preview (/dev/collector): the map outlines and Rain & flooding read the dev API (dry-run store, this PC only) */
+  dev?: boolean;
 }) {
   const [dept, setDeptState] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>("daily");
@@ -278,9 +281,19 @@ export default function CollectorApp({ initial, allDepts, user }: {
     return n;
   });
   const [palette, setPalette] = useState(false);
-  // Rain Rehearsal: open over the page (from the rain band, the palette or Ask the Map)
-  const [rehearsal, setRehearsal] = useState<RehearsalOpen | null>(null);
-  const openRehearsal = useCallback((o: RehearsalOpen) => setRehearsal(o), []);
+  // Rain & flooding, on the Overview's map (from the top bar, the rain band, the palette or Ask the Map): a question
+  // about a past rain opens on it; "how did we do" opens on the newest
+  const [rain, setRain] = useState<RainStart | null>(null);
+  const rainEsc = useRef<(() => boolean) | null>(null);
+  const openRain = useCallback((o: RehearsalOpen) => {
+    setRain((x) => ({ rain: o.replay ?? (o.stop === "check" || o.stop === "rain" || o.stop === "learn" ? "latest" : null), seq: (x?.seq ?? 0) + 1 }));
+    setPageState("overview");
+  }, []);
+  // the dev preview opens on it with ?rain=1 (and on a rain with &replay=rain-YYYY-MM-DD)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (dev && p.get("rain") === "1") openRain({ replay: p.get("replay"), manual: false });
+  }, [dev, openRain]);
   // Ask the Map: one conversation per tab, on the Overview's map
   const mapCtx = useRef<{ zone: number | null; taluk: string | null }>({ zone: null, taluk: null });
   mapCtx.current = { zone, taluk };
@@ -313,7 +326,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
   }, []);
 
   useEffect(() => {
-    fetch("/api/collector/geo").then((r) => (r.ok ? r.json() : null)).then((g) => g && setGeo(g)).catch(() => {});
+    fetch(dev ? "/api/rehearsal/dev?kind=geo" : "/api/collector/geo").then((r) => (r.ok ? r.json() : null)).then((g) => g && setGeo(g)).catch(() => {});
   }, []);
 
   const toast = useCallback((msg: string, kind: "ok" | "alert" = "ok", act?: Toast["act"]) => {
@@ -597,6 +610,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
     openWorkspace: () => setModal({ kind: "workspace", title: "Workspaces" }),
     saveWorkspace, openSavedWorkspace, archived, closeArchived: () => setArchived(null),
     showText: (title, md) => setModal({ kind: "text", title, md }),
+    rainView: { open: rain, close: () => setRain(null), esc: rainEsc, api: dev ? DEV_RAIN_API : LIVE_RAIN_API },
     mapAsk,
     askOnMap: (q) => {
       closeAll();
@@ -623,6 +637,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
       if (e.key === "Escape") {
         // the assistant sits above everything else, so it closes first
         if (palette) setPalette(false);
+        // Rain & flooding goes back one level (a card, a zone, a rain), then closes
+        else if (!ask && !inc && !modal && rain && page === "overview") { if (!rainEsc.current?.()) setRain(null); }
         // the grown map shrinks back last, with its answer still drawn
         else if (!ask && !inc && !modal && mapAsk.grown && page === "overview") mapAsk.setGrown(false);
         else if (ask) setAsk(false);
@@ -641,7 +657,10 @@ export default function CollectorApp({ initial, allDepts, user }: {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inc, modal, ask, palette, closeAll, page, pages, mapAsk.grown]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inc, modal, ask, palette, closeAll, page, pages, mapAsk.grown, rain]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the grown map shows one thing: Rain & flooding or Ask the Map, whichever was opened last
+  useEffect(() => { if (rain && mapAsk.grown) mapAsk.setGrown(false); }, [rain]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (mapAsk.grown) setRain(null); }, [mapAsk.grown]);
 
   const bellN = bellRead ? 0 : ov.bell.length;
   // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live
@@ -678,8 +697,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
-    { g: "Actions", ic: "cloud", l: "Rain rehearsal (மழை ஒத்திகை)", s: "Where heavy rain will hit first, who loses quick help, and the jobs to send before it",
-      run: () => setRehearsal({ replay: null, manual: false }) },
+    { g: "Actions", ic: "cloud", l: "Rain & flooding (மழை வெள்ளம்)", s: "Where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one",
+      run: () => openRain({ replay: null, manual: false }) },
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
       run: () => { setPage("overview"); mapAsk.setGrown(true); } },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
@@ -714,7 +733,7 @@ export default function CollectorApp({ initial, allDepts, user }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${mapAsk.grown && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
@@ -726,9 +745,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
           <span className="tspace" />
-          {/* Rain Rehearsal is always one click away (the rain band appears only when a warning is out) */}
-          <button className={`rr-top${rehearsal ? " on" : ""}`} onClick={() => setRehearsal(rehearsal ? null : { replay: null, manual: false })}
-            title="Rain rehearsal: where heavy rain will hit first, who loses quick help, and the jobs to send before it" aria-pressed={!!rehearsal}>
+          {/* Rain & flooding is always one click away (the rain band appears only when a warning is out) */}
+          <button className={`rr-top${rain && page === "overview" ? " on" : ""}`} onClick={() => (rain && page === "overview" ? setRain(null) : openRain({ replay: null, manual: false }))}
+            title="Rain & flooding: where water stood in past heavy rains, and the jobs to send before the next one" aria-pressed={!!rain && page === "overview"}>
             <I n="cloud" /><span>Rain</span>
           </button>
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
@@ -769,12 +788,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
         <div className="body">
           {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys (on every page) */}
           <AlertBar now={ov.now} />
-          {/* heavy rain near: the rain band, with its countdown and the jobs done; opens Rain Rehearsal */}
-          <RainBand onOpen={openRehearsal} hidden={!!rehearsal} />
-          {rehearsal && (
-            <RainRehearsal key={`${rehearsal.replay ?? "now"}|${rehearsal.manual}`} geo={geo} init={rehearsal} onClose={() => setRehearsal(null)}
-              onOpenIncident={(id) => c.openInc(id)} toast={(m, k) => toast(m, k ?? "ok")} />
-          )}
+          {/* heavy rain near: the rain band, with its countdown and the jobs done; opens Rain & flooding on the map */}
+          <RainBand onOpen={openRain} hidden={!!rain && page === "overview"} />
           {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
           <section className={`band${page === "overview" ? " hero" : ""}`}>
             <div className="band-row">

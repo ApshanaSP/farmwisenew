@@ -1,0 +1,178 @@
+/* Rain & flooding on the Overview map (RainView.tsx): the panel over the map's left side (Ask the Map's .amp box),
+   its lists and cards, and the map key. Rain blue for flood streets, red and amber for reports. Console tokens, so
+   light and dark both work. */
+
+.dic .rv{--rv:#0369A1;--rv-soft:#E0F2FE;--rv-line:#BAE6FD}
+.dic[data-theme="dark"] .rv,.dic[data-theme="dark"] .rv-leg{--rv:#7DD3FC;--rv-soft:#0C2A3D;--rv-line:#0369A1}
+
+/* head and the warning line */
+.dic .rv-h{display:flex;align-items:flex-start;gap:10px;padding:12px 12px 8px}
+.dic .rv-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--rv-soft);color:var(--rv)}
+.dic .rv-ic svg{width:18px;height:18px}
+.dic .rv-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.dic .rv-t b{font:700 15px/1.25 var(--font-ui)}
+.dic .rv-t small{color:var(--text-3);font-size:11.5px;line-height:1.35}
+.dic .rv-now{margin:0 12px 6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 10px;border-radius:10px;background:var(--surface-2);font-size:12px;color:var(--text-2)}
+.dic .rv-now > svg{width:14px;height:14px;flex:none;color:var(--ok)}
+.dic .rv-now span{flex:1;min-width:0}
+.dic .rv-now em{font-style:normal;display:inline-flex;align-items:center;gap:4px;color:var(--text-3);white-space:nowrap}
+.dic .rv-now em svg{width:12px;height:12px;color:var(--rv)}
+.dic .rv-now.lv-watch,.dic .rv-now.lv-rehearse{background:var(--high-soft);color:var(--text)}
+.dic .rv-now.lv-act{background:var(--critical-soft);color:var(--text)}
+.dic .rv-now.lv-watch > svg,.dic .rv-now.lv-rehearse > svg{color:var(--high)}
+.dic .rv-now.lv-act > svg{color:var(--critical)}
+
+/* the body scrolls; sections are spaced evenly */
+.dic .rv-b{flex:1;min-height:0;overflow:auto;padding:4px 12px 14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+.dic .rv-sec{margin:6px 0 -2px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font:700 11px var(--font-ui);text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)}
+.dic .rv-sec small{font:500 11px var(--font-ui);text-transform:none;letter-spacing:0;color:var(--text-4)}
+.dic .rv-muted{margin:0;color:var(--text-3)}
+.dic .rv-wait{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center;color:var(--text-2)}
+.dic .rv-wait small{color:var(--text-3)}
+.dic .rv-wait svg{width:20px;height:20px;color:var(--critical)}
+.dic .rv-spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--line-3);border-top-color:var(--rv);animation:rv-spin .8s linear infinite}
+@keyframes rv-spin{to{transform:rotate(360deg)}}
+
+/* three numbers */
+.dic .rv-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dic .rv-kpis > div{padding:9px 10px;border-radius:11px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.dic .rv-kpis b{display:block;font:700 22px/1.1 var(--font-num);color:var(--rv);font-variant-numeric:tabular-nums}
+.dic .rv-kpis span{display:block;margin-top:2px;font-size:11px;line-height:1.3;color:var(--text-2)}
+.dic .rv-insight{margin:0;display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border-radius:11px;background:var(--rv-soft);border:1px solid var(--rv-line);font-size:12.5px;line-height:1.45;color:var(--text)}
+.dic .rv-insight > svg{flex:none;width:15px;height:15px;margin-top:2px;color:var(--rv)}
+.dic .rv-insight > span{flex:1;min-width:0}
+
+/* the rains: date, a bar of reports, the zone with the most */
+.dic .rv-rains,.dic .rv-zones,.dic .rv-streets,.dic .rv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .rv-rains button{width:100%;display:grid;grid-template-columns:92px minmax(0,1fr) 16px;align-items:center;gap:10px;padding:8px 10px;border:0;border-radius:11px;background:var(--surface);
+  box-shadow:0 0 0 1px var(--line);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:box-shadow .15s,background .15s}
+.dic .rv-rains button:hover{box-shadow:0 0 0 1.5px var(--rv);background:var(--surface-2)}
+.dic .rv-rains button > svg{width:15px;height:15px;color:var(--text-4)}
+.dic .rv-date{display:flex;flex-direction:column;min-width:0}
+.dic .rv-date b{font:700 13px/1.25 var(--font-ui);white-space:nowrap}
+.dic .rv-date small{font-size:11px;color:var(--text-3);white-space:nowrap}
+.dic .rv-mid{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dic .rv-mid small{font-size:11.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .rv-bar{display:block;height:7px;border-radius:9px;background:var(--surface-3);overflow:hidden}
+.dic .rv-bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#38BDF8,var(--rv))}
+
+/* zones: name, bar, count */
+.dic .rv-zones button{width:100%;display:grid;grid-template-columns:minmax(0,118px) minmax(0,1fr) 40px;align-items:center;gap:10px;padding:5px 8px;border:0;border-radius:9px;background:transparent;
+  color:var(--text);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+.dic .rv-zones button:hover:not(:disabled){background:var(--surface-2)}
+.dic .rv-zones button.on{background:var(--rv-soft);box-shadow:0 0 0 1px var(--rv-line)}
+.dic .rv-zones button:disabled{cursor:default;color:var(--text-3)}
+.dic .rv-zones button > span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .rv-zones b{text-align:right;font:700 12.5px var(--font-num);font-variant-numeric:tabular-nums}
+
+/* streets: name, and a dot per rain */
+.dic .rv-streets button{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 10px;border:0;border-radius:11px;background:var(--surface);
+  box-shadow:0 0 0 1px var(--line);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.dic .rv-streets button:hover{box-shadow:0 0 0 1.5px var(--rv);background:var(--surface-2)}
+.dic .rv-sn{display:flex;flex-direction:column;min-width:0}
+.dic .rv-sn b{font-size:12.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .rv-sn small{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .rv-often-s{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.dic .rv-often-s em{font-style:normal;font:600 10.5px var(--font-ui);color:var(--text-3)}
+.dic .rv-dots{display:inline-flex;gap:3px;align-items:center}
+.dic .rv-dots i,.dic .rv-dots button{display:block;width:9px;height:9px;padding:0;border-radius:50%;border:1.5px solid var(--line-3);background:transparent}
+.dic .rv-dots .on{background:var(--rv);border-color:var(--rv)}
+.dic .rv-dots .now{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px #F59E0B}
+.dic .rv-dots button{width:13px;height:13px;cursor:pointer}
+.dic .rv-dots button:hover{transform:scale(1.15)}
+
+/* one rain: back and the rains either side, the title, chips, the description */
+.dic .rv-nav{display:flex;align-items:center;gap:4px}
+.dic .rv-nav .tspace{flex:1}
+.dic .rv-nav button,.dic .rv-back{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border-radius:999px;border:1px solid var(--line-3);background:var(--surface);
+  color:var(--text-2);font:600 12px var(--font-ui);cursor:pointer;white-space:nowrap}
+.dic .rv-nav button:first-child,.dic .rv-back{color:var(--rv);border-color:var(--rv-line)}
+.dic .rv-nav button:hover:not(:disabled),.dic .rv-back:hover{border-color:var(--rv);color:var(--text)}
+.dic .rv-nav button:disabled{opacity:.45;cursor:default}
+.dic .rv-nav svg,.dic .rv-back svg{width:13px;height:13px}
+.dic .rv-back{align-self:flex-start}
+.dic .rv-rh h3{margin:2px 0 6px;font:700 18px/1.2 var(--font-ui)}
+.dic .rv-chips{display:flex;flex-wrap:wrap;gap:5px}
+.dic .rv-chips span{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--surface-2);font-size:11.5px;font-weight:600;color:var(--text-2)}
+.dic .rv-chips svg{width:12px;height:12px;color:var(--rv)}
+.dic .rv-desc{margin:0;padding:10px 12px;border-radius:11px;background:var(--surface);box-shadow:0 0 0 1px var(--line);line-height:1.55;font-size:12.5px;color:var(--text-2)}
+.dic .rv-desc b{color:var(--text)}
+
+/* the jobs */
+.dic .rv-act{padding:11px 12px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--rv-line);display:flex;flex-direction:column;gap:7px}
+.dic .rv-act.big{background:linear-gradient(180deg,var(--rv-soft),var(--surface) 70%)}
+.dic .rv-act h4{margin:0;display:flex;align-items:center;gap:6px;font:700 13px var(--font-ui);color:var(--text)}
+.dic .rv-act h4 svg{width:15px;height:15px;color:var(--rv)}
+.dic .rv-act p{margin:0;font-size:12.5px;color:var(--text-2)}
+.dic .rv-act small{font-size:11px;color:var(--text-3);text-align:center}
+.dic .rv-kinds{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.dic .rv-kinds li{display:flex;align-items:baseline;gap:6px;padding:5px 8px;border-radius:8px;background:var(--surface-2);font-size:11.5px;line-height:1.3;color:var(--text-2)}
+.dic .rv-kinds b{font:700 13px var(--font-num);color:var(--text)}
+.dic .rv-go{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;border:0;border-radius:10px;background:var(--rv);color:#fff;font:700 13px var(--font-ui);cursor:pointer}
+.dic[data-theme="dark"] .rv-go{background:#0284C7}
+.dic .rv-go:hover{filter:brightness(1.08)}
+.dic .rv-go svg{width:15px;height:15px}
+
+/* lists and cards */
+.dic .rv-list button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:7px 10px;border:0;border-radius:10px;
+  background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.dic .rv-list button:hover{box-shadow:0 0 0 1.5px var(--rv)}
+.dic .rv-list i{grid-row:span 2;width:9px;height:9px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px var(--line-3)}
+.dic .rv-list i.rep{background:#DC2626}.dic .rv-list i.new{background:#F59E0B}
+.dic .rv-list b{grid-column:2;font-size:12.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dic .rv-list button:not(:has(i)) b{grid-column:1 / span 2}
+.dic .rv-list small{grid-column:2;font-size:11px;color:var(--text-3)}
+.dic .rv-list button:not(:has(i)) small{grid-column:1 / span 2}
+.dic .rv-more{align-self:center;border:0;background:none;color:var(--rv);font:600 12px var(--font-ui);cursor:pointer;padding:4px 8px}
+.dic .rv-card{display:flex;flex-direction:column;gap:9px;animation:amp-in .2s both}
+.dic .rv-card-h{display:flex;gap:10px;align-items:flex-start}
+.dic .rv-card-h > span:last-child{flex:1;min-width:0;display:flex;flex-direction:column}
+.dic .rv-card-h b{font:700 15px/1.3 var(--font-ui)}
+.dic .rv-card-h small{color:var(--text-3);font-size:11.5px}
+.dic .rv-cic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.dic .rv-cic svg{width:16px;height:16px}
+.dic .rv-cic.st{background:#1D4ED8}.dic .rv-cic.rep{background:#DC2626}.dic .rv-cic.new{background:#D97706}
+.dic .rv-often{display:flex;flex-direction:column;gap:6px;padding:9px 11px;border-radius:11px;background:var(--rv-soft);border:1px solid var(--rv-line)}
+.dic .rv-often b{font-size:13px}
+.dic .rv-facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .rv-facts li{padding:7px 10px;border-radius:9px;background:var(--surface-2);font-size:12.5px;line-height:1.4}
+.dic .rv-facts li.warn{background:var(--high-soft)}
+.dic .rv-inl{all:unset;cursor:pointer;color:var(--rv);font-weight:700;border-bottom:1px dashed currentColor}
+.dic .rv-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:10px;border:1px solid var(--line-3);background:var(--surface);
+  color:var(--text);font:600 12.5px var(--font-ui);cursor:pointer}
+.dic .rv-btn:hover{border-color:var(--rv)}
+.dic .rv-btn svg{width:14px;height:14px}
+
+/* the map's key, bottom left of the free map (beside the panel), clear of the console's Ask button and the scale bar */
+.dic .rv-leg{position:absolute;left:calc(12px + clamp(380px,34%,460px) + 12px);bottom:14px;z-index:560;padding:8px 11px;border-radius:12px;background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 0 0 1px var(--line-3),0 10px 24px -12px rgba(0,0,0,.4);font-size:11.5px;color:var(--text-2)}
+.dic .rv-leg b{display:flex;align-items:center;gap:5px;margin-bottom:5px;font:700 11.5px var(--font-ui);color:var(--text)}
+.dic .rv-leg b svg{width:12px;height:12px;color:#0369A1}
+.dic .rv-leg ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.dic .rv-leg li{display:flex;align-items:center;gap:8px}
+.dic .rv-leg li i{flex:none;display:inline-block;width:20px;border-radius:4px}
+.dic .rv-leg li i.l-3,.dic .rv-leg li i.l-2,.dic .rv-leg li i.l-1,.dic .rv-leg li i.l-0{border-radius:50%;margin:0 calc((20px - var(--d)) / 2);width:var(--d);height:var(--d)}
+.dic .rv-leg .l-3{--d:16px;background:rgba(30,64,175,.8);box-shadow:0 0 0 1px #fff}
+.dic .rv-leg .l-2{--d:13px;background:rgba(37,99,235,.65);box-shadow:0 0 0 1px #fff}
+.dic .rv-leg .l-1{--d:10px;background:rgba(96,165,250,.55)}
+.dic .rv-leg .l-0{--d:6px;background:rgba(148,163,184,.6)}
+.dic .rv-leg small{display:block;margin-top:5px;color:var(--text-3);font-size:10.5px}
+.dic .rv-leg .d-rep,.dic .rv-leg .d-new{width:10px;height:10px;margin:0 5px;border-radius:50%;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px rgba(0,0,0,.15)}
+.dic .rv-leg .d-rep{background:#DC2626}.dic .rv-leg .d-new{background:#F59E0B}
+
+/* the map while it is shown: a calm street map (paler, less colour), no zone heat, zone names in dark ink */
+.dic .map-wrap .rain-on .leaflet-tile-pane,.dic[data-theme="light"] .map-wrap .rain-on .leaflet-tile-pane{filter:saturate(.3) brightness(1.05) contrast(.92)}
+.dic[data-theme="dark"] .map-wrap .rain-on .leaflet-tile-pane,:root[data-theme="dark"] .dic .map-wrap .rain-on .leaflet-tile-pane{filter:invert(.92) hue-rotate(180deg) brightness(.85) contrast(.85) saturate(.3)}
+.dic .rain-on path.wpoly{fill-opacity:0!important}
+.dic:not([data-theme="dark"]) .rain-on .zlbl{color:#334155;text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px #fff}
+
+/* the send sheet opens beside the panel, not over it */
+.dic .map-wrap > .rr-sheet{left:auto;z-index:600;bottom:72px}
+@media (max-width:767px){
+  .dic .rv-leg{display:none}
+  .dic .rv-kpis b{font-size:19px}
+  /* phone: the panel is a bottom sheet under half the screen, so the map stays in sight above it */
+  .dic .amp.rv.sheet{height:46svh}
+  .dic .rv-h{padding:10px 12px 6px}
+  .dic .rv-t small{display:none}
+}

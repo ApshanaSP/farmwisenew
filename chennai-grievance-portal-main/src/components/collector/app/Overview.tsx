@@ -18,6 +18,11 @@ import { useState } from "react";
 import { AttentionCard } from "./Attention";
 import AskOverlay from "./askmap/AskOverlay";
 import { useMapChrome } from "./askmap/Chrome";
+import dynamic from "next/dynamic";
+import type { RainLayer } from "./rehearsal/rainLayer";
+
+// Rain & flooding loads only when it is opened (the top bar's Rain button, the rain band, Ask the Map)
+const RainView = dynamic(() => import("./rehearsal/RainView"), { ssr: false });
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
 
 // =================================================================== page 1 ==
@@ -76,6 +81,9 @@ export function HeroBody({ d, c }: { d: OverviewData; c: Console }) {
 export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const env = useEnv(d, c.geo, c);
   const chrome = useMapChrome(c.mapAsk ?? null);
+  // Rain & flooding: the map grows, and draws the rain view's streets and reports instead of the console's pins
+  const rv = c.rainView?.open ? c.rainView : null;
+  const [rainLayer, setRainLayer] = useState<RainLayer | null>(null);
   const L = c.layout;
   let ix = 4;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
@@ -120,9 +128,14 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                   mode={c.mapMode} taluk={c.taluk} focus={c.focus}
                   onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)} onPin={(id) => c.openInc(id)} zoneTip={c.zoneTip}
                   onStation={(st) => { c.setEnvSel(st.kind, st.id); c.setPage("environment"); c.toast(`${st.name} selected on the Environment page.`); }}
-                  ask={c.mapAsk} grown={!!c.mapAsk?.grown} extraTools={c.mapAsk?.grown ? chrome.tools : undefined} base={chrome.base} overlays={chrome.overlays}
-                  drawCircle={chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openInc(id)} heat={chrome.heat} />
-                {c.mapAsk && (
+                  ask={rv ? null : c.mapAsk} grown={!!rv || !!c.mapAsk?.grown} extraTools={!rv && c.mapAsk?.grown ? chrome.tools : undefined}
+                  base={rv ? "streets" : chrome.base} overlays={rv ? undefined : chrome.overlays}
+                  drawCircle={!rv && chrome.drawCircle} onDrawn={() => chrome.setDrawCircle(false)} onAskOpen={(id) => c.openInc(id)} heat={!rv && chrome.heat}
+                  rain={rv ? rainLayer : null} />
+                {rv ? (
+                  <RainView key={rv.open!.seq} geo={c.geo} api={rv.api} start={rv.open!} onClose={rv.close} onLayer={setRainLayer}
+                    onOpenIncident={(id) => c.openInc(id)} toast={c.toast} escRef={rv.esc} />
+                ) : c.mapAsk && (
                   <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => c.openInc(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays} />
                 )}
                 {c.mapMode === "zones"

@@ -2,8 +2,8 @@
 /**
  * The rain band: one slim line at the top of every page when IMD, the Chennai Flood Monitor or a reservoir says heavy
  * rain is near (rehearsal trigger, lib/rehearsal/trigger.ts), with a countdown and the readiness of the jobs sent. One
- * button opens the rehearsal. Quiet when there is nothing to say. Also listens for "diq:rehearsal" (Ask the Map, the
- * palette) to open the rehearsal from anywhere.
+ * button opens Rain & flooding on the Overview's map. Quiet when there is nothing to say. Also listens for
+ * "diq:rehearsal" (Ask the Map) to open it from a question.
  */
 import { useEffect, useState } from "react";
 import { I } from "../icons";
@@ -40,7 +40,7 @@ export function RainBand({ onOpen, hidden }: { onOpen: (o: RehearsalOpen) => voi
       {sent > 0 && <span className="rr-band-ready" title="Before-rain jobs done"><I n="checkc" />Ready {d.counts.done} / {sent}</span>}
       <span className="tspace" />
       <span className="rr-band-n" title="Streets that flooded in past rains">{d.counts.likely} likely flood streets</span>
-      <button className="rr-band-go" onClick={() => onOpen({ replay: null, manual: false })}><I n="play" />Rehearse</button>
+      <button className="rr-band-go" onClick={() => onOpen({ replay: null, manual: false })}><I n="map" />Show flood streets</button>
     </div>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 /**
- * Send tasks: the rehearsal plan by department. Step 1, tick the jobs (all ticked, already-sent ones shown as sent);
+ * Send jobs: the rehearsal plan by department. Step 1, tick the jobs (all ticked, already-sent ones shown as sent);
  * step 2, one draft email per department, read and edited by the Collector, then Approve and send. The server re-makes
  * the plan itself and never trusts this list; email goes out under the console's safety rule (sandbox by default).
  */
 import { useMemo, useState } from "react";
 import { I } from "../icons";
 import type { RehearsalState, RJob } from "@/lib/rehearsal/types";
-import type { Lang } from "./words";
+type Lang = "en" | "ta";
 
 interface Draft { dept: string; deptName: string; keys: string[]; subject: string; body: string; to: { name: string; email: string | null } | null; delivery: { mode: string; note: string }; jobs: { key: string; en: string; due: string | null }[] }
 
@@ -49,9 +49,9 @@ export function PlanSheet({ d, lang, manual, planUrl, onClose, onSent, onShow }:
   };
 
   return (
-    <div className="rr-sheet" role="dialog" aria-label="Send tasks">
+    <div className="rr-sheet" role="dialog" aria-label="Send jobs">
       <div className="rr-sheet-h">
-        <b><I n="send" />{drafts ? "Read, edit and approve" : "Send tasks"}</b>
+        <b><I n="send" />{drafts ? "Read, edit and approve" : "Send jobs"}</b>
         <span>{drafts ? `${drafts.length} ${drafts.length === 1 ? "email" : "emails"}, one per department. Nothing is sent until you approve.` : `${tick.size} of ${open.length} jobs ticked · ${byDept.length} departments`}</span>
         <button className="rr-x" onClick={onClose} aria-label="Close"><I n="x" /></button>
       </div>

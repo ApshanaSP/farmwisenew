@@ -90,6 +90,16 @@ export interface RRain { id: string; name: string; district: string; at: string 
 
 export interface RReport { id: string; lat: number; lon: number; first: string; title: string; place: string | null; street: string | null; missed: boolean }
 
+/** one past heavy rain and its flooding reports, each tied to the flood street it stood on (null: a place with no flood street) */
+export interface PastRain {
+  id: string;
+  start: string;
+  end: string;
+  maxMm: number | null;
+  sources: string[];
+  reports: { id: string; lat: number; lon: number; title: string; place: string | null; first: string; ward: number | null; open: boolean; street: string | null }[];
+}
+
 export interface RBacktest {
   event: { id: string; start: string; end: string; sources: string[]; maxMm: number | null };
   asOf: string;

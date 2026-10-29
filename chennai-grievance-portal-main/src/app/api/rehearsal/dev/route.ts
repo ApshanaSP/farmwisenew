@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { facilityReach, planFor, rehearsalState, routeBetween, RehearsalUnavailable } from "@/lib/rehearsal/engine";
+import { facilityReach, pastRains, planFor, rehearsalState, routeBetween, RehearsalUnavailable } from "@/lib/rehearsal/engine";
 import { draftDept, markDone, readTasks, sendDept } from "@/lib/rehearsal/tasks";
 import { mapGeo } from "@/lib/collector/geo";
 
@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       case "reach": return NextResponse.json(await facilityReach(String(p.get("id")), o));
       case "tasks": return NextResponse.json({ dept: p.get("dept"), tasks: await readTasks({ dept: String(p.get("dept")) }) });
       case "geo": return NextResponse.json(await mapGeo());
+      case "rains": return NextResponse.json(await pastRains());
       default: return NextResponse.json(await rehearsalState(o));
     }
   } catch (e) {

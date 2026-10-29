@@ -9,6 +9,7 @@ import type { MapAsk } from "./askmap/useMapAsk";
 import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
 import { hardenLeaflet } from "./askmap/leafletSafe";
+import type { RainLayer } from "./rehearsal/rainLayer";
 import "./askmap/askmap.css";
 
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
@@ -60,6 +61,8 @@ interface Props {
   onDrawn?: () => void;
   /** an answer pin clicked twice: open the incident */
   onAskOpen?: (id: string) => void;
+  /** Rain & flooding (rehearsal/RainView.tsx): its streets and reports, drawn instead of the console's pins */
+  rain?: RainLayer | null;
 }
 
 /** zone shading: sea cyan, warming to coral and red where the most incidents were reported */
@@ -99,6 +102,10 @@ interface State {
   /** the camera is moving the map (not the user) */
   prog: boolean;
   follow: number | null;
+  /** Rain & flooding: its streets and report dots, in their own panes above the zones */
+  rain: Leaflet.LayerGroup;
+  rainLines: Leaflet.Renderer;
+  rainDots: Leaflet.Renderer;
 }
 
 /** Satellite map of the district: ward heat or taluk colours, zone outlines, incident pins and stations. */
@@ -162,12 +169,15 @@ export default function SatMap(props: Props) {
       const wards = geo.wards.map((w) => {
         const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.6, opacity: 0.35, fillOpacity: 0, className: "wpoly" })
           .on("click", () => {
+            // Rain & flooding: the streets and reports answer clicks; a ward does not filter the console
+            if (cb.current.rain) return;
             // grown for Ask the Map, a ward click asks "What is happening here?"
             if (cb.current.grown && cb.current.ask && !cb.current.drawCircle) { cb.current.ask.draw({ ward: w.ward }); return; }
             if (cb.current.mode === "taluks") { if (w.taluk) cb.current.onTaluk(w.taluk); }
             else cb.current.onZone(w.zone);
           })
-          .bindTooltip(() => cb.current.mode === "taluks"
+          .bindTooltip(() => cb.current.rain ? `<b>Ward ${w.ward}</b><span style="opacity:.7">${esc(geo.zones.find((z) => z.zone === w.zone)?.name ?? "")}</span>`
+            : cb.current.mode === "taluks"
             ? `<b>${esc(talukName.get(w.taluk ?? "") ?? "Taluk not known")} taluk</b><span style="opacity:.7">Ward ${w.ward} · click to filter to this taluk</span>`
             : cb.current.zoneTip(w.zone) + `<span style="opacity:.7">Ward ${w.ward}</span>`,
           { sticky: true, className: "dtip", direction: "top", offset: [0, -10] })
@@ -195,6 +205,9 @@ export default function SatMap(props: Props) {
       const district = L.latLngBounds([]);
       zoneBounds.forEach((b) => district.extend(b));
       map.fitBounds(district, { padding: [8, 8] });
+      // Rain & flooding: streets over the zones, report dots over the pins
+      map.createPane("rainLines").style.zIndex = "450";
+      map.createPane("rainDots").style.zIndex = "640";
 
       st.current = {
         L, map, wards, zoneLabels, talukLabels, outlines, zoneBounds, talukBounds, district, declutter,
@@ -203,7 +216,8 @@ export default function SatMap(props: Props) {
         stations: L.layerGroup().addTo(map),
         added: L.layerGroup().addTo(map),
         focus: L.layerGroup().addTo(map),
-        answer: createAnswerLayers(L, map), streets, sat, overlay: L.layerGroup().addTo(map), scale: null, prog: false, follow: null
+        answer: createAnswerLayers(L, map), streets, sat, overlay: L.layerGroup().addTo(map), scale: null, prog: false, follow: null,
+        rain: L.layerGroup().addTo(map), rainLines: L.svg({ pane: "rainLines" }), rainDots: L.svg({ pane: "rainDots" })
       };
       // the user's hand wins: a drag, a wheel or a pinch while the camera flies stops it, and it stays put
       const took = () => {
@@ -230,7 +244,7 @@ export default function SatMap(props: Props) {
       ro = new ResizeObserver(() => {
         map.invalidateSize();
         const p = cb.current;
-        if (!moved && !p.ask?.resp && p.zone == null && !p.taluk && !p.focus) map.fitBounds(district, { padding: [8, 8], animate: false });
+        if (!moved && !p.ask?.resp && !p.rain && p.zone == null && !p.taluk && !p.focus) map.fitBounds(district, { padding: [8, 8], animate: false });
       });
       ro.observe(el.current);
       setReady((n) => n + 1);
@@ -547,6 +561,76 @@ export default function SatMap(props: Props) {
     }
     if (props.overlays?.some((o) => o.id !== "news" && !liveKind(o.id))) s.map.attributionControl.addAttribution("© OpenStreetMap contributors (ODbL)");
   }, [ready, props.overlays]);
+  // ---- Rain & flooding: the console's pins and stations step aside; the base map steps back (rain-on in askmap.css)
+  const rainOn = !!props.rain;
+  useEffect(() => {
+    const s = st.current;
+    if (!s) return;
+    for (const g of [s.pins, s.stations, s.added]) { if (rainOn) s.map.removeLayer(g); else if (!s.map.hasLayer(g)) g.addTo(s.map); }
+    el.current?.classList.toggle("rain-on", rainOn);
+    if (!rainOn) s.rain.clearLayers();
+  }, [ready, rainOn]);
+  // its streets (stronger = flooded in more rains, or under water in the chosen rain) and its report dots. Over the
+  // district a street is a soft spot (a street is too short to see as a line there); from street level, its road
+  // itself, with a white casing; widths grow with the zoom
+  useEffect(() => {
+    const s = st.current;
+    const r = props.rain;
+    if (!s) return;
+    s.rain.clearLayers();
+    if (!r) return;
+    const L = s.L;
+    const zoom = s.map.getZoom();
+    const zf = Math.max(0.75, Math.min(2.2, 0.75 + (zoom - 11) * 0.32));
+    const W = [1.4, 2.2, 3.2, 4.4], C = ["#94A3B8", "#60A5FA", "#2563EB", "#1E40AF"], O = [0.5, 0.85, 0.95, 1];
+    const pick = (kind: "street" | "report", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
+    const selStreet = r.sel?.kind === "street" ? r.streets.find((x) => x.key === r.sel!.id) : null;
+    const spots = zoom < 13.5;
+    const R = [2.5, 5, 7, 9], SO = [0.35, 0.45, 0.6, 0.75];
+    for (const lvl of [0, 1, 2, 3] as const) for (const x of r.streets) {
+      if (x.level !== lvl || x === selStreet) continue;
+      if (spots) {
+        // the faint streets of a rain view wait for a closer zoom
+        if (lvl === 0) continue;
+        L.circleMarker(x.at, { pane: "rainLines", renderer: s.rainLines, radius: R[lvl] * (0.85 + (zoom - 11) * 0.12), stroke: lvl >= 2, color: "#fff", weight: 1, fillColor: C[lvl], fillOpacity: SO[lvl] })
+          .bindTooltip(x.tip, { className: "dtip", direction: "top" }).on("click", pick("street", x.key)).addTo(s.rain);
+        continue;
+      }
+      if (lvl >= 2) L.polyline(x.lines, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: W[lvl] * zf + 3, opacity: 0.85, lineCap: "round", interactive: false }).addTo(s.rain);
+      L.polyline(x.lines, { pane: "rainLines", renderer: s.rainLines, color: C[lvl], weight: W[lvl] * zf, opacity: O[lvl], lineCap: "round" })
+        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).on("click", pick("street", x.key)).addTo(s.rain);
+    }
+    if (selStreet) {
+      const w = Math.max(6, W[3] * zf * 1.3);
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#38BDF8", weight: w + 14, opacity: 0.35, lineCap: "round", interactive: false }).addTo(s.rain);
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: w + 5, opacity: 1, lineCap: "round", interactive: false }).addTo(s.rain);
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#1D4ED8", weight: w, opacity: 1, lineCap: "round" })
+        .bindTooltip(selStreet.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
+    }
+    const rad = Math.max(4, Math.min(8, 4 + (s.map.getZoom() - 11) * 0.9));
+    for (const x of r.dots) {
+      const on = r.sel?.kind === "report" && r.sel.id === x.id;
+      L.circleMarker([x.lat, x.lon], { pane: "rainDots", renderer: s.rainDots, radius: on ? rad + 3 : rad, color: on ? "#0F172A" : "#fff", weight: on ? 3 : 1.5,
+        fillColor: x.tone === "repeat" ? "#DC2626" : "#F59E0B", fillOpacity: 1 })
+        .bindTooltip(x.tip, { className: "dtip", direction: "top" }).on("click", pick("report", x.id)).addTo(s.rain);
+    }
+  }, [ready, props.rain, zoomTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  // its camera: each new fit frames its points beside the panel (a stalled flight, as in a paused tab, jumps)
+  useEffect(() => {
+    const s = st.current;
+    const r = cb.current.rain;
+    if (!s || !r || !el.current) return;
+    const L = s.L;
+    const pad = panelPad(el.current);
+    const b = r.fit.pts && r.fit.pts.length ? L.latLngBounds(r.fit.pts) : s.district;
+    const o = { paddingTopLeft: L.point(pad.tl[0], pad.tl[1]), paddingBottomRight: L.point(pad.br[0], pad.br[1]), maxZoom: r.fit.maxZoom ?? 15 };
+    if (reduced) { s.map.fitBounds(b, { ...o, animate: false }); return; }
+    const from = s.map.getCenter();
+    s.map.flyToBounds(b, { ...o, duration: 0.7 });
+    const t = setTimeout(() => { if (st.current && s.map.getCenter().distanceTo(from) < 1) s.map.fitBounds(b, { ...o, animate: false }); }, 1500);
+    return () => clearTimeout(t);
+  }, [ready, props.rain?.fit.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // the circle tool: press, drag out the radius, release
   useEffect(() => {
     const s = st.current;

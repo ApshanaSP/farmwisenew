@@ -7,19 +7,19 @@
 import { asOf as consoleNow } from "@/lib/collector/intel";
 import { world } from "@/lib/map/world";
 import type { World } from "@/lib/map/types";
-import { edgeShape, flatDistM, indexGraph, loadGraph, MAIN_CLASS_MAX, type GraphIndex, type RoadGraph } from "./graph";
+import { edgeShape, edgesNear, flatDistM, indexGraph, loadGraph, MAIN_CLASS_MAX, type GraphIndex, type RoadGraph } from "./graph";
 import { buildMemory, rainEvents, rehearsalFactor, streetLabel, type Memory, type RainEvent } from "./memory";
 import { SPEED_KMH } from "./paths";
 import { chokes as findChokes, drySchools, RELEASE_RIVER, ribbon as ribbonOf } from "./places";
 import { plan, type Job } from "./playbook";
 import { computeReach, mergeHospitals, nodeWards, T_HELP_MIN, type Facility, type ReachResult } from "./reach";
 import { checkRain } from "./report";
-import { backtestAll, judge, rainReports, rainWindow, replayAsOf, type Backtest } from "./replay";
+import { backtestAll, COVER_M, judge, rainReports, rainWindow, replayAsOf, type Backtest } from "./replay";
 import { lakesAt, rehearsalSources, type Sources } from "./source";
 import { readTasks, type Task } from "./tasks";
 import { trigger } from "./trigger";
 import { CFM_BASE, heavyNow, liveRain } from "./cfmlive";
-import type { Line, RehearsalState, RJob, RStreet } from "./types";
+import type { Line, PastRain, RehearsalState, RJob, RStreet } from "./types";
 import { CLASSES } from "./graph";
 
 interface Base {
@@ -42,6 +42,8 @@ declare global {
   var __rehearsalBase: { key: string; p: Promise<Base> } | undefined;
   // eslint-disable-next-line no-var
   var __rehearsalMoments: Map<string, { at: number; mem: Memory; reach: ReachResult }> | undefined;
+  // eslint-disable-next-line no-var
+  var __rehearsalPast: { key: string; v: { asOf: string; rains: PastRain[] } } | undefined;
 }
 
 export class RehearsalUnavailable extends Error {}
@@ -278,6 +280,33 @@ export async function rehearsalState(o: StateOpts = {}): Promise<RehearsalState>
     },
     ms: Date.now() - t0
   };
+}
+
+/**
+ * Every past heavy rain with its flooding reports (the ones a replay is judged on), each tied to the street of the
+ * current flood memory it stood on, within the replay's own distance (COVER_M), so the map can show where water stood
+ * in each rain and which of those streets flood again and again. Cached with the memory (one computation an hour).
+ */
+export async function pastRains(): Promise<{ asOf: string; rains: PastRain[] }> {
+  const b = await base();
+  const now = await consoleNow();
+  const memAt = now.slice(0, 13) + ":00:00";
+  const k = `${b.key}|${memAt}`;
+  if (global.__rehearsalPast?.key === k) return global.__rehearsalPast.v;
+  const { mem } = moment(b, memAt, T_HELP_MIN);
+  const streetOf = new Map<number, string>();
+  for (const s of mem.streets) for (const e of s.edges) streetOf.set(e, s.key);
+  const r5 = (x: number) => Math.round(x * 1e5) / 1e5;
+  const rains: PastRain[] = b.events.map((ev) => ({
+    id: ev.id, start: ev.start, end: ev.end, maxMm: ev.maxMm, sources: ev.sources,
+    reports: rainReports(b.src.incidents, ev).filter((r) => r.first <= now).map((r) => {
+      const hit = edgesNear(b.g, b.ix, r.lat, r.lon, COVER_M).sort((x, y) => x.d - y.d).find((x) => streetOf.has(x.e));
+      return { id: r.id, lat: r5(r.lat), lon: r5(r.lon), title: r.title, place: r.place, first: r.first, ward: r.ward, open: r.open, street: hit ? streetOf.get(hit.e)! : null };
+    })
+  }));
+  const v = { asOf: memAt, rains };
+  global.__rehearsalPast = { key: k, v };
+  return v;
 }
 
 /** the server's own plan for a rehearsal (Send tasks never trusts the browser's list) */

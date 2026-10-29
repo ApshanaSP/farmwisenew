@@ -1,27 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { MapGeo } from "@/lib/collector/geo";
-import RainRehearsal, { type Endpoints } from "@/components/collector/app/rehearsal/RainRehearsal";
 import { BeforeRainTasks } from "@/components/officer/BeforeRainTasks";
 import "@/components/collector/app/collector.css";
 import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/motionfx.css";
-import "leaflet/dist/leaflet.css";
 
-const DEV: Endpoints = {
-  state: (q) => `/api/rehearsal/dev?${q}`,
-  reach: (q) => `/api/rehearsal/dev?kind=reach&${q}`,
-  plan: "/api/rehearsal/dev?kind=plan"
-};
-
+/** The officer's before-rain tasks card (?officer=GCC-SWD). Rain & flooding itself is on the Collector's map: /dev/collector?rain=1. */
 export default function Preview() {
-  const [geo, setGeo] = useState<MapGeo | null>(null);
-  const [open, setOpen] = useState(true);
-  const [toast, setToast] = useState<string | null>(null);
   // the query string is read after the first render, so the server's HTML and the browser's match
   const [p, setP] = useState<URLSearchParams | null>(null);
-  useEffect(() => { setP(new URLSearchParams(window.location.search)); fetch("/api/rehearsal/dev?kind=geo").then((r) => r.json()).then(setGeo).catch(() => undefined); }, []);
+  useEffect(() => { setP(new URLSearchParams(window.location.search)); }, []);
   if (!p) return null;
   const theme = p.get("theme") === "dark" ? "dark" : "light";
   const officer = p.get("officer");
@@ -32,13 +21,10 @@ export default function Preview() {
           <BeforeRainTasks dev={officer} />
         </div>
       ) : (
-        <div className="rr-host" style={{ position: "relative", width: "calc(100vw - 24px)", height: "min(608px, calc(100vh - 24px))" }}>
-          {open ? <RainRehearsal geo={geo} init={{ replay: p.get("replay"), manual: p.get("manual") === "1" }} onClose={() => setOpen(false)} endpoints={DEV} dev
-            toast={(m) => { setToast(m); setTimeout(() => setToast(null), 5000); }} onOpenIncident={(id) => setToast(`Would open ${id}`)} />
-            : <button onClick={() => setOpen(true)}>Open the rehearsal</button>}
-        </div>
+        <p style={{ color: "var(--text-2)" }}>
+          Rain &amp; flooding is on the Collector&apos;s Overview map: <a href="/dev/collector?rain=1">/dev/collector?rain=1</a>. The officer&apos;s before-rain card: <a href="?officer=GCC-SWD">?officer=GCC-SWD</a>.
+        </p>
       )}
-      {toast && <div style={{ position: "fixed", bottom: 16, left: 16, background: "#0F172A", color: "#fff", padding: "8px 12px", borderRadius: 10, fontSize: 13, zIndex: 9999 }}>{toast}</div>}
     </div>
   );
 }
