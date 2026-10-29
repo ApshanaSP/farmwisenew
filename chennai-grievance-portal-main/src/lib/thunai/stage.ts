@@ -24,7 +24,9 @@ export type PointT = z.infer<typeof Point>;
 
 export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Kpis"), id: str(40), title: str(120), items: z.array(z.object({
-    key: str(40), label: str(80), value: num, unit: str(20).nullable(), prev: num.nullable(), delta: num.nullable(), tone: z.enum(["bad", "good", "neutral"]), spark: z.array(num).max(60)
+    key: str(40), label: str(80), value: num, unit: str(20).nullable(), prev: num.nullable(), delta: num.nullable(), tone: z.enum(["bad", "good", "neutral"]), spark: z.array(num).max(60),
+    /** the change in percent, shown on the tile when Thunai says it */
+    pct: num.nullable().optional()
   })).min(1).max(6) }),
   z.object({ kind: z.literal("CaseList"), id: str(40), title: str(160), source: z.enum(["console-severity", "list", "search", "map"]), sev: str(12).nullable(),
     total: num, rows: z.array(CaseRow).max(60) }),
@@ -133,7 +135,8 @@ export function figuresOf(d: Pick<StageDocT, "blocks">): Set<string> {
   const walk = (v: unknown) => {
     if (typeof v === "number") add(v);
     else if (typeof v === "string") for (const m of v.match(/\d+(?:\.\d+)?/g) ?? []) out.add(String(Number(m)));
-    else if (Array.isArray(v)) v.forEach(walk);
+    // a list of numbered cards shows how many there are
+    else if (Array.isArray(v)) { if (v.length) out.add(String(v.length)); v.forEach(walk); }
     else if (v && typeof v === "object") Object.values(v).forEach(walk);
   };
   walk(d.blocks);

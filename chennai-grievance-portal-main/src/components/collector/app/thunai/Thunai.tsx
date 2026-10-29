@@ -18,10 +18,20 @@ import { say as line } from "@/lib/thunai/say";
 import type { Lang, OutMode, PageKey, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "@/lib/thunai/types";
 import { describe as describeStep, PAGE_EN, PAGE_TA, PERIOD_EN, PERIOD_TA, SUGGEST, understand } from "@/lib/thunai/understand";
 import { band, canSpeak as watchMaySpeak, remember as watchRemember, type Signal, type WatchMemory } from "@/lib/thunai/watch";
-import { canListen, listen, speak, stopSpeaking } from "../assistant/speech";
+import type { MapGeo } from "@/lib/collector/geo";
+import type { AgentResult, StageOp } from "@/lib/thunai/agent";
+import { stageContext, type StageDocT } from "@/lib/thunai/stage";
+import { ackFor, caseIds, filterStage, localStageCommand, narrationOf, sortStage, toCsv, type LocalCmd } from "@/lib/thunai/stagelocal";
+import { canListen, listen } from "../assistant/speech";
 import type { Console } from "../CollectorApp";
 import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
+import Stage, { type BlockView, type PinnedScreen } from "./Stage";
+import { download, exportPng, fileName } from "./export";
+import { hasVoice, speakLines, speakText, stopVoice, voicesFor, warmVoices } from "./voice";
 import "./thunai.css";
+
+const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null) => speakText(text, lang, { onEnd, rate, voice });
+const stopSpeaking = () => stopVoice();
 
 export interface Snap { page: PageKey; period: PeriodKey; zone: number | null; dept: string | null; cat: string | null; taluk: string | null;
   sev: string | null; mapMode: "zones" | "taluks"; layers: Record<string, boolean> }
@@ -47,6 +57,12 @@ export interface ThunaiHost {
   restore: (s: Snap) => void;
   /** where the brain lives (the dev test console uses its own) */
   planUrl?: string;
+  /** where the agent lives (v2: screens built from the data) */
+  agentUrl?: string;
+  /** the ward and zone outlines for the Stage's maps */
+  loadGeo?: () => Promise<MapGeo | null>;
+  /** where a Take action draft is read (the dev test console uses its own, which cannot send) */
+  draftUrl?: (incidentId: string) => string;
 }
 
 type Phase = "off" | "ready" | "listening" | "thinking" | "acting" | "speaking" | "asking" | "waiting" | "blocked";
@@ -68,6 +84,30 @@ async function post(path: string, body: unknown) {
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || "Request failed.");
   return j;
+}
+
+/** A soft heartbeat while the agent works (lane 1, after jarvis-v3): stops when the answer arrives. */
+function heartbeat(): () => void {
+  let ctx: AudioContext | null = null;
+  try {
+    const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+    const AC = W.AudioContext ?? W.webkitAudioContext;
+    if (!AC) return () => undefined;
+    ctx = new AC();
+  } catch { return () => undefined; }
+  const c = ctx;
+  const beat = () => {
+    [0, 0.16].forEach((dt, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.value = i ? 98 : 110;
+      const t = c.currentTime + dt;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.16);
+    });
+  };
+  beat();
+  const t = setInterval(beat, 1100);
+  return () => { clearInterval(t); setTimeout(() => c.close().catch(() => undefined), 300); };
 }
 
 /** Earcons from the Web Audio API: no files. */
@@ -113,7 +153,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [pendingB, setPendingB] = useState<{ text: string; steps: Step[]; heard: string; lang: Lang } | null>(null);
   const [tray, setTray] = useState<Draft[]>([]);
   const [trayShownAt, setTrayShownAt] = useState<number | null>(null);
-  const [panel, setPanel] = useState<"memory" | "trail" | "help" | null>(null);
+  const [panel, setPanel] = useState<"memory" | "trail" | "help" | "voice" | null>(null);
   const [memory, setMemory] = useState<MemoryView | null>(null);
   const [trail, setTrail] = useState<{ lines: { at: string; heard: string | null; outcome: string; risk: string }[]; intact: boolean } | null>(null);
   const [numbers, setNumbers] = useState<{ names: boolean; items: Clickable[] } | null>(null);
@@ -124,6 +164,24 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [handsfree, setHandsfree] = useState(false);
   const [typed, setTyped] = useState("");
   const [ref, setRef] = useState<Pick<World, "cats" | "taluks" | "places">>({ cats: [], taluks: [], places: [] });
+  // ---- the Stage (v2)
+  const [stage, setStage] = useState<StageDocT | null>(null);
+  const [stageBack, setStageBack] = useState<StageDocT[]>([]);
+  const [stageViews, setStageViews] = useState<Record<string, BlockView>>({});
+  const [stageBusy, setStageBusy] = useState<string | null>(null);
+  const [stageBrain, setStageBrain] = useState<{ model: string | null; ms: number; rounds: number; calls: number } | null>(null);
+  const [stageFilter, setStageFilter] = useState<string | null>(null);
+  const [reading, setReading] = useState<{ key: string; char: number | null; lead?: string } | null>(null);
+  const [narrating, setNarrating] = useState(false);
+  const [pins, setPins] = useState<PinnedScreen[]>([]);
+  const [geo, setGeo] = useState<MapGeo | null>(null);
+  const [saveAsk, setSaveAsk] = useState<string | null>(null);
+  const [voiceName, setVoiceName] = useState<string | null>(() => store.get("thunai-voice"));
+  const stageRef = useRef<StageDocT | null>(null);
+  stageRef.current = stage;
+  const stageFocus = useRef<number | null>(null);
+  const narration = useRef<{ key: string; text: string; lead: string }[]>([]);
+  const narrIndex = useRef(0);
 
   const orbRef = useRef<HTMLButtonElement>(null);
   const stopListen = useRef<(() => void) | null>(null);
@@ -209,10 +267,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const ok = speak(text, lang === "ta" ? "ta-IN" : "en-IN", () => {
         setPhase(onRef.current ? ph : "off");
         if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 250); // eslint-disable-line @typescript-eslint/no-use-before-define
-      }, rate);
+      }, rate, voiceName);
       if (!ok) setPhase(ph);
     } else setPhase(ph);
-  }, [outMode, rate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [outMode, rate, voiceName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const audit = (heardText: string | null, steps: Step[], outcome: string, approval: { how: "none" | "tap" | "spoken"; count?: number } | null = null) => {
     post("/api/collector/thunai/audit", { heard: heardText, plan: steps as unknown as Record<string, unknown>[], risk: planRisk(steps), approval, outcome }).catch(() => undefined);
@@ -314,7 +372,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // --------------------------------------------------------------- tray (level C) --
   const draftFor = async (incidentId: string): Promise<Draft | null> => {
     try {
-      const r = await fetch(`/api/collector/incidents/${encodeURIComponent(incidentId)}/action`);
+      const r = await fetch(hostRef.current.draftUrl?.(incidentId) ?? `/api/collector/incidents/${encodeURIComponent(incidentId)}/action`);
       const j = await r.json();
       if (!r.ok) return null;
       return { incidentId, title: String(j.subject ?? incidentId), subject: j.subject, body: j.body, to: j.to?.role ?? j.to?.name ?? null,
@@ -483,7 +541,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   // --------------------------------------------------------------- a plan --
   const VIEW_CHANGING = new Set(["page", "period", "view", "mapMode", "layer", "panel", "item", "draft", "zoom", "map", "close", "mission", "read", "workspace"]);
-  const run = async (steps: Step[], lang: Lang, heardText: string, by: "rules" | "ai", note?: string) => {
+  const run = async (steps: Step[], lang: Lang, heardText: string, by: "rules" | "ai", note?: string, quiet = false) => {
     if (!steps.length) { setPhase("ready"); return; }
     const changes = steps.some((s) => VIEW_CHANGING.has(s.a) && !(s.a === "workspace" && s.op === "save"));
     if (changes) {
@@ -518,6 +576,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     changeMemory({ op: "recent", text: heardText });
     const speakLine = [note, ...said].filter(Boolean).join(" ");
     if (steps.some((s) => s.a === "off")) return;
+    // the Stage speaks for itself: the steps only made the console agree with it
+    if (quiet) { setPhase(tray.length ? "waiting" : "ready"); return; }
     if (speakLine) out(speakLine, lang, tray.length ? "waiting" : "ready");
     else { earcon("done"); setReply(steps.map((s) => describeStep(s, worldRef.current, lang)).join(" · ")); setPhase(tray.length ? "waiting" : "ready"); }
   };
@@ -561,6 +621,259 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     out(q, lang, "asking");
   };
 
+
+  // --------------------------------------------------------------- the Stage (v2) --
+  const loadPins = useCallback(() => {
+    const fromMem = (memoryRef.current as unknown as { pins?: PinnedScreen[] } | null)?.pins;
+    if (fromMem) { setPins(fromMem); return; }
+    try { setPins(JSON.parse(store.get("thunai-pins") ?? "[]")); } catch { setPins([]); }
+  }, []);
+  useEffect(() => { loadPins(); }, [memory, loadPins]);
+  const savePins = async (next: PinnedScreen[], op: Record<string, unknown>) => {
+    setPins(next);
+    store.set("thunai-pins", JSON.stringify(next));
+    await changeMemory(op);
+  };
+
+  /** Ask the agent: a sentence (with the screen, the turns and the open Stage), or a Stage control's direct screen. */
+  const callAgent = async (said: string, st: ScreenState, direct?: { recipe: StageDocT["recipe"]; slots: Record<string, unknown>; lang: Lang }): Promise<AgentResult | null> => {
+    try {
+      const doc = stageRef.current;
+      const j = await post(hostRef.current.agentUrl ?? "/api/collector/thunai/agent", {
+        text: said.slice(0, 300), turns: turns.current.slice(-4),
+        state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat, taluk: st.taluk, sev: st.sev, mapMode: st.mapMode,
+          panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers },
+        stage: doc ? stageContext(doc, stageFocus.current) : null,
+        direct: direct ?? null
+      });
+      return (j?.result as AgentResult) ?? null;
+    } catch { return null; }
+  };
+
+  const stopNarration = () => { stopVoice(); setNarrating(false); setReading(null); };
+
+  /** Read the summary, then (for news and the brief) every item, the one being read highlighted; then listen again. */
+  const narrate = (doc: StageDocT, say: string | null, lang: Lang, items: boolean) => {
+    const list = items ? narrationOf(doc, lang) : [];
+    narration.current = list;
+    narrIndex.current = 0;
+    const lines = [...(say ? [say] : []), ...list.map((x) => x.text)];
+    const offset = say ? 1 : 0;
+    if (say) { setReply(say); lastSpoken.current = { text: say, lang }; }
+    const voiceLang = lang === "ta" && hasVoice("ta-IN") ? "ta-IN" : "en-IN";
+    if (outMode !== "voice" || !lines.length || (lang === "ta" && voiceLang !== "ta-IN")) { setPhase(tray.length ? "waiting" : "ready"); return; }
+    stopListen.current?.();
+    setNarrating(true);
+    setPhase("speaking");
+    speakLines(lines, voiceLang, {
+      rate, voice: voiceName,
+      onLine: (i) => { const it = list[i - offset]; if (it) narrIndex.current = i - offset; setReading(it ? { key: it.key, char: null, lead: it.lead } : null); },
+      onWord: (i, ch) => { const it = list[i - offset]; if (it) setReading({ key: it.key, char: ch, lead: it.lead }); },
+      onEnd: () => {
+        setNarrating(false); setReading(null);
+        setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
+        // the follow-up listen (jarvis-v3): hands-free goes back to listening once the Stage has been read
+        if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 300); // eslint-disable-line @typescript-eslint/no-use-before-define
+      }
+    });
+  };
+
+  /** Read the items from item i onwards ("next", "again", "read them"). */
+  const readFrom = (i: number, lang: Lang) => {
+    const doc = stageRef.current;
+    if (!doc) return;
+    const list = narrationOf(doc, lang);
+    if (!list.length) { out(doc.say[lang], lang); return; }
+    const k = Math.max(0, Math.min(list.length - 1, i));
+    narration.current = list;
+    const voiceLang = lang === "ta" && hasVoice("ta-IN") ? "ta-IN" : "en-IN";
+    narrIndex.current = k;
+    setReading({ key: list[k].key, char: null, lead: list[k].lead });
+    if (outMode !== "voice") { setReply(list[k].text); return; }
+    setNarrating(true); setPhase("speaking");
+    speakLines(list.slice(k).map((x) => x.text), voiceLang, {
+      rate, voice: voiceName,
+      onLine: (j) => { narrIndex.current = k + j; setReading({ key: list[k + j].key, char: null, lead: list[k + j].lead }); },
+      onWord: (j, ch) => setReading({ key: list[k + j].key, char: ch, lead: list[k + j].lead }),
+      onEnd: () => { setNarrating(false); setReading(null); setPhase("ready"); if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 300); } // eslint-disable-line @typescript-eslint/no-use-before-define
+    });
+  };
+
+  const ensureGeo = () => {
+    if (geo) return;
+    const h = hostRef.current;
+    (h.loadGeo ? h.loadGeo() : fetch("/api/collector/geo").then((r) => (r.ok ? r.json() : null))).then((g) => g && setGeo(g as MapGeo)).catch(() => undefined);
+  };
+
+  const showStage = (doc: StageDocT, say: string | null, lang: Lang, brainInfo: { model: string | null; ms: number; rounds: number; calls: number } | null, opts: { push?: boolean; drafts?: boolean } = {}) => {
+    stopNarration();
+    ensureGeo();
+    const withDrafts: StageDocT = opts.drafts && doc.blocks.length < 6 ? { ...doc, blocks: [...doc.blocks, { kind: "Drafts", id: "drafts", title: lang === "ta" ? "ஒப்புதலுக்காக" : "Waiting for your approval" }] } : doc;
+    const apply = () => {
+      if (stageRef.current && opts.push !== false) { const cur = stageRef.current; setStageBack((b) => [...b, cur].slice(-8)); }
+      setStage(withDrafts); setStageViews({}); setStageFilter(null); setStageBrain(brainInfo); stageFocus.current = null;
+    };
+    // a shared-element style hand-over where the browser has it (the View Transitions API), a plain swap elsewhere
+    const d = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (d.startViewTransition && !reduced() && stageRef.current) d.startViewTransition(() => apply()); else apply();
+    stageRef.current = withDrafts;
+    remember(doc.title, `showed a ${doc.recipe} screen: ${doc.title}`);
+    const auto = withDrafts.blocks.some((b) => b.kind === "NewsReader" || b.kind === "Brief");
+    narrate(withDrafts, say, lang, auto);
+  };
+
+  const closeStage = () => { stopNarration(); setStage(null); stageRef.current = null; setStageBack([]); setStageBusy(null); setSaveAsk(null); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); };
+
+  /** A screen from a Stage control or a local command: built by code from the data, no model. */
+  const directStage = async (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string, lang: Lang = listenLang, opts: { drafts?: boolean } = {}) => {
+    setStageBusy(label);
+    stopNarration();
+    const t0 = performance.now();
+    const r = await callAgent(label, buildState(), { recipe, slots, lang });
+    setStageBusy(null);
+    if (!r?.stage) { earcon("blocked"); setReply(lang === "ta" ? "அந்தத் திரையை உருவாக்க முடியவில்லை." : "I could not build that screen."); return; }
+    if (r.steps.length) await run(r.steps, lang, label, "rules", undefined, true);
+    showStage(r.stage, r.say, lang, { model: null, ms: Math.round(performance.now() - t0), rounds: 0, calls: r.calls.length }, opts);
+  };
+
+  const draftMany = async (ids: string[], lang: Lang) => {
+    const uniq = [...new Set(ids)].slice(0, 10);
+    if (!uniq.length) { out(line("noIncident", lang), lang); return; }
+    setReply(line("draftsMaking", lang, { n: uniq.length }));
+    const ds = (await Promise.all(uniq.map(draftFor))).filter((d): d is Draft => !!d);
+    const total = new Set([...tray.map((t) => t.incidentId), ...ds.map((d) => d.incidentId)]).size;
+    if (ds.length) { addToTray(ds); out(line("sendGate", lang, { n: total }), lang, "waiting"); }
+    else out(line("noDraft", lang), lang);
+    audit(`draft ${uniq.join(", ")}`, [{ a: "draft" }], `drafted ${ds.length} of ${uniq.length} into the tray (nothing sent)`);
+  };
+
+  const exportCsv = () => {
+    const d = stageRef.current;
+    if (!d) return;
+    download(new Blob([toCsv(d)], { type: "text/csv;charset=utf-8" }), `${fileName(d.title)}.csv`);
+  };
+
+  /** Apply one Stage command (from the local parser or the agent's stage op). */
+  const applyLocal = async (cmd: LocalCmd, lang: Lang) => {
+    const doc = stageRef.current;
+    if (!doc) return;
+    switch (cmd.op) {
+      case "stop": stopNarration(); setPhase("ready"); return;
+      case "next": readFrom(narrIndex.current + 1, lang); return;
+      case "prev": readFrom(narrIndex.current - 1, lang); return;
+      case "again": readFrom(narrIndex.current, lang); return;
+      case "read": readFrom(0, lang); return;
+      case "close": closeStage(); return;
+      case "back": {
+        const prev = stageBack[stageBack.length - 1];
+        if (!prev) { closeStage(); return; }
+        setStageBack((b) => b.slice(0, -1)); stopNarration(); setStage(prev); stageRef.current = prev; setStageViews({}); setStageFilter(null);
+        out(prev.say[lang], lang); return;
+      }
+      case "clear": await directStage(doc.recipe, doc.slots, doc.title, lang); return;
+      case "pin": {
+        const p: PinnedScreen = { id: Math.random().toString(36).slice(2, 10), title: doc.title.slice(0, 80), recipe: doc.recipe, slots: doc.slots, at: new Date().toISOString() };
+        await savePins([...pins.filter((x) => x.title !== p.title), p].slice(-12), { op: "pin", pin: p });
+        earcon("done"); out(lang === "ta" ? "இந்தத் திரையைப் பின் செய்தேன்." : "Pinned this screen.", lang); return;
+      }
+      case "export": {
+        if (cmd.what === "png") { const root = document.querySelector<HTMLElement>(".st-root"); if (root) await exportPng(root, doc); }
+        else exportCsv();
+        earcon("done"); out(lang === "ta" ? "ஏற்றுமதி செய்தேன்." : cmd.what === "png" ? "Saved a picture of this screen." : "Exported this screen's data as CSV.", lang); return;
+      }
+      case "view": {
+        const b = doc.blocks.find((x) => (cmd.view === "map" ? x.kind === "Ranking" && x.items.some((i) => i.zone != null || i.lat != null) : ["Ranking", "Trend", "Chart", "Compare"].includes(x.kind)));
+        if (b) setStageViews((v) => ({ ...v, [b.id]: cmd.view }));
+        else if (cmd.view === "map") document.querySelector(".st-block.k-MapView")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
+        earcon("done"); setReply(lang === "ta" ? "மாற்றினேன்." : `Showing it as a ${cmd.view}.`); return;
+      }
+      case "sort": { const d2 = sortStage(doc, cmd.by); setStage(d2); stageRef.current = d2; earcon("done"); setReply(lang === "ta" ? "வரிசைப்படுத்தினேன்." : `Sorted by ${cmd.by}.`); return; }
+      case "filter": {
+        const r = filterStage(doc, cmd.text);
+        if (!r.kept) { out(lang === "ta" ? `"${cmd.text}" எதிலும் இல்லை.` : `None of these mention ${cmd.text}.`, lang); return; }
+        setStage(r.doc); stageRef.current = r.doc; setStageFilter(cmd.text);
+        out(lang === "ta" ? `${r.of}-இல் ${r.kept} மட்டும்.` : `${r.kept} of the ${r.of} shown are about ${cmd.text}.`, lang); return;
+      }
+      case "open": {
+        const id = caseIds(doc)[cmd.n - 1];
+        if (!id) { out(line("noItem", lang), lang); return; }
+        stageFocus.current = cmd.n;
+        await directStage("case", { id }, `#${cmd.n}`, lang); return;
+      }
+      case "draft": {
+        const ids = caseIds(doc);
+        const pick = cmd.first ? ids.slice(0, cmd.n) : doc.recipe === "case" ? ids.slice(0, 1) : ([ids[cmd.n - 1]].filter(Boolean) as string[]);
+        await draftMany(pick, lang); return;
+      }
+      case "map": {
+        const ids = caseIds(doc);
+        const id = cmd.n ? ids[cmd.n - 1] : ids[0];
+        closeStage();
+        if (id) { hostRef.current.c.setPage("overview"); hostRef.current.c.askOnMap?.({ incidentId: id }); }
+        return;
+      }
+      case "full": document.querySelector<HTMLElement>(".st-frame")?.requestFullscreen?.().catch(() => undefined); return;
+    }
+  };
+
+  const applyStageOp = async (op: StageOp, lang: Lang) => {
+    if (op.op === "save") { askSave(op.text ?? stageRef.current?.title ?? "Thunai screen", lang); return; }
+    const sortBy = (["complaints", "time", "value", "name", "severity"].includes(op.text ?? "") ? op.text : "value") as "value";
+    const cmd: LocalCmd | null =
+      op.op === "open" ? { op: "open", n: op.n ?? 1 }
+        : op.op === "draft" ? { op: "draft", n: op.n ?? 1, first: /first|top/i.test(op.text ?? "") }
+          : op.op === "filter" ? (op.text ? { op: "filter", text: op.text } : null)
+            : op.op === "sort" ? { op: "sort", by: sortBy }
+              : op.op === "view" ? { op: "view", view: op.text === "table" ? "table" : op.text === "map" ? "map" : "chart" }
+                : op.op === "export" ? { op: "export", what: /png|image|picture/i.test(op.text ?? "") ? "png" : /csv|data/i.test(op.text ?? "") ? "csv" : null }
+                  : op.op === "map" ? { op: "map", n: op.n }
+                    : op.op === "explain" ? { op: "again" }
+                      : ({ op: op.op } as LocalCmd);
+    if (cmd) await applyLocal(cmd, lang);
+  };
+
+  /** Saving a workspace changes something kept: one tap or "yes" first (level B). */
+  const askSave = (name: string, lang: Lang) => {
+    const q = line("saveAsk", lang, { name });
+    setSaveAsk(q);
+    setPendingB({ text: q, steps: [{ a: "workspace", op: "save", name }], heard: `save as ${name}`, lang });
+    earcon("need");
+    out(q, lang, "asking");
+  };
+
+  const stageActions = {
+    close: () => { if (narrating) stopNarration(); else closeStage(); },
+    back: stageBack.length ? () => void applyLocal({ op: "back" }, listenLang) : null,
+    ask: (t: string) => void handleRef.current(t, 0.95), // eslint-disable-line @typescript-eslint/no-use-before-define
+    mic: () => { if (phase === "listening") stopListen.current?.(); else startListening(); }, // eslint-disable-line @typescript-eslint/no-use-before-define
+    listening: phase === "listening",
+    direct: (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string) => void directStage(recipe, slots, label),
+    openCase: (id: string) => void directStage("case", { id }, id),
+    openInConsole: (id: string) => { closeStage(); hostRef.current.c.openInc(id); },
+    takeAction: (id: string) => { closeStage(); hostRef.current.c.openAction(id); audit(`take action ${id}`, [{ a: "draft" }], "opened Take action (nothing sent)"); },
+    draft: (ids: string[]) => void draftMany(ids, listenLang),
+    showOnMainMap: (q: { incidentId?: string; zone?: number; text?: string }) => {
+      closeStage();
+      const c = hostRef.current.c;
+      c.setPage("overview");
+      if (q.incidentId) c.askOnMap?.({ incidentId: q.incidentId }); else if (q.zone) hostRef.current.applyView({ zone: q.zone }); else if (q.text) c.askOnMap?.(q.text);
+    },
+    zone: (z: number) => void directStage("cases", { zones: [z], period: stageRef.current?.scope.period ?? null, cat: stageRef.current?.scope.cat ?? null, sort: "priority", n: 15 }, `${ZONE_NAMES[z - 1] ?? `Zone ${z}`}`),
+    dept: (code: string, name: string) => void directStage("cases", { dept: code, status: "open", period: stageRef.current?.scope.period ?? null, sort: "priority", n: 15 }, name),
+    station: (name: string, metric: string) => void directStage("readings", { metric: ["rain", "aqi", "lakes", "temp", "humidity"].includes(metric) ? metric : "rain", name }, name),
+    read: () => readFrom(0, listenLang),
+    stop: () => stopNarration(),
+    pin: () => void applyLocal({ op: "pin" }, listenLang),
+    openPin: (p: PinnedScreen) => void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title),
+    unpin: (id: string) => void savePins(pins.filter((x) => x.id !== id), { op: "unpin", id }),
+    exportCsv,
+    exportPng: (root: HTMLElement) => { if (stageRef.current) void exportPng(root, stageRef.current); },
+    save: (name: string) => askSave(name, listenLang),
+    setView: (id: string, v: BlockView) => setStageViews((x) => ({ ...x, [id]: v })),
+    confirmTray: () => void sendTray(tray.length, listenLang, "tap"),
+    discardTray: () => { setTray([]); setTrayShownAt(null); }
+  };
+
   // --------------------------------------------------------------- a sentence --
   /**
    * The brain understands every sentence; only instant controls (stop, undo, confirm 3, click 4 while numbers show) are
@@ -587,6 +900,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (/^(no|cancel|வேண்டாம்|illa|vendaam)$/i.test(said)) { setPendingB(null); setPhase("ready"); return; }
       setPendingB(null);
     }
+    // the open Stage: its own commands ("next", "only the Adyar ones", "open 3", "pin this") need no model
+    if (stageRef.current && !original) {
+      const lc = localStageCommand(said);
+      if (lc) { setBrain({ by: "instant", model: null, ms: 0 }); remember(said, `on the Stage: ${lc.op}`); await applyLocal(lc, /[஀-௿]/.test(said) ? "ta" : listenLang); return; }
+    }
     const st = buildState();
     const rules = understand(said, st, worldRef.current, { speechConf: conf });
     // instant controls never wait for the network; sending only ever happens here, from the Collector's own words
@@ -594,9 +912,39 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
     setPhase("thinking");
     setChips([]);
+    const heardAs = original ?? said;
+    // lane 1: an acknowledgement at once and a soft heartbeat while the agent looks, then lane 2: its screen and its words
+    const ack = ackFor(said, rules.lang);
+    setReply(ack);
+    if (stageRef.current) setStageBusy(ack);
+    const stopBeat = outMode !== "quiet" ? heartbeat() : () => undefined;
+    const ag = await callAgent(said, st).finally(stopBeat);
+    setStageBusy(null);
+    if (ag && ag.kind !== "none") {
+      setBrain({ by: "ai", model: ag.model, ms: ag.ms });
+      const lang = ag.lang;
+      if (ag.kind === "chat") { earcon("done"); remember(heardAs, ag.reply ?? ""); out(ag.reply ?? "", lang, "ready"); return; }
+      if (ag.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${ag.reply}`); out(ag.reply ?? "", lang, "ready"); return; }
+      if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }); return; }
+      if (ag.steps.length && planRisk(ag.steps) === "B") { gateB(ag.steps, heardAs, lang); return; }
+      if (ag.stage) {
+        if (ag.steps.length) await run(ag.steps, lang, heardAs, "ai", undefined, true);
+        audit(heardAs, ag.steps, `screen ${ag.stage.recipe} (${ag.calls.length} data calls, ${ag.rounds} model rounds)`);
+        showStage(ag.stage, ag.say, lang, { model: ag.model, ms: ag.ms, rounds: ag.rounds, calls: ag.calls.length });
+        return;
+      }
+      if (ag.stageOp) {
+        if (ag.steps.length) await run(ag.steps, lang, heardAs, "ai", undefined, true);
+        remember(heardAs, `on the Stage: ${ag.stageOp.op}${ag.stageOp.n ? ` ${ag.stageOp.n}` : ""}`);
+        await applyStageOp(ag.stageOp, lang);
+        return;
+      }
+      await run(ag.steps, lang, heardAs, "ai", ag.reply ?? undefined);
+      return;
+    }
+    // the agent could not answer: the v1 planner, then the built-in rules
     setReply(line("aiThinking", rules.lang));
     const ai = await think(said, st);
-    const heardAs = original ?? said;
     if (ai && ai.plan.kind !== "none") {
       setBrain({ by: "ai", model: ai.model, ms: ai.ms });
       const p = ai.plan;
@@ -649,7 +997,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         setChips((cs) => cs.map((c, j) => (j === i ? { ...c, state: "running" } : j < i ? { ...c, state: "done" } : c)));
         const text = line("briefPoint", lang, { text: lang === "ta" && pts[i].ta ? pts[i].ta : pts[i].text });
         setReply(text);
-        if (outMode === "voice") await new Promise<void>((res) => { if (!speak(text, lang === "ta" ? "ta-IN" : "en-IN", () => res(), rate)) res(); });
+        if (outMode === "voice") await new Promise<void>((res) => { if (!speak(text, lang === "ta" ? "ta-IN" : "en-IN", () => res(), rate, voiceName)) res(); });
         else await sleep(3500);
       }
       setChips((cs) => cs.map((c) => ({ ...c, state: "done" })));
@@ -686,7 +1034,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (drafts.length) addToTray(drafts);
     mark(3, drafts.length ? "done" : "failed");
     mark(4, "running");
-    out(`${lakes} ${drafts.length ? line("sendGate", lang, { n: drafts.length }) : line("noDraft", lang)}`, lang, drafts.length ? "waiting" : "ready");
+    setReply(`${lakes} ${drafts.length ? line("sendGate", lang, { n: drafts.length }) : line("noDraft", lang)}`);
+    // v2: the mission ends on a screen (the flooding picture today, with the drafts waiting under it)
+    await directStage("dashboard", { cat: "FLOOD_WATERLOGGING", period: "daily" }, lang === "ta" ? "வெள்ள நிலவரம்" : "Flooding today", lang, { drafts: true });
+    mark(4, "done");
   };
 
   // --------------------------------------------------------------- listening --
@@ -720,6 +1071,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     void loadMemory();
     if (!ref.cats.length) fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => j && setRef(j)).catch(() => undefined);
     setReply(line("onLine", listenLang));
+    warmVoices();
   }, [listenLang, loadMemory, ref.cats.length]);
   const switchOff = useCallback(() => {
     stopListen.current?.(); stopListen.current = null;
@@ -838,7 +1190,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </span>
       ))}
 
-      {on && (chips.length > 0 || heard || interim || reply) && (
+      {on && !stage && (chips.length > 0 || heard || interim || reply) && (
         <div className="th-dock" role="status" aria-live="polite">
           {chips.length > 0 && (
             <div className="th-chips">
@@ -895,7 +1247,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {on && panel && (
         <aside className="th-panel" aria-label={panel}>
           <header>
-            <b>{panel === "memory" ? (ta ? "துணையின் நினைவு" : "What Thunai remembers") : panel === "trail" ? (ta ? "தணிக்கைப் பதிவு" : "Audit trail") : (ta ? "சொல்லக்கூடியவை" : "Things to say")}</b>
+            <b>{panel === "memory" ? (ta ? "துணையின் நினைவு" : "What Thunai remembers") : panel === "trail" ? (ta ? "தணிக்கைப் பதிவு" : "Audit trail") : panel === "voice" ? (ta ? "குரல்" : "Thunai's voice") : (ta ? "சொல்லக்கூடியவை" : "Things to say")}</b>
             <button aria-label="Close" onClick={() => setPanel(null)}>×</button>
           </header>
           {panel === "memory" && (
@@ -913,11 +1265,29 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
               <ol className="trail">{[...trail.lines].reverse().slice(0, 60).map((l, i) => <li key={i}><time>{whenOf(l.at)}</time><span className={`risk r${l.risk}`}>{l.risk}</span>{l.heard ?? "—"}<small>{l.outcome}</small></li>)}</ol>
             </div>
           )}
+          {panel === "voice" && (
+            <div className="body voice">
+              <p className="muted">{ta ? "இந்தக் கணினியில் உள்ள குரல்கள், இயல்பானவை முதலில்." : "The voices this device has, the most natural first. Edge and Windows \"Natural\" voices sound best."}</p>
+              {(["en-IN", "ta-IN"] as const).map((lg) => (
+                <div key={lg}>
+                  <h4>{lg === "en-IN" ? "English" : "தமிழ்"}</h4>
+                  {!voicesFor(lg).length && <p className="muted">{ta ? "குரல் இல்லை: எழுத்தில் காட்டுகிறேன்." : "No voice for this language on this device: Thunai shows the words instead."}</p>}
+                  <ul>{voicesFor(lg).slice(0, 8).map((v) => (
+                    <li key={v.name}>
+                      <label><input type="radio" name={`voice-${lg}`} checked={(voiceName ?? voicesFor(lg)[0]?.name) === v.name} onChange={() => { setVoiceName(v.name); store.set("thunai-voice", v.name); }} />{v.name}{v.natural ? <em>{ta ? " இயல்பானது" : " natural"}</em> : null}</label>
+                      <button onClick={() => speakText(lg === "ta-IN" ? "வணக்கம், நான் துணை." : "Good morning. Six severe cases need you today.", lg, { voice: v.name, rate })}>{ta ? "கேள்" : "Try"}</button>
+                    </li>))}</ul>
+                </div>
+              ))}
+            </div>
+          )}
           {panel === "help" && (
             <div className="body help">
               <p className="muted">{ta ? "சாதாரணமாகப் பேசுங்கள்: AI புரிந்துகொள்ளும். உதாரணங்கள்:" : "Just talk normally: the AI understands. For example:"}</p>
               {(ta ? ["அம்பத்தூர்ல இந்த வாரம் என்ன நடக்குது காட்டு", "Adyar la police complaints mattum kaatu", "அவசரமானவை மட்டும்", "செம்பரம்பாக்கம் ஏரியில் எவ்வளவு தண்ணீர் இருக்கு", "முதல் சம்பவத்தைத் திற", "நாளைக்கு கனமழை, தயார் பண்ணு", "பழையபடி மாத்து"]
-                : ["What's happening in Ambattur this week? Only the serious stuff", "Same for Adyar", "Why is Perungudi looking so bad lately?", "Any hospitals within 2 km of the flooding there?",
+                : ["Show me the severe cases", "Read today's news", "Compare Adyar and Ambattur this week", "Top 3 areas with the most rainfall", "Department-wise performance",
+                  "Make me a flooding dashboard for this week", "Schools within 1 km of flooding in Adyar", "How has dengue moved this quarter?",
+                  "What's happening in Ambattur this week? Only the serious stuff", "Same for Adyar", "Why is Perungudi looking so bad lately?",
                   "Open the top one and draft something for the department", "How full is Chembarambakkam?", "Explain this chart", "We expect heavy rain tonight, get everything ready",
                   "Remind me at 6 to call the SWD engineer", "Go back"]).map((x) => (
                 <button key={x} onClick={() => void handle(x, 0.95)}>{x}</button>
@@ -927,7 +1297,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </aside>
       )}
 
-      {on && (
+      {on && stage && (
+        <Stage doc={stage} lang={listenLang} theme={host.theme ?? "dark"} busy={stageBusy} reading={reading} narrating={narrating} views={stageViews} pins={pins} geo={geo}
+          tray={tray.map((d) => ({ incidentId: d.incidentId, title: d.title, to: d.to, sandbox: d.sandbox }))} brain={stageBrain} filtered={stageFilter} saveAsk={pendingB ? saveAsk : null}
+          caption={{ heard: interim || heard, reply: phase === "listening" ? "" : reply, interim: !!interim,
+            by: brain && phase !== "thinking" && phase !== "listening" ? (brain.by === "ai" ? `${ta ? "AI" : "Understood by AI"}${brain.model ? ` · ${brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")}` : ""}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}` : brain.by === "instant" ? (ta ? "உடனடி" : "Instant, no model") : (ta ? "விதிகள்" : "Built-in rules")) : null }}
+          a={stageActions} />
+      )}
+
+      {on && !stage && (
         <form className="th-bar" onSubmit={(e) => { e.preventDefault(); const t = typed; setTyped(""); void handle(t, 0.95); }}>
           <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={ta ? "சொல்லுங்கள் அல்லது தட்டச்சு செய்யுங்கள்…" : "Say or type a command…"} aria-label="Thunai command" />
           <div className="th-tools">
@@ -938,6 +1316,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             <button type="button" className={handsfree ? "on" : ""} onClick={() => setHandsfree((v) => !v)} title={ta ? "தொடர்ந்து கேள்" : "Stay listening"}>{ta ? "தொடர்" : "Hands-free"}</button>
             <button type="button" onClick={() => { void loadMemory(); setPanel(panel === "memory" ? null : "memory"); }}>{ta ? "நினைவு" : "Memory"}</button>
             <button type="button" onClick={() => (panel === "trail" ? setPanel(null) : void openTrail())}>{ta ? "பதிவு" : "Trail"}</button>
+            <button type="button" onClick={() => { warmVoices(() => setPanel("voice")); setPanel(panel === "voice" ? null : "voice"); }} title={ta ? "குரலைத் தேர்ந்தெடு" : "Choose Thunai's voice"}>{ta ? "குரல் வகை" : "Voice"}</button>
             <button type="button" onClick={() => setPanel(panel === "help" ? null : "help")}>?</button>
             <button type="button" onClick={switchOff} title="Thunai off" aria-label="Thunai off">⏻</button>
           </div>
@@ -945,7 +1324,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       )}
 
       <button ref={orbRef} className={`th-orb ${phase}`} aria-label={orbLabel} title={orbLabel} aria-pressed={on}
-        onClick={() => { if (!on) switchOn(); else if (phase === "listening") stopListen.current?.(); else startListening(); }}>
+        onClick={() => { if (!on) switchOn(); else if (narrating) stopNarration(); else if (phase === "listening") stopListen.current?.(); else startListening(); }}>
         <span className="core" />
         {phase === "listening" && <span className="mic" aria-label="Microphone on" />}
         {tray.length > 0 && <em className="count">{tray.length}</em>}

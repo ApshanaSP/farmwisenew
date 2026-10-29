@@ -15,7 +15,10 @@ const Op = z.discriminatedUnion("op", [
   z.object({ op: z.literal("correction"), heard: z.string().trim().min(1).max(60), meant: z.string().trim().min(1).max(80) }),
   z.object({ op: z.literal("prefs"), prefs: z.object({ lang: z.enum(["en", "ta"]).optional(), mode: z.enum(["voice", "visual", "quiet"]).optional(),
     rate: z.number().min(0.6).max(1.6).optional() }) }),
-  z.object({ op: z.literal("recent"), text: z.string().trim().min(1).max(200) })
+  z.object({ op: z.literal("recent"), text: z.string().trim().min(1).max(200) }),
+  z.object({ op: z.literal("pin"), pin: z.object({ id: z.string().regex(/^[a-z0-9]{4,20}$/), title: z.string().trim().min(1).max(200), recipe: z.string().max(20),
+    slots: z.record(z.unknown()).refine((x) => JSON.stringify(x).length < 2000, "too large"), at: z.string().max(40) }) }),
+  z.object({ op: z.literal("unpin"), id: z.string().max(20) })
 ]);
 
 /** The signed-in Collector's own Thunai memory: notes, habits, preferences, reminders, recent commands. */

@@ -21,9 +21,12 @@ export interface Memory {
   prefs: { lang?: "en" | "ta"; mode?: "voice" | "visual" | "quiet"; rate?: number };
   reminders: Reminder[];
   recent: { text: string; at: string }[];
+  /** Stage screens the Collector pinned (v2): the recipe and slots rebuild them from the data when opened */
+  pins: Pin[];
 }
+export interface Pin { id: string; title: string; recipe: string; slots: Record<string, unknown>; at: string }
 
-const EMPTY: Memory = { notes: [], habits: {}, pending: {}, prefs: {}, reminders: [], recent: [] };
+const EMPTY: Memory = { notes: [], habits: {}, pending: {}, prefs: {}, reminders: [], recent: [], pins: [] };
 
 function file(user: number) { return path.join(dir(), `memory-${Number(user)}.json`); }
 
@@ -31,7 +34,7 @@ export function readMemory(user: number): Memory {
   try {
     const m = JSON.parse(fs.readFileSync(file(user), "utf8"));
     return { ...EMPTY, ...m };
-  } catch { return { ...EMPTY, habits: {}, pending: {}, prefs: {} }; }
+  } catch { return { ...EMPTY, habits: {}, pending: {}, prefs: {}, pins: [] }; }
 }
 
 function writeMemory(user: number, m: Memory) {
@@ -52,7 +55,9 @@ export type MemoryOp =
   | { op: "habit"; heard: string; meant: string }
   | { op: "correction"; heard: string; meant: string }
   | { op: "prefs"; prefs: Memory["prefs"] }
-  | { op: "recent"; text: string };
+  | { op: "recent"; text: string }
+  | { op: "pin"; pin: Pin }
+  | { op: "unpin"; id: string };
 
 /** Apply one change and return the new memory. Corrections become a habit on the second identical one. */
 export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memory {
@@ -61,7 +66,7 @@ export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memo
   switch (op.op) {
     case "note": m.notes = [...m.notes, { id: id(), text: clip(op.text, 300), at }].slice(-100); break;
     case "forget":
-      if (op.all) Object.assign(m, { ...EMPTY, habits: {}, pending: {}, prefs: {}, notes: [], reminders: [], recent: [] });
+      if (op.all) Object.assign(m, { ...EMPTY, habits: {}, pending: {}, prefs: {}, notes: [], reminders: [], recent: [], pins: [] });
       else if (op.id) { m.notes = m.notes.filter((n) => n.id !== op.id); m.reminders = m.reminders.filter((r) => r.id !== op.id); delete m.habits[op.id]; }
       else m.notes = m.notes.slice(0, -1);
       break;
@@ -75,6 +80,8 @@ export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memo
     }
     case "prefs": m.prefs = { ...m.prefs, ...op.prefs }; break;
     case "recent": m.recent = [...m.recent, { text: clip(op.text, 200), at }].slice(-200); break;
+    case "pin": m.pins = [...(m.pins ?? []).filter((p) => p.id !== op.pin.id && p.title !== op.pin.title), { ...op.pin, title: clip(op.pin.title, 80) }].slice(-12); break;
+    case "unpin": m.pins = (m.pins ?? []).filter((p) => p.id !== op.id); break;
   }
   writeMemory(user, m);
   return m;

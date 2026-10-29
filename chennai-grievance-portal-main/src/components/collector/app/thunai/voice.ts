@@ -27,7 +27,8 @@ export function warmVoices(onReady?: () => void) {
 export function voiceScore(v: { name: string; lang: string; localService?: boolean }, lang: string): number {
   const L = lang.toLowerCase(), VL = v.lang.toLowerCase().replace("_", "-");
   let s = 0;
-  if (VL === L) s += 60; else if (VL.slice(0, 2) === L.slice(0, 2)) s += 35; else return -1;
+  // an Indian voice always comes first when the device has one (the owner's wish), the most natural Indian voice first
+  if (VL === L) s += 100; else if (VL.slice(0, 2) === L.slice(0, 2)) s += 35; else return -1;
   if (/natural|neural|online|wavenet|premium|enhanced/i.test(v.name)) s += 45;
   if (/google/i.test(v.name)) s += 20;
   if (/microsoft/i.test(v.name)) s += 8;

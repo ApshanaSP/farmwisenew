@@ -78,7 +78,7 @@ const plural = (n: number, one: string, many: string) => `${spoken(n)} ${n === 1
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 /** Text fit to show and say: no phone numbers or e-mail addresses, no letter openings ("Respected sir, ..."). */
 export function safeText(t: unknown, n: number): string {
-  return clip(String(t ?? "").replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "").replace(/(?:\+?91[\s-]?)?\d[\d\s-]{8,}\d/g, "")
+  return clip(String(t ?? "").replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "").replace(/(?:\+?91[\s-]?)?\b\d[\d\s-]{8,}\d\b/g, "")
     .replace(/^\s*(respected|dear)\s+(sir|madam|sir\/madam)[,.:\s-]*/i, "").replace(/^\s*(sir|madam)[,.:]\s*/i, ""), n);
 }
 /** How Thunai names an incident aloud: its own short summary, else its kind and place (never a citizen's words). */
@@ -191,7 +191,8 @@ async function cases(c: Ctx): Promise<Part> {
     total = slots.status === "overdue" ? rows.length : data.total;
     source = "list";
   }
-  rows = sortRows(rows, slots.sort).slice(0, n);
+  // the console's own list is shown whole ("the 6 severe cases" are the ones it shows, however many it shows now)
+  rows = sortRows(rows, slots.sort).slice(0, source === "console-severity" ? 30 : n);
   const sevWord = sev ? sev.toLowerCase() : "";
   const scope = scopeWords(w, { ...s, sev: null });
   const title = `${sev ? `${sev} cases` : slots.q ? `Cases: ${slots.q}` : "Cases"} · ${scope.en}`;
@@ -199,20 +200,38 @@ async function cases(c: Ctx): Promise<Part> {
     return { title, takeaway: null, say: bi(`There are no ${sevWord} cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
       blocks: [{ kind: "Note", id: "none", text: "No incidents match this view." }] };
   }
-  const top = rows[0];
-  const where = top.zoneName ?? top.place ?? "Chennai";
-  const worst = spokenLabel(top);
   const overdue = rows.filter((r) => r.overdue).length;
-  const shown = rows.length < total ? ` I am showing the top ${rows.length}.` : "";
-  const say = bi(
-    `${plural(total, `${sevWord ? `${sevWord} ` : ""}case`, `${sevWord ? `${sevWord} ` : ""}cases`)} ${PERIOD_EN[s.period]}.${shown} The worst: ${worst}${worst.includes(where) ? "" : `, ${where}`}.`,
-    `${PERIOD_TA[s.period]} ${spoken(total)} ${sev ? SEV_TA[sev] + " " : ""}சம்பவங்கள். முதன்மையானது: ${worst}${worst.includes(where) ? "" : `, ${where}`}.`
-  );
+  const say = casesSay(rows, total, sev, s.period);
   const takeaway = overdue ? bi(`${overdue} of the ${rows.length} shown are past their deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${overdue} காலக்கெடுவைத் தாண்டியவை.`) : null;
   const pts = points(rows);
   const blocks: BlockT[] = [{ kind: "CaseList", id: "cases", title, source, sev, total, rows }];
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: "Where they are", rule: "Numbered as in the list; cases without an exact place are not drawn.", shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
   return { title, takeaway, say, blocks };
+}
+
+/**
+ * The spoken summary of a list of cases, as an aide would give it: how many, which need the Collector first and why (past
+ * their deadline), who holds most of them, and what to say next. Names come from each incident's own short summary,
+ * never an id or a citizen's words; every figure is a count of the rows.
+ */
+export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey): Bilingual {
+  const sevWord = sev ? `${sev.toLowerCase()} ` : "";
+  const where = (r: CaseRowT) => { const l = spokenLabel(r); return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l; };
+  const late = rows.filter((r) => r.overdue);
+  const first = late.length ? late.slice(0, 2) : rows.slice(0, 1);
+  const byDept = new Map<string, number>();
+  for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
+  const [lead] = [...byDept.entries()].sort((a, b) => b[1] - a[1]);
+  const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${PERIOD_EN[period]}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
+  const need = late.length
+    ? `${late.length === 1 ? "One is past its deadline and needs" : `${spoken(late.length)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
+    : `The most urgent: ${where(first[0])}.`;
+  const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
+  const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
+  const ta = [`${PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்.`,
+    late.length ? `${spoken(late.length)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(where).join(", ")}.` : `மிக அவசரமானது: ${where(first[0])}.`,
+    lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
+  return bi(en, ta);
 }
 
 async function caseDetail(c: Ctx): Promise<Part> {
@@ -381,7 +400,7 @@ async function ranking(c: Ctx): Promise<Part> {
   const first = items[0];
   const vm = vsMedian(first.value, all);
   if (order === "top" && first.value === 0 && all.every((v) => v === 0)) {
-    const nothing = bi(`Nothing to rank: every one of the ${all.length} reads 0${unit ? ` ${unit}` : ""}${asWhen ? ` as of ${asWhen}` : ""}.`, `வரிசைப்படுத்த எதுவும் இல்லை: ${all.length} அளவீடுகளும் 0${asWhen ? `, ${asWhen} நிலவரப்படி` : ""}.`);
+    const nothing = bi(`Nothing to rank: all ${all.length} read 0${unit ? ` ${unit}` : ""}${asWhen ? ` as of ${asWhen}` : ""}.`, `வரிசைப்படுத்த எதுவும் இல்லை: ${all.length} அளவீடுகளும் 0${asWhen ? `, ${asWhen} நிலவரப்படி` : ""}.`);
     return { title, takeaway: nothing, say: measure === "rain" ? bi(`No rain in the last 24 hours at any of the ${all.length} stations${asWhen ? `, as of ${asWhen}` : ""}.`, `கடந்த 24 மணி நேரத்தில் ${all.length} நிலையங்களிலும் மழை இல்லை${asWhen ? `, ${asWhen} நிலவரப்படி` : ""}.`) : nothing,
       blocks: [{ kind: "Ranking", id: "rank", title: label, unit, method, order, items }, ...(pts.length ? [{ kind: "MapView" as const, id: "map", title: "Stations", rule: null, shade: null, points: pts, outline: [] }] : [])] };
   }
@@ -529,7 +548,7 @@ async function trend(c: Ctx): Promise<Part> {
     { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
       { key: "total", label: `${subject}, ${PERIOD_EN[s.period]}`, value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
       { key: "peak", label: `Peak (${t.labels[p.i]})`, value: p.value, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-      { key: "half", label: "Second half vs first", value: second, unit: null, prev: first, delta: ch.delta, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] }
+      { key: "half", label: "Second half vs first", value: second, unit: null, prev: first, delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] }
     ] },
     t.block,
     { kind: "Ranking", id: "zones", title: `Zones with the most ${subject.toLowerCase()}`, unit: "incidents", method: `Incidents reported by zone, ${PERIOD_EN[s.period]}.`, order: "top",
@@ -566,7 +585,7 @@ async function why(c: Ctx): Promise<Part> {
   const text = `${head} ${reasons.length ? `Main reasons: ${reasons.join("; ")}.` : ""}`;
   const blocks: BlockT[] = [
     { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-      { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: Number(t.n ?? 0), unit: null, prev: num(t.prev), delta: ch.delta, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] },
+      { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: Number(t.n ?? 0), unit: null, prev: num(t.prev), delta: ch.delta, pct: ch.pct, tone: (ch.delta ?? 0) > 0 ? "bad" : "good", spark: [] },
       { key: "severe", label: "Severe", value: Number(t.severe ?? 0), unit: null, prev: num(t.severePrev), delta: num(t.severePrev) != null ? Number(t.severe ?? 0) - Number(t.severePrev) : null, tone: "bad", spark: [] },
       { key: "overdue", label: "Past deadline (open)", value: Number(t.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
       { key: "rain", label: "Rain-linked", value: Number(t.rainLinked ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
@@ -686,7 +705,8 @@ async function dashboard(c: Ctx): Promise<Part> {
   const rows = ((list.data as { rows: Row[] }).rows ?? []).map((x) => caseRow(x, w)).slice(0, 8);
   const hot = ((hs?.data as { rows: Row[] } | undefined)?.rows ?? []).filter((x) => !s.cat || x.cat === s.cat).slice(0, 8);
   const pts: PointT[] = [...points(rows, 3), ...hot.map((x, i) => ({ n: null, id: String(x.id), lat: Number(x.lat), lon: Number(x.lon), label: `Hotspot: ${clip(x.top_place, 60)} (${spoken(Number(x.incidents_30d))} in 30 days)`, sev: null, value: Number(x.incidents_30d), hot: i === 0 }))];
-  const tile = (key: string, label: string, tone: "bad" | "neutral") => ({ key, label, value: Number(kd.cur?.[key] ?? 0), unit: null, prev: num(kd.prev?.[key]), delta: num(kd.prev?.[key]) != null ? Number(kd.cur?.[key] ?? 0) - Number(kd.prev[key]) : null, tone, spark: (kd.series?.[key] ?? []).slice(-30) });
+  const tile = (key: string, label: string, tone: "bad" | "neutral") => ({ key, label, value: Number(kd.cur?.[key] ?? 0), unit: null, prev: num(kd.prev?.[key]), delta: num(kd.prev?.[key]) != null ? Number(kd.cur?.[key] ?? 0) - Number(kd.prev[key]) : null,
+    pct: change(Number(kd.cur?.[key] ?? 0), num(kd.prev?.[key])).pct, tone, spark: (kd.series?.[key] ?? []).slice(-30) });
   const title = `${subject} dashboard · ${scope.en}`;
   const rep = Number(kd.cur?.reported ?? t.total);
   const prev = num(kd.prev?.reported);
