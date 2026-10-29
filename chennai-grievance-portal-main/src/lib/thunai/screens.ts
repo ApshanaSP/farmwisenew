@@ -749,7 +749,13 @@ async function dashboard(c: Ctx): Promise<Part> {
   const rep = Number(kd.cur?.reported ?? t.total);
   const prev = num(kd.prev?.reported);
   const ch = change(rep, prev);
-  const topZone = zr5[0];
+  const topZone = zr5[0] && zr5[0].value > 0 ? zr5[0] : undefined;
+  // nothing reported: say so plainly instead of ranking zeros
+  if (!rep && !zrows.some((x) => Number(x.n) > 0)) {
+    return { title, takeaway: bi(`No ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
+      say: bi(`No ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}${prev ? `, against ${spoken(prev)} the period before` : ""}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
+      blocks: [{ kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad")] }, t.block] };
+  }
   return { title,
     takeaway: topZone ? bi(`${topZone.item.name} has the most: ${spoken(topZone.value)} of ${spoken(zrows.reduce((a, x) => a + Number(x.n), 0))}.`, `${zoneTa(w, Number(topZone.item.zone))} அதிகம்: ${spoken(topZone.value)}.`) : null,
     say: bi(`${spoken(rep)} ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}${ch.pct != null ? `, ${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}% on the period before` : ""}. ${spoken(Number(kd.cur?.severe ?? 0))} severe.${topZone ? ` Most in ${topZone.item.name}.` : ""}`,

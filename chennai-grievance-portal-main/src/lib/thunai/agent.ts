@@ -108,6 +108,7 @@ THE OPEN STAGE (when "Stage:" is given): the Collector is looking at it; "this",
 
 RULES
 1. To see, list, read, count, compare, rank, map, explain or check anything in the data -> a screen. Pure steering ("Zone 7", "weekly", "open the news panel", "dark mode", "show numbers", "go back") -> steps only. Never use ask or read steps when a screen fits.
+1a. Getting ready for heavy rain, a storm or a cyclone ("prepare for heavy rain") -> steps mission{option rain} (it reads the gauges, sets the flooding view, drafts for the worst cases and ends on the flooding screen); no screen.
 1b. Which screen: being briefed or asking how things stand overall (today's situation, a summary of the day) -> brief, never only a page step. A level, reading or measure at a named reservoir, lake, station or for the air -> readings. Actions on what the Stage shows (export, pin, save, draft, open, sort, filter, view) go in "stage", never in steps.
 2. Also add steps only when the Collector asked to change the console itself; code sets the console's filters to match the screen.
 2b. Screen slots hold only what THIS sentence (or, for a refinement, the open Stage) names. Never copy the console's current filters into slots: "why is Perungudi so bad" -> zones [14] only, even if the console shows a category.

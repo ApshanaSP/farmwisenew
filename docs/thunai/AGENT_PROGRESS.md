@@ -56,7 +56,13 @@ Branch `thunai/agent`, cut from `thunai/pilot` (36ac244). Nothing pushed or merg
 - `design-taste-frontend`: design read ("in-product command overlay for a District Collector, calm dark-glass mission
   control, the console's own fonts and icon family"); one accent, one radius scale, no em-dashes in UI copy, motion only
   for arrival, reading and work in progress, all off under reduced motion.
-- `redesign-existing-projects`, `web-design-guidelines`: see the review section below (filled in after the review).
+- `web-design-guidelines` (applied by the UI review subagent): focus trap set up once and focus kept inside the
+  dialog, fake radio groups replaced by pressed buttons, one always-mounted live region, accent fill darkened for 4.5:1
+  white text, light-theme accent and amber darkened, touch targets 28-32 px, empty blocks say so, heat strip aligned,
+  map controls styled inside the Stage, reduced motion for the map's fly-to.
+- `redesign-existing-projects`: not loaded separately; the Stage is new UI on top of the console, built from the
+  console's own fonts, icon family and map; the redesign checklist items (contrast, empty states, motion purpose)
+  were covered by the review above.
 
 ## Log
 - Read the build prompt, REPORT.md, plan.ts, Thunai.tsx, assistant/agent.ts, tools.ts; probed every tool's real output
@@ -65,3 +71,13 @@ Branch `thunai/agent`, cut from `thunai/pilot` (36ac244). Nothing pushed or merg
 - Built Stage.tsx, stage.css, StageChart.tsx, export.ts, voice.ts; extended StudioMap with numbered pins and outlines;
   wired Thunai.tsx; 95 Thunai tests; checkpoint a9ea3d8.
 - Live cases and unseen set: see AGENT_REPORT.md.
+
+## After the live runs (generic fixes, found in the browser)
+- Route body limit matched the Stage context (30 ids); v1 map/read steps become the nearby/readings screens; news and
+  brief are district-wide; a request naming its own place starts clean; a console filter the model copied without the
+  sentence mentioning it is dropped; empty lists caused by console filters are explained with "All of Chennai";
+  long news links fit the catalog; an all-zero dashboard says nothing was reported; Ask the Map retries a zone name.
+- The rain mission rule in the prompt uses only the CASES phrase ("prepare for heavy rain"); an example that resembled
+  an unseen case was removed so the unseen score stays honest.
+- The machine (7.5 GB) ran out of memory for a parallel full test run while another session's dev server and the
+  browser were running; the suite was run folder by folder in one process instead.
