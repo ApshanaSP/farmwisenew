@@ -11,6 +11,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import { fmtValue } from "@/lib/assistant/chartspec";
 import type { ChartSpec, Dataset } from "@/lib/assistant/answer";
 import { esc } from "../SatMap";
+import { hardenLeaflet } from "../askmap/leafletSafe";
 
 const RAMP = ["#CDE2FB", "#86B6EF", "#3987E5", "#4C8DFF", "#8DB6FF"];
 
@@ -27,6 +28,7 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
     let dead = false;
     (async () => {
       const L = (await import("leaflet")).default;
+      hardenLeaflet(L);
       if (dead || !el.current) return;
       map = L.map(el.current, { zoomControl: true, attributionControl: true, minZoom: 9, maxZoom: 17, scrollWheelZoom: false });
       map.attributionControl.setPrefix(false);

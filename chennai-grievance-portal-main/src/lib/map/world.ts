@@ -17,7 +17,7 @@ import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
 import type { Entry, ResolverData } from "./resolve";
 import { CAT_TA } from "./words";
-import type { Hotspot, Inc, LayerMeta, LineFeat, LineLayer, PointFeat, PointLayer, PolyFeat, Sev, WardGeo, World } from "./types";
+import type { CondPlace, Hotspot, Inc, LayerMeta, LineFeat, LineLayer, NewsDoc, PointFeat, PointLayer, PolyFeat, Sev, WardGeo, Work, World } from "./types";
 
 type Row = Record<string, any>;
 async function q(sql: string, params: unknown[] = []): Promise<Row[]> {
@@ -38,7 +38,7 @@ declare global {
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 5;
+const WORLD_VERSION = 7;
 
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
@@ -60,18 +60,28 @@ async function buildKey(): Promise<string> {
 const SEV_OK = new Set(["Severe", "High", "Medium", "Low"]);
 
 async function loadBase(key: string): Promise<Base> {
-  const [incRows, wardRows, facRows, hotRows, geo, asOfRows] = await Promise.all([
+  const [incRows, wardRows, facRows, hotRows, geo, asOfRows, newsRows, sigRows, workRows] = await Promise.all([
     q(`SELECT i.incident_id AS id, i.category_code AS cat, i.family, i.lead_dept AS dept, i.ward_no AS ward, i.zone_no AS zone, i.taluk_code AS taluk,
               i.lat, i.lon, i.loc_precision_m AS prec, i.place_text AS place, i.status_std AS status, i.is_open AS open, i.severity_level AS sev,
               i.priority_score AS priority, i.priority_reasons AS reasons, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.sla_breached AS breached,
               DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS first, ${TITLE} AS title, i.citizen_complaints AS citizen, i.source_count AS sources,
-              i.hotspot_id AS hotspot, i.vulnerable AS tags
+              i.hotspot_id AS hotspot, i.vulnerable AS tags, i.outlet_count AS outlets
        FROM incidents i WHERE i.lat IS NOT NULL AND i.lon IS NOT NULL`),
     q(`SELECT ward_no, zone_no, zone_name, taluk_code, centroid_lat, centroid_lon, adjacent_wards, gi_star_z_30d FROM ref_wards ORDER BY ward_no`),
     q(`SELECT facility_id, type, name, lat, lon, in_district FROM ref_facilities WHERE lat IS NOT NULL AND lon IS NOT NULL ORDER BY facility_id`),
     q(`SELECT hotspot_id, category_code, incidents, incidents_30d, open, lat, lon, wards, top_place FROM hotspots ORDER BY hotspot_id`),
     mapGeo(),
-    q(`SELECT JSON_UNQUOTE(value) AS v FROM metrics WHERE metric = 'as_of'`).catch(() => [] as Row[])
+    q(`SELECT JSON_UNQUOTE(value) AS v FROM metrics WHERE metric = 'as_of'`).catch(() => [] as Row[]),
+    // news articles about incidents in the district (public reporting: headline, outlet, link; no personal data)
+    q(`SELECT doc_id, title, title_en, url, publisher, publisher_domain, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS at, category_code, department, lat, lon, geo_level,
+              place_text, linked_incident_id
+       FROM documents WHERE is_district = 1 AND is_incident = 1 ORDER BY published_at DESC, doc_id`).catch(() => [] as Row[]),
+    // live feeds with a place: the latest reading per place and metric, and PWD works with a site
+    q(`SELECT metric, place_id, place_name, lat, lon, DATE_FORMAT(observed_at, '%Y-%m-%d %H:%i:%s') AS at, value, unit, zscore, anomaly, detail, days_to_full, source
+       FROM observation_signals WHERE lat IS NOT NULL AND lon IS NOT NULL ORDER BY place_id, metric`).catch(() => [] as Row[]),
+    q(`SELECT work_id, work_title, work_type, asset_name, latitude, longitude, status, physical_progress_pct, progress_gap_pct,
+              DATE_FORMAT(target_date, '%Y-%m-%d') AS target, office
+       FROM pwd_works WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND status <> 'completed' ORDER BY work_id`).catch(() => [] as Row[])
   ]);
   const incidents: Inc[] = incRows.map((r) => ({
     id: String(r.id), cat: String(r.cat ?? "OTHER"), family: String(r.family ?? "OTHER"), dept: String(r.dept ?? ""),
@@ -80,8 +90,15 @@ async function loadBase(key: string): Promise<Base> {
     place: r.place ?? null, status: String(r.status ?? ""), open: Number(r.open) === 1, sev: (SEV_OK.has(r.sev) ? r.sev : "Low") as Sev,
     priority: Number(r.priority) || 0, reasons: r.reasons ?? null, slaDue: r.sla_due ?? null, breached: Number(r.breached) === 1,
     first: String(r.first ?? ""), title: String(r.title ?? "Incident"), citizen: Number(r.citizen) || 0, sources: Number(r.sources) || 0, hotspot: r.hotspot ?? null,
-    tags: r.tags ? String(r.tags) : null
+    tags: r.tags ? String(r.tags) : null, outlets: Number(r.outlets) || 0
   }));
+  const news: NewsDoc[] = newsRows.map((d) => ({
+    id: String(d.doc_id), title: String(d.title ?? ""), title_en: d.title_en ? String(d.title_en) : null, url: /^https?:\/\//i.test(String(d.url ?? "")) ? String(d.url) : null,
+    outlet: String(d.publisher ?? d.publisher_domain ?? "News"), at: String(d.at ?? ""), cat: d.category_code ?? null, dept: d.department ?? null,
+    lat: d.lat == null ? null : Number(d.lat), lon: d.lon == null ? null : Number(d.lon), level: String(d.geo_level ?? "district"), place: d.place_text ?? null,
+    inc: d.linked_incident_id ?? null
+  }));
+  const conds = condsOf(sigRows, workRows);
 
   const wardInfo = new Map(wardRows.map((w) => [Number(w.ward_no), w]));
   const wards: WardGeo[] = geo.wards.map((g) => {
@@ -154,8 +171,40 @@ async function loadBase(key: string): Promise<Base> {
   const dataAsOf = asOfRows[0]?.v ? String(asOfRows[0].v).slice(0, 19).replace("T", " ") : "";
   return {
     key, incidents, resolver,
-    world: { dataAsOf, points, lines, water, wards, zones: geo.zones.map((z) => ({ zone: z.zone, name: z.name, lat: z.lat, lon: z.lon })), taluks, hotspots, meta, cats, depts, district }
+    world: { dataAsOf, news, conds, points, lines, water, wards, zones: geo.zones.map((z) => ({ zone: z.zone, name: z.name, lat: z.lat, lon: z.lon })), taluks, hotspots, meta, cats, depts, district }
   };
+}
+
+/** What a place measures, from its metrics: lake levels make a lake, AQI an air station, bed figures a hospital ... */
+function condKind(metrics: string[], source: string): CondPlace["kind"] | null {
+  if (metrics.includes("imd_warning_level")) return "weather";
+  if (metrics.some((m) => m.startsWith("lake_"))) return "lake";
+  if (metrics.includes("aqi")) return "air";
+  if (metrics.includes("reservoir_inflow_cusec")) return "reservoir";
+  if (source === "hospital" || metrics.includes("bed_occupancy_pct")) return "hospital";
+  if (metrics.some((m) => m.startsWith("rainfall") || m.startsWith("temp_") || m === "humidity_pct")) return "rain";
+  return null;
+}
+/** The live feeds as places with their latest readings, and the PWD works still to finish. */
+export function condsOf(sigRows: Row[], workRows: Row[]): { places: CondPlace[]; works: Work[] } {
+  const byPlace = new Map<string, Row[]>();
+  for (const r of sigRows) (byPlace.get(String(r.place_id)) ?? byPlace.set(String(r.place_id), []).get(String(r.place_id))!).push(r);
+  const places: CondPlace[] = [];
+  for (const [id, rs] of byPlace) {
+    const kind = condKind(rs.map((r) => String(r.metric)), String(rs[0].source ?? ""));
+    if (!kind) continue;
+    const m: CondPlace["m"] = {};
+    for (const r of rs) m[String(r.metric)] = { v: Number(r.value), unit: String(r.unit ?? ""), z: r.zscore == null ? null : Number(r.zscore), anomaly: Number(r.anomaly) === 1,
+      detail: r.detail ? String(r.detail) : null, full: r.days_to_full == null ? null : Number(r.days_to_full) };
+    places.push({ id, kind, name: String(rs[0].place_name ?? id), lat: Number(rs[0].lat), lon: Number(rs[0].lon), at: rs.map((r) => String(r.at ?? "")).sort().at(-1) ?? "",
+      source: String(rs[0].source ?? ""), m });
+  }
+  const works: Work[] = workRows.map((r) => ({
+    id: String(r.work_id), title: String(r.work_title ?? r.work_type ?? "PWD work"), type: String(r.work_type ?? ""), asset: r.asset_name ?? null,
+    lat: Number(r.latitude), lon: Number(r.longitude), status: String(r.status ?? ""), progress: r.physical_progress_pct == null ? null : Number(r.physical_progress_pct),
+    gap: r.progress_gap_pct == null ? null : Number(r.progress_gap_pct), target: r.target ?? null, office: r.office ?? null
+  }));
+  return { places, works };
 }
 
 /** Joins OSM line features of the same name whose pieces lie within 1.5 km of each other (gaps where a way has no name). */

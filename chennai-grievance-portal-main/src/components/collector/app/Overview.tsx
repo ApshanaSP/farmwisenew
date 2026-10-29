@@ -80,12 +80,20 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   const addedPins = d.added.pins;
 
-  // Under the ocean band, one row of four: the map (where), by severity (what is urgent), my tasks (what to check)
-  // and the latest news. The counts and the snapshot live in the band above.
+  // Under the band the map leads: it takes the left half and more, full height; by severity (what is urgent) and my
+  // tasks (what to check) stack beside it, and the latest news runs down the right. The counts live in the band above.
   const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
   const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
     .filter(([, on]) => on).map(([k]) => k as string);
-  const grid: React.CSSProperties = {
+  const stack = cols.filter((k) => k === "sev" || k === "tasks");
+  const r0 = ["map"], r1 = ["map"];
+  if (stack.length) { r0.push(stack[0]); r1.push(stack[1] ?? stack[0]); }
+  if (cols.includes("brief")) { r0.push("brief"); r1.push("brief"); }
+  const grid: React.CSSProperties = cols.includes("map") && cols.length > 1 ? {
+    gridTemplateColumns: ["minmax(0,2.1fr)", ...r0.slice(1).map((k) => (k === "brief" ? "minmax(0,1.05fr)" : "minmax(0,1fr)"))].join(" "),
+    gridTemplateRows: "minmax(0,1.15fr) minmax(0,.85fr)",
+    gridTemplateAreas: `"${r0.join(" ")}" "${r1.join(" ")}"`
+  } : {
     gridTemplateColumns: cols.map((k) => `minmax(0,${W[k]})`).join(" "),
     gridTemplateRows: "minmax(0,1fr)",
     gridTemplateAreas: `"${cols.join(" ")}"`
@@ -100,13 +108,7 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
       <section className="p1" style={grid}>
         {L.panels.map && (
           <article className="card a-map" style={iv()}>
-            <div className="ch"><I n="map" />
-              <h3>{c.taluk ? <>{c.talukName(c.taluk)} taluk</> : c.zoneName ? c.zoneName : "Chennai District"}</h3>
-              <div className="seg sm" style={{ marginLeft: "auto" }} role="tablist" aria-label="Map areas">
-                <button className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
-                <button className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
-              </div>
-            </div>
+            {/* no header: the map takes the card; its name and the Zones/Taluks switch sit in the row under it */}
             <div className="map-cb">
               <div className="map-wrap">
                 <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={d.map.pins} zone={d.zone} layers={c.layers} stations={env.mapStations}
@@ -126,6 +128,7 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
             </div>
             {/* the legend sits under the map, so nothing covers the map itself; each item turns its pins on or off */}
             <div className="map-leg2" role="group" aria-label="Show on the map">
+              <h3 className="map-title"><I n="map" />{c.taluk ? <>{c.talukName(c.taluk)} taluk</> : c.zoneName ? c.zoneName : "Chennai District"}</h3>
               {LAYERS.map(([k, l, col, n]) => (
                 <button key={k} className={c.layers[k] ? "" : "off"} aria-pressed={c.layers[k]} onClick={() => c.toggleLayer(k)} title={`Show or hide ${l.toLowerCase()} pins`}>
                   <i style={{ background: col, color: col }} />{l}<b>{n.toLocaleString("en-IN")}</b>
@@ -143,9 +146,13 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
               {d.map.unlocated > 0 && (
                 <button className="unloc" onClick={() => c.openList({ place: "unlocated", sort: "sev", dir: 1 }, "Incidents with no exact place")}
                   title={`${d.map.unlocated.toLocaleString("en-IN")} of ${d.map.total.toLocaleString("en-IN")} incidents in this view have no exact place (district-wide or unknown), so they are not drawn as pins. Click for the list.`}>
-                  <i className="ring" /><b>{d.map.unlocated.toLocaleString("en-IN")}</b>incidents with no exact place (district-wide or unknown)
+                  <i className="ring" /><b>{d.map.unlocated.toLocaleString("en-IN")}</b>not on the map
                 </button>
               )}
+              <div className="seg sm map-seg" role="tablist" aria-label="Map areas">
+                <button className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
+                <button className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
+              </div>
             </div>
           </article>
         )}
@@ -170,7 +177,8 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, prevLabel, style, on
   const cls = same ? "" : (goodDown ? diff < 0 : diff > 0) ? "good" : "bad";
   const than = prevLabel.replace(/^prev\. /, "the previous ");
   return (
-    <button className="kpi" style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick} title={tip ? `${tip} Click for the list.` : undefined}>
+    <button className="kpi" style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick}
+      title={tip ? `${tip}${sub ? ` (${sub}.)` : ""} Click for the list.` : sub}>
       <span className={`kpi-ic ${tone}`}><I n={icon} /></span>
       <span className="kpi-b">
         <span className="kpi-l">{label}{note && <em className="kpi-note">· {note}</em>}</span>

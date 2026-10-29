@@ -72,7 +72,7 @@ function zonesOf(hits: Hit[], w: World) {
 /** What the incidents are, in words: "open Flooding & waterlogging reports" / Tamil. */
 function subject(plan: Plan, w: World, lang: Lang, n = 2): string {
   const s = subjectMany(plan, w, lang);
-  return n === 1 && lang !== "ta" ? s.replace(/complaints$/, "complaint").replace(/incidents$/, "incident") : s;
+  return n === 1 && lang !== "ta" ? s.replace(/complaints( in the news)?$/, "complaint$1").replace(/incidents( in the news)?$/, "incident$1") : s;
 }
 function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const t = take0(plan);
@@ -81,7 +81,7 @@ function subjectMany(plan: Plan, w: World, lang: Lang): string {
   const cats = f?.category?.length ? f.category.map((c) => (ta ? CAT_TA[c] ?? c : (w.cats.get(c)?.label ?? c).toLowerCase())).join(", ") : f?.family?.length ? (ta ? "வெள்ளம்" : f.family.join(", ").toLowerCase().replace("flood", "flooding")) : "";
   const st = f?.status === "open" ? (ta ? "திறந்த " : "open ") : f?.status === "closed" ? (ta ? "முடிந்த " : "closed ") : "";
   const sev = f?.severity?.length === 1 ? (ta ? "கடுமையான " : "severe ") : f?.severity?.length ? (ta ? "கடுமையான/அதிக " : "severe or high ") : "";
-  const noun = f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents";
+  const noun = (f?.news ? (ta ? "செய்திகளில் வந்த " : "") : "") + (f?.citizen ? (ta ? "புகார்கள்" : "complaints") : ta ? "சம்பவங்கள்" : "incidents") + (f?.news && !ta ? " in the news" : "");
   return ta ? `${st}${sev}${cats ? cats + " " : ""}${noun}` : `${st}${sev}${cats ? cats + " " : ""}${noun}`.replace(/\s+/g, " ").trim();
 }
 const periodTail = (plan: Plan, lang: Lang) => {
@@ -106,12 +106,34 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
 
   const meaningOf = (extra = "") => {
     if (!r.hits.length) return null;
-    const z = zones.slice(0, 2);
+    const z = zones.length > 1 ? zones.slice(0, 2) : [];
     const d = depts[0];
-    if (ta) return `${z.length ? `பெரும்பாலானவை ${z.map((x) => `${x.name} (${n(x.n)})`).join(", ")} மண்டலங்களில்${extra}` : ""}${d ? `; ${d.name} துறையிடம் ${n(d.n)}` : ""}.`;
-    if (tg) return `${z.length ? `Neraya ${z.map((x) => `${x.name} (${n(x.n)})`).join(", ")} zone-la${extra}` : ""}${d ? `; ${d.name} kitta ${n(d.n)}` : ""}.`;
-    return `${z.length ? `Most are in ${z.map((x) => `${x.name} (${n(x.n)})`).join(" and ")}${extra}` : ""}${d ? `; ${d.name} holds ${n(d.n)} of them` : ""}.`;
+    const all = d && d.n === r.hits.length;
+    const parts = ta
+      ? [z.length ? `பெரும்பாலானவை ${z.map((x) => `${x.name} (${n(x.n)})`).join(", ")} மண்டலங்களில்${extra}` : extra.replace(/^,\s*/, ""), d ? (all ? `அனைத்தும் ${d.name} துறையிடம்` : `${d.name} துறையிடம் ${n(d.n)}`) : ""]
+      : tg
+        ? [z.length ? `Neraya ${z.map((x) => `${x.name} (${n(x.n)})`).join(", ")} zone-la${extra}` : extra.replace(/^,\s*/, ""), d ? (all ? `Ellaam ${d.name} kitta` : `${d.name} kitta ${n(d.n)}`) : ""]
+        : [z.length ? `Most are in ${z.map((x) => `${x.name} (${n(x.n)})`).join(" and ")}${extra}` : extra.replace(/^,\s*/, ""), d ? (all ? `${r.hits.length === 1 ? "It is" : "All are"} with ${d.name}` : `${d.name} holds ${n(d.n)} of them`) : ""];
+    const s = parts.filter(Boolean).join("; ");
+    return s ? `${s.charAt(0).toUpperCase()}${s.slice(1)}.` : null;
   };
+
+  // "schools in Valasaravakkam": the places themselves, counted and named
+  if (show.type === "points") {
+    const lw = LAYER_WORD[show.layer];
+    count = fact("count", show.items.length, lw.en);
+    const area = last.op === "inside" ? areaLabel(last.area, w, ctx) : { en: "Chennai district", ta: "சென்னை மாவட்டம்" };
+    const inWord = last.op !== "inside" || last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk" ? "in " : "";
+    const word = count === 1 ? lw.one : lw.en;
+    headline = !count ? (ta ? `${area.ta} ${lw.ta} எதுவும் இல்லை.` : tg ? `${area.en}-la ${lw.en} edhuvum illa.` : `No ${lw.en} ${inWord}${area.en} on the map.`)
+      : ta ? `${area.ta} ${n(count)} ${count === 1 ? lw.ta_one : lw.ta}.` : tg ? `${area.en}-la ${n(count)} ${word} irukku.` : `${n(count)} ${word} ${inWord}${area.en}.`;
+    const gov = show.items.filter((p) => p.government).length;
+    const named = show.items.filter((p) => p.name).slice(0, 3).map((p) => (ta ? p.name_ta ?? p.name : p.name));
+    if (count) meaning = ta ? `${gov ? `${n(gov)} அரசு. ` : ""}${named.length ? `எ.கா. ${named.join(", ")}.` : ""}`.trim() || null
+      : `${gov && show.layer !== "police" && show.layer !== "fire_stations" ? `${n(gov)} ${gov === 1 ? "is" : "are"} government. ` : ""}${named.length ? `${count > named.length ? "Including" : count === 1 ? "It is" : "They are"} ${named.join(", ")}.` : ""}`.trim() || null;
+    if (!count && last.op === "inside") meaning = ta ? "பகுதியை மாற்றிக் கேளுங்கள்." : "Try a nearby area or a wider radius.";
+    return { count, headline: headline.replace(/\s+/g, " ").trim(), meaning, depts: [], miss: null, facts, lang };
+  }
 
   switch (last.op) {
     case "within": {
@@ -145,12 +167,16 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
         return { en: `within ${fmtDistance(last.meters)} of ${nm}`, ta: `${l?.name_ta ?? nm} இலிருந்து ${fmtDistance(last.meters, "ta")} க்குள்` };
       })();
       const inWord = last.op === "inside" && (last.area.kind === "ward" || last.area.kind === "zone" || last.area.kind === "taluk") ? "in " : "";
+      // "near schools in Zone 11": the distance step before the area is part of what was counted
+      const wi = plan.steps.find((s) => s.op === "within") as Extract<Step, { op: "within" }> | undefined;
+      const nearWhat = wi ? wi.near.map((nm) => plan.steps.find((s) => s.as === nm)).filter((s): s is Extract<Step, { op: "take" }> => s?.op === "take").map((s) => LAYER_WORD[s.layer]) : [];
+      const nearTail = wi && nearWhat.length ? (ta ? ` ${nearWhat.map((x) => x.ta_one).join(" / ")} இலிருந்து ${fmtDistance(wi.meters, "ta")} க்குள்` : tg ? ` ${nearWhat.map((x) => x.one).join(" / ")} pakkathula` : ` within ${fmtDistance(wi.meters)} of a ${nearWhat.map((x) => x.one).join(" or ")}`) : "";
       if (!count) {
-        headline = ta ? `${where.ta} ${subj} எதுவும் இல்லை${per}.` : tg ? `${inWord}${where.en} ${subj} edhuvum illa${per}.` : `No ${subj} ${inWord}${where.en}${per}.`;
+        headline = ta ? `${where.ta}${nearTail} ${subj} எதுவும் இல்லை${per}.` : tg ? `${inWord}${where.en}${nearTail} ${subj} edhuvum illa${per}.` : `No ${subj}${nearTail} ${inWord}${where.en}${per}.`;
         break;
       }
-      headline = ta ? `${where.ta} ${n(count)} ${subj}${per} · ${ready}.` : tg ? `${inWord}${where.en} ${n(count)} ${subj} irukku${per} · ${ready}.`
-        : `${n(count)} ${subj} ${inWord}${where.en}${per} · ${ready}.`;
+      headline = ta ? `${where.ta}${nearTail} ${n(count)} ${subj}${per} · ${ready}.` : tg ? `${inWord}${where.en}${nearTail} ${n(count)} ${subj} irukku${per} · ${ready}.`
+        : `${n(count)} ${subj}${nearTail} ${inWord}${where.en}${per} · ${ready}.`;
       meaning = meaningOf();
       break;
     }

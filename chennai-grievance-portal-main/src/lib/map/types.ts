@@ -40,6 +40,8 @@ export interface Inc {
   title: string;
   citizen: number;
   sources: number;
+  /** news outlets that reported it (0 or missing = not in the news) */
+  outlets?: number;
   hotspot: string | null;
   /** who or what the reports mention ("school|children", "hospital", "elderly"): mentions, never distances */
   tags?: string | null;
@@ -107,6 +109,63 @@ export interface WardGeo {
   gi30: number | null;
 }
 
+/**
+ * A news article about an incident in the district (documents: is_district and is_incident). `level` is how precisely
+ * the article names its place: only "locality" is drawn as a pin; taluk, zone and district are counted, never pinned.
+ */
+export interface NewsDoc {
+  id: string;
+  title: string;
+  title_en: string | null;
+  url: string | null;
+  outlet: string;
+  /** IST wall clock "YYYY-MM-DD HH:MM:SS" */
+  at: string;
+  cat: string | null;
+  /** the department the pipeline assigned (an officer sees only their own) */
+  dept: string | null;
+  lat: number | null;
+  lon: number | null;
+  level: string;
+  place: string | null;
+  /** the incident the pipeline linked it to, if any */
+  inc: string | null;
+}
+export const NEWS_PIN_LEVEL = "locality";
+
+/** One reading of a live feed at a place (observation_signals: the latest per place and metric). */
+export interface Reading { v: number; unit: string; z: number | null; anomaly: boolean; detail: string | null; full: number | null }
+/**
+ * A place a live feed measures: an IMD weather station, a PWD lake, a CPCB air station, a government hospital, a
+ * reservoir, or the district's IMD warning. Readings by metric ("rainfall_24h_mm", "lake_pct_full", "aqi" ...).
+ */
+export interface CondPlace {
+  id: string;
+  kind: "rain" | "lake" | "air" | "hospital" | "reservoir" | "weather";
+  name: string;
+  lat: number;
+  lon: number;
+  /** newest reading, IST wall clock */
+  at: string;
+  source: string;
+  m: Record<string, Reading>;
+}
+/** A PWD work with a site (desilting, drain, bund ...): progress against plan. */
+export interface Work {
+  id: string;
+  title: string;
+  type: string;
+  asset: string | null;
+  lat: number;
+  lon: number;
+  status: string;
+  progress: number | null;
+  /** progress minus planned progress, in points: below -10 is behind schedule */
+  gap: number | null;
+  target: string | null;
+  office: string | null;
+}
+
 export interface Hotspot { id: string; cat: string; lat: number; lon: number; incidents: number; incidents30: number; open: number; wards: number[]; place: string | null }
 
 export interface LayerMeta {
@@ -145,6 +204,10 @@ export interface World {
   zones: { zone: number; name: string; lat: number; lon: number }[];
   taluks: { code: string; name: string; name_ta: string | null; lat: number; lon: number }[];
   hotspots: Hotspot[];
+  /** news articles about incidents in the district, newest first (none in the unit-test world) */
+  news?: NewsDoc[];
+  /** live feeds with a place: weather, lakes, air, hospitals, reservoirs, PWD works (none in the unit-test world) */
+  conds?: { places: CondPlace[]; works: Work[] };
   meta: Record<string, LayerMeta>;
   cats: Map<string, { label: string; label_ta: string | null; family: string; lead: string }>;
   depts: Map<string, { name: string }>;

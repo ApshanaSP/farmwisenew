@@ -57,6 +57,10 @@ const CAT_WORDS: { cats?: string[]; family?: string[]; words: string[] }[] = [
   { family: ["CRIME"], words: ["crime", "crimes", "குற்றம்", "குற்றங்கள்", "kuttram"] }
 ];
 const COMPLAINT = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்", "புகார்கள்", "pugar", "pugaar", "complaintu"];
+/** "in the news": incidents a news outlet reported (not a category: "garbage in the news" is garbage, reported in the news) */
+const NEWS = ["in the news", "in the papers", "in the paper", "news", "newspaper", "newspapers", "news report", "news reports", "news reported", "press", "press reports", "media",
+  "media reports", "headlines", "செய்தி", "செய்திகள்", "செய்திகளில்", "செய்தியில்", "நாளிதழ்", "நாளிதழ்களில்", "பத்திரிகை", "பத்திரிகைகளில்", "ஊடக", "ஊடகங்களில்",
+  "news la", "newsla", "paper la", "paperla", "news-la"];
 const SEVERE = ["severe", "serious", "critical", "கடுமையான", "கடுமை", "தீவிர", "gambhir", "serious-a", "severe-a"];
 const SEVERE_HIGH = ["severe or high", "high or severe", "severe and high", "high and severe", "urgent", "high severity", "high-severity", "அவசர"];
 const OPEN = ["open", "pending", "unresolved", "not resolved", "active", "ongoing", "திறந்த", "நிலுவை", "நிலுவையில்", "தீர்க்கப்படாத", "pending-a"];
@@ -127,7 +131,7 @@ export function periodOf(text: string): Period | null | "all" {
 export interface Chip {
   id: string;
   /** what the chip edits: a part of the plan */
-  part: "category" | "status" | "period" | "severity" | "distance" | "facility" | "place" | "dept" | "citizen" | "group" | "overdue" | "k";
+  part: "category" | "status" | "period" | "severity" | "distance" | "facility" | "place" | "dept" | "citizen" | "news" | "group" | "overdue" | "k";
   en: string;
   ta: string;
   /** a default the question did not state */
@@ -160,6 +164,7 @@ interface Parsed {
   cats: string[] | null;
   family: string[] | null;
   citizen: boolean | null;
+  news: boolean | null;
   severity: string[] | null;
   status: "open" | "closed" | "any" | null;
   period: Period | null | "all";
@@ -169,6 +174,10 @@ interface Parsed {
   k: number | null;
   places: Found[];
   verb: Verb;
+  /** "near schools", "school pakkathula": something near the facility, not the facility itself ("schools in Adyar") */
+  facNear: boolean;
+  /** a follow-up keeps the last answer's place when it names none ("and thefts?", "hospitals there") */
+  keep?: { area: AreaRef | null; line: { ref: string; meters: number } | null };
   shape: { countBy: "ward" | "zone" | "taluk" | null; hotspot: boolean; nearest: boolean; farthest: boolean; compare: boolean; change: boolean; brief: boolean };
 }
 
@@ -179,7 +188,7 @@ const FILLER = new Set(("a an the of in on at to for from with by and or not no 
   + "thing things spot spots place places area areas map city chennai district side part parts number count total wise about around near nearby within close along "
   + "open pending closed resolved severe serious high low medium status last past previous week weeks month months day days year time "
   + "meter meters metre metres km kms m it its them they we us i you he she is iruku irukku irukka enna evlo evvalo kaattu sollu la le ku kitta pakkathula pakkam "
-  + "உள்ள உள்ளன எத்தனை என்ன காட்டு எங்கே மற்றும் இந்த அந்த அனைத்து எல்லா").split(/\s+/));
+  + "உள்ள உள்ளன எத்தனை என்ன காட்டு எங்கே மற்றும் இந்த அந்த அனைத்து எல்லா வந்த வந்தவை வந்துள்ள vandha vandhadhu vandhathu make change same instead too well ones one then so but how else again same").split(/\s+/));
 
 /**
  * The rest of the question after places, facilities and filters were read: content words the rules did not use.
@@ -187,10 +196,20 @@ const FILLER = new Set(("a an the of in on at to for from with by and or not no 
  */
 export function unreadWords(rest: string[], classified: string[]): string[] {
   const known = new Set(classified.flatMap((t) => tokens(t)));
-  const allWords = new Set([...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...SEVERE, ...SEVERE_HIGH, ...OPEN, ...CLOSED, ...ANY_STATUS, ...NEAR, ...ALONG,
+  const allWords = new Set([...CAT_WORDS.flatMap((c) => c.words), ...COMPLAINT, ...NEWS, ...SEVERE, ...SEVERE_HIGH, ...OPEN, ...CLOSED, ...ANY_STATUS, ...NEAR, ...ALONG,
     ...FACILITIES.flatMap((f) => f.words)].flatMap((w) => tokens(w)));
   return [...new Set(rest.filter((t) => t.length >= 3 && !/^\d/.test(t) && !FILLER.has(t) && !known.has(t) && !allWords.has(t) && !topicOf([t])
     && !/^(by|per|ward|zone|taluk|hotspot|cluster|compare|vs|versus|nearest|closest|farthest|furthest|summary|happening|clustering|wise|vaariyaga|வாரியாக)/i.test(t)))];
+}
+
+const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Is a facility the thing measured from ("near schools", "within 300 m of hospitals", "பள்ளி அருகே") rather than the thing asked for? */
+function facilityIsNear(text: string, facWords: string[]): boolean {
+  if (!facWords.length) return false;
+  const fw = facWords.map(reEsc).join("|");
+  const before = new RegExp(`(\\bnear(by)?|\\baround|\\bclose to|\\bnext to|\\bbeside|\\bsurrounding|\\bwithin\\s+[\\d.]+\\s*(m|km|kms|metres?|meters?)?\\s+(of|from)|\\bwithin\\s+(a|one|half a)\\s+km\\s+(of|from)|\\bwithin)\\s+(the\\s+|a\\s+|an\\s+|any\\s+|all\\s+)?(government\\s+|govt\\s+)?(${fw})`, "i");
+  const after = new RegExp(`(${fw})[\\u0B80-\\u0BFF]*\\s*(அருகே|அருகில்|அருகிலுள்ள|அருகாமையில்|பக்கத்தில்|பக்கம்|சுற்றி|pakkathula|pakkathil|pakkam|kitta|kitte|arugil|arugey|aruge|arukil)`, "i");
+  return before.test(text) || after.test(text);
 }
 
 /** Removes the words a phrase covers, so "lakes" in "incidents near lakes" is a facility, never the flood topic. */
@@ -239,7 +258,9 @@ export function parse(text: string, env: RouteEnv): Parsed {
     if (!facilities.some((x) => x.layer === f.layer)) facilities.push(f);
     facWords.push(...f.words.filter((w) => hasPhrase(ftoks, w)));
   }
-  const rest = strip(free, facWords);
+  const news = any(tokens(free), NEWS) ? true : null;
+  // news words are a source, never a category ("news" is not read as a topic)
+  const rest = strip(free, [...facWords, ...(news ? NEWS.filter((w) => hasPhrase(tokens(free), w)) : [])]);
   const rtoks = tokens(rest);
 
   let cats: string[] | null = null, family: string[] | null = null;
@@ -259,7 +280,8 @@ export function parse(text: string, env: RouteEnv): Parsed {
   const classified = classify(rest)?.terms ?? [];
   return {
     unread: unreadWords(rtoks, classified),
-    lang, toks, facilities, cats, family, citizen, severity, status, period: periodOf(text), dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
+    lang, toks, facilities, cats, family, citizen, news, severity, status, period: periodOf(text), dept: env.dept(text), overdue, meters: distanceOf(text), k: kOf(text), places, verb,
+    facNear: facilityIsNear(free, facWords),
     shape: {
       countBy: COUNT_BY.find(([re]) => re.test(text))?.[1] ?? null, hotspot: HOTSPOT.test(text), nearest: NEAREST.test(text), farthest: FARTHEST.test(text),
       compare: COMPARE.test(text) && !CHANGE.test(text), change: CHANGE.test(text), brief: BRIEF.test(text)
@@ -269,10 +291,11 @@ export function parse(text: string, env: RouteEnv): Parsed {
 
 // ----------------------------------------------------------------- build --
 
-const DEFAULT_PERIOD: Period = { kind: "last_days", days: 30, offset: 0 };
+const DEFAULT_PERIOD: Period = { kind: "last_days", days: 7, offset: 0 };
 
 function incidentFilter(p: Parsed, defaults: string[], opts: { status?: "open" | "any"; period?: Period | null } = {}): Filter {
-  const status = p.status ?? opts.status ?? "open";
+  // what was in the news is asked about whether or not it is still open
+  const status = p.status ?? opts.status ?? (p.news ? "any" : "open");
   if (!p.status) defaults.push("status");
   let period: Period | null;
   if (p.period === "all") period = null;
@@ -280,7 +303,7 @@ function incidentFilter(p: Parsed, defaults: string[], opts: { status?: "open" |
   else { period = opts.period === undefined ? DEFAULT_PERIOD : opts.period; defaults.push("period"); }
   return {
     category: p.cats, family: p.family, severity: p.severity as Filter["severity"], status, dept: p.dept ? [p.dept] : null, overdue: p.overdue,
-    citizen: p.citizen, period, text: null
+    citizen: p.citizen, ...(p.news ? { news: true } : {}), period, text: null
   };
 }
 
@@ -290,7 +313,7 @@ const placeArea = (f: Found, meters: number | null): AreaRef | null => areaFor(f
 export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null {
   const defaults: string[] = [];
   const steps: Step[] = [];
-  const subject = !!(p.cats || p.family || p.citizen || p.severity || p.overdue || p.dept || p.status || hasIncidentNoun(p.toks));
+  const subject = !!(p.cats || p.family || p.citizen || p.news || p.severity || p.overdue || p.dept || p.status || hasIncidentNoun(p.toks));
   const take = (opts?: Parameters<typeof incidentFilter>[2]) => steps.push({ op: "take", as: "a", layer: "incidents", filter: incidentFilter(p, defaults, opts), where: null });
   const takeFac = () => p.facilities.forEach((f, i) => steps.push({ op: "take", as: `f${i + 1}`, layer: f.layer, filter: null, where: f.where }));
   const lines = p.places.filter((x) => isLine(x.pick.entry));
@@ -324,6 +347,18 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     return done("far");
   }
 
+  // the places themselves: "schools in Valasaravakkam", "police stations near Adyar", "hospitals" (never incidents near them)
+  const pointFac = p.facilities.filter((f) => f.layer !== "water_bodies" && f.layer !== "waterways");
+  if (pointFac.length && !subject && !p.facNear && !lines.length && !p.shape.hotspot && !p.shape.countBy && !p.shape.compare && !p.shape.change) {
+    const f = pointFac[0];
+    steps.push({ op: "take", as: "f1", layer: f.layer, filter: null, where: f.where });
+    if (!areas.length && !p.keep?.area) return done("f1");
+    const area = areas.length ? placeArea(areas[0], p.meters)! : p.keep!.area!;
+    if (area.kind === "point" && p.meters == null) defaults.push("radius");
+    steps.push({ op: "inside", as: "in", of: "f1", area });
+    return done("in");
+  }
+
   const hot = p.shape.hotspot;
   // hotspots look at all reports of the last 90 days by default, as the pipeline's clusters do
   take(hot ? { status: "any", period: { kind: "last_days", days: 90, offset: 0 } } : p.shape.change ? { status: "any" } : undefined);
@@ -350,7 +385,8 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     const area = placeArea(areas[0], p.facilities.length ? null : p.meters)!;
     if (area.kind === "point" && (p.meters == null || p.facilities.length)) defaults.push("radius");
     next({ op: "inside", as: "in", of: cur, area });
-  }
+  } else if (p.keep?.line && !p.facilities.length) next({ op: "along", as: "line", of: cur, line: p.keep.line.ref, meters: p.keep.line.meters });
+  else if (p.keep?.area) next({ op: "inside", as: "in", of: cur, area: p.keep.area });
   if (p.shape.compare && areas.length === 1 && !lines.length) return null; // "compare X" with one place: a follow-up only
   if (hot) next({ op: "hotspot", as: "hot", of: cur });
   else if (p.shape.countBy) next({ op: "count_by", as: "by", of: cur, by: p.shape.countBy });
@@ -361,7 +397,7 @@ export function buildPlan(p: Parsed): { plan: Plan; defaults: string[] } | null 
     next({ op: "change", as: "chg", of: cur, now: per, before: { ...per, offset: 1 } as Period });
   }
   // nothing to ask about: no category, place, facility or shape
-  if (!subject && !p.facilities.length && !lines.length && !areas.length && !hot && !p.shape.countBy) return null;
+  if (!subject && !p.facilities.length && !lines.length && !areas.length && !p.keep?.area && !p.keep?.line && !hot && !p.shape.countBy) return null;
   return done(cur);
 }
 const clampM = (m: number) => Math.max(LIMITS.minM, Math.min(LIMITS.maxM, m));
@@ -383,7 +419,23 @@ const EDIT_CLEAR = /^\s*(start over|clear( it| all| the map)?|reset|new question
 /** "plan my visits today", "visit order", "route my visits": the officer's visit order for the current answer */
 const VISITS = /\b(plan|order|route|sequence)\s+(my|the|today'?s)?\s*(site\s+)?visits?\b|\bvisit\s+(order|plan|route)\b|என் வருகை|visit plan pannu/i;
 const EDIT_EXPORT =/^\s*(export|download)(\s+(these|them|this|it|csv|geojson|the list))*\s*$|பதிவிறக்கு/i;
-const EDIT_OPEN = /^\s*(only )?open( ones| only)?\s*$|^\s*include closed\s*$|^\s*(all|any) status(es)?\s*$|^\s*closed( ones| only)?\s*$/i;
+const EDIT_NEWS = /^\s*(only|just)?\s*(the\s+)?(ones\s+)?(that\s+were\s+)?((in|from)\s+(the\s+)?)?(news|newspapers?|papers?|press|media)(\s+(ones|only|reports?))?\s*$|^\s*(only|just)?\s*(news|media)[- ]reported(\s+ones)?\s*$|செய்தி(களில்|யில்)?\s*(வந்த(வை)?)?\s*மட்டும்|^\s*news\s*(la)?\s*(vandhadhu|vandhathu)?\s*mattum\s*$/i;
+const EDIT_NOT_NEWS = /^\s*(all|any)\s+sources?\s*$|^\s*(not only|not just)\s+(the\s+)?news\s*$|^\s*include\s+(all|everything|non-news)\s*$/i;
+const EDIT_OPEN =/^\s*(only )?open( ones| only)?\s*$|^\s*include closed\s*$|^\s*(all|any) status(es)?\s*$|^\s*closed( ones| only)?\s*$/i;
+const EDIT_OVERDUE = /^\s*(show\s+)?(me\s+)?(only\s+|just\s+)?(the\s+)?(overdue|past[- ]deadline|delayed|late|breached)(\s+(ones|cases|only|complaints|incidents))?\s*\??\s*$|^\s*how many (are|of them are|of these are)\s+(overdue|past[- ]deadline|late|delayed)\s*\??\s*$|காலக்கெடு\s*(தாண்டிய|கடந்த)(வை)?\s*(மட்டும்)?\s*$|overdue\s*(mattum)?\s*$/i;
+const EDIT_DEPTS = /^\s*(which|what)\s+(department|dept|departments|office)s?\b|\b(by|per)\s+department\b|\bdepartment[- ]?wise\b|^\s*(who|which team)\s+(has|holds|handles|owns)\b|எந்த\s*துறை|துறை\s*வாரி|endha department/i;
+const EDIT_WHICH_AREA = /^\s*(which|what)\s+(zone|ward|taluk)s?\b|எந்த\s*(மண்டல|வார்டு|வட்ட)/i;
+
+/** "ward 999", "zone 22", "வார்டு 250": an area number the district does not have. */
+export function noSuchArea(t: string): { en: string; ta: string } | null {
+  const w = t.match(/\bward\s*(?:no\.?\s*|number\s*)?(\d{1,5})\b|வார்டு\s*(\d{1,5})/i);
+  const n = w ? Number(w[1] ?? w[2]) : null;
+  if (n != null && (n < 1 || n > 200)) return { en: `There is no Ward ${n}: Chennai's wards are numbered 1 to 200.`, ta: `வார்டு ${n} இல்லை: சென்னை வார்டுகள் 1 முதல் 200 வரை.` };
+  const z = t.match(/\bzone\s*(?:no\.?\s*|number\s*)?(\d{1,4})\b|மண்டலம்\s*(\d{1,4})/i);
+  const m = z ? Number(z[1] ?? z[2]) : null;
+  if (m != null && (m < 1 || m > 15)) return { en: `There is no Zone ${m}: Chennai has 15 zones, numbered 1 to 15.`, ta: `மண்டலம் ${m} இல்லை: சென்னையில் 1 முதல் 15 வரை 15 மண்டலங்கள்.` };
+  return null;
+}
 
 /** Applies a follow-up to the current plan; null when the text is not an edit (a new question). */
 export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | null {
@@ -400,6 +452,24 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
   if (EDIT_SEND.test(t)) return { kind: "ui", ui: "send", dept: env.dept(t), plan: prev };
   if (take && EDIT_SEVERE.test(t)) { filt().severity = ["Severe"]; return ok("severity"); }
   if (take && EDIT_ALL_SEV.test(t)) { filt().severity = null; return ok("severity"); }
+  if (take && EDIT_NEWS.test(t)) { filt().news = true; return ok("news"); }
+  if (take && EDIT_NOT_NEWS.test(t) && take.filter?.news) { delete filt().news; return ok("news"); }
+  if (take && EDIT_OVERDUE.test(t)) { filt().overdue = true; return ok("overdue"); }
+  // "which department has the most?": the same answer, said by department
+  if (take && EDIT_DEPTS.test(t)) return ok("depts");
+  // "which zone has the most?": counted by zone
+  const whichArea = t.match(EDIT_WHICH_AREA);
+  if (take && whichArea) {
+    const by = /ward|வார்டு/i.test(whichArea[0]) ? "ward" : /taluk|வட்ட/i.test(whichArea[0]) ? "taluk" : "zone";
+    const last = plan.steps[plan.steps.length - 1];
+    if (last.op === "count_by") last.by = by;
+    else {
+      if (plan.steps.length >= LIMITS.steps) return null;
+      plan.steps.push({ op: "count_by", as: uniq(plan, "by"), of: plan.show, by });
+      plan.show = plan.steps[plan.steps.length - 1].as;
+    }
+    return ok("group");
+  }
   if (take && EDIT_OPEN.test(t)) {
     filt().status = /closed/i.test(t) && !/include/i.test(t) ? "closed" : /include|all|any/i.test(t) ? "any" : "open";
     return ok("status");
@@ -458,8 +528,20 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
         return ok("facility");
       }
     }
+    // the only facility: drop the distance step, and the steps after it read what it read
+    if (fac && within && within.near.length === 1) {
+      const gone = plan.steps.find((s) => s.op === "take" && s.layer === fac.layer && s.as === within.near[0]);
+      if (gone) {
+        plan.steps = plan.steps.filter((s) => s !== gone && s !== within);
+        for (const s of plan.steps) if ("of" in s && s.of === within.as) s.of = within.of;
+        if (plan.show === within.as) plan.show = within.of;
+        return ok("facility");
+      }
+    }
   }
   const cmp = t.match(EDIT_COMPARE);
+  // "compare zone 9 and zone 10" names both sides: a new question, not "compare this with ..."
+  if (cmp && env.resolve(cmp[4] ?? cmp[5] ?? "", "in").filter((f) => placeArea(f, null)).length >= 2) return null;
   if (cmp) {
     const other = env.resolve(cmp[4] ?? cmp[5] ?? "", "in").find((f) => placeArea(f, null));
     if (other) {
@@ -476,6 +558,71 @@ export function editPlan(text: string, prev: Plan, env: RouteEnv): RouteOut | nu
   }
   return null;
 }
+/** Words that make a short question lean on the last answer ("and thefts?", "what about Velachery", "same for flooding"). */
+const FOLLOW = /^\s*(and|also|plus|now|then|so|what about|how about|same|for|in|at|on|near|around|only|just|but|make it|change (it )?to|instead|அப்போ|அதே)\b|\b(there|same|instead|too|as well|those|them|these)\b|அங்கே|அங்கு|அதே|அவற்றில்/i;
+const THERE = /\b(there|same area|same place|that area|in it|nearby there)\b|அங்கே|அங்கு|அதே இடத்தில்|anga\b/i;
+
+/**
+ * A short follow-up merged with the last answer: whatever the new words do not say is kept. "in Adyar" keeps the topic
+ * and the period and moves the place; "and thefts?" keeps the place and the period and changes the topic; "near schools"
+ * adds the distance; "hospitals there" lists the hospitals in the last answer's area. Null when the text is a question
+ * of its own ("flooding in Adyar"), so a full question is never bent to the last one.
+ */
+export function mergeFollowUp(text: string, prev: Plan, env: RouteEnv): RouteOut | null {
+  const p = parse(text, env);
+  if (p.shape.brief || p.shape.nearest || p.shape.farthest || (p.shape.compare && p.places.length >= 2)) return null;
+  const subject = !!(p.cats || p.family || p.citizen || p.news || p.severity || p.overdue || p.dept || hasIncidentNoun(p.toks));
+  const lines = p.places.filter((x) => isLine(x.pick.entry));
+  const areas = p.places.filter((x) => !isLine(x.pick.entry) && placeArea(x, null));
+  const hasPlace = lines.length + areas.length > 0;
+  const marker = FOLLOW.test(text);
+
+  const take = prev.steps.find((s) => s.op === "take" && s.layer === "incidents") as Extract<Step, { op: "take" }> | undefined;
+  const inside = prev.steps.find((s) => s.op === "inside") as Extract<Step, { op: "inside" }> | undefined;
+  const along = prev.steps.find((s) => s.op === "along") as Extract<Step, { op: "along" }> | undefined;
+  const within = prev.steps.find((s) => s.op === "within") as Extract<Step, { op: "within" }> | undefined;
+  const prevFacs: Facility[] = (within?.near ?? []).map((nm) => prev.steps.find((s) => s.as === nm))
+    .filter((s): s is Extract<Step, { op: "take" }> => s?.op === "take").map((s) => ({ layer: s.layer, where: s.where, words: [] }));
+  // the last answer was places ("schools in Valasaravakkam"): its layer is the subject
+  const placesOnly = !take ? prev.steps.find((s) => s.op === "take") as Extract<Step, { op: "take" }> | undefined : undefined;
+  const last = prev.steps.find((s) => s.as === prev.show);
+
+  const placeOnly = !subject && !p.facilities.length && hasPlace;
+  const nearOnly = !subject && p.facilities.length > 0 && p.facNear && !!take;
+  const thereFacs = !subject && p.facilities.length > 0 && !p.facNear && THERE.test(text) && !hasPlace && !!inside;
+  const topicSwap = subject && marker && !hasPlace && !!take;
+  // "garbage near them" after "schools in Valasaravakkam": incidents near those places, in that area
+  const nearThem = !!placesOnly && !p.facilities.length && /\b(near|around|close to|next to|within\s+[\d.]+\s*(m|km)?\s+of)\s+(them|those|these|it)\b|அவற்றின்\s*அருகே|அவை\s*அருகே|adhu pakkathula/i.test(text);
+  if (nearThem) {
+    const m: Parsed = { ...p, facilities: [{ layer: placesOnly!.layer, where: placesOnly!.where, words: [] }], facNear: true, keep: { area: inside?.area ?? null, line: null } };
+    if (!subject) m.status = "open";
+    const built = buildPlan(m);
+    return built ? { kind: "plan", plan: built.plan, defaults: built.defaults, places: [], ai: false, edited: "follow", unread: p.unread } : null;
+  }
+  if (!placeOnly && !nearOnly && !thereFacs && !topicSwap) return null;
+
+  const m: Parsed = { ...p, shape: { ...p.shape }, keep: { area: null, line: null } };
+  if (!hasPlace) m.keep = { area: inside?.area ?? null, line: along ? { ref: along.line, meters: along.meters } : null };
+  if (placesOnly && placeOnly) {
+    m.facilities = [{ layer: placesOnly.layer, where: placesOnly.where, words: [] }];
+    m.facNear = false;
+  } else if (take && !thereFacs) {
+    const f = take.filter;
+    if (!subject) { m.cats = f?.category ?? null; m.family = f?.family ?? null; m.citizen = f?.citizen ?? null; if (f?.news) m.news = true; }
+    m.severity = p.severity ?? f?.severity ?? null;
+    m.overdue = p.overdue ?? f?.overdue ?? null;
+    m.dept = p.dept ?? f?.dept?.[0] ?? null;
+    m.status = p.status ?? f?.status ?? null;
+    m.period = p.period ?? (f ? f.period ?? "all" : null);
+    if (!p.facilities.length && prevFacs.length) { m.facilities = prevFacs; m.facNear = true; m.meters = p.meters ?? within!.meters; }
+    if (!p.shape.countBy && last?.op === "count_by" && last.by !== "hex500") m.shape.countBy = last.by;
+    if (!p.shape.hotspot && last?.op === "hotspot") m.shape.hotspot = true;
+  }
+  const built = buildPlan(m);
+  if (!built) return null;
+  return { kind: "plan", plan: built.plan, defaults: built.defaults, places: p.places, ai: false, edited: "follow", unread: p.unread };
+}
+
 /** "compare with Adyar": Adyar is compared as an area; a locality that is also a zone's name means the zone. */
 function zoneOrPoint(f: Found, b: AreaRef): AreaRef {
   const z = f.alternatives.find((a) => a.entry.kind === "zone");
@@ -498,10 +645,13 @@ export function rulesRoute(text: string, prev: Plan | null, env: RouteEnv): Rout
   const t = text.trim();
   if (!t) return null;
   for (const [re, msg] of OUT_OF_SCOPE) if (re.test(t)) return { kind: "say", ...msg, chips: [] };
+  // a ward or zone that does not exist: say so, never answer for the whole district instead
+  const bad = noSuchArea(t);
+  if (bad) return { kind: "say", ...bad, chips: [] };
   if (!prev && VISITS.test(t)) return { kind: "say", en: "First ask which cases to visit, then plan the visits:", ta: "முதலில் எந்தச் சம்பவங்கள் என்று கேளுங்கள், பிறகு வருகைகளைத் திட்டமிடுங்கள்:",
     chips: ["my open cases this week", "open severe cases near schools"] };
   if (prev) {
-    const e = editPlan(t, prev, env);
+    const e = editPlan(t, prev, env) ?? mergeFollowUp(t, prev, env);
     if (e) return e;
   }
   const p = parse(t, env);

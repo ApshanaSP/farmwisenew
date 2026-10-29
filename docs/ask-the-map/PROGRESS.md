@@ -191,3 +191,58 @@ Homework: FarmwiseAI's Play Store apps (கள ஆய்வு / FIMMS Vellore, 
   - the panel code loads when the pointer reaches the pill.
 - **Fixes:** a road named "(North)" no longer matches "north"; "Most affected" names only named facilities; "all incidents this quarter" is a new question, not a period edit.
 - **Checks:** 294 map unit tests; 8 map golden tests (property p90 257 ms); browser run with 0 console errors. Screenshots ai1–ai5 in docs/review-pdfs/ask-the-map/.
+
+## News on the map (2026-10-28, after the push)
+
+- **"In the news" filter:** incidents a news outlet reported (`incidents.outlet_count > 0`). Words: in the news, newspapers, press, media, headlines; செய்தி / செய்திகளில் / நாளிதழ் / பத்திரிகை; news la, paper la. The AI planner has a `news` field and a concept line. Default status is "any" for news questions (what was reported, open or not).
+- **Follow-ups and chips:** "only in the news", "news only", "செய்திகளில் வந்தவை மட்டும்" add it; "all sources" or the chip's × removes it. Plans saved before this still parse (the field is optional).
+- **Articles behind an answer:** an "in the news" answer pins each article at the locality it names (purple "N"). Its popup gives the headline, outlet, date and a link to the publisher. Articles that name only a taluk, zone or the district are counted in the panel ("counted, not pinned"), never placed at a guessed spot.
+- **Press links in the list:** every row with news coverage shows up to 3 outlets, each linking to its article.
+- **News layer:** Layers → Reports → "News reports, 30 days". Covers all incident articles in the district, including the ones the pipeline did not link to an incident. Live data on 28 Oct: 268 pins, 946 counted without a locality. An officer sees only their department's news.
+- **Insight:** "N of the M were reported in the news; K still open", with "Only the ones in the news" as the next step.
+- **Fix found by the property test:** "by ward/taluk" no longer fails when none of the results has that area on record; it says so (news-only incidents often name only the city).
+- **Checks:** map unit 307 passed; golden 8 passed (p90 211 ms); live: "flooding in the news this week" gives 8 incidents and 8 articles (3 pinned, 5 counted); browser run with 0 console errors. Screenshots news1–news3 in docs/review-pdfs/ask-the-map/.
+
+## Clearer answers, live feeds, crash fixes (2026-10-28 evening)
+
+- **Answer at a glance:** the panel now leads with the number in large type and what it counts ("160 · open flooding incidents · last 7 days"), with no "map layer ready". Under it: one sentence of meaning, then key-fact tiles (past deadline, severe, and still open when closed ones are counted). Each tile shows its own cases on the map when clicked.
+- **Filters folded:** the plan's parts are one line ("Flooding (all kinds) · Last 7 days") with a Change button; the chips open only when asked. Insights are renamed "What needs attention" and show 3, then "N more".
+- **On the ground now** (src/lib/map/conditions.ts): live feeds that have a place, read where the answer is.
+  - Flooding and drainage: the IMD district warning, the nearest station's 24 h rain (or "No rain …: standing water points to drains or pipes"), lakes over 85 % full in the area, and PWD water works under way and behind schedule. Building works are left out.
+  - Health: the nearest government hospitals' bed occupancy and emergencies.
+  - Pollution and fire: the nearest AQI station.
+  - An orange or red IMD warning is shown with every answer. Area briefs show conditions too.
+  - Each reading is drawn on the map as a value pill (works as small amber squares, figures on hover).
+- **Live layers:** Layers → "On the ground now": Rain (IMD), Lake levels (PWD), PWD works under way, Govt hospital beds (MIS), Air quality (CPCB). Sources are observation_signals (latest per place) and pwd_works. No new tables.
+- **Crash fixes:**
+  - Leaflet guards (askmap/leafletSafe.ts) stop the "Cannot read properties of null (_latLngToNewLayerPoint …)" family of errors when a new answer clears pins mid-zoom.
+  - The panel prefetch on hover no longer leaves a failed chunk load unhandled.
+  - The Send dialog survives a dropped connection.
+  - An aborted question no longer shows "could not answer".
+  - A 33-question headless run (follow-ups, chips, fast repeats) and an officer run showed 0 page errors.
+- **Answer fixes:**
+  - Gibberish ("asdf qwerty") is no longer answered with the whole district: the AI planner's flat plan has `understood`.
+  - "ward 999" and "zone 22" are said plainly.
+  - "compare zone 9 and zone 10" after an answer is a new question.
+- **Checks:** map unit 317 passed. Screenshots v2-1 … v2-6 (light) in docs/review-pdfs/ask-the-map/.
+- **Faster everywhere:** a filter's date window was worked out (with date parsing) once per incident, about 27,000 times per step; it is now worked out once per filter (execute.ts windowOf). The random-plan check went from p90 380 ms to 40 ms; insights that re-run the question (change on last period) got the same speed-up.
+- **Final checks:** golden 14 passed (p90 40 ms); map unit 317 passed; full unit run: the only failures are 2 Data Studio outcome tests that pass when run alone (timing under load, files not touched here).
+
+## Simpler answers and place questions (2026-10-29)
+
+- **Place questions answer with the places.** "schools in Valasaravakkam" used to become "open incidents within 500 m of a school in Zone 11", and the map drew every school near any incident in Chennai. Now the router reads a facility with no incident words, and no "near" before it, as the places themselves: take schools, keep those inside the area (by their ward for a ward, zone or taluk; by distance for a circle). Answer: "13 schools in Valasaravakkam (Zone 11). 1 is government. Including …"; the map draws only those 13; the panel lists them by name. "flooding near schools", "school pakkathula kuppai" and "பள்ளிகள் அருகே" still ask about incidents near schools.
+- **Near places trimmed to the answer.** A "within" step followed by an area used to keep every place it measured to; now only the places the final incidents are near are drawn.
+- **Default period 7 days** (was 30) when the question names none, in the rules and in the AI planner's prompt. Hotspots keep their 90 days.
+- **Removed the AI analyst and "What needs attention"** from the panel; insights are no longer computed per question (insights.ts and /api/map/insight stay, unused).
+- **Card trimmed:** the departments row is gone (the meaning sentence names the main one), tiles with 0 are hidden, live readings capped at 2, the as-of line is one short line (sources on hover). Meaning does not repeat the one zone asked about; "It is …" for one; "All are with …" when one department holds all.
+- **Filter line** says "Near schools" or "Within 300 m of schools", not "of Schools (OSM)". Area headlines keep the "within 500 m of a school" part.
+- **Hover lag:** hovering a list row set React state in the console shell, re-rendering the whole Collector console on every row; the hover now goes straight to the map pins. A row click reaches the next frame in about 100 ms in dev mode; the rest is the map's fly-to.
+- Tests: map unit 324 passed (new: places in an area, near vs places, 7-day default, near-place trimming); golden 14 passed, p90 43 ms; tsc clean. Screenshots v3-1…v3-4 in docs/review-pdfs/ask-the-map.
+
+## Follow-ups, the conversation, and the Overview map first (2026-10-29)
+
+- **Follow-ups keep what they do not change** (route.ts `mergeFollowUp`, after `editPlan`): "in Adyar" / "what about Velachery?" / "make it zone 10" keep the topic, period, status and distance and move the place; "and thefts?" / "same for flooding" keep the place and period and change the topic; "near schools" adds the distance to the last answer; "hospitals there" lists them in the last answer's area; "open complaints near them" after a places answer. A full question ("flooding in zone 13") is still a new question. New edits: "show the overdue ones" / "how many are past deadline?" (overdue filter), "which department has the most?" (same plan, answer said by department), "which zone has the most?" (count by zone), and "remove hospitals" when it is the only facility (drops the distance step). Follow-up words added to FILLER so they no longer call the AI.
+- **The conversation in the panel**: every question shows as a bubble with its answer; earlier questions stay above as a chat (question + the answer's gist), and a click brings that answer back (and makes it the one follow-ups edit). Chip edits and map clicks are labelled too. "Ask next" chips under each answer are follow-ups the router reads (overdue, only severe, which zone, which department, this month, near schools; for places: other facilities there, complaints near them).
+- **Panel wider**: clamp(380px, 34%, 460px).
+- **Overview leads with the map** (Overview.tsx grid + overview-map.css, loaded last): the map spans both rows on the left (2.1fr); severity and tasks stack in the middle; news runs down the right. The band is thinner (18.5 px greeting, one-line count tiles, breakdown in the tooltip, slimmer snapshot rows, thinner alert bars). The map card has no header: its name and Zones/Taluks sit in the row under it (title hidden on a narrow card). The map re-fits the district when its box grows until the user or an answer moves it. Map: 350×126 → 635×293 at 1366×680; 499×364 → 899×582 at 1920×1080.
+- Tests: map unit 331 passed (new follow-up chains); golden 14 passed, p90 41 ms; tsc clean; headless console checks (collector conversation, officer Board) 0 errors. Screenshots ov-before/after5 and v4-1…v4-4 in docs/review-pdfs/ask-the-map.

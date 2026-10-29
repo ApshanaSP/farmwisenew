@@ -46,6 +46,7 @@ import "./action.css";
 import "./analysis.css";
 import "./nearby.css";
 import "./motionfx.css";
+import "./overview-map.css";
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
 // "./command.css" and "./command-bold.css" here and add "cc" to the root's className below.
 

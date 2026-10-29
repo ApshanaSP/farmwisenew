@@ -15,7 +15,7 @@ import { LAYER_WORD } from "@/lib/map/words";
 import { I } from "../icons";
 import { SEV_HEX } from "../lib";
 import { canListen, listen } from "../assistant/speech";
-import type { MapAsk } from "./useMapAsk";
+import type { MapAsk, Turn } from "./useMapAsk";
 
 const T = {
   en: {
@@ -68,6 +68,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   const [sheet, setSheet] = useState<"peek" | "half" | "full">("half");
   const [traceOn, setTraceOn] = useState<string | null>(null);
   const [tour, setTour] = useState(-1);
+  // the plan's parts fold into one line; opened, each part is a chip that can be changed
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => { if (autoFocus) input.current?.focus(); }, [autoFocus]);
@@ -109,14 +111,24 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
     setMenu(null);
     if (!ask.plan) return;
     const p = applyChip(ask.plan, c.id, option);
-    if (p) ask.run(p);
+    const o = c.options.find((x) => x.key === option);
+    if (p) ask.run(p, option == null ? `${lang === "ta" ? "நீக்கு" : "Remove"}: ${lang === "ta" ? c.ta : c.en}` : `${lang === "ta" ? o?.ta ?? option : o?.en ?? option}`);
   };
   const altChip = (c: PlanChip, key: string) => {
     setMenu(null);
     if (!ask.plan) return;
     const p = applyChip(ask.plan, c.id, key);
-    if (p) ask.run(p);
+    const o = c.options.find((x) => x.key === key);
+    if (p) ask.run(p, lang === "ta" ? o?.ta ?? key : o?.en ?? key);
   };
+  // each new answer: scroll so its question sits at the top of the panel, the earlier ones above it
+  const body = useRef<HTMLDivElement>(null);
+  const qRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const b = body.current, q = qRef.current;
+    if (b && q) b.scrollTop = Math.max(0, q.offsetTop - b.offsetTop - 6);
+  }, [r]);
+  const cur = ask.turns.find((t) => t.resp === r) ?? null;
 
   return (
     <aside className={`amp${typeof window !== "undefined" && window.innerWidth < 768 ? " sheet" : ""}`} data-h={sheet} aria-label={w.title}>
@@ -131,8 +143,10 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         {canListen() && <button className={listening ? "rec" : ""} onClick={mic} title={w.mic} aria-label={w.mic} aria-pressed={!!listening}><I n={listening ? "stop" : "mic"} /></button>}
         <button className="go" onClick={() => submit()} title={w.ask} aria-label={w.ask} disabled={ask.busy}><I n="send" /></button>
       </div>
-      <div className="amp-b">
+      <div className="amp-b" ref={body}>
         {ask.busy && <div className="amp-busy" role="progressbar" aria-label="Working" />}
+        <Thread ask={ask} cur={cur} lang={lang} />
+        {cur && <div className="amp-q" ref={qRef}><span>{cur.q}</span></div>}
         {ask.error && <div className="amp-err" role="alert">{ask.error}</div>}
         {!r && <Empty w={w} suggestions={actions.suggestions} onPick={submit} />}
         {r?.kind === "say" && r.say && (
@@ -143,7 +157,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
         )}
         {r?.kind === "answer" && r.answer && (
           <>
-            <div className="amp-chips" role="group" aria-label="The question, part by part">
+            <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+            {filtersOpen && <div className="amp-chips" role="group" aria-label="The question, part by part">
               {r.chips.map((c) => (
                 <span key={c.id} className={`amp-chip${c.isDefault ? " def" : ""}`}>
                   <button style={{ all: "unset", display: "inline-flex", alignItems: "center", gap: 3, cursor: c.options.length ? "pointer" : "default", minWidth: 0 }}
@@ -163,13 +178,13 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                   )}
                 </span>
               ))}
-            </div>
-            <Answer r={r} w={w} lang={lang} ask={ask} onDept={(code, ids) => ask.setSpot({ ids, label: r.answer!.depts.find((d) => d.code === code)?.name ?? code })} />
-            <Analyst r={r} lang={lang} onSend={actions.role === "collector" && actions.onSend ? (dept) => actions.onSend!(r, dept) : undefined} />
-            <Insights r={r} lang={lang} ask={ask} onSend={actions.role === "collector" && actions.onSend ? () => actions.onSend!(r, null) : undefined} onAsk={submit} />
+            </div>}
+            <Answer r={r} w={w} lang={lang} ask={ask} />
+            <NextAsks r={r} lang={lang} onAsk={submit} busy={ask.busy} />
             <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
             <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
             <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
+            <Places r={r} lang={lang} />
           </>
         )}
         {r?.kind === "brief" && r.brief && <BriefView r={r} w={w} lang={lang} ask={ask} actions={actions} />}
@@ -199,93 +214,148 @@ function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; on
   );
 }
 
-function Answer({ r, w, lang, ask, onDept }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk; onDept: (code: string, ids: string[]) => void }) {
+/** The answer in a few words, for the thread: "160 open flooding incidents · last 7 days". */
+function gist(r: AskResponse, lang: "en" | "ta"): string {
+  if (r.answer) { const { big, rest } = splitHead(r.answer.headline); return big ? `${big} ${rest}` : rest; }
+  if (r.brief) return `${lang === "ta" ? "இங்கே என்ன நடக்கிறது" : "What is happening"}: ${lang === "ta" ? r.brief.label.ta : r.brief.label.en}`;
+  if (r.say) return lang === "ta" ? r.say.ta : r.say.en;
+  return "";
+}
+
+/** The conversation so far, as a chat: each earlier question and the gist of its answer. A click shows that answer again. */
+function Thread({ ask, cur, lang }: { ask: MapAsk; cur: Turn | null; lang: "en" | "ta" }) {
+  const past = ask.turns.filter((t) => t !== cur);
+  if (!past.length) return null;
+  return (
+    <ol className="amp-thread" aria-label={lang === "ta" ? "முந்தைய கேள்விகள்" : "Earlier questions"}>
+      {past.map((t) => (
+        <li key={t.id}>
+          <button onClick={() => ask.restore(t.id)} title={lang === "ta" ? "இந்தப் பதிலை மீண்டும் காட்டு" : "Show this answer again"}>
+            <span className="q">{t.q}</span>
+            <span className="a">{gist(t.resp, lang)}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** What to ask next, from what this answer is: each is a follow-up the router reads against this answer. */
+function NextAsks({ r, lang, onAsk, busy }: { r: AskResponse; lang: "en" | "ta"; onAsk: (q: string) => void; busy: boolean }) {
+  const ta = lang === "ta";
+  const plan = r.plan;
+  if (!plan) return null;
+  const take = plan.steps.find((s) => s.op === "take" && s.layer === "incidents");
+  const f = take?.op === "take" ? take.filter : null;
+  const last = plan.steps.find((s) => s.as === plan.show);
+  const out: [string, string][] = [];
+  if (take && r.total > 0) {
+    if (r.glance?.overdue.n && !f?.overdue) out.push(["Show the overdue ones", "காலக்கெடு தாண்டியவை"]);
+    if (!f?.severity) out.push(["Only severe", "கடுமையானவை மட்டும்"]);
+    if (last?.op !== "count_by" && last?.op !== "compare" && last?.op !== "hotspot") out.push(["Which zone has the most?", "மண்டல வாரியாக"]);
+    if ((r.answer?.depts.length ?? 0) > 1) out.push(["Which department has the most?", "எந்த துறை அதிகம்?"]);
+    const days = f?.period?.kind === "last_days" ? f.period.days : null;
+    out.push(days === 7 ? ["This month", "இந்த மாதம்"] : ["Last 7 days", "கடந்த 7 நாட்கள்"]);
+    if (!plan.steps.some((s) => s.op === "within")) out.push(["Near schools", "பள்ளிகள் அருகே"]);
+  } else if (take && f?.period?.kind === "last_days" && f.period.days < 30) out.push(["This month", "இந்த மாதம்"]);
+  else if (!take && r.context.points.length) {
+    const layer = r.context.points[0].layer;
+    const inArea = plan.steps.some((s) => s.op === "inside");
+    if (inArea) for (const [l, en, tam] of [["hospitals", "Hospitals there", "அங்கே மருத்துவமனைகள்"], ["schools", "Schools there", "அங்கே பள்ளிகள்"], ["police", "Police stations there", "அங்கே காவல் நிலையங்கள்"]] as const)
+      if (l !== layer) out.push([en, tam]);
+    out.push(["Open complaints near them", "அவற்றின் அருகே திறந்த புகார்கள்"]);
+  }
+  if (!out.length) return null;
+  return (
+    <div className="amp-next" role="group" aria-label={ta ? "அடுத்து கேளுங்கள்" : "Ask next"}>
+      <span>{ta ? "அடுத்து" : "Ask next"}</span>
+      {out.slice(0, 4).map(([en, tam]) => <button key={en} disabled={busy} onClick={() => onAsk(ta ? tam : en)}>{ta ? tam : en}</button>)}
+    </div>
+  );
+}
+
+/** The plan in one line ("Flooding · Last 7 days · Open"), and a button that opens its parts for changing. */
+function FilterLine({ r, lang, open, onToggle }: { r: AskResponse; lang: "en" | "ta"; open: boolean; onToggle: () => void }) {
+  const said = r.chips.filter((c) => !c.isDefault);
+  // "of Schools (OSM)" reads as "Near schools", or joins the distance said before it ("Within 300 m of schools")
+  const parts: string[] = [];
+  let prev: PlanChip | null = null;
+  for (const c of said.length ? said : r.chips.slice(0, 2)) {
+    if (lang !== "ta" && c.part === "facility") {
+      const what = c.en.replace(/\s*\((OSM|store)\)$/, "").replace(/^of /, "").toLowerCase();
+      if (prev?.part === "distance") parts[parts.length - 1] += ` of ${what}`;
+      else parts.push(`Near ${what}`);
+    } else parts.push(lang === "ta" ? c.ta : c.en);
+    prev = c;
+  }
+  const line = parts.join(" · ");
+  return (
+    <div className="amp-fl">
+      <span title={line}><I n="sliders" />{line}</span>
+      <button onClick={onToggle} aria-expanded={open}>{open ? (lang === "ta" ? "மூடு" : "Done") : (lang === "ta" ? "மாற்று" : "Change")}<I n={open ? "chevd" : "chevr"} /></button>
+    </div>
+  );
+}
+
+const READY = / · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/;
+/** "160 open flooding incidents (last 7 days)" -> big "160", then "open flooding incidents · last 7 days" */
+function splitHead(h: string): { big: string | null; rest: string } {
+  const clean = h.replace(READY, "").replace(/\.$/, "").replace(/ \(([^()]+)\)$/, " · $1");
+  const m = clean.match(/^([\d,]+(?:\.\d+)?)\s+(.+)$/);
+  return m ? { big: m[1], rest: m[2] } : { big: null, rest: clean };
+}
+
+const COND_ICON = { weather: "cloud", rain: "drop", lakes: "drop", works: "cone", hospital: "health", air: "wind" } as const;
+
+function Answer({ r, w, lang, ask }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk }) {
   const a = r.answer!;
-  const ready = lang === "ta" ? "வரைபட அடுக்கு தயார்" : "map layer ready";
-  const [head, tail] = a.headline.includes(` · ${ready}`) ? [a.headline.split(` · ${ready}`)[0], ready] : [a.headline, null];
-  const deptIds = (code: string) => r.rows.filter((x) => x.dept === code).map((x) => x.id);
+  const { big, rest } = splitHead(a.headline);
+  const g = r.glance;
+  const ta = lang === "ta";
   const layers = r.asOf.layers.filter((l) => l.id !== "incidents");
+  const show = (ids: string[], label: string) => (ask.spot?.label === label ? ask.setSpot(null) : ask.setSpot({ ids, label }));
+  // the tiles say only what the headline does not: "open" is news only when the answer counts closed ones too
+  const tiles = g ? [
+    g.open.n !== r.total ? { k: "open", n: g.open.n, ids: g.open.ids, en: "still open", ta: "திறந்தவை", tone: "" } : null,
+    { k: "overdue", n: g.overdue.n, ids: g.overdue.ids, en: "past deadline", ta: "காலக்கெடு தாண்டியவை", tone: g.overdue.n ? "t-alert" : "t-good" },
+    { k: "severe", n: g.severe.n, ids: g.severe.ids, en: "severe", ta: "கடுமையானவை", tone: g.severe.n ? "t-warn" : "t-good" }
+  ].filter((x): x is NonNullable<typeof x> => !!x && x.n > 0) : [];
   return (
     <div className="amp-card">
-      <p className="amp-head" aria-live="polite">
-        <button onClick={() => ask.setSpot(null)} title={w.clear}>{head}</button>{tail && <> · <span className="rd">{tail}</span></>}
-      </p>
+      <div className="amp-big" aria-live="polite">
+        {big && <button className="n" onClick={() => ask.setSpot(null)} title={w.clear}>{big}</button>}
+        <p className="amp-head">{rest}</p>
+      </div>
       {a.meaning && <p className="amp-mean">{a.meaning}</p>}
-      {a.depts.length > 0 && (
-        <div className="amp-depts" aria-label={w.depts}>
-          {a.depts.slice(0, 4).map((d) => <button key={d.code} onClick={() => onDept(d.code, deptIds(d.code))} title={`${d.name}: ${d.n}`}>{d.name}<b>{d.n.toLocaleString("en-IN")}</b></button>)}
+      {tiles.length > 0 && r.total > 0 && (
+        <div className="amp-tiles">
+          {tiles.map((t) => {
+            const label = ta ? t.ta : t.en;
+            return (
+              <button key={t.k} className={`amp-tile ${t.tone}${ask.spot?.label === label ? " on" : ""}`} disabled={!t.n} onClick={() => show(t.ids, label)} title={t.n ? (ta ? "வரைபடத்தில் காட்டு" : "Show these on the map") : undefined}>
+                <b>{t.n.toLocaleString("en-IN")}</b><span>{label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
-      {r.unplaced.length > 0 && <div className="amp-asof">{w.unplaced(r.unplaced.length)}</div>}
-      <div className="amp-asof">
-        {w.asOf}: {lang === "ta" ? "சம்பவங்கள்" : "Incidents"} {fmtWhen(r.asOf.data || r.asOf.now)}
-        {layers.map((l) => ` · ${lang === "ta" ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("")}
+      <Conditions r={r} lang={lang} max={2} />
+      <div className="amp-asof" title={layers.map((l) => `${ta ? l.ta : l.en}: ${l.source}${l.as_of ? `, ${fmtDay(l.as_of)}` : ""}`).join("\n") || undefined}>
+        {w.asOf} {fmtWhen(r.asOf.data || r.asOf.now)}
+        {r.unplaced.length > 0 && ` · ${w.unplaced(r.unplaced.length)}`}
       </div>
       {ask.spot && <div className="amp-asof" style={{ color: "var(--accent-2)", fontWeight: 600 }}>{w.showing(ask.spot.label)} · <button style={{ all: "unset", cursor: "pointer", textDecoration: "underline" }} onClick={() => ask.setSpot(null)}>{w.clear}</button></div>}
     </div>
   );
 }
 
-const TONE_ICON = { alert: "alert", warn: "bolt", info: "info", good: "checkc" } as const;
-/** Findings the map computed about this answer; a click shows exactly their rows on the map. */
-function Insights({ r, lang, ask, onSend, onAsk }: { r: AskResponse; lang: "en" | "ta"; ask: MapAsk; onSend?: () => void; onAsk: (q: string) => void }) {
-  if (!r.insights?.length) return null;
+/** "On the ground now": the live readings that bear on the answer, each from a named place and time. */
+function Conditions({ r, lang, max = 4 }: { r: AskResponse; lang: "en" | "ta"; max?: number }) {
+  if (!r.conditions?.length) return null;
   return (
-    <div className="amp-ins" aria-label={lang === "ta" ? "கண்டறிதல்கள்" : "Insights"}>
-      <div className="amp-sec" style={{ cursor: "default" }}><I n="spark" />{lang === "ta" ? "வரைபடம் கண்டவை" : "What the map found"}<span className="n">{r.insights.length}</span></div>
-      {r.insights.map((i) => {
-        const on = ask.spot?.label === i.en || ask.spot?.label === i.ta;
-        return (
-          <div key={i.id} className={`amp-insight t-${i.tone}${on ? " on" : ""}`}>
-            <button className="amp-insight-b" disabled={!i.ids.length} onClick={() => (on ? ask.setSpot(null) : ask.setSpot({ ids: i.ids, label: lang === "ta" ? i.ta : i.en }))}
-              title={i.ids.length ? (lang === "ta" ? "இவற்றை வரைபடத்தில் காட்டு" : "Show these on the map") : undefined}>
-              <I n={TONE_ICON[i.tone]} /><span>{lang === "ta" ? i.ta : i.en}</span>
-            </button>
-            {i.next && (i.next.ask || (i.kind === "overdue" && onSend)) && (
-              <button className="amp-insight-n" onClick={() => (i.next!.ask ? onAsk(i.next!.ask) : onSend?.())}>{lang === "ta" ? i.next.ta : i.next.en}<I n="chevr" /></button>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-interface AnalystOut { summary: string; actions: { text: string; dept: string | null }[]; watch: string | null; model: string; dropped: number }
-/** The AI analyst's reading, after the answer is drawn: what it means, up to three actions with owners, what to watch. */
-function Analyst({ r, lang, onSend }: { r: AskResponse; lang: "en" | "ta"; onSend?: (dept: string) => void }) {
-  const [state, setState] = useState<{ plan: string; out: AnalystOut | null; busy: boolean } | null>(null);
-  const key = JSON.stringify(r.plan);
-  useEffect(() => {
-    if (!r.plan || !r.total) { setState(null); return; }
-    const ac = new AbortController();
-    setState({ plan: key, out: null, busy: true });
-    fetch("/api/map/insight", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: r.plan }), signal: ac.signal })
-      .then((x) => (x.ok ? x.json() : null)).then((j) => setState({ plan: key, out: j && !j.none ? j : null, busy: false }))
-      .catch(() => { if (!ac.signal.aborted) setState({ plan: key, out: null, busy: false }); });
-    return () => ac.abort();
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!state || state.plan !== key || (!state.busy && !state.out)) return null;
-  const deptName = (c: string) => r.answer?.depts.find((d) => d.code === c)?.name ?? c;
-  return (
-    <div className="amp-ai" aria-live="polite">
-      <div className="amp-ai-h"><I n="ai" />{lang === "ta" ? "AI பகுப்பாய்வாளர்" : "AI analyst"}{state.busy && <span className="amp-ai-dots" aria-label="reading"><i /><i /><i /></span>}</div>
-      {state.busy && <div className="amp-ai-sk"><i /><i /><i style={{ width: "62%" }} /></div>}
-      {state.out && (
-        <>
-          <p>{state.out.summary}</p>
-          {state.out.actions.length > 0 && (
-            <ol className="amp-ai-acts">{state.out.actions.map((a, k) => (
-              <li key={k}><span>{a.text}</span>
-                {a.dept && <em>{deptName(a.dept)}</em>}
-                {a.dept && onSend && <button onClick={() => onSend(a.dept!)} title={`Draft an email to ${deptName(a.dept)}`}><I n="send" /></button>}
-              </li>))}
-            </ol>
-          )}
-          {state.out.watch && <p className="amp-ai-w"><I n="clock" />{state.out.watch}</p>}
-          <small>{lang === "ta" ? "ஒவ்வொரு எண்ணும் வரைபடத்தின் கணக்குடன் சரிபார்க்கப்பட்டது" : "Every number checked against the map's own figures"} · {state.out.model}</small>
-        </>
-      )}
+    <div className="amp-cond">
+      <h5><span className="live" />{lang === "ta" ? "இப்போது களத்தில்" : "On the ground now"}</h5>
+      <ul>{r.conditions.slice(0, max).map((c) => <li key={c.id} className={`t-${c.tone}`}><I n={COND_ICON[c.kind]} /><span>{lang === "ta" ? c.ta : c.en}</span></li>)}</ul>
     </div>
   );
 }
@@ -356,6 +426,13 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
   return (
     <div>
       <div className="amp-sec" style={{ cursor: "default" }}>{w.list}<span className="n">{(ask.spot ? ask.spot.ids.length : r.total).toLocaleString("en-IN")}</span></div>
+      {r.news && r.news.articles > 0 && (
+        <p className="amp-newsnote"><I n="news" />
+          {lang === "ta"
+            ? `${r.news.articles} செய்திகள்: ${r.news.pins.length} வரைபடத்தில் (பகுதி பெயருடன்)${r.news.unplaced ? `, ${r.news.unplaced} மாவட்ட/மண்டல அளவில் மட்டும் (எண்ணப்பட்டது, குறிக்கப்படவில்லை)` : ""}.`
+            : `${r.news.articles.toLocaleString("en-IN")} news ${r.news.articles === 1 ? "article" : "articles"}: ${r.news.pins.length.toLocaleString("en-IN")} on the map where they name a locality${r.news.unplaced ? `; ${r.news.unplaced.toLocaleString("en-IN")} name only a taluk, zone or the district (counted, not pinned)` : ""}.`}
+        </p>
+      )}
       <ul className="amp-list" ref={listRef} aria-label={w.list}>
         {rows.map((x) => {
           const age = Math.max(0, Math.round((nowMs - Date.parse(x.first.replace(" ", "T") + "Z")) / 86_400_000));
@@ -376,12 +453,45 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
                     : `from ${x.near.name ?? `a ${LAYER_WORD[x.near.layer].one}`}`} · </span>}
                   {age === 0 ? (lang === "ta" ? "இன்று" : "today") : lang === "ta" ? `${age} நாள் முன்` : `${age} d ago`} · {x.deptName}
                 </div>
+                {x.press?.length > 0 && (
+                  <div className="s amp-press">
+                    <I n="news" />
+                    {x.press.map((p, k) => (
+                      <span key={p.id}>{k > 0 && " · "}
+                        {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" title={p.title} onClick={(e) => e.stopPropagation()}>{p.outlet}</a> : <span title={p.title}>{p.outlet}</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </li>
           );
         })}
       </ul>
       {more > 0 && <div className="amp-more">{w.more(more)} · {actions.onExport ? <button onClick={() => actions.onExport!(r)}>{w.exportAll}</button> : null}</div>}
+    </div>
+  );
+}
+
+/** "Schools in Valasaravakkam": the places, by name (each is a marker on the map). */
+function Places({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
+  const pts = r.context.points;
+  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas) return null;
+  const lw = LAYER_WORD[pts[0].layer];
+  return (
+    <div>
+      <div className="amp-sec" style={{ cursor: "default" }}>{lang === "ta" ? lw.ta : lw.en[0].toUpperCase() + lw.en.slice(1)}<span className="n">{pts.length.toLocaleString("en-IN")}</span></div>
+      <ul className="amp-list amp-places">
+        {pts.map((p) => (
+          <li key={p.id} className="amp-row">
+            <span className="dot" style={{ background: "#2E7D5B" }} />
+            <div style={{ minWidth: 0 }}>
+              <div className="t">{(lang === "ta" ? p.name_ta ?? p.name : p.name) ?? (lang === "ta" ? lw.ta_one : `Unnamed ${lw.one}`)}</div>
+              {p.government && <div className="s">{lang === "ta" ? "அரசு" : "Government"}</div>}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -397,6 +507,7 @@ function BriefView({ r, w, lang, ask, actions }: { r: AskResponse; w: Words; lan
         <dt>{w.open}</dt><dd>{num(b.open.n, b.open.ids, w.open)}</dd>
         <dt>{w.citizen}</dt><dd>{num(b.citizen.n, b.citizen.ids, w.citizen)}</dd>
       </dl>
+      <Conditions r={r} lang={lang} />
       {b.byType.length > 0 && <><h5>{w.byType}</h5><dl>{b.byType.slice(0, 8).map((t) => <FragmentRow key={t.cat} label={lang === "ta" ? t.ta : t.en} n={num(t.n, t.ids, lang === "ta" ? t.ta : t.en)} />)}</dl></>}
       {b.worst.length > 0 && <><h5>{w.worst}</h5>
         <ul className="amp-list">{b.worst.map((x) => (

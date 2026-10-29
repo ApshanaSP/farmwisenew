@@ -235,3 +235,61 @@ describe("officer lock, determinism and safety", () => {
     expect(checkPlan({ steps: [{ op: "take", as: "f1", layer: "schools", filter: null, where: null }, { op: "nearest", as: "n", from: "place:loc:X", to: "f1", k: 21 }], show: "n", language: "en" }).ok).toBe(false);
   });
 });
+
+describe("in the news", () => {
+  // the fixture has no news; mark three incidents as reported by an outlet
+  const wn = { ...w, incidents: w.incidents.map((i) => (["I01", "I08", "I12"].includes(i.id) ? { ...i, outlets: 2 } : i)) };
+  it("news true keeps only incidents an outlet reported; false leaves them out; null ignores it", () => {
+    const run = (f: Partial<Filter>) => ids(runMapPlan(plan([take({ period: null, status: "any", ...f })]), wn, ctx));
+    expect(run({ news: true })).toEqual(["I01", "I08", "I12"]);
+    expect(run({ news: false })).not.toContain("I01");
+    expect(run({ news: false }).length + 3).toBe(run({}).length);
+  });
+  it("the answer says so", () => {
+    const p = plan([take({ period: null, status: "any", news: true })]);
+    const a = compose(p, runMapPlan(p, wn, ctx), wn, ctx);
+    expect(a.headline).toMatch(/3 incidents in the news/);
+  });
+});
+
+describe("count by an area none of the results has", () => {
+  it("says so instead of failing", () => {
+    const wn = { ...w, incidents: w.incidents.map((i) => ({ ...i, taluk: null })) };
+    const p = plan([take({ period: null, status: "any" }), { op: "count_by", as: "by", of: "a", by: "taluk" }]);
+    const a = compose(p, runMapPlan(p, wn, ctx), wn, ctx);
+    expect(a.headline).toMatch(/none has a taluk on record/);
+  });
+});
+
+describe("the places themselves", () => {
+  // the fixture's schools with the wards the world build gives them (n1 in ward 1, zone 1; n2 in ward 3, zone 2)
+  const ws = { ...w, points: { ...w.points, schools: [{ ...SCHOOLS[0], ward: 1 }, { ...SCHOOLS[1], ward: 3 }] } };
+  const sch: Step = { op: "take", as: "f1", layer: "schools", filter: null, where: null };
+  it("schools in a zone, a ward, a circle: only those, and only they are drawn", () => {
+    for (const [area, want] of [[{ kind: "zone", id: 2 }, ["osm:n2"]], [{ kind: "ward", id: 1 }, ["osm:n1"]], [{ kind: "taluk", code: "TLK-AAA" }, ["osm:n1"]], [{ kind: "point", ref: "loc:Testpet", radius_m: 1100 }, ["osm:n1"]]] as const) {
+      const pl = plan([sch, { op: "inside", as: "in", of: "f1", area: area as never }]);
+      const r = runMapPlan(pl, ws, ctx);
+      if (r.show.type !== "points") throw new Error("points");
+      expect(r.show.items.map((p) => p.id)).toEqual(want);
+      expect(r.context.points.map((p) => p.id)).toEqual(want);
+      expect(r.hits).toEqual([]);
+    }
+  });
+  it("says how many and names them", () => {
+    const pl = plan([sch, { op: "inside", as: "in", of: "f1", area: { kind: "zone", id: 1 } }]);
+    const a = compose(pl, runMapPlan(pl, ws, ctx), ws, ctx);
+    expect(a.count).toBe(1);
+    expect(a.headline).toBe("1 school in Northpet (Zone 1).");
+    expect(a.meaning).toBe("1 is government. It is Govt School Northpet.");
+    const all = plan([sch]);
+    expect(compose(all, runMapPlan(all, ws, ctx), ws, ctx).headline).toBe("2 schools in Chennai district.");
+    const none = plan([sch, { op: "inside", as: "in", of: "f1", area: { kind: "ward", id: 2 } }]);
+    expect(compose(none, runMapPlan(none, ws, ctx), ws, ctx).headline).toMatch(/^No schools in Ward 2/);
+  });
+  it("incidents near schools inside an area draw only the schools those incidents are near", () => {
+    const pl = plan([take(), sch, { op: "within", as: "near", of: "a", near: ["f1"], meters: 5000 }, { op: "inside", as: "in", of: "near", area: { kind: "zone", id: 2 } }]);
+    const r = runMapPlan(pl, ws, ctx);
+    const used = new Set(r.hits.map((h) => h.near!.id));
+    expect(r.context.points.every((p) => used.has(p.id))).toBe(true);
+  });
+});

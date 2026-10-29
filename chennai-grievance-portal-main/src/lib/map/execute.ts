@@ -86,6 +86,16 @@ export function periodRange(p: Period, now: string): { from: string; to: string;
 
 // ------------------------------------------------------------ filters --
 
+/** a filter's window, worked out once per filter and "now" (not once per incident: date parsing was the take step's main cost) */
+const windows = new WeakMap<object, { now: string; r: ReturnType<typeof periodRange> }>();
+function windowOf(p: Period, now: string) {
+  const c = windows.get(p);
+  if (c && c.now === now) return c.r;
+  const r = periodRange(p, now);
+  windows.set(p, { now, r });
+  return r;
+}
+
 export function matches(i: Inc, f: Filter | null, now: string): boolean {
   if (!f) return true;
   if (f.category?.length && !f.category.includes(i.cat)) return false;
@@ -99,8 +109,10 @@ export function matches(i: Inc, f: Filter | null, now: string): boolean {
   if (f.overdue === false && i.breached) return false;
   if (f.citizen === true && !(i.citizen > 0)) return false;
   if (f.citizen === false && i.citizen > 0) return false;
+  if (f.news === true && !((i.outlets ?? 0) > 0)) return false;
+  if (f.news === false && (i.outlets ?? 0) > 0) return false;
   if (f.period) {
-    const r = periodRange(f.period, now);
+    const r = windowOf(f.period, now);
     if (r.fromOpen ? !(i.first > r.from) : !(i.first >= r.from)) return false;
     if (!(i.first <= r.to)) return false;
   }
@@ -126,6 +138,7 @@ export function filterWords(f: Filter | null, w: World, lang: Lang): string {
   if (what) parts.push(what);
   parts.push(f.citizen ? (ta ? "குடிமக்கள் புகார்கள்" : "citizen complaints") : ta ? "சம்பவங்கள்" : "incidents");
   const tail: string[] = [];
+  if (f.news) tail.push(ta ? "செய்திகளில் வந்தவை" : "reported in the news");
   if (f.overdue) tail.push(ta ? "காலக்கெடு தாண்டியவை" : "past their deadline");
   if (f.dept?.length) tail.push(f.dept.map((d) => w.depts.get(d)?.name ?? d).join(", ") + (ta ? " மட்டும்" : " only"));
   if (f.period) tail.push(periodWords(f.period, lang));
@@ -169,6 +182,20 @@ function inArea(i: Inc, a: AreaRef, w: World, ctx: Ctx): boolean {
   return haversineM(i, p) <= r;
 }
 const byRecord = (a: AreaRef) => a.kind === "ward" || a.kind === "zone" || a.kind === "taluk";
+
+/** Is this school, hospital... inside the area: by its ward for a ward, zone or taluk; by distance for a circle. */
+function pointInArea(p: PointFeat, a: AreaRef, w: World, ctx: Ctx): boolean {
+  if (a.kind === "ward" || a.kind === "zone" || a.kind === "taluk") {
+    if (p.ward == null) return false;
+    if (a.kind === "ward") return p.ward === a.id;
+    const wd = w.wards.find((x) => x.ward === p.ward);
+    return !!wd && (a.kind === "zone" ? wd.zone === a.id : wd.taluk === a.code);
+  }
+  const c = a.kind === "point" ? ctx.place(a.ref) : ctx.place(`drawn:${a.id}`);
+  const r = a.kind === "point" ? a.radius_m : drawnRadius(a.id);
+  if (!c || r == null) throw new PlanError("The place in the question could not be found on the map.");
+  return haversineM(p, c) <= r;
+}
 
 // ------------------------------------------------------------ helpers --
 
@@ -311,6 +338,8 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
   const steps: StepOut[] = [];
   const context: RunResult["context"] = { points: [], lines: [], polys: [], areas: [], places: [] };
   let leftOut = 0, lockNote = false;
+  // places a "within" step measured to: trimmed at the end to those the final answer still uses
+  const fromWithin = new Set<string>();
   const lang = ctx.lang;
   const ta = isTa(lang);
   const need = (name: string): Coll => {
@@ -376,6 +405,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         hits.sort(byPriority);
         out = { type: "incidents", hits };
         const used = new Set(hits.map((h) => h.near!.id));
+        for (const id of used) fromWithin.add(id);
         for (const c of sets) {
           if (c.type === "points") context.points.push(...c.items.filter((p) => used.has(p.id)));
           if (c.type === "polys") context.polys.push(...c.items.filter((p) => used.has(p.id)));
@@ -396,6 +426,18 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         break;
       }
       case "inside": {
+        const from = need(s.of);
+        if (from.type === "points") {
+          // "schools in Valasaravakkam": the places themselves, by their ward (or their point for a circle)
+          const items = from.items.filter((p) => pointInArea(p, s.area, w, ctx));
+          out = { type: "points", layer: from.layer, items };
+          context.points.push(...items);
+          context.areas.push(s.area);
+          if (s.area.kind === "point") { const p = ctx.place(s.area.ref); if (p) context.places.push(p); }
+          const al = areaLabel(s.area, w, ctx);
+          n = note(`Kept the ${LAYER_WORD[from.layer].en} ${byRecord(s.area) ? "in" : ""} ${al.en} (${items.length}).`.replace(/\s+/g, " "), `${al.ta} உள்ள ${LAYER_WORD[from.layer].ta} (${items.length}).`);
+          break;
+        }
         const src = incHits(s.of);
         const hits = src.filter((h) => inArea(h.inc, s.area, w, ctx));
         if (!byRecord(s.area)) {
@@ -552,7 +594,7 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
         const src = incHits(s.of);
         const take = plan.steps.find((x) => x.as === s.of && x.op === "take");
         const f = take?.op === "take" ? take.filter : null;
-        const storedOk = !lockDept && f && f.category?.length === 1 && !f.family && !f.severity && f.status === "any" && !f.dept && f.overdue == null && f.citizen == null && !f.text
+        const storedOk = !lockDept && f && f.category?.length === 1 && !f.family && !f.severity && f.status === "any" && !f.dept && f.overdue == null && f.citizen == null && f.news == null && !f.text
           && (!f.period || (f.period.kind === "last_days" && f.period.days === 90 && f.period.offset === 0));
         let clusters: Cluster[];
         let method: "stored" | "dbscan";
@@ -623,6 +665,15 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
   const hits = hitsOf(show) ?? [];
   if (lockNote) steps.push({ as: "lock", op: "take", count: hits.length, note_en: "Your department only: the question named another department, so it was answered for yours.",
     note_ta: "உங்கள் துறை மட்டும்: கேள்வி வேறு துறையைக் குறிப்பிட்டதால் உங்கள் துறைக்கான பதில்.", layer: null, ids: [] });
+  if (fromWithin.size) {
+    const still = new Set(hits.map((h) => h.near?.id).filter(Boolean));
+    const keep = (id: string) => !fromWithin.has(id) || still.has(id);
+    context.points = context.points.filter((p) => keep(p.id));
+    context.polys = context.polys.filter((p) => keep(p.id));
+    context.lines = context.lines.filter((l) => keep(l.feat.id));
+  }
+  // "schools": the places are the answer
+  if (show.type === "points" && !context.points.length) context.points.push(...show.items);
   dedupe(context);
   return { steps, show, hits, context, leftOut, lockNote };
 }
