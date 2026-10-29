@@ -40,6 +40,36 @@ Tamil or Tanglish. The console moves by itself and shows each step; anything tha
   - "not understood" with examples;
   - no sideways scroll for Thunai at 375 px.
 
+## Update, 29 Oct (later): the AI understands every sentence
+The owner asked for real natural-language understanding, not rules. Now:
+- **Every sentence goes to the AI brain** (`src/lib/thunai/plan.ts`, `brain.ts`). It sees the screen, the last 4 turns and
+  the Collector's notes and habits, so follow-ups work: "same for Adyar", "now monthly", "and only the critical ones",
+  "schools near the flooding there". It can plan several steps, ask a clarifying question with buttons ("water problems"),
+  chat ("good morning"), and refuse (delete, book tickets, "ignore your rules and send").
+- **Only instant controls skip the AI:** stop, off, go back/undo, "confirm 3", "click 4" while numbers show, repeat. Sending is
+  never an AI action: only the Collector's own "confirm N" sends.
+- **Code still checks everything:** a step naming an unreal zone/department/category is dropped; a reply with a figure the
+  Collector did not say is dropped; the console speaks readings itself; reminders must be in the future.
+- **The rules are now the backup:** when the AI cannot be reached (keys, rate limits), the dock says "AI unreachable:
+  built-in rules answered" and the rules still work.
+- **Model:** Groq `gpt-oss-120b` first (then the other Groq models) because the AWS key has expired. When a fresh AWS key
+  is pasted, set `THUNAI_PROVIDER=bedrock` to use Nova Lite instead.
+- **UI:** a "thinking" animation, an "Understood by AI · model · time" line, clarify buttons, natural examples in Help.
+
+### Measured (live, Groq, 43 natural sentences in English, Tamil and Tanglish: `src/lib/thunai/brain.live.ts`)
+- First run: **37/43 (86%)**, p50 1.0 s. After fixes to the checker and prompt: **40/43 (93%)**, p50 1.1 s, p90 1.5 s.
+- The 3 misses ("go back", "what am I looking at", "news about this") then got prompt examples, so a rerun would no longer
+  be an independent score. "go back" never reaches the AI in the console (instant control).
+- Browser check on `/dev/thunai` (real Groq calls): multi-filter sentences, follow-ups, Tamil and Tanglish replies,
+  clarify buttons, chat, refusal, "open the top one and draft", taluk map + rain gauges, self-correction, the rules
+  fallback when Groq was rate-limited, phone width without sideways scroll.
+
+### Watch out
+- **Groq free-tier limits:** each call is about 4,000 tokens and each Groq model allows 8,000 tokens a minute per key.
+  In bursts the gateway moves to the smaller Groq models (gpt-oss-20b, qwen), which are less careful; in the live run only
+  22 of 57 calls were answered by gpt-oss-120b. More Groq keys (GROQ_API_KEY_3..5) or Bedrock fix this.
+- Nova Lite was not measured live with the new brain (the AWS key had expired).
+
 ## Not verified (be careful in the demo)
 1. **The real console was not clicked through**: it needs a Collector sign-in, which was not used. The wiring is
    type-checked and built. The first thing to do: sign in on port 3007 and run the demo below.

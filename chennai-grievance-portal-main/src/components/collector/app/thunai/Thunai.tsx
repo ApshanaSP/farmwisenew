@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import type { Overview } from "@/lib/collector/intel";
 import { chartFacts, type ChartFacts } from "@/lib/thunai/explain";
 import { ZONE_NAMES, ZONE_TA_NAME } from "@/lib/thunai/lexicon";
+import { isReflex, type Checked, type Turn } from "@/lib/thunai/plan";
 import { confirmGate, planRisk } from "@/lib/thunai/risk";
 import { say as line } from "@/lib/thunai/say";
 import type { Lang, OutMode, PageKey, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "@/lib/thunai/types";
@@ -44,9 +45,12 @@ export interface ThunaiHost {
   applyView: (v: View) => void;
   snapshot: () => Snap;
   restore: (s: Snap) => void;
+  /** where the brain lives (the dev test console uses its own) */
+  planUrl?: string;
 }
 
 type Phase = "off" | "ready" | "listening" | "thinking" | "acting" | "speaking" | "asking" | "waiting" | "blocked";
+interface AskCard { question: string; lang: Lang; heard: string; choices: { label: string; en: string; steps?: Step[]; request?: string }[] }
 interface Chip { id: number; label: string; state: "pending" | "running" | "done" | "failed" }
 interface Draft { incidentId: string; title: string; subject: string; body: string; to: string | null; sandbox: boolean }
 interface MemoryView { notes: { id: string; text: string; at: string }[]; habits: Record<string, string>; reminders: { id: string; text: string; at: string; done: boolean }[];
@@ -103,7 +107,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [reply, setReply] = useState("");
   const [chips, setChips] = useState<Chip[]>([]);
   const [wrong, setWrong] = useState<string | null>(null);
-  const [askOnce, setAskOnce] = useState<Extract<Understood, { kind: "ask" }> | null>(null);
+  const [askOnce, setAskOnce] = useState<AskCard | null>(null);
+  /** who understood the last sentence: the model (and how fast), the built-in rules, or an instant control */
+  const [brain, setBrain] = useState<{ by: "ai" | "rules" | "instant"; model: string | null; ms: number } | null>(null);
   const [pendingB, setPendingB] = useState<{ text: string; steps: Step[]; heard: string; lang: Lang } | null>(null);
   const [tray, setTray] = useState<Draft[]>([]);
   const [trayShownAt, setTrayShownAt] = useState<number | null>(null);
@@ -123,6 +129,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const stopListen = useRef<(() => void) | null>(null);
   const undoStack = useRef<{ steps: Step[]; snap: Snap }[]>([]);
   const lastSteps = useRef<Step[]>([]);
+  /** the incident an "item" step opened in the plan now running */
+  const justOpened = useRef<string | null>(null);
+  /** the last few turns, so "same for Adyar" and "open that" make sense to the brain */
+  const turns = useRef<Turn[]>([]);
+  const remember = (heardText: string, did: string) => { turns.current = [...turns.current, { heard: heardText.slice(0, 300), did: did.slice(0, 300) }].slice(-4); };
   const lastSpoken = useRef<{ text: string; lang: Lang } | null>(null);
   const lastFilter = useRef<ScreenState["lastFilter"]>(null);
   const lastPlace = useRef<string | null>(null);
@@ -378,16 +389,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         let idx = typeof step.which === "number" ? step.which - 1 : st.list.indexOf(st.incident ?? "") + (step.which === "next" ? 1 : -1);
         idx = Math.max(0, Math.min(st.list.length - 1, idx));
         c.openInc(st.list[idx]);
+        justOpened.current = st.list[idx];
         return null;
       }
       case "draft": {
-        const id = buildState().incident;
+        // the incident a step just opened counts before the console has re-rendered
+        const id = justOpened.current ?? buildState().incident;
         if (!id) return line("noIncident", lang);
         c.openAction(id);
         return line("draft", lang);
       }
       case "zoom": {
-        const id = buildState().incident;
+        const id = justOpened.current ?? buildState().incident;
         if (id) { c.askOnMap?.({ incidentId: id }); return null; }
         if (step.target ?? lastPlace.current) { c.askOnMap?.(`incidents in ${step.target ?? lastPlace.current}`); return null; }
         return line("noIncident", lang);
@@ -481,6 +494,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setChips(steps.map((s, i) => ({ id: ids[i], label: describeStep(s, worldRef.current, lang), state: "pending" })));
     setPhase("acting");
     abortMission.current = false;
+    justOpened.current = null;
     const said: string[] = [];
     const t0 = performance.now();
     for (let i = 0; i < steps.length; i++) {
@@ -500,6 +514,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setChips((cs) => cs.map((c, i) => (i === cs.length - 1 ? { ...c, label: `${c.label} (${(ms / 1000).toFixed(1)} s)` } : c)));
     if (!steps.some((s) => s.a === "whatDid" || s.a === "repeat" || s.a === "undo")) lastSteps.current = steps;
     audit(heardText, steps, `done by ${by}${note ? `; ${note}` : ""}`);
+    if (!steps.some((s) => s.a === "whatDid" || s.a === "repeat")) remember(heardText, steps.map((s) => describeStep(s, worldRef.current, "en")).join("; "));
     changeMemory({ op: "recent", text: heardText });
     const speakLine = [note, ...said].filter(Boolean).join(" ");
     if (steps.some((s) => s.a === "off")) return;
@@ -507,32 +522,64 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     else { earcon("done"); setReply(steps.map((s) => describeStep(s, worldRef.current, lang)).join(" · ")); setPhase(tray.length ? "waiting" : "ready"); }
   };
 
-  const ask = (r: Extract<Understood, { kind: "ask" }>) => {
-    setAskOnce(r);
+  const ask = (card: AskCard) => {
+    setAskOnce(card);
     setPhase("asking");
     earcon("need");
-    out(line("askOnce", r.lang, { question: r.question[r.lang] }), r.lang, "asking");
+    out(card.question, card.lang, "asking");
+  };
+  const fromRules = (r: Extract<Understood, { kind: "ask" }>): AskCard =>
+    ({ question: r.question[r.lang], lang: r.lang, heard: r.heard, choices: r.choices.map((c) => ({ label: c.label[r.lang], en: c.label.en, steps: c.steps })) });
+  const pickChoice = async (card: AskCard, c: AskCard["choices"][number]) => {
+    setAskOnce(null);
+    if (c.request) { await handle(c.request, 0.95, card.heard); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+    if (!c.steps?.length) { setPhase("ready"); return; }
+    void changeMemory({ op: "habit", heard: card.heard.toLowerCase(), meant: c.en });
+    await run(c.steps, card.lang, card.heard, "rules");
+  };
+
+  /** Ask the brain (the model on the server); null when it cannot be reached. */
+  const think = async (said: string, st: ScreenState): Promise<{ plan: Checked; model: string | null; ms: number } | null> => {
+    try {
+      const j = await post(hostRef.current.planUrl ?? "/api/collector/thunai/plan", {
+        text: said, turns: turns.current.slice(-4),
+        state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat, taluk: st.taluk, sev: st.sev, mapMode: st.mapMode,
+          panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers }
+      });
+      return j?.plan?.kind ? { plan: j.plan as Checked, model: j.model ?? null, ms: j.ms ?? 0 } : null;
+    } catch { return null; }
+  };
+
+  /** Steps that change something saved wait for one tap or "yes" (level B). */
+  const gateB = (steps: Step[], said: string, lang: Lang) => {
+    const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind")!;
+    const q = s.a === "workspace" ? line("saveAsk", lang, { name: s.name }) : s.a === "remember" ? line("rememberAsk", lang, { text: s.text })
+      : s.a === "forget" ? line("forgetAsk", lang, { what: s.all ? (lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (lang === "ta" ? "கடைசி குறிப்பை" : "the last note") })
+        : line("remindAsk", lang, { when: whenOf((s as Extract<Step, { a: "remind" }>).at), text: (s as Extract<Step, { a: "remind" }>).text });
+    setPendingB({ text: q, steps, heard: said, lang });
+    earcon("need");
+    out(q, lang, "asking");
   };
 
   // --------------------------------------------------------------- a sentence --
-  const handle = async (text: string, conf = 0.95) => {
+  /**
+   * The brain understands every sentence; only instant controls (stop, undo, confirm 3, click 4 while numbers show) are
+   * done on the spot. When the brain cannot be reached, the built-in rules answer instead and the dock says so.
+   */
+  const handle = async (text: string, conf = 0.95, original?: string) => {
     const said = text.trim();
     if (!said) return;
     lastUserSpeech.current = Date.now();
     lastHeardAt.current = Date.now();
-    setHeard(said); setInterim(""); setWrong(null); setReply("");
+    setHeard(original ?? said); setInterim(""); setWrong(null); setReply("");
     // an answer to the one question
-    if (askOnce) {
+    if (askOnce && !original) {
       const t = said.toLowerCase();
       const pick = /^(1|first|one|முதலாவது|முதல்|onnu|mudhal)$/.test(t) ? 0 : /^(2|second|two|இரண்டாவது|ரெண்டாவது|rendu|second one)$/.test(t) ? 1
-        : askOnce.choices.findIndex((c) => c.label.en.toLowerCase() === t || c.label.ta === said);
-      const choice = pick >= 0 ? askOnce.choices[pick] : null;
+        : /^(3|third|three|மூன்றாவது|moonu)$/.test(t) ? 2 : askOnce.choices.findIndex((c) => c.label.toLowerCase() === t || c.en.toLowerCase() === t);
+      const card = askOnce;
       setAskOnce(null);
-      if (choice) {
-        if (choice.steps.length) changeMemory({ op: "habit", heard: askOnce.heard.toLowerCase(), meant: choice.label.en });
-        await run(choice.steps, askOnce.lang, askOnce.heard, "rules");
-        return;
-      }
+      if (pick >= 0 && card.choices[pick]) { await pickChoice(card, card.choices[pick]); return; }
     }
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
@@ -541,46 +588,47 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       setPendingB(null);
     }
     const st = buildState();
-    let r = understand(said, st, worldRef.current, { speechConf: conf });
-    if (r.kind === "unknown") {
-      setPhase("thinking");
-      setReply(line("aiThinking", r.lang));
-      try {
-        const j = await post("/api/collector/thunai/plan", { text: said, state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat,
-          taluk: st.taluk, sev: st.sev, mapMode: st.mapMode, panel: st.panel, incident: st.incident, listLength: st.list.length } });
-        if (Array.isArray(j.steps) && j.steps.length) r = { kind: "do", steps: j.steps, confidence: 0.8, lang: r.lang, heard: said, by: "ai" };
-      } catch { /* no model: say what was heard */ }
+    const rules = understand(said, st, worldRef.current, { speechConf: conf });
+    // instant controls never wait for the network; sending only ever happens here, from the Collector's own words
+    if (rules.kind === "do" && isReflex(rules.steps, st)) { setBrain({ by: "instant", model: null, ms: 0 }); await run(rules.steps, rules.lang, said, "rules"); return; }
+
+    setPhase("thinking");
+    setChips([]);
+    setReply(line("aiThinking", rules.lang));
+    const ai = await think(said, st);
+    const heardAs = original ?? said;
+    if (ai && ai.plan.kind !== "none") {
+      setBrain({ by: "ai", model: ai.model, ms: ai.ms });
+      const p = ai.plan;
+      if (p.kind === "chat") { earcon("done"); remember(heardAs, p.reply); out(p.reply, p.lang, "ready"); return; }
+      if (p.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${p.reply}`); out(p.reply, p.lang, "ready"); return; }
+      if (p.kind === "clarify") {
+        ask({ question: p.question, lang: p.lang, heard: heardAs, choices: p.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) });
+        return;
+      }
+      if (planRisk(p.steps) === "B") { gateB(p.steps, heardAs, p.lang); return; }
+      await run(p.steps, p.lang, heardAs, "ai", p.reply ?? undefined);
+      return;
     }
-    if (r.kind === "unknown") {
+    // the brain was unreachable or found nothing real: the built-in rules answer, and the dock says so
+    setBrain({ by: "rules", model: null, ms: 0 });
+    if (rules.kind === "unknown") {
       earcon("blocked");
       audit(said, [], "not understood");
-      out(line("notUnderstood", r.lang, { heard: said, examples: SUGGEST.slice(0, 3).join(", ") }), r.lang, "ready");
+      out(line("notUnderstood", rules.lang, { heard: said, examples: SUGGEST.slice(0, 3).join(", ") }), rules.lang, "ready");
       return;
     }
-    if (r.kind === "refuse") { earcon("blocked"); audit(said, [], "refused"); out(r.why[r.lang], r.lang, "ready"); return; }
-    if (r.kind === "ask") { ask(r); return; }
-    const risk = planRisk(r.steps);
-    const note = r.note?.[r.lang];
-    // level B: one tap or "yes"
-    if (risk === "B") {
-      const s = r.steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind")!;
-      const q = s.a === "workspace" ? line("saveAsk", r.lang, { name: s.name }) : s.a === "remember" ? line("rememberAsk", r.lang, { text: s.text })
-        : s.a === "forget" ? line("forgetAsk", r.lang, { what: s.all ? (r.lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (r.lang === "ta" ? "கடைசி குறிப்பை" : "the last note") })
-          : line("remindAsk", r.lang, { when: whenOf((s as Extract<Step, { a: "remind" }>).at), text: (s as Extract<Step, { a: "remind" }>).text });
-      setPendingB({ text: q, steps: r.steps, heard: said, lang: r.lang });
-      earcon("need");
-      out(q, r.lang, "asking");
+    if (rules.kind === "refuse") { earcon("blocked"); audit(said, [], "refused"); out(rules.why[rules.lang], rules.lang, "ready"); return; }
+    if (rules.kind === "ask") { ask(fromRules(rules)); return; }
+    if (planRisk(rules.steps) === "B") { gateB(rules.steps, said, rules.lang); return; }
+    if (rules.confidence < 0.6) {
+      const what = rules.steps.map((x) => describeStep(x, worldRef.current, rules.lang)).join(", ");
+      ask({ question: line("lowConfidence", rules.lang, { what }), lang: rules.lang, heard: said,
+        choices: [{ label: rules.lang === "ta" ? "ஆம்" : "Yes", en: "Yes", steps: rules.steps }, { label: rules.lang === "ta" ? "இல்லை" : "No", en: "No", steps: [] }] });
       return;
     }
-    // level A: act; below 0.6 ask once; 0.6-0.85 act and offer "wrong?"
-    if (r.confidence < 0.6) {
-      const what = r.steps.map((x) => describeStep(x, worldRef.current, r.lang)).join(", ");
-      ask({ kind: "ask", lang: r.lang, heard: said, question: { en: line("lowConfidence", "en", { what }), ta: line("lowConfidence", "ta", { what }) },
-        choices: [{ label: { en: "Yes", ta: "ஆம்" }, steps: r.steps }, { label: { en: "No", ta: "இல்லை" }, steps: [] }] });
-      return;
-    }
-    if (r.confidence < 0.85) { setWrong(r.steps.map((x) => describeStep(x, worldRef.current, r.lang)).join(", ")); setTimeout(() => setWrong(null), 4000); }
-    await run(r.steps, r.lang, said, r.by, note);
+    if (rules.confidence < 0.85) { setWrong(rules.steps.map((x) => describeStep(x, worldRef.current, rules.lang)).join(", ")); setTimeout(() => setWrong(null), 4000); }
+    await run(rules.steps, rules.lang, said, rules.by, rules.note?.[rules.lang]);
   };
   const handleRef = useRef(handle);
   handleRef.current = handle;
@@ -801,19 +849,24 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             </div>
           )}
           {(interim || heard) && <p className={`th-heard${interim ? " interim" : ""}`}>{interim || heard}</p>}
-          {reply && <p className="th-reply">{reply}</p>}
+          {phase === "thinking" ? <p className="th-reply th-thinking"><span className="dots" aria-hidden="true"><i /><i /><i /></span>{reply}</p> : reply && <p className="th-reply">{reply}</p>}
+          {brain && phase !== "thinking" && phase !== "listening" && (
+            <p className={`th-brain ${brain.by}`}>
+              {brain.by === "ai" ? `${ta ? "AI புரிந்தது" : "Understood by AI"}${brain.model ? ` · ${brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")}` : ""}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}`
+                : brain.by === "instant" ? (ta ? "உடனடி கட்டளை" : "Instant control")
+                  : (ta ? "AI கிடைக்கவில்லை: உள்ளமைந்த விதிகள்" : "AI unreachable: built-in rules answered")}
+            </p>
+          )}
           {wrong && <button className="th-wrong" onClick={() => { setWrong(null); void run([{ a: "undo", n: 1 }], listenLang, "wrong", "rules"); }}>{ta ? `கேட்டது: ${wrong} — தவறா?` : `Heard: ${wrong} — wrong?`}</button>}
         </div>
       )}
 
       {on && askOnce && (
-        <div className="th-card" role="dialog" aria-label={askOnce.question[askOnce.lang]}>
-          <p>{askOnce.question[askOnce.lang]}</p>
+        <div className="th-card" role="dialog" aria-label={askOnce.question}>
+          <p>{askOnce.question}</p>
           <div className="row">
             {askOnce.choices.map((c, i) => (
-              <button key={i} onClick={() => { setAskOnce(null); if (c.steps.length) { void changeMemory({ op: "habit", heard: askOnce.heard.toLowerCase(), meant: c.label.en }); void run(c.steps, askOnce.lang, askOnce.heard, "rules"); } else setPhase("ready"); }}>
-                {i + 1}. {c.label[askOnce.lang]}
-              </button>
+              <button key={i} onClick={() => void pickChoice(askOnce, c)}>{i + 1}. {c.label}</button>
             ))}
           </div>
         </div>
@@ -862,8 +915,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           )}
           {panel === "help" && (
             <div className="body help">
-              {(ta ? ["ஏழாவது மண்டலம்", "இந்த வாரம்", "அவசரமானவை மட்டும்", "மோசமான வெள்ளம் காட்டு", "எண்களைக் காட்டு", "பழையபடி மாத்து", "இன்றைய சுருக்கம் சொல்லு", "நாளைக்கு கனமழை, தயார் பண்ணு"]
-                : ["Zone 7", "Change filter to 7", "Adyar, weekly, critical only", "Show the worst flooding", "Schools within 1 km of flooding", "Explain this chart", "Show numbers", "Go back three steps", "Remember that …", "Brief me", "Prepare for heavy rain"]).map((x) => (
+              <p className="muted">{ta ? "சாதாரணமாகப் பேசுங்கள்: AI புரிந்துகொள்ளும். உதாரணங்கள்:" : "Just talk normally: the AI understands. For example:"}</p>
+              {(ta ? ["அம்பத்தூர்ல இந்த வாரம் என்ன நடக்குது காட்டு", "Adyar la police complaints mattum kaatu", "அவசரமானவை மட்டும்", "செம்பரம்பாக்கம் ஏரியில் எவ்வளவு தண்ணீர் இருக்கு", "முதல் சம்பவத்தைத் திற", "நாளைக்கு கனமழை, தயார் பண்ணு", "பழையபடி மாத்து"]
+                : ["What's happening in Ambattur this week? Only the serious stuff", "Same for Adyar", "Why is Perungudi looking so bad lately?", "Any hospitals within 2 km of the flooding there?",
+                  "Open the top one and draft something for the department", "How full is Chembarambakkam?", "Explain this chart", "We expect heavy rain tonight, get everything ready",
+                  "Remind me at 6 to call the SWD engineer", "Go back"]).map((x) => (
                 <button key={x} onClick={() => void handle(x, 0.95)}>{x}</button>
               ))}
             </div>

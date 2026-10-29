@@ -54,6 +54,7 @@ export default function Harness() {
     mapAsk: { setGrown: () => undefined }, saveWorkspace: async (n: string) => { note(`saved ${n}`); return 1; }, openSavedWorkspace: async () => undefined
   } as unknown as Console;
   const host: ThunaiHost = {
+    planUrl: "/api/dev/thunai/plan",
     c, ov: ov as unknown as ThunaiHost["ov"], ins: null, inc, modal, ask, theme,
     toggleTheme: () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); document.documentElement.dataset.theme = t; },
     openExport: open("export"), openCustomize: open("customize"), openPalette: open("search"), askWith: (q) => { setAsk(true); note(`asked District IQ: ${q}`); },

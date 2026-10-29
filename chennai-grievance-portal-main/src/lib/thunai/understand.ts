@@ -512,12 +512,16 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "period": return ta ? PERIOD_TA[step.period] : PERIOD_EN[step.period];
     case "view": {
       const v = step.view;
+      const keys = ["zone", "taluk", "dept", "cat", "sev"] as const;
+      if (keys.every((k) => v[k] === null)) return ta ? "வடிகட்டிகள் நீக்கம்" : "Filters cleared";
+      // a fresh view clears the filters it does not name: show only what it sets
+      const fresh = keys.some((k) => v[k] === null) && keys.some((k) => v[k] != null);
       const parts: string[] = [];
-      if (v.zone !== undefined) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
-      if (v.taluk !== undefined) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
-      if (v.dept !== undefined) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
-      if (v.cat !== undefined) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
-      if (v.sev !== undefined) parts.push(v.sev == null ? (ta ? "எல்லா தீவிரங்கள்" : "All severities") : ta ? SEV_TA[v.sev] : v.sev);
+      if (v.zone !== undefined && !(fresh && v.zone === null)) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
+      if (v.taluk !== undefined && !(fresh && v.taluk === null)) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
+      if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
+      if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
+      if (v.sev !== undefined && !(fresh && v.sev === null)) parts.push(v.sev == null ? (ta ? "எல்லா தீவிரங்கள்" : "All severities") : ta ? SEV_TA[v.sev] : v.sev);
       return parts.join(" · ");
     }
     case "mapMode": return step.mode === "taluks" ? (ta ? "வட்ட வரைபடம்" : "Taluk map") : (ta ? "மண்டல வரைபடம்" : "Zone map");

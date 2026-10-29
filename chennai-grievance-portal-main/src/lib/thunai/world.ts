@@ -5,6 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { deptList } from "@/lib/collector/intel";
+import { ZONE_TA_NAME } from "./lexicon";
 import type { World } from "./types";
 
 const ZONE_NAMES = ["Thiruvottiyur", "Manali", "Madhavaram", "Tondiarpet", "Royapuram", "Thiru-Vi-Ka Nagar", "Ambattur", "Anna Nagar",
@@ -38,7 +39,7 @@ export function referenceWorld(): Pick<World, "cats" | "taluks" | "places"> {
 export async function serverWorld(): Promise<World> {
   const depts = await deptList().catch(() => []);
   return {
-    zones: ZONE_NAMES.map((name, i) => ({ n: i + 1, name })),
+    zones: ZONE_NAMES.map((name, i) => ({ n: i + 1, name, ta: ZONE_TA_NAME[i + 1] ?? null })),
     depts: depts.map((d: { code: string; name: string }) => ({ code: d.code, name: d.name })),
     ...referenceWorld(),
     reservoirs: []
