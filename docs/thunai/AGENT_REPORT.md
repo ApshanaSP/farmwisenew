@@ -129,4 +129,9 @@ monthly", "show it as a table", "pin this", "export", "save as Monsoon watch", "
 - Decisions: `docs/thunai/AGENT_PROGRESS.md`. References: `docs/thunai/REFERENCES.md`.
 
 ## Full suite, type check, production build
-(filled in below when they finish)
+- **All tests: 1,466 passed, 13 skipped (the existing skips), 0 failed**, in 108 files (before this build: 1,396
+  passed). The machine (7.5 GB) ran out of memory for a parallel run while another session's dev server and the
+  browser were open, so the suite was run folder by folder in one process; every folder passed.
+- **Type check**: clean.
+- **Production build**: succeeds (`NEXT_DIST_DIR=.next-agentbuild`, `NODE_OPTIONS=--max-old-space-size=8192`; the
+  folder was deleted afterwards). The dev-only routes (`/api/dev/thunai/*`, `/dev/thunai`) return 404 in production.
