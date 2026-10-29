@@ -1,0 +1,35 @@
+{
+ "source": "OpenStreetMap",
+ "licence": "ODbL 1.0",
+ "attribution": "© OpenStreetMap contributors",
+ "osm_base": "2026-10-28T19:39:47Z",
+ "built_at": "2026-10-28T19:42:13.897Z",
+ "bbox": {
+  "s": 12.825023192289352,
+  "w": 80.11251352677728,
+  "n": 13.262134780484399,
+  "e": 80.35888661195372
+ },
+ "tiles": 9,
+ "ways": 73733,
+ "in_district_edges": 96808,
+ "dropped_pieces": 787,
+ "simplify_m": 2,
+ "query": "way[\"highway\"~\"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street)$\"][\"access\"!~\"^(private|no)$\"][\"motor_vehicle\"!~\"^(private|no)$\"][\"area\"!=\"yes\"](12.82502,80.11251,12.97073,80.19464)->.w;\n.w out body qt;\nnode(w.w);\nout skel qt;",
+ "nodes": 123062,
+ "edges": 157419,
+ "shape_points": 363634,
+ "names": 7465,
+ "bytes": 8258136,
+ "km": 11295,
+ "by_class": {
+  "motorway": 228,
+  "trunk": 897,
+  "primary": 6896,
+  "secondary": 5803,
+  "tertiary": 13698,
+  "unclassified": 1929,
+  "residential": 123831,
+  "living_street": 4137
+ }
+}

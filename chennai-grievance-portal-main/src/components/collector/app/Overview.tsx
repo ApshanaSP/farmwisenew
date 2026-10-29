@@ -15,6 +15,7 @@ import { AddedRow } from "./Added";
 import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useState } from "react";
+import { AttentionCard } from "./Attention";
 import AskOverlay from "./askmap/AskOverlay";
 import { useMapChrome } from "./askmap/Chrome";
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
@@ -85,12 +86,15 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
   const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
     .filter(([, on]) => on).map(([k]) => k as string);
-  const stack = cols.filter((k) => k === "sev" || k === "tasks");
+  // by severity and my tasks share one full-height card (a switch at its top) when both are on: each list gets the
+  // whole column instead of half of it (Attention.tsx)
+  const both = cols.includes("sev") && cols.includes("tasks");
+  const stack = both ? ["sev"] : cols.filter((k) => k === "sev" || k === "tasks");
   const r0 = ["map"], r1 = ["map"];
   if (stack.length) { r0.push(stack[0]); r1.push(stack[1] ?? stack[0]); }
   if (cols.includes("brief")) { r0.push("brief"); r1.push("brief"); }
   const grid: React.CSSProperties = cols.includes("map") && cols.length > 1 ? {
-    gridTemplateColumns: ["minmax(0,2.1fr)", ...r0.slice(1).map((k) => (k === "brief" ? "minmax(0,1.05fr)" : "minmax(0,1fr)"))].join(" "),
+    gridTemplateColumns: ["minmax(0,1.9fr)", ...r0.slice(1).map((k) => (k === "brief" ? "minmax(0,1fr)" : "minmax(0,1.15fr)"))].join(" "),
     gridTemplateRows: "minmax(0,1.15fr) minmax(0,.85fr)",
     gridTemplateAreas: `"${r0.join(" ")}" "${r1.join(" ")}"`
   } : {
@@ -157,8 +161,10 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
           </article>
         )}
 
-        {L.panels.severity && <article className="card a-sev" style={iv()}><SeverityCard d={d} c={c} /></article>}
-        {L.panels.tasks && <article className="card a-tasks" style={iv()}><TasksCard d={d} c={c} /></article>}
+        {both ? <article className="card a-sev att" style={iv()}><AttentionCard d={d} c={c} /></article> : <>
+          {L.panels.severity && <article className="card a-sev att" style={iv()}><AttentionCard d={d} c={c} only="sev" /></article>}
+          {L.panels.tasks && <article className="card a-tasks att" style={iv()}><AttentionCard d={d} c={c} only="tasks" /></article>}
+        </>}
         {L.panels.brief && <article className="card a-brief" style={iv()}><BriefCard d={d} c={c} /></article>}
       </section>
     </>
@@ -199,151 +205,7 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, prevLabel, style, on
 /** The KPI's edge colour, from its tone. */
 const KC: Record<string, string> = { "t-sev": "var(--sev)", "t-high": "var(--high)", "t-info": "var(--accent)", "t-low": "var(--low)" };
 
-// ------------------------------------------------------ severity card --
-
-const SEV_WORD: Record<string, string> = { Severe: "severe", High: "high", Medium: "medium", Low: "low" };
-
-function SeverityCard({ d, c }: { d: OverviewData; c: Console }) {
-  const counts = d.severity.counts;
-  const first = SEVS.find((s) => counts[s] > 0) ?? "Severe";
-  const tab = c.sevTab && (counts[c.sevTab] > 0 || c.sevTab === first) ? c.sevTab : first;
-  const rows = d.severity.rows.filter((r) => r.sev === tab);
-  const needN = rows.filter((r) => r.why?.needsYou).length;
-  return (
-    <>
-      <div className="ch">
-        <svg className="ic" viewBox="0 0 24 24" style={{ color: "var(--sev)" }} aria-hidden="true"><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18h.01" /></svg>
-        <h3 title="Open incidents by severity (the Severe events tile counts every severe event reported in the period)">Open, by severity</h3>
-        <button className="more" onClick={() => c.openList({ status: "open", sev: tab, sort: "sev", dir: 1 }, `${tab} incidents`)}>See all<I n="right" /></button>
-      </div>
-      <SevMix counts={counts} tab={tab} onPick={(s) => c.setSevTab(s)} />
-      <div className="sevtabs" role="tablist" aria-label="Severity">
-        {SEVS.map((s) => (
-          <button key={s} role="tab" aria-selected={tab === s} className={`sevtab s-${SEV_WORD[s]}${tab === s ? " on" : ""}`} onClick={() => c.setSevTab(s)}>
-            <b className="num">{counts[s].toLocaleString("en-IN")}</b>
-            <span><i style={{ background: SEV_HEX[s] }} />{s}</span>
-          </button>
-        ))}
-      </div>
-      {rows.length > 0 && (
-        <div className="sev-note">{needN ? <><I n="bell" /><b>{needN} need{needN === 1 ? "s" : ""} you</b>, shown first</> : <><I n="checkc" />All routine for the departments</>}</div>
-      )}
-      <div className="fitlist">
-        {rows.length ? [...rows].sort((a, b) => Number(!!b.why?.needsYou) - Number(!!a.why?.needsYou)).map((i) => (
-          <div key={i.id} className={`si-item si-row${c.focus?.id === i.id ? " on" : ""}${i.why?.needsYou ? " need" : ""}`} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
-            <button className="si-open" onClick={() => { c.highlight(i); c.openInc(i.id); }}>
-              <span className={`si-ic ${sevTone(i.sev)}`}><I n={deptIcon(i.dept)} /></span>
-              <span className="si-main">
-                <span className="si-t" title={fullTitle(i)}>{fullTitle(i)}</span>
-                <span className="si-meta">{[i.zone_name, i.dept_name ?? i.dept, rel(i.t, d.now)].filter(Boolean).join(" · ")}
-                  {Number(i.grouped) > 1 && <em className="grp-n" title="The same problem reported in the same area: merged into one">{i.grouped} incidents merged</em>}
-</span>
-                {i.why?.needsYou && (
-                  <span className="si-why" title={i.why.attention.join("\n")}><I n="bell" />{i.why.attention[0]}</span>
-                )}
-              </span>
-            </button>
-            {i.sev === "Severe" && (
-              <button className={`si-act${i.acted ? " done" : ""}`} onClick={() => c.openAction(i.id)}
-                title={i.acted ? `Action taken: instruction sent ${rel(i.acted.t, d.now)}. Click to send another.` : "Take action: AI drafts an instruction email to the department officer; you approve it"}
-                aria-label={`${i.acted ? "Action taken on" : "Take action on"} ${fullTitle(i)}`}>
-                <I n={i.acted ? "checkc" : "send"} /><span>{i.acted ? "Action taken" : "Take action"}</span>
-              </button>
-            )}
-          </div>
-        )) : <Empty>No open {tab.toLowerCase()} incidents {c.periodLabel.toLowerCase()}.</Empty>}
-      </div>
-    </>
-  );
-}
-
-/**
- * The open incidents' severity mix as one bar: each severity's share of the whole, in its own colour, with a 2px gap
- * between segments; the selected severity is full strength and the rest recede. A click picks that severity's list.
- */
-function SevMix({ counts, tab, onPick }: { counts: Record<string, number>; tab: string; onPick: (s: (typeof SEVS)[number]) => void }) {
-  const total = SEVS.reduce((a, s) => a + (counts[s] ?? 0), 0);
-  if (!total) return null;
-  return (
-    <div className="sevmix" role="img" aria-label={SEVS.map((s) => `${s} ${counts[s]}`).join(", ")}>
-      {SEVS.filter((s) => counts[s] > 0).map((s) => {
-        const pct = Math.round(((counts[s] ?? 0) / total) * 100);
-        return (
-          <button key={s} className={`sevmix-s${tab === s ? " on" : ""}`} style={{ flexGrow: counts[s], ["--c" as string]: SEV_HEX[s] }}
-            title={`${s}: ${counts[s].toLocaleString("en-IN")} open · ${pct}%`} onClick={() => onPick(s)} aria-label={`${s} ${pct}%`}>
-            {pct >= 12 && <span>{pct}%</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ------------------------------------------------------------- tasks --
-
-function TasksCard({ d, c }: { d: OverviewData; c: Console }) {
-  // Verify: the button turns into a green check, then the row collapses (the reload removes it) and the count ticks down.
-  // A grouped task (the same problem reported several times in one area) verifies every incident of the group.
-  const [done, setDone] = useState<Set<string>>(new Set());
-  const verify = async (i: Row) => {
-    const ids: string[] = i.members ?? [i.id];
-    if (await c.verify(ids.map((id) => (id === i.id ? i : { ...i, id })))) setDone((s) => new Set(s).add(i.id));
-  };
-  return (
-    <>
-      <div className="ch"><I n="tasks" /><h3 title="Closed work for you to check">My Tasks</h3>
-        <span className="cnt-b"><Cnt v={d.tasks.count} /></span>
-        <button className="more" onClick={() => c.openList({ status: "awaiting", sort: "sev", dir: 1 }, "Closed work for you to check")}>
-          See all<I n="right" />
-        </button>
-      </div>
-      <div className="task-rule" title={TASK_RULE}>
-        <I n="alert" /><span>Severe work only{d.tasks.leftToDepts > 0 ? <> · <b>{d.tasks.leftToDepts}</b> other closures verified by departments</> : ""}</span>
-      </div>
-      <div className="fitlist">
-        {d.tasks.rows.length ? d.tasks.rows.map((i) => {
-          const a = i.action as Row | null;
-          const photos: string[] = a?.photos ?? [];
-          const proof = !!a?.evidence;
-          return (
-            <div className={`task${done.has(i.id) ? " leaving" : ""}`} key={i.id} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
-              <button className="task-h" onClick={() => c.openInc(i.id)} title={fullTitle(i)}><b>{fullTitle(i)}</b>
-                {Number(i.grouped) > 1 && <em className="grp-n" title="The same problem reported in the same area: verified together">{i.grouped} merged</em>}
-                {i.acted && <em className="acted-n" title={`Instruction sent ${rel(i.acted.t, d.now)}`}><I n="checkc" />Action taken</em>}</button>
-              <div className={`task-ev${proof ? "" : " none"}`}>
-                <span className="task-who"><I n={proof ? "photo" : "alert"} />{proof ? `${i.dept_name ?? a?.actor ?? "Department"} · ${rel(a!.t, d.now)}` : `${i.dept_name ?? i.dept ?? "Department"}`}</span>
-                {proof ? <q title={a!.note}>“{a!.note}”</q> : <span className="task-miss">{a?.note ? `Records say: ${String(a.note).replace(/\.$/, "")}. ` : ""}No remarks or photos sent from the officer console yet.</span>}
-                {photos.length > 0 && (
-                  <span className="task-ph">
-                    {photos.slice(0, 3).map((p, k) => <a key={p} href={p} target="_blank" rel="noreferrer" title="Open the photo"><img src={p} alt={`Site photo ${k + 1}`} loading="lazy" /></a>)}
-                    {photos.length > 3 && <b>+{photos.length - 3}</b>}
-                  </span>
-                )}
-              </div>
-              <div className="task-f">
-                <span className="task-why" title={`With you because: ${(i.because as string[]).join(", ")}`}>{(i.because as string[]).slice(0, 2).map((b) => <i key={b}>{b}</i>)}</span>
-                <button className="btn sm plain icon" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)}
-                  title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
-                {proof ? (
-                  <button className={`btn sm ok${done.has(i.id) ? " did" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it">
-                    {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}{done.has(i.id) ? "Verified" : "Verify"}
-                  </button>
-                ) : (
-                  <button className="btn sm" onClick={() => c.openAction(i.id)} title="Ask the department officer for the completion report with site photos">
-                    <I n="send" />Ask for report
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        }) : <Empty>All caught up. Nothing needs your check right now.</Empty>}
-      </div>
-    </>
-  );
-}
-
-const TASK_RULE = "You verify closed work on severe incidents only, from the department's remarks and site photos. " +
-  "The department verifies and closes everything else itself. The same problem reported several times in one area is one task.";
+// The severity and tasks cards are in Attention.tsx.
 
 // ------------------------------------------------------------ snapshot --
 

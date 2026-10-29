@@ -1,0 +1,99 @@
+/* The Overview's "what needs you" card (Attention.tsx): by severity and My Tasks in one full-height card with a switch,
+   compact rows (title, facts, actions on the right) so eight or more show at a time. */
+
+.dic .att{display:flex;flex-direction:column;min-height:0}
+
+/* head: the switch (or the one list's name) and See all */
+.dic .att-h{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px 8px}
+.dic .att-sw{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:11px;background:var(--surface-3)}
+.dic .att-sw button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;height:30px;border:0;border-radius:9px;background:transparent;
+  color:var(--text-2);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
+.dic .att-sw button svg{width:14px;height:14px;flex:none}
+.dic .att-sw button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(15,27,45,.12)}
+.dic .att-sw em,.dic .att-one em{font-style:normal;font-size:11px;font-weight:700;min-width:20px;padding:1px 6px;border-radius:999px;background:var(--surface);color:var(--text-2);text-align:center}
+.dic .att-sw button.on em{background:var(--surface-3)}
+.dic .att-sw em.hot,.dic .att-sw button.on em.hot{background:var(--critical);color:#fff}
+.dic .att-one{flex:1;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700}
+.dic .att-one svg{width:16px;height:16px;color:var(--critical)}
+.dic .att-h .more{flex:none}
+
+/* severity filters: one row, each with its share as a thin bar */
+.dic .att-pills{flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:0 12px 6px}
+.dic .att-pills button{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;min-width:0;height:40px;padding:0 8px 3px;
+  border:1px solid var(--line-2);border-radius:9px;background:var(--surface-2);color:var(--text-2);font:inherit;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .15s,border-color .15s}
+.dic .att-pills button span{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.dic .att-pills button i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.dic .att-pills button b{font-size:15px;line-height:1.1;color:var(--text);font-variant-numeric:tabular-nums}
+.dic .att-pills button s{position:absolute;left:0;bottom:0;height:3px;background:var(--c);opacity:.45;border-radius:0 3px 0 0}
+.dic .att-pills button.on{background:color-mix(in srgb,var(--c) 12%,var(--surface));border-color:color-mix(in srgb,var(--c) 60%,transparent);color:var(--text)}
+.dic .att-pills button.on b{color:var(--c)}
+.dic .att-pills button.on s{opacity:1}
+.dic .att-pills button:hover:not(.on){border-color:var(--line-3)}
+
+.dic .att-note{flex:none;display:flex;align-items:center;gap:6px;padding:0 14px 6px;font-size:11.5px;color:var(--critical)}
+.dic .att-note svg{width:13px;height:13px;flex:none}
+.dic .att-note.dim{color:var(--text-3)}
+.dic .att-note.dim b{color:var(--text-2)}
+
+/* the list fills the rest of the card and scrolls */
+.dic .att-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:5px;padding:2px 10px 12px;scrollbar-gutter:stable}
+.dic .att-row{flex:none;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line-2);border-left:3px solid var(--c);border-radius:10px;
+  background:var(--surface);transition:background .12s,border-color .12s,opacity .28s,transform .28s}
+.dic .att-row:hover{background:var(--surface-2)}
+.dic .att-row.on{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 25%,transparent)}
+.dic .att-row.need{background:color-mix(in srgb,var(--critical) 4%,var(--surface))}
+.dic .att-row.leaving{opacity:0;transform:translateX(12px)}
+.dic .att-main{display:flex;align-items:center;gap:9px;min-width:0;padding:7px 6px 7px 8px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.dic .att-ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center}
+.dic .att-ic svg{width:15px;height:15px}
+.dic .att-txt{min-width:0;display:flex;flex-direction:column;gap:1px}
+.dic .att-txt b{font-size:12.5px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .att-txt small{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .att-txt em{display:inline-flex;align-items:center;gap:3px;max-width:62%;margin-right:6px;padding:0 6px;border-radius:999px;vertical-align:-2px;font-style:normal;font-size:10.5px;font-weight:700;
+  color:var(--critical);background:var(--critical-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .att-txt em svg{width:10px;height:10px;flex:none}
+.dic .att-txt em.ok{background:var(--ok-soft)}
+.dic .att-txt em.miss{background:var(--high-soft)}
+.dic .att-txt em.ok{color:var(--ok)}
+.dic .att-txt em.miss{color:var(--high)}
+.dic .att-chev{flex:none;width:14px;height:14px;margin-left:auto;color:var(--text-4)}
+
+/* actions on the right */
+.dic .att-btns{display:flex;align-items:center;gap:4px;padding-right:8px}
+.dic .att-act{flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;margin-right:8px;padding:0 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--critical) 35%,transparent);
+  background:var(--critical-soft);color:var(--critical);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.dic .att-btns .att-act{margin-right:0}
+.dic .att-act svg{width:13px;height:13px}
+.dic .att-act:hover:not(:disabled){filter:brightness(.97);border-color:var(--critical)}
+.dic .att-act.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.dic .att-act.done{background:var(--surface-3);color:var(--text-3);border-color:var(--line-2)}
+.dic .att-act:disabled{cursor:default}
+.dic .att-ib{flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--text-3);cursor:pointer}
+.dic .att-ib svg{width:13px;height:13px}
+.dic .att-ib:hover:not(:disabled){color:var(--text);border-color:var(--line-3)}
+
+/* a task opened in place: remarks, photos, why it is with you */
+.dic .att-more{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;padding:0 12px 10px 45px;font-size:12px;color:var(--text-2);animation:fx-pop .18s both}
+.dic .att-more q{font-style:italic;line-height:1.45}
+.dic .att-more p{margin:0;line-height:1.45}
+.dic .att-ph{display:flex;gap:6px}
+.dic .att-ph img{width:56px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.dic .att-why{font-size:11px;color:var(--text-3)}
+.dic .att-link{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:var(--accent-2);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.dic .att-link svg{width:12px;height:12px}
+
+/* the officer Board: the card takes the two middle columns; My Work's two filters; the "returned" line; a severity chip */
+.dic .op1.att2{grid-template-areas:"map snap snap snap" "map sev sev brief"}
+.dic .att-pills.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dic .att-ret{border:0;background:none;font:inherit;font-size:11.5px;color:var(--high);cursor:pointer;text-align:left}
+.dic .att-ret b{margin-right:2px}
+.dic .att-txt em.sev{font-weight:700}
+
+/* the band's count tiles: the change sits above "than yesterday" instead of both being cut off on one line */
+.dic .band .kpis .kpi .kpi-d{flex-direction:column;align-items:flex-start;gap:1px;min-width:0}
+.dic .band .kpis .kpi .kpi-d em{white-space:nowrap}
+.dic .band .kpis .kpi .kpi-d small{white-space:nowrap;font-size:10.5px;line-height:1.2}
+.dic .band .kpis .kpi .kpi-r{align-items:center;gap:10px;justify-content:flex-start}
+
+@media (prefers-reduced-motion:reduce){.dic .att-row,.dic .att-more{transition:none;animation:none}}

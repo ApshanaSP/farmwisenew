@@ -112,7 +112,8 @@ async function api(path: string, body?: unknown) {
     ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }
     : { cache: "no-store" });
   const j = await r.json().catch(() => ({}));
-  if (r.status === 401) { window.location.href = "/login?redirect=/officer"; throw new Error("Your session has ended. Sign in again."); }
+  // (the development preview at /dev/officer has no sign-in: it stays on the page)
+  if (r.status === 401 && !window.location.pathname.startsWith("/dev/")) { window.location.href = "/login?redirect=/officer"; throw new Error("Your session has ended. Sign in again."); }
   if (!r.ok) throw new Error(j.error || "Request failed.");
   return j;
 }

@@ -9,6 +9,7 @@ import { useCallback, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
 import type { Route } from "./actions";
+import { rehearsalIntent } from "@/lib/rehearsal/intent";
 
 export interface MapAskContext { zone: number | null; taluk: string | null }
 
@@ -165,6 +166,9 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
     ask: async (text: string) => {
       const t = text.trim();
       if (!t) return null;
+      // a question about the coming rain opens Rain Rehearsal where the Collector's console listens for it (RainBand)
+      const rr = (window as Window & { __diqRehearsal?: boolean }).__diqRehearsal ? rehearsalIntent(t) : null;
+      if (rr) { window.dispatchEvent(new CustomEvent("diq:rehearsal", { detail: rr })); return null; }
       setHistory((h) => { const n = [...h.filter((x) => x !== t), t].slice(-30); save(HISTORY_KEY, n); return n; });
       return post({ text: t, prev: planRef.current }, t);
     },

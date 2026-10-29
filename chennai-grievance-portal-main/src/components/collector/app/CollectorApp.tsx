@@ -21,6 +21,7 @@ import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, 
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
 import { AlertBar } from "./AlertBar";
+import { RainBand, type RehearsalOpen } from "./rehearsal/RainBand";
 import { ContactBody, DeptsBody, ExportBody, ListBody, Modal, NewsAllBody, ZonesBody } from "./Overlays";
 import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
@@ -53,6 +54,8 @@ import "./overview-map.css";
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
 // Page 5 (Data Studio) loads only when it is opened
 const Studio = dynamic(() => import("./studio/Studio"), { ssr: false, loading: () => <div className="empty" style={{ margin: "auto" }}>Opening the Data Studio…</div> });
+// Rain Rehearsal (the map before the rain) loads only when it is opened
+const RainRehearsal = dynamic(() => import("./rehearsal/RainRehearsal"), { ssr: false });
 
 const PERIOD_KEYS: Period[] = ["daily", "weekly", "monthly", "quarterly"];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
@@ -274,6 +277,9 @@ export default function CollectorApp({ initial, allDepts, user }: {
     return n;
   });
   const [palette, setPalette] = useState(false);
+  // Rain Rehearsal: open over the page (from the rain band, the palette or Ask the Map)
+  const [rehearsal, setRehearsal] = useState<RehearsalOpen | null>(null);
+  const openRehearsal = useCallback((o: RehearsalOpen) => setRehearsal(o), []);
   // Ask the Map: one conversation per tab, on the Overview's map
   const mapCtx = useRef<{ zone: number | null; taluk: string | null }>({ zone: null, taluk: null });
   mapCtx.current = { zone, taluk };
@@ -653,6 +659,8 @@ export default function CollectorApp({ initial, allDepts, user }: {
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "cloud", l: "Rain rehearsal (மழை ஒத்திகை)", s: "Where heavy rain will hit first, who loses quick help, and the jobs to send before it",
+      run: () => setRehearsal({ replay: null, manual: false }) },
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
       run: () => { setPage("overview"); mapAsk.setGrown(true); } },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
@@ -699,6 +707,11 @@ export default function CollectorApp({ initial, allDepts, user }: {
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
           <span className="tspace" />
+          {/* Rain Rehearsal is always one click away (the rain band appears only when a warning is out) */}
+          <button className={`rr-top${rehearsal ? " on" : ""}`} onClick={() => setRehearsal(rehearsal ? null : { replay: null, manual: false })}
+            title="Rain rehearsal: where heavy rain will hit first, who loses quick help, and the jobs to send before it" aria-pressed={!!rehearsal}>
+            <I n="cloud" /><span>Rain</span>
+          </button>
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
@@ -737,6 +750,12 @@ export default function CollectorApp({ initial, allDepts, user }: {
         <div className="body">
           {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys (on every page) */}
           <AlertBar now={ov.now} />
+          {/* heavy rain near: the rain band, with its countdown and the jobs done; opens Rain Rehearsal */}
+          <RainBand onOpen={openRehearsal} hidden={!!rehearsal} />
+          {rehearsal && (
+            <RainRehearsal key={`${rehearsal.replay ?? "now"}|${rehearsal.manual}`} geo={geo} init={rehearsal} onClose={() => setRehearsal(null)}
+              onOpenIncident={(id) => c.openInc(id)} toast={(m, k) => toast(m, k ?? "ok")} />
+          )}
           {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
           <section className={`band${page === "overview" ? " hero" : ""}`}>
             <div className="band-row">

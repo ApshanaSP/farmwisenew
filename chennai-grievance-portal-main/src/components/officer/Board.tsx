@@ -14,11 +14,12 @@ import { useMapChrome } from "@/components/collector/app/askmap/Chrome";
 import { useMapAsk } from "@/components/collector/app/askmap/useMapAsk";
 import { I, type IconName } from "@/components/collector/app/icons";
 import { Kpi, OfficerCard } from "@/components/collector/app/Overview";
-import { Cnt, Empty, SEVS, SEV_HEX, SevChip, deptIcon, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { Cnt, Empty, deptIcon, fullTitle, rel, type Row } from "@/components/collector/app/lib";
 import type { Ctx } from "./OfficerApp";
+import { BeforeRainStrip } from "./BeforeRainTasks";
+import { OfficerAttention } from "./OfficerAttention";
 
 const noop = () => undefined;
-const SEV_WORD: Record<string, string> = { Severe: "severe", High: "high", Medium: "medium", Low: "low" };
 const shortName = (n: string) => String(n ?? "").replace(/\s*\(.*\)\s*$/, "");
 
 export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
@@ -32,6 +33,8 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
   const daily = c.ov.period === "daily";
   return (
     <>
+      {/* Rain Rehearsal: the jobs the Collector sent before a heavy rain (only while there are some) */}
+      <BeforeRainStrip />
       <section className="kpis" style={{ gridTemplateColumns: "repeat(4,minmax(0,1fr))" }}>
         <Kpi k="severe" icon="bell" tone="t-sev" label="Severe events" v={d.kpi.cur.severe} p={d.kpi.prev.severe} goodDown series={d.kpi.series.severe}
           prevLabel={P.prev} style={iv()} onClick={() => c.openList(null, "Severe events", undefined, { sev: "Severe", tab: "all" })}
@@ -56,11 +59,11 @@ export function OverviewPage({ c, goGrievances, openContacts, openNews }: {
           tip="Your department's incidents reported in the period that are resolved." />
       </section>
 
-      <section className="p1 op1">
+      {/* by severity and My Work share one card two columns wide (a switch at its top), as on the Collector's Overview */}
+      <section className="p1 op1 att2">
         <MapCard c={c} style={iv()} />
         <article className="card a-snap" style={iv()}><DeptSnap c={c} openContacts={openContacts} /></article>
-        <article className="card a-sev" style={iv()}><SeverityCard c={c} /></article>
-        <article className="card a-tasks" style={iv()}><WorkCard c={c} goGrievances={goGrievances} /></article>
+        <article className="card a-sev att" style={iv()}><OfficerAttention c={c} goGrievances={goGrievances} /></article>
         <article className="card a-brief" style={iv()}><NewsCard c={c} openNews={openNews} /></article>
       </section>
     </>
@@ -160,89 +163,7 @@ function DeptSnap({ c, openContacts }: { c: Ctx; openContacts: () => void }) {
   );
 }
 
-// -------------------------------------------------------------- severity --
-
-function SeverityCard({ c }: { c: Ctx }) {
-  const d = c.ov.board;
-  const counts = d.severity.counts as Record<string, number>;
-  const first = SEVS.find((s) => counts[s] > 0) ?? "Severe";
-  const [pick, setPick] = useState<string | null>(null);
-  const tab = pick && (counts[pick] > 0 || pick === first) ? pick : first;
-  const rows = (d.severity.rows as Row[]).filter((r) => r.sev === tab);
-  return (
-    <>
-      <div className="ch">
-        <svg className="ic" viewBox="0 0 24 24" style={{ color: "var(--sev)" }} aria-hidden="true"><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18h.01" /></svg>
-        <h3 title="Open incidents by severity (the Severe events tile counts every severe event reported in the period)">Open, by severity</h3>
-        <button className="more" onClick={() => c.openList(null, `${tab} incidents, open`, "open", { sev: tab })}>See all<I n="right" /></button>
-      </div>
-      <div className="sevtabs" role="tablist" aria-label="Severity">
-        {SEVS.map((s) => (
-          <button key={s} role="tab" aria-selected={tab === s} className={`sevtab s-${SEV_WORD[s]}${tab === s ? " on" : ""}`} onClick={() => setPick(s)}>
-            <b className="num">{(counts[s] ?? 0).toLocaleString("en-IN")}</b>
-            <span><i style={{ background: SEV_HEX[s] }} />{s}</span>
-          </button>
-        ))}
-      </div>
-      <div className="fitlist">
-        {rows.length ? rows.map((i) => (
-          <button key={i.id} className="si-item" style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties} onClick={() => c.openGrievance(i.id)}>
-            <span className={`si-ic ${sevTone(i.sev)}`}><I n={deptIcon(i.dept)} /></span>
-            <span className="si-main">
-              <span className="si-t" title={fullTitle(i)}>{fullTitle(i)}</span>
-              <span className="si-meta">{[i.zone_name, i.loc, rel(i.t, c.now)].filter(Boolean).join(" · ")}</span>
-            </span>
-          </button>
-        )) : <Empty>No open {tab.toLowerCase()} incidents {c.ov.periodInfo.label.toLowerCase()}.</Empty>}
-      </div>
-    </>
-  );
-}
-
-// ------------------------------------------------------------ work queue --
-
-/** The officer's "My Tasks": new grievances to approve and work in action to complete and send, most severe first. */
-function WorkCard({ c, goGrievances }: { c: Ctx; goGrievances: (tab: "new" | "action") => void }) {
-  const k = c.ov.counts;
-  const [tab, setTab] = useState<"new" | "action">(k.new || !k.action ? "new" : "action");
-  const rows = c.ov.queue[tab] as Row[];
-  return (
-    <>
-      <div className="ch"><I n="tasks" /><h3 title="Your work: approve new grievances, complete and send the work in action">My Work</h3>
-        <span className="cnt-b">{(k.new + k.action).toLocaleString("en-IN")}</span>
-        <button className="more" onClick={() => goGrievances(tab)}>See all<I n="right" /></button>
-      </div>
-      <div className="btabs" role="tablist" aria-label="Work">
-        <button role="tab" aria-selected={tab === "new"} className={tab === "new" ? "on" : ""} onClick={() => setTab("new")}>To approve <b className="tab-n">{k.new}</b></button>
-        <button role="tab" aria-selected={tab === "action"} className={tab === "action" ? "on" : ""} onClick={() => setTab("action")}>In action <b className="tab-n">{k.action}</b></button>
-      </div>
-      {k.returned > 0 && (
-        <button className="task-rule ret" onClick={() => goGrievances("action")} title="Returned by the Collector: redo the work and send a fresh completion report">
-          <I n="refresh" /><span><b>{k.returned}</b> returned by the Collector for rework</span>
-        </button>
-      )}
-      <div className="fitlist">
-        {rows.length ? rows.map((r) => (
-          <div className="task" key={r.id} style={{ "--c": SEV_HEX[r.sev] } as React.CSSProperties}>
-            <button className="task-h" onClick={() => c.openGrievance(r.id)} title={[r.type, r.loc].filter(Boolean).join(" – ")}>
-              <b>{fullTitle(r)}</b>
-              <small>{[r.zone_name, rel(r.t, c.now), r.complaints ? `${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ")}</small>
-            </button>
-            <div className="task-f">
-              <SevChip s={r.sev} />
-              {r.returned && <span className="chip sev-high" title={r.returnNote ?? undefined}><I n="refresh" />Returned</span>}
-              <span style={{ flex: 1 }} />
-              {tab === "new"
-                ? <button className="btn sm" disabled={c.busy.has(r.id)} onClick={() => c.approve(r)}><I n="check" />Approve</button>
-                : <button className="btn sm ok" disabled={c.busy.has(r.id)} onClick={() => c.openSend(r)}>
-                  {r.sev === "Severe" ? <><I n="send" />Complete &amp; send</> : <><I n="check" />Complete &amp; close</>}</button>}
-            </div>
-          </div>
-        )) : <Empty>{tab === "new" ? "Nothing waiting for your approval." : "Nothing in action right now."}</Empty>}
-      </div>
-    </>
-  );
-}
+// The severity and work cards are in OfficerAttention.tsx.
 
 // ------------------------------------------------------------------ news --
 
