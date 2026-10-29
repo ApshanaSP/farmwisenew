@@ -15,15 +15,17 @@ import { I } from "../icons";
 const RAMP = ["#312E81", "#4F46E5", "#6366F1", "#8B5CF6", "#C026D3", "#F43F5E"];
 const color = (t: number) => RAMP[Math.max(0, Math.min(RAMP.length - 1, Math.floor(t * (RAMP.length - 0.001))))];
 
-interface Props { geo: MapGeo | null; panel: PanelData; focusZone: number | null; onZone?: (z: number) => void }
+/** A numbered pin (Thunai's Stage): the items being talked about pulse (`hot`). */
+export interface MapPin { n: number | null; id: string; lat: number; lon: number; label: string; sev: string | null; hot: boolean }
+interface Props { geo: MapGeo | null; panel: PanelData; focusZone: number | null; onZone?: (z: number) => void; pins?: MapPin[]; outline?: number[]; onPin?: (i: number) => void }
 
-interface St { L: typeof Leaflet; map: Leaflet.Map; wards: { ward: number; zone: number; taluk: string | null; poly: Leaflet.Polygon }[]; bubbles: Leaflet.LayerGroup; sel: Leaflet.LayerGroup; district: Leaflet.LatLngBounds }
+interface St { L: typeof Leaflet; map: Leaflet.Map; wards: { ward: number; zone: number; taluk: string | null; poly: Leaflet.Polygon }[]; bubbles: Leaflet.LayerGroup; sel: Leaflet.LayerGroup; pins: Leaflet.LayerGroup; district: Leaflet.LatLngBounds }
 
-export default function StudioMap({ geo, panel, focusZone, onZone }: Props) {
+export default function StudioMap({ geo, panel, focusZone, onZone, pins, outline, onPin }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const st = useRef<St | null>(null);
-  const cb = useRef({ onZone, panel });
-  cb.current = { onZone, panel };
+  const cb = useRef({ onZone, panel, onPin });
+  cb.current = { onZone, panel, onPin };
   const [ready, setReady] = useState(0);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function StudioMap({ geo, panel, focusZone, onZone }: Props) {
       const district = L.latLngBounds([]);
       for (const w of wards) district.extend(w.poly.getBounds());
       map.fitBounds(district, { padding: [6, 6] });
-      st.current = { L, map, wards, district, bubbles: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map) };
+      st.current = { L, map, wards, district, bubbles: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), pins: L.layerGroup().addTo(map) };
       ro = new ResizeObserver(() => map.invalidateSize());
       ro.observe(el.current);
       setReady((n) => n + 1);
@@ -80,11 +82,38 @@ export default function StudioMap({ geo, panel, focusZone, onZone }: Props) {
     });
   }, [ready, panel]);
 
-  // ---- the zone in focus
+  // ---- numbered pins (the Stage): drawn over the shading, the hot ones pulse
+  const pinKey = JSON.stringify(pins?.map((p) => [p.id, p.hot]) ?? []);
+  useEffect(() => {
+    const s = st.current;
+    if (!s) return;
+    s.pins.clearLayers();
+    (pins ?? []).forEach((p, i) => {
+      const cls = `st-pin${p.hot ? " hot" : ""}${p.sev ? ` sev-${p.sev.toLowerCase()}` : ""}${p.n == null ? " ring" : ""}`;
+      s.L.marker([p.lat, p.lon], { icon: s.L.divIcon({ className: "", html: `<div class="${cls}"><b>${p.n ?? ""}</b></div>`, iconSize: [0, 0] }), zIndexOffset: p.hot ? 900 : p.n ? 500 - p.n : 0, keyboard: false })
+        .bindTooltip(esc(p.label), { className: "dtip", direction: "top", offset: [0, -12] })
+        .on("click", () => cb.current.onPin?.(i))
+        .addTo(s.pins);
+    });
+  }, [ready, pinKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---- the zone in focus (or the Stage's outlined zones, or its pins)
+  const outlineKey = (outline ?? []).join(",");
   useEffect(() => {
     const s = st.current;
     if (!s || !geo) return;
     s.sel.clearLayers();
+    if (pins?.length || outline?.length) {
+      const b = s.L.latLngBounds([]);
+      for (const z of outline ?? []) {
+        const zz = geo.zones.find((x) => x.zone === z);
+        if (zz) s.L.polyline(zz.lines, { color: "#FFFFFF", weight: 2.4, opacity: 0.95, interactive: false }).addTo(s.sel);
+        for (const w of s.wards) if (w.zone === z) b.extend(w.poly.getBounds());
+      }
+      for (const p of pins ?? []) if (p.n != null || !b.isValid()) b.extend([p.lat, p.lon]);
+      if (b.isValid()) s.map.flyToBounds(b.pad(0.08), { padding: [24, 24], duration: 0.6, maxZoom: 15 });
+      return;
+    }
     if (focusZone) {
       const z = geo.zones.find((x) => x.zone === focusZone);
       if (z) s.L.polyline(z.lines, { color: "#FFFFFF", weight: 2.6, opacity: 1, interactive: false }).addTo(s.sel);
@@ -92,7 +121,7 @@ export default function StudioMap({ geo, panel, focusZone, onZone }: Props) {
       for (const w of s.wards) if (w.zone === focusZone) b.extend(w.poly.getBounds());
       if (b.isValid()) s.map.flyToBounds(b, { padding: [20, 20], duration: 0.6 });
     } else s.map.flyToBounds(s.district, { padding: [6, 6], duration: 0.6 });
-  }, [ready, focusZone, geo]);
+  }, [ready, focusZone, geo, outlineKey, pinKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const max = Math.max(0, ...panel.values);
   return (

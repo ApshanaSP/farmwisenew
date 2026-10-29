@@ -21,7 +21,7 @@ export const AI_ACTIONS = ["page", "period", "view", "clearFilters", "panel", "m
   "mission", "remember", "recall", "remind", "forget", "undo", "saveWorkspace", "openWorkspace", "send", "help"] as const;
 
 // every field is present (null where unused): strict structured-output modes on every provider accept this shape
-const AiStep = z.object({
+export const AiStep = z.object({
   action: z.enum(AI_ACTIONS),
   page: z.enum(PAGES).nullable(),
   period: z.enum(PERIODS).nullable(),
@@ -76,6 +76,16 @@ export function stateCard(s: ScreenState, w?: World): string {
   });
 }
 
+/** The real lists the model must choose from (shared with the v2 agent's prompt). */
+export function codesText(w: World): string {
+  return `Zones: ${w.zones.map((z) => `${z.n} ${z.name}${z.ta ? `/${z.ta}` : ""}`).join("; ")}.
+Departments: ${w.depts.map((d) => `${d.code} ${d.name}`).join("; ")}.
+Categories: ${w.cats.map((c) => `${c.code} ${c.label}`).join("; ")}.
+Taluks: ${w.taluks.map((t) => `${t.code} ${t.name}${t.ta ? `/${t.ta}` : ""}`).join("; ")}.
+Reservoirs: ${w.reservoirs.length ? w.reservoirs.map((r) => r.name).join(", ") : "Chembarambakkam, Puzhal, Poondi, Cholavaram, Kannankottai Thervoy Kandigai, Veeranam"}.
+Places by zone: ${w.places.filter((p) => p.zone).slice(0, 40).map((p) => `${p.name}=${p.zone}`).join("; ")}.`;
+}
+
 export function systemPrompt(w: World): string {
   return `You are Thunai (துணை), the voice co-pilot of the Chennai District Collector's command console. The Collector speaks naturally in English, Tamil or Tanglish (Tamil in Latin letters), often in half-sentences, with fillers, corrections ("Ambattur... no, Anna Nagar"), and follow-ups that depend on what was just done ("same for Adyar", "now weekly", "open that", "go back"). Understand the intent like a sharp human aide would, then return a plan of console actions.
 
@@ -102,12 +112,7 @@ RULES
 10. Every step lists every field; fields an action does not use are null. Output only the plan.
 
 CODES
-Zones: ${w.zones.map((z) => `${z.n} ${z.name}${z.ta ? `/${z.ta}` : ""}`).join("; ")}.
-Departments: ${w.depts.map((d) => `${d.code} ${d.name}`).join("; ")}.
-Categories: ${w.cats.map((c) => `${c.code} ${c.label}`).join("; ")}.
-Taluks: ${w.taluks.map((t) => `${t.code} ${t.name}${t.ta ? `/${t.ta}` : ""}`).join("; ")}.
-Reservoirs: ${w.reservoirs.length ? w.reservoirs.map((r) => r.name).join(", ") : "Chembarambakkam, Puzhal, Poondi, Cholavaram, Kannankottai Thervoy Kandigai, Veeranam"}.
-Places by zone: ${w.places.filter((p) => p.zone).slice(0, 40).map((p) => `${p.name}=${p.zone}`).join("; ")}.
+${codesText(w)}
 
 EXAMPLES
 "show me what's cooking in Ambattur this week, only the serious stuff" -> do: view{zone 7, sev Severe}, period weekly.
