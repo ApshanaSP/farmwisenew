@@ -147,6 +147,74 @@ and alive (animated entrance, live highlights while it speaks, every element cli
   a one-line takeaway at the top ("Adyar had 2× the severe incidents of Ambattur this week"), sources and "as of" time
   at the bottom, no empty or broken charts (if a block has no data it says so in words), responsive to 375 px.
 
+### 4.2c Operate AND show: Thunai acts on the page it builds (the owner, 29 Oct)
+The owner: "based on my query it should operate, not only visualise; it can take action on that page; building screens
+for me; very fast and neat; department-wise performance, every insight; not random insights."
+
+- Every answer is **an operation plus a screen**: Thunai sets the console (filters, page, map, panels) so the console
+  agrees with the Stage, then builds the screen, then speaks. Closing the Stage leaves the console showing the same scope.
+- **Actions from the Stage**, by voice or click, all through the existing console actions and the v1 risk levels:
+  open an incident, open Take action, draft for one or several rows (into the approval tray), assign/mark for review
+  where the console already has that action (find it; never invent a new write path), save the screen as a workspace,
+  export (the console's own Export), pin, "show this on the main map", "open the department's backlog". Anything that
+  leaves the console still needs "confirm N".
+- **Insight quality, not random insights**: each screen answers the question asked, leads with the one takeaway that
+  matters (largest gap, worst performer, sharpest change), and shows only blocks that support it. Insights are computed
+  by code from tool results with explicit rules (rank, gap vs median, change vs previous period, z-score from the
+  `environment` tool, share of total), each labelled with its method; the model picks which ones to show and words the
+  takeaway, and the spoken-figure check applies.
+- **Department performance screen** (scenario 18): "department-wise performance" / "which department is slowest" →
+  Kpis (open, overdue, median resolution time, verified share), a Ranking of departments (worst first, with the
+  console's own measures from `departments`, `dept_backlog`, `resolution_times`, `dept_followups`), a Trend of backlog,
+  a heat strip of department × category, and actions on each row ("open its backlog", "draft a follow-up to the
+  head" → tray). Also "zone-wise performance" with the same layout.
+
+### 4.2d The generated-studio spec the owner pasted (all of it is in scope)
+- A **command bar** on the Stage (and Thunai's bar): typed or spoken questions; each answer opens **a new full screen**
+  (not a text reply) with an insight map, charts, a ranked table, key numbers and a short written summary.
+- "Top 3 areas with rainfall" → ranked view, map highlighting those areas, bar and trend charts, key numbers.
+- "Compare A vs B" → side-by-side matching metrics, differences highlighted, a radar or grouped chart, a one-line
+  verdict.
+- **Follow-ups refine the current screen** ("now show last year", "add temperature"); when the data cannot do it (for
+  example no history before the dataset starts), say so plainly on the screen.
+- **Filters** on every screen: date range (the console's periods plus custom where the tools support it), region
+  (zone/taluk/ward/place), metric.
+- **Interactive visuals**: hover details, click to drill down (zone → wards → incidents), zoom and pan on the map.
+- **Switch any block** between chart, table and map views (where the data has places).
+- **Save, pin and export** screens: save = console workspace (level B), pin = keep in a "Pinned screens" strip on the
+  Stage (per Collector, in Thunai's memory file), export = PNG of the screen and CSV of its data (client-side, no new
+  service).
+- **Design**: premium, distinctive, not a template; light and dark themes; smooth transitions between screens
+  (shared-element style: the block you asked about grows into the new screen); clean typography (the console's fonts,
+  Noto Sans Tamil); **colourblind-safe palettes** (check categorical and sequential colours with the `dataviz` skill's
+  validator); fast and responsive on phone and desktop; prefers-reduced-motion honoured.
+- **Quality**: every number from the real data, no invented values; unclear questions get one short clarifying question
+  with buttons.
+
+### 4.2e How to work (use everything available)
+- Model: Opus 5.5 at high effort for the main session.
+- **Skills** (load before the work they cover): `dataviz` before any chart, palette or KPI tile; `design-taste-frontend`
+  and `redesign-existing-projects` before designing the Stage and insight screens; `web-design-guidelines` to review the
+  finished UI (accessibility, focus, contrast, motion); `run` / the browser pane to verify. Record what each skill
+  changed in AGENT_PROGRESS.md.
+- **Subagents in parallel** where the parts do not touch the same files: one reads and maps the assistant tools'
+  result shapes into the Stage bindings; one writes the 40 + 20 live cases before any tuning; one reviews the finished
+  UI against the design bar and the guidelines; one runs a `/code-review`-style correctness pass on the agent core. You
+  stay the integrator; check every subagent's output before using it.
+- Look at 2–3 more real projects on GitHub for generative dashboards / agentic UIs (for example Vercel's generative UI
+  examples, CopilotKit's AG-UI demos) through the browser, take patterns only, list them in REFERENCES.md.
+
+### 4.2f Ask the Map inside Thunai (all in one)
+The owner: "that school idea, Ask the Map, it should all be done in this Jarvis, all in one."
+- Questions about places and distances ("schools within 1 km of the flooding", "hospitals near this incident", "which
+  wards around Velachery have waterlogging", "shelters near the severe cases") are answered **inside the Stage**: a
+  `MapView` with the results (numbered pins matching a ranked table), the distance rule on screen, and actions on each
+  result. Today Thunai only forwards these to the console's Ask the Map (`c.askOnMap`); find how Ask the Map answers
+  (the conversational map on the Collector console, commit 030fdbf and 9a20b92, `/api/collector/nearby`, `geo`) and
+  call the same server logic from the agent as a tool. Do not build a second spatial engine.
+- Scenario 19: "schools within 1 km of flooding in Adyar" → MapView + ranked table of schools with distance, spoken
+  count and nearest; "draft an alert to the nearest three" → drafts into the tray (confirm N to send, sandbox only).
+
 ### 4.3 The scenarios that must work (golden list: unit tests with fakes, live tests, and browser proof)
 1. "Show me the 6 severe cases" / "severe cases kaatu" / "கடுமையான சம்பவங்களைக் காட்டு" → Severe filter set **and**
    `CaseList` with exactly the console's severe rows (6 if it shows 6), spoken: how many, the worst one, where.
@@ -167,12 +235,18 @@ and alive (animated entrance, live highlights while it speaks, every element cli
 15. "How has dengue moved this quarter?" → `Trend` with unusual points + `Ranking` of zones; spoken peak and change.
 16. "Map the severe cases" / "show hotspots on a map" → `MapView` with points, numbered to match a `CaseList`.
 17. "Make me a flooding dashboard for this week" → a 4–6 block screen (Kpis, MapView, Ranking, Trend, CaseList).
+18. "Department-wise performance" / "which department is slowest" / "zone-wise performance" → the performance screen
+    (4.2c), with row actions.
+19. "Schools within 1 km of flooding in Adyar" → Ask the Map inside the Stage (4.2f).
+20. Any screen: "show it as a table", "switch to map", "pin this", "export this", "save as Monsoon watch".
 Write at least 40 agent cases (English, Tamil, Tanglish) for the live test, written **before** tuning, and keep a
 separate unseen set of 20 written after; report both scores honestly.
 
-## 5. Build order (about 6–7 hours; commit at each checkpoint)
+## 5. Build order (about 8 hours; commit at each checkpoint; keep going until done)
 Between steps 3 and 4 below, add **Insight screens** (about 75 min): the layout renderer, Ranking, MapView, Compare,
-Trend, Kpis, the code-side aggregations and their unit tests, and scenarios 13–17 in the fakes and the live set.
+Trend, Kpis, the code-side aggregations and their unit tests, and scenarios 13–20 in the fakes and the live set; then the
+operate-and-act layer (4.2c), the studio features (4.2d: command bar, filters, view switch, drill-down, pin, export) and
+Ask the Map inside the Stage (4.2f), about 2 hours more.
 
 1. **Read** (20 min): REPORT.md, plan.ts, Thunai.tsx, assistant/agent.ts, tools.ts, the chat route, cards.ts. Write
    `docs/thunai/AGENT_PROGRESS.md` with decisions as you go.
@@ -187,7 +261,7 @@ Trend, Kpis, the code-side aggregations and their unit tests, and scenarios 13�
    Checkpoint commit.
 5. **Live** (45 min): `agent.live.ts` with the 40 cases (paced for Groq), fix generic problems (not phrase hacks), then
    the 20 unseen. Record both scores, p50/p90 latency, tokens per call, and which model answered.
-6. **Browser proof** (40 min): on `/dev/thunai` with real model calls: scenarios 1, 2, 4, 7, 8, 9, 13, 14, 17 in English and Tamil;
+6. **Browser proof** (40 min): on `/dev/thunai` with real model calls: scenarios 1, 2, 4, 7, 8, 9, 13, 14, 17, 18, 19, 20 in English and Tamil;
    phone width; dark/light; reduced motion; no console errors. Screenshots in `docs/thunai/evidence/`.
 7. **Finish** (30 min): full vitest, tsc, production build, `docs/thunai/AGENT_REPORT.md` (what, numbers, not verified,
    2-minute demo script), update REFERENCES.md. Final commit.
@@ -207,7 +281,7 @@ number check, or the safety gates.
 - Every number spoken or shown comes from data through code. If something was not verified, say so in the report.
 
 ## 7. Done means
-- The 17 scenarios work in the browser with real model calls; evidence saved.
+- The 20 scenarios work in the browser with real model calls; evidence saved.
 - Live agent score and unseen score reported, with latency and tokens.
 - All tests pass, tsc clean, production build succeeds, everything committed on `thunai/agent`, nothing pushed.
 - AGENT_REPORT.md tells the owner, in plain words, what to try first on the real console.
