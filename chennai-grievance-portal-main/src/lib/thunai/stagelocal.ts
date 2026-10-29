@@ -58,8 +58,11 @@ export function localStageCommand(raw: string): LocalCmd | null {
   const sort = t.match(/^(?:sort|order|rank)(?: (?:them|it|these))?(?: by)? (complaints?|time|date|newest|latest|value|name|severity|worst)$/);
   if (sort) return { op: "sort", by: /complaint/.test(sort[1]) ? "complaints" : /time|date|newest|latest/.test(sort[1]) ? "time" : /name/.test(sort[1]) ? "name" : /severity|worst/.test(sort[1]) ? "severity" : "value" };
   const only = t.match(/^(?:only|just|show only|show just|keep only)(?: the)? (.+?)(?: ones| cases| items| incidents)?(?: mattum)?$/) ?? t.match(/^(.+?) (?:mattum|மட்டும்)$/);
-  if (only && only[1].length >= 3 && !/\b(severe|critical|high|medium|low|open|week|month|today|quarter)\b/.test(only[1])) return { op: "filter", text: only[1].replace(/^(?:ones?|cases?|items?|incidents?) (?:in|at|from|of) /, "").replace(/^(in|at|from|la|il)\s+/, "").replace(/\s+(la|il|ones)$/, "").trim() };
-  const open = t.match(/^(?:open|show|thira|திற)(?: me)?(?: the| number| no\.?)? (.+?)(?: one| case| item)?(?: thira| திற)?$/) ?? t.match(/^(.+?)(?:vathu|வது)?(?:ai)? ?(?:thira|திற|தைத் திற|ஐத் திற)$/);
+  if (only && only[1].length >= 3 && !/\b(severe|critical|high|medium|low|open|week|month|today|quarter)\b|கடுமை|அவசர|திறந்த|வாரம்|மாதம்|இன்று/.test(only[1])) return { op: "filter", text: only[1].replace(/^(?:ones?|cases?|items?|incidents?) (?:in|at|from|of) /, "").replace(/^(in|at|from|la|il)\s+/, "").replace(/\s+(la|il|ones)$/, "").trim() };
+  const mapIt = t.match(/^show (?:(?:number )?(\d{1,2}|this|it)) on the (?:main )?map$/);
+  if (mapIt) return { op: "map", n: mapIt[1] && /\d/.test(mapIt[1]) ? Number(mapIt[1]) : null };
+  if (/\b(zone|ward|taluk)\b|மண்டலம்|வார்டு/.test(t)) return null;
+  const open = t.match(/^(?:open|thira|திற)(?: me)?(?: the| number| no\.?)? (.+?)(?: one| case| item)?(?: thira| திற)?$/) ?? t.match(/^(.+?)(?:vathu|வது)?(?:ai)? ?(?:thira|திற|தைத் திற|ஐத் திற)$/);
   if (open) { const n = numberIn(open[1]); if (n && n > 0) return { op: "open", n }; }
   // spoken Tamil: "மூணாவது கேஸைத் திறந்து காட்டு", "3-வதைத் திற": an ordinal and an open verb in a short sentence
   if (/(திற|thira|thirandhu|open pannu)/.test(t) && t.split(" ").length <= 5 && !/(பேனல்|panel|news|செய்தி)/.test(t)) {
@@ -73,8 +76,6 @@ export function localStageCommand(raw: string): LocalCmd | null {
     const n = numberIn(first ? draft[1].replace(/^(?:first|top)\s+/, "") : draft[1]);
     if (n && n > 0) return { op: "draft", n, first };
   }
-  const mapIt = t.match(/^show (?:(?:number )?(\d{1,2}|this|it)) on the (?:main )?map$/);
-  if (mapIt) return { op: "map", n: mapIt[1] && /\d/.test(mapIt[1]) ? Number(mapIt[1]) : null };
   return null;
 }
 
@@ -111,7 +112,7 @@ export function filterStage(d: StageDocT, text: string): { doc: StageDocT; kept:
       default: return b;
     }
   });
-  return { doc: { ...d, blocks, title: `${d.title} · ${text}` }, kept, of };
+  return { doc: { ...d, blocks, title: `${d.title} · ${text}`.slice(0, 200) }, kept, of };
 }
 
 export function sortStage(d: StageDocT, by: "complaints" | "time" | "value" | "name" | "severity"): StageDocT {

@@ -44,7 +44,7 @@ describe("the catalog", () => {
   });
   it("the open Stage goes back to the agent as kinds and ids only", async () => {
     const ctx = stageContext(await severe(), 2);
-    expect(ctx.blocks[0]).toEqual({ kind: "CaseList", ids: ["INC-A1", "INC-A2", "INC-A3", "INC-A4", "INC-A5", "INC-A6"] });
+    expect(ctx.blocks.find((b) => b.kind === "CaseList")).toEqual({ kind: "CaseList", ids: ["INC-A1", "INC-A2", "INC-A3", "INC-A4", "INC-A5", "INC-A6"] });
     expect(JSON.stringify(ctx)).not.toMatch(/Chetpet|Respected/);
   });
 });
@@ -168,5 +168,13 @@ describe("what Thunai suggests next", () => {
   it("a comparison suggests asking why the higher area is higher", async () => {
     const { doc } = await buildScreen("compare", { ...emptySlots(), zones: [13, 7], period: "weekly" }, SCOPE, WORLD, fakeHands(), "compare");
     expect(doc.next![0]).toMatchObject({ kind: "direct", recipe: "why", slots: { zones: [13] } });
+  });
+});
+
+describe("review fixes: local commands", () => {
+  it("'show' is not 'open', zones are not items, the map pattern wins", () => {
+    for (const t of ["show zone 7", "show me 3 severe cases", "show top 5", "மண்டலம் 3 திற"]) expect(localStageCommand(t), t).toBeNull();
+    expect(localStageCommand("show 2 on the map")).toEqual({ op: "map", n: 2 });
+    expect(localStageCommand("கடுமையான சம்பவங்கள் மட்டும்")).toBeNull();
   });
 });

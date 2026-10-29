@@ -100,9 +100,9 @@ it("Thunai v2 agent, live", async () => {
     if (!local && !reflex) {
       r = await runThunaiAgent({ text: c.say, state: START, ctx: { turns: c.turns, now: START.now }, stage }, {
         world, hands: fakeHands(),
-        llm: async (system, prompt, round) => {
+        llm: async (system, prompt, round, timeoutMs) => {
           const g = await generateJson({ role: provider() === "groq" ? "reasoning" : "fast", name: `thunai_agent${round}`, schema: AgentPlanSchema, lenient: AgentPlanLenient, system, prompt,
-            temperature: 0, maxOutputTokens: 1100, user: "live:thunai-agent", prefer: provider(), timeoutMs: 6000 });
+            temperature: 0, maxOutputTokens: 1100, user: "live:thunai-agent", prefer: provider(), timeoutMs });
           tokens += (g.info.inputTokens ?? 0) + (g.info.outputTokens ?? 0);
           return { plan: g.object, model: g.info.model };
         }

@@ -10,6 +10,7 @@ import type * as Leaflet from "leaflet";
 import type { MapGeo } from "@/lib/collector/geo";
 import { fmtNum, type PanelData } from "@/lib/studio/types";
 import { esc } from "../SatMap";
+import { reduced } from "./client";
 import { I } from "../icons";
 
 const RAMP = ["#312E81", "#4F46E5", "#6366F1", "#8B5CF6", "#C026D3", "#F43F5E"];
@@ -84,6 +85,7 @@ export default function StudioMap({ geo, panel, focusZone, onZone, pins, outline
 
   // ---- numbered pins (the Stage): drawn over the shading, the hot ones pulse
   const pinKey = JSON.stringify(pins?.map((p) => [p.id, p.hot]) ?? []);
+  const pinIds = (pins ?? []).map((p) => p.id).join(",");
   useEffect(() => {
     const s = st.current;
     if (!s) return;
@@ -111,7 +113,7 @@ export default function StudioMap({ geo, panel, focusZone, onZone, pins, outline
         for (const w of s.wards) if (w.zone === z) b.extend(w.poly.getBounds());
       }
       for (const p of pins ?? []) if (p.n != null || !b.isValid()) b.extend([p.lat, p.lon]);
-      if (b.isValid()) s.map.flyToBounds(b.pad(0.08), { padding: [24, 24], duration: 0.6, maxZoom: 15 });
+      if (b.isValid()) s.map.flyToBounds(b.pad(0.08), { padding: [24, 24], duration: 0.6, maxZoom: 15, animate: !reduced() });
       return;
     }
     if (focusZone) {
@@ -121,7 +123,8 @@ export default function StudioMap({ geo, panel, focusZone, onZone, pins, outline
       for (const w of s.wards) if (w.zone === focusZone) b.extend(w.poly.getBounds());
       if (b.isValid()) s.map.flyToBounds(b, { padding: [20, 20], duration: 0.6 });
     } else s.map.flyToBounds(s.district, { padding: [6, 6], duration: 0.6 });
-  }, [ready, focusZone, geo, outlineKey, pinKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    // the fit follows which pins are shown, not which one is being read (that would undo the Collector's own pan)
+  }, [ready, focusZone, geo, outlineKey, pinIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const max = Math.max(0, ...panel.values);
   return (

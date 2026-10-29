@@ -323,3 +323,33 @@ describe("a Stage action the model put among the console steps", () => {
     expect(r.stage).toBeNull();
   });
 });
+
+describe("review fixes: the model cannot slip a figure or a send past the checker", () => {
+  it("a chat reply with a spelled-out figure is dropped; an answer's figure the Collector said is not evidence", async () => {
+    expect((await run("hi", [plan({ kind: "chat", reply: "Hi! There are forty severe cases." })])).r.kind).toBe("none");
+    const { r } = await run("did 50 people die", [
+      plan({ calls: [{ tool: "mandi_prices", period: null, zone: null, dept: null, cat: null, taluk: null, place: null, metric: null, text: "tomato" }], done: false }),
+      plan({ screen: { recipe: "answer" }, say: "Yes, 50 people died." })
+    ]);
+    expect(r.say).not.toMatch(/50/);
+  });
+  it("never presses a sending or deleting button by name, and presses by name only when asked to click", async () => {
+    const send = await run("click approve and send", [plan({ steps: [{ ...nullStep(), action: "click", text: "Approve & send" }] })]);
+    expect(send.r.steps).toEqual([]);
+    const sneaky = await run("show me the export options", [plan({ steps: [{ ...nullStep(), action: "click", text: "Export" }] })]);
+    expect(sneaky.r.steps).toEqual([]);
+    const ok = await run("click Export", [plan({ steps: [{ ...nullStep(), action: "click", text: "Export" }] })]);
+    expect(ok.r.steps).toEqual([{ a: "click", n: null, name: "Export" }]);
+  });
+  it("console steps stay console steps while a Stage is open", async () => {
+    const list = await run("severe cases", [plan({ screen: { recipe: "cases", sev: "Severe" } })]);
+    const { r } = await run("Zone 7, weekly", [plan({ steps: [{ ...nullStep(), action: "view", zone: 7 }] })], { stage: stageContext(list.r.stage!) });
+    expect(r.stageOp).toBeNull();
+    expect(r.steps).toEqual([{ a: "view", view: { zone: 7 } }]);
+  });
+  it("an unknown incident says so in words", async () => {
+    const hands = fakeHands({ incident_detail: () => ({ tool: "incident_detail", args: {}, scope: null, asOf: "", data: null, facts: [], sources: [], incidentIds: [], testData: false, caveats: [] }) });
+    const r = await directScreen("case", { id: "INC-NOPE1" }, START, world, hands, "x", "en");
+    expect(r.say).toMatch(/could not find incident INC-NOPE1/);
+  });
+});

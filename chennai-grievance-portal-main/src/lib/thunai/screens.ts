@@ -204,7 +204,17 @@ async function cases(c: Ctx): Promise<Part> {
   const say = casesSay(rows, total, sev, s.period);
   const takeaway = overdue ? bi(`${overdue} of the ${rows.length} shown are past their deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${overdue} காலக்கெடுவைத் தாண்டியவை.`) : null;
   const pts = points(rows);
-  const blocks: BlockT[] = [{ kind: "CaseList", id: "cases", title, source, sev, total, rows }];
+  const blocks: BlockT[] = [];
+  const late = rows.filter((r) => r.overdue).length;
+  const byDept = new Map<string, number>();
+  for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
+  const lead = [...byDept.entries()].sort((a, b) => b[1] - a[1])[0];
+  blocks.push({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+    { key: "total", label: `${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
+    { key: "late", label: "Past their deadline", value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
+    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: `Held by ${lead[0]}`, value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
+  ] });
+  blocks.push({ kind: "CaseList", id: "cases", title, source, sev, total, rows });
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: "Where they are", rule: "Numbered as in the list; cases without an exact place are not drawn.", shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
   return { title, takeaway, say, blocks };
 }
@@ -238,13 +248,15 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const id = c.slots.id;
   if (!id) return { title: "Incident", takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
   const r = await call(c, "incident_detail", { id });
-  const d = r.data as { incident: Row; reports: Row[]; officials: Row[] };
+  const d = r.data as { incident: Row; reports: Row[]; officials: Row[] } | null;
+  if (!d?.incident) return { title: id, takeaway: null, say: bi(`I could not find incident ${id}.`, `${id} சம்பவம் கிடைக்கவில்லை.`), blocks: [{ kind: "Note", id: "none", text: `No incident ${id} in the data.` }] };
   const i = d.incident;
   const row = caseRow({ ...i, loc: i.place }, c.w);
   const what = (i.why?.what ?? []).map((x: unknown) => clip(x, 300)).slice(0, 6);
   const officials = (d.officials ?? []).slice(0, 4).map((o) => ({ name: clip(o.name, 80), role: clip(o.designation, 120) }));
   const timeline = (d.reports ?? []).slice(0, 20).map((x) => ({ t: clip(x.t, 30), source: clip(x.publisher ?? x.source, 60), text: clip(x.title ?? x.what, 300) }));
-  const block: BlockT = { kind: "CaseDetail", id: "case", incident: { ...row, what, why: clip(i.why?.why?.[0], 300) || null, next: clip(i.why?.next, 300) || null,
+  if (i.open_for) what.unshift(`Open for ${clip(i.open_for, 40)}`);
+  const block: BlockT = { kind: "CaseDetail", id: "case", incident: { ...row, what: what.slice(0, 6), why: clip(i.why?.why?.[0], 300) || null, next: clip(i.why?.next, 300) || null,
     deadline: when(i.sla_due), officials }, timeline };
   const blocks: BlockT[] = [block];
   if (row.lat != null && row.lon != null) blocks.push({ kind: "MapView", id: "map", title: "Where", rule: null, shade: null, outline: [],
@@ -602,7 +614,7 @@ async function why(c: Ctx): Promise<Part> {
   return {
     title,
     takeaway: rises[0] ? bi(`${clip(rises[0].label, 60)} rose the most: ${spoken(Number(rises[0].n))} against ${spoken(Number(rises[0].prev))}.`, `${clip(rises[0].label, 60)} அதிகம் உயர்ந்தது: ${spoken(Number(rises[0].n))}, முன்பு ${spoken(Number(rises[0].prev))}.`) : null,
-    say: bi(`${head} ${reasons.slice(0, 2).length ? `Mainly: ${reasons.slice(0, 2).join("; ")}.` : ""}`.trim(), `${headTa} ${reasonsTa.slice(0, 2).join("; ")}.`.trim()),
+    say: bi(`${head} ${reasons.slice(0, 2).length ? `Mainly: ${reasons.slice(0, 2).join("; ")}.` : ""}`.trim(), `${headTa}${reasonsTa.length ? ` ${reasonsTa.slice(0, 2).join("; ")}.` : ""}`),
     blocks
   };
 }
@@ -775,7 +787,7 @@ async function nearby(c: Ctx): Promise<Part> {
   ];
   if (pts.length) blocks.push({ kind: "MapView", id: "map", title: headline || title, rule, shade: null, points: pts, outline: [] });
   if (ranked.length) {
-    blocks.push({ kind: "Ranking", id: "near", title: `Nearest ${clip(ranked[0].p.layer ?? "places", 30)} to the results`, unit: "m", method: `Straight-line distance from each place to the closest result, within ${spoken(radius)} m (Ask the Map's rule).`, order: "bottom",
+    blocks.push({ kind: "Ranking", id: "near", title: `${within} ${clip(ranked[0].p.layer ?? "places", 30)} within ${spoken(radius)} m${within > ranked.length ? `, nearest ${ranked.length} listed` : ""}`, unit: "m", method: `Straight-line distance from each place to the closest result, within ${spoken(radius)} m (Ask the Map's rule).`, order: "bottom",
       items: ranked.map((x, i) => ({ key: String(x.p.id), label: clip(x.p.name ?? `${x.p.kind} (no name on the map)`, 120), value: x.m, rank: i + 1, sub: x.to ? clip(x.to.title, 120) : null, zone: null, lat: Number(x.p.lat), lon: Number(x.p.lon), action: "none" as const })) });
   }
   if (rows.length) blocks.push({ kind: "CaseList", id: "cases", title: "The incidents", source: "map", sev: null, total: Number(r.total ?? rows.length), rows: rows.slice(0, 30) });
@@ -797,8 +809,8 @@ async function brief(c: Ctx): Promise<Part> {
   const r = await call(c, "briefing", { scope: scopeArg(c.s) });
   const d = r.data as { headline: string[]; stats: Record<string, number>; attention: Row[]; emerging: Row[]; conditions: string | null };
   const points = [
-    ...(d.headline ?? []).map((t) => ({ text: clip(t, 400), incidentId: null })),
-    ...(d.attention ?? []).slice(0, 4).map((a) => ({ text: clip(`${a.title}${a.zone ? `, ${a.zone}` : ""}${a.why?.attention?.[0] ? `: ${a.why.attention[0]}` : ""}`, 400), incidentId: String(a.id) })),
+    ...(d.headline ?? []).map((t) => ({ text: safeText(t, 400), incidentId: null })),
+    ...(d.attention ?? []).slice(0, 4).map((a) => ({ text: safeText(`${a.why?.summary && String(a.why.summary).length <= 110 ? a.why.summary : a.title}${a.zone ? `, ${a.zone}` : ""}${a.why?.attention?.[0] ? `: ${a.why.attention[0]}` : ""}`, 400), incidentId: String(a.id) })),
     ...(d.emerging ?? []).slice(0, 2).map((e) => ({ text: clip(e.text, 400), incidentId: null })),
     ...(d.conditions ? [{ text: clip(`Conditions: ${d.conditions}`, 400), incidentId: null }] : [])
   ].slice(0, 10);

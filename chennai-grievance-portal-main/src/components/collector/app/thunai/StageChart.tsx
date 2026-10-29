@@ -36,9 +36,10 @@ function option(s: StageChartSpec, ink: Ink, title: string, reduce: boolean): ec
   const axisLabel = { color: ink.text2, fontSize: 11.5 };
   const valAxis = { type: "value" as const, min: 0, splitLine: { lineStyle: { color: ink.grid } }, axisLabel: { color: ink.text3, fontSize: 11, formatter: fmt } };
   if (s.type === "donut") {
+    const narrow = typeof window !== "undefined" && window.innerWidth < 480;
     return { ...base, tooltip: { ...tip, trigger: "item" },
-      legend: { orient: "vertical", right: 0, top: "middle", icon: "circle", textStyle: { color: ink.text2, fontSize: 11.5 } },
-      series: [{ type: "pie", radius: ["55%", "80%"], center: ["32%", "50%"], padAngle: 2, itemStyle: { borderRadius: 4, borderColor: ink.surface, borderWidth: 2 }, label: { show: false },
+      legend: narrow ? { bottom: 0, left: "center", icon: "circle", textStyle: { color: ink.text2, fontSize: 11 } } : { orient: "vertical", right: 0, top: "middle", icon: "circle", textStyle: { color: ink.text2, fontSize: 11.5 } },
+      series: [{ type: "pie", radius: narrow ? ["40%", "62%"] : ["55%", "80%"], center: narrow ? ["50%", "42%"] : ["32%", "50%"], padAngle: 2, itemStyle: { borderRadius: 4, borderColor: ink.surface, borderWidth: 2 }, label: { show: false },
         data: s.labels.map((n, i) => ({ name: n, value: s.values[i], itemStyle: { color: series[i % series.length] } })) }] };
   }
   if (s.type === "bars") {
@@ -85,7 +86,7 @@ function option(s: StageChartSpec, ink: Ink, title: string, reduce: boolean): ec
     xAxis: { type: "category", data: s.labels, boundaryGap: false, axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } }, axisLabel: { ...axisLabel, hideOverlap: true } },
     yAxis: valAxis,
     series: s.series.map((x, i) => ({ type: "line", name: x.name, data: x.values, smooth: 0.3, symbol: "circle", symbolSize: 5, lineStyle: { width: 2, color: series[i % series.length] },
-      itemStyle: { color: series[i % series.length], borderColor: ink.surface, borderWidth: 1.5 }, endLabel: { show: true, color: ink.text2, fontSize: 11, formatter: "{a}" } })) };
+      itemStyle: { color: series[i % series.length], borderColor: ink.surface, borderWidth: 1.5 } })) };
 }
 
 function StageChart({ spec, height, title, onPick }: { spec: StageChartSpec; height: number; title: string; onPick?: (i: number) => void }) {
@@ -100,4 +101,5 @@ function StageChart({ spec, height, title, onPick }: { spec: StageChartSpec; hei
     </div>
   );
 }
-export default memo(StageChart);
+// the item being read aloud changes every word: a chart redraws only when its own data changes
+export default memo(StageChart, (x, y) => x.title === y.title && x.height === y.height && x.onPick === y.onPick && JSON.stringify(x.spec) === JSON.stringify(y.spec));

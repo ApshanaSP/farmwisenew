@@ -127,22 +127,41 @@ function Stage(p: Props) {
   const [menu, setMenu] = useState<"export" | "save" | null>(null);
   const [saveName, setSaveName] = useState("");
 
-  // focus moves in, stays in (Tab cycles inside), and returns to where it was on close
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
+  const aRef = useRef(a);
+  aRef.current = a;
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [font, setFont] = useState<string | null>(null);
+  // the console's own UI font (Geist in the Command look), read once
+  useEffect(() => {
+    const dic = document.querySelector<HTMLElement>(".dic");
+    const f = dic ? getComputedStyle(dic).getPropertyValue("--font-ui").trim() : "";
+    if (f) setFont(f);
+  }, []);
+  // focus moves in, stays in (Tab cycles inside), and returns to where it was on close; set up once, live values by ref
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     closeBtn.current?.focus({ preventScroll: true });
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (menu) setMenu(null); else a.close(); return; }
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (menuRef.current) setMenu(null); else aRef.current.close(); return; }
       if (e.key !== "Tab" || !root.current) return;
       const f = [...root.current.querySelectorAll<HTMLElement>("button, [href], input, select, [tabindex]:not([tabindex='-1'])")].filter((x) => !x.hasAttribute("disabled") && x.offsetParent !== null);
       if (!f.length) return;
       const first = f[0], last = f[f.length - 1];
+      if (!root.current.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     window.addEventListener("keydown", key, true);
     return () => { window.removeEventListener("keydown", key, true); before?.focus?.({ preventScroll: true }); };
-  }, [menu]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+  // a new screen replaces the old one's buttons: focus goes to its title, never to the console behind
+  const firstDoc = useRef(true);
+  useEffect(() => {
+    if (firstDoc.current) { firstDoc.current = false; return; }
+    if (!root.current?.contains(document.activeElement) || document.activeElement === document.body) titleRef.current?.focus({ preventScroll: true });
+  }, [doc.id]);
 
   const sp = useMemo(() => spans(doc.blocks), [doc.blocks]);
   const slots = doc.slots as Record<string, unknown>;
@@ -152,7 +171,8 @@ function Stage(p: Props) {
   const metric = typeof slots.metric === "string" ? slots.metric : typeof slots.measure === "string" && ["rain", "aqi", "lakes", "temp"].includes(slots.measure as string) ? (slots.measure as string) : null;
 
   return createPortal(
-    <div className="st-root" data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui>
+    <div className="st-root" data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
+      style={font ? { ["--st-font" as string]: font } : undefined}>
       <div className="st-scrim" aria-hidden="true" />
       <div className="st-frame">
         <header className="st-head">
@@ -161,7 +181,7 @@ function Stage(p: Props) {
               {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")}><I n="chevl" /></button>}
               <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Thunai</span>
             </div>
-            <h2 id="st-title">{doc.title}</h2>
+            <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.title}</h2>
             {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[lang]}</p>}
             {!!doc.next?.length && (
               <div className="st-sugg" role="group" aria-label={T(lang, "Suggested next", "அடுத்து")}>
@@ -181,11 +201,11 @@ function Stage(p: Props) {
               : <button className="st-btn" onClick={a.read}><I n="volume" />{T(lang, "Read aloud", "படி")}</button>}
             <button className="st-icon" onClick={a.pin} aria-label={T(lang, "Pin this screen", "இந்தத் திரையைப் பின் செய்")} title={T(lang, "Pin", "பின்")}><I n="bookmark" /></button>
             <div className="st-menuwrap">
-              <button className="st-icon" onClick={() => setMenu(menu === "export" ? null : "export")} aria-expanded={menu === "export"} aria-label={T(lang, "Export", "ஏற்றுமதி")} title={T(lang, "Export", "ஏற்றுமதி")}><I n="download" /></button>
+              <button className="st-icon" onClick={() => setMenu(menu === "export" ? null : "export")} aria-expanded={menu === "export"} aria-haspopup="true" aria-controls="st-export-menu" aria-label={T(lang, "Export", "ஏற்றுமதி")} title={T(lang, "Export", "ஏற்றுமதி")}><I n="download" /></button>
               {menu === "export" && (
-                <div className="st-menu" role="menu">
-                  <button role="menuitem" onClick={() => { setMenu(null); if (root.current) a.exportPng(root.current); }}><I n="photo" />{T(lang, "Picture of this screen (PNG)", "படம் (PNG)")}</button>
-                  <button role="menuitem" onClick={() => { setMenu(null); a.exportCsv(); }}><I n="table" />{T(lang, "Its data (CSV)", "தரவு (CSV)")}</button>
+                <div className="st-menu" id="st-export-menu">
+                  <button onClick={() => { setMenu(null); if (root.current) a.exportPng(root.current); }}><I n="photo" />{T(lang, "Picture of this screen (PNG)", "படம் (PNG)")}</button>
+                  <button onClick={() => { setMenu(null); a.exportCsv(); }}><I n="table" />{T(lang, "Its data (CSV)", "தரவு (CSV)")}</button>
                 </div>
               )}
             </div>
@@ -213,9 +233,9 @@ function Stage(p: Props) {
           </form>
           {SCOPED.has(doc.recipe) && (
             <div className="st-filters" role="group" aria-label={T(lang, "Filters", "வடிகட்டிகள்")}>
-              <div className="st-seg" role="radiogroup" aria-label={T(lang, "Period", "காலம்")}>
+              <div className="st-seg" role="group" aria-label={T(lang, "Period", "காலம்")}>
                 {PERIODS.map(([k, en, ta]) => (
-                  <button key={k} role="radio" aria-checked={doc.scope.period === k} className={doc.scope.period === k ? "on" : ""} onClick={() => setPeriod(k)} disabled={!!p.busy}>{lang === "ta" ? ta : en}</button>
+                  <button key={k} aria-pressed={doc.scope.period === k} className={doc.scope.period === k ? "on" : ""} onClick={() => setPeriod(k)} disabled={!!p.busy}>{lang === "ta" ? ta : en}</button>
                 ))}
               </div>
               {doc.recipe !== "compare" && doc.recipe !== "performance" && (
@@ -231,8 +251,8 @@ function Stage(p: Props) {
                 </select>
               )}
               {doc.recipe === "performance" && (
-                <div className="st-seg" role="radiogroup" aria-label={T(lang, "By", "வகை")}>
-                  {(["dept", "zone"] as const).map((b) => <button key={b} role="radio" aria-checked={slots.by === b} className={slots.by === b ? "on" : ""} onClick={() => a.direct("performance", { ...slots, by: b }, doc.title)}>{b === "dept" ? T(lang, "Departments", "துறைகள்") : T(lang, "Zones", "மண்டலங்கள்")}</button>)}
+                <div className="st-seg" role="group" aria-label={T(lang, "By", "வகை")}>
+                  {(["dept", "zone"] as const).map((b) => <button key={b} aria-pressed={slots.by === b} className={slots.by === b ? "on" : ""} onClick={() => a.direct("performance", { ...slots, by: b }, doc.title)}>{b === "dept" ? T(lang, "Departments", "துறைகள்") : T(lang, "Zones", "மண்டலங்கள்")}</button>)}
                 </div>
               )}
               {metric && (
@@ -245,8 +265,8 @@ function Stage(p: Props) {
         </div>
 
         {(p.caption.heard || p.caption.reply) && (
-          <div className="st-caption" role="status" aria-live="polite">
-            {p.caption.heard && <span className={`hd${p.caption.interim ? " interim" : ""}`}><I n="mic" />{p.caption.heard}</span>}
+          <div className="st-caption">
+            {p.caption.heard && <span className={`hd${p.caption.interim ? " interim" : ""}`} aria-hidden={p.caption.interim || undefined}><I n="mic" />{p.caption.heard}</span>}
             {p.caption.reply && <span className="rp">{p.caption.reply}</span>}
             {p.caption.by && <span className="by">{p.caption.by}</span>}
           </div>
@@ -269,9 +289,10 @@ function Stage(p: Props) {
               <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a} />
             </section>
           ))}
-          {p.busy && <div className="st-busy" role="status"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
+          {p.busy && <div className="st-busy"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
         </main>
 
+        <p className="st-sr" role="status" aria-live="polite">{p.busy ?? p.caption.reply}</p>
         <footer className="st-foot">
           <span><I n="info" />{T(lang, "From", "ஆதாரம்")}: {doc.sources.join(", ") || "-"}</span>
           {doc.asOf && <span><I n="clock" />{T(lang, "Data as of", "தரவு நேரம்")} {when(doc.asOf)}</span>}
@@ -303,13 +324,32 @@ function ViewSwitch({ id, views, cur, a, lang }: { id: string; views: BlockView[
   const ICON: Record<BlockView, IconName> = { chart: "barH", table: "table", map: "map" };
   const NAME: Record<BlockView, [string, string]> = { chart: ["Chart", "வரைபடம்"], table: ["Table", "அட்டவணை"], map: ["Map", "நிலவரைபடம்"] };
   return (
-    <div className="st-vs" role="radiogroup" aria-label={T(lang, "Show as", "காட்டும் வகை")}>
-      {views.map((v) => <button key={v} role="radio" aria-checked={cur === v} className={cur === v ? "on" : ""} onClick={() => a.setView(id, v)} title={NAME[v][lang === "ta" ? 1 : 0]} aria-label={NAME[v][lang === "ta" ? 1 : 0]}><I n={ICON[v]} /></button>)}
+    <div className="st-vs" role="group" aria-label={T(lang, "Show as", "காட்டும் வகை")}>
+      {views.map((v) => <button key={v} aria-pressed={cur === v} className={cur === v ? "on" : ""} onClick={() => a.setView(id, v)} title={NAME[v][lang === "ta" ? 1 : 0]} aria-label={NAME[v][lang === "ta" ? 1 : 0]}><I n={ICON[v]} /></button>)}
     </div>
   );
 }
 
+const EMPTY_EN = "No data for this, for this period and area.";
+function isEmpty(b: BlockT): boolean {
+  switch (b.kind) {
+    case "Kpis": return !b.items.length;
+    case "Readings": case "Ranking": return !b.items.length;
+    case "Chart": return !b.values.length;
+    case "Heat": return !b.rows.length;
+    case "Compare": return !b.sides.length;
+    case "MapView": return !b.points.length && !(b.shade?.values.length) && !b.outline.length;
+    default: return false;
+  }
+}
+
 function Block(p: BP) {
+  const { b, lang } = p;
+  if (isEmpty(b)) return <><Head title={"title" in b ? (b as { title: string }).title : b.kind} icon="info" /><p className="st-empty">{T(lang, EMPTY_EN, "இந்தக் காலம், பகுதிக்கு தரவு இல்லை.")}</p></>;
+  return <BlockBody {...p} />;
+}
+
+function BlockBody(p: BP) {
   const { b, lang, a } = p;
   switch (b.kind) {
     case "Kpis": return (
@@ -427,7 +467,7 @@ function Block(p: BP) {
       return (
         <>
           <Head title={b.title} icon="grid" />
-          <div className="st-heat" role="table" aria-label={b.title}>
+          <div className="st-heat" role="table" aria-label={b.title} style={{ ["--cols" as string]: b.cols.length }}>
             <div role="row" className="hr"><span role="columnheader" />{b.cols.map((c) => <span key={c} role="columnheader">{c}</span>)}</div>
             {b.rows.map((r, i) => (
               <div role="row" key={r}>

@@ -33,7 +33,15 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   return y;
 }
 
-export async function exportPng(root: HTMLElement, doc: StageDocT): Promise<void> {
+const when = (t: string | null) => {
+  const m = String(t ?? "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!m) return t ?? "unknown";
+  const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(m[2]) - 1];
+  const h = Number(m[4] ?? 0);
+  return `${Number(m[3])} ${mo} ${m[1]}${m[4] != null ? `, ${h % 12 || 12}:${m[5]} ${h < 12 ? "AM" : "PM"}` : ""}`;
+};
+
+export async function exportPng(root: HTMLElement, doc: StageDocT, lang: "en" | "ta" = "en"): Promise<void> {
   const cs = getComputedStyle(root);
   const v = (k: string, d: string) => cs.getPropertyValue(k).trim() || d;
   const bg = v("--surface", "#0d1322"), text = v("--text", "#eef2f8"), text2 = v("--text-2", "#b7c2d4"), accent = v("--accent", "#3987e5"), line = v("--line-2", "rgba(255,255,255,.14)");
@@ -52,7 +60,7 @@ export async function exportPng(root: HTMLElement, doc: StageDocT): Promise<void
   ctx.fillStyle = accent; ctx.font = `600 18px ${font}`; ctx.fillText("Thunai · District IQ", pad, pad + 6);
   ctx.fillStyle = text; ctx.font = `700 34px ${font}`;
   let y = wrap(ctx, doc.title, pad, pad + 54, W - pad * 2, 42, 2);
-  if (doc.takeaway) { ctx.fillStyle = text2; ctx.font = `500 22px ${font}`; y = wrap(ctx, doc.takeaway.en, pad, y + 8, W - pad * 2, 30, 2); }
+  if (doc.takeaway) { ctx.fillStyle = text2; ctx.font = `500 22px ${font}`; y = wrap(ctx, doc.takeaway[lang], pad, y + 8, W - pad * 2, 30, 2); }
   y += 18;
   let colY = [y, y];
   for (let i = 0; i < blocks.length; i++) {
@@ -85,7 +93,7 @@ export async function exportPng(root: HTMLElement, doc: StageDocT): Promise<void
   }
   y = Math.max(...colY) + 10;
   ctx.fillStyle = text2; ctx.font = `400 16px ${font}`;
-  wrap(ctx, `Sources: ${doc.sources.join(", ")}. Data as of ${doc.asOf ?? "unknown"}. Every figure comes from the console's data.`, pad, y, W - pad * 2, 22, 3);
+  wrap(ctx, `Sources: ${doc.sources.join(", ")}. Data as of ${when(doc.asOf)}. Every figure comes from the console's data.`, pad, y, W - pad * 2, 22, 3);
   // trim the unused height
   const out = document.createElement("canvas");
   out.width = W; out.height = Math.min(canvas.height, y + 60);

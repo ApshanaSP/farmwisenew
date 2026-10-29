@@ -15,7 +15,7 @@ import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { detectLang } from "./normalise";
 import { AiStep, checkPlan, codesText, stateCard, type AiPlan, type Context } from "./plan";
-import { buildScreen, emptySlots, MEASURES, METRICS, type Hands, type Slots } from "./screens";
+import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
 import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
 import type { Lang, PeriodKey, ScreenState, Sev, Step, View, World } from "./types";
 
@@ -178,7 +178,7 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (typeof s.taluk === "string" && w.taluks.some((t) => t.code === s.taluk)) out.taluk = s.taluk;
   if ((SEVS as readonly string[]).includes(s.sev as string)) out.sev = s.sev as Sev;
   if (s.status === "open" || s.status === "overdue") out.status = s.status;
-  out.q = clip(s.q, 240) || null;
+  out.q = clip(s.q, recipe === "cases" ? 80 : 240) || null;
   if ((METRICS as readonly string[]).includes(s.metric as string)) out.metric = s.metric as Slots["metric"];
   if ((MEASURES as readonly string[]).includes(s.measure as string)) out.measure = s.measure as Slots["measure"];
   if (s.by === "dept" || s.by === "zone") out.by = s.by;
@@ -219,18 +219,27 @@ export function checkStageOp(raw: unknown, stage: StageContext | null): StageOp 
  * Models sometimes put an action on the open Stage among the console steps ({action: "export"}, {action: "panel", panel:
  * "export"}, {action: "draft", item: 2}). With a Stage open, such a step is read as that Stage action.
  */
-export function stageOpFromSteps(steps: unknown, stage: StageContext | null): StageOp | null {
+export function stageOpFromSteps(steps: unknown, stage: StageContext | null): { op: StageOp; index: number } | null {
   if (!stage || !Array.isArray(steps)) return null;
-  for (const raw of steps as Record<string, unknown>[]) {
+  // only actions that mean something on a Stage and nothing else while it is open (view, close, read stay console steps)
+  const MAP: Record<string, StageOp["op"]> = { export: "export", pin: "pin", saveWorkspace: "save", draft: "draft", item: "open" };
+  for (const [index, raw] of (steps as Record<string, unknown>[]).entries()) {
     const a = String(raw?.action ?? "");
-    const op = a === "panel" && raw.panel === "export" ? "export" : a === "saveWorkspace" ? "save" : a === "item" ? "open" : a;
-    if (!(STAGE_OPS as readonly string[]).includes(op)) continue;
+    const op = a === "panel" && raw.panel === "export" ? "export" : MAP[a];
+    if (!op) continue;
     const n = typeof raw.n === "number" ? raw.n : typeof raw.item === "number" ? raw.item : null;
     const r = checkStageOp({ op, n, text: raw.text ?? raw.option ?? null }, stage);
-    if (r) return r;
+    if (r) return { op: r, index };
   }
   return null;
 }
+
+/** English and Tamil number words and Tamil digits: a model-written line must not carry a figure spelled out either. */
+const NUMBER_WORDS = /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|lakh|lakhs|crore|crores|dozen|dozens|million|billion|percent)\b|[\u0BE6-\u0BEF]|(இரண்டு|மூன்று|நான்கு|ஐந்து|ஆறு|ஏழு|எட்டு|ஒன்பது|பத்து|நூறு|ஆயிரம்|லட்சம்|கோடி)/i;
+export const spellsNumber = (t: string | null | undefined) => !!t && NUMBER_WORDS.test(t);
+
+/** Button names a model may never press by name: anything that sends, approves, deletes or discards. */
+const DANGER = /send|approve|confirm|delete|remove|discard|reject|submit|அனுப்பு|நீக்கு|உறுதி/i;
 
 /** A tool call's arguments, built by code from the model's fields (each tool's own schema checks them again). */
 export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Record<string, unknown> } {
@@ -239,7 +248,7 @@ export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Rec
     case "environment": return { name: c.tool, args: { metric: ENV_METRIC[c.metric ?? "rain"] ?? "rainfall_24h_mm" } };
     case "contacts": return { name: c.tool, args: { dept: c.dept ?? null, zone: c.zone ?? null } };
     case "mandi_prices": return { name: c.tool, args: { commodity: clip(c.text, 40) || null, market: null } };
-    case "zone_profile": return { name: c.tool, args: { scope, zone: c.zone ?? 1 } };
+    case "zone_profile": return { name: c.tool, args: { scope, zone: c.zone } };
     case "place_breakdown": case "developing_stories": return { name: c.tool, args: { scope, place: clip(c.place, 60) || null } };
     case "news_gaps": return { name: c.tool, args: { scope } };
     default: return { name: c.tool, args: { scope } };
@@ -271,7 +280,7 @@ export interface AgentDeps {
   world: World;
   hands: Hands;
   /** one structured model call (generateJson behind it); returns the plan and which model answered */
-  llm: (system: string, prompt: string, round: number) => Promise<{ plan: AgentPlan; model: string | null }>;
+  llm: (system: string, prompt: string, round: number, timeoutMs: number) => Promise<{ plan: AgentPlan; model: string | null }>;
   now?: () => number;
   deadlineMs?: number;
   log?: (m: string) => void;
@@ -311,6 +320,14 @@ export function scopeAfter(state: ScreenState, steps: Step[]): ScopeT {
   return s;
 }
 
+/** A promise that gives up after ms (the work itself is not cancelled; its result is ignored). */
+export function within<T>(p: Promise<T>, ms: number, why: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(why)), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+  });
+}
+
 export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<AgentResult> {
   const clock = d.now ?? Date.now;
   const t0 = clock();
@@ -328,7 +345,7 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
   for (let round = 0; round < MAX_ROUNDS; round++) {
     if (round > 0 && clock() >= until) { log(`deadline after ${round} round(s)`); break; }
     try {
-      const r = await d.llm(system, agentPrompt(input, w, observations, round), round);
+      const r = await d.llm(system, agentPrompt(input, w, observations, round), round, Math.max(1500, Math.min(6000, until - clock())));
       plan = r.plan; model = r.model ?? model; rounds = round + 1;
     } catch (e) {
       log(`round ${round}: model failed: ${(e as Error).message.slice(0, 120)}`);
@@ -339,13 +356,13 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
     const wantsLook = plan.kind === "do" && (plan.calls ?? []).length > 0 && !(plan.screen && plan.screen.recipe !== "answer");
     if (!wantsLook || round === MAX_ROUNDS - 1) break;
     const base = scopeAfter(input.state, []);
-    const fresh = (plan.calls ?? []).filter((c) => (AGENT_TOOLS as readonly string[]).includes(c.tool)).map((c) => callArgs(c, base))
+    const fresh = (plan.calls ?? []).filter((c) => (AGENT_TOOLS as readonly string[]).includes(c.tool) && !(c.tool === "zone_profile" && !c.zone)).map((c) => callArgs(c, base))
       .filter((c) => !called.has(JSON.stringify(c))).slice(0, CALLS_PER_ROUND);
     if (!fresh.length) break;
     for (const c of fresh) {
       called.add(JSON.stringify(c));
       try {
-        const result = await d.hands.tool(c.name, c.args);
+        const result = await within(d.hands.tool(c.name, c.args), Math.max(500, until - clock()), `${c.name} took too long`);
         results.push({ name: c.name, result });
         observations.push(observe(results.length, `${c.name}(${JSON.stringify(c.args).slice(0, 160)})`, result, 16));
       } catch (e) {
@@ -354,28 +371,37 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
     }
   }
   if (!plan) return none(lang0, t0, "model", model);
-  return finish(plan, input, d, { t0, rounds, model, results, clock });
+  return finish(plan, input, d, { t0, rounds, model, results, clock, until });
 }
 
-async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number }): Promise<AgentResult> {
+async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
   const w = d.world;
   const lang: Lang = plan.lang === "ta" ? "ta" : detectLang(input.text) === "ta" ? "ta" : "en";
   const base: AgentResult = { ...none(lang, run.t0, null, run.model), rounds: run.rounds, calls: run.results.map((r) => r.name) };
   // v1's checker reads the kind, the reply and the steps: unreal codes and figures the Collector did not say are dropped
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
-  if (v1.kind === "chat" || v1.kind === "refuse") return { ...base, kind: v1.kind, reply: v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: v1.question, options: v1.options, ms: run.clock() - run.t0 };
+  if (v1.kind === "chat") return spellsNumber(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
-  let modelSteps = v1.kind === "do" ? v1.steps : [];
-  const reply = v1.kind === "do" ? v1.reply : null;
+  // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
+  const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
+  let modelSteps = (v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? "")));
+  const reply = v1.kind === "do" && !spellsNumber(v1.reply) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
   // an answer screen with nothing looked up has nothing to show: the plan's other parts (or the fallbacks) answer
   if (screen?.recipe === "answer" && !run.results.length) screen = null;
   const own = screen ? null : checkStageOp(plan.stage, input.stage);
   const fromSteps = screen || own ? null : stageOpFromSteps(plan.steps, input.stage);
-  const stageOp = own ?? fromSteps;
-  // a step read as a Stage action is not also run on the console underneath
-  if (fromSteps) modelSteps = modelSteps.filter((s) => !(s.a === "draft" || s.a === "item" || s.a === "workspace" || (s.a === "panel" && s.panel === "export")));
+  const stageOp = own ?? fromSteps?.op ?? null;
+  // the step read as a Stage action is not also run on the console underneath (only that one step)
+  if (fromSteps) {
+    const conv = (plan.steps ?? [])[fromSteps.index] as { action?: string; panel?: string } | undefined;
+    const same = (s: Step) => (conv?.action === "draft" && s.a === "draft") || (conv?.action === "item" && s.a === "item") || (conv?.action === "saveWorkspace" && s.a === "workspace" && s.op === "save")
+      || (conv?.panel === "export" && s.a === "panel" && s.panel === "export");
+    let dropped = false;
+    modelSteps = modelSteps.filter((s) => (dropped || !same(s) ? true : ((dropped = true), false)));
+  }
   // looked but did not choose a screen: the answer screen from what was gathered
   if (!screen && !stageOp && run.results.length) screen = { recipe: "answer", slots: emptySlots() };
   if (!screen) {
@@ -388,7 +414,13 @@ async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t
   const scope0 = scopeAfter(input.state, modelSteps);
   let stage: StageDocT;
   if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang);
-  else stage = (await buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text)).doc;
+  else {
+    try {
+      stage = (await within(buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text), Math.max(2500, run.until - run.clock() + 2000), "the data took too long")).doc;
+    } catch {
+      return { ...base, note: "deadline", ms: run.clock() - run.t0 };
+    }
+  }
   // the console agrees with the screen: the model's view and period steps give way to one view and one period from code
   const kept = modelSteps.filter((s) => s.a !== "view" && s.a !== "period" && s.a !== "ask" && s.a !== "read" && !(s.a === "mission" && screen!.recipe === "brief"));
   const steps = [...syncSteps(screen.recipe, screen.slots, stage.scope, input.state), ...kept];
@@ -404,8 +436,9 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   const allowed = new Set<string>();
   for (const f of facts) for (const v of [f.value, Math.round(f.value), Math.round(f.value * 10) / 10, Math.abs(f.value)]) allowed.add(String(v));
   const said = clip(plan.say, 600);
-  const ok = said && figuresOk(said, allowed, heard);
-  const top = facts.slice(0, 8);
+  // the Collector's own numbers are not evidence: an answer's figures must all come from the results
+  const ok = said && figuresOk(said, allowed) && !spellsNumber(said);
+  const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");
   const doc: StageDocT = {

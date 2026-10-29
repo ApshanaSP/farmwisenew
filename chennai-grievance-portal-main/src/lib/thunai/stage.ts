@@ -116,7 +116,7 @@ export interface StageContext { recipe: Recipe; title: string; blocks: { kind: B
 export function stageContext(d: StageDocT, focus: number | null = null): StageContext {
   return {
     recipe: d.recipe, title: d.title, focus, slots: d.slots,
-    blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 12) }))
+    blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 30) }))
   };
 }
 

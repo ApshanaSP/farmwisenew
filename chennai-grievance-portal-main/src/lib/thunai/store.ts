@@ -80,7 +80,7 @@ export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memo
     }
     case "prefs": m.prefs = { ...m.prefs, ...op.prefs }; break;
     case "recent": m.recent = [...m.recent, { text: clip(op.text, 200), at }].slice(-200); break;
-    case "pin": m.pins = [...(m.pins ?? []).filter((p) => p.id !== op.pin.id && p.title !== op.pin.title), { ...op.pin, title: clip(op.pin.title, 80) }].slice(-12); break;
+    case "pin": { const title = clip(op.pin.title, 80); m.pins = [...(m.pins ?? []).filter((p) => p.id !== op.pin.id && p.title !== title), { ...op.pin, title }].slice(-12); } break;
     case "unpin": m.pins = (m.pins ?? []).filter((p) => p.id !== op.id); break;
   }
   writeMemory(user, m);

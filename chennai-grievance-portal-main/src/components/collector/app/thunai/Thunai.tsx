@@ -777,7 +777,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         earcon("done"); out(lang === "ta" ? "இந்தத் திரையைப் பின் செய்தேன்." : "Pinned this screen.", lang); return;
       }
       case "export": {
-        if (cmd.what === "png") { const root = document.querySelector<HTMLElement>(".st-root"); if (root) await exportPng(root, doc); }
+        if (cmd.what === "png") { const root = document.querySelector<HTMLElement>(".st-root"); if (root) await exportPng(root, doc, lang); }
         else exportCsv();
         earcon("done"); out(lang === "ta" ? "ஏற்றுமதி செய்தேன்." : cmd.what === "png" ? "Saved a picture of this screen." : "Exported this screen's data as CSV.", lang); return;
       }
@@ -867,7 +867,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     openPin: (p: PinnedScreen) => void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title),
     unpin: (id: string) => void savePins(pins.filter((x) => x.id !== id), { op: "unpin", id }),
     exportCsv,
-    exportPng: (root: HTMLElement) => { if (stageRef.current) void exportPng(root, stageRef.current); },
+    exportPng: (root: HTMLElement) => { if (stageRef.current) void exportPng(root, stageRef.current, listenLang); },
     save: (name: string) => askSave(name, listenLang),
     setView: (id: string, v: BlockView) => setStageViews((x) => ({ ...x, [id]: v })),
     confirmTray: () => void sendTray(tray.length, listenLang, "tap"),
