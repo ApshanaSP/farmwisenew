@@ -50,12 +50,13 @@ export function listen(lang: "en-IN" | "ta-IN", onText: (t: string) => void, onD
 }
 
 /** Read text aloud in the answer's language; `onEnd` runs when it finishes or is stopped. Returns false where speech is unavailable. */
-export function speak(text: string, lang: string, onEnd?: () => void): boolean {
+export function speak(text: string, lang: string, onEnd?: () => void, rate = 1): boolean {
   if (!canSpeak() || !text.trim()) return false;
   const s = window.speechSynthesis;
   s.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
+  u.rate = rate;
   const voices = s.getVoices();
   const v = voices.find((x) => x.lang === lang) ?? voices.find((x) => x.lang.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
   if (v) u.voice = v;

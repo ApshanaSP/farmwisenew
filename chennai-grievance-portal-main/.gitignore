@@ -26,3 +26,6 @@ data/lancedb/
 
 # frozen district data for the chatbot golden questions (scripts/freeze-eval-store.cjs)
 eval/store/
+
+# Thunai: per-Collector memory and the audit trail (never committed)
+data/thunai/

@@ -5,7 +5,7 @@
  * list is compact (a line of title, a line of facts, the actions on the right), so the card shows eight or more at a
  * time; a task opens in place to show the department's remarks and photos.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { Empty, SEVS, SEV_HEX, deptIcon, fullTitle, rel, sevTone, type Row } from "./lib";
@@ -17,6 +17,8 @@ export const TASK_RULE = "You verify closed work on severe incidents only, from 
 
 export function AttentionCard({ d, c, only }: { d: OverviewData; c: Console; only?: "sev" | "tasks" }) {
   const [view, setView] = useState<"sev" | "tasks">(only ?? "sev");
+  // a severity picked from outside the card (Thunai, a saved view) shows the severity list
+  useEffect(() => { if (c.sevTab) setView("sev"); }, [c.sevTab]);
   const v = only ?? view;
   const counts = d.severity.counts;
   const openN = SEVS.reduce((a, s) => a + (counts[s] ?? 0), 0);

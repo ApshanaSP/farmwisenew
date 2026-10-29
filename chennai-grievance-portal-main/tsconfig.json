@@ -37,7 +37,11 @@
     ".next-local/types/**/*.ts",
     ".next-finaltest/types/**/*.ts",
     ".next-test/types/**/*.ts",
-    ".next-rehearsal/types/**/*.ts"
+    ".next-rehearsal/types/**/*.ts",
+    ".next-studio-hunt/types/**/*.ts",
+    ".next-thunai/types/**/*.ts",
+    ".next-thunai-build/types/**/*.ts",
+    ".next-agentbuild/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -55,7 +55,8 @@ export interface Ink {
 function read(el: Element): Ink {
   const cs = getComputedStyle(el);
   const v = (k: string, d: string) => cs.getPropertyValue(k).trim() || d;
-  const dark = (el.closest(".dic") as HTMLElement | null)?.dataset.theme !== "light";
+  // the console (.dic) or Thunai's Stage (.st-root, portalled outside the console) carries the theme
+  const dark = (el.closest(".dic, .st-root") as HTMLElement | null)?.dataset.theme !== "light";
   return {
     text: v("--text", "#F1F5F9"), text2: v("--text-2", "#B6C2D4"), text3: v("--text-3", "#8492A9"), grid: v("--viz-grid", "rgba(148,163,184,.08)"),
     axis: v("--viz-axis", "rgba(148,163,184,.18)"), surface: v("--surface", "#0D1322"), elev: v("--elev", "#0F1628"), line: v("--line-3", "rgba(148,163,184,.24)"),
@@ -72,7 +73,7 @@ export function useInk(ref: RefObject<HTMLElement>): Ink | null {
     const el = ref.current;
     if (!el) return;
     setInk(read(el));
-    const root = el.closest(".dic");
+    const root = el.closest(".dic, .st-root");
     if (!root) return;
     const mo = new MutationObserver(() => setInk(read(el)));
     mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
