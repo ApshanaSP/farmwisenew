@@ -34,7 +34,7 @@ export const Block = z.discriminatedUnion("kind", [
     deadline: str(40).nullable(), officials: z.array(z.object({ name: str(80), role: str(120) })).max(4) }),
     timeline: z.array(z.object({ t: str(30), source: str(60), text: str(300) })).max(20) }),
   z.object({ kind: z.literal("NewsReader"), id: str(40), title: str(160), total: num, items: z.array(z.object({
-    id: str(120), title: str(300), source: str(80).nullable(), t: str(30).nullable(), place: str(120).nullable(), incidentId: str(80).nullable(), url: str(500).nullable()
+    id: str(120), title: str(300), source: str(80).nullable(), t: str(30).nullable(), place: str(120).nullable(), incidentId: str(80).nullable(), url: str(2000).nullable()
   })).max(30) }),
   z.object({ kind: z.literal("Readings"), id: str(40), title: str(160), metric: str(40), unit: str(20), items: z.array(z.object({
     id: str(80), name: str(120), value: num, t: str(30).nullable(), mean28: num.nullable(), z: num.nullable(), anomaly: z.boolean(), detail: str(200).nullable()

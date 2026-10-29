@@ -15,7 +15,7 @@ const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock"
 export const AgentBody = PlanBody.extend({
   stage: z.object({
     recipe: z.enum(RECIPES), title: z.string().max(200),
-    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(20) })).max(6),
+    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(30) })).max(6),
     slots: z.record(z.unknown()), focus: z.number().int().nullable()
   }).nullable().optional(),
   /** a screen asked for by a Stage control (filter chip, refinement, mission): built by code, no model */
@@ -29,7 +29,7 @@ function served(r: AgentResult): AgentResult {
   const c = checkStage(r.stage);
   if (c.ok) return r;
   console.error(`[thunai agent] screen refused by the catalog: ${c.why}`);
-  return { ...r, kind: r.steps.length ? "do" : "none", stage: null, say: null, note: "catalog" };
+  return { ...r, kind: r.steps.length ? "do" : "none", stage: null, say: null, note: process.env.NODE_ENV !== "production" ? `catalog: ${c.why}`.slice(0, 200) : "catalog" };
 }
 
 export async function handleAgent(b: AgentBodyT, world: World, hands: Hands, user: string, mem: { notes: string[]; habits: Record<string, string> } = { notes: [], habits: {} }): Promise<AgentResult> {

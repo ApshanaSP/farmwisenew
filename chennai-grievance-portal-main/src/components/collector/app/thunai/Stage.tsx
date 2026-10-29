@@ -98,9 +98,10 @@ function age(t: string | null, asOf: string | null): string | null {
 
 /** Grid spans (of 12) for the blocks, by what sits next to what. */
 function spans(blocks: BlockT[]): number[] {
-  const kinds = blocks.map((b) => b.kind);
-  return blocks.map((b, i) => {
-    const other = kinds.filter((_, j) => j !== i);
+  // KPI tiles sit on their own row: the layout of the rest is decided without them
+  const kinds = blocks.map((b) => b.kind).filter((k) => k !== "Kpis");
+  return blocks.map((b) => {
+    const other = kinds.filter((k) => k !== b.kind);
     switch (b.kind) {
       case "Kpis": case "NewsReader": case "Note": case "Drafts": return 12;
       case "Compare": return other.includes("MapView") ? 8 : 12;
@@ -359,6 +360,7 @@ function BlockBody(p: BP) {
             <div key={k.key} className={`st-kpi t-${k.tone}`}>
               <span className="lbl">{k.label}</span>
               <b className="val">{fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${k.unit}`}</small>}</b>
+              {k.delta == null && k.pct != null && k.pct !== 0 && <span className={`dl ${k.pct > 0 ? "up" : "down"}`}><I n={k.pct > 0 ? "up" : "down"} />{`${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%`}<em>{T(lang, " vs the period before", " முந்தைய காலத்துடன்")}</em></span>}
               {k.delta != null && k.delta !== 0 && (
                 <span className={`dl ${k.delta > 0 ? "up" : "down"}`}><I n={k.delta > 0 ? "up" : "down"} />{fmt(Math.abs(k.delta))}{k.pct != null ? ` (${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%)` : ""}{k.prev != null ? <em>{T(lang, ` vs ${fmt(k.prev)}`, ` / ${fmt(k.prev)}`)}</em> : null}</span>
               )}
@@ -700,7 +702,7 @@ function Table({ cols, rows }: { cols: string[]; rows: (string | number)[][] }) 
     <div className="st-tablewrap">
       <table className="st-table">
         <thead><tr>{cols.map((c, i) => <th key={i} scope="col">{c}</th>)}</tr></thead>
-        <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => (j === 0 ? <th key={j} scope="row">{c}</th> : <td key={j}>{c}</td>))}</tr>)}</tbody>
+        <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => (j === 0 ? <th key={j} scope="row">{c}</th> : <td key={j} className={/^[-+]?[\d,.]+%?$/.test(String(c)) ? "num" : ""}>{c}</td>))}</tr>)}</tbody>
       </table>
     </div>
   );

@@ -6,7 +6,7 @@
  */
 import type { ToolResult } from "@/lib/assistant/types";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
-import type { BlockT, Bilingual, CaseRowT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
+import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { nextSteps } from "./next";
 
@@ -40,6 +40,8 @@ export interface Slots {
   name: string | null;
   what: "severe" | "hotspots" | "cases" | null;
   sort: "priority" | "complaints" | "time" | null;
+  /** start clean: the console's own filters are not inherited (a Stage control's "All of Chennai") */
+  fresh?: boolean;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -138,7 +140,7 @@ const scopeArg = (s: ScopeT, extra: Partial<ScopeT> = {}) => {
   return { period: x.period, zone: x.zone, dept: x.dept, cat: x.cat, taluk: x.taluk };
 };
 
-type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[] };
+type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   cases, case: caseDetail, news, readings, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, answer: async () => {
@@ -152,6 +154,12 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
     period: slots.period ?? base.period, zone: slots.zones.length === 1 ? slots.zones[0] : slots.zones.length ? null : base.zone,
     dept: slots.dept ?? (slots.depts.length ? null : base.dept), cat: slots.cat ?? base.cat, taluk: slots.taluk ?? base.taluk, sev: slots.sev ?? null
   };
+  // news covers the whole district unless the request names its own area or topic: the console's filters (say, Flooding
+  // left on by an earlier dashboard) would otherwise turn "today's news" into "today's flooding news"
+  // a request that names its own place or topic starts clean (as v1's planner does); one that names nothing keeps the
+  // console's filters, so "the severe cases" are the ones the console shows
+  const named = slots.zones.length > 0 || !!slots.dept || !!slots.cat || !!slots.taluk || slots.depts.length > 0;
+  if (recipe === "news" || recipe === "brief" || slots.fresh || named) { s.zone = slots.zones[0] ?? null; s.dept = slots.dept; s.cat = slots.cat; s.taluk = slots.taluk; }
   const c: Ctx = { w, h, s, slots, heard, runs: [], sources: new Set(), notes: [], asOf: null };
   let part: Part;
   try {
@@ -163,7 +171,7 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   if (!part.blocks.length) part.blocks.push({ kind: "Note", id: "empty", text: "Nothing in the data matches this, for this scope." });
   const doc: StageDocT = { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway, say: part.say, blocks: part.blocks.slice(0, 6), scope: s,
     slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10), asOf: c.asOf, notes: c.notes.slice(0, 4) };
-  doc.next = part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc);
+  doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   return { runs: c.runs, doc };
 }
 
@@ -197,8 +205,15 @@ async function cases(c: Ctx): Promise<Part> {
   const scope = scopeWords(w, { ...s, sev: null });
   const title = `${sev ? `${sev} cases` : slots.q ? `Cases: ${slots.q}` : "Cases"} · ${scope.en}`;
   if (!rows.length) {
-    return { title, takeaway: null, say: bi(`There are no ${sevWord} cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
-      blocks: [{ kind: "Note", id: "none", text: "No incidents match this view." }] };
+    // filters left on the console (not named in this request) can empty the list: say so and offer the whole district
+    const inherited = (s.zone && !slots.zones.length) || (s.cat && !slots.cat) || (s.dept && !slots.dept) || (s.taluk && !slots.taluk);
+    const filters = scopeWords(w, { ...s, sev: null, period: s.period });
+    return { title, takeaway: null,
+      say: inherited
+        ? bi(`No ${sevWord} cases ${PERIOD_EN[s.period]} with the console's filters (${filters.en}). Say "all of Chennai" to look across the district.`, `கன்சோல் வடிகட்டிகளுடன் (${filters.ta}) ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை. முழு மாவட்டத்தையும் பார்க்க "முழு சென்னை" என்று சொல்லுங்கள்.`)
+        : bi(`There are no ${sevWord} cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: inherited ? `No incidents match this view. The console still has these filters on: ${filters.en}.` : "No incidents match this view." }],
+      next: inherited ? [{ label: { en: "All of Chennai", ta: "முழு சென்னை" }, kind: "direct", recipe: "cases", slots: { ...slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, ids: [], text: null }] : [] };
   }
   const overdue = rows.filter((r) => r.overdue).length;
   const say = casesSay(rows, total, sev, s.period);
@@ -275,24 +290,35 @@ async function news(c: Ctx): Promise<Part> {
   const r = await c.h.news(s);
   c.sources.add("console latest news");
   c.asOf ??= r.asOf;
-  const words = (slots.q ?? "").toLowerCase().split(/[^a-z஀-௿]+/).filter((x) => x.length >= 4)
+  // words that ask for news are not its topic ("today's news", "read the headlines", "இன்றைய செய்திகள்")
+  const GENERIC = /^(news|today|todays|latest|headline|headlines|read|tell|show|about|this|week|month|please|செய்தி.*|இன்றைய|இன்று|படி.*|சொல்லு.*|காட்டு.*|seithi.*|padi|sollu)$/;
+  const words = (slots.q ?? "").toLowerCase().split(/[^a-z\u0B80-\u0BFF]+/).filter((x) => x.length >= 4 && !GENERIC.test(x))
     .map((x) => x.replace(/(ing|ed|s)$/, ""));
   const match = (x: Row) => !words.length || words.some((wd) => `${x.title ?? ""} ${x.original ?? ""} ${x.loc ?? ""}`.toLowerCase().includes(wd));
   let items = r.rows.filter(match).map((x) => ({
     id: String(x.id), title: clip(x.title, 300), source: clip((x.outletNames ?? [])[0] ?? x.publisher, 80) || null, t: x.t ?? null,
-    place: clip(x.loc, 120) || null, incidentId: x.incident ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) ? x.url : null
+    place: clip(x.loc, 120) || null, incidentId: x.incident ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
   }));
   // a topic the latest news does not carry: the console's search over every report
   if (words.length && items.length < 2) {
     const sr = await call(c, "search_records", { text: slots.q, scope: scopeArg(s), kinds: ["news"] }).catch(() => null);
     const found = ((sr?.data as { news?: Row[] } | undefined)?.news ?? []).map((x) => ({
       id: String(x.id ?? x.doc_id ?? x.title), title: clip(x.title, 300), source: clip(x.publisher ?? x.source, 80) || null, t: x.t ?? x.published ?? null,
-      place: clip(x.place ?? x.loc, 120) || null, incidentId: x.incident ?? x.incident_id ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) ? x.url : null
+      place: clip(x.place ?? x.loc, 120) || null, incidentId: x.incident ?? x.incident_id ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
     }));
     if (found.length) { items = found; c.notes.push("Found by searching every news report (the latest news had none on this)."); }
   }
+  let topic = words.length && slots.q ? ` about ${slots.q}` : "";
+  // a topic nothing matched: say so, and still show the latest news
+  if (words.length && !items.length) {
+    c.notes.push(`No news matched "${clip(slots.q, 80)}"; showing the latest news instead.`);
+    topic = "";
+    items = r.rows.map((x) => ({
+      id: String(x.id), title: clip(x.title, 300), source: clip((x.outletNames ?? [])[0] ?? x.publisher, 80) || null, t: x.t ?? null,
+      place: clip(x.loc, 120) || null, incidentId: x.incident ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
+    }));
+  }
   items = items.slice(0, Math.min(slots.n ?? 12, 20));
-  const topic = slots.q ? ` about ${slots.q}` : "";
   const title = `News${topic} · ${PERIOD_EN[s.period]}`;
   if (!items.length) return { title, takeaway: null, say: bi(`No news${topic} ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
   const linked = items.filter((x) => x.incidentId).length;
@@ -493,8 +519,8 @@ async function compare(c: Ctx): Promise<Part> {
   const [a, b] = out;
   const g = gaps[0];
   const say = bi(
-    `${a.label}: ${spoken(a.values.severe)} severe and ${spoken(a.values.open)} open. ${b.label}: ${spoken(b.values.severe)} severe and ${spoken(b.values.open)} open.${g ? ` The biggest gap is ${lab(g.metric).toLowerCase()}: ${g.hi} ${spoken(g.hiValue)} against ${g.lo} ${spoken(g.loValue)}.` : ""}`,
-    `${zoneTa(w, a.zone)}: ${spoken(a.values.severe)} கடுமையான, ${spoken(a.values.open)} திறந்தவை. ${zoneTa(w, b.zone)}: ${spoken(b.values.severe)} கடுமையான, ${spoken(b.values.open)} திறந்தவை.${g ? ` பெரிய வேறுபாடு ${lab(g.metric)}: ${g.hi} ${spoken(g.hiValue)}, ${g.lo} ${spoken(g.loValue)}.` : ""}`
+    `${out.map((x) => `${x.label}: ${spoken(x.values.severe)} severe and ${spoken(x.values.open)} open.`).join(" ")}${g ? ` The biggest gap is ${lab(g.metric).toLowerCase()}: ${g.hi} ${spoken(g.hiValue)} against ${g.lo} ${spoken(g.loValue)}.` : ""}`,
+    `${out.map((x) => `${zoneTa(w, x.zone)}: ${spoken(x.values.severe)} கடுமையான, ${spoken(x.values.open)} திறந்தவை.`).join(" ")}${g ? ` பெரிய வேறுபாடு ${lab(g.metric)}: ${g.hi} ${spoken(g.hiValue)}, ${g.lo} ${spoken(g.loValue)}.` : ""}`
   );
   const takeaway = g ? bi(`${g.hi} had ${g.ratio ? `${spoken(g.ratio)}×` : `${spoken(g.gap)} more`} the ${lab(g.metric).toLowerCase()} of ${g.lo} ${PERIOD_EN[s.period]}.`,
     `${PERIOD_TA[s.period]} ${g.hi}, ${g.lo}-ஐ விட ${g.ratio ? `${spoken(g.ratio)} மடங்கு` : `${spoken(g.gap)} கூடுதல்`} ${lab(g.metric)}.`) : null;
@@ -502,7 +528,7 @@ async function compare(c: Ctx): Promise<Part> {
   return { title, takeaway, say, blocks: [
     { kind: "Compare", id: "cmp", title, metrics: CMP_METRICS, sides: out, seriesLabels,
       diffs: gaps.slice(0, 6).map((x) => ({ metric: x.metric, label: lab(x.metric), hi: x.hi, lo: x.lo, ratio: x.ratio, gap: x.gap })) },
-    { kind: "MapView", id: "map", title: "Both areas", rule: null, shade: { geo: "zone", label: "Severe incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.severe) })) }, points: [], outline: zones }
+    { kind: "MapView", id: "map", title: out.length === 2 ? "Both areas" : `The ${out.length} areas`, rule: null, shade: { geo: "zone", label: "Severe incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.severe) })) }, points: [], outline: zones }
   ] };
 }
 
@@ -586,13 +612,13 @@ async function why(c: Ctx): Promise<Part> {
     reasons.push(`${rises.map((x) => `${clip(x.label, 60).toLowerCase()} rose by ${spoken(Number(x.delta))}`).join(", ")}`);
     reasonsTa.push(`${rises.map((x) => `${clip(x.label, 60)} ${spoken(Number(x.delta))} கூடியது`).join(", ")}`);
   }
-  if (num(t.rainLinked)) { reasons.push(`${spoken(Number(t.rainLinked))} incidents were rain-linked over ${spoken(d.rainDays)} rain days`); reasonsTa.push(`${spoken(d.rainDays)} மழை நாட்களில் ${spoken(Number(t.rainLinked))} மழை தொடர்பானவை`); }
-  if (num(t.overdue)) { reasons.push(`${spoken(Number(t.overdue))} open incidents are past their deadline`); reasonsTa.push(`${spoken(Number(t.overdue))} காலக்கெடு தாண்டியவை`); }
+  if (num(t.rainLinked)) { reasons.push(`${Number(t.rainLinked) === 1 ? "1 incident was" : `${spoken(Number(t.rainLinked))} incidents were`} rain-linked over ${plural(d.rainDays, "rain day", "rain days")}`); reasonsTa.push(`${spoken(d.rainDays)} மழை நாட்களில் ${spoken(Number(t.rainLinked))} மழை தொடர்பானவை`); }
+  if (num(t.overdue)) { reasons.push(Number(t.overdue) === 1 ? "1 open incident is past its deadline" : `${spoken(Number(t.overdue))} open incidents are past their deadline`); reasonsTa.push(`${spoken(Number(t.overdue))} காலக்கெடு தாண்டியவை`); }
   const place = d.places?.[0];
   if (place) { reasons.push(`the busiest spot is ${clip(place.place, 60)} (${spoken(Number(place.n))} ${clip(place.category, 50).toLowerCase()})`); reasonsTa.push(`அதிக இடம் ${clip(place.place, 60)} (${spoken(Number(place.n))})`); }
   const head = ch.delta != null
-    ? `${spoken(Number(t.n))} incidents ${PERIOD_EN[s.period]} against ${spoken(Number(t.prev))} the period before${ch.pct != null ? ` (${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}%)` : ""}.`
-    : `${spoken(Number(t.n ?? 0))} incidents ${PERIOD_EN[s.period]}.`;
+    ? `${plural(Number(t.n), "incident", "incidents")} ${PERIOD_EN[s.period]} against ${spoken(Number(t.prev))} the period before${ch.pct ? ` (${ch.pct > 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}%)` : ""}.`
+    : `${plural(Number(t.n ?? 0), "incident", "incidents")} ${PERIOD_EN[s.period]}.`;
   const headTa = `${PERIOD_TA[s.period]} ${spoken(Number(t.n ?? 0))} சம்பவங்கள்${num(t.prev) != null ? `, முந்தைய காலத்தில் ${spoken(Number(t.prev))}` : ""}.`;
   const text = `${head} ${reasons.length ? `Main reasons: ${reasons.join("; ")}.` : ""}`;
   const blocks: BlockT[] = [
@@ -756,9 +782,17 @@ export function metres(a: { lat: number; lon: number }, b: { lat: number; lon: n
 }
 
 async function nearby(c: Ctx): Promise<Part> {
-  const q = c.slots.q ?? c.heard;
+  let q = c.slots.q ?? c.heard;
   c.runs.push("ask_map");
-  const r = await c.h.map(q);
+  let r = await c.h.map(q);
+  // "flooding in Adyar" can mean the Adyar locality or Zone 13 Adyar: when the locality finds nothing, ask for the zone
+  const zone = c.w.zones.find((z) => new RegExp(`(^|[^a-z])${z.name.toLowerCase().replace(/[^a-z]+/g, ".?")}($|[^a-z])`).test(q.toLowerCase()));
+  if (zone && !Number(r.total ?? 0) && !/zone|மண்டல/i.test(q)) {
+    const q2 = q.replace(new RegExp(zone.name, "i"), `${zone.name} zone`);
+    c.runs.push("ask_map");
+    const r2 = await c.h.map(q2);
+    if (Number(r2.total ?? 0) > 0) { r = r2; c.notes.push(`Read "${zone.name}" as Zone ${zone.n} ${zone.name}: the ${zone.name} locality itself had no results.`); q = q2; }
+  }
   c.sources.add("Ask the Map");
   c.asOf ??= r.asOf?.data ?? null;
   const rows = ((r.rows ?? []) as Row[]).map((x) => caseRow(x, c.w));
@@ -785,10 +819,10 @@ async function nearby(c: Ctx): Promise<Part> {
     ...ranked.map((x, i) => ({ n: i + 1, id: String(x.p.id), lat: Number(x.p.lat), lon: Number(x.p.lon), label: `${clip(x.p.name ?? x.p.kind, 100)} · ${spoken(x.m)} m`, sev: null, value: x.m, hot: i < 3 })),
     ...rows.slice(0, 60).filter((x) => x.lat != null).map((x) => ({ n: null, id: x.id, lat: x.lat as number, lon: x.lon as number, label: x.title, sev: x.sev, value: null, hot: false }))
   ];
-  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: headline || title, rule, shade: null, points: pts, outline: [] });
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: clip(headline || title, 160), rule, shade: null, points: pts, outline: [] });
   if (ranked.length) {
     blocks.push({ kind: "Ranking", id: "near", title: `${within} ${clip(ranked[0].p.layer ?? "places", 30)} within ${spoken(radius)} m${within > ranked.length ? `, nearest ${ranked.length} listed` : ""}`, unit: "m", method: `Straight-line distance from each place to the closest result, within ${spoken(radius)} m (Ask the Map's rule).`, order: "bottom",
-      items: ranked.map((x, i) => ({ key: String(x.p.id), label: clip(x.p.name ?? `${x.p.kind} (no name on the map)`, 120), value: x.m, rank: i + 1, sub: x.to ? clip(x.to.title, 120) : null, zone: null, lat: Number(x.p.lat), lon: Number(x.p.lon), action: "none" as const })) });
+      items: ranked.map((x, i) => ({ key: String(x.p.id), label: clip(x.p.name ?? `${x.p.kind} (no name on the map)`, 120), value: x.m, rank: i + 1, sub: x.to ? safeText(x.to.title, 120) : null, zone: null, lat: Number(x.p.lat), lon: Number(x.p.lon), action: "none" as const })) });
   }
   if (rows.length) blocks.push({ kind: "CaseList", id: "cases", title: "The incidents", source: "map", sev: null, total: Number(r.total ?? rows.length), rows: rows.slice(0, 30) });
   const nearest = ranked[0];
@@ -821,7 +855,7 @@ async function brief(c: Ctx): Promise<Part> {
     say: bi(`${points.length} points in today's brief. ${points[0]?.text ?? ""}`, `இன்றைய சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0]?.text ?? ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "reported", label: "Reported", value: Number(st.reported ?? 0), unit: null, prev: null, delta: num(st.change), tone: "neutral", spark: [] },
+        { key: "reported", label: "Reported", value: Number(st.reported ?? 0), unit: null, prev: null, delta: null, pct: num(st.change), tone: "neutral", spark: [] },
         { key: "severe", label: "Severe", value: Number(st.severe ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
         { key: "overdue", label: "Past deadline", value: Number(st.overdue ?? 0), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
         { key: "newsOnly", label: "In the news only", value: Number(st.newsOnly ?? 0), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }

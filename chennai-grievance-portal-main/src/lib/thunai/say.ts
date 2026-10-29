@@ -87,7 +87,9 @@ export function say(key: LineKey, lang: Lang, fields: Fields = {}): string {
   const line = tpl.replace(/\{(\w+)\}/g, (_, k) => {
     const v = fields[k];
     return v == null ? "" : typeof v === "number" ? v.toLocaleString("en-IN") : String(v);
-  }).replace(/\s+([.,])/g, "$1").replace(/\s{2,}/g, " ").trim();
+  }).replace(/\s+([.,])/g, "$1").replace(/\s{2,}/g, " ").trim()
+    // "1 drafts ready" reads "1 draft ready"
+    .replace(/(^|\s)1 (draft|case|incident|headline|day|hour|reminder)s\b/g, "$11 $2");
   if (!numberGuard(line, fields, tpl)) throw new Error(`number guard: ${key}`);
   return line;
 }

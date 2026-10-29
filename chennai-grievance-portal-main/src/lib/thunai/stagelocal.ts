@@ -16,7 +16,8 @@ export type LocalCmd =
   | { op: "open"; n: number }
   | { op: "draft"; n: number; first: boolean }
   | { op: "map"; n: number | null }
-  | { op: "full" };
+  | { op: "full" }
+  | { op: "everywhere" };
 
 const ORD: Record<string, number> = {
   first: 1, one: 1, "1st": 1, second: 2, two: 2, "2nd": 2, third: 3, three: 3, "3rd": 3, fourth: 4, four: 4, "4th": 4, fifth: 5, five: 5, "5th": 5,
@@ -45,6 +46,7 @@ export function localStageCommand(raw: string): LocalCmd | null {
   if (/^(close( (this|it|the stage|the screen))?|done|that's all|moodu|மூடு)$/.test(t)) return { op: "close" };
   if (/^(go back|back|previous screen|pinnadi|பின்னால்)$/.test(t)) return { op: "back" };
   if (/^(clear( the)? filter|show (all|everything)( again)?|ellam kaattu|எல்லாம் காட்டு)$/.test(t)) return { op: "clear" };
+  if (/^((for |in )?(all of chennai|the whole (district|city)|whole chennai|everywhere)|muzhu chennai|முழு சென்னை|மாவட்டம் முழுவதும்)$/.test(t)) return { op: "everywhere" };
   if (/^(pin (this|it)( screen)?|pin pannu|பின் செய்)$/.test(t)) return { op: "pin" };
   if (/^(full screen|bigger|expand( it)?)$/.test(t)) return { op: "full" };
   if (/(எக்ஸ்போர்ட்|ஏற்றுமதி|export pannu|download pannu)/.test(t) && t.split(" ").length <= 5) return { op: "export", what: /png|படம்/.test(t) ? "png" : /csv/.test(t) ? "csv" : null };
@@ -108,11 +110,16 @@ export function filterStage(d: StageDocT, text: string): { doc: StageDocT; kept:
       case "NewsReader": { const items = b.items.filter((x) => has([x.title, x.place, x.source], text)); kept += items.length; of += b.items.length; return { ...b, items }; }
       case "Ranking": { const items = b.items.filter((x) => has([x.label, x.sub], text)); kept += items.length; of += b.items.length; return { ...b, items }; }
       case "Readings": { const items = b.items.filter((x) => has([x.name], text)); kept += items.length; of += b.items.length; return { ...b, items }; }
-      case "MapView": return { ...b, points: b.points.filter((p) => has([p.label], text)) };
       default: return b;
     }
   });
-  return { doc: { ...d, blocks, title: `${d.title} · ${text}`.slice(0, 200) }, kept, of };
+  // the map keeps the pins of the items kept (by id), renumbered as the list now is, or those whose label matches
+  const keptIds = blocks.flatMap((b) => (b.kind === "CaseList" ? b.rows.map((r) => r.id) : b.kind === "Ranking" ? b.items.map((x) => x.key) : []));
+  const mapped = blocks.map((b): BlockT => b.kind !== "MapView" ? b : {
+    ...b, points: b.points.filter((p) => keptIds.includes(p.id) || has([p.label], text)).map((p) => (p.n != null && keptIds.includes(p.id) ? { ...p, n: keptIds.indexOf(p.id) + 1 } : p))
+  });
+  const nice = text.replace(/(^|\s)(\p{Ll})/gu, (_, s0: string, c: string) => s0 + c.toUpperCase());
+  return { doc: { ...d, blocks: mapped, title: `${d.title} · ${nice}`.slice(0, 200) }, kept, of };
 }
 
 export function sortStage(d: StageDocT, by: "complaints" | "time" | "value" | "name" | "severity"): StageDocT {

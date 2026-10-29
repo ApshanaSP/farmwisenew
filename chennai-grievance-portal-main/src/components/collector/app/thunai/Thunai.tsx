@@ -762,7 +762,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       case "next": readFrom(narrIndex.current + 1, lang); return;
       case "prev": readFrom(narrIndex.current - 1, lang); return;
       case "again": readFrom(narrIndex.current, lang); return;
-      case "read": readFrom(0, lang); return;
+      case "read":
+        // a screen with nothing on it to read is built again from fresh data, then read
+        if (!narrationOf(doc, lang).length && doc.blocks.every((b) => b.kind === "Note")) { await directStage(doc.recipe, doc.slots, doc.title, lang); return; }
+        readFrom(0, lang); return;
       case "close": closeStage(); return;
       case "back": {
         const prev = stageBack[stageBack.length - 1];
@@ -771,6 +774,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         out(prev.say[lang], lang); return;
       }
       case "clear": await directStage(doc.recipe, doc.slots, doc.title, lang); return;
+      case "everywhere":
+        // the same screen for the whole district, and the console's own filters cleared to match
+        hostRef.current.applyView({ zone: null, dept: null, cat: null, taluk: null });
+        await directStage(doc.recipe, { ...doc.slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, lang === "ta" ? "முழு சென்னை" : "All of Chennai", lang); return;
       case "pin": {
         const p: PinnedScreen = { id: Math.random().toString(36).slice(2, 10), title: doc.title.slice(0, 80), recipe: doc.recipe, slots: doc.slots, at: new Date().toISOString() };
         await savePins([...pins.filter((x) => x.title !== p.title), p].slice(-12), { op: "pin", pin: p });
@@ -798,7 +805,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const id = caseIds(doc)[cmd.n - 1];
         if (!id) { out(line("noItem", lang), lang); return; }
         stageFocus.current = cmd.n;
-        await directStage("case", { id }, `#${cmd.n}`, lang); return;
+        await directStage("case", { id }, lang === "ta" ? `${cmd.n}-வது சம்பவத்தைத் திறக்கிறேன்` : `Opening case ${cmd.n}`, lang); return;
       }
       case "draft": {
         const ids = caseIds(doc);
@@ -848,7 +855,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     mic: () => { if (phase === "listening") stopListen.current?.(); else startListening(); }, // eslint-disable-line @typescript-eslint/no-use-before-define
     listening: phase === "listening",
     direct: (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string) => void directStage(recipe, slots, label),
-    openCase: (id: string) => void directStage("case", { id }, id),
+    openCase: (id: string) => void directStage("case", { id }, listenLang === "ta" ? "சம்பவத்தைத் திறக்கிறேன்" : "Opening the incident"),
     openInConsole: (id: string) => { closeStage(); hostRef.current.c.openInc(id); },
     takeAction: (id: string) => { closeStage(); hostRef.current.c.openAction(id); audit(`take action ${id}`, [{ a: "draft" }], "opened Take action (nothing sent)"); },
     draft: (ids: string[]) => void draftMany(ids, listenLang),

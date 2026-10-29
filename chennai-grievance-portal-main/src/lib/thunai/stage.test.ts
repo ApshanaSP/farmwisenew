@@ -178,3 +178,55 @@ describe("review fixes: local commands", () => {
     expect(localStageCommand("கடுமையான சம்பவங்கள் மட்டும்")).toBeNull();
   });
 });
+
+describe("long real-world values stay within the catalog", () => {
+  it("a very long news link is kept (or dropped), never breaks the screen", async () => {
+    const long = `https://example.org/${"a".repeat(900)}`;
+    const hands = fakeHands();
+    const news = hands.news;
+    hands.news = async (s) => { const r = await news(s); return { ...r, rows: r.rows.map((x) => ({ ...x, url: long })) }; };
+    const { doc } = await buildScreen("news", emptySlots(), SCOPE, WORLD, hands, "news");
+    expect(checkStage(doc).ok).toBe(true);
+  });
+});
+
+describe("news is district-wide unless asked otherwise", () => {
+  it("ignores a category the console still has on", async () => {
+    let seen: unknown = null;
+    const hands = fakeHands();
+    const news = hands.news;
+    hands.news = async (s) => { seen = s; return news(s); };
+    await buildScreen("news", emptySlots(), { ...SCOPE, cat: "FLOOD_WATERLOGGING", zone: 7 }, WORLD, hands, "news");
+    expect(seen).toMatchObject({ cat: null, zone: null });
+  });
+});
+
+describe("filters left on the console", () => {
+  it("an empty list says which filters emptied it and offers the whole district", async () => {
+    const hands = fakeHands();
+    hands.severe = async () => ({ rows: [], counts: { Severe: 0 }, asOf: "2026-10-29 07:00:00" });
+    const { doc } = await buildScreen("cases", { ...emptySlots(), sev: "Severe" }, { ...SCOPE, cat: "FLOOD_WATERLOGGING" }, WORLD, hands, "severe cases");
+    expect(doc.say.en).toMatch(/console's filters \(Flooding & waterlogging/);
+    expect(doc.next![0]).toMatchObject({ kind: "direct", recipe: "cases", slots: { fresh: true, cat: null } });
+    expect(localStageCommand("all of Chennai")).toEqual({ op: "everywhere" });
+  });
+  it("a fresh screen ignores the console's filters", async () => {
+    let seen: unknown = null;
+    const hands = fakeHands();
+    const sev = hands.severe;
+    hands.severe = async (s) => { seen = s; return sev(s); };
+    await buildScreen("cases", { ...emptySlots(), sev: "Severe", fresh: true }, { ...SCOPE, cat: "FLOOD_WATERLOGGING", zone: 7 }, WORLD, hands, "x");
+    expect(seen).toMatchObject({ cat: null, zone: null });
+  });
+});
+
+describe("a request that names its own place starts clean", () => {
+  it("'why is Perungudi so bad' is not narrowed by a category left on the console", async () => {
+    const { doc } = await buildScreen("why", { ...emptySlots(), zones: [14] }, { ...SCOPE, cat: "VECTOR_DISEASE" }, WORLD, fakeHands(), "why");
+    expect(doc.scope).toMatchObject({ zone: 14, cat: null });
+  });
+  it("one that names nothing keeps the console's filters", async () => {
+    const { doc } = await buildScreen("cases", { ...emptySlots(), sev: "Severe" }, { ...SCOPE, zone: 7 }, WORLD, fakeHands(), "severe");
+    expect(doc.scope.zone).toBe(7);
+  });
+});

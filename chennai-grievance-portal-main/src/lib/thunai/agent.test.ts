@@ -353,3 +353,28 @@ describe("review fixes: the model cannot slip a figure or a send past the checke
     expect(r.say).toMatch(/could not find incident INC-NOPE1/);
   });
 });
+
+describe("Ask the Map is inside Thunai", () => {
+  it("a console map step becomes the in-Stage nearby screen", async () => {
+    const { r } = await run("schools near flooding in Adyar", [plan({ steps: [{ ...nullStep(), action: "map", text: "schools within 1 km of flooding in Adyar zone" }] })]);
+    expect(r.stage?.recipe).toBe("nearby");
+    expect(r.steps.some((s) => s.a === "map")).toBe(false);
+  });
+});
+
+describe("v1 read steps are screens now", () => {
+  it("a reservoir read becomes the readings screen", async () => {
+    const { r } = await run("how full is Chembarambakkam", [plan({ steps: [{ ...nullStep(), action: "read", option: "reservoir", text: "Chembarambakkam" }] })]);
+    expect(r.stage?.recipe).toBe("readings");
+    expect(r.say).toMatch(/^Chembarambakkam is at 40% full/);
+  });
+});
+
+describe("filters copied from the console", () => {
+  it("a category the sentence never mentions is dropped; one it mentions stays", async () => {
+    const copied = await run("Why is Perungudi so bad lately?", [plan({ screen: { recipe: "why", zones: [14], cat: "VECTOR_DISEASE" } })], { state: { cat: "VECTOR_DISEASE" } });
+    expect(copied.r.stage!.scope.cat).toBeNull();
+    const said = await run("why is dengue rising in Perungudi", [plan({ screen: { recipe: "why", zones: [14], cat: "VECTOR_DISEASE" } })], { state: { cat: "VECTOR_DISEASE" } });
+    expect(said.r.stage!.scope.cat).toBe("VECTOR_DISEASE");
+  });
+});
