@@ -128,6 +128,10 @@ describe("local Stage commands (no model)", () => {
     expect(c("export this")).toEqual({ op: "export", what: null });
     expect(c("export as csv")).toEqual({ op: "export", what: "csv" });
     expect(c("close")).toEqual({ op: "close" });
+    expect(c("மூணாவது கேஸைத் திறந்து காட்டு")).toEqual({ op: "open", n: 3 });
+    expect(c("complaints vechu sort pannu")).toEqual({ op: "sort", by: "complaints" });
+    expect(c("இதை எக்ஸ்போர்ட் பண்ணு")).toEqual({ op: "export", what: null });
+    expect(c("open the news panel")).toBeNull();
   });
   it("leaves real requests to the agent", () => {
     for (const t of ["only severe", "add Perungudi", "make it monthly", "compare Adyar and Ambattur", "why is it so high", "show me the severe cases", "now show last year"])
@@ -152,5 +156,17 @@ describe("local Stage commands (no model)", () => {
     expect(ackFor("show me the 6 severe cases", "en")).toBe("Checking the severe cases.");
     expect(ackFor("இன்றைய செய்திகளைப் படி", "ta")).toMatch(/செய்தி/);
     expect(ackFor("anything", "en")).not.toMatch(/\d/);
+  });
+});
+
+describe("what Thunai suggests next", () => {
+  it("anticipates from what the screen shows: drafts for the late cases, a map, the slow departments", async () => {
+    const d = await severe();
+    expect(d.next!.map((x) => x.label.en)).toEqual(["Draft for the 2 past deadline", "Show them on a map", "Which department is slowest?"]);
+    expect(d.next![0]).toMatchObject({ kind: "draft", ids: ["INC-A1", "INC-A3"] });
+  });
+  it("a comparison suggests asking why the higher area is higher", async () => {
+    const { doc } = await buildScreen("compare", { ...emptySlots(), zones: [13, 7], period: "weekly" }, SCOPE, WORLD, fakeHands(), "compare");
+    expect(doc.next![0]).toMatchObject({ kind: "direct", recipe: "why", slots: { zones: [13] } });
   });
 });

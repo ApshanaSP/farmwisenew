@@ -310,3 +310,16 @@ function nullStep(): AgentPlan["steps"][number] {
   return { action: "help", page: null, period: null, zone: null, dept: null, cat: null, taluk: null, sev: null, panel: null, mapMode: null, layer: null, on: null, item: null, which: null,
     option: null, n: null, text: null, when: null };
 }
+
+describe("a Stage action the model put among the console steps", () => {
+  it("is read as that Stage action and not run on the console", async () => {
+    const list = await run("severe cases", [plan({ screen: { recipe: "cases", sev: "Severe" } })]);
+    const { r } = await run("export this", [plan({ steps: [{ ...nullStep(), action: "panel", panel: "export" }] })], { stage: stageContext(list.r.stage!) });
+    expect(r.stageOp?.op).toBe("export");
+    expect(r.steps).toEqual([]);
+  });
+  it("an answer screen with nothing looked up is not shown", async () => {
+    const { r } = await run("how full is Chembarambakkam", [plan({ screen: { recipe: "answer" } })]);
+    expect(r.stage).toBeNull();
+  });
+});

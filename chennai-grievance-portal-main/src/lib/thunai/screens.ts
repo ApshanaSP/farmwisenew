@@ -8,6 +8,7 @@ import type { ToolResult } from "@/lib/assistant/types";
 import { aggregate, change, largestGaps, median, peak, rank, round, share, spoken, unusualPoints, vsMedian } from "./insight";
 import type { BlockT, Bilingual, CaseRowT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
+import { nextSteps } from "./next";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -160,11 +161,10 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
       blocks: [{ kind: "Note", id: "err", text: `The data could not be read: ${clip((e as Error).message, 200)}` }] };
   }
   if (!part.blocks.length) part.blocks.push({ kind: "Note", id: "empty", text: "Nothing in the data matches this, for this scope." });
-  return {
-    runs: c.runs,
-    doc: { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway, say: part.say, blocks: part.blocks.slice(0, 6), scope: s,
-      slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10), asOf: c.asOf, notes: c.notes.slice(0, 4) }
-  };
+  const doc: StageDocT = { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway, say: part.say, blocks: part.blocks.slice(0, 6), scope: s,
+    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10), asOf: c.asOf, notes: c.notes.slice(0, 4) };
+  doc.next = part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc);
+  return { runs: c.runs, doc };
 }
 
 // ------------------------------------------------------------------ cases --

@@ -70,6 +70,12 @@ export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "q
   taluk: str(20).nullable(), sev: z.enum(["Severe", "High", "Medium", "Low"]).nullable() });
 export type ScopeT = z.infer<typeof Scope>;
 
+/** A next step Thunai suggests on a screen (next.ts): a screen built directly, a draft into the tray, or a sentence. */
+export const NextStep = z.object({
+  label: Bi, kind: z.enum(["direct", "draft", "ask"]), recipe: z.enum(RECIPES).nullable(), slots: z.record(z.unknown()).nullable(), ids: z.array(str(80)).max(10), text: str(200).nullable()
+});
+export type NextStepT = z.infer<typeof NextStep>;
+
 export const StageDoc = z.object({
   v: z.literal(1),
   id: str(40),
@@ -88,7 +94,9 @@ export const StageDoc = z.object({
   sources: z.array(str(80)).max(10),
   asOf: str(40).nullable(),
   /** honest limits ("no history before the dataset starts") */
-  notes: z.array(str(300)).max(4)
+  notes: z.array(str(300)).max(4),
+  /** what Thunai suggests next, computed by code */
+  next: z.array(NextStep).max(3).optional()
 });
 export type StageDocT = z.infer<typeof StageDoc>;
 

@@ -163,6 +163,16 @@ function Stage(p: Props) {
             </div>
             <h2 id="st-title">{doc.title}</h2>
             {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[lang]}</p>}
+            {!!doc.next?.length && (
+              <div className="st-sugg" role="group" aria-label={T(lang, "Suggested next", "அடுத்து")}>
+                <span>{T(lang, "Next", "அடுத்து")}</span>
+                {doc.next.map((n, i) => (
+                  <button key={i} disabled={!!p.busy} onClick={() => (n.kind === "draft" ? a.draft(n.ids) : n.kind === "direct" && n.recipe ? a.direct(n.recipe, n.slots ?? {}, n.label[lang]) : n.text ? a.ask(n.text) : undefined)}>
+                    <I n={n.kind === "draft" ? "send" : "right"} />{n.label[lang]}
+                  </button>
+                ))}
+              </div>
+            )}
             {p.filtered && <p className="st-filtered">{T(lang, `Showing only: ${p.filtered}`, `மட்டும்: ${p.filtered}`)} <button onClick={() => a.direct(doc.recipe, slots, doc.title)}>{T(lang, "Show all", "அனைத்தும்")}</button></p>}
           </div>
           <div className="st-tools">

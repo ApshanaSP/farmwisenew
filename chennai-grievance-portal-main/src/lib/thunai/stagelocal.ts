@@ -22,7 +22,9 @@ const ORD: Record<string, number> = {
   first: 1, one: 1, "1st": 1, second: 2, two: 2, "2nd": 2, third: 3, three: 3, "3rd": 3, fourth: 4, four: 4, "4th": 4, fifth: 5, five: 5, "5th": 5,
   sixth: 6, six: 6, "6th": 6, seventh: 7, seven: 7, eighth: 8, eight: 8, ninth: 9, nine: 9, tenth: 10, ten: 10, top: 1, last: -1,
   onnu: 1, rendu: 2, moonu: 3, naalu: 4, anju: 5, aaru: 6,
-  "முதல்": 1, "முதலாவது": 1, "இரண்டாவது": 2, "ரெண்டாவது": 2, "மூன்றாவது": 3, "நான்காவது": 4, "ஐந்தாவது": 5, "ஆறாவது": 6
+  "முதல்": 1, "முதலாவது": 1, "இரண்டாவது": 2, "ரெண்டாவது": 2, "மூன்றாவது": 3, "நான்காவது": 4, "ஐந்தாவது": 5, "ஆறாவது": 6,
+  // spoken Tamil and Tanglish forms
+  "மூணாவது": 3, "நாலாவது": 4, "அஞ்சாவது": 5, mudhal: 1, rendavathu: 2, moonavathu: 3, munavathu: 3, naalavathu: 4, anjavathu: 5
 };
 const numberIn = (t: string): number | null => {
   const d = t.match(/\b(\d{1,2})\b/);
@@ -45,16 +47,25 @@ export function localStageCommand(raw: string): LocalCmd | null {
   if (/^(clear( the)? filter|show (all|everything)( again)?|ellam kaattu|எல்லாம் காட்டு)$/.test(t)) return { op: "clear" };
   if (/^(pin (this|it)( screen)?|pin pannu|பின் செய்)$/.test(t)) return { op: "pin" };
   if (/^(full screen|bigger|expand( it)?)$/.test(t)) return { op: "full" };
+  if (/(எக்ஸ்போர்ட்|ஏற்றுமதி|export pannu|download pannu)/.test(t) && t.split(" ").length <= 5) return { op: "export", what: /png|படம்/.test(t) ? "png" : /csv/.test(t) ? "csv" : null };
   const exp = t.match(/^(export|download)( this| it| the screen)?( as)?( (a )?(png|image|picture|csv|excel|data|table))?( pannu)?$/);
   if (exp) return { op: "export", what: /png|image|picture/.test(t) ? "png" : /csv|excel|data|table/.test(t) ? "csv" : null };
   const view = t.match(/^(?:show|switch|make|change|put)?(?: (?:it|this|that))?(?: (?:to|as|into|on))?(?: an?)? ?(table|map|chart|graph|bars?)(?: view)?(?:-?aa? (?:kaattu|maathu))?$/);
   if (view) return { op: "view", view: view[1] === "table" ? "table" : view[1] === "map" ? "map" : "chart" };
+  // Tanglish: "complaints vechu sort pannu", "time-a vechu sort pannu"
+  const sortTa = t.match(/^(complaints?|time|date|value|name|severity)(?:-?a)? (?:vechu|padi) (?:sort|order|varisai) ?(?:pannu|panni kaattu)?$/);
+  if (sortTa) return { op: "sort", by: /complaint/.test(sortTa[1]) ? "complaints" : /time|date/.test(sortTa[1]) ? "time" : sortTa[1] === "name" ? "name" : sortTa[1] === "severity" ? "severity" : "value" };
   const sort = t.match(/^(?:sort|order|rank)(?: (?:them|it|these))?(?: by)? (complaints?|time|date|newest|latest|value|name|severity|worst)$/);
   if (sort) return { op: "sort", by: /complaint/.test(sort[1]) ? "complaints" : /time|date|newest|latest/.test(sort[1]) ? "time" : /name/.test(sort[1]) ? "name" : /severity|worst/.test(sort[1]) ? "severity" : "value" };
   const only = t.match(/^(?:only|just|show only|show just|keep only)(?: the)? (.+?)(?: ones| cases| items| incidents)?(?: mattum)?$/) ?? t.match(/^(.+?) (?:mattum|மட்டும்)$/);
   if (only && only[1].length >= 3 && !/\b(severe|critical|high|medium|low|open|week|month|today|quarter)\b/.test(only[1])) return { op: "filter", text: only[1].replace(/^(?:ones?|cases?|items?|incidents?) (?:in|at|from|of) /, "").replace(/^(in|at|from|la|il)\s+/, "").replace(/\s+(la|il|ones)$/, "").trim() };
   const open = t.match(/^(?:open|show|thira|திற)(?: me)?(?: the| number| no\.?)? (.+?)(?: one| case| item)?(?: thira| திற)?$/) ?? t.match(/^(.+?)(?:vathu|வது)?(?:ai)? ?(?:thira|திற|தைத் திற|ஐத் திற)$/);
   if (open) { const n = numberIn(open[1]); if (n && n > 0) return { op: "open", n }; }
+  // spoken Tamil: "மூணாவது கேஸைத் திறந்து காட்டு", "3-வதைத் திற": an ordinal and an open verb in a short sentence
+  if (/(திற|thira|thirandhu|open pannu)/.test(t) && t.split(" ").length <= 5 && !/(பேனல்|panel|news|செய்தி)/.test(t)) {
+    const n = numberIn(t);
+    if (n && n > 0) return { op: "open", n };
+  }
   const draft = t.match(/^draft(?: an?)?(?: action| alert| mail| email| letter)?(?: for| to)?(?: the)? (.+?)(?: ones?)?$/);
   if (draft) {
     // "the first three": the count follows "first"/"top"; "the first" alone is item 1

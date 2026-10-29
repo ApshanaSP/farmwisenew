@@ -20,5 +20,20 @@ library is added later; where a licence could not be confirmed, it says so.
 | [Pipecat / LiveKit](https://livekit.com/blog/best-open-source-voice-and-video-ai-agent-frameworks) | Real-time voice pipelines; interruption vs back-channel handling | Overview article | Later: smarter interruption rules |
 | Bhashini, Sarvam | Indian-language speech services | Bhashini needs registration; Sarvam is paid after ₹1,000 credits | Not used (no new paid service) |
 
+## Added for Thunai v2 (the agent and the Stage), 29 Oct 2026
+
+Read on GitHub in the browser on 29 Oct (the first four were checked by the owner's earlier session and are recorded in
+`AGENT_BUILD_PROMPT.md`; the last three were opened during this build). Patterns only: no npm dependency was added.
+
+| Source | Pattern | Used how in v2 |
+|---|---|---|
+| [openai/openai-realtime-agents](https://github.com/openai/openai-realtime-agents) "Chat-Supervisor" | A fast voice layer answers at once; a smarter model runs the tools and writes the real answer | **Two lanes**: `ackFor()` (stagelocal.ts) says "Checking the severe cases." the moment a request leaves; the agent's screen and spoken line follow |
+| [CarverXx/jarvis-v3](https://github.com/CarverXx/jarvis-v3) "dual brain" | Heartbeat tone while the agent works; short spoken replies; listen again after answering | `heartbeat()` earcon in Thunai.tsx; 1-3 sentence `say`; hands-free goes back to listening when the Stage has been read |
+| [a2ui-project/a2ui](https://github.com/a2ui-project/a2ui) (A2UI v0.9) | The agent sends declarative JSON naming components from a trusted catalog; the client renders its own components | `stage.ts`: a closed catalog (zod) of 15 block kinds; the client renders only those. Thunai goes one step further: the model names a *recipe and slots*, and code fills every block from the data |
+| [tambo-ai/tambo](https://github.com/tambo-ai/tambo) | zod-described components; "interactable" components the user refines | The open Stage (`stageContext()`: kinds and ids only) goes back with the next sentence, so "open the third one", "add Perungudi", "only the Adyar ones" act on what is shown. Library not used (Tambo Cloud closes 31 Oct 2026) |
+| [vercel/chatbot](https://github.com/vercel/chatbot) (AI SDK template) | Typed tool results render as their own components; long results open in an "artifacts" panel next to the conversation | The Stage is Thunai's artifact panel: a full screen for the answer, the console underneath, the conversation continuing in the Stage's own command bar |
+| [ag-ui-protocol/ag-ui](https://github.com/ag-ui-protocol/ag-ui) (CopilotKit's AG-UI) | Event-based agent-to-UI protocol: progress events, two-way state sync, human-in-the-loop | State goes both ways (console state and the open Stage up; console steps and the Stage down); every send stays human-in-the-loop ("confirm N"). Streaming progress events were not added (a single response is under 3 s on Groq) |
+| [thesysdev/openui](https://github.com/thesysdev/openui) (OpenUI, formerly Crayon) | A compact UI language the model writes, prompts generated from the allowed component library, "up to 67% fewer tokens than JSON" | The same token argument taken further for the Groq free tier: the model writes about 60 tokens (recipe + slots) instead of a UI tree, and the recipe list in the prompt is generated from the catalog |
+
 Not done in this build: the extra GitHub search for 3–5 more voice-control projects (for example annyang, Leon,
 OpenVoiceOS, known from general knowledge only, not checked here). It is listed as a gap in REPORT.md.

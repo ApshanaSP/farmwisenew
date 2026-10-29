@@ -108,6 +108,7 @@ THE OPEN STAGE (when "Stage:" is given): the Collector is looking at it; "this",
 
 RULES
 1. To see, list, read, count, compare, rank, map, explain or check anything in the data -> a screen. Pure steering ("Zone 7", "weekly", "open the news panel", "dark mode", "show numbers", "go back") -> steps only. Never use ask or read steps when a screen fits.
+1b. Which screen: being briefed or asking how things stand overall (today's situation, a summary of the day) -> brief, never only a page step. A level, reading or measure at a named reservoir, lake, station or for the air -> readings. Actions on what the Stage shows (export, pin, save, draft, open, sort, filter, view) go in "stage", never in steps.
 2. Also add steps only when the Collector asked to change the console itself; code sets the console's filters to match the screen.
 3. Use only the codes listed; map spoken names, Tamil names and misspellings to them ("Ambathur", "அம்பத்தூர்" -> zone 7; "mosquito"/"dengue" -> VECTOR_DISEASE; "flood"/"thanni nikkudhu" -> FLOOD_WATERLOGGING; "garbage"/"kuppai" -> SOLID_WASTE; "police" -> POL-GCP; "metro water" -> CMWSSB). A zone name -> zones [n]; a locality -> its zone if listed below, else q.
 4. reply: ONE short sentence said at once while code fetches, in THIS sentence's language (Tamil script for Tamil or Tanglish; lang ta): "Checking the severe cases." Never a figure.
@@ -214,6 +215,23 @@ export function checkStageOp(raw: unknown, stage: StageContext | null): StageOp 
   return { op: s.op as StageOp["op"], n, text: clip(s.text, 60) || null };
 }
 
+/**
+ * Models sometimes put an action on the open Stage among the console steps ({action: "export"}, {action: "panel", panel:
+ * "export"}, {action: "draft", item: 2}). With a Stage open, such a step is read as that Stage action.
+ */
+export function stageOpFromSteps(steps: unknown, stage: StageContext | null): StageOp | null {
+  if (!stage || !Array.isArray(steps)) return null;
+  for (const raw of steps as Record<string, unknown>[]) {
+    const a = String(raw?.action ?? "");
+    const op = a === "panel" && raw.panel === "export" ? "export" : a === "saveWorkspace" ? "save" : a === "item" ? "open" : a;
+    if (!(STAGE_OPS as readonly string[]).includes(op)) continue;
+    const n = typeof raw.n === "number" ? raw.n : typeof raw.item === "number" ? raw.item : null;
+    const r = checkStageOp({ op, n, text: raw.text ?? raw.option ?? null }, stage);
+    if (r) return r;
+  }
+  return null;
+}
+
 /** A tool call's arguments, built by code from the model's fields (each tool's own schema checks them again). */
 export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Record<string, unknown> } {
   const scope = { period: c.period ?? base.period, zone: c.zone ?? null, dept: c.dept ?? null, cat: c.cat ?? null, taluk: c.taluk ?? null };
@@ -276,6 +294,8 @@ export interface AgentResult {
   ms: number;
   /** what fell back, for the dock ("deadline", "model", "checker") */
   note: string | null;
+  /** dev only: the model's plan when the checker could use none of it */
+  raw?: unknown;
 }
 
 const none = (lang: Lang, t0: number, note: string | null, model: string | null = null): AgentResult =>
@@ -346,14 +366,23 @@ async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t
   if (v1.kind === "chat" || v1.kind === "refuse") return { ...base, kind: v1.kind, reply: v1.reply, ms: run.clock() - run.t0 };
   if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: v1.question, options: v1.options, ms: run.clock() - run.t0 };
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
-  const modelSteps = v1.kind === "do" ? v1.steps : [];
+  let modelSteps = v1.kind === "do" ? v1.steps : [];
   const reply = v1.kind === "do" ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
-  const stageOp = screen ? null : checkStageOp(plan.stage, input.stage);
+  // an answer screen with nothing looked up has nothing to show: the plan's other parts (or the fallbacks) answer
+  if (screen?.recipe === "answer" && !run.results.length) screen = null;
+  const own = screen ? null : checkStageOp(plan.stage, input.stage);
+  const fromSteps = screen || own ? null : stageOpFromSteps(plan.steps, input.stage);
+  const stageOp = own ?? fromSteps;
+  // a step read as a Stage action is not also run on the console underneath
+  if (fromSteps) modelSteps = modelSteps.filter((s) => !(s.a === "draft" || s.a === "item" || s.a === "workspace" || (s.a === "panel" && s.panel === "export")));
   // looked but did not choose a screen: the answer screen from what was gathered
   if (!screen && !stageOp && run.results.length) screen = { recipe: "answer", slots: emptySlots() };
   if (!screen) {
-    if (!modelSteps.length && !stageOp) return { ...base, note: "checker", ms: run.clock() - run.t0 };
+    if (!modelSteps.length && !stageOp) {
+      d.log?.(`checker left nothing of: ${JSON.stringify({ screen: plan.screen, stage: plan.stage, steps: plan.steps }).slice(0, 400)}`);
+      return { ...base, note: "checker", ms: run.clock() - run.t0, ...(process.env.NODE_ENV !== "production" ? { raw: plan } : {}) };
+    }
     return { ...base, kind: "do", reply, steps: modelSteps, stageOp, ms: run.clock() - run.t0 };
   }
   const scope0 = scopeAfter(input.state, modelSteps);
