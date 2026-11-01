@@ -22,7 +22,7 @@ let suggestCache: string[] | null = null;
 /** loads the panel's code when the pointer reaches the pill; a failed load (a dev rebuild, a dropped connection) is retried on open */
 const prefetchPanel = () => { import("./AskMapPanel").catch(() => undefined); };
 
-export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overlays, compact }: {
+export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overlays, compact, beside }: {
   ask: MapAsk;
   role: "collector" | "officer";
   toast: (msg: string, kind?: "ok" | "alert") => void;
@@ -31,6 +31,8 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
   overlays: Overlay[];
   /** the officer's smaller map: the pill says only "Ask the map" */
   compact?: boolean;
+  /** more buttons in the same row as the pill (the Collector's Rain) */
+  beside?: React.ReactNode;
 }) {
   const [suggestions, setSuggestions] = useState<string[]>(suggestCache ?? []);
   const [focusBox, setFocusBox] = useState(false);
@@ -45,10 +47,13 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
   if (!ask.grown) {
     const label = r?.kind === "answer" ? r.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") : r?.kind === "brief" ? r.brief?.label.en : null;
     return (
-      <button className="ampill" onClick={() => { setFocusBox(true); ask.setGrown(true); }} title="Ask the map a question, in English or Tamil" aria-label="Ask the map"
-        onMouseEnter={prefetchPanel} onFocus={prefetchPanel}>
-        <I n="search" />{label ? <span className="ans">{label}</span> : <span>{compact ? "Ask the map" : "Ask the map…"}</span>}
-      </button>
+      <div className="ampills">
+        <button className="ampill" onClick={() => { setFocusBox(true); ask.setGrown(true); }} title="Ask the map a question, in English or Tamil" aria-label="Ask the map"
+          onMouseEnter={prefetchPanel} onFocus={prefetchPanel}>
+          <I n="search" />{label ? <span className="ans">{label}</span> : <span>{compact ? "Ask the map" : "Ask the map…"}</span>}
+        </button>
+        {beside}
+      </div>
     );
   }
   const exportIt = () => setExporting(true);

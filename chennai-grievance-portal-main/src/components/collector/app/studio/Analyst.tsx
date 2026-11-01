@@ -185,7 +185,7 @@ function AskTab({ data, id, c, msgs, setMsgs, onSpot, onAdd, onPin, onWatched, s
                         <button className="ds-btn sm" disabled={m.watched} onClick={() => watch(m)}><I n="bell" />{m.watched ? "Alert saved" : `Alert me when ${m.a.watch.op.startsWith("g") ? "above" : "below"} ${m.a.watch.threshold.toLocaleString("en-IN")}`}</button>
                       ) : null}
                       {m.a.plan && <button className="ds-chip-b" disabled={m.added} onClick={() => { onAdd(m.a!.plan!); setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, added: true } : y))); }}><I n="plus" />{m.added ? "On the dashboard" : "Add to dashboard"}</button>}
-                      {m.a.plan && <button className="ds-chip-b" disabled={m.pinned} onClick={() => { onPin(m.a!.plan!); setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, pinned: true } : y))); }}><I n="bookmark" />{m.pinned ? "Pinned" : "Pin"}</button>}
+                      {m.a.plan && <button className="ds-chip-b" disabled={m.pinned} onClick={() => { onPin(m.a!.plan!); setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, pinned: true } : y))); }}><I n={m.pinned ? "check" : "plus"} />{m.pinned ? "On the dashboard" : "Add to dashboard"}</button>}
                       {m.a.plan && <button className="ds-chip-b" onClick={() => onSpot(m.a!.plan!, m.a!.answer)}><I n="expand" />Open</button>}
                     </div>
                     <small className="ds-a-by">{m.a.by === "ai" ? `Planned by AI (${m.a.model?.split("/").pop()}) · computed from the rows` : "Read by rules (no AI answered) · computed from the rows"}</small>

@@ -10,7 +10,87 @@
         "run",
         "dev"
       ],
-      "port": 3000
+      "port": 3000,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
+    },
+    {
+      "name": "portal-aws-dryrun",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3001"
+      ],
+      "port": 3001,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-test",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000"
+      }
+    },
+    {
+      "name": "rehearsal-3006",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3006"
+      ],
+      "port": 3006,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-rehearsal",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-rehearsal/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AI_PROVIDER": "none",
+        "AI_FALLBACK_PROVIDER": "none"
+      }
+    },
+    {
+      "name": "studio-3002",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set NEXT_DIST_DIR=.next-studio&& npm --prefix chennai-grievance-portal-main run dev -- -p 3002"
+      ],
+      "port": 3002,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
+    },
+    {
+      "name": "incubrix-light",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "D:\\incubrix-ps4\\start-light.ps1",
+        "-Port",
+        "8088"
+      ],
+      "port": 8088,
+      "env": {
+        "DATA_DIR": "C:\\Users\\DELL\\AppData\\Local\\Temp\\claude\\D--farmwisenew\\c016a308-e763-4324-b5fe-26742db8f316\\scratchpad\\preview-data"
+      }
     },
     {
       "name": "grievance-portal-3001",
@@ -24,7 +104,10 @@
         "-p",
         "3001"
       ],
-      "port": 3001
+      "port": 3001,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
     },
     {
       "name": "portal-local-build-3001",
@@ -33,34 +116,10 @@
         "/c",
         "set DATA_BACKEND=mysql&& set NEXT_DIST_DIR=.next-local&& npm --prefix chennai-grievance-portal-main run dev -- -p 3001"
       ],
-      "port": 3001
-    },
-    {
-      "name": "studio-3002",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": [
-        "/c",
-        "set NEXT_DIST_DIR=.next-studio&& npm --prefix chennai-grievance-portal-main run dev -- -p 3002"
-      ],
-      "port": 3002
-    },
-    {
-      "name": "studio-masterclass-3001",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": [
-        "/c",
-        "set STUDIO_DIR=data/studio-test&& set STUDIO_FIXTURES=1&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& npm --prefix chennai-grievance-portal-main run dev -- -p 3001"
-      ],
-      "port": 3001
-    },
-    {
-      "name": "studio-fixtures-4599",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "chennai-grievance-portal-main/scripts/studio-fixtures/server.mjs"
-      ],
-      "port": 4599,
-      "autoPort": false
+      "port": 3001,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
     },
     {
       "name": "final-test-3005",
@@ -70,7 +129,10 @@
         "set NEXT_DIST_DIR=.next-finaltest&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& set AI_PROVIDER=none&& set AI_CHAT_PROVIDER=none&& npm --prefix chennai-grievance-portal-main run start -- -H 127.0.0.1 -p 3005"
       ],
       "port": 3005,
-      "autoPort": false
+      "autoPort": false,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
     },
     {
       "name": "final-test-3005-ai",
@@ -80,7 +142,34 @@
         "set NEXT_DIST_DIR=.next-finaltest&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& npm --prefix chennai-grievance-portal-main run start -- -H 127.0.0.1 -p 3005"
       ],
       "port": 3005,
-      "autoPort": false
+      "autoPort": false,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
+    },
+    {
+      "name": "studio-masterclass-3001",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set STUDIO_DIR=data/studio-test&& set STUDIO_FIXTURES=1&& set SMTP_HOST=127.0.0.1&& set SMTP_PORT=1&& npm --prefix chennai-grievance-portal-main run dev -- -p 3001"
+      ],
+      "port": 3001,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
+    },
+    {
+      "name": "studio-fixtures-4599",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "chennai-grievance-portal-main/scripts/studio-fixtures/server.mjs"
+      ],
+      "port": 4599,
+      "autoPort": false,
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
     },
     {
       "name": "thunai-3007",
@@ -91,6 +180,83 @@
       ],
       "port": 3007,
       "autoPort": false
+    },
+    {
+      "name": "rehearsal-ux-3008",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3008"
+      ],
+      "port": 3008,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-test",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-rehearsal-ux/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AI_PROVIDER": "none",
+        "AI_FALLBACK_PROVIDER": "none"
+      }
+    },
+    {
+      "name": "jarvis-ai-3009",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3009"
+      ],
+      "port": 3009,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-test",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-rehearsal-ux/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1"
+      }
+    },
+    {
+      "name": "jarvis-prod-3010",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3010"
+      ],
+      "port": 3010,
+      "autoPort": false,
+      "env": {
+        "NEXT_DIST_DIR": ".next-prod",
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-rehearsal-ux/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1"
+      }
     }
   ]
 }

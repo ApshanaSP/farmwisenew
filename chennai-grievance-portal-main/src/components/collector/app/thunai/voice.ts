@@ -35,13 +35,31 @@ export function voiceScore(v: { name: string; lang: string; localService?: boole
   // Indian English first for an Indian Collector, then the clearest other English accents
   if (L === "en-in" && VL !== "en-in") s += /en-gb/.test(VL) ? 6 : /en-us/.test(VL) ? 4 : 0;
   if (/compact|espeak|robot/i.test(v.name)) s -= 30;
+  // Jarvis speaks with a woman's voice: the device's female voices first, its male voices last
+  const g = voiceGender(v.name);
+  if (g === "f") s += 40; else if (g === "m") s -= 40;
   return s;
 }
 
-export interface VoiceInfo { name: string; lang: string; natural: boolean }
+/**
+ * Whether a voice is a woman's or a man's, from its name (browsers do not say): the Microsoft, Google and Apple voices
+ * an Indian device has. Neerja and Pallavi (Edge's natural en-IN and ta-IN voices) and Heera (Windows) are female;
+ * Prabhat, Ravi and Valluvar male.
+ */
+const FEMALE = /\b(female|woman|neerja|heera|pallavi|swara|kalpana|aashi|ananya|aria|jenny|zira|hazel|susan|sonia|libby|natasha|clara|emma|ava|michelle|nancy|sara|samantha|veena|lekha|kanya|shruti|priya|karen|moira|tessa|fiona|victoria|serena|catherine)\b/i;
+const MALE = /\b(male|man|prabhat|ravi|valluvar|hemant|madhur|david|mark|guy|ryan|george|james|thomas|daniel|alex|fred|rishi|aaron|arthur|oliver|brian|eric|roger|steffan|christopher|andrew|davis|tony|jason)\b/i;
+export function voiceGender(name: string): "f" | "m" | null {
+  if (FEMALE.test(name) && !/\bmale\b/i.test(name)) return "f";
+  if (MALE.test(name)) return "m";
+  // Google's plain voices ("Google US English", "Google हिन्दी") are women's voices
+  if (/^google\b/i.test(name)) return "f";
+  return null;
+}
+
+export interface VoiceInfo { name: string; lang: string; natural: boolean; female: boolean }
 export function voicesFor(lang: string): VoiceInfo[] {
   return all().map((v) => ({ v, s: voiceScore(v, lang) })).filter((x) => x.s >= 0).sort((a, b) => b.s - a.s)
-    .map(({ v }) => ({ name: v.name, lang: v.lang, natural: /natural|neural|online|google|wavenet|premium|enhanced/i.test(v.name) }));
+    .map(({ v }) => ({ name: v.name, lang: v.lang, natural: /natural|neural|online|google|wavenet|premium|enhanced/i.test(v.name), female: voiceGender(v.name) === "f" }));
 }
 
 export function bestVoice(lang: string, preferred?: string | null): SpeechSynthesisVoice | null {
@@ -92,7 +110,8 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
     u.lang = voice?.lang ?? lang;
     if (voice) u.voice = voice;
     u.rate = o.rate ?? 1;
-    u.pitch = 1;
+    // a woman's voice as it is; where the device has only a man's voice for the language, a little lighter
+    u.pitch = voice && voiceGender(voice.name) === "m" ? 1.18 : 1.04;
     u.onboundary = (e) => { if (my === token && e.name === "word") o.onWord?.(q.line, e.charIndex); };
     u.onend = () => setTimeout(next, q.first && queue[at]?.first ? 260 : 40);
     u.onerror = (e) => { if ((e as SpeechSynthesisErrorEvent).error === "interrupted" || (e as SpeechSynthesisErrorEvent).error === "canceled") return; next(); };

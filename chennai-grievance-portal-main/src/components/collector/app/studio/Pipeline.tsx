@@ -29,7 +29,7 @@ export interface RunState {
 
 export const AGENT_ICON: Record<StepKey, IconName> = { read: "doc", understand: "spark", clean: "shield", place: "pin", design: "grid", link: "compare", story: "bulb" };
 /** each agent's colour, used for its orb, its notes in the console and the packet passing through it */
-const HUE: Record<StepKey, string> = { read: "#38BDF8", understand: "#A78BFA", clean: "#F59E0B", place: "#2DD4BF", design: "#F472B6", link: "#818CF8", story: "#34D399" };
+const HUE: Record<StepKey, string> = { read: "#10B981", understand: "#15803D", clean: "#F59E0B", place: "#14B8A6", design: "#84CC16", link: "#059669", story: "#34D399" };
 const ABOUT: Record<StepKey, { what: string; how: string }> = {
   read: { what: "Connects to the source and finds the data in it.", how: "Downloads the file, or opens the page in a real browser when it builds itself with JavaScript or needs a sign-in. Every table, linked file, feed and the data the page loads are scored; the best is used, the others stay a click away." },
   understand: { what: "An AI model decides what every column means.", how: "It sees the headers, column statistics and ten sample rows with personal details masked, and says whether the data is Chennai's. Its answer is checked against the values before use." },

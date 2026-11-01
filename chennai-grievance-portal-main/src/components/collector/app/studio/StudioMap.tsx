@@ -13,7 +13,7 @@ import { esc } from "../SatMap";
 import { reduced } from "./client";
 import { I } from "../icons";
 
-const RAMP = ["#312E81", "#4F46E5", "#6366F1", "#8B5CF6", "#C026D3", "#F43F5E"];
+const RAMP = ["#BBF7D0", "#86EFAC", "#4ADE80", "#16A34A", "#15803D", "#14532D"];
 const color = (t: number) => RAMP[Math.max(0, Math.min(RAMP.length - 1, Math.floor(t * (RAMP.length - 0.001))))];
 
 /** A numbered pin (Thunai's Stage): the items being talked about pulse (`hot`). */

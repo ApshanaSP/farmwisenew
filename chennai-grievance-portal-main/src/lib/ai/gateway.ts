@@ -200,6 +200,11 @@ function charge(user: string, tokens: number) {
 
 export interface JsonCall<T> {
   role: Role;
+  /**
+   * models of a provider's pool to try first (their id, without the provider), in this order; the rest keep theirs.
+   * Jarvis puts the fast ones first: a voice answer cannot wait on the big model's small per-minute allowance.
+   */
+  first?: string[];
   /** short name of the step, for logs ("router", "planner", "composer") */
   name: string;
   /** sent to the provider as a strict JSON schema */
@@ -293,7 +298,8 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
     // minute are skipped (no refused call costs the Collector time); among the rest, the least used goes first
     if (p.pool) {
       const need = Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
-      const models = p.pool(c.role).map((m, rank) => ({ ...m, rank, key: `${p.name}/${m.id}` }))
+      const lead = (id: string) => { const k = (c.first ?? []).findIndex((f) => id.split("#")[0] === f); return k < 0 ? 100 : k; };
+      const models = p.pool(c.role).map((m, i) => ({ ...m, rank: lead(m.id) * 1000 + i, key: `${p.name}/${m.id}` }))
         .filter((m) => (cooling.get(m.key) ?? 0) <= Date.now());
       const room = (m: { key: string }) => {
         const u = usedLastMinute(m.key), lim = p.limits ?? { tpm: Infinity, rpm: Infinity };

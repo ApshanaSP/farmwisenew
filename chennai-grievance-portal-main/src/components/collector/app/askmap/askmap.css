@@ -58,6 +58,18 @@
 .dic .ampill svg{width:15px;height:15px;color:var(--accent)}
 .dic .ampill .ans{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 
+/* ---- the Ask pill and the buttons beside it (the Collector's Rain), one row */
+.dic .ampills{position:absolute;left:10px;top:10px;z-index:520;display:flex;align-items:center;gap:8px;max-width:calc(100% - 64px)}
+.dic .ampills .ampill{position:static;max-width:none;min-width:0}
+.dic .rainpill{cursor:pointer;flex:none}
+.dic .rainpill .ic{color:#0284C7}
+.dic .rainpill .rp-w{font-style:normal;margin-left:2px;padding:1px 7px;border-radius:999px;background:#FEF3C7;color:#92400E;font:700 11px var(--font-ui)}
+.dic .rainpill.w-rehearse .rp-w{background:#FFEDD5;color:#9A3412}
+.dic .rainpill.w-act .rp-w{background:#FEE2E2;color:#991B1B}
+.dic .rainpill.w-act,.dic .rainpill.w-rehearse{box-shadow:0 0 0 1px rgba(234,88,12,.45),0 8px 20px -10px rgba(0,0,0,.6)}
+.dic[data-theme="dark"] .rainpill .ic{color:#7DD3FC}
+.dic[data-theme="dark"] .rainpill .rp-w{background:rgba(253,230,138,.16);color:#FDE68A}
+
 /* ---- the panel: 440 px glass over the map's left side (a third of a wide map) */
 .dic .amp{position:absolute;left:12px;top:12px;bottom:12px;width:clamp(380px,34%,460px);z-index:560;display:flex;flex-direction:column;border-radius:var(--r);overflow:hidden;
   background:var(--elev-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 0 0 1px var(--line-3),0 24px 60px -24px rgba(0,0,0,.55);color:var(--text);font:var(--fs-sm)/1.45 var(--font-ui);
@@ -333,3 +345,22 @@
 .dic .amp-next button{all:unset;box-sizing:border-box;padding:5px 10px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-2);cursor:pointer;font:600 12px var(--font-ui);color:var(--accent-2);transition:box-shadow .15s,background .15s}
 .dic .amp-next button:hover,.dic .amp-next button:focus-visible{box-shadow:0 0 0 1.5px var(--accent);background:var(--accent-soft)}
 .dic .amp-next button:disabled{opacity:.5;cursor:default}
+
+/* ---- the guide before the first question: how it works, and questions by what the Collector wants to do */
+.dic .amp-guide{display:grid;gap:12px}
+.dic .amg-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dic .amg-steps li{position:relative;display:grid;justify-items:center;gap:5px;padding:10px 6px 9px;border-radius:12px;background:var(--accent-soft);text-align:center}
+.dic .amg-steps li .n{position:absolute;top:6px;left:8px;font:700 11px var(--font-ui);color:var(--accent);opacity:.8}
+.dic .amg-steps li .ic{width:19px;height:19px;color:var(--accent)}
+.dic .amg-steps li b{font:650 12px/1.25 var(--font-ui);color:var(--text)}
+.dic .amg-g h4{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px;font:700 12.5px var(--font-ui);letter-spacing:0;text-transform:none;color:var(--text)}
+.dic .amg-g h4 .ic{width:15px;height:15px;color:var(--accent)}
+.dic .amg-g h4 small{flex-basis:100%;font:500 11.5px/1.35 var(--font-ui);color:var(--text-3)}
+.dic .amg-g .amp-sug{display:grid;gap:5px}
+.dic .amg-g .amp-sug button{display:flex;align-items:center;gap:8px;line-height:1.3;transition:box-shadow .15s,transform .15s}
+.dic .amg-g .amp-sug button .ic{width:14px;height:14px;flex:none;color:var(--text-3)}
+.dic .amg-g .amp-sug button:hover{transform:translateX(2px)}
+.dic .amg-g .amp-sug button:hover .ic{color:var(--accent)}
+.dic .amg-g.live h4 .ic{color:#D97706}
+.dic .amg-foot{display:flex;gap:7px;align-items:flex-start;margin:2px 0 0;font:500 11.5px/1.4 var(--font-ui);color:var(--text-3)}
+.dic .amg-foot .ic{width:14px;height:14px;flex:none;margin-top:1px}

@@ -40,6 +40,7 @@ import "./collector.css";
 import { MotionConfig } from "motion/react";
 import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
 import Thunai, { type ThunaiHost } from "./thunai/Thunai";
+import { LangSwitch, TopMenu } from "./TopMenu";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
 import "./marina.css";
@@ -49,13 +50,14 @@ import "./analysis.css";
 import "./nearby.css";
 import "./motionfx.css";
 import "./overview-map.css";
+import "./shell2.css";
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
 // "./command.css" and "./command-bold.css" here and add "cc" to the root's className below.
 
 // The assistant loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("./assistant/AssistantDialog"), { ssr: false });
 // Page 5 (Data Studio) loads only when it is opened
-const Studio = dynamic(() => import("./studio/Studio"), { ssr: false, loading: () => <div className="empty" style={{ margin: "auto" }}>Opening the Data Studio…</div> });
+const Studio = dynamic(() => import("./studio/Studio"), { ssr: false, loading: () => <div className="skel" role="status" aria-label="Opening the Data Studio"><span className="skel-h" /><span className="skel-l" /><span className="skel-l s" /><span className="skel-l m" /></div> });
 
 const PERIOD_KEYS: Period[] = ["daily", "weekly", "monthly", "quarterly"];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
@@ -186,6 +188,10 @@ export interface Console {
   showText: (title: string, md: string) => void;
   /** Rain & flooding on the Overview's map (rehearsal/RainView.tsx): open on a rain or on all rains, or closed */
   rainView?: { open: RainStart | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null>; api: RainApi };
+  /** open Rain & flooding on the Overview's map (the map's Rain button) */
+  openRain?: () => void;
+  /** the rain warning now, for the map's Rain button: its level and one line */
+  rainAlert?: { level: string; line: string | null; likely: number } | null;
   /** Ask the Map on the Overview's map: its state, and the actions an answer can lead to */
   mapAsk?: MapAsk;
   mapActions?: { send?: (r: AskResponse, dept: string | null) => void; export?: (r: AskResponse) => void; save?: (r: AskResponse) => void };
@@ -245,7 +251,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   /** the incident opened with Take action showing (from the By severity list) */
   const [actionFor, setActionFor] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState | null>(null);
-  const [pop, setPop] = useState<"bell" | "profile" | null>(null);
+  const [pop, setPop] = useState<"bell" | "profile" | "menu" | null>(null);
   const [bellRead, setBellRead] = useState(false);
   const [ask, setAskState] = useState(false);
   // once opened, the assistant stays mounted so the conversation survives closing it
@@ -268,6 +274,13 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: 1366, h: 680 });
+  /** Jarvis's panel at the right (its width, 0 when closed) and whether a conversation is on, for the top bar's button */
+  const [jv, setJv] = useState<{ width: number; open: boolean; conv: boolean; resting: boolean; mic?: "on" | "off" | "blocked" }>({ width: 0, open: false, conv: false, resting: false });
+  useEffect(() => {
+    const f = (e: Event) => setJv((e as CustomEvent<typeof jv>).detail);
+    window.addEventListener("jarvis:state", f);
+    return () => window.removeEventListener("jarvis:state", f);
+  }, []);
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   // light (Marina) by default; dark is the harbour at night. Remembered in this browser.
@@ -285,6 +298,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   // about a past rain opens on it; "how did we do" opens on the newest
   const [rain, setRain] = useState<RainStart | null>(null);
   const rainEsc = useRef<(() => boolean) | null>(null);
+  /** the rain warning now (none, watch, rehearse, act) and its one line, for the map's Rain button */
+  const [rainAlert, setRainAlert] = useState<{ level: string; line: string | null; likely: number } | null>(null);
   const openRain = useCallback((o: RehearsalOpen) => {
     setRain((x) => ({ rain: o.replay ?? (o.stop === "check" || o.stop === "rain" || o.stop === "learn" ? "latest" : null), seq: (x?.seq ?? 0) + 1 }));
     setPageState("overview");
@@ -313,7 +328,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   // ever scrolls. Phones in portrait are too narrow for four columns and stack instead.
   useLayoutEffect(() => {
     const f = () => {
-      const w = window.innerWidth, h = window.innerHeight;
+      // the console fits beside Jarvis's panel, never under it
+      const w = window.innerWidth - jvW.current, h = window.innerHeight;
       const on = w >= 700 && h >= 380;
       const raw = Math.min(w / FIT_W, h / FIT_H);
       const z = on ? Math.max(0.5, Math.min(1.3, raw > 1 && raw < 1.08 ? 1 : raw)) : 1;
@@ -321,9 +337,13 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     };
     f();
     setLayoutState(loadLayout());
+    fitRef.current = f;
     window.addEventListener("resize", f);
     return () => window.removeEventListener("resize", f);
   }, []);
+  const jvW = useRef(0);
+  const fitRef = useRef<() => void>(() => undefined);
+  useEffect(() => { jvW.current = jv.width; fitRef.current(); }, [jv.width]);
 
   useEffect(() => {
     fetch(dev ? "/api/rehearsal/dev?kind=geo" : "/api/collector/geo").then((r) => (r.ok ? r.json() : null)).then((g) => g && setGeo(g)).catch(() => {});
@@ -346,10 +366,9 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   // --------------------------------------------------------------- data --
   useEffect(() => {
-    if (firstLoad.current && qs === "period=daily" && reloadKey === 0) {
-      firstLoad.current = false;
-      return;
-    }
+    // the server already sent the first view (daily, whole district): not fetched again, even when React runs this twice
+    if (firstLoad.current && qs === "period=daily" && reloadKey === 0) return;
+    firstLoad.current = false;
     let live = true;
     setLoading(true);
     api(`/api/collector/overview?${qs}`)
@@ -365,12 +384,32 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const part = page === "trends" ? "trends" : page === "environment" ? "environment" : "briefing";
   // Trends and Environment & markets are district-wide: they ignore the zone, taluk and department filters
   const insQs = `${page === "trends" || page === "environment" ? `period=${period}` : qs}&part=${part}`;
+  // each page's data, kept once loaded (and fetched ahead in the background after the console opens), so turning to
+  // Briefing, Trends or Environment shows it at once instead of a wait; a reload or new data clears it
+  const insCache = useRef(new Map<string, { at: number; d: Insights }>());
+  useEffect(() => { insCache.current.clear(); }, [reloadKey]);
+  const getIns = useCallback((key: string) => {
+    const hit = insCache.current.get(key);
+    if (hit && Date.now() - hit.at < 5 * 60_000) return Promise.resolve(hit.d);
+    return api(`/api/collector/insights?${key}`).then((d: Insights) => { insCache.current.set(key, { at: Date.now(), d }); return d; });
+  }, []);
   useEffect(() => {
     if (!needIns) return;
     let live = true;
-    api(`/api/collector/insights?${insQs}`).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => live && toast(e.message, "alert"));
+    const hit = insCache.current.get(insQs);
+    if (hit) setIns({ key: insQs, d: hit.d });
+    getIns(insQs).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => live && !hit && toast(e.message, "alert"));
     return () => { live = false; };
-  }, [insQs, reloadKey, needIns, toast]);
+  }, [insQs, reloadKey, needIns, toast, getIns]);
+  useEffect(() => {
+    // the other pages, one after another, a few seconds after the console has drawn (never competing with page 1)
+    const t = setTimeout(async () => {
+      for (const key of [`${qs}&part=briefing`, `period=${period}&part=trends`, `period=${period}&part=environment`]) {
+        if (!insCache.current.has(key)) await getIns(key).catch(() => undefined);
+      }
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [qs, period, reloadKey, getIns]);
   const ins = insState?.key === insQs ? insState.d : null;
 
   // The Briefing's developing stories (duplicates joined, repeats dropped, storyai.ts) and AI key points (aibrief.ts) take
@@ -611,6 +650,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     saveWorkspace, openSavedWorkspace, archived, closeArchived: () => setArchived(null),
     showText: (title, md) => setModal({ kind: "text", title, md }),
     rainView: { open: rain, close: () => setRain(null), esc: rainEsc, api: dev ? DEV_RAIN_API : LIVE_RAIN_API },
+    openRain: () => openRain({ replay: null, manual: false }),
+    rainAlert,
     mapAsk,
     askOnMap: (q) => {
       closeAll();
@@ -631,7 +672,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
       // Ctrl+K opens the assistant
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setAsk(true);
+        window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } }));
         return;
       }
       if (e.key === "Escape") {
@@ -670,11 +711,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const clearFilters = () => { setDept(null); setZone(null); setCatState(null); setTalukState(null); };
   const openExport = () => setModal({ kind: "export", title: "Export report" });
   const openCustomize = () => setModal({ kind: "customize", title: "Customize the dashboard" });
-  const askWith = (q: string) => {
-    setAsk(true);
-    // the assistant loads on first open, so hand the question over once it is listening
-    [60, 900].forEach((ms) => setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), ms));
-  };
+  // a typed question from anywhere (the palette, a card) goes to Jarvis, which answers in its panel
+  const askWith = (q: string) => { window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); };
 
   // Thunai, the voice pilot: it presses these same controls; a sentence's filters land in one render and one undo
   const thunaiHost: ThunaiHost = {
@@ -696,7 +734,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
-    { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The assistant, in English, Tamil or Tanglish", kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "chat", l: "Jarvis", s: "Talk or type, in English or Tamil", kbd: "Ctrl K", run: () => window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } })) },
     { g: "Actions", ic: "cloud", l: "Rain & flooding (மழை வெள்ளம்)", s: "Where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one",
       run: () => openRain({ replay: null, manual: false }) },
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
@@ -745,20 +783,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
           <span className="tspace" />
-          {/* Rain & flooding is always one click away (the rain band appears only when a warning is out) */}
-          <button className={`rr-top${rain && page === "overview" ? " on" : ""}`} onClick={() => (rain && page === "overview" ? setRain(null) : openRain({ replay: null, manual: false }))}
-            title="Rain & flooding: where water stood in past heavy rains, and the jobs to send before the next one" aria-pressed={!!rain && page === "overview"}>
-            <I n="cloud" /><span>Rain</span>
-          </button>
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
-          <button className="tbtn icon" onClick={openExport} title="Export report: PDF or CSV action list" aria-label="Export report"><I n="download" /></button>
-          <button className={`tbtn icon${workspaceName ? " on" : ""}`} onClick={c.openWorkspace} title={workspaceName ? `Workspace: ${workspaceName}` : "Save or reopen a workspace"} aria-label="Workspaces"><I n="layers" /></button>
-          <button className="tbtn icon" onClick={openCustomize} title="Choose what the dashboard shows" aria-label="Customize"><I n="sliders" /></button>
-          <button className="tbtn icon theme-t" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-            <span key={theme ?? "l"} className="theme-ic"><I n={theme === "dark" ? "sun" : "moon"} /></span>
-          </button>
+          <LangSwitch />
+          {/* the tools, each with its name (they were five bare icons) */}
+          <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} items={[
+            { key: "export", icon: "download", label: "Export report", sub: "PDF report or CSV action list", run: openExport },
+            { key: "ws", icon: "layers", label: "Workspaces", sub: workspaceName ? `Open: ${workspaceName}` : "Save or reopen a view", on: !!workspaceName, run: c.openWorkspace },
+            { key: "custom", icon: "sliders", label: "Customize the dashboard", sub: "Choose what the dashboard shows", run: openCustomize },
+            { key: "theme", icon: theme === "dark" ? "sun" : "moon", label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
+            { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds, OCR upload, audit log", run: c.openFeeds }
+          ]} />
           <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)}
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
             items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />
@@ -786,18 +822,19 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
 
         <div className="body">
-          {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys (on every page) */}
-          <AlertBar now={ov.now} />
-          {/* heavy rain near: the rain band, with its countdown and the jobs done; opens Rain & flooding on the map */}
-          <RainBand onOpen={openRain} hidden={!!rain && page === "overview"} />
+          {/* heavy rain near: no band of its own any more (the map's Rain button carries it); this keeps the warning level
+              and opens Rain & flooding when Ask the Map asks for it */}
+          <RainBand onOpen={openRain} hidden onState={setRainAlert} />
           {/* the ocean band: when, which data, the page (on page 1 the greeting, key points and counts) and the filters */}
           <section className={`band${page === "overview" ? " hero" : ""}`}>
             <div className="band-row">
               <div className="band-t">
                 <div className="band-eb">
                   <span>{fmtDay(ov.now)}</span>
-                  <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} />
-                  <FreshWarn ov={ov} page={page} onClick={c.openFeeds} />
+                  {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys: one chip, details on a click */}
+                  <AlertBar now={ov.now} compact />
+                  {/* one chip for the data: when it was collected, amber with the count when a feed this page uses is late */}
+                  <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} page={page} />
                 </div>
                 <RollTitle text={page === "overview" ? `${greeting(ov.now)}, Collector` : PAGE_TITLE[page]} />
               </div>
@@ -877,10 +914,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} askMap={(q) => c.askOnMap?.(q)} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        <button className="ask-fab ask-fab-v2" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
-          <i className="ask-ico"><AskIcon size={22} /></i><span className="ask-label">Ask District IQ<kbd>Ctrl K</kbd></span>
-          {insightCount > 0 && !ask && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
-        </button>
+        {/* Jarvis, where the chat always was: talk or type (or just say "Hi Jarvis") */}
+        {!jv.open && (
+          <button className={`ask-fab ask-fab-v2 jv-fab${jv.conv ? " conv" : ""}`} onClick={() => window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } }))}
+            aria-label="Ask Jarvis (Ctrl+K)" title={jv.resting ? "Ask Jarvis: listening for \"Hi Jarvis\" (or type, Ctrl+K)" : jv.mic === "blocked" ? "Ask Jarvis (Ctrl+K). The microphone is blocked: allow it in the address bar to use \"Hi Jarvis\"" : "Ask Jarvis (Ctrl+K). Click once to turn on \"Hi Jarvis\""}>
+            <i className="ask-ico"><AskIcon size={22} /></i>
+            <span className="ask-label">Ask Jarvis<kbd>Ctrl K</kbd></span>
+            {/* whether "Hi Jarvis" can be heard right now, in words: never a silent button */}
+            {/* "Hi Jarvis" is heard (green) or not (amber: the microphone is off or blocked); the words are in the tooltip */}
+            <i className={`jv-fab-st${jv.resting || jv.conv ? " on" : ""}`} aria-hidden="true" />
+            {insightCount > 0 && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
+          </button>
+        )}
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} />}
         <Thunai host={thunaiHost} />
       </div>
@@ -911,8 +956,11 @@ const PAGE_ICON: Record<PageKey, IconName> = { overview: "grid", briefing: "news
 const TAB_LABEL: Record<PageKey, string> = { overview: "Overview", briefing: "Briefing", trends: "Trends", environment: "Environment", studio: "Data Studio" };
 
 /** Are the feeds current? The collection time always leads; a feed behind turns the chip orange. Pulses once on new data. */
-function Collected({ ov, onClick, live, partial }: { ov: OverviewData; onClick: () => void; live: number; partial: string[] }) {
+function Collected({ ov, onClick, live, partial, page }: { ov: OverviewData; onClick: () => void; live: number; partial: string[]; page: PageKey }) {
   const s = ov.collection;
+  // the feeds this page draws on that are more than twice their refresh interval behind (they were a second, long chip)
+  const late = (ov.collection?.stale ?? []).filter((f) => (PAGE_FEEDS[page] ?? []).includes(f.source));
+  const lateTip = late.length ? `\n\nBehind for this page:\n${late.map((f) => freshnessLine(f, page === "environment" ? "this page" : "today's view")).join("\n")}` : "";
   const all = !!s && s.total > 0 && s.missing.length === 0;
   // the time the data was collected always leads; how many feeds are current goes on the second line
   const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
@@ -923,8 +971,8 @@ function Collected({ ov, onClick, live, partial }: { ov: OverviewData; onClick: 
     ` ${live} of ${ov.feeds.length} feeds live.` + (partial.length ? ` Partly available (some endpoints blocked): ${partial.join(", ")}.` : "") +
     " Click for the data sources: status, refresh, OCR, audit log.";
   return (
-    <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick}>
-      <LiveDot state={s && !all ? "warn" : "ok"} /><span>{head}<small>{sub}</small></span>
+    <button key={ov.exportedAt} className={`daily${(s && !all) || late.length ? " pend" : ""}`} title={tip + lateTip} onClick={onClick}>
+      <LiveDot state={(s && !all) || late.length ? "warn" : "ok"} /><span>{head}{late.length ? <em className="late">{late.length} {late.length === 1 ? "feed" : "feeds"} behind</em> : null}<small>{sub}</small></span>
     </button>
   );
 }

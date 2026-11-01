@@ -15,6 +15,7 @@
  * Every figure comes from the unified district intelligence store. Ask District IQ answers for
  * this department only.
  */
+import { LangSwitch } from "@/components/collector/app/TopMenu";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Wordmark } from "@/components/Logo";
@@ -43,6 +44,7 @@ import "@/components/collector/app/civic.css";
 import "@/components/collector/app/marina.css";
 import "@/components/collector/app/action.css";
 import "@/components/collector/app/motionfx.css";
+import "@/components/collector/app/shell2.css";
 import { MotionConfig } from "motion/react";
 import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
 import { LiveDot, SegmentedControl } from "@/components/ui";
@@ -503,6 +505,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
+          <LangSwitch compact />
           <div className="rel">
             <Collected ov={ov} live={feedsOk} onClick={() => setPop((p) => (p === "feeds" ? null : "feeds"))} />
             {pop === "feeds" && (

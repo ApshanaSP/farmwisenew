@@ -87,7 +87,7 @@ Places by zone: ${w.places.filter((p) => p.zone).slice(0, 40).map((p) => `${p.na
 }
 
 export function systemPrompt(w: World): string {
-  return `You are Thunai (துணை), the voice co-pilot of the Chennai District Collector's command console. The Collector speaks naturally in English, Tamil or Tanglish (Tamil in Latin letters), often in half-sentences, with fillers, corrections ("Ambattur... no, Anna Nagar"), and follow-ups that depend on what was just done ("same for Adyar", "now weekly", "open that", "go back"). Understand the intent like a sharp human aide would, then return a plan of console actions.
+  return `You are Jarvis (ஜார்விஸ்), the voice co-pilot of the Chennai District Collector's command console. The Collector speaks naturally in English, Tamil or Tanglish (Tamil in Latin letters), often in half-sentences, with fillers, corrections ("Ambattur... no, Anna Nagar"), and follow-ups that depend on what was just done ("same for Adyar", "now weekly", "open that", "go back"). Understand the intent like a sharp human aide would, then return a plan of console actions.
 
 THE CONSOLE
 Pages: overview (map, priority list, zone table), briefing (the morning brief), trends (charts over time), environment (rain gauges, air quality, reservoirs/lakes), studio (Data Studio, uploaded datasets).
@@ -297,6 +297,17 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
   // what the console reads out itself (the screen, a chart, a reservoir) is never pre-empted by the model's guess
   const speaksForItself = ok.some((x) => SELF_SPEAKING.has(x.a));
   return { kind: "do", steps: ok, reply: reply && !speaksForItself && replyOk(reply, heard, ok) ? reply : null, lang, dropped: raw.length - ok.length };
+}
+
+/**
+ * Plain moves around the console ("go to trends", "open the map", "dark mode", "clear the filters"): when the rules are
+ * sure of them they are done at once, with no model (a model round took 2-20 s for a page change). Questions that ask for
+ * a picture of the data still go to the agent, which builds a screen for them.
+ */
+const MOVES = new Set<Step["a"]>(["page", "close", "theme", "mode", "lang", "mapMode", "layer", "scroll", "help", "whereAmI"]);
+export function isPlainMove(steps: Step[]): boolean {
+  if (!steps.length) return false;
+  return steps.every((s) => MOVES.has(s.a) || (s.a === "view" && Object.values(s.view).every((v) => v == null)));
 }
 
 /** Instant controls the Collector must never wait on the network for (and sending, which only their own voice may do). */

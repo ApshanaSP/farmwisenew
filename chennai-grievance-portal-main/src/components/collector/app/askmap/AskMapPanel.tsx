@@ -12,7 +12,8 @@ import type { AskResponse } from "@/lib/map/ask";
 import { applyChip, type PlanChip } from "@/lib/map/chips";
 import { fmtDistance } from "@/lib/map/geom";
 import { LAYER_WORD } from "@/lib/map/words";
-import { I } from "../icons";
+import { I, type IconName } from "../icons";
+import { useLang } from "@/lib/i18n/lang";
 import { SEV_HEX } from "../lib";
 import { canListen, listen } from "../assistant/speech";
 import type { MapAsk, Turn } from "./useMapAsk";
@@ -203,13 +204,46 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
   );
 }
 
+/**
+ * What the map is for, before the first question: three steps (ask, see exactly where, act) and questions grouped by
+ * what the Collector is trying to do, each one checked to have an answer in the data. The live suggestions (made from
+ * today's open cases, lib/map/suggest.ts) come first.
+ */
+const GROUPS: { ic: IconName; en: string; ta: string; why: [string, string]; qs: string[] }[] = [
+  { ic: "cloud", en: "Before the rain", ta: "மழைக்கு முன்", why: ["Flooding next to hospitals and schools, to clear first.", "மருத்துவமனை, பள்ளி அருகே உள்ள வெள்ளம்: முதலில் சரிசெய்ய."],
+    qs: ["open flooding within 500 m of hospitals", "waterlogging within 300 m of schools", "compare Adyar and Velachery flooding"] },
+  { ic: "alert", en: "Where to act first", ta: "முதலில் எங்கே செயல்படுவது", why: ["The serious cases, and the streets where one problem keeps coming back.", "கடுமையானவை, ஒரே பிரச்சனை திரும்ப வரும் தெருக்கள்."],
+    qs: ["severe cases this week", "where are garbage complaints clustering", "streetlight complaints by ward"] },
+  { ic: "social", en: "People and places", ta: "மக்களும் இடங்களும்", why: ["What is near schools, and which wards are far from help.", "பள்ளிகள் அருகே என்ன, உதவியிலிருந்து தொலைவான வார்டுகள்."],
+    qs: ["road accidents within 1 km of schools", "what is happening in Teynampet", "which ward is farthest from a fire station"] },
+  { ic: "globe", en: "In Tamil", ta: "தமிழில்", why: ["Ask the way you speak.", "நீங்கள் பேசுவது போலவே கேளுங்கள்."],
+    qs: ["அடையாறு அருகே திறந்த புகார்கள்", "மருத்துவமனைகள் அருகே குப்பை புகார்கள்"] }
+];
+
 function Empty({ w, suggestions, onPick }: { w: Words; suggestions: string[]; onPick: (q: string) => void }) {
+  const [ui] = useLang();
+  const ta = ui === "ta";
+  const steps: [IconName, string, string][] = [["search", "Ask in one sentence", "ஒரே வரியில் கேளுங்கள்"], ["map", "See exactly where", "எங்கே என்று பாருங்கள்"],
+    ["send", "Send, export or plan visits", "அனுப்பு, பதிவிறக்கு, வருகை"]];
+  const live = suggestions.filter((q) => !GROUPS.some((g) => g.qs.includes(q))).slice(0, 4);
   return (
-    <div className="amp-empty">
-      <p style={{ margin: "2px 0 8px", color: "var(--text-2)" }}>{w.empty}</p>
-      {suggestions.length > 0 && <h4>{w.suggest}</h4>}
-      <div className="amp-sug">{suggestions.map((s) => <button key={s} onClick={() => onPick(s)}>{s}</button>)}</div>
-      <ul className="amp-sell">{SELLING.map(([a, b]) => <li key={a}><b>{a}</b> {b}</li>)}</ul>
+    <div className="amp-empty amp-guide" data-no-i18n>
+      <ol className="amg-steps" aria-label={ta ? "எப்படி" : "How it works"}>
+        {steps.map(([ic, en, t], i) => <li key={en}><span className="n">{i + 1}</span><I n={ic} /><b>{ta ? t : en}</b></li>)}
+      </ol>
+      {live.length > 0 && (
+        <section className="amg-g live">
+          <h4><I n="bolt" />{ta ? "இன்றைய தரவிலிருந்து" : "From today's data"}</h4>
+          <div className="amp-sug">{live.map((q) => <button key={q} onClick={() => onPick(q)}>{q}</button>)}</div>
+        </section>
+      )}
+      {GROUPS.map((g) => (
+        <section key={g.en} className="amg-g">
+          <h4><I n={g.ic} />{ta ? g.ta : g.en}<small>{ta ? g.why[1] : g.why[0]}</small></h4>
+          <div className="amp-sug">{g.qs.map((q) => <button key={q} onClick={() => onPick(q)}><I n="arrowUR" />{q}</button>)}</div>
+        </section>
+      ))}
+      <p className="amg-foot"><I n="info" />{ta ? "ஒவ்வொரு புள்ளியும் உண்மையான புகார்: அதைத் தட்டினால் யார், எப்போது, நிலை தெரியும்." : "Every dot is a real report: click one to see who reported it, when, and its status."}<span hidden>{w.empty}</span></p>
     </div>
   );
 }

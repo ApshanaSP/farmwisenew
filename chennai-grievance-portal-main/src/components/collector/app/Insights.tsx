@@ -15,7 +15,12 @@ import { METRICS, caption, dataAge, pctChange, shortWindow, windowText } from "@
 
 export { mdToHtml };
 
-const Loading = () => <div className="empty" style={{ margin: "auto" }}><I n="refresh" className="spin" />Preparing…</div>;
+/** While a page's data arrives: cards that shimmer in the shape of what is coming, never a blank "Preparing…". */
+const Loading = () => (
+  <div className="skel" role="status" aria-label="Loading">
+    <span className="skel-h" /><span className="skel-l" /><span className="skel-l s" /><span className="skel-l" /><span className="skel-l m" /><span className="skel-l s" />
+  </div>
+);
 
 /** An AI write-up from /api/collector/brief (aibrief.ts): undefined while it is written, null when no model answered. */
 function useAi<T>(qs: string | null): T | null | undefined {
@@ -533,6 +538,12 @@ function Rising({ t, where, c }: { t: Insights["trends"]["weekly"]; where: Insig
   const real = rows.filter((r) => r.cat !== "OTHERS" && r.before >= 5);
   const up = real.filter((r) => (r.chg ?? 0) >= 10), down = real.filter((r) => (r.chg ?? 0) <= -10);
   const WORD = (r: typeof rows[number]) => r.chg == null ? "New" : r.state === "up" ? `${r.chg}% more` : r.state === "down" ? `${Math.abs(r.chg)}% fewer` : "About the same";
+  // no reports in the 8 weeks: one plain line instead of a lead, headers and an empty table
+  if (!rows.length) return (
+    <div className="rs">
+      <p className="rs-empty"><I n="checkc" />Not enough weekly reports yet to compare the last 4 weeks with the 4 before. Unusual rises and recurring hotspots are below.</p>
+    </div>
+  );
   return (
     <div className="rs">
       <p className="rs-lead">

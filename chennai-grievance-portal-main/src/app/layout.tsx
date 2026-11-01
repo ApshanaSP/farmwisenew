@@ -10,6 +10,8 @@ import "@/components/ui/ui.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { TAB_SESSION_SCRIPT } from "@/lib/tab-session";
+import { LANG_SCRIPT } from "@/lib/i18n/script";
+import Translator from "@/components/i18n/Translator";
 
 const THEME_SCRIPT =
   "try{if(localStorage.getItem('diq-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}";
@@ -34,8 +36,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         {/* every tab signs in and out on its own (lib/tab-session.ts); runs before the app's first fetch */}
         <script dangerouslySetInnerHTML={{ __html: TAB_SESSION_SCRIPT }} />
+        {/* the chosen language (English or Tamil) before the first paint */}
+        <script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} />
       </head>
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased">
+        {children}
+        {/* the whole site in Tamil when chosen: the words are swapped in place, numbers untouched */}
+        <Translator />
+      </body>
     </html>
   );
 }

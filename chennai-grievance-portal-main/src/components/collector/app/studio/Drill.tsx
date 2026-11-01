@@ -86,7 +86,7 @@ export default function Drill({ id, start, extra, c, onClose, onFocus, onAsk, on
             <button className="ds-chip-b" onClick={draft} disabled={note === "busy"}>{note === "busy" ? <span className="ds-spin sm" /> : <I n="scroll" />}Draft a note to the department</button>
             <a className="ds-chip-b" href={csv}><I n="download" />Download these {data.rows.toLocaleString("en-IN")} rows</a>
             <button className="ds-chip-b" onClick={() => onPin({ ...level.plan, id: `p_${Date.now().toString(36)}`, title: `${level.plan.title}: ${data.label}`, filters: data.filters, by: level.plan.by === "time" ? "time" : "none", chart: level.plan.by === "time" ? "area" : "kpi" })}>
-              <I n="bookmark" />Pin</button>
+              <I n="plus" />Add to dashboard</button>
           </div>
           {note && note !== "busy" && (
             <div className="ds-note">

@@ -12,8 +12,11 @@ import "./rehearsal.css";
 
 export interface RehearsalOpen { replay: string | null; manual: boolean; stop?: "warn" | "act" | "rain" | "check" | "learn" | null; focus?: "streets" | "help" | "schools" | "drains" | null }
 
-export function RainBand({ onOpen, hidden }: { onOpen: (o: RehearsalOpen) => void; hidden?: boolean }) {
+export function RainBand({ onOpen, hidden, onState }: { onOpen: (o: RehearsalOpen) => void; hidden?: boolean;
+  /** the warning level and its one line, for the map's Rain button (the band itself is hidden on the Collector's console) */
+  onState?: (s: { level: string; line: string | null; likely: number } | null) => void }) {
   const [d, setD] = useState<RehearsalState | null>(null);
+  useEffect(() => { onState?.(d ? { level: d.trigger.level, line: d.trigger.reasons[0]?.en ?? null, likely: d.counts.likely } : null); }, [d]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     let live = true;
     const load = () => fetch("/api/rehearsal/state").then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j?.trigger) setD(j); }).catch(() => undefined);

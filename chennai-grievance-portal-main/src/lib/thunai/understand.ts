@@ -558,7 +558,7 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "whatDid": return ta ? "செய்தது" : "What I did";
     case "repeat": return ta ? "மறுபடி" : "Repeat";
     case "stop": return ta ? "நிறுத்து" : "Stop";
-    case "off": return ta ? "துணை அணை" : "Thunai off";
+    case "off": return ta ? "ஜார்விஸ் அணை" : "Jarvis off";
     case "help": return ta ? "உதவி" : "Help";
     default: return (step as Step).a;
   }

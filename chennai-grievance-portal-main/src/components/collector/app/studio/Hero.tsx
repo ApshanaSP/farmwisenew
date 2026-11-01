@@ -70,8 +70,8 @@ function Constellation() {
             <stop offset="1" stopColor="#0B7290" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="dsSpoke" x1="0" x2="1">
-            <stop offset="0" stopColor="#38BDF8" stopOpacity="0" />
-            <stop offset=".5" stopColor="#38BDF8" stopOpacity=".9" />
+            <stop offset="0" stopColor="#10B981" stopOpacity="0" />
+            <stop offset=".5" stopColor="#10B981" stopOpacity=".9" />
             <stop offset="1" stopColor="#18A7BC" stopOpacity="0" />
           </linearGradient>
         </defs>

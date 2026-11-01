@@ -44,9 +44,18 @@ export function listen(lang: "en-IN" | "ta-IN", onText: (t: string) => void, onD
     onText(`${final}${interim}`.trim());
   };
   r.onerror = (e) => { if (e.error !== "no-speech" && e.error !== "aborted") onError(e.error); };
-  r.onend = () => onDone(final.trim());
-  r.start();
+  // one recogniser at a time: Jarvis's wake word steps aside while anything else listens (thunai/wake.ts)
+  micBusy(true);
+  r.onend = () => { micBusy(false); onDone(final.trim()); };
+  try { r.start(); } catch (e) { micBusy(false); onError((e as Error).message || "busy"); }
   return () => r.stop();
+}
+
+let busyN = 0;
+/** Tells the page a microphone is in use (or free again): "diq:mic" with true or false. */
+export function micBusy(on: boolean) {
+  busyN = Math.max(0, busyN + (on ? 1 : -1));
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("diq:mic", { detail: busyN > 0 }));
 }
 
 /** Read text aloud in the answer's language; `onEnd` runs when it finishes or is stopped. Returns false where speech is unavailable. */

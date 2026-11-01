@@ -4,6 +4,7 @@ import { Phone } from "lucide-react";
 import BrandWordmark from "@/components/BrandWordmark";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
+import LangToggle from "@/components/LangToggle";
 import AuthHero from "@/components/auth/AuthHero";
 import AuthCard from "@/components/auth/AuthCard";
 
@@ -22,6 +23,7 @@ export default function AuthShell({ children, headline }: { children: ReactNode;
               <Phone className="h-4 w-4 text-navy-500" aria-hidden="true" />
               Helpline <b className="font-mono text-ink">1913</b>
             </a>
+            <LangToggle />
             <ThemeToggle />
           </div>
         </div>

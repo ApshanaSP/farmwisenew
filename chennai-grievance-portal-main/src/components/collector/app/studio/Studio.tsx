@@ -239,7 +239,7 @@ export default function Studio({ c }: { c: Console }) {
           <div className="ds-lib-l">
             <button className={`ds-li board${mode.k === "board" ? " on" : ""}`} onClick={() => setMode({ k: "board" })}>
               <span className="ds-li-ic"><I n="bookmark" /></span>
-              <span className="ds-li-b"><b>Studio board</b><small>{list?.board.length ? `${list.board.length} pinned ${list.board.length === 1 ? "chart" : "charts"}` : "Pin charts from any dataset"}</small></span>
+              <span className="ds-li-b"><b>On the dashboard</b><small>{list?.board.length ? `${list.board.length} ${list.board.length === 1 ? "chart" : "charts"} added` : "Add charts from any dataset"}</small></span>
             </button>
             <button className={`ds-li board${mode.k === "connectors" ? " on" : ""}`} onClick={() => setMode({ k: "connectors" })}>
               <span className="ds-li-ic"><I n="refresh" /></span>
@@ -308,10 +308,10 @@ function Board({ list, c, onOpen, onChanged }: { list: ListResp | null; c: Conso
     <section className="ds-span card ds-board">
       <header className="ds-board-h">
         <span className="ds-ws-ic k-board"><I n="bookmark" /></span>
-        <div><h2>Studio board</h2><small>Charts pinned from any dataset, recomputed from the latest rows every time you open the board.</small></div>
+        <div><h2>On the dashboard</h2><small>Charts added from any dataset, shown on the Environment page and recomputed from the latest rows every time.</small></div>
       </header>
       {!items.length ? (
-        <div className="ds-empty big"><I n="bookmark" /><b>Nothing pinned yet</b>Open a dataset and press the bookmark on any chart, or pin an answer from the AI analyst.</div>
+        <div className="ds-empty big"><I n="bookmark" /><b>Nothing added yet</b>Open a dataset and press “Add to dashboard” on any chart, or add an answer from the AI analyst.</div>
       ) : (
         <div className="ds-board-g">
           {items.map(({ pin, panel, dataset }, i) => (

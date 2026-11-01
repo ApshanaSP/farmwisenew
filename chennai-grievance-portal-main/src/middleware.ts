@@ -67,6 +67,11 @@ export async function middleware(request: NextRequest) {
   requestHeaders.delete(PORTAL_HEADER);
 
   const portal = portalFromPath(pathname);
+  // dev only: the server compiling its own pages at start (instrumentation-node.ts) is let through; with no session the
+  // page itself redirects to /login, but it is compiled, so the first real sign-in does not wait for the compiler
+  const warm = process.env.NODE_ENV !== "production" && request.headers.get("x-diq-warm") === "1" &&
+    (request.nextUrl.hostname === "127.0.0.1" || request.nextUrl.hostname === "localhost");
+  if (portal && warm) return NextResponse.next();
   if (portal) {
     if (!(await portalSession(request, portal))) return toLogin(request, pathname);
     requestHeaders.set(PORTAL_HEADER, portal);

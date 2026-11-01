@@ -85,7 +85,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
   const pin = useCallback(async (plan: Plan, on: boolean) => {
     try {
       await api(`/api/collector/studio/${id}`, { json: on ? { action: "pin", plan } : { action: "unpin", planId: plan.id } });
-      c.toast(on ? `Pinned "${plan.title}" to the Studio board.` : "Removed from the board.");
+      c.toast(on ? `Added "${plan.title}" to the dashboard: it is on the Environment page, under Your data.` : "Removed from the dashboard.");
       refresh(); onPinned();
     } catch (e: any) { c.toast(e.message, "alert"); }
   }, [id, c, refresh, onPinned]);
@@ -178,7 +178,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
             <div className="ds-spot-b">{renderChart(spot.panel, c, focusZone, pick(spot.panel), "100%")}</div>
             <footer>
               {spot.panel.note && <small>{spot.panel.note}</small>}
-              <button className="ds-ghost" onClick={() => pin(spot.panel.plan, !pinned.has(spot.panel.plan.id))}><I n="bookmark" />{pinned.has(spot.panel.plan.id) ? "Unpin" : "Pin to board"}</button>
+              <button className="ds-ghost" onClick={() => pin(spot.panel.plan, !pinned.has(spot.panel.plan.id))}><I n={pinned.has(spot.panel.plan.id) ? "check" : "plus"} />{pinned.has(spot.panel.plan.id) ? "On the dashboard" : "Add to dashboard"}</button>
               {!m.panels.some((x) => x.id === spot.panel.plan.id) && <button className="ds-btn" onClick={() => addPanel(spot.panel.plan)}><I n="plus" />Add to this dashboard</button>}
             </footer>
           </div>
@@ -339,7 +339,8 @@ function PanelCard({ p: drawn, i, c, zone, onPick, pinned, onPin, onExpand, onRe
         <div className="ds-p-t"><h4>{p.title}</h4><small>{p.subtitle}{hint}</small></div>
         <div className="ds-p-acts">
           {canTable && <button className={rowsView ? "on" : ""} aria-pressed={rowsView} onClick={() => setRowsView((x) => !x)} title={rowsView ? "Show as a chart" : "Show as a table"} aria-label={rowsView ? "Show as a chart" : "Show as a table"}><I n={rowsView ? "chart" : "table"} /></button>}
-          <button className={pinned ? "on" : ""} onClick={() => onPin(!pinned)} title={pinned ? "Unpin from the board" : "Pin to the Studio board"} aria-label="Pin"><I n="bookmark" /></button>
+          <button className={`ds-todash${pinned ? " on" : ""}`} onClick={() => onPin(!pinned)} title={pinned ? "On the dashboard (Environment page): click to remove" : "Add this chart to the dashboard (Environment page)"} aria-pressed={pinned}>
+            <I n={pinned ? "check" : "plus"} /><span>{pinned ? "On dashboard" : "Add to dashboard"}</span></button>
           <button onClick={onExpand} title="Open large" aria-label="Open large"><I n="expand" /></button>
           {onRemove && <button onClick={onRemove} title="Remove from this dashboard" aria-label="Remove"><I n="x" /></button>}
         </div>

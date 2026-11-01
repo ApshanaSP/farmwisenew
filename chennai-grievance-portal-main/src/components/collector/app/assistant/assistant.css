@@ -598,3 +598,13 @@
 /* thinking: coral is the AI's colour */
 .dic .aq.v2 .aq-typing{background:var(--surface);border:1px solid var(--line);border-radius:14px}
 .dic .aq.v2 .aq-dots i{background:var(--ai)}
+
+/* round 26: a chat answer can open as Jarvis's full screen */
+.aq-col { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.aq-col > * { max-width: 100%; }
+.aq-stage { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, .45);
+  background: rgba(16, 185, 129, .1); color: #047857; font: 600 12px/1 inherit; cursor: pointer; transition: background .2s, transform .15s; }
+.aq-stage:hover { background: rgba(16, 185, 129, .18); transform: translateY(-1px); }
+.aq-stage svg { width: 14px; height: 14px; }
+html[data-theme="dark"] .aq-stage { color: #6EE7B7; }
+.aq-col > .aq-card, .aq-col > .aq-typing { width: 100%; }

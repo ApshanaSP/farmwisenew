@@ -16,6 +16,7 @@ import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useState } from "react";
 import { AttentionCard } from "./Attention";
+import YourData from "./YourData";
 import AskOverlay from "./askmap/AskOverlay";
 import { useMapChrome } from "./askmap/Chrome";
 import dynamic from "next/dynamic";
@@ -26,6 +27,22 @@ const RainView = dynamic(() => import("./rehearsal/RainView"), { ssr: false });
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
 
 // =================================================================== page 1 ==
+
+/**
+ * Rain & flooding, beside "Ask the map…" on the map itself: the one way in (the top bar's button and the rain band
+ * are gone). When IMD or the flood monitor warns of rain, the button turns to the warning's colour and says so.
+ */
+function RainPill({ c }: { c: Console }) {
+  const a = c.rainAlert;
+  const warn = a && a.level !== "none" ? a.level : null;
+  return (
+    <button className={`ampill rainpill${warn ? ` w-${warn}` : ""}`} onClick={() => c.openRain?.()}
+      title={warn && a?.line ? `Rain & flooding: ${a.line}. Where water stood in past heavy rains, and the jobs to send before the next one.` : "Rain & flooding: where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one"}>
+      <I n="cloud" /><span>Rain</span>
+      {warn && <em className="rp-w">{warn === "act" ? "Heavy rain soon" : warn === "rehearse" ? "Heavy rain likely" : "Rain watch"}</em>}
+    </button>
+  );
+}
 
 /** The KPI tiles, in the order the Collector chose (Customize). */
 function useKpis(d: OverviewData, c: Console) {
@@ -136,7 +153,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                   <RainView key={rv.open!.seq} geo={c.geo} api={rv.api} start={rv.open!} onClose={rv.close} onLayer={setRainLayer}
                     onOpenIncident={(id) => c.openInc(id)} toast={c.toast} escRef={rv.esc} />
                 ) : c.mapAsk && (
-                  <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => c.openInc(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays} />
+                  <AskOverlay ask={c.mapAsk} role="collector" toast={c.toast} onOpen={(id) => c.openInc(id)} layersMenu={chrome.layersMenu} overlays={chrome.overlays}
+                    beside={c.openRain && <RainPill c={c} />} />
                 )}
                 {c.mapMode === "zones"
                   ? <div className="map-heat"><span>Incidents by zone</span><div /><span><em>Fewer</em><em>More</em></span></div>
@@ -448,14 +466,18 @@ export function EnvPage({ d, ins, c }: { d: OverviewData; ins: Insights | null; 
   let ix = 0;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   return (
-    // conditions in a compact column on the left; the price table gets the page's full height on the right
-    <section className="p2 env2">
-      <div className="env2-col">
+    // the three readings side by side across the top, each with room for its chart; under them the prices, and the
+    // Collector's own data (charts added from the Data Studio) beside them
+    <section className="p2 env3">
+      <div className="env3-top">
         <RainCard d={d} c={c} env={env} style={iv()} />
         <AqiCard c={c} d={d} env={env} style={iv()} />
         <LakeCard c={c} d={d} env={env} style={iv()} />
       </div>
-      <article className="card mk-card" style={iv()}><MarketsCard ins={ins} c={c} /></article>
+      <div className="env3-bot">
+        <article className="card mk-card" style={iv()}><MarketsCard ins={ins} c={c} /></article>
+        <YourData c={c} />
+      </div>
     </section>
   );
 }
@@ -517,7 +539,7 @@ function StationPicker({ c, kind, all }: { c: Console; kind: Kind; all: Station[
   return (
     <select className="sel" style={{ marginLeft: "auto", maxWidth: 170 }} value={c.envSel[kind] ?? "auto"} aria-label="Choose station"
       onChange={(e) => c.setEnvSel(kind, e.target.value)}>
-      <option value="auto">All stations (average)</option>
+      <option value="auto">All stations</option>
       {all.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
     </select>
   );

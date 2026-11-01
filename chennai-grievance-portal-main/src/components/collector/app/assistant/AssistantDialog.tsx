@@ -382,8 +382,14 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
               return (
                 <div key={it.id} className="aq-row bot">
                   <BrandMark size={28} className="aq-av" />
-                  <AnswerCard card={it.card} geo={c.geo} onAsk={onAsk} onAction={onAct} expanded={wide} onExpand={onExpand} onPin={pin}
-                    reveal={live.current.has(it.card.id)} onRetry={q && !busy && k === items.length - 1 ? () => ask(q) : undefined} />
+                  <div className="aq-col">
+                    <AnswerCard card={it.card} geo={c.geo} onAsk={onAsk} onAction={onAct} expanded={wide} onExpand={onExpand} onPin={pin}
+                      reveal={live.current.has(it.card.id)} onRetry={q && !busy && k === items.length - 1 ? () => ask(q) : undefined} />
+                    {/* Jarvis builds the same question as a full screen over the console, with its charts, and says it */}
+                    {q && <button className="aq-stage" onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); }}
+                      title={lang === "en" ? "Jarvis shows this answer as a full screen with charts, and reads it out" : "ஜார்விஸ் இதை முழுத் திரையில் காட்டும்"}>
+                      <I n="tv" />{lang === "en" ? "Show on screen with Jarvis" : "ஜார்விஸ் திரையில் காட்டு"}</button>}
+                  </div>
                 </div>
               );
             }

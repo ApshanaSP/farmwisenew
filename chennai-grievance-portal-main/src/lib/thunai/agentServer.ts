@@ -8,6 +8,7 @@ import { AgentPlanLenient, AgentPlanSchema, directScreen, runThunaiAgent, type A
 import { PlanBody, screenOf } from "./brain";
 import type { Hands } from "./screens";
 import { checkStage, RECIPES, type StageContext } from "./stage";
+import { offTopic, quickScreen } from "./quick";
 import type { Lang, World } from "./types";
 
 const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock" ? "bedrock" : "groq");
@@ -35,13 +36,55 @@ function served(r: AgentResult): AgentResult {
 export async function handleAgent(b: AgentBodyT, world: World, hands: Hands, user: string, mem: { notes: string[]; habits: Record<string, string> } = { notes: [], habits: {} }): Promise<AgentResult> {
   const state = screenOf(b.state);
   if (b.direct) return served(await directScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang));
+  // the everyday questions (severe cases, a place's news, prices, air, rain, lakes, why, where) are answered from the data
+  // at once by rules, in the language they were asked in; the model is asked only when the rules are not sure
+  // Jarvis answers only about the district: anything else gets a polite "ask me about the district" and no model call
+  if (offTopic(b.text, world)) {
+    const lang: Lang = /[\u0B80-\u0BFF]/.test(b.text) ? "ta" : "en";
+    const reply = lang === "ta"
+      ? "மன்னிக்கவும், சென்னை மாவட்டத்தின் தரவு பற்றி மட்டுமே என்னால் பதில் சொல்ல முடியும்: புகார்கள், சம்பவங்கள், செய்திகள், மழை மற்றும் வெள்ளம், காற்றின் தரம், ஏரிகள், சந்தை விலைகள், துறைகள். இவற்றைப் பற்றிக் கேளுங்கள்."
+      : "Sorry, I can only answer questions about Chennai district's data on this console: complaints and incidents, news, rain and flooding, air quality, reservoirs, market prices and departments. Please ask me about those.";
+    return { kind: "refuse", lang, reply, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "off-topic" };
+  }
+  const quick = quickScreen(b.text, world);
+  if (quick) {
+    const lang: Lang = /[஀-௿]/.test(b.text) ? "ta" : "en";
+    let r = served(await directScreen(quick.recipe, quick.slots, state, world, hands, b.text, lang));
+    // nothing today ("where did the fire happen today", no fire today): the last 7 days instead, and Jarvis says so
+    const empty = (x: AgentResult) => !!x.stage && x.stage.blocks.every((bl) => bl.kind === "Note");
+    if (empty(r) && quick.recipe === "cases" && (quick.slots.period === "daily" || quick.slots.period === "weekly")) {
+      const tries: ["weekly" | "monthly", string, string][] = quick.slots.period === "daily"
+        ? [["weekly", "None today. ", "இன்று எதுவும் இல்லை. "], ["monthly", "None today or this week. ", "இன்றும் இந்த வாரமும் இல்லை. "]]
+        : [["monthly", "None this week. ", "இந்த வாரம் இல்லை. "]];
+      for (const [period, en, ta] of tries) {
+        const wk = served(await directScreen("cases", { ...quick.slots, period }, state, world, hands, b.text, lang));
+        if (!wk.stage || empty(wk)) continue;
+        r = { ...wk, say: `${lang === "ta" ? ta : en}${wk.say ?? ""}`, stage: { ...wk.stage, say: { en: `${en}${wk.stage.say.en}`, ta: `${ta}${wk.stage.say.ta}` } } };
+        break;
+      }
+    }
+    if (r.kind === "do" && r.stage) return { ...r, note: "quick" };
+  }
   return served(await runThunaiAgent({ text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage: (b.stage ?? null) as StageContext | null }, {
     world, hands,
     llm: async (system, prompt, round, timeoutMs) => {
-      const r = await generateJson({
-        role: provider() === "groq" ? "reasoning" : "fast", name: `thunai_agent${round}`, schema: AgentPlanSchema, lenient: AgentPlanLenient, system, prompt,
-        temperature: 0, maxOutputTokens: 1100, user, prefer: provider(), timeoutMs
+      // Jarvis must not wait on one slow free tier: when the main provider has not answered in 3.5 s, a second provider
+      // (Gemini) is asked too, and the first good answer is used (the other call is cancelled)
+      const ask = (prefer: "groq" | "bedrock" | "gemini", signal: AbortSignal) => generateJson({
+        role: prefer === "groq" ? "reasoning" : "fast", name: `thunai_agent${round}`, schema: AgentPlanSchema, lenient: AgentPlanLenient, system, prompt,
+        temperature: 0, maxOutputTokens: 1100, user, prefer, timeoutMs, abortSignal: signal,
+        // Groq: qwen answers a Jarvis plan in about a second; gpt-oss-120b takes longer and has only 8,000 tokens a minute
+        first: (process.env.JARVIS_MODELS_FIRST ?? "qwen/qwen3.8-27b,openai/gpt-oss-20b").split(",").map((x) => x.trim()).filter(Boolean)
       });
+      const a = new AbortController(), b2 = new AbortController();
+      const main = ask(provider(), a.signal);
+      if (!process.env.GEMINI_API_KEY) return { plan: (await main).object, model: (await main).info.model };
+      const backup = new Promise<Awaited<typeof main>>((res, rej) => {
+        const t = setTimeout(() => ask("gemini", b2.signal).then(res, rej), 3500);
+        main.then(() => clearTimeout(t), () => { clearTimeout(t); ask("gemini", b2.signal).then(res, rej); });
+      });
+      const r = await Promise.any([main, backup]);
+      a.abort(); b2.abort();
       return { plan: r.object, model: r.info.model };
     },
     log: (m) => console.info(`[thunai agent] ${m}`)

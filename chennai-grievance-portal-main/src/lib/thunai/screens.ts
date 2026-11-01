@@ -9,6 +9,7 @@ import { aggregate, change, largestGaps, median, peak, rank, round, share, spoke
 import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { nextSteps } from "./next";
+import { ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -143,7 +144,7 @@ const scopeArg = (s: ScopeT, extra: Partial<ScopeT> = {}) => {
 type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
-  cases, case: caseDetail, news, readings, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, answer: async () => {
+  cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
   }
 };
@@ -211,7 +212,7 @@ async function cases(c: Ctx): Promise<Part> {
     return { title, takeaway: null,
       say: inherited
         ? bi(`No ${sevWord} cases ${PERIOD_EN[s.period]} with the console's filters (${filters.en}). Say "all of Chennai" to look across the district.`, `கன்சோல் வடிகட்டிகளுடன் (${filters.ta}) ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை. முழு மாவட்டத்தையும் பார்க்க "முழு சென்னை" என்று சொல்லுங்கள்.`)
-        : bi(`There are no ${sevWord} cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
+        : bi(`There are no ${sevWord ? `${sevWord} ` : ""}cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
       blocks: [{ kind: "Note", id: "none", text: inherited ? `No incidents match this view. The console still has these filters on: ${filters.en}.` : "No incidents match this view." }],
       next: inherited ? [{ label: { en: "All of Chennai", ta: "முழு சென்னை" }, kind: "direct", recipe: "cases", slots: { ...slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, ids: [], text: null }] : [] };
   }
@@ -284,10 +285,25 @@ async function caseDetail(c: Ctx): Promise<Part> {
 
 // ------------------------------------------------------------------ news --
 
+/** the words that name a zone in a news report: its names in both languages and the localities inside it */
+function zoneWords(w: World, zone: number): string[] {
+  const z = ZONES[zone];
+  const out = [...(z?.en ?? []), ...(z?.ta ?? []), w.zones.find((x) => x.n === zone)?.name ?? ""];
+  for (const p of w.places) if (p.zone === zone) out.push(p.name, ...p.aliases);
+  return [...new Set(out.map((x) => x.toLowerCase().trim()).filter((x) => x.length >= 4))];
+}
+
 async function news(c: Ctx): Promise<Part> {
-  const { s, slots } = c;
+  const { s, slots, w } = c;
   c.runs.push("console_news");
-  const r = await c.h.news(s);
+  // the console keeps no news list per zone (reports carry a place name, not a zone): the district's news is read and
+  // kept to the reports that name the zone or a locality in it
+  const zone = s.zone;
+  const zoneName = zone ? w.zones.find((x) => x.n === zone)?.name ?? `Zone ${zone}` : null;
+  const r0 = await c.h.news(zone ? { ...s, zone: null } : s);
+  const zw = zone ? zoneWords(w, zone) : [];
+  const inZone = (x: Row) => !zone || zw.some((wd) => `${x.loc ?? ""} ${x.title ?? ""} ${x.original ?? ""}`.toLowerCase().includes(wd));
+  const r = { ...r0, rows: r0.rows.filter(inZone) };
   c.sources.add("console latest news");
   c.asOf ??= r.asOf;
   // words that ask for news are not its topic ("today's news", "read the headlines", "இன்றைய செய்திகள்")
@@ -308,7 +324,21 @@ async function news(c: Ctx): Promise<Part> {
     }));
     if (found.length) { items = found; c.notes.push("Found by searching every news report (the latest news had none on this)."); }
   }
-  let topic = words.length && slots.q ? ` about ${slots.q}` : "";
+  // a zone with no report of its own in the latest news: every report is searched for it
+  if (zone && !items.length) {
+    const sr = await call(c, "search_records", { text: zoneName, scope: scopeArg({ ...s, zone: null }), kinds: ["news"] }).catch(() => null);
+    items = ((sr?.data as { news?: Row[] } | undefined)?.news ?? []).filter(inZone).map((x) => ({
+      id: String(x.id ?? x.doc_id ?? x.title), title: clip(x.title, 300), source: clip(x.publisher ?? x.source, 80) || null, t: x.t ?? x.published ?? null,
+      place: clip(x.place ?? x.loc, 120) || null, incidentId: x.incident ?? x.incident_id ?? null, url: typeof x.url === "string" && /^https?:\/\//.test(x.url) && x.url.length <= 2000 ? x.url : null
+    }));
+  }
+  if (zone && !items.length) {
+    return { title: `News · ${zoneName} · ${PERIOD_EN[s.period]}`, takeaway: null,
+      say: bi(`No news report named ${zoneName} ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} ${ZONE_TA[zone] ?? zoneName} பற்றி செய்தி இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: `No news report ${PERIOD_EN[s.period]} names ${zoneName} or a place in it.` }],
+      next: [{ label: { en: "All of Chennai's news", ta: "சென்னை முழுவதும்" }, kind: "direct", recipe: "news", slots: { ...slots, zones: [], fresh: true }, ids: [], text: null }] };
+  }
+  let topic = words.length && slots.q ? ` about ${slots.q}` : zoneName ? ` from ${zoneName}` : "";
   // a topic nothing matched: say so, and still show the latest news
   if (words.length && !items.length) {
     c.notes.push(`No news matched "${clip(slots.q, 80)}"; showing the latest news instead.`);
@@ -320,12 +350,62 @@ async function news(c: Ctx): Promise<Part> {
   }
   items = items.slice(0, Math.min(slots.n ?? 12, 20));
   const title = `News${topic} · ${PERIOD_EN[s.period]}`;
+  const taTopic = zone ? `${ZONE_TA[zone] ?? zoneName} ` : "";
   if (!items.length) return { title, takeaway: null, say: bi(`No news${topic} ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
   const linked = items.filter((x) => x.incidentId).length;
   return {
     title, takeaway: linked ? bi(`${linked} of these ${items.length} headlines are linked to an incident.`, `இந்த ${items.length} தலைப்புகளில் ${linked} ஒரு சம்பவத்துடன் இணைந்தவை.`) : null,
-    say: bi(`${plural(items.length, "headline", "headlines")}${topic}. Reading them now.`, `${spoken(items.length)} தலைப்புச் செய்திகள். படிக்கிறேன்.`),
+    say: bi(`${plural(items.length, "headline", "headlines")}${topic}. Reading them now.`, `${taTopic}${spoken(items.length)} தலைப்புச் செய்திகள். படிக்கிறேன்.`),
     blocks: [{ kind: "NewsReader", id: "news", title, total: words.length ? items.length : r.total, items }]
+  };
+}
+
+// ------------------------------------------------------------------ prices --
+
+interface MandiRow { commodity: string; markets: number; avg_per_kg: number | null; avg_prev_per_kg: number | null;
+  prices: { market: string; date: string; per_kg: number; prev_per_kg: number | null }[] }
+
+/** Vegetable prices at Chennai's markets (AGMARKNET): one item's price at every market, or the day's price list. */
+async function prices(c: Ctx): Promise<Part> {
+  const r = await call(c, "mandi_prices", { commodity: c.slots.q, market: null });
+  const d = r.data as { rows: MandiRow[]; latest: string | null; unknown: string[] };
+  const latest = d.latest ? when(d.latest) ?? d.latest : null;
+  if (!d.rows?.length) {
+    const what = c.slots.q ?? "vegetables";
+    return { title: `Prices · ${what}`, takeaway: null, say: bi(`There is no recent market price for ${what}.`, `${what} விலை சமீபத்திய சந்தை அறிக்கைகளில் இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: `No Chennai market reported a price for ${what} in the last 14 days.` }] };
+  }
+  const rs = (x: number | null) => (x == null ? "—" : `₹${Math.round(x)}`);
+  if (c.slots.q) {
+    const it = d.rows[0];
+    const ps = [...it.prices].sort((a, b) => a.per_kg - b.per_kg);
+    const lo = ps[0], hi = ps[ps.length - 1];
+    const ch = it.avg_per_kg != null && it.avg_prev_per_kg ? change(it.avg_per_kg, it.avg_prev_per_kg) : { delta: null, pct: null };
+    const trendEn = ch.pct == null || Math.abs(ch.pct) < 3 ? "about the same as the last report" : `${Math.abs(ch.pct)}% ${ch.pct > 0 ? "up" : "down"} since the last report`;
+    const trendTa = ch.pct == null || Math.abs(ch.pct) < 3 ? "முந்தைய அறிக்கையைப் போலவே" : `முந்தைய அறிக்கையை விட ${Math.abs(ch.pct)}% ${ch.pct > 0 ? "அதிகம்" : "குறைவு"}`;
+    const say = bi(`${it.commodity} costs ${rs(it.avg_per_kg)} a kilo on average across ${it.markets} Chennai markets, ${trendEn}. Cheapest at ${lo.market}, ${rs(lo.per_kg)}; dearest at ${hi.market}, ${rs(hi.per_kg)}.`,
+      `${it.commodity} சராசரியாக கிலோ ${rs(it.avg_per_kg)}, ${it.markets} சென்னை சந்தைகளில்; ${trendTa}. மலிவு: ${lo.market}, ${rs(lo.per_kg)}; அதிகம்: ${hi.market}, ${rs(hi.per_kg)}.`);
+    return {
+      title: `${it.commodity} prices · Chennai markets`, takeaway: ch.pct != null && Math.abs(ch.pct) >= 10 ? bi(`${it.commodity} is ${trendEn}.`, `${it.commodity} ${trendTa}.`) : null, say,
+      blocks: [
+        { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+          { key: "avg", label: `Average, ${it.markets} markets`, value: Math.round(it.avg_per_kg ?? 0), unit: "₹/kg", prev: it.avg_prev_per_kg == null ? null : Math.round(it.avg_prev_per_kg), delta: ch.delta, tone: ch.pct != null && ch.pct >= 10 ? "bad" : "neutral", spark: [] },
+          { key: "lo", label: `Cheapest: ${lo.market}`, value: Math.round(lo.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "good", spark: [] },
+          { key: "hi", label: `Dearest: ${hi.market}`, value: Math.round(hi.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "neutral", spark: [] }
+        ] },
+        { kind: "Ranking", id: "markets", title: `${it.commodity} at each market${latest ? ` · reports to ${latest}` : ""}`, unit: "₹/kg", method: "AGMARKNET modal price, rupees per kilo (the latest report of each market)", order: "bottom",
+          items: ps.map((p, i) => ({ key: p.market, label: p.market, value: Math.round(p.per_kg), rank: i + 1, sub: `${p.date}${p.prev_per_kg != null ? ` · was ₹${Math.round(p.prev_per_kg)}` : ""}`, zone: null, lat: null, lon: null, action: "none" as const })) }
+      ]
+    };
+  }
+  const list = d.rows.filter((x) => x.avg_per_kg != null);
+  const ups = list.map((x) => ({ x, ch: x.avg_prev_per_kg ? change(x.avg_per_kg!, x.avg_prev_per_kg) : { delta: null, pct: null } })).filter((y) => (y.ch.pct ?? 0) >= 10);
+  return {
+    title: "Vegetable prices · Chennai markets", takeaway: ups.length ? bi(`Up 10% or more: ${ups.map((y) => y.x.commodity).join(", ")}.`, `10% அல்லது அதிகம் உயர்ந்தவை: ${ups.map((y) => y.x.commodity).join(", ")}.`) : null,
+    say: bi(`Prices of ${list.length} items at Chennai markets${latest ? `, reports to ${latest}` : ""}. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} went up.` : "No big rises."}`,
+      `சென்னை சந்தைகளில் ${list.length} பொருட்களின் விலை. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} விலை உயர்ந்துள்ளது.` : "பெரிய உயர்வு இல்லை."}`),
+    blocks: [{ kind: "Ranking", id: "prices", title: "Average price per kilo", unit: "₹/kg", method: "AGMARKNET modal prices averaged across the Chennai markets that reported", order: "top",
+      items: list.map((x, i) => ({ key: x.commodity, label: x.commodity, value: Math.round(x.avg_per_kg!), rank: i + 1, sub: x.avg_prev_per_kg != null ? `was ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} markets` : `${x.markets} markets`, zone: null, lat: null, lon: null, action: "none" as const })) }]
   };
 }
 

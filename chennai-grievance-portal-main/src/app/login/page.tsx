@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, FormEvent } from "react";
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import AuthShell from "@/components/AuthShell";
+import ConsoleLoader from "@/components/ConsoleLoader";
 import { authError, authLeave } from "@/components/auth/AuthCard";
 
 function LoginForm() {
@@ -17,6 +18,8 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  /** signed in: the console is on its way */
+  const [leaving, setLeaving] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,10 +38,10 @@ function LoginForm() {
         authError();
         return;
       }
-      // the card steps back before the console assembles
+      // the card steps back while the console is fetched (one navigation: a refresh after it built the console twice)
+      setLeaving(true);
       await authLeave();
-      router.push(data.redirectTo || "/");
-      router.refresh();
+      router.replace(data.redirectTo || "/");
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -48,6 +51,7 @@ function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-[420px]">
+      {leaving && <ConsoleLoader overlay />}
       <h1 className="font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] text-ink">Welcome back</h1>
       <p className="mt-1.5 text-[15px] text-ink-muted">
         Sign in with your District IQ account. You&apos;ll land on the dashboard for your role.

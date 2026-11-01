@@ -133,3 +133,31 @@ body.thunai-dim .card:not(.thunai-spot), body.thunai-dim .bb-card:not(.thunai-sp
   .thunai .th-card, .thunai .th-tray { right: 16px; left: 16px; width: auto; bottom: 210px; }
   .thunai .th-panel { left: 16px; right: 16px; width: auto; top: 12px; bottom: 210px; }
 }
+
+/* ---- Jarvis (round 26): a name tag beside the orb, a softly turning glow while the wake word listens, and every
+   reply in the other language under it */
+.thunai{--jv-a:#10B981;--jv-b:#0EA5E9;--jv-c:#84CC16}
+.thunai .th-orb{width:52px;height:52px;bottom:78px;right:24px;opacity:.92;
+  background:radial-gradient(circle at 32% 28%,#6EE7B7,var(--jv-a) 45%,#047857 100%);box-shadow:0 10px 28px -8px rgba(4,120,87,.6),0 0 0 1px rgba(255,255,255,.35) inset}
+.thunai.on .th-orb{opacity:1}
+.thunai .th-orb::before{content:"";position:absolute;inset:-5px;border-radius:50%;padding:2px;opacity:0;transition:opacity .3s;
+  background:conic-gradient(from 0deg,var(--jv-a),var(--jv-b),var(--jv-c),var(--jv-a));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;animation:jv-turn 3.2s linear infinite}
+.thunai .th-orb.wake::before,.thunai .th-orb.listening::before,.thunai .th-orb.speaking::before,.thunai .th-orb.thinking::before{opacity:1}
+.thunai .th-orb.listening::before{animation-duration:1.1s}
+.thunai .th-orb.listening{box-shadow:0 0 0 6px rgba(16,185,129,.18),0 0 0 14px rgba(16,185,129,.08),0 10px 28px -8px rgba(4,120,87,.6)}
+.thunai .th-orb .core{width:18px;height:18px}
+@keyframes jv-turn{to{transform:rotate(360deg)}}
+.thunai .th-name{position:fixed;right:84px;bottom:86px;z-index:2147483000;display:flex;flex-direction:column;align-items:flex-end;gap:0;padding:5px 12px 6px;border-radius:12px;
+  border:1px solid var(--th-line);background:color-mix(in srgb,var(--th-bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--th-shadow);
+  color:var(--th-fg);cursor:pointer;line-height:1.15;transition:transform .2s,opacity .2s}
+.thunai .th-name:hover{transform:translateX(-2px)}
+.thunai .th-name b{font:750 13px var(--font-ui,Inter),system-ui;letter-spacing:.01em;background:linear-gradient(90deg,#047857,#0EA5E9);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme="dark"] .thunai .th-name b{background:linear-gradient(90deg,#6EE7B7,#7DD3FC);-webkit-background-clip:text;background-clip:text}
+.thunai .th-name small{font:500 11px var(--font-ui,Inter),"Noto Sans Tamil",system-ui;color:var(--th-muted);white-space:nowrap}
+.thunai .th-name.wake small::before{content:"";display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#10B981;vertical-align:1px;animation:jv-dot 1.6s ease-in-out infinite}
+@keyframes jv-dot{50%{opacity:.25}}
+.thunai .th-alt{margin:3px 0 0;font-size:13px;line-height:1.45;color:var(--th-muted);border-top:1px dashed var(--th-line);padding-top:4px}
+.thunai .th-bar{bottom:146px}
+@media (prefers-reduced-motion:reduce){.thunai .th-orb::before,.thunai .th-name.wake small::before{animation:none}}
+@media (max-width:700px){.thunai .th-name{display:none}}

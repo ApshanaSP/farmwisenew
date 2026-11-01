@@ -1,0 +1,211 @@
+/* Round 26 shell: the tools in one labelled menu, the language switch, the alert as a chip in the band, and Rain beside
+   "Ask the map…" on the map. Loaded after the other console sheets. */
+
+/* ---- the Menu button and its drop-down */
+.dic .tm-btn{position:relative;gap:7px;padding:0 10px 0 11px}
+.dic .tm-btn .ic{width:16px;height:16px}
+.dic .tm-btn .tm-chev{width:14px;height:14px;color:var(--text-3);transition:transform .2s}
+.dic .tm-btn.on{border-color:var(--accent);color:var(--text);background:var(--accent-soft)}
+.dic .tm-btn.on .tm-chev{transform:rotate(180deg)}
+.dic .tm-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.dic .tm-pop{position:absolute;right:0;width:330px;z-index:900;display:grid;gap:2px;transform-origin:top right;animation:tm-in .18s cubic-bezier(.16,1,.3,1) both}
+@keyframes tm-in{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.dic .tm-i{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;text-align:left}
+.dic .tm-i b{display:block;font:650 13.5px/1.25 var(--font-ui);color:var(--text)}
+.dic .tm-i small{display:block;font:500 12px/1.3 var(--font-ui);color:var(--text-3);margin-top:1px}
+.dic .tm-i.on b{color:var(--accent)}
+.dic .tm-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.dic .tm-ic .ic{width:17px;height:17px}
+.dic .tm-lang{display:flex;align-items:center;gap:11px;margin-top:4px;padding:10px 10px 6px;border-top:1px solid var(--line)}
+.dic .tm-lang-l{flex:1;min-width:0}
+.dic .tm-lang-l b{display:block;font:650 13.5px/1.25 var(--font-ui);color:var(--text)}
+.dic .tm-lang-l small{display:block;font:500 12px/1.3 var(--font-ui);color:var(--text-3)}
+.dic .tm-seg{display:inline-flex;padding:3px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.dic .tm-seg button{height:26px;padding:0 10px;border:0;border-radius:999px;background:none;color:var(--text-2);font:600 12.5px var(--font-ui);cursor:pointer}
+.dic .tm-seg button.on{background:var(--accent);color:#fff}
+
+/* ---- English / தமிழ் */
+.dic .lang-sw{gap:7px;padding:0 11px 0 6px}
+.dic .lang-sw .lang-a{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:700 13px/1 var(--font-ui)}
+@media (max-width:1180px){.dic .lang-sw span:last-child,.dic .tm-btn>span{display:none}.dic .lang-sw{padding:0 6px}}
+
+/* ---- the alert: one chip in the band's top line */
+.dic .alc-w{display:inline-flex;min-width:0}
+.dic .alc{display:inline-flex;align-items:center;gap:6px;height:22px;max-width:320px;padding:0 8px 0 7px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:var(--band-ink);font:650 11.5px var(--font-ui)}
+.dic .alc b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650}
+.dic .alc .ic{width:13px;height:13px;flex:none}
+.dic .alc.t-red{background:rgba(255,120,110,.28);border-color:rgba(255,160,150,.55)}
+.dic .alc.t-orange{background:rgba(255,190,90,.24);border-color:rgba(255,200,120,.5)}
+.dic .alc.t-yellow,.dic .alc.t-watch{background:rgba(255,225,120,.2);border-color:rgba(255,225,140,.45)}
+.dic .alc:hover,.dic .alc.open{background:rgba(255,255,255,.22)}
+.dic .alc-dot{width:7px;height:7px;border-radius:50%;background:#FF8A7A;flex:none;box-shadow:0 0 0 0 rgba(255,138,122,.6);animation:alc-pulse 1.8s ease-out infinite}
+.dic .alc.t-yellow .alc-dot,.dic .alc.t-watch .alc-dot{background:#FFE08A}
+.dic .alc.t-orange .alc-dot{background:#FFC56E}
+@keyframes alc-pulse{to{box-shadow:0 0 0 7px rgba(255,138,122,0)}}
+.dic .alc-pop{position:absolute;z-index:950;width:min(600px,calc(100% - 24px));max-height:420px;overflow:auto;padding:12px 14px;display:grid;gap:9px;font-size:12.5px;
+  background:var(--elev-glass,var(--surface));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-3);border-radius:var(--r);
+  box-shadow:var(--shadow-pop);color:var(--text);animation:tm-in .18s cubic-bezier(.16,1,.3,1) both;
+  --c:var(--medium)}
+.dic .alc-pop.t-red{--c:var(--critical)}
+.dic .alc-pop.t-orange{--c:var(--high)}
+.dic .alc-line{margin:0;font:600 13px/1.45 var(--font-ui);color:var(--text)}
+.dic .alc-admin{display:flex;gap:8px;align-items:flex-start;margin:0;color:var(--text-2)}
+.dic .alc-admin .ic{width:15px;height:15px;color:var(--high);flex:none;margin-top:2px}
+.dic .alc-admin button{margin-left:auto;border:0;background:none;color:var(--text-3);cursor:pointer}
+
+/* ---- Environment (round 26): three readings across the top, prices and Your data under them */
+.dic .p2.env3{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1.22fr);gap:12px}
+.dic .env3-top{min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.dic .env3-bot{min-height:0;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:12px}
+.dic .env3 .env{min-height:0;display:flex;flex-direction:column}
+.dic .env3 .env .ch{padding:10px 14px 4px}
+.dic .env3 .env .ch h3{font-size:14px}
+.dic .env3 .env .ch>.ic{width:26px;height:26px;padding:5px}
+.dic .env3 .env .sel{height:28px;font-size:12px;max-width:150px!important}
+.dic .env3 .env .cb{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);grid-template-rows:auto minmax(0,1fr);column-gap:14px;row-gap:6px;padding:4px 14px 12px}
+.dic .env3 .env .env-lbl{display:none}
+.dic .env3 .env .env-top{grid-column:1;gap:8px;flex-wrap:wrap}
+.dic .env3 .env .env-v{font-size:30px}
+.dic .env3 .env .env-v small{font-size:12px}
+.dic .env3 .env .lvl{padding:3px 8px;font-size:10px}
+.dic .env3 .env .trend{margin-left:0;padding:3px 8px 3px 4px;gap:6px}
+.dic .env3 .env .trend .arr{width:22px;height:22px;border-radius:7px}
+.dic .env3 .env .trend .arr .ic{width:13px;height:13px}
+.dic .env3 .env .trend b{font-size:12px}
+.dic .env3 .env .trend small{font-size:10.5px}
+.dic .env3 .env .scale{display:none}
+.dic .env3 .env .env-say{grid-column:1;font-size:12px;line-height:1.5;color:var(--text-2);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.dic .env3 .env .env-chart,.dic .env3 .env .cb>.empty{grid-column:2;grid-row:1/3;min-height:0}
+.dic .env3 .env .cb>.empty{font-size:12px;padding:8px}
+.dic .env3 .mk-card{min-height:0}
+.dic .env3 .mk-card .cb.mk-cb{padding:0 14px 10px}
+.dic:not(.fit) .p2.env3{grid-template-rows:none}
+.dic:not(.fit) .env3-top,.dic:not(.fit) .env3-bot{grid-template-columns:minmax(0,1fr)}
+.dic:not(.fit) .env3-top>*{height:230px}
+.dic:not(.fit) .env3-bot>*{min-height:420px}
+
+/* ---- Your data (YourData.tsx): folded beside the prices; "Show all" opens it over the whole page */
+.dic .yd{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.dic .yd.all{position:absolute;inset:0;z-index:40;box-shadow:0 30px 80px -30px rgba(6,40,20,.55);animation:yd-grow .38s cubic-bezier(.16,1,.3,1) both;transform-origin:bottom right}
+@keyframes yd-grow{from{opacity:.4;transform:scale(.6)}}
+.dic .yd-h{flex:none;display:flex;align-items:center;gap:8px;padding:12px 14px 8px}
+.dic .yd-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;color:#fff;background:linear-gradient(135deg,#15803D,#10B981 60%,#84CC16)}
+.dic .yd-ic .ic{width:16px;height:16px}
+.dic .yd-t{flex:1;min-width:0}
+.dic .yd-t h3{margin:0;font:700 14px/1.2 var(--font-ui);color:var(--text)}
+.dic .yd-t small{display:block;font:500 11.5px var(--font-ui);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .yd-more{flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);font:650 12px var(--font-ui);cursor:pointer}
+.dic .yd-more .ic{width:13px;height:13px}
+.dic .yd-more.ghost{width:28px;padding:0;justify-content:center;background:none;border-color:var(--line)}
+.dic .yd-b{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:0 12px 12px;overflow:auto}
+.dic .yd-acts{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.dic .yd-acts button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;padding:7px 10px;border-radius:10px;background:var(--high-soft,#FFF7ED);cursor:pointer}
+.dic .yd-acts button:hover{box-shadow:0 0 0 1px var(--high,#EA580C)}
+.dic .yd-dot{grid-row:1/3;width:7px;height:7px;margin-top:5px;border-radius:50%;background:var(--high,#EA580C)}
+.dic .yd-acts b{font:650 12.5px/1.3 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .yd-acts small{font:500 11px var(--font-ui);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .yd-grid{flex:1;min-height:120px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(120px,1fr);gap:8px}
+.dic .yd.all .yd-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));grid-auto-rows:230px;flex:none}
+.dic .yd-p{min-height:0;display:flex;flex-direction:column;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;animation:yd-in .4s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0) * 45ms)}
+@keyframes yd-in{from{opacity:0;transform:translateY(6px)}}
+.dic .yd-p header{flex:none;display:flex;align-items:flex-start;gap:6px;padding:8px 9px 2px}
+.dic .yd-p header>div{flex:1;min-width:0}
+.dic .yd-p h4{margin:0;font:650 12px/1.3 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .yd-p small button{all:unset;cursor:pointer;font:500 11px var(--font-ui);color:var(--accent)}
+.dic .yd-x{flex:none;width:22px;height:22px;border-radius:6px;border:0;background:none;color:var(--text-3);display:grid;place-items:center;cursor:pointer}
+.dic .yd-x:hover{background:var(--surface-3,var(--line));color:var(--text)}
+.dic .yd-x .ic{width:13px;height:13px}
+.dic .yd-c{flex:1;min-height:0;padding:0 6px 6px}
+.dic .yd-k{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 6px}
+.dic .yd-k b{font:800 28px/1.1 var(--font-ui);color:var(--text)}
+.dic .yd-k small{font:500 11.5px var(--font-ui);color:var(--text-3)}
+.dic .yd-none{font-size:12px;color:var(--text-3);padding:8px}
+.dic .yd-ph{border-radius:12px;background:linear-gradient(90deg,var(--surface-2),var(--surface-3,var(--line)),var(--surface-2));background-size:200% 100%;animation:yd-shim 1.4s linear infinite;min-height:110px}
+@keyframes yd-shim{to{background-position:-200% 0}}
+.dic .yd-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:14px;color:var(--text-3);font-size:12.5px;border:1.5px dashed var(--line-3);border-radius:12px}
+.dic .yd-empty>.ic{width:22px;height:22px;color:var(--accent)}
+.dic .yd-empty b{color:var(--text);font-size:13.5px}
+.dic .yd-empty em{font-style:normal;font-weight:650;color:var(--accent)}
+.dic .yd-go{margin-top:4px;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:650 12.5px var(--font-ui);cursor:pointer}
+.dic .yd-go .ic{width:14px;height:14px}
+@media (prefers-reduced-motion:reduce){.dic .yd.all,.dic .yd-p,.dic .yd-ph{animation:none}}
+
+
+/* the band's top line keeps each chip whole: the data chip gives way first, the alert chip keeps its title short */
+.dic .band-eb>.alc-w{flex:none}
+.dic .band-eb>.daily{flex:0 1 auto;min-width:0;overflow:hidden}
+.dic .band-eb>.daily>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dic .band:not(.hero) .alc b{max-width:150px}
+.dic .band:not(.hero) .band-eb>.daily small{display:none}
+.dic .env3-top>.env{grid-column:auto}
+
+/* Trends: the rising table gets most of the height and scrolls inside its card instead of being cut off */
+.dic .p3.trends{grid-template-rows:minmax(0,1.75fr) minmax(0,1fr)}
+.dic .trends .rs-body{overflow-y:auto;scrollbar-width:thin;mask-image:linear-gradient(#000 calc(100% - 18px),transparent);-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),transparent);padding-bottom:10px}
+/* the Overview band has room: the data chip keeps its words */
+.dic .band.hero .band-eb>.daily{flex:none}
+.dic .band.hero .alc b{max-width:170px}
+.dic .band-eb:has(.alc-w)>.daily small{display:none}
+
+/* Tamil words are longer: the top bar makes room (the "Chennai · Collector" line goes, the tabs tighten) */
+html[data-lang="ta"] .dic .tsub{display:none}
+html[data-lang="ta"] .dic .ptab{padding-left:10px;padding-right:10px;gap:6px}
+html[data-lang="ta"] .dic .ptab span{font-size:13px}
+html[data-lang="ta"] .dic .cmdk{width:150px}
+html[data-lang="ta"] .dic .band h1.roll{letter-spacing:0}
+.dic .yd-c{position:relative;overflow:hidden;border-radius:0 0 10px 10px}
+.dic .yd-acts.wide{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+/* Tamil: tab rows keep every tab readable (smaller, tighter) */
+html[data-lang="ta"] .dic [role="tab"]{font-size:12px;letter-spacing:0;padding-left:7px;padding-right:7px}
+html[data-lang="ta"] .dic .card [role="tablist"]{gap:2px}
+.dic .lang-sw.compact{padding:0 6px}.dic .lang-sw.compact span:last-child{display:none}
+
+/* the chat button in the corner opens Jarvis; while Jarvis rests it says how to wake it */
+.dic .jv-fab .jv-fab-wake{position:absolute;right:6px;top:-22px;font-style:normal;padding:2px 9px;border-radius:999px;background:var(--surface);color:var(--accent);
+  border:1px solid var(--accent-line);font:650 11px var(--font-ui);white-space:nowrap;box-shadow:0 6px 16px -10px rgba(0,0,0,.4)}
+.dic .jv-fab.conv{box-shadow:0 0 0 4px rgba(16,185,129,.25),var(--ai-glow)}
+.dic .jv-fab .jv-fab-wake{display:inline-flex;align-items:center;gap:6px}
+.dic .jv-fab .jv-fab-wake.off{color:#B45309;border-color:rgba(217,119,6,.45)}
+.dic .jv-fab-dot{width:7px;height:7px;border-radius:50%;background:#10B981;animation:jvf-pulse 1.6s ease-in-out infinite}
+@keyframes jvf-pulse{50%{opacity:.3}}
+
+/* ---- Jarvis in the top bar (round 27, no longer shown): one button opens the panel; its orb rests, listens or glows in a conversation */
+.dic .jv-top{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 8px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(4,120,87,.35);background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(14,165,233,.1));color:var(--text);font:700 13px var(--font-ui);
+  transition:box-shadow .2s,transform .15s}
+.dic .jv-top:hover{box-shadow:0 0 0 3px rgba(16,185,129,.18);transform:translateY(-1px)}
+.dic .jv-top.on{background:linear-gradient(135deg,#047857,#0E9F6E);color:#fff;border-color:transparent}
+.dic .jv-top-orb{position:relative;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#A7F3D0,#10B981 46%,#047857);box-shadow:0 0 0 2px rgba(255,255,255,.6) inset}
+.dic .jv-top-orb::after{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff;opacity:.9}
+.dic .jv-top.rest .jv-top-orb::before{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(16,185,129,.5);animation:jvt-rest 2.6s ease-in-out infinite}
+.dic .jv-top.conv .jv-top-orb::before{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #6EE7B7;animation:jvt-live 1.1s ease-out infinite}
+@keyframes jvt-rest{50%{opacity:.25;transform:scale(1.08)}}
+@keyframes jvt-live{from{transform:scale(.9);opacity:1}to{transform:scale(1.35);opacity:0}}
+@media (max-width:1180px){.dic .jv-top span:last-child{display:none}.dic .jv-top{padding:0 7px}}
+@media (prefers-reduced-motion:reduce){.dic .jv-top-orb::before{animation:none!important}}
+
+/* while a page's data arrives: shimmering lines in the shape of a card (Insights.tsx Loading) */
+.dic .skel{flex:1;align-self:stretch;width:100%;min-height:160px;display:flex;flex-direction:column;gap:12px;padding:16px 18px}
+.dic .skel span{display:block;border-radius:8px;background:linear-gradient(90deg,var(--surface-2) 0%,var(--surface-3,var(--line)) 45%,var(--surface-2) 90%);background-size:200% 100%;animation:skel-shim 1.25s linear infinite}
+.dic .skel-h{height:22px;width:38%}
+.dic .skel-l{height:14px;width:92%}
+.dic .skel-l.s{width:64%}
+.dic .skel-l.m{width:80%}
+@keyframes skel-shim{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.dic .skel span{animation:none}}
+
+/* round 31: the band's top line holds the date, one alert chip and one data chip, each whole */
+.dic .band .daily em.late{font-style:normal;margin-left:6px;padding:0 6px;border-radius:999px;background:rgba(255,197,110,.25);color:#FFE2B0;font:650 10.5px var(--font-ui)}
+.dic .band-eb{gap:8px}
+.dic .band .alc b{max-width:160px}
+.dic .band:not(.hero) .band-eb>span:first-child{display:none}
+.dic .band .daily small{display:none}
+.dic .band.hero .daily small{display:inline}
+.dic .band.hero .band-eb:has(.alc-w) .daily small{display:none}
+/* Jarvis's button: a small status dot instead of a label over the page */
+.dic .jv-fab .jv-fab-st{position:absolute;top:6px;left:38px;width:10px;height:10px;border-radius:50%;background:#F59E0B;border:2px solid #fff}
+.dic .jv-fab .jv-fab-st.on{background:#10B981;animation:jvf-pulse 1.8s ease-in-out infinite}
+.dic .rs-empty{display:flex;align-items:center;gap:10px;margin:18px 4px;padding:16px 18px;border-radius:12px;background:var(--low-soft,#ECFDF3);color:var(--text-2);font:500 13.5px/1.5 var(--font-ui)}
+.dic .rs-empty .ic{width:18px;height:18px;color:var(--low,#16A34A);flex:none}
+.dic .band.hero .daily:has(em.late) small{display:none}

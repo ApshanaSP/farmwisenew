@@ -47,8 +47,8 @@ const LOAN: Record<string, string> = {
 
 const NUM_CONTEXT = new Set(["zone", "ward", "confirm", "click", "back", "undo", "filter", "to", "number", "step", "steps", "press", "tap", "உறுதி", "uruthi"]);
 
-const POLITE = new Set(["please", "pls", "plz", "kindly", "sir", "madam", "mam", "maam", "thunai", "hey", "ok", "okay",
-  "ஐயா", "சார்", "மேடம்", "தயவுசெய்து", "துணை", "ப்ளீஸ்"]);
+const POLITE = new Set(["please", "pls", "plz", "kindly", "sir", "madam", "mam", "maam", "thunai", "jarvis", "jarvish", "javis", "jervis", "hey", "hi", "hello", "ok", "okay",
+  "ஐயா", "சார்", "மேடம்", "தயவுசெய்து", "துணை", "ஜார்விஸ்", "ஜார்விஸ", "ஹாய்", "ஹலோ", "ப்ளீஸ்"]);
 
 export interface Normalised {
   /** lower-case tokens; numbers as digit strings */

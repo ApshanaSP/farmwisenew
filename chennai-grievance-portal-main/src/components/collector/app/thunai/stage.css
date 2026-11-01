@@ -374,3 +374,52 @@
   .st-vs button, .st-link, .st-pinchip button { min-height: 32px; }
   .st-kpi:has(.st-spark) { padding-right: 15px; padding-bottom: 40px; }
 }
+
+/* round 26: the answer in the other language, under it */
+.st-caption .rp.alt { color: var(--text-2); flex-basis: 100%; font-size: 13px; padding-top: 4px; border-top: 1px dashed var(--line-2); }
+.st-take.alt { margin-top: 3px; padding-left: 25px; font-size: 13.5px; color: var(--text-2); }
+/* the Stage takes the FarmWise green as its one accent (it was blue) */
+.st-root { --accent: #10B981; --accent-soft: rgba(16, 185, 129, .16); --glow: rgba(16, 185, 129, .35); --accent-fill: #059669; --viz-1: #10B981; --signal: #10B981; }
+.st-root[data-theme="light"] { --accent: #047857; --accent-fill: #047857; --accent-soft: rgba(4, 120, 87, .1); --glow: rgba(4, 120, 87, .25); --viz-1: #059669; --signal: #059669; }
+
+/* round 28: the answer gets the screen. No second question box or caption (the panel beside it has both); the list shows
+   each case whole, larger, and the screen scrolls as one page instead of a small box inside it */
+.st-bar.slim { padding-top: 0; padding-bottom: 6px; }
+.st-bar.slim[hidden] { display: none; }
+.st-cases { max-height: none; overflow: visible; gap: 10px; }
+.st-case .t { font-size: 15px; -webkit-line-clamp: 3; }
+.st-case .meta, .st-news .meta { font-size: 13px; }
+.st-case .main { padding: 12px 8px 12px 14px; }
+.st-block.k-MapView { position: sticky; top: 4px; align-self: start; }
+.st-block.k-MapView .st-map, .st-block.k-MapView .leaflet-container { min-height: 360px; }
+.st-head h2 { font-size: clamp(19px, 1.9vw, 24px); }
+.st-foot { padding: 8px 22px 10px; }
+
+/* round 30: the answer fits the window. Key numbers in a slim row; under them the list and its map side by side, full
+   height, each scrolling on its own (the map fills its column); the header is two lines at most */
+.st-head { padding: 14px 20px 6px; }
+.st-take { margin-top: 4px; font-size: 14px; }
+.st-sugg { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-top: 8px; }
+.st-sugg::-webkit-scrollbar { display: none; }
+.st-sugg button { flex: none; }
+.st-bar.slim { padding: 0 20px 8px; }
+.st-grid { padding: 2px 20px 14px; gap: 12px; }
+.st-grid.fit { overflow: hidden; grid-template-rows: auto minmax(0, 1fr); align-content: stretch; }
+.st-grid.fit > .st-block.k-Kpis { grid-row: 1; }
+.st-grid.fit > .st-block:not(.k-Kpis) { grid-row: 2; display: flex; flex-direction: column; min-height: 0; padding: 12px 14px 12px; }
+.st-grid.fit > .st-block:not(.k-Kpis) > :last-child { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+.st-grid.fit > .st-block.k-MapView > :last-child { overflow: hidden; }
+.st-grid.fit .st-map, .st-grid.fit .st-block.k-MapView .st-map { height: auto !important; min-height: 220px; flex: 1 1 auto; }
+.st-grid.fit .st-block.k-MapView { position: static; }
+.st-grid.fit .st-kpis { gap: 10px; }
+.st-grid.fit .st-kpi { padding: 9px 13px 10px; }
+.st-grid.fit .st-kpi .val { font-size: 24px; }
+.st-grid.fit .st-cases { padding-right: 4px; }
+.st-grid:not(.fit) .st-map { height: 380px; }
+.st-grid.fit .st-block.k-MapView { align-self: stretch; }
+
+/* the map enlarged over the answer area (the other parts of the answer step aside; the key numbers stay) */
+.st-grid.bigmap > .st-block:not(.k-Kpis):not(.k-MapView) { display: none; }
+.st-grid.bigmap > .st-block.k-MapView { grid-column: 1 / -1; }
+.st-grid.bigmap:not(.fit) .st-map { height: calc(100dvh - 300px); }
+.st-bigmap { margin-left: auto; }

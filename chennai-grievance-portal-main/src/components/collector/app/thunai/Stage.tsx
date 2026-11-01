@@ -68,7 +68,7 @@ interface Props {
   filtered: string | null;
   saveAsk: string | null;
   /** the subtitles: what was heard and what Thunai is saying (the console's dock hides while the Stage is open) */
-  caption: { heard: string; reply: string; interim: boolean; by: string | null };
+  caption: { heard: string; reply: string; alt?: string; interim: boolean; by: string | null };
   a: StageActions;
 }
 
@@ -105,8 +105,8 @@ function spans(blocks: BlockT[]): number[] {
     switch (b.kind) {
       case "Kpis": case "NewsReader": case "Note": case "Drafts": return 12;
       case "Compare": return other.includes("MapView") ? 8 : 12;
-      case "CaseList": return other.includes("MapView") && kinds.length <= 3 ? (kinds[0] === "CaseList" ? 7 : 5) : kinds.length >= 5 ? 7 : other.includes("Chart") || other.includes("Answer") ? 12 : 12;
-      case "MapView": return other.includes("Compare") ? 4 : kinds[0] === "MapView" ? 7 : other.includes("CaseList") && kinds.length <= 3 ? 5 : other.includes("Readings") || other.includes("CaseDetail") ? 4 : 7;
+      case "CaseList": return other.includes("MapView") && kinds.length <= 3 ? 6 : kinds.length >= 5 ? 7 : other.includes("Chart") || other.includes("Answer") ? 12 : 12;
+      case "MapView": return other.includes("Compare") ? 4 : kinds[0] === "MapView" ? 7 : other.includes("CaseList") && kinds.length <= 3 ? 6 : other.includes("Readings") || other.includes("CaseDetail") ? 4 : 7;
       case "Ranking": return other.includes("Trend") && !other.includes("MapView") ? 4 : other.includes("MapView") ? 5 : 12;
       case "Trend": return other.includes("Ranking") && !other.includes("MapView") ? 8 : other.includes("Heat") ? 6 : kinds.length >= 5 ? 5 : 12;
       case "Heat": return other.includes("Trend") ? 6 : 12;
@@ -165,6 +165,14 @@ function Stage(p: Props) {
   }, [doc.id]);
 
   const sp = useMemo(() => spans(doc.blocks), [doc.blocks]);
+  // one row of answer under the key numbers (a list and its map, a ranking, the news): the screen fits the window and
+  // each part scrolls on its own, so the map is never below the fold; more than a row scrolls as a page
+  const fit = useMemo(() => doc.blocks.reduce((n, b, i) => n + (b.kind === "Kpis" ? 0 : sp[i]), 0) <= 12, [doc.blocks, sp]);
+  /** the map over the whole answer area ("Enlarge map"), back with "Back to the list" */
+  const [bigMap, setBigMap] = useState(false);
+  useEffect(() => { setBigMap(false); }, [doc.id]);
+  // the map redraws its tiles for its new size (it grows with "Enlarge map" and with the fitted layout)
+  useEffect(() => { const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 80); return () => clearTimeout(t); }, [bigMap, doc.id]);
   const slots = doc.slots as Record<string, unknown>;
   const zones = Array.isArray(slots.zones) ? (slots.zones as number[]) : [];
   const setPeriod = (period: string) => a.direct(doc.recipe, { ...slots, period }, `${doc.title} (${period})`);
@@ -180,7 +188,7 @@ function Stage(p: Props) {
           <div className="st-titles">
             <div className="st-crumbs">
               {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")}><I n="chevl" /></button>}
-              <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Thunai</span>
+              <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Jarvis</span>
             </div>
             <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.title}</h2>
             {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[lang]}</p>}
@@ -226,12 +234,8 @@ function Stage(p: Props) {
 
         {p.saveAsk && <div className="st-confirm" role="alert">{p.saveAsk}</div>}
 
-        <div className="st-bar">
-          <form className="st-cmd" onSubmit={(e) => { e.preventDefault(); const t = cmd.trim(); if (t) { setCmd(""); a.ask(t); } }}>
-            <I n="ai" />
-            <input value={cmd} onChange={(e) => setCmd(e.target.value)} placeholder={T(lang, "Ask a follow-up: \"only severe\", \"add Perungudi\", \"make it monthly\"", "தொடர்ந்து கேளுங்கள்")} aria-label={T(lang, "Ask Thunai", "துணையிடம் கேள்")} />
-            <button type="button" className={`st-mic${a.listening ? " on" : ""}`} onClick={a.mic} aria-label={T(lang, "Speak", "பேசு")} aria-pressed={a.listening}><I n="mic" /></button>
-          </form>
+        {/* only the period and the area stay above the answer: questions and follow-ups go in Jarvis's panel beside it */}
+        <div className="st-bar slim" hidden={!SCOPED.has(doc.recipe)}>
           {SCOPED.has(doc.recipe) && (
             <div className="st-filters" role="group" aria-label={T(lang, "Filters", "வடிகட்டிகள்")}>
               <div className="st-seg" role="group" aria-label={T(lang, "Period", "காலம்")}>
@@ -265,29 +269,12 @@ function Stage(p: Props) {
           )}
         </div>
 
-        {(p.caption.heard || p.caption.reply) && (
-          <div className="st-caption">
-            {p.caption.heard && <span className={`hd${p.caption.interim ? " interim" : ""}`} aria-hidden={p.caption.interim || undefined}><I n="mic" />{p.caption.heard}</span>}
-            {p.caption.reply && <span className="rp">{p.caption.reply}</span>}
-            {p.caption.by && <span className="by">{p.caption.by}</span>}
-          </div>
-        )}
 
-        {p.pins.length > 0 && (
-          <nav className="st-pins" aria-label={T(lang, "Pinned screens", "பின் செய்த திரைகள்")}>
-            {p.pins.map((x) => (
-              <span key={x.id} className="st-pinchip">
-                <button onClick={() => a.openPin(x)}><I n="bookmark" />{x.title}</button>
-                <button className="x" onClick={() => a.unpin(x.id)} aria-label={T(lang, `Unpin ${x.title}`, "நீக்கு")}><I n="x" /></button>
-              </span>
-            ))}
-          </nav>
-        )}
-
-        <main className="st-grid" key={doc.id} aria-busy={!!p.busy}>
+        <main className={`st-grid${fit ? " fit" : ""}${bigMap ? " bigmap" : ""}`} key={doc.id} aria-busy={!!p.busy}>
           {doc.blocks.map((b, i) => (
             <section key={`${doc.id}-${b.id}`} className={`st-block k-${b.kind}`} style={{ ["--span" as string]: sp[i], ["--i" as string]: i }} aria-label={"title" in b ? (b as { title: string }).title : b.kind}>
-              <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a} />
+              <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a}
+                big={bigMap} setBig={doc.blocks.length > 1 ? setBigMap : undefined} />
             </section>
           ))}
           {p.busy && <div className="st-busy"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
@@ -295,10 +282,8 @@ function Stage(p: Props) {
 
         <p className="st-sr" role="status" aria-live="polite">{p.busy ?? p.caption.reply}</p>
         <footer className="st-foot">
-          <span><I n="info" />{T(lang, "From", "ஆதாரம்")}: {doc.sources.join(", ") || "-"}</span>
-          {doc.asOf && <span><I n="clock" />{T(lang, "Data as of", "தரவு நேரம்")} {when(doc.asOf)}</span>}
+          {doc.asOf && <span title={`${T(lang, "From", "ஆதாரம்")}: ${doc.sources.join(", ") || "-"}`}><I n="clock" />{T(lang, "Data as of", "தரவு நேரம்")} {when(doc.asOf)}</span>}
           {doc.notes.map((n) => <span key={n} className="note">{n}</span>)}
-          {p.brain && <span className="brain"><I n="ai" />{p.brain.model ? `${p.brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")} · ` : T(lang, "No model needed · ", "AI தேவையில்லை · ")}{(p.brain.ms / 1000).toFixed(1)} s{p.brain.calls ? ` · ${p.brain.calls} ${T(lang, "data calls", "தரவு அழைப்புகள்")}` : ""}</span>}
         </footer>
       </div>
     </div>,
@@ -309,7 +294,9 @@ export default memo(Stage);
 
 // ------------------------------------------------------------------ blocks --
 
-interface BP { b: BlockT; doc: StageDocT; lang: Lang; reading: Props["reading"]; view: BlockView | null; geo: MapGeo | null; tray: StageDraft[]; a: StageActions }
+interface BP { b: BlockT; doc: StageDocT; lang: Lang; reading: Props["reading"]; view: BlockView | null; geo: MapGeo | null; tray: StageDraft[]; a: StageActions;
+  /** the map enlarged over the answer area, and its switch (none when the map is the only block) */
+  big?: boolean; setBig?: (v: boolean) => void }
 
 function Head({ title, icon, children, sub }: { title: string; icon: IconName; children?: React.ReactNode; sub?: string | null }) {
   return (
@@ -433,7 +420,9 @@ function BlockBody(p: BP) {
     }
     case "MapView": return (
       <>
-        <Head title={b.title} icon="map" sub={b.rule} />
+        <Head title={b.title} icon="map" sub={p.big ? null : b.rule}>
+          {p.setBig && <button className="st-btn sm st-bigmap" onClick={() => p.setBig!(!p.big)}><I n={p.big ? "chevl" : "expand"} />{p.big ? T(p.lang, "Back to the list", "பட்டியலுக்குத் திரும்பு") : T(p.lang, "Enlarge map", "வரைபடத்தைப் பெரிதாக்கு")}</button>}
+        </Head>
         <MapBox geo={p.geo} title={b.title} shade={b.shade} outline={b.outline} onZone={a.zone}
           pins={b.points.map((x) => ({ ...x, hot: x.hot || (p.reading != null && p.reading.key === x.id) }))}
           onPin={(i) => { const x = b.points[i]; if (x && /^INC-/.test(x.id)) a.openCase(x.id); }} />

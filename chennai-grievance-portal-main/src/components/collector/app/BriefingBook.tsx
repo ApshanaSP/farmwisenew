@@ -1,5 +1,6 @@
 "use client";
 
+import { useLang } from "@/lib/i18n/lang";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
@@ -31,8 +32,8 @@ export function BriefingBook({ ins, c }: { ins: Insights; d?: OverviewData; c: C
     <section className="bb">
       <Brief ins={ins} b={b} c={c} />
       <Departments b={b} c={c} />
+      {/* the Collector's own datasets are on the Environment page now (pinned from the Data Studio), not here */}
       <div className="bb-col">
-        <FromDatasets c={c} />
         <Developing ins={ins} c={c} />
         <NewsOnly ins={ins} c={c} />
       </div>
@@ -109,7 +110,10 @@ const TOPIC: Record<string, { ic: IconName; c: string }> = {
  * is written (a few seconds, once per build) a placeholder; when no model answers, the pipeline's note or the rules'.
  */
 function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
+  // the key points open in the site's language (the AI writes them in both); the switch here still changes them
+  const [uiLang] = useLang();
   const [lang, setLang] = useState<Lang>("en");
+  useEffect(() => { setLang(uiLang === "ta" ? "ta" : "en"); }, [uiLang]);
   const [talking, setTalking] = useState(false);
   const [voice, setVoice] = useState(false);
   useEffect(() => { setVoice(canSpeak()); return () => stopSpeaking(); }, []);
@@ -151,7 +155,8 @@ function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
             {talking ? <span className="bb-bars" aria-hidden="true"><i /><i /><i /><i /></span> : <I n="volume" />}{talking ? "Stop" : "Listen"}</button>}
         </span>
       </Head>
-      <div className="bb-body kp">
+      {/* written by the AI in both languages: the site's translator leaves these words alone */}
+      <div className="bb-body kp" data-no-i18n={ta ? "" : undefined}>
         <p className={`bb-status lv-${b.status.level}`} title="District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news">
           <i /><b>{STATUS[b.status.level]}</b><span>{reasons.length ? reasons.join(" · ") : b.status.warning ? "IMD warning in force" : "Nothing unusual in this period"}</span>
         </p>

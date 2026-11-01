@@ -71,6 +71,8 @@ const EN: Case[] = [
   ["Forget that", [{ a: "forget", all: false }]],
   ["Stop", [{ a: "stop" }]],
   ["Thunai off", [{ a: "off" }]],
+  ["Jarvis off", [{ a: "off" }]],
+  ["hey jarvis switch off", [{ a: "off" }]],
   ["What am I looking at?", [{ a: "whereAmI" }]],
   ["Explain this chart", [{ a: "explain" }]],
   ["Brief me", [{ a: "mission", name: "brief" }]],
