@@ -41,6 +41,7 @@ import { MotionConfig } from "motion/react";
 import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
 import Thunai, { type ThunaiHost } from "./thunai/Thunai";
 import JarvisSwitch from "./thunai/JarvisSwitch";
+import JarvisPins from "./thunai/JarvisPins";
 import { LangSwitch, TopMenu } from "./TopMenu";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
@@ -889,6 +890,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
               )}
             </div>
             {page === "overview" && <HeroBody d={ov} c={c} />}
+            {page === "overview" && <JarvisPins />}
           </section>
           <PageSwap k={page} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
             {page === "overview" ? <Page1 d={ov} c={c} />

@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 
 /** The dev test console's rounds: the same code on the local store, no sign-in. 404 in production. */
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
+  // a measuring build (NEXT_PUBLIC_JARVIS_SPEC=1 at build time) keeps these; a normal production build does not
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_JARVIS_SPEC !== "1") return new NextResponse(null, { status: 404 });
   const parsed = RoundBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ done: true, result: { kind: "none" }, why: parsed.error.issues[0]?.message ?? "bad request" }, { status: 400 });
   try {

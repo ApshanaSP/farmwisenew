@@ -17,6 +17,10 @@ describe("the address gate", () => {
     expect(gate("why?", near)).toMatchObject({ tier: 2, act: true });
     expect(gate("the second one", near)).toMatchObject({ tier: 2, act: true });
     expect(gate("did he send the file", near)).toMatchObject({ tier: 0, act: false });
+    // already in the conversation, "my" and "I" are the Collector's own words
+    expect(gate("put together something useful for my morning", near)).toMatchObject({ tier: 2, act: true });
+    expect(gate("what should I do about flooding", near)).toMatchObject({ tier: 2, act: true });
+    expect(gate("the file is on the table", near)).toMatchObject({ tier: 0, act: false });
     expect(gate("and in Adyar?", { lastTurnAt: NOW - ENGAGED_MS - 1 })).toMatchObject({ tier: 0, act: false });
   });
   it("tier 3: a sure rule or imperative plus a district noun acts, level A only", () => {

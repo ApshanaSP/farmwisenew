@@ -6,6 +6,7 @@ import { FX } from "./helpers";
 test.use({ launchOptions: { args: ["--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${path.join(FX, "b1.wav")}%noloop`] } });
 
 test("a sentence from the capture device reaches the transcriber", async ({ page }) => {
+  await page.addInitScript(() => { try { localStorage.setItem("jarvis-mode-seen", "1"); localStorage.setItem("thunai-greeted", new Date().toDateString()); } catch { /* */ } });
   const hits: number[] = [];
   await page.route("**/api/dev/thunai/hear**", async (r) => { hits.push(r.request().postDataBuffer()?.length ?? 0); await r.fulfill({ json: { text: "", lang: "en", noise: true, ms: 1, lane: "ambient", conf: { speech: 0, logprob: 0 }, model: null } }); });
   await page.route("**/api/collector/**", (r) => r.fulfill({ status: 401, json: {} }));

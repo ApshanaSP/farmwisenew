@@ -22,3 +22,10 @@
 html.jv-hud .dic .tbrand .tsub, html.jv-hud .dic .tbrand small, html.jv-hud .dic .top .cmdk span, html.jv-hud .dic .top .cmdk kbd { display: none; }
 html.jv-hud .dic .top .cmdk { width: 40px; padding: 0 10px; }
 @media (max-width: 1500px) { .jsw-mute { padding: 0 6px; } }
+
+/* the screens pinned to the Overview */
+.jpins { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; }
+.jpins span { opacity: .8; font-weight: 600; }
+.jpins button { height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(128, 140, 160, .45); background: rgba(128, 140, 160, .12); color: inherit; font: inherit; cursor: pointer; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jpins button:hover { background: rgba(128, 140, 160, .24); }
+.jpins button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

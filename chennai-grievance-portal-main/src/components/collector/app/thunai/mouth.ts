@@ -20,7 +20,7 @@ export interface SpeakOpts {
   allowed?: Set<string>;
 }
 export type VoicePath = "browser" | "pcm" | "text";
-export interface MouthHooks { onStart?: (path: VoicePath) => void; onEnd?: () => void; onGateRefused?: (raw: string[]) => void }
+export interface MouthHooks { onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: () => void; onGateRefused?: (raw: string[]) => void }
 
 let hooks: MouthHooks = {};
 export function setMouthHooks(h: MouthHooks) { hooks = h; }
@@ -159,7 +159,7 @@ function pieces(lines: string[]): Piece[] {
 async function run(s: Speech, my: number) {
   const l = short(s.lang);
   let started = false;
-  const start = (p: VoicePath) => { if (!started) { started = true; hooks.onStart?.(p); } };
+  const start = (p: VoicePath) => { if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
   for (; s.at < s.pieces.length; s.at++) {
     if (my !== token) return;
     const piece = s.pieces[s.at];

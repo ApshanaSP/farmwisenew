@@ -1,0 +1,9 @@
+{
+ "minutes": 10.1,
+ "sentencesSpoken": 146,
+ "ambientRequests": 8,
+ "otherRequests": 0,
+ "ambientPerHour": 48,
+ "planner": 0,
+ "note": "detector and budget real, transcriber mocked; people talking throughout, nothing addressed to Jarvis"
+}

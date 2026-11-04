@@ -4,7 +4,7 @@ import { quickScreen } from "./quick";
 import { ACTION_LEVEL, cannotLine, NO_MODEL_LINE, REACH } from "./reach";
 import { riskOf } from "./risk";
 import { routeByRules } from "./router";
-import { pushScreen, stageDigest, stageEmpty, stageReducer, type StageModel } from "./stagelocal";
+import { localStageCommand, pushScreen, stageDigest, stageEmpty, stageReducer, type StageModel } from "./stagelocal";
 import type { StageDocT } from "./stage";
 import type { ActionName, Step } from "./types";
 import { understand } from "./understand";
@@ -33,6 +33,9 @@ describe("the reach audit", () => {
       expect((u.steps[0] as { name?: string }).name?.toLowerCase()).toContain("daily briefing");
       expect(riskOf(u.steps[0])).toBe("B");
     }
+  });
+  it('"pin this to the Overview" is the pin command, in three languages', () => {
+    for (const t of ["pin this to the Overview", "pin it on the dashboard", "pin this", "overview-la pin pannu", "முகப்பில் பின் செய்"]) expect(localStageCommand(t), t).toEqual({ op: "pin" });
   });
   it("what cannot be done is said plainly, with what can", () => {
     expect(cannotLine("en")).toMatch(/I can't do that\. I can show/);
@@ -84,7 +87,7 @@ describe("stageReducer: pure, and split from speech and network", () => {
     const d = stageDigest(f.m)!;
     expect(d).toContain("Adyar");
     expect(d).not.toContain("Tree fall");
-    expect(d.length).toBeLessThanOrEqual(1600);
+    expect(d.length).toBeLessThanOrEqual(1400);
     expect(stageDigest(stageEmpty)).toBeNull();
   });
 });

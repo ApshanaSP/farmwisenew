@@ -178,6 +178,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
         {s.mode === "muted" && <span className="hud-mic off">{ta ? "மைக் மூடியது" : "Mic closed"}</span>}
         <span><b>{ta ? "பதில்" : "Last answer"}</b> {strip.lastMs != null ? `${(strip.lastMs / 1000).toFixed(1)} s` : "--"}</span>
         <span><b>{ta ? "முதல் சொல்" : "First reply"}</b> {strip.ackMs != null ? `${(strip.ackMs / 1000).toFixed(1)} s` : "--"}</span>
+        <span><b>{ta ? "பதில் குரல்" : "Answer spoken"}</b> {strip.findingMs != null ? `${(strip.findingMs / 1000).toFixed(1)} s` : "--"}</span>
         <span><b>{ta ? "பதிலளித்தது" : "Answered by"}</b> {strip.provider ? strip.provider.replace(/^.*\//, "") : ta ? "விதிகள்" : "rules"}</span>
         <span><b>{ta ? "குரல்" : "Voice"}</b> {PATH_WORD[strip.path ?? ""]?.[lang] ?? "--"}</span>
         <span><b>{ta ? "தரவு" : "Data as of"}</b> {strip.freshness ?? "--"}</span>

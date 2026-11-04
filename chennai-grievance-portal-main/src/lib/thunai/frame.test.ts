@@ -22,6 +22,10 @@ describe("follow-ups, resolved in code before anything else", () => {
     expect(f("ஏன்?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why" });
     expect(f("yen?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why" });
   });
+  it("the review's sentences: and severe?, and the rain there", () => {
+    expect(f("and severe?", { stage: cases })).toMatchObject({ kind: "screen", slots: { sev: "Severe", zones: [5] } });
+    expect(f("what about flooding", { stage: cases })).toMatchObject({ kind: "screen", slots: { cat: "FLOOD_WATERLOGGING", zones: [5] } });
+  });
   it("a reservoir after a reading, and a longer why", () => {
     const lakes: StageContext = { ...cases, recipe: "readings", slots: { metric: "lakes" } };
     expect(f("and in Puzhal?", { stage: lakes })).toMatchObject({ kind: "screen", recipe: "readings", slots: { metric: "lakes", name: "Puzhal" } });

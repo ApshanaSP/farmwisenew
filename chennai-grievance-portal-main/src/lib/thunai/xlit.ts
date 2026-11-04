@@ -59,12 +59,13 @@ export function fuzzyNames<T>(text: string, names: [T, string][]): T[] {
     // Tamil and Tanglish case endings on a name: "Adyar-la", "அடையாறில்"
     const w = words[i];
     for (const g of [w, w.replace(/(la|le|ku|lla|il|ile|kku)$/i, ""), w.replace(/(இல்|ில்|க்கு|ல்)$/, "")]) grams.add(g);
-    if (i + 1 < words.length) grams.add(`${w} ${words[i + 1]}`);
+    // "Vela Cherry", "Anna Nagar": a name Whisper split in two, or wrote as one
+    if (i + 1 < words.length) { grams.add(`${w} ${words[i + 1]}`); grams.add(`${w}${words[i + 1]}`); }
   }
-  const keys = [...grams].map(phonetic).filter((k) => k.length >= 4);
+  const keys = [...grams].map((g) => phonetic(g).replace(/ /g, "")).filter((k) => k.length >= 4);
   const out: T[] = [];
   for (const [id, name] of names) {
-    const k = phonetic(name);
+    const k = phonetic(name).replace(/ /g, "");
     if (k.length < 4) continue;
     if (keys.some((g) => g === k || (k.length >= 6 && near(g, k, 1)))) out.push(id);
   }

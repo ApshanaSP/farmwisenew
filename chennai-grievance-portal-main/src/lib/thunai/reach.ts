@@ -25,7 +25,7 @@ export const REACH: Reach[] = [
   { what: "Read a tool: KPIs, zones, departments, severity, resolution times, backlog, follow-ups, trends, taluks, hotspots, change drivers, a place, unusual rises, stories, environment, series, prices, contacts, gaps, the verification queue, incidents, one incident, the briefing, source health, a place's location, search", level: "read", how: "data bundle", say: "how many open complaints does Metro Water have" },
   { what: "Get ready for heavy rain", level: "A", how: "step mission rain", say: "we expect heavy rain tonight, get everything ready" },
   { what: "Save this workspace", level: "B", how: "step workspace, spoken yes or a tap", say: "save this workspace as Collector's Daily Briefing" },
-  { what: "Pin a screen", level: "B", how: "stage op pin, spoken yes or a tap", say: "pin this" },
+  { what: "Pin a screen to the Overview: it shows there as a chip and opens fresh from the data", level: "B", how: "stage op pin, spoken yes or a tap; JarvisPins on the Overview", say: "pin this to the Overview" },
   { what: "Remember a note, set a reminder, forget a note", level: "B", how: "steps remember, remind, forget", say: "remember that the Adyar bridge is closed" },
   { what: "Draft an action for an incident", level: "C", how: "to the tray only", say: "draft action for the second one" },
   { what: "Send, approve, delete, change an officer's record, anything outside this console", level: "never", how: "refused in code; the tray's button is the Collector's own tap", say: "send the drafts" }

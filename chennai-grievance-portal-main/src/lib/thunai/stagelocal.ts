@@ -47,7 +47,7 @@ export function localStageCommand(raw: string): LocalCmd | null {
   if (/^(go back|back|previous screen|pinnadi|பின்னால்)$/.test(t)) return { op: "back" };
   if (/^(clear( the)? filter|show (all|everything)( again)?|ellam kaattu|எல்லாம் காட்டு)$/.test(t)) return { op: "clear" };
   if (/^((for |in )?(all of chennai|the whole (district|city)|whole chennai|everywhere)|muzhu chennai|முழு சென்னை|மாவட்டம் முழுவதும்)$/.test(t)) return { op: "everywhere" };
-  if (/^(pin (this|it)( screen)?|pin pannu|பின் செய்)$/.test(t)) return { op: "pin" };
+  if (/^(pin (this|it)( screen)?((?: to| on)(?: the)? (?:overview|dashboard|front page|home))?|pin pannu|overview-?(?:la|ku) pin pannu|பின் செய்|முகப்பில் பின் செய்)$/.test(t)) return { op: "pin" };
   if (/^(full screen|bigger|expand( it)?)$/.test(t)) return { op: "full" };
   if (/(எக்ஸ்போர்ட்|ஏற்றுமதி|export pannu|download pannu)/.test(t) && t.split(" ").length <= 5) return { op: "export", what: /png|படம்/.test(t) ? "png" : /csv/.test(t) ? "csv" : null };
   const exp = t.match(/^(export|download)( this| it| the screen)?( as)?( (a )?(png|image|picture|csv|excel|data|table))?( pannu)?$/);
@@ -173,7 +173,7 @@ export function stageDigest(m: StageModel, focus: number | null = null): string 
     if (b.kind === "Compare") return `compare: ${b.sides.map((s) => s.label).join(" vs ")}`;
     return b.kind;
   }).join(" | ");
-  return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1600);
+  return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1400);
 }
 
 /** Lane 1: what Thunai says the moment the request leaves, from the words alone (no figures). */

@@ -37,3 +37,22 @@ Read on GitHub in the browser on 29 Oct (the first four were checked by the owne
 
 Not done in this build: the extra GitHub search for 3–5 more voice-control projects (for example annyang, Leon,
 OpenVoiceOS, known from general knowledge only, not checked here). It is listed as a gap in REPORT.md.
+
+## Added for the Jarvis mode build, 4 Nov 2026
+
+Used in this build, each checked where it says so. Figures quoted in earlier drafts of the prompt without a source (for example Whisper WER on IndicVoices) are not repeated here: the review found no source for them.
+
+| Source | What it is | Licence, as checked | Used how |
+|---|---|---|---|
+| [snakers4/silero-vad](https://github.com/snakers4/silero-vad) v5 ONNX, from `@ricky0123/vad-web@0.0.24` | Voice activity detector | MIT per the repository's LICENSE (the CC BY-NC text is stale badge alt text, per the review) | `public/thunai/silero_vad_v5.onnx`, run by onnxruntime-web in the browser |
+| onnxruntime-web, already installed through `@huggingface/transformers` | WebAssembly inference | MIT | Served from `node_modules` by `/thunai-ort/[file]`, so 14 MB of WASM stays out of git |
+| `thunai/v3` branch, this repository | `vad.ts`, `turn()`, `gloss.ts`, caf5e7e, a321af5, the advise screen | Own code | Ported by `git show`, not merged |
+| [OpenSLR SLR65](https://www.openslr.org/65/) `ta_in_female.zip` | Crowdsourced Tamil speech | CC BY-SA 4.0: test only, not committed or shipped, flagged | `eval/holdout/tamil-asr/`: only hashes and reference text are committed |
+| Groq Whisper, `whisper-large-v3` and `-turbo` | Speech to text | Service, existing keys | Parallel forced decodes. Limits from console.groq.com/docs/rate-limits as relayed by the review: 20 RPM, 2K RPD, 7.2K audio-s/hour, 28.8K audio-s/day, 10 s minimum billing |
+| Google `gemini-3.5-transcribe`, `gemini-3.5-flash-lite`, `gemini-3.8-*-tts` | Transcription, planner rung, speech | Service, existing key. Free-tier limits are not published outside AI Studio: ledger values are starting points that a 429 overrides | Third racer, ladder rung, second voice rung |
+| Iglewicz and Hoaglin (1993), modified z-score | Outlier test, flagged at 3.5 | Method | `stats.ts` |
+| Montgomery, *Introduction to Statistical Quality Control*: c-chart | Control limits for counts | Method | `stats.ts` |
+| Theil (1950), Sen (1968); Mann (1945), Kendall (1975) | Robust slope and trend test | Method | `stats.ts` |
+| Abramowitz and Stegun 26.2.17 | Normal CDF approximation | Method | `stats.ts` |
+| [Playwright](https://playwright.dev) 1.63.0 | Browser tests | Apache-2.0 | `tests/e2e`, dev dependency |
+| Windows SAPI voices (David, Zira) | Spoken test fixtures | Generated on this PC, synthetic | `tests/e2e/fixtures` |

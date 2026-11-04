@@ -28,7 +28,10 @@ export const ENGAGED_MS = 20_000;
 const norm = (s: string) => ` ${s.toLowerCase().normalize("NFC").replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 
 /** Things people say to each other: other people as the subject or object, past and future plans, chatter. */
-const SIDE_EN = /\b(him|her|she|he|his|they|them|their|your|you|we|our|us|i|im|ive|ill|my|me and|sir|madam|boss|colleague|anna(?! nagar)|akka|yesterday|last night|tomorrow|later|after lunch|lunch|tea|coffee|meeting|leave|transfer|traffic|cricket|match|movie|wife|husband|son|daughter|kids|files?|report by|phone|call him|call her|did|didnt|was|were|had|has|have you|are you|do you|will you|should we|shall we|lets|let us|told|said|heard|saw|see you|wants)\b/;
+/** said of other people, or of the past: side talk even within the 20 s of being engaged */
+const SIDE_STRONG = /\b(him|her|she|he|his|they|them|their|we|our|us|sir|madam|boss|colleague|anna(?! nagar)|akka|yesterday|last night|after lunch|lunch|tea|coffee|leave|transfer|cricket|match|movie|wife|husband|son|daughter|kids|report by|call him|call her|did|didnt|was|were|had|should we|shall we|lets|let us|told|said|heard|saw|see you|wants)\b/;
+/** said to someone, or about oneself: side talk unless Jarvis is already in the conversation */
+const SIDE_WEAK = /\b(your|you|i|im|ive|ill|my|me and|tomorrow|later|meeting|traffic|files?|phone|has|have you|are you|do you|will you)\b/;
 const SIDE_KEEP_EN = /^ (show me|give me|tell me|get me|take me|bring me|pull up|remind me|let me see) /;
 const SIDE_TA = /(நேத்து|நேற்று|நாளைக்கு|நாளை |சாப்பாடு|சாப்பிட|டீ |காபி|மீட்டிங்|லீவு|அவரு|அவர் |அவங்க|அவன்|அவள்|நீங்க|நீ |நான் |நாம |நாங்க|என் |என்னோட|உங்க|போனேன்|பார்த்தேன்|பாத்தேன்|சொன்னார்|சொன்னாரு|சொன்னாங்க|வந்தார்|வந்தாரு|போனார்|ஆச்சா|தெரியுமா|கிரிக்கெட்|டிராபிக்|படம் பார்)/;
 const SIDE_TG = /\b(netthu|nethu|nethiku|naalaiku|naliku|saapadu|sapadu|saptiya|saptingala|tea|coffee|meeting|leave|avaru|avanga|avan|aval|nee|neenga|naan|naanga|naama|enoda|unga|ponen|paathen|parthen|sonnaru|sonnanga|vandharu|ponaru|aacha|theriyuma|cricket|traffic|padam)\b/;
@@ -36,7 +39,7 @@ const IMPERATIVE_EN = /^ (please )?(show|open|go to|go|list|display|compare|pull
 const IMPERATIVE_TA = /(காட்டு|காட்டுங்க|காட்டுங்கள்|காமி|காமிங்க|திற|திறங்க|திறந்து|சொல்லு|சொல்லுங்க|சொல்லுங்கள்|ஒப்பிடு|ஒப்பிடுங்க|ஒப்பிட்டு|பாரு|பாருங்க|போங்க|மாத்து|மாத்துங்க|மாற்று|படி|படிங்க|வாசி|போடு|போடுங்க|கொடு|கொடுங்க|தா) *$/;
 const IMPERATIVE_TG = /\b(kaattu|kaatu|kattu|katu|kaami|kaminga|kaatunga|kattunga|katunga|thira|thiranga|thirandhu|sollu|sollunga|oppidu|oppidunga|paaru|paarunga|ponga|maathu|mathu|maathunga|padi|padinga|podu|podunga|kudu|kudunga|show pannu|open pannu|compare pannu|list pannu|filter pannu|map pannu|sort pannu)\s*$/;
 /** the shape of a request or a follow-up: for tier 2 */
-const REQUEST_EN = /^ (and|what|whats|why|how|which|where|who|when|same|also|now|only|just|no|not|then|next|the|that|this|those|these|compare|show|open|go|list|read|tell|give|filter|sort|zone|in|for|at|more|less|top|worst|best|first|second|third|last|today|this|please|ok|okay|yes|can|could|is|are|do|does) /;
+const REQUEST_EN = /^ (and|what|whats|why|how|which|where|who|when|same|also|now|only|just|no|not|then|next|compare|show|open|go|list|read|tell|give|filter|sort|zone|in|for|at|more|less|top|worst|best|first|second|third|last|today|please|ok|okay|yes|can|could|would|is|are|do|does|put|make|build|create|get|bring|check|look|find|pull|prepare|summarise|summarize|brief|run|add|change|set|switch|draft|export|map|rank|save|pin|remember|remind) /;
 const QUESTION_TA = /(என்ன|எங்க|எங்கே|ஏன்|எத்தனை|எவ்வளவு|எது|யார்|எப்படி|எப்போ|ஆ\?|ஆ *$)/;
 const QUESTION_TG = /\b(enna|enga|yen|ethana|evvalavu|edhu|yaaru|eppadi|eppo)\b/;
 
@@ -47,11 +50,12 @@ export function namedIn(text: string): string | null {
   return /(jarvis|ஜார்விஸ்)/i.test(text) ? text.replace(/,?\s*(jarvis|ஜார்விஸ்)\s*,?/gi, " ").replace(/\s+/g, " ").trim() : null;
 }
 
-export const looksSide = (text: string): boolean => {
+const sideEn = (t: string, weak: boolean) => SIDE_STRONG.test(t) || (weak && SIDE_WEAK.test(t));
+export const looksSide = (text: string, engaged = false): boolean => {
   const t = norm(text);
   if (SIDE_TA.test(text) || SIDE_TG.test(t)) return true;
-  if (SIDE_KEEP_EN.test(t)) return SIDE_EN.test(t.replace(SIDE_KEEP_EN, " "));
-  return SIDE_EN.test(t);
+  if (SIDE_KEEP_EN.test(t)) return sideEn(t.replace(SIDE_KEEP_EN, " "), !engaged);
+  return sideEn(t, !engaged);
 };
 export const isImperative = (text: string): boolean => {
   const t = norm(text);
@@ -67,7 +71,7 @@ export function addressed(i: GateInput): Addressed {
   const named = namedIn(text);
   if (named != null) return { tier: 1, act: true, text: named || text, maxLevel: "C", why: "named" };
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
-  if (engaged && looksRequest(text) && !looksSide(text)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
+  if (engaged && looksRequest(text) && !looksSide(text, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };
   if (i.rulesSure && (isImperative(text) || i.districtNoun)) return { tier: 3, act: true, text, maxLevel: "A", why: "rules" };
   if (isImperative(text) && i.districtNoun) return { tier: 3, act: true, text, maxLevel: "A", why: "imperative" };

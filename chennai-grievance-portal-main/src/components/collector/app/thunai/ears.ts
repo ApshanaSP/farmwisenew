@@ -102,7 +102,7 @@ export class Ears {
     const AC = W.AudioContext ?? W.webkitAudioContext;
     if (!AC) throw new Error("unsupported");
     const my = ++this.gen;
-    const test = process.env.NODE_ENV !== "production" ? window.__jarvisTestStream : undefined;
+    const test = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1" ? window.__jarvisTestStream : undefined;
     if (test) this.stream = await test();
     else {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");

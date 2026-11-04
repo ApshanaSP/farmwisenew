@@ -47,7 +47,10 @@ export function zonesIn(t: string, w: World): number[] {
   const m = / zone (\d{1,2}) /.exec(t);
   if (m && +m[1] >= 1 && +m[1] <= 15 && !hits.some((h) => h.n === +m[1])) hits.push({ n: +m[1], at: m.index });
   // the last resort: a spelling or a transliteration the lexicon does not list
-  if (!hits.length) for (const n of fuzzyNames(t, w.zones.map((z): [number, string] => [z.n, z.name]))) hits.push({ n, at: 0 });
+  if (!hits.length) {
+    const names: [number, string][] = [...w.zones.map((z): [number, string] => [z.n, z.name]), ...w.places.filter((p) => p.zone != null && p.name.length >= 6).map((p): [number, string] => [p.zone as number, p.name])];
+    for (const n of fuzzyNames(t, names)) hits.push({ n, at: 0 });
+  }
   return [...new Set(hits.sort((a, b) => a.at - b.at).map((h) => h.n))];
 }
 

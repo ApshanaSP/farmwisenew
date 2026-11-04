@@ -11,17 +11,17 @@ export const ZONES: Record<number, { en: string[]; ta: string[] }> = {
   2: { en: ["manali"], ta: ["மணலி"] },
   3: { en: ["madhavaram", "madavaram"], ta: ["மாதவரம்"] },
   4: { en: ["tondiarpet", "thandaiyarpet", "tondiarpettai", "thandaiyarpettai"], ta: ["தண்டையார்பேட்டை"] },
-  5: { en: ["royapuram", "rayapuram"], ta: ["ராயபுரம்", "இராயபுரம்"] },
+  5: { en: ["royapuram", "rayapuram", "royapuram zone"], ta: ["ராயபுரம்", "இராயபுரம்", "ரோயபுரம்"] },
   6: { en: ["thiru vi ka nagar", "thiruvika nagar", "tvk nagar", "thiru-vi-ka nagar", "thiruvika"], ta: ["திருவிக நகர்", "திரு.வி.க. நகர்", "திருவிக"] },
-  7: { en: ["ambattur", "ambathur", "ambatthur"], ta: ["அம்பத்தூர்"] },
-  8: { en: ["anna nagar", "annanagar"], ta: ["அண்ணா நகர்", "அண்ணாநகர்"] },
+  7: { en: ["ambattur", "ambathur", "ambatthur", "ambatur"], ta: ["அம்பத்தூர்", "அம்பட்டூர்"] },
+  8: { en: ["anna nagar", "annanagar", "annan nagar"], ta: ["அண்ணா நகர்", "அண்ணாநகர்", "அன்னா நகர்"] },
   9: { en: ["teynampet", "thenampet", "thenampettai", "teynampettai"], ta: ["தேனாம்பேட்டை"] },
   10: { en: ["kodambakkam", "kodambakam"], ta: ["கோடம்பாக்கம்"] },
   11: { en: ["valasaravakkam", "valasarawakkam", "valasaravakam"], ta: ["வளசரவாக்கம்"] },
   12: { en: ["alandur", "aalandur"], ta: ["ஆலந்தூர்"] },
-  13: { en: ["adyar", "adayar", "adaiyar", "adaiyaru", "adayaru"], ta: ["அடையாறு", "அடையார்"] },
-  14: { en: ["perungudi"], ta: ["பெருங்குடி"] },
-  15: { en: ["sholinganallur", "sholinganalur", "solinganallur", "shozhinganallur"], ta: ["சோழிங்கநல்லூர்"] }
+  13: { en: ["adyar", "adayar", "adaiyar", "adaiyaru", "adayaru", "adyaru"], ta: ["அடையாறு", "அடையார்", "அடயார்", "அட்யார்"] },
+  14: { en: ["perungudi", "perungudy", "perunkudi", "peringudi"], ta: ["பெருங்குடி", "பெரும்குடி"] },
+  15: { en: ["sholinganallur", "sholinganalur", "solinganallur", "shozhinganallur", "cholinganallur"], ta: ["சோழிங்கநல்லூர்", "சோளிங்கநல்லூர்", "ஷோலிங்கநல்லூர்"] }
 };
 export const ZONE_TA_NAME: Record<number, string> = Object.fromEntries(Object.entries(ZONES).map(([n, z]) => [n, z.ta[0]]));
 export const ZONE_NAMES = ["Thiruvottiyur", "Manali", "Madhavaram", "Tondiarpet", "Royapuram", "Thiru-Vi-Ka Nagar", "Ambattur", "Anna Nagar",

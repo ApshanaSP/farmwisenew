@@ -73,6 +73,8 @@ for (const [lang, sizeName, size] of [["en", "1366", { width: 1366, height: 768 
     await page.waitForFunction(() => !document.querySelector(".st-root"), null, { timeout: 8000 }).catch(() => undefined);
     await page.waitForTimeout(1000);
     await shot(page, `${sizeName}-${lang}-4-panels`);
+    // the reticle has a place (its position on screen depends on the map being loaded)
+    expect(await page.evaluate(() => (window as unknown as { __jv: { hud(): { focus: { lat: number | null } | null } } }).__jv.hud().focus?.lat ?? null)).not.toBeNull();
     for (const core of ["thinking", "speaking", "holding", "offline"]) {
       await page.evaluate((c) => (window as unknown as { __jv: { setCore(x: string): void } }).__jv.setCore(c), core);
       await page.waitForTimeout(500);

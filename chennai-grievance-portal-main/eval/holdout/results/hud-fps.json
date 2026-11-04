@@ -1,10 +1,10 @@
 {
  "speaking": {
-  "fps": 110.7,
-  "worst": 90,
-  "frames": 2214
+  "fps": 140.6,
+  "worst": 222,
+  "frames": 2811
  },
- "reducedMotionFps": 136.6,
+ "reducedMotionFps": 144.1,
  "browser": "chromium",
  "channel": "msedge",
  "note": "headless, software rendering unless the channel says otherwise; a 20 s requestAnimationFrame count with the HUD on the console"

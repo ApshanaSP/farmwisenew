@@ -12,7 +12,6 @@ test("ambient requests an hour, side talk throughout", async ({ page }) => {
   test.setTimeout(720_000);
   const ctx = await setup(page);
   await modeOn(page);
-  await page.locator(".hud-first button").click().catch(() => undefined);
   const t0 = Date.now();
   const clips = ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "cmd_adyar", "cmd_trends", "cmd_zone"];
   let i = 0, spoken = 0;

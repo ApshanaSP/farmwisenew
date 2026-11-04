@@ -3,8 +3,10 @@ import { clearMarks, durOf, marks, modeOn, pct, saveResult, say } from "./helper
 import { b64 } from "./helpers";
 
 /**
- * The one real local run: Silero, Whisper, the planner and the voice all real, the audio injected. Spends about 20 Whisper requests
- * and two or three model calls. Reported apart from the mocked numbers.   REAL=1 PW_CHANNEL=msedge npx playwright test tests/e2e/real.spec.ts
+ * The one real local run: Silero, Whisper, the planner and the voice all real, the audio injected, on a production bundle. Spends
+ * about 20 Whisper requests and two or three model calls. Reported apart from the mocked numbers. Build, then:
+ *   NEXT_PUBLIC_JARVIS_SPEC=1 NEXT_DIST_DIR=.next-agentbuild npx next build
+ *   SPEC_PROD=1 REAL=1 PW_CHANNEL=msedge npx playwright test tests/e2e/real.spec.ts
  */
 test.skip(!process.env.REAL, "spends real quota: run with REAL=1");
 test.use({ channel: process.env.PW_CHANNEL || undefined });
@@ -44,8 +46,10 @@ test("real providers, end to end", async ({ page }) => {
   page.on("response", async (r) => { if (r.url().includes("/hear")) { const j = await r.json().catch(() => null); heard.push({ lane: new URL(r.url()).searchParams.get("lane"), status: r.status(), ...(j ?? {}) }); } });
   await page.goto("/dev/thunai");
   await page.waitForFunction(() => !!(window as unknown as { __jv?: unknown }).__jv, null, { timeout: 180_000 });
+  // warm the dev server's routes first: a first compile is not latency
+  const warm = { turnId: "warm1", round: 0, text: "show the severe cases", turns: [], stage: null, direct: null, state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 0, lastPlace: null, numbers: false } };
+  await page.request.post("/api/dev/thunai/agent/round", { data: warm, timeout: 120_000 }).catch(() => undefined);
   await modeOn(page);
-  await page.locator(".hud-first button").click().catch(() => undefined);
   const out: Record<string, unknown>[] = [];
   // the rules lane: a plain move, a screen; the planner lane: a sentence the rules leave to it
   for (const [clip, lane] of [["cmd_trends", "rules"], ["cmd_adyar", "rules"], ["b6", "rules"], ["b3", "rules"], ["open_ended", "planner"], ["open_ended2", "planner"]] as const) {
@@ -57,17 +61,20 @@ test("real providers, end to end", async ({ page }) => {
     await page.waitForTimeout(700);
     const m = await marks(page);
     const at = (n: string) => m.find((x) => x.name === n)?.t ?? NaN;
-    const end = at("vadEnd") - 300;
+    // a clip that says "Jarvis," and pauses ends twice: its request ends at the last end event before the answer
+    const answerAt = Math.min(at("answer"), at("firstAudio"), at("ack"));
+    const lastEnd = m.filter((x) => x.name === "vadEnd" && x.t < answerAt).map((x) => x.t).pop() ?? at("vadEnd");
+    const end = lastEnd - 300;
     const hud = await page.evaluate(() => (window as unknown as { __jv: { hud(): { ribbon: string; strip: { provider: string | null; tokens: number | null; path: string | null } } } }).__jv.hud());
-    out.push({ clip, lane, heard: hud.ribbon, ack: Math.round(at("ack") - end), answer: Math.round(at("answer") - end), firstAudio: Math.round(at("firstAudio") - end), provider: hud.strip.provider, tokens: hud.strip.tokens, path: hud.strip.path });
+    out.push({ clip, lane, heard: hud.ribbon, ack: Math.round(at("ack") - end), answer: Math.round(at("answer") - end), firstAudio: Math.round(at("firstAudio") - end), finding: Math.round(at("finding") - end), provider: hud.strip.provider, tokens: hud.strip.tokens, path: hud.strip.path });
     console.log(JSON.stringify(out[out.length - 1]));
     await page.keyboard.press("Escape");
     await page.waitForTimeout(500);
   }
   const col = (lane: string, k: string) => out.filter((x) => x.lane === lane).map((x) => x[k] as number).filter((x) => Number.isFinite(x));
-  const r = { runs: out, rules: { ack_p50: pct(col("rules", "ack"), 0.5), firstAudio_p50: pct(col("rules", "firstAudio"), 0.5), answer_p50: pct(col("rules", "answer"), 0.5) }, planner: { ack_p50: pct(col("planner", "ack"), 0.5), firstAudio_p50: pct(col("planner", "firstAudio"), 0.5), answer_p50: pct(col("planner", "answer"), 0.5) },
-    note: "real Whisper, real planner, real voice ladder, injected audio, next dev server: a production server would be a little faster" };
-  saveResult("latency-real", { ...r, heard });
+  const r = { runs: out, rules: { ack_p50: pct(col("rules", "ack"), 0.5), firstAudio_p50: pct(col("rules", "firstAudio"), 0.5), finding_p50: pct(col("rules", "finding"), 0.5), answer_p50: pct(col("rules", "answer"), 0.5) }, planner: { ack_p50: pct(col("planner", "ack"), 0.5), firstAudio_p50: pct(col("planner", "firstAudio"), 0.5), finding_p50: pct(col("planner", "finding"), 0.5), answer_p50: pct(col("planner", "answer"), 0.5) },
+    note: process.env.SPEC_PROD ? "real Whisper, real planner, real voice ladder, injected audio, production bundle. firstAudio can be the acknowledgement; finding is the first spoken answer" : "real Whisper, real planner, real voice ladder, injected audio, next dev server" };
+  saveResult(process.env.SPEC_PROD ? "latency-real-prod" : "latency-real", { ...r, heard });
   console.log(JSON.stringify(r.rules), JSON.stringify(r.planner));
   expect(out.length).toBe(6);
 });

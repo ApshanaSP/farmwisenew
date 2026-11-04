@@ -51,7 +51,8 @@ const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?:
   return speakText(text, lang, { onEnd, rate, voice, allowed });
 };
 /** dev only: a time mark the end-to-end specs read */
-const jvMark = (name: string) => { if (process.env.NODE_ENV !== "production") (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t: performance.now() }); };
+const SPEC = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1";
+const jvMark = (name: string) => { if (SPEC) (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t: performance.now() }); };
 /** What a screen's narration may say: its own figures and what code wrote from them; an answer screen's model text may say only the facts. */
 function screenFigures(doc: StageDocT, lang: Lang): Set<string> {
   const base = figuresOf(doc);
@@ -221,13 +222,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const lastRequest = useRef<{ text: string; lang: "en" | "ta" } | null>(null);
   /** when the sentence being answered ended (the strip's latency runs from here) */
   const utterEnd = useRef<number | null>(null);
+  const utterEnd2 = useRef<number | null>(null);
   /** The screen's real figures, as a panel for the HUD; the place it is about, for the map's reticle. */
   const toHud = (doc: StageDocT, lang: Lang) => {
     const ta = lang === "ta";
     const figures: { label: string; value: number; unit: string | null }[] = [];
     let focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null = null;
     for (const b of doc.blocks) {
-      if (figures.length >= 3) break;
+      if (!focus && b.kind === "MapView" && b.points.length) {
+        const hot = b.points.filter((p) => p.hot).slice(0, 4);
+        focus = { label: doc.title.slice(0, 40), lat: b.points[0].lat, lon: b.points[0].lon, zone: doc.scope.zone, pulses: hot.map((p) => ({ lat: p.lat, lon: p.lon })) };
+      }
+      if (figures.length >= 3) continue;
       if (b.kind === "CaseList") figures.push({ label: ta ? "சம்பவங்கள்" : "Cases", value: b.total, unit: null });
       else if (b.kind === "Kpis") for (const k of b.items.slice(0, 3)) { if (figures.length < 3) figures.push({ label: k.label, value: k.value, unit: k.unit }); }
       else if (b.kind === "Ranking" && b.items[0]) figures.push({ label: b.items[0].label, value: b.items[0].value, unit: b.unit });
@@ -235,10 +241,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       else if (b.kind === "Compare") for (const x of b.sides.slice(0, 3)) figures.push({ label: x.label, value: Number(x.values.severe ?? 0), unit: ta ? "கடுமையான" : "severe" });
       else if (b.kind === "Filled") figures.push({ label: ta ? "நிரப்பியது" : "Filled", value: b.filled, unit: null }, { label: ta ? "மீதம்" : "Left", value: b.left, unit: null });
       else if (b.kind === "Findings") { const f = b.items.find((x) => x.value != null); if (f) figures.push({ label: f.title.slice(0, 40), value: f.value as number, unit: f.unit }); }
-      if (!focus && b.kind === "MapView" && b.points.length) {
-        const hot = b.points.filter((p) => p.hot).slice(0, 4);
-        focus = { label: doc.title.slice(0, 40), lat: b.points[0].lat, lon: b.points[0].lon, zone: doc.scope.zone, pulses: hot.map((p) => ({ lat: p.lat, lon: p.lon })) };
-      }
     }
     hud.panel({ id: doc.id, title: doc.title.slice(0, 90), takeaway: doc.takeaway?.[lang] ?? null, figures: figures.filter((f) => Number.isFinite(f.value)).slice(0, 3), source: doc.sources[0] ?? null, recipe: doc.recipe, at: Date.now() });
     hud.set({ focus });
@@ -264,7 +266,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [askOnce, setAskOnce] = useState<AskCard | null>(null);
   /** who understood the last sentence: the model (and how fast), the built-in rules, or an instant control */
   const [brain, setBrain] = useState<{ by: "ai" | "rules" | "instant"; model: string | null; ms: number } | null>(null);
-  const [pendingB, setPendingB] = useState<{ text: string; steps: Step[]; heard: string; lang: Lang } | null>(null);
+  const [pendingB, setPendingB] = useState<{ text: string; steps: Step[]; heard: string; lang: Lang; act?: () => void } | null>(null);
   const [tray, setTray] = useState<Draft[]>([]);
   const [trayShownAt, setTrayShownAt] = useState<number | null>(null);
   const [panel, setPanel] = useState<"memory" | "trail" | "help" | "voice" | null>(null);
@@ -789,8 +791,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const savePins = async (next: PinnedScreen[], op: Record<string, unknown>) => {
     setPins(next);
     store.set("thunai-pins", JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent("jarvis:pins"));
     await changeMemory(op);
   };
+  // a pinned screen's chip on the Overview: it opens built fresh from the data
+  useEffect(() => {
+    const f = (e: Event) => { const p = (e as CustomEvent<PinnedScreen>).detail; if (!onRef.current) switchOn(true); void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title); }; // eslint-disable-line @typescript-eslint/no-use-before-define
+    window.addEventListener("jarvis:open-pin", f);
+    return () => window.removeEventListener("jarvis:open-pin", f);
+  }); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Ask the agent: a sentence (with the screen, the turns and the open Stage), or a Stage control's direct screen. */
   const callAgent = async (said: string, st: ScreenState, direct?: { recipe: StageDocT["recipe"]; slots: Record<string, unknown>; lang: Lang }, signal?: AbortSignal): Promise<AgentResult | null> => {
@@ -991,8 +1000,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     return digest;
   };
 
+  /** Pinning keeps something: one spoken yes or a tap first (level B). */
+  const askPin = (lang: Lang) => {
+    const q = lang === "ta" ? "இந்தத் திரையைப் பின் செய்யவா?" : "Pin this screen?";
+    setPendingB({ text: q, steps: [], heard: "pin this", lang, act: () => void applyLocal({ op: "pin" }, lang) });
+    earcon("need");
+    out(q, lang, "asking");
+  };
   const applyStageOp = async (op: StageOp, lang: Lang) => {
     if (op.op === "save") { askSave(op.text ?? stageRef.current?.title ?? "Jarvis screen", lang); return; }
+    if (op.op === "pin") { askPin(lang); return; }
     const sortBy = (["complaints", "time", "value", "name", "severity"].includes(op.text ?? "") ? op.text : "value") as "value";
     const cmd: LocalCmd | null =
       op.op === "open" ? { op: "open", n: op.n ?? 1 }
@@ -1085,19 +1102,38 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
       // a yes from Whisper, typed text or a tap; browser captions can catch Jarvis's own voice, so theirs never counts
-      if (/^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said) && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); await run(p.steps, p.lang, p.heard, "rules"); return; }
+      if (/^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said) && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); if (p.act) p.act(); else await run(p.steps, p.lang, p.heard, "rules"); return; }
       if (/^(no|cancel|வேண்டாம்|illa|vendaam)$/i.test(said)) { setPendingB(null); setPhase("ready"); return; }
       setPendingB(null);
     }
+    // from tier 3 (no name, not engaged) only level A runs; the rest waits for the name
+    const needsName = (risk: "A" | "B" | "C", lang: Lang) => {
+      const g = gateRef.current;
+      if (!g || levelAllowed(g, risk)) return false;
+      earcon("need");
+      out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
+      return true;
+    };
     // the open Stage: its own commands ("next", "only the Adyar ones", "open 3", "pin this") need no model
     if (stageRef.current && !original) {
       const lc = localStageCommand(said);
-      if (lc) { setBrain({ by: "instant", model: null, ms: 0 }); remember(said, `on the Stage: ${lc.op}`); await applyLocal(lc, /[஀-௿]/.test(said) ? "ta" : listenLang); return; }
+      if (lc) {
+        const lg: Lang = /[஀-௿]/.test(said) ? "ta" : listenLang;
+        if (needsName(lc.op === "pin" ? "B" : lc.op === "draft" ? "C" : "A", lg)) return;
+        setBrain({ by: "instant", model: null, ms: 0 }); remember(said, `on the Stage: ${lc.op}`);
+        // pinning keeps something: one spoken yes or a tap first (level B)
+        if (lc.op === "pin") { askPin(lg); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+        await applyLocal(lc, lg);
+        return;
+      }
     }
     const st = buildState();
     const rules = understand(said, st, worldRef.current, { speechConf: conf });
     // instant controls never wait for the network; sending only ever happens here, from the Collector's own words
-    if (rules.kind === "do" && isReflex(rules.steps, st)) { setBrain({ by: "instant", model: null, ms: 0 }); await run(rules.steps, rules.lang, said, "rules"); return; }
+    if (rules.kind === "do" && isReflex(rules.steps, st)) {
+      if (needsName(planRisk(rules.steps), rules.lang)) return;
+      setBrain({ by: "instant", model: null, ms: 0 }); await run(rules.steps, rules.lang, said, "rules"); return;
+    }
     // a plain move the rules are sure of ("go to trends", "open the map") is done at once, with no model
     if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && isPlainMove(rules.steps)) {
       setBrain({ by: "instant", model: null, ms: 0 });
@@ -1115,21 +1151,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     ackText.current = ack;
     setReply(ack);
     if (stageRef.current) setStageBusy(ack);
-    if (outMode === "voice" && modeRef.current === "on") speakAck(ack, rules.lang === "ta" ? "ta-IN" : "en-IN");
+    const ackT = outMode === "voice" && modeRef.current === "on" ? setTimeout(() => { if (alive()) speakAck(ack, rules.lang === "ta" ? "ta-IN" : "en-IN"); }, 150) : null;
     jvMark("ack");
     if (utterEnd.current) hud.strip({ ackMs: Math.round(performance.now() - utterEnd.current) });
     const stopBeat = outMode !== "quiet" && modeRef.current !== "on" ? heartbeat() : () => undefined;
-    const ag = await callAgent(said, st, undefined, ctl.signal).finally(stopBeat);
+    const ag = await callAgent(said, st, undefined, ctl.signal).finally(() => { stopBeat(); if (ackT) clearTimeout(ackT); });
     if (!alive()) return;
     setStageBusy(null);
-    // from tier 3 (no name, not engaged) only level A runs; the rest waits for the name
-    const needsName = (risk: "A" | "B" | "C", lang: Lang) => {
-      const g = gateRef.current;
-      if (!g || levelAllowed(g, risk)) return false;
-      earcon("need");
-      out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
-      return true;
-    };
     if (ag && ag.kind !== "none") {
       setBrain({ by: "ai", model: ag.model, ms: ag.ms });
       const lang = ag.lang;
@@ -1366,10 +1394,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         return { sure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(t, w) };
       },
       lastTurnAt: () => lastTurnAt.current,
-      onVoice: (e, p) => { if (e === "start") { hud.strip({ path: p ?? null }); jvMark("firstAudio"); } lastTurnAt.current = Date.now(); },
+      onVoice: (e, p, ack) => {
+        if (e === "start") {
+          hud.strip({ path: p ?? null });
+          jvMark("firstAudio");
+          if (!ack) { jvMark("finding"); if (utterEnd2.current) { hud.strip({ findingMs: Math.round(performance.now() - utterEnd2.current) }); utterEnd2.current = null; } }
+        }
+        lastTurnAt.current = Date.now();
+      },
       mark: (name, t) => {
-        if (name === "vadEnd") utterEnd.current = t;
-        if (process.env.NODE_ENV !== "production") (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t });
+        if (name === "vadEnd") { utterEnd.current = t; utterEnd2.current = t; }
+        if (SPEC) (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t });
       }
     });
     onEarcon = () => c.earcon();
@@ -1485,7 +1520,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // dev only: what the end-to-end specs read
   useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
+    if (!SPEC) return;
     (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }), setHud: (p: never) => hud.set(p) };
   }, []);
 
@@ -1497,8 +1532,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!ref.cats.length) fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => j && setRef(j)).catch(() => undefined);
     if (!quiet) setFocusKey((k) => k + 1);
     warmVoices();
-    // the short lines Jarvis says most, made ready before they are needed
-    prefetch(line("wake", listenLangRef.current), listenLangRef.current);
   }, [loadMemory, ref.cats.length]); // eslint-disable-line react-hooks/exhaustive-deps
   /** The panel closes; the ears go back to waiting for the name (when the wake word is on). */
   const switchOff = useCallback(() => {
@@ -1687,7 +1720,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         <div className="th-card amber" role="dialog" aria-label={pendingB.text}>
           <p>{pendingB.text}</p>
           <div className="row">
-            <button className="primary" onClick={() => { const p = pendingB; setPendingB(null); void run(p.steps, p.lang, p.heard, "rules"); }}>{ta ? "ஆம்" : "Yes"}</button>
+            <button className="primary" onClick={() => { const p = pendingB; setPendingB(null); if (p.act) p.act(); else void run(p.steps, p.lang, p.heard, "rules"); }}>{ta ? "ஆம்" : "Yes"}</button>
             <button onClick={() => { setPendingB(null); setPhase("ready"); }}>{ta ? "வேண்டாம்" : "No"}</button>
           </div>
         </div>

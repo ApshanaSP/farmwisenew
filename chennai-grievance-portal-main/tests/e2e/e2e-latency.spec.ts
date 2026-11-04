@@ -11,13 +11,13 @@ async function oneTurn(page: Parameters<typeof setup>[0], ctx: Ctx, clip: string
   await clearMarks(page);
   ctx.hear.push({ text, delay: 450 });
   await say(page, clip);
-  await page.waitForFunction(() => (window as unknown as { __jv: { marks: { name: string }[] } }).__jv.marks.some((m) => m.name === "firstAudio"), null, { timeout: 15_000 });
+  await page.waitForFunction(() => (window as unknown as { __jv: { marks: { name: string }[] } }).__jv.marks.some((m) => m.name === "finding"), null, { timeout: 15_000 });
   const m = await marks(page);
   const at = (n: string) => m.find((x) => x.name === n)?.t ?? NaN;
   // SAPI leaves a variable tail of silence after the words, so the end of speech is taken as the VAD's end event less its
   // 300 ms of required quiet
   const end = at("vadEnd") - 300;
-  const r = { ack: at("ack") - end, answer: at("answer") - end, firstAudio: at("firstAudio") - end, vadEnd: at("vadEnd") - end };
+  const r = { ack: at("ack") - end, answer: at("answer") - end, firstAudio: at("firstAudio") - end, finding: at("finding") - end, vadEnd: at("vadEnd") - end };
   await page.keyboard.press("Escape");
   await page.waitForTimeout(500);
   return r;
@@ -29,7 +29,7 @@ test("latency from the end of speech, mocked providers", async ({ page }) => {
   await modeOn(page);
   const planner: Awaited<ReturnType<typeof oneTurn>>[] = [];
   for (const c of ["b1", "b2", "b3", "b4", "b5", "b6"]) planner.push(await oneTurn(page, ctx, c, "Jarvis, what is going on near the bridge"));
-  const sum = (xs: typeof planner) => Object.fromEntries((["ack", "answer", "firstAudio", "vadEnd"] as const).map((k) => [k, { p50: Math.round(pct(xs.map((x) => x[k]), 0.5)), p90: Math.round(pct(xs.map((x) => x[k]), 0.9)) }]));
+  const sum = (xs: typeof planner) => Object.fromEntries((["ack", "answer", "firstAudio", "finding", "vadEnd"] as const).map((k) => [k, { p50: Math.round(pct(xs.map((x) => x[k]), 0.5)), p90: Math.round(pct(xs.map((x) => x[k]), 0.9)) }]));
   const out = { planner: sum(planner), note: "from the end of speech (VAD end less 300 ms); mocked: hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium has no natural voice here, so first audio is the PCM path and the ack is on screen, not spoken" };
   saveResult("latency-mocked", out);
   console.log(JSON.stringify(out));

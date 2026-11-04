@@ -46,7 +46,7 @@ export interface ConductorHooks {
   rules: (text: string) => { sure: boolean; districtNoun: boolean };
   /** when Jarvis last finished a turn */
   lastTurnAt: () => number | null;
-  onVoice?: (e: "start" | "end", path?: VoicePath) => void;
+  onVoice?: (e: "start" | "end", path?: VoicePath, ack?: boolean) => void;
   /** dev metrics: barge-in marks, the detector's fire times */
   mark?: (name: string, t: number) => void;
 }
@@ -70,7 +70,7 @@ export class Conductor {
 
   constructor(private h: ConductorHooks) {
     setMouthHooks({
-      onStart: (p) => { this.h.onVoice?.("start", p); this.dispatch({ type: "ttsStart" }); },
+      onStart: (p, ack) => { this.h.onVoice?.("start", p, ack); this.dispatch({ type: "ttsStart" }); },
       onEnd: () => { this.h.onVoice?.("end"); this.dispatch({ type: "ttsEnd" }); }
     });
   }
@@ -197,8 +197,10 @@ export class Conductor {
         });
       }
     }
-    if (this.budgetT) clearTimeout(this.budgetT);
-    this.budgetT = setTimeout(() => {
+    // the window is a minute from when it went low, and is not pushed back by more talk: nonstop talk must not keep unnamed
+    // commands out for good
+    if (!this.budgetT) this.budgetT = setTimeout(() => {
+      this.budgetT = null;
       this.budgetLow = false;
       this.wakeStop?.(); this.wakeStop = null;
       this.h.onBudget?.({ low: false, ambient: 0 });
@@ -282,7 +284,6 @@ export class Conductor {
       this.engage();
       this.h.onNameOnly?.();
       this.dispatch({ type: "text", text: "", gen });
-      this.ears?.extend(TUNING.holdExtendMs);
       return;
     }
     const gate = this.gateFor(t);

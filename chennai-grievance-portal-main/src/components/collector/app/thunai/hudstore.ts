@@ -26,14 +26,14 @@ export interface HudState {
   denied: boolean;
   firstUse: boolean;
   /** the system strip: real numbers only */
-  strip: { lastMs: number | null; ackMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null };
+  strip: { lastMs: number | null; ackMs: number | null; findingMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null };
   /** the place being discussed, for the map's reticle */
   focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null;
 }
 
 const START: HudState = {
   mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
-  strip: { lastMs: null, ackMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null
+  strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null
 };
 
 let state: HudState = START;
