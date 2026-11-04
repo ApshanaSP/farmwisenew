@@ -7,15 +7,56 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     expect(await jv(page, "micLive")).toBe(false);
     await page.keyboard.press("Control+Shift+J");
     await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
-    await expect(page.getByText("Listening", { exact: true })).toBeVisible();
+    await expect(page.locator(".jsw-mute", { hasText: "Listening" })).toBeVisible();
     await page.keyboard.press("Control+Shift+M");
     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive());
-    await expect(page.getByText("Muted", { exact: true })).toBeVisible();
+    await expect(page.locator(".jsw-mute", { hasText: "Muted" })).toBeVisible();
     await page.keyboard.press("Control+Shift+M");
     await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 30_000 });
     await page.keyboard.press("Control+Shift+J");
     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive());
     expect(await page.evaluate(() => localStorage.getItem("jarvis-mode"))).toBe("off");
+  });
+
+  test("the first time, the notice comes first: the microphone stays closed until it is read", async ({ page }) => {
+    await setup(page);
+    await page.evaluate(() => localStorage.removeItem("jarvis-mode-seen"));
+    await page.keyboard.press("Control+Shift+J");
+    await expect(page.locator(".hud-first")).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(1500);
+    expect(await jv(page, "micLive")).toBe(false);
+    await page.locator(".hud-first button").click();
+    await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
+    expect(await page.evaluate(() => localStorage.getItem("jarvis-mode-seen"))).toBe("1");
+  });
+
+  test("the name alone, then a pause, then the request: it listens on and asks no model for the name", async ({ page }) => {
+    const ctx = await setup(page, { agent: () => ({ result: steps([{ a: "view", view: { zone: 13 } }]) }) });
+    await modeOn(page);
+    ctx.hear.push({ text: "Jarvis." });
+    await say(page, "cmd_trends");
+    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { ribbon: string } } }).__jv.hud().ribbon === "Yes?", null, { timeout: 15_000 });
+    expect(ctx.agentCalls.length).toBe(0);
+    await page.waitForTimeout(durOf("cmd_trends"));
+    ctx.hear.push({ text: "put something together for Adyar" });
+    await say(page, "cmd_adyar");
+    await expect(page.getByTestId("state")).toContainText('"zone": 13', { timeout: 15_000 });
+    expect(ctx.hearCalls[1].lane).toBe("engaged");
+  });
+
+  test("Esc forgets a cancelled question: a later ignored sentence does not bring it back", async ({ page }) => {
+    const ctx = await setup(page, { agent: () => ({ result: chat("The late answer."), delay: 2000 }) });
+    await modeOn(page);
+    ctx.hear.push({ text: "Jarvis, what is going on near the bridge" });
+    await say(page, "cmd_adyar");
+    await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { ribbon: string } } }).__jv.hud().ribbon.includes("bridge"), null, { timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    const n = ctx.agentCalls.length;
+    await page.waitForTimeout(2500);
+    ctx.hear.push({ text: "did he send the file yesterday" });
+    await say(page, "b3");
+    await page.waitForTimeout(durOf("b3") + 1500);
+    expect(ctx.agentCalls.length).toBe(n);
   });
 
   test("three commands with no click and no name: the console acts", async ({ page }) => {

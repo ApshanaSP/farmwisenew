@@ -31,7 +31,7 @@ export const steps = (s: unknown[], reply: string | null = null) => ({ kind: "do
 const init = () => {
   const W = window as unknown as Record<string, unknown>;
   // the morning greeting would talk over the first test
-  try { localStorage.setItem("thunai-greeted", new Date().toDateString()); } catch { /* opaque origin */ }
+  try { localStorage.setItem("thunai-greeted", new Date().toDateString()); localStorage.setItem("jarvis-mode-seen", "1"); } catch { /* opaque origin */ }
   const A = window.AudioContext;
   const c = new A({ sampleRate: 48000 });
   let dest: MediaStreamAudioDestinationNode | null = null;

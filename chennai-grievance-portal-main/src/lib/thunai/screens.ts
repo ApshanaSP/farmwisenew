@@ -370,7 +370,9 @@ async function cases(c: Ctx): Promise<Part> {
   rows = sortRows(rows, slots.sort).slice(0, source === "console-severity" ? 30 : n);
   const sevWord = sev ? sev.toLowerCase() : "";
   const scope = scopeWords(w, { ...s, sev: null });
-  const title = `${sev ? `${sev} cases` : slots.q ? `Cases: ${slots.q}` : "Cases"} · ${scope.en}`;
+  const asTa = /[஀-௿]/.test(c.heard);
+  const L = (en: string, ta: string) => (asTa ? ta : en);
+  const title = asTa ? `${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : slots.q ? `சம்பவங்கள்: ${slots.q}` : "சம்பவங்கள்"} · ${scope.ta}` : `${sev ? `${sev} cases` : slots.q ? `Cases: ${slots.q}` : "Cases"} · ${scope.en}`;
   if (!rows.length) {
     // filters left on the console (not named in this request) can empty the list: say so and offer the whole district
     const inherited = (s.zone && !slots.zones.length) || (s.cat && !slots.cat) || (s.dept && !slots.dept) || (s.taluk && !slots.taluk);
@@ -384,7 +386,7 @@ async function cases(c: Ctx): Promise<Part> {
   }
   const overdue = rows.filter((r) => r.overdue).length;
   const say = casesSay(rows, total, sev, s.period);
-  const takeaway = overdue ? bi(`${overdue} of the ${rows.length} shown are past their deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${overdue} காலக்கெடுவைத் தாண்டியவை.`) : null;
+  const takeaway = overdue ? bi(`${overdue} of the ${rows.length} shown ${overdue === 1 ? "is" : "are"} past ${overdue === 1 ? "its" : "their"} deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${overdue} காலக்கெடுவைத் தாண்டியவை.`) : null;
   const pts = points(rows);
   const blocks: BlockT[] = [];
   const late = rows.filter((r) => r.overdue).length;
@@ -392,12 +394,12 @@ async function cases(c: Ctx): Promise<Part> {
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
   const lead = [...byDept.entries()].sort((a, b) => b[1] - a[1])[0];
   blocks.push({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-    { key: "total", label: `${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
-    { key: "late", label: "Past their deadline", value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
-    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: `Held by ${lead[0]}`, value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
+    { key: "total", label: L(`${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள், ${PERIOD_TA[s.period]}`), value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
+    { key: "late", label: L("Past their deadline", "காலக்கெடு தாண்டியவை"), value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
+    ...(lead && lead[1] >= 2 ? [{ key: "dept", label: L(`Held by ${lead[0]}`, `${lead[0]} வசம்`), value: lead[1], unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : [])
   ] });
   blocks.push({ kind: "CaseList", id: "cases", title, source, sev, total, rows });
-  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: "Where they are", rule: "Numbered as in the list; cases without an exact place are not drawn.", shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
+  if (pts.length) blocks.push({ kind: "MapView", id: "map", title: L("Where they are", "எங்கே உள்ளன"), rule: L("Numbered as in the list; cases without an exact place are not drawn.", "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."), shade: null, points: pts, outline: s.zone ? [s.zone] : [] });
   return { title, takeaway, say, blocks };
 }
 

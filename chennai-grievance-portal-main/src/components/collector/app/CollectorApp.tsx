@@ -278,12 +278,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: 1366, h: 680 });
   /** Jarvis's panel at the right (its width, 0 when closed) and whether a conversation is on, for the top bar's button */
-  const [jv, setJv] = useState<{ width: number; open: boolean; conv: boolean; resting: boolean; mic?: "on" | "off" | "blocked" }>({ width: 0, open: false, conv: false, resting: false });
+  const [jv, setJv] = useState<{ width: number; open: boolean; conv: boolean; resting: boolean; mic?: "on" | "off" | "blocked"; hud?: boolean }>({ width: 0, open: false, conv: false, resting: false });
   useEffect(() => {
     const f = (e: Event) => setJv((e as CustomEvent<typeof jv>).detail);
     window.addEventListener("jarvis:state", f);
     return () => window.removeEventListener("jarvis:state", f);
   }, []);
+  // Jarvis mode's near-black layer sits on the dark console, whatever theme is saved: a black veil over a white page goes grey
+  useEffect(() => {
+    const was = document.documentElement.dataset.theme;
+    if (jv.hud) document.documentElement.dataset.theme = "dark";
+    return () => { if (jv.hud && was) document.documentElement.dataset.theme = was; };
+  }, [jv.hud]);
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   // light (Marina) by default; dark is the harbour at night. Remembered in this browser.
@@ -778,14 +784,14 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={jv.hud ? "dark" : theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {loading && <div className="loading-bar" />}
-      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
+      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: (fit.h - (jv.hud ? 36 : 0)) / fit.z } : undefined}>
         <header className="top">
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />

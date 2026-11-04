@@ -40,6 +40,8 @@ export interface ConductorHooks {
   onFail?: (why: EarsError | "gesture") => void;
   onEndSession?: () => void;
   onHold?: () => void;
+  /** the name alone ("Jarvis", and a pause): it listens on, engaged; the next sentence is the request */
+  onNameOnly?: () => void;
   /** does the rules layer resolve this sentence with confidence and slots, and does it name something of the district? */
   rules: (text: string) => { sure: boolean; districtNoun: boolean };
   /** when Jarvis last finished a turn */
@@ -129,7 +131,7 @@ export class Conductor {
 
   resumeAudio() { return this.ears?.resume(); }
   /** Esc, or the HUD's stop: everything stops at once; the frame stays. */
-  stop() { if (this.m.state !== "off") this.dispatch({ type: "stop" }); }
+  stop() { if (this.m.state !== "off") this.dispatch({ type: "stop" }); this.interruptedThinking = false; }
   /** An earcon is playing: it must not count as speech. */
   earcon(ms = 400) { this.earconUntil = performance.now() + ms; }
   /** The answer had nothing to say. */
@@ -275,6 +277,14 @@ export class Conductor {
     // Jarvis's own voice, heard back: not a sentence
     if (t && selfHeard(t, saying)) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
     if (!t) { this.dispatch({ type: "text", text: "", gen }); this.backOn(interrupted); return; }
+    // "Jarvis" and a pause: the end of utterance is short, so the name often arrives alone. It is not a request
+    if (namedIn(t) === "") {
+      this.engage();
+      this.h.onNameOnly?.();
+      this.dispatch({ type: "text", text: "", gen });
+      this.ears?.extend(TUNING.holdExtendMs);
+      return;
+    }
     const gate = this.gateFor(t);
     if (!gate.act) {
       this.h.onIgnored(t);
@@ -283,6 +293,7 @@ export class Conductor {
       return;
     }
     this.pending = { lang, source, gate };
+    this.forgetCancelled();
     this.dispatch({ type: "text", text: gate.text, gen });
   }
 
@@ -291,6 +302,8 @@ export class Conductor {
     if (interrupted && continueAnswer()) { this.m = { ...this.m, state: "speaking" }; this.h.onState("speaking"); return; }
     if (this.interruptedThinking) { this.interruptedThinking = false; this.h.reissue?.(); }
   }
+  /** Tell the turn machine a new sentence was taken: nothing cancelled earlier comes back after it. */
+  private forgetCancelled() { this.interruptedThinking = false; }
 
   /** Whisper unavailable: the browser's recogniser, in the site's language, for as long as the mic is open. Its "yes" never counts. */
   private startCaptions() {

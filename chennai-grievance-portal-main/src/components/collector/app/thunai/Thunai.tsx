@@ -1358,6 +1358,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       },
       onEndSession: () => { setMode("off"); },
       onHold: () => { setNarrating(false); setReading(null); },
+      onNameOnly: () => { const l = listenLangRef.current; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); earcon("open"); lastTurnAt.current = Date.now(); },
       rules: (t) => {
         const w = worldRef.current;
         const q = quickScreen(t, w);
@@ -1389,9 +1390,22 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       setMini(true);
       setMicBlocked(false);
       hud.set({ denied: false });
-      if (!store.get("jarvis-mode-seen")) { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: true }); }
+      // the first time, the notice comes before the microphone: it opens when the Collector has read it
+      if (!store.get("jarvis-mode-seen")) { hud.set({ firstUse: true }); return; }
       // the power-on's sound: one short synthesised tone, once a session, heard as an earcon so it cannot trigger a barge-in
       try { if (why !== "hidden" && sessionStorage.getItem("jarvis-powered") !== "1") setTimeout(() => earcon("open"), 40); } catch { /* no storage: no tone */ }
+      openMic();
+    } else {
+      conductor.current?.close();
+      captions.current?.stop();
+      captions.current = null;
+      if (next === "off") { stopSpeaking(); cancelTurn(); }
+      setActivity("idle");
+      setInterim("");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /** The microphone opens: the ears and the live captions. */
+  const openMic = () => {
       const c = conductorOf();
       void c.open().then(() => {
         hud.strip({ detector: c.detector });
@@ -1402,15 +1416,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         captions.current = new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => { if (modeRef.current === "on" && conductor.current?.state === "hearing") { hud.set({ ribbon: t }); setInterim(t); } });
         captions.current.start();
       }
-    } else {
-      conductor.current?.close();
-      captions.current?.stop();
-      captions.current = null;
-      if (next === "off") { stopSpeaking(); cancelTurn(); }
-      setActivity("idle");
-      setInterim("");
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  };
   const setModeRef = useRef(setMode);
   setModeRef.current = setMode;
   /** the Panel's mic, Alt+Space, the Stage's mic: they all mean "listen" */
@@ -1419,8 +1425,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // the answer is on screen as soon as it exists; the core and the strip follow the real state
   const busyNow = phase === "thinking" || phase === "acting";
   useEffect(() => {
-    hud.set({ core: coreOf(mode, turnState, busyNow, !!hud.get().strip.budgetLow && false) });
-  }, [mode, turnState, busyNow]);
+    hud.set({ core: mode === "on" && (narrating || phase === "speaking") && turnState !== "holding" && turnState !== "interrupted" && turnState !== "hearing" ? "speaking" : coreOf(mode, turnState, busyNow, false) });
+  }, [mode, turnState, busyNow, narrating, phase]);
   // how fresh the data is, as the console says it (real, or nothing)
   useEffect(() => { hud.strip({ freshness: host.ov?.now ? String(host.ov.now).slice(0, 16).replace("T", " ") : null }); }, [host.ov?.now]);
   const wasBusy = useRef(false);
@@ -1480,7 +1486,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // dev only: what the end-to-end specs read
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
-    (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }) };
+    (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer, setCore: (core: never) => hud.set({ core }), setHud: (p: never) => hud.set(p) };
   }, []);
 
   const switchOn = useCallback((quiet = false) => {
@@ -1519,7 +1525,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const w = !on || mode !== "off" ? 0 : window.innerWidth <= 700 ? 0 : window.innerWidth <= 1100 ? 380 : 480;
     document.documentElement.style.setProperty("--jv-w-open", `${w}px`);
     document.documentElement.classList.toggle("jv-hud", mode !== "off");
-    window.dispatchEvent(new CustomEvent("jarvis:state", { detail: { open: on, width: 0, conv, resting: false, mic: micBlocked ? "blocked" : conv ? "on" : "off" } }));
+    window.dispatchEvent(new CustomEvent("jarvis:state", { detail: { open: on, width: 0, conv, resting: false, hud: mode !== "off", mic: micBlocked ? "blocked" : conv ? "on" : "off" } }));
   }, [on, conv, micBlocked, mode]);
   // the top bar's Jarvis button and Ctrl+K: open (to type), close
   useEffect(() => {
@@ -1736,7 +1742,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {/* the page behind the panel dims a little, as behind the chat; a click there closes the panel */}
       {on && mode === "off" && !stage && !mini && <div className="jv-veil" onClick={switchOff} aria-hidden="true" />}
       {mode !== "off" && (
-        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => hud.set({ firstUse: false })}
+        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") openMic(); }}
           onStop={() => { stopSpeaking(); abortMission.current = true; conductor.current?.stop(); if (phase === "thinking" || phase === "acting") cancelTurn(); else { setNarrating(false); setReading(null); setPhase("ready"); } }}>{waiting}</Hud>
       )}
       {on && mode === "off" && (
@@ -1805,7 +1811,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       )}
 
       {on && stage && (
-        <Stage doc={stage} lang={listenLang} theme={mode !== "off" ? "dark" : host.theme ?? "dark"} busy={stageBusy} reading={reading} narrating={narrating} views={stageViews} pins={pins} geo={geo}
+        <Stage doc={stage} lang={listenLang} theme={mode !== "off" ? "dark" : host.theme ?? "dark"} busy={stageBusy} reading={reading} narrating={narrating} views={stageViews} pins={pins} geo={geo ?? host.c.geo}
           tray={tray.map((d) => ({ incidentId: d.incidentId, title: d.title, to: d.to, sandbox: d.sandbox }))} brain={stageBrain} filtered={stageFilter} saveAsk={pendingB ? saveAsk : null}
           caption={{ heard: interim || heard, reply: phase === "listening" ? "" : reply, alt: phase === "listening" ? "" : alt, interim: !!interim,
             by: brain && phase !== "thinking" && phase !== "listening" ? (brain.by === "ai" ? `${ta ? "AI" : "Understood by AI"}${brain.model ? ` · ${brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")}` : ""}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}` : brain.by === "instant" ? (ta ? "உடனடி" : "Instant, no model") : (ta ? "விதிகள்" : "Built-in rules")) : null }}

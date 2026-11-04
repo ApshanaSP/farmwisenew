@@ -78,7 +78,8 @@ export function drawCore(g: CanvasRenderingContext2D, size: number, dpr: number,
       disc = 0.14; glowSize = 0.4;
       break;
   }
-  const gs = R * 2 * glowSize;
+  // the stamp stays inside the canvas: a glow clipped by the canvas edge shows as a hard square
+  const gs = Math.min(size / 2, R * 2 * glowSize);
   g.globalCompositeOperation = "lighter";
   g.drawImage(stamp, -gs, -gs, gs * 2, gs * 2);
   g.globalCompositeOperation = "source-over";
@@ -127,8 +128,10 @@ export function drawCore(g: CanvasRenderingContext2D, size: number, dpr: number,
       break;
     }
     case "offline":
-      ring(g, R * 0.6, 2, rgb, 0.7);
-      ring(g, R * 0.8, 1, rgb, 0.4);
+      // still, and broken: a dashed ring, so it reads without the colour
+      g.setLineDash([4, 7]);
+      ring(g, R * 0.62, 2, rgb, 0.8);
+      g.setLineDash([]);
       break;
   }
 }

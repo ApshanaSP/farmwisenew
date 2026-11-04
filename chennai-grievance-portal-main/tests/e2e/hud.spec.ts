@@ -13,7 +13,7 @@ test.use({ channel: process.env.PW_CHANNEL || undefined, launchOptions: { args: 
 async function open(page: Page, lang: "en" | "ta", size: { width: number; height: number }) {
   await page.setViewportSize(size);
   await page.addInitScript((l) => {
-    try { localStorage.setItem("thunai-greeted", new Date().toDateString()); localStorage.setItem("diq-lang", l); localStorage.setItem("district-lang", l); localStorage.setItem("lang", l); } catch { /* */ }
+    try { localStorage.setItem("thunai-greeted", new Date().toDateString()); localStorage.setItem("diq-lang", l); localStorage.setItem("district-lang", l); localStorage.setItem("lang", l); if (!sessionStorage.getItem("notice-once")) { sessionStorage.setItem("notice-once", "1"); localStorage.removeItem("jarvis-mode-seen"); } } catch { /* */ }
     const c = new AudioContext();
     (window as unknown as Record<string, unknown>).__jarvisTestStream = async () => { const d = c.createMediaStreamDestination(); const o = c.createConstantSource(); o.offset.value = 0.0005; o.connect(d); o.start(); return d.stream; };
   }, lang);
@@ -27,6 +27,9 @@ async function open(page: Page, lang: "en" | "ta", size: { width: number; height
 }
 async function jarvisOn(page: Page) {
   await page.keyboard.press("Control+Shift+J");
+  // the first-use notice: the microphone opens after it is read
+  await page.waitForTimeout(500);
+  if (await page.locator(".hud-first button").count()) await page.locator(".hud-first button").click();
   await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
 }
 async function typed(page: Page, text: string) {
@@ -42,21 +45,33 @@ for (const [lang, sizeName, size] of [["en", "1366", { width: 1366, height: 768 
     await open(page, lang, size);
     if (lang === "ta") { const t = page.getByRole("button", { name: "தமிழ்" }).first(); if (await t.count()) await t.click().catch(() => undefined); await page.waitForTimeout(800); }
     await shot(page, `${sizeName}-${lang}-0-mode-off`);
-    await jarvisOn(page);
-    await page.waitForTimeout(400);
-    await shot(page, `${sizeName}-${lang}-1-power-on`);
-    await page.waitForTimeout(1300);
-    await page.locator(".hud-first button").click().catch(() => undefined);
-    await page.waitForTimeout(300);
+    await page.keyboard.press("Control+Shift+J");
+    await page.waitForTimeout(450);
+    await shot(page, `${sizeName}-${lang}-1-first-use`);
+    await page.locator(".hud-first button").click();
+    await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
+    await page.waitForTimeout(1400);
     await shot(page, `${sizeName}-${lang}-2-listening`);
+    // the no-screen states: the core at full size, the ribbon, a faint line, the budget note
+    await page.evaluate((ta) => { const J = (window as unknown as { __jv: { setCore(x: string): void; setHud(x: unknown): void } }).__jv; J.setHud({ ribbon: ta ? "அடையாறு மற்றும் அண்ணா நகர் ஒப்பிடு" : "Compare Adyar with Anna Nagar this week" }); J.setCore("thinking"); }, lang === "ta");
+    await page.waitForTimeout(600);
+    await shot(page, `${sizeName}-${lang}-2b-thinking-big`);
+    await page.evaluate(() => (window as unknown as { __jv: { setCore(x: string): void } }).__jv.setCore("speaking"));
+    await page.waitForTimeout(500);
+    await shot(page, `${sizeName}-${lang}-2c-speaking-big`);
+    await page.evaluate((ta) => { const J = (window as unknown as { __jv: { setCore(x: string): void; setHud(x: unknown): void } }).__jv; J.setHud({ ribbon: "", faint: ta ? "நேத்து மழை ரொம்ப அதிகம்" : "did you see the rain yesterday" }); J.setCore("listening"); }, lang === "ta");
+    await page.waitForTimeout(250);
+    await shot(page, `${sizeName}-${lang}-2d-faint`);
+    await page.evaluate(() => (window as unknown as { __jv: { setHud(x: unknown): void } }).__jv.setHud({ faint: "" }));
     await typed(page, lang === "ta" ? "கடுமையான சம்பவங்களைக் காட்டு" : "Show the severe cases");
     await page.waitForFunction(() => document.querySelector(".st-root") || document.querySelector(".hud-answer"), null, { timeout: 60_000 });
     await page.waitForTimeout(1600);
     await shot(page, `${sizeName}-${lang}-3-screen`);
     await page.keyboard.press("Escape");
     // the screen closed: the answer stays as a panel, the timeline beside it
-    await page.locator(".st-root button[aria-label]").last().click().catch(() => undefined);
-    await page.waitForTimeout(900);
+    await page.locator(".st-root .st-head button").last().click({ timeout: 3000 }).catch(() => undefined);
+    await page.waitForFunction(() => !document.querySelector(".st-root"), null, { timeout: 8000 }).catch(() => undefined);
+    await page.waitForTimeout(1000);
     await shot(page, `${sizeName}-${lang}-4-panels`);
     for (const core of ["thinking", "speaking", "holding", "offline"]) {
       await page.evaluate((c) => (window as unknown as { __jv: { setCore(x: string): void } }).__jv.setCore(c), core);
@@ -71,7 +86,6 @@ test("fps over 20 s, speaking and reduced motion", async ({ page, browser }) => 
   await open(page, "en", { width: 1366, height: 768 });
   await jarvisOn(page);
   await page.waitForTimeout(1600);
-  await page.locator(".hud-first button").click().catch(() => undefined);
   const measure = () => page.evaluate(() => new Promise<{ fps: number; worst: number; frames: number }>((res) => {
     const times: number[] = [];
     const t0 = performance.now();

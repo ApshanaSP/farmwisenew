@@ -183,8 +183,10 @@ export async function hearUtterance(buf: ArrayBuffer, o: { lane: Lane; site: "en
     throw new Error("stt-failed");
   }
   let c = choose(good, o.site);
-  // Whisper is unsure of a turn someone is waiting on: the third racer, if the budget allows
-  if (o.lane !== "ambient" && (!c || c.logprob < UNSURE)) {
+  // Whisper is unsure of a turn someone is waiting on, or only the other language's decode came back and it is not sure:
+  // the third racer, if the budget allows; else the site's own language has a say
+  const loneOther = !!c && good.length === 1 && c.lang !== o.site && c.logprob < -0.45;
+  if (o.lane !== "ambient" && (!c || c.logprob < UNSURE || loneOther)) {
     const g = await third(audio, o.signal, o.fetcher);
     if (g) c = scoreDecode(g).ok ? scoreDecode(g) : c;
   }

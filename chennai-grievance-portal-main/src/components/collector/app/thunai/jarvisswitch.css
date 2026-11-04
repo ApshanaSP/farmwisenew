@@ -3,7 +3,8 @@
 .jsw button { font: inherit; cursor: pointer; }
 .jsw-main { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 10px; border-radius: 8px; border: 1px solid var(--line-2, rgba(128, 140, 160, .35)); background: transparent; color: inherit; font-weight: 600; }
 .jsw-main:hover { background: rgba(128, 140, 160, .12); }
-.jsw-main:focus-visible, .jsw-mute:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+.jsw-main:focus-visible, .jsw-mute:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+:root[data-theme="dark"] .jsw-main:focus-visible, :root[data-theme="dark"] .jsw-mute:focus-visible { outline-color: #22d3ee; }
 .jsw-core { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; opacity: .55; box-sizing: border-box; }
 .jsw.on .jsw-main { border-color: #22d3ee; color: #0e7490; background: rgba(34, 211, 238, .1); }
 :root[data-theme="dark"] .jsw.on .jsw-main { color: #67e8f9; }
@@ -16,3 +17,8 @@
 .jsw-resume { color: #0e7490; font-weight: 600; font-size: 12.5px; }
 :root[data-theme="dark"] .jsw-denied { color: #fbbf24; }
 :root[data-theme="dark"] .jsw-resume { color: #67e8f9; }
+
+/* the switch needs room in a row that had none: the search shrinks to its icon and the subtitle goes while the mode is on */
+html.jv-hud .dic .tbrand .tsub, html.jv-hud .dic .tbrand small, html.jv-hud .dic .top .cmdk span, html.jv-hud .dic .top .cmdk kbd { display: none; }
+html.jv-hud .dic .top .cmdk { width: 40px; padding: 0 10px; }
+@media (max-width: 1500px) { .jsw-mute { padding: 0 6px; } }

@@ -12,6 +12,7 @@ import { drawCore, drawStill } from "./hudcore";
 import { coreOf, hud, type CoreState, type HudPanel, type WorkStep } from "./hudstore";
 import { voiceLevel } from "./mouth";
 import { Reticle } from "./mapbridge";
+import { CountUp } from "./countup";
 import "./hud.css";
 
 export interface HudProps {
@@ -27,8 +28,9 @@ export interface HudProps {
 }
 
 const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const PATH_WORD: Record<string, { en: string; ta: string }> = { browser: { en: "this browser", ta: "இந்த உலாவி" }, pcm: { en: "server", ta: "சேவையகம்" }, text: { en: "on screen", ta: "திரையில்" } };
 const STATE_WORD: Record<CoreState, { en: string; ta: string }> = {
-  off: { en: "Off", ta: "அணைப்பு" }, idle: { en: "Muted", ta: "மௌனம்" }, listening: { en: "Listening", ta: "கேட்கிறேன்" }, hearing: { en: "Hearing", ta: "கேட்கிறேன்" }, thinking: { en: "Thinking", ta: "யோசிக்கிறேன்" },
+  off: { en: "Off", ta: "அணைப்பு" }, idle: { en: "Muted", ta: "மௌனம்" }, listening: { en: "Listening", ta: "கேட்கிறேன்" }, hearing: { en: "Hearing you", ta: "நீங்கள் பேசுகிறீர்கள்" }, thinking: { en: "Thinking", ta: "யோசிக்கிறேன்" },
   speaking: { en: "Speaking", ta: "பேசுகிறேன்" }, holding: { en: "Holding", ta: "காத்திருக்கிறேன்" }, interrupted: { en: "Stopped", ta: "நிறுத்தினேன்" }, offline: { en: "Offline", ta: "இணைப்பு இல்லை" }
 };
 
@@ -78,26 +80,6 @@ function Core({ state, stageOpen, anchor }: { state: CoreState; stageOpen: boole
   );
 }
 
-/** A number that counts up to the value code gave it. Whole digits in a tabular face; with reduced motion, it just arrives. */
-function CountUp({ value }: { value: number }) {
-  const [shown, setShown] = useState(reducedMotion() ? value : 0);
-  useEffect(() => {
-    if (reducedMotion()) { setShown(value); return; }
-    let raf = 0;
-    const t0 = performance.now();
-    const step = (t: number) => {
-      const k = Math.min(1, (t - t0) / 650);
-      const e = 1 - (1 - k) ** 3;
-      setShown(value * e);
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [value]);
-  const whole = Number.isInteger(value);
-  return <>{(whole ? Math.round(shown) : Math.round(shown * 10) / 10).toLocaleString("en-IN")}</>;
-}
-
 /** An answer as an angular glass panel, arriving from the core. */
 function Panel({ p, lang }: { p: HudPanel; lang: "en" | "ta" }) {
   const el = useRef<HTMLElement>(null);
@@ -142,20 +124,18 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState("");
   const ta = lang === "ta";
-  const [powered, setPowered] = useState(() => {
-    if (reducedMotion()) return true;
-    try { return sessionStorage.getItem("jarvis-powered") === "1"; } catch { return true; }
-  });
-  // the power-on: 1.2 s, once a session, skippable by any click or key
+  // the power-on: the full 1.2 s once a session, a quick 0.4 s on later toggles; never with reduced motion; any click or key skips it
+  const [powered, setPowered] = useState(() => reducedMotion());
+  const [quick] = useState(() => { try { return sessionStorage.getItem("jarvis-powered") === "1"; } catch { return true; } });
   useEffect(() => {
     if (powered) return;
-    try { sessionStorage.setItem("jarvis-powered", "1"); } catch { /* it plays again: harmless */ }
+    try { sessionStorage.setItem("jarvis-powered", "1"); } catch { /* it plays in full again: harmless */ }
     const done = () => setPowered(true);
-    const t = setTimeout(done, 1200);
+    const t = setTimeout(done, quick ? 400 : 1200);
     window.addEventListener("pointerdown", done, { once: true, capture: true });
     window.addEventListener("keydown", done, { once: true, capture: true });
     return () => { clearTimeout(t); window.removeEventListener("pointerdown", done, { capture: true }); window.removeEventListener("keydown", done, { capture: true }); };
-  }, [powered]);
+  }, [powered, quick]);
   // for screen readers: the answer, whole, half a second after it settles; never the partials
   const [said, setSaid] = useState("");
   useEffect(() => { const t = setTimeout(() => setSaid(s.answer), 500); return () => clearTimeout(t); }, [s.answer]);
@@ -168,37 +148,40 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   const word = STATE_WORD[s.core]?.[lang] ?? "";
   const strip = s.strip;
   return (
-    <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : " powering"}`} data-core={s.core} data-testid="hud" data-no-i18n>
+    <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : quick ? " powering quick" : " powering"}`} data-core={s.core} data-testid="hud" data-no-i18n lang={lang}>
       <div className="hud-veil" aria-hidden="true" />
+      {!powered && <div className="hud-sweep" aria-hidden="true" />}
       <div className="hud-top">
         <Core state={s.core} stageOpen={stageOpen} anchor={coreRef} />
         <div className="hud-under">
           <div className="hud-state" lang={lang}>{word}</div>
           {reducedMotion() && <span className="hud-levelbar" aria-hidden="true"><span ref={level} /></span>}
-          <div className="hud-ribbon" lang={s.ribbon && /[஀-௿]/.test(s.ribbon) ? "ta" : "en"} data-testid="ribbon">{s.ribbon}</div>
+          <div className="hud-ribbon" lang={s.ribbon && /[஀-௿]/.test(s.ribbon) ? "ta" : "en"} data-testid="ribbon">{s.ribbon.length > 130 ? `…${s.ribbon.slice(-130)}` : s.ribbon}</div>
           {s.faint && <div className="hud-faint" data-testid="faint">{s.faint}</div>}
           {s.answer && !stageOpen && <div className="hud-answer" lang={/[஀-௿]/.test(s.answer) ? "ta" : "en"} data-testid="answer">{s.answer}</div>}
           {s.notice && <div className="hud-notice" role="status" lang={lang}>{s.notice}</div>}
           {s.needsResume && <div className="hud-notice" lang={lang}>{ta ? "தொடர கிளிக் செய்யுங்கள்" : "Click to resume"}</div>}
           {strip.budgetLow && <div className="hud-notice warn" lang={lang}>{ta ? "கேட்கும் வரம்பு நெருங்கிவிட்டது: முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்" : "The listening budget is low: say Jarvis first"}</div>}
         </div>
+        <div className="hud-cards" lang={lang}>{children}</div>
       </div>
       <aside className="hud-rail left"><Timeline steps={s.steps} lang={lang} /></aside>
       {!stageOpen && <aside className="hud-rail right">{s.panels.map((p) => <Panel key={p.id} p={p} lang={lang} />)}</aside>}
-      <div className="hud-cards" lang={lang}>{children}</div>
       {s.firstUse && (
         <div className="hud-first" role="dialog" aria-label={ta ? "முதல் பயன்பாடு" : "First use"} lang={lang}>
-          <p>{ta ? "ஜார்விஸ் பயன்முறையில் இந்த அறையில் பேசுவது எழுத்தாக மாற்றும் சேவைகளுக்கு அனுப்பப்படும்; சேமிக்கப்படாது. அறையில் உள்ள யார் சொன்னாலும் கேட்கும்." : "In Jarvis mode, speech in this room is sent to transcription services and not stored. It obeys anyone in the room: it cannot tell voices apart."}</p>
-          <button onClick={onDismissFirstUse}>{ta ? "புரிந்தது" : "Understood"}</button>
+          <p>{ta ? "ஜார்விஸ் பயன்முறையில் இந்த அறையில் பேசுவது எழுத்தாக மாற்றும் சேவைகளுக்கு அனுப்பப்படும்; சேமிக்கப்படாது. அறையில் யார் சொன்னாலும் கேட்கும்: குரல்களைப் பிரித்து அறியாது. மைக் இதற்குப் பிறகே திறக்கும்." : "In Jarvis mode, speech in this room is sent to transcription services and not stored. It obeys anyone in the room: it cannot tell voices apart. The microphone opens after this."}</p>
+          <button onClick={onDismissFirstUse} autoFocus>{ta ? "புரிந்தது, திற" : "Understood, open it"}</button>
         </div>
       )}
-      <footer className="hud-strip" aria-label={ta ? "அமைப்பு" : "System"}>
-        <span><b>{ta ? "கடைசி" : "Last turn"}</b>{strip.lastMs != null ? ` ${(strip.lastMs / 1000).toFixed(1)} s` : " --"}</span>
-        <span><b>{ta ? "ஒப்புகை" : "Ack"}</b>{strip.ackMs != null ? ` ${(strip.ackMs / 1000).toFixed(1)} s` : " --"}</span>
-        <span><b>{ta ? "மாடல்" : "Model"}</b> {strip.provider ? strip.provider.replace(/^.*\//, "") : ta ? "விதிகள்" : "rules"}</span>
-        <span><b>{ta ? "குரல்" : "Voice"}</b> {strip.path ?? "--"}</span>
+      <footer className="hud-strip" aria-label={ta ? "அமைப்பு" : "System"} lang={lang}>
+        {s.mode === "on" && !s.firstUse && <span className="hud-mic"><i aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</span>}
+        {s.mode === "muted" && <span className="hud-mic off">{ta ? "மைக் மூடியது" : "Mic closed"}</span>}
+        <span><b>{ta ? "பதில்" : "Last answer"}</b> {strip.lastMs != null ? `${(strip.lastMs / 1000).toFixed(1)} s` : "--"}</span>
+        <span><b>{ta ? "முதல் சொல்" : "First reply"}</b> {strip.ackMs != null ? `${(strip.ackMs / 1000).toFixed(1)} s` : "--"}</span>
+        <span><b>{ta ? "பதிலளித்தது" : "Answered by"}</b> {strip.provider ? strip.provider.replace(/^.*\//, "") : ta ? "விதிகள்" : "rules"}</span>
+        <span><b>{ta ? "குரல்" : "Voice"}</b> {PATH_WORD[strip.path ?? ""]?.[lang] ?? "--"}</span>
         <span><b>{ta ? "தரவு" : "Data as of"}</b> {strip.freshness ?? "--"}</span>
-        <span className={strip.budgetLow ? "warn" : ""}><b>{ta ? "கேட்பு" : "Listening"}</b> {strip.ambient}/8 {ta ? "நிமிடம்" : "a min"}</span>
+        <span className={strip.budgetLow ? "warn" : ""}><b>{ta ? "அறைப் பேச்சு" : "Room speech"}</b> {ta ? `இந்த நிமிடம் ${strip.ambient}/8` : `${strip.ambient} of 8 this minute`}</span>
         {strip.tokens != null && strip.tokens > 0 && <span><b>{ta ? "டோக்கன்கள்" : "Tokens"}</b> {strip.tokens.toLocaleString("en-IN")}</span>}
         <span className="hud-spacer" />
         <button className="hud-btn" onClick={onStop} aria-label={ta ? "நிறுத்து (Esc)" : "Stop (Esc)"} title="Esc">Esc</button>

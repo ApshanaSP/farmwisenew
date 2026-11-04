@@ -21,7 +21,7 @@ export default function JarvisSwitch() {
         <i className="jsw-core" aria-hidden="true" />
         <span>{ta ? "ஜார்விஸ்" : "Jarvis"}</span>
       </button>
-      {s.mode !== "off" && (
+      {s.mode !== "off" && !s.firstUse && (
         <button className="jsw-mute" onClick={() => send({ mute: true })} aria-pressed={muted} title={ta ? "மௌனம் (Ctrl+Shift+M)" : "Mute (Ctrl+Shift+M)"}>
           {muted ? (ta ? "மௌனம்" : "Muted") : <><i className="jsw-dot" aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</>}
         </button>

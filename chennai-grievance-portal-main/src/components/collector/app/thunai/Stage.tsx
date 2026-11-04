@@ -18,7 +18,11 @@ import { I, type IconName } from "../icons";
 import StageChart from "./StageChart";
 import "leaflet/dist/leaflet.css";
 import "../studio/studio.css";
+import { CountUp } from "./countup";
 import "./stage.css";
+
+/** Jarvis mode is on: the tiles count up */
+const hudOn = () => typeof document !== "undefined" && document.documentElement.classList.contains("jv-hud");
 
 export type BlockView = "chart" | "table" | "map";
 export interface PinnedScreen { id: string; title: string; recipe: string; slots: Record<string, unknown>; at: string }
@@ -180,7 +184,7 @@ function Stage(p: Props) {
   const metric = typeof slots.metric === "string" ? slots.metric : typeof slots.measure === "string" && ["rain", "aqi", "lakes", "temp"].includes(slots.measure as string) ? (slots.measure as string) : null;
 
   return createPortal(
-    <div className="st-root" data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
+    <div className="st-root" lang={p.lang} data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
       style={font ? { ["--st-font" as string]: font } : undefined}>
       <div className="st-scrim" aria-hidden="true" />
       <div className="st-frame">
@@ -346,7 +350,7 @@ function BlockBody(p: BP) {
           {b.items.map((k) => (
             <div key={k.key} className={`st-kpi t-${k.tone}`}>
               <span className="lbl">{k.label}</span>
-              <b className="val">{fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${k.unit}`}</small>}</b>
+              <b className="val">{hudOn() ? <CountUp value={k.value} format={fmt} /> : fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${k.unit}`}</small>}</b>
               {k.delta == null && k.pct != null && k.pct !== 0 && <span className={`dl ${k.pct > 0 ? "up" : "down"}`}><I n={k.pct > 0 ? "up" : "down"} />{`${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%`}<em>{T(lang, " vs the period before", " முந்தைய காலத்துடன்")}</em></span>}
               {k.delta != null && k.delta !== 0 && (
                 <span className={`dl ${k.delta > 0 ? "up" : "down"}`}><I n={k.delta > 0 ? "up" : "down"} />{fmt(Math.abs(k.delta))}{k.pct != null ? ` (${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%)` : ""}{k.prev != null ? <em>{T(lang, ` vs ${fmt(k.prev)}`, ` / ${fmt(k.prev)}`)}</em> : null}</span>

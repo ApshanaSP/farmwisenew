@@ -54,5 +54,13 @@
  "burst": {
   "speechMs": 600,
   "durMs": 1550
+ },
+ "open_ended": {
+  "speechMs": 600,
+  "durMs": 4790
+ },
+ "open_ended2": {
+  "speechMs": 600,
+  "durMs": 5160
  }
 }
