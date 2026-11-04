@@ -8,13 +8,13 @@ Measured on 4 Nov 2026 on this Windows laptop, on branch `claude/jarvis-agentic-
 
 | Metric | Target | Result | Status |
 |---|---|---|---|
-| Existing suite plus new tests, tsc, build | all green (gate) | Vitest 1,887 passed, 13 skipped (Phase 0 baseline: 1,573 passed, 13 skipped); `tsc` clean; `next build` passes | Pass |
+| Existing suite plus new tests, tsc, build | all green (gate) | Vitest 1,887 passed, 13 skipped (Phase 0 baseline: 1,573 passed, 13 skipped); `tsc` clean; `next build` passes; Playwright voice specs 30 of 30, HUD specs 5 of 5 | Pass |
 | Mode on: a command with no click and no name, the console acts | 3 scripted (gate) | `mode.spec` | Pass, on injected audio |
 | Side conversation ignored | ≤ 5 % false acts of 40 (report); Level B/C = 0 (gate) | 4/40 = 10 %; Level B/C 0 | **Report target missed**; gate passes |
 | Unnamed commands accepted | ≥ 80 % of 40 (report) | 35/40 = 87.5 % | Met |
 | Mode off or muted: mic tracks stopped | verified in test (gate) | `mode.spec` | Pass |
 | Hold words, "wait, do X", continue, noise-resume, late-transcript drop, no old answer after stop | named tests (gate) | `hold.spec`, `bargein.spec`, `turn.test.ts` | Pass |
-| Barge-in from known speech start, PCM path | p50 ≤ 150 ms, p90 ≤ 250 ms (p90 gate) | p50 81 ms, p90 90 ms | Pass, on injected audio |
+| Barge-in from known speech start, PCM path | p50 ≤ 150 ms, p90 ≤ 250 ms (p90 gate) | p50 82 ms, p90 98 ms | Pass, on injected audio |
 | Ack and first-audio latency | mocked and one real run (report) | See "Latency" | Reported |
 | Follow-ups | 18/20 (gate) | 18/20 on the set I had read; **15/20 in code on the unseen set**, the other 5 go to the planner and were not scored | **Not met cleanly** |
 | Compare, insights, complete this data end to end | 3/3, filled cells show sources (gate) | 3/3 in `owner.test.ts`, code and mocked model | Pass; not run on real Studio data |
@@ -114,9 +114,9 @@ The race read all 100 clips as Tamil with the site set to English. A WER near 0.
 
 | | Measured | Target |
 |---|---|---|
-| Voice paused, from known speech start | p50 81 ms, p90 90 ms | p50 ≤ 150, p90 ≤ 250 |
-| Detector fired | p50 80 ms | |
-| Turn cancelled | p50 389 ms | |
+| Voice paused, from known speech start | p50 82 ms, p90 98 ms | p50 ≤ 150, p90 ≤ 250 |
+| Detector fired | p50 82 ms | |
+| Turn cancelled | p50 444 ms | |
 
 No echo canceller and no real microphone are involved. The browser voice path cannot pause: it cancels and restarts the chunk.
 
@@ -126,10 +126,10 @@ No echo canceller and no real microphone are involved. The browser voice path ca
 
 | Mark | p50 | p90 |
 |---|---|---|
-| Acknowledgement | 782 ms | 3,142 ms |
-| Answer on screen | 2,010 ms | 4,369 ms |
-| First audio | 2,015 ms | 4,826 ms |
-| First spoken finding | 2,015 ms | 4,826 ms |
+| Acknowledgement | 776 ms | 3,141 ms |
+| Answer on screen | 2,005 ms | 4,377 ms |
+| First audio | 2,007 ms | 4,832 ms |
+| First spoken finding | 2,007 ms | 4,832 ms |
 
 **One real run, production build with real providers:**
 
@@ -157,7 +157,7 @@ Detector and budget are real; the transcriber is mocked.
 | An hour, at that rate | 48 | **334** |
 | To the planner | 0 | 0 |
 
-The number went up on purpose. The low-budget window used to re-arm under nonstop talk, so after 8 sentences unnamed commands stayed out for good. It now ends after its minute. So nonstop talk costs up to 8 requests a minute in bursts, and this figure is the worst case, not a typical room.
+The number went up on purpose. The low-budget window used to re-arm under nonstop talk, so after 8 sentences unnamed commands stayed out for good. It now ends after its minute. So nonstop talk costs up to 8 requests a minute in bursts, and this figure is the worst case, not a typical room. The ledger records Whisper's cap as 2,000 requests a day, so nonstop talk at this rate would reach it in about 6 hours, and the budget would then fall back to listening for the name only.
 
 ## HUD
 

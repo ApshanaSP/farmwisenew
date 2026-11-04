@@ -28,7 +28,8 @@ One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be
 | 12:04-12:21 | 6 | Fixes: four workers with disjoint files (numbers, capacity, safety, HUD), and the turn machine and `Thunai.tsx` by me. Suite 1,887 passed, 13 skipped. Commit `da7af05`. |
 | 12:21-12:30 | 7 | Voice specs on the fixed code: 28 of 29. The failure was real: the old re-ask had been hiding the loss of a sentence's first part when it went on after a pause. Fixed, with a test. Commit `f9a2e35`. |
 | 12:21-12:37 | 7 | Final held-out runs: rules, ambient, both follow-up sets, 40 planner sentences, the Tamil race. Hashes checked first. Each run once, no tuning after. |
-| 12:37 onward | 7 | Production builds, the real latency run, HUD screens and fps in Edge, the 10-minute ambient run, the last full spec run. See `eval/RESULTS.md`. |
+| 12:37-12:50 | 7 | Production builds, the real latency run, the 10-minute ambient run, HUD screens and fps in Edge. The screens were re-shot with nothing else running, because the Tamil strip had said "Mic closed" under load (the model was still loading; it does not repeat on a quiet machine). Commit and push `164202f`. |
+| 12:50-13:00 | 7 | Last run of all voice specs on the final code: 30 of 30. `tsc` clean. |
 
 ## Decisions
 
