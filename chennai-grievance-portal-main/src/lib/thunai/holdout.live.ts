@@ -255,6 +255,8 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
     const got = r ? (r.note === "general-fallback" ? "general-fallback" : resultIntent(r)) : "error";
     rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null });
     if (SET_DIR === "holdout") console.log(x.id, gold, "->", got, lane, capacity ? "(capacity)" : "", tokens, "tokens", calls, "calls");
+    // kept as it goes: a run cut off by a lost connection still says how far it got, and is marked as not finished
+    write(`planner-${which}`, { at: new Date().toISOString(), partial: true, done: rows.length, of: set.length, rows });
     if (calls > 0) await sleep(gap);
   }
   const summary = byLang(rows);

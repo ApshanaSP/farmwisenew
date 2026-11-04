@@ -91,3 +91,5 @@ A separate session, from the branch tip, in worktree `interesting-babbage-37ab60
 ## Claude for Jarvis (4 Nov 2026)
 
 The owner added an Anthropic key after the final run. Jarvis asks `claude-opus-5-5` first and falls back to Groq with no key or on any failure, proved live. The API refused the planner's schemas for structured outputs, so those use plain JSON with a short shape line. Not scored on the frozen set.
+
+Scored afterwards on the frozen set: 49/60 with Claude first, Tamil 25/30, in a clean run. The first attempt lost its network connection and saved nothing, so the harness now saves after every sentence.

@@ -2,7 +2,7 @@
 
 Measured on 4 Nov 2026 on this Windows laptop, on branch `claude/jarvis-agentic-voice-5be9b7`. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Raw results are in `eval/holdout/results/`. The frozen sets were checked against `eval/holdout/HASHES.txt` before the final run, and all hashes match.
 
-**In short, after the second pass below:** on a new frozen set of the same kind, the full pipeline went from 24/60 (40 %) on its first run to **44/60 (73.3 %)** on the finished code, and Tamil from 9/30 to **22/30**. It costs 64 % more tokens a sentence. Two calls in that final run met a Groq limit, so read the caveat in the section before quoting the figure. Side-talk false acts are unchanged, at 4/60 (6.7 %) against a 5 % target. **Nothing has been tried with a real microphone in a real room, and these sentences are typed text, not what Whisper hears.**
+**In short, after the second pass below:** on a new frozen set of the same kind, the full pipeline went from 24/60 (40 %) on its first run to **44/60 (73.3 %)** on the finished code, and Tamil from 9/30 to **22/30**. It costs 64 % more tokens a sentence. That final run met four refusals from a Groq limit, so read the caveat in the section before quoting the figure. With Claude answering first, the same 60 sentences scored **49/60 (81.7 %)**, with Tamil at **25/30**, in a clean run; a model turn then takes about 3.9 s rather than 1.2 s. Side-talk false acts are unchanged, at 4/60 (6.7 %) against a 5 % target. **Nothing has been tried with a real microphone in a real room, and these sentences are typed text, not what Whisper hears.**
 
 **In short, as first built (this report's older sections, kept as they were):** the safety gates, barge-in and mode gates pass. Understanding does not reach its targets: the rules are at 66.7 % against 85 %, and the full pipeline on the 40-sentence sample scored 42.5 %, with Tamil at 15.4 %. Side-talk false acts are 10 % against a 5 % target. The follow-up gate of 18/20 was reached only on a set I had already read; the unseen set scored 15/20 in code.
 
@@ -106,7 +106,26 @@ The arithmetic against an all-AI gate: at the worst-case 334 ambient sentences a
 
 ### Claude, added after these runs
 
-**Every figure above is from Groq's models only.** After the final run the owner added an Anthropic key, so Jarvis now asks `claude-opus-5-5` first and falls back to Groq with no key, a refused key, no credit or any failure. It has not been scored on the frozen set. This is what one live check showed, on five sentences written for the check:
+**Every figure above is from Groq's models only.** After the final run the owner added an Anthropic key, so Jarvis now asks `claude-opus-5-5` first and falls back to Groq with no key, a refused key, no credit or any failure.
+
+The same 60 frozen sentences on the same code, with no tuning in between:
+
+| | Groq only (final) | Claude first |
+|---|---|---|
+| **All 60** | 44 (73.3 %, 61-82.9) | **49 (81.7 %, 70.1-89.4)** |
+| **Tamil, 30** | 22 (73.3 %) | **25 (83.3 %, 66.4-92.7)** |
+| English, 15 | 13 (86.7 %) | 12 (80 %) |
+| Tanglish, 15 | 9 (60 %) | 12 (80 %) |
+| Capacity failures counted, 429s in the log | 0, four 429s | 0, no 429s |
+| A model turn, p50 / p90 | 1,174 / 2,557 ms | **3,870 / 5,224 ms** |
+| Tokens, whole run | 76,117 | 140,270, most of the input read from the prompt cache |
+| Sentences that used a model | 41 | 41, of which 38 were answered by Claude and 3 by Groq |
+
+**Claude is probably better, but this does not prove it.** Sentence by sentence, 41 were right both ways and 8 wrong both ways; 8 were right only with Claude and 3 only with Groq. On 11 sentences that split is not significant (sign test, p about 0.23), and the intervals overlap. The speed cost is clear: over three times slower at p50, and the slowest turn took 8 s, which is the whole turn's budget. In one turn Claude's second call ran out that budget and was cut off, and three planner turns left nothing usable. `claude-haiku-5-5` might be quicker and costs far less, but it has not been tried.
+
+An earlier attempt at this run lost its network connection partway through and saved nothing, so it is not counted. The harness now saves after every sentence. No row of the set has been read: only totals and these paired counts.
+
+This is what one earlier live check showed, on five sentences written for the check:
 
 | | Measured |
 |---|---|
