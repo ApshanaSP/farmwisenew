@@ -7,6 +7,7 @@
  *   attention today.
  */
 import { CAT_ALIASES, SEV_WORDS, ZONES } from "./lexicon";
+import { fuzzyNames } from "./xlit";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 
@@ -21,6 +22,12 @@ export function zonesIn(t: string, w: World): number[] {
   for (const [k, z] of Object.entries(ZONES)) {
     for (const word of [...z.en, ...z.ta]) {
       const at = /[஀-௿]/.test(word) ? t.indexOf(word) : t.indexOf(` ${word} `);
+      if (at >= 0) { hits.push({ n: Number(k), at }); break; }
+    }
+    // a Tamil name with a case ending changes its last letter: அடையாறு, அடையாறில்; அம்பத்தூர், அம்பத்தூரில்
+    if (!hits.some((h) => h.n === Number(k))) for (const word of z.ta) {
+      const stem = word.replace(/[்ுூ]$/, "");
+      const at = stem.length >= 4 ? t.indexOf(stem) : -1;
       if (at >= 0) { hits.push({ n: Number(k), at }); break; }
     }
   }
@@ -39,11 +46,13 @@ export function zonesIn(t: string, w: World): number[] {
   }
   const m = / zone (\d{1,2}) /.exec(t);
   if (m && +m[1] >= 1 && +m[1] <= 15 && !hits.some((h) => h.n === +m[1])) hits.push({ n: +m[1], at: m.index });
+  // the last resort: a spelling or a transliteration the lexicon does not list
+  if (!hits.length) for (const n of fuzzyNames(t, w.zones.map((z): [number, string] => [z.n, z.name]))) hits.push({ n, at: 0 });
   return [...new Set(hits.sort((a, b) => a.at - b.at).map((h) => h.n))];
 }
 
 /** the topic named first in the sentence ("fire accident" is a fire, not a road accident); a longer name wins a tie */
-function catIn(t: string): string | null {
+export function catIn(t: string): string | null {
   let best: { code: string; at: number; len: number } | null = null;
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
@@ -55,12 +64,12 @@ function catIn(t: string): string | null {
   }
   return best?.code ?? null;
 }
-function sevIn(t: string): Sev | null {
+export function sevIn(t: string): Sev | null {
   for (const [word, sev] of SEV_WORDS) if (has(t, [word.toLowerCase()])) return sev;
   if (has(t, ["serious", "critical", "urgent", "danger", "dangerous", "கடுமையான", "கடுமை", "அவசர", "severe"])) return "Severe";
   return null;
 }
-function periodIn(t: string): PeriodKey | null {
+export function periodIn(t: string): PeriodKey | null {
   if (has(t, ["today", "now", "24 hours", "இன்று", "இன்னைக்கு", "innaiku", "inniki", "ippo"])) return "daily";
   if (has(t, ["this week", "week", "weekly", "7 days", "இந்த வாரம்", "வாரம்", "vaaram"])) return "weekly";
   if (has(t, ["this month", "month", "monthly", "30 days", "இந்த மாதம்", "மாதம்", "maasam"])) return "monthly";
@@ -79,6 +88,15 @@ const WHY = ["why", "reason", "cause", "ஏன்", "காரணம்", "yen"]
 const WHERE = ["where", "எங்கே", "எங்கு", "enga", "engey"];
 const CASES = ["case", "cases", "complaint", "complaints", "incident", "incidents", "issue", "issues", "problem", "problems", "புகார்", "புகார்கள்", "சம்பவம்", "சம்பவங்கள்", "பிரச்சனை", "pugar"];
 const COMPARE = ["compare", "comparison", "versus", "vs", "ஒப்பிடு", "ஒப்பிட்டு", "oppidu"];
+const INSIGHT = ["stand out", "stands out", "standing out", "outlier", "outliers", "anomaly", "anomalies", "unusual", "abnormal", "spike", "spikes", "odd one", "out of line", "red flag", "red flags", "தனித்து", "அசாதாரண", "வித்தியாசம்", "வித்தியாசமா", "unusual a", "weird"];
+const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
+const PERFORMANCE = ["performance", "department wise", "department-wise", "departmentwise", "zone wise", "zone-wise", "zonewise", "slowest department", "fastest department", "slowest", "turnaround", "செயல்பாடு", "துறைவாரி", "மண்டலவாரி", "performance eppadi"];
+const RANK = ["top", "worst", "highest", "lowest", "most", "least", "best", "rank", "ranking", "அதிகம்", "அதிக", "குறைவு", "மோசமான", "romba"];
+const TREND = ["trend", "trends", "over time", "how has", "moved", "movement", "graph", "போக்கு", "ட்ரெண்ட்", "trend enna"];
+const DASHBOARD = ["dashboard", "டாஷ்போர்டு", "dashboard pannu", "dashboard podu"];
+const ON_MAP = ["on a map", "on the map", "on map", "map the", "map of", "plot", "map la", "வரைபடத்தில்", "மேப்ல", "மேப்பில்"];
+const NEARBY = /\b(within|near|nearby|close to|around|km|kilometre|kilometer|metres?)\b|அருகில்|பக்கத்தில்|கிமீ|கி\.மீ|pakkathula|kitta/;
+const FACILITY = /(school|hospital|shelter|fire station|police station|பள்ளி|மருத்துவமனை|முகாம்|hospitals|schools|shelters)/;
 const ATTENTION = ["attention", "priority", "priorities", "what is happening", "whats happening", "brief", "briefing", "summary", "update", "கவனம்", "சுருக்கம்", "நிலவரம்", "என்ன நடக்குது", "என்ன நடக்கிறது"];
 
 /** words that tie a question to the district and this console (any one of them keeps the question in) */
@@ -109,24 +127,45 @@ export function districtNounIn(text: string, w: World): boolean {
   return zonesIn(t, w).length > 0 || !!catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[஀-௿]/.test(d) && raw.includes(d));
 }
 
+/**
+ * What the fast lane must leave to the planner: more than one thing asked at once, a request for judgement, and getting ready
+ * for something (the planner's rain mission). The rules answer one plain question, fast; they do not reason.
+ */
+const MULTI = / (and then|then|after that|also|as well as|plus|அப்புறம்|பிறகு|அதன் பிறகு|apram|appuram) /;
+const ADVICE = / (what should|what do i do|what can i do|how should|should i|should we|advise|advice|recommend|suggest|suggestion|what next|ennna pannalam|enna pannalam|என்ன செய்ய|என்ன செய்யலாம்|என்ன பண்ணலாம்|பரிந்துரை) /;
+const MISSION = / (prepare|prepare for|get ready|get everything ready|readiness|be ready|expect heavy|expecting heavy|expect rain|heavy rain tonight|heavy rain tomorrow|storm is coming|cyclone is coming|tayar|thayar|ready pannu|தயார்|தயாராக) /;
+
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
-export function quickScreen(text: string, w: World): Quick | null {
+export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
+  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
+  if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
+  // "what should I do about flooding in Adyar": what needs the Collector first, reasoned in code from the data
+  if (ADVICE.test(t)) return { recipe: "advise", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved", "தீர்க்கப்படாத", "no location", "unlocated"]) } };
+  if (has(t, INSIGHT) || INSIGHT.some((w) => /[஀-௿]/.test(w) && t.includes(w))) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (NEARBY.test(t) && FACILITY.test(t)) return { recipe: "nearby", slots: { q: text.trim().slice(0, 240) } };
+  if (has(t, DASHBOARD)) return { recipe: "dashboard", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (has(t, ON_MAP) && (cat || sev || has(t, ["hotspot", "hotspots", "severe"]))) return { recipe: "map", slots: { what: has(t, ["hotspot", "hotspots"]) ? "hotspots" : sev ? "severe" : "cases", sev, cat, zones: zones.slice(0, 1), period: period ?? "weekly" } };
   if (has(t, PRICE) || (VEG.test(t) && /(price|rate|cost|விலை|vilai|எவ்வளவு|evvalavu|how much)/.test(t))) {
     const m = VEG.exec(t);
     const veg = m ? (m[1] ?? m[2]).replace(/es$/, "").replace(/s$/, "") : null;
     return { recipe: "prices", slots: { q: veg } };
   }
   if (has(t, NEWS)) return { recipe: "news", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: true } };
+  if (has(t, COMPARE) && zones.length >= 2 && (has(t, AIR) || has(t, LAKE))) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   if (has(t, AIR)) return { recipe: "readings", slots: { metric: "aqi", zones: zones.slice(0, 1), name: zones.length ? w.zones.find((z) => z.n === zones[0])?.name ?? null : null } };
   if (has(t, LAKE) && !cat) return { recipe: "readings", slots: { metric: "lakes" } };
-  if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, COMPARE) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
+  if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, WHY) && (cat || zones.length)) return { recipe: "why", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
+  if (has(t, TREND) && (cat || zones.length || sev)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
+  if (has(t, RANK) && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   if (sev || ((has(t, CASES) || cat) && (zones.length || period || cat))) {
     return { recipe: "cases", slots: { sev, cat, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,

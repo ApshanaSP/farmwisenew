@@ -9,6 +9,9 @@ import { aggregate, change, largestGaps, median, peak, rank, round, share, spoke
 import type { BlockT, Bilingual, CaseRowT, NextStepT, PointT, Recipe, ScopeT, StageDocT } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 import { nextSteps } from "./next";
+import { completeRows, type InRow, type Lookups } from "./complete";
+import { cChart, modifiedZ, trendOf } from "./stats";
+import { hoursBetween } from "./stagelocal";
 import { ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -49,6 +52,10 @@ export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, d
   measure: null, by: null, order: "top", n: null, id: null, name: null, what: null, sort: null });
 
 export interface Hands {
+  /** a Data Studio dataset by name, as rows for "complete this data" */
+  dataset?: (name: string) => Promise<{ name: string; rows: InRow[] } | null>;
+  /** the deterministic lookups "complete this data" fills from */
+  lookups?: (w: World) => Lookups;
   tool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
   severe: (s: ScopeT) => Promise<{ rows: Row[]; counts: Record<string, number>; asOf: string }>;
   news: (s: ScopeT) => Promise<{ rows: Row[]; total: number; asOf: string }>;
@@ -144,7 +151,7 @@ const scopeArg = (s: ScopeT, extra: Partial<ScopeT> = {}) => {
 type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
-  cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, answer: async () => {
+  cases, case: caseDetail, news, readings, prices, ranking, compare, trend, why, performance, dashboard, map: mapScreen, nearby, brief, drafts, advise, insight, complete, answer: async () => {
     throw new Error("the answer screen is written from the agent's own results");
   }
 };
@@ -174,6 +181,165 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
     slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10), asOf: c.asOf, notes: c.notes.slice(0, 4) };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   return { runs: c.runs, doc };
+}
+
+function actionFor(label: string): { en: string; ta: string } {
+  const l = label.toLowerCase();
+  if (/flood|waterlog|drain|inundat/.test(l)) return { en: "ask Storm Water Drains for pumps and a desilting check on the worst streets", ta: "மழைநீர் வடிகால் துறையிடம் பம்புகளும் தூர்வாரலும் கேளுங்கள்" };
+  if (/garbage|waste|sanitat|debris/.test(l)) return { en: "ask Solid Waste Management for a clearance drive", ta: "திடக்கழிவு மேலாண்மையிடம் சுத்தம் செய்யக் கேளுங்கள்" };
+  if (/vector|dengue|mosquito|malaria|disease|health|fever/.test(l)) return { en: "ask Health for fogging and source reduction in those wards", ta: "சுகாதாரத் துறையிடம் புகை மருந்தும் கொசு ஒழிப்பும் கேளுங்கள்" };
+  if (/water supply|sewage|sewer|drinking|pipe/.test(l)) return { en: "ask Metro Water for a status by this evening", ta: "மெட்ரோ குடிநீரிடம் இன்று மாலைக்குள் நிலவரம் கேளுங்கள்" };
+  if (/road|pothole|traffic/.test(l)) return { en: "ask the roads department for a repair date", ta: "சாலைத் துறையிடம் சரிசெய்யும் தேதி கேளுங்கள்" };
+  if (/power|electric|tree/.test(l)) return { en: "ask the department holding most of them for a status today", ta: "அதிகம் வைத்திருக்கும் துறையிடம் இன்றே நிலவரம் கேளுங்கள்" };
+  return { en: "ask the department holding most of them for a status today", ta: "அதிகம் வைத்திருக்கும் துறையிடம் இன்றே நிலவரம் கேளுங்கள்" };
+}
+
+/**
+ * "What should I do first (in X)?": several steps of reasoning, all in code. It reads the open incidents in priority order
+ * and what changed against the period before, then ranks what needs the Collector: a case past its deadline first, then
+ * a department sitting on several overdue cases, then the kind of incident rising fastest (with a suggested ask), then the
+ * busiest spot. Every figure in the points comes from those two tool results.
+ */
+async function advise(c: Ctx): Promise<Part> {
+  const { w, s } = c;
+  const ta = /[஀-௿]/.test(c.heard);
+  const where = s.zone ? bi(` in ${zoneName(w, s.zone)}`, ` ${zoneTa(w, s.zone) ?? zoneName(w, s.zone)} பகுதியில்`) : bi("", "");
+  const [inc, drv] = await Promise.all([
+    call(c, "incidents", { scope: scopeArg(s), status: "open", sort: "sev" }).catch(() => null),
+    call(c, "change_drivers", { scope: scopeArg(s) }).catch(() => null)
+  ]);
+  const rows = (((inc?.data as { rows?: Row[] } | undefined)?.rows) ?? []).map((x) => caseRow(x, w)).slice(0, 8);
+  const d = (drv?.data ?? {}) as { totals?: Row; categories?: Row[]; places?: Row[] };
+  const points: { en: string; ta: string; id: string | null }[] = [];
+  const holder = (r: CaseRowT) => r.deptName ?? r.dept ?? null;
+  const at = (r: CaseRowT) => r.place ?? r.zoneName ?? null;
+  // 1. the case past its deadline that matters most (else the most urgent open case)
+  const first = rows.find((r) => r.overdue) ?? rows[0];
+  if (first) {
+    const h = holder(first), p = at(first);
+    points.push(first.overdue
+      ? { en: `First: ${clip(first.title, 120)}${p ? ` at ${p}` : ""} is past its deadline${h ? `; ${h} holds it, call them` : ""}.`,
+        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""} காலக்கெடு தாண்டிவிட்டது${h ? `; ${h} துறையை அழையுங்கள்` : ""}.`, id: first.id }
+      : { en: `First: ${clip(first.title, 120)}${p ? ` at ${p}` : ""}${first.sev ? `, ${first.sev.toLowerCase()}` : ""}${h ? `, with ${h}` : ""}.`,
+        ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""}${h ? `; ${h} வசம் உள்ளது` : ""}.`, id: first.id });
+  }
+  // 2. a department sitting on several overdue cases
+  const overdue = rows.filter((r) => r.overdue);
+  if (overdue.length > 1) {
+    const by = new Map<string, number>();
+    for (const r of overdue) { const h = holder(r); if (h) by.set(h, (by.get(h) ?? 0) + 1); }
+    const [dept, n] = [...by.entries()].sort((a, b) => b[1] - a[1])[0] ?? [null, 0];
+    points.push({ en: `${spoken(overdue.length)} of the ${spoken(rows.length)} most urgent open cases are past their deadline${dept && n > 1 ? `, ${spoken(n)} of them with ${dept}: ask for a status today` : ""}.`,
+      ta: `அவசரமான ${spoken(rows.length)} திறந்த சம்பவங்களில் ${spoken(overdue.length)} காலக்கெடு தாண்டியவை${dept && n > 1 ? `; அவற்றில் ${spoken(n)} ${dept} வசம்: இன்றே நிலவரம் கேளுங்கள்` : ""}.`, id: null });
+  }
+  // 3. what is rising fastest, with the ask that fits it
+  const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
+  if (rise) {
+    const act = actionFor(String(rise.label ?? rise.code ?? ""));
+    points.push({ en: `${clip(rise.label, 60)} rose by ${spoken(Number(rise.delta))} ${PERIOD_EN[s.period]} (${spoken(Number(rise.n))} against ${spoken(Number(rise.prev))}). Suggested: ${act.en}.`,
+      ta: `${clip(rise.label, 60)} ${PERIOD_TA[s.period]} ${spoken(Number(rise.delta))} கூடியது (${spoken(Number(rise.n))}, முன்பு ${spoken(Number(rise.prev))}). பரிந்துரை: ${act.ta}.`, id: null });
+  }
+  // 4. the busiest spot
+  const place = d.places?.[0];
+  if (place && points.length < 4) points.push({ en: `The busiest spot is ${clip(place.place, 60)}: ${spoken(Number(place.n))} ${clip(place.category, 50).toLowerCase()}.`,
+    ta: `அதிக சம்பவங்கள்: ${clip(place.place, 60)} (${spoken(Number(place.n))}).`, id: null });
+  const title = ta ? `இப்போது என்ன செய்ய வேண்டும்${where.ta}` : `What needs you first${where.en}`;
+  if (!points.length) return { title, takeaway: null, say: bi(`Nothing open needs you${where.en} right now.`, `இப்போது${where.ta} உங்கள் கவனம் தேவைப்படும் திறந்த சம்பவம் இல்லை.`), blocks: [] };
+  const blocks: BlockT[] = [{ kind: "Brief", id: "advise", title, points: points.map((p) => ({ text: clip(ta ? p.ta : p.en, 400), incidentId: p.id })) }];
+  if (rows.length) blocks.push({ kind: "CaseList", id: "open", title: ta ? "அவசரமான திறந்த சம்பவங்கள்" : "The most urgent open cases", source: "list", sev: null, total: rows.length, rows });
+  const cats = [...(d.categories ?? [])].sort((a, b) => Number(b.delta) - Number(a.delta)).slice(0, 8);
+  if (cats.length) blocks.push({ kind: "Chart", id: "chart", title: ta ? "முந்தைய காலத்தை விட மாற்றம்" : "Change against the period before", chart: "hbar", unit: "incidents", labels: cats.map((x) => clip(x.label, 80)), values: cats.map((x) => Number(x.delta)) });
+  const n = points.length;
+  const say = bi(`${n === 1 ? "One thing needs" : `${spoken(n)} things need`} you${where.en}. ${points.slice(0, 3).map((p) => p.en).join(" ")}`,
+    `${where.ta ? `${where.ta.trim()} ` : ""}${spoken(n)} விஷயங்கள் உங்கள் கவனத்துக்கு. ${points.slice(0, 3).map((p) => p.ta).join(" ")}`);
+  return { title, takeaway: null, say, blocks };
+}
+
+// ------------------------------------------------------------------ insight --
+
+/**
+ * "What stands out?": the zones unlike the rest (modified z-score), whether the latest count is outside its limits (c-chart),
+ * and which way the series is going (Theil-Sen with Mann-Kendall). Every finding carries its method, its n and a caveat. The
+ * spoken line reads only those.
+ */
+async function insight(c: Ctx): Promise<Part> {
+  const { w, s } = c;
+  const ta = /[஀-௿]/.test(c.heard);
+  const [zr, ser, drv] = await Promise.all([
+    call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
+    call(c, "incident_series", { scope: scopeArg(s) }),
+    call(c, "change_drivers", { scope: scopeArg(s) }).catch(() => null)
+  ]);
+  const zrows = ((zr.data as { rows?: Row[] }).rows ?? []);
+  const buckets = ((ser.data as { buckets?: Row[] }).buckets ?? []);
+  const counts = buckets.map((b) => Number(b.n) || 0);
+  const labels = buckets.map((b) => when(b.from)?.split(",")[0] ?? "");
+  const items: Extract<BlockT, { kind: "Findings" }>["items"] = [];
+  const zoneLabel = (z: number) => (ta ? zoneTa(w, z) : zoneName(w, z)) ?? `Zone ${z}`;
+  const open = modifiedZ(zrows.map((z) => ({ key: String(z.zone), value: Number(z.open ?? z.n ?? 0) })));
+  const severe = modifiedZ(zrows.map((z) => ({ key: String(z.zone), value: Number(z.severe ?? 0) })));
+  for (const o of open.value.slice(0, 2)) items.push({ title: ta ? `${zoneLabel(Number(o.key))}: மற்ற மண்டலங்களை விட ${o.z > 0 ? "அதிகம்" : "குறைவு"} திறந்த சம்பவங்கள்` : `${zoneLabel(Number(o.key))} has ${o.z > 0 ? "far more" : "far fewer"} open cases than the other zones`, value: o.value, unit: ta ? "திறந்தவை" : "open", method: open.method, n: open.n, caveat: ta ? open.caveat.ta : open.caveat.en, tone: "bad" });
+  for (const o of severe.value.slice(0, 1)) if (!open.value.some((x) => x.key === o.key)) items.push({ title: ta ? `${zoneLabel(Number(o.key))}: கடுமையான சம்பவங்கள் அசாதாரணம்` : `${zoneLabel(Number(o.key))} stands out for severe cases`, value: o.value, unit: ta ? "கடுமையானவை" : "severe", method: severe.method, n: severe.n, caveat: ta ? severe.caveat.ta : severe.caveat.en, tone: "bad" });
+  const chart = cChart(counts);
+  if (counts.length >= 4) items.push({ title: chart.value.latestOut ? (ta ? `கடைசிக் கால எண்ணிக்கை வரம்புக்கு வெளியே` : `The latest count is outside its usual limits`) : (ta ? `கடைசிக் கால எண்ணிக்கை வழக்கமான வரம்புக்குள்` : `The latest count is within its usual limits`), value: chart.value.latest, unit: ta ? "சம்பவங்கள்" : "incidents", method: chart.method, n: chart.n, caveat: ta ? chart.caveat.ta : chart.caveat.en, tone: chart.value.latestOut ? "bad" : "ok" });
+  const trendS = trendOf(counts);
+  if (counts.length >= 4) items.push({ title: trendS.value.direction === "rising" ? (ta ? "போக்கு உயர்கிறது" : "The series is rising") : trendS.value.direction === "falling" ? (ta ? "போக்கு குறைகிறது" : "The series is falling") : (ta ? "தெளிவான போக்கு இல்லை" : "No clear trend"), value: trendS.value.slope, unit: ta ? "ஒரு காலத்துக்கு" : "per period", method: trendS.method, n: trendS.n, caveat: ta ? trendS.caveat.ta : trendS.caveat.en, tone: trendS.value.direction === "rising" ? "warn" : "ok" });
+  const d = (drv?.data ?? {}) as { categories?: Row[] };
+  const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
+  if (rise) items.push({ title: ta ? `வேகமாக உயர்வது: ${clip(rise.label, 60)}` : `Rising fastest: ${clip(rise.label, 60)}`, value: Number(rise.delta), unit: ta ? "கூடுதல்" : "more", method: `Against the period before (${Number(rise.prev)} to ${Number(rise.n)})`, n: 2, caveat: ta ? "இரண்டு காலங்களின் ஒப்பீடு மட்டுமே." : "A comparison of two periods only.", tone: "warn" });
+  const title = ta ? "தனித்து நிற்பவை" : "What stands out";
+  if (!items.length) return { title, takeaway: null, say: bi("Nothing stands out in this data.", "இந்தத் தரவில் தனித்து நிற்பது எதுவும் இல்லை."), blocks: [] };
+  const lead = open.value[0];
+  const en = lead ? `${zoneName(w, Number(lead.key)) ?? ""} stands out: ${spoken(lead.value)} open cases against a typical ${spoken(lead.median)}.` : `No zone stands out from the rest${chart.value.latestOut ? ", but the latest count is outside its usual limits" : ""}.`;
+  const tam = lead ? `${zoneTa(w, Number(lead.key)) ?? ""} தனித்து நிற்கிறது: ${spoken(lead.value)} திறந்த சம்பவங்கள், வழக்கமாக ${spoken(lead.median)}.` : `எந்த மண்டலமும் தனித்து நிற்கவில்லை${chart.value.latestOut ? ", ஆனால் கடைசி எண்ணிக்கை வரம்புக்கு வெளியே" : ""}.`;
+  const marks = chart.value.signals.slice(0, 8).map((i) => ({ i, why: ta ? "வரம்புக்கு வெளியே" : "Outside the limits" }));
+  const blocks: BlockT[] = [{ kind: "Findings", id: "find", title, items: items.slice(0, 6) }];
+  if (counts.length) blocks.push({ kind: "Trend", id: "trend", title: ta ? "காலவாரி எண்ணிக்கை" : "Incidents over time", unit: "incidents", labels, values: counts, marks, normal: { lo: chart.value.lcl, hi: chart.value.ucl } });
+  blocks.push({ kind: "MapView", id: "map", title: ta ? "மண்டலங்கள்" : "The zones", rule: open.method, shade: { geo: "zone", label: "Open incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.open ?? x.n ?? 0) })) }, points: [], outline: open.value.map((o) => Number(o.key)).slice(0, 15) });
+  return { title, takeaway: bi(en, tam), say: bi(en, tam), blocks };
+}
+
+// ------------------------------------------------------------------ complete --
+
+/**
+ * "Complete this data": the open Stage's list, a Studio dataset named in the sentence, or the unresolved incidents. A cell is
+ * filled only from deterministic code (complete.ts) and shows its source; what cannot be filled is named. Nothing is guessed,
+ * and follow-ups for what is left are offered as drafts for the tray.
+ */
+async function complete(c: Ctx): Promise<Part> {
+  const { w, s, slots } = c;
+  const ta = /[஀-௿]/.test(c.heard);
+  let input: InRow[] = [];
+  let what = ta ? "தீர்க்கப்படாத சம்பவங்கள்" : "Unresolved incidents";
+  const asOfNow = await Promise.resolve(c.asOf);
+  const ds = slots.name && c.h.dataset ? await c.h.dataset(slots.name) : null;
+  if (ds) {
+    c.runs.push("studio_dataset");
+    c.sources.add(`Data Studio: ${ds.name}`);
+    what = ds.name;
+    input = ds.rows.slice(0, 30);
+  } else {
+    const r = await call(c, "incidents", { scope: scopeArg(s), status: "open", sort: "sev" });
+    const rows = (((r.data as { rows?: Row[] }).rows) ?? []).map((x) => caseRow(x, w));
+    input = rows.map((x) => ({ id: x.id, title: x.title, zone: x.zone, zoneName: x.zoneName, ward: x.ward, place: x.place, dept: x.dept, deptName: x.deptName, cat: x.cat, lat: x.lat, lon: x.lon, t: x.t, hours: hoursBetween(x.t, r.asOf ?? asOfNow) }));
+    if (slots.fresh) input = input.filter((x) => !x.zone || !x.place || !x.dept);
+  }
+  const k: Lookups = c.h.lookups?.(w) ?? {};
+  const res = completeRows(input, k);
+  const title = ta ? `${what}: நிரப்பியவை` : `${what}: completed`;
+  if (!res.rows.length) return { title, takeaway: null, say: bi("Nothing here to complete.", "நிரப்ப வேண்டியது எதுவும் இல்லை."), blocks: [] };
+  const COLS = [{ key: "ward", en: "Ward", ta: "வார்டு" }, { key: "zone", en: "Zone", ta: "மண்டலம்" }, { key: "place", en: "Place", ta: "இடம்" }, { key: "dept", en: "Department", ta: "துறை" }, { key: "age", en: "Open, hours", ta: "திறந்த மணி" }] as const;
+  const shown = res.rows.slice(0, 30);
+  const blocks: BlockT[] = [{ kind: "Filled", id: "filled", title, cols: COLS.map((x) => ({ key: x.key, label: ta ? x.ta : x.en })),
+    rows: shown.map((r) => ({ id: r.id, title: clip(r.title, 240), cells: COLS.map((x) => { const v = r.cells[x.key]; return { v: typeof v.v === "string" ? clip(v.v, 160) : v.v, src: v.src, filled: v.filled }; }) })),
+    filled: res.filled, left: res.left, cannot: res.cannot.slice(0, 8).map((x) => ({ col: x.col, n: x.n, why: ta ? x.ta : x.why })) }];
+  const leftWords = res.cannot.map((x) => `${spoken(x.n)} ${x.col}`).join(", ");
+  const say = bi(`I filled ${spoken(res.filled)} cells, each with its source. ${res.left ? `${spoken(res.left)} could not be filled: ${leftWords}. Nothing was guessed.` : "Nothing is left blank."}`,
+    `${spoken(res.filled)} இடங்களை நிரப்பினேன், ஒவ்வொன்றுக்கும் ஆதாரத்துடன். ${res.left ? `${spoken(res.left)} நிரப்ப முடியவில்லை. எதையும் ஊகிக்கவில்லை.` : "எதுவும் காலியாக இல்லை."}`);
+  const ids = res.unresolved.slice(0, 10);
+  const next: NextStepT[] = ids.length ? [{ label: bi(`Draft follow-ups for ${spoken(ids.length)} unresolved`, `தீர்க்கப்படாத ${spoken(ids.length)}-க்கு வரைவு`), kind: "draft", recipe: null, slots: null, ids, text: null }] : [];
+  c.notes.push("A filled cell shows where the value came from. Blank cells are left blank on purpose.");
+  return { title, takeaway: bi(`${spoken(res.filled)} filled, ${spoken(res.left)} left.`, `${spoken(res.filled)} நிரப்பியது, ${spoken(res.left)} மீதம்.`), say, blocks, next };
 }
 
 // ------------------------------------------------------------------ cases --

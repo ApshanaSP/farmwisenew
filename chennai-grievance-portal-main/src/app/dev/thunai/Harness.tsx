@@ -58,6 +58,7 @@ export default function Harness() {
     planUrl: "/api/dev/thunai/plan",
     agentUrl: "/api/dev/thunai/agent",
     hearUrl: "/api/dev/thunai/hear",
+    settled: () => Promise.resolve(),
     draftUrl: (id) => `/api/dev/thunai/draft?id=${encodeURIComponent(id)}`,
     loadGeo: () => fetch("/api/dev/thunai/tool", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tool: "map_geo", args: {} }) })
       .then((r) => (r.ok ? r.json() : null)).then((j) => j?.result?.data ?? null),

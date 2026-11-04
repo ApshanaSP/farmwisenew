@@ -57,13 +57,19 @@ export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), incidentId: str(80).nullable() })).max(10) }),
   z.object({ kind: z.literal("Answer"), id: str(40), title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
   z.object({ kind: z.literal("Drafts"), id: str(40), title: str(120) }),
+  /** what stands out: each finding with its method, how many values it rests on, and a caveat (stats.ts) */
+  z.object({ kind: z.literal("Findings"), id: str(40), title: str(160), items: z.array(z.object({ title: str(240), value: num.nullable(), unit: str(30).nullable(), method: str(200), n: num, caveat: str(240), tone: z.enum(["bad", "warn", "ok"]) })).max(8) }),
+  /** a table filled in by code: a filled cell shows its source, and what could not be filled is named (complete.ts) */
+  z.object({ kind: z.literal("Filled"), id: str(40), title: str(160), cols: z.array(z.object({ key: str(30), label: str(60) })).max(8),
+    rows: z.array(z.object({ id: str(80), title: str(240), cells: z.array(z.object({ v: z.union([num, str(160)]).nullable(), src: str(160).nullable(), filled: z.boolean() })).max(8) })).max(30),
+    filled: num, left: num, cannot: z.array(z.object({ col: str(40), n: num, why: str(160) })).max(8) }),
   z.object({ kind: z.literal("Note"), id: str(40), text: str(400) })
 ]);
 export type BlockT = z.infer<typeof Block>;
 export type BlockKind = BlockT["kind"];
 export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as BlockKind[];
 
-export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices"] as const;
+export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete"] as const;
 export type Recipe = (typeof RECIPES)[number];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),
@@ -113,6 +119,9 @@ export function checkStage(d: unknown): { ok: true; doc: StageDocT } | { ok: fal
 /** The open Stage as the agent sees it with the next sentence (Tambo's "interactable"): kind, ids, nothing else. */
 export interface StageContext { recipe: Recipe; title: string; blocks: { kind: BlockKind; ids: string[] }[]; slots: Record<string, unknown>; focus: number | null }
 
+/** the longest digest of a screen the browser may send with a round */
+export const STAGE_DIGEST_MAX = 1800;
+
 export function stageContext(d: StageDocT, focus: number | null = null): StageContext {
   return {
     recipe: d.recipe, title: d.title, focus, slots: d.slots,
@@ -122,6 +131,7 @@ export function stageContext(d: StageDocT, focus: number | null = null): StageCo
 
 export function idsOf(b: BlockT): string[] {
   switch (b.kind) {
+    case "Filled": return b.rows.map((r) => r.id);
     case "CaseList": return b.rows.map((r) => r.id);
     case "NewsReader": return b.items.map((x) => x.id);
     case "Readings": return b.items.map((x) => x.name);

@@ -81,6 +81,101 @@ export function localStageCommand(raw: string): LocalCmd | null {
   return null;
 }
 
+// ------------------------------------------------------------------ the reducer --
+
+/** Everything the open Stage holds, in one place: what is shown, what came before, and how each block is viewed. */
+export interface StageModel {
+  doc: StageDocT | null;
+  back: StageDocT[];
+  views: Record<string, string>;
+  filter: string | null;
+  /** the item being read aloud */
+  narr: number;
+}
+/** What a command asks the world to do. The reducer only describes these; the component carries them out. */
+export type StageEffect =
+  | { fx: "stopVoice" } | { fx: "closed" }
+  | { fx: "say"; en: string; ta: string; speak: boolean }
+  | { fx: "readFrom"; i: number }
+  | { fx: "rebuild"; recipe: StageDocT["recipe"]; slots: Record<string, unknown>; label: { en: string; ta: string }; clearConsole?: boolean }
+  | { fx: "pin" } | { fx: "export"; what: "png" | "csv" | null } | { fx: "draft"; ids: string[] } | { fx: "mapItem"; id: string | null } | { fx: "full" } | { fx: "scrollMap" } | { fx: "earcon" };
+
+export const stageEmpty: StageModel = { doc: null, back: [], views: {}, filter: null, narr: 0 };
+
+/**
+ * One command on the Stage: the next model and the effects, in order. Pure: it speaks and fetches nothing, and reads only what it
+ * is given, so a digest made right after it is right. "open" and the like ask for a rebuild: the new screen arrives through
+ * pushScreen.
+ */
+export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx: StageEffect[] } {
+  const doc = m.doc;
+  if (!doc) return { m, fx: [] };
+  switch (cmd.op) {
+    case "stop": return { m, fx: [{ fx: "stopVoice" }] };
+    case "next": return { m, fx: [{ fx: "readFrom", i: m.narr + 1 }] };
+    case "prev": return { m, fx: [{ fx: "readFrom", i: m.narr - 1 }] };
+    case "again": return { m, fx: [{ fx: "readFrom", i: m.narr }] };
+    case "read": return { m, fx: [doc.blocks.every((b) => b.kind === "Note") ? { fx: "rebuild", recipe: doc.recipe, slots: doc.slots, label: { en: doc.title, ta: doc.title } } : { fx: "readFrom", i: 0 }] };
+    case "close": return { m: stageEmpty, fx: [{ fx: "stopVoice" }, { fx: "closed" }] };
+    case "back": {
+      const prev = m.back[m.back.length - 1];
+      if (!prev) return { m: stageEmpty, fx: [{ fx: "stopVoice" }, { fx: "closed" }] };
+      return { m: { ...m, doc: prev, back: m.back.slice(0, -1), views: {}, filter: null, narr: 0 }, fx: [{ fx: "stopVoice" }, { fx: "say", en: prev.say.en, ta: prev.say.ta, speak: true }] };
+    }
+    case "clear": return { m, fx: [{ fx: "rebuild", recipe: doc.recipe, slots: doc.slots, label: { en: doc.title, ta: doc.title } }] };
+    case "everywhere": return { m, fx: [{ fx: "rebuild", recipe: doc.recipe, slots: { ...doc.slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, label: { en: "All of Chennai", ta: "முழு சென்னை" }, clearConsole: true }] };
+    case "pin": return { m, fx: [{ fx: "pin" }, { fx: "earcon" }, { fx: "say", en: "Pinned this screen.", ta: "இந்தத் திரையைப் பின் செய்தேன்.", speak: true }] };
+    case "export": return { m, fx: [{ fx: "export", what: cmd.what }, { fx: "earcon" }, { fx: "say", en: cmd.what === "png" ? "Saved a picture of this screen." : "Exported this screen's data as CSV.", ta: "ஏற்றுமதி செய்தேன்.", speak: true }] };
+    case "view": {
+      const b = doc.blocks.find((x) => (cmd.view === "map" ? x.kind === "Ranking" && x.items.some((i) => i.zone != null || i.lat != null) : ["Ranking", "Trend", "Chart", "Compare"].includes(x.kind)));
+      const fx: StageEffect[] = [{ fx: "earcon" }, { fx: "say", en: `Showing it as a ${cmd.view}.`, ta: "மாற்றினேன்.", speak: false }];
+      if (!b && cmd.view === "map") fx.unshift({ fx: "scrollMap" });
+      return { m: b ? { ...m, views: { ...m.views, [b.id]: cmd.view } } : m, fx };
+    }
+    case "sort": return { m: { ...m, doc: sortStage(doc, cmd.by) }, fx: [{ fx: "earcon" }, { fx: "say", en: `Sorted by ${cmd.by}.`, ta: "வரிசைப்படுத்தினேன்.", speak: false }] };
+    case "filter": {
+      const r = filterStage(doc, cmd.text);
+      if (!r.kept) return { m, fx: [{ fx: "say", en: `None of these mention ${cmd.text}.`, ta: `"${cmd.text}" எதிலும் இல்லை.`, speak: true }] };
+      return { m: { ...m, doc: r.doc, filter: cmd.text }, fx: [{ fx: "say", en: `${r.kept} of the ${r.of} shown are about ${cmd.text}.`, ta: `${r.of}-இல் ${r.kept} மட்டும்.`, speak: true }] };
+    }
+    case "open": {
+      const id = caseIds(doc)[cmd.n - 1];
+      if (!id) return { m, fx: [{ fx: "say", en: "There is no such item.", ta: "அப்படி ஒரு உருப்படி இல்லை.", speak: true }] };
+      return { m, fx: [{ fx: "rebuild", recipe: "case", slots: { id }, label: { en: `Opening case ${cmd.n}`, ta: `${cmd.n}-வது சம்பவத்தைத் திறக்கிறேன்` } }] };
+    }
+    case "draft": {
+      const ids = caseIds(doc);
+      const pick = cmd.first ? ids.slice(0, cmd.n) : doc.recipe === "case" ? ids.slice(0, 1) : ([ids[cmd.n - 1]].filter(Boolean) as string[]);
+      return { m, fx: [{ fx: "draft", ids: pick }] };
+    }
+    case "map": {
+      const ids = caseIds(doc);
+      return { m: stageEmpty, fx: [{ fx: "stopVoice" }, { fx: "closed" }, { fx: "mapItem", id: (cmd.n ? ids[cmd.n - 1] : ids[0]) ?? null }] };
+    }
+    case "full": return { m, fx: [{ fx: "full" }] };
+  }
+}
+
+/** A new screen arrives: what was shown goes on the back stack. */
+export const pushScreen = (m: StageModel, doc: StageDocT, push = true): StageModel => ({ doc, back: m.doc && push ? [...m.back, m.doc].slice(-8) : m.back, views: {}, filter: null, narr: 0 });
+
+/**
+ * What the screen shows now, for the planner's next round: small (at most 400 tokens), never a source of figures (the server
+ * reads figures only from its own tool results), and built from the same document the browser shows.
+ */
+export function stageDigest(m: StageModel, focus: number | null = null): string | null {
+  const d = m.doc;
+  if (!d) return null;
+  const items = d.blocks.map((b) => {
+    if (b.kind === "CaseList") return `cases(${b.total}): ${b.rows.slice(0, 8).map((r, i) => `${i + 1}=${r.id} ${r.title.slice(0, 40)}`).join("; ")}`;
+    if (b.kind === "NewsReader") return `news: ${b.items.slice(0, 6).map((x, i) => `${i + 1}=${x.title.slice(0, 40)}`).join("; ")}`;
+    if (b.kind === "Ranking") return `ranking: ${b.items.slice(0, 6).map((x) => x.label.slice(0, 24)).join(", ")}`;
+    if (b.kind === "Compare") return `compare: ${b.sides.map((s) => s.label).join(" vs ")}`;
+    return b.kind;
+  }).join(" | ");
+  return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1600);
+}
+
 /** Lane 1: what Thunai says the moment the request leaves, from the words alone (no figures). */
 export function ackFor(text: string, lang: Lang): string {
   const t = text.toLowerCase();
@@ -106,7 +201,7 @@ export function ackTemplated(text: string, lang: Lang, w: { zones: { n: number; 
   const named = w.zones.filter((z) => low.includes(z.name.toLowerCase()) || (z.ta && text.includes(z.ta)));
   if (!named.length) return "";
   const nm = (z: { name: string; ta?: string | null }) => (lang === "ta" ? z.ta ?? z.name : z.name);
-  if (/compare|versus|vs|ஒப்பிடு|oppidu/.test(low) && named.length >= 2) {
+  if (/compare|versus|\bvs\b|ஒப்பிடு|oppidu/.test(low) && named.length >= 2) {
     return lang === "ta" ? `${nm(named[0])}, ${nm(named[1])} ஒப்பிடுகிறேன்.` : `Comparing ${nm(named[0])} with ${nm(named[1])}.`;
   }
   return lang === "ta" ? `${nm(named[0])} பார்க்கிறேன்.` : `Looking at ${nm(named[0])}.`;
@@ -236,6 +331,8 @@ export function toCsv(d: StageDocT): string {
     else if (b.kind === "NewsReader") table(b.title, ["#", "headline", "source", "time", "incident"], b.items.map((x, i) => [i + 1, x.title, x.source, x.t, x.incidentId]));
     else if (b.kind === "Brief") table(b.title, ["#", "point"], b.points.map((p, i) => [i + 1, p.text]));
     else if (b.kind === "Answer") table(b.title, ["fact", "value", "unit"], b.facts.map((f) => [f.label, f.value, f.unit]));
+    else if (b.kind === "Findings") table(b.title, ["finding", "value", "unit", "method", "n", "caveat"], b.items.map((f) => [f.title, f.value, f.unit, f.method, f.n, f.caveat]));
+    else if (b.kind === "Filled") table(b.title, ["id", "title", ...b.cols.flatMap((c) => [c.label, `${c.label} source`])], b.rows.map((r) => [r.id, r.title, ...r.cells.flatMap((c) => [c.v, c.src])]));
   }
   return out.join("\n");
 }

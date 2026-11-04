@@ -11,7 +11,7 @@
  * model, tokens and latency, never with the prompt (it can carry untrusted text), and each
  * user has a daily token budget.
  */
-import { APICallError, Output, generateText, type LanguageModel } from "ai";
+import { APICallError, Output, generateText, zodSchema, type LanguageModel } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -232,6 +232,8 @@ export interface JsonCall<T> {
   chat?: boolean;
   /** what the ledger files this call under (Jarvis's lanes) */
   lane?: Lane;
+  /** this provider and these models only, whatever AI_FORCE_PROVIDER says (Jarvis's own ladder walks its rungs itself) */
+  only?: { provider: ProviderName; models: string[] };
 }
 
 export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
@@ -273,7 +275,7 @@ export function retryAfterSeconds(e: APICallError): number | null {
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
-  const all = providers(c.prefer, c.chat);
+  const all = c.only ? providers(c.only.provider, c.chat).filter((p) => p.name === c.only!.provider) : providers(c.prefer, c.chat);
   // the main provider is the first configured one named in AI_PROVIDER
   const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
   // background work stays off the main provider while another one is configured (not when a provider is forced)
@@ -302,11 +304,15 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
     if (p.pool) {
       const need = Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
       const lead = (id: string) => { const k = (c.first ?? []).findIndex((f) => id.split("#")[0] === f); return k < 0 ? 100 : k; };
-      const models = p.pool(c.role).map((m, i) => ({ ...m, rank: lead(m.id) * 1000 + i, key: `${p.name}/${m.id}` }))
-        .filter((m) => (cooling.get(m.key) ?? 0) <= Date.now());
-      const room = (m: { key: string }) => {
-        const u = usedLastMinute(m.key), lim = p.limits ?? { tpm: Infinity, rpm: Infinity };
-        return u.requests < lim.rpm && u.tokens + need <= lim.tpm ? lim.tpm - u.tokens : -1;
+      const only = c.only?.models;
+      // the pooled keys are one organisation: a model cooling, or out of allowance, is so on all of them
+      const models = p.pool(c.role).map((m, i) => ({ ...m, rank: lead(m.id) * 1000 + i, key: `${p.name}/${m.id}`, bare: `${p.name}/${m.id.split("#")[0]}` }))
+        .filter((m) => (!only || only.includes(m.id.split("#")[0]) || only.includes(m.id)) && (cooling.get(m.bare) ?? 0) <= Date.now() && (cooling.get(m.key) ?? 0) <= Date.now());
+      const room = (m: { key: string; bare: string }) => {
+        const bare = m.bare.slice(p.name.length + 1);
+        const u = usedLastMinute(m.bare), lim = p.limits ?? { tpm: Infinity, rpm: Infinity };
+        const led = ledger().room(p.name as Org, bare, { tokens: need });
+        return u.requests < lim.rpm && u.tokens + need <= lim.tpm && (led.ok || led.why === "cooling") ? lim.tpm - u.tokens : -1;
       };
       // keep the preferred order while a model has room; models that would go over this minute's allowance go last
       const order = [...models].sort((a, b) => Number(room(b) < 0) - Number(room(a) < 0) || a.rank - b.rank);
@@ -383,11 +389,30 @@ function usedLastMinute(key: string): { requests: number; tokens: number } {
   return { requests: l.length, tokens: l.reduce((a, x) => a + x.tokens, 0) };
 }
 const recordUse = (key: string, tokens: number, lane?: Lane) => {
-  const l = usage.get(key) ?? []; l.push({ t: Date.now(), tokens }); usage.set(key, l);
-  // the ledger counts per organisation and model: the pooled keys' "#2" and "#3" are one allowance
-  const [org, ...rest] = key.split("/");
+  // the pooled keys' "#2" and "#3" are one organisation's allowance: the minute's count and the ledger both use the bare model
+  const bare = key.split("#")[0];
+  const l = usage.get(bare) ?? []; l.push({ t: Date.now(), tokens }); usage.set(bare, l);
+  const [org, ...rest] = bare.split("/");
   ledger().record(org as Org, rest.join("/"), { tokens, lane: lane ?? "other" });
 };
+
+/**
+ * Gemini refuses some large strict schemas outright (400 INVALID_ARGUMENT, no detail): Thunai's agent plan is accepted part
+ * by part but not whole. For those calls the schema goes into the instructions instead, the reply is plain JSON, and our
+ * own schema checks it. Remembered per model and schema, so the refused attempt is made once. Ported from thunai/v3 (caf5e7e).
+ */
+const schemaInPrompt = new Set<string>();
+export function schemaText(schema: z.ZodTypeAny): string {
+  try { return JSON.stringify(zodSchema(schema as never).jsonSchema); } catch { return ""; }
+}
+/** The JSON object in a model's text (it may wrap it in a code fence or a sentence). */
+export function jsonIn(text: string): unknown {
+  const t = String(text ?? "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+  try { return JSON.parse(t); } catch { /* look for the object */ }
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(t.slice(a, b + 1)); } catch { return null; }
+}
 
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
   state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
@@ -399,7 +424,35 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
     // every call has a deadline: an overloaded model used to hold a question for minutes (a 193 s composer call)
     const limit = Math.max(1500, Math.min(callTimeout(c), (state.until ?? Infinity) - Date.now()));
     const deadline = AbortSignal.timeout(limit);
+    const plainKey = `${key}:${c.name.replace(/\d+$/, "")}`;
+    const plain = schemaInPrompt.has(plainKey);
     try {
+      if (plain) {
+        // the schema as instructions; the reply checked by our own schema (lenient first, as for a refused draft)
+        const opts = p.options(c.role, id) as { google?: Record<string, unknown> };
+        const r = await generateText({
+          model: lm, system: `${c.system}\n\nOUTPUT: reply with ONE JSON object only (no prose, no code fence) that matches this JSON Schema exactly; every property present, null or [] where unused:\n${schemaText(c.schema)}`,
+          prompt: c.prompt, temperature: c.temperature, maxOutputTokens: Math.min(c.maxOutputTokens ?? 1200, p.maxOut?.(id) ?? Infinity),
+          maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
+          providerOptions: { ...opts, google: { ...(opts.google ?? {}), structuredOutputs: false, responseMimeType: "application/json" } } as never
+        });
+        const parsed = (c.lenient ?? c.schema).safeParse(jsonIn(r.text));
+        if (!parsed.success) {
+          const issue = parsed.error.issues[0];
+          console.warn(`[assistant] ${c.name} ${p.name}/${id} (schema in prompt) off-schema at ${issue?.path.join(".")}: ${issue?.message}`);
+          state.lastError = new Error(`off-schema output at ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
+          if (attempt === 0) continue;
+          return { longBusy: false };
+        }
+        const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
+          inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
+        charge(c.user, info.inputTokens + info.outputTokens);
+        recordUse(key, info.inputTokens + info.outputTokens, c.lane);
+        strikes.delete(key);
+        keyWorks(p.name);
+        console.info(`[assistant] ${c.name} ${p.name}/${id} (schema in prompt) ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);
+        return { result: { object: parsed.data as T, info }, longBusy: false };
+      }
       const r = await generateText({
         model: lm, system: c.system, prompt: c.prompt, temperature: c.temperature, maxOutputTokens: Math.min(c.maxOutputTokens ?? 1200, p.maxOut?.(id) ?? Infinity),
         maxRetries: 0, abortSignal: c.abortSignal ? AbortSignal.any([c.abortSignal, deadline]) : deadline,
@@ -440,6 +493,12 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         }
       }
       const status = APICallError.isInstance(e) ? e.statusCode : undefined;
+      // Gemini refusing the schema itself: put it in the instructions and try again at once (remembered)
+      if (p.name === "gemini" && status === 400 && /invalid argument/i.test((e as Error).message ?? "") && !plain) {
+        console.warn(`[assistant] ${c.name} ${p.name}/${id} refused the schema; sending it as instructions instead`);
+        schemaInPrompt.add(plainKey);
+        continue;
+      }
       const busy = status === 429 || (status != null && status >= 500) || (APICallError.isInstance(e) && e.isRetryable);
       console.warn(`[assistant] ${c.name} ${p.name}/${id} failed (${status ?? (e as Error).name}): ${(e as Error).message.slice(0, 160)}`);
       // a refused or expired key is remembered for the console's admin banner (keyhealth.ts), not only logged
@@ -453,8 +512,11 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         const daily = /quota|per day|RPD|TPD/i.test((e as Error).message);
         // a per-minute limit with a known reset rests exactly that long (a few seconds, often): the pool may wait for it;
         // a 503 "high demand" rests longer each time in a row (it was asked again every minute and refused each time)
-        cooling.set(key, Date.now() + (daily ? 1000 * Math.max(15 * 60, wait ?? 0) : status === 503 && wait == null ? restFor(key)
-          : 1000 * Math.min(120, wait != null ? wait + 1 : 60)));
+        const rest = daily ? 1000 * Math.max(15 * 60, wait ?? 0) : status === 503 && wait == null ? restFor(key) : 1000 * Math.min(120, wait != null ? wait + 1 : 60);
+        // a 429 is the organisation's: the same model on the other pooled keys is out too, and the ledger remembers it
+        const bare = key.split("#")[0];
+        cooling.set(status === 429 ? bare : key, Date.now() + rest);
+        if (status === 429) ledger().cool(p.name as Org, id, rest);
         return { longBusy: true };
       }
       if (busy) {

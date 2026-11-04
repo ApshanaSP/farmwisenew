@@ -501,6 +501,33 @@ function BlockBody(p: BP) {
         )}
       </>
     );
+    case "Findings": return (
+      <>
+        <Head title={b.title} icon="bulb" />
+        <ul className="st-findings">
+          {b.items.map((f, i) => (
+            <li key={i} className={`t-${f.tone}`}>
+              <div className="st-find-h"><b>{f.title}</b>{f.value != null && <span className="st-find-v">{fmt(f.value)}{f.unit ? <small> {f.unit}</small> : null}</span>}</div>
+              <small className="st-find-m">{f.method} · n = {f.n}</small>
+              <small className="st-find-c">{f.caveat}</small>
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+    case "Filled": return (
+      <>
+        <Head title={b.title} icon="doc" />
+        <p className="st-filled-sum">{T(lang, `${b.filled} filled from code and reference data, ${b.left} left blank. Nothing guessed.`, `${b.filled} குறியீடு மற்றும் குறிப்புத் தரவிலிருந்து நிரப்பியது, ${b.left} காலி. எதுவும் ஊகிக்கவில்லை.`)}</p>
+        <div className="st-tablewrap"><table className="st-table st-filled">
+          <thead><tr><th>{T(lang, "Incident", "சம்பவம்")}</th>{b.cols.map((c) => <th key={c.key}>{c.label}</th>)}</tr></thead>
+          <tbody>{b.rows.map((r) => (
+            <tr key={r.id}><td>{r.title}</td>{r.cells.map((c, i) => <td key={i} className={c.filled ? "filled" : c.v == null ? "blank" : ""}>{c.v ?? "—"}{c.filled && c.src ? <small className="st-src">{c.src}</small> : null}</td>)}</tr>
+          ))}</tbody>
+        </table></div>
+        {b.cannot.length > 0 && <ul className="st-cannot">{b.cannot.map((x) => <li key={x.col}><b>{x.n} {x.col}</b>: {x.why}</li>)}</ul>}
+      </>
+    );
     case "Drafts": return (
       <>
         <Head title={b.title} icon="send" />

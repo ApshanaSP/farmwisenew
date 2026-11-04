@@ -241,6 +241,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [insState, setIns] = useState<{ key: string; d: Insights } | null>(null);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
+  loadingRef.current = loading;
   const [reloadKey, setReloadKey] = useState(0);
   const [anim, setAnim] = useState(true);
   const [layers, setLayers] = useState<Record<string, boolean>>({ severe: true, complaint: true, other: true, added: true, stations: false });
@@ -718,6 +720,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   // Thunai, the voice pilot: it presses these same controls; a sentence's filters land in one render and one undo
   const thunaiHost: ThunaiHost = {
     c, ov, ins, inc, modal: modal?.kind ?? null, ask, theme, toggleTheme, openExport, openCustomize, openPalette: () => setPalette(true), askWith,
+    // Jarvis's next look waits for the console to finish loading what its last step asked for (at most 4 s)
+    settled: () => new Promise<void>((res) => { const t0 = Date.now(); setTimeout(function check() { if (!loadingRef.current || Date.now() - t0 > 4000) res(); else setTimeout(check, 60); }, 80); }),
     applyView: (v) => {
       if (v.zone !== undefined) { setZoneState(v.zone); setEnvSelState({ rain: "auto", aqi: "auto", lake: "auto" }); }
       if (v.dept !== undefined) setDeptState(v.dept);

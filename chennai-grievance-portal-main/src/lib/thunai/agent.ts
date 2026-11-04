@@ -27,7 +27,9 @@ export const DEADLINE_MS = 8000;
 /** The tools the model may call itself (read-only, small results); screens call the others from code. */
 export const AGENT_TOOLS = ["overview_kpis", "zones", "zone_profile", "departments", "severity", "resolution_times", "dept_backlog", "dept_followups",
   "category_trends", "taluks", "hotspots", "change_drivers", "place_breakdown", "unusual_rises", "developing_stories", "environment", "incident_series",
-  "mandi_prices", "contacts", "news_gaps", "verification_queue"] as const;
+  "mandi_prices", "contacts", "news_gaps", "verification_queue",
+  // reachable since the reach audit (reach.ts); search and incident_story write an embedding index and run a model, map_geo and category_summary are not for answering
+  "incidents", "incident_detail", "briefing", "source_health", "resolve_place", "search_records"] as const;
 const ENV_METRIC: Record<string, string> = { rain: "rainfall_24h_mm", aqi: "aqi", lakes: "lake_pct_full", temp: "temp_max_c", humidity: "humidity_pct" };
 export const STAGE_OPS = ["open", "draft", "read", "next", "prev", "stop", "filter", "sort", "view", "pin", "export", "save", "close", "explain", "map"] as const;
 export type StageOp = { op: (typeof STAGE_OPS)[number]; n: number | null; text: string | null };
@@ -36,7 +38,7 @@ const PERIODS = ["daily", "weekly", "monthly", "quarterly"] as const;
 const SEVS = ["Severe", "High", "Medium", "Low"] as const;
 
 // every property present, null where unused: strict structured-output modes accept this shape
-const Screen = z.object({
+export const Screen = z.object({
   recipe: z.enum(RECIPES),
   period: z.enum(PERIODS).nullable(),
   zones: z.array(z.number().int()).max(4).describe("zone numbers; 2-4 to compare"),
@@ -50,7 +52,7 @@ const Screen = z.object({
   name: z.string().nullable().describe("readings: a station or reservoir name"),
   what: z.enum(["severe", "hotspots", "cases"]).nullable(), sort: z.enum(["priority", "complaints", "time"]).nullable()
 });
-const Call = z.object({
+export const Call = z.object({
   tool: z.enum(AGENT_TOOLS), period: z.enum(PERIODS).nullable(), zone: z.number().int().nullable(), dept: z.string().nullable(), cat: z.string().nullable(),
   taluk: z.string().nullable(), place: z.string().nullable(), metric: z.enum(METRICS).nullable(), text: z.string().nullable()
 });
@@ -283,6 +285,11 @@ export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Rec
     case "zone_profile": return { name: c.tool, args: { scope, zone: c.zone } };
     case "place_breakdown": case "developing_stories": return { name: c.tool, args: { scope, place: clip(c.place, 60) || null } };
     case "news_gaps": return { name: c.tool, args: { scope } };
+    case "incidents": return { name: c.tool, args: { scope, q: clip(c.text, 80) || null, sort: "sev" } };
+    case "incident_detail": return { name: c.tool, args: { id: clip(c.text, 64).toUpperCase() } };
+    case "briefing": return { name: c.tool, args: { scope } };
+    case "source_health": return { name: c.tool, args: {} };
+    case "resolve_place": case "search_records": return { name: c.tool, args: { text: clip(c.text ?? c.place, 120) } };
     default: return { name: c.tool, args: { scope } };
   }
 }
@@ -406,7 +413,7 @@ export async function runThunaiAgent(input: AgentInput, d: AgentDeps): Promise<A
   return finish(plan, input, d, { t0, rounds, model, results, clock, until });
 }
 
-async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
+export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, run: { t0: number; rounds: number; model: string | null; results: { name: string; result: ToolResult }[]; clock: () => number; until: number }): Promise<AgentResult> {
   const w = d.world;
   const lang: Lang = plan.lang === "ta" ? "ta" : detectLang(input.text) === "ta" ? "ta" : "en";
   const base: AgentResult = { ...none(lang, run.t0, null, run.model), rounds: run.rounds, calls: run.results.map((r) => r.name) };

@@ -24,7 +24,8 @@ import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
 import { figuresOf, stageContext, type StageDocT } from "@/lib/thunai/stage";
 import { allowedSet, figuresIn } from "@/lib/thunai/numbergate";
-import { ackFor, ackTemplated, caseIds, filterStage, localStageCommand, narrationOf, sortStage, toCsv, type LocalCmd } from "@/lib/thunai/stagelocal";
+import { ackFor, ackTemplated, localStageCommand, narrationOf, stageDigest, stageReducer, toCsv, type LocalCmd, type StageEffect, type StageModel } from "@/lib/thunai/stagelocal";
+import { cannotLine, NO_MODEL_LINE } from "@/lib/thunai/reach";
 import type { Console } from "../CollectorApp";
 import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
@@ -94,6 +95,8 @@ export interface ThunaiHost {
   draftUrl?: (incidentId: string) => string;
   /** where Jarvis's ears post a sentence (the dev test console uses its own) */
   hearUrl?: string;
+  /** resolves when the console has finished loading what the last step asked for */
+  settled?: () => Promise<void>;
 }
 
 type Phase = "off" | "ready" | "listening" | "thinking" | "acting" | "speaking" | "asking" | "waiting" | "blocked";
@@ -769,17 +772,40 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   /** Ask the agent: a sentence (with the screen, the turns and the open Stage), or a Stage control's direct screen. */
   const callAgent = async (said: string, st: ScreenState, direct?: { recipe: StageDocT["recipe"]; slots: Record<string, unknown>; lang: Lang }, signal?: AbortSignal): Promise<AgentResult | null> => {
+    const turnId = `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+    const url = `${hostRef.current.agentUrl ?? "/api/collector/thunai/agent"}/round`;
+    const t0 = performance.now();
+    const stepId = `think-${turnId}`;
+    if (!direct) { hud.clearSteps(); hud.step({ id: stepId, label: listenLangRef.current === "ta" ? "புரிந்துகொள்கிறேன்" : "Understanding" }); }
+    const finishStep = (state: "done" | "failed") => { if (!direct) hud.step({ id: stepId, label: listenLangRef.current === "ta" ? "புரிந்துகொள்கிறேன்" : "Understanding", state }); };
+    let observations: { step: string; ok: boolean; error?: string | null }[] = [];
     try {
-      const doc = stageRef.current;
-      const j = await post(hostRef.current.agentUrl ?? "/api/collector/thunai/agent", {
-        text: said.slice(0, 300), turns: turns.current.slice(-4),
-        state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat, taluk: st.taluk, sev: st.sev, mapMode: st.mapMode,
-          panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers },
-        stage: doc ? stageContext(doc, stageFocus.current) : null,
-        direct: direct ?? null
-      }, signal);
-      return (j?.result as AgentResult) ?? null;
-    } catch { return null; }
+      // the browser drives the rounds: it applies what comes back, makes the digest, and asks again (at most 3, 8 s in all)
+      for (let round = 0; round < 3; round++) {
+        if (performance.now() - t0 > 8000) break;
+        const doc = stageRef.current;
+        const j = await post(url, {
+          turnId, round, text: said.slice(0, 300), turns: turns.current.slice(-4), lastText: lastRequest.current && lastRequest.current.text !== said ? lastRequest.current.text.slice(0, 300) : null,
+          state: { page: st.page, period: st.period, zone: st.zone, dept: st.dept, cat: st.cat, taluk: st.taluk, sev: st.sev, mapMode: st.mapMode,
+            panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers },
+          stage: doc ? stageContext(doc, stageFocus.current) : null,
+          stageDigest: doc ? stageDigest(stageModel(), stageFocus.current) : null, // eslint-disable-line @typescript-eslint/no-use-before-define
+          observations, direct: direct ?? null
+        }, signal) as { done: boolean; result: AgentResult | null; steps?: Step[]; trace?: { label: string; ms: number; ok: boolean }[]; tokens?: number; hops?: string[] };
+        // the work timeline: only what really ran, with the time it took
+        if (!direct) for (const [i, x] of (j.trace ?? []).entries()) hud.step({ id: `${turnId}-${round}-${i}`, label: x.label, state: x.ok ? "done" : "failed", ms: x.ms });
+        hud.strip({ tokens: j.tokens ?? null });
+        // steps the plan runs before it looks again; how they went goes back with the next round
+        observations = [];
+        for (const s of j.steps ?? []) {
+          try { await runStep(s, listenLangRef.current, said); await hostRef.current.settled?.(); observations.push({ step: s.a, ok: true }); }
+          catch (e) { observations.push({ step: s.a, ok: false, error: String((e as Error).message).slice(0, 150) }); }
+        }
+        if (j.done) { finishStep("done"); if (j.result?.model) hud.strip({ provider: j.result.model.replace(/#\d+$/, "") }); return j.result ?? null; }
+      }
+      finishStep("failed");
+      return null;
+    } catch { finishStep("failed"); return null; }
   };
 
   const stopNarration = () => { stopVoice(); setNarrating(false); setReading(null); };
@@ -890,74 +916,56 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     download(new Blob([toCsv(d)], { type: "text/csv;charset=utf-8" }), `${fileName(d.title)}.csv`);
   };
 
-  /** Apply one Stage command (from the local parser or the agent's stage op). */
-  const applyLocal = async (cmd: LocalCmd, lang: Lang) => {
-    const doc = stageRef.current;
-    if (!doc) return;
-    switch (cmd.op) {
-      case "stop": stopNarration(); setPhase("ready"); return;
-      case "next": readFrom(narrIndex.current + 1, lang); return;
-      case "prev": readFrom(narrIndex.current - 1, lang); return;
-      case "again": readFrom(narrIndex.current, lang); return;
-      case "read":
-        // a screen with nothing on it to read is built again from fresh data, then read
-        if (!narrationOf(doc, lang).length && doc.blocks.every((b) => b.kind === "Note")) { await directStage(doc.recipe, doc.slots, doc.title, lang); return; }
-        readFrom(0, lang); return;
-      case "close": closeStage(); return;
-      case "back": {
-        const prev = stageBack[stageBack.length - 1];
-        if (!prev) { closeStage(); return; }
-        setStageBack((b) => b.slice(0, -1)); stopNarration(); setStage(prev); stageRef.current = prev; setStageViews({}); setStageFilter(null);
-        out(prev.say[lang], lang); return;
-      }
-      case "clear": await directStage(doc.recipe, doc.slots, doc.title, lang); return;
-      case "everywhere":
-        // the same screen for the whole district, and the console's own filters cleared to match
-        hostRef.current.applyView({ zone: null, dept: null, cat: null, taluk: null });
-        await directStage(doc.recipe, { ...doc.slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, lang === "ta" ? "முழு சென்னை" : "All of Chennai", lang); return;
+  /** The Stage as one object, read through refs, so a command right after another sees what it did (not a stale render). */
+  const stageViewsRef = useRef(stageViews);
+  stageViewsRef.current = stageViews;
+  const stageFilterRef = useRef(stageFilter);
+  stageFilterRef.current = stageFilter;
+  const stageBackRef = useRef(stageBack);
+  stageBackRef.current = stageBack;
+  const stageModel = (): StageModel => ({ doc: stageRef.current, back: stageBackRef.current, views: stageViewsRef.current, filter: stageFilterRef.current, narr: narrIndex.current });
+  /** Commit a model to the screen and to the refs at once; the digest of what is now true comes back. */
+  const commit = (m: StageModel): string | null => {
+    stageRef.current = m.doc; stageBackRef.current = m.back; stageViewsRef.current = m.views as Record<string, BlockView>; stageFilterRef.current = m.filter; narrIndex.current = m.narr;
+    setStage(m.doc); setStageBack(m.back); setStageViews(m.views as Record<string, BlockView>); setStageFilter(m.filter);
+    return stageDigest(m, stageFocus.current);
+  };
+  /** Carry out what a command asked for. Speech and network live here, not in the reducer. */
+  const runEffect = async (e: StageEffect, lang: Lang, doc: StageDocT) => {
+    switch (e.fx) {
+      case "stopVoice": stopNarration(); return;
+      case "closed": setStageBusy(null); setSaveAsk(null); setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off"); return;
+      case "say": if (e.speak) out(e[lang], lang); else setReply(e[lang]); return;
+      case "readFrom": readFrom(e.i, lang); return;
+      case "rebuild":
+        if (e.clearConsole) hostRef.current.applyView({ zone: null, dept: null, cat: null, taluk: null });
+        await directStage(e.recipe, e.slots, e.label[lang], lang);
+        return;
       case "pin": {
         const p: PinnedScreen = { id: Math.random().toString(36).slice(2, 10), title: doc.title.slice(0, 80), recipe: doc.recipe, slots: doc.slots, at: new Date().toISOString() };
         await savePins([...pins.filter((x) => x.title !== p.title), p].slice(-12), { op: "pin", pin: p });
-        earcon("done"); out(lang === "ta" ? "இந்தத் திரையைப் பின் செய்தேன்." : "Pinned this screen.", lang); return;
-      }
-      case "export": {
-        if (cmd.what === "png") { const root = document.querySelector<HTMLElement>(".st-root"); if (root) await exportPng(root, doc, lang); }
-        else exportCsv();
-        earcon("done"); out(lang === "ta" ? "ஏற்றுமதி செய்தேன்." : cmd.what === "png" ? "Saved a picture of this screen." : "Exported this screen's data as CSV.", lang); return;
-      }
-      case "view": {
-        const b = doc.blocks.find((x) => (cmd.view === "map" ? x.kind === "Ranking" && x.items.some((i) => i.zone != null || i.lat != null) : ["Ranking", "Trend", "Chart", "Compare"].includes(x.kind)));
-        if (b) setStageViews((v) => ({ ...v, [b.id]: cmd.view }));
-        else if (cmd.view === "map") document.querySelector(".st-block.k-MapView")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
-        earcon("done"); setReply(lang === "ta" ? "மாற்றினேன்." : `Showing it as a ${cmd.view}.`); return;
-      }
-      case "sort": { const d2 = sortStage(doc, cmd.by); setStage(d2); stageRef.current = d2; earcon("done"); setReply(lang === "ta" ? "வரிசைப்படுத்தினேன்." : `Sorted by ${cmd.by}.`); return; }
-      case "filter": {
-        const r = filterStage(doc, cmd.text);
-        if (!r.kept) { out(lang === "ta" ? `"${cmd.text}" எதிலும் இல்லை.` : `None of these mention ${cmd.text}.`, lang); return; }
-        setStage(r.doc); stageRef.current = r.doc; setStageFilter(cmd.text);
-        out(lang === "ta" ? `${r.of}-இல் ${r.kept} மட்டும்.` : `${r.kept} of the ${r.of} shown are about ${cmd.text}.`, lang); return;
-      }
-      case "open": {
-        const id = caseIds(doc)[cmd.n - 1];
-        if (!id) { out(line("noItem", lang), lang); return; }
-        stageFocus.current = cmd.n;
-        await directStage("case", { id }, lang === "ta" ? `${cmd.n}-வது சம்பவத்தைத் திறக்கிறேன்` : `Opening case ${cmd.n}`, lang); return;
-      }
-      case "draft": {
-        const ids = caseIds(doc);
-        const pick = cmd.first ? ids.slice(0, cmd.n) : doc.recipe === "case" ? ids.slice(0, 1) : ([ids[cmd.n - 1]].filter(Boolean) as string[]);
-        await draftMany(pick, lang); return;
-      }
-      case "map": {
-        const ids = caseIds(doc);
-        const id = cmd.n ? ids[cmd.n - 1] : ids[0];
-        closeStage();
-        if (id) { hostRef.current.c.setPage("overview"); hostRef.current.c.askOnMap?.({ incidentId: id }); }
         return;
       }
+      case "export":
+        if (e.what === "png") { const root = document.querySelector<HTMLElement>(".st-root"); if (root) await exportPng(root, doc, lang); }
+        else exportCsv();
+        return;
+      case "draft": await draftMany(e.ids, lang); return;
+      case "mapItem": if (e.id) { hostRef.current.c.setPage("overview"); hostRef.current.c.askOnMap?.({ incidentId: e.id }); } return;
       case "full": document.querySelector<HTMLElement>(".st-frame")?.requestFullscreen?.().catch(() => undefined); return;
+      case "scrollMap": document.querySelector(".st-block.k-MapView")?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" }); return;
+      case "earcon": earcon("done"); return;
     }
+  };
+  /** Apply one Stage command (from the local parser or the agent's stage op): the reducer, then its effects. Returns the digest. */
+  const applyLocal = async (cmd: LocalCmd, lang: Lang): Promise<string | null> => {
+    const before = stageModel();
+    if (!before.doc) return null;
+    const r = stageReducer(before, cmd);
+    if (cmd.op === "open") stageFocus.current = cmd.n;
+    const digest = commit(r.m);
+    for (const e of r.fx) await runEffect(e, lang, before.doc);
+    return digest;
   };
 
   const applyStageOp = async (op: StageOp, lang: Lang) => {
@@ -1113,6 +1121,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (ag.stage) {
         // the screen is the answer: the dashboard's own filters stay as they were (only a command changes them)
         audit(heardAs, ag.steps, `screen ${ag.stage.recipe} (${ag.calls.length} data calls, ${ag.rounds} model rounds)`);
+        // the plan's own console steps run too ("go to trends and show me dengue"); the filters code added to match stay out
+        const own = ag.steps.filter((s) => s.a !== "view" && s.a !== "period" && s.a !== "layer" && !(s.a === "page" && s.page === "environment"));
+        if (own.length) await run(own, lang, heardAs, "ai", undefined, true);
+        if (!alive()) return;
         showStage(ag.stage, ag.say, lang, { model: ag.model, ms: ag.ms, rounds: ag.rounds, calls: ag.calls.length });
         return;
       }
@@ -1127,7 +1139,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // the agent could not answer: the built-in rules, then the analyst (the v1 planner asked the same busy provider again,
     // which doubled the wait; it is kept only for when the agent itself could not be reached)
-    const ai = ag ? null : await think(said, st);
+    const ai = ag || modeRef.current === "on" ? null : await think(said, st);
     if (!alive()) return;
     if (ai && ai.plan.kind !== "none") {
       setBrain({ by: "ai", model: ai.model, ms: ai.ms });
@@ -1146,6 +1158,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the brain was unreachable or found nothing real: the built-in rules answer, and the dock says so
     setBrain({ by: "rules", model: null, ms: 0 });
     if (rules.kind === "unknown") {
+      // no model can answer right now: said plainly, inside the 8 s, with what still works
+      if (ag?.note === "no-model") { earcon("blocked"); audit(said, [], "no model answered"); out(NO_MODEL_LINE[rules.lang], rules.lang, "ready"); return; }
+      // the checker left nothing of the plan: what Jarvis can do, not silence
+      if (ag && ag.kind === "none") { earcon("need"); audit(said, [], "cannot do"); out(cannotLine(rules.lang), rules.lang, "ready"); return; }
       // not a console command: a question about the district, answered by the analyst (Ask District IQ's engine)
       audit(said, [], "to the analyst");
       await askAnalyst(said, rules.lang); // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -1205,12 +1221,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     h.c.setPage("overview");
     h.applyView({ cat: "FLOOD_WATERLOGGING" });
     h.c.setPeriod("daily");
-    await sleep(1600);
+    await hostRef.current.settled?.();
     mark(1, "done");
     if (abortMission.current) return;
     mark(2, "running");
     h.c.askOnMap?.("hotspots of flooding and waterlogging");
-    await sleep(1200);
+    await hostRef.current.settled?.();
     mark(2, "done");
     if (abortMission.current) return;
     mark(3, "running");

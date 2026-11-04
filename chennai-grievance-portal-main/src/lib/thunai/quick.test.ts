@@ -4,6 +4,32 @@ import { offTopic, quickScreen } from "./quick";
 
 const q = (t: string) => quickScreen(t, WORLD);
 
+describe("the fast lane leaves reasoning to the planner", () => {
+  it("multi-intent, mission and advice sentences do not run as a plain screen", () => {
+    expect(q("prepare for heavy rain")).toBeNull();
+    expect(q("We expect heavy rain tonight, get everything ready")).toBeNull();
+    expect(q("show the severe cases and then open the first one")).toBeNull();
+    expect(q("compare the rain in Adyar and Perungudi")).toMatchObject({ recipe: "compare", slots: { zones: [13, 14] } });
+    expect(q("what should I do about flooding in Adyar")).toMatchObject({ recipe: "advise", slots: { zones: [13], cat: "FLOOD_WATERLOGGING" } });
+    expect(q("என்ன செய்யலாம் வெள்ளம் அடையாறு")).toMatchObject({ recipe: "advise" });
+  });
+  it("new recipes by rules: what stands out, complete this data, performance, ranking, nearby", () => {
+    expect(q("what stands out this week")).toMatchObject({ recipe: "insight" });
+    expect(q("any anomalies in Adyar")).toMatchObject({ recipe: "insight", slots: { zones: [13] } });
+    expect(q("fill in the missing data")).toMatchObject({ recipe: "complete" });
+    expect(q("complete this data")).toMatchObject({ recipe: "complete" });
+    expect(q("show the unresolved incidents, fill what you can")).toMatchObject({ recipe: "complete" });
+    expect(q("department-wise performance")).toMatchObject({ recipe: "performance", slots: { by: "dept" } });
+    expect(q("worst zones this week")).toMatchObject({ recipe: "ranking" });
+    expect(q("schools within 1 km of flooding in Adyar")).toMatchObject({ recipe: "nearby" });
+    expect(q("make me a flooding dashboard for this week")).toMatchObject({ recipe: "dashboard" });
+  });
+  it("a Tamil place with a case ending, and a spelling the lexicon does not list", () => {
+    expect(q("அடையாறில் கடுமையான சம்பவங்கள்")).toMatchObject({ recipe: "cases", slots: { zones: [13] } });
+    expect(q("அம்பத்தூரில் புகார்கள் இந்த வாரம்")).toMatchObject({ slots: { zones: [7] } });
+  });
+});
+
 describe("Jarvis's fast lane: everyday questions answered from the data with no model", () => {
   it("severe cases, in a place, in a period", () => {
     expect(q("Show me the severe cases")).toMatchObject({ recipe: "cases", slots: { sev: "Severe", period: "daily" } });

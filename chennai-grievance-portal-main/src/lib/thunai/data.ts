@@ -10,6 +10,11 @@ import { overview, asOf } from "@/lib/collector/intel";
 import { askMap, type AskResponse } from "@/lib/map/ask";
 import { runTool } from "@/lib/assistant/tools";
 import type { ToolResult } from "@/lib/assistant/types";
+import { datasetIds, getMeta, getRows } from "@/lib/studio/store";
+import { loadWardDataset, resolveWard } from "@/lib/wards";
+import { referenceLeads } from "./world";
+import type { Lookups, InRow } from "./complete";
+import type { World } from "./types";
 import type { ScopeT } from "./stage";
 
 type Row = Record<string, unknown>;
@@ -51,8 +56,61 @@ export interface Hands {
   severe: (s: ScopeT) => ReturnType<typeof consoleSevere>;
   news: (s: ScopeT) => ReturnType<typeof consoleNews>;
   map: (q: string) => Promise<AskResponse>;
+  dataset?: (name: string) => Promise<{ name: string; rows: InRow[] } | null>;
+  lookups?: (w: World) => Lookups;
+}
+
+/** ward -> zone from the GCC ward boundaries, the point's ward by polygon, the gazetteer, each category's lead department. */
+function lookups(w: World): Lookups {
+  const leads = referenceLeads();
+  const wards = new Map<number, { zone: number; name: string }>();
+  try {
+    for (const f of loadWardDataset().features ?? []) {
+      if (f.wardNo && f.zoneNumber) wards.set(f.wardNo, { zone: f.zoneNumber, name: w.zones.find((z) => z.n === f.zoneNumber)?.name ?? f.zoneName ?? `Zone ${f.zoneNumber}` });
+    }
+  } catch { /* no boundaries file: wards stay blank */ }
+  return {
+    wardZone: (ward) => wards.get(ward) ?? null,
+    pointWard: (lat, lon) => {
+      const r = resolveWard(lat, lon);
+      if (r.status !== "resolved" || r.ambiguous) return null;
+      const z = wards.get(r.wardNo);
+      return { ward: r.wardNo, zone: z?.zone ?? r.zoneNumber, zoneName: z?.name ?? r.zoneName };
+    },
+    placeZone: (place) => {
+      const q = place.trim().toLowerCase();
+      const hit = w.places.filter((p) => p.zone != null && (p.name.toLowerCase() === q || p.aliases.some((a) => a.toLowerCase() === q)));
+      const zones = new Set(hit.map((p) => p.zone));
+      if (zones.size !== 1) return null;
+      const zone = hit[0].zone as number;
+      return { zone, name: w.zones.find((z) => z.n === zone)?.name ?? `Zone ${zone}` };
+    },
+    catLead: (cat) => {
+      const c = w.cats.find((x) => x.code === cat || x.label === cat);
+      const lead = c ? leads[c.code] : null;
+      if (!lead) return null;
+      return { code: lead, name: w.depts.find((d) => d.code === lead)?.name ?? lead };
+    }
+  };
+}
+
+/** A Data Studio dataset by name, its rows read as a table "complete this data" understands (columns matched by their names). */
+async function studioDataset(name: string): Promise<{ name: string; rows: InRow[] } | null> {
+  const q = name.toLowerCase();
+  const id = datasetIds().find((x) => { const m = getMeta(x); return m && (m.name ?? "").toLowerCase().includes(q); });
+  if (!id) return null;
+  const meta = getMeta(id)!;
+  const pick = (r: Record<string, unknown>, re: RegExp) => { const k = Object.keys(r).find((x) => re.test(x)); return k ? r[k] : null; };
+  const rows = getRows(id).slice(0, 30).map((raw, i): InRow => {
+    const r = raw as unknown as Record<string, unknown>;
+    const ward = Number(pick(r, /^ward/i)), zone = Number(pick(r, /^zone(_?no|_?num.*)?$/i));
+    const lat = Number(pick(r, /^lat/i)), lon = Number(pick(r, /^(lon|lng)/i));
+    return { id: String(pick(r, /^(id|incident_id|ref)/i) ?? `row ${i + 1}`), title: String(pick(r, /^(title|name|subject|description)/i) ?? `Row ${i + 1}`), ward: ward || null, zone: zone || null, zoneName: (pick(r, /^zone_?name$/i) as string) ?? null,
+      place: (pick(r, /^(place|area|locality|location)/i) as string) ?? null, dept: (pick(r, /^(dept|department)/i) as string) ?? null, cat: (pick(r, /^(cat|category|type)/i) as string) ?? null, lat: lat || null, lon: lon || null };
+  });
+  return { name: String(meta.name ?? name), rows };
 }
 
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {
-  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, news: consoleNews, map: (q) => mapAnswer(q, user, signal) };
+  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups };
 }

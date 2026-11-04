@@ -12,7 +12,7 @@ const ZONE_NAMES = ["Thiruvottiyur", "Manali", "Madhavaram", "Tondiarpet", "Roya
   "Teynampet", "Kodambakkam", "Valasaravakkam", "Alandur", "Adyar", "Perungudi", "Sholinganallur"];
 
 interface Ref {
-  categories: { code: string; label: string }[];
+  categories: { code: string; label: string; lead?: string }[];
   taluks: { code: string; name: string; name_ta: string; in_district: boolean }[];
   places: { name: string; zone: number | null; aliases_en?: string[]; aliases_ta?: string[] }[];
 }
@@ -24,6 +24,11 @@ function reference(): Ref {
     ref = { categories: r.categories ?? [], taluks: r.taluks ?? [], places: r.places ?? [] };
   }
   return ref;
+}
+
+/** Each category's lead department, from the district reference. */
+export function referenceLeads(): Record<string, string> {
+  return Object.fromEntries(reference().categories.filter((c) => c.lead).map((c) => [c.code, c.lead as string]));
 }
 
 /** The reference part of the world (no database): categories, taluks, places. */

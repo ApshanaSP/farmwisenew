@@ -423,3 +423,18 @@
 .st-grid.bigmap > .st-block.k-MapView { grid-column: 1 / -1; }
 .st-grid.bigmap:not(.fit) .st-map { height: calc(100dvh - 300px); }
 .st-bigmap { margin-left: auto; }
+
+/* What stands out, and a table filled in by code: the source sits on the cell it filled */
+.st-findings { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.st-findings li { padding: 9px 11px; border-radius: 10px; background: var(--panel-2); border-left: 3px solid var(--line-2); display: grid; gap: 3px; }
+.st-findings li.t-bad { border-left-color: #f87171; } .st-findings li.t-warn { border-left-color: #fbbf24; } .st-findings li.t-ok { border-left-color: #34d399; }
+.st-find-h { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.st-find-v { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.st-find-m, .st-find-c { opacity: .78; font-size: 12px; line-height: 1.45; }
+.st-filled-sum { margin: 0 0 8px; font-size: 13px; }
+.st-tablewrap { overflow: auto; max-height: 420px; }
+.st-filled td, .st-filled th { padding: 6px 8px; font-size: 12.5px; vertical-align: top; text-align: left; border-bottom: 1px solid var(--line); }
+.st-filled td.filled { background: rgba(34, 211, 238, .1); }
+.st-filled td.blank { opacity: .55; }
+.st-src { display: block; font-size: 10.5px; opacity: .8; line-height: 1.35; margin-top: 2px; }
+.st-cannot { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; }
