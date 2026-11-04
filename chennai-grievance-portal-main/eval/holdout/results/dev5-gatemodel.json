@@ -1,0 +1,741 @@
+{
+ "at": "2026-11-04T08:06:54.066Z",
+ "summary": {
+  "sideN": 40,
+  "commandsN": 40,
+  "rules": {
+   "sideFalseActs": 4,
+   "commandsAccepted": 34
+  },
+  "withVeto": {
+   "sideFalseActs": 0,
+   "commandsAccepted": 34
+  },
+  "asked": 38,
+  "noAnswer": 0,
+  "tokensPerCall": 140,
+  "msP50": 333
+ },
+ "rows": [
+  {
+   "id": "a001",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a002",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a003",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a004",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a005",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a006",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a007",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a008",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a009",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a010",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a011",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a012",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a013",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a014",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a015",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a016",
+   "kind": "side",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a017",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 631
+  },
+  {
+   "id": "a018",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 205
+  },
+  {
+   "id": "a019",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 131,
+   "ms": 220
+  },
+  {
+   "id": "a020",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 856
+  },
+  {
+   "id": "a021",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 137,
+   "ms": 448
+  },
+  {
+   "id": "a022",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 130,
+   "ms": 333
+  },
+  {
+   "id": "a023",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 131,
+   "ms": 243
+  },
+  {
+   "id": "a024",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 132,
+   "ms": 251
+  },
+  {
+   "id": "a025",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 133,
+   "ms": 455
+  },
+  {
+   "id": "a026",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 131,
+   "ms": 237
+  },
+  {
+   "id": "a027",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 135,
+   "ms": 853
+  },
+  {
+   "id": "a028",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 133,
+   "ms": 175
+  },
+  {
+   "id": "a029",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 228
+  },
+  {
+   "id": "a030",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 323
+  },
+  {
+   "id": "a031",
+   "kind": "command",
+   "lang": "en",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a032",
+   "kind": "command",
+   "lang": "en",
+   "rules": true,
+   "model": true,
+   "tokens": 137,
+   "ms": 224
+  },
+  {
+   "id": "a033",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a034",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a035",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a036",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a037",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a038",
+   "kind": "side",
+   "lang": "ta",
+   "rules": true,
+   "model": false,
+   "tokens": 157,
+   "ms": 989
+  },
+  {
+   "id": "a039",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a040",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a041",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a042",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a043",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a044",
+   "kind": "side",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a045",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 146,
+   "ms": 226
+  },
+  {
+   "id": "a046",
+   "kind": "command",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a047",
+   "kind": "command",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a048",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 147,
+   "ms": 706
+  },
+  {
+   "id": "a049",
+   "kind": "command",
+   "lang": "ta",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a050",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 149,
+   "ms": 226
+  },
+  {
+   "id": "a051",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 148,
+   "ms": 1663
+  },
+  {
+   "id": "a052",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 152,
+   "ms": 354
+  },
+  {
+   "id": "a053",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 145,
+   "ms": 245
+  },
+  {
+   "id": "a054",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 161,
+   "ms": 864
+  },
+  {
+   "id": "a055",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 163,
+   "ms": 230
+  },
+  {
+   "id": "a056",
+   "kind": "command",
+   "lang": "ta",
+   "rules": true,
+   "model": true,
+   "tokens": 159,
+   "ms": 443
+  },
+  {
+   "id": "a057",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": true,
+   "model": false,
+   "tokens": 141,
+   "ms": 236
+  },
+  {
+   "id": "a058",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a059",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": true,
+   "model": false,
+   "tokens": 145,
+   "ms": 539
+  },
+  {
+   "id": "a060",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a061",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a062",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": true,
+   "model": false,
+   "tokens": 138,
+   "ms": 274
+  },
+  {
+   "id": "a063",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a064",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a065",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a066",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a067",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a068",
+   "kind": "side",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a069",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 138,
+   "ms": 716
+  },
+  {
+   "id": "a070",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 132,
+   "ms": 342
+  },
+  {
+   "id": "a071",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 134,
+   "ms": 245
+  },
+  {
+   "id": "a072",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a073",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 133,
+   "ms": 160
+  },
+  {
+   "id": "a074",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": false,
+   "model": null,
+   "tokens": 0,
+   "ms": 0
+  },
+  {
+   "id": "a075",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 132,
+   "ms": 712
+  },
+  {
+   "id": "a076",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 135,
+   "ms": 433
+  },
+  {
+   "id": "a077",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 133,
+   "ms": 248
+  },
+  {
+   "id": "a078",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 138,
+   "ms": 347
+  },
+  {
+   "id": "a079",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 138,
+   "ms": 173
+  },
+  {
+   "id": "a080",
+   "kind": "command",
+   "lang": "tanglish",
+   "rules": true,
+   "model": true,
+   "tokens": 138,
+   "ms": 420
+  }
+ ]
+}

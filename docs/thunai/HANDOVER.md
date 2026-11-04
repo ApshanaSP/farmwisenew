@@ -1,6 +1,6 @@
 # Jarvis mode: handover
 
-Branch `claude/jarvis-agentic-voice-5be9b7`, not merged to `main`, no PR. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md`, the day's record is in `docs/thunai/BUILD_LOG.md`, and pictures are in `docs/jarvis/screens/`.
+Pushed to `main` by fast-forward on the owner's request, 4 Nov 2026, from branch `claude/jarvis-agentic-voice-5be9b7`. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md`, the day's record is in `docs/thunai/BUILD_LOG.md`, and pictures are in `docs/jarvis/screens/`.
 
 **Read this first.** Nothing has been tried with a real microphone in a real room. Barge-in, the address gate and the latency figures come from injected or recorded audio. Do the five-minute check at the top of `docs/jarvis/DEMO.md` before showing it to anyone.
 
@@ -52,8 +52,8 @@ The two settings most likely to need changing after a real-room try are both in 
 
 - **No speaker identification.** Anyone in the room can command it. The gate decides whether a sentence was addressed to Jarvis, not who said it. Level B and C need the name and a yes, but anyone can say those too.
 - **Unnamed requests depend on the words.** The gate is a text rule set, so it will sometimes act on side talk or ignore a real command. See the ambient figures in `RESULTS.md`.
-- **Understanding through rules alone is below the 85 % target** in the report-only metric. The planner picks up what the rules hand it, at a cost in quota.
-- **Quota is the real ceiling.** The three Groq keys are one organisation, so they add nothing: 8K tokens a minute, and a daily cap that one evaluation run can use up. The Gemini transcriber allowed about 28 calls in a day, so it runs only as a third racer when Whisper is unsure.
+- **The rules now hand off when unsure, so Tamil nearly always takes a model turn** of about 1,900 tokens and 1.2 to 2.6 s. Understanding rose from 40 % to 73 % on the new frozen set, at 64 % more tokens a sentence.
+- **Quota is the real ceiling.** The three Groq keys are one organisation, so they add nothing: 8K tokens a minute, and a daily cap that one evaluation run can use up. There is also a limit on output tokens per minute that the ledger does not track, which `qwen` hit during the final run. The Gemini transcriber allowed about 28 calls in a day, so it runs only as a third racer when Whisper is unsure.
 - **Tamil voice needs Edge.** Elsewhere the words stay on screen.
 - **Tamil coverage on screens is partial.** Only the `cases` recipe's labels are Tamil at the source. Other recipes rely on the runtime translator, `when()` writes English months, and HUD panel titles use the screen's title as it comes.
 - **The console's runtime translator shares the same Groq organisation.** Loading the Tamil console drew 429s on its minute limits during the screen runs, which competes with Jarvis's own quota. It also makes mistakes with figures: one news headline, "47-year-old Chennai man", came out in Tamil as "47-thousand". That translator is not part of this build and the number gate does not cover it, but it shows on the same screen.
@@ -61,8 +61,8 @@ The two settings most likely to need changing after a real-room try are both in 
 - **The ledger is a local SQLite file** (`node:sqlite`, with a memory fallback). A hosted deployment with more than one process needs a different store behind the same interface.
 - **Whisper's end of utterance at 300 ms** splits "Jarvis," from what follows. The name alone now engages and listens on, but this is the first thing to retest in a room.
 - **A sentence still at Whisper when someone else talks for 200 ms is merged with their words.** The capture reaches back so that a sentence with a pause in it stays whole, and that means a second speaker's words go along with it.
-- **Understanding is the weakest part, and Tamil the weakest of that.** The full pipeline scored 42.5 % on the 40-sentence sample, with Tamil at 15.4 %. Half the misses are the rules confidently choosing a wrong screen with no model involved. That is the first thing to fix: make the quick lane hand off when it is unsure, then look at the planner's habit of clarifying or answering in chat where a screen was expected. Use a fresh held-out set when you do, because this one has now been read for the report.
-- **The address gate's rules grew late, in response to the review**, and its false-act rate did not improve (10 % against a 5 % target). Consider whether a small model is better here than more wording rules, if the quota allows it.
+- **Understanding: the second pass is in `eval/RESULTS.md`.** The full pipeline scored 44/60 (73.3 %) on the new frozen set, with Tamil at 22/30, up from 24/60 and 9/30 on its first run. Two things come first: re-run that sample once the cap resets, because the final run met four 429s, and try real Tamil speech, because every one of these sentences is typed text. Tanglish, at 9/15, is now the weakest language.
+- **The address gate is still above its target:** 4/60 false acts against 5 %, all in Tanglish. A small model as a veto on what the rules would act on took the old set from 4/40 to 0/40 and lost no commands, but its run on the frozen set was a capacity failure. It has not been built: it sends overheard sentences to a model, so that is the owner's call.
 
 ## What an Azure key would add
 
@@ -96,4 +96,4 @@ npx playwright test tests/e2e/mode.spec.ts tests/e2e/bargein.spec.ts tests/e2e/h
 
 A measuring production build for the real latency run needs `NEXT_PUBLIC_JARVIS_SPEC=1` at compile time, so a normal production build has none of the test hooks. See `playwright.config.ts` (`SPEC_PROD=1`).
 
-Live evaluation lives in `src/lib/thunai/holdout.live.ts` and spends real quota. The frozen sets are in `eval/holdout/`, with hashes in `HASHES.txt`. Do not edit them or tune to them.
+Live evaluation lives in `src/lib/thunai/holdout.live.ts` and spends real quota, so check the ledger first. The set still held out is `eval/holdout2/` (`HOLDOUT_DIR=holdout2`, `HOLDOUT_SET=live60`), with hashes in `HASHES.txt`, and a run refuses it if one has changed. Do not edit it, tune to it or open its rows: only totals have been read so far. `eval/holdout/` has been read, so use it for tuning.

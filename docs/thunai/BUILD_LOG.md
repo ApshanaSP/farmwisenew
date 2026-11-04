@@ -77,3 +77,13 @@ One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be
 ## Cuts
 
 See `docs/thunai/HANDOVER.md`.
+
+## Second pass: understanding (4 Nov 2026, afternoon)
+
+A separate session, from the branch tip, in worktree `interesting-babbage-37ab60`. Numbers are in `chennai-grievance-portal-main/eval/RESULTS.md`.
+
+- Froze `eval/holdout2/` by hash and committed it before changing anything. Gemini drafted it from a prompt that sees no code, and a second model labelled it blind. This session never printed a sentence from it and read only totals.
+- First run on unchanged code: 24/60, Tamil 9/30. Tuned only on the old sets: 33/40 on the old sample, and 30/37 on old Tamil sentences outside it that no change was made against.
+- Final run on finished code: 44/60, Tamil 22/30, with four 429s from `qwen` on output tokens per minute. No sentence went unanswered, but the figure is provisional until a clean re-run.
+- The trial of a model veto on the address gate went 4/40 to 0/40 on the old set. On the frozen set it was a capacity failure, because `qwen` had used its day. Not built: the owner decides.
+- The owner asked for this to go to `main` once complete, which overrode the brief's "do not merge".

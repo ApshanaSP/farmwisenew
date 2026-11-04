@@ -2,7 +2,119 @@
 
 Measured on 4 Nov 2026 on this Windows laptop, on branch `claude/jarvis-agentic-voice-5be9b7`. The brief is `docs/jarvis/OPUS_BUILD_PROMPT_V3.md`. Raw results are in `eval/holdout/results/`. The frozen sets were checked against `eval/holdout/HASHES.txt` before the final run, and all hashes match.
 
-**In short:** the safety gates, barge-in and mode gates pass. Understanding does not reach its targets: the rules are at 66.7 % against 85 %, and the full pipeline on the 40-sentence sample scored 42.5 %, with Tamil at 15.4 %. Side-talk false acts are 10 % against a 5 % target. The follow-up gate of 18/20 was reached only on a set I had already read; the unseen set scored 15/20 in code. **Nothing has been tried with a real microphone in a real room.**
+**In short, after the second pass below:** on a new frozen set of the same kind, the full pipeline went from 24/60 (40 %) on its first run to **44/60 (73.3 %)** on the finished code, and Tamil from 9/30 to **22/30**. It costs 64 % more tokens a sentence. Two calls in that final run met a Groq limit, so read the caveat in the section before quoting the figure. Side-talk false acts are unchanged, at 4/60 (6.7 %) against a 5 % target. **Nothing has been tried with a real microphone in a real room, and these sentences are typed text, not what Whisper hears.**
+
+**In short, as first built (this report's older sections, kept as they were):** the safety gates, barge-in and mode gates pass. Understanding does not reach its targets: the rules are at 66.7 % against 85 %, and the full pipeline on the 40-sentence sample scored 42.5 %, with Tamil at 15.4 %. Side-talk false acts are 10 % against a 5 % target. The follow-up gate of 18/20 was reached only on a set I had already read; the unseen set scored 15/20 in code.
+
+## Second pass: understanding, on a new held-out set (4 Nov 2026)
+
+The sets in `eval/holdout/` had been read while the report was written, so they could no longer measure anything. Before any change, a new set was drafted and frozen in `eval/holdout2/`: 169 sentences (Tamil 78, English 48, Tanglish 43), a 60-sentence live sample with Tamil at half, and 100 ambient lines. Gemini drafted it from a prompt that sees no code (`draft.mjs`). A second model labelled every sentence blind, and the 15 where the two disagreed were dropped, so the set leans a little easier than a raw draft. The script never prints a sentence and no row has been read: only totals were looked at, so the set is still usable. The commits show the order: the freeze, then the scorer, then the first run, then the changes. All tuning used the old sets.
+
+### The live sample: the same 60 sentences through the real pipeline
+
+| | First run, unchanged code | Final, finished code |
+|---|---|---|
+| **All 60** | 24 (40 %, 28.6-52.6) | **44 (73.3 %, 61-82.9)** |
+| English, 15 | 8 (53.3 %) | 13 (86.7 %) |
+| **Tamil, 30** | 9 (30 %, 16.7-47.9) | **22 (73.3 %, 55.6-85.8)** |
+| Tanglish, 15 | 7 (46.7 %) | 9 (60 %, 35.7-80.2) |
+| Capacity failures counted | 0 | 0 |
+
+**The caveat.** The final run's log has four refusals from Groq (429, `qwen` over its output tokens per minute), which the ledger does not track. Each time the next model answered, so no sentence went unanswered, but the rule is that a run with 429s is a capacity failure and not a clean score. The log does not tie them to sentences. Leaving out up to four sentences, the score stays between 71.4 % and 78.6 %, so the conclusion holds and the exact figure is provisional. It could not be re-run today, because that same run used up `qwen`'s day. The first run had no 429s. **The code has not changed since, so a clean re-run after the cap resets is fair, and should replace this figure.**
+
+| By lane | First run | Final |
+|---|---|---|
+| Rules (quick) | 16/28 | 13/15 |
+| Planner | 5/28 | 28/40 |
+| Refuse | 2/2 | 2/2 |
+| Frame | 1/2 | 1/2 |
+| General | | 0/1 (the model's reply held a figure or was empty, so the "cannot reason" line was said, as it should be; scored wrong) |
+
+| The planner's misses | First run | Final |
+|---|---|---|
+| Asked a clarifying question | 14 | 4 |
+| Nothing usable left by the checker | 5 | 1 |
+| A different screen | 4 | 7 |
+
+| Right, by the model that answered (these saw different sentences, so this is a pointer, not a comparison) | First run | Final |
+|---|---|---|
+| `qwen3.8-27b` | 2/7 | 19/24 |
+| `gpt-oss-20b` | 3/13 | 5/9 |
+| `gpt-oss-120b` | 0/8 | 4/7 |
+
+### What it costs
+
+| | First run | Final |
+|---|---|---|
+| Sentences that used a model, of 60 | 28 | 41 |
+| Tokens, whole run | 46,412 | 76,117 |
+| Tokens a sentence, all | 774 | 1,269 (+64 %) |
+| Tokens a sentence, Tamil | 973 | 1,679 (+73 %) |
+| Tokens a model turn | 1,658 | 1,857 |
+| Calls a model turn | 1.2 | 1.0 |
+| A model turn, p50 / p90 | 1,015 / 1,767 ms | 1,174 / 2,557 ms |
+
+This is the price of handing off, and it falls on one Groq organisation. At about 1,900 tokens a turn, the 8K-a-minute limit allows about four planner turns a minute per model, and Tamil now nearly always takes one, so most Tamil answers wait on a model rather than coming from the rules at once. **Today's evaluation used `qwen`'s whole daily allowance (199,936 of 200,000 by the ledger), so do not demo for 24 hours.**
+
+### Rules and router alone: 169 sentences, no model
+
+| | First run | Final |
+|---|---|---|
+| With hand-off | 66.9 % | **89.3 %** (83.8-93.2) |
+| English | 79.2 % | 93.8 % |
+| Tamil | 66.7 % | 91 % |
+| Tanglish | 53.5 % | 81.4 % |
+| Strict (code alone named the intent) | 33.7 % | 27.8 %, down on purpose |
+| Wrong, with no model involved | 43 | 10 |
+| The fast lane, when it answered | 49 of 89 right | 38 of 43 right |
+| Handed to the planner | 69 | 112 |
+
+This passes the 85 % and 80 % targets on paper, **but do not lean on it.** "With hand-off" only says the sentence reached a prompt that could serve it, not that the planner then got it right, and part of the rise is by definition, because the data and Tamil prompts now hold the screens. The live table is the real measure. The useful figure here is the fast lane: when it answers now, it is usually right.
+
+### Side conversation: 60 side sentences, 40 commands, no name
+
+| | First run | Final |
+|---|---|---|
+| Side talk that acted | 4/60 (6.7 %) | 4/60 (6.7 %), target 5 %. **Not met** |
+| Of those, Level B or C | 0 | 0 |
+| Commands accepted | 37/40 (92.5 %) | 36/40 (90 %) |
+
+All four false acts are in Tanglish. The gate's wording rules were not changed.
+
+### What changed
+
+- **Scorer.** A general answer given as chat now counts as right; the lane's "cannot reason" line does not. A run on the new set refuses to start if a hash has changed.
+- **Rules lane (`quick.ts`).** It answers only when it can account for the sentence's words and only one kind of question is being asked. A topic alone no longer becomes a list of its cases, and "closure rates" no longer becomes market prices.
+- **Planner (`round.ts`).** `do` is the default, and clarify and chat are narrow. A general question has its own kind and label. If the model only asks back or chats about a sentence the rules can read, the rules' reading is shown (once in the final run). A model's refusal is never overruled.
+- **Tamil.** Tamil and Tanglish get screens and console steps in one call, with their own examples. Loan words in Tamil letters are glossed, and localities and reservoirs are hinted.
+- **Ladder (`llm.ts`).** `qwen` comes first while the minute has room.
+- **False refusal (`privacy.ts`).** "Who wrote the book Mahabharata?" now goes to the general lane; "who wrote this complaint" is still refused. The 50 and 10 adversarial tests are green.
+
+### Should a small model replace some address-gate rules?
+
+The owner asked why Jarvis is not all AI. **Recommendation: not replace, but add one as a veto, and it has not been built, because it sends overheard sentences to a model and that is the owner's call.** The rules still decide first, and the model is asked only about a sentence they would already act on with no name, so it can stop an act and never add one. Safety and number rules stay in code either way.
+
+| | Rules alone | With the veto |
+|---|---|---|
+| Old ambient set, which has been read: side talk that acted | 4/40 | **0/40** |
+| Old ambient set: commands accepted | 34/40 | 34/40 |
+| Frozen set | 4/60, 36/40 | **Capacity failure, no result** |
+
+On the old set it took 38 calls, 140 tokens a call and 333 ms at p50, on the first prompt tried. On the frozen set `qwen` had no budget left, 31 of 40 calls got no answer, and that run (`final-gatemodel.json`) says nothing about accuracy. It does show that the other two models did not answer in time with so small an output limit, so the veto depends on `qwen`. **It needs a clean run on the frozen set before anyone relies on it.**
+
+The arithmetic against an all-AI gate: at the worst-case 334 ambient sentences an hour, asking about every one costs about 47K tokens an hour, which is a model's whole day in about four hours of nonstop talk. Asked only about what the rules would act on, it should be a small fraction of that.
+
+### Checks on the finished code
+
+Vitest 1,917 passed, 13 skipped, including the 50 and 10 adversarial privacy tests; `tsc` clean; `next build` passes; Playwright voice specs 30 of 30 (`mode`, `bargein`, `hold`, `vad`, `vadfake`, `e2e-latency`, on injected audio). The HUD specs were not re-run, since nothing they cover changed. Raw results: `eval/holdout2/results/firstrun-*` and `final-*`. The tuning runs on the old sets are `eval/holdout/results/dev3-planner-final40.json` (33/40, tuned on), `dev6-planner-tamilrest.json` (30/37, Tamil no change was made against) and `dev5-gatemodel.json` (the veto).
+
+### What this does not show
+
+- **Real speech.** These are typed sentences. Tamil transcription has a WER near 0.5 (see below), so a Tamil speaker in a room will do worse than 73 %, by an amount not measured. Sentences in the frozen set are also a model's idea of how a Collector talks, not recordings of one.
+- **The right place.** The scorer checks the kind of screen, not its slots, so the right screen for the wrong zone counts as right.
+- **Comparing localities.** Most localities have no zone in the district reference, and compare needs zones, so "Mylapore and T Nagar" cannot be served. Seen on the old set; a gap in the data, not in understanding.
+- **Tanglish** is now the weakest language, at 9/15, on few sentences.
+- The changes were checked by tests and these runs, not by an independent review.
 
 ## Acceptance against section 12 of the brief
 
