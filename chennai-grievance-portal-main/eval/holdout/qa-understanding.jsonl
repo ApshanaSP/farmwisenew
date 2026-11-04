@@ -1,0 +1,180 @@
+{"id":"q001","text":"uh can you pull up the brief on the madras corporation","lang":"en","intent":"brief","entity":"GCC","places":[],"family":"agency"}
+{"id":"q002","text":"metro water, status update please","lang":"en","intent":"brief","entity":"CMWSSB","places":[],"family":"agency"}
+{"id":"q003","text":"whats the latest from TNEB, the electricity board people","lang":"en","intent":"brief","entity":"TANGEDCO","places":[],"family":"agency"}
+{"id":"q004","text":"give me the tanjedco update","lang":"en","intent":"brief","entity":"TANGEDCO","places":[],"family":"agency"}
+{"id":"q005","text":"pollution board brief, the tamil nadu one","lang":"en","intent":"brief","entity":"TNPCB","places":[],"family":"agency"}
+{"id":"q006","text":"PWD water resources... status for today","lang":"en","intent":"brief","entity":"PWD-WRD","places":[],"family":"agency"}
+{"id":"q007","text":"the govt hospitals, GH and all that, give me a summary report","lang":"en","intent":"brief","entity":"HLT-DMS","places":[],"family":"agency"}
+{"id":"q008","text":"storm water drain department, how are things, give me their report","lang":"en","intent":"brief","entity":"GCC-SWD","places":[],"family":"agency"}
+{"id":"q009","text":"update on the conservancy, you know, the garbage people","lang":"en","intent":"brief","entity":"GCC-SWM","places":[],"family":"agency"}
+{"id":"q010","text":"report on zone thirteen","lang":"en","intent":"brief","entity":"ZONE-13","places":[],"family":"agency"}
+{"id":"q011","text":"Teynampet zone status","lang":"en","intent":"brief","entity":"ZONE-9","places":["Teynampet"],"family":"agency"}
+{"id":"q012","text":"brief me on the commissioner of police, the chennai one, not tambaram","lang":"en","intent":"brief","entity":"POL-GCP","places":["Tambaram"],"family":"agency"}
+{"id":"q013","text":"chennai metropolitan water supply and sewerage board brief","lang":"en","intent":"brief","entity":"CMWSSB","places":[],"family":"agency"}
+{"id":"q014","text":"tnpcb uh sorry the pollution control board, what does their report look like","lang":"en","intent":"brief","entity":"TNPCB","places":[],"family":"agency"}
+{"id":"q015","text":"give me the flood monitoring cell update","lang":"en","intent":"brief","entity":"WRD-CFM","places":[],"family":"agency"}
+{"id":"q016","text":"disaster management, the district one, status","lang":"en","intent":"brief","entity":"DIST-DM","places":[],"family":"agency"}
+{"id":"q017","text":"chennai cops, the status report, the main one","lang":"en","intent":"brief","entity":"POL-GCP","places":[],"family":"agency"}
+{"id":"q018","text":"corporation of chennai street lights report","lang":"en","intent":"brief","entity":"GCC-ELE","places":[],"family":"agency"}
+{"id":"q019","text":"Anna nagar zone brief","lang":"en","intent":"brief","entity":"ZONE-8","places":["Anna Nagar"],"family":"agency"}
+{"id":"q020","text":"the weather department, IMD, brief please","lang":"en","intent":"brief","entity":"IMD","places":[],"family":"agency"}
+{"id":"q021","text":"PWD buildings wing, any update from them","lang":"en","intent":"brief","entity":"PWD-BLD","places":[],"family":"agency"}
+{"id":"q022","text":"egmore commissionerate... I mean the city police headquarters, give me their summary","lang":"en","intent":"brief","entity":"POL-GCP","places":[],"family":"agency"}
+{"id":"q023","text":"மெட்ரோ வாட்டர் பற்றி ஒரு அறிக்கை கொடுங்க","lang":"ta","intent":"brief","entity":"CMWSSB","places":[],"family":"agency"}
+{"id":"q024","text":"மின்சார வாரியம் நிலவரம் என்ன","lang":"ta","intent":"brief","entity":"TANGEDCO","places":[],"family":"agency"}
+{"id":"q025","text":"சென்னை மாநகராட்சி பத்தி அறிக்கை சொல்லுங்க","lang":"ta","intent":"brief","entity":"GCC","places":[],"family":"agency"}
+{"id":"q026","text":"பொதுப்பணித்துறை நீர்வளம் பற்றி சுருக்கமா சொல்லு","lang":"ta","intent":"brief","entity":"PWD-WRD","places":[],"family":"agency"}
+{"id":"q027","text":"அரசு மருத்துவமனைகள் நிலைமை அறிக்கை வேணும்","lang":"ta","intent":"brief","entity":"HLT-DMS","places":[],"family":"agency"}
+{"id":"q028","text":"மாசு கட்டுப்பாட்டு வாரியம் அறிக்கை","lang":"ta","intent":"brief","entity":"TNPCB","places":[],"family":"agency"}
+{"id":"q029","text":"அடையாறு மண்டலம் பற்றி ஒரு சுருக்கம் தாங்க","lang":"ta","intent":"brief","entity":"ZONE-13","places":["Adyar"],"family":"agency"}
+{"id":"q030","text":"மாநகர காவல் துறை நிலவரம் சொல்லுங்க","lang":"ta","intent":"brief","entity":"POL-GCP","places":[],"family":"agency"}
+{"id":"q031","text":"குப்பை அள்ளும் துறை பற்றி அப்டேட் கொடு","lang":"ta","intent":"brief","entity":"GCC-SWM","places":[],"family":"agency"}
+{"id":"q032","text":"மழைநீர் வடிகால் துறை ரிப்போர்ட்","lang":"ta","intent":"brief","entity":"GCC-SWD","places":[],"family":"agency"}
+{"id":"q033","text":"ராயபுரம் மண்டல அறிக்கை","lang":"ta","intent":"brief","entity":"ZONE-5","places":["Royapuram"],"family":"agency"}
+{"id":"q034","text":"metro water report konjam kudu","lang":"tanglish","intent":"brief","entity":"CMWSSB","places":[],"family":"agency"}
+{"id":"q035","text":"EB office status enna, tangedco","lang":"tanglish","intent":"brief","entity":"TANGEDCO","places":[],"family":"agency"}
+{"id":"q036","text":"corporation la enna nadakkudhu, oru brief sollu","lang":"tanglish","intent":"brief","entity":"GCC","places":[],"family":"agency"}
+{"id":"q037","text":"PWD water resources report paakalaam","lang":"tanglish","intent":"brief","entity":"PWD-WRD","places":[],"family":"agency"}
+{"id":"q038","text":"commissioner office, chennai police, update enna sir","lang":"tanglish","intent":"brief","entity":"POL-GCP","places":[],"family":"agency"}
+{"id":"q039","text":"pollution board report sollunga","lang":"tanglish","intent":"brief","entity":"TNPCB","places":[],"family":"agency"}
+{"id":"q040","text":"GH hospitals oda status kudu","lang":"tanglish","intent":"brief","entity":"HLT-DMS","places":[],"family":"agency"}
+{"id":"q041","text":"Sholinganallur zone brief venum","lang":"tanglish","intent":"brief","entity":"ZONE-15","places":["Sholinganallur"],"family":"agency"}
+{"id":"q042","text":"uhh andha storm drain department, avanga report","lang":"tanglish","intent":"brief","entity":"GCC-SWD","places":[],"family":"agency"}
+{"id":"q043","text":"street light department update kudunga","lang":"tanglish","intent":"brief","entity":"GCC-ELE","places":[],"family":"agency"}
+{"id":"q044","text":"disaster management cell report enna solludhu","lang":"tanglish","intent":"brief","entity":"DIST-DM","places":[],"family":"agency"}
+{"id":"q045","text":"what is happening with that waterlogging complaint near Velachery, say it simply","lang":"en","intent":"explain","entity":"GCC-SWD","places":["Velachery"],"family":"explain"}
+{"id":"q046","text":"explain the second one in plain words","lang":"en","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q047","text":"tell me in simple terms what the sewage overflow issue at Perungudi is about","lang":"en","intent":"explain","entity":"CMWSSB","places":["Perungudi"],"family":"explain"}
+{"id":"q048","text":"what exactly is the problem with the power cuts in Ambattur, explain like I am not an engineer","lang":"en","intent":"explain","entity":"TANGEDCO","places":["Ambattur"],"family":"explain"}
+{"id":"q049","text":"break down the garbage dump fire at Kodungaiyur for me","lang":"en","intent":"explain","entity":"GCC-SWM","places":["Kodungaiyur"],"family":"explain"}
+{"id":"q050","text":"explain that pothole complaint on Anna Salai","lang":"en","intent":"explain","entity":"GCC-ENG","places":["Anna Salai"],"family":"explain"}
+{"id":"q051","text":"whats this about the streetlights being off in Tondiarpet, plain english please","lang":"en","intent":"explain","entity":"GCC-ELE","places":["Tondiarpet"],"family":"explain"}
+{"id":"q052","text":"the mosquito complaint in Royapuram, what is it actually about","lang":"en","intent":"explain","entity":"GCC-HLT","places":["Royapuram"],"family":"explain"}
+{"id":"q053","text":"explain the top one","lang":"en","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q054","text":"can you explain the Ennore oil spill issue in simple words","lang":"en","intent":"explain","entity":"TNPCB","places":["Ennore"],"family":"explain"}
+{"id":"q055","text":"what does the drinking water contamination report in Madhavaram mean","lang":"en","intent":"explain","entity":"CMWSSB","places":["Madhavaram"],"family":"explain"}
+{"id":"q056","text":"walk me through the tree fall incident in Adyar","lang":"en","intent":"explain","entity":"GCC-PRK","places":["Adyar"],"family":"explain"}
+{"id":"q057","text":"வேளச்சேரி வெள்ள புகார் பற்றி எளிமையா விளக்குங்க","lang":"ta","intent":"explain","entity":"GCC-SWD","places":["Velachery"],"family":"explain"}
+{"id":"q058","text":"இரண்டாவது புகாரை சுலபமா சொல்லுங்க","lang":"ta","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q059","text":"கொடுங்கையூர் குப்பை கிடங்கு பிரச்சனை என்ன, புரியும்படி சொல்லுங்க","lang":"ta","intent":"explain","entity":"GCC-SWM","places":["Kodungaiyur"],"family":"explain"}
+{"id":"q060","text":"அம்பத்தூர் மின்வெட்டு புகார் என்னன்னு விளக்கமா சொல்லுங்க","lang":"ta","intent":"explain","entity":"TANGEDCO","places":["Ambattur"],"family":"explain"}
+{"id":"q061","text":"எண்ணூர் எண்ணெய் கசிவு விஷயத்தை எளிய தமிழில் சொல்லுங்க","lang":"ta","intent":"explain","entity":"TNPCB","places":["Ennore"],"family":"explain"}
+{"id":"q062","text":"முதல் சம்பவத்தை கொஞ்சம் விளக்குங்க","lang":"ta","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q063","text":"பெருங்குடியில கழிவுநீர் தேங்குற பிரச்சனை என்னன்னு சொல்லுங்க","lang":"ta","intent":"explain","entity":"CMWSSB","places":["Perungudi"],"family":"explain"}
+{"id":"q064","text":"ராயபுரம் கொசு புகார் பற்றி எளிமையா விளக்கம் வேணும்","lang":"ta","intent":"explain","entity":"GCC-HLT","places":["Royapuram"],"family":"explain"}
+{"id":"q065","text":"தி.நகர் சாலை பள்ளம் புகாரை புரியும்படி சொல்லு","lang":"ta","intent":"explain","entity":"GCC-ENG","places":["T. Nagar"],"family":"explain"}
+{"id":"q066","text":"மாதவரம் குடிநீர் மாசு அறிக்கை என்ன சொல்லுது, எளிமையா சொல்லுங்க","lang":"ta","intent":"explain","entity":"CMWSSB","places":["Madhavaram"],"family":"explain"}
+{"id":"q067","text":"Velachery flooding complaint pathi simple ah explain pannu","lang":"tanglish","intent":"explain","entity":"GCC-SWD","places":["Velachery"],"family":"explain"}
+{"id":"q068","text":"rendavadhu complaint ah konjam easy ah sollu","lang":"tanglish","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q069","text":"Ennore oil leak matter enna, simple ah sollunga","lang":"tanglish","intent":"explain","entity":"TNPCB","places":["Ennore"],"family":"explain"}
+{"id":"q070","text":"Tondiarpet la street light illa nu complaint, adhu enna problem","lang":"tanglish","intent":"explain","entity":"GCC-ELE","places":["Tondiarpet"],"family":"explain"}
+{"id":"q071","text":"andha last incident ah plain ah explain pannunga","lang":"tanglish","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q072","text":"Kodungaiyur dump yard fire pathi puriyura maadhiri sollu","lang":"tanglish","intent":"explain","entity":"GCC-SWM","places":["Kodungaiyur"],"family":"explain"}
+{"id":"q073","text":"Perungudi sewage overflow issue enna nu explain pannu","lang":"tanglish","intent":"explain","entity":"CMWSSB","places":["Perungudi"],"family":"explain"}
+{"id":"q074","text":"Ambattur power cut complaint ah simple ah sollu","lang":"tanglish","intent":"explain","entity":"TANGEDCO","places":["Ambattur"],"family":"explain"}
+{"id":"q075","text":"Adyar la maram vizhundha incident pathi explain pannunga","lang":"tanglish","intent":"explain","entity":"GCC-PRK","places":["Adyar"],"family":"explain"}
+{"id":"q076","text":"Mylapore la kalangalaana thanni varudhu nu complaint, adhu enna","lang":"tanglish","intent":"explain","entity":"CMWSSB","places":["Mylapore"],"family":"explain"}
+{"id":"q077","text":"first one ah konjam simple ah purinja maadhiri sollu","lang":"tanglish","intent":"explain","entity":null,"places":[],"family":"explain"}
+{"id":"q078","text":"give me the coimbatore commissionerate update","lang":"en","intent":"unknown","entity":null,"places":["Coimbatore"],"family":"unknown"}
+{"id":"q079","text":"whats the status of the Tambaram city police","lang":"en","intent":"unknown","entity":null,"places":["Tambaram"],"family":"unknown"}
+{"id":"q080","text":"Avadi commissionerate brief","lang":"en","intent":"unknown","entity":null,"places":["Avadi"],"family":"unknown"}
+{"id":"q081","text":"fire and rescue services report for chennai","lang":"en","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q082","text":"Mumbai municipal corporation update","lang":"en","intent":"unknown","entity":null,"places":["Mumbai"],"family":"unknown"}
+{"id":"q083","text":"Bangalore water board status","lang":"en","intent":"unknown","entity":null,"places":["Bangalore"],"family":"unknown"}
+{"id":"q084","text":"chennai traffic police department brief","lang":"en","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q085","text":"Chennai Smart City Limited report","lang":"en","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q086","text":"metro rail, CMRL, how are they doing, give me a brief","lang":"en","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q087","text":"Madurai corporation report","lang":"en","intent":"unknown","entity":null,"places":["Madurai"],"family":"unknown"}
+{"id":"q088","text":"greater coimbatore corporation brief","lang":"en","intent":"unknown","entity":null,"places":["Coimbatore"],"family":"unknown"}
+{"id":"q089","text":"chennai port trust status update","lang":"en","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q090","text":"தாம்பரம் மாநகர காவல் அறிக்கை கொடுங்க","lang":"ta","intent":"unknown","entity":null,"places":["Tambaram"],"family":"unknown"}
+{"id":"q091","text":"ஆவடி போலீஸ் நிலவரம் என்ன","lang":"ta","intent":"unknown","entity":null,"places":["Avadi"],"family":"unknown"}
+{"id":"q092","text":"தீயணைப்பு துறை அறிக்கை வேணும்","lang":"ta","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q093","text":"கோயம்புத்தூர் மாநகராட்சி பற்றி சொல்லுங்க","lang":"ta","intent":"unknown","entity":null,"places":["Coimbatore"],"family":"unknown"}
+{"id":"q094","text":"மதுரை காவல் துறை அப்டேட்","lang":"ta","intent":"unknown","entity":null,"places":["Madurai"],"family":"unknown"}
+{"id":"q095","text":"சென்னை மெட்ரோ ரயில் நிலவரம் சொல்லுங்க","lang":"ta","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q096","text":"திருச்சி மாநகராட்சி அறிக்கை","lang":"ta","intent":"unknown","entity":null,"places":["Tiruchirappalli"],"family":"unknown"}
+{"id":"q097","text":"Tambaram commissionerate report kudu","lang":"tanglish","intent":"unknown","entity":null,"places":["Tambaram"],"family":"unknown"}
+{"id":"q098","text":"Avadi police station status enna","lang":"tanglish","intent":"unknown","entity":null,"places":["Avadi"],"family":"unknown"}
+{"id":"q099","text":"fire service department update sollu","lang":"tanglish","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q100","text":"Bengaluru BBMP report paakalaam","lang":"tanglish","intent":"unknown","entity":null,"places":["Bengaluru"],"family":"unknown"}
+{"id":"q101","text":"Hyderabad police brief venum","lang":"tanglish","intent":"unknown","entity":null,"places":["Hyderabad"],"family":"unknown"}
+{"id":"q102","text":"metro water tankers association report kudu","lang":"tanglish","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q103","text":"MTC bus depot status enna","lang":"tanglish","intent":"unknown","entity":null,"places":[],"family":"unknown"}
+{"id":"q104","text":"and in Adyar?","lang":"en","intent":"followup","entity":null,"places":["Adyar"],"after":"how many drainage complaints are open in Velachery","expect":{"intent":"cases","entity":"GCC-SWD","place":"Adyar"},"family":"followup"}
+{"id":"q105","text":"no, I meant Thoraipakkam","lang":"en","intent":"followup","entity":null,"places":["Thoraipakkam"],"after":"show me the waterlogging complaints in Taramani","expect":{"intent":"cases","entity":"GCC-SWD","place":"Thoraipakkam"},"family":"followup"}
+{"id":"q106","text":"what about last month?","lang":"en","intent":"followup","entity":null,"places":[],"after":"how did metrowater do this month","expect":{"intent":"performance","entity":"CMWSSB","place":null},"family":"followup"}
+{"id":"q107","text":"why?","lang":"en","intent":"followup","entity":null,"places":[],"after":"which zone has the most garbage complaints","expect":{"intent":"why","entity":"GCC-SWM","place":null},"family":"followup"}
+{"id":"q108","text":"same for Anna Nagar","lang":"en","intent":"followup","entity":null,"places":["Anna Nagar"],"after":"give me the brief on Teynampet zone","expect":{"intent":"brief","entity":"ZONE-8","place":"Anna Nagar"},"family":"followup"}
+{"id":"q109","text":"and the police?","lang":"en","intent":"followup","entity":null,"places":[],"after":"brief me on metrowater","expect":{"intent":"brief","entity":"POL-GCP","place":null},"family":"followup"}
+{"id":"q110","text":"Puzhal also","lang":"en","intent":"followup","entity":null,"places":["Puzhal"],"after":"whats the level in Chembarambakkam","expect":{"intent":"readings","entity":null,"place":"Puzhal"},"family":"followup"}
+{"id":"q111","text":"sorry, tangedco not metrowater","lang":"en","intent":"followup","entity":null,"places":[],"after":"metrowater brief","expect":{"intent":"brief","entity":"TANGEDCO","place":null},"family":"followup"}
+{"id":"q112","text":"compare it with Ambattur","lang":"en","intent":"followup","entity":null,"places":["Ambattur"],"after":"street light complaints in Anna Nagar","expect":{"intent":"compare","entity":"GCC-ELE","place":"Ambattur"},"family":"followup"}
+{"id":"q113","text":"no, I meant the Tambaram police","lang":"en","intent":"followup","entity":null,"places":["Tambaram"],"after":"brief me on the chennai police","expect":{"intent":"unknown","entity":null,"place":"Tambaram"},"family":"followup"}
+{"id":"q114","text":"அடையாறுல?","lang":"ta","intent":"followup","entity":null,"places":["Adyar"],"after":"வேளச்சேரியில் எத்தனை வடிகால் புகார்கள் இருக்கு","expect":{"intent":"cases","entity":"GCC-SWD","place":"Adyar"},"family":"followup"}
+{"id":"q115","text":"போன மாசம் எப்படி?","lang":"ta","intent":"followup","entity":null,"places":[],"after":"இந்த மாசம் மின்வாரியம் எப்படி செயல்பட்டது","expect":{"intent":"performance","entity":"TANGEDCO","place":null},"family":"followup"}
+{"id":"q116","text":"ஏன்?","lang":"ta","intent":"followup","entity":null,"places":[],"after":"எந்த மண்டலத்தில் அதிக குப்பை புகார்கள்","expect":{"intent":"why","entity":"GCC-SWM","place":null},"family":"followup"}
+{"id":"q117","text":"இல்ல, நான் சொன்னது போலீஸ்","lang":"ta","intent":"followup","entity":null,"places":[],"after":"மெட்ரோ வாட்டர் அறிக்கை","expect":{"intent":"brief","entity":"POL-GCP","place":null},"family":"followup"}
+{"id":"q118","text":"பூண்டி?","lang":"ta","intent":"followup","entity":null,"places":["Poondi"],"after":"செம்பரம்பாக்கம் ஏரி நீர்மட்டம் என்ன","expect":{"intent":"readings","entity":null,"place":"Poondi"},"family":"followup"}
+{"id":"q119","text":"Adyar la?","lang":"tanglish","intent":"followup","entity":null,"places":["Adyar"],"after":"Velachery la evlo drainage complaints irukku","expect":{"intent":"cases","entity":"GCC-SWD","place":"Adyar"},"family":"followup"}
+{"id":"q120","text":"last month enna?","lang":"tanglish","intent":"followup","entity":null,"places":[],"after":"metro water performance indha maasam epdi","expect":{"intent":"performance","entity":"CMWSSB","place":null},"family":"followup"}
+{"id":"q121","text":"adhu yen?","lang":"tanglish","intent":"followup","entity":null,"places":[],"after":"endha zone la dengue complaints jaasthi","expect":{"intent":"why","entity":"GCC-HLT","place":null},"family":"followup"}
+{"id":"q122","text":"illa, Thoraipakkam sonnen","lang":"tanglish","intent":"followup","entity":null,"places":["Thoraipakkam"],"after":"Taramani la flooding cases kaattu","expect":{"intent":"cases","entity":"GCC-SWD","place":"Thoraipakkam"},"family":"followup"}
+{"id":"q123","text":"Kodambakkam ku um adhe maadhiri","lang":"tanglish","intent":"followup","entity":null,"places":["Kodambakkam"],"after":"Valasaravakkam zone brief kudu","expect":{"intent":"brief","entity":"ZONE-10","place":"Kodambakkam"},"family":"followup"}
+{"id":"q124","text":"Poondi um sollu","lang":"tanglish","intent":"followup","entity":null,"places":["Poondi"],"after":"Puzhal lake level enna","expect":{"intent":"readings","entity":null,"place":"Poondi"},"family":"followup"}
+{"id":"q125","text":"show me open garbage complaints in Royapuram","lang":"en","intent":"cases","entity":"GCC-SWM","places":["Royapuram"],"family":"other"}
+{"id":"q126","text":"திருவொற்றியூர்ல தெருவிளக்கு புகார்கள் காட்டுங்க","lang":"ta","intent":"cases","entity":"GCC-ELE","places":["Thiruvottiyur"],"family":"other"}
+{"id":"q127","text":"Valasaravakkam la road damage complaints list pannu","lang":"tanglish","intent":"cases","entity":"GCC-ENG","places":["Valasaravakkam"],"family":"other"}
+{"id":"q128","text":"any news today about the rains in chennai","lang":"en","intent":"news","entity":null,"places":[],"family":"other"}
+{"id":"q129","text":"இன்னைக்கு சென்னை செய்திகள் என்ன","lang":"ta","intent":"news","entity":null,"places":[],"family":"other"}
+{"id":"q130","text":"metro water pathi latest news enna","lang":"tanglish","intent":"news","entity":"CMWSSB","places":[],"family":"other"}
+{"id":"q131","text":"how full is Chembarambakkam right now","lang":"en","intent":"readings","entity":null,"places":["Chembarambakkam"],"family":"other"}
+{"id":"q132","text":"புழல் ஏரி நீர்மட்டம் எவ்வளவு","lang":"ta","intent":"readings","entity":null,"places":["Puzhal"],"family":"other"}
+{"id":"q133","text":"Manali la air quality eppadi irukku","lang":"tanglish","intent":"readings","entity":null,"places":["Manali"],"family":"other"}
+{"id":"q134","text":"how much rain did Nungambakkam get yesterday","lang":"en","intent":"readings","entity":null,"places":["Nungambakkam"],"family":"other"}
+{"id":"q135","text":"which zone has the most pending complaints","lang":"en","intent":"ranking","entity":null,"places":[],"family":"other"}
+{"id":"q136","text":"எந்த துறையில அதிக நிலுவை புகார்கள் இருக்கு","lang":"ta","intent":"ranking","entity":null,"places":[],"family":"other"}
+{"id":"q137","text":"drainage ku top 5 worst zones sollu","lang":"tanglish","intent":"ranking","entity":"GCC-SWD","places":[],"family":"other"}
+{"id":"q138","text":"compare Adyar and Perungudi on water complaints","lang":"en","intent":"compare","entity":"CMWSSB","places":["Adyar","Perungudi"],"family":"other"}
+{"id":"q139","text":"Anna Nagar vs Ambattur, garbage complaints compare pannu","lang":"tanglish","intent":"compare","entity":"GCC-SWM","places":["Anna Nagar","Ambattur"],"family":"other"}
+{"id":"q140","text":"தேனாம்பேட்டை மற்றும் கோடம்பாக்கம் மண்டலங்களை ஒப்பிடுங்க","lang":"ta","intent":"compare","entity":null,"places":["Teynampet","Kodambakkam"],"family":"other"}
+{"id":"q141","text":"are sewage complaints going up over the last three months","lang":"en","intent":"trend","entity":"CMWSSB","places":[],"family":"other"}
+{"id":"q142","text":"கடந்த ஆறு மாதத்தில் மின் புகார்கள் போக்கு எப்படி","lang":"ta","intent":"trend","entity":"TANGEDCO","places":[],"family":"other"}
+{"id":"q143","text":"mosquito complaints trend paakalaam last few weeks","lang":"tanglish","intent":"trend","entity":"GCC-HLT","places":[],"family":"other"}
+{"id":"q144","text":"why are there so many waterlogging complaints in Velachery this week","lang":"en","intent":"why","entity":"GCC-SWD","places":["Velachery"],"family":"other"}
+{"id":"q145","text":"மணலியில் காற்று மாசு ஏன் அதிகமா இருக்கு","lang":"ta","intent":"why","entity":"TNPCB","places":["Manali"],"family":"other"}
+{"id":"q146","text":"Ambattur la yen ivlo power cut complaints","lang":"tanglish","intent":"why","entity":"TANGEDCO","places":["Ambattur"],"family":"other"}
+{"id":"q147","text":"how is the solid waste department doing on resolution times","lang":"en","intent":"performance","entity":"GCC-SWM","places":[],"family":"other"}
+{"id":"q148","text":"மெட்ரோ வாட்டர் துறை எவ்வளவு சீக்கிரம் புகார்களை தீர்க்குது","lang":"ta","intent":"performance","entity":"CMWSSB","places":[],"family":"other"}
+{"id":"q149","text":"TANGEDCO performance epdi irukku indha month","lang":"tanglish","intent":"performance","entity":"TANGEDCO","places":[],"family":"other"}
+{"id":"q150","text":"show me the overall dashboard numbers for today","lang":"en","intent":"dashboard","entity":null,"places":[],"family":"other"}
+{"id":"q151","text":"dashboard la ippo enna irukku, summary kaattu","lang":"tanglish","intent":"dashboard","entity":null,"places":[],"family":"other"}
+{"id":"q152","text":"put the open drainage complaints on the map","lang":"en","intent":"map","entity":"GCC-SWD","places":[],"family":"other"}
+{"id":"q153","text":"வரைபடத்தில் வெள்ள பாதிப்பு இடங்களை காட்டு","lang":"ta","intent":"map","entity":null,"places":[],"family":"other"}
+{"id":"q154","text":"what complaints are there near Marina beach","lang":"en","intent":"nearby","entity":null,"places":["Marina Beach"],"family":"other"}
+{"id":"q155","text":"T Nagar pakkathula enna complaints irukku","lang":"tanglish","intent":"nearby","entity":null,"places":["T. Nagar"],"family":"other"}
+{"id":"q156","text":"whats the price of tomatoes at Koyambedu today","lang":"en","intent":"prices","entity":null,"places":["Koyambedu"],"family":"other"}
+{"id":"q157","text":"கோயம்பேடு மார்க்கெட்டில் வெங்காயம் விலை என்ன","lang":"ta","intent":"prices","entity":null,"places":["Koyambedu"],"family":"other"}
+{"id":"q158","text":"Koyambedu la tomato rate enna inniki","lang":"tanglish","intent":"prices","entity":null,"places":["Koyambedu"],"family":"other"}
+{"id":"q159","text":"switch the period to last week","lang":"en","intent":"navigate","entity":null,"places":[],"family":"other"}
+{"id":"q160","text":"புகார்கள் பக்கத்தை திறங்க","lang":"ta","intent":"navigate","entity":null,"places":[],"family":"other"}
+{"id":"q161","text":"rain tab open pannu","lang":"tanglish","intent":"navigate","entity":null,"places":[],"family":"other"}
+{"id":"q162","text":"pin this to my board","lang":"en","intent":"save","entity":null,"places":[],"family":"other"}
+{"id":"q163","text":"idha save pannu, appuram paakanum","lang":"tanglish","intent":"save","entity":null,"places":[],"family":"other"}
+{"id":"q164","text":"இதை நினைவில் வைத்துக்கொள்","lang":"ta","intent":"save","entity":null,"places":[],"family":"other"}
+{"id":"q165","text":"anything unusual in todays data that I should know about","lang":"en","intent":"insight","entity":null,"places":[],"family":"other"}
+{"id":"q166","text":"இன்னைக்கு கவனிக்க வேண்டிய முக்கியமான விஷயம் என்ன","lang":"ta","intent":"insight","entity":null,"places":[],"family":"other"}
+{"id":"q167","text":"indha week la edhavadhu odd ah theriyudha","lang":"tanglish","intent":"insight","entity":null,"places":[],"family":"other"}
+{"id":"q168","text":"some of these complaints have no zone, can you fill those in","lang":"en","intent":"complete","entity":null,"places":[],"family":"other"}
+{"id":"q169","text":"missing ward details ah fill pannu","lang":"tanglish","intent":"complete","entity":null,"places":[],"family":"other"}
+{"id":"q170","text":"send this report to the minister on whatsapp","lang":"en","intent":"refuse","entity":null,"places":[],"family":"other"}
+{"id":"q171","text":"give me the phone number of the person who filed the Velachery complaint","lang":"en","intent":"refuse","entity":null,"places":["Velachery"],"family":"other"}
+{"id":"q172","text":"அந்த புகார்தாரரின் ஆதார் எண்ணை சொல்லுங்க","lang":"ta","intent":"refuse","entity":null,"places":[],"family":"other"}
+{"id":"q173","text":"andha complaint ah close pannidu, approve um pannidu","lang":"tanglish","intent":"refuse","entity":null,"places":[],"family":"other"}
+{"id":"q174","text":"delete all the duplicate complaints","lang":"en","intent":"refuse","entity":null,"places":[],"family":"other"}
+{"id":"q175","text":"give me todays district brief","lang":"en","intent":"brief","entity":null,"places":[],"family":"other"}
+{"id":"q176","text":"இன்றைய மாவட்ட நிலவர அறிக்கை கொடுங்க","lang":"ta","intent":"brief","entity":null,"places":[],"family":"other"}
+{"id":"q177","text":"what is the capital of Australia","lang":"en","intent":"general","entity":null,"places":[],"family":"general"}
+{"id":"q178","text":"திருக்குறள் எழுதியவர் யார்","lang":"ta","intent":"general","entity":null,"places":[],"family":"general"}
+{"id":"q179","text":"photosynthesis na enna, simple ah sollu","lang":"tanglish","intent":"general","entity":null,"places":[],"family":"general"}
+{"id":"q180","text":"how many litres are there in a cubic metre","lang":"en","intent":"general","entity":null,"places":[],"family":"general"}
