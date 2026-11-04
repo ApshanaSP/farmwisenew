@@ -720,8 +720,9 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   useEffect(() => { if (mapAsk.grown) setRain(null); }, [mapAsk.grown]);
 
   const bellN = bellRead ? 0 : ov.bell.length;
-  // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live
-  const feedsOk = ov.feeds.filter((f) => f.status === "ok" || f.status === "degraded").length;
+  // a degraded feed still delivered today's data (some of its endpoints are blocked), so it counts as live; a feed made by a
+  // generator (police, PWD, hospital: source_health.kind says "synthetic") is test data, never counted as live
+  const feedsOk = ov.feeds.filter((f) => (f.status === "ok" || f.status === "degraded") && !isTestFeed(f)).length;
   const feedsPartial = ov.feeds.filter((f) => f.status === "degraded").map((f) => String(f.source).toUpperCase());
   const districtWide = page === "environment" || page === "trends";
   const clearFilters = () => { setDept(null); setZone(null); setCatState(null); setTalukState(null); };
@@ -978,6 +979,9 @@ function FreshWarn({ ov, page, onClick }: { ov: OverviewData; page: PageKey; onC
 const PAGE_ICON: Record<PageKey, IconName> = { overview: "grid", briefing: "news", trends: "line", environment: "leaf", studio: "spark" };
 const TAB_LABEL: Record<PageKey, string> = { overview: "Overview", briefing: "Briefing", trends: "Trends", environment: "Environment", studio: "Data Studio" };
 
+/** A departmental feed made by a generator, not collected from its source (source_health.kind) */
+export const isTestFeed = (f: { kind?: unknown }) => /synthetic/i.test(String(f.kind ?? ""));
+
 /** Are the feeds current? The collection time always leads; a feed behind turns the chip orange. Pulses once on new data. */
 function Collected({ ov, onClick, live, partial, page }: { ov: OverviewData; onClick: () => void; live: number; partial: string[]; page: PageKey }) {
   const s = ov.collection;
@@ -988,7 +992,8 @@ function Collected({ ov, onClick, live, partial, page }: { ov: OverviewData; onC
   // the time the data was collected always leads; how many feeds are current goes on the second line
   const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
   const sub = s && !all ? `${s.done.length} of ${s.total} feeds current · ${live}/${ov.feeds.length} live` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
-  const tip = "Every source is collected hourly (CPCB air quality while the PC is on)." +
+  const tests = ov.feeds.filter(isTestFeed).map((f) => String(f.source));
+  const tip = (tests.length ? `${tests.length} of ${ov.feeds.length} feeds are generated test data (${tests.join(", ")}).` : "") +
     (s?.lastRun ? ` Last collection: ${fmtTime(s.lastRun)}, ${fmtDate(s.lastRun)}.` : "") +
     (s ? (s.missing.length ? ` Behind: ${s.missing.join(", ")}.` : " All feeds current.") : "") +
     ` ${live} of ${ov.feeds.length} feeds live.` + (partial.length ? ` Partly available (some endpoints blocked): ${partial.join(", ")}.` : "") +

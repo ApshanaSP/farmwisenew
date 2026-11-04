@@ -180,7 +180,8 @@ export function FeedsBody({ d }: { d: OverviewData }) {
           {d.feeds.map((f) => (
             <tr key={f.source} style={{ cursor: "default" }}>
               <td className="ev">{feedName(f.source)}</td>
-              <td><span className={`st ${f.status === "ok" ? "st-resolved" : "st-progress"}`}>{f.status === "ok" ? "Healthy" : f.status}</span></td>
+              <td><span className={`st ${f.status === "ok" ? "st-resolved" : "st-progress"}`}>{f.status === "ok" ? "Healthy" : f.status}</span>
+                {/synthetic/i.test(String((f as { kind?: unknown }).kind ?? "")) && <span className="st st-progress" style={{ marginLeft: 6 }} title={String((f as { kind?: unknown }).kind)}>Test data</span>}</td>
               <td>{f.newest ? fmtShort(f.newest) : "—"}</td>
               <td className="dim">{f.minutes_since_success != null ? `${f.minutes_since_success} min before the build` : "—"}</td>
               <td className="num">{Number(f.row_count).toLocaleString("en-IN")}</td>
@@ -188,7 +189,7 @@ export function FeedsBody({ d }: { d: OverviewData }) {
           ))}
         </tbody>
       </table>
-      <p style={{ marginTop: 12, fontSize: 13, color: "var(--text-3)" }}>Exported to the dashboard {d.exportedAt ? fmtShort(d.exportedAt) : "—"}. The pipeline refreshes every source every 30 minutes.</p>
+      <p style={{ marginTop: 12, fontSize: 13, color: "var(--text-3)" }}>Exported to the dashboard {d.exportedAt ? fmtShort(d.exportedAt) : "—"}. Feeds marked Test data are made by a generator, not collected from the department.</p>
     </div>
   );
 }

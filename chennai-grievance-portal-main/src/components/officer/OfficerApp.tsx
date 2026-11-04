@@ -437,7 +437,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     setSeen(latest);
     try { localStorage.setItem(seenKey, latest); } catch { /* not saved in this browser */ }
   };
-  const feedsOk = ov.feeds.filter((f) => f.status === "ok" || f.status === "degraded").length;
+  // generated departmental feeds (source_health.kind "synthetic") are test data, never live
+  const feedsOk = ov.feeds.filter((f) => (f.status === "ok" || f.status === "degraded") && !/synthetic/i.test(String((f as { kind?: unknown }).kind ?? ""))).length;
   const me = loginName(user);
   const pi = PAGES.indexOf(view);
   const openModule = (key: string) => { setDrawer(null); setModal({ kind: "module", key }); };

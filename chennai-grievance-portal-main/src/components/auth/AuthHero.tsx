@@ -93,7 +93,7 @@ export default function AuthHero({ headline, children }: { headline: ReactNode; 
           <motion.span initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
             style={{ background: "var(--h-chip)", color: "var(--h-text-2)", boxShadow: "inset 0 0 0 1px var(--h-line-strong)" }}>
-            <LiveDot /> Live across Chennai&apos;s 15 zones
+            <LiveDot /> Across Chennai&apos;s 15 zones
           </motion.span>
           <motion.h2 initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.6, delay: 0.08, ease: EASE_OUT }}
             className="mt-6 text-balance text-[2.15rem] font-semibold leading-[1.08] tracking-[-0.03em]" style={{ color: "var(--h-text)" }}>
@@ -106,7 +106,7 @@ export default function AuthHero({ headline, children }: { headline: ReactNode; 
           {children}
         </div>
         <div className="grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "var(--h-line-strong)" }}>
-          {([[15, "Zones"], [200, "Wards"], [8, "Live data feeds"]] as const).map(([v, l]) => (
+          {([[15, "Zones"], [200, "Wards"], [8, "Data feeds"]] as const).map(([v, l]) => (
             <div key={l}>
               <p className="font-display text-[28px] font-extrabold tracking-[-0.035em] tabular" style={{ color: "var(--h-text)" }}><CountUp value={v} duration={1200} /></p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--h-text-3)" }}>{l}</p>
