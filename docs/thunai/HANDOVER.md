@@ -56,10 +56,13 @@ The two settings most likely to need changing after a real-room try are both in 
 - **Quota is the real ceiling.** The three Groq keys are one organisation, so they add nothing: 8K tokens a minute, and a daily cap that one evaluation run can use up. The Gemini transcriber allowed about 28 calls in a day, so it runs only as a third racer when Whisper is unsure.
 - **Tamil voice needs Edge.** Elsewhere the words stay on screen.
 - **Tamil coverage on screens is partial.** Only the `cases` recipe's labels are Tamil at the source. Other recipes rely on the runtime translator, `when()` writes English months, and HUD panel titles use the screen's title as it comes.
+- **The console's runtime translator shares the same Groq organisation.** Loading the Tamil console drew 429s on its minute limits during the screen runs, which competes with Jarvis's own quota. It also makes mistakes with figures: one news headline, "47-year-old Chennai man", came out in Tamil as "47-thousand". That translator is not part of this build and the number gate does not cover it, but it shows on the same screen.
 - **Noise figures for Tamil transcription use synthetic babble**, and are labelled so.
 - **The ledger is a local SQLite file** (`node:sqlite`, with a memory fallback). A hosted deployment with more than one process needs a different store behind the same interface.
 - **Whisper's end of utterance at 300 ms** splits "Jarvis," from what follows. The name alone now engages and listens on, but this is the first thing to retest in a room.
-- **A sentence still at Whisper when someone else talks for 200 ms is lost.** The Collector has to say it again.
+- **A sentence still at Whisper when someone else talks for 200 ms is merged with their words.** The capture reaches back so that a sentence with a pause in it stays whole, and that means a second speaker's words go along with it.
+- **Understanding is the weakest part, and Tamil the weakest of that.** The full pipeline scored 42.5 % on the 40-sentence sample, with Tamil at 15.4 %. Half the misses are the rules confidently choosing a wrong screen with no model involved. That is the first thing to fix: make the quick lane hand off when it is unsure, then look at the planner's habit of clarifying or answering in chat where a screen was expected. Use a fresh held-out set when you do, because this one has now been read for the report.
+- **The address gate's rules grew late, in response to the review**, and its false-act rate did not improve (10 % against a 5 % target). Consider whether a small model is better here than more wording rules, if the quota allows it.
 
 ## What an Azure key would add
 

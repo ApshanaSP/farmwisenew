@@ -1,8 +1,8 @@
 {
  "speaking": {
-  "fps": 140.6,
-  "worst": 222,
-  "frames": 2811
+  "fps": 144.1,
+  "worst": 8,
+  "frames": 2881
  },
  "reducedMotionFps": 144.1,
  "browser": "chromium",

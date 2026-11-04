@@ -22,6 +22,13 @@ One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be
 | 09:53-10:10 | 6 | HUD: core, ribbon, timeline, panels, reticle, strip, power-on. Whisper final pass in the background. Commit `cd79082`. |
 | 10:10-10:25 | 6 | Independent UI review (25 findings). First rules, ambient and follow-up scoring, kept as `firstrun-*.json`. |
 | 10:25-11:20 | 6 | Review fixes. The real run found three real bugs (below). |
+| 11:30 | 6 | Commit `6d67875`: first spoken finding as its own measure, a measuring build behind `NEXT_PUBLIC_JARVIS_SPEC`, pin to the Overview by voice, level gates on every path. These came from a peer session's skeptic pass over the brief. |
+| 11:32 | 6 | Suite 1,735 passed, 13 skipped; `tsc` clean; both production builds pass. First push of the branch. |
+| 11:32-12:01 | 6 | Independent code review: five areas, finder and skeptic each. 60 findings, 57 upheld, 4 of them blockers. It took 30 minutes against the 10 I had allowed, which is why I finished later than I told the owner. |
+| 12:04-12:21 | 6 | Fixes: four workers with disjoint files (numbers, capacity, safety, HUD), and the turn machine and `Thunai.tsx` by me. Suite 1,887 passed, 13 skipped. Commit `da7af05`. |
+| 12:21-12:30 | 7 | Voice specs on the fixed code: 28 of 29. The failure was real: the old re-ask had been hiding the loss of a sentence's first part when it went on after a pause. Fixed, with a test. Commit `f9a2e35`. |
+| 12:21-12:37 | 7 | Final held-out runs: rules, ambient, both follow-up sets, 40 planner sentences, the Tamil race. Hashes checked first. Each run once, no tuning after. |
+| 12:37 onward | 7 | Production builds, the real latency run, HUD screens and fps in Edge, the 10-minute ambient run, the last full spec run. See `eval/RESULTS.md`. |
 
 ## Decisions
 
@@ -48,6 +55,23 @@ One session, 4 Nov 2026, in the worktree branch `claude/jarvis-agentic-voice-5be
 - `gemini-3.5-transcribe` returns `audioTranscription.text`, not `text`. My first probe scored it at 100 % CER: my parser, not the model.
 - The Stage's map was empty under the HUD because it only got Thunai's own `geo`, not the console's.
 - `toHud` stopped reading blocks at three figures, so the reticle never got a place.
+- The low-budget timer re-armed under nonstop talk, so unnamed commands could stay out for good.
+- A sentence that went on after a short pause lost its first part: speech cancelled the question at Whisper, and only the second part was transcribed. The old re-ask had hidden this. Now the capture reaches back to the start.
+- My own fix for "Speaking in silence" stopped the voice before telling the turn machine, so "continue" no longer worked after Esc. Fixed by reversing the order; caught by reading, not by a test.
+- The planner scorer has no match from general to chat, so a correct general-knowledge answer counts as wrong. Left as scored and noted in `eval/RESULTS.md`, because I found it after the final run.
+- For the blockers the independent review found, see `eval/RESULTS.md`. All four had passed every earlier test.
+
+## Corrections from a peer session's skeptic pass
+
+- Kept the `store.ts` sqlite pattern rather than spending time on it.
+- Added a separate metric for the time to the first spoken finding, because an acknowledgement is not an answer, and ran the unmocked latency on a production build.
+- Voice pin and save to the Overview did not exist: added and covered in the reach audit.
+- Kept `runThunaiAgent`, and did not add `GROQ_API_KEYS`.
+
+## Probe results that changed the plan
+
+- **Ollama:** no reply in 60 s with `llama3.2:3b`, so its rung was dropped. The model was unloaded afterwards, when the owner asked why Ollama was running: it was my probe.
+- **Bedrock:** token expired, so its rung is off.
 
 ## Cuts
 
