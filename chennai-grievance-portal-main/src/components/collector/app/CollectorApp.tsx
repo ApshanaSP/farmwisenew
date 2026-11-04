@@ -40,6 +40,7 @@ import "./collector.css";
 import { MotionConfig } from "motion/react";
 import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
 import Thunai, { type ThunaiHost } from "./thunai/Thunai";
+import JarvisSwitch from "./thunai/JarvisSwitch";
 import { LangSwitch, TopMenu } from "./TopMenu";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
@@ -786,6 +787,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
+          <JarvisSwitch />
           <LangSwitch />
           {/* the tools, each with its name (they were five bare icons) */}
           <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} items={[
@@ -914,15 +916,14 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} askMap={(q) => c.askOnMap?.(q)} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        {/* Jarvis, where the chat always was: talk or type (or just say "Hi Jarvis") */}
+        {/* Jarvis, where the chat always was: type here; Jarvis mode in the top bar is the voice */}
         {!jv.open && (
           <button className={`ask-fab ask-fab-v2 jv-fab${jv.conv ? " conv" : ""}`} onClick={() => window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } }))}
-            aria-label="Ask Jarvis (Ctrl+K)" title={jv.resting ? "Ask Jarvis: listening for \"Hi Jarvis\" (or type, Ctrl+K)" : jv.mic === "blocked" ? "Ask Jarvis (Ctrl+K). The microphone is blocked: allow it in the address bar to use \"Hi Jarvis\"" : "Ask Jarvis (Ctrl+K). Click once to turn on \"Hi Jarvis\""}>
+            aria-label="Ask Jarvis (Ctrl+K)" title={jv.mic === "blocked" ? "Ask Jarvis (Ctrl+K). The microphone is blocked: allow it in the address bar to use Jarvis mode" : "Ask Jarvis: type a question (Ctrl+K). Jarvis mode (Ctrl+Shift+J) listens without a button"}>
             <i className="ask-ico"><AskIcon size={22} /></i>
             <span className="ask-label">Ask Jarvis<kbd>Ctrl K</kbd></span>
-            {/* whether "Hi Jarvis" can be heard right now, in words: never a silent button */}
-            {/* "Hi Jarvis" is heard (green) or not (amber: the microphone is off or blocked); the words are in the tooltip */}
-            <i className={`jv-fab-st${jv.resting || jv.conv ? " on" : ""}`} aria-hidden="true" />
+            {/* listening (green) or not (amber: the microphone is off or blocked); the words are in the tooltip */}
+            <i className={`jv-fab-st${jv.conv ? " on" : ""}`} aria-hidden="true" />
             {insightCount > 0 && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
           </button>
         )}

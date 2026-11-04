@@ -1,0 +1,18 @@
+/* The top bar's Jarvis switch. Mode off looks like any other control; on is the HUD's one cyan accent, with the recording dot. */
+.jsw { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; flex: none; }
+.jsw button { font: inherit; cursor: pointer; }
+.jsw-main { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 10px; border-radius: 8px; border: 1px solid var(--line-2, rgba(128, 140, 160, .35)); background: transparent; color: inherit; font-weight: 600; }
+.jsw-main:hover { background: rgba(128, 140, 160, .12); }
+.jsw-main:focus-visible, .jsw-mute:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+.jsw-core { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; opacity: .55; box-sizing: border-box; }
+.jsw.on .jsw-main { border-color: #22d3ee; color: #0e7490; background: rgba(34, 211, 238, .1); }
+:root[data-theme="dark"] .jsw.on .jsw-main { color: #67e8f9; }
+.jsw.on .jsw-core { border-color: #22d3ee; background: #22d3ee; opacity: 1; }
+.jsw.muted .jsw-core { border-style: dashed; opacity: .8; }
+.jsw-mute { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: inherit; font-weight: 600; }
+.jsw-mute:hover { background: rgba(128, 140, 160, .12); }
+.jsw-dot { width: 9px; height: 9px; border-radius: 50%; background: #e11d48; }
+.jsw-denied { color: #b45309; font-weight: 600; font-size: 12.5px; }
+.jsw-resume { color: #0e7490; font-weight: 600; font-size: 12.5px; }
+:root[data-theme="dark"] .jsw-denied { color: #fbbf24; }
+:root[data-theme="dark"] .jsw-resume { color: #67e8f9; }

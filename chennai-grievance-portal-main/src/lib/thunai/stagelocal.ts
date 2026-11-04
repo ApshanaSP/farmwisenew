@@ -97,6 +97,21 @@ export function ackFor(text: string, lang: Lang): string {
   return pick("On it.", "பார்க்கிறேன்.");
 }
 
+/**
+ * The acknowledgement with the places in it ("Comparing Adyar with Anna Nagar"): code-templated from the sentence's own zone
+ * names, never a figure. "" when the sentence names no zones (ackFor's line is used).
+ */
+export function ackTemplated(text: string, lang: Lang, w: { zones: { n: number; name: string; ta?: string | null }[] }): string {
+  const low = text.toLowerCase();
+  const named = w.zones.filter((z) => low.includes(z.name.toLowerCase()) || (z.ta && text.includes(z.ta)));
+  if (!named.length) return "";
+  const nm = (z: { name: string; ta?: string | null }) => (lang === "ta" ? z.ta ?? z.name : z.name);
+  if (/compare|versus|vs|ஒப்பிடு|oppidu/.test(low) && named.length >= 2) {
+    return lang === "ta" ? `${nm(named[0])}, ${nm(named[1])} ஒப்பிடுகிறேன்.` : `Comparing ${nm(named[0])} with ${nm(named[1])}.`;
+  }
+  return lang === "ta" ? `${nm(named[0])} பார்க்கிறேன்.` : `Looking at ${nm(named[0])}.`;
+}
+
 // ------------------------------------------------------------------ refinements --
 
 const has = (hay: (string | null | undefined)[], needle: string) => hay.some((h) => (h ?? "").toLowerCase().includes(needle.toLowerCase()));

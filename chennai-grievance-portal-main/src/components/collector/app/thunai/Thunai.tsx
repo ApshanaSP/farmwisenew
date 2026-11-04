@@ -1,12 +1,13 @@
 "use client";
 /**
- * Jarvis (ஜார்விஸ், formerly Thunai), the Collector console's voice pilot. Say "Hi Jarvis" (the wake word, wake.ts), or
- * switch it on (Alt+T or the orb), hold Alt+Space (or the orb) and talk
- * in English, Tamil or Tanglish; the console moves by itself. The understanding is in lib/thunai (rules first, tested);
+ * Jarvis (ஜார்விஸ், formerly Thunai), the Collector console's voice pilot. Turn on Jarvis mode (the top bar, Ctrl+Shift+J) and
+ * there is nothing to press: it listens, works out whether it was spoken to (lib/thunai/addressed.ts), acts and answers,
+ * in English, Tamil or Tanglish; the console moves by itself. Talk over it and it stops. With the mode off the microphone is
+ * closed and the panel takes typed questions. The understanding is in lib/thunai (rules first, tested);
  * this file is the hands and the face: it presses the console's own controls (Console in CollectorApp), shows a ghost
  * pointer, step chips and subtitles, keeps an undo stack, an approval tray for anything that leaves the console, the
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
- * template (lib/thunai/say.ts); nothing goes out without "confirm" and the count.
+ * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -22,14 +23,18 @@ import { band, canSpeak as watchMaySpeak, remember as watchRemember, type Signal
 import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
 import { stageContext, type StageDocT } from "@/lib/thunai/stage";
-import { ackFor, caseIds, filterStage, localStageCommand, narrationOf, sortStage, toCsv, type LocalCmd } from "@/lib/thunai/stagelocal";
-import { canListen, listen } from "../assistant/speech";
+import { ackFor, ackTemplated, caseIds, filterStage, localStageCommand, narrationOf, sortStage, toCsv, type LocalCmd } from "@/lib/thunai/stagelocal";
 import type { Console } from "../CollectorApp";
 import { byName, clickables, press, readChart, scroll, spotlight, targetFor, typeInto, type Clickable } from "./dom";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
-import { hasVoice, prefetch, setJarvisVoice, speakLines, speakText, stopVoice, voiceInfo, voicesFor, warmVoices } from "./mouth";
-import { Ears, type Heard } from "./ears";
+import { canContinue, continueAnswer, forgetBookmark, hasVoice, nowSaying, prefetch, setJarvisVoice, speakAck, speaking, speakLines, speakText, stopVoice, voiceInfo, voicePath, voicesFor, warmVoices } from "./mouth";
+import { Conductor, type HeardLine } from "./conductor";
+import { Captions, canCaption } from "./captions";
+import { coreOf, hud, type JarvisMode } from "./hudstore";
+import { levelAllowed, type Addressed } from "@/lib/thunai/addressed";
+import { districtNounIn, quickScreen } from "@/lib/thunai/quick";
+import type { TurnState } from "@/lib/thunai/turn";
 import Panel, { type Ear, type Msg } from "./Panel";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
 import { JARVIS_VOICES, type JarvisVoice } from "@/lib/jarvis/voices";
@@ -74,6 +79,8 @@ export interface ThunaiHost {
   loadGeo?: () => Promise<MapGeo | null>;
   /** where a Take action draft is read (the dev test console uses its own, which cannot send) */
   draftUrl?: (incidentId: string) => string;
+  /** where Jarvis's ears post a sentence (the dev test console uses its own) */
+  hearUrl?: string;
 }
 
 type Phase = "off" | "ready" | "listening" | "thinking" | "acting" | "speaking" | "asking" | "waiting" | "blocked";
@@ -86,6 +93,7 @@ interface Station { id: string; name: string; zone: number | null; times: string
 interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] }; lakes?: { stations: Station[]; asOn: string | null } }
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
+const DANGER_BUTTON = /send|approve|confirm|delete|remove|discard|reject|submit|அனுப்பு|நீக்கு|உறுதி|ஒப்புதல்/i;
 /** What Jarvis says aloud: the first sentence or two (about 240 characters); the panel and the screen show it all. */
 function spoken(text: string): string {
   const parts = text.replace(/\s+/g, " ").trim().match(/[^.!?।]+[.!?।]?(\s|$)/g) ?? [text];
@@ -100,8 +108,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const store = { get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* not saved */ } } };
 
-async function post(path: string, body: unknown) {
-  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function post(path: string, body: unknown, signal?: AbortSignal) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || "Request failed.");
   return j;
@@ -131,8 +139,11 @@ function heartbeat(): () => void {
   return () => { clearInterval(t); setTimeout(() => c.close().catch(() => undefined), 300); };
 }
 
+/** told when an earcon starts: it must not count as speech */
+let onEarcon: (() => void) | null = null;
 /** Earcons from the Web Audio API: no files. */
 function earcon(kind: "open" | "done" | "need" | "blocked") {
+  onEarcon?.();
   try {
     const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
     const AC = W.AudioContext ?? W.webkitAudioContext;
@@ -169,23 +180,29 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** the reply in the other language (every answer is shown in English and Tamil) */
   const [alt, setAlt] = useState("");
   const altSeq = useRef(0);
-  /** "Hi Jarvis": the wake word listens while Jarvis is idle (remembered in this browser; on unless switched off) */
-  const [wakeOn, setWakeOn] = useState(false);
-  const [wakeBlocked, setWakeBlocked] = useState(false);
-  const [micBusy, setMicBusy] = useState(false);
-  const [wakeTick, setWakeTick] = useState(0);
-  /** the wake word is listening right now */
-  const [wakeLive, setWakeLive] = useState(false);
   const [uiLang] = useLang();
   // ---- the conversation (round 27): Jarvis's ears (ears.ts), the panel's thread, the minute of quiet before it rests
-  const ears = useRef<Ears | null>(null);
-  const [earMode, setEarMode] = useState<"off" | "asleep" | "awake">("off");
-  const [conv, setConv] = useState(false);
-  const convRef = useRef(false);
-  convRef.current = conv;
+  /** Jarvis mode: off (the mic's tracks are stopped), on (it listens, no mic button), muted (closed, one keystroke away) */
+  const [mode, setModeState] = useState<JarvisMode>("off");
+  const modeRef = useRef<JarvisMode>("off");
+  modeRef.current = mode;
+  const conductor = useRef<Conductor | null>(null);
+  const captions = useRef<Captions | null>(null);
+  const [turnState, setTurnState] = useState<TurnState>("off");
+  const conv = mode === "on";
   const [activity, setActivity] = useState<"speech" | "reading" | "idle">("idle");
   const [micBlocked, setMicBlocked] = useState(false);
-  const [idleLeft, setIdleLeft] = useState<number | null>(null);
+  /** when Jarvis last finished a turn (the gate's 20 s of being engaged) */
+  const lastTurnAt = useRef<number | null>(null);
+  /** the question in flight: a new sentence, a barge-in or Esc aborts it; the generation stops any late answer speaking */
+  const turnGen = useRef(0);
+  const turnCtl = useRef<AbortController | null>(null);
+  /** what passed the address gate for the sentence being handled: level B and C need tier 1 or 2 */
+  const gateRef = useRef<Addressed | null>(null);
+  const sourceRef = useRef<"whisper" | "captions" | "typed">("typed");
+  /** the last request said, so a cancelled one can be asked again and "no, Anna Nagar" can refine it */
+  const lastRequest = useRef<{ text: string; lang: "en" | "ta" } | null>(null);
+  const firstAudioFrom = useRef<number | null>(null);
   const [thread, setThread] = useState<Msg[]>([]);
   const [focusKey, setFocusKey] = useState(0);
   const [jvVoice, setJvVoice] = useState<JarvisVoice>("Despina");
@@ -216,7 +233,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [outMode, setOutMode] = useState<OutMode>("voice");
   const [listenLang, setListenLang] = useState<Lang>("en");
   const [rate, setRate] = useState(1);
-  const [handsfree, setHandsfree] = useState(false);
   const [typed, setTyped] = useState("");
   const [ref, setRef] = useState<Pick<World, "cats" | "taluks" | "places">>({ cats: [], taluks: [], places: [] });
   // ---- the Stage (v2)
@@ -239,7 +255,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const narrIndex = useRef(0);
 
   const orbRef = useRef<HTMLSpanElement>(null);
-  const stopListen = useRef<(() => void) | null>(null);
   const undoStack = useRef<{ steps: Step[]; snap: Snap }[]>([]);
   const lastSteps = useRef<Step[]>([]);
   /** the incident an "item" step opened in the plan now running */
@@ -253,8 +268,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const numbersRef = useRef(numbers);
   numbersRef.current = numbers;
   const abortMission = useRef(false);
-  const handsfreeRef = useRef(handsfree);
-  handsfreeRef.current = handsfree;
   const lastHeardAt = useRef<number>(0);
   const lastUserSpeech = useRef<number | null>(null);
   const pointerAt = useRef<{ x: number; y: number } | null>(null);
@@ -263,8 +276,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const memoryRef = useRef(memory);
   memoryRef.current = memory;
   const chipId = useRef(0);
-  /** startListening, for the wake word (declared further down) */
-  const startListeningRef = useRef<() => void>(() => undefined);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -321,11 +332,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     lastSpoken.current = { text, lang };
     if (!text) { setPhase(ph); return; }
     if (outMode === "voice") {
-      stopListen.current?.();
       setPhase("speaking");
       const ok = speak(spoken(text), lang === "ta" ? "ta-IN" : "en-IN", () => {
         setPhase(onRef.current ? ph : "off");
-        if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 250); // eslint-disable-line @typescript-eslint/no-use-before-define
       }, rate, voiceName);
       if (!ok) setPhase(ph);
     } else setPhase(ph);
@@ -559,7 +568,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       case "lang": setListenLang(step.lang); changeMemory({ op: "prefs", prefs: { lang: step.lang } }); return null;
       case "mode": setOutMode(step.mode); changeMemory({ op: "prefs", prefs: { mode: step.mode } }); return null;
       case "speed": { const r = Math.round(Math.max(0.7, Math.min(1.4, rate + (step.faster ? 0.15 : -0.15))) * 100) / 100; setRate(r); changeMemory({ op: "prefs", prefs: { rate: r } }); return null; }
-      case "handsfree": setHandsfree(step.on); return null;
+      case "handsfree": setMode(step.on ? "on" : "off"); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
       case "workspace": {
         if (step.op === "save") { const id = await c.saveWorkspace(step.name ?? "Jarvis view"); return id ? line("saved", lang, { name: step.name }) : null; }
         try {
@@ -602,6 +611,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const t = step.n != null ? list.find((x) => x.n === step.n) ?? null : byName(list, step.name ?? "");
         setNumbers(null);
         if (!t) return line("notUnderstood", lang, { heard: heardText, examples: "show numbers, click 3" });
+        // Jarvis never presses send, approve or delete, by number or by name
+        if (DANGER_BUTTON.test(t.name ?? t.el.textContent ?? "")) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
         press(t.el);
         return null;
       }
@@ -621,7 +632,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         addToTray([d]);
         return line("sendGate", lang, { n: 1 });
       }
-      case "confirm": await sendTray(step.n, lang, "spoken"); return null;
+      // Jarvis never sends or approves, even when told to: the tray's button is the Collector's own tap
+      case "confirm": return lang === "ta" ? "அனுப்புவது உங்கள் கையால்: தட்டில் உள்ள ஒப்புதல் பொத்தானைத் தட்டுங்கள்." : "Approving is yours to tap: the Approve button is in the tray. I never send.";
       case "mission": await mission(step.name, lang); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
       case "read": return read(step, lang);
       case "help": setPanel("help"); return line("help", lang);
@@ -709,7 +721,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   /** Steps that change something saved wait for one tap or "yes" (level B). */
   const gateB = (steps: Step[], said: string, lang: Lang) => {
-    const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind")!;
+    const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind");
+    // a plan with something outward in it (level C) and nothing to keep: run() only drafts to the tray, never sends
+    if (!s) { void run(steps, lang, said, "ai"); return; }
     const q = s.a === "workspace" ? line("saveAsk", lang, { name: s.name }) : s.a === "remember" ? line("rememberAsk", lang, { text: s.text })
       : s.a === "forget" ? line("forgetAsk", lang, { what: s.all ? (lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (lang === "ta" ? "கடைசி குறிப்பை" : "the last note") })
         : line("remindAsk", lang, { when: whenOf((s as Extract<Step, { a: "remind" }>).at), text: (s as Extract<Step, { a: "remind" }>).text });
@@ -733,7 +747,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
 
   /** Ask the agent: a sentence (with the screen, the turns and the open Stage), or a Stage control's direct screen. */
-  const callAgent = async (said: string, st: ScreenState, direct?: { recipe: StageDocT["recipe"]; slots: Record<string, unknown>; lang: Lang }): Promise<AgentResult | null> => {
+  const callAgent = async (said: string, st: ScreenState, direct?: { recipe: StageDocT["recipe"]; slots: Record<string, unknown>; lang: Lang }, signal?: AbortSignal): Promise<AgentResult | null> => {
     try {
       const doc = stageRef.current;
       const j = await post(hostRef.current.agentUrl ?? "/api/collector/thunai/agent", {
@@ -742,7 +756,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           panel: st.panel, incident: st.incident, listLength: st.list.length, lastPlace: st.lastPlace, numbers: !!st.numbers },
         stage: doc ? stageContext(doc, stageFocus.current) : null,
         direct: direct ?? null
-      });
+      }, signal);
       return (j?.result as AgentResult) ?? null;
     } catch { return null; }
   };
@@ -759,7 +773,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (say) { setReply(say); showAlt(say, lang); lastSpoken.current = { text: say, lang }; }
     const voiceLang = lang === "ta" && hasVoice("ta-IN") ? "ta-IN" : "en-IN";
     if (outMode !== "voice" || !lines.length || (lang === "ta" && voiceLang !== "ta-IN")) { setPhase(tray.length ? "waiting" : "ready"); return; }
-    stopListen.current?.();
     setNarrating(true);
     setPhase("speaking");
     speakLines(lines, voiceLang, {
@@ -769,8 +782,6 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onEnd: () => {
         setNarrating(false); setReading(null);
         setPhase(onRef.current ? (tray.length ? "waiting" : "ready") : "off");
-        // the follow-up listen (jarvis-v3): hands-free goes back to listening once the Stage has been read
-        if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 300); // eslint-disable-line @typescript-eslint/no-use-before-define
       }
     });
   };
@@ -792,7 +803,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       rate, voice: voiceName,
       onLine: (j) => { narrIndex.current = k + j; setReading({ key: list[k + j].key, char: null, lead: list[k + j].lead }); },
       onWord: (j, ch) => setReading({ key: list[k + j].key, char: ch, lead: list[k + j].lead }),
-      onEnd: () => { setNarrating(false); setReading(null); setPhase("ready"); if (handsfreeRef.current && onRef.current) setTimeout(() => startListening(), 300); } // eslint-disable-line @typescript-eslint/no-use-before-define
+      onEnd: () => { setNarrating(false); setReading(null); setPhase("ready"); }
     });
   };
 
@@ -956,8 +967,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     close: () => { if (narrating) stopNarration(); else closeStage(); },
     back: stageBack.length ? () => void applyLocal({ op: "back" }, listenLang) : null,
     ask: (t: string) => void handleRef.current(t, 0.95), // eslint-disable-line @typescript-eslint/no-use-before-define
-    mic: () => { if (phase === "listening") stopListen.current?.(); else startListening(); }, // eslint-disable-line @typescript-eslint/no-use-before-define
-    listening: phase === "listening",
+    mic: () => setMode(modeRef.current === "on" ? "muted" : "on"), // eslint-disable-line @typescript-eslint/no-use-before-define
+    listening: conv,
     direct: (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string) => void directStage(recipe, slots, label),
     openCase: (id: string) => void directStage("case", { id }, listenLang === "ta" ? "சம்பவத்தைத் திறக்கிறேன்" : "Opening the incident"),
     openInConsole: (id: string) => { closeStage(); hostRef.current.c.openInc(id); },
@@ -990,9 +1001,20 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * The brain understands every sentence; only instant controls (stop, undo, confirm 3, click 4 while numbers show) are
    * done on the spot. When the brain cannot be reached, the built-in rules answer instead and the dock says so.
    */
-  const handle = async (text: string, conf = 0.95, original?: string) => {
+  const handle = async (text: string, conf = 0.95, original?: string, opts: { gate?: Addressed | null; source?: "whisper" | "captions" | "typed" } = {}) => {
     const said = text.trim();
     if (!said) return;
+    // a new sentence: the question in flight is aborted, and nothing it comes back with may speak
+    const gen = ++turnGen.current;
+    const alive = () => gen === turnGen.current;
+    turnCtl.current?.abort();
+    const ctl = new AbortController();
+    turnCtl.current = ctl;
+    gateRef.current = opts.gate ?? null;
+    sourceRef.current = opts.source ?? "typed";
+    forgetBookmark();
+    if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
+    hud.set({ ribbon: said, answer: "" });
     lastUserSpeech.current = Date.now();
     lastHeardAt.current = Date.now();
     setHeard(original ?? said); setInterim(""); setWrong(null); setReply(""); setAlt(""); altSeq.current++; lastBot.current = "";
@@ -1009,7 +1031,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
-      if (/^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri|confirm)$/i.test(said)) { const p = pendingB; setPendingB(null); await run(p.steps, p.lang, p.heard, "rules"); return; }
+      // a yes from Whisper, typed text or a tap; browser captions can catch Jarvis's own voice, so theirs never counts
+      if (/^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said) && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); await run(p.steps, p.lang, p.heard, "rules"); return; }
       if (/^(no|cancel|வேண்டாம்|illa|vendaam)$/i.test(said)) { setPendingB(null); setPhase("ready"); return; }
       setPendingB(null);
     }
@@ -1023,7 +1046,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // instant controls never wait for the network; sending only ever happens here, from the Collector's own words
     if (rules.kind === "do" && isReflex(rules.steps, st)) { setBrain({ by: "instant", model: null, ms: 0 }); await run(rules.steps, rules.lang, said, "rules"); return; }
     // a plain move the rules are sure of ("go to trends", "open the map") is done at once, with no model
-    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) !== "B" && isPlainMove(rules.steps)) {
+    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && isPlainMove(rules.steps)) {
       setBrain({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);
       return;
@@ -1032,21 +1055,36 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setPhase("thinking");
     setChips([]);
     const heardAs = original ?? said;
-    // lane 1: an acknowledgement at once and a soft heartbeat while the agent looks, then lane 2: its screen and its words
-    const ack = ackFor(said, rules.lang);
+    // lane 1: an acknowledgement at once, then lane 2: the screen and the words. The acknowledgement never holds up the
+    // answer: when the answer exists it speaks and the acknowledgement is cut. With the mode on the core shows the work,
+    // with it off a soft heartbeat does
+    const ack = ackTemplated(said, rules.lang, worldRef.current) || ackFor(said, rules.lang);
     ackText.current = ack;
     setReply(ack);
     if (stageRef.current) setStageBusy(ack);
-    const stopBeat = outMode !== "quiet" ? heartbeat() : () => undefined;
-    const ag = await callAgent(said, st).finally(stopBeat);
+    if (outMode === "voice" && modeRef.current === "on") speakAck(ack, rules.lang === "ta" ? "ta-IN" : "en-IN");
+    const stopBeat = outMode !== "quiet" && modeRef.current !== "on" ? heartbeat() : () => undefined;
+    const ag = await callAgent(said, st, undefined, ctl.signal).finally(stopBeat);
+    if (!alive()) return;
     setStageBusy(null);
+    // from tier 3 (no name, not engaged) only level A runs; the rest waits for the name
+    const needsName = (risk: "A" | "B" | "C", lang: Lang) => {
+      const g = gateRef.current;
+      if (!g || levelAllowed(g, risk)) return false;
+      earcon("need");
+      out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
+      return true;
+    };
     if (ag && ag.kind !== "none") {
       setBrain({ by: "ai", model: ag.model, ms: ag.ms });
       const lang = ag.lang;
       if (ag.kind === "chat") { earcon("done"); remember(heardAs, ag.reply ?? ""); out(ag.reply ?? "", lang, "ready"); return; }
       if (ag.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${ag.reply}`); out(ag.reply ?? "", lang, "ready"); return; }
       if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }); return; }
-      if (ag.steps.length && planRisk(ag.steps) === "B") { gateB(ag.steps, heardAs, lang); return; }
+      const risk = planRisk(ag.steps);
+      const opRisk: "A" | "B" | "C" = ag.stageOp?.op === "save" || ag.stageOp?.op === "pin" ? "B" : ag.stageOp?.op === "draft" ? "C" : "A";
+      if (needsName(risk > opRisk ? risk : opRisk, lang)) return;
+      if (ag.steps.length && risk !== "A") { gateB(ag.steps, heardAs, lang); return; }
       if (ag.stage) {
         // the screen is the answer: the dashboard's own filters stay as they were (only a command changes them)
         audit(heardAs, ag.steps, `screen ${ag.stage.recipe} (${ag.calls.length} data calls, ${ag.rounds} model rounds)`);
@@ -1065,6 +1103,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the agent could not answer: the built-in rules, then the analyst (the v1 planner asked the same busy provider again,
     // which doubled the wait; it is kept only for when the agent itself could not be reached)
     const ai = ag ? null : await think(said, st);
+    if (!alive()) return;
     if (ai && ai.plan.kind !== "none") {
       setBrain({ by: "ai", model: ai.model, ms: ai.ms });
       const p = ai.plan;
@@ -1074,7 +1113,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         ask({ question: p.question, lang: p.lang, heard: heardAs, choices: p.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) });
         return;
       }
-      if (planRisk(p.steps) === "B") { gateB(p.steps, heardAs, p.lang); return; }
+      if (needsName(planRisk(p.steps), p.lang)) return;
+      if (planRisk(p.steps) !== "A") { gateB(p.steps, heardAs, p.lang); return; }
       await run(p.steps, p.lang, heardAs, "ai", p.reply ?? undefined);
       return;
     }
@@ -1088,7 +1128,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     if (rules.kind === "refuse") { earcon("blocked"); audit(said, [], "refused"); out(rules.why[rules.lang], rules.lang, "ready"); return; }
     if (rules.kind === "ask") { ask(fromRules(rules)); return; }
-    if (planRisk(rules.steps) === "B") { gateB(rules.steps, said, rules.lang); return; }
+    if (needsName(planRisk(rules.steps), rules.lang)) return;
+    if (planRisk(rules.steps) !== "A") { gateB(rules.steps, said, rules.lang); return; }
     if (rules.confidence < 0.6) {
       const what = rules.steps.map((x) => describeStep(x, worldRef.current, rules.lang)).join(", ");
       ask({ question: line("lowConfidence", rules.lang, { what }), lang: rules.lang, heard: said,
@@ -1168,7 +1209,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setPhase("thinking");
     setReply(lang === "ta" ? "தரவில் தேடுகிறேன்…" : "Looking it up in the district's data…");
     try {
-      const res = await fetch("/api/collector/assistant/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+      const res = await fetch("/api/collector/assistant/chat", { method: "POST", headers: { "Content-Type": "application/json" }, signal: turnCtl.current?.signal,
         body: JSON.stringify({ sessionId: analystSession.current, message: q, inputMode: "voice", language: lang === "ta" ? "ta" : "auto",
           consoleScope: { period: c.period, zone: c.zone, dept: c.dept, cat: c.cat, taluk: c.taluk } }) });
       if (!res.ok || !res.body) throw new Error("failed");
@@ -1185,13 +1226,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           if (ev === "answer" && raw) { card = JSON.parse(raw) as Card; analystSession.current = (card as unknown as { sessionId?: string }).sessionId ?? analystSession.current; }
         }
       }
+      if (turnCtl.current?.signal.aborted) return;
       if (!card) throw new Error("no answer");
       const say = card.voiceSummary || card.headline;
       lastBot.current = say;
       pushMsg({ who: "jarvis", text: say, lang: card.voiceLang === "ta-IN" ? "ta" : "en", card });
       earcon("done");
       out(say, card.voiceLang === "ta-IN" ? "ta" : "en", "ready");
-    } catch {
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
       earcon("blocked");
       out(line("notUnderstood", lang, { heard: q, examples: SUGGEST.slice(0, 3).join(", ") }), lang, "ready");
     }
@@ -1209,57 +1252,164 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     else if (a.action === "show_on_map") { if (a.plan && c.askOnMap) c.askOnMap({ plan: a.plan as never }); else { if (a.zone) c.setZone(a.zone); c.setPage("overview"); } }
   };
 
-  // --------------------------------------------------------------- listening --
-  /** Open the microphone (asleep: waiting for the name). False when it is blocked or missing. */
-  const openEars = async (): Promise<boolean> => {
-    if (ears.current) return ears.current.start();
-    const e = new Ears({
-      onWake: () => onWakeRef.current(), // eslint-disable-line @typescript-eslint/no-use-before-define
-      onHeard: (h) => onHeardRef.current(h), // eslint-disable-line @typescript-eslint/no-use-before-define
-      onActivity: (a) => { setActivity(a); if (a !== "idle") lastHeardAt.current = Date.now(); },
-      // the mic ring follows the voice without re-drawing Jarvis twenty times a second
-      onLevel: (v) => { document.querySelector<HTMLElement>(".jv-mic")?.style.setProperty("--lv", v.toFixed(2)); },
-      onFail: (why) => { if (why === "not-allowed") setMicBlocked(true); },
-      // the Collector talks over Jarvis: it stops at once and listens (the sentence is already being recorded)
-      onBargeIn: () => { stopVoice(); setNarrating(false); setReading(null); abortMission.current = true; setPhase("ready"); },
-      siteLang: () => listenLangRef.current
-    });
-    ears.current = e;
-    const ok = await e.start();
-    if (!ok) { if (ears.current === e) ears.current = null; setMicBlocked(true); return false; }
-    if (ears.current !== e) { e.stop(); return !!ears.current; }
-    setMicBlocked(false);
-    setEarMode("asleep");
-    return true;
+  // --------------------------------------------------------------- Jarvis mode --
+  /** Abort the question in flight: nothing it comes back with may speak or change the screen. The frame stays. */
+  const cancelTurn = () => {
+    turnGen.current++;
+    turnCtl.current?.abort();
+    turnCtl.current = null;
+    abortMission.current = true;
+    setStageBusy(null);
+    setNarrating(false); setReading(null);
+    setPhase(onRef.current ? "ready" : "off");
   };
-
-  /** The conversation: Jarvis listens to every sentence until a minute passes with nothing said (or "bye Jarvis"). */
-  const startListening = useCallback(async () => {
-    if (!onRef.current) { setOn(true); setPhase("ready"); }
-    if (!(await openEars())) { setReply(line("noMic", listenLangRef.current)); return; }
-    stopSpeaking();
-    ears.current!.wake();
-    setEarMode("awake");
-    setConv(true);
+  /** A sentence that passed the address gate. */
+  const onSentence = (h: HeardLine) => {
     lastHeardAt.current = Date.now();
-    setPhase("ready");
-    earcon("open");
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  startListeningRef.current = () => void startListening();
-
-  const endConversation = (spoken: boolean) => {
-    if (!convRef.current) return;
-    ears.current?.sleep();
-    setEarMode(ears.current ? "asleep" : "off");
-    setConv(false);
-    setIdleLeft(null);
-    setActivity("idle");
-    const l = listenLangRef.current;
-    pushMsg({ who: "note", text: l === "ta" ? "ஜார்விஸ் ஓய்வெடுக்கிறது · தேவைப்படும்போது \"ஹாய் ஜார்விஸ்\" என்று சொல்லுங்கள்" : "Jarvis is resting · say \"Hi Jarvis\" when you need me", lang: l });
-    if (spoken) { earcon("done"); }
+    via.current = "voice";
+    if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
+    setMini(true);
+    void handleRef.current(h.text, 0.95, undefined, { gate: h.gate, source: h.source }).finally(() => conductor.current?.answered());
   };
-  const endRef = useRef(endConversation);
-  endRef.current = endConversation;
+  const onSentenceRef = useRef(onSentence);
+  onSentenceRef.current = onSentence;
+
+  const conductorOf = () => {
+    if (conductor.current) return conductor.current;
+    const c = new Conductor({
+      hearUrl: () => hostRef.current.hearUrl ?? "/api/jarvis/hear",
+      siteLang: () => listenLangRef.current,
+      onSentence: (h) => onSentenceRef.current(h),
+      cancelTurn: () => cancelTurn(),
+      reissue: () => { const l = lastRequest.current; if (l) void handleRef.current(l.text, 0.95, l.text); },
+      onIgnored: (t) => { hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000); },
+      onState: (s) => { setTurnState(s); hud.set({ turn: s }); if (s === "listening" && !speaking()) lastTurnAt.current = lastTurnAt.current ?? null; },
+      onLevel: (v) => hud.setLevel(v),
+      onHearing: (a) => { setActivity(a); if (a !== "idle") lastHeardAt.current = Date.now(); },
+      onBudget: (b) => hud.strip({ ambient: b.ambient, budgetLow: b.low }),
+      onFail: (why) => {
+        if (why === "gesture") { hud.set({ needsResume: true }); return; }
+        if (why === "blocked") { setMicBlocked(true); hud.set({ denied: true }); }
+        setMode("off");
+      },
+      onEndSession: () => { setMode("off"); },
+      onHold: () => { setNarrating(false); setReading(null); },
+      rules: (t) => {
+        const w = worldRef.current;
+        const q = quickScreen(t, w);
+        const u = q ? null : understand(t, buildState(), w, { speechConf: 0.95 });
+        return { sure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(t, w) };
+      },
+      lastTurnAt: () => lastTurnAt.current,
+      onVoice: (e, p) => { if (e === "start") hud.strip({ path: p ?? null }); lastTurnAt.current = Date.now(); },
+      mark: process.env.NODE_ENV !== "production" ? (name, t) => { (window as unknown as { __jv?: { marks: { name: string; t: number }[] } }).__jv?.marks.push({ name, t }); } : undefined
+    });
+    onEarcon = () => c.earcon();
+    conductor.current = c;
+    return c;
+  };
+
+  /** Turn Jarvis mode on, off, or mute it. Off and muted stop the microphone's tracks: nothing listens. */
+  const setMode = useCallback((next: JarvisMode, why?: "hidden" | "boot") => {
+    const prev = modeRef.current;
+    if (prev === next) return;
+    modeRef.current = next;
+    setModeState(next);
+    hud.set({ mode: next, notice: null, ...(next === "off" ? { ribbon: "", answer: "", faint: "", panels: [], steps: [], needsResume: false } : {}) });
+    if (why !== "hidden") store.set("jarvis-mode", next);
+    if (next === "on") {
+      if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
+      setMini(true);
+      setMicBlocked(false);
+      hud.set({ denied: false });
+      if (!store.get("jarvis-mode-seen")) { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: true }); }
+      const c = conductorOf();
+      void c.open().then(() => {
+        hud.strip({ detector: c.detector });
+        // the answer can start before the first click after a reload: the browser may need a gesture for audio
+        if (c.needsGesture) hud.set({ needsResume: true });
+      }).catch(() => undefined);
+      if (canCaption() && !captions.current) {
+        captions.current = new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => { if (modeRef.current === "on" && conductor.current?.state === "hearing") { hud.set({ ribbon: t }); setInterim(t); } });
+        captions.current.start();
+      }
+    } else {
+      conductor.current?.close();
+      captions.current?.stop();
+      captions.current = null;
+      if (next === "off") { stopSpeaking(); cancelTurn(); }
+      setActivity("idle");
+      setInterim("");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const setModeRef = useRef(setMode);
+  setModeRef.current = setMode;
+  /** the Panel's mic, Alt+Space, the Stage's mic: they all mean "listen" */
+  const startListening = useCallback(() => setMode("on"), [setMode]);
+
+  // the answer is on screen as soon as it exists; the core and the strip follow the real state
+  const busyNow = phase === "thinking" || phase === "acting";
+  useEffect(() => {
+    hud.set({ core: coreOf(mode, turnState, busyNow, false) });
+  }, [mode, turnState, busyNow]);
+  useEffect(() => {
+    if (phase === "thinking" || phase === "acting") return;
+    if (reply && reply !== ackText.current) hud.set({ answer: reply });
+    // a turn just ended: the 20 s of being engaged run from here
+    if (mode === "on" && (phase === "ready" || phase === "waiting" || phase === "speaking")) lastTurnAt.current = Date.now();
+  }, [phase, reply, mode]);
+
+  // the mode is remembered in this browser; after a reload the microphone opens again when it was on (permission permitting)
+  useEffect(() => {
+    if (store.get("jarvis-mode") !== "on") return;
+    const P = navigator.permissions as Permissions | undefined;
+    const go = () => setModeRef.current("on", "boot");
+    P?.query({ name: "microphone" as PermissionName }).then((st) => { if (st.state === "granted") go(); else hud.set({ needsResume: true }); }).catch(() => hud.set({ needsResume: true }));
+    return undefined;
+  }, []);
+  useEffect(() => {
+    const click = () => {
+      if (!hud.get().needsResume) return;
+      hud.set({ needsResume: false });
+      if (modeRef.current === "on") void conductor.current?.resumeAudio();
+      else if (store.get("jarvis-mode") === "on") setModeRef.current("on", "boot");
+    };
+    window.addEventListener("pointerdown", click, { capture: true });
+    window.addEventListener("keydown", click, { capture: true });
+    return () => { window.removeEventListener("pointerdown", click, { capture: true }); window.removeEventListener("keydown", click, { capture: true }); };
+  }, []);
+  // the tab goes out of sight: the microphone closes, and Jarvis says so on return
+  useEffect(() => {
+    const vis = () => {
+      if (document.hidden && modeRef.current === "on") { setModeRef.current("muted", "hidden"); hiddenMuted.current = true; }
+      else if (!document.hidden && hiddenMuted.current) {
+        hiddenMuted.current = false;
+        setModeRef.current("on", "hidden");
+        hud.set({ notice: listenLangRef.current === "ta" ? "இந்தத் தாவல் மறைந்திருந்தபோது கேட்கவில்லை. இப்போது கேட்கிறேன்." : "I stopped listening while this tab was hidden. Listening again." });
+        setTimeout(() => hud.set({ notice: null }), 5000);
+      }
+    };
+    document.addEventListener("visibilitychange", vis);
+    return () => document.removeEventListener("visibilitychange", vis);
+  }, []);
+  useEffect(() => () => { conductor.current?.close(); captions.current?.stop(); }, []);
+  // the top bar's switch
+  useEffect(() => {
+    const f = (e: Event) => {
+      const d = (e as CustomEvent<{ mode?: JarvisMode; toggle?: boolean; mute?: boolean; keyboard?: boolean }>).detail ?? {};
+      if (d.mode) setModeRef.current(d.mode);
+      else if (d.toggle) setModeRef.current(modeRef.current === "off" ? "on" : "off");
+      else if (d.mute) setModeRef.current(modeRef.current === "muted" ? "on" : modeRef.current === "on" ? "muted" : "off");
+      else if (d.keyboard) { if (!onRef.current) switchOn(); setMini(false); setFocusKey((k) => k + 1); }
+    };
+    window.addEventListener("jarvis:mode", f);
+    return () => window.removeEventListener("jarvis:mode", f);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // dev only: what the end-to-end specs read
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    (window as unknown as { __jv?: unknown }).__jv = { marks: [], micLive: () => !!conductor.current?.micLive, state: () => conductor.current?.state ?? "off", speaking, nowSaying, canContinue, path: () => voicePath(), gen: () => turnGen.current, hud: () => hud.get(), continueAnswer };
+  }, []);
 
   const switchOn = useCallback((quiet = false) => {
     setOn(true);
@@ -1276,8 +1426,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const switchOff = useCallback(() => {
     stopSpeaking();
     abortMission.current = true;
-    endRef.current(false);
-    setHandsfree(false); setNumbers(null); setAskOnce(null); setPendingB(null); setPanel(null); setChips([]); setInterim("");
+    setNumbers(null); setAskOnce(null); setPendingB(null); setPanel(null); setChips([]); setInterim("");
     setOn(false); setPhase("off");
     setReply("");
   }, []);
@@ -1285,99 +1434,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // Jarvis listens and answers in the site's language (the top bar's English / தமிழ்), changed there or by voice
   useEffect(() => { setListenLang(uiLang === "ta" ? "ta" : "en"); }, [uiLang]);
 
-  // ---- "Hi Jarvis": the ears wait for the name from the start when the Collector has allowed the microphone before
-  useEffect(() => { listenLangRef.current = listenLang; }, [listenLang]);
+  useEffect(() => { listenLangRef.current = listenLang; captions.current?.setLang(listenLang === "ta" ? "ta-IN" : "en-IN"); }, [listenLang]);
   useEffect(() => {
-    const pref = store.get("jarvis-wake") !== "0";
-    setWakeOn(pref);
     const v = store.get("jarvis-voice") as JarvisVoice | null;
     if (v && (JARVIS_VOICES as readonly string[]).includes(v)) { setJvVoice(v); setJarvisVoice(v); }
-    if (!pref) return;
-    const P = navigator.permissions as Permissions | undefined;
-    // "Hi Jarvis" must work from the first visit: the microphone is asked for at once (the browser shows its prompt), and
-    // if the browser wants a click first, on the first click anywhere
-    const tryOpen = () => { if (!ears.current) void openEars(); };
-    P?.query({ name: "microphone" as PermissionName }).then((st) => { if (st.state !== "denied") tryOpen(); else setMicBlocked(true); }).catch(tryOpen);
-    window.addEventListener("pointerdown", tryOpen, { once: true, capture: true });
-    return () => { ears.current?.stop(); ears.current = null; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const greetT = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onWake = () => {
-    if (!onRef.current) switchOn(true);
-    setConv(true);
-    setEarMode("awake");
-    lastHeardAt.current = Date.now();
-    setPhase("ready");
-    earcon("open");
-    // the name alone: a short "Yes, I'm listening" (said once the Collector has stopped, never over a question)
-    if (greetT.current) clearTimeout(greetT.current);
-    greetT.current = setTimeout(() => {
-      if (ears.current?.busy || Date.now() - lastHeardAt.current < 1200 || lastUserSpeech.current && Date.now() - lastUserSpeech.current < 2500) return;
-      const l = listenLangRef.current, t = line("wake", l);
-      setReply(t); showAlt(t, l);
-      if (outMode === "voice") speak(t, l === "ta" ? "ta-IN" : "en-IN", undefined, rate, voiceName);
-    }, 1500);
-  };
-  const onWakeRef = useRef(onWake);
-  onWakeRef.current = onWake;
-  const BYE = /^(?:ok(?:ay)?[,\s]+)?(?:bye|good ?bye|bye bye|that'?s all|that is all|stop listening|go to sleep|thank you|thanks)(?:[,\s]+jarvis)?[.!]*$|^(?:போதும்|நன்றி|பை|சரி போதும்)(?:\s*ஜார்விஸ்)?[.!]*$/i;
-  const onHeard = (h: Heard) => {
-    if (greetT.current) { clearTimeout(greetT.current); greetT.current = null; }
-    lastHeardAt.current = Date.now();
-    const said = h.text.trim();
-    // Jarvis's own greeting, heard back through the speakers, is not a question
-    if (lastBot.current && said.toLowerCase().replace(/[^\p{L} ]/gu, "") === lastBot.current.toLowerCase().replace(/[^\p{L} ]/gu, "")) return;
-    if (BYE.test(said)) {
-      pushMsg({ who: "you", text: said, lang: h.lang, via: "voice" });
-      const t = h.lang === "ta" ? "சரி, தேவைப்படும்போது அழையுங்கள்." : "Okay. Call me when you need me.";
-      lastBot.current = t; setReply(t);
-      if (outMode === "voice") speak(t, h.lang === "ta" ? "ta-IN" : "en-IN", undefined, rate, voiceName);
-      endRef.current(true);
-      return;
-    }
-    if (!convRef.current) { setConv(true); setEarMode("awake"); }
-    // said while Jarvis is still working on the last one: answered next, not lost
-    if (busyRef.current) { queued.current = said; return; }
-    via.current = "voice";
-    void handleRef.current(said, 0.95);
-  };
-  const queued = useRef<string | null>(null);
-  const busyRef = useRef(false);
-  busyRef.current = phase === "thinking" || phase === "acting";
-  useEffect(() => {
-    if (busyRef.current || !queued.current) return;
-    const q = queued.current; queued.current = null;
-    via.current = "voice";
-    void handleRef.current(q, 0.95);
-  }, [phase]);
-  const onHeardRef = useRef(onHeard);
-  onHeardRef.current = onHeard;
-
-  // while Jarvis thinks or speaks the ears are muted (it never answers itself); after it, a minute of quiet ends the conversation
-  const IDLE = 60;
-  useEffect(() => {
-    const e = ears.current;
-    if (!e || !conv) { setIdleLeft(null); return; }
-    const busy = phase === "thinking" || phase === "acting" || phase === "speaking" || narrating;
-    e.mute(busy);
-    if (busy) { setIdleLeft(null); return; }
-    let left = IDLE;
-    setIdleLeft(left);
-    const t = setInterval(() => {
-      left = Date.now() - lastHeardAt.current < 1500 ? IDLE : left - 1;
-      setIdleLeft(left);
-      if (left <= 0) { clearInterval(t); endRef.current(true); }
-    }, 1000);
-    return () => clearInterval(t);
-  }, [conv, phase, narrating]);
+  }, []);
 
   // the panel slides in over the page at the right, as the chat always did (the dashboard keeps its size); Jarvis's
   // screens open beside it
   useEffect(() => {
     const w = !on ? 0 : window.innerWidth <= 700 ? 0 : window.innerWidth <= 1100 ? 380 : 480;
     document.documentElement.style.setProperty("--jv-w-open", `${w}px`);
-    window.dispatchEvent(new CustomEvent("jarvis:state", { detail: { open: on, width: 0, conv, resting: earMode === "asleep", mic: micBlocked ? "blocked" : earMode === "off" ? "off" : "on" } }));
-  }, [on, conv, earMode, micBlocked]);
+    window.dispatchEvent(new CustomEvent("jarvis:state", { detail: { open: on, width: 0, conv, resting: false, mic: micBlocked ? "blocked" : conv ? "on" : "off" } }));
+  }, [on, conv, micBlocked]);
   // the top bar's Jarvis button and Ctrl+K: open (to type), close
   useEffect(() => {
     const t = (e: Event) => {
@@ -1386,18 +1455,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (!onRef.current) switchOn(!d.focus);
       setMini(false);
       if (d.focus) setFocusKey((k) => k + 1);
-      if (d.talk) void startListening();
+      if (d.talk) startListening();
     };
     window.addEventListener("jarvis:toggle", t);
     return () => window.removeEventListener("jarvis:toggle", t);
   }, [switchOn, switchOff, startListening]);
-  const toggleWake = () => {
-    const next = !wakeOn;
-    store.set("jarvis-wake", next ? "1" : "0");
-    setWakeBlocked(false);
-    setWakeOn(next);
-    if (next) void openEars(); else { endRef.current(false); ears.current?.stop(); ears.current = null; setEarMode("off"); }
-  };
+  const hiddenMuted = useRef(false);
   const nextVoice = () => {
     const v = JARVIS_VOICES[(JARVIS_VOICES.indexOf(jvVoice) + 1) % JARVIS_VOICES.length];
     setJvVoice(v); setJarvisVoice(v); store.set("jarvis-voice", v);
@@ -1432,18 +1495,26 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (e.altKey && e.code === "Space") {
         e.preventDefault();
         if (e.repeat) return;
-        void startListening();
+        startListening();
         return;
       }
+      // Ctrl+Shift+J: Jarvis mode on and off. Ctrl+Shift+M: mute, one keystroke away
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "j") { e.preventDefault(); setMode(modeRef.current === "off" ? "on" : "off"); return; }
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "m") { e.preventDefault(); if (modeRef.current !== "off") setMode(modeRef.current === "muted" ? "on" : "muted"); return; }
       if (!onRef.current) return;
-      if (e.key === "Escape" && (window.speechSynthesis?.speaking || phase === "acting")) { stopSpeaking(); abortMission.current = true; }
+      // Esc interrupts whatever the voice path: the mouth and the turn know, the browser's speech object does not
+      if (e.key === "Escape" && (speaking() || phase === "acting" || phase === "thinking" || narrating)) {
+        stopSpeaking(); abortMission.current = true;
+        conductor.current?.stop();
+        if (phase === "thinking" || phase === "acting") cancelTurn(); else { setNarrating(false); setReading(null); setPhase("ready"); }
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing()) { e.preventDefault(); void run([{ a: "undo", n: 1 }], listenLang, "Ctrl+Z", "rules"); }
     };
     const up = () => undefined;
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
-  }, [switchOn, switchOff, startListening, phase, listenLang]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [switchOn, switchOff, startListening, phase, listenLang, narrating]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // the numbered badges follow the page while shown
   useEffect(() => {
@@ -1510,7 +1581,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   if (!mounted) return null;
   const ta = listenLang === "ta";
   const ear: Ear = micBlocked && !conv ? "blocked" : phase === "thinking" || phase === "acting" ? "thinking" : phase === "speaking" || narrating ? "speaking"
-    : conv ? (activity === "speech" ? "hearing" : activity === "reading" ? "reading" : "listening") : earMode === "asleep" ? "resting" : "off";
+    : conv ? (activity === "speech" ? "hearing" : activity === "reading" ? "reading" : "listening") : "off";
   const brainLine = brain && phase !== "thinking" ? (brain.by === "ai" && !brain.model ? `${ta ? "தரவிலிருந்து நேரடியாக" : "Answered straight from the data"}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}`
     : brain.by === "ai" ? `${ta ? "AI புரிந்தது" : "Understood by AI"}${brain.model ? ` · ${brain.model.replace(/^.*\//, "").replace(/#\d+$/, "")}` : ""}${brain.ms ? ` · ${(brain.ms / 1000).toFixed(1)} s` : ""}`
     : brain.by === "instant" ? (ta ? "உடனடி கட்டளை · AI தேவையில்லை" : "Done at once · no AI needed") : (ta ? "AI கிடைக்கவில்லை: உள்ளமைந்த விதிகள்" : "AI unreachable: built-in rules answered")) : null;
@@ -1556,7 +1627,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   ) : null;
   const menu = (
     <>
-      <button onClick={toggleWake}>{ta ? "\"ஹாய் ஜார்விஸ்\" என்று அழைத்தால் எழும்" : "Wake on \"Hi Jarvis\""}<em>{wakeBlocked || micBlocked ? (ta ? "மைக் தடை" : "mic blocked") : wakeOn ? (ta ? "இயக்கம்" : "on") : (ta ? "அணைப்பு" : "off")}</em></button>
+      <button onClick={() => setMode(mode === "off" ? "on" : "off")}>{ta ? "ஜார்விஸ் பயன்முறை" : "Jarvis mode"}<em>{micBlocked ? (ta ? "மைக் தடை" : "mic blocked") : mode === "off" ? (ta ? "அணைப்பு" : "off") : mode === "muted" ? (ta ? "மௌனம்" : "muted") : (ta ? "இயக்கம்" : "on")}</em></button>
       <button onClick={() => setOutMode(outMode === "voice" ? "visual" : outMode === "visual" ? "quiet" : "voice")}>{ta ? "பதில்கள்" : "Replies"}<em>{outMode === "voice" ? (ta ? "குரலில்" : "spoken") : outMode === "visual" ? (ta ? "எழுத்தில்" : "on screen only") : (ta ? "அமைதி" : "quiet")}</em></button>
       {(["ta", "en"] as const).map((lg) => {
         const v = voiceInfo(lg);
@@ -1591,11 +1662,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {/* the page behind the panel dims a little, as behind the chat; a click there closes the panel */}
       {on && !stage && !mini && <div className="jv-veil" onClick={switchOff} aria-hidden="true" />}
       {on && (
-        <Panel lang={listenLang} ear={ear} mini={mini} onExpand={() => setMini(false)} conv={conv} idleLeft={idleLeft} level={0} thread={thread} geo={geo ?? host.c.geo}
+        <Panel lang={listenLang} ear={ear} mini={mini} onExpand={() => setMini(false)} conv={conv} idleLeft={null} level={0} thread={thread} geo={geo ?? host.c.geo}
           busyLine={phase === "thinking" ? reply || (ta ? "யோசிக்கிறேன்…" : "Thinking…") : null} brain={brainLine} focusKey={focusKey} orbRef={orbRef}
           onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }}
-          onMic={() => { if (phase === "speaking" || narrating) { stopNarration(); stopSpeaking(); setPhase("ready"); } else if (conv) endConversation(false); else void startListening(); }}
-          onEnd={() => endConversation(false)} onClose={switchOff}
+          onMic={() => { if (phase === "speaking" || narrating) { stopNarration(); stopSpeaking(); setPhase("ready"); } else setMode(conv ? "off" : "on"); }}
+          onEnd={() => setMode("off")} onClose={switchOff}
           onOpenScreen={(mm) => mm.screen && void directStage(mm.screen.recipe as StageDocT["recipe"], mm.screen.slots, mm.screen.title)}
           onCardAsk={(q) => { via.current = "typed"; void handle(q, 0.95); }} onCardAction={cardAction} menu={menu}>
           {waiting}
@@ -1641,7 +1712,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           )}
           {panel === "help" && (
             <div className="body help">
-              <p className="muted">{ta ? "\"ஹாய் ஜார்விஸ்\" என்று சொல்லிவிட்டு சாதாரணமாகப் பேசுங்கள்: AI புரிந்துகொள்ளும். உதாரணங்கள்:" : "Say \"Hi Jarvis\", then just talk normally: the AI understands. For example:"}</p>
+              <p className="muted">{ta ? "ஜார்விஸ் பயன்முறையை இயக்கி சாதாரணமாகப் பேசுங்கள். உதாரணங்கள்:" : "Turn on Jarvis mode and just talk. For example:"}</p>
               {(ta ? ["அம்பத்தூர்ல இந்த வாரம் என்ன நடக்குது காட்டு", "Adyar la police complaints mattum kaatu", "அவசரமானவை மட்டும்", "செம்பரம்பாக்கம் ஏரியில் எவ்வளவு தண்ணீர் இருக்கு", "முதல் சம்பவத்தைத் திற", "நாளைக்கு கனமழை, தயார் பண்ணு", "பழையபடி மாத்து"]
                 : ["Show me the severe cases", "Read today's news", "Compare Adyar and Ambattur this week", "Top 3 areas with the most rainfall", "Department-wise performance",
                   "Make me a flooding dashboard for this week", "Schools within 1 km of flooding in Adyar", "How has dengue moved this quarter?",

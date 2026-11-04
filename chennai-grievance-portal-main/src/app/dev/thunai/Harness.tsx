@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import Thunai, { type Snap, type ThunaiHost } from "@/components/collector/app/thunai/Thunai";
+import JarvisSwitch from "@/components/collector/app/thunai/JarvisSwitch";
 import type { Console } from "@/components/collector/app/CollectorApp";
 import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 
@@ -56,6 +57,7 @@ export default function Harness() {
   const host: ThunaiHost = {
     planUrl: "/api/dev/thunai/plan",
     agentUrl: "/api/dev/thunai/agent",
+    hearUrl: "/api/dev/thunai/hear",
     draftUrl: (id) => `/api/dev/thunai/draft?id=${encodeURIComponent(id)}`,
     loadGeo: () => fetch("/api/dev/thunai/tool", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tool: "map_geo", args: {} }) })
       .then((r) => (r.ok ? r.json() : null)).then((j) => j?.result?.data ?? null),
@@ -77,7 +79,10 @@ export default function Harness() {
   const box: React.CSSProperties = { border: "1px solid #ccd", borderRadius: 10, padding: 12, background: theme === "dark" ? "#16213a" : "#fff" };
   return (
     <main style={{ minHeight: "100vh", padding: 20, fontFamily: "Inter, system-ui", background: theme === "dark" ? "#0a1020" : "#f6f4ee", color: theme === "dark" ? "#e8ecf5" : "#14213d" }}>
-      <h1 style={{ fontSize: 18, margin: "0 0 10px" }}>Thunai test console (dev only, made-up numbers)</h1>
+      <header className="top" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <h1 style={{ fontSize: 18, margin: 0, flex: 1 }}>Jarvis test console (dev only, made-up numbers)</h1>
+        <JarvisSwitch />
+      </header>
       <nav className="ptabs" role="tablist" aria-label="Pages" style={{ display: "flex", gap: 6, marginBottom: 10 }}>
         {PAGES.map((p) => <button key={p} data-key={p} role="tab" aria-selected={page === p} onClick={() => setPage(p)} style={{ fontWeight: page === p ? 700 : 400 }}>{p}</button>)}
       </nav>

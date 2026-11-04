@@ -1,0 +1,295 @@
+{
+ "at": "2026-11-04T03:00:19.721Z",
+ "summary": {
+  "all": {
+   "n": 20,
+   "right": 11,
+   "deferred": 0,
+   "wrong": 9,
+   "capacity": 0,
+   "pct": {
+    "p": 55,
+    "lo": 34.2,
+    "hi": 74.2
+   }
+  },
+  "en": {
+   "n": 8,
+   "right": 5,
+   "deferred": 0,
+   "wrong": 3,
+   "capacity": 0,
+   "pct": {
+    "p": 62.5,
+    "lo": 30.6,
+    "hi": 86.3
+   }
+  },
+  "ta": {
+   "n": 7,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 4,
+   "capacity": 0,
+   "pct": {
+    "p": 42.9,
+    "lo": 15.8,
+    "hi": 75
+   }
+  },
+  "tanglish": {
+   "n": 5,
+   "right": 3,
+   "deferred": 0,
+   "wrong": 2,
+   "capacity": 0,
+   "pct": {
+    "p": 60,
+    "lo": 23.1,
+    "hi": 88.2
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "u060",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1034,
+   "note": null
+  },
+  {
+   "id": "u041",
+   "lang": "en",
+   "gold": "complete",
+   "got": "refuse",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 730,
+   "note": null
+  },
+  {
+   "id": "u016",
+   "lang": "en",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 2344,
+   "note": null
+  },
+  {
+   "id": "u015",
+   "lang": "en",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1104,
+   "note": null
+  },
+  {
+   "id": "u046",
+   "lang": "en",
+   "gold": "insight",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b#2",
+   "ms": 3754,
+   "note": "checker"
+  },
+  {
+   "id": "u014",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 2620,
+   "note": null
+  },
+  {
+   "id": "u045",
+   "lang": "en",
+   "gold": "compare",
+   "got": "none",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1685,
+   "note": "checker"
+  },
+  {
+   "id": "u058",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1077,
+   "note": null
+  },
+  {
+   "id": "u102",
+   "lang": "ta",
+   "gold": "general",
+   "got": "answer",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1590,
+   "note": null
+  },
+  {
+   "id": "u075",
+   "lang": "ta",
+   "gold": "save",
+   "got": "save",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1845,
+   "note": null
+  },
+  {
+   "id": "u071",
+   "lang": "ta",
+   "gold": "nearby",
+   "got": "nearby",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1008,
+   "note": null
+  },
+  {
+   "id": "u088",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 1002,
+   "note": null
+  },
+  {
+   "id": "u090",
+   "lang": "ta",
+   "gold": "map",
+   "got": "readings",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1100,
+   "note": null
+  },
+  {
+   "id": "u073",
+   "lang": "ta",
+   "gold": "prices",
+   "got": "answer",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 9504,
+   "note": null
+  },
+  {
+   "id": "u093",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "clarify",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 2031,
+   "note": null
+  },
+  {
+   "id": "u142",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 881,
+   "note": null
+  },
+  {
+   "id": "u119",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "nearby",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "openai/gpt-oss-20b",
+   "ms": 2054,
+   "note": null
+  },
+  {
+   "id": "u123",
+   "lang": "tanglish",
+   "gold": "nearby",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b",
+   "ms": 941,
+   "note": null
+  },
+  {
+   "id": "u133",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1386,
+   "note": null
+  },
+  {
+   "id": "u114",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "capacity": false,
+   "model": "qwen/qwen3.8-27b#2",
+   "ms": 1611,
+   "note": null
+  }
+ ]
+}

@@ -33,7 +33,7 @@ export const LIMITS: Record<string, Limits> = {
   "gemini/gemini-3.6-flash": { rpm: 5, rpd: 20, tpm: 250_000 },
   "gemini/gemini-3.8-flash": { rpm: 5, rpd: 20, tpm: 250_000 },
   "gemini/gemini-3.5-flash": { rpm: 5, rpd: 20, tpm: 250_000 },
-  "gemini/gemini-3.5-transcribe": { rpm: 10, rpd: 500 },
+  "gemini/gemini-3.5-transcribe": { rpm: 5, rpd: 500 }, // 10 a minute drew 429s on the Phase 0 probe; one every 13 s drew none
   "gemini/gemini-3.8-flash-lite-tts": { rpm: 3, rpd: 100 },
   "gemini/gemini-3.8-flash-tts": { rpm: 3, rpd: 100 }
 };

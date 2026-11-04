@@ -103,6 +103,12 @@ export function offTopic(text: string, w: World): boolean {
   return GENERAL.test(raw) || SUBJECTS.test(raw);
 }
 
+/** Does the sentence name a zone, a place, a topic or a department of the district? (the address gate's "district noun") */
+export function districtNounIn(text: string, w: World): boolean {
+  const t = norm(text), raw = text.toLowerCase();
+  return zonesIn(t, w).length > 0 || !!catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[஀-௿]/.test(d) && raw.includes(d));
+}
+
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World): Quick | null {
   const t = norm(text);

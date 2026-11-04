@@ -1,24 +1,25 @@
 /**
- * Jarvis's voice on the server: a reply becomes speech in a woman's voice, in Tamil or English: Microsoft Azure's neural
- * voices when AZURE_SPEECH_KEY and AZURE_SPEECH_REGION are set (ta-IN Pallavi, en-IN Neerja; a free tier of 500,000
- * characters a month), else Gemini's speech models (free tier: 10 a day per model). Three models share the load: each takes a few quick calls a
- * minute on the free tier, so one that refuses (429) rests for a minute and the next speaks. What was said once is kept
- * (memory, 300 lines), so a repeated line costs nothing. When no model can speak, 503: the console then uses the
- * browser's own voice, or shows the words.
+ * Jarvis's voice on the server, the second rung of the voice ladder (mouth.ts; Edge's natural voices speak first and never
+ * come here). Gemini's speech models, under the ledger's cap of 3 a minute: a model that refuses (429) rests and the next
+ * speaks. What was said once is kept (memory, 300 lines), so a repeated line costs nothing. When no model can speak, 503: the
+ * console then uses the browser's own voice, or shows the words. The Azure branch runs only behind AZURE_SPEECH_KEY and
+ * AZURE_SPEECH_REGION (ta-IN Pallavi, en-IN Neerja); no such key exists yet, so that branch has never run: Not verified.
+ * TTS_PROVIDER: auto (the default, and what the older value "browser" now means), azure or gemini.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { JARVIS_VOICES } from "@/lib/jarvis/voices";
+import { ledger } from "@/lib/thunai/ledger";
 
 export const dynamic = "force-dynamic";
 
-const MODELS = (process.env.JARVIS_TTS_MODELS || "gemini-3.8-flash-lite-tts,gemini-3.8-flash-tts,gemini-2.5-flash-preview-tts").split(",").map((x) => x.trim()).filter(Boolean);
+const MODELS = (process.env.JARVIS_TTS_MODELS || "gemini-3.8-flash-lite-tts,gemini-3.8-flash-tts").split(",").map((x) => x.trim()).filter(Boolean);
+const provider = () => { const p = (process.env.TTS_PROVIDER ?? "auto").trim().toLowerCase(); return p === "azure" || p === "gemini" ? p : "auto"; };
 const Body = z.object({ text: z.string().trim().min(1).max(700), lang: z.enum(["en", "ta"]), voice: z.enum(JARVIS_VOICES).optional() });
 
 const cache = new Map<string, Buffer>();
-const resting = new Map<string, number>();
 
 /** 16-bit PCM (what Gemini sends as audio/L16) wrapped as a WAV the browser can play */
 function wav(pcm: Buffer, rate: number): Buffer {
@@ -32,7 +33,7 @@ function wav(pcm: Buffer, rate: number): Buffer {
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 /** Azure: one SSML request, a 24 kHz WAV back */
 async function azure(text: string, lang: "en" | "ta"): Promise<Buffer> {
-  const region = process.env.AZURE_SPEECH_REGION!, v = lang === "ta" ? process.env.JARVIS_AZURE_TA || "ta-IN-PallaviNeural" : process.env.JARVIS_AZURE_EN || "en-IN-NeerjaNeural";
+  const region = process.env.AZURE_SPEECH_REGION!, v = lang === "ta" ? process.env.JARVIS_AZURE_TA || "ta-IN-PallaviNeural" : process.env.JARVIS_AZURE_EN || "en-IN-NeerjaNeural"; // Not verified: no key has existed
   const r = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
     method: "POST", signal: AbortSignal.timeout(12_000),
     headers: { "Ocp-Apim-Subscription-Key": process.env.AZURE_SPEECH_KEY!, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm", "User-Agent": "district-iq" },
@@ -53,7 +54,7 @@ async function speak(model: string, text: string, voice: string): Promise<Buffer
     // a daily cap rests the model until it resets (its retry delay), a per-minute one for a minute
     const body = await r.text();
     const secs = Number(/"retryDelay":\s*"(\d+)s"/.exec(body)?.[1] ?? 60);
-    resting.set(model, Date.now() + Math.max(60, secs) * 1000);
+    ledger().cool("gemini", model, Math.max(60, secs) * 1000);
     throw new Error("busy");
   }
   if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 120)}`);
@@ -69,7 +70,7 @@ async function speak(model: string, text: string, voice: string): Promise<Buffer
 export async function POST(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
-  const az = !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION);
+  const az = provider() !== "gemini" && !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION);
   if (!process.env.GEMINI_API_KEY && !az) return NextResponse.json({ error: "no-tts" }, { status: 503 });
   if (!checkRateLimit(`jarvis-say:${s.email}`, 60, 60).allowed) return NextResponse.json({ error: "busy" }, { status: 429 });
   const b = Body.safeParse(await req.json().catch(() => null));
@@ -79,12 +80,11 @@ export async function POST(req: NextRequest) {
   const key = `${voice}|${lang}|${text}`;
   let audio = cache.get(key);
   if (!audio && az) { try { audio = await azure(text, lang); } catch (e) { console.warn("[jarvis] azure could not speak:", (e as Error).message); } }
-  if (!audio && process.env.GEMINI_API_KEY) {
-    const now = Date.now();
+  if (!audio && process.env.GEMINI_API_KEY && provider() !== "azure") {
     // the models at their cap are not asked at all (each refusal cost the Collector a second or two)
-    const order = MODELS.filter((m) => (resting.get(m) ?? 0) <= now);
-    for (const m of order) {
-      try { audio = await speak(m, text, voice); break; } catch (e) { if ((e as Error).message !== "busy") console.warn(`[jarvis] ${m} could not speak:`, (e as Error).message); }
+    for (const m of MODELS) {
+      if (!ledger().room("gemini", m).ok) continue;
+      try { ledger().record("gemini", m, { lane: "tts" }); audio = await speak(m, text, voice); break; } catch (e) { if ((e as Error).message !== "busy") console.warn(`[jarvis] ${m} could not speak:`, (e as Error).message); }
     }
   }
   if (!audio) return NextResponse.json({ error: "busy" }, { status: 503 });
