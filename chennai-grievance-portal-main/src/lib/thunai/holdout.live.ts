@@ -6,10 +6,13 @@
  * Results go to eval/holdout/results/<HOLDOUT_TAG>-<mode>.json. Run with:
  *   set HOLDOUT=rules&& npx vitest run --config vitest.live.config.ts src/lib/thunai/holdout.live.ts
  */
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { expect, it } from "vitest";
+import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
+import { callLlm } from "./llm";
 import { AgentPlanLenient, AgentPlanSchema, runThunaiAgent, type AgentResult } from "./agent";
 import { START, WORLD } from "./fixture";
 import { byLang, goldIntent, type HoldoutItem, type Scored } from "./holdout";
@@ -28,8 +31,17 @@ import { resolveFrame } from "./frame";
 import type { StageContext } from "./stage";
 
 const world = { ...WORLD, ...referenceWorld(), zones: WORLD.zones.map((z) => ({ ...z, ta: ZONE_TA_NAME[z.n] ?? null })), depts: WORLD.depts };
-const DIR = path.join(process.cwd(), "eval", "holdout");
+// HOLDOUT_DIR=holdout2 is the set frozen on 4 Nov 2026 after eval/holdout had been read; a run refuses it if a hash has changed
+const SET_DIR = process.env.HOLDOUT_DIR ?? "holdout";
+const DIR = path.join(process.cwd(), "eval", SET_DIR);
+if (SET_DIR !== "holdout") for (const line of fs.readFileSync(path.join(DIR, "HASHES.txt"), "utf8").trim().split("\n")) {
+  const [hash, rel] = line.split(" *");
+  const now = crypto.createHash("sha256").update(fs.readFileSync(path.join(process.cwd(), rel))).digest("hex");
+  if (now !== hash) throw new Error(`${rel} no longer matches its frozen hash`);
+}
 const items = () => fs.readFileSync(path.join(DIR, "understanding.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as HoldoutItem);
+/** right and wrong per lane: what a report may look at without opening the rows of a set still held out */
+const byLane = (rows: (Scored & { lane: string })[]) => Object.fromEntries([...new Set(rows.map((r) => r.lane))].map((l) => { const x = rows.filter((r) => r.lane === l); return [l, { n: x.length, right: x.filter((r) => r.ok).length }]; }));
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const TAG = process.env.HOLDOUT_TAG || "baseline";
 const write = (name: string, data: unknown) => { fs.mkdirSync(path.join(DIR, "results"), { recursive: true }); fs.writeFileSync(path.join(DIR, "results", `${TAG}-${name}.json`), JSON.stringify(data, null, 1)); };
@@ -117,7 +129,8 @@ it.runIf(mode === "planner")("the planner on the frozen sample", async () => {
 // ------------------------------------------------------------------ the final pipeline --
 
 const FINAL = process.env.HOLDOUT_TAG === "final" || process.env.HOLDOUT_FINAL === "1";
-const MATCH: Record<string, string[]> = { ...SAME, insight: ["insight", "why", "ranking", "trend", "answer"], complete: ["complete"], general: ["general"], refuse: ["refuse"], followup: [] };
+// a general question is answered as chat, which is what its lane is for; the lane's "cannot reason" line is not an answer (see planner2)
+const MATCH: Record<string, string[]> = { ...SAME, insight: ["insight", "why", "ranking", "trend", "answer"], complete: ["complete"], general: ["general", "chat"], refuse: ["refuse"], followup: [] };
 const hits = (gold: string, got: string) => got === gold || (MATCH[gold] ?? []).includes(got);
 
 it.runIf(mode === "rules2")("rules and router on all 150, the shipped pipeline: strict, and with a correct hand-off to the planner", () => {
@@ -131,8 +144,8 @@ it.runIf(mode === "rules2")("rules and router on all 150, the shipped pipeline: 
   const strict = byLang(rows);
   const lenient = byLang(rows.map((r) => ({ ...r, ok: r.ok || r.routed })));
   write("rules", { at: new Date().toISOString(), note: "strict: code alone names the intent. with hand-off: or it goes to the planner with a prompt bundle that can serve the intent", strict, withHandOff: lenient, rows });
-  console.log(JSON.stringify({ strict: strict.all, handoff: lenient.all, en: lenient.en, ta: lenient.ta, tanglish: lenient.tanglish }));
-  expect(rows.length).toBe(150);
+  console.log(JSON.stringify({ strict: strict.all, handoff: lenient.all, en: lenient.en, ta: lenient.ta, tanglish: lenient.tanglish, byLane: byLane(rows.map((r) => ({ ...r, ok: r.ok || r.routed }))) }));
+  expect(rows.length).toBe(items().length);
 });
 
 it.runIf(mode === "ambient")("the address gate on 40 side conversations and 40 unnamed commands", () => {
@@ -149,6 +162,32 @@ it.runIf(mode === "ambient")("the address gate on 40 side conversations and 40 u
   write("ambient", { at: new Date().toISOString(), summary, rows: out });
   console.log(JSON.stringify(summary));
   expect(summary.sideLevelBC).toBe(0);
+});
+
+// a trial, not the shipped gate: would a small model, asked only about what the rules would already act on, cut the false acts? It can
+// only say no, so it can never let in more than the rules do, and an ambient sentence the rules ignore never reaches it
+const GATE_SYSTEM = `People are talking in the office of the Chennai District Collector, where a voice assistant runs a civic console (incidents, complaints, news, rain, reservoirs, air, prices, departments). One sentence was overheard, in English, Tamil or Tanglish, with no earlier context. Was it a request for the console to show or do something (yes), or people talking to each other, about their day, or a remark about work (no)? Reply as JSON.`;
+const GateSchema = z.object({ forConsole: z.boolean() });
+
+it.runIf(mode === "gatemodel")("a small model as a veto on the address gate", async () => {
+  const rows = fs.readFileSync(path.join(DIR, "ambient.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as { id: string; text: string; lang: string; kind: "side" | "command" });
+  const gap = Number(process.env.LIVE_GAP_MS ?? 2_000);
+  const out: { id: string; kind: string; lang: string; rules: boolean; model: boolean | null; tokens: number; ms: number }[] = [];
+  for (const x of rows) {
+    const q = quickScreen(x.text, world);
+    const u = q ? null : understand(x.text, START, world, { speechConf: 0.95 });
+    const g = addressed({ text: x.text, lastTurnAt: null, now: Date.now(), rulesSure: !!q || (u?.kind === "do" && u.confidence >= 0.85), districtNoun: districtNounIn(x.text, world) });
+    if (!g.act) { out.push({ id: x.id, kind: x.kind, lang: x.lang, rules: false, model: null, tokens: 0, ms: 0 }); continue; }
+    const t0 = Date.now();
+    const r = await callLlm({ name: "jarvis_gate", system: GATE_SYSTEM, prompt: JSON.stringify(x.text), schema: GateSchema, maxOutputTokens: 20, user: "holdout", lane: "eval", until: Date.now() + 6000, hedge: false });
+    out.push({ id: x.id, kind: x.kind, lang: x.lang, rules: true, model: r ? r.object.forConsole : null, tokens: r?.tokens ?? 0, ms: Date.now() - t0 });
+    await sleep(gap);
+  }
+  const side = out.filter((x) => x.kind === "side"), cmd = out.filter((x) => x.kind === "command"), asked = out.filter((x) => x.rules);
+  const after = (x: (typeof out)[number]) => x.rules && x.model !== false;
+  const summary = { sideN: side.length, commandsN: cmd.length, rules: { sideFalseActs: side.filter((x) => x.rules).length, commandsAccepted: cmd.filter((x) => x.rules).length }, withVeto: { sideFalseActs: side.filter(after).length, commandsAccepted: cmd.filter(after).length }, asked: asked.length, noAnswer: asked.filter((x) => x.model == null).length, tokensPerCall: asked.length ? Math.round(asked.reduce((a, x) => a + x.tokens, 0) / asked.length) : 0, msP50: asked.map((x) => x.ms).sort((a, b) => a - b)[Math.floor(asked.length / 2)] ?? 0 };
+  write("gatemodel", { at: new Date().toISOString(), summary, rows: out });
+  console.log(JSON.stringify(summary));
 });
 
 it.runIf(mode === "followups")("the 20 follow-ups, resolved in code from the earlier sentence", () => {
@@ -184,8 +223,9 @@ it.runIf(mode === "followups")("the 20 follow-ups, resolved in code from the ear
 });
 
 it.runIf(mode === "planner2")("the shipped planner, through planRound, on the frozen sample", async () => {
-  const which = (process.env.HOLDOUT_SET ?? "final40") as "baseline20" | "final40";
-  const ids = JSON.parse(fs.readFileSync(path.join(DIR, "planner40.json"), "utf8"))[which] as string[];
+  const which = process.env.HOLDOUT_SET ?? "final40";
+  const sample = SET_DIR === "holdout" ? "planner40.json" : "live60.json";
+  const ids = JSON.parse(fs.readFileSync(path.join(DIR, sample), "utf8"))[which] as string[];
   const all = items();
   const set = ids.map((id) => all.find((x) => x.id === id)!);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
@@ -209,15 +249,16 @@ it.runIf(mode === "planner2")("the shipped planner, through planRound, on the fr
       }
     } catch (e) { failed = true; console.warn(x.id, (e as Error).message.slice(0, 160)); }
     const capacity = failed || !r || (r.kind === "none" && r.note === "no-model");
-    const got = r ? resultIntent(r) : "error";
+    const got = r ? (r.note === "general-fallback" ? "general-fallback" : resultIntent(r)) : "error";
     rows.push({ id: x.id, lang: x.lang, gold, got, ok: !capacity && hits(gold, got), deferred: false, capacity, model: r?.model ?? null, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null });
-    console.log(x.id, gold, "->", got, lane, capacity ? "(capacity)" : "", tokens, "tokens", calls, "calls");
+    if (SET_DIR === "holdout") console.log(x.id, gold, "->", got, lane, capacity ? "(capacity)" : "", tokens, "tokens", calls, "calls");
     if (calls > 0) await sleep(gap);
   }
   const summary = byLang(rows);
   const used = rows.filter((x) => x.calls > 0);
   const avg = (k: "tokens" | "calls") => (used.length ? Math.round((used.reduce((a, x) => a + x[k], 0) / used.length) * 10) / 10 : 0);
-  write(`planner-${which}`, { at: new Date().toISOString(), summary, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
-  console.log(JSON.stringify({ summary: summary.all, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
+  const tokensAll = rows.reduce((a, x) => a + x.tokens, 0);
+  write(`planner-${which}`, { at: new Date().toISOString(), summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length, rows });
+  console.log(JSON.stringify({ summary, byLane: byLane(rows), tokensAll, tokensPerModelTurn: avg("tokens"), callsPerModelTurn: avg("calls"), modelTurns: used.length }));
 });
 void FINAL;
