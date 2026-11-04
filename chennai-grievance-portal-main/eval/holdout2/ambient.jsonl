@@ -1,0 +1,100 @@
+{"id":"b001","text":"Machi, traffic near Kathipara junction was simply too heavy this morning.","lang":"en","kind":"side"}
+{"id":"b002","text":"Did you see how heavily it rained in Velachery yesterday evening?","lang":"en","kind":"side"}
+{"id":"b003","text":"The Adyar file is right there on your table, please check it.","lang":"en","kind":"side"}
+{"id":"b004","text":"Collector sir wants the progress report on his desk by five o'clock.","lang":"en","kind":"side"}
+{"id":"b005","text":"Show him the Ambattur figures later when he comes back from lunch.","lang":"en","kind":"side"}
+{"id":"b006","text":"We should definitely compare our notes after we finish lunch.","lang":"en","kind":"side"}
+{"id":"b007","text":"Who is bringing the chicken biryani from that shop near Marina today?","lang":"en","kind":"side"}
+{"id":"b008","text":"My cousin sent a WhatsApp saying he got transferred to Madurai.","lang":"en","kind":"side"}
+{"id":"b009","text":"Did you hear that Sharma in Accounts applied for casual leave till Friday?","lang":"en","kind":"side"}
+{"id":"b010","text":"It is getting so hot and humid, even the ceiling fan is not helping.","lang":"en","kind":"side"}
+{"id":"b011","text":"Are we watching the IPL match at your place this weekend or what?","lang":"en","kind":"side"}
+{"id":"b012","text":"That auto driver charged me two hundred rupees just from T. Nagar bus stand.","lang":"en","kind":"side"}
+{"id":"b013","text":"Keep some filter coffee ready before the Joint Commissioner enters the room.","lang":"en","kind":"side"}
+{"id":"b014","text":"Where did you keep the extra stapler pins I bought yesterday?","lang":"en","kind":"side"}
+{"id":"b015","text":"My son has exam tomorrow, so I need to leave a little early today.","lang":"en","kind":"side"}
+{"id":"b016","text":"Did you check the status of that RTI application from Anna Nagar?","lang":"en","kind":"side"}
+{"id":"b017","text":"The printer on the second floor is jammed again with thick paper.","lang":"en","kind":"side"}
+{"id":"b018","text":"Let us take the MRTS train this evening to avoid the GST road jam.","lang":"en","kind":"side"}
+{"id":"b019","text":"He is always saying he will submit the file, but never does on time.","lang":"en","kind":"side"}
+{"id":"b020","text":"Is the Joint Director coming for the review meeting at three?","lang":"en","kind":"side"}
+{"id":"b021","text":"Pull up the daily brief for T Nagar","lang":"en","kind":"command","intent":"brief"}
+{"id":"b022","text":"Show me open cases in Mylapore","lang":"en","kind":"command","intent":"cases"}
+{"id":"b023","text":"Display Puzhal water level now","lang":"en","kind":"command","intent":"readings"}
+{"id":"b024","text":"Open the map for Velachery drainage","lang":"en","kind":"command","intent":"map"}
+{"id":"b025","text":"Compare Alandur and Adyar garbage clearance","lang":"en","kind":"command","intent":"compare"}
+{"id":"b026","text":"List worst performing zones in Solid Waste Management","lang":"en","kind":"command","intent":"ranking"}
+{"id":"b027","text":"Get me the vegetable market prices in Egmore","lang":"en","kind":"command","intent":"prices"}
+{"id":"b028","text":"Show trend of air quality in Anna Nagar","lang":"en","kind":"command","intent":"trend"}
+{"id":"b029","text":"Pull details for case number four zero five","lang":"en","kind":"command","intent":"case"}
+{"id":"b030","text":"Switch view to Guindy storm water drains","lang":"en","kind":"command","intent":"navigate"}
+{"id":"b031","text":"Pin this screen as monsoon monitoring dashboard","lang":"en","kind":"command","intent":"save"}
+{"id":"b032","text":"Find anomalies in Teynampet power outages","lang":"en","kind":"command","intent":"insight"}
+{"id":"b033","text":"அடயாரு ஃபைலு உன் டேபிளு மேலதான் இருக்கு.","lang":"ta","kind":"side"}
+{"id":"b034","text":"நேத்து வேளச்சேரில பெஞ்ச மழையப் பார்த்தியா நீ?","lang":"ta","kind":"side"}
+{"id":"b035","text":"கலெக்டருக்கு அஞ்சு மணிக்குள்ள ரிப்போர்ட் வேணுமாம்.","lang":"ta","kind":"side"}
+{"id":"b036","text":"அப்புறமா அவருக்கிட்ட அம்பத்தூர் ஃபிகர்ஸைக் காட்டு.","lang":"ta","kind":"side"}
+{"id":"b037","text":"சாப்பிட்டு முடிச்சதும் நம்ம ரெண்டு பேரும் உக்காந்து பேசுவோம்.","lang":"ta","kind":"side"}
+{"id":"b038","text":"இன்னைக்கு செம வெயில், வர வழியில டிராபிக் வேற லெவல்.","lang":"ta","kind":"side"}
+{"id":"b039","text":"நேத்து மேட்ச் பார்த்தியா, தோனி லாஸ்ட்ல செமயா அடிச்சான்!","lang":"ta","kind":"side"}
+{"id":"b040","text":"மதியம் லஞ்சுக்கு என்ன கொண்டு வந்திருக்க, மட்டன் பிரியாணியா?","lang":"ta","kind":"side"}
+{"id":"b041","text":"அந்த தம்பிக்கு இன்னைக்கு உடம்பு சரியில்ல, லீவு போட்டுட்டான்.","lang":"ta","kind":"side"}
+{"id":"b042","text":"ஏய் பாலா, அந்த பில்ல பாஸ் பண்றதுக்கு எவ்வளோ லஞ்சம் கேக்குறானுங்க?","lang":"ta","kind":"side"}
+{"id":"b043","text":"அடிப்பாவி, இந்த டாக்குமெண்ட்டை எவன் எங்க வச்சானன்னே தெரியல.","lang":"ta","kind":"side"}
+{"id":"b044","text":"டேய் காபி குடிக்கப் போலாமா, ரொம்ப தலை வலிக்குது.","lang":"ta","kind":"side"}
+{"id":"b045","text":"அந்த அண்ணன் இன்னும் ஆபீசுக்கே வரல, என்னாச்சுன்னு கேளு.","lang":"ta","kind":"side"}
+{"id":"b046","text":"நேத்து அண்ணாதுரை சர்கிள்ல செம பிஸியா இருந்துச்சு ரோடு.","lang":"ta","kind":"side"}
+{"id":"b047","text":"அந்த ஃபைலை மட்டும் சீக்கிரம் தேடிக் கொடு மச்சான்.","lang":"ta","kind":"side"}
+{"id":"b048","text":"இன்னைக்கு சீக்கிரமா கிளம்பணும், வீட்ல கெஸ்ட் வராங்க.","lang":"ta","kind":"side"}
+{"id":"b049","text":"ஏய், அந்த ஏசியை கொஞ்சம் தூக்கி வை, செம சில்லுன்னு இருக்கு.","lang":"ta","kind":"side"}
+{"id":"b050","text":"இவன் போன்ல பேசிட்டே ஒர்க்கை கெடுத்து வச்சிருக்கான் பாரு.","lang":"ta","kind":"side"}
+{"id":"b051","text":"அந்த பொண்ணு நாளைக்கு சிஎல் போடுறதா சொல்லுச்சு.","lang":"ta","kind":"side"}
+{"id":"b052","text":"மழையில நனைஞ்சுகிட்டே வந்ததுனால இன்னைக்கு ஜுரம் மாதிரி இருக்கு.","lang":"ta","kind":"side"}
+{"id":"b053","text":"செம்பரம்பாக்கம் நீர்மட்டத்தை உடனே காட்டு","lang":"ta","kind":"command","intent":"readings"}
+{"id":"b054","text":"அடையார்ல எத்தனை கேஸ் பெண்டிங்னு பாரு","lang":"ta","kind":"command","intent":"cases"}
+{"id":"b055","text":"வேளச்சேரி மழை நிலவரம் என்ன சொல்லு","lang":"ta","kind":"command","intent":"readings"}
+{"id":"b056","text":"மைலாப்பூர் ஏரியாவோட டிராஃபிக் நியூஸ் எடு","lang":"ta","kind":"command","intent":"news"}
+{"id":"b057","text":"டி நகர் காய்கறி விலை நிலவரத்தை காட்டு","lang":"ta","kind":"command","intent":"prices"}
+{"id":"b058","text":"அண்ணா நகர் கம்ப்ளைன்ட் லிஸ்ட்டை ஓபன் பண்ணு","lang":"ta","kind":"command","intent":"cases"}
+{"id":"b059","text":"வளசரவாக்கம் குப்பை அள்ளுனது பத்தி சொல்லு","lang":"ta","kind":"command","intent":"cases"}
+{"id":"b060","text":"மடிப்பாக்கம் பக்கம் இருக்கிற ஹாஸ்பிட்டல்ஸ் காட்டு","lang":"ta","kind":"command","intent":"nearby"}
+{"id":"b061","text":"கண்டிப்பா சோழிங்கநல்லூர் வாட்டர் டேங்க் லெவல் என்னனு பார்","lang":"ta","kind":"command","intent":"readings"}
+{"id":"b062","text":"எழும்பூர் ரோடு சரியானது பத்தி டீடைல்ஸ் கொடு","lang":"ta","kind":"command","intent":"case"}
+{"id":"b063","text":"திருவொற்றியூர் ஏரியா பெர்பார்மன்ஸ் எப்படி இருக்கு காட்டு","lang":"ta","kind":"command","intent":"performance"}
+{"id":"b064","text":"அம்பத்தூர் ஏர் குவாலிட்டி இன்டெக்ஸ் என்னனு சொல்லு","lang":"ta","kind":"command","intent":"readings"}
+{"id":"b065","text":"கிண்டி மார்க்கெட் பிரைஸ் லிஸ்ட் போடு","lang":"ta","kind":"command","intent":"prices"}
+{"id":"b066","text":"தேனாம்பேட்டை ரோடு டேமேஜ் மேப்ல காட்டு","lang":"ta","kind":"command","intent":"map"}
+{"id":"b067","text":"மாதவரம் குடிநீர் பிரச்னை ட்ரெண்ட் எப்படி போகுது காட்டு","lang":"ta","kind":"command","intent":"trend"}
+{"id":"b068","text":"புழல் டேம் ஸ்டோரேஜ் இப்போ எவ்வளவும்னு சொல்லு","lang":"ta","kind":"command","intent":"readings"}
+{"id":"b069","text":"Machi, traffic romba jaasthi inaikku Anna Salai la.","lang":"tanglish","kind":"side"}
+{"id":"b070","text":"Correct thaan, rain vera Velachery pakkam semaya peythu irukku.","lang":"tanglish","kind":"side"}
+{"id":"b071","text":"Adyar file unoda table mela thaan irukku, paathiya?","lang":"tanglish","kind":"side"}
+{"id":"b072","text":"Collector kku andha report inaikku evening 5 mani kulladhe kudukanum.","lang":"tanglish","kind":"side"}
+{"id":"b073","text":"Lunch ku apram rendu perum oru vaati notes compare pannalam.","lang":"tanglish","kind":"side"}
+{"id":"b074","text":"Ambattur figures la enna varudhu nu avarkitta later kaattu.","lang":"tanglish","kind":"side"}
+{"id":"b075","text":"Indha weekend match la CSK nalla vilaiyaaduvangala illaya?","lang":"tanglish","kind":"side"}
+{"id":"b076","text":"Enaku inaikku konjam headache a irukku, coffee kudikkanum.","lang":"tanglish","kind":"side"}
+{"id":"b077","text":"Kannan inaikku leave potrukkane, ungalukku theriyuma?","lang":"tanglish","kind":"side"}
+{"id":"b078","text":"Avanukku vazhakkam pola fever solli iruppan.","lang":"tanglish","kind":"side"}
+{"id":"b079","text":"Mess la inaikku enna special, biryani ya illai meals a?","lang":"tanglish","kind":"side"}
+{"id":"b080","text":"Antha transfer order innum varalai ya, romba naala pesittu irukkaanga.","lang":"tanglish","kind":"side"}
+{"id":"b081","text":"Oru vazhiya adhu mudinja nalla irukkum.","lang":"tanglish","kind":"side"}
+{"id":"b082","text":"Phone call pesitu varren, indha file a konjam paathu iru.","lang":"tanglish","kind":"side"}
+{"id":"b083","text":"Yo, antha printout-a eduthutu vaa seekiram.","lang":"tanglish","kind":"side"}
+{"id":"b084","text":"Net romba slow a irukku inaikku office la.","lang":"tanglish","kind":"side"}
+{"id":"b085","text":"Server down aana madhiri thaan theriyudhu.","lang":"tanglish","kind":"side"}
+{"id":"b086","text":"Evening porappo T. Nagar la shopping irukku da.","lang":"tanglish","kind":"side"}
+{"id":"b087","text":"Veetla vekkai romba jaasthi, AC podama thoonga mudiyala.","lang":"tanglish","kind":"side"}
+{"id":"b088","text":"Sari, andha letter draft-a konjam read pannitu sollu.","lang":"tanglish","kind":"side"}
+{"id":"b089","text":"Adyar la enna nadakkudhu oru summary podu","lang":"tanglish","kind":"command","intent":"brief"}
+{"id":"b090","text":"Velachery drainage overflow cases ellam screen la podu","lang":"tanglish","kind":"command","intent":"cases"}
+{"id":"b091","text":"Puzhal water level ippo enna irukku","lang":"tanglish","kind":"command","intent":"readings"}
+{"id":"b092","text":"Anna Nagar la road cut complaint oru dharavam kaattu","lang":"tanglish","kind":"command","intent":"case"}
+{"id":"b093","text":"T Nagar market la vekkkai thakkali price enna","lang":"tanglish","kind":"command","intent":"prices"}
+{"id":"b094","text":"Royapuram la garbage clearance work epdi pogudhu oru ranking eduthu kudu","lang":"tanglish","kind":"command","intent":"ranking"}
+{"id":"b095","text":"Mylapore map la current waterlogging marks ellam highlight pannu","lang":"tanglish","kind":"command","intent":"map"}
+{"id":"b096","text":"Ambattur kolai case details open pannu","lang":"tanglish","kind":"command","intent":"case"}
+{"id":"b097","text":"Teynampet and Kodambakkam mosquito menace compare pannu","lang":"tanglish","kind":"command","intent":"compare"}
+{"id":"b098","text":"Sholinganallur AQI last week trend eduthu kaattu","lang":"tanglish","kind":"command","intent":"trend"}
+{"id":"b099","text":"Egmore station pathi indru varum news ellam screen la podu","lang":"tanglish","kind":"command","intent":"news"}
+{"id":"b100","text":"Guindy la un-resolved pending petitions list pannu","lang":"tanglish","kind":"command","intent":"complete"}

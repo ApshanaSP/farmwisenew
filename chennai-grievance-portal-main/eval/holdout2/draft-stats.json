@@ -1,0 +1,52 @@
+{
+ "at": "2026-11-04T07:47:51.123Z",
+ "drafter": "gemini-3.5-flash-lite",
+ "labellers": [
+  "gemini-3.5-flash",
+  "gemini-3.6-flash"
+ ],
+ "drafted": 293,
+ "filtered": 8,
+ "duplicate": 15,
+ "labelDropped": 15,
+ "unlabelled": 0,
+ "agreed": 255,
+ "understanding": 169,
+ "byLang": {
+  "en": 48,
+  "ta": 78,
+  "tanglish": 43
+ },
+ "byIntent": {
+  "cases": 12,
+  "trend": 9,
+  "map": 8,
+  "performance": 12,
+  "readings": 13,
+  "prices": 4,
+  "compare": 14,
+  "brief": 5,
+  "why": 9,
+  "dashboard": 7,
+  "ranking": 7,
+  "news": 6,
+  "navigate": 5,
+  "save": 12,
+  "refuse": 6,
+  "insight": 13,
+  "complete": 12,
+  "general": 8,
+  "nearby": 6,
+  "case": 1
+ },
+ "live": 60,
+ "ambient": 100,
+ "ambientKinds": {
+  "en/side": 20,
+  "en/command": 12,
+  "ta/side": 20,
+  "ta/command": 16,
+  "tanglish/side": 20,
+  "tanglish/command": 12
+ }
+}
