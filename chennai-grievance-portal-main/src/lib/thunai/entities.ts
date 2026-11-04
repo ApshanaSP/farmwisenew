@@ -88,7 +88,7 @@ export function registry(w: World): Registry {
     const suffix = d.code.includes("-") ? d.code.split("-")[1].toLowerCase() : d.code.toLowerCase();
     // a code suffix is an alias only when it is a word people say (SWD, SWM), not a filing code (ENG, REV)
     const said = (DEPT_ALIASES[d.code] ?? []).some((a) => a.toLowerCase() === suffix) || initials(d.name) === suffix;
-    add(d.code, "dept", d.name, DEPT_TA[d.code] ?? null, [d.name, d.code.toLowerCase(), initials(d.name), said ? suffix : "", ...(DEPT_ALIASES[d.code] ?? [])]);
+    add(d.code, "dept", d.name, DEPT_TA[d.code] ?? null, [d.name, d.code.toLowerCase(), initials(d.name), said ? suffix : "", DEPT_TA[d.code] ?? "", ...(DEPT_ALIASES[d.code] ?? [])]);
   }
   for (const o of orgs) add(o, "org", ORGS[o].name, ORGS[o].ta, [ORGS[o].name, ORGS[o].ta, ...ORGS[o].aliases]);
   for (const z of w.zones) add(`ZONE-${z.n}`, "zone", z.name, z.ta ?? null, [z.name, `zone ${z.n}`, ...(ZONES[z.n]?.en ?? []), ...(z.ta ? [z.ta] : []), ...(ZONES[z.n]?.ta ?? [])]);
@@ -119,7 +119,14 @@ function toRoman(text: string): string[] {
 export function sentenceWords(text: string): string[] {
   let t = text.normalize("NFC");
   for (const [ta, en] of TA_TERMS) if (ta.includes(" ")) t = t.split(ta).join(` ${en} `);
-  return toRoman(t);
+  // letters spelled out one at a time ("C M W S S B", "P W D") are the one word they spell
+  const out: string[] & { spelled?: string } = [];
+  for (const w of toRoman(t)) {
+    const prev = out[out.length - 1];
+    if (w.length === 1 && /[a-z]/.test(w) && prev && /^[a-z]+$/.test(prev) && (prev.length === 1 || out.spelled === prev)) { out[out.length - 1] = prev + w; out.spelled = prev + w; }
+    else out.push(w);
+  }
+  return out;
 }
 
 /** How close a heard word is to a registry word: 1 the same, 0.86 one edit (two on long words), 0.8 the same sound, 0 no. */
@@ -169,17 +176,31 @@ export function resolveEntity(text: string, w: World): Resolution {
     for (const a of e.aliases) {
       for (let k = 0; k + a.length <= idx.length; k++) {
         let s = 1, via: Hit["via"] = a.length === 1 && a[0].length <= 4 && a[0] === initials(e.name) ? "initials" : "exact";
-        let ok = true;
+        let ok = true, missed = 0;
         for (let j = 0; j < a.length && ok; j++) {
           const r = wordScore(idx[k + j].x, a[j]);
           // a one-word alias of three letters (an acronym) matches only exactly
-          if (!r || (a[j].length <= 3 && r.via !== "exact")) { ok = false; break; }
+          if (!r || (a[j].length <= 3 && r.via !== "exact")) {
+            // a name of three words or more survives one word misheard inside it, the others heard right
+            if (a.length >= 3 && missed === 0 && j > 0 && j < a.length - 1) { missed++; via = "sound"; continue; }
+            ok = false; break;
+          }
           s = Math.min(s, r.s);
           if (r.via !== "exact") via = r.via;
         }
         if (!ok) continue;
         const conf = via === "exact" ? 0.97 : via === "initials" ? 0.92 : via === "edit" ? 0.86 : 0.8;
         hits.push({ e, s: conf, via, start: idx[k].i, end: idx[k + a.length - 1].i, len: a.length });
+      }
+      // a one-word name heard as two or three short pieces ("tay nam pet", "tan ged co"): the pieces joined, by spelling or sound
+      if (a.length === 1 && a[0].length >= 6) {
+        for (let k = 0; k < idx.length; k++) for (const span of [2, 3]) {
+          if (k + span > idx.length) continue;
+          const parts = idx.slice(k, k + span);
+          if (parts.some((p) => p.x.length > 5 || p.i !== parts[0].i + (parts.indexOf(p)))) continue;
+          const r = wordScore(parts.map((p) => p.x).join(""), a[0]);
+          if (r) hits.push({ e, s: r.via === "exact" ? 0.9 : r.via === "edit" ? 0.84 : 0.8, via: r.via === "exact" ? "edit" : r.via, start: parts[0].i, end: parts[span - 1].i, len: 1 });
+        }
       }
     }
   }
@@ -218,7 +239,8 @@ export function resolveEntity(text: string, w: World): Resolution {
   const byEntity = new Map<string, Hit>();
   for (const h of hits) { const b = byEntity.get(h.e.id); if (!b || rank(h) > rank(b)) byEntity.set(h.e.id, h); }
   const sorted = [...byEntity.values()].sort((a, b) => rank(b) - rank(a));
-  const top = sorted[0];
+  let top = sorted[0];
+  if (top.e.kind === "org") { const own = sorted.find((h) => h.e.kind === "dept" && h.e.id.startsWith(`${top.e.id}-`) && h.s >= 0.8); if (own) top = own; }
   // the corporation and one of its own departments, said together, are the department ("corporation health department")
   const rival = sorted.find((h) => h !== top && h.e.kind === top.e.kind && Math.abs(rank(top) - rank(h)) < 0.02 && !overlapsOrg(top.e, h.e));
   if (rival && top.via !== "exact" && rival.via !== "exact") return { kind: "ambiguous", options: [top.e, rival.e], heard: content.slice(top.start, top.end + 1).join(" "), brief };

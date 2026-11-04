@@ -1,0 +1,60 @@
+{"text": "Give me a status report on the Greater Chennai Corporation", "lang": "en", "expect": "GCC"}
+{"text": "um can you brief me on the Greater Chenai Corparation", "lang": "en", "expect": "GCC"}
+{"text": "I want the latest update on the Madras Corporation", "lang": "en", "expect": "GCC"}
+{"text": "Corporation overall status enna nu sollunga", "lang": "tanglish", "expect": "GCC"}
+{"text": "பெருநகர சென்னை மாநகராட்சி பற்றிய அறிக்கை கொடுங்க", "lang": "ta", "expect": "GCC"}
+{"text": "What's the latest update on Chennai Metrowater?", "lang": "en", "expect": "CMWSSB"}
+{"text": "uh give me the C M W S S B report", "lang": "en", "expect": "CMWSSB"}
+{"text": "can you brief me on the metro waiter board", "lang": "en", "expect": "CMWSSB"}
+{"text": "Metrowater pathi oru report kudunga", "lang": "tanglish", "expect": "CMWSSB"}
+{"text": "சென்னை குடிநீர் வாரியம் நிலவரம் என்ன", "lang": "ta", "expect": "CMWSSB"}
+{"text": "um I want the update on the Public Works Department water resources wing", "lang": "en", "expect": "PWD-WRD"}
+{"text": "status of Public Wroks Dept WRD", "lang": "en", "expect": "PWD-WRD"}
+{"text": "PWD water resources report enna aachu", "lang": "tanglish", "expect": "PWD-WRD"}
+{"text": "பொதுப்பணித் துறை நீர்வளப் பிரிவு அறிக்கை கொடுங்க", "lang": "ta", "expect": "PWD-WRD"}
+{"text": "can you give me the storm water drain department update", "lang": "en", "expect": "GCC-SWD"}
+{"text": "brief me on the storm order drain department", "lang": "en", "expect": "GCC-SWD"}
+{"text": "SWD department report konjam kudunga", "lang": "tanglish", "expect": "GCC-SWD"}
+{"text": "மழைநீர் வடிகால் துறை நிலவரம் சொல்லுங்க", "lang": "ta", "expect": "GCC-SWD"}
+{"text": "I want the report on solid waste management", "lang": "en", "expect": "GCC-SWM"}
+{"text": "um status on solid waist managment please", "lang": "en", "expect": "GCC-SWM"}
+{"text": "SWM department la enna update iruku", "lang": "tanglish", "expect": "GCC-SWM"}
+{"text": "திடக்கழிவு மேலாண்மை துறை அறிக்கை வேணும்", "lang": "ta", "expect": "GCC-SWM"}
+{"text": "Give me the TANGEDCO status", "lang": "en", "expect": "TANGEDCO"}
+{"text": "um can you brief me on tan gen co", "lang": "en", "expect": "TANGEDCO"}
+{"text": "I want the update on TNEB electricity distribution", "lang": "en", "expect": "TANGEDCO"}
+{"text": "EB department status enna sir, report sollunga", "lang": "tanglish", "expect": "TANGEDCO"}
+{"text": "மின்சார வாரியம் பற்றிய அறிக்கை கொடுங்க", "lang": "ta", "expect": "TANGEDCO"}
+{"text": "Brief me on the Tamil Nadu Pollution Control Board", "lang": "en", "expect": "TNPCB"}
+{"text": "um the pollusion control bord report please", "lang": "en", "expect": "TNPCB"}
+{"text": "TNPCB latest update enna", "lang": "tanglish", "expect": "TNPCB"}
+{"text": "தமிழ்நாடு மாசு கட்டுப்பாட்டு வாரியம் நிலவரம் என்ன", "lang": "ta", "expect": "TNPCB"}
+{"text": "What is the status of the government hospitals?", "lang": "en", "expect": "HLT-DMS"}
+{"text": "can you give me the govt hospitles update", "lang": "en", "expect": "HLT-DMS"}
+{"text": "GH hospitals pathi oru brief kudunga", "lang": "tanglish", "expect": "HLT-DMS"}
+{"text": "அரசு மருத்துவமனைகள் அறிக்கை கொடுங்க", "lang": "ta", "expect": "HLT-DMS"}
+{"text": "Give me the Adyar zone report", "lang": "en", "expect": "ZONE-13"}
+{"text": "um brief me on Adayar zone", "lang": "en", "expect": "ZONE-13"}
+{"text": "Adyar zone la enna update", "lang": "tanglish", "expect": "ZONE-13"}
+{"text": "அடையாறு மண்டலம் அறிக்கை கொடுங்க", "lang": "ta", "expect": "ZONE-13"}
+{"text": "What's the update on Anna Nagar zone?", "lang": "en", "expect": "ZONE-8"}
+{"text": "can you give me the Annanagar zone status", "lang": "en", "expect": "ZONE-8"}
+{"text": "Anna Nagar zone report kudunga", "lang": "tanglish", "expect": "ZONE-8"}
+{"text": "அண்ணா நகர் மண்டல நிலவரம் என்ன", "lang": "ta", "expect": "ZONE-8"}
+{"text": "I want the Teynampet zone report", "lang": "en", "expect": "ZONE-9"}
+{"text": "um brief me on tay nam pet zone", "lang": "en", "expect": "ZONE-9"}
+{"text": "Teynampettai zone status sollunga", "lang": "tanglish", "expect": "ZONE-9"}
+{"text": "தேனாம்பேட்டை மண்டலம் அறிக்கை வேணும்", "lang": "ta", "expect": "ZONE-9"}
+{"text": "Give me an update on Ambattur zone", "lang": "en", "expect": "ZONE-7"}
+{"text": "can you brief me on the Ambathur zone", "lang": "en", "expect": "ZONE-7"}
+{"text": "Ambattur zone la status enna", "lang": "tanglish", "expect": "ZONE-7"}
+{"text": "அம்பத்தூர் மண்டலம் நிலவரம் சொல்லுங்க", "lang": "ta", "expect": "ZONE-7"}
+{"text": "What is the status of Royapuram zone?", "lang": "en", "expect": "ZONE-5"}
+{"text": "um I want the Rayapuram zone brief", "lang": "en", "expect": "ZONE-5"}
+{"text": "Royapuram zone report kudunga", "lang": "tanglish", "expect": "ZONE-5"}
+{"text": "இராயபுரம் மண்டலம் அறிக்கை கொடுங்க", "lang": "ta", "expect": "ZONE-5"}
+{"text": "Give me the fire service report", "lang": "en", "expect": "unknown"}
+{"text": "um can you brief me on fire and rescue services", "lang": "en", "expect": "unknown"}
+{"text": "I want the fyre and rescue department update", "lang": "en", "expect": "unknown"}
+{"text": "fire station department status enna", "lang": "tanglish", "expect": "unknown"}
+{"text": "தீயணைப்பு மற்றும் மீட்புப் பணிகள் துறை அறிக்கை கொடுங்க", "lang": "ta", "expect": "unknown"}
