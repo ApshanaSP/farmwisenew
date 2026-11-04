@@ -1,0 +1,21 @@
+{
+ "planner": {
+  "ack": {
+   "p50": 803,
+   "p90": 3195
+  },
+  "answer": {
+   "p50": 2051,
+   "p90": 4441
+  },
+  "firstAudio": {
+   "p50": 2055,
+   "p90": 4937
+  },
+  "vadEnd": {
+   "p50": 300,
+   "p90": 300
+  }
+ },
+ "note": "from the end of speech (VAD end less 300 ms); mocked: hear 450 ms, planner 1,200 ms, voice 400 ms; Chromium has no natural voice here, so first audio is the PCM path and the ack is on screen, not spoken"
+}
