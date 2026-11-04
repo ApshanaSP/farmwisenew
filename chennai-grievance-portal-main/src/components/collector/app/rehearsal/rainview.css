@@ -24,6 +24,8 @@
 
 /* the body scrolls; sections are spaced evenly */
 .dic .rv-b{flex:1;min-height:0;overflow:auto;padding:4px 12px 14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+/* the body scrolls as one: its lists never shrink to fit (a list with its own scroll would fold to nothing) */
+.dic .rv-b > *{flex-shrink:0}
 .dic .rv-sec{margin:6px 0 -2px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font:700 11px var(--font-ui);text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)}
 .dic .rv-sec small{font:500 11px var(--font-ui);text-transform:none;letter-spacing:0;color:var(--text-4)}
 .dic .rv-muted{margin:0;color:var(--text-3)}
@@ -146,6 +148,8 @@
 /* the map's key, bottom left of the free map (beside the panel), clear of the console's Ask button and the scale bar */
 .dic .rv-leg{position:absolute;left:calc(12px + clamp(380px,34%,460px) + 12px);bottom:14px;z-index:560;padding:8px 11px;border-radius:12px;background:var(--elev-glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   box-shadow:0 0 0 1px var(--line-3),0 10px 24px -12px rgba(0,0,0,.4);font-size:11.5px;color:var(--text-2)}
+/* the panel moved or minimised: the key goes to the map's left edge */
+.dic .amp.moved ~ .rv-leg,.dic .amp.min ~ .rv-leg{left:12px}
 .dic .rv-leg b{display:flex;align-items:center;gap:5px;margin-bottom:5px;font:700 11.5px var(--font-ui);color:var(--text)}
 .dic .rv-leg b svg{width:12px;height:12px;color:#0369A1}
 .dic .rv-leg ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
@@ -176,3 +180,93 @@
   .dic .rv-h{padding:10px 12px 6px}
   .dic .rv-t small{display:none}
 }
+
+/* ---- the four tabs (round 32): Flooding · Traffic · Power · Metro, each in its own colour */
+.dic .rv.l-traffic{--rv:#C2410C;--rv-soft:#FFEDD5;--rv-line:#FED7AA;--rv-bar:#FB923C}
+.dic .rv.l-power{--rv:#A16207;--rv-soft:#FEF9C3;--rv-line:#FDE68A;--rv-bar:#FACC15}
+.dic .rv.l-metro{--rv:#6D28D9;--rv-soft:#EDE9FE;--rv-line:#DDD6FE;--rv-bar:#A78BFA}
+.dic[data-theme="dark"] .rv.l-traffic{--rv:#FDBA74;--rv-soft:#3A1D0B;--rv-line:#9A3412}
+.dic[data-theme="dark"] .rv.l-power{--rv:#FDE047;--rv-soft:#332A06;--rv-line:#A16207}
+.dic[data-theme="dark"] .rv.l-metro{--rv:#C4B5FD;--rv-soft:#251A47;--rv-line:#6D28D9}
+.dic .rv.l-traffic .rv-bar i,.dic .rv.l-power .rv-bar i,.dic .rv.l-metro .rv-bar i{background:linear-gradient(90deg,var(--rv-bar),var(--rv))}
+.dic .rv-tabs{margin:0 12px 8px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:3px;border-radius:12px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line)}
+.dic .rv-tabs button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px 5px;border-radius:9px;cursor:pointer;color:var(--text-2);font:650 12px var(--font-ui);text-align:center;transition:background .15s,color .15s}
+.dic .rv-tabs button svg{width:15px;height:15px}
+.dic .rv-tabs button small{font:600 10.5px var(--font-num,var(--font-ui));color:var(--text-3)}
+.dic .rv-tabs button:hover{color:var(--text);background:var(--surface)}
+.dic .rv-tabs button.on{background:var(--surface);color:var(--tc);box-shadow:0 0 0 1px var(--line),0 4px 10px -6px rgba(0,0,0,.35)}
+.dic .rv-tabs button:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.dic .rv-tabs .t-flood{--tc:#0369A1}.dic .rv-tabs .t-traffic{--tc:#C2410C}.dic .rv-tabs .t-power{--tc:#A16207}.dic .rv-tabs .t-metro{--tc:#6D28D9}
+.dic[data-theme="dark"] .rv-tabs .t-flood{--tc:#7DD3FC}.dic[data-theme="dark"] .rv-tabs .t-traffic{--tc:#FDBA74}.dic[data-theme="dark"] .rv-tabs .t-power{--tc:#FDE047}.dic[data-theme="dark"] .rv-tabs .t-metro{--tc:#C4B5FD}
+/* "also in this rain": the other tabs' counts as chips */
+.dic .rv-also{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.dic .rv-also > span{font:700 10.5px var(--font-ui);text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);margin-right:2px}
+.dic .rv-also button{all:unset;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line-2);cursor:pointer;font:600 12px var(--font-ui);color:var(--text)}
+.dic .rv-also button b{font-family:var(--font-num);color:var(--tc)}
+.dic .rv-also button svg{width:13px;height:13px;color:var(--tc)}
+.dic .rv-also button:hover{box-shadow:0 0 0 1.5px var(--tc)}
+.dic .rv-also .t-traffic{--tc:#C2410C}.dic .rv-also .t-power{--tc:#A16207}.dic .rv-also .t-metro{--tc:#6D28D9}.dic .rv-also .t-flood{--tc:#0369A1}
+/* where the data comes from: real, open data, live, sample */
+.dic .rv-src{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.dic .rv-src li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 9px;border-radius:9px;background:var(--surface);box-shadow:0 0 0 1px var(--line);font-size:12px}
+.dic .rv-src li small{grid-column:2 / span 2;color:var(--text-3);font-size:11px;margin-top:-2px}
+.dic .rv-src li b{font:700 12px var(--font-num);color:var(--text)}
+.dic .rv-tag{display:inline-block;padding:1px 7px;border-radius:999px;font:700 10px var(--font-ui);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.dic .rv-tag.k-real{background:var(--ok-soft);color:var(--ok)}
+.dic .rv-tag.k-open{background:#E0F2FE;color:#075985}
+.dic .rv-tag.k-live{background:#FCE7F3;color:#9D174D}
+.dic .rv-tag.k-sample{background:var(--surface-3);color:var(--text-2);border:1px dashed var(--line-3)}
+.dic[data-theme="dark"] .rv-tag.k-open{background:#0C2A3D;color:#7DD3FC}
+.dic[data-theme="dark"] .rv-tag.k-live{background:#3B0A24;color:#F9A8D4}
+.dic .rv-list i.citizen{background:#F59E0B}.dic .rv-list i.police{background:#F97316}.dic .rv-list i.news{background:#7C3AED}
+.dic .rv-list i.sample{background:#CBD5E1;border-style:dashed;border-color:#64748B}
+.dic .rv-list button.sample b{color:var(--text-2);font-weight:500}
+.dic .rv-cic.traffic{background:#C2410C}.dic .rv-cic.power{background:#A16207}.dic .rv-cic.metro{background:#6D28D9}.dic .rv-cic.news{background:#7C3AED}.dic .rv-cic.sample{background:#64748B}
+.dic .rv-jobs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .rv-jobs li{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:9px;background:var(--surface-2);font-size:12.5px;line-height:1.4}
+.dic .rv-jobs li small{color:var(--text-3);font:700 10.5px var(--font-ui);text-transform:uppercase;letter-spacing:.04em}
+/* live traffic */
+.dic .rv-live{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.dic .rv-live h4{margin:0;display:flex;align-items:center;gap:7px;font:700 13px var(--font-ui)}
+.dic .rv-live h4 .dot{width:8px;height:8px;border-radius:50%;background:#94A3B8}
+.dic .rv-live.on h4 .dot{background:#DB2777;box-shadow:0 0 0 3px rgba(219,39,119,.2)}
+.dic .rv-live p{margin:0;font-size:12px;color:var(--text-2)}
+.dic .rv-live label{display:flex;align-items:center;gap:7px;font:600 12.5px var(--font-ui);cursor:pointer}
+/* places on the map: a letter in a shape, strong by level (underpasses, stations); orientation marks small and grey */
+.rvp{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:#fff;color:#0F172A;font:800 11px/1 var(--font-num,system-ui);box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.35);cursor:pointer}
+.rvp.t-metro{border-radius:50%}
+.rvp.l-1{background:var(--p1)}.rvp.l-2{background:var(--p2);color:#fff}.rvp.l-3{background:var(--p3);color:#fff}
+.rvp.t-traffic{--p1:#FED7AA;--p2:#F97316;--p3:#C2410C}.rvp.t-power{--p1:#FEF08A;--p2:#EAB308;--p3:#A16207}.rvp.t-metro{--p1:#DDD6FE;--p2:#8B5CF6;--p3:#5B21B6}.rvp.t-flood{--p1:#BFDBFE;--p2:#2563EB;--p3:#1E40AF}
+.rvp.on{box-shadow:0 0 0 3px #0F172A,0 0 0 6px rgba(255,255,255,.8);transform:scale(1.2)}
+.rvp.ctx{width:16px;height:16px;font-size:9px;background:#E2E8F0;color:#475569;box-shadow:0 0 0 1.5px #fff,0 1px 3px rgba(0,0,0,.3);cursor:default;opacity:.9}
+/* a place in one rain (round 33): what happened there, strong by how bad; its rains one per line; its records folded away */
+.dic .rv-hit{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:11px;background:var(--surface);box-shadow:inset 3px 0 0 var(--rv),0 0 0 1px var(--rv-line)}
+.dic .rv-hit small{font:700 10.5px var(--font-ui);text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)}
+.dic .rv-hit > b{font:700 14px/1.35 var(--font-ui);color:var(--text)}
+.dic .rv-hit.lv-3{background:var(--rv-soft)}
+.dic .rv-hit.none{box-shadow:inset 3px 0 0 var(--line-3),0 0 0 1px var(--line)}
+.dic .rv-hit.none > b{color:var(--text-2);font-weight:600}
+.dic .rv-hit ul{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-2)}
+.dic .rv-byrain{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.dic .rv-byrain button:not(.rv-more){all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:86px minmax(0,1fr);gap:8px;align-items:baseline;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:12px}
+.dic .rv-byrain button:not(.rv-more):hover{background:var(--surface-2)}
+.dic .rv-byrain span{color:var(--text-3);font-weight:600;white-space:nowrap}
+.dic .rv-byrain b{font-weight:600;color:var(--text-2)}
+.dic .rv-byrain b.lv-3,.dic .rv-sn small.why.lv-3{color:var(--rv);font-weight:700}
+.dic .rv-sn small.why{color:var(--text-2)}
+.dic .rv-sw{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:3px;vertical-align:-1px}
+.dic .rv-from{border-radius:11px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:2px 10px}
+.dic .rv-from > summary{cursor:pointer;padding:8px 0;font:700 12px var(--font-ui);color:var(--text-2);list-style-position:inside}
+.dic .rv-from > summary small{font:600 11px var(--font-num);color:var(--text-4);margin-left:4px}
+.dic .rv-from[open] > summary{color:var(--text)}
+.dic .rv-from > ul{margin-bottom:8px}
+.dic .rv-from .rv-more{display:block;margin:0 auto 6px}
+.dic .rv-list .rv-a{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--surface);
+  box-shadow:0 0 0 1px var(--line);color:var(--text);text-decoration:none}
+.dic .rv-list a.rv-a:hover{box-shadow:0 0 0 1.5px var(--rv)}
+.dic .rv-list .rv-a b{grid-column:2;font-size:12.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dic .rv-list .rv-a small{grid-column:2;font-size:11px;color:var(--text-3)}
+.dic .rv-list i.flood{background:#2563EB}
+.dic .rv-tag.k-generated{background:var(--surface-3);color:var(--text-2)}
+.dic .rv-leg .g{display:inline-grid;place-items:center;width:16px;height:16px;margin:0 2px;border-radius:5px;font:800 9px var(--font-num);color:#fff}
+.dic .rv-leg .ln{height:4px;border-radius:2px}

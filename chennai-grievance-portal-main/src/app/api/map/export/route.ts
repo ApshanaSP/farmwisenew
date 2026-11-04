@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { assistantSession } from "@/lib/assistant/access";
 import { audit } from "@/lib/collector/sources";
@@ -16,6 +17,8 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const b = Body.safeParse(await req.json().catch(() => null));
   if (!b.success) return NextResponse.json({ error: "Nothing to export." }, { status: 400 });
+  const c = await requireConfirm(req, s, "export", `Download this answer as ${b.data.format === "csv" ? "a spreadsheet (CSV)" : "GeoJSON"}`, b.data);
+  if (!c.ok) return c.res;
   try {
     const x = await exportAnswer(b.data.plan as never, b.data.question, { email: s.email, role: s.role, lockDept: s.lockDept }, b.data.format);
     await audit(s.email, "ask_map:export", "map_answer", null, null, { format: b.data.format, rows: x.rows, plan: b.data.plan });

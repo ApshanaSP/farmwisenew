@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
 import { loginSchema } from "@/lib/validators";
-import { signToken } from "@/lib/jwt";
-import { migrateLegacyCookie, setAuthCookie } from "@/lib/auth";
 import { roleToPortal } from "@/lib/session-cookies";
 import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
 import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
+import { startSession } from "@/lib/security/session";
+import { securityLog } from "@/lib/security/audit";
 
 const GENERIC_ERROR = "Invalid email or password.";
 
@@ -52,34 +52,16 @@ export async function POST(req: NextRequest) {
 
     const passwordMatches = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatches) {
+      if (user.role !== "citizen") await securityLog(user.email, "auth:password_wrong", String(user.id), { ip });
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
 
-    const token = await signToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      departmentId: user.department_id,
-      // signing out or changing the password raises the account's version and ends this session (lib/auth.ts)
-      tv: Number((user as UserRow & { token_version?: unknown }).token_version) || 0
-    });
-
-    let redirectTo = "/login";
-    if (user.role === "citizen") redirectTo = "/citizen";
-    else if (user.role === "department_officer") redirectTo = "/officer";
-    else if (user.role === "collector") redirectTo = "/collector";
-
-    const portal = roleToPortal(user.role);
-    if (!portal) {
+    const tv = Number((user as UserRow & { token_version?: unknown }).token_version) || 0;
+    const how = { ip, ua: req.headers.get("user-agent") };
+    if (!roleToPortal(user.role)) {
       return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     }
-
-    // Each role signs in to its own cookie, so this login leaves any other
-    // portal's session in this browser signed in.
-    const res = NextResponse.json({ message: "Login successful", redirectTo, role: user.role });
-    await migrateLegacyCookie(res);
-    setAuthCookie(res, token, portal);
-    return res;
+    return startSession({ id: user.id, email: user.email, role: user.role, department_id: user.department_id, tv }, { factor: null, ...how });
   } catch (err) {
     console.error("[api/auth/login]", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });

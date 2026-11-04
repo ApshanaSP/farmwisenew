@@ -208,6 +208,8 @@ export default function SatMap(props: Props) {
       zoneBounds.forEach((b) => district.extend(b));
       map.fitBounds(district, { padding: [8, 8] });
       // Rain & flooding: streets over the zones, report dots over the pins
+      // live traffic tiles in a pane of their own: the calm rain basemap filter (rainview.css) must not grey them
+      map.createPane("rainTiles").style.zIndex = "430";
       map.createPane("rainLines").style.zIndex = "450";
       map.createPane("rainDots").style.zIndex = "640";
 
@@ -572,9 +574,10 @@ export default function SatMap(props: Props) {
     el.current?.classList.toggle("rain-on", rainOn);
     if (!rainOn) s.rain.clearLayers();
   }, [ready, rainOn]);
-  // its streets (stronger = flooded in more rains, or under water in the chosen rain) and its report dots. Over the
+  // its streets (stronger = flooded or jammed in more rains, or hit in the chosen rain) and its report dots. Over the
   // district a street is a soft spot (a street is too short to see as a line there); from street level, its road
-  // itself, with a white casing; widths grow with the zoom
+  // itself, with a white casing; widths grow with the zoom. The other tabs add wards (Power), places with a letter
+  // (underpasses, stations), rail lines, orientation marks and live traffic, each tab in its own colours.
   useEffect(() => {
     const s = st.current;
     const r = props.rain;
@@ -584,8 +587,36 @@ export default function SatMap(props: Props) {
     const L = s.L;
     const zoom = s.map.getZoom();
     const zf = Math.max(0.75, Math.min(2.2, 0.75 + (zoom - 11) * 0.32));
-    const W = [1.4, 2.2, 3.2, 4.4], C = ["#94A3B8", "#60A5FA", "#2563EB", "#1E40AF"], O = [0.5, 0.85, 0.95, 1];
-    const pick = (kind: "street" | "report", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
+    const theme = r.theme ?? "flood";
+    const PAL: Record<string, string[]> = { flood: ["#94A3B8", "#60A5FA", "#2563EB", "#1E40AF"], traffic: ["#94A3B8", "#FDBA74", "#F97316", "#C2410C"],
+      power: ["#94A3B8", "#FDE047", "#EAB308", "#A16207"], metro: ["#94A3B8", "#C4B5FD", "#8B5CF6", "#5B21B6"] };
+    const SEL: Record<string, string> = { flood: "#1D4ED8", traffic: "#9A3412", power: "#854D0E", metro: "#4C1D95" };
+    const W = [1.4, 2.2, 3.2, 4.4], C = PAL[theme] ?? PAL.flood, O = [0.5, 0.85, 0.95, 1];
+    const pick = (kind: "street" | "report" | "point" | "area" | "line", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
+    // live traffic first, under everything else
+    if (r.tiles) L.tileLayer(r.tiles, { pane: "rainTiles", opacity: 0.85, maxZoom: 18, attribution: "Traffic © TomTom" }).addTo(s.rain);
+    for (const a of r.areas ?? []) {
+      const on = r.sel?.kind === "area" && r.sel.id === a.key;
+      L.polygon(a.rings, { pane: "rainLines", renderer: s.rainLines, color: on ? SEL[theme] : C[a.level], weight: on ? 3 : a.level >= 2 ? 1.5 : 1, opacity: on ? 1 : 0.8,
+        fillColor: C[a.level], fillOpacity: on ? 0.5 : [0.04, 0.16, 0.28, 0.42][a.level] })
+        .bindTooltip(a.tip, { sticky: true, className: "dtip" }).on("click", pick("area", a.key)).addTo(s.rain);
+    }
+    // rail lines; a line with a level is a place (Metro): grey when the chosen rain did not touch it, thicker the worse
+    const rails = [...(r.rails ?? [])].sort((a, b) => (a.level ?? 1) - (b.level ?? 1) || Number(r.sel?.id === a.id) - Number(r.sel?.id === b.id));
+    for (const x of rails) {
+      const on = r.sel?.kind === "line" && r.sel.id === x.id;
+      const lv = x.level;
+      const wt = (lv == null ? 3 : on ? 7 : [2, 3.5, 5, 6.5][lv]) * zf;
+      const col = lv === 0 && !on ? "#94A3B8" : x.color;
+      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: wt + (on ? 5 : 2.5), opacity: lv === 0 && !on ? 0.5 : 0.9, interactive: false }).addTo(s.rain);
+      const ln = L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: col, weight: wt, opacity: lv === 0 && !on ? 0.55 : 0.95, lineCap: "round", lineJoin: "round" })
+        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
+      if (lv != null) ln.on("click", pick("line", x.id));
+    }
+    for (const x of r.live ?? []) {
+      L.polyline(x.path, { pane: "rainLines", renderer: s.rainLines, color: x.flooding ? "#0EA5E9" : "#DB2777", weight: 4 * zf, opacity: 0.9, dashArray: "6 5" })
+        .bindTooltip(x.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
+    }
     const selStreet = r.sel?.kind === "street" ? r.streets.find((x) => x.key === r.sel!.id) : null;
     const spots = zoom < 13.5;
     const R = [2.5, 5, 7, 9], SO = [0.35, 0.45, 0.6, 0.75];
@@ -604,16 +635,27 @@ export default function SatMap(props: Props) {
     }
     if (selStreet) {
       const w = Math.max(6, W[3] * zf * 1.3);
-      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#38BDF8", weight: w + 14, opacity: 0.35, lineCap: "round", interactive: false }).addTo(s.rain);
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: C[1], weight: w + 14, opacity: 0.35, lineCap: "round", interactive: false }).addTo(s.rain);
       L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#fff", weight: w + 5, opacity: 1, lineCap: "round", interactive: false }).addTo(s.rain);
-      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: "#1D4ED8", weight: w, opacity: 1, lineCap: "round" })
+      L.polyline(selStreet.lines, { pane: "rainLines", renderer: s.rainLines, color: SEL[theme], weight: w, opacity: 1, lineCap: "round" })
         .bindTooltip(selStreet.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
     }
+    for (const x of r.context ?? []) {
+      L.marker([x.lat, x.lon], { pane: "rainDots", icon: L.divIcon({ className: "", html: `<span class="rvp ctx t-${theme}">${esc(x.glyph)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }), keyboard: false })
+        .bindTooltip(x.tip, { className: "dtip", direction: "top" }).addTo(s.rain);
+    }
+    for (const x of r.points ?? []) {
+      const on = r.sel?.kind === "point" && r.sel.id === x.key;
+      L.marker([x.lat, x.lon], { pane: "rainDots", zIndexOffset: on ? 1000 : x.level * 100,
+        icon: L.divIcon({ className: "", html: `<span class="rvp t-${theme} l-${x.level}${on ? " on" : ""}">${esc(x.glyph)}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }) })
+        .bindTooltip(x.tip, { className: "dtip", direction: "top" }).on("click", pick("point", x.key)).addTo(s.rain);
+    }
     const rad = Math.max(4, Math.min(8, 4 + (s.map.getZoom() - 11) * 0.9));
+    const DOT: Record<string, string> = { repeat: "#DC2626", new: "#F59E0B", citizen: "#F59E0B", news: "#7C3AED", sample: "#94A3B8" };
     for (const x of r.dots) {
       const on = r.sel?.kind === "report" && r.sel.id === x.id;
-      L.circleMarker([x.lat, x.lon], { pane: "rainDots", renderer: s.rainDots, radius: on ? rad + 3 : rad, color: on ? "#0F172A" : "#fff", weight: on ? 3 : 1.5,
-        fillColor: x.tone === "repeat" ? "#DC2626" : "#F59E0B", fillOpacity: 1 })
+      L.circleMarker([x.lat, x.lon], { pane: "rainDots", renderer: s.rainDots, radius: on ? rad + 3 : x.tone === "sample" ? rad - 1 : rad, color: on ? "#0F172A" : x.tone === "sample" ? "#64748B" : "#fff",
+        weight: on ? 3 : 1.5, dashArray: x.tone === "sample" && !on ? "2 2" : undefined, fillColor: DOT[x.tone] ?? "#F59E0B", fillOpacity: x.tone === "sample" ? 0.55 : 1 })
         .bindTooltip(x.tip, { className: "dtip", direction: "top" }).on("click", pick("report", x.id)).addTo(s.rain);
     }
   }, [ready, props.rain, zoomTick]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -689,7 +731,12 @@ function panelPad(box: HTMLElement): { tl: [number, number]; br: [number, number
   const sheet = panel.classList.contains("sheet");
   if (sheet) return { tl: [16, 16], br: [16, box.offsetHeight - panel.offsetTop + 16] };
   // the legend sits in the bottom-right corner only: a little room for it, not its whole height across the map
-  return { tl: [panel.offsetLeft + panel.offsetWidth + 20, 24], br: [56 + (legend ? 40 : 0), 32] };
+  const rightRoom = 56 + (legend ? 40 : 0);
+  // minimised to its header: room under the header only
+  if (panel.classList.contains("min")) return { tl: [24, panel.offsetTop + panel.offsetHeight + 16], br: [rightRoom, 32] };
+  // moved to the right half of the map (dragPanel.tsx): keep the fitted things clear of it on that side
+  if (panel.offsetLeft + panel.offsetWidth / 2 > box.offsetWidth / 2) return { tl: [24, 24], br: [Math.max(rightRoom, box.offsetWidth - panel.offsetLeft + 20), 32] };
+  return { tl: [panel.offsetLeft + panel.offsetWidth + 20, 24], br: [rightRoom, 32] };
 }
 
 /** data-camera on the map: the last shot, its target and final bounds, and whether the user took over (for tests). */

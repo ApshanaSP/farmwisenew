@@ -130,9 +130,9 @@ export function touchSlot(res: NextResponse, slot: string, keep: string[] = []) 
 }
 
 /** Sign in one portal in this tab only (its slot's cookie). */
-export function setAuthCookie(res: NextResponse, token: string, portal: Portal) {
+export function setAuthCookie(res: NextResponse, token: string, portal: Portal, maxAge?: number) {
   const slot = resolveSlot();
-  setSessionCookie(res, portalCookieName(portal, slot), token);
+  setSessionCookie(res, portalCookieName(portal, slot), token, maxAge);
   if (slot) touchSlot(res, slot);
 }
 

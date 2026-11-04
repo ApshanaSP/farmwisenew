@@ -140,6 +140,11 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
             <div className="sec-t"><I n="send" />From the Collector · {fmtShort(d.instructions[0].t)}</div>
             <b>{d.instructions[0].subject}</b>
             <p>{String(d.instructions[0].body)}</p>
+            {d.instructions[0].ref && (
+              <small className="o-ref" title="The same reference is at the foot of the email. A message without it, or with another, did not come from District IQ.">
+                <I n="checkc" />Genuine · approved by {d.instructions[0].from} · Ref <b translate="no">{d.instructions[0].ref}</b>
+              </small>
+            )}
           </div>
         )}
         {g.summary && <p style={{ margin: 0, color: "var(--text-2)" }}>{g.summary}</p>}

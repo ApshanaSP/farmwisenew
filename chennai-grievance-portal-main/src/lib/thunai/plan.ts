@@ -314,6 +314,24 @@ export function isPlainMove(steps: Step[]): boolean {
   return steps.every((s) => MOVES.has(s.a) || (s.a === "view" && Object.values(s.view).every((v) => v == null)));
 }
 
+/**
+ * A command to move around the dashboard, said as one ("go to trends and show only Adyar", "switch to weekly", "open the
+ * news", "show Teynampet on the map", "அடையாறுக்கு மாற்று"): done at once by the rules, with no model, so the Collector sees
+ * Jarvis move. A question about the data ("why", "how many", "compare", "which zone has the most") is not one: it goes to
+ * the agent, which builds a screen for it.
+ */
+const NAV_STEPS = new Set<Step["a"]>([...MOVES, "view", "period", "panel", "map", "zoom"]);
+const NAV_VERB = /\b(go|goto|open|switch|change|set|filter|navigate|take me|bring|move|select|pick|turn (on|off)|apply|put|jump|zoom|clear|reset|remove the filter|close|hide|only|just)\b|(போ|போங்க|மாற்று|மாத்து|மாறு|திற|தொற|வடிகட்டு|மட்டும்|மூடு|maathu|maattu|maaru|thora|thira|podu|poo\b|pannu)/i;
+const SHOW_VERB = /\b(show|display|see|view)\b|காட்டு|காமி|kaattu|kaami/i;
+const ASKS = /\b(why|how|what|which|who|when|where|compare|versus|vs|trend|rising|falling|most|least|top|worst|best|count|number of|summar|explain|analy|tell me|is there|are there|any)\b|\?|ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|ஒப்பி|கம்பே|யார்|எப்போ|enna|evlo|yen\b|eppadi|endha/i;
+export function isNavCommand(text: string, steps: Step[]): boolean {
+  if (!steps.length || !steps.every((s) => NAV_STEPS.has(s.a))) return false;
+  if (ASKS.test(text)) return false;
+  if (NAV_VERB.test(text)) return true;
+  // "show ..." moves the dashboard when it names a part of it (a page, a panel, the map), not when it asks for a picture of the data
+  return SHOW_VERB.test(text) && steps.some((s) => s.a === "page" || s.a === "panel" || s.a === "map" || s.a === "layer" || s.a === "mapMode");
+}
+
 /** Instant controls the Collector must never wait on the network for (and sending, which only their own voice may do). */
 const REFLEX = new Set<Step["a"]>(["stop", "off", "undo", "confirm", "repeat", "handsfree", "speed"]);
 export function isReflex(steps: Step[], state: ScreenState): boolean {

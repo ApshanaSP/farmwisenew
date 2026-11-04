@@ -309,6 +309,21 @@ export async function pastRains(): Promise<{ asOf: string; rains: PastRain[] }> 
   return v;
 }
 
+/**
+ * What Rain's Traffic, Power and Metro tabs build on (impacts.ts): the road network, the past rains, Ask the Map's world,
+ * the water incidents and the flood streets as of this hour (the same memory as Flooding), with each street's main-road flag.
+ */
+export async function impactInputs(): Promise<{ key: string; g: RoadGraph; ix: GraphIndex; events: RainEvent[]; w: World; incidents: Sources["incidents"]; now: string;
+  streets: (Memory["streets"][number] & { main: boolean; label: string })[] }> {
+  const b = await base();
+  const now = await consoleNow();
+  const memAt = now.slice(0, 13) + ":00:00";
+  const { mem } = moment(b, memAt, T_HELP_MIN);
+  const isMainSt = (st: Memory["streets"][number]) => st.edges.some((e) => b.g.cls[e] <= MAIN_CLASS_MAX);
+  return { key: `${b.key}|${memAt}`, g: b.g, ix: b.ix, events: b.events, w: b.w, incidents: b.src.incidents, now,
+    streets: mem.streets.map((st) => ({ ...st, main: isMainSt(st), label: streetLabel(st) })) };
+}
+
 /** the server's own plan for a rehearsal (Send tasks never trusts the browser's list) */
 export async function planFor(o: StateOpts): Promise<{ rid: string; jobs: Job[]; headline: string; deptName: (c: string) => string; trigger: RehearsalState["trigger"] }> {
   const s = await rehearsalState(o);

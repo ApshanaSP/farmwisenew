@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { OnboardError, approve } from "@/lib/collector/onboard";
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid source." }, { status: 400 });
+  const c = await requireConfirm(req, s, "approve_source", "Approve the new data source: it will be fetched on a schedule", parsed.data);
+  if (!c.ok) return c.res;
   try {
     return NextResponse.json(await approve(parsed.data, s.email));
   } catch (err: any) {

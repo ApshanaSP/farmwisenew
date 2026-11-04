@@ -33,7 +33,7 @@ async function jarvisOn(page: Page) {
   await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
 }
 async function typed(page: Page, text: string) {
-  if (!(await page.locator(".hud-compose input").count())) await page.locator(".hud-strip button").last().click();
+  if (!(await page.locator(".hud-compose input").count())) await page.locator(".hud-btn", { hasText: "Type" }).click();
   await page.locator(".hud-compose input").fill(text);
   await page.keyboard.press("Enter");
 }

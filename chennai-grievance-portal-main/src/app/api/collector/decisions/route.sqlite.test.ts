@@ -35,6 +35,9 @@ beforeEach(() => {
 
 const verify = () => POST(new NextRequest("http://localhost/api/collector/decisions", { method: "POST", body: JSON.stringify({ incidentIds: ["INC-1"], decision: "verify" }) }));
 
+// the route's own logic, without a person to type the confirmation code (step-up is tested in lib/security/stepup.test.ts)
+process.env.STEP_UP = "off";
+
 describe("Collector decisions", () => {
   it("records a double-clicked verify once, with one audit row, and answers both with the same decision", async () => {
     const a = await (await verify()).json();

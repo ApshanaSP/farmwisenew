@@ -13,7 +13,9 @@ export type OtpPurpose =
   | "password_reset"
   | "mobile_verify"
   | "complaint_mobile_verify"
-  | "email_verify";
+  | "email_verify"
+  /** confirming an action (sending emails, closing cases) by email instead of the app */
+  | "action_confirm";
 
 /**
  * Cryptographically secure numeric code. crypto.randomInt is uniform over the

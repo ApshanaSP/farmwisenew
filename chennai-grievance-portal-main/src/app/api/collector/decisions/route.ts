@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
@@ -52,6 +53,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const d = parsed.data;
+  if (d.decision !== "note" && d.decision !== "reopen") {
+    const verb = { verify: "Verify and close", escalate: "Escalate", reject: "Return to the department", resolve: "Mark resolved" }[d.decision];
+    const c = await requireConfirm(req, session, "decide", `${verb} ${d.incidentIds.length} ${d.incidentIds.length === 1 ? "case" : "cases"}`,
+      { ids: [...d.incidentIds].sort(), decision: d.decision, escalateTo: d.escalateTo ?? null, note: d.note ?? null });
+    if (!c.ok) return c.res;
+  }
 
   const conn = await intelPool.getConnection();
   try {

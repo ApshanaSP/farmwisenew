@@ -84,8 +84,9 @@ interface CookieWriter {
   cookies: { set(name: string, value: string, options?: Record<string, unknown>): unknown };
 }
 
-export function setSessionCookie(res: CookieWriter, name: string, token: string) {
-  res.cookies.set(name, token, { ...COOKIE_OPTIONS, maxAge: SESSION_MAX_AGE });
+/** `maxAge` in seconds: a staff session's cookie ends with its token (12 hours), a citizen's after 7 days */
+export function setSessionCookie(res: CookieWriter, name: string, token: string, maxAge = SESSION_MAX_AGE) {
+  res.cookies.set(name, token, { ...COOKIE_OPTIONS, maxAge });
 }
 
 export function clearCookie(res: CookieWriter, name: string) {

@@ -13,6 +13,10 @@ import type { MapGeo } from "@/lib/collector/geo";
 import type { PastRain, RehearsalState, RJob } from "@/lib/rehearsal/types";
 import type { RainApi, RainLayer, RainStart } from "./rainLayer";
 import { PlanSheet } from "./PlanSheet";
+import ImpactView, { LENS_WORD } from "./ImpactView";
+import type { ImpactData, Lens } from "@/lib/rehearsal/impacts";
+import { days, fmtD, fmtT, n0, plural, RainDots, range } from "./rainKit";
+import { Grip, useDragPanel } from "../askmap/dragPanel";
 import "./rehearsal.css";
 import "./rainview.css";
 
@@ -20,18 +24,6 @@ type View = { kind: "all"; zone: number | null } | { kind: "rain"; id: string; z
 type Pick = { kind: "street" | "report"; id: string } | null;
 type Report = PastRain["reports"][number];
 
-const n0 = (x: number) => x.toLocaleString("en-IN");
-const day = (d: string) => new Date(d.slice(0, 10) + "T00:00:00Z");
-const fmtD = (d: string) => day(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
-const fmtT = (t: string) => new Date(t.replace(" ", "T") + "Z").toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "UTC" });
-/** "21 Oct", "21–23 Oct", "30 Sept–2 Oct" */
-const range = (r: { start: string; end: string }) => {
-  if (r.start === r.end) return fmtD(r.start);
-  const a = day(r.start), b = day(r.end);
-  return a.getUTCMonth() === b.getUTCMonth() ? `${a.getUTCDate()}–${fmtD(r.end)}` : `${fmtD(r.start)}–${fmtD(r.end)}`;
-};
-const days = (r: { start: string; end: string }) => Math.round((day(r.end).getTime() - day(r.start).getTime()) / 86_400_000) + 1;
-const plural = (n: number, one: string, many = `${one}s`) => `${n0(n)} ${n === 1 ? one : many}`;
 /** the job kinds of the plan (playbook.ts), in plain words */
 const KIND: Record<string, string> = {
   drain: "Clear blocked drains", street: "Check drains along flood streets", works: "Finish or make safe road and drain works", pump: "Keep pumps ready",
@@ -58,6 +50,18 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   const [plan, setPlan] = useState<{ only: string[] | null } | null>(null);
   const [allReports, setAllReports] = useState(false);
   const opened = useRef(false);
+  // the tab: Flooding (this view) or Traffic, Power, Metro (ImpactView); the chosen rain is shared by all four
+  const [lens, setLens] = useState<"flood" | Lens>(start.lens ?? "flood");
+  useEffect(() => { if (start.lens) setLens(start.lens); }, [start.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [imp, setImp] = useState<Partial<Record<Lens, ImpactData>>>({});
+  const childEsc = useRef<(() => boolean) | null>(null);
+  // the other tabs' records, read once in the background: their counts show on the tabs and as "also in this rain"
+  useEffect(() => {
+    let on = true;
+    for (const l of ["traffic", "power", "metro"] as Lens[])
+      fetch(api.impacts + l).then((r) => (r.ok ? r.json() : null)).then((j) => { if (on && j) setImp((m) => ({ ...m, [l]: j })); }).catch(() => undefined);
+    return () => { on = false; };
+  }, [api]);
 
   const load = useCallback(async () => {
     setErr(null);
@@ -125,6 +129,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   // Escape: the sheet, the card, the zone, the rain; then the console closes the view
   useEffect(() => {
     escRef.current = () => {
+      if (lens !== "flood") return childEsc.current?.() ?? false;
       if (plan) { setPlan(null); return true; }
       if (pick) { setPick(null); return true; }
       if (view.zone != null) { setView({ ...view, zone: null }); return true; }
@@ -132,7 +137,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
       return false;
     };
     return () => { escRef.current = null; };
-  }, [plan, pick, view, escRef]);
+  }, [plan, pick, view, escRef, lens]);
 
   // ---- the map: what to draw, and a new camera shot whenever the view or the choice changes
   const shot = useRef({ key: "", seq: 0 });
@@ -164,23 +169,63 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
         if (!dots.some((x) => x.id === r.id)) dots.push({ id: r.id, lat: r.lat, lon: r.lon, tone: "new", tip: r.place ?? "Flooding report" });
       }
     }
-    return { streets, dots, sel: pick, fit: { seq: shot.current.seq, pts, maxZoom }, onPick: (kind, id) => setPick({ kind, id }) };
+    return { theme: "flood", streets, dots, sel: pick, fit: { seq: shot.current.seq, pts, maxZoom }, onPick: (kind, id) => { if (kind === "street" || kind === "report") setPick({ kind, id }); } };
   }, [d, past, view, pick, rain, streetBy, zoneOfWard]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { onLayer(layer); }, [layer, onLayer]);
+  // the other tabs draw their own layer (ImpactView)
+  useEffect(() => { if (lens === "flood") onLayer(layer); }, [layer, onLayer, lens]);
   useEffect(() => () => onLayer(null), [onLayer]);
 
   const phone = typeof window !== "undefined" && window.innerWidth < 768;
+  const drag = useDragPanel("rain", phone);
+  const SUB: Record<"flood" | Lens, string> = {
+    flood: "Where water stood in past heavy rains, and what to do before the next one", traffic: "Roads where traffic jams when it rains, and why",
+    power: "Wards that lose power in heavy rain, and for how long", metro: "How late trains run in heavy rain, and which stations close"
+  };
   const head = (
-    <header className="rv-h">
-      <span className="rv-ic"><I n="cloud" /></span>
-      <span className="rv-t"><b>Rain &amp; flooding</b><small>Where water stood in past heavy rains, and what to do before the next one</small></span>
+    <header className={`rv-h ${drag.handle.className}`} onPointerDown={drag.handle.onPointerDown} onDoubleClick={drag.handle.onDoubleClick}>
+      <Grip off={phone} />
+      <span className="rv-ic"><I n={lens === "flood" ? "cloud" : LENS_WORD[lens].icon} /></span>
+      <span className="rv-t"><b>Rain · {lens === "flood" ? "Flooding" : LENS_WORD[lens].title}</b><small>{SUB[lens]}</small></span>
+      {drag.tools}
       <button className="amp-x" onClick={onClose} title="Back to the Overview (Esc)"><I n="x" />Close</button>
     </header>
   );
+  const rainNow = view.kind === "rain" ? view.id : null;
+  /** a tab's count: Flooding's reports, the other tabs' places hit (roads, wards, lines), in the chosen rain or in any rain */
+  const countOf = (l: "flood" | Lens): number | null => {
+    if (l === "flood") return past ? (rainNow ? past.find((r) => r.id === rainNow)?.reports.length ?? 0 : past.reduce((a, r) => a + r.reports.length, 0)) : null;
+    const x = imp[l];
+    if (!x) return null;
+    return rainNow ? x.rains.find((r) => r.id === rainNow)?.hit ?? 0 : x.items.filter((y) => y.rains.length).length;
+  };
+  const tabs = (
+    <nav className="rv-tabs" role="tablist" aria-label="What the rain did">
+      {(["flood", "traffic", "power", "metro"] as const).map((l) => {
+        const n = countOf(l);
+        return (
+          <button key={l} role="tab" aria-selected={lens === l} className={`t-${l}${lens === l ? " on" : ""}`} onClick={() => { setPick(null); setPlan(null); setLens(l); }}>
+            <I n={l === "flood" ? "drop" : LENS_WORD[l].icon} />{l === "flood" ? "Flooding" : LENS_WORD[l].title}<small>{n == null ? "…" : n0(n)}</small>
+          </button>
+        );
+      })}
+    </nav>
+  );
+  /** the other tabs' counts for a rain (or all rains), as chips that open the tab */
+  const also = (id: string | null) => {
+    const rows = (["traffic", "power", "metro"] as Lens[]).map((l) => ({ l, n: imp[l] ? (id ? imp[l]!.rains.find((r) => r.id === id)?.hit ?? 0 : imp[l]!.items.filter((y) => y.rains.length).length) : null, of: imp[l]?.items.length ?? 0 }));
+    if (rows.every((r) => r.n == null)) return null;
+    return (
+      <div className="rv-also">
+        <span>Also in {id ? "this rain" : "these rains"}</span>
+        {rows.map(({ l, n, of }) => n != null && <button key={l} className={`t-${l}`} onClick={() => setLens(l)}><I n={LENS_WORD[l].icon} />{LENS_WORD[l].inRain(n, of)}</button>)}
+      </div>
+    );
+  };
   if (!d || !past) {
     return (
-      <aside className={`amp rv${phone ? " sheet" : ""}`} data-h="half" aria-label="Rain and flooding" aria-busy={!err}>
+      <aside ref={drag.ref} style={drag.style} className={`amp rv l-${lens}${phone ? " sheet" : ""}${drag.cls}`} data-h="half" aria-label="Rain" aria-busy={!err}>
         {head}
+        {tabs}
         <div className="rv-wait">
           {err ? <><I n="alert" /><b>{err}</b><button className="rv-btn" onClick={load}>Try again</button></>
             : <><span className="rv-spin" /><b>Reading the past rains…</b><small>Flooding reports, flood streets and the road map</small></>}
@@ -273,6 +318,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
             {repeats > 0 && <><b>{Math.round((100 * repeats) / total)} %</b> of reports came from streets that had already flooded in an earlier rain: the same places, again.</>}
           </span></p>
         )}
+        {also(null)}
         <h4 className="rv-sec">Past heavy rains <small>newest first · click one to see where water stood</small></h4>
         <ul className="rv-rains">
           {rains.map((r) => {
@@ -345,6 +391,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
               : "This is the first heavy rain in the record, so every place was new to it."}
           </>}
         </p>
+        {also(rain.id)}
         {zones.length > 0 && (
           <>
             <h4 className="rv-sec">Where water stood <small>click a zone to look closer</small></h4>
@@ -392,14 +439,18 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   const backTo = rain ? `the ${range(rain)} rain` : "all rains";
   return (
     <>
-      <aside className={`amp rv${phone ? " sheet" : ""}`} data-h="half" aria-label="Rain and flooding">
+      <aside ref={drag.ref} style={drag.style} className={`amp rv l-${lens}${phone ? " sheet" : ""}${drag.cls}`} data-h="half" aria-label="Rain">
         {head}
+        {tabs}
         <NowStrip d={d} />
         <div className="rv-b">
-          {card ? <><button className="rv-back" onClick={() => setPick(null)}><I n="chevl" />Back to {backTo}</button><div className="rv-card">{card}</div></> : body}
+          {lens !== "flood" ? (
+            <ImpactView lens={lens} api={api} rains={rains} rainId={rainNow} data={imp[lens] ?? null} escRef={childEsc} onLayer={onLayer} onOpenIncident={onOpenIncident}
+              onRain={(id) => { setPick(null); setView(id ? { kind: "rain", id, zone: null } : { kind: "all", zone: null }); }} />
+          ) : card ? <><button className="rv-back" onClick={() => setPick(null)}><I n="chevl" />Back to {backTo}</button><div className="rv-card">{card}</div></> : body}
         </div>
       </aside>
-      <Legend rain={!!rain} />
+      {lens === "flood" ? <Legend rain={!!rain} /> : <ImpactLegend lens={lens} rain={!!rain} lines={imp.metro?.items ?? []} />}
       {plan && (
         <PlanSheet d={sheetJobs ? { ...d, jobs: d.jobs.filter((j) => j.task || sheetJobs.has(j.key)) } : d} lang="en" manual={false} planUrl={api.plan}
           onClose={() => setPlan(null)} onSent={(m) => { toast(m, "ok"); reloadState(); }}
@@ -428,17 +479,6 @@ function NowStrip({ d }: { d: RehearsalState }) {
   );
 }
 
-/** one dot per heavy rain, oldest first: filled where the street flooded; the chosen rain ringed */
-function RainDots({ rains, on, now = null, onRain }: { rains: PastRain[]; on: (r: PastRain) => boolean; now?: string | null; onRain?: (id: string) => void }) {
-  return (
-    <span className="rv-dots" aria-label={`${rains.filter(on).length} of ${rains.length} rains`}>
-      {rains.map((r) => onRain
-        ? <button key={r.id} className={`${on(r) ? "on" : ""}${now === r.id ? " now" : ""}`} title={`${range(r)} rain: ${on(r) ? "flooded" : "no flooding here"}`} onClick={() => onRain(r.id)} />
-        : <i key={r.id} className={`${on(r) ? "on" : ""}${now === r.id ? " now" : ""}`} title={`${range(r)} rain: ${on(r) ? "flooded" : "no flooding here"}`} />)}
-    </span>
-  );
-}
-
 /** the jobs of the plan for what is shown: how many of each kind, and one button to read and send them */
 function JobsBox({ title, jobs, onSend, sent = 0, done = 0, depts, big, empty }: {
   title: string; jobs: RJob[]; onSend: () => void; sent?: number; done?: number; depts?: number; big?: boolean; empty?: string;
@@ -458,6 +498,27 @@ function JobsBox({ title, jobs, onSend, sent = 0, done = 0, depts, big, empty }:
         </>
       ) : <p className="rv-muted">{empty}</p>}
     </section>
+  );
+}
+
+/** the other tabs' map key */
+function ImpactLegend({ lens, rain, lines }: { lens: Lens; rain: boolean; lines: ImpactData["items"] }) {
+  const ln = (c: string, h = 4, o = 1) => <i className="ln" style={{ background: c, height: h, opacity: o }} />;
+  const rows: [React.ReactNode, string][] = lens === "traffic"
+    ? rain ? [[ln("#C2410C", 5), "Jammed badly in this rain"], [ln("#F97316", 4), "Jammed in this rain"], [ln("#94A3B8", 2, 0.6), "Not jammed this time"], [<span key="u" className="g" style={{ background: "#C2410C" }}>U</span>, "Underpass with water in it"]]
+      : [[ln("#C2410C", 5), "Jams in 4 or more rains"], [ln("#F97316", 4), "Jams in 2 or 3 rains"], [ln("#FDBA74", 3), "Jammed once"], [<span key="u" className="g" style={{ background: "#F97316" }}>U</span>, "Underpass that fills with water"]]
+    : lens === "power"
+      ? rain ? [[ln("#A16207", 10, 0.7), "Off 5 hours or more"], [ln("#EAB308", 10, 0.6), "Off 3 or 4 hours"], [ln("#FDE047", 10, 0.6), "Off 1 or 2 hours"]]
+        : [[ln("#A16207", 10, 0.7), "Loses power in 4 or more rains"], [ln("#EAB308", 10, 0.6), "In 2 or 3 rains"], [ln("#FDE047", 10, 0.6), "Once, or often in planned cuts"]]
+      : [...lines.map((x) => [ln(x.color ?? "#6D28D9", 5), x.label] as [React.ReactNode, string]),
+        [<span key="x" className="g" style={{ background: "#5B21B6", borderRadius: "50%" }}>×</span>, rain ? "Station closed in this rain" : "Station closed in 2 or more rains"],
+        ...(rain ? [[ln("#94A3B8", 3, 0.6), "On time in this rain"] as [React.ReactNode, string]] : [])];
+  return (
+    <div className="rv-leg" aria-label="Map key">
+      <b><I n={LENS_WORD[lens].icon} />{lens === "metro" ? (rain ? "Lines in this rain: thicker = later" : "Lines: thicker = late in more rains") : `${LENS_WORD[lens].title} ${rain ? "in this rain" : "in heavy rains"}`}</b>
+      <ul>{rows.map(([k, l]) => <li key={l}>{k}{l}</li>)}</ul>
+      {lens === "traffic" && <small>Zoom in to see the roads themselves</small>}
+    </div>
   );
 }
 

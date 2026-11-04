@@ -142,7 +142,23 @@ async function ov(s: AssistantScope): Promise<Overview> {
 /** The console's briefing, trends and patterns for the scope. */
 async function ins(s: AssistantScope): Promise<Insights> {
   const now = await asOf();
-  return once(`ins|${now}|${scopeKey(s)}`, () => insights(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }));
+  // the key holds the data's own as-of time, so a newer collection is never answered from an older copy: kept 10 minutes
+  // (the whole-district overview for a quarter took about 4 s to work out, and a spoken answer waited for it each time)
+  return once(`ins|${now}|${scopeKey(s)}`, () => insights(s.period, s.zone, s.dept, { cat: s.cat, taluk: s.taluk }), 600_000);
+}
+
+let warmedAt = 0;
+/**
+ * Works out the whole-district overview for each period ahead of the first question (Jarvis calls it when it opens), so a
+ * screen built on it ("how is storm water keeping up this quarter") answers in a second, not five. Once in 5 minutes at most;
+ * a failure only means the first question computes it itself.
+ */
+export async function warmInsights(): Promise<void> {
+  if (Date.now() - warmedAt < 300_000) return;
+  warmedAt = Date.now();
+  for (const period of ["daily", "weekly", "monthly", "quarterly"] as const) {
+    try { await ins(ScopeSchema.parse({ period })); } catch { /* the question will compute it */ }
+  }
 }
 
 const fact = (id: string, label: string, value: unknown, unit?: string): Fact => ({ id, label, value: Number(value ?? 0), ...(unit ? { unit } : {}) });

@@ -88,6 +88,9 @@ function fresh() {
 const OFFICER = { session: { email: "ele@x", userId: 20, role: "department_officer" }, dept: ELE };
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
 
+// the loop runs the routes with no person to type a confirmation code (lib/security/stepup.ts; tested in stepup.test.ts)
+process.env.STEP_UP = "off";
+
 describe("citizen -> officer -> Collector -> citizen", () => {
   it("the resident sees the Collector's verification and the completion photo", async () => {
     h.db = fresh();

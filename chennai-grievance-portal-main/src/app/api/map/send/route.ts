@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { collectorSession } from "@/lib/collector/guard";
 import { draftBatchAction, sendBatchAction } from "@/lib/collector/actionmail";
@@ -20,7 +21,12 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const body = await req.json().catch(() => null);
   if (body?.action === "send") {
-    const r = await sendBatchAction(body, s.email);
+    // the email goes out in the Collector's name: confirmed for exactly this department, these cases and this text
+    const ids = Array.isArray(body.ids) ? [...body.ids].map(String).sort() : [];
+    const c = await requireConfirm(req, s, "send_email", `Send 1 email to ${String(body.dept ?? "the department")} about ${ids.length} ${ids.length === 1 ? "case" : "cases"}: "${String(body.subject ?? "").slice(0, 90)}"`,
+      { dept: body.dept ?? null, ids, subject: body.subject ?? null, body: body.body ?? null });
+    if (!c.ok) return c.res;
+    const r = await sendBatchAction(body, s.email, c.grant?.fac ?? null);
     return NextResponse.json(r.body, { status: r.status });
   }
   const b = Draft.safeParse(body);

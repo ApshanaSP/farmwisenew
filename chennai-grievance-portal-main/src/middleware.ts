@@ -59,8 +59,32 @@ function toLogin(request: NextRequest, pathname: string) {
   return NextResponse.redirect(url);
 }
 
+/**
+ * A request that changes something (not GET/HEAD/OPTIONS) must come from this site's own pages. The session cookies
+ * are SameSite=Lax already; this is the second wall: a form or script on another site that makes the browser post
+ * here is refused before any route runs. Requests with no Origin and no Sec-Fetch-Site (scheduled jobs with their own
+ * token, curl) are not browser requests from another site and go on to the route's own checks. ALLOWED_ORIGINS adds
+ * other origins (comma-separated) for a deployment behind a different public name.
+ */
+export function crossSite(request: NextRequest): boolean {
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method)) return false;
+  if (request.headers.get("sec-fetch-site") === "cross-site") return true;
+  const origin = request.headers.get("origin");
+  if (!origin || origin === "null") return origin === "null";
+  let host: string;
+  try { host = new URL(origin).host.toLowerCase(); } catch { return true; }
+  const own = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host).split(",")[0].trim().toLowerCase();
+  if (host === own) return false;
+  const extra = (process.env.ALLOWED_ORIGINS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return !extra.some((x) => x === origin.toLowerCase() || x === host);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/api/")) {
+    if (crossSite(request)) return NextResponse.json({ error: "Requests that change data must come from District IQ's own pages." }, { status: 403 });
+    return NextResponse.next();
+  }
 
   // Tell server components which portal (and so which session cookie) this page uses.
   const requestHeaders = new Headers(request.headers);
@@ -100,6 +124,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/:path*",
     "/citizen/:path*",
     "/officer/:path*",
     "/collector/:path*",

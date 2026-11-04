@@ -1,4 +1,4 @@
-/* Thunai's Stage: a dark glass control-room screen over the console (light when the console is light). One accent (the
+/* Jarvis's Stage: a screen over the console, in the console's own theme and accent. One accent (the
    validated series-1 blue), one radius scale (14 for blocks, 10 for controls, pills for chips), motion only to show what
    arrived, what is being read and what is working; all of it stops under prefers-reduced-motion. */
 .st-root {
@@ -14,7 +14,7 @@
   font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased;
 }
 .st-root[data-theme="light"] {
-  --bg: rgba(248, 250, 252, .94); --panel: rgba(15, 23, 42, .025); --panel-2: rgba(15, 23, 42, .05); --line: rgba(15, 23, 42, .08); --line-2: rgba(15, 23, 42, .16);
+  --bg: #fbfcfb; --panel: rgba(15, 23, 42, .025); --panel-2: rgba(15, 23, 42, .05); --line: rgba(15, 23, 42, .08); --line-2: rgba(15, 23, 42, .16);
   --text: #0f172a; --text-2: #334155; --text-3: #5b6577; --accent: #1f6fd1; --accent-fill: #1f6fd1; --accent-soft: rgba(42, 120, 214, .12); --glow: rgba(42, 120, 214, .25);
   --sev: #c93a3a; --high: #8f5c00; --med: #64748b; --low: #12855c; --ok: #12855c;
   --surface: #ffffff; --elev: #ffffff; --line-3: rgba(15, 23, 42, .16); --viz-grid: rgba(15, 23, 42, .07); --viz-axis: rgba(15, 23, 42, .18);
@@ -25,8 +25,12 @@
 .st-root button { font: inherit; color: inherit; cursor: pointer; }
 .st-root button:disabled { cursor: default; opacity: .55; }
 .st-root :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.st-scrim { position: absolute; inset: 0; background: rgba(4, 7, 14, .45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.st-root[data-theme="light"] .st-scrim { background: rgba(15, 23, 42, .18); }
+.st-scrim { position: absolute; inset: 0; background: rgba(4, 7, 14, .3); }
+.st-root[data-theme="light"] .st-scrim { background: rgba(15, 23, 42, .08); }
+/* the way back, in words */
+.st-home { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px 0 8px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--text); font-weight: 650; font-size: 13.5px; white-space: nowrap; }
+.st-home:hover { background: var(--accent); color: #fff; }
+.st-home svg { width: 15px; height: 15px; }
 .st-frame {
   position: relative; margin: 14px; display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 28px); overflow: hidden;
   background: var(--bg); border: 1px solid var(--line-2); border-radius: 20px; box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .06);

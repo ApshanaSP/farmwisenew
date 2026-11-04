@@ -8,7 +8,7 @@ export type JarvisMode = "off" | "on" | "muted";
 export type CoreState = "idle" | "listening" | "hearing" | "thinking" | "speaking" | "holding" | "interrupted" | "offline" | "off";
 
 export interface WorkStep { id: string; label: string; state: "running" | "done" | "failed"; ms: number | null; at: number }
-export interface HudPanel { id: string; title: string; takeaway: string | null; figures: { label: string; value: number; unit: string | null }[]; source: string | null; recipe: string; at: number }
+export interface HudPanel { id: string; title: string; takeaway: string | null; figures: { label: string; value: number; unit: string | null }[]; source: string | null; recipe: string; at: number; slots?: Record<string, unknown> }
 export interface HudState {
   mode: JarvisMode;
   turn: TurnState;
@@ -19,6 +19,14 @@ export interface HudState {
   faint: string;
   /** the answer in words, as soon as it exists, whatever the voice is doing */
   answer: string;
+  /** the question that answer belongs to, for the corner card */
+  asked: string;
+  /** what Jarvis is doing about it now, in a few words ("Putting them side by side") */
+  doing: string;
+  /** until when it takes a sentence without its name (0: it needs "Hi Jarvis" first) */
+  engagedUntil: number;
+  /** the keyboard's box is open */
+  typing: boolean;
   steps: WorkStep[];
   panels: HudPanel[];
   notice: string | null;
@@ -32,7 +40,7 @@ export interface HudState {
 }
 
 const START: HudState = {
-  mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
+  mode: "off", turn: "off", core: "off", ribbon: "", faint: "", answer: "", asked: "", doing: "", engagedUntil: 0, typing: false, steps: [], panels: [], notice: null, needsResume: false, denied: false, firstUse: false,
   strip: { lastMs: null, ackMs: null, findingMs: null, provider: null, freshness: null, ambient: 0, budgetLow: false, tokens: null, path: null, detector: null }, focus: null
 };
 
@@ -54,7 +62,8 @@ export const hud = {
     hud.set({ steps: old ? state.steps.map((x) => (x.id === s.id ? next : x)) : [...state.steps, next].slice(-7) });
   },
   clearSteps: () => hud.set({ steps: [] }),
-  panel: (p: HudPanel) => hud.set({ panels: [p, ...state.panels.filter((x) => x.id !== p.id)].slice(0, 3) }),
+  // one answer at a time: earlier ones go to the chatbot's Jarvis tab, they never stack over the dashboard
+  panel: (p: HudPanel) => hud.set({ panels: [p] }),
   level: () => micLevel,
   setLevel: (v: number) => { micLevel = v; }
 };
@@ -73,6 +82,25 @@ export function coreOf(mode: JarvisMode, turn: TurnState, busy: boolean, offline
 
 /** the microphone is open: the conductor leaves "off" only once the tracks are live, and goes back when they stop */
 export const micOpen = (s: Pick<HudState, "mode" | "turn">) => s.mode === "on" && s.turn !== "off";
+
+/** What Jarvis is doing, and what the Collector can do now, in words: nobody should have to guess whether to say its name. */
+export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing" | "engagedUntil"> & { denied?: boolean }, ta: boolean, now: number): { word: string; hint: string } {
+  const t = (en: string, tamil: string) => (ta ? tamil : en);
+  if (s.mode === "muted" && s.denied) return { word: t("Microphone blocked", "மைக் தடுக்கப்பட்டுள்ளது"), hint: "" };
+  if (s.mode === "muted") return { word: t("Muted", "மௌனம்"), hint: t("I can't hear you. Press Unmute to talk.", "எனக்குக் கேட்காது. பேச \"மைக்கைத் திற\" அழுத்துங்கள்.") };
+  switch (s.core) {
+    case "listening": return now < s.engagedUntil
+      ? { word: t("Listening", "கேட்கிறேன்"), hint: t("Go ahead, no need to say my name.", "சொல்லுங்கள், பெயர் சொல்ல வேண்டாம்.") }
+      : { word: t("Listening", "கேட்கிறேன்"), hint: t("Say \"Hi Jarvis\", then your question.", "\"ஹாய் ஜார்விஸ்\" என்று சொல்லி கேளுங்கள்.") };
+    case "hearing": return { word: t("Hearing you", "நீங்கள் பேசுவதைக் கேட்கிறேன்"), hint: "" };
+    case "thinking": return { word: t("Working on it", "பார்க்கிறேன்"), hint: s.doing };
+    case "speaking": return { word: t("Answering", "பதில் சொல்கிறேன்"), hint: t("Talk any time to stop me.", "எப்போது வேண்டுமானாலும் பேசி நிறுத்தலாம்.") };
+    case "holding": return { word: t("Waiting", "காத்திருக்கிறேன்"), hint: t("Say \"continue\" to hear the rest.", "மீதியைக் கேட்க \"தொடர்\" என்று சொல்லுங்கள்.") };
+    case "interrupted": return { word: t("Stopped", "நிறுத்தினேன்"), hint: "" };
+    case "offline": return { word: t("Offline", "இணைப்பு இல்லை"), hint: t("I can't hear right now. You can still type.", "இப்போது கேட்க முடியவில்லை. தட்டச்சு செய்யலாம்.") };
+    default: return s.firstUse ? { word: t("Mic closed", "மைக் மூடியது"), hint: "" } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
+  }
+}
 
 /** the power-on plays once a session, never with reduced motion */
 export const powerOnDue = (reduced: boolean, seen: string | null) => !reduced && seen !== "1";

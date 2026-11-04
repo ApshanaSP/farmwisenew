@@ -15,6 +15,7 @@
  * itself is only what the pipeline's hourly collection loads; nothing here fetches it.
  */
 import { isNewsMedia } from "@/lib/collector/newsrel";
+import { emailRef } from "@/lib/security/stamp";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
@@ -459,7 +460,7 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     q(`SELECT report_id AS rid, remarks, photo_dir, photos, sent_by, ${fmt("sent_at")} AS t
        FROM ${ops("officer_reports")} WHERE incident_id = ? AND dept_code = ? ORDER BY sent_at DESC, report_id DESC`, [id, dept.code]),
     // instructions the Collector sent about it (Take action on a severe incident)
-    q(`SELECT email_id AS id, subject, body, ${fmt("created_at")} AS t FROM ${ops("outbound_emails")} WHERE incident_id = ?
+    q(`SELECT email_id AS id, subject, body, owner, body_hash, approved_at, ${fmt("created_at")} AS t FROM ${ops("outbound_emails")} WHERE incident_id = ?
        ORDER BY created_at DESC, email_id DESC LIMIT 5`, [id]).catch(orEmpty("data:462"))
   ]);
 
@@ -504,8 +505,9 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
         returned: lastReturn && lastReturn.t >= r.t ? { t: String(lastReturn.t), note: String(lastReturn.note ?? "") } : null
       };
     }),
-    /** the Collector's instructions on this grievance, newest first */
-    instructions,
+    /** the Collector's instructions on this grievance, newest first, each with its signed reference (lib/security/stamp.ts) */
+    instructions: instructions.map((e) => ({ id: e.id, subject: e.subject, body: e.body, t: e.t, from: e.owner ?? null,
+      ref: e.owner && e.body_hash && e.approved_at ? emailRef({ owner: String(e.owner), subject: String(e.subject), bodyHash: String(e.body_hash), at: String(e.approved_at) }) : null })),
     /** the department closed it itself (not severe) */
     closedByDept: steps.length > 0 && steps[steps.length - 1].step === "close",
     firstSource: members[0] ? SOURCE_LABEL[members[0].source] ?? members[0].source : docs[0]?.publisher ?? "—"

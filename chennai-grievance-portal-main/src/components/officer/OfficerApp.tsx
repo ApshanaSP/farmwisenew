@@ -48,6 +48,8 @@ import "@/components/collector/app/shell2.css";
 import { MotionConfig } from "motion/react";
 import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
 import { LiveDot, SegmentedControl } from "@/components/ui";
+import ConfirmHost from "@/components/security/Confirm";
+const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"), { ssr: false });
 
 // Ask District IQ loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("@/components/collector/app/assistant/AssistantDialog"), { ssr: false });
@@ -150,6 +152,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
   const [drawer, setDrawer] = useState<{ id: string; mode: "off" | "news" } | null>(null);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [pop, setPop] = useState<"bell" | "profile" | "feeds" | null>(null);
+  /** account menu → Security: recent sign-ins, check an email's reference */
+  const [secOpen, setSecOpen] = useState(false);
   const [ask, setAskState] = useState(false);
   // same theme switch and saved choice as the Collector console (dark by default)
   // null until mounted, so the first paint follows <html data-theme> (set before paint)
@@ -493,6 +497,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     <MotionConfig reducedMotion="user">
     <div className={`dic ofc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
+      <ConfirmHost />
+      {secOpen && <SecurityPanel onClose={() => setSecOpen(false)} />}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
@@ -558,6 +564,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                   Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b><br />{dept.name}{dept.org ? `, ${dept.org}` : ""}
                   {dept.route ? <><br />Department head / escalation: {dept.route}</> : null}
                 </div>
+                <button className="pop-i" onClick={() => { setPop(null); setSecOpen(true); }}><I n="shield" /><span><b>Security</b><small>Sign-ins, sessions, check an email from the Collector</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "contacts" }); }}><I n="phone" /><span><b>Department contacts</b><small>Head of department and officials</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 {(zone || taluk) && <button className="pop-i" onClick={() => { setPop(null); setZone(null); setTaluk(null); }}><I n="home" /><span><b>Clear the area filter</b><small>Every zone and taluk</small></span></button>}

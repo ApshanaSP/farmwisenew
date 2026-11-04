@@ -1,0 +1,56 @@
+/* Menu → Security (SecurityPanel.tsx): two columns of short cards over the console, in the console's tokens */
+.dic .sec-veil{position:fixed;inset:0;z-index:3500;display:grid;place-items:center;padding:16px;background:rgba(8,15,26,.42);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:cfm-fade .16s ease both}
+.dic .sec{width:min(880px,100%);max-height:calc(100% - 24px);display:flex;flex-direction:column;border-radius:18px;background:var(--elev);color:var(--text);box-shadow:0 0 0 1px var(--line-3),0 30px 70px -24px rgba(0,0,0,.6);font:var(--fs-sm)/1.45 var(--font-ui);overflow:hidden;animation:cfm-in .22s cubic-bezier(.2,.9,.3,1) both}
+.dic .sec-h{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.dic .sec-h h3{margin:0;font:700 16px var(--font-ui)}
+.dic .sec-h small{color:var(--text-3);font-size:12px}
+.dic .sec-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.dic .sec-ic svg{width:18px;height:18px}
+.dic .sec-x{all:unset;margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);cursor:pointer}
+.dic .sec-x:hover{background:var(--surface-3);color:var(--text)}
+.dic .sec-x svg{width:16px;height:16px}
+.dic .sec-err,.dic .sec-ok{display:flex;gap:7px;align-items:center;margin:10px 16px 0;padding:8px 10px;border-radius:9px;font:600 12.5px var(--font-ui)}
+.dic .sec-err{background:var(--critical-soft);color:var(--critical)}
+.dic .sec-ok{background:var(--ok-soft);color:var(--ok)}
+.dic .sec-err svg,.dic .sec-ok svg{width:14px;height:14px;flex:none}
+.dic .sec-b{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px;padding:12px 16px 16px;scrollbar-width:thin}
+.dic .sec-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.dic .sec-card{padding:12px 13px;border-radius:13px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.dic .sec-card h4{display:flex;align-items:center;gap:7px;margin:0 0 6px;font:700 13px var(--font-ui)}
+.dic .sec-card h4 svg{width:15px;height:15px;color:var(--accent)}
+.dic .sec-card p{margin:0 0 8px;color:var(--text-2);font-size:12.5px}
+.dic .sec-ref{display:flex;gap:6px}
+.dic .sec-ref input{flex:1;min-width:0;height:36px;padding:0 10px;border-radius:9px;border:1px solid var(--line-3);background:var(--surface-2);color:var(--text);font:700 14px var(--font-num,var(--font-ui));letter-spacing:.06em;outline:none}
+.dic .sec-ref input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.dic .sec-ref button,.dic .sec-btn,.dic .sec-codes button{height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line-3);background:var(--surface);color:var(--text);font:700 12.5px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.dic .sec-ref button.pri{background:var(--accent-3);border-color:var(--accent-3);color:#fff}
+.dic .sec-ref button:disabled,.dic .sec-btn:disabled{opacity:.5;cursor:default}
+.dic .sec-ref svg,.dic .sec-btn svg,.dic .sec-codes button svg{width:14px;height:14px}
+.dic .sec-res{margin-top:9px;padding:9px 11px;border-radius:10px;font-size:12.5px}
+.dic .sec-res b{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.dic .sec-res b svg{width:15px;height:15px;flex:none}
+.dic .sec-res.good{background:var(--ok-soft);color:var(--ok)}
+.dic .sec-res.bad{background:var(--critical-soft);color:var(--critical)}
+.dic .sec-res dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;color:var(--text)}
+.dic .sec-res dt{color:var(--text-3);font-weight:600}
+.dic .sec-res dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.dic .sec-res small{display:block;margin-top:6px;color:var(--text-2);font-size:11.5px}
+.dic .sec-how{margin:0;padding:0 0 0 16px;display:flex;flex-direction:column;gap:5px;color:var(--text-2);font-size:12.5px}
+.dic .sec-how b{color:var(--text)}
+.dic .sec-state{display:flex;align-items:center;gap:6px;font-weight:700}
+.dic .sec-state svg{width:15px;height:15px;flex:none}
+.dic .sec-state.on{color:var(--ok)!important}
+.dic .sec-state.off{color:var(--high)!important}
+.dic .sec-codes small{display:block;margin-bottom:6px;color:var(--text-2)}
+.dic .sec-codes ul{list-style:none;margin:0 0 8px;padding:8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;border-radius:9px;background:var(--surface-2);font:700 13px var(--font-num,monospace)}
+.dic .sec-codes li{text-align:center;user-select:all}
+.dic .sec-ev{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;scrollbar-width:thin}
+.dic .sec-ev li{display:flex;gap:8px;align-items:flex-start}
+.dic .sec-ev li svg{flex:none;width:14px;height:14px;margin-top:2px;color:var(--text-3)}
+.dic .sec-ev li.ok svg{color:var(--ok)}
+.dic .sec-ev li.bad svg{color:var(--critical)}
+.dic .sec-ev b{display:block;font:600 12.5px/1.35 var(--font-ui);color:var(--text)}
+.dic .sec-ev small{color:var(--text-3);font-size:11.5px}
+.dic .sec-skel{height:38px;border-radius:8px;background:linear-gradient(90deg,var(--surface-3),var(--surface-2),var(--surface-3));background-size:200% 100%;animation:sec-sk 1.2s linear infinite}
+@keyframes sec-sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (max-width:767px){.dic .sec-b{grid-template-columns:minmax(0,1fr)}.dic .sec{max-height:calc(100% - 16px)}}

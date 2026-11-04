@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { planFor, RehearsalUnavailable } from "@/lib/rehearsal/engine";
@@ -27,8 +28,11 @@ export async function POST(req: NextRequest) {
     if (raw?.action === "send") {
       const b = Send.safeParse(raw);
       if (!b.success) return NextResponse.json({ error: "Write a subject and a message before sending." }, { status: 400 });
+      const c = await requireConfirm(req, s, "send_email", `Send ${b.data.keys.length} ${b.data.keys.length === 1 ? "job" : "jobs"} to ${b.data.dept}: "${b.data.subject.slice(0, 90)}"`,
+        { dept: b.data.dept, keys: [...b.data.keys].sort(), subject: b.data.subject, body: b.data.body });
+      if (!c.ok) return c.res;
       const p = await planFor({ manual: b.data.manual });
-      const r = await sendDept(p.rid, p.jobs, b.data.dept, b.data.keys, b.data.subject, b.data.body, s.email, { trigger: p.trigger, rehearsal: p.rid });
+      const r = await sendDept(p.rid, p.jobs, b.data.dept, b.data.keys, b.data.subject, b.data.body, s.email, { trigger: p.trigger, rehearsal: p.rid }, c.grant?.fac ?? null);
       return NextResponse.json(r.body, { status: r.status });
     }
     const b = Draft.safeParse(raw);

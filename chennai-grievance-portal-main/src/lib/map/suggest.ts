@@ -11,7 +11,7 @@ import { placeLookup } from "./ask";
 import { world } from "./world";
 
 /** Everyday words for the categories a suggestion may name ("garbage", not "Garbage & solid waste"). */
-const WORDS: Record<string, { en: string; ta: string }> = {
+export const WORDS: Record<string, { en: string; ta: string }> = {
   SOLID_WASTE: { en: "garbage", ta: "குப்பை" }, FLOOD_WATERLOGGING: { en: "waterlogging", ta: "மழைநீர் தேக்கம்" }, ROAD_ACCIDENT: { en: "road accidents", ta: "சாலை விபத்துகள்" },
   CRIME_PROPERTY: { en: "thefts", ta: "திருட்டு" }, STREETLIGHT_ELECTRICAL: { en: "streetlight problems", ta: "தெருவிளக்கு" }, DRAINAGE_SEWAGE: { en: "drainage complaints", ta: "கழிவுநீர்" },
   ROAD_DAMAGE: { en: "potholes", ta: "சாலை சேதம்" }, VECTOR_DISEASE: { en: "dengue cases", ta: "டெங்கு" }, WATER_SUPPLY: { en: "drinking water complaints", ta: "குடிநீர்" },
@@ -49,7 +49,8 @@ export async function suggestions(): Promise<string[]> {
   const week = new Map<string, number>();
   for (const i of w.incidents) if (WORDS[i.cat] && i.first > shift(w.now, -7 * 24)) week.set(i.cat, (week.get(i.cat) ?? 0) + 1);
   const top = [...week.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-  if (top) add(`where are ${WORDS[top].en} clustering`);
+  // "where are garbage complaints clustering", "where are road accidents clustering"
+  if (top) add(`where are ${/s$/.test(WORDS[top].en) ? WORDS[top].en : `${WORDS[top].en} complaints`} clustering`);
   // 3. the zone with the most open past-deadline cases
   const over = new Map<number, number>();
   for (const i of w.incidents) if (i.open && i.breached && i.zone != null) over.set(i.zone, (over.get(i.zone) ?? 0) + 1);

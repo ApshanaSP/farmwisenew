@@ -1,8 +1,9 @@
 /**
- * The one door to the language models for Ask District IQ. Google Gemini is the default
- * provider; Amazon Bedrock (Amazon Nova Lite, bedrock.ts), Groq and OpenAI remain optional
- * (AI_PROVIDER / AI_FALLBACK_PROVIDER). Every call asks for JSON that must match a zod
- * schema (a tool call on Bedrock; generateText with Output.object elsewhere);
+ * The one door to the language models for Ask District IQ. The providers are tried in the order AI_PROVIDER, then
+ * AI_FALLBACK_PROVIDER name them: the Claude API (claude.ts, ANTHROPIC_API_KEY) with Amazon Bedrock (Amazon Nova Lite,
+ * bedrock.ts) behind it is the intended setup; Google Gemini (the default when nothing is set), Groq and OpenAI remain
+ * optional. Every call asks for JSON that must match a zod schema (structured outputs on Claude, a tool call on Bedrock,
+ * generateText with Output.object elsewhere);
  * a busy provider (429, 5xx) is retried with backoff and jitter; a model rate-limited for
  * longer (a daily cap) hands over to the provider's other model; then the next provider is
  * tried, then the caller gets AiBusyError with the seconds to wait.
@@ -17,7 +18,7 @@ import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
-import { claudeConfigured, claudeJson, claudeModel } from "@/lib/ai/claude";
+import { ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 
@@ -26,7 +27,7 @@ export type ProviderName = "gemini" | "bedrock" | "groq" | "openai" | "anthropic
 
 export class AiUnavailableError extends Error {
   constructor() {
-    super("No AI provider is configured: add GEMINI_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.");
+    super("No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.");
   }
 }
 export class AiBusyError extends Error {
@@ -102,18 +103,30 @@ function bedrock(): Provider | null {
   };
 }
 
-/** Claude: only for a call that names it (Jarvis's ladder), never through AI_PROVIDER's order. */
+/**
+ * Claude (claude.ts), named in settings as claude or anthropic. Two kinds of call: a console step, through AI_PROVIDER's order
+ * (paid, so no free tier's per-minute pool to share out), and Jarvis's ladder, which names it (`only`) and has its own
+ * ceiling in the ledger.
+ */
 function anthropic(): Provider | null {
   if (!claudeConfigured()) return null;
   return {
     name: "anthropic",
-    model: () => ({ id: claudeModel(), lm: null }),
+    model: (role) => ({ id: claudeModel(role), lm: null }),
     options: () => ({}),
     json: async <T>(c: JsonCall<T>): Promise<JsonResult<T>> => {
-      const r = await claudeJson({ name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens, timeoutMs: c.timeoutMs, abortSignal: c.abortSignal });
+      const jarvis = c.only?.provider === "anthropic";
+      const until = jarvis ? 0 : ledger().coolingUntil("anthropic", claudeModel(c.role));
+      // rate limited or out of credit a moment ago: straight to the next provider, without a refused call
+      if (until > Date.now()) throw new ClaudeBusyError(Math.ceil((until - Date.now()) / 1000), "resting");
+      // Claude thinks before it answers: a console step's short deadline (5 s, set for the free models) gets at least 10 s here;
+      // a Jarvis turn keeps its own, and its model and effort (no role)
+      const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
+        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal });
       const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1 };
       charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
-      ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
+      // the ledger's Claude ceiling is Jarvis's own: the console's steps must not use it up (they have the per-user daily budget)
+      if (jarvis) ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
       console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache)`);
       return { object: r.object, info };
     }
@@ -166,20 +179,23 @@ function openai(): Provider | null {
 }
 
 /** A provider setting may name several, in order: AI_PROVIDER=bedrock,gemini. */
-const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean).map((x) => (x === "claude" ? "anthropic" : x));
+const makers = (): Record<string, () => Provider | null> => ({ gemini, bedrock, groq, openai, anthropic });
 
 /**
  * Providers in the order they are tried: AI_PROVIDER (default gemini), then AI_FALLBACK_PROVIDER (default none); each may
  * list several ("bedrock,gemini": Bedrock while the team's AWS keys are valid, Gemini once they expire). Only those
- * configured. `prefer` goes first when it is configured (the source onboarding agent asks for Gemini).
+ * configured. `prefer` goes first when it is configured and also named in those settings (the source onboarding agent
+ * asks for Gemini; with AI_PROVIDER=claude and AI_FALLBACK_PROVIDER=bedrock it is not asked at all).
  * AI_FORCE_PROVIDER (e.g. bedrock) goes before `prefer`, for every call, background work included.
  * AI_CHAT_PROVIDER (e.g. groq, or groq,bedrock) is the whole list for Ask District IQ's own calls (`chat`): only those, in
  * that order; when they are all busy the question is answered from the data by rules.
  */
 function providers(prefer?: ProviderName, chat = false): Provider[] {
-  const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai, anthropic };
+  const make = makers();
+  const chosen = [...names("AI_FORCE_PROVIDER", ""), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
   const order = chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
-    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
+    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer && chosen.includes(prefer) ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
   const out: Provider[] = [];
   for (const name of order) {
     const p = make[name]?.();
@@ -194,7 +210,7 @@ export function aiStatus() {
   return {
     available: list.length > 0,
     /** why the model is not being used ("AWS keys expired"), when that is known */
-    problem: bedrockProblem(),
+    problem: claudeProblem() ?? bedrockProblem(),
     providers: list.map((p) => ({ name: p.name, fast: p.model("fast").id, reasoning: p.model("reasoning").id })),
     stt: env("AI_MODEL_STT") || "whisper-large-v3-turbo"
   };
@@ -297,12 +313,16 @@ const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: numb
 
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
-  const all = c.only ? providers(c.only.provider, c.chat).filter((p) => p.name === c.only!.provider) : providers(c.prefer, c.chat);
+  // `only` walks Jarvis's own ladder, whatever AI_PROVIDER names
+  const named = c.only ? makers()[c.only.provider]?.() : null;
+  const all = c.only ? (named ? [named] : []) : providers(c.prefer, c.chat);
   // the main provider is the first configured one named in AI_PROVIDER
   const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
-  // background work stays off the main provider while another one is configured (not when a provider is forced)
+  // background work stays off the main provider while another one is configured (not when a provider is forced), to keep
+  // a free tier's small per-minute allowance for the questions; a paid main provider (Claude) has none to keep
   const forced = names("AI_FORCE_PROVIDER", "").length > 0;
-  const list = c.background && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
+  const spare = main !== "anthropic";
+  const list = c.background && spare && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
   if (!list.length) throw new AiUnavailableError();
   if (!budgetLeft(c.user)) throw new AiBudgetError();
   // all models together get one deadline (twice one call's): a question is answered from the data rather than wait longer
@@ -316,7 +336,7 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       } catch (e) {
         if (c.abortSignal?.aborted) throw e;
         state.lastError = e;
-        if (e instanceof BedrockBusyError) state.busyFor = Math.max(state.busyFor ?? 0, e.retryAfter);
+        if (e instanceof BedrockBusyError || e instanceof ClaudeBusyError) state.busyFor = Math.max(state.busyFor ?? 0, e.retryAfter);
         console.warn(`[assistant] ${c.name} ${p.name} failed: ${(e as Error).message.slice(0, 200)}`);
         continue;
       }

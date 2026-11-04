@@ -42,7 +42,8 @@
     ".next-thunai/types/**/*.ts",
     ".next-thunai-build/types/**/*.ts",
     ".next-agentbuild/types/**/*.ts",
-    ".next-prod/types/**/*.ts"
+    ".next-prod/types/**/*.ts",
+    ".next-r32/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

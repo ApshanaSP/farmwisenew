@@ -3,7 +3,8 @@
 /**
  * One dataset in the Studio: its dashboard (headline cards, the map and charts, all computed from the rows; clicking a
  * zone on the map or a zone bar focuses every chart on that zone), the Data Detective's report, the AI's reading of
- * the columns (change a meaning and rebuild), and the cleaned rows. The AI analyst sits beside it (Analyst.tsx).
+ * the columns (change a meaning and rebuild), the cleaned rows and its alerts. Questions about it go to Jarvis, which
+ * answers from the same engine; the Studio tells Jarvis which dataset is open (window.__diqStudio, event "diq:studio").
  */
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -12,7 +13,7 @@ import type { DatasetView } from "@/lib/studio/pipeline";
 import type { Console } from "../CollectorApp";
 import { I, type IconName } from "../icons";
 import { api, reduced } from "./client";
-import Analyst from "./Analyst";
+import { AlertsTab, LinkCard } from "./Analyst";
 import Drill from "./Drill";
 import { BriefCard, InsightGrid } from "./Insights";
 import SourceBar from "./Source";
@@ -32,6 +33,11 @@ const CHART_IC: Record<string, IconName> = { map: "map", area: "line", line: "li
 const KPI_IC: IconName[] = ["table", "clock", "chart", "pin"];
 
 interface Chip { label: string; filters: Filter[] }
+type Tab = "dash" | "alerts" | "detective" | "mapping" | "rows" | "card";
+/** what Jarvis is told about the open dataset */
+export interface StudioContext { id: string; name: string; questions: string[]; rows: number }
+/** a question about this dataset, asked of Jarvis (it opens and answers from the dataset's engine) */
+const askJarvis = (q: string) => window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q }));
 
 export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted, onPinned, onFindMore }: {
   id: string; c: Console; onRemap: (changes: { key: string; role: Role; label?: string }[]) => void; onRefresh: () => void; onChoose: (candidate: string) => void;
@@ -40,11 +46,10 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
   const [data, setData] = useState<DatasetData | null>(null);
   // the dashboard's filters, each added by focusing on a mark (a zone, a type, a week); every panel follows them
   const [chips, setChips] = useState<Chip[]>([]);
-  const [tab, setTab] = useState<"dash" | "detective" | "mapping" | "rows" | "card">("dash");
+  const [tab, setTab] = useState<Tab>("dash");
   const [reload, setReload] = useState(0);
   const [spot, setSpot] = useState<{ panel: PanelData; answer?: string } | null>(null);
   const [drill, setDrill] = useState<{ plan: Plan; key: string | number | null; n: number } | null>(null);
-  const [seed, setSeed] = useState<{ q: string; n: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const extra = useMemo(() => chips.flatMap((x) => x.filters), [chips]);
   const fq = extra.length ? `?f=${encodeURIComponent(JSON.stringify(extra))}` : "";
@@ -99,12 +104,28 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
   const removePanel = useCallback(async (plan: Plan) => {
     try { await api(`/api/collector/studio/${id}`, { json: { action: "remove-panel", planId: plan.id } }); refresh(); } catch (e: any) { c.toast(e.message, "alert"); }
   }, [id, c, refresh]);
+  // Jarvis answers questions about the open dataset: it is told which one, and its answers can join this dashboard
+  useEffect(() => {
+    if (!data) return;
+    const w = window as Window & { __diqStudio?: StudioContext | null };
+    w.__diqStudio = { id, name: data.meta.name, questions: data.meta.spec.questions ?? [], rows: data.meta.rows };
+    window.dispatchEvent(new CustomEvent("diq:studio"));
+    const spot = (e: Event) => { const d = (e as CustomEvent<{ id: string; plan: Plan; answer?: string }>).detail; if (d?.id === id) void preview(d.plan, d.answer); };
+    const again = (e: Event) => { if ((e as CustomEvent<{ id: string }>).detail?.id === id) refresh(); };
+    window.addEventListener("diq:studio-spot", spot);
+    window.addEventListener("diq:studio-refresh", again);
+    return () => {
+      window.removeEventListener("diq:studio-spot", spot);
+      window.removeEventListener("diq:studio-refresh", again);
+      if (w.__diqStudio?.id === id) { w.__diqStudio = null; window.dispatchEvent(new CustomEvent("diq:studio")); }
+    };
+  }, [id, data?.meta.name, data?.meta.rows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (err && !data) return <section className="ds-ws card ds-span"><div className="ds-empty"><I n="alert" /><b>{err}</b><button className="ds-btn" onClick={refresh}>Try again</button></div></section>;
-  if (!data) return (<><section className="ds-ws card"><div className="ds-loading-sk" role="status" aria-live="polite"><span className="ds-sr">Opening the dataset…</span>
+  if (!data) return (<><section className="ds-ws card ds-span"><div className="ds-loading-sk" role="status" aria-live="polite"><span className="ds-sr">Opening the dataset…</span>
     <div className="ds-skel sk-head" /><div className="ds-skel sk-tabs" /><div className="ds-skel sk-brief" />
     <div className="sk-row"><div className="ds-skel" /><div className="ds-skel" /><div className="ds-skel" /></div>
-    <div className="sk-row two"><div className="ds-skel" /><div className="ds-skel" /></div></div></section><aside className="ds-ai-col card"><div className="ds-skel tall" /></aside></>);
+    <div className="sk-row two"><div className="ds-skel" /><div className="ds-skel" /></div></div></section></>);
 
   const m = data.meta;
   const kpis = data.panels.filter((p) => p.chart === "kpi");
@@ -119,7 +140,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
 
   return (
     <>
-      <section className="ds-ws card">
+      <section className="ds-ws card ds-span">
         <Head data={data} tab={tab} setTab={setTab} issuesN={issuesN} c={c} onRefresh={onRefresh} onDeleted={onDeleted} onRenamed={refresh} />
         <SourceBar meta={m as DatasetData["meta"]} c={c} onChoose={onChoose} onRefresh={onRefresh} onChanged={() => { refresh(); onPinned(); }} />
         {m.relevance?.forced && (
@@ -132,10 +153,10 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
                 <div className="ds-enrich" role="group" aria-label="Make a small dataset more useful">
                   <span><I n="info" />{m.rows <= 5 ? "A few figures: shown as numbers, not charts." : "A small table: shown sorted, with at most one chart."} Make it more useful:</span>
                   <button className="ds-ghost" onClick={() => setTab("card")}><I n="clock" />Compare with the last refresh</button>
-                  <button className="ds-ghost" onClick={() => setSeed({ q: "Is there a link with district incidents by zone?", n: Date.now() })}><I n="compare" />Compare with district incidents</button>
+                  <button className="ds-ghost" onClick={() => askJarvis("Is there a link with district incidents by zone?")}><I n="compare" />Compare with district incidents</button>
                   {m.source.url && <button className="ds-ghost" onClick={() => onFindMore?.(m.source.url!)}><I n="search" />Find more on this site</button>}
                   <button className="ds-ghost" disabled title="Needs ward and zone population: the district reference does not hold it yet"><I n="social" />Per 1,000 people (needs population)</button>
-                  <button className="ds-ghost" onClick={() => setSeed({ q: "What should these figures be compared with?", n: Date.now() })}><I n="target" />What should this be compared with?</button>
+                  <button className="ds-ghost" onClick={() => askJarvis("What should these figures be compared with?")}><I n="target" />What should this be compared with?</button>
                 </div>
               )}
               {chips.length > 0 && (
@@ -153,6 +174,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
               )}
               <h5 className="ds-sec"><I n="bulb" />What matters<small>{data.brief.items.length} insights · click any card for the records behind it</small></h5>
               <InsightGrid items={data.brief.items} onOpen={open} />
+              {m.link && <div className="ds-story ds-linkwrap"><LinkCard l={m.link} c={c} /></div>}
               <h5 className="ds-sec"><I n="chart" />The evidence<small>live charts · click a bar, slice or zone to open it</small></h5>
               <div className={`ds-grid${charts.some((p) => p.chart === "map") ? " has-map" : ""}`}>
                 {charts.map((p, i) => (
@@ -162,6 +184,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
               </div>
             </div>
           )}
+          {tab === "alerts" && <div className="ds-alerts-tab"><AlertsTab data={data} id={id} c={c} onChanged={refresh} /></div>}
           {tab === "detective" && <DetectiveTab d={m.detective} id={id} rows={m.rows} cols={m.cols} masked={m.spec.columns.filter((x) => x.role === "person").map((x) => x.label)} />}
           {tab === "mapping" && <MappingTab data={data} onRemap={onRemap} />}
           {tab === "rows" && <RowsTab id={id} />}
@@ -185,10 +208,9 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
         )}
         {drill && (
           <Drill key={drill.n} id={id} start={drill} extra={extra} c={c} onClose={() => setDrill(null)} onFocus={focusOn}
-            onAsk={(q) => { setDrill(null); setSeed({ q, n: Date.now() }); }} onPin={(p) => pin(p, true)} />
+            onAsk={(q) => { setDrill(null); askJarvis(q); }} onPin={(p) => pin(p, true)} />
         )}
       </section>
-      <Analyst data={data} id={id} c={c} onSpot={preview} onAdd={addPanel} onPin={(p) => pin(p, true)} onAlertsChanged={refresh} seed={seed} />
     </>
   );
 }
@@ -196,7 +218,7 @@ export default function Dataset({ id, c, onRemap, onRefresh, onChoose, onDeleted
 // ------------------------------------------------------------------ header --
 
 function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }: {
-  data: DatasetData; tab: string; setTab: (t: "dash" | "detective" | "mapping" | "rows" | "card") => void; issuesN: number; c: Console;
+  data: DatasetData; tab: string; setTab: (t: Tab) => void; issuesN: number; c: Console;
   onRefresh: () => void; onDeleted: () => void; onRenamed: () => void;
 }) {
   const m = data.meta;
@@ -242,9 +264,10 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
       </div>
       </div>
       <nav className="ds-tabs" role="tablist">
-        {([["dash", "Insights", "bulb"], ["detective", "Data Detective", "shield"], ["mapping", "AI reading", "spark"], ["rows", "Rows", "table"], ["card", "Data card", "doc"]] as const).map(([k, t, ic]) => (
+        {([["dash", "Insights", "bulb"], ["alerts", "Alerts", "bell"], ["detective", "Data Detective", "shield"], ["mapping", "AI reading", "spark"], ["rows", "Rows", "table"], ["card", "Data card", "doc"]] as const).map(([k, t, ic]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
             <I n={ic} />{t}{k === "detective" && <em className={m.detective.after >= 85 ? "ok" : "warn"}>{m.detective.after}</em>}
+            {k === "alerts" && data.alerts.length > 0 && <em className={data.alerts.some((a) => !a.ok) ? "warn" : "ok"}>{data.alerts.filter((a) => !a.ok).length || data.alerts.length}</em>}
             {k === "detective" && issuesN > 0 && <span className="ds-sr">{issuesN} issues</span>}
           </button>
         ))}

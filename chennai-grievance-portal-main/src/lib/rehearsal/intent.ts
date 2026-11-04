@@ -8,6 +8,8 @@ export interface RehearsalAsk {
   manual: boolean;
   stop: "warn" | "act" | "rain" | "check" | "learn" | null;
   focus: "streets" | "help" | "schools" | "drains" | null;
+  /** Rain's other tabs: "where does traffic jam when it rains", "areas that lose power in rain", "metro stations at risk in rain" */
+  lens?: "traffic" | "power" | "metro";
 }
 
 const MONTHS: Record<string, string> = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
@@ -17,6 +19,13 @@ const CUT_OFF = /\b(cut off|cut-off|lose (quick )?help|can'?t reach|cannot reach
 const DRY = /\bdry (school|shelter|place)|\brelief cent(re|er)s?\b.{0,20}\b(dry|open|where)|உலர்ந்த பள்ளி|நிவாரண மைய/i;
 const HOW_DID = /\bhow (did|was) (we|it)\b.{0,30}\brain\b|\blast rain\b.{0,20}\b(report|check|how)|கடந்த மழை/i;
 const REPLAY = /\breplay\b|\bmeendum\b|மீண்டும் காட்டு/i;
+/** a rain word: "flood" alone is not one (flooding near a station is an ordinary map question) */
+const RAIN_WORD = /\b(rain|rains|raining|rainy|monsoon|downpour|cyclone|heavy showers?)\b|மழை|\bmazhai\b/i;
+const TRAFFIC_WORD = /\b(traffic|jams?|jammed|congest\w*|snarl\w*|gridlock|subways?|underpass\w*|diversions?)\b|போக்குவரத்து|நெரிசல்|சுரங்கப்பாதை/i;
+const POWER_WORD = /\b(power|electricity|current|outages?|blackouts?|power ?cuts?|streetlights?|transformers?)\b|மின்|\bkarent\b/i;
+const METRO_WORD = /\b(metro|trains?|stations?|mrts|suburban|railway|cmrl)\b|மெட்ரோ|ரயில்/i;
+/** "where do power cuts happen most often", "which areas lose power": power, rain or not */
+const POWER_OFTEN = /\b(power ?cuts?|outages?|lose power|loses power|without power|power goes)\b.{0,30}\b(often|most|where|which|areas?|wards?)\b|\b(where|which)\b.{0,30}\b(power ?cuts?|lose power|outages?)\b|மின் ?தடை/i;
 
 /** "21 October", "21 Oct", "Oct 21" → "2026-10-21" (the year of the rains in the record) */
 export function dayIn(text: string, year = "2026"): string | null {
@@ -32,6 +41,10 @@ export function dayIn(text: string, year = "2026"): string | null {
 export function rehearsalIntent(text: string): RehearsalAsk | null {
   const t = text.trim();
   if (!t) return null;
+  const rainy = RAIN_WORD.test(t);
+  if (rainy && TRAFFIC_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "traffic" };
+  if ((rainy && POWER_WORD.test(t)) || POWER_OFTEN.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "power" };
+  if (rainy && METRO_WORD.test(t)) return { replay: null, manual: false, stop: null, focus: null, lens: "metro" };
   if (REPLAY.test(t) && (/\brain\b|மழை/i.test(t) || dayIn(t))) {
     const d = dayIn(t);
     return { replay: d ? `rain-${d}` : null, manual: false, stop: "warn", focus: null };

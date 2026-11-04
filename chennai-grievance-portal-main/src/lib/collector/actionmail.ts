@@ -17,6 +17,8 @@
  * Only severe incidents: everything else is the department's to handle (see intel.FOR_COLLECTOR).
  */
 import { createHash } from "crypto";
+import { bodyHash, emailRef, stampHtml } from "@/lib/security/stamp";
+import type { Factor } from "@/lib/security/factors";
 import { z } from "zod";
 import intelPool, { ops } from "@/lib/collector/db";
 import pool from "@/lib/db";
@@ -207,7 +209,7 @@ const SendSchema = z.object({
 });
 
 /** Step 4: the Collector approved the draft (edited or not). Recipients are found again here, never taken from the browser. */
-export async function sendAction(id: string, input: unknown, user: string): Promise<{ status: number; body: Row }> {
+export async function sendAction(id: string, input: unknown, user: string, factor: Factor | null = null): Promise<{ status: number; body: Row }> {
   const parsed = SendSchema.safeParse(input);
   if (!parsed.success) return { status: 400, body: { error: "Write a subject and a message before sending." } };
   const d = await incident(id);
@@ -217,11 +219,13 @@ export async function sendAction(id: string, input: unknown, user: string): Prom
   const { to } = await recipients(i.dept ?? null, d.contacts as Row[]);
   const { subject, body } = parsed.data;
   const dv = delivery(to?.email ?? null);
+  // the email's reference is made from these, and they are what the row keeps (lib/security/stamp.ts)
+  const at = istNow(), st = { owner: user, subject, bodyHash: bodyHash(body), at };
 
   let status = "console_only", error: string | null = null, deliveredTo: string | null = null;
   if (dv.to) {
     const sandbox = dv.mode === "sandbox";
-    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null);
+    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null, stampHtml(st, factor));
     const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html);
     if (r.ok) { status = "sent"; deliveredTo = dv.to; }
     else { status = "failed"; error = r.reason === "send_failed" ? r.detail : "not configured"; }
@@ -232,8 +236,7 @@ export async function sendAction(id: string, input: unknown, user: string): Prom
     `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
        approved_at, sent_at, delivered_to, body_hash, error)
      VALUES (?, ?, NULL, ?, ?, ?, 'en', ?, ?, ?, ?, ?, ?, ?)`,
-    [user, rcpt, id, subject, body, dv.mode, status, istNow(), status === "sent" ? istNow() : null, deliveredTo,
-      createHash("sha256").update(body).digest("hex"), error]
+    [user, rcpt, id, subject, body, dv.mode, status, at, status === "sent" ? istNow() : null, deliveredTo, st.bodyHash, error]
   ) as unknown as [{ insertId: number }];
   const emailId = Number(res?.insertId ?? 0);
   await Promise.all([
@@ -244,12 +247,12 @@ export async function sendAction(id: string, input: unknown, user: string): Prom
     intelPool.query(
       `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'take_action:email', 'outbound_emails', ?, ?, ?)`,
       [user, id, JSON.stringify({ severity_level: i.sev, status_std: i.status }),
-        JSON.stringify({ email_id: emailId, to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo })]
+        JSON.stringify({ email_id: emailId, to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo, ref: emailRef(st), confirmed_with: factor })]
     )
   ]);
   return {
     status: 201,
-    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
+    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, ref: emailRef(st), note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
       : status === "failed" ? `The email could not be sent (${error}); the officer still sees it on the console.` : dv.note }
   };
 }
@@ -257,7 +260,7 @@ export async function sendAction(id: string, input: unknown, user: string): Prom
 const istNow = (plusHours = 0) => new Date(Date.now() + (330 + plusHours * 60) * 60_000).toISOString().slice(0, 19).replace("T", " ");
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-function mailHtml(subject: string, body: string, banner: string | null) {
+function mailHtml(subject: string, body: string, banner: string | null, stamp = "") {
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;padding:8px;color:#111">
   ${banner ? `<p style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:6px;padding:8px 10px;font-size:12px;color:#7A4B00">${esc(banner)}</p>` : ""}
   <h2 style="color:#14532D;margin:0 0 2px">District Collectorate &ndash; Chennai</h2>
@@ -266,6 +269,7 @@ function mailHtml(subject: string, body: string, banner: string | null) {
   ${body.split(/\n{2,}/).map((p) => `<p style="line-height:1.5;margin:0 0 10px">${esc(p).replace(/\n/g, "<br>")}</p>`).join("")}
   <hr style="border:none;border-top:1px solid #e5e5e5;margin:18px 0" />
   <p style="color:#666;font-size:12px">Reply through the District IQ officer console with a completion report and site photos.</p>
+  ${stamp}
 </div>`;
 }
 
@@ -318,7 +322,7 @@ export async function draftBatchAction(ids: string[], dept: string, deptName: st
 }
 
 /** The Collector approved a batch draft: send it under the same safety rule, set a follow-up per case (24 h), audit it with the plan. */
-export async function sendBatchAction(input: unknown, user: string): Promise<{ status: number; body: Row }> {
+export async function sendBatchAction(input: unknown, user: string, factor: Factor | null = null): Promise<{ status: number; body: Row }> {
   const parsed = BatchSchema.safeParse(input);
   if (!parsed.success) return { status: 400, body: { error: "Write a subject and a message before sending." } };
   const { dept, ids, subject, body, plan } = parsed.data;
@@ -326,10 +330,11 @@ export async function sendBatchAction(input: unknown, user: string): Promise<{ s
   if (!cases.length) return { status: 404, body: { error: "None of these cases belongs to that department any more." } };
   const { to } = await recipients(dept, []);
   const dv = delivery(to?.email ?? null);
+  const at = istNow(), st = { owner: user, subject, bodyHash: bodyHash(body), at };
   let status = "console_only", error: string | null = null, deliveredTo: string | null = null;
   if (dv.to) {
     const sandbox = dv.mode === "sandbox";
-    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null);
+    const html = mailHtml(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null, stampHtml(st, factor));
     const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html);
     if (r.ok) { status = "sent"; deliveredTo = dv.to; } else { status = "failed"; error = r.reason === "send_failed" ? r.detail : "not configured"; }
   }
@@ -337,8 +342,7 @@ export async function sendBatchAction(input: unknown, user: string): Promise<{ s
     `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status,
        approved_at, sent_at, delivered_to, body_hash, error)
      VALUES (?, ?, NULL, ?, ?, ?, 'en', ?, ?, ?, ?, ?, ?, ?)`,
-    [user, JSON.stringify(to ? [to] : []), String(cases[0].id), subject, body, dv.mode, status, istNow(), status === "sent" ? istNow() : null, deliveredTo,
-      createHash("sha256").update(body).digest("hex"), error]
+    [user, JSON.stringify(to ? [to] : []), String(cases[0].id), subject, body, dv.mode, status, at, status === "sent" ? istNow() : null, deliveredTo, st.bodyHash, error]
   ) as unknown as [{ insertId: number }];
   const emailId = Number(res?.insertId ?? 0);
   // a follow-up for each case the email lists, due in 24 hours
@@ -347,11 +351,11 @@ export async function sendBatchAction(input: unknown, user: string): Promise<{ s
       [emailId, to?.id ?? 0, String(c.id), `Completion report with photos (map send to ${dept})`, istNow(24)]);
   await intelPool.query(
     `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'ask_map:send', 'outbound_emails', ?, ?, ?)`,
-    [user, String(emailId), JSON.stringify({ plan }), JSON.stringify({ email_id: emailId, dept, cases: cases.length, listed: Math.min(cases.length, BATCH_MAX), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo })]
+    [user, String(emailId), JSON.stringify({ plan }), JSON.stringify({ email_id: emailId, dept, cases: cases.length, listed: Math.min(cases.length, BATCH_MAX), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo, ref: emailRef(st), confirmed_with: factor })]
   );
   return {
     status: 201,
-    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, followups: Math.min(cases.length, BATCH_MAX),
+    body: { id: emailId, status, deliveredTo, mode: dv.mode, to, followups: Math.min(cases.length, BATCH_MAX), ref: emailRef(st),
       note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
         : status === "failed" ? `The email could not be sent (${error}); the officer still sees the cases on the console.` : dv.note }
   };

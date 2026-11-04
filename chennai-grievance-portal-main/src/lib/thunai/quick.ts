@@ -16,6 +16,8 @@ export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && t.includes(w)));
 
+const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|கம்பே|கம்பா)/.test(t);
+
 /** the zones named in the sentence (by their names in either language, or a locality inside one), in the order said */
 export function zonesIn(t: string, w: World): number[] {
   const hits: { n: number; at: number }[] = [];
@@ -47,9 +49,10 @@ export function zonesIn(t: string, w: World): number[] {
   const m = / zone (\d{1,2}) /.exec(t);
   if (m && +m[1] >= 1 && +m[1] <= 15 && !hits.some((h) => h.n === +m[1])) hits.push({ n: +m[1], at: m.index });
   // the last resort: a spelling or a transliteration the lexicon does not list
-  if (!hits.length) {
+  // (for a comparison the second place too: one name misheard must not leave a comparison of one)
+  if (!hits.length || (hits.length === 1 && isComparing(t))) {
     const names: [number, string][] = [...w.zones.map((z): [number, string] => [z.n, z.name]), ...w.places.filter((p) => p.zone != null && p.name.length >= 6).map((p): [number, string] => [p.zone as number, p.name])];
-    for (const n of fuzzyNames(t, names)) hits.push({ n, at: 0 });
+    for (const n of fuzzyNames(t, names)) if (!hits.some((h) => h.n === n)) hits.push({ n, at: t.length });
   }
   return [...new Set(hits.sort((a, b) => a.at - b.at).map((h) => h.n))];
 }
@@ -110,7 +113,9 @@ export const reservoirIn = (t: string): string | null => RESERVOIRS.find(([, re]
 const WHY = ["why", "reason", "cause", "ஏன்", "காரணம்", "yen"];
 const WHERE = ["where", "எங்கே", "எங்கு", "enga", "engey"];
 const CASES = ["case", "cases", "complaint", "complaints", "incident", "incidents", "issue", "issues", "problem", "problems", "புகார்", "புகார்கள்", "சம்பவம்", "சம்பவங்கள்", "பிரச்சனை", "pugar"];
-const COMPARE = ["compare", "comparison", "versus", "vs", "side by side", "stack up", "difference between", "ஒப்பிடு", "ஒப்பிட்டு", "ஒப்பீடு", "oppidu", "oppittu", "சைடு பை சைடு"];
+const COMPARE = ["compare", "comparison", "versus", "vs", "side by side", "stack up", "difference between", "ஒப்பிடு", "ஒப்பிட்டு", "ஒப்பீடு", "oppidu", "oppittu", "சைடு பை சைடு",
+  // English as it is said in Tamil, in either script
+  "கம்பேர்", "கம்பேரிசன்", "கம்பேரு", "கம்பார்", "compare pannu", "compare panni", "vithiyasam", "வித்தியாசம் சொல்லு"];
 const INSIGHT = ["stand out", "stands out", "standing out", "outlier", "outliers", "anomaly", "anomalies", "unusual", "abnormal", "spike", "spikes", "odd one", "out of line", "red flag", "red flags", "தனித்து", "அசாதாரண", "வித்தியாசம்", "வித்தியாசமா", "unusual a", "weird"];
 const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
 const PERFORMANCE = ["performance", "department wise", "department-wise", "departmentwise", "zone wise", "zone-wise", "zonewise", "slowest department", "fastest department", "slowest", "turnaround", "செயல்பாடு", "துறைவாரி", "மண்டலவாரி", "performance eppadi"];
@@ -170,7 +175,7 @@ const PLAIN = new Set(("a an the this that these those is are was were be been a
   + "la le ku kku lla ah a nu oru enna ennaa epdi eppadi enga yen evlo evvalavu ethana irukku iruku irukka irukkaa sollu sollunga kaattu kaatu kattu katu kaami kaatunga kattunga paaru paarunga pannu pannunga podu eduthu vaa konjam inga anga ellam ella "
   + "என்ன என்னென்ன எங்க எங்கே எப்படி ஏன் எத்தனை எவ்வளவு இருக்கு இருக்கா இருக்கிறது உள்ள காட்டு காட்டுங்க காட்டுங்கள் சொல்லு சொல்லுங்க பாரு பாருங்க போடு எல்லாம் ஒரு இந்த அந்த கொஞ்சம் இப்போ இப்போது").split(" "));
 const words = (list: string[]) => list.flatMap((x) => norm(x).trim().split(" ")).filter(Boolean);
-const LISTED = new Set([...PLAIN, ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
+const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
 const WORLD_WORDS = new WeakMap<World, Set<string>>();
 function worldWords(w: World): Set<string> {
   let s = WORLD_WORDS.get(w);
@@ -207,8 +212,9 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   if (SAVE_ASK.test(t)) return "save";
   if (MAPISH.test(t) && !has(t, ON_MAP)) return "map-word";
   if (NEARBY.test(t) && !FACILITY.test(t)) return "nearby-word";
-  const comparing = has(t, COMPARE) || /(ஒப்பி|oppid)/.test(t);
-  if (comparing) return zones.length >= 2 ? null : "compare-needs-two";
+  if (isComparing(t)) return zones.length >= 2 ? null : "compare-needs-two";
+  // two places and no word for comparing: every screen below keeps one place, and would silently drop the other
+  if (zones.length >= 2) return "two-places";
   const why = has(t, WHY) && (!!cat || zones.length > 0);
   const shapes = [why, !why && has(t, INSIGHT), has(t, TREND), has(t, RANK_SHAPE), has(t, PERFORMANCE), has(t, COMPLETE), has(t, DASHBOARD), has(t, ON_MAP), has(t, BRIEF_SHAPE)].filter(Boolean).length;
   if (shapes >= 2) return "two-questions";
@@ -244,15 +250,16 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
     const veg = m ? (m[1] ?? m[2]).replace(/es$/, "").replace(/s$/, "") : null;
     return { recipe: "prices", slots: { q: veg } };
   }
+  if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   if (has(t, NEWS)) return { recipe: "news", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: true } };
   if (has(t, COMPARE) && zones.length >= 2 && (has(t, AIR) || has(t, LAKE))) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   if (has(t, AIR)) return { recipe: "readings", slots: { metric: "aqi", zones: zones.slice(0, 1), name: zones.length ? w.zones.find((z) => z.n === zones[0])?.name ?? null : null } };
   const reservoir = reservoirIn(t);
   if (reservoir) return { recipe: "readings", slots: { metric: "lakes", name: reservoir } };
   if (has(t, LAKE) && !cat) return { recipe: "readings", slots: { metric: "lakes" } };
-  if (has(t, COMPARE) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
+  if (isComparing(t) && zones.length >= 2) return { recipe: "compare", slots: { zones: zones.slice(0, 2), cat, period: period ?? "weekly" } };
   // a comparison the rules cannot fill (two departments, a period against another) is the planner's, never a plain list
-  if (has(t, COMPARE) || /(ஒப்பி|oppid)/.test(t)) return null;
+  if (isComparing(t)) return null;
   if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-௿]/.test(w) && t.includes(w)))) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };

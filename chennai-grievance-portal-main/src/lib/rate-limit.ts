@@ -44,6 +44,25 @@ export function checkRateLimit(key: string, limit: number, windowSeconds: number
 }
 
 /**
+ * Counting failures only (wrong second-step codes): `failuresOver` says whether `key` already has `limit` failures in
+ * its window, without adding one; `addFailure` adds one; `clearFailures` forgets them after a success.
+ */
+export function failuresOver(key: string, limit: number): RateLimitResult {
+  const b = buckets.get(key);
+  if (!b || b.resetAt < Date.now()) return { allowed: true };
+  return b.count >= limit ? { allowed: false, retryAfterSeconds: Math.ceil((b.resetAt - Date.now()) / 1000) } : { allowed: true };
+}
+export function addFailure(key: string, windowSeconds: number): void {
+  const now = Date.now();
+  const b = buckets.get(key);
+  if (!b || b.resetAt < now) buckets.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
+  else b.count += 1;
+}
+export function clearFailures(key: string): void {
+  buckets.delete(key);
+}
+
+/**
  * The client's address for per-IP limits. X-Forwarded-For is written by the client too, so it is read only behind
  * proxies the server trusts: TRUST_PROXY_HOPS=n (n proxies in front, each appending the address it saw) takes the n-th
  * entry from the right, the first one a trusted proxy wrote. Without it the headers are ignored (a client used to send a

@@ -21,6 +21,7 @@ import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom
 import { checkPlan, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { mapLang, rulesRoute, type RouteEnv } from "./route";
+import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
 import { LAYER_WORD, type Lang } from "./words";
@@ -102,6 +103,8 @@ export interface AskResponse {
   before: Feat[];
   brief: Brief | null;
   say: { en: string; ta: string; chips: string[] } | null;
+  /** what to ask next, made from this answer's facts and each checked to get an answer (followups.ts) */
+  followups: string[];
   ui: "open_trace" | "send" | "clear" | "export" | "visits" | null;
   uiDept: string | null;
   asOf: { now: string; data: string; layers: { id: string; en: string; ta: string; source: string; as_of: string | null; count: number }[] };
@@ -167,7 +170,7 @@ function emptyResponse(lang: Lang, w: World): AskResponse {
   return {
     kind: "say", lang, plan: null, chips: [], edited: null, answer: null, trace: [], rows: [], total: 0, features: [], unplaced: [], hidden: 0,
     context: { points: [], lines: [], polys: [], areas: [], places: [], rings: [] }, extra: {},
-    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], insights: [], news: null, glance: null, conditions: [], brief: null, say: null, ui: null, uiDept: null,
+    camera: { shape: "district", areas: [], points: [], line: null, focus: null, tour: [], district: w.district }, shots: [], before: [], insights: [], news: null, glance: null, conditions: [], brief: null, say: null, followups: [], ui: null, uiDept: null,
     asOf: { now: w.now, data: w.dataAsOf, layers: [] }, ai_used: false, ms: 0
   };
 }
@@ -190,6 +193,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
   const done = (r: AskResponse) => { r.ms = Date.now() - t0; logQuestion(input, r); return r; };
+  const fe = { w, env, ctx, lock, role: input.user.role };
 
   // ---- a drawn circle, a clicked ward or "what else is near this incident?": the area brief or a plan with no text
   if (!input.plan && !input.text) {
@@ -205,6 +209,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       const box = areaBox(area, w, ctxD);
       if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+      out.followups = followUps(out, null, fe);
       return done(out);
     }
     if (c.incidentId) {
@@ -231,6 +236,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
       const box = areaBox(r.area, w, ctx);
       if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(r.area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
+      out.followups = followUps(out, null, fe);
       return done(out);
     }
     if (r?.kind === "plan") {
@@ -314,6 +320,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
     const spread = place && !pts.length ? { center: place, box: { s: place.lat - 0.01, n: place.lat + 0.01, w: place.lon - 0.01, e: place.lon + 0.01 }, wide: false } : spreadOf(pts, w.district);
     res.conditions = conditionsNear(w, { fams: familiesOf(f?.category, f?.family, w), ...spread });
   }
+  res.followups = followUps(res, r, fe);
   const store = answerCache();
   store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);

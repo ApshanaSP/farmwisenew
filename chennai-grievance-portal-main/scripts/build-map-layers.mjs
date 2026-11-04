@@ -247,6 +247,29 @@ function polygons(json, minHa) {
   return { feats, small };
 }
 
+/**
+ * Road underpasses ("subways": the road dips under a railway and fills in a heavy rain): one point at the middle of
+ * each, ways within 80 m of each other joined, named from the way or left for the app to name by its locality.
+ */
+function underpasses(json) {
+  const feats = [];
+  for (const e of json.elements) {
+    if (e.type !== "way" || !e.geometry?.length) continue;
+    const t = e.tags || {};
+    const coords = e.geometry.map((g) => [g.lon, g.lat]);
+    const len = lineLen(coords);
+    if (len < 30) continue;
+    const mid = coords[Math.floor(coords.length / 2)];
+    const n = names(t);
+    const near = feats.find((f) => haversine(f.geometry.coordinates, mid) <= 80);
+    if (near) { near.properties.length_m += Math.round(len); if (!near.properties.name && n.name) near.properties.name = n.name; continue; }
+    const ward = wardAt(mid[0], mid[1]);
+    feats.push({ type: "Feature", geometry: { type: "Point", coordinates: [r5(mid[0]), r5(mid[1])] },
+      properties: { id: `osm:w${e.id}`, name: n.name || null, name_ta: n.name_ta || null, kind: t.highway, length_m: Math.round(len), ward, in_district: ward != null } });
+  }
+  return { feats };
+}
+
 // ----------------------------------------------------------------- layers --
 
 const HOSPITAL_KIND = (t) => (t.amenity === "hospital" || t.healthcare === "hospital" ? "hospital" : t.healthcare === "centre" ? "health_centre" : "clinic");
@@ -285,6 +308,22 @@ const LAYERS = [
     id: "rail_metro", name_en: "Rail and metro stations", name_ta: "ரயில் / மெட்ரோ நிலையங்கள்", kind: "point",
     query: () => `(\n${sel(['["railway"="station"]', '["station"="subway"]', '["public_transport"="station"]'])}\n);\nout center tags;`,
     build: (j) => points(j, (t) => (t.station === "subway" || /metro/i.test(t.network || "") ? "metro" : t.railway === "station" ? "rail" : t.amenity === "bus_station" || t.bus === "yes" ? "bus" : "station"))
+  },
+  {
+    id: "underpasses", name_en: "Road underpasses (subways)", name_ta: "சுரங்கப்பாதைகள்", kind: "point",
+    query: () => `(
+  way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]["tunnel"~"^(yes|building_passage)$"](${BBOX});
+);
+out geom tags;`,
+    build: (j) => underpasses(j)
+  },
+  {
+    id: "substations", name_en: "Power substations", name_ta: "துணை மின் நிலையங்கள்", kind: "point",
+    query: () => `(
+${sel(['["power"="substation"]'])}
+);
+out center tags;`,
+    build: (j) => points(j, (t) => t.substation || "substation", (t) => ({ voltage: t.voltage || undefined, operator: t.operator || undefined }))
   },
   {
     id: "roads", name_en: "Roads", name_ta: "சாலைகள்", kind: "line",

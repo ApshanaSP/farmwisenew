@@ -24,4 +24,14 @@ describe("rain rehearsal questions", () => {
     expect(dayIn("sep 9")).toBe("2026-09-09");
     expect(dayIn("no date")).toBeNull();
   });
+  it("opens Rain's Traffic, Power and Metro tabs, and leaves plain map questions alone", () => {
+    expect(rehearsalIntent("where does traffic jam when it rains?")?.lens).toBe("traffic");
+    expect(rehearsalIntent("which subways close in heavy rain")?.lens).toBe("traffic");
+    expect(rehearsalIntent("which areas lose power in rain")?.lens).toBe("power");
+    expect(rehearsalIntent("where do power cuts happen most often?")?.lens).toBe("power");
+    expect(rehearsalIntent("metro stations at risk in the monsoon")?.lens).toBe("metro");
+    expect(rehearsalIntent("மழையில் மின்தடை எங்கே?")?.lens).toBe("power");
+    expect(rehearsalIntent("flooding near metro stations")).toBeNull();
+    expect(rehearsalIntent("road accidents within 1 km of schools")).toBeNull();
+  });
 });

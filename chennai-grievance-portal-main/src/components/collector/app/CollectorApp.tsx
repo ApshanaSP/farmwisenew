@@ -40,9 +40,8 @@ import "./collector.css";
 import { MotionConfig } from "motion/react";
 import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "./Shell";
 import Thunai, { type ThunaiHost } from "./thunai/Thunai";
-import JarvisSwitch from "./thunai/JarvisSwitch";
+import JarvisFab from "./thunai/JarvisFab";
 import JarvisPins from "./thunai/JarvisPins";
-import { savedTheme } from "./thunai/hudstore";
 import { LangSwitch, TopMenu } from "./TopMenu";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
@@ -54,6 +53,8 @@ import "./nearby.css";
 import "./motionfx.css";
 import "./overview-map.css";
 import "./shell2.css";
+import ConfirmHost from "@/components/security/Confirm";
+const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"), { ssr: false });
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
 // "./command.css" and "./command-bold.css" here and add "cc" to the root's className below.
 
@@ -257,10 +258,14 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [actionFor, setActionFor] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState | null>(null);
   const [pop, setPop] = useState<"bell" | "profile" | "menu" | null>(null);
+  /** Menu → Security: recent sign-ins, check an email's reference */
+  const [secOpen, setSecOpen] = useState(false);
   const [bellRead, setBellRead] = useState(false);
   const [ask, setAskState] = useState(false);
   // once opened, the assistant stays mounted so the conversation survives closing it
   const [askMounted, setAskMounted] = useState(false);
+  /** the chatbot's two tabs: its own chat, and what was asked of Jarvis */
+  const [askTab, setAskTab] = useState<"chat" | "jarvis">("chat");
   // today's insights count, for the launcher badge (loaded after the console, so it never slows it)
   const [insightCount, setInsightCount] = useState(0);
   useEffect(() => {
@@ -276,6 +281,11 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
       return next;
     });
   }, []);
+  useEffect(() => {
+    const f = () => { setAskTab("jarvis"); setAsk(true); };
+    window.addEventListener("diq:jarvis-log", f);
+    return () => window.removeEventListener("diq:jarvis-log", f);
+  }, [setAsk]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: 1366, h: 680 });
@@ -286,14 +296,6 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     window.addEventListener("jarvis:state", f);
     return () => window.removeEventListener("jarvis:state", f);
   }, []);
-  // Jarvis mode's near-black layer sits on the dark console, whatever theme is saved: a black veil over a white page goes grey
-  const hudOn = useRef(false);
-  hudOn.current = !!jv.hud;
-  useEffect(() => {
-    if (!jv.hud) return;
-    document.documentElement.dataset.theme = "dark";
-    return () => { let saved: string | null = null; try { saved = localStorage.getItem("diq-theme"); } catch { /* the default */ } document.documentElement.dataset.theme = savedTheme(saved); };
-  }, [jv.hud]);
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   // light (Marina) by default; dark is the harbour at night. Remembered in this browser.
@@ -303,8 +305,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const toggleTheme = () => setTheme((t) => {
     const n = t === "dark" ? "light" : "dark";
     try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
-    // html stays dark under Jarvis mode; the saved theme comes back when the mode ends
-    if (!hudOn.current) document.documentElement.dataset.theme = n;
+    document.documentElement.dataset.theme = n;
     return n;
   });
   const [palette, setPalette] = useState(false);
@@ -315,7 +316,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   /** the rain warning now (none, watch, rehearse, act) and its one line, for the map's Rain button */
   const [rainAlert, setRainAlert] = useState<{ level: string; line: string | null; likely: number } | null>(null);
   const openRain = useCallback((o: RehearsalOpen) => {
-    setRain((x) => ({ rain: o.replay ?? (o.stop === "check" || o.stop === "rain" || o.stop === "learn" ? "latest" : null), seq: (x?.seq ?? 0) + 1 }));
+    setRain((x) => ({ rain: o.replay ?? (o.stop === "check" || o.stop === "rain" || o.stop === "learn" ? "latest" : null), seq: (x?.seq ?? 0) + 1, lens: o.lens }));
     setPageState("overview");
   }, []);
   // the dev preview opens on it with ?rain=1 (and on a rain with &replay=rain-YYYY-MM-DD)
@@ -683,10 +684,11 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = /INPUT|TEXTAREA|SELECT/.test((document.activeElement as HTMLElement)?.tagName);
-      // Ctrl+K opens the assistant
+      // Ctrl+K opens the chatbot
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } }));
+        setAskTab("chat");
+        setAsk(true);
         return;
       }
       if (e.key === "Escape") {
@@ -725,8 +727,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const clearFilters = () => { setDept(null); setZone(null); setCatState(null); setTalukState(null); };
   const openExport = () => setModal({ kind: "export", title: "Export report" });
   const openCustomize = () => setModal({ kind: "customize", title: "Customize the dashboard" });
-  // a typed question from anywhere (the palette, a card) goes to Jarvis, which answers in its panel
-  const askWith = (q: string) => { window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); };
+  // a typed question from anywhere (the palette, a card) goes to the chatbot, ready to send
+  const askWith = (q: string) => { setAskTab("chat"); setAsk(true); setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), 60); };
 
   // Thunai, the voice pilot: it presses these same controls; a sentence's filters land in one render and one undo
   const thunaiHost: ThunaiHost = {
@@ -752,7 +754,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   const actions: Hit[] = [
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
-    { g: "Actions", ic: "chat", l: "Jarvis", s: "Talk or type, in English or Tamil", kbd: "Ctrl K", run: () => window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } })) },
+    { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The chatbot: type a question, in English or Tamil", kbd: "Ctrl K", run: () => { setAskTab("chat"); setAsk(true); } },
+    { g: "Actions", ic: "mic", l: "Jarvis", s: "Talk to it, in English or Tamil. Or say \"Hi Jarvis\"", run: () => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } })) },
     { g: "Actions", ic: "cloud", l: "Rain & flooding (மழை வெள்ளம்)", s: "Where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one",
       run: () => openRain({ replay: null, manual: false }) },
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
@@ -789,14 +792,16 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={jv.hud ? "dark" : theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
+      <ConfirmHost />
+      {secOpen && <SecurityPanel onClose={() => setSecOpen(false)} />}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {loading && <div className="loading-bar" />}
-      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: (fit.h - (jv.hud ? 36 : 0)) / fit.z } : undefined}>
+      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
         <header className="top">
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
@@ -804,7 +809,6 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
-          <JarvisSwitch />
           <LangSwitch />
           {/* the tools, each with its name (they were five bare icons) */}
           <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} items={[
@@ -812,7 +816,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             { key: "ws", icon: "layers", label: "Workspaces", sub: workspaceName ? `Open: ${workspaceName}` : "Save or reopen a view", on: !!workspaceName, run: c.openWorkspace },
             { key: "custom", icon: "sliders", label: "Customize the dashboard", sub: "Choose what the dashboard shows", run: openCustomize },
             { key: "theme", icon: theme === "dark" ? "sun" : "moon", label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
-            { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds, OCR upload, audit log", run: c.openFeeds }
+            { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds, OCR upload, audit log", run: c.openFeeds },
+            { key: "sec", icon: "shield", label: "Security", sub: "Sign-ins, sessions, check an email", run: () => setSecOpen(true) }
           ]} />
           <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)}
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
@@ -827,11 +832,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                 <div style={{ padding: "0 10px 8px", color: "var(--text-3)", fontSize: 12.5 }}>
                   Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b>. Figures come from the district intelligence store, as of {fmtTime(ov.now)}.
                 </div>
+                <button className="pop-i" onClick={() => { setPop(null); setSecOpen(true); }}><I n="shield" /><span><b>Security</b><small>Recent sign-ins, check an email</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); c.openFeeds(); }}><I n="sensor" /><span><b>Data sources</b><small>Feeds, added sources, OCR upload</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
-                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); try { localStorage.removeItem("thunai-pins"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
+                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); try { localStorage.removeItem("thunai-pins"); localStorage.removeItem("jarvis-log"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
                   <I n="user" /><span><b>Sign out</b></span>
                 </button>
               </div>
@@ -934,18 +940,16 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} askMap={(q) => c.askOnMap?.(q)} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        {/* Jarvis, where the chat always was: type here; Jarvis mode in the top bar is the voice */}
-        {!jv.open && (
-          <button className={`ask-fab ask-fab-v2 jv-fab${jv.conv ? " conv" : ""}`} onClick={() => window.dispatchEvent(new CustomEvent("jarvis:toggle", { detail: { focus: true } }))}
-            aria-label="Ask Jarvis (Ctrl+K)" title={jv.mic === "blocked" ? "Ask Jarvis (Ctrl+K). The microphone is blocked: allow it in the address bar to use Jarvis mode" : "Ask Jarvis: type a question (Ctrl+K). Jarvis mode (Ctrl+Shift+J) listens without a button"}>
+        {/* the chatbot at the bottom right, and Jarvis's own button just above it */}
+        {!ask && <JarvisFab />}
+        {!ask && (
+          <button className="ask-fab ask-fab-v2" onClick={() => { setAskTab("chat"); setAsk(true); }} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ: type a question (Ctrl+K)">
             <i className="ask-ico"><AskIcon size={22} /></i>
-            <span className="ask-label">Ask Jarvis<kbd>Ctrl K</kbd></span>
-            {/* listening (green) or not (amber: the microphone is off or blocked); the words are in the tooltip */}
-            <i className={`jv-fab-st${jv.conv ? " on" : ""}`} aria-hidden="true" />
+            <span className="ask-label">Ask District IQ<kbd>Ctrl K</kbd></span>
             {insightCount > 0 && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
           </button>
         )}
-        {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} />}
+        {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} tab={askTab} onTab={setAskTab} />}
         <Thunai host={thunaiHost} />
       </div>
     </div>

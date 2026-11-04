@@ -15,11 +15,11 @@ declare global {
 const store = () => (global.__keyProblems ??= new Map());
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 16).replace("T", " ");
 
-const NAMES: Record<string, string> = { bedrock: "Amazon Bedrock", groq: "Groq", gemini: "Google Gemini", openai: "OpenAI" };
+const NAMES: Record<string, string> = { anthropic: "Claude API (Anthropic)", bedrock: "Amazon Bedrock", groq: "Groq", gemini: "Google Gemini", openai: "OpenAI" };
 
 /** A provider refused its key. Kept until it answers again (the first refusal's time is kept). */
 export function keyRefused(provider: string, status: number | string, message = ""): void {
-  const reason = /expired/i.test(message) || status === "ExpiredTokenException" ? "key expired"
+  const reason = /no credit/i.test(message) ? "no credit left" : /expired/i.test(message) || status === "ExpiredTokenException" ? "key expired"
     : status === 401 || /invalid api key|unauthori[sz]ed|invalid.*key/i.test(message) ? "key not accepted (401)"
       : status === 403 || /forbidden|access ?denied/i.test(message) ? "key refused (403)" : `key refused (${status})`;
   const s = store(), old = s.get(provider);

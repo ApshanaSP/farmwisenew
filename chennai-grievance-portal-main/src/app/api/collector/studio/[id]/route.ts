@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { csvCell } from "@/lib/csv";
 import { collectorSession, failed } from "@/lib/collector/guard";
@@ -145,11 +146,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   });
 }
 
-export async function DELETE(_req: NextRequest, { params }: Ctx) {
+export async function DELETE(req: NextRequest, { params }: Ctx) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const meta = validId(params.id) ? getMeta(params.id) : null;
   if (!meta) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
+  const c = await requireConfirm(req, s, "delete_dataset", `Delete the dataset "${meta.name}" and its dashboard`, { id: params.id });
+  if (!c.ok) return c.res;
   deleteDataset(params.id);
   // its Live Connector goes with it (an orphan would keep reading the site for nothing)
   deleteConnector(params.id);

@@ -43,7 +43,7 @@ export function PlanSheet({ d, lang, manual, planUrl, onClose, onSent, onShow }:
       const r = await fetch(planUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "send", manual, dept: x.dept, keys: x.keys, subject: x.subject, body: x.body }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Not sent.");
-      setDone((m) => ({ ...m, [x.dept]: `${j.tasks} ${j.tasks === 1 ? "task" : "tasks"} created. ${j.note}` }));
+      setDone((m) => ({ ...m, [x.dept]: `${j.tasks} ${j.tasks === 1 ? "task" : "tasks"} created. ${j.note}${j.ref ? ` Reference ${j.ref}.` : ""}` }));
       onSent(`${x.deptName}: ${j.tasks} before-rain ${j.tasks === 1 ? "task" : "tasks"} sent. ${j.note}`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };

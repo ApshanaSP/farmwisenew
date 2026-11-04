@@ -41,8 +41,16 @@ export function referenceWorld(): Pick<World, "cats" | "taluks" | "places"> {
   };
 }
 
+let worldCache: { at: number; w: World } | null = null;
+/** the departments change only with a new collection: read once a minute, not on every round of every question */
 export async function serverWorld(): Promise<World> {
-  const depts = await deptList().catch(() => []);
+  if (worldCache && Date.now() - worldCache.at < 60_000) return worldCache.w;
+  const depts = await deptList().catch(() => null);
+  const w = buildWorld(depts ?? []);
+  if (depts?.length) worldCache = { at: Date.now(), w };
+  return w;
+}
+function buildWorld(depts: { code: string; name: string }[]): World {
   return {
     zones: ZONE_NAMES.map((name, i) => ({ n: i + 1, name, ta: ZONE_TA_NAME[i + 1] ?? null })),
     depts: depts.map((d: { code: string; name: string }) => ({ code: d.code, name: d.name })),

@@ -22,14 +22,17 @@
  "இன்று # கடுமையான சம்பவங்கள்.": "Today # severe incidents.",
  "எதைச் சொல்கிறீர்கள்?": "What are you referring to?",
  "எந்த சம்பவத்தைப் பற்றி மேலும் விளக்க வேண்டும்?": "Which incident would you like more details about?",
+ "எந்த செய்தியைப் பற்றி அறிய விரும்புகிறீர்கள்?": "Which news would you like to know about?",
  "எந்தப் பகுதியை அல்லது பிரச்சினையை முன்னதாகப் பார்க்க வேண்டும்?": "Which area or issue should be looked into first?",
  "என்ன பார்க்க விரும்புகிறீர்கள்?": "What would you like to see?",
  "என்ன பார்க்கலாம்?": "What shall we look at?",
  "கடந்த #1 மணி நேரம்": "Past #1 hours",
  "சந்தை விலைகள்": "Market prices",
  "சரி, என்னைத் தமில்ல பேச சொல்லுங்கள்!": "Okay, tell me to speak in Tamil!",
+ "சரி, நன்றி.": "Okay, thank you.",
  "சென்னை மாவட்டத் தரவு பற்றி மட்டுமே என்னால் உதவ முடியும்.": "I can only help with Chennai district data.",
  "டிரெண்ட் பக்கத்துக்குச் செல்கிறேன்.": "Going to the trends page.",
+ "டிரெண்ட்ஸ் பேஜுக்கு மாறுகிறேன்.": "Switching to the Trends page.",
  "தமில்லாக டிராஞ்சலைட் பண்ணி சொல்ல வேண்டுமா?": "Should I translate and tell you in Tamil?",
  "நல்ல மனப்பான்மை!": "Good attitude!",
  "நன்றி!": "Thank you!",
@@ -41,5 +44,6 @@
  "மண்டலம் # · அடையாறு · கடுமையானவை · கடந்த # நாட்கள்": "Zone # · Adyar · Severe · Past # days",
  "மாப்பைப் திறக்கிறேன்.": "Opening the map.",
  "வணக்கம், நான் ஜார்விஸ்.": "Hello, I am Jarvis.",
- "வணக்கம்!": "Hello!"
+ "வணக்கம்!": "Hello!",
+ "வேறு ஏதாவது வேண்டுமா?": "Do you need anything else?"
 }

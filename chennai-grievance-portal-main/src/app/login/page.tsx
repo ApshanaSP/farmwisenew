@@ -21,6 +21,13 @@ function LoginForm() {
   /** signed in: the console is on its way */
   const [leaving, setLeaving] = useState(false);
 
+  const go = async (to: string) => {
+    // the card steps back while the console is fetched (one navigation: a refresh after it built the console twice)
+    setLeaving(true);
+    await authLeave();
+    router.replace(to || "/");
+  };
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -38,10 +45,7 @@ function LoginForm() {
         authError();
         return;
       }
-      // the card steps back while the console is fetched (one navigation: a refresh after it built the console twice)
-      setLeaving(true);
-      await authLeave();
-      router.replace(data.redirectTo || "/");
+      await go(data.redirectTo);
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);

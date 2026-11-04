@@ -18,8 +18,8 @@ export const ZONES: Record<number, { en: string[]; ta: string[] }> = {
   9: { en: ["teynampet", "thenampet", "thenampettai", "teynampettai"], ta: ["தேனாம்பேட்டை"] },
   10: { en: ["kodambakkam", "kodambakam"], ta: ["கோடம்பாக்கம்"] },
   11: { en: ["valasaravakkam", "valasarawakkam", "valasaravakam"], ta: ["வளசரவாக்கம்"] },
-  12: { en: ["alandur", "aalandur"], ta: ["ஆலந்தூர்"] },
-  13: { en: ["adyar", "adayar", "adaiyar", "adaiyaru", "adayaru", "adyaru"], ta: ["அடையாறு", "அடையார்", "அடயார்", "அட்யார்"] },
+  12: { en: ["alandur", "aalandur", "alandhur", "aalandhur", "allandur"], ta: ["ஆலந்தூர்", "அலந்தூர்", "ஆளந்தூர்", "ஆலந்துர்"] },
+  13: { en: ["adyar", "adayar", "adaiyar", "adaiyaru", "adayaru", "adyaru", "adiyar", "adyaar", "adaiyaar"], ta: ["அடையாறு", "அடையார்", "அடயார்", "அட்யார்"] },
   14: { en: ["perungudi", "perungudy", "perunkudi", "peringudi"], ta: ["பெருங்குடி", "பெரும்குடி"] },
   15: { en: ["sholinganallur", "sholinganalur", "solinganallur", "shozhinganallur", "cholinganallur"], ta: ["சோழிங்கநல்லூர்", "சோளிங்கநல்லூர்", "ஷோலிங்கநல்லூர்"] }
 };
@@ -97,7 +97,9 @@ export const PERIOD_WORDS: [string, PeriodKey][] = [
 export const PAGE_WORDS: [string, PageKey][] = [
   ["overview", "overview"], ["home", "overview"], ["main page", "overview"], ["dashboard", "overview"], ["முகப்பு", "overview"],
   ["briefing", "briefing"], ["brief page", "briefing"], ["சுருக்கம் பக்கம்", "briefing"],
-  ["trends", "trends"], ["trend", "trends"], ["போக்கு", "trends"], ["ட்ரெண்ட்ஸ்", "trends"],
+  ["trends", "trends"], ["trend", "trends"], ["போக்கு", "trends"], ["ட்ரெண்ட்ஸ்", "trends"], ["டிரெண்ட்ஸ்", "trends"], ["டிரெண்ட்", "trends"], ["ட்ரெண்ட்", "trends"],
+  ["ஓவர்வியூ", "overview"], ["டாஷ்போர்டு", "overview"], ["டாஷ்போர்ட்", "overview"], ["பிரீஃபிங்", "briefing"], ["ப்ரீஃபிங்", "briefing"], ["ப்ரீபிங்", "briefing"],
+  ["என்விரான்மென்ட்", "environment"], ["ஸ்டுடியோ", "studio"],
   ["environment", "environment"], ["environment and markets", "environment"], ["weather", "environment"], ["சுற்றுச்சூழல்", "environment"],
   ["வானிலை", "environment"], ["data studio", "studio"], ["studio", "studio"], ["datasets", "studio"], ["தரவு", "studio"]
 ];

@@ -1,0 +1,34 @@
+/* "Confirm it's you" (Confirm.tsx): a small card over the console, in the console's own tokens (light and dark) */
+.dic .cfm-veil{position:fixed;inset:0;z-index:4000;display:grid;place-items:center;padding:16px;background:rgba(8,15,26,.48);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:cfm-fade .16s ease both}
+.dic .cfm{width:min(420px,100%);display:flex;flex-direction:column;gap:9px;padding:16px 16px 14px;border-radius:16px;background:var(--elev);color:var(--text);box-shadow:0 0 0 1px var(--line-3),0 30px 70px -24px rgba(0,0,0,.6);font:var(--fs-sm)/1.45 var(--font-ui);animation:cfm-in .22s cubic-bezier(.2,.9,.3,1) both}
+.dic .cfm header{display:flex;align-items:center;gap:10px}
+.dic .cfm header h3{margin:0;font:700 15.5px var(--font-ui)}
+.dic .cfm header small{display:block;color:var(--text-3);font:600 11.5px var(--font-ui);text-transform:uppercase;letter-spacing:.05em}
+.dic .cfm-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.dic .cfm-ic svg{width:18px;height:18px}
+.dic .cfm-x{all:unset;margin-left:auto;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);cursor:pointer}
+.dic .cfm-x:hover{background:var(--surface-3);color:var(--text)}
+.dic .cfm-x svg{width:15px;height:15px}
+.dic .cfm-what{margin:2px 0 4px;padding:9px 11px;border-radius:10px;background:var(--surface-2);box-shadow:0 0 0 1px var(--line);font:600 13px/1.4 var(--font-ui);color:var(--text)}
+.dic .cfm label{font:600 12px var(--font-ui);color:var(--text-2)}
+.dic .cfm input{height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line-3);background:var(--surface);color:var(--text);font:600 15px var(--font-ui);outline:none}
+.dic .cfm input.num{font:700 20px var(--font-num,var(--font-ui));letter-spacing:.35em;text-align:center}
+.dic .cfm input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.dic .cfm-err,.dic .cfm-ok{display:flex;gap:7px;align-items:flex-start;padding:8px 10px;border-radius:9px;font:600 12.5px/1.4 var(--font-ui)}
+.dic .cfm-err{background:var(--critical-soft);color:var(--critical)}
+.dic .cfm-ok{background:var(--ok-soft);color:var(--ok)}
+.dic .cfm-err svg,.dic .cfm-ok svg{flex:none;width:14px;height:14px;margin-top:1px}
+.dic .cfm-acts{display:flex;gap:8px;margin-top:2px}
+.dic .cfm-acts button{flex:1;height:36px;border-radius:10px;border:1px solid var(--line-3);background:var(--surface);color:var(--text);font:700 13px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.dic .cfm-acts button.pri{background:var(--accent-3);border-color:var(--accent-3);color:#fff}
+.dic .cfm-acts button:disabled{opacity:.5;cursor:default}
+.dic .cfm-acts svg{width:15px;height:15px}
+.dic .cfm-alt{display:flex;flex-wrap:wrap;gap:4px 14px}
+.dic .cfm-alt button{all:unset;cursor:pointer;font:700 12px var(--font-ui);color:var(--accent-2)}
+.dic .cfm-alt button:hover{text-decoration:underline}
+.dic .cfm-alt button:disabled{opacity:.5;cursor:default}
+.dic .cfm-why{display:flex;gap:6px;align-items:flex-start;margin:4px 0 0;color:var(--text-3);font:500 11.5px/1.4 var(--font-ui)}
+.dic .cfm-why svg{flex:none;width:13px;height:13px;margin-top:1px}
+@keyframes cfm-fade{from{opacity:0}to{opacity:1}}
+@keyframes cfm-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dic .cfm-veil,.dic .cfm{animation:none}}

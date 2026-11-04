@@ -35,6 +35,8 @@ export function voiceScore(v: { name: string; lang: string; localService?: boole
   // Indian English first for an Indian Collector, then the clearest other English accents
   if (L === "en-in" && VL !== "en-in") s += /en-gb/.test(VL) ? 6 : /en-us/.test(VL) ? 4 : 0;
   if (/compact|espeak|robot/i.test(v.name)) s -= 30;
+  // an older voice installed on the machine sounds robotic beside a natural one of another accent
+  if (!/natural|neural|online|wavenet|premium|enhanced|google/i.test(v.name)) s -= 25;
   // Jarvis speaks with a woman's voice: the device's female voices first, its male voices last
   const g = voiceGender(v.name);
   if (g === "f") s += 40; else if (g === "m") s -= 40;
@@ -62,12 +64,26 @@ export function voicesFor(lang: string): VoiceInfo[] {
     .map(({ v }) => ({ name: v.name, lang: v.lang, natural: /natural|neural|online|google|wavenet|premium|enhanced/i.test(v.name), female: voiceGender(v.name) === "f" }));
 }
 
+/** One voice for each language for as long as the page is open: the first best one found stays, whatever arrives later. */
+const locked = new Map<string, SpeechSynthesisVoice>();
 export function bestVoice(lang: string, preferred?: string | null): SpeechSynthesisVoice | null {
   const list = all();
   if (preferred) { const p = list.find((v) => v.name === preferred && voiceScore(v, lang) >= 0); if (p) return p; }
+  const have = locked.get(lang);
+  if (have) return have;
   let best: SpeechSynthesisVoice | null = null, bs = -1;
   for (const v of list) { const s = voiceScore(v, lang); if (s > bs) { bs = s; best = v; } }
+  if (best) locked.set(lang, best);
   return best;
+}
+/** Resolves when the browser has listed its voices (at once if it has; Chrome lists them late), or after 1.2 s. */
+export function voicesReady(): Promise<void> {
+  if (!canSpeak() || all().length) return Promise.resolve();
+  return new Promise((res) => {
+    const done = () => { window.speechSynthesis.removeEventListener("voiceschanged", done); clearTimeout(t); all(); res(); };
+    const t = setTimeout(done, 1200);
+    window.speechSynthesis.addEventListener("voiceschanged", done);
+  });
 }
 
 /** Can this device speak the language at all (a Tamil line read by an English voice is noise)? */

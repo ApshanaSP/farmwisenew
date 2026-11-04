@@ -10,7 +10,9 @@ import { I } from "../icons";
 import type { RehearsalState } from "@/lib/rehearsal/types";
 import "./rehearsal.css";
 
-export interface RehearsalOpen { replay: string | null; manual: boolean; stop?: "warn" | "act" | "rain" | "check" | "learn" | null; focus?: "streets" | "help" | "schools" | "drains" | null }
+export interface RehearsalOpen { replay: string | null; manual: boolean; stop?: "warn" | "act" | "rain" | "check" | "learn" | null; focus?: "streets" | "help" | "schools" | "drains" | null;
+  /** open on Traffic, Power or Metro instead of Flooding */
+  lens?: "traffic" | "power" | "metro" }
 
 export function RainBand({ onOpen, hidden, onState }: { onOpen: (o: RehearsalOpen) => void; hidden?: boolean;
   /** the warning level and its one line, for the map's Rain button (the band itself is hidden on the Collector's console) */

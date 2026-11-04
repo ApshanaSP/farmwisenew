@@ -113,7 +113,7 @@ function SendDialog({ r, dept, question, onClose, toast }: { r: AskResponse; dep
     const j = x ? await x.json().catch(() => ({})) : {};
     setBusy(null);
     if (!x?.ok) { toast(j.error ?? "Not sent: the server could not be reached.", "alert"); return; }
-    setDone((m) => ({ ...m, [d.dept]: `${j.note} Follow-up set for ${j.followups} ${j.followups === 1 ? "case" : "cases"} (24 h).` }));
+    setDone((m) => ({ ...m, [d.dept]: `${j.note} Follow-up set for ${j.followups} ${j.followups === 1 ? "case" : "cases"} (24 h).${j.ref ? ` Reference ${j.ref}: the officer can check it is genuine.` : ""}` }));
     toast(`${d.deptName}: ${j.note}`);
   };
   return (

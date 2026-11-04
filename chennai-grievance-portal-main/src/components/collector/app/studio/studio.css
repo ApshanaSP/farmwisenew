@@ -1008,3 +1008,10 @@
   color:var(--accent)!important;background:var(--accent-soft)!important;border:1px solid var(--accent-line)!important;white-space:nowrap}
 .dic .ds-p-acts .ds-todash .ic{width:13px;height:13px}
 .dic .ds-p-acts .ds-todash.on{color:#fff!important;background:var(--accent)!important;border-color:var(--accent)!important}
+
+/* round 32: the AI analyst column is gone (Jarvis answers questions about the open dataset); its District link card sits in
+   Insights and its alerts are a tab of their own */
+.dic .ds-linkwrap{flex:none;margin:2px 0}
+.dic .ds-linkwrap .ds-linkc{max-width:760px}
+.dic .ds-alerts-tab{flex:1;min-height:0;overflow:auto;padding:12px 14px;max-width:760px}
+.dic .ds-ws.ds-span{grid-column:2 / 4}

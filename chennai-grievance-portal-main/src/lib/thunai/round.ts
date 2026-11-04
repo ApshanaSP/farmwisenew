@@ -85,7 +85,7 @@ export function safeHands(h: Hands, signal?: AbortSignal): Hands {
   };
 }
 
-const INTENTS: [string, RegExp][] = [["compare", /compare|versus|\bvs\b|ஒப்பிடு|oppidu/i], ["why", /\bwhy\b|reason|ஏன்|காரணம்|\byen\b/i], ["trend", /trend|over time|moved|போக்கு/i], ["rank", /\btop\b|worst|highest|most|lowest|best/i],
+const INTENTS: [string, RegExp][] = [["compare", /compare|versus|\bvs\b|ஒப்பி|oppid|கம்பே|கம்பா/i], ["why", /\bwhy\b|reason|ஏன்|காரணம்|\byen\b/i], ["trend", /trend|over time|moved|போக்கு/i], ["rank", /\btop\b|worst|highest|most|lowest|best/i],
   ["map", /\bmap\b|வரைபட/i], ["dashboard", /dashboard|டாஷ்போர்டு/i], ["perf", /performance|slowest|செயல்பாடு/i], ["list", /\b(show|list)\b|காட்டு|kaattu/i]];
 const LEANS = /\b(this|these|that|those|it|them|again|idha|idhu|adhu|andha)\b|இதை|இவற்றை|அதை|அந்த/i;
 /**

@@ -81,6 +81,7 @@ export function TakeAction({ id, c, onClose, onSent }: { id: string; c: Console;
             <span className="ta-ok"><I n="checkc" /></span>
             <h4>{done.status === "sent" ? "Instruction sent" : "Instruction recorded"}</h4>
             <p>{done.note}</p>
+            {(done as { ref?: string }).ref && <p className="dim">Reference <b translate="no">{(done as { ref?: string }).ref}</b>: at the foot of the email, and checkable by the officer (Menu → Security).</p>}
             <p className="dim">A follow-up is due in 24 hours. The department&apos;s completion report, with photos, comes to My Tasks.</p>
             <button className="btn" onClick={onClose}><I n="chevl" />Back to the incident</button>
           </div>

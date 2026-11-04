@@ -6,7 +6,7 @@
  */
 import { useState } from "react";
 import Thunai, { type Snap, type ThunaiHost } from "@/components/collector/app/thunai/Thunai";
-import JarvisSwitch from "@/components/collector/app/thunai/JarvisSwitch";
+import JarvisFab from "@/components/collector/app/thunai/JarvisFab";
 import type { Console } from "@/components/collector/app/CollectorApp";
 import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 
@@ -82,7 +82,7 @@ export default function Harness() {
     <main style={{ minHeight: "100vh", padding: 20, fontFamily: "Inter, system-ui", background: theme === "dark" ? "#0a1020" : "#f6f4ee", color: theme === "dark" ? "#e8ecf5" : "#14213d" }}>
       <header className="top" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
         <h1 style={{ fontSize: 18, margin: 0, flex: 1 }}>Jarvis test console (dev only, made-up numbers)</h1>
-        <JarvisSwitch />
+        <JarvisFab />
       </header>
       <nav className="ptabs" role="tablist" aria-label="Pages" style={{ display: "flex", gap: 6, marginBottom: 10 }}>
         {PAGES.map((p) => <button key={p} data-key={p} role="tab" aria-selected={page === p} onClick={() => setPage(p)} style={{ fontWeight: page === p ? 700 : 400 }}>{p}</button>)}

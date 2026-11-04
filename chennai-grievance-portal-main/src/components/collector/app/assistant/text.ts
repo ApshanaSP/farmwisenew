@@ -29,7 +29,7 @@ const typesEn: Types = { horizontal_bar: "Bar chart", bar: "Column chart", line:
 
 export const T: Record<Lang, Strings> = {
   en: {
-    title: "Jarvis · Chat", subtitle: "Answers from the district's live data", placeholder: "Ask about incidents, complaints, weather, prices…", send: "Send", stop: "Stop",
+    title: "Ask District IQ", subtitle: "Answers from the district's live data", placeholder: "Ask about incidents, complaints, weather, prices…", send: "Send", stop: "Stop",
     close: "Close", maximize: "Maximise", restore: "Restore", language: "Reply language", auto: "Auto",
     stages: { understanding: "Understanding", fetching: "Fetching data", drawing: "Drawing the answer" }, tryAsking: "Try asking", newChat: "New conversation",
     fresh: (a, ok, n) => `Data as of ${a} · ${ok} of ${n} feeds up to date`, aiOff: "AI provider not configured: answering by rules", offline: "From the data",

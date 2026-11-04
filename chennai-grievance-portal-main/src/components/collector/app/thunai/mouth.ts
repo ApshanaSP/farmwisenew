@@ -1,10 +1,10 @@
 /**
- * Jarvis's mouth. The voice ladder, first that can speak wins:
- *   1. the browser's natural voice (Edge has Pallavi for Tamil and Neerja for Indian English): free, at once. No PCM exists on
- *      this path, so barge-in is cancel only, a resume restarts at the sentence boundary, and the HUD's level is an envelope
- *      driven by the state.
- *   2. the server's voice (api/jarvis/say), played through an AudioContext (source -> gain -> analyser -> speakers), so a
- *      barge-in pauses within a frame, resumes where it stopped, and the HUD reads the real level.
+ * Jarvis's mouth. One voice for each language, chosen once and kept, so it never changes between answers or mid-answer:
+ *   1. the browser's own voice for the language, when it has one (Edge: Pallavi for Tamil, Neerja for Indian English): free, at
+ *      once. No PCM exists on this path, so a barge-in cancels it once the speech is confirmed (a cough does not cut it off), and
+ *      the HUD's level is an envelope driven by the state.
+ *   2. no browser voice for the language (Tamil in Chrome): the server's voice (api/jarvis/say), played through an AudioContext
+ *      (source -> gain -> analyser -> speakers), so a barge-in pauses within a frame and the HUD reads the real level.
  *   3. the words on screen, for the time they would take to say.
  * What was said once is kept. Every chunk (lib/thunai/chunker.ts) passes the number gate before it is spoken; a chunk that
  * fails stays on screen and is not said. The next chunk is fetched while one plays.
@@ -84,7 +84,7 @@ const short = (l: string) => (l.toLowerCase().startsWith("ta") ? "ta" : "en") as
  */
 function natural(lang: "ta" | "en"): boolean {
   const v = browser.bestVoice(lang === "ta" ? "ta-IN" : "en-IN");
-  return !!v && browser.voiceGender(v.name) === "f" && /natural|neural|online|google/i.test(v.name) && v.lang.toLowerCase().startsWith(lang);
+  return !!v && v.lang.toLowerCase().startsWith(lang);
 }
 
 /** Which voice Jarvis speaks the language with on this browser, for its settings ("Microsoft Pallavi · Edge"). */
@@ -158,6 +158,9 @@ function pieces(lines: string[]): Piece[] {
 
 async function run(s: Speech, my: number) {
   const l = short(s.lang);
+  // the choice between the two voices waits until the browser has said which voices it has: deciding early changed the voice later
+  await browser.voicesReady();
+  if (my !== token) return;
   let started = false;
   const start = (p: VoicePath) => { if (!started) { started = true; hooks.onStart?.(p, s.ack); } };
   for (; s.at < s.pieces.length; s.at++) {
@@ -234,7 +237,7 @@ export function speakAck(text: string, lang: string): boolean {
 
 /**
  * Pause at once (the energy gate's onset). PCM: the gain goes to nothing in about a frame and the clock stops, so resume is
- * exact. speechSynthesis has no reliable pause for its natural voices: cancel, and resume restarts the chunk.
+ * exact. speechSynthesis has no reliable pause for its natural voices: it goes on until the barge-in is confirmed.
  */
 export function pauseVoice() {
   if (!speakingNow) return;
@@ -243,7 +246,11 @@ export function pauseVoice() {
     gain.gain.cancelScheduledValues(ctx.currentTime);
     gain.gain.setTargetAtTime(0, ctx.currentTime, 0.004);
     void ctx.suspend().catch(() => undefined);
-  } else if (browser.speaking()) browser.stopVoice();
+  } else {
+    // the browser's voice cannot pause, only stop and start the sentence again, which was the crack in the voice at every cough
+    // or echo: it carries on until the speech is confirmed, and is then cancelled
+    paused = false;
+  }
 }
 
 /** Go on from where it paused (a cough, a door). */

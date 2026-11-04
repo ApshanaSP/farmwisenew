@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { csvCell } from "@/lib/csv";
 import { exportRows, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
@@ -12,6 +13,8 @@ export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
+  const c = await requireConfirm(req, s, "export", "Download the action list as a spreadsheet", Object.fromEntries([...p.entries()].sort()));
+  if (!c.ok) return c.res;
   try {
     const rows = await exportRows(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
       { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) });

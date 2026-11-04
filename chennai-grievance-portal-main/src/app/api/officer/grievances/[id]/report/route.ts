@@ -1,4 +1,6 @@
+import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { requireConfirm } from "@/lib/security/stepup";
 import { ID_RE, officerSession } from "@/lib/officer/guard";
 import { WorkflowError, recordStep } from "@/lib/officer/data";
 import { OFFICER } from "@/lib/officer/departments";
@@ -35,6 +37,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const step = form.get("step") === "close" ? "close" : "send";
+  // closing a case, or sending it to the Collector, is confirmed for exactly these remarks and photos
+  const c = await requireConfirm(req, ctx.session, "officer_report", step === "close" ? `Close case ${params.id} with your report` : `Send case ${params.id} to the Collector for verification`,
+    { id: params.id, step, remarks, photos: photos.map((x) => createHash("sha256").update(x.buf).digest("hex")) });
+  if (!c.ok) return c.res;
   const dir = newPhotoDir();
   try {
     const names = await savePhotos(dir, photos);

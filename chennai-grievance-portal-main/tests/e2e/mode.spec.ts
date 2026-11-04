@@ -2,20 +2,20 @@ import { expect, test } from "@playwright/test";
 import { chat, durOf, jv, modeOn, say, setup, steps, until } from "./helpers";
 
 test.describe("Jarvis mode: always listening, no mic button", () => {
-  test("off and muted stop the microphone's tracks; on opens them; the choice is remembered", async ({ page }) => {
+  test("off and muted stop the microphone's tracks; on opens them; the bar says which", async ({ page }) => {
     await setup(page);
     expect(await jv(page, "micLive")).toBe(false);
     await page.keyboard.press("Control+Shift+J");
     await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 60_000 });
-    await expect(page.locator(".jsw-mute", { hasText: "Listening" })).toBeVisible();
+    await expect(page.locator(".hud-state", { hasText: "Listening" })).toBeVisible();
     await page.keyboard.press("Control+Shift+M");
     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive());
-    await expect(page.locator(".jsw-mute", { hasText: "Muted" })).toBeVisible();
+    await expect(page.locator(".hud-state", { hasText: "Muted" })).toBeVisible();
     await page.keyboard.press("Control+Shift+M");
     await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 30_000 });
     await page.keyboard.press("Control+Shift+J");
     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive());
-    expect(await page.evaluate(() => localStorage.getItem("jarvis-mode"))).toBe("off");
+    await expect(page.locator(".hud")).toHaveCount(0);
   });
 
   test("the first time, the notice comes first: the microphone stays closed until it is read", async ({ page }) => {
@@ -70,13 +70,13 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     await page.waitForFunction(() => (window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 15_000 });
   });
 
-  test("a denied microphone says so clearly, and the mode goes off", async ({ page }) => {
+  test("a denied microphone says so clearly, and Jarvis stays open to type", async ({ page }) => {
     await page.addInitScript(() => { (window as unknown as Record<string, unknown>).__denyMic = true; });
     await setup(page);
     await page.evaluate(() => { (window as unknown as { __jarvisTestStream: () => Promise<MediaStream> }).__jarvisTestStream = async () => { throw new Error("blocked"); }; });
     await page.keyboard.press("Control+Shift+J");
-    await expect(page.locator(".jsw-denied")).toContainText("Microphone blocked", { timeout: 15_000 });
-    await expect(page.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    await expect(page.locator(".hud-state")).toContainText("Microphone blocked", { timeout: 15_000 });
+    await expect(page.locator(".hud-compose input")).toBeVisible();
   });
 
   test("with the voice model unreachable, the energy gate still hears", async ({ page }) => {

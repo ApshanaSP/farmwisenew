@@ -13,6 +13,7 @@ import type { AssistantHost } from "./host";
 import { I } from "../icons";
 import AnswerCard from "./AnswerCard";
 import { BrandMark } from "./Brand";
+import JarvisLogView from "../thunai/JarvisLogView";
 import { canListen, listen, speak, stopSpeaking } from "./speech";
 import { T, X } from "./text";
 import { EXAMPLES, detectLanguage, type Lang, type LangChoice } from "@/lib/assistant/lang";
@@ -33,7 +34,9 @@ const LANG_OPTS: { v: LangChoice; l: string }[] = [{ v: "auto", l: "Auto" }, { v
 const uid = () => Math.random().toString(36).slice(2);
 const SESSION_KEY = "diq-assistant-session";
 
-export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost; open: boolean; onClose: () => void }) {
+export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab }: { c: AssistantHost; open: boolean; onClose: () => void;
+  /** the Collector's chatbot has a second tab: what was asked of Jarvis */
+  tab?: "chat" | "jarvis"; onTab?: (t: "chat" | "jarvis") => void }) {
   const [items, setItems] = useState<Item[]>([]);
   const [text, setText] = useState("");
   const [choice, setChoice] = useState<LangChoice>("auto");
@@ -336,6 +339,13 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
             )}
           </div>
         )}
+        {onTab && (
+          <div className="aq-tabs" role="tablist" aria-label="Ask District IQ or Jarvis">
+            <button role="tab" aria-selected={tab === "chat"} className={tab === "chat" ? "on" : ""} onClick={() => onTab("chat")}><I n="chat" />{lang === "ta" ? "டிஸ்ட்ரிக்ட் IQ-விடம் கேள்" : "Ask District IQ"}</button>
+            <button role="tab" aria-selected={tab === "jarvis"} className={tab === "jarvis" ? "on" : ""} onClick={() => onTab("jarvis")}><I n="mic" />{lang === "ta" ? "ஜார்விஸிடம் கேட்டவை" : "Asked of Jarvis"}</button>
+          </div>
+        )}
+        {onTab && tab === "jarvis" ? <JarvisLogView geo={c.geo ?? null} onClose={onClose} /> : <>
         <div className="aq-scopebar" title={t.periodTip}>
           <small>{t.scopeNow}</small>
           {scopeChips.map((s) => <span key={s}>{s}</span>)}
@@ -422,6 +432,7 @@ export default function AssistantDialog({ c, open, onClose }: { c: AssistantHost
           </div>
           <small className="aq-hint">{t.hint}</small>
         </form>
+        </>}
         </div>
       </aside>
     </div>

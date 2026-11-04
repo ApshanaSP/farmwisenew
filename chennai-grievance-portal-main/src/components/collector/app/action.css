@@ -187,3 +187,7 @@
 .dic .nv-read .ev-ai dd{margin:0;font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere}
 .dic .si-row .si-act.done{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
 .dic .si-row .si-act.done:hover,.dic .si-row .si-act.done:focus-visible{background:var(--ok);border-color:var(--ok);color:#fff}
+/* the instruction's signed reference (lib/security/stamp.ts): the officer can match it with the one in the email */
+.dic .o-instr .o-ref{display:flex;align-items:center;gap:5px;margin-top:6px;color:var(--ok);font:600 11.5px var(--font-ui)}
+.dic .o-instr .o-ref svg{width:13px;height:13px;flex:none}
+.dic .o-instr .o-ref b{font-size:11.5px;font-family:var(--font-num,monospace);letter-spacing:.04em}

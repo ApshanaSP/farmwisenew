@@ -105,7 +105,7 @@ html[data-theme="dark"] .thunai {
 .thunai .help button { border: 1px solid var(--th-line); background: transparent; color: var(--th-fg); border-radius: 14px; padding: 4px 10px; font-size: 13px; }
 
 /* the ghost pointer: a translucent ring that never takes real input */
-.thunai .th-pointer { position: fixed; left: 0; top: 0; z-index: 2147483002; pointer-events: none; transition: transform .32s cubic-bezier(.2, .7, .2, 1); }
+.thunai .th-pointer { position: fixed; left: 0; top: 0; z-index: 2147483002; pointer-events: none; transition: transform .23s cubic-bezier(.2, .7, .2, 1); }
 .thunai .th-pointer .ring { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--th-orb2);
   background: color-mix(in srgb, var(--th-orb2) 18%, transparent); }
 .thunai .th-pointer.ripple .ring { animation: th-ripple .45s ease-out; }

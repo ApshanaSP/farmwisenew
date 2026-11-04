@@ -12,11 +12,12 @@ let key: Uint8Array | null = null;
 const secretKey = () => (key ??= new TextEncoder().encode(jwtSecret()));
 const EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
-export async function signToken(payload: JwtPayload): Promise<string> {
+/** `expiresIn`: a staff session's own length ("12h", lib/security/session.ts); else JWT_EXPIRES_IN (7 days) */
+export async function signToken(payload: JwtPayload, expiresIn: string = EXPIRES_IN): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(EXPIRES_IN)
+    .setExpirationTime(expiresIn)
     .sign(secretKey());
 }
 

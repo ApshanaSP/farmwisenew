@@ -2,8 +2,8 @@
 
 /**
  * Page 5 of the Collector console: the Data Studio. Add a department's file, a link or a sample; seven agents read,
- * clean, place, design, link and explain it while the page shows each step; the result is a live dashboard with an AI
- * analyst beside it. Datasets and the board of pinned panels are listed on the left.
+ * clean, place, design, link and explain it while the page shows each step; the result is a live dashboard, and
+ * questions about it go to Jarvis. Datasets and the board of pinned panels are listed on the left.
  */
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "motion/react";
@@ -311,7 +311,7 @@ function Board({ list, c, onOpen, onChanged }: { list: ListResp | null; c: Conso
         <div><h2>On the dashboard</h2><small>Charts added from any dataset, shown on the Environment page and recomputed from the latest rows every time.</small></div>
       </header>
       {!items.length ? (
-        <div className="ds-empty big"><I n="bookmark" /><b>Nothing added yet</b>Open a dataset and press “Add to dashboard” on any chart, or add an answer from the AI analyst.</div>
+        <div className="ds-empty big"><I n="bookmark" /><b>Nothing added yet</b>Open a dataset and press “Add to dashboard” on any chart, or ask Jarvis about the dataset and add its answer.</div>
       ) : (
         <div className="ds-board-g">
           {items.map(({ pin, panel, dataset }, i) => (

@@ -6,6 +6,8 @@
  * actionmail.delivery), and audited. Nothing is sent before the Collector approves.
  */
 import { createHash } from "crypto";
+import { bodyHash, emailRef, stampHtml } from "@/lib/security/stamp";
+import type { Factor } from "@/lib/security/factors";
 import intelPool, { ops } from "@/lib/collector/db";
 import pool from "@/lib/db";
 import { delivery, tidyEmail, type Delivery, type Recipient } from "@/lib/collector/actionmail";
@@ -113,13 +115,14 @@ export async function draftDept(jobs: Job[], dept: string, deptName: string, hea
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-function html(subject: string, body: string, banner: string | null) {
+function html(subject: string, body: string, banner: string | null, stamp = "") {
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;padding:8px;color:#111">
   ${banner ? `<p style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:6px;padding:8px 10px;font-size:12px;color:#7A4B00">${esc(banner)}</p>` : ""}
   <h2 style="color:#14532D;margin:0 0 2px">District Collectorate &ndash; Chennai</h2>
   <p style="color:#666;font-size:12px;margin:0 0 14px">District IQ &middot; rain rehearsal</p>
   <h3 style="margin:0 0 10px">${esc(subject)}</h3>
   ${body.split(/\n{2,}/).map((p) => `<p style="line-height:1.5;margin:0 0 10px">${esc(p).replace(/\n/g, "<br>")}</p>`).join("")}
+  ${stamp}
 </div>`;
 }
 
@@ -127,24 +130,24 @@ function html(subject: string, body: string, banner: string | null) {
  * The Collector approved one department's draft: send it (safety rule), create one task per job that is not already a
  * task of this rehearsal, audit it. `jobs` are the server's own plan for this rehearsal, never the browser's.
  */
-export async function sendDept(rid: string, jobs: Job[], dept: string, keys: string[], subject: string, body: string, user: string, context: unknown): Promise<{ status: number; body: Row }> {
+export async function sendDept(rid: string, jobs: Job[], dept: string, keys: string[], subject: string, body: string, user: string, context: unknown, factor: Factor | null = null): Promise<{ status: number; body: Row }> {
   const want = new Set(keys);
   const existing = new Set((await readTasks({ rehearsal: rid, dept })).map((t) => t.key));
   const mine = jobs.filter((j) => j.dept === dept && want.has(j.key) && !existing.has(j.key));
   if (!mine.length) return { status: 409, body: { error: existing.size ? "These jobs were already sent for this rehearsal." : "None of these jobs is in the plan any more." } };
   const to = await officerOf(dept);
   const dv = delivery(to?.email ?? null);
+  const at = ist(), st = { owner: user, subject, bodyHash: bodyHash(body), at };
   let status = "console_only", error: string | null = null, deliveredTo: string | null = null;
   if (dv.to && isSmtpConfigured()) {
     const sandbox = dv.mode === "sandbox";
-    const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null));
+    const r = await sendMail(dv.to, sandbox ? `[Sandbox] ${subject}` : subject, html(subject, body, sandbox ? `Sandbox copy. In live mode this goes to ${to?.name ?? "the department officer"} <${to?.email ?? "no address"}>.` : null, stampHtml(st, factor)));
     if (r.ok) { status = "sent"; deliveredTo = dv.to; } else { status = "failed"; error = r.reason === "send_failed" ? r.detail : "not configured"; }
   }
   const [res] = (await intelPool.query(
     `INSERT INTO ${ops("outbound_emails")} (owner, to_contact_ids, cc_contact_ids, incident_id, subject, body, language, mode, status, approved_at, sent_at, delivered_to, body_hash, error)
      VALUES (?, ?, NULL, ?, ?, ?, 'en', ?, ?, ?, ?, ?, ?, ?)`,
-    [user, JSON.stringify(to ? [to] : []), mine.find((j) => j.incident)?.incident ?? null, subject, body, dv.mode, status, ist(), status === "sent" ? ist() : null, deliveredTo,
-      createHash("sha256").update(body).digest("hex"), error]
+    [user, JSON.stringify(to ? [to] : []), mine.find((j) => j.incident)?.incident ?? null, subject, body, dv.mode, status, at, status === "sent" ? ist() : null, deliveredTo, st.bodyHash, error]
   )) as unknown as [{ insertId: number }];
   const emailId = Number(res?.insertId ?? 0);
   for (const j of mine)
@@ -152,11 +155,11 @@ export async function sendDept(rid: string, jobs: Job[], dept: string, keys: str
       [emailId, to?.id ?? 0, j.incident, encodeSummary(rid, j), (j.due ?? ist(24)).slice(0, 10)]);
   await intelPool.query(
     `INSERT INTO ${ops("audit_log")} (actor, action, table_name, record_id, before_value, after_value) VALUES (?, 'rehearsal:send', 'outbound_emails', ?, ?, ?)`,
-    [user, String(emailId), JSON.stringify(context ?? null), JSON.stringify({ rehearsal: rid, dept, jobs: mine.map((j) => j.key), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo })]
+    [user, String(emailId), JSON.stringify(context ?? null), JSON.stringify({ rehearsal: rid, dept, jobs: mine.map((j) => j.key), to: to?.email ?? null, mode: dv.mode, status, delivered_to: deliveredTo, ref: emailRef(st), confirmed_with: factor })]
   );
   return {
     status: 201,
-    body: { id: emailId, status, mode: dv.mode, deliveredTo, tasks: mine.length, to,
+    body: { id: emailId, status, mode: dv.mode, deliveredTo, tasks: mine.length, to, ref: emailRef(st),
       note: status === "sent" ? (dv.mode === "sandbox" ? `Sent to the sandbox inbox ${deliveredTo}.` : `Emailed to ${deliveredTo}.`)
         : status === "failed" ? `The email could not be sent (${error}); the officer still sees the jobs on the console.` : dv.note }
   };

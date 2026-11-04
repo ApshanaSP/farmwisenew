@@ -1,0 +1,608 @@
+<title>District IQ Review Pack</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column with a sticky tab bar; scripts are SAY / DO cue cards, timed per section */
+:root{
+  --bg:#f6f8f5; --panel:#ffffff; --ink:#18241c; --muted:#5b6b60; --line:#dbe3dc;
+  --accent:#1f7a4d; --accent-soft:#e3f1e8; --say:#fbfdfb; --do:#fff6e0; --do-ink:#7a5300;
+  --warn:#b4471f; --warn-soft:#fbe9e1;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --panel:#16211a; --ink:#e4ece6; --muted:#9db0a3; --line:#2a3a2f;
+  --accent:#5fcf93; --accent-soft:#1c3326; --say:#142019; --do:#2e2614; --do-ink:#f0c86a;
+  --warn:#f08a62; --warn-soft:#3a2219; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --panel:#16211a; --ink:#e4ece6; --muted:#9db0a3; --line:#2a3a2f;
+  --accent:#5fcf93; --accent-soft:#1c3326; --say:#142019; --do:#2e2614; --do-ink:#f0c86a;
+  --warn:#f08a62; --warn-soft:#3a2219; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px}
+header.top{padding-block:28px 8px}
+.eyebrow{font:600 12px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,46px);line-height:1.05;margin:.3em 0 .25em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1.15;margin:1.4em 0 .4em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:20px;margin:1.6em 0 .3em;text-wrap:balance}
+p{margin:.5em 0}
+.lede{color:var(--muted);max-width:62ch}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:4px;overflow-x:auto;padding-block:8px;margin-top:16px}
+nav.tabs button{font:600 15px var(--f-body);color:var(--muted);background:none;border:1px solid transparent;border-radius:999px;padding:7px 14px;white-space:nowrap;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sec{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:2em;border-top:1px solid var(--line);padding-top:14px}
+.sec h3{margin:0}
+.time{font:500 13px var(--f-mono);color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:6px}
+.say{background:var(--say);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0}
+.say::before{content:"SAY";display:block;font:600 11px var(--f-body);letter-spacing:.14em;color:var(--accent);margin-bottom:4px}
+.say p{margin:.4em 0}
+.do{background:var(--do);color:var(--do-ink);border-radius:8px;padding:8px 14px;margin:10px 0;font-weight:600;font-size:15.5px}
+.do::before{content:"DO  ";letter-spacing:.14em;font-size:11px}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:15.5px}
+.tech{border:1px dashed var(--accent);border-radius:8px;padding:8px 14px;margin:10px 0;font-size:14.5px;color:var(--muted);break-inside:avoid}
+.tech::before{content:"TECH / ALGORITHM";display:block;font:600 11px var(--f-body);letter-spacing:.14em;color:var(--accent);margin-bottom:2px}
+.tip{color:var(--muted);font-size:15px;font-style:italic}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+.tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+ol.flow{counter-reset:s;list-style:none;padding:0;margin:12px 0;display:grid;gap:10px}
+ol.flow>li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 52px;position:relative}
+ol.flow>li::before{content:counter(s);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font:700 14px/26px var(--f-body);text-align:center}
+ol.flow b{font-family:var(--f-display);font-weight:600}
+ul{padding-left:1.2em}
+li{margin:.25em 0}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{font-weight:700;cursor:pointer}
+details[open] summary{margin-bottom:6px}
+kbd,code{font-family:var(--f-mono);font-size:.86em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.card h4{margin:0 0 4px;font-family:var(--f-display);font-weight:600;font-size:17px}
+.card p,.card ul{font-size:15.5px;margin:.3em 0}
+.ctrl{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.ctrl button{font:600 14px var(--f-body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer}
+.ctrl button:focus-visible{outline:2px solid var(--accent)}
+body.big{font-size:20px}
+.check li{list-style:none;margin-left:-1.2em}
+.check li::before{content:"☐ ";color:var(--accent)}
+@media (prefers-reduced-motion: no-preference){.panel{animation:in .18s ease-out}@keyframes in{from{opacity:.4}to{opacity:1}}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Team Initiators · Review · Sunday 18 Oct 2026, 4:45 PM</div>
+  <h1>District IQ review pack</h1>
+  <p class="lede">Two speaking scripts (intro and live demo), a study guide for the whole system from data collection to the website, today's numbers, and the questions reviewers are likely to ask. Numbers are from the live build of 18 Oct, 10:43 AM. Say "about" for any count: they change every hour.</p>
+  <div class="ctrl"><button id="bigtext" type="button">Larger text for reading aloud</button><span>Fill in the names in [brackets] before the meeting.</span></div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-t="intro" aria-selected="true">1 · Friend: intro + Overview</button>
+  <button role="tab" data-t="demo" aria-selected="false">2 · You: behind the screen</button>
+  <button role="tab" data-t="study" aria-selected="false">3 · Study guide</button>
+  <button role="tab" data-t="nums" aria-selected="false">4 · Numbers</button>
+  <button role="tab" data-t="qa" aria-selected="false">5 · Questions</button>
+  <button role="tab" data-t="prep" aria-selected="false">6 · Prep plan</button>
+</nav>
+
+<!-- ============ INTRO ============ -->
+<section class="panel" id="intro">
+<h2>Intro and Overview: [friend's name]</h2>
+<p class="tip">About 9 minutes: a 5-minute pitch, then a 4-minute walk through the Collector's Overview page. Your job is to make the judges care, then show them the first screen. Speak slowly, look at the judges, and pause after every bold line. Yellow lines are what to click.</p>
+
+<div class="sec"><h3>1 · Opening</h3><span class="time">0:00 – 0:40</span></div>
+<div class="say">
+<p>Good afternoon, everyone, and thank you for having us.</p>
+<p>We are <b>Team Initiators</b>. I'm [friend's name], and this is [your name]. Today we're going to show you <b>District IQ</b>: an intelligence platform that helps the Collector of Chennai see the whole district on one screen, and know exactly what needs attention first.</p>
+<p>I'll explain why we built it and what makes it different, and then walk you through the Collector's main screen. After that, [your name] will take you behind it: the data, the intelligence, and how it reaches the officers and the citizens.</p>
+</div>
+
+<div class="sec"><h3>2 · The problem: one morning in Chennai</h3><span class="time">0:40 – 1:50</span></div>
+<div class="say">
+<p>I'd like you to imagine a morning after heavy rain in Chennai.</p>
+<p>By eight o'clock, the Collector's office is already flooded too, with information. Citizens have filed complaints about waterlogged streets. The police have logged calls about a fallen tree. PWD has opened work orders for blocked drains. IMD has issued a warning. And the newspapers, in English and in Tamil, are already reporting all of it.</p>
+<p>All of this is useful. But it arrives from <b>a dozen different places</b>, in different formats, at different times, and <b>none of it talks to each other.</b></p>
+<p>So the same waterlogged street can show up as seven separate reports. Nobody can see that it's one problem. And nobody can answer the two questions that actually matter to a Collector: <b>What is really happening in my district? And what needs me first?</b></p>
+<p>Today, that answer depends on phone calls, meetings and a lot of experience. We believe it should take <b>one screen.</b></p>
+</div>
+
+<div class="sec"><h3>3 · Our vision</h3><span class="time">1:50 – 2:20</span></div>
+<div class="say">
+<p>So our vision for District IQ was simple. Not another dashboard that shows <b>more data</b>, but a system that shows <b>less, but the right things</b>, and always explains why.</p>
+<p>It should collect on its own, connect the dots on its own, and give the Collector a clear, trustworthy picture every single morning.</p>
+</div>
+
+<div class="sec"><h3>4 · What makes it different</h3><span class="time">2:20 – 3:50</span></div>
+<div class="say">
+<p>There are five things we're especially proud of, and you'll see every one of them today.</p>
+<p><b>First, it never sleeps.</b> Every hour, it collects fresh data on its own: weather and warnings, flood levels, air quality, lake levels, market prices and news. And it does it responsibly. It never breaks into a website or bypasses a captcha.</p>
+<p><b>Second, it connects the dots.</b> Seven reports about one street become <b>one incident</b>, even when one report is in Tamil and another is in English. Matching a Tamil report with an English one, when they share almost no words, was one of the hardest things we built.</p>
+<p><b>Third, it explains itself.</b> Every incident has a priority, and the reasons are written right next to it. Nothing is a black box. And over time, it learns from the Collector's own decisions.</p>
+<p><b>Fourth, you can trust its numbers.</b> We use AI where it genuinely helps: to read, match and write. But <b>every number is checked against the real data</b> before anyone sees it. Even our chatbot is built so that it cannot invent a figure.</p>
+<p><b>And fifth, it closes the loop.</b> The Collector can send work to a department, the officer has to show photo proof that it's done, and the citizen who complained can see that proof too. <b>One system, from the citizen's complaint to the Collector's decision, and back.</b></p>
+</div>
+
+<div class="sec"><h3>5 · Who it serves</h3><span class="time">3:50 – 4:15</span></div>
+<div class="say">
+<p>It serves three kinds of people. <b>The Collector</b>, who sees the whole district. <b>Department officers</b>, 25 departments, each with a clear queue of their own work. And <b>citizens</b>, who can file a complaint in a few taps and follow it until it's done. All of it works in <b>Tamil as well as English.</b></p>
+</div>
+
+<div class="sec"><h3>6 · The data, honestly</h3><span class="time">4:15 – 4:45</span></div>
+<div class="say">
+<p>We also want to be upfront about our data, because we think that matters.</p>
+<p>All the <b>public data is real and live</b>: about fifteen thousand news articles in English and Tamil, plus IMD, the flood monitor, air quality, lakes and market prices. The department records (complaints, police, PWD and hospitals) are <b>realistic simulations</b>, because those departments don't publish open data. They follow Chennai's real wards and real rain days. Connecting a real department later is <b>one small connector, not a rebuild.</b></p>
+</div>
+
+<div class="sec"><h3>7 · Our journey, and into the screen</h3><span class="time">4:45 – 5:15</span></div>
+<div class="say">
+<p>Building this was a real journey for us. We've been through <b>more than twenty-five rounds</b> of building, testing and rebuilding, and every round started by asking: would a Collector actually trust this? We measured everything, found what was wrong, and fixed it.</p>
+<p>So rather than tell you more, let me show you what the Collector actually sees.</p>
+</div>
+
+<div class="sec"><h3>8 · The Collector's morning screen</h3><span class="time">5:15 – 6:15</span></div>
+<div class="do">Collector console on the Overview page, shared on screen. Point at the greeting band and the four tiles.</div>
+<div class="say">
+<p>This is the Collector's screen: exactly what the Collector of Chennai would open at eight in the morning. It greets them, and straight away answers the first question: <b>what is happening in my district?</b></p>
+<p>These four tiles are the pulse of the district: <b>severe events, open complaints, ongoing incidents, and what's been resolved.</b> Each one is compared with the previous period, so the Collector instantly knows whether things are getting better or worse. And under each number, it says it in plain words, like how many are still open and how many are closed.</p>
+<p>We actually started with tiny trend charts on every tile. But a Collector reads this at a glance, and at a glance <b>a sentence is quicker than a squiggle</b>. So we replaced them with plain words.</p>
+</div>
+<div class="do">Click one tile to show its list, close it. Then switch the period: Daily → Weekly → Monthly, and leave it on Weekly.</div>
+<div class="say">
+<p>Every number here is clickable. [Click a tile.] This is the list behind it, so the Collector never has to take a number on faith.</p>
+<p>And the Collector chooses the time frame: today, this week, this month or this quarter. [Switch the period.] <b>Everything on the page follows that choice</b>, from the tiles to the map to the news.</p>
+</div>
+
+<div class="sec"><h3>9 · The map: one click, one zone</h3><span class="time">6:15 – 7:15</span></div>
+<div class="do">Point at the map. Switch Zones ↔ Taluks. Then click one zone and let the whole page change. Then clear it.</div>
+<div class="say">
+<p>Here's the district on a map. All 15 zones of the Greater Chennai Corporation, or, with one switch, the revenue taluks. Darker areas have more incidents, and the pins show what is severe, what came from citizen complaints, and our live stations: air quality, rain gauges and lakes.</p>
+<p>Now watch this. [Click a zone.] When I click a zone, <b>the whole console becomes that zone.</b> The numbers, the lists, the news, even the briefing. And the snapshot here even shows the <b>zonal officer</b> responsible, so the Collector knows exactly who to call. A zonal review meeting becomes one click.</p>
+<p>One small detail that mattered a lot to us. A lot of news just says "in Chennai", with no street or area. If we pinned all of those, they would pile up in one spot and draw a huge hotspot that doesn't exist. So if we don't know exactly where something happened, <b>we don't put it on the map</b>. We list it separately, right here below the map. The map should never mislead the Collector.</p>
+</div>
+<div class="do">Clear the zone.</div>
+
+<div class="sec"><h3>10 · What's urgent, what's waiting, what's in the news</h3><span class="time">7:15 – 8:15</span></div>
+<div class="do">Point at "Open, by severity" and click through Severe → High. Then point at "My Tasks". Then "Latest news", and click its "Next door" tab.</div>
+<div class="say">
+<p>Next to the map, <b>Open, by severity</b> splits every open incident into severe, high, medium and low, so the most dangerous things are always one click away.</p>
+<p>Then <b>My Tasks</b>. This is work that departments say they've finished, waiting for the Collector to check. [Your name] will show you that whole loop in a few minutes, from the officer's side and the citizen's side.</p>
+<p>And <b>Latest news</b>: what the newspapers are saying, already grouped, so one event reported by five outlets shows up once, not five times.</p>
+<p>[Click Next door.] And this tab is one of our favourites. Chennai doesn't flood only because of Chennai. If a lake upstream in Tiruvallur or Chengalpattu releases water today, it reaches Chennai tomorrow. So <b>Next door</b> watches the news from the three neighbouring districts and flags what could reach us. It's <b>early warning from beyond the district boundary.</b></p>
+</div>
+
+<div class="sec"><h3>11 · Built around the Collector</h3><span class="time">8:15 – 8:45</span></div>
+<div class="do">Point at the top bar: press "/" to open search, close it; open Customize (sliders icon), close it; point at Export, Workspaces, the bell and the light/dark switch.</div>
+<div class="say">
+<p>Finally, we wanted the console to fit the Collector, not the other way round. They can <b>search everything</b> with a single key. [Press /.] They can <b>customise</b> the screen, hiding or reordering tiles and pages. They can save a view as a <b>workspace</b> and come back to it. They can <b>export</b> a PDF report or an action list for a meeting. The bell shows new alerts, and it works in light or dark mode.</p>
+</div>
+
+<div class="sec"><h3>12 · Handover</h3><span class="time">8:45 – 9:00</span></div>
+<div class="say">
+<p>So that's what the Collector sees every morning. But the real question is: <b>how does it know all this?</b> How does it turn thousands of scattered reports into one clear picture, and how does it reach the officers and citizens?</p>
+<p>[Your name] will take you behind the screen. [Your name], over to you.</p>
+</div>
+
+<div class="note"><b>Delivery tips:</b> learn sections 2 and 4 almost by heart; they carry the pitch. Say "five things" and count them on your fingers. On the screen, say what you're about to click before you click it, then let the screen change before you explain it. If a judge asks a deep technical question, answer in one line and say, "[your name] will show exactly that in a minute." Hand over with energy.</div>
+</section>
+
+<!-- ============ DEMO ============ -->
+<section class="panel" id="demo" hidden>
+<h2>Behind the screen: [your name]</h2>
+<p class="tip">About 18 minutes. You take over from [friend's name] right after the Overview page, so you start with the data and never go back to the Overview until the close. The script follows the screen in order: data, one incident, action, officer, citizen, briefing, trends, Ask, Data Studio. Yellow lines are what to click. If time is short, skip the parts not marked "short" (about 15 minutes).</p>
+
+<div class="sec"><h3>1 · Behind the screen: where the data comes from</h3><span class="time">0:00 – 2:30 · short</span></div>
+<div class="say">
+<p>Thank you, [friend's name].</p>
+<p>So you've just seen what the Collector sees every morning. Now I'd like to take you <b>behind the screen</b>: how it knows all this, how it joins thousands of scattered reports into one clear picture, and how it reaches the officers and the citizens. And along the way, I'll tell you about the problems we ran into, and how we solved them.</p>
+<p>Let's start where everything starts: the data.</p>
+</div>
+<div class="do">Click the "Collected …" chip in the top bar. Data sources opens.</div>
+<div class="say">
+<p>Everything starts here. This little chip tells the Collector when the data was last collected and whether every source is up to date. Right now, all eight are current, and this refreshes <b>every hour, on its own</b>.</p>
+<p>These are our sources: IMD weather and its district warnings, the Chennai Flood Monitor's river levels, CPCB air quality, Chennai Metro Water's lake levels, market prices, and news from six Chennai newspapers in English and Tamil.</p>
+<p>Now, the first real problem we hit: <b>government data is not built to be collected.</b> CPCB has no open feed at all. And two of these sites simply block cloud servers, so our hourly job kept failing.</p>
+<p>We didn't want to cut corners there. So for CPCB, we read the public map the same way a citizen sees it in a browser. For the blocked sites, our own machine collects them and passes them to the cloud job. To the Collector, none of that is visible. The data is just there, every hour.</p>
+<p>And one rule we never broke: if a site has a captcha or a login, <b>we stop.</b> We never bypass it. For a government platform, we felt how you collect data matters as much as what you collect.</p>
+</div>
+<div class="say">
+<p>One more thing, so you know exactly what you're seeing. Grievances, police, PWD and hospitals don't publish open data, so we built realistic simulators for them. The challenge was that they didn't agree with each other: each one had its own idea of when it rained. So we gave them <b>one shared world</b>, with one rain calendar and Chennai's real wards. Now when it rains, complaints, police calls and drain work all rise together, just like real life. Every simulated record is marked, and plugging in a real department later is one small connector.</p>
+</div>
+<div class="do">Close the dialog.</div>
+<div class="tech">Python collectors: requests (IMD, Flood Monitor APIs), Playwright headless browser (CPCB), feedparser + trafilatura (news).<br>Hourly on GitHub Actions triggered by cron-job.org; PC Task Scheduler for CPCB and CFM; result stored in AWS S3.</div>
+
+<div class="sec"><h3>2 · One incident, from seven reports</h3><span class="time">2:30 – 5:30 · short</span></div>
+<div class="do">Open the severe incident you chose before the meeting (one with several sources and news).</div>
+<div class="say">
+<p>Let me open one incident. This is the part of the project we're proudest of, and honestly the part that took the longest.</p>
+<p>In the real world, one problem doesn't arrive as one report. A waterlogged street comes in as three citizen complaints, a police report, a PWD work order, and two news articles, one in Tamil and one in English. To a normal system, that's seven separate things. <b>Here, it's one incident.</b> One timeline, and the evidence from every source right here.</p>
+</div>
+<div class="say">
+<p>Getting this right was hard, and I'll tell you about three problems we had to solve.</p>
+<p><b>The first: Tamil and English.</b> A Tamil article and an English article about the same accident share almost no words. Our first approach simply couldn't tell "the same accident" apart from "two different accidents on the same day". So we rebuilt it to compare <b>meaning</b>, not words, using a multilingual AI model that understands both languages. A second model then reads the two articles side by side, the way a person would. Today, about <b>2,800 Tamil and English reports</b> are matched this way.</p>
+<p><b>The second: chains.</b> If report A looks like B, and B looks a bit like C, a naive system pulls all three together, even when A and C are completely unrelated. We saw that happen, so we stopped it. Every match has to stand on its own.</p>
+<p><b>The third, and this one taught us the most: coincidences.</b> When we checked real news against our department records by hand, 141 pairs of them, we found the system sometimes joined two events just because they happened at the same place on the same day. A road-rage report and a murder story, for example. So we added a simple rule: they must also be the same kind of incident. <b>Wrong joins dropped from 32 to 9.</b> That's how we've worked the whole way through: test on real data, find what's wrong, fix it.</p>
+<p>The result: when this system says two reports are the same incident, it's right <b>97 times out of 100.</b> And when it isn't sure, it doesn't guess. It puts the pair on a review list for a person.</p>
+</div>
+<div class="tech">Duplicates: blocking + SimHash + union-find. Linking: KD-tree + logistic regression on 9 features + multilingual-e5 embeddings.<br>Tamil–English stories: bge-m3 embeddings + bge-reranker-v2-m3 cross-encoder + trained classifier + LLM check.</div>
+
+<div class="sec"><h3>3 · Why this one is at the top</h3><span class="time">5:30 – 7:00 · short</span></div>
+<div class="do">Point at the severity, the priority and the list of reasons in the pop-up.</div>
+<div class="say">
+<p>Now, the second question: why does this need the Collector first?</p>
+<p>Most systems give you a score and expect you to trust it. <b>We give you the reasons.</b> You can read them right here: severe, past its deadline, not yet checked on the ground, vulnerable people nearby, linked to rain. Every point is explained. Nothing is a black box.</p>
+<p>We had to think carefully about one trap here. One busy street can collect thirty complaints about the same pothole, while a single report of a live electric wire is far more dangerous. If every complaint simply added points, the pothole would win. That's the wrong order. So complaints count with diminishing weight: more complaints still raise priority, but they <b>can never outweigh real danger</b>.</p>
+<p>And here's what makes it smarter over time: <b>it learns from the Collector.</b> Every time the Collector verifies, reopens or escalates something, that decision is recorded. After thirty decisions, the system adjusts its own weighting to match the Collector's judgement. And it only switches to the learned version if that version actually ranks better. So it adapts, but it can't drift off course.</p>
+</div>
+<div class="tech">Severity: rule-based score 0–100. Priority: weighted signals, log scale for sources and complaints.<br>Learning: logistic regression with a Gaussian (Bayesian) prior, adopted only if held-out ranking (AUC) improves.</div>
+
+<div class="sec"><h3>4 · From insight to action</h3><span class="time">7:00 – 8:30 · short</span></div>
+<div class="do">Scroll to the AI analysis, then "Reports differ" if present. Then click "Take action". Show the draft. Do not send.</div>
+<div class="say">
+<p>Down here, the AI has read every report behind this incident and summarised it. And here's the important part: <b>every number it writes is checked against the original reports</b> before you see it.</p>
+<p>And this, <b>Reports differ</b>, came from something we noticed in the news. Different papers often report different death tolls, or a different age, or even a different place. If a Collector quotes the wrong figure in a press meet, that's a real problem. So we flag every disagreement, side by side.</p>
+<p>Now, seeing a problem isn't enough. The Collector has to act on it. So I click <b>Take action</b>, and an AI agent drafts the instruction to the right department officer, with the facts and the deadline already in it. But <b>nothing is sent until the Collector approves it.</b> AI prepares, the human decides.</p>
+<p>Then the officer does the work and sends back a completion report with photos from the site. It comes straight back here, into <b>My Tasks</b>, and the Collector either verifies it or sends it back. Every step is recorded. That's real accountability between the Collector and every department, in one loop. Let me show you that loop from the other side.</p>
+</div>
+<div class="tech">AI analysis and drafts: Amazon Bedrock (Nova Lite), Gemini and Groq as fallbacks, every figure checked by a number verifier.<br>Reports differ: LLM side-by-side comparison with figure check; email via Nodemailer; decisions and audit log in DynamoDB.</div>
+
+<div class="sec"><h3>5 · The department officer's side</h3><span class="time">8:30 – 10:30 · short</span></div>
+<div class="do">Switch to the second browser tab, already signed in as a department officer (for example Electrical or Storm Water Drain). If you sign in live, do it off the shared screen.</div>
+<div class="say">
+<p>So that's the Collector's side. But a Collector can't fix a drain. The departments do the work. So let me switch to the other side of the loop: a <b>department officer</b>.</p>
+<p>And notice: I'm still signed in as the Collector in the other tab. Each tab keeps its own login, so the Collector, an officer and a citizen can all be open side by side. We actually had to fix that: at first, logging out in one tab logged you out everywhere, which made exactly this kind of demo impossible.</p>
+<p>This officer sees <b>only their own department</b>. Their severe events, their open incidents, what is past its deadline, what is <b>due in the next 24 hours</b>, and which zone has the most open work. It's the same system as the Collector's, but focused on one job.</p>
+</div>
+<div class="do">Point at "What needs you now", then open My Work and walk through its tabs: New → In action → Sent to Collector → Verified.</div>
+<div class="say">
+<p>Here is the officer's work queue, and it follows a simple journey: <b>New, In action, Sent to Collector, Verified.</b></p>
+<p>A new grievance arrives, and the officer approves it, which puts it in action. When the work is done, they send a completion report. And here we made a deliberate choice: <b>you can't just tick a box.</b> The report must have remarks describing the work, and <b>at least one photo of the completed work</b>. Proof, not a promise.</p>
+<p>Then a second challenge: if every completed job went to the Collector, the Collector would drown in approvals. So only the <b>severe</b> ones go to the Collector to verify. Everything else, the department closes itself. The Collector's time goes where it matters most.</p>
+</div>
+<div class="do">Point at "Collector Feedback" (work returned by the Collector), and open one grievance to show the instruction "From the Collector" if there is one.</div>
+<div class="say">
+<p>And if the Collector isn't satisfied, the work comes back here, under <b>Collector Feedback</b>, to be redone. The instruction the Collector approved earlier shows up right inside the grievance, "From the Collector", with the facts and the deadline.</p>
+<p>Officers also get Ask District IQ, but locked to their department. An electrical officer can ask anything about streetlights, and nothing about the police. Even if they try, the system simply won't show another department's data.</p>
+</div>
+<div class="tech">Next.js + React + TypeScript console; server-side role guard and department lock; per-tab JWT sessions (jose).<br>Completion report with photo upload; saved to DynamoDB through API Gateway + Lambda.</div>
+
+<div class="sec"><h3>6 · The citizen's side</h3><span class="time">10:30 – 12:30 · short</span></div>
+<div class="do">Switch to the third tab, signed in as a citizen. Show the home page, then click "File a complaint".</div>
+<div class="say">
+<p>And finally, where it all starts: <b>the citizen.</b></p>
+<p>Citizens can sign up on their own. Officer and Collector accounts are issued, never self-registered, because a government system has to know exactly who is on the inside.</p>
+<p>The first challenge we thought about here: <b>a citizen doesn't know their ward number, or which department handles a fallen streetlight.</b> They shouldn't have to. So filing is four simple steps: your details, the location, the type of problem, and the details.</p>
+</div>
+<div class="do">Step 2: drop a pin on the map. Show the ward and zone filling in by themselves. Step 3: pick a complaint type. Show the department filling in. Step 4: add a short description and a photo.</div>
+<div class="say">
+<p>I just point to the problem on the map. [Drop the pin.] The system works out the <b>ward and zone from the ward boundaries itself.</b> I pick what kind of problem it is, and the <b>right department is chosen automatically</b>. If the citizen picks "Other" and just describes it in their own words, the AI reads it and routes it to the right department, and an officer confirms.</p>
+<p>A photo or a short video can be attached, and citizens can even file <b>anonymously</b> if they're afraid to give their name.</p>
+</div>
+<div class="do">Click Submit. Show the complaint number.</div>
+<div class="say">
+<p>Submitted. Here's the complaint number.</p>
+<p>And a small story here. On a slow connection, people double-click, or press submit again, and we found that the same complaint was being registered twice. So now a second press simply waits for the first and gets the <b>same complaint number back</b>. No duplicates, and the citizen isn't confused.</p>
+</div>
+<div class="do">Go to Track status and open a complaint that has been resolved (choose it before the meeting). Show its journey and "Photos of the work done".</div>
+<div class="say">
+<p>Now this is my favourite part of the citizen side. The citizen can <b>track every complaint</b> and see its whole journey, step by step. And when the work is done, they see the officer's remarks and the <b>photos of the work done.</b></p>
+<p>So the same photo the officer uploaded as proof for the Collector also reaches the citizen. One loop, from the citizen, to the department, to the Collector, and back to the citizen. <b>Everyone sees the same truth.</b></p>
+</div>
+<div class="note"><b>Rehearse this part once before 4:45:</b> sign in to all three tabs (Collector, one officer, one citizen) in the same browser. Pick a resolved complaint with photos for the citizen's Track page. Decide whether to file a new complaint live; if you do, use a clearly test description. Don't type passwords on the shared screen.</div>
+<div class="tech">Leaflet map + point-in-polygon on GCC ward boundaries (GeoJSON); department from the complaint type, "Other" routed by AI or a keyword classifier.<br>bcrypt passwords, encrypted ID numbers, a one-at-a-time lock that stops double submissions.</div>
+
+<div class="sec"><h3>7 · The morning briefing</h3><span class="time">12:30 – 13:30</span></div>
+<div class="do">Go to the Briefing page. Scroll slowly. Switch to Tamil, then back.</div>
+<div class="say">
+<p>Every morning, the Collector also gets a briefing. If they read nothing else, they read this.</p>
+<p>The key points at the top are deaths, severe incidents and IMD warnings, picked by fixed rules, so <b>nothing critical depends on an AI's mood.</b> Then a short brief for each department, the stories still developing, and something we think is really valuable: things that are <b>in the news but no department has a record of yet</b>. Those are exactly the things that slip through the cracks.</p>
+<p>Every number in this briefing is checked against the data. Today there are zero numbers we couldn't verify. And [click] the whole thing is available in Tamil.</p>
+</div>
+<div class="tech">Briefing agent: key points by fixed rules, text by AI, every number checked by a numeric verifier (0 unverified).<br>Bilingual English/Tamil; PDF export with jsPDF.</div>
+
+<div class="sec"><h3>8 · Warnings people can trust</h3><span class="time">13:30 – 14:45</span></div>
+<div class="do">Trends page → Unusual rises. Then Recurring hotspots.</div>
+<div class="say">
+<p>Here's a challenge every alert system faces. If it cries wolf too often, people stop reading it. When we started, a simple "is today higher than usual?" rule gave us more than twenty alerts a week, and most of them were noise.</p>
+<p>The big reason was <b>rain</b>. Of course waterlogging complaints jump when it rains. That's not news. So now every problem type, in every zone, learns its own normal level, including how much it normally rises on rain days and on particular weekdays. On top of that, we run a statistical correction, because when you check four thousand things a day, some will look unusual just by chance.</p>
+<p>Today, the old rule would have raised fifteen alerts. Ours raised <b>one</b>. So when this page says something is rising, it's worth the Collector's time.</p>
+<p>And here, <b>recurring hotspots</b>: places where the same problem keeps coming back. Today we found about 330. These are the places where one permanent fix, a new drain or a new streetlight, saves a hundred future complaints.</p>
+</div>
+<div class="do">Optional, 15 seconds: click Environment &amp; markets.</div>
+<div class="say">
+<p>And for completeness: rainfall, air quality, reservoirs, lake levels and vegetable prices, all live, on one page.</p>
+</div>
+<div class="tech">Poisson baselines with weekday and rain factors; spike test + CUSUM; Benjamini-Hochberg false-discovery control at 5%.<br>Hotspots: DBSCAN (haversine distance, 5 incidents within 250 m) + Getis-Ord Gi* on wards.</div>
+
+<div class="sec"><h3>9 · Just ask</h3><span class="time">14:45 – 16:30 · short</span></div>
+<div class="do">Click Ask. Type "theft cases by zone this month". Then "show as a chart". Pin it. Then ask one question in Tamil.</div>
+<div class="say">
+<p>Now, not every Collector wants to click through pages. Sometimes you just want to ask. So we built <b>Ask District IQ</b>.</p>
+<p>[Type the question.] There's the answer, by zone. [Ask for a chart.] Now as a chart. [Pin it.] And it's pinned to the dashboard.</p>
+<p>Here's the challenge we had to solve. AI chatbots are great with words, but they <b>make up numbers.</b> In government, a made-up number is not acceptable. So in ours, the AI is never allowed to produce a number. It only understands the question. The actual figures come straight from the data, and then <b>every number in the answer is checked</b> before you see it.</p>
+<p>When we first tested it on 75 questions with known answers, it got <b>37 right</b>. We went through every failure, one by one. One example: asked about incidents "in ward 120", it searched for the text "ward 120" and said zero. Now it reads that ward's own records. Today it gets <b>all 75 right, even with the AI switched off.</b> So if every AI service went down tomorrow, the Collector would still get correct answers.</p>
+<p>[Ask in Tamil.] And of course, it works in Tamil too. Department officers get the same assistant, but it only ever shows them their own department.</p>
+</div>
+<div class="tech">Router → query planner → compiler → read-only SQL on in-memory SQLite (node:sqlite); number verifier on every answer.<br>Search: LanceDB hybrid (multilingual-e5-base vectors via Transformers.js + BM25 keywords, reciprocal-rank fusion).</div>
+
+<div class="sec"><h3>10 · Add any new source with a link</h3><span class="time">16:30 – 17:30</span></div>
+<div class="do">Data Studio → Add data → paste the link you prepared. Let the preview appear.</div>
+<div class="say">
+<p>Last feature. A district never stays the same. There will always be a new website, a new feed, a new department report. So the Collector shouldn't need a developer to add one.</p>
+<p>I just paste a link. [Paste.] The system checks it's allowed to read the site, works out what kind of source it is, maps the fields, and shows me a <b>preview before anything is saved</b>.</p>
+<p>And here's a choice we're quite proud of. AI is used <b>only once</b>, at this setup step. After that, the source runs every hour on its own, with <b>no AI cost at all</b>. So adding twenty new sources doesn't mean twenty new AI bills.</p>
+</div>
+<div class="tech">Onboarding agent: robots.txt + SSRF guard, detects RSS / API / page / login, Gemini maps the fields, preview before save.<br>Scheduled runs use the saved mapping with zero AI calls; uploaded datasets profiled with SheetJS.</div>
+
+<div class="sec"><h3>11 · Close</h3><span class="time">17:30 – 18:30 · short</span></div>
+<div class="do">Go back to the Overview. Hands off the mouse. Look at the judges.</div>
+<div class="say">
+<p>So let me bring it back to that eight o'clock question.</p>
+<p>With District IQ, the Collector sees <b>one incident instead of seven reports.</b> They're warned early, from upstream districts and from rises that are actually real. They know why something is at the top of the list. They can act on it in two clicks, and check that it was actually done. The officer gets a clear queue and has to show proof. And the citizen who complained sees the photo of the finished work. All of it works in Tamil as well as English.</p>
+<p>It runs entirely on the AWS services we were given, refreshes itself every hour, and keeps working even when the AI doesn't.</p>
+<p>We know where we go next. Our news filter is our weakest point today, and labelling more real news will improve it. And the biggest step is connecting one real department system. We built it so that's one connector, not a rebuild.</p>
+<p>We've put a lot of ourselves into this, and we really believe it can change how a Collector's day starts. Thank you. We'd love to take your questions.</p>
+</div>
+
+<div class="tech">Front end: Next.js, React, TypeScript, Leaflet, ECharts. Pipeline: Python, pandas, scikit-learn, sentence-transformers.<br>AWS: S3, DynamoDB, Lambda, API Gateway, Bedrock (ap-south-1, Mumbai).</div>
+
+<h3>Challenges we solved (learn these: judges love them)</h3>
+<div class="tbl"><table>
+<tr><th>Challenge</th><th>How we solved it</th><th>Result</th></tr>
+<tr><td>CPCB has no open feed</td><td>Read the public map like a citizen's browser</td><td>Live AQI every hour</td></tr>
+<tr><td>Two government sites block cloud servers</td><td>Our own machine collects them and hands them to the cloud job</td><td>All 8 feeds current</td></tr>
+<tr><td>The cloud scheduler skipped runs</td><td>An external hourly trigger, and a check that skips an hour already built</td><td>Reliable hourly refresh</td></tr>
+<tr><td>Simulators disagreed on rain days</td><td>One shared world: one rain calendar, real wards</td><td>Sources rise together on rain days</td></tr>
+<tr><td>Tamil and English share no words</td><td>Match by meaning, then a second model reads each pair</td><td>About 2,800 cross-language matches</td></tr>
+<tr><td>Chains pulling in unrelated reports</td><td>Every match must stand on its own</td><td>No accidental mega-incidents</td></tr>
+<tr><td>Joins by coincidence of place and time</td><td>Checked 141 real pairs by hand; added a same-category rule</td><td>Wrong joins 32 → 9; 97% precision</td></tr>
+<tr><td>"In Chennai" news making fake hotspots</td><td>Don't pin what we can't place</td><td>A map that never misleads</td></tr>
+<tr><td>Thirty duplicate complaints outranking real danger</td><td>Complaints count with diminishing weight</td><td>Danger stays on top</td></tr>
+<tr><td>Too many false alerts</td><td>Rain- and weekday-aware normal levels, plus a false-alarm correction</td><td>1 alert instead of 15 today</td></tr>
+<tr><td>Newspapers disagree on figures</td><td>"Reports differ" flags every conflict</td><td>The Collector never quotes a wrong figure</td></tr>
+<tr><td>Chatbots invent numbers</td><td>AI never produces numbers; every figure is checked</td><td>37/75 → 75/75, even with AI off</td></tr>
+<tr><td>AI keys expire, services go down</td><td>Backup AI providers, and answers from the data when all are down</td><td>Never a blank screen</td></tr>
+<tr><td>Logging out in one tab logged out every tab</td><td>Each tab keeps its own login</td><td>Collector, officer and citizen side by side</td></tr>
+<tr><td>"Done" with no proof</td><td>Completion report needs remarks and at least one photo</td><td>Proof, not a promise</td></tr>
+<tr><td>Collector flooded with approvals</td><td>Only severe work goes to the Collector; departments close the rest</td><td>Collector's time goes where it matters</td></tr>
+<tr><td>Citizens don't know their ward or department</td><td>Map pin fills ward and zone; type picks the department; AI routes "Other"</td><td>Filing in four simple steps</td></tr>
+<tr><td>Double-click registered a complaint twice</td><td>A second press waits and returns the same complaint number</td><td>No duplicate complaints</td></tr>
+<tr><td>Citizens never see what was done</td><td>Officer's remarks and work photos shown on the Track page</td><td>Everyone sees the same truth</td></tr>
+<tr><td>New sources need a developer</td><td>Paste a link; AI maps it once, then it runs free</td><td>New source in minutes, no ongoing AI cost</td></tr>
+</table></div>
+
+<div class="note"><b>How to deliver it:</b> say each challenge as a short story: "here's a problem we hit… so we… and now…". Pause after the bold lines. Let the screen change before you explain it. If something fails live, smile and say: "this refreshes hourly; let me show you the same thing from here." If the AI is down, say: "this is exactly the fallback I mentioned. The answer still comes from the data."</div>
+</section>
+
+<!-- ============ STUDY ============ -->
+<section class="panel" id="study" hidden>
+<h2>Study guide: the whole system</h2>
+<p class="lede">Read this top to bottom once. Each step says what happens, which algorithm does it, and the one line to say if asked.</p>
+
+<h3>The big picture</h3>
+<div class="tbl"><table>
+<tr><th>Layer</th><th>What it is</th><th>Where in the code</th></tr>
+<tr><td>Collectors</td><td>One program per source; each keeps its own fetch method</td><td><code>imd_weather_collector/</code>, <code>cpcb_air_quality_collector/</code>, <code>cfm_dss_collector/</code>, <code>chennai_news_pipeline/</code></td></tr>
+<tr><td>Simulators</td><td>Realistic department records: grievances, police, PWD, hospitals</td><td><code>police_dataset_generator/</code>, <code>pwd_dataset_generator/</code>, <code>chennai_hospital_data/</code>, the portal's grievance generator</td></tr>
+<tr><td>Pipeline</td><td>Cleans, locates, links and analyses everything into one store</td><td><code>district_intel/</code> (<code>dintel/*.py</code>)</td></tr>
+<tr><td>Scheduler</td><td>Hourly job on GitHub Actions, triggered by cron-job.org; the PC sends CPCB and CFM</td><td>separate repo <code>farmwisenew-dataload</code>, <code>district_intel/scripts/run_intel.bat</code></td></tr>
+<tr><td>Storage</td><td>AWS S3 (each build as compressed tables plus a manifest), DynamoDB (accounts, complaints, decisions)</td><td><code>aws/</code> (kept on the team PC)</td></tr>
+<tr><td>Website</td><td>Next.js app: citizen portal, Collector console, officer consoles, Ask District IQ, Data Studio</td><td><code>chennai-grievance-portal-main/</code></td></tr>
+</table></div>
+
+<h3>Data collection, feed by feed</h3>
+<div class="grid2">
+  <div class="card"><h4>IMD weather (real)</h4><p>IMD city-weather JSON for 4 stations: 24-hour rain to 8:30 AM, temperature, humidity, 7-day forecast. District warnings from IMD's GIS warning map (WFS). Endpoints behind a login or IP whitelist are logged, never bypassed.</p></div>
+  <div class="card"><h4>CPCB air quality (real)</h4><p>Playwright opens CPCB's public city map and reads each station's AQI popup. data.gov.in needs a key we don't have; history is behind a captcha, so missing days are reported, not invented. Runs on the team PC (CPCB blocks cloud servers).</p></div>
+  <div class="card"><h4>Chennai Flood Monitor, CFM-DSS (real)</h4><p>TN WRD's flood DSS API: 25 river and canal gauges with warning and danger levels, reservoir records, alerts and bulletins; Adyar, Cooum, Kosasthalayar and Kovalam basins. Also from the PC since 14 Oct.</p></div>
+  <div class="card"><h4>News (real)</h4><p>RSS and sitemaps: The Hindu, Times of India, DT Next, New Indian Express, Dinamani, Dinamalar, plus Google News search. Full text from publisher pages where robots.txt allows. A Tamil-aware gazetteer finds places.</p></div>
+  <div class="card"><h4>Lakes and prices (real, read by the website)</h4><p>Chennai Metro Water (CMWSSB) lake levels; AGMARKNET and Uzhavar Sandhai vegetable and fruit prices; nearby-district news (Tiruvallur, Kancheepuram, Chengalpattu).</p></div>
+  <div class="card"><h4>Simulated departments</h4><p>Grievances (about 16,100), police (about 12,300), PWD (about 2,100) and hospital alert episodes, 180 days. One shared rain calendar (<code>dintel/sync.py</code>) so all sources react to the same rain days. Every row has <code>is_synthetic = 1</code>.</p></div>
+</div>
+
+<h3>The pipeline, step by step</h3>
+<ol class="flow">
+<li><b>Load.</b> One loader per source turns every record into a row of one <code>events</code> table (70 columns: time, text, category, place, impact, severity, status, provenance). Mobile numbers become a keyed hash, so personal data is never copied.</li>
+<li><b>Classify.</b> Structured sources use crosswalk tables to our ~31 categories. Free text uses a character n-gram classifier (scikit-learn), which handles English, Tamil and Tanglish. News is labelled by an LLM (Groq), and a local SetFit model (multilingual-e5-base) trained on those labels covers articles the LLM hasn't reached. A trained incident filter decides which articles are real incidents and which are notices, politics or court news.</li>
+<li><b>Locate.</b> Point-in-polygon on the 200 GCC ward boundaries; a point within 500 m outside a ward is snapped (and flagged). Ward → zone, and ward → taluk by majority vote. News places come from the gazetteer, which picks <i>where it happened</i>, not every place mentioned.</li>
+<li><b>Shared world (overlay).</b> The simulators were written separately, so they disagreed about rain days. The overlay builds one world rain calendar and adds the reports a source would have produced on those days. It also plants multi-source events, which give us an answer key to measure the linker. Real sources are never changed.</li>
+<li><b>Duplicates within a source.</b> Compare only plausible pairs (blocking), apply the portal's rule for grievances plus officers' own "duplicate of" decisions, then <b>union-find</b> joins them into groups. Measured with <b>B-cubed F1 ≈ 0.995</b>.</li>
+<li><b>News stories across languages.</b> <b>bge-m3</b> embeddings put Tamil and English in one vector space to find candidate pairs; the <b>bge-reranker-v2-m3</b> cross-encoder reads each pair together; a small model trained on our labelled pairs decides; an LLM checks unsure pairs; and we stop chaining (A like B, B like C does not pull in C). About 9,500 story groups became 7,100; about 2,800 merges joined Tamil and English reports.</li>
+<li><b>Link across sources into incidents.</b> Blocking by category group, a <b>KD-tree</b> on distance and a time window per category → a <b>logistic regression</b> scores each pair on 9 features: distance, time gap, word similarity, meaning similarity (multilingual-e5), shared named things, same category, same ward, coarse location, involves news → thresholds learned from the data (merge at 0.80, review band from 0.55) → union-find. A news report links to a department record only if both have the same category. <b>F1 ≈ 0.83</b> on the held-out half (precision 0.97, recall 0.72).</li>
+<li><b>Incidents: severity, deadline, priority.</b> Lead record, status and a deadline per category (an SLA). <b>Severity</b> is a rule score from 0 to 100 (≥70 Severe, ≥50 High, ≥30 Medium, else Low), from facts only. <b>Priority</b> = severity + weighted signals, each with its reason (table below). Priority is computed when it is read, so it never goes stale.</li>
+<li><b>Analytics.</b> Poisson baselines with weekday and rain factors; one-day spikes plus <b>CUSUM</b> slow rises; all ~3,900 tests under one <b>Benjamini-Hochberg</b> FDR at 5%. <b>DBSCAN</b> hotspots, <b>Getis-Ord Gi*</b> on wards, <b>EWMA</b> and z-scores for trends, KPIs per period and zone, and <b>PSI</b> for category drift.</li>
+<li><b>Agents.</b> <b>Data Steward</b> (feed health, data contract checks, quarantine, drift), <b>Action Planner</b> (playbook tasks per category), <b>Gap Finder</b> (in the news, no department record), <b>Linker</b> (pairs in the review band), <b>Watchdog</b> (alerts), <b>Briefing</b> (writes the daily, weekly, monthly and quarterly briefings; a numeric verifier rejects any number not in the data: 0 unverified today).</li>
+<li><b>Store and publish.</b> SQLite store (33 tables) → <code>export_intel.py</code> uploads each changed table to S3 as gzip JSON, named by its hash, and then a manifest. Unchanged tables are skipped.</li>
+<li><b>Website reads it.</b> On start and every few minutes, the site downloads the manifest and tables into an in-memory SQLite database (Node's built-in <code>node:sqlite</code>). Its queries were written for MySQL, so a small dialect layer translates them. Build hooks add headlines, incident clusters and lake alerts. Writes (complaints, decisions) go to DynamoDB through API Gateway and a Lambda.</li>
+</ol>
+
+<h3>Priority signals and weights</h3>
+<div class="tbl"><table>
+<tr><th>Signal</th><th>Points</th><th>Meaning</th></tr>
+<tr><td>Past deadline, twice over</td><td class="n">+20</td><td>open for more than twice its category's SLA</td></tr>
+<tr><td>Past deadline</td><td class="n">+10</td><td>open beyond its SLA</td></tr>
+<tr><td>Serious and unverified</td><td class="n">+8</td><td>severe or high, no officer has confirmed it on the ground</td></tr>
+<tr><td>Growing</td><td class="n">+8</td><td>3 or more new reports in the last 24 hours</td></tr>
+<tr><td>More than one source</td><td class="n">5 × log₂(sources)</td><td>e.g. 2 sources = +5, 4 sources = +10</td></tr>
+<tr><td>Vulnerable people</td><td class="n">+5</td><td>the record names an affected vulnerable group</td></tr>
+<tr><td>Several outlets</td><td class="n">+5</td><td>2 or more news outlets</td></tr>
+<tr><td>Only in the media</td><td class="n">+5</td><td>news reports it, no department record</td></tr>
+<tr><td>Rain</td><td class="n">+5</td><td>linked to a rain event</td></tr>
+<tr><td>Recurring</td><td class="n">+5</td><td>3 or more times at the same place in 90 days</td></tr>
+<tr><td>Citizen complaints</td><td class="n">3 × log₂(1 + complaints)</td><td>applies from 2 complaints; grows slowly so many complaints can't swamp severity</td></tr>
+</table></div>
+<p class="tip">The deadline and growth signals apply only while the incident is open; "serious and unverified" applies only to Severe or High.</p>
+<p><b>Learning:</b> each Collector decision (verify, reopen, escalate) is saved with the incident's facts. After 30 decisions, with at least 5 on each side, a logistic model refits the weights with a Gaussian prior around these hand-set values. The learned weights are used only if they rank held-out decisions at least as well. Today: 6 decisions, still collecting.</p>
+
+<h3>Ask District IQ, step by step</h3>
+<ol class="flow">
+<li><b>Code guard.</b> Rejects unsafe or off-topic input; fixes spelling; detects Tamil.</li>
+<li><b>Router</b> (a fast model, or rules if no AI is available) decides the kind of question: a count, a list, a chart, an explanation, a console action, or a chart edit.</li>
+<li><b>Tools or query plan.</b> Either one of the console's own functions, or a planner writes a structured plan that a <b>compiler</b> turns into <b>read-only SQL</b>. The model never writes raw SQL.</li>
+<li><b>Search</b> for open questions: <b>LanceDB</b> (embedded vector database) with <b>multilingual-e5-base</b> vectors, plus BM25 keyword search, merged by <b>reciprocal-rank fusion</b>. It retrieves records; counts still come from SQL.</li>
+<li><b>Facts → composer.</b> Code builds the facts; the composer model writes the answer in English or Tamil.</li>
+<li><b>Number verifier.</b> Every number in the text must exist in the facts. If not, it regenerates once, then falls back to a template. A chart checker validates the chart type.</li>
+<li>At most three model calls per question. If the AI is busy or missing, the answer still comes from the tools and says "without AI". Officers' answers are locked to their department.</li>
+</ol>
+
+<h3>Tech stack</h3>
+<div class="tbl"><table>
+<tr><th>Area</th><th>Technology</th></tr>
+<tr><td>Website</td><td>Next.js 14, React 18, TypeScript, Tailwind CSS, Leaflet (maps), ECharts (charts), Motion and anime.js (animation), jsPDF (PDF export), SheetJS (Excel), Zod (validation)</td></tr>
+<tr><td>Website data</td><td>In-memory SQLite (<code>node:sqlite</code>) loaded from S3; durable writes to DynamoDB; MySQL still supported (<code>DATA_BACKEND=mysql</code>)</td></tr>
+<tr><td>Security</td><td>bcrypt passwords, signed JWT session cookies (jose), role guards, login rate limits, OTP, encrypted ID numbers, SSRF guard on fetched links, audit log, email sandbox with an allowlist</td></tr>
+<tr><td>Pipeline</td><td>Python 3.11, pandas, NumPy, scikit-learn, SciPy, sentence-transformers, SetFit, Playwright, truststore</td></tr>
+<tr><td>Models</td><td>multilingual-e5-small (linking), multilingual-e5-base (news classifier, chatbot search), bge-m3 and bge-reranker-v2-m3 (cross-language stories)</td></tr>
+<tr><td>AI services</td><td>Amazon Bedrock (Nova Lite / Nova Micro); Gemini and Groq as fallbacks; Transformers.js runs the embedding model inside the website</td></tr>
+<tr><td>AWS</td><td>S3, DynamoDB, Lambda, API Gateway, CloudWatch Logs, Bedrock; region ap-south-1 (Mumbai)</td></tr>
+<tr><td>Automation</td><td>GitHub Actions (hourly build), cron-job.org (trigger), Windows Task Scheduler on the PC (CPCB and CFM)</td></tr>
+<tr><td>Testing</td><td>Vitest (about 570 web tests), pytest (about 100 pipeline and 88 news tests), a golden set of 75 chatbot questions</td></tr>
+</table></div>
+
+<h3>Glossary: one line each</h3>
+<div class="tbl"><table>
+<tr><th>Term</th><th>Say this</th></tr>
+<tr><td>Union-find</td><td>A fast way to merge pairs into groups: if A=B and B=C, all three become one group.</td></tr>
+<tr><td>Blocking</td><td>Only compare records that could plausibly match (same category group, nearby, close in time) instead of every pair.</td></tr>
+<tr><td>KD-tree</td><td>A spatial index that finds nearby points quickly.</td></tr>
+<tr><td>Logistic regression</td><td>Turns the pair features into a probability that two reports are the same event.</td></tr>
+<tr><td>Embedding</td><td>A vector that represents the meaning of a text; similar meanings sit close together, even across Tamil and English.</td></tr>
+<tr><td>Cross-encoder (reranker)</td><td>Reads two texts together and scores how related they are; slower but more accurate than comparing vectors.</td></tr>
+<tr><td>SetFit</td><td>Fine-tunes a sentence-embedding model with few labels to make a classifier.</td></tr>
+<tr><td>Poisson baseline</td><td>The expected count per day for a category in a zone, from its own history.</td></tr>
+<tr><td>CUSUM</td><td>Cumulative sum test that detects a slow, steady rise rather than a one-day spike.</td></tr>
+<tr><td>Benjamini-Hochberg (FDR)</td><td>When you run thousands of tests, it controls the share of false alarms among the alerts you keep (5%).</td></tr>
+<tr><td>DBSCAN</td><td>Density clustering: finds tight groups of points (hotspots) without fixing the number of clusters.</td></tr>
+<tr><td>Getis-Ord Gi*</td><td>Says whether a ward and its neighbours together have unusually high counts: a statistical hotspot.</td></tr>
+<tr><td>EWMA</td><td>An exponentially weighted moving average that smooths a trend.</td></tr>
+<tr><td>PSI</td><td>Population stability index: measures how much the category mix has drifted.</td></tr>
+<tr><td>B-cubed F1</td><td>A clustering score: for each record, how correct its group is.</td></tr>
+<tr><td>Precision / recall / F1</td><td>Precision: of what we flagged, how much was right. Recall: of what was really there, how much we found. F1 balances the two.</td></tr>
+<tr><td>Reciprocal-rank fusion</td><td>Merges two ranked result lists (meaning search and keyword search) into one.</td></tr>
+<tr><td>Point-in-polygon</td><td>Tests which ward boundary contains a latitude and longitude.</td></tr>
+</table></div>
+</section>
+
+<!-- ============ NUMBERS ============ -->
+<section class="panel" id="nums" hidden>
+<h2>Today's numbers</h2>
+<p class="lede">From the live build of 18 Oct 2026, 10:43 AM (build took about 6.5 minutes). All eight feeds were "ok". Round them when speaking.</p>
+<div class="tbl"><table>
+<tr><th>What</th><th>Number</th><th>Say</th></tr>
+<tr><td>Events (all source records)</td><td class="n">33,058</td><td>about 33,000 records</td></tr>
+<tr><td>Incidents after joining</td><td class="n">27,502</td><td>about 27,500 incidents</td></tr>
+<tr><td>Incidents with more than one source</td><td class="n">259</td><td>about 260</td></tr>
+<tr><td>Grievances / police / PWD (simulated)</td><td class="n">16,099 / 12,279 / 2,128</td><td>about 16,000, 12,000 and 2,100</td></tr>
+<tr><td>Environmental readings</td><td class="n">30,483</td><td>about 30,000 readings</td></tr>
+<tr><td>News: feed rows → unique links</td><td class="n">35,336 → 14,934</td><td>about 15,000 unique articles</td></tr>
+<tr><td>News: articles → story groups</td><td class="n">13,977 → 7,097</td><td>about 7,100 stories</td></tr>
+<tr><td>News: incident articles / with full text</td><td class="n">2,055 / 3,388</td><td>about 2,000 incident articles</td></tr>
+<tr><td>Tamil–English story merges</td><td class="n">2,814 pairs</td><td>about 2,800</td></tr>
+<tr><td>Linking F1 (held-out simulation)</td><td class="n">0.83 (P 0.97, R 0.72)</td><td>about 0.83</td></tr>
+<tr><td>Real pairs checked by hand</td><td class="n">141; wrong joins 32 → 9</td><td>same-category rule cut wrong joins</td></tr>
+<tr><td>Duplicates (B-cubed F1)</td><td class="n">0.995</td><td>about 0.99</td></tr>
+<tr><td>Officer duplicate decisions used</td><td class="n">574</td><td></td></tr>
+<tr><td>News incident filter F1 (300 real labels)</td><td class="n">≈ 0.63</td><td>our weakest number; finds about 6 in 10</td></tr>
+<tr><td>Category classifier (macro F1)</td><td class="n">0.997, 31 classes</td><td>high because complaint text is templated; expect lower on real text</td></tr>
+<tr><td>Place from text alone</td><td class="n">zone right 78%, median error ~1 km</td><td>grievances always also carry the citizen's ward</td></tr>
+<tr><td>Unusual-rise tests per build</td><td class="n">3,936</td><td>about 4,000, under one 5% FDR</td></tr>
+<tr><td>Alerts kept today vs old rule</td><td class="n">1 vs 15</td><td></td></tr>
+<tr><td>Rain factor, waterlogging</td><td class="n">4.16×</td><td>about four times more reports on rain days</td></tr>
+<tr><td>Shared world: rain days / planted events</td><td class="n">32 / 300</td><td></td></tr>
+<tr><td>Unverified numbers in briefings</td><td class="n">0</td><td></td></tr>
+<tr><td>Chatbot golden questions</td><td class="n">75 / 75</td><td>with the AI switched off</td></tr>
+<tr><td>Collector decisions so far</td><td class="n">6 of 30</td><td>priority learning switches on at 30</td></tr>
+<tr><td>GCC wards / zones / taluks</td><td class="n">200 / 15 / 16</td><td></td></tr>
+<tr><td>Department officer accounts</td><td class="n">25</td><td></td></tr>
+</table></div>
+</section>
+
+<!-- ============ Q&A ============ -->
+<section class="panel" id="qa" hidden>
+<h2>Likely questions</h2>
+<p class="lede">Short, honest answers. If you don't know, say "we haven't measured that yet; here is what we did measure."</p>
+
+<details open><summary>Is the data real?</summary><p>News, IMD weather and warnings, CPCB air quality, the Flood Monitor, lake levels and market prices are real and collected every hour. Grievances, police, PWD and hospital records are simulated, because those departments have no open API. They share the real rain calendar and real wards, and every simulated row is flagged. Connecting a real department means writing one loader.</p></details>
+<details><summary>Why did you not use the two FarmwiseAI systems?</summary><p>We explored both. The hostels system is for GHMC, which is Hyderabad, and the leave portal is for Yadadri Bhuvanagiri in Telangana. Neither has Chennai data. The same kind of source, a website with a login, plugs in through Data Studio.</p></details>
+<details><summary>How do you know two reports are the same incident?</summary><p>We compare only plausible pairs: same category group, nearby, and close in time. A logistic regression scores each pair on distance, time gap, word and meaning similarity, shared names, category and ward. Pairs above a threshold learned from the data are merged; the grey zone goes to a review list. News must also share the category. F1 is about 0.83 on held-out simulated events.</p></details>
+<details><summary>How do you match Tamil and English news?</summary><p>They rarely share words, so we match by meaning. bge-m3 puts both languages in one vector space; a cross-encoder reranks the candidates; a model trained on our labelled pairs decides; an LLM checks only the unsure pairs. We also prevent chaining.</p></details>
+<details><summary>How is priority decided? Is it AI?</summary><p>No. Severity is a rule score from facts. Priority adds weighted, named signals: past deadline, more than one source, vulnerable people, rain, growing, recurring. Each reason is shown. The weights can learn from the Collector's decisions after 30 decisions, and only if they rank better on held-out decisions.</p></details>
+<details><summary>How do you avoid false alerts?</summary><p>Each category-zone series has a Poisson baseline adjusted for weekday and rain. We run about 4,000 tests a day and apply one Benjamini-Hochberg correction at a 5% false-discovery rate. Today that kept 1 alert where a simple rule would have raised 15.</p></details>
+<details><summary>Can the chatbot make up numbers?</summary><p>No. Counts come from read-only SQL that our compiler generates from a structured plan. The model only plans and writes words. Every number in the text is checked against the data; if one fails, it rewrites once, then uses a template. 75 out of 75 golden questions are correct with AI off.</p></details>
+<details><summary>Which AI models do you use, and why?</summary><p>Amazon Bedrock Nova Lite for routing and writing (it is on the FarmwiseAI AWS account), with Gemini and Groq as backups. Local multilingual-e5 and bge models for meaning. Numbers never come from a model, which keeps it cheap, testable and safe.</p></details>
+<details><summary>What is your weakest point?</summary><p>The news incident filter: F1 about 0.63, so it finds about 6 in 10 incident articles. More real labels are the fastest fix, and that is first on our roadmap. Also, linking accuracy is measured on simulated events because the department data is simulated.</p></details>
+<details><summary>What happens if a source goes down?</summary><p>The Data Steward marks the feed as stale or degraded, the chip in the top bar turns orange and says which feed is behind, and the rest of the dashboard keeps working on the last good data. Endpoints closed by their owner (captcha, login) are logged, never bypassed.</p></details>
+<details><summary>Why GitHub Actions and not AWS for scheduling?</summary><p>Our AWS role does not allow EventBridge scheduling, so cron-job.org triggers the GitHub job every hour. The job runs the pipeline and uploads to S3. CPCB and the Flood Monitor block cloud machines, so the team PC collects those two and sends them to the job.</p></details>
+<details><summary>Why is the website's database SQLite in memory?</summary><p>We were asked to use only AWS services, with no SQL server. Each hourly build sits in S3; the site loads it into an in-memory SQLite database, which is fast and needs no server. Durable data (accounts, complaints, decisions) is written to DynamoDB through API Gateway and a Lambda.</p></details>
+<details><summary>How is personal data protected?</summary><p>Mobile numbers are hashed in the pipeline, ID numbers are encrypted, passwords are bcrypt-hashed, roles are enforced on the server, real complaints are excluded from the public build files, and every Collector decision is audited.</p></details>
+<details><summary>How does adding a new source by link work?</summary><p>Paste a link in Data Studio. The agent checks the host is public and robots.txt allows it, detects RSS, API, page or login, maps the fields with AI, and shows a preview. Nothing is saved until the Collector approves. Scheduled runs then use the saved mapping without AI.</p></details>
+<details><summary>How does the officer–Collector loop work?</summary><p>Severe incident → the Collector approves an AI-drafted instruction to the department officer → the officer does the work and sends a completion report with photos → it appears in the Collector's My Tasks → the Collector verifies or sends it back. Every step is logged.</p></details>
+<details><summary>How do you place a news article on the map?</summary><p>A Tamil-aware gazetteer of Chennai places finds mentions. A place-role step picks where the event happened, not, for example, the hospital a victim was taken to. Then point-in-polygon finds the ward. Articles that only say "Chennai" are not pinned.</p></details>
+<details><summary>How did you test the system?</summary><p>About 570 automated web tests, about 100 pipeline tests and 88 news tests, a golden set of 75 chatbot questions checked by SQL, and an evaluation report each build with the accuracy of every AI step.</p></details>
+<details><summary>How would this scale to other districts?</summary><p>Collectors and categories are configuration; ward boundaries, taluks and departments are reference tables. A new district needs its boundaries, its gazetteer and its department list. The pipeline and the website stay the same.</p></details>
+<details><summary>What would you do with more time?</summary><p>Connect one real department system, label more real news to raise the filter's recall, collect 30 Collector decisions so priority learns, and move the PC collectors to an approved server.</p></details>
+</section>
+
+<!-- ============ PREP ============ -->
+<section class="panel" id="prep" hidden>
+<h2>Prep plan: from now to 4:45 PM</h2>
+<div class="tbl"><table>
+<tr><th>Time</th><th>[Friend's name]</th><th>[Your name]</th></tr>
+<tr><td class="n">1:45 – 2:15</td><td>Read the intro script aloud twice. Mark where you breathe.</td><td>Read the demo script once while clicking through the live site.</td></tr>
+<tr><td class="n">2:15 – 3:00</td><td>Study guide: the big picture, data collection and "the data, stated honestly". Learn the four ideas by heart.</td><td>Study guide: pipeline steps 1–12, priority table, Ask District IQ steps.</td></tr>
+<tr><td class="n">3:00 – 3:30</td><td colspan="2">Full rehearsal together, with a timer: intro, handover, demo. Note where you overrun.</td></tr>
+<tr><td class="n">3:30 – 4:00</td><td colspan="2">Question drill: one asks from tab 5, the other answers without looking. Swap. Learn the glossary terms you stumbled on.</td></tr>
+<tr><td class="n">4:00 – 4:15</td><td colspan="2">Second rehearsal, short version only (parts 1, 3, 4, 8, 11).</td></tr>
+<tr><td class="n">4:15 – 4:40</td><td colspan="2">Set up (checklist below). Then stop studying.</td></tr>
+</table></div>
+
+<h3>Set-up checklist (4:15 PM)</h3>
+<ul class="check">
+<li>Get fresh AWS keys from the portal and install them: in <code>chennai-grievance-portal-main</code>, run <code>npm run ai:key</code> (it tests Bedrock and prints only the last 4 characters).</li>
+<li>Start the site (<code>npm run dev</code>) and open the Collector console. The "Collected" chip should say all feeds are current.</li>
+<li>Sign in with the Collector account (not on a shared or recorded screen).</li>
+<li>Ask District IQ one warm-up question so the search model is loaded.</li>
+<li>Pick the severe incident you will open in Part 4, and check that it has evidence, a timeline and Take action.</li>
+<li>Copy one public link for Part 9 (for example an RSS feed URL) to paste.</li>
+<li>Open the citizen portal and officer console in separate tabs.</li>
+<li>Close other apps and notifications. Set the browser zoom so the whole Overview fits on the shared screen.</li>
+<li>Keep this page open on a phone as your prompt.</li>
+</ul>
+
+<h3>Handover and speaking tips</h3>
+<ul>
+<li>Handover line, word for word: "With that, I will hand over to [your name], who will show you the live system." Then: "Thank you, [friend's name]."</li>
+<li>Say "we", not "I": you are a team.</li>
+<li>When you click, say what you are clicking before the screen changes.</li>
+<li>Round every number and say "about". Never read a number off the screen you are not sure of.</li>
+<li>If you don't know an answer: "We haven't measured that yet. What we did measure is …"</li>
+<li>Don't call simulated data real. Reviewers respect honesty more than big numbers.</li>
+</ul>
+</section>
+</div>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('nav.tabs button');
+  function show(id){
+    tabs.forEach(function(b){b.setAttribute('aria-selected',b.dataset.t===id?'true':'false')});
+    document.querySelectorAll('section.panel').forEach(function(s){s.hidden=s.id!==id});
+    try{localStorage.setItem('diq-tab',id)}catch(e){}
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.t);window.scrollTo(0,0)})});
+  var start=(location.hash||'').slice(1);
+  if(!document.getElementById(start)){try{start=localStorage.getItem('diq-tab')||'intro'}catch(e){start='intro'}}
+  if(document.getElementById(start))show(start);
+  var big=document.getElementById('bigtext');
+  big.addEventListener('click',function(){
+    document.body.classList.toggle('big');
+    big.textContent=document.body.classList.contains('big')?'Normal text':'Larger text for reading aloud';
+  });
+})();
+</script>

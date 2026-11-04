@@ -247,7 +247,7 @@ export function Palette({ open, onClose, actions, search, ask, askMap }: {
     const acts = t ? actions.filter((a) => `${a.l} ${a.s ?? ""}`.toLowerCase().includes(t)) : actions;
     const out = [...acts, ...found];
     if (t.length >= 3 && askMap) out.push({ g: "Ask", ic: "map", l: `Ask the map: “${q.trim()}”`, s: "Answers on the Overview's map", run: () => askMap(q.trim()) });
-    if (t.length >= 3 && ask) out.push({ g: "Ask", ic: "chat", l: `Ask Jarvis: “${q.trim()}”`, s: "Opens the chat with this question", run: () => ask(q.trim()) });
+    if (t.length >= 3 && ask) out.push({ g: "Ask", ic: "chat", l: `Ask District IQ: “${q.trim()}”`, s: "Opens the chat with this question", run: () => ask(q.trim()) });
     return out;
   }, [q, actions, found, ask]);
   useEffect(() => { setIdx(0); }, [hits.length]);

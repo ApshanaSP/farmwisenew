@@ -1,68 +1,26 @@
 "use client";
 
 /**
- * The AI analyst beside a dataset:
- *   Story   the headline, the link with the district's incidents (the incidents open in the console), the findings
- *   Ask     questions in words or by voice; the AI plans, the engine computes; answers can join the dashboard or the board
- *   Alerts  "tell me when ...": checked against the rows every time the dataset is opened or rebuilt
+ * The dataset's District link card (shown in its Insights) and its Alerts tab ("tell me when ..."). Questions about a
+ * dataset are asked of Jarvis, which uses the same engine (the AI plans, the numbers are counted from the rows):
+ * the Studio tells Jarvis which dataset is open (window.__diqStudio, event "diq:studio").
  */
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { fmtNum, type LinkResult, type PanelData, type Plan, type RuleStatus } from "@/lib/studio/types";
+import { useState } from "react";
+import { type LinkResult, type RuleStatus } from "@/lib/studio/types";
 import type { Console } from "../CollectorApp";
 import { I } from "../icons";
-import { BrandMark } from "../assistant/Brand";
-import { canListen, listen } from "../assistant/speech";
 import { api } from "./client";
 import type { DatasetData } from "./Dataset";
 
-const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel sm" /> });
 const PairChart = dynamic(() => import("./StudioChart").then((m) => m.PairChart), { ssr: false, loading: () => <div className="ds-skel sm" /> });
 const TimeChart = dynamic(() => import("./StudioChart").then((m) => m.TimeChart), { ssr: false, loading: () => <div className="ds-skel sm" /> });
 
-interface Answer {
-  kind: "query" | "watch" | "unsupported" | "why"; plan?: Plan | null; panel?: PanelData | null; answer?: string; note?: string | null; by: "ai" | "rules"; model: string | null; how?: string;
-  watch?: { op: "gt" | "gte" | "lt" | "lte"; threshold: number } | null;
-}
-interface Msg { id: number; q: string; a: Answer | null; err: string | null; added?: boolean; pinned?: boolean; watched?: boolean }
-
-export default function Analyst({ data, id, c, onSpot, onAdd, onPin, onAlertsChanged, seed }: {
-  data: DatasetData; id: string; c: Console; onSpot: (p: Plan, answer?: string) => void; onAdd: (p: Plan) => void; onPin: (p: Plan) => void; onAlertsChanged: () => void;
-  /** a question handed over from a drill-down ("Ask the AI"): asked at once */
-  seed?: { q: string; n: number } | null;
-}) {
-  const [tab, setTab] = useState<"link" | "ask" | "alerts">("ask");
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  useEffect(() => { setMsgs([]); setTab("ask"); }, [id]);
-  useEffect(() => { if (seed) setTab("ask"); }, [seed]);
-  const fired = data.alerts.filter((a) => !a.ok).length;
-  return (
-    <aside className="ds-ai-col card">
-      <header className="ds-ai-h">
-        <span className="ds-ai-mark"><BrandMark size={26} /></span>
-        <div><b>AI analyst</b><small>Questions in plain words · answers counted from the rows</small></div>
-      </header>
-      <nav className="ds-ai-tabs" role="tablist">
-        {([["ask", "Ask", "chat"], ["link", "District link", "compare"], ["alerts", "Alerts", "bell"]] as const).map(([k, t, ic]) => (
-          <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
-            <I n={ic} />{t}{k === "alerts" && data.alerts.length > 0 && <em className={fired ? "hot" : ""}>{fired || data.alerts.length}</em>}
-            {k === "ask" && msgs.length > 0 && <em>{msgs.length}</em>}
-          </button>
-        ))}
-      </nav>
-      <div className="ds-ai-b" key={tab}>
-        {tab === "link" && (data.meta.link ? <div className="ds-story"><LinkCard l={data.meta.link} c={c} /></div>
-          : <div className="ds-ask-0"><span className="ds-ask-ic"><I n="compare" /></span><b>No link with district incidents</b><p>This data has no zones or weeks that line up with the incidents the console records.</p></div>)}
-        {tab === "ask" && <AskTab data={data} id={id} c={c} msgs={msgs} setMsgs={setMsgs} onSpot={onSpot} onAdd={onAdd} onPin={onPin} onWatched={onAlertsChanged} seed={seed ?? null} />}
-        {tab === "alerts" && <AlertsTab data={data} id={id} c={c} onChanged={onAlertsChanged} />}
-      </div>
-    </aside>
-  );
-}
+interface Answer { kind: "query" | "watch" | "unsupported" | "why"; plan?: unknown; watch?: { op: "gt" | "gte" | "lt" | "lte"; threshold: number } | null }
 
 // -------------------------------------------------------------------- link --
 
-function LinkCard({ l, c }: { l: LinkResult; c: Console }) {
+export function LinkCard({ l, c }: { l: LinkResult; c: Console }) {
   const rho = l.mode === "place" ? l.rho : l.time?.rho ?? 0;
   const label = l.strength === "none" ? "no clear link" : `${l.strength} link`;
   const win = `${day(l.window.from)} – ${day(l.window.to)}`;
@@ -106,111 +64,9 @@ function LinkCard({ l, c }: { l: LinkResult; c: Console }) {
   );
 }
 
-// --------------------------------------------------------------------- ask --
-
-function AskTab({ data, id, c, msgs, setMsgs, onSpot, onAdd, onPin, onWatched, seed }: {
-  data: DatasetData; id: string; c: Console; msgs: Msg[]; setMsgs: React.Dispatch<React.SetStateAction<Msg[]>>;
-  onSpot: (p: Plan, a?: string) => void; onAdd: (p: Plan) => void; onPin: (p: Plan) => void; onWatched: () => void; seed: { q: string; n: number } | null;
-}) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [mic, setMic] = useState<(() => void) | null>(null);
-  const list = useRef<HTMLDivElement>(null);
-  useEffect(() => { list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" }); }, [msgs]);
-  const send = async (q: string) => {
-    q = q.trim();
-    if (q.length < 2 || busy) return;
-    setText("");
-    const mid = Date.now();
-    setMsgs((m) => [...m, { id: mid, q, a: null, err: null }]);
-    setBusy(true);
-    try {
-      // a follow-up keeps the last answer's filters ("and in Adyar?"): the server decides whether it is one
-      const last = [...msgs].reverse().find((x) => x.a?.plan)?.a?.plan;
-      const a = await api<Answer>(`/api/collector/studio/${id}`, { json: { action: "ask", question: q, context: last ? { filters: last.filters } : null } });
-      setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, a } : x)));
-      // "add ... to the dashboard": the answer joins the dashboard at once
-      if (a.plan && a.kind === "query" && /\b(add|put|include)\b.*\b(dashboard|panels?)\b/i.test(q)) { onAdd(a.plan); setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, added: true } : x))); }
-    } catch (e: any) {
-      setMsgs((m) => m.map((x) => (x.id === mid ? { ...x, err: e.message } : x)));
-    } finally { setBusy(false); }
-  };
-  // a question handed over from a drill-down is asked once
-  const asked = useRef(0);
-  useEffect(() => { if (seed && seed.n !== asked.current) { asked.current = seed.n; void send(seed.q); } }, [seed]); // eslint-disable-line react-hooks/exhaustive-deps
-  const watch = async (m: Msg) => {
-    if (!m.a?.plan || !m.a.watch) return;
-    try {
-      await api(`/api/collector/studio/${id}`, { json: { action: "watch", text: m.q, plan: m.a.plan, op: m.a.watch.op, threshold: m.a.watch.threshold } });
-      setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, watched: true } : y)));
-      c.toast("Alert saved. It is checked whenever this data is opened or fetched again.");
-      onWatched();
-    } catch (e: any) { c.toast(e.message, "alert"); }
-  };
-  const voice = () => {
-    if (mic) { mic(); setMic(null); return; }
-    const stop = listen("en-IN", (t) => setText(t), (t) => { setMic(null); if (t) send(t); }, (e) => { setMic(null); c.toast(e === "not-allowed" ? "The microphone is blocked for this site." : "Voice input stopped.", "alert"); });
-    setMic(() => stop);
-  };
-  const qs = data.meta.spec.questions;
-  return (
-    <div className="ds-ask">
-      <div className="ds-thread" ref={list}>
-        {!msgs.length && (
-          <div className="ds-ask-0">
-            <span className="ds-ask-ic"><I n="chat" /></span>
-            <b>Ask this data anything</b>
-            <p>The AI turns your question into a query; the numbers are counted from the rows, never written by the model. Say &ldquo;add it to the dashboard&rdquo; to keep the chart.</p>
-          </div>
-        )}
-        {msgs.map((m) => (
-          <div key={m.id} className="ds-turn">
-            <div className="ds-q">{m.q}</div>
-            {!m.a && !m.err && <div className="ds-a think"><span className="ds-dots"><i /><i /><i /></span>Planning the query…</div>}
-            {m.err && <div className="ds-a err"><I n="alert" />{m.err}</div>}
-            {m.a && (
-              <div className="ds-a">
-                {m.a.kind === "unsupported" ? <p className="ds-muted">{m.a.note}</p> : (
-                  <>
-                    <p className="ds-a-t">{m.a.answer}</p>
-                    {m.a.panel?.subtitle && <p className="ds-a-how"><I n="sliders" /><span><b>Counted:</b> {m.a.panel.subtitle}</span></p>}
-                    {m.a.note && <p className="ds-muted">{m.a.note}</p>}
-                    {m.a.how && <p className="ds-iconf" title="How this was computed"><I n="info" />{m.a.how}</p>}
-                    {m.a.panel && m.a.panel.chart !== "kpi" && m.a.panel.chart !== "table" && m.a.panel.values.length > 0 && m.a.panel.chart !== "map" && (
-                      <div className="ds-a-c"><StudioChart panel={m.a.panel} height={150} compact /></div>
-                    )}
-                    {m.a.panel?.kpi && <div className="ds-a-k"><b>{fmtNum(m.a.panel.kpi.value, m.a.panel.format, m.a.panel.unit)}</b><small>{m.a.panel.kpi.sub}</small></div>}
-                    <div className="ds-a-acts">
-                      {m.a.kind === "watch" && m.a.watch ? (
-                        <button className="ds-btn sm" disabled={m.watched} onClick={() => watch(m)}><I n="bell" />{m.watched ? "Alert saved" : `Alert me when ${m.a.watch.op.startsWith("g") ? "above" : "below"} ${m.a.watch.threshold.toLocaleString("en-IN")}`}</button>
-                      ) : null}
-                      {m.a.plan && <button className="ds-chip-b" disabled={m.added} onClick={() => { onAdd(m.a!.plan!); setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, added: true } : y))); }}><I n="plus" />{m.added ? "On the dashboard" : "Add to dashboard"}</button>}
-                      {m.a.plan && <button className="ds-chip-b" disabled={m.pinned} onClick={() => { onPin(m.a!.plan!); setMsgs((x) => x.map((y) => (y.id === m.id ? { ...y, pinned: true } : y))); }}><I n={m.pinned ? "check" : "plus"} />{m.pinned ? "On the dashboard" : "Add to dashboard"}</button>}
-                      {m.a.plan && <button className="ds-chip-b" onClick={() => onSpot(m.a!.plan!, m.a!.answer)}><I n="expand" />Open</button>}
-                    </div>
-                    <small className="ds-a-by">{m.a.by === "ai" ? `Planned by AI (${m.a.model?.split("/").pop()}) · computed from the rows` : "Read by rules (no AI answered) · computed from the rows"}</small>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      {qs.length > 0 && msgs.length === 0 && (
-        <div className="ds-sugg">{qs.map((q) => <button key={q} onClick={() => send(q)} disabled={busy}>{q}</button>)}</div>
-      )}
-      <form className="ds-ask-f" onSubmit={(e) => { e.preventDefault(); send(text); }}>
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={mic ? "Listening…" : "Which zone has the most…"} maxLength={400} aria-label="Ask this data" />
-        {canListen() && <button type="button" className={`ds-mic${mic ? " on" : ""}`} onClick={voice} aria-label={mic ? "Stop listening" : "Ask by voice"} title="Ask by voice"><I n="mic" /></button>}
-        <button type="submit" className="ds-send" disabled={busy || text.trim().length < 2} aria-label="Ask"><I n="send" /></button>
-      </form>
-    </div>
-  );
-}
-
 // ------------------------------------------------------------------ alerts --
 
-function AlertsTab({ data, id, c, onChanged }: { data: DatasetData; id: string; c: Console; onChanged: () => void }) {
+export function AlertsTab({ data, id, c, onChanged }: { data: DatasetData; id: string; c: Console; onChanged: () => void }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);

@@ -139,12 +139,16 @@ function Stage(p: Props) {
   aRef.current = a;
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [font, setFont] = useState<string | null>(null);
-  // the console's own UI font (Geist in the Command look), read once
+  const [look, setLook] = useState<Record<string, string>>({});
+  // the console's own UI font and accent (FarmWise green), read once: a screen looks like the dashboard it came from
   useEffect(() => {
     const dic = document.querySelector<HTMLElement>(".dic");
-    const f = dic ? getComputedStyle(dic).getPropertyValue("--font-ui").trim() : "";
-    if (f) setFont(f);
-  }, []);
+    if (!dic) return;
+    const cs = getComputedStyle(dic), v = (k: string) => cs.getPropertyValue(k).trim();
+    if (v("--font-ui")) setFont(v("--font-ui"));
+    const accent = (p.theme === "dark" ? v("--accent") : v("--accent-3")) || v("--accent");
+    if (accent) setLook({ "--accent": accent, "--accent-fill": v("--accent-3") || accent, "--signal": accent, ...(v("--accent-soft") ? { "--accent-soft": v("--accent-soft") } : {}) });
+  }, [p.theme]);
   // focus moves in, stays in (Tab cycles inside, and through the HUD's own controls when the HUD is up), and returns to where it was on close; set up once, live values by ref
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
@@ -185,13 +189,14 @@ function Stage(p: Props) {
 
   return createPortal(
     <div className="st-root" lang={p.lang} data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
-      style={font ? { ["--st-font" as string]: font } : undefined}>
+      style={{ ...(font ? { ["--st-font" as string]: font } : {}), ...look } as React.CSSProperties}>
       <div className="st-scrim" aria-hidden="true" />
       <div className="st-frame">
         <header className="st-head">
           <div className="st-titles">
             <div className="st-crumbs">
-              {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")}><I n="chevl" /></button>}
+              <button className="st-home" onClick={a.close}><I n="chevl" />{T(lang, "Back to dashboard", "டாஷ்போர்டுக்குத் திரும்பு")}</button>
+              {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")} title={T(lang, "Previous screen", "முந்தைய திரை")}><I n="refresh" /></button>}
               <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Jarvis</span>
             </div>
             <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.title}</h2>
@@ -232,7 +237,7 @@ function Stage(p: Props) {
                 </form>
               )}
             </div>
-            <button ref={closeBtn} className="st-icon st-close" onClick={a.close} aria-label={T(lang, "Close (Esc)", "மூடு (Esc)")} title="Esc"><I n="x" /></button>
+            <button ref={closeBtn} className="st-icon st-close" onClick={a.close} aria-label={T(lang, "Close this screen", "இந்தத் திரையை மூடு")} title={T(lang, "Close this screen", "இந்தத் திரையை மூடு")}><I n="x" /></button>
           </div>
         </header>
 
