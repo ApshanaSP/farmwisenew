@@ -9,7 +9,8 @@ import { chat, clearMarks, durOf, marks, modeOn, pct, saveResult, say, setup, ty
 
 async function oneTurn(page: Parameters<typeof setup>[0], ctx: Ctx, clip: string, text: string) {
   await clearMarks(page);
-  ctx.hear.push({ text, delay: 450 });
+  // (a clip can split at a pause, and its second part is then posted with the first: both get the sentence)
+  ctx.hear.push({ text, delay: 450 }, { text, delay: 450 });
   await say(page, clip);
   await page.waitForFunction(() => (window as unknown as { __jv: { marks: { name: string }[] } }).__jv.marks.some((m) => m.name === "finding"), null, { timeout: 15_000 });
   const m = await marks(page);

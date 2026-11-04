@@ -90,7 +90,8 @@ export class Conductor {
     const e = new Ears({
       onVad: (ev, wall) => {
         if (!ev) return;
-        if (ev.type === "start") { this.speechStart = ev.at; this.h.mark?.("vadStart", wall); this.noteOnset(); this.dispatch({ type: "vadStart", at: ev.at }); this.h.onHearing?.("speech"); }
+        // the sentence goes on after a pause with its first part still at Whisper: the capture reaches back, so Whisper hears all of it
+        if (ev.type === "start") { if (!(this.m.state === "thinking" && this.m.awaiting)) this.speechStart = ev.at; this.h.mark?.("vadStart", wall); this.noteOnset(); this.dispatch({ type: "vadStart", at: ev.at }); this.h.onHearing?.("speech"); }
         else { this.lastEnd = { ms: ev.ms, start: this.speechStart }; this.h.mark?.("vadEnd", wall); this.dispatch({ type: "vadEnd", at: ev.at, ms: ev.ms, short: ev.short }); }
       },
       // speech over the voice: the capture starts here, not at the start of the sentence before

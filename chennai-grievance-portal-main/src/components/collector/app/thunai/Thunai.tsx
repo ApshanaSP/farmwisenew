@@ -1041,7 +1041,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
 
   /** Esc, the HUD's stop, the Stage's stop: the voice and the question stop at once. The frame stays, and so does the screen. */
-  const interrupt = () => { stopSpeaking(); conductor.current?.stop(); cancelTurn(); }; // eslint-disable-line @typescript-eslint/no-use-before-define
+  // (the turn machine first: it keeps what "continue" needs only if it hears this while the voice is still going)
+  const interrupt = () => { conductor.current?.stop(); stopSpeaking(); cancelTurn(); }; // eslint-disable-line @typescript-eslint/no-use-before-define
   const turnActive = () => speaking() || narrating || phase === "thinking" || phase === "acting" || !!stageBusy || !!(conductor.current && conductor.current.state !== "off" && conductor.current.state !== "listening");
 
   const stageActions = {

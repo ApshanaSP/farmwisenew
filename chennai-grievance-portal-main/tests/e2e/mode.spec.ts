@@ -183,3 +183,15 @@ test.describe("Jarvis mode: always listening, no mic button", () => {
     expect(ctx.hearCalls.filter((c) => c.lane === "ambient" && c.at - t0 < 60_000).length).toBeLessThanOrEqual(8);
   });
 });
+
+test("a sentence that goes on after a pause reaches Whisper whole, with its first part still there", async ({ page }) => {
+  test.setTimeout(90_000);
+  const ctx = await setup(page);
+  await modeOn(page);
+  ctx.hear.push({ text: "Jarvis, show", delay: 4000 }, { text: "Jarvis, show the trends page" });
+  await say(page, "cmd_trends");
+  await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(1);
+  await say(page, "cmd_trends");
+  await expect.poll(() => ctx.hearCalls.length, { timeout: 15_000 }).toBe(2);
+  expect(ctx.hearCalls[1].bytes).toBeGreaterThan(ctx.hearCalls[0].bytes * 1.5);
+});
