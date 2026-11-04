@@ -14,12 +14,18 @@ import fs from "fs";
 import path from "path";
 import type { DatabaseSync as DB } from "node:sqlite";
 
-export type Org = "groq" | "gemini" | "bedrock" | "azure";
+export type Org = "groq" | "gemini" | "bedrock" | "azure" | "anthropic";
 export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hedge" | "tts" | "eval" | "other";
 
 export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number; ash?: number; asd?: number; minAudioS?: number }
 
+/** Claude is paid by the token: this is Jarvis's own ceiling on a day, not Anthropic's limit. On Opus 5.5 it comes to about US$8 at the very most */
+const CLAUDE_DAY: Limits = { rpm: 50, rpd: 500, tpm: 50_000, tpd: 1_500_000 };
+
 export const LIMITS: Record<string, Limits> = {
+  "anthropic/claude-opus-5-5": CLAUDE_DAY,
+  "anthropic/claude-sonnet-5-5": CLAUDE_DAY,
+  "anthropic/claude-haiku-5-5": CLAUDE_DAY,
   // Groq, one organisation across all keys; x-ratelimit-limit-tokens said 8000 on the Phase 0 probe (see BUILD_LOG)
   "groq/qwen/qwen3.8-27b": { rpm: 60, rpd: 1000, tpm: 8000, tpd: 200_000 },
   "groq/openai/gpt-oss-20b": { rpm: 30, rpd: 1000, tpm: 8000, tpd: 200_000 },

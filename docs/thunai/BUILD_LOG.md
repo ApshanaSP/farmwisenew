@@ -87,3 +87,7 @@ A separate session, from the branch tip, in worktree `interesting-babbage-37ab60
 - Final run on finished code: 44/60, Tamil 22/30, with four 429s from `qwen` on output tokens per minute. No sentence went unanswered, but the figure is provisional until a clean re-run.
 - The trial of a model veto on the address gate went 4/40 to 0/40 on the old set. On the frozen set it was a capacity failure, because `qwen` had used its day. Not built: the owner decides.
 - The owner asked for this to go to `main` once complete, which overrode the brief's "do not merge".
+
+## Claude for Jarvis (4 Nov 2026)
+
+The owner added an Anthropic key after the final run. Jarvis asks `claude-opus-5-5` first and falls back to Groq with no key or on any failure, proved live. The API refused the planner's schemas for structured outputs, so those use plain JSON with a short shape line. Not scored on the frozen set.

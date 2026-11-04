@@ -104,6 +104,21 @@ On the old set it took 38 calls, 140 tokens a call and 333 ms at p50, on the fir
 
 The arithmetic against an all-AI gate: at the worst-case 334 ambient sentences an hour, asking about every one costs about 47K tokens an hour, which is a model's whole day in about four hours of nonstop talk. Asked only about what the rules would act on, it should be a small fraction of that.
 
+### Claude, added after these runs
+
+**Every figure above is from Groq's models only.** After the final run the owner added an Anthropic key, so Jarvis now asks `claude-opus-5-5` first and falls back to Groq with no key, a refused key, no credit or any failure. It has not been scored on the frozen set. This is what one live check showed, on five sentences written for the check:
+
+| | Measured |
+|---|---|
+| Sentences | 4 of 5 used Claude, and all 4 got the expected kind of screen or a labelled general answer. The fifth was answered by the rules with no model |
+| A turn | 2.2 to 3.4 s, against about 1.2 to 2.6 s on Groq |
+| Tokens, a Tamil turn | About 3,750 in and 230 to 290 out, with 3,574 from the prompt cache on a repeat |
+| Cost, a Tamil turn | About 0.7 US cents from the cache, about 2.4 cents when it writes the cache (worked out from list prices, not read from a bill) |
+| With no key | Groq answered the turn in 1.3 s, with no call to Anthropic |
+| With a refused key | The same turn went on to Groq and finished in 1.5 s |
+
+This is the one paid service in Jarvis, which the first brief ruled out and the owner has now chosen. The ledger caps Claude at 500 requests and 1.5M tokens a day (`LIMITS` in `ledger.ts`), at most about US$8 on Opus 5.5. `JARVIS_CLAUDE_MODEL` picks another model. `claude-haiku-5-5` costs far less per token, but it has not been tried here.
+
 ### Checks on the finished code
 
 Vitest 1,917 passed, 13 skipped, including the 50 and 10 adversarial privacy tests; `tsc` clean; `next build` passes; Playwright voice specs 30 of 30 (`mode`, `bargein`, `hold`, `vad`, `vadfake`, `e2e-latency`, on injected audio). The HUD specs were not re-run, since nothing they cover changed. Raw results: `eval/holdout2/results/firstrun-*` and `final-*`. The tuning runs on the old sets are `eval/holdout/results/dev3-planner-final40.json` (33/40, tuned on), `dev6-planner-tamilrest.json` (30/37, Tamil no change was made against) and `dev5-gatemodel.json` (the veto).

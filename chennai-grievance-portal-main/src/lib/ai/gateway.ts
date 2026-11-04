@@ -17,11 +17,12 @@ import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
+import { claudeConfigured, claudeJson, claudeModel } from "@/lib/ai/claude";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 
 export type Role = "fast" | "reasoning";
-export type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
+export type ProviderName = "gemini" | "bedrock" | "groq" | "openai" | "anthropic";
 
 export class AiUnavailableError extends Error {
   constructor() {
@@ -101,6 +102,24 @@ function bedrock(): Provider | null {
   };
 }
 
+/** Claude: only for a call that names it (Jarvis's ladder), never through AI_PROVIDER's order. */
+function anthropic(): Provider | null {
+  if (!claudeConfigured()) return null;
+  return {
+    name: "anthropic",
+    model: () => ({ id: claudeModel(), lm: null }),
+    options: () => ({}),
+    json: async <T>(c: JsonCall<T>): Promise<JsonResult<T>> => {
+      const r = await claudeJson({ name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens, timeoutMs: c.timeoutMs, abortSignal: c.abortSignal });
+      const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1 };
+      charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
+      ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
+      console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache)`);
+      return { object: r.object, info };
+    }
+  };
+}
+
 function groq(): Provider | null {
   const apiKey = env("GROQ_API_KEY");
   if (!apiKey) return null;
@@ -158,7 +177,7 @@ const names = (k: string, dflt: string) => (env(k) || dflt).split(",").map((x) =
  * that order; when they are all busy the question is answered from the data by rules.
  */
 function providers(prefer?: ProviderName, chat = false): Provider[] {
-  const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai };
+  const make: Record<string, () => Provider | null> = { gemini, bedrock, groq, openai, anthropic };
   const order = chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
     : [...names("AI_FORCE_PROVIDER", ""), ...(prefer ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
   const out: Provider[] = [];

@@ -1,10 +1,12 @@
 /**
  * Jarvis's way to a model: a ladder over organisations and models, under the ledger, with a hedge. Server only.
- *   Groq with the most budget -> next Groq -> flash-lite -> Bedrock if its keys work -> null (the caller's rules-only answer).
+ *   Claude if ANTHROPIC_API_KEY is set -> Groq with the most budget -> next Groq -> flash-lite -> Bedrock if its keys work -> null
+ *   (the caller's rules-only answer). With no Claude key the ladder is what it always was.
  * Each hop is logged. The hedge: when the first model has not answered by its observed p95 (never under 1 s), one more model
  * is asked and the loser is aborted; never into gemini-3.8-flash (20 a day), and never with under 40 % of a minute's budget
  * left on the hedge's model. Everything inside the caller's deadline and signal.
  */
+import { claudeConfigured, claudeModel } from "@/lib/ai/claude";
 import { generateJson, type JsonCall, type JsonResult, type ProviderName } from "@/lib/ai/gateway";
 import type { z } from "zod";
 import { ledger, type Lane, type Ledger, type Org } from "./ledger";
@@ -18,14 +20,15 @@ export const estimate = (system: string, prompt: string, maxOut: number) => Math
 export interface Rung { provider: ProviderName; model: string }
 
 /** The rungs in order: the Groq models with the most budget left first; those out of budget are not rungs at all. */
-export function ladder(need: number, l: Ledger = ledger(), bedrock = false): Rung[] {
+export function ladder(need: number, l: Ledger = ledger(), bedrock = false, claude = false): Rung[] {
   // qwen first while the minute has room for this call and a margin (fastest, and on the held-out rows the most often right), else by what is left of the minute
   const roomy = (x: { model: string; r: { left: { tpm: number } } }) => x.model === GROQ_MODELS[0] && x.r.left.tpm >= need * 1.5;
   const groq = GROQ_MODELS.map((model) => ({ model, r: l.room("groq", model, { tokens: need }) })).filter((x) => x.r.ok)
     .sort((a, b) => Number(roomy(b)) - Number(roomy(a)) || Math.min(b.r.left.tpm, b.r.left.tpd) - Math.min(a.r.left.tpm, a.r.left.tpd))
     .map((x): Rung => ({ provider: "groq", model: x.model }));
   const lite: Rung[] = l.room("gemini", LITE_MODEL, { tokens: need }).ok ? [{ provider: "gemini", model: LITE_MODEL }] : [];
-  return [...groq, ...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
+  const first: Rung[] = claude && l.room("anthropic", claudeModel(), { tokens: need }).ok ? [{ provider: "anthropic", model: claudeModel() }] : [];
+  return [...first, ...groq, ...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];
 }
 
 const samples = new Map<string, number[]>();
@@ -55,7 +58,7 @@ export interface LlmCall<T> {
 export interface LlmResult<T> { object: T; model: string; tokens: number; ms: number; hops: string[]; hedged: boolean }
 
 type Generate = <U>(c: JsonCall<U>) => Promise<JsonResult<U>>;
-export interface LlmDeps { generate?: Generate; ledger?: Ledger; now?: () => number; bedrockOk?: () => boolean; gapMs?: number }
+export interface LlmDeps { generate?: Generate; ledger?: Ledger; now?: () => number; bedrockOk?: () => boolean; claudeOk?: () => boolean; gapMs?: number }
 
 const bedrockReady = () => !!(process.env.AWS_BEARER_TOKEN_BEDROCK || process.env.AWS_ACCESS_KEY_ID) && process.env.JARVIS_BEDROCK === "1";
 
@@ -75,7 +78,8 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
   const now = d.now ?? Date.now;
   const t0 = now();
   const need = estimate(c.system, c.prompt, c.maxOutputTokens);
-  const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)());
+  // a test's own model stands alone: a key in the developer's .env does not change what it asks
+  const rungs = ladder(need, l, (d.bedrockOk ?? bedrockReady)(), (d.claudeOk ?? (d.generate ? () => false : claudeConfigured))());
   const hops: string[] = [];
   for (let i = 0; i < rungs.length; i++) {
     if (c.signal?.aborted) throw new DOMException("aborted", "AbortError");

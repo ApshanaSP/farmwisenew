@@ -45,6 +45,23 @@ describe("the ladder", () => {
     l.record("groq", "qwen/qwen3.8-27b", { tokens: 1000 });
     expect(ladder(1000, l)[0].model).not.toBe("qwen/qwen3.8-27b");
   });
+  it("Claude comes first when it has a key, and with none the ladder is Groq as before", () => {
+    expect(ladder(500, fresh()).some((x) => x.provider === "anthropic")).toBe(false);
+    const r = ladder(500, fresh(), false, true);
+    expect(r[0]).toEqual({ provider: "anthropic", model: "claude-opus-5-5" });
+    expect(r[1].provider).toBe("groq");
+  });
+  it("Claude out of its day, or cooling, is not a rung: Groq answers", () => {
+    const l = fresh();
+    l.cool("anthropic", "claude-opus-5-5", 60_000);
+    expect(ladder(500, l, false, true)[0].provider).toBe("groq");
+  });
+  it("a failing Claude moves on to Groq inside the same turn", async () => {
+    const a = answers({ "claude-opus-5-5": { fail: true } });
+    const r = await callLlm(base(), { generate: a.generate, ledger: fresh(), bedrockOk: () => false, claudeOk: () => true });
+    expect(a.asked[0]).toBe("claude-opus-5-5");
+    expect(r?.model).toMatch(/qwen|gpt-oss/);
+  });
   it("never includes gemini-3.8-flash", () => {
     expect(ladder(100, fresh()).some((x) => x.model.includes("3.8-flash"))).toBe(false);
   });
