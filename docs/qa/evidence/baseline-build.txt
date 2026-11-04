@@ -1,0 +1,172 @@
+  ▲ Next.js 14.2.35
+  - Environments: .env
+  - Experiments (use with caution):
+    · instrumentationHook
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+
+   We detected TypeScript in your project and reconfigured your tsconfig.json file for you. Strict-mode is set to false by default.
+   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+   	- include was updated to add '.next-qa/types/**/*.ts'
+
+   Collecting page data ...
+   Generating static pages (0/41) ...
+   Generating static pages (10/41) 
+   Generating static pages (20/41) 
+   Generating static pages (30/41) 
+ ✓ Generating static pages (41/41)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                   Size     First Load JS
+┌ ƒ /                                         143 B          89.1 kB
+├ ○ /_not-found                               880 B          89.8 kB
+├ ƒ /api/auth/confirm                         0 B                0 B
+├ ƒ /api/auth/forgot-password/request-otp     0 B                0 B
+├ ƒ /api/auth/forgot-password/reset-password  0 B                0 B
+├ ƒ /api/auth/forgot-password/verify-otp      0 B                0 B
+├ ƒ /api/auth/login                           0 B                0 B
+├ ƒ /api/auth/logout                          0 B                0 B
+├ ƒ /api/auth/me                              0 B                0 B
+├ ƒ /api/auth/register                        0 B                0 B
+├ ƒ /api/auth/security                        0 B                0 B
+├ ƒ /api/auth/tab                             0 B                0 B
+├ ƒ /api/collector/actions                    0 B                0 B
+├ ƒ /api/collector/alerts                     0 B                0 B
+├ ƒ /api/collector/assistant/briefing         0 B                0 B
+├ ƒ /api/collector/assistant/chat             0 B                0 B
+├ ƒ /api/collector/assistant/export           0 B                0 B
+├ ƒ /api/collector/assistant/feedback         0 B                0 B
+├ ƒ /api/collector/assistant/insights         0 B                0 B
+├ ƒ /api/collector/assistant/pins             0 B                0 B
+├ ƒ /api/collector/assistant/sessions         0 B                0 B
+├ ƒ /api/collector/assistant/sessions/[id]    0 B                0 B
+├ ƒ /api/collector/assistant/status           0 B                0 B
+├ ƒ /api/collector/assistant/tools            0 B                0 B
+├ ƒ /api/collector/audit                      0 B                0 B
+├ ƒ /api/collector/brief                      0 B                0 B
+├ ƒ /api/collector/conflicts                  0 B                0 B
+├ ƒ /api/collector/decisions                  0 B                0 B
+├ ƒ /api/collector/export                     0 B                0 B
+├ ƒ /api/collector/geo                        0 B                0 B
+├ ƒ /api/collector/incidents/[id]             0 B                0 B
+├ ƒ /api/collector/incidents/[id]/action      0 B                0 B
+├ ƒ /api/collector/incidents/[id]/analysis    0 B                0 B
+├ ƒ /api/collector/insights                   0 B                0 B
+├ ƒ /api/collector/jobs/route-news            0 B                0 B
+├ ƒ /api/collector/list                       0 B                0 B
+├ ƒ /api/collector/nearby                     0 B                0 B
+├ ƒ /api/collector/news                       0 B                0 B
+├ ƒ /api/collector/news/analysis              0 B                0 B
+├ ƒ /api/collector/news/article               0 B                0 B
+├ ƒ /api/collector/overview                   0 B                0 B
+├ ƒ /api/collector/pattern                    0 B                0 B
+├ ƒ /api/collector/report                     0 B                0 B
+├ ƒ /api/collector/search                     0 B                0 B
+├ ƒ /api/collector/sources                    0 B                0 B
+├ ƒ /api/collector/sources/[id]               0 B                0 B
+├ ƒ /api/collector/sources/ocr                0 B                0 B
+├ ƒ /api/collector/sources/onboard            0 B                0 B
+├ ƒ /api/collector/sources/onboard/approve    0 B                0 B
+├ ƒ /api/collector/sources/onboard/preview    0 B                0 B
+├ ƒ /api/collector/stories                    0 B                0 B
+├ ƒ /api/collector/studio                     0 B                0 B
+├ ƒ /api/collector/studio/[id]                0 B                0 B
+├ ƒ /api/collector/studio/connectors          0 B                0 B
+├ ƒ /api/collector/studio/pick                0 B                0 B
+├ ƒ /api/collector/studio/watch               0 B                0 B
+├ ƒ /api/collector/thunai/agent               0 B                0 B
+├ ƒ /api/collector/thunai/agent/round         0 B                0 B
+├ ƒ /api/collector/thunai/audit               0 B                0 B
+├ ƒ /api/collector/thunai/memory              0 B                0 B
+├ ƒ /api/collector/thunai/plan                0 B                0 B
+├ ƒ /api/collector/thunai/world               0 B                0 B
+├ ƒ /api/collector/workspaces                 0 B                0 B
+├ ƒ /api/collector/workspaces/[id]            0 B                0 B
+├ ƒ /api/complaint-taxonomy                   0 B                0 B
+├ ƒ /api/complaint-types                      0 B                0 B
+├ ƒ /api/complaints                           0 B                0 B
+├ ƒ /api/complaints/[code]                    0 B                0 B
+├ ƒ /api/complaints/media                     0 B                0 B
+├ ƒ /api/complaints/media/[name]              0 B                0 B
+├ ƒ /api/departments                          0 B                0 B
+├ ƒ /api/dev/thunai/agent                     0 B                0 B
+├ ƒ /api/dev/thunai/agent/round               0 B                0 B
+├ ƒ /api/dev/thunai/draft                     0 B                0 B
+├ ƒ /api/dev/thunai/hear                      0 B                0 B
+├ ƒ /api/dev/thunai/plan                      0 B                0 B
+├ ƒ /api/dev/thunai/tool                      0 B                0 B
+├ ƒ /api/i18n                                 0 B                0 B
+├ ƒ /api/jarvis/hear                          0 B                0 B
+├ ƒ /api/jarvis/say                           0 B                0 B
+├ ƒ /api/locations/areas                      0 B                0 B
+├ ƒ /api/locations/gcc-localities             0 B                0 B
+├ ƒ /api/locations/gcc-streets                0 B                0 B
+├ ƒ /api/locations/localities                 0 B                0 B
+├ ƒ /api/locations/resolve-ward               0 B                0 B
+├ ƒ /api/locations/streets                    0 B                0 B
+├ ƒ /api/locations/wards                      0 B                0 B
+├ ƒ /api/locations/zones                      0 B                0 B
+├ ƒ /api/map/ask                              0 B                0 B
+├ ƒ /api/map/export                           0 B                0 B
+├ ƒ /api/map/insight                          0 B                0 B
+├ ƒ /api/map/layers/[id]                      0 B                0 B
+├ ƒ /api/map/send                             0 B                0 B
+├ ƒ /api/map/suggest                          0 B                0 B
+├ ƒ /api/officer/geo                          0 B                0 B
+├ ƒ /api/officer/grievances                   0 B                0 B
+├ ƒ /api/officer/grievances/[id]              0 B                0 B
+├ ƒ /api/officer/grievances/[id]/report       0 B                0 B
+├ ƒ /api/officer/insights                     0 B                0 B
+├ ƒ /api/officer/overview                     0 B                0 B
+├ ƒ /api/officer/photos/[dir]/[name]          0 B                0 B
+├ ƒ /api/officer/search                       0 B                0 B
+├ ƒ /api/profile                              0 B                0 B
+├ ƒ /api/profile/change-password              0 B                0 B
+├ ƒ /api/profile/mobile-otp/request           0 B                0 B
+├ ƒ /api/profile/mobile-otp/verify            0 B                0 B
+├ ƒ /api/profile/photo                        0 B                0 B
+├ ƒ /api/rehearsal/dev                        0 B                0 B
+├ ƒ /api/rehearsal/impacts                    0 B                0 B
+├ ƒ /api/rehearsal/photo/[dir]/[name]         0 B                0 B
+├ ƒ /api/rehearsal/plan                       0 B                0 B
+├ ƒ /api/rehearsal/rains                      0 B                0 B
+├ ƒ /api/rehearsal/reach                      0 B                0 B
+├ ƒ /api/rehearsal/route                      0 B                0 B
+├ ƒ /api/rehearsal/state                      0 B                0 B
+├ ƒ /api/rehearsal/tasks                      0 B                0 B
+├ ƒ /api/rehearsal/traffic/[z]/[x]/[y]        0 B                0 B
+├ ƒ /api/rehearsal/traffic/live               0 B                0 B
+├ ƒ /citizen                                  4.4 kB          163 kB
+├ ○ /citizen/file-complaint                   18.1 kB         176 kB
+├ ○ /citizen/track-complaints                 7.96 kB         166 kB
+├ ƒ /collector                                214 B           609 kB
+├ ○ /dev/assistant                            15 kB           104 kB
+├ ƒ /dev/collector                            214 B           609 kB
+├ ƒ /dev/officer                              188 B           257 kB
+├ ○ /dev/rehearsal                            3.76 kB        92.7 kB
+├ ƒ /dev/thunai                               6.2 kB          523 kB
+├ ○ /dev/ui                                   5.38 kB         151 kB
+├ ○ /forgot-password                          4.67 kB         193 kB
+├ ○ /icon.png                                 0 B                0 B
+├ ○ /login                                    3.23 kB         179 kB
+├ ƒ /officer                                  188 B           257 kB
+├ ○ /profile                                  8.6 kB          180 kB
+├ ○ /register                                 4.34 kB         193 kB
+└ ƒ /thunai-ort/[file]                        0 B                0 B
++ First Load JS shared by all                 88.9 kB
+  ├ chunks/2117-acecbb192205f686.js           31.9 kB
+  ├ chunks/fd9d1056-910789d129e10e0c.js       53.6 kB
+  └ other shared chunks (total)               3.4 kB
+
+
+ƒ Middleware                                  31.7 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+exit 0

@@ -25,6 +25,7 @@ import type { Hands } from "./screens";
 import { telemetry } from "./telemetry";
 import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
+import { briefTurn } from "./entities";
 
 export const RoundBody = AgentBody.extend({
   turnId: z.string().min(2).max(40),
@@ -291,6 +292,17 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
       if (r.kind === "do" && r.stage) return out({ ...r, note: `frame:${frame.why}` }, "frame");
     }
     if (frame.kind === "stageOp") return out({ ...none(lang, t0, `frame:${frame.why}`), kind: "do", stageOp: { op: frame.op, n: frame.n, text: frame.text } }, "frame");
+
+    // 2b. who it is about: a report, brief or status on a body ("chennai city police report", "GCP status", "corporation update")
+    // is decided in code: the body is resolved by the registry's ladder, an unknown body is said to be unknown, and a close call is asked
+    const who = briefTurn(b.text, world);
+    if (who) {
+      telemetry("resolve", { kind: who.kind, entity: who.kind === "screen" ? String(who.slots.dept ?? who.slots.org ?? (who.slots.zones as number[] | undefined)?.[0] ?? "") : "", conf: who.conf, via: who.via, turn: b.turnId });
+      if (who.kind === "reply") return out(plainReply("chat", lang, who.text[lang], t0, "unknown-entity"), "resolve");
+      if (who.kind === "clarify") return out({ ...plainReply("clarify", lang, who.text[lang], t0, "resolve-ambiguous"), options: who.options }, "resolve");
+      const r = await screenFrom("brief", who.slots, lang === "ta" ? "சுருக்கம் தயார் செய்கிறேன்" : "Putting the brief together");
+      if (r.kind === "do" && r.stage) return out({ ...r, note: `resolve:${who.via}` }, "resolve");
+    }
 
     // 3. general knowledge: labelled, no tools, no district numbers
     let lane: "district" | "general" | "refuse" | null = route.lane;

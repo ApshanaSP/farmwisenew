@@ -12,7 +12,7 @@ import { nextSteps } from "./next";
 import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { hoursBetween } from "./stagelocal";
-import { ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
+import { DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -48,6 +48,8 @@ export interface Slots {
   fresh?: boolean;
   /** complete: the open Stage's incident ids; those rows are completed, not the console's list */
   ids?: string[];
+  /** brief: a body above the departments (GCC, PWD), briefed across its own departments */
+  org?: string | null;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -1130,7 +1132,110 @@ async function nearby(c: Ctx): Promise<Part> {
 
 // ------------------------------------------------------------------ brief, drafts --
 
+/**
+ * Where a department's records come from, said plainly. The police, PWD and government-hospital feeds are made by the generators in
+ * police_dataset_generator/, pwd_dataset_generator/ and chennai_hospital_data/ (docs/qa/DATA_SOURCES.md), and most citizen
+ * complaints are test filings: a brief on them must never sound like an official report.
+ */
+export function recordsOf(code: string): Bilingual {
+  if (code.startsWith("POL-")) return bi("These are generated police test records, not an official police report.", "இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல.");
+  if (code.startsWith("PWD-")) return bi("The PWD records here are generated test data.", "இங்குள்ள பொதுப்பணித் துறைப் பதிவுகள் சோதனைத் தரவு.");
+  if (code === "HLT-DMS") return bi("The hospital records here are generated test data.", "இங்குள்ள மருத்துவமனைப் பதிவுகள் சோதனைத் தரவு.");
+  return bi("Most complaint records here are test filings.", "இங்குள்ள பெரும்பாலான புகார்கள் சோதனைப் பதிவுகள்.");
+}
+
+/** How old the data is, in words (never a figure): stale data is called stale. */
+export function freshness(asOf: string | null, now = Date.now()): Bilingual {
+  const m = String(asOf ?? "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!m) return bi("I can't tell how recent this is.", "இது எவ்வளவு புதியது என்று தெரியவில்லை.");
+  // the store's times are India time
+  const t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] ?? 0) - 5, Number(m[5] ?? 0) - 30);
+  const h = (now - t) / 3_600_000;
+  if (h < 24) return bi("This is from today's records.", "இது இன்றைய பதிவுகளின்படி.");
+  if (h < 48) return bi("This is as of yesterday's records.", "இது நேற்றைய பதிவுகளின்படி.");
+  if (h < 24 * 7) return bi("These records are a few days old.", "இந்தப் பதிவுகள் சில நாட்கள் பழையவை.");
+  if (h < 24 * 14) return bi("These records are about a week old.", "இந்தப் பதிவுகள் ஏறக்குறைய ஒரு வாரம் பழையவை.");
+  return bi("These records are more than two weeks old, so treat them as stale.", "இந்தப் பதிவுகள் இரண்டு வாரங்களுக்கு மேல் பழையவை; பழைய தரவாகக் கொள்ளுங்கள்.");
+}
+
+const cap1 = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const norm1 = (x: string) => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
+/** "Taking that as Greater Chennai Police." when the words heard were not the body's own name */
+function assumed(heard: string, name: string, ta: string | null): Bilingual {
+  if (norm1(heard).includes(norm1(name)) || (ta && heard.includes(ta))) return bi("", "");
+  return bi(`Taking that as ${name}. `, `${ta ?? name} என்று எடுத்துக்கொள்கிறேன். `);
+}
+
+/**
+ * A brief on one body: a department, or the corporation or PWD across their own departments. Code builds every figure; the spoken
+ * line is a short retelling (what it is, how it stands, what needs attention, where the records come from, how old they are),
+ * never the records read out.
+ */
+async function bodyBrief(c: Ctx): Promise<Part> {
+  const org = c.slots.org ?? null;
+  const codes = org ? c.w.depts.filter((d) => d.code.startsWith(`${org}-`)).map((d) => d.code) : [c.s.dept as string];
+  const name = org ? (org === "GCC" ? "Greater Chennai Corporation" : org === "PWD" ? "Public Works Department" : org) : deptName(c.w, c.s.dept) ?? String(c.s.dept);
+  const ta = org === "GCC" ? "பெருநகர சென்னை மாநகராட்சி" : org === "PWD" ? "பொதுப்பணித்துறை" : DEPT_TA[String(c.s.dept)] ?? null;
+  const scope = scopeArg({ ...c.s, dept: org ? null : c.s.dept });
+  const [fu, br] = await Promise.all([call(c, "dept_followups", { scope }), org ? Promise.resolve(null) : call(c, "briefing", { scope }).catch(() => null)]);
+  const rows = ((fu.data as { rows?: Row[] })?.rows ?? []).filter((r) => codes.includes(String(r.code)));
+  const sum = (k: string) => rows.reduce((a, r) => a + (num(r[k]) ?? 0), 0);
+  const open = sum("open"), overdue = sum("overdue"), serious = sum("serious");
+  const st = ((br?.data as { stats?: Record<string, number> })?.stats ?? {}) as Record<string, number>;
+  const reported = org ? null : num(st.reported);
+  const att = ((br?.data as { attention?: Row[] })?.attention ?? []).filter((a) => !a.dept || codes.includes(String(a.dept)));
+  const worst = [...rows].sort((a, b) => (num(b.open) ?? 0) - (num(a.open) ?? 0))[0];
+  const pre = assumed(c.heard, name, ta);
+  const when = PERIOD_EN[c.s.period], whenTa = PERIOD_TA[c.s.period];
+  const src = recordsOf(org ? `${org}-` : codes[0]);
+  const age = freshness(c.asOf);
+  if (!rows.length && reported == null) {
+    return { title: `${name} · brief`, takeaway: null,
+      say: bi(`${pre.en}I have no records for ${name} ${when}. ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${age.ta}`),
+      blocks: [{ kind: "Note", id: "empty", text: `No records for ${name} in this period. ${src.en}` }] };
+  }
+  // the one thing to say first: what needs attention, as a judgement made from the figures
+  const pressing = overdue > 0 && open > 0 && overdue / open >= 0.15;
+  const head = reported != null ? `${plural(reported, "new incident", "new incidents")} came in ${when}` : `${plural(open, "case is", "cases are")} open across its departments`;
+  const headTa = reported != null ? `${whenTa} ${spoken(reported)} புதிய சம்பவங்கள் வந்தன` : `அதன் துறைகளில் ${spoken(open)} வழக்குகள் நிலுவையில் உள்ளன`;
+  // no follow-up row for the body says nothing about its open cases: say nothing, rather than "nothing is open"
+  const stand = !rows.length ? "" : open || overdue
+    ? `${reported != null ? `${plural(open, "case is", "cases are")} still open, and ` : ""}${overdue ? `${plural(overdue, "is", "are")} past the deadline` : "none is past the deadline"}`
+    : "nothing is open";
+  const standTa = !rows.length ? "" : open || overdue ? `${reported != null ? `${spoken(open)} இன்னும் நிலுவையில்; ` : ""}${overdue ? `${spoken(overdue)} கெடு தாண்டியவை` : "கெடு தாண்டியது எதுவும் இல்லை"}` : "நிலுவையில் எதுவும் இல்லை";
+  const zEn = att[0]?.zone ? clip(att[0].zone, 40) : null;
+  const zTa = zEn ? c.w.zones.find((z) => z.name.toLowerCase() === zEn.toLowerCase())?.ta ?? zEn : null;
+  const where = zEn ? ` The one to look at first is in ${zEn}.` : worst && org ? ` Most of it sits with ${clip(worst.name, 60)}.` : "";
+  const whereTa = zTa ? ` முதலில் பார்க்க வேண்டியது ${zTa} பகுதியில்.` : worst && org ? ` பெரும்பகுதி ${DEPT_TA[String(worst.code)] ?? clip(worst.name, 60)} துறையிடம்.` : "";
+  const advice = pressing ? " That backlog is the thing to chase today." : "";
+  const adviceTa = pressing ? " இந்த நிலுவையைத்தான் இன்று கேட்க வேண்டும்." : "";
+  const points = [
+    { text: clip(`${head}${stand ? `; ${stand}` : ""}.`, 400), incidentId: null },
+    ...(serious ? [{ text: `${plural(serious, "is", "are")} serious (severe or high).`, incidentId: null }] : []),
+    ...att.slice(0, 3).map((a) => ({ text: safeText(`${a.why?.summary && String(a.why.summary).length <= 110 ? a.why.summary : a.title}${a.zone ? `, ${a.zone}` : ""}`, 400), incidentId: String(a.id) })),
+    ...(org ? rows.slice(0, 4).map((r) => ({ text: `${clip(r.name, 60)}: ${spoken(num(r.open) ?? 0)} open, ${spoken(num(r.overdue) ?? 0)} past the deadline.`, incidentId: null })) : []),
+    { text: `${src.en} ${age.en}`, incidentId: null }
+  ].slice(0, 10);
+  return {
+    title: `${name} · brief, ${PERIOD_EN[c.s.period]}`,
+    takeaway: bi(`${head}${stand ? `; ${stand}` : ""}.`, `${headTa}${standTa ? `; ${standTa}` : ""}.`),
+    // the name once: after "Taking that as X." it is not said again
+    say: bi(`${pre.en || `${name}: `}${cap1(head)}${stand ? `; ${stand}` : ""}.${where}${advice} ${src.en} ${age.en}`.replace(/\s+/g, " ").trim(),
+      `${pre.ta || `${ta ?? name}: `}${headTa}${standTa ? `; ${standTa}` : ""}.${whereTa}${adviceTa} ${src.ta} ${age.ta}`.replace(/\s+/g, " ").trim()),
+    blocks: [
+      { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
+        ...(reported != null ? [{ key: "reported", label: "Reported", value: reported, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : []),
+        { key: "open", label: "Open", value: open, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] },
+        { key: "overdue", label: "Past deadline", value: overdue, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] },
+        { key: "serious", label: "Serious", value: serious, unit: null, prev: null, delta: null, tone: "bad" as const, spark: [] }
+      ] },
+      { kind: "Brief", id: "brief", title: "The brief", points }
+    ]
+  };
+}
+
 async function brief(c: Ctx): Promise<Part> {
+  if (c.slots.org || c.s.dept) return bodyBrief(c);
   const r = await call(c, "briefing", { scope: scopeArg(c.s) });
   const d = r.data as { headline: string[]; stats: Record<string, number>; attention: Row[]; emerging: Row[]; conditions: string | null };
   const points = [
@@ -1143,7 +1248,7 @@ async function brief(c: Ctx): Promise<Part> {
   return {
     title: `Briefing · ${PERIOD_EN[c.s.period]}`,
     takeaway: points[0] ? bi(points[0].text, points[0].text) : null,
-    say: bi(`${points.length} points in today's brief. ${points[0]?.text ?? ""}`, `இன்றைய சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0]?.text ?? ""}`),
+    say: bi(`${points.length} points in the brief for ${PERIOD_EN[c.s.period]}. ${points[0]?.text ?? ""}`, `${PERIOD_TA[c.s.period]} சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0]?.text ?? ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
         { key: "reported", label: "Reported", value: Number(st.reported ?? 0), unit: null, prev: null, delta: null, pct: num(st.change), tone: "neutral", spark: [] },

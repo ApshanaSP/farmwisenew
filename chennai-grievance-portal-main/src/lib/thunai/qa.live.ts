@@ -64,6 +64,24 @@ export function resultEntity(r: AgentResult): string | null {
   return z ? `ZONE-${z}` : null;
 }
 const entityOk = (want: string | null | undefined, got: string | null) => !want || want === got || (want === "GCC" && !!got && got.startsWith("GCC"));
+/**
+ * Right: the intent, and for a brief the body it is about. Other intents are scored on intent alone: the set names a department
+ * for a topic ("garbage" -> GCC-SWM) where the console filters by category, so a department check there would score the
+ * labelling, not the understanding. (Changed after the first run's rows were looked at, by gold and got only; the first run is
+ * re-scored with the same rule, from its recorded rows, with no new model call.)
+ */
+export const scoreRow = (r: { gold: string; got: string; entity: string | null; wantEntity: string | null; capacity: boolean; invalid: boolean }) =>
+  !r.capacity && !r.invalid && hits(r.gold, r.got) && (r.gold !== "brief" || entityOk(r.wantEntity, r.entity));
+
+it.runIf(mode === "rescore")("re-score a recorded live40 run with the scorer as it is now", () => {
+  const f = path.join(DIR, "results", `qa-${TAG}-live40.json`);
+  const j = JSON.parse(fs.readFileSync(f, "utf8"));
+  for (const r of j.rows) r.ok = scoreRow(r);
+  const fam = Object.fromEntries([...new Set(j.rows.map((r: { family?: string }) => String(r.family ?? "other")))].map((x) => [x, { n: j.rows.filter((r: { family?: string }) => String(r.family ?? "other") === x).length, right: j.rows.filter((r: { family?: string; ok: boolean }) => String(r.family ?? "other") === x && r.ok).length }]));
+  j.summary = byLang(j.rows); j.byFamily = fam; j.rescoredAt = new Date().toISOString();
+  fs.writeFileSync(f, JSON.stringify(j, null, 1));
+  console.log(JSON.stringify({ all: j.summary.all, byFamily: fam }));
+});
 
 it.runIf(mode === "quota")("what is left of today's Groq budget, per model", () => {
   const left = Object.fromEntries(GROQ_MODELS.map((m) => [m, ledger().room("groq", m).left]));
@@ -118,7 +136,7 @@ it.runIf(mode === "live40")("the frozen 40 through the shipped planner, Groq onl
     const got = r ? resultIntent(r) : "error";
     const ent = r ? resultEntity(r) : null;
     const want = x.expect?.entity ?? x.entity ?? null;
-    const ok = !capacity && !invalid && hits(g, got) && (g === "unknown" || entityOk(want, ent));
+    const ok = scoreRow({ gold: g, got, entity: ent, wantEntity: want, capacity, invalid });
     rows.push({ id: x.id, lang: x.lang, family: x.family, gold: g, got, entity: ent, wantEntity: want, ok, deferred: false, capacity, invalid, model, ms: Date.now() - t0, tokens, calls, lane, note: r?.note ?? null, hops,
       say: r?.say ?? r?.reply ?? null, title: r?.stage?.title ?? null, takeaway: r?.stage?.takeaway ?? null });
     write("live40", { at: new Date().toISOString(), partial: true, done: rows.length, of: set.length, rows });
@@ -135,3 +153,20 @@ it.runIf(mode === "live40")("the frozen 40 through the shipped planner, Groq onl
 });
 
 void quickScreen; void understand;
+
+it.runIf(mode === "one")("one sentence through the shipped planner, Groq only (for a before/after transcript)", async () => {
+  expect(process.env.QA_GROQ_ONLY).toBe("1");
+  const text = process.env.QA_TEXT ?? "";
+  const turnId = `qa-one-${Date.now()}`;
+  let r: AgentResult | null = null, tokens = 0, lane = "";
+  for (let round = 0; round < 3; round++) {
+    const body = RoundBody.parse({ turnId, round, text, turns: [], lastText: null, stage: null, direct: null,
+      state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } });
+    const o = await planRound(body, world, fakeHands(), "qa-one");
+    tokens = o.tokens; lane = o.lane;
+    if (o.done) { r = o.result; break; }
+  }
+  const row = { text, lane, tokens, model: r?.model ?? null, kind: r?.kind, recipe: r?.stage?.recipe ?? null, slots: r?.stage?.slots ?? null, title: r?.stage?.title ?? null, say: r?.stage?.say ?? r?.say ?? r?.reply ?? null, note: r?.note ?? null };
+  write(`one-${(process.env.QA_ONE_NAME ?? "x")}`, row);
+  console.log("ONE", JSON.stringify(row));
+});

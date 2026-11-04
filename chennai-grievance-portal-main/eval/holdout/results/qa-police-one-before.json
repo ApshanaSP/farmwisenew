@@ -1,0 +1,34 @@
+{
+ "text": "chennai city police report",
+ "lane": "planner",
+ "tokens": 1198,
+ "model": "qwen/qwen3.8-27b",
+ "kind": "do",
+ "recipe": "cases",
+ "slots": {
+  "period": "daily",
+  "zones": [],
+  "dept": "POL-GCP",
+  "depts": [],
+  "cat": "CRIME_PROPERTY",
+  "taluk": null,
+  "sev": null,
+  "status": null,
+  "q": "chennai city police report",
+  "metric": null,
+  "measure": null,
+  "by": "zone",
+  "order": "top",
+  "n": null,
+  "id": null,
+  "name": null,
+  "what": null,
+  "sort": null
+ },
+ "title": "Cases: chennai city police report · Greater Chennai Police · Theft, snatching & fraud · today",
+ "say": {
+  "en": "23 cases today; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "ta": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ "note": null
+}

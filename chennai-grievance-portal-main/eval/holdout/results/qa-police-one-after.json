@@ -1,0 +1,35 @@
+{
+ "text": "chennai city police report",
+ "lane": "resolve",
+ "tokens": 0,
+ "model": null,
+ "kind": "do",
+ "recipe": "brief",
+ "slots": {
+  "period": "daily",
+  "zones": [],
+  "dept": "POL-GCP",
+  "depts": [],
+  "cat": null,
+  "taluk": null,
+  "sev": null,
+  "status": null,
+  "q": null,
+  "metric": null,
+  "measure": null,
+  "by": null,
+  "order": "top",
+  "n": null,
+  "id": null,
+  "name": null,
+  "what": null,
+  "sort": null,
+  "fresh": true
+ },
+ "title": "Greater Chennai Police · brief, today",
+ "say": {
+  "en": "Taking that as Greater Chennai Police. Greater Chennai Police: 158 new incidents came in today; 392 cases are still open, and 76 are past the deadline. The one to look at first is in Royapuram. That backlog is the thing to chase today. These are generated police test records, not an official police report. These records are a few days old.",
+  "ta": "Greater Chennai Police என்று எடுத்துக்கொள்கிறேன். Greater Chennai Police: இன்று 158 புதிய சம்பவங்கள் வந்தன; 392 இன்னும் நிலுவையில்; 76 கெடு தாண்டியவை. முதலில் பார்க்க வேண்டியது Royapuram பகுதியில். இந்த நிலுவையைத்தான் இன்று கேட்க வேண்டும். இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இந்தப் பதிவுகள் சில நாட்கள் பழையவை."
+ },
+ "note": "resolve:exact"
+}

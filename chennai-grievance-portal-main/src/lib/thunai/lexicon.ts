@@ -46,6 +46,14 @@ export const DEPT_ALIASES: Record<string, string[]> = {
   "GCC-REV": ["revenue", "tax department"]
 };
 
+/** department code -> its name in Tamil, as said aloud (the Tamil voice says this, never the English name) */
+export const DEPT_TA: Record<string, string> = {
+  "POL-GCP": "பெருநகர சென்னை காவல்துறை", "GCC-SWD": "மழைநீர் வடிகால் துறை", "GCC-SWM": "திடக்கழிவு மேலாண்மைத் துறை", "GCC-ENG": "சாலைகள் மற்றும் கட்டட அனுமதித் துறை",
+  "GCC-ELE": "தெருவிளக்கு மற்றும் மின் துறை", "GCC-HLT": "மாநகராட்சி சுகாதாரத் துறை", "GCC-PRK": "பூங்காக்கள் துறை", "GCC-REV": "வருவாய்த் துறை", "PWD-WRD": "பொதுப்பணித்துறை நீர்வளம்",
+  "PWD-BLD": "பொதுப்பணித்துறை கட்டடங்கள்", "HLT-DMS": "அரசு மருத்துவமனைகள்", "CMWSSB": "சென்னை குடிநீர் வாரியம்", "TANGEDCO": "மின் பகிர்மானக் கழகம்", "TNPCB": "மாசு கட்டுப்பாடு வாரியம்",
+  "DIST-DM": "மாவட்டப் பேரிடர் மேலாண்மை", "DIST-REV": "மாவட்ட வருவாய்த் துறை"
+};
+
 /** category code -> spoken names */
 export const CAT_ALIASES: Record<string, string[]> = {
   FLOOD_WATERLOGGING: ["flooding", "flood", "floods", "waterlogging", "water logging", "waterlogged", "water stagnation", "stagnation",

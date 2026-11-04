@@ -193,6 +193,7 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (s.what === "severe" || s.what === "hotspots" || s.what === "cases") out.what = s.what;
   if (s.sort === "priority" || s.sort === "complaints" || s.sort === "time") out.sort = s.sort;
   if (s.fresh === true) out.fresh = true;
+  if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
   if (recipe === "complete" && Array.isArray(s.ids)) {
     const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x)))].slice(0, 30);
     if (ids.length) out.ids = ids;
