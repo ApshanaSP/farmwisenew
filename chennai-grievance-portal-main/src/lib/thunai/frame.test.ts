@@ -22,6 +22,13 @@ describe("follow-ups, resolved in code before anything else", () => {
     expect(f("ஏன்?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why" });
     expect(f("yen?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why" });
   });
+  it("a reservoir after a reading, and a longer why", () => {
+    const lakes: StageContext = { ...cases, recipe: "readings", slots: { metric: "lakes" } };
+    expect(f("and in Puzhal?", { stage: lakes })).toMatchObject({ kind: "screen", recipe: "readings", slots: { metric: "lakes", name: "Puzhal" } });
+    expect(f("why are there so many?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why", slots: { zones: [5] } });
+    expect(f("ஏன் இந்த தாமதம்?", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why" });
+    expect(f("why is Perungudi so bad", { stage: cases })).toMatchObject({ kind: "screen", recipe: "why", slots: { zones: [14] } });
+  });
   it("the second one opens the second item", () => {
     expect(f("the second one", { stage: cases })).toMatchObject({ kind: "stageOp", op: "open", n: 2 });
     expect(f("இரண்டாவது", { stage: cases })).toMatchObject({ kind: "stageOp", op: "open", n: 2 });

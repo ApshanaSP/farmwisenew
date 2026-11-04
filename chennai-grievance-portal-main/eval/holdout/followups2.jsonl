@@ -1,0 +1,20 @@
+{"id":"f01","lang":"en","after":"Show me water logging complaints in Royapuram.","text":"And in Teynampet?","expect":{"intent":"cases","place":"Teynampet","keeps":true,"n":null}}
+{"id":"f02","lang":"en","after":"What is the current reservoir water level?","text":"Compare with last month.","expect":{"intent":"compare","place":"Chennai","keeps":true,"n":null}}
+{"id":"f03","lang":"en","after":"List the top road repair incidents.","text":"Select the second one.","expect":{"intent":"case","place":"Chennai","keeps":true,"n":2}}
+{"id":"f04","lang":"en","after":"Check the air quality index in Adyar.","text":"Why is it so high?","expect":{"intent":"why","place":"Adyar","keeps":true,"n":null}}
+{"id":"f05","lang":"en","after":"Show me garbage clearance performance for Anna Nagar.","text":"Same for Ambattur.","expect":{"intent":"performance","place":"Ambattur","keeps":true,"n":null}}
+{"id":"f06","lang":"en","after":"Display all civic complaints across Chennai.","text":"Only severe ones.","expect":{"intent":"cases","place":"Chennai","keeps":true,"n":null}}
+{"id":"f07","lang":"en","after":"Give me vegetable prices in Koyambedu market.","text":"Show as a table.","expect":{"intent":"prices","place":"Chennai","keeps":true,"n":null}}
+{"id":"f08","lang":"en","after":"What is the rainfall update for Sholinganallur?","text":"No, Perungudi.","expect":{"intent":"readings","place":"Perungudi","keeps":true,"n":null}}
+{"id":"f09","lang":"en","after":"Show recent news on Metro water supply.","text":"Summarize briefly.","expect":{"intent":"brief","place":"Chennai","keeps":true,"n":null}}
+{"id":"f10","lang":"ta","after":"அடையாறு பகுதியில் மழை நீர் தேங்கிய புகார்களை காட்டுங்கள்.","text":"மற்றும் அண்ணா நகரில்?","expect":{"intent":"cases","place":"Anna Nagar","keeps":true,"n":null}}
+{"id":"f11","lang":"ta","after":"சென்னையின் முக்கிய ஏரிகளின் நீர்மட்டம் என்ன?","text":"கடந்த மாதத்துடன் ஒப்பிடுங்கள்.","expect":{"intent":"compare","place":"Chennai","keeps":true,"n":null}}
+{"id":"f12","lang":"ta","after":"ராயபுரம் பகுதியில் உள்ள சாலை சேத புகார்களை பட்டியலிடுங்கள்.","text":"இரண்டாவதை காட்டு.","expect":{"intent":"case","place":"Royapuram","keeps":true,"n":2}}
+{"id":"f13","lang":"ta","after":"தேனாம்பேட்டை ஏர் குவாலிட்டி இண்டெக்ஸ் என்ன?","text":"ஏன் இப்படி அதிகம் உள்ளது?","expect":{"intent":"why","place":"Teynampet","keeps":true,"n":null}}
+{"id":"f14","lang":"ta","after":"அம்பத்தூர் மண்டலத்தின் துப்புரவு பணியை காட்டுங்கள்.","text":"கொடுங்கையூருக்கு என்ன நிலை?","expect":{"intent":"performance","place":"Ambattur","keeps":true,"n":null}}
+{"id":"f15","lang":"ta","after":"பெருங்குடி பகுதியில் மழை அளவை சொல்லுங்கள்.","text":"இல்லை, சோழிங்கநல்லூர்.","expect":{"intent":"readings","place":"Sholinganallur","keeps":true,"n":null}}
+{"id":"f16","lang":"tanglish","after":"Show me drainage complaints in Kodambakkam.","text":"Adyar layum same ah?","expect":{"intent":"cases","place":"Adyar","keeps":true,"n":null}}
+{"id":"f17","lang":"tanglish","after":"Check vegetable prices in market.","text":"Last week oda compare pani sollu.","expect":{"intent":"compare","place":"Chennai","keeps":true,"n":null}}
+{"id":"f18","lang":"tanglish","after":"List out electricity issues in Royapuram.","text":"Athula 3rd complaint enna nu paru.","expect":{"intent":"case","place":"Royapuram","keeps":true,"n":3}}
+{"id":"f19","lang":"tanglish","after":"What is the AQI level in Teynampet?","text":"Why romba high ah iruku?","expect":{"intent":"why","place":"Teynampet","keeps":true,"n":null}}
+{"id":"f20","lang":"tanglish","after":"Show rain status for Sholinganallur.","text":"Illai, Anna Nagar ku podu.","expect":{"intent":"readings","place":"Anna Nagar","keeps":true,"n":null}}

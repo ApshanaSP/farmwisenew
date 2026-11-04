@@ -2,3 +2,4 @@
 1f924e844a729d68c812f42f72dcd8e9000daf2d89da0bc8b82f5e919efb5d1a *eval/holdout/ambient.jsonl
 34bba7209af7d836953d45a1fc6fd9a151f3c35f88f55faecfc52bfd2dbd35a2 *eval/holdout/followups.jsonl
 25341451042d621c8c6cc03d3a1ea99d254fdab5e77ff3774c99b5ee262775dc *eval/holdout/planner40.json
+3a28b5c3a2c1eebc6b601fd87deb6c8b688798fb1f1e72c5e39c773a99ec0644 *eval/holdout/followups2.jsonl

@@ -1,0 +1,190 @@
+{
+ "at": "2026-11-04T04:44:47.972Z",
+ "summary": {
+  "n": 20,
+  "right": 15,
+  "resolvedInCode": 15
+ },
+ "rows": [
+  {
+   "id": "f01",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f02",
+   "lang": "en",
+   "gold": "compare",
+   "got": "why",
+   "why": "compare-previous",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f03",
+   "lang": "en",
+   "gold": "case",
+   "got": "stage_op",
+   "why": "ordinal",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f04",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "why": "why",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f05",
+   "lang": "en",
+   "gold": "performance",
+   "got": "performance",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f06",
+   "lang": "en",
+   "gold": "cases",
+   "got": "none",
+   "why": null,
+   "ok": false,
+   "inCode": false
+  },
+  {
+   "id": "f07",
+   "lang": "en",
+   "gold": "prices",
+   "got": "stage_op",
+   "why": "view",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f08",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f09",
+   "lang": "en",
+   "gold": "brief",
+   "got": "none",
+   "why": null,
+   "ok": false,
+   "inCode": false
+  },
+  {
+   "id": "f10",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "cases",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f11",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "why",
+   "why": "compare-previous",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f12",
+   "lang": "ta",
+   "gold": "case",
+   "got": "none",
+   "why": null,
+   "ok": false,
+   "inCode": false
+  },
+  {
+   "id": "f13",
+   "lang": "ta",
+   "gold": "why",
+   "got": "none",
+   "why": null,
+   "ok": false,
+   "inCode": false
+  },
+  {
+   "id": "f14",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "none",
+   "why": null,
+   "ok": false,
+   "inCode": false
+  },
+  {
+   "id": "f15",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "readings",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f16",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f17",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "why",
+   "why": "compare-previous",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f18",
+   "lang": "tanglish",
+   "gold": "case",
+   "got": "stage_op",
+   "why": "ordinal",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f19",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "why",
+   "why": "why",
+   "ok": true,
+   "inCode": true
+  },
+  {
+   "id": "f20",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "why": "new-place",
+   "ok": true,
+   "inCode": true
+  }
+ ]
+}

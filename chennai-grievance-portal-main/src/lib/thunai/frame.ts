@@ -55,7 +55,7 @@ const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அத�
 const ELLIPSIS_TG = /^ (appo|apram|adhe|athe|illa|venam|vendaam|sari) | (la|le|ku|mattum|pathi)\??\s*$/;
 const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank)\b/;
 
-const WHY = /^ (why|why is that|why so|whats the reason|what is the reason|reason|cause|how come|yen|yen appadi|ஏன்|ஏன் அப்படி|காரணம்|காரணம் என்ன|karanam|karanam enna) $/;
+const WHY = /^ (why|whats the reason|what is the reason|reason|cause|how come|yen|ஏன்|காரணம்|karanam)( [^ ]+){0,5} $/;
 const WEEKLY = / (weekly|this week|last week|week|வாரம்|இந்த வாரம்|vaaram) /, MONTHLY = / (monthly|this month|last month|month|மாதம்|இந்த மாதம்|கடந்த மாதம்|maasam|masam) /, DAILY = / (daily|today|இன்று|இன்னைக்கு|innaiku) /, QUARTER = / (quarterly|this quarter|last quarter|quarter|காலாண்டு) /;
 const PERIOD_ONLY = /^ (make it |change to |switch to |show |for |only |just |now |and |இந்த |கடந்த )*(weekly|monthly|daily|quarterly|today|this week|last week|this month|last month|this quarter|week|month|quarter|வாரம்|மாதம்|இன்று|காலாண்டு|maasam|masam|vaaram)( only| instead| mattum| view| மட்டும்)? $/;
 const COMPARE_LAST = /(compare|versus|vs|against|ஒப்பிடு|oppidu|compare pannu).*(last|previous|before|earlier|கடந்த|முந்தைய|pona|poana)|(last|previous|கடந்த|pona|poana).*(compare|ஒப்பிடு|oppidu)/;
@@ -82,9 +82,9 @@ export function resolveFrame(i: FrameInput): Frame {
   const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !LIKE_NEW_REQUEST.test(t));
   const slots = { ...last.slots };
 
-  // "why?"
-  if (WHY.test(t)) {
-    const zones = slots.zones as number[] | undefined;
+  // "why?", "why so many?", "ஏன் இந்த தாமதம்?": the reason for what is on screen (a why naming a new place is a new question)
+  if (WHY.test(t) && !catIn(t)) {
+    const zones = hasNewPlace.length ? hasNewPlace.slice(0, 1) : (slots.zones as number[] | undefined);
     return { kind: "screen", recipe: "why", slots: { zones: zones ?? [], cat: slots.cat ?? null, period: slots.period ?? "weekly" }, why: "why" };
   }
   // "compare with last month": the same place and topic, what changed against the period before
@@ -110,6 +110,11 @@ export function resolveFrame(i: FrameInput): Frame {
   }
   if (!ellipsis) return { kind: "none" };
 
+  // "and in Puzhal?" after a reservoir, a gauge named after the last reading
+  if (last.recipe === "readings") {
+    const named = (i.world.reservoirs.length ? i.world.reservoirs.map((r) => r.name) : ["Chembarambakkam", "Puzhal", "Poondi", "Cholavaram", "Veeranam", "Red Hills"]).find((n) => t.includes(` ${n.toLowerCase().split(" ")[0]} `));
+    if (named) return { kind: "screen", recipe: "readings", slots: { ...slots, name: named }, why: "new-station" };
+  }
   // "and in Adyar?", "same for Ambattur", "no, Anna Nagar"
   if (hasNewPlace.length) {
     if (last.recipe === "compare") return { kind: "screen", recipe: "compare", slots: { ...slots, zones: [...((slots.zones as number[]) ?? []), ...hasNewPlace].slice(0, 4) }, why: "add-place" };

@@ -35,7 +35,7 @@ export function asksPrivate(text: string): boolean {
 export function asksForbidden(text: string): boolean {
   const t = text.trim();
   if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி/i.test(t)) return true;
-  const verb = /\b(send|approve|delete|erase|wipe|remove|purge|dispatch|forward|e-?mail|sms|reject|submit|issue|close all|mark .{0,20}resolved)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|நீக்கு|நீக்குங்க|அழி|அழிங்க|delete pannu|anuppu|anupu|approve pannu|azhi|neekku)/i;
+  const verb = /\b(send|approve|authorise|authorize|sanction|delete|erase|wipe|remove|purge|dispatch|forward|e-?mail|sms|reject|submit|issue|publish|close all|mark .{0,20}resolved)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|அங்கீகரி|நீக்கு|நீக்குங்க|அழி|அழிங்க|delete pannu|anuppu|anupu|approve pannu|azhi|neekku)/i;
   if (!verb.test(t)) return false;
   // "send" in the sense of a draft to the tray is still only a draft: the tray gate handles it; these name the outward act itself
   return /\b(all|every|old|complaints?|cases?|incidents?|records?|data|report|alert|message|notice|letter|mail|email|sms|it|this|that|them|these|the\s+drafts?|officers?|departments?|engineers?|commissioner|citizens?|press|media)\b|(எல்லா|புகார்|சம்பவ|அறிக்கை|செய்தி|கடிதம்|அதிகாரி|துறை|வரைவ|இதை|அதை)|(ellam|pugar|complaint|case|report|message|draft|officer)/i.test(t);
