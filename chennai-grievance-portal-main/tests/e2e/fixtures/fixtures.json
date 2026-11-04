@@ -1,0 +1,58 @@
+{
+ "answer": {
+  "speechMs": 600,
+  "durMs": 20585
+ },
+ "b1": {
+  "speechMs": 600,
+  "durMs": 4295
+ },
+ "b2": {
+  "speechMs": 600,
+  "durMs": 3980
+ },
+ "b3": {
+  "speechMs": 600,
+  "durMs": 3625
+ },
+ "b4": {
+  "speechMs": 600,
+  "durMs": 4125
+ },
+ "b5": {
+  "speechMs": 600,
+  "durMs": 4290
+ },
+ "b6": {
+  "speechMs": 600,
+  "durMs": 4030
+ },
+ "b7": {
+  "speechMs": 600,
+  "durMs": 3785
+ },
+ "b8": {
+  "speechMs": 600,
+  "durMs": 4120
+ },
+ "cmd_adyar": {
+  "speechMs": 600,
+  "durMs": 3435
+ },
+ "cmd_trends": {
+  "speechMs": 600,
+  "durMs": 2930
+ },
+ "cmd_zone": {
+  "speechMs": 600,
+  "durMs": 3160
+ },
+ "wait": {
+  "speechMs": 600,
+  "durMs": 2030
+ },
+ "burst": {
+  "speechMs": 600,
+  "durMs": 1550
+ }
+}

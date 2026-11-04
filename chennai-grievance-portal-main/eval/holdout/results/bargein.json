@@ -1,0 +1,18 @@
+{
+ "clips": 8,
+ "pause_ms": [
+  77,
+  69,
+  93,
+  80,
+  95,
+  83,
+  81,
+  86
+ ],
+ "pause_p50": 82.5,
+ "pause_p90": 94.79999999701977,
+ "detector_fire_p50": 82,
+ "cancel_p50": 402.09999999403954,
+ "note": "injected audio through WebAudio into the real worklet and Silero; PCM path; no echo canceller, no real microphone"
+}

@@ -29,3 +29,7 @@ eval/store/
 
 # Thunai: per-Collector memory and the audit trail (never committed)
 data/thunai/
+
+# Playwright output
+test-results/
+playwright-report/

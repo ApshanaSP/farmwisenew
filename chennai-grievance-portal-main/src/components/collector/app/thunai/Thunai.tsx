@@ -36,6 +36,7 @@ import { levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { districtNounIn, quickScreen } from "@/lib/thunai/quick";
 import type { TurnState } from "@/lib/thunai/turn";
 import Panel, { type Ear, type Msg } from "./Panel";
+import Hud from "./Hud";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
 import { JARVIS_VOICES, type JarvisVoice } from "@/lib/jarvis/voices";
 import { useLang } from "@/lib/i18n/lang";
@@ -1352,11 +1353,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   useEffect(() => {
     hud.set({ core: coreOf(mode, turnState, busyNow, false) });
   }, [mode, turnState, busyNow]);
+  const wasBusy = useRef(false);
   useEffect(() => {
-    if (phase === "thinking" || phase === "acting") return;
+    if (phase === "thinking" || phase === "acting") { wasBusy.current = true; return; }
     if (reply && reply !== ackText.current) hud.set({ answer: reply });
-    // a turn just ended: the 20 s of being engaged run from here
-    if (mode === "on" && (phase === "ready" || phase === "waiting" || phase === "speaking")) lastTurnAt.current = Date.now();
+    // a turn just ended: the 20 s of being engaged run from here (turning the mode on is not a turn)
+    if (wasBusy.current && mode === "on") { lastTurnAt.current = Date.now(); wasBusy.current = false; }
   }, [phase, reply, mode]);
 
   // the mode is remembered in this browser; after a reload the microphone opens again when it was on (permission permitting)
@@ -1660,8 +1662,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       ))}
 
       {/* the page behind the panel dims a little, as behind the chat; a click there closes the panel */}
-      {on && !stage && !mini && <div className="jv-veil" onClick={switchOff} aria-hidden="true" />}
-      {on && (
+      {on && mode === "off" && !stage && !mini && <div className="jv-veil" onClick={switchOff} aria-hidden="true" />}
+      {mode !== "off" && (
+        <Hud lang={listenLang} coreRef={orbRef} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }}>{waiting}</Hud>
+      )}
+      {on && mode === "off" && (
         <Panel lang={listenLang} ear={ear} mini={mini} onExpand={() => setMini(false)} conv={conv} idleLeft={null} level={0} thread={thread} geo={geo ?? host.c.geo}
           busyLine={phase === "thinking" ? reply || (ta ? "யோசிக்கிறேன்…" : "Thinking…") : null} brain={brainLine} focusKey={focusKey} orbRef={orbRef}
           onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }}
