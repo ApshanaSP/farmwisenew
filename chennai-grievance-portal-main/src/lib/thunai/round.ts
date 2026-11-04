@@ -111,7 +111,8 @@ cases[sev,status,q,zones,dept,cat,taluk,period,sort,n] list incidents | case[id 
 How a department or team is doing, its closure or resolution rates -> performance. How something rose or fell -> trend. Reasons -> why. Near or within a distance of a place -> nearby. "Map out", "overlay", "plot" -> map. Pending, unfinished or unresolved work -> complete. A named reservoir's level -> readings metric lakes, with its name. A locality with no zone goes in q.
 Slots hold only what the sentence names. Example: "Adyar vs Ambattur this month" -> compare zones [13,7], period monthly.`;
 /** for a sentence in Tamil or Tanglish. Written for this prompt: none of these is a test sentence */
-const TAMIL_B = `Spoken Tamil and Tanglish carry English words, often in Tamil letters; Gloss, when given, spells them out. Word endings (-ல, -ku, -னு, -nu) are grammar. Say what screen it means, in the same way as English:
+const TAMIL_B = `To see, list, compare or explain anything: a screen. Steps only to move the console when asked to ("go to", "open the panel"). After Recent, a follow-up ("and in Adyar", "compare with last month", "only severe") is a new screen of the same kind with that change, never a step.
+Spoken Tamil and Tanglish carry English words, often in Tamil letters; Gloss, when given, spells them out. Word endings (-ல, -ku, -னு, -nu) are grammar. Say what screen it means, in the same way as English:
 "போன வாரம் டெங்கு எப்படி ஏறி இறங்குது" -> trend cat VECTOR_DISEASE, period weekly
 "ஸ்டார்ம் வாட்டர் டீம் ஒர்க் எப்படி போகுது" -> performance by dept
 "அம்பத்தூரும் மணலியும் குப்பையில எப்படி, ஒப்பிட்டு சொல்லு" -> compare zones [7,2]

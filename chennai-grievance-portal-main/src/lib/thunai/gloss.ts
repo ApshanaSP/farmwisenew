@@ -75,7 +75,7 @@ const LEX: [string[], string][] = [
   [["பில்டர்"], "filter"], [["சேவ்"], "save"], [["கிலோமீட்டர்"], "kilometre"], [["ஸ்பாட்"], "spot"], [["சைடு"], "side"], [["மந்த்"], "month"],
   [["வீக்"], "week"], [["ரேட்"], "rate"], [["ஓபன்"], "open"], [["போன", "கடந்த"], "last/past"], [["நிலவரம்", "nilavaram"], "situation"],
   [["மாறு", "மாத்து", "maathu", "mathu"], "change to"], [["சுத்தி", "சுற்றி", "suthi"], "around"], [["குடிநீர்"], "drinking water"], [["பட்டியல்"], "list"],
-  [["mosam", "mosama", "மோசம்", "மோசமா"], "bad"], [["aagala", "ஆகல"], "not done"], [["kooda", "கூட"], "with/compared to"]
+  [["கூடி", "koodi"], "has risen"], [["குறைஞ்", "குறைந்"], "has fallen"], [["mosam", "mosama", "மோசம்", "மோசமா"], "bad"], [["aagala", "ஆகல"], "not done"], [["kooda", "கூட"], "with/compared to"]
 ];
 
 const LATIN = new Map<string, string>();
