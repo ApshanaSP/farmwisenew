@@ -9,6 +9,7 @@ import type { MapAsk } from "./askmap/useMapAsk";
 import { condMarker, createAnswerLayers, clearAnswer, corridorWeights, drawAnswer, drawHeat, drawPins, liveKind, markPins, newsMarker, type AnswerLayers, type NewsMarkerFeat } from "./askmap/answerLayers";
 import { cameraFor, type Shot } from "@/lib/map/camera";
 import { hardenLeaflet } from "./askmap/leafletSafe";
+import { setConsoleMap } from "./thunai/mapbridge";
 import type { RainLayer } from "./rehearsal/rainLayer";
 import "./askmap/askmap.css";
 
@@ -127,6 +128,7 @@ export default function SatMap(props: Props) {
       if (dead || !el.current) return;
       hardenLeaflet(L);
       const map = L.map(el.current, { zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, minZoom: 9, maxZoom: 18, attributionControl: true });
+      setConsoleMap(map as never); // Jarvis's reticle reads positions from here
       map.attributionControl.setPrefix(false);
       // markers and zone names scale with the zoom: small over the whole district, larger as the Collector zooms in
       const box = el.current;

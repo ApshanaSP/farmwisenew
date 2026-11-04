@@ -28,7 +28,7 @@ export interface HudState {
   /** the system strip: real numbers only */
   strip: { lastMs: number | null; ackMs: number | null; provider: string | null; freshness: string | null; ambient: number; budgetLow: boolean; tokens: number | null; path: string | null; detector: string | null };
   /** the place being discussed, for the map's reticle */
-  focus: { label: string; lat: number | null; lon: number | null; zone: number | null } | null;
+  focus: { label: string; lat: number | null; lon: number | null; zone: number | null; pulses?: { lat: number; lon: number }[] } | null;
 }
 
 const START: HudState = {

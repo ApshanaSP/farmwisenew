@@ -720,6 +720,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   // Thunai, the voice pilot: it presses these same controls; a sentence's filters land in one render and one undo
   const thunaiHost: ThunaiHost = {
     c, ov, ins, inc, modal: modal?.kind ?? null, ask, theme, toggleTheme, openExport, openCustomize, openPalette: () => setPalette(true), askWith,
+    // the dev preview has no sign-in, so Jarvis uses the dev routes (dry-run store, this PC only)
+    ...(dev ? { planUrl: "/api/dev/thunai/plan", agentUrl: "/api/dev/thunai/agent", hearUrl: "/api/dev/thunai/hear", draftUrl: (id: string) => `/api/dev/thunai/draft?id=${encodeURIComponent(id)}` } : {}),
     // Jarvis's next look waits for the console to finish loading what its last step asked for (at most 4 s)
     settled: () => new Promise<void>((res) => { const t0 = Date.now(); setTimeout(function check() { if (!loadingRef.current || Date.now() - t0 > 4000) res(); else setTimeout(check, 60); }, 80); }),
     applyView: (v) => {

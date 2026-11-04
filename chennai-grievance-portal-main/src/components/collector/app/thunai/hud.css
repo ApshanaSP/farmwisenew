@@ -1,0 +1,132 @@
+/* The HUD, over the console. Near-black, one electric cyan, one amber for warnings, thin lines, tabular numerals. Spatial, not a
+   chat box. Text is crisp: no glow on body text, no scanlines over text. Only transform and opacity animate. */
+.hud {
+  --c: #22d3ee; --c-soft: rgba(34, 211, 238, .28); --c-line: rgba(34, 211, 238, .34); --amber: #fbbf24; --ink: #f1f7fb; --ink-2: #b9c7d4; --glass: rgba(6, 13, 20, .86); --glass-2: rgba(10, 20, 30, .92);
+  position: fixed; inset: 0; z-index: 2147482995; pointer-events: none; color: var(--ink); display: block;
+  font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Noto Sans Tamil Variable", "Noto Sans Tamil", "Nirmala UI", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.5; font-variant-numeric: tabular-nums;
+}
+.hud [lang="ta"], .hud[lang="ta"] { font-family: "Noto Sans Tamil Variable", "Noto Sans Tamil", "Nirmala UI", system-ui, sans-serif; letter-spacing: normal; line-height: 1.6; }
+.hud button, .hud input, .hud .th-card, .hud .th-tray, .hud .hud-first { pointer-events: auto; }
+.hud button { font: inherit; cursor: pointer; }
+.hud :focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+
+/* the layer over the console: it dims, it does not block */
+.hud-veil { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 18%, rgba(2, 6, 11, .72), rgba(2, 6, 11, .46) 70%); }
+.hud.with-stage .hud-veil { display: none; }
+
+/* the core, the ribbon under it */
+.hud-top { position: absolute; left: 50%; top: 58px; width: min(760px, 92vw); margin-left: calc(min(760px, 92vw) / -2); display: flex; flex-direction: column; align-items: center; }
+.hud-core { position: relative; width: 240px; height: 240px; margin-bottom: -144px; transform: scale(.4); transform-origin: top center; transition: transform .32s cubic-bezier(.2, .8, .2, 1), margin-bottom .32s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
+.hud-core.big { transform: scale(1); margin-bottom: 0; }
+.hud-canvas { position: absolute; inset: 0; width: 240px; height: 240px; }
+.hud-anchor { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; }
+.hud-dial { position: absolute; inset: 0; width: 240px; height: 240px; fill: none; stroke: var(--c-line); stroke-width: 1; }
+.hud-ticks line { stroke-width: 1; }
+.hud-core[data-state="thinking"] .hud-dial { animation: hud-turn 14s linear infinite; }
+.hud-core[data-state="offline"] .hud-dial { stroke: rgba(251, 191, 36, .4); }
+@keyframes hud-turn { to { transform: rotate(360deg); } }
+.hud-under { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; width: 100%; }
+.hud-state { font-size: 12.5px; font-weight: 600; color: var(--c); background: var(--glass); padding: 0 8px; text-transform: uppercase; letter-spacing: .14em; }
+.hud-state[lang="ta"] { text-transform: none; letter-spacing: normal; font-size: 14px; }
+.hud-ribbon { min-height: 28px; font-size: 19px; font-weight: 500; color: var(--ink); background: var(--glass); padding: 0 12px; border-radius: 3px; }
+.hud-ribbon:empty { background: none; }
+.hud-faint { font-size: 15px; color: var(--ink-2); opacity: .7; animation: hud-fade 2s ease forwards; }
+@keyframes hud-fade { 0%, 60% { opacity: .7; } 100% { opacity: 0; } }
+.hud-answer { max-width: 680px; font-size: 17px; color: var(--ink); background: var(--glass); padding: 8px 14px; border-left: 2px solid var(--c); text-align: left; animation: hud-in .22s ease both; }
+@keyframes hud-in { from { opacity: 0; transform: translateY(6px); } }
+.hud-notice { font-size: 15px; color: var(--ink); background: var(--glass-2); padding: 4px 12px; border: 1px solid var(--c-line); }
+.hud-notice.warn { border-color: rgba(251, 191, 36, .6); color: var(--amber); }
+
+/* the rails */
+.hud-rail { position: absolute; top: 76px; bottom: 56px; width: 300px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.hud-rail.left { left: 16px; }
+.hud-rail.right { right: 16px; width: 330px; }
+.hud-steps { list-style: none; margin: 0; padding: 8px 10px; background: var(--glass); border: 1px solid var(--c-line); display: grid; gap: 5px; font-size: 14.5px; }
+.hud-steps li { display: grid; grid-template-columns: 12px 1fr auto; gap: 7px; align-items: baseline; animation: hud-in .18s ease both; }
+.hud-steps i { width: 7px; height: 7px; align-self: center; border: 1px solid var(--c); transform: rotate(45deg); }
+.hud-steps li.running i { animation: hud-pulse 1s ease-in-out infinite; }
+.hud-steps li.done i { background: var(--c); }
+.hud-steps li.failed i { background: var(--amber); border-color: var(--amber); }
+.hud-steps time { color: var(--ink-2); font-size: 12.5px; }
+@keyframes hud-pulse { 50% { opacity: .35; } }
+
+/* an answer: an angular glass panel */
+.hud-panel { background: var(--glass-2); padding: 12px 14px 10px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); border-top: 1px solid var(--c); pointer-events: auto; }
+.hud-panel h3 { margin: 0 0 4px; font-size: 16px; font-weight: 650; color: var(--ink); }
+.hud-panel p { margin: 0 0 8px; font-size: 16px; color: var(--ink); }
+.hud-panel dl { margin: 0 0 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hud-panel dt { font-size: 12.5px; color: var(--ink-2); }
+.hud-panel dd { margin: 0; font-size: 24px; font-weight: 650; color: var(--c); }
+.hud-panel dd small { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.hud-panel footer { font-size: 12.5px; color: var(--ink-2); }
+
+/* the waiting cards: a question, a yes, the tray */
+.hud-cards { position: absolute; left: 50%; top: 240px; width: min(520px, 92vw); margin-left: calc(min(520px, 92vw) / -2); display: flex; flex-direction: column; gap: 10px; }
+.hud-cards:empty { display: none; }
+.hud .hud-cards .th-card, .hud .hud-cards .th-tray { position: static; width: auto; background: var(--glass-2); color: var(--ink); border: 1px solid var(--c-line); border-radius: 2px; box-shadow: none; }
+.hud .hud-cards .th-card button, .hud .hud-cards .th-tray button { color: var(--ink); background: transparent; border: 1px solid var(--c-line); }
+.hud .hud-cards .th-card button.primary, .hud .hud-cards .th-tray button.primary { background: var(--c); color: #04131a; border-color: var(--c); font-weight: 650; }
+.hud .hud-cards .th-chips { display: none; }
+
+.hud-first { position: absolute; left: 50%; bottom: 62px; width: min(560px, 92vw); margin-left: calc(min(560px, 92vw) / -2); background: var(--glass-2); border: 1px solid rgba(251, 191, 36, .55); padding: 12px 14px; display: flex; gap: 12px; align-items: center; }
+.hud-first p { margin: 0; font-size: 15px; }
+.hud-first button { flex: none; background: transparent; color: var(--ink); border: 1px solid var(--c-line); padding: 6px 12px; }
+
+/* the system strip: real numbers only */
+.hud-strip { position: absolute; left: 0; right: 0; bottom: 0; height: 36px; display: flex; align-items: center; gap: 18px; padding: 0 14px; background: var(--glass-2); border-top: 1px solid var(--c-line); font-size: 13px; color: var(--ink); pointer-events: none; white-space: nowrap; overflow: hidden; }
+.hud-strip b { font-weight: 500; color: var(--ink-2); }
+.hud-strip .warn { color: var(--amber); }
+.hud-spacer { flex: 1; }
+.hud-btn { pointer-events: auto; height: 26px; min-width: 34px; background: transparent; color: var(--ink); border: 1px solid var(--c-line); font-size: 13px; }
+.hud-btn:hover { background: rgba(34, 211, 238, .12); }
+.hud-compose { position: absolute; left: 50%; bottom: 46px; width: min(620px, 92vw); margin-left: calc(min(620px, 92vw) / -2); pointer-events: auto; }
+.hud-compose input { width: 100%; height: 42px; padding: 0 12px; font: inherit; font-size: 17px; color: var(--ink); background: var(--glass-2); border: 1px solid var(--c); outline: none; box-sizing: border-box; }
+.hud-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* the power-on: dim, the core ignites, the rails slide in (1.2 s; transform and opacity only) */
+.hud.powering .hud-veil { animation: hud-veil 1.2s ease both; }
+.hud.powering .hud-core { animation: hud-ignite 1.2s cubic-bezier(.2, .8, .2, 1) both; }
+.hud.powering .hud-strip { animation: hud-slide-b .9s .3s ease both; }
+.hud.powering .hud-rail.left { animation: hud-slide-l .9s .3s ease both; }
+.hud.powering .hud-rail.right { animation: hud-slide-r .9s .3s ease both; }
+@keyframes hud-veil { from { opacity: 0; } }
+@keyframes hud-ignite { 0% { opacity: 0; transform: scale(.05); } 45% { opacity: 1; transform: scale(.55); } 100% { transform: scale(.4); } }
+@keyframes hud-slide-l { from { opacity: 0; transform: translateX(-24px); } }
+@keyframes hud-slide-r { from { opacity: 0; transform: translateX(24px); } }
+@keyframes hud-slide-b { from { opacity: 0; transform: translateY(24px); } }
+
+/* with a screen open: the core stays docked, the rails fold into the band above it */
+.hud.with-stage { z-index: 2147482995; }
+.hud.with-stage .hud-top { top: 6px; flex-direction: row; gap: 12px; width: min(620px, 50vw); margin-left: calc(min(620px, 50vw) / -2); align-items: center; }
+.hud.with-stage .hud-core { margin-bottom: -144px; align-self: flex-start; flex: none; transform: scale(.4); }
+.hud.with-stage .hud-under { align-items: flex-start; text-align: left; margin-left: -130px; width: auto; flex: 1; min-width: 0; }
+.hud.with-stage .hud-ribbon { font-size: 16px; }
+.hud.with-stage .hud-rail.left { top: 6px; bottom: auto; width: 25vw; max-height: 94px; }
+.hud.with-stage .hud-steps { grid-auto-flow: row; font-size: 13px; padding: 4px 8px; gap: 2px; }
+.hud.with-stage .hud-steps li:nth-last-child(n + 4) { display: none; }
+.hud.with-stage .hud-cards { top: 112px; }
+html.jv-hud .st-root { z-index: 2147482992; }
+html.jv-hud .st-scrim { background: rgba(2, 6, 11, .66); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.jv-hud .st-frame { margin: 104px 14px 44px; max-height: calc(100dvh - 148px); border-radius: 3px; border-color: rgba(34, 211, 238, .34); backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 12, 19, .97); animation: none; }
+html.jv-hud .st-root { --accent: #22d3ee; --accent-soft: rgba(34, 211, 238, .16); --accent-fill: #0e7490; --signal: #22d3ee; }
+
+/* the map's targeting reticle: it sweeps to the place being discussed */
+.hud-reticle { position: fixed; left: 0; top: 0; width: 72px; height: 72px; margin: -36px 0 0 -36px; transition: transform .7s cubic-bezier(.2, .8, .2, 1); pointer-events: none; }
+.hud-reticle svg { width: 100%; height: 100%; fill: none; stroke: var(--c); stroke-width: 1.5; }
+.hud-reticle span { position: absolute; left: 76px; top: 26px; font-size: 13px; color: var(--ink); background: var(--glass-2); padding: 1px 7px; white-space: nowrap; }
+.hud-pulse { position: fixed; left: 0; top: 0; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 1.5px solid var(--amber); animation: hud-ping 1.6s ease-out infinite; pointer-events: none; }
+@keyframes hud-ping { from { opacity: .9; transform: var(--at) scale(.3); } to { opacity: 0; transform: var(--at) scale(1.1); } }
+
+/* phones and the small laptop: the rails give way */
+@media (max-width: 1100px) { .hud-rail.right { display: none; } .hud-strip span:nth-child(n + 4):not(.hud-spacer) { display: none; } }
+@media (max-width: 760px) { .hud-rail.left { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud *, .hud { animation: none !important; transition: none !important; }
+  .hud-levelbar { display: block; width: 120px; height: 3px; background: var(--c-line); }
+  .hud-levelbar span { display: block; height: 100%; background: var(--c); transform-origin: left; transform: scaleX(0); }
+  .hud-faint { opacity: .7; }
+}
+.hud-levelbar { display: none; }
+@media (prefers-reduced-motion: reduce) { .hud-levelbar { display: block; } }
