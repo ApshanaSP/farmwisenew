@@ -1,0 +1,150 @@
+{"id":"u001","text":"Show me severe drainage complaints in T Nagar and Adyar from yesterday.","intent":"cases","places":["T Nagar","Adyar"],"lang":"en"}
+{"id":"u002","text":"Any flash floods reported in Velachery this morning?","intent":"cases","places":["Velachery"],"lang":"en"}
+{"id":"u003","text":"Pull up the latest news ticker about the Metro rail extension.","intent":"news","places":[],"lang":"en"}
+{"id":"u004","text":"What do the dailies say about the Chembarambakkam outflow?","intent":"news","places":["Chembarambakkam"],"lang":"en"}
+{"id":"u005","text":"Check current storage in Puzhal and Poondi reservoirs.","intent":"readings","places":["Puzhal","Poondi"],"lang":"en"}
+{"id":"u006","text":"What is the AQI reading in Manali and Tondiarpet right now?","intent":"readings","places":["Manali","Tondiarpet"],"lang":"en"}
+{"id":"u007","text":"Top five worst zones for garbage clearance this week.","intent":"ranking","places":[],"lang":"en"}
+{"id":"u008","text":"Which ward has the highest dengue cases currently?","intent":"ranking","places":[],"lang":"en"}
+{"id":"u009","text":"Compare water logging issues between Anna Nagar and Teynampet.","intent":"compare","places":["Anna Nagar","Teynampet"],"lang":"en"}
+{"id":"u010","text":"Put CMWSSB and Storm Water Drains resolution rates side by side.","intent":"compare","places":[],"lang":"en"}
+{"id":"u011","text":"How has the malaria count moved in Royapuram over the last three months?","intent":"trend","places":["Royapuram"],"lang":"en"}
+{"id":"u012","text":"Plot the reservoir inflow trend for Veeranam over the past fortnight.","intent":"trend","places":["Veeranam"],"lang":"en"}
+{"id":"u013","text":"Why did garbage complaints spike in Sholinganallur yesterday?","intent":"why","places":["Sholinganallur"],"lang":"en"}
+{"id":"u014","text":"Reason for the sudden drop in water pressure across Ambattur?","intent":"why","places":["Ambattur"],"lang":"en"}
+{"id":"u015","text":"How is GCC Public Health performing in Kodambakkam compared to last month?","intent":"performance","places":["Kodambakkam"],"lang":"en"}
+{"id":"u016","text":"Show me Greater Chennai Police closure rates zone-wise.","intent":"performance","places":[],"lang":"en"}
+{"id":"u017","text":"Build a quick monsoon emergency dashboard for us.","intent":"dashboard","places":[],"lang":"en"}
+{"id":"u018","text":"Set up a heatwave monitoring screen with all relevant widgets.","intent":"dashboard","places":[],"lang":"en"}
+{"id":"u019","text":"Map out all stagnant water points in Thiru-Vi-Ka Nagar.","intent":"map","places":["Thiru-Vi-Ka Nagar"],"lang":"en"}
+{"id":"u020","text":"Show me the GIS overlay of streetlights not working in Mylapore.","intent":"map","places":["Mylapore"],"lang":"en"}
+{"id":"u021","text":"Find relief centers within three kilometers of Guindy.","intent":"nearby","places":["Guindy"],"lang":"en"}
+{"id":"u022","text":"Any public hospitals near Perungudi reporting oxygen shortages?","intent":"nearby","places":["Perungudi"],"lang":"en"}
+{"id":"u023","text":"Give me the morning briefing on rain and traffic.","intent":"brief","places":[],"lang":"en"}
+{"id":"u024","text":"Summarize key escalations from all fifteen zones since midnight.","intent":"brief","places":[],"lang":"en"}
+{"id":"u025","text":"What are the retail prices of onion and tomato in Koyambedu market today?","intent":"prices","places":[],"lang":"en"}
+{"id":"u026","text":"Check current vegetable rates across major city markets.","intent":"prices","places":[],"lang":"en"}
+{"id":"u027","text":"Open the PWD water resources panel.","intent":"navigate","places":[],"lang":"en"}
+{"id":"u028","text":"Switch the time filter on the console to previous monsoon.","intent":"navigate","places":[],"lang":"en"}
+{"id":"u029","text":"Save this view as monsoon_prep_2024.","intent":"save","places":[],"lang":"en"}
+{"id":"u030","text":"Pin current filter settings to my workspace.","intent":"save","places":[],"lang":"en"}
+{"id":"u031","text":"Any unusual anomalies in power outage complaints today?","intent":"insight","places":[],"lang":"en"}
+{"id":"u032","text":"Find which department is standing out for delayed ticket closures.","intent":"insight","places":[],"lang":"en"}
+{"id":"u033","text":"List all unresolved grievances older than seven days in Alandur.","intent":"complete","places":["Alandur"],"lang":"en"}
+{"id":"u034","text":"Fill in missing field inspection reports for Thiruvottiyur.","intent":"complete","places":["Thiruvottiyur"],"lang":"en"}
+{"id":"u035","text":"What is the boiling point of heavy water?","intent":"general","places":[],"lang":"en"}
+{"id":"u036","text":"Approve compensation payout for complainant ID 8492.","intent":"refuse","places":[],"lang":"en"}
+{"id":"u037","text":"Send notice to the contractor in Egmore.","intent":"refuse","places":["Egmore"],"lang":"en"}
+{"id":"u038","text":"Filter those specifically for Solid Waste Management.","intent":"followup","places":[],"lang":"en"}
+{"id":"u039","text":"Compare Teynampet and Kodambakkam on solid waste clearance speed.","intent":"compare","places":["Teynampet","Kodambakkam"],"lang":"en"}
+{"id":"u040","text":"Spot any weird spikes in Adyar drainage complaints today.","intent":"insight","places":["Adyar"],"lang":"en"}
+{"id":"u041","text":"Fill in those missing inspection logs for Sholinganallur zone.","intent":"complete","places":["Sholinganallur"],"lang":"en"}
+{"id":"u042","text":"Pin this current water level view as Collectorate Monsoon Monitor.","intent":"save","places":[],"lang":"en"}
+{"id":"u043","text":"What is the capital of Australia?","intent":"general","places":[],"lang":"en"}
+{"id":"u044","text":"Send citizen Kumar's phone number to the press guy.","intent":"refuse","places":[],"lang":"en"}
+{"id":"u045","text":"Put Puzhal and Chembarambakkam side by side for storage trend.","intent":"compare","places":["Puzhal","Chembarambakkam"],"lang":"en"}
+{"id":"u046","text":"Find anything unusual in the night shift Greater Chennai Police logs from Mylapore.","intent":"insight","places":["Mylapore"],"lang":"en"}
+{"id":"u047","text":"List all unresolved GCC Electrical tickets in T Nagar.","intent":"complete","places":["T Nagar"],"lang":"en"}
+{"id":"u048","text":"Save this layout under my morning review workspace.","intent":"save","places":[],"lang":"en"}
+{"id":"u049","text":"Who wrote the book Mahabharata?","intent":"general","places":[],"lang":"en"}
+{"id":"u050","text":"Delete the personal grievance details of that petitioner from Velachery.","intent":"refuse","places":["Velachery"],"lang":"en"}
+{"id":"u051","text":"How do Anna Nagar and Royapuram stack up on mosquito control?","intent":"compare","places":["Anna Nagar","Royapuram"],"lang":"en"}
+{"id":"u052","text":"Any hidden outliers in the market vegetable prices this week?","intent":"insight","places":[],"lang":"en"}
+{"id":"u053","text":"Show unresolved cases in T Nagar.","intent":"cases","places":["T Nagar"],"lang":"en"}
+{"id":"u054","text":"only severe.","intent":"followup","places":[],"after":"Show unresolved cases in T Nagar.","expect":"cases","lang":"en"}
+{"id":"u055","text":"What's the reservoir status at Puzhal today?","intent":"readings","places":[],"lang":"en"}
+{"id":"u056","text":"compare with last month.","intent":"compare","places":[],"after":"What's the reservoir status at Puzhal today?","lang":"en"}
+{"id":"u057","text":"List Solid Waste Management complaints in Velachery.","intent":"cases","places":["Velachery"],"lang":"en"}
+{"id":"u058","text":"and in Adyar?","intent":"cases","places":["Adyar"],"after":"List Solid Waste Management complaints in Velachery.","lang":"en"}
+{"id":"u059","text":"Check air quality readings in Mylapore.","intent":"readings","places":["Mylapore"],"lang":"en"}
+{"id":"u060","text":"same for Ambattur.","intent":"readings","places":["Ambattur"],"after":"Check air quality readings in Mylapore.","lang":"en"}
+{"id":"u061","text":"நேத்து பதிவான கேஸ்லாம் ஒரு லிஸ்ட் எடு.","intent":"cases","places":[],"lang":"ta"}
+{"id":"u062","text":"அடையார்ல மழை தண்ணி தேங்குன நியூஸ் என்னனு பாரு.","intent":"news","places":["Adyar"],"lang":"ta"}
+{"id":"u063","text":"புழல் டேம் நிலவரம் என்னாச்சு இன்னைக்கு?","intent":"readings","places":[],"lang":"ta"}
+{"id":"u064","text":"எந்த ஜோன்ல வேஸ்டு ரொம்ப கிடக்கு, டாப் அஞ்சு காட்டு.","intent":"ranking","places":[],"lang":"ta"}
+{"id":"u065","text":"அண்ணா நகரும் தேனாம்பேட்டையும் கம்பேர் பண்ணி காட்டு.","intent":"compare","places":["Anna Nagar","Teynampet"],"lang":"ta"}
+{"id":"u066","text":"கடந்த வாரத்துல டெங்கு கேஸ் எப்படி ஏறி இறங்குனுது?","intent":"trend","places":[],"lang":"ta"}
+{"id":"u067","text":"கிண்டில ஏர் குவாலிட்டி ஏன் திடீர்னு மோசம் ஆச்சு?","intent":"why","places":["Guindy"],"lang":"ta"}
+{"id":"u068","text":"மெட்ரோ வாட்டர் பெர்ஃபார்மன்ஸ் இன்னைக்கு எப்படி இருக்கு?","intent":"performance","places":[],"lang":"ta"}
+{"id":"u069","text":"மழை நிலவரம் ஃபுல்லா ஒரு டூ இன் ஒன் டேஷ்போர்டு போடு.","intent":"dashboard","places":[],"lang":"ta"}
+{"id":"u070","text":"மயிலாப்பூர்ல டிராபிக் ஜாம் எங்கெங்க இருக்கு மேப்ல காட்டு.","intent":"map","places":["Mylapore"],"lang":"ta"}
+{"id":"u071","text":"வேளச்சேரி ஸ்பாட்ல இருந்து ரெண்டு கிலோமீட்டர்ல என்னென்ன கம்ப்ளைன்ட் இருக்கு?","intent":"nearby","places":["Velachery"],"lang":"ta"}
+{"id":"u072","text":"இன்றைய நிலைமை என்னனு ஒரு பிரீஃபா சொல்லு.","intent":"brief","places":[],"lang":"ta"}
+{"id":"u073","text":"கோயம்பேடுல தக்காளி விலை நிலவரம் என்ன?","intent":"prices","places":[],"lang":"ta"}
+{"id":"u074","text":"கரண்ட் மந்த் பில்டரிங் பேஜுக்கு மாறு.","intent":"navigate","places":[],"lang":"ta"}
+{"id":"u075","text":"இந்த டிஸ்ப்ளேவ அப்படியே ஒர்க்ஸ்பேஸா சேவ் பண்ணு.","intent":"save","places":[],"lang":"ta"}
+{"id":"u076","text":"இந்த வாரத்துல எங்கயாச்சும் அவுட்லேயர் இருக்கா பாரு.","intent":"insight","places":[],"lang":"ta"}
+{"id":"u077","text":"எந்தெந்த ஃபைல்லாம் இன்னும் பெண்டிங்ல இருக்கு?","intent":"complete","places":[],"lang":"ta"}
+{"id":"u078","text":"இந்தியால மொத்தம் எத்தனை யூனியன் டெரிட்டரி இருக்கு?","intent":"general","places":[],"lang":"ta"}
+{"id":"u079","text":"அந்த மனுதாரன் போன் நம்பர எனக்கு அனுப்பு.","intent":"refuse","places":[],"lang":"ta"}
+{"id":"u080","text":"அதுல ரெண்டாவதா இருக்கிறதை மட்டும் விரிவாவே காட்டு.","intent":"followup","places":[],"lang":"ta"}
+{"id":"u081","text":"ராயபுரத்துல ரோடு போடுறதுல எவ்வளவோ கம்ப்ளைன்ட் வந்துருக்கு.","intent":"cases","places":["Royapuram"],"lang":"ta"}
+{"id":"u082","text":"செம்பரம்பாக்கம் தண்ணி திறக்குறது பத்தி பேப்பர்ல என்ன வந்துருக்கு?","intent":"news","places":[],"lang":"ta"}
+{"id":"u083","text":"இன்னைக்கு சென்செக்ஸ் ரேட் என்னனு சொல்லு.","intent":"readings","places":[],"lang":"ta"}
+{"id":"u084","text":"மோஸ்டா வாட்டர் லீக்கேஜ் கம்ப்ளைன்ட் வார லாஸ்ட் மூணு ஜோன் எது?","intent":"ranking","places":[],"lang":"ta"}
+{"id":"u085","text":"எம்கம்கேவையும் வளசரவாக்கத்தையும் ஒப்பிட்டு பாரு.","intent":"compare","places":["Kodambakkam","Valasaravakkam"],"lang":"ta"}
+{"id":"u086","text":"கடந்த மாசத்துல குடிநீர் தட்டுப்பாடு எப்படி கூடிருக்கு?","intent":"trend","places":[],"lang":"ta"}
+{"id":"u087","text":"நேத்து தாண்டாரப்பேட்டையில கரண்ட் ஏன் போச்சு?","intent":"why","places":["Tondiarpet"],"lang":"ta"}
+{"id":"u088","text":"சாலிடே மேனேஜ்மென்ட் டீம் ஒர்க் எப்படி போகுது?","intent":"performance","places":[],"lang":"ta"}
+{"id":"u089","text":"டீ நகர் ஏரியா டிராபிக் அண்ட் கிரவுட் டேஷ்போர்டு ஓபன் பண்ணு.","intent":"dashboard","places":["T Nagar"],"lang":"ta"}
+{"id":"u090","text":"போரூர் லேக் சுத்தி இருக்கிற என்விரோமென்ட் மேப் போடு.","intent":"map","places":[],"lang":"ta"}
+{"id":"u091","text":"எழும்பூர் ஸ்டேஷன் பக்கத்துல என்னென்ன ப்ராப்ளம் இருக்கு?","intent":"nearby","places":["Egmore"],"lang":"ta"}
+{"id":"u092","text":"மணி என்ன ஆகுது, காலையில இருந்து நிலவரம் என்ன?","intent":"brief","places":[],"lang":"ta"}
+{"id":"u093","text":"அடையாரும் வேளச்சேரியும் எப்படி இருக்கு தண்ணி தேங்குறதுல, ஒப்பிட்டு பாரு.","intent":"compare","places":["Adyar","Velachery"],"lang":"ta"}
+{"id":"u094","text":"மயிலாப்பூரும் தி நகரும் பக்கம் பக்கம் எப்படி இருக்கு ஸ்வீவேஜ் பிரச்சனைகளில்?","intent":"compare","places":["Mylapore","T Nagar"],"lang":"ta"}
+{"id":"u095","text":"செம்பரம்பாக்கம் ஏரியும் புழல் ஏரியும் நீர்மட்டம் எப்படின்னு சைடு பை சைடு காட்டு.","intent":"compare","places":["Chembarambakkam","Puzhal"],"lang":"ta"}
+{"id":"u096","text":"அம்பத்தூர்ல ஏன் திடீர்னு இந்த குப்பை குவிஞ்சிருக்குன்னு ஒரு அவுட்லையர் கண்டுபிடி.","intent":"insight","places":["Ambattur"],"lang":"ta"}
+{"id":"u097","text":"அண்ணாநகர்ல மட்டும் இந்த மாசம் கொசு தொல்லை ஏறி இருக்கு, என்னன்னு பாரு.","intent":"insight","places":["Anna Nagar"],"lang":"ta"}
+{"id":"u098","text":"இந்த வார கணக்குல விட்டேற்பட்ட ரோடு ஒர்க் விவரங்களை உடனே பூர்த்தி செய்.","intent":"complete","places":[],"lang":"ta"}
+{"id":"u099","text":"அந்த தண்டையார்பேட்டை குப்பை அப்புறப்படுத்துன ஃபைல்ல விடுபட்டதை எழுது.","intent":"complete","places":["Tondiarpet"],"lang":"ta"}
+{"id":"u100","text":"இந்த மழைக் கால மானிட்டரிங் ஸ்கிரீனை அப்படியே ஒரு ஒர்க்ஸ்பேஸா சேவ் பண்ணு.","intent":"save","places":[],"lang":"ta"}
+{"id":"u101","text":"ராயபுரம் நிலவரத்தை பின் பண்ணி வை, நாளைக்கு தேவைப்படும்.","intent":"save","places":["Royapuram"],"lang":"ta"}
+{"id":"u102","text":"தமிழ்நாட்டுல கடந்த வருஷம் பெய்த மொத்த மழையோட சராசரி எவ்வளவாக்கும்?","intent":"general","places":[],"lang":"ta"}
+{"id":"u103","text":"அந்த புகார் கொடுத்தவரோட பர்சனல் போன் நம்பரையும் அட்ரஸையும் ஸ்கிரீன்ல காட்டு.","intent":"refuse","places":[],"lang":"ta"}
+{"id":"u104","text":"ஆதியாருக்கு என்னாச்சு?","intent":"followup","places":["Adyar"],"after":"சென்னையில குடிநீர் தட்டுப்பாடு எங்கெங்க இருக்கு?","expect":"cases","lang":"ta"}
+{"id":"u105","text":"ஏன் அங்க மட்டும் இவ்வளவு?","intent":"followup","places":[],"after":"வேளச்சேரி பஸ் ஸ்டாண்ட் ரோடு ரொம்ப மோசமா இருக்கு.","expect":"why","lang":"ta"}
+{"id":"u106","text":"அம்பத்தூருக்கும் இதையே காட்டு.","intent":"followup","places":["Ambattur"],"after":"அண்ணா நகர்ல குப்பை அள்ளலன்னு பல கம்ப்ளைன்ட் வந்துருக்கு.","expect":"cases","lang":"ta"}
+{"id":"u107","text":"போன மாசத்தோட ஒப்பிட்டு சொல்லு.","intent":"followup","places":[],"after":"இந்த வாரம் மலேரியா கேஸ் எவ்வளவா ஏறி இருக்கு?","expect":"compare","lang":"ta"}
+{"id":"u108","text":"ரொம்ப சீரியஸா இருக்கிறதை மட்டும் வை.","intent":"followup","places":[],"after":"ரோடு போடுறதுல டிலே ஆன இடமெல்லாம் லிஸ்ட் போடு.","expect":"cases","lang":"ta"}
+{"id":"u109","text":"அந்த ரெண்டாவது வார்டை கிளிக் பண்ணு.","intent":"followup","places":[],"after":"ராயபுரம்ல ட்ரெைனேஜ் பிளாக் ஆனா இடங்கள் என்னென்ன?","expect":"navigate","lang":"ta"}
+{"id":"u110","text":"இப்ப அங்க மழை எப்படி இருக்கு?","intent":"followup","places":[],"after":"புழல் ஏரி தண்ணி அளவு என்ன நிலவரம்னு சொல்லு.","expect":"readings","lang":"ta"}
+{"id":"u111","text":"T Nagar la water logging cases ellam kondu vaa","intent":"cases","places":["T Nagar"],"lang":"tanglish"}
+{"id":"u112","text":"Mylapore drainage overflow case enna status?","intent":"case","places":["Mylapore"],"lang":"tanglish"}
+{"id":"u113","text":"Chennai rain news enna solranga today?","intent":"news","places":[],"lang":"tanglish"}
+{"id":"u114","text":"Chembarambakkam and Puzhal level eduthu podu","intent":"readings","places":["Chembarambakkam","Puzhal"],"lang":"tanglish"}
+{"id":"u115","text":"Perungudi la air quality epdi irukku?","intent":"readings","places":["Perungudi"],"lang":"tanglish"}
+{"id":"u116","text":"Top 5 worst zones solid waste management ku?","intent":"ranking","places":[],"lang":"tanglish"}
+{"id":"u117","text":"Anna Nagarkum Teynampetkum water complaint compare pannu","intent":"compare","places":["Anna Nagar","Teynampet"],"lang":"tanglish"}
+{"id":"u118","text":"Last one week la Adyar la mosquito nuisance epdi aeri irukku?","intent":"trend","places":["Adyar"],"lang":"tanglish"}
+{"id":"u119","text":"Velachery la edனால adឹកku water stagnation jaasti aachu?","intent":"why","places":["Velachery"],"lang":"tanglish"}
+{"id":"u120","text":"GCC Public Health department performance report kaatu","intent":"performance","places":[],"lang":"tanglish"}
+{"id":"u121","text":"Monsoon prep ku oru full dashboard podu","intent":"dashboard","places":[],"lang":"tanglish"}
+{"id":"u122","text":"Guindy map la fallen trees ellam mark pannu","intent":"map","places":["Guindy"],"lang":"tanglish"}
+{"id":"u123","text":"Egmore metro stationku pakathula irukka water stagnation spots list pannu","intent":"nearby","places":["Egmore"],"lang":"tanglish"}
+{"id":"u124","text":"Innikku overall situation oru brief kudunga","intent":"brief","places":[],"lang":"tanglish"}
+{"id":"u125","text":"Koyambedu la vegetables price ennaa irukku nu sollu","intent":"prices","places":[],"lang":"tanglish"}
+{"id":"u126","text":"Kodambakkam zone ku screen-a maathu","intent":"navigate","places":["Kodambakkam"],"lang":"tanglish"}
+{"id":"u127","text":"Intha view-a 'Monsoon 23'nu save panniko","intent":"save","places":[],"lang":"tanglish"}
+{"id":"u128","text":"Royapuram la mattum inaikku en intha garbage complaint spike aagudhu?","intent":"insight","places":["Royapuram"],"lang":"tanglish"}
+{"id":"u129","text":"Innum eththanai storm water drain work pending irukku?","intent":"complete","places":[],"lang":"tanglish"}
+{"id":"u130","text":"District Collector power-lam enna enna?","intent":"general","places":[],"lang":"tanglish"}
+{"id":"u131","text":"Intha complaint kudutha citizen number-a enaku anuppu","intent":"refuse","places":[],"lang":"tanglish"}
+{"id":"u132","text":"Athula rendu peroda status enna?","intent":"followup","places":[],"lang":"tanglish"}
+{"id":"u133","text":"Sholinganallur la pothu makkal panra complaints ellam eduthu vaa","intent":"cases","places":["Sholinganallur"],"lang":"tanglish"}
+{"id":"u134","text":"Madhavaram la water flow enna level nu oru vaati check pannu","intent":"readings","places":["Madhavaram"],"lang":"tanglish"}
+{"id":"u135","text":"Thiruvottiyurkum Manali kum garbage clearance compare pannu","intent":"compare","places":["Thiruvottiyur","Manali"],"lang":"tanglish"}
+{"id":"u136","text":"Adyarkum Perungudikum mela vandha water stagnation complaintsa side by side compare panni kaattu","intent":"compare","places":["Adyar","Perungudi"],"lang":"tanglish"}
+{"id":"u137","text":"Indha week la enna anomolies irukku nu paaru, especially T Nagar pakkam","intent":"insight","places":["T Nagar"],"lang":"tanglish"}
+{"id":"u138","text":"Velachery la edhellam innum pending irukku, list out pannu","intent":"complete","places":["Velachery"],"lang":"tanglish"}
+{"id":"u139","text":"Idha oru workspace ah save pannittu, monsoon review nu peru vechiru","intent":"save","places":[],"lang":"tanglish"}
+{"id":"u140","text":"Chennai district boundary la total ah evlo revenue taluks irukku","intent":"general","places":[],"lang":"tanglish"}
+{"id":"u141","text":"Complaint kudutha public oda personal phone number aen ennaikku kaattu nu kekkura, adhellam thara mudiyadhu","intent":"refuse","places":[],"lang":"tanglish"}
+{"id":"u142","text":"Anna Nagar kooda Teynampet zone performance epdi irukku nu compare pannunga","intent":"compare","places":["Anna Nagar","Teynampet"],"lang":"tanglish"}
+{"id":"u143","text":"Mylapore la mattum eppadi sudden a garbage pile up aagi irukku nu anomoly spot pannu","intent":"insight","places":["Mylapore"],"lang":"tanglish"}
+{"id":"u144","text":"Ambattur zone la innum enna work complete aagala nu paarkalam","intent":"complete","places":["Ambattur"],"lang":"tanglish"}
+{"id":"u145","text":"Indha view a pin pannittu morning briefing workspace nu save panniru","intent":"save","places":[],"lang":"tanglish"}
+{"id":"u146","text":"Adyar la enna nadakkudhu","intent":"cases","places":["Adyar"],"lang":"tanglish"}
+{"id":"u147","text":"and in Adyar?","intent":"followup","places":["Adyar"],"after":"Adyar la enna nadakkudhu","expect":"cases","lang":"tanglish"}
+{"id":"u148","text":"Puzhal water level romba kammi ah irukku","intent":"readings","places":[],"after":"Adyar la enna nadakkudhu","expect":"readings","lang":"tanglish"}
+{"id":"u149","text":"why?","intent":"followup","places":[],"after":"Puzhal water level romba kammi ah irukku","expect":"why","lang":"tanglish"}
+{"id":"u150","text":"Guindy solid waste management romba mosam","intent":"performance","places":["Guindy"],"after":"why?","expect":"performance","lang":"tanglish"}

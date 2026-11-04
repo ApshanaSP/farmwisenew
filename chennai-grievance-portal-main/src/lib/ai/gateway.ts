@@ -18,6 +18,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
+import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 
 export type Role = "fast" | "reasoning";
 export type ProviderName = "gemini" | "bedrock" | "groq" | "openai";
@@ -229,6 +230,8 @@ export interface JsonCall<T> {
   timeoutMs?: number;
   /** a step of Ask District IQ answering a question: AI_CHAT_PROVIDER's order, when set */
   chat?: boolean;
+  /** what the ledger files this call under (Jarvis's lanes) */
+  lane?: Lane;
 }
 
 export interface CallInfo { step: string; provider: ProviderName; model: string; ms: number; inputTokens: number; outputTokens: number; attempts: number }
@@ -379,7 +382,12 @@ function usedLastMinute(key: string): { requests: number; tokens: number } {
   usage.set(key, l);
   return { requests: l.length, tokens: l.reduce((a, x) => a + x.tokens, 0) };
 }
-const recordUse = (key: string, tokens: number) => { const l = usage.get(key) ?? []; l.push({ t: Date.now(), tokens }); usage.set(key, l); };
+const recordUse = (key: string, tokens: number, lane?: Lane) => {
+  const l = usage.get(key) ?? []; l.push({ t: Date.now(), tokens }); usage.set(key, l);
+  // the ledger counts per organisation and model: the pooled keys' "#2" and "#3" are one allowance
+  const [org, ...rest] = key.split("/");
+  ledger().record(org as Org, rest.join("/"), { tokens, lane: lane ?? "other" });
+};
 
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
   state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
@@ -400,7 +408,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
         inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
       charge(c.user, info.inputTokens + info.outputTokens);
-      recordUse(key, info.inputTokens + info.outputTokens);
+      recordUse(key, info.inputTokens + info.outputTokens, c.lane);
       strikes.delete(key);
       keyWorks(p.name);
       console.info(`[assistant] ${c.name} ${p.name}/${id} ${info.ms} ms, ${info.inputTokens}+${info.outputTokens} tokens`);

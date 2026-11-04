@@ -1,0 +1,1255 @@
+{
+ "at": "2026-11-04T02:50:58.923Z",
+ "summary": {
+  "all": {
+   "n": 150,
+   "right": 30,
+   "deferred": 74,
+   "wrong": 46,
+   "capacity": 0,
+   "pct": {
+    "p": 20,
+    "lo": 14.4,
+    "hi": 27.1
+   }
+  },
+  "en": {
+   "n": 60,
+   "right": 18,
+   "deferred": 23,
+   "wrong": 19,
+   "capacity": 0,
+   "pct": {
+    "p": 30,
+    "lo": 19.9,
+    "hi": 42.5
+   }
+  },
+  "ta": {
+   "n": 50,
+   "right": 5,
+   "deferred": 35,
+   "wrong": 10,
+   "capacity": 0,
+   "pct": {
+    "p": 10,
+    "lo": 4.3,
+    "hi": 21.4
+   }
+  },
+  "tanglish": {
+   "n": 40,
+   "right": 7,
+   "deferred": 16,
+   "wrong": 17,
+   "capacity": 0,
+   "pct": {
+    "p": 17.5,
+    "lo": 8.7,
+    "hi": 32
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "u001",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u002",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u003",
+   "lang": "en",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u004",
+   "lang": "en",
+   "gold": "news",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u005",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u006",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u007",
+   "lang": "en",
+   "gold": "ranking",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u008",
+   "lang": "en",
+   "gold": "ranking",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u009",
+   "lang": "en",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u010",
+   "lang": "en",
+   "gold": "compare",
+   "got": "prices",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u011",
+   "lang": "en",
+   "gold": "trend",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u012",
+   "lang": "en",
+   "gold": "trend",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u013",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u014",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u015",
+   "lang": "en",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u016",
+   "lang": "en",
+   "gold": "performance",
+   "got": "prices",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u017",
+   "lang": "en",
+   "gold": "dashboard",
+   "got": "navigate",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u018",
+   "lang": "en",
+   "gold": "dashboard",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u019",
+   "lang": "en",
+   "gold": "map",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u020",
+   "lang": "en",
+   "gold": "map",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u021",
+   "lang": "en",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u022",
+   "lang": "en",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u023",
+   "lang": "en",
+   "gold": "brief",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u024",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u025",
+   "lang": "en",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u026",
+   "lang": "en",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u027",
+   "lang": "en",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u028",
+   "lang": "en",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u029",
+   "lang": "en",
+   "gold": "save",
+   "got": "save",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u030",
+   "lang": "en",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u031",
+   "lang": "en",
+   "gold": "insight",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u032",
+   "lang": "en",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u033",
+   "lang": "en",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u034",
+   "lang": "en",
+   "gold": "complete",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u035",
+   "lang": "en",
+   "gold": "general",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u036",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u037",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "general",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u038",
+   "lang": "en",
+   "gold": "followup",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u039",
+   "lang": "en",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u040",
+   "lang": "en",
+   "gold": "insight",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u041",
+   "lang": "en",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u042",
+   "lang": "en",
+   "gold": "save",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u043",
+   "lang": "en",
+   "gold": "general",
+   "got": "general",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u044",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u045",
+   "lang": "en",
+   "gold": "compare",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u046",
+   "lang": "en",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u047",
+   "lang": "en",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u048",
+   "lang": "en",
+   "gold": "save",
+   "got": "save",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u049",
+   "lang": "en",
+   "gold": "general",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u050",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u051",
+   "lang": "en",
+   "gold": "compare",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u052",
+   "lang": "en",
+   "gold": "insight",
+   "got": "prices",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u053",
+   "lang": "en",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u054",
+   "lang": "en",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u055",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u056",
+   "lang": "en",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u057",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u058",
+   "lang": "en",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u059",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u060",
+   "lang": "en",
+   "gold": "readings",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u061",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u062",
+   "lang": "ta",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u063",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "brief",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u064",
+   "lang": "ta",
+   "gold": "ranking",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u065",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u066",
+   "lang": "ta",
+   "gold": "trend",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u067",
+   "lang": "ta",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u068",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u069",
+   "lang": "ta",
+   "gold": "dashboard",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u070",
+   "lang": "ta",
+   "gold": "map",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u071",
+   "lang": "ta",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u072",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u073",
+   "lang": "ta",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u074",
+   "lang": "ta",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u075",
+   "lang": "ta",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u076",
+   "lang": "ta",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u077",
+   "lang": "ta",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u078",
+   "lang": "ta",
+   "gold": "general",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u079",
+   "lang": "ta",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u080",
+   "lang": "ta",
+   "gold": "followup",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u081",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u082",
+   "lang": "ta",
+   "gold": "news",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u083",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "prices",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u084",
+   "lang": "ta",
+   "gold": "ranking",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u085",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u086",
+   "lang": "ta",
+   "gold": "trend",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u087",
+   "lang": "ta",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u088",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u089",
+   "lang": "ta",
+   "gold": "dashboard",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u090",
+   "lang": "ta",
+   "gold": "map",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u091",
+   "lang": "ta",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u092",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u093",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u094",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u095",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u096",
+   "lang": "ta",
+   "gold": "insight",
+   "got": "why",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u097",
+   "lang": "ta",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u098",
+   "lang": "ta",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u099",
+   "lang": "ta",
+   "gold": "complete",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u100",
+   "lang": "ta",
+   "gold": "save",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u101",
+   "lang": "ta",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u102",
+   "lang": "ta",
+   "gold": "general",
+   "got": "readings",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u103",
+   "lang": "ta",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u104",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u105",
+   "lang": "ta",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u106",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u107",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u108",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u109",
+   "lang": "ta",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u110",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u111",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u112",
+   "lang": "tanglish",
+   "gold": "case",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u113",
+   "lang": "tanglish",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u114",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u115",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u116",
+   "lang": "tanglish",
+   "gold": "ranking",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u117",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u118",
+   "lang": "tanglish",
+   "gold": "trend",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u119",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u120",
+   "lang": "tanglish",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u121",
+   "lang": "tanglish",
+   "gold": "dashboard",
+   "got": "navigate",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u122",
+   "lang": "tanglish",
+   "gold": "map",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u123",
+   "lang": "tanglish",
+   "gold": "nearby",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u124",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u125",
+   "lang": "tanglish",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u126",
+   "lang": "tanglish",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u127",
+   "lang": "tanglish",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u128",
+   "lang": "tanglish",
+   "gold": "insight",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u129",
+   "lang": "tanglish",
+   "gold": "complete",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u130",
+   "lang": "tanglish",
+   "gold": "general",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u131",
+   "lang": "tanglish",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u132",
+   "lang": "tanglish",
+   "gold": "followup",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u133",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u134",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u135",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u136",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u137",
+   "lang": "tanglish",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u138",
+   "lang": "tanglish",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u139",
+   "lang": "tanglish",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u140",
+   "lang": "tanglish",
+   "gold": "general",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u141",
+   "lang": "tanglish",
+   "gold": "refuse",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u142",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false
+  },
+  {
+   "id": "u143",
+   "lang": "tanglish",
+   "gold": "insight",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u144",
+   "lang": "tanglish",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u145",
+   "lang": "tanglish",
+   "gold": "save",
+   "got": "brief",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u146",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u147",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u148",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  },
+  {
+   "id": "u149",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true
+  },
+  {
+   "id": "u150",
+   "lang": "tanglish",
+   "gold": "performance",
+   "got": "cases",
+   "ok": false,
+   "deferred": false
+  }
+ ]
+}
