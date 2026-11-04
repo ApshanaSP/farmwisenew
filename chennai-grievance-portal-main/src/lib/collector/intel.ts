@@ -1499,6 +1499,11 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
 // ---------------------------------------------------------- departments --
 
 /** Departments that own incidents, for the department picker and sidebar. */
+/** Every body in the reference table, with or without records: who Jarvis can name, and say it has nothing from. */
+export async function bodyList() {
+  return q<{ code: string; name: string }>(`SELECT d.code, d.name FROM ref_departments d ORDER BY d.name`);
+}
+
 export async function deptList() {
   return q<{ code: string; name: string; head: string | null }>(
     `SELECT d.code, d.name, d.head FROM ref_departments d

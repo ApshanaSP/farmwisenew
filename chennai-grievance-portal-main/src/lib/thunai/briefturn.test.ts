@@ -57,3 +57,48 @@ describe("a brief on a named body, decided in code", () => {
     expect(r.stage?.slots.dept ?? null).not.toBe("POL-GCP");
   });
 });
+
+// the skeptic's breaks of the first version (docs/qa/BUGS.md BUG-005): each is a case the resolver must get right now
+describe("the skeptic's breaks", () => {
+  beforeEach(() => clearCaches());
+  const brief = async (s: string) => { const r = await turn(s); return r.stage?.recipe === "brief" ? String(r.stage.slots.dept ?? r.stage.slots.org ?? `ZONE-${(r.stage.slots.zones as number[])[0]}`) : r.note === "unknown-entity" ? "unknown" : `other:${r.stage?.recipe ?? r.kind}`; };
+  it.each(["full police report", "Jarvis police report", "hey police report", "quick police update", "detailed police report", "Mylapur police report", "Chetpet police report", "Anna Salai police status", "Velachery police report"])("%s is our police", async (s) => {
+    expect(await brief(s)).toBe("POL-GCP");
+  });
+  it.each(["Madurai police report", "Chengai police report", "police report for Coimbatore", "what's the police status in Bangalore", "Mumbai city traffic police report", "Coimbatore City Municipal Corporation report", "Hyderabad metro water report", "Kerala public works department report", "Karnataka State Pollution Control Board status", "Tamil Nadu police report"])("%s is not ours", async (s) => {
+    expect(await brief(s)).toBe("unknown");
+  });
+  it.each(["Chembarambakkam lake water level update", "Puzhal reservoir water status", "compare Adyar and Anna Nagar status", "any news on the police", "police complaints updated today", "show police records for Adyar", "what's the status of police complaint INC-1234", "draft a report to the police commissioner on Adyar floods", "how many complaints at Adyar police station", "nearest police station to Velachery", "compare police and corporation status", "Adyar drainage status", "report a pothole in Adyar"])("%s is not taken over by a brief", async (s) => {
+    expect(await brief(s)).not.toMatch(/^(POL-GCP|CMWSSB|GCC|ZONE-\d+|PWD.*|unknown)$/);
+  });
+  it.each([["Anna Nagar police update", "POL-GCP"], ["police report for Anna Nagar", "POL-GCP"], ["PWD report", "PWD"], ["PWD buildings report", "PWD-BLD"], ["Adyar police report", "POL-GCP"]])("%s -> %s", async (s, want) => {
+    expect(await brief(s)).toBe(want);
+  });
+  it("a locality the data gives no zone is said, not silently dropped", async () => {
+    // intel-reference.json has no zone for Velachery, T. Nagar or Mylapore: the brief says it covers the district
+    const r = await turn("Velachery police report");
+    expect(r.stage?.slots.dept).toBe("POL-GCP");
+    expect(r.stage!.say.en).toMatch(/can't narrow these records to Velachery, so this is the whole district/);
+  });
+  it("Metrowater's name is said without its code", async () => {
+    const r = await turn("metrowater status");
+    expect(r.stage!.say.en).not.toMatch(/CMWSSB/);
+  });
+  it("an empty police brief still says the records are test data", async () => {
+    const { fakeHands: fh } = await import("./stagefake");
+    const h = fh();
+    const empty = { ...h, tool: async (n: string, a: Record<string, unknown>) => (n === "dept_followups" || n === "briefing" ? { scope: null, asOf: "2026-11-04 10:00:00", data: { rows: [], stats: {}, attention: [] }, facts: [], sources: [], incidentIds: [], caveats: [] } as never : h.tool(n, a)) };
+    const body = RoundBody.parse({ turnId: "empty-1", round: 0, text: "police report", turns: [], lastText: null, stage: null, direct: null,
+      state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } });
+    const r = (await planRound(body, world, empty, "test", { notes: [], habits: {} }, undefined, { llm: noModel })).result!;
+    expect(r.stage!.say.en).toMatch(/test records/);
+  });
+  it("a long sentence resolves inside 20 ms at p95", async () => {
+    const { resolveEntity } = await import("./entities");
+    const long = "um so Jarvis I was wondering if you could please give me the full and detailed police report for the Adyar and Velachery side because the commissioner asked me about it this morning".repeat(2).slice(0, 300);
+    const ms: number[] = [];
+    for (let i = 0; i < 60; i++) { const t = performance.now(); resolveEntity(long + i, world); ms.push(performance.now() - t); }
+    ms.sort((a, b) => a - b);
+    expect(ms[Math.floor(ms.length * 0.95)]).toBeLessThan(20);
+  });
+});

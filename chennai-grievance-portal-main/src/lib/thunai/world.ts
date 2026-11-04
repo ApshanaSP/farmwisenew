@@ -4,7 +4,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { deptList } from "@/lib/collector/intel";
+import { bodyList, deptList } from "@/lib/collector/intel";
 import { ZONE_TA_NAME } from "./lexicon";
 import type { World } from "./types";
 
@@ -45,8 +45,8 @@ let worldCache: { at: number; w: World } | null = null;
 /** the departments change only with a new collection: read once a minute, not on every round of every question */
 export async function serverWorld(): Promise<World> {
   if (worldCache && Date.now() - worldCache.at < 60_000) return worldCache.w;
-  const depts = await deptList().catch(() => null);
-  const w = buildWorld(depts ?? []);
+  const [depts, bodies] = await Promise.all([deptList().catch(() => null), bodyList().catch(() => null)]);
+  const w = { ...buildWorld(depts ?? []), ...(bodies?.length ? { bodies: bodies.map((b) => ({ code: b.code, name: b.name })) } : {}) };
   if (depts?.length) worldCache = { at: Date.now(), w };
   return w;
 }

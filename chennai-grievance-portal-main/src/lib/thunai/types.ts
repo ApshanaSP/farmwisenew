@@ -100,6 +100,8 @@ export interface World {
   reservoirs: { id: string; name: string }[];
   /** zones from worst to best by the console's own zone table (severe, then open), for "the worst zone" */
   zoneRank?: number[];
+  /** every public body in the reference table, including those with no records yet (TANGEDCO): Jarvis knows them and says so */
+  bodies?: { code: string; name: string }[];
   /** the Collector's learned aliases: heard words to a canonical phrase ("marina side" -> "zone 9") */
   aliases?: Record<string, string>;
 }

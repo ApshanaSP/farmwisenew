@@ -1,6 +1,6 @@
 {
- "at": "2026-11-04T17:58:22.878Z",
- "right": 55,
+ "at": "2026-11-04T18:11:55.879Z",
+ "right": 56,
  "n": 60,
  "rows": [
   {
@@ -85,7 +85,7 @@
    "text": "பொதுப்பணித் துறை நீர்வளப் பிரிவு அறிக்கை கொடுங்க",
    "lang": "ta",
    "expect": "PWD-WRD",
-   "got": "PWD-WRD"
+   "got": "PWD"
   },
   {
    "text": "can you give me the storm water drain department update",
@@ -139,19 +139,19 @@
    "text": "Give me the TANGEDCO status",
    "lang": "en",
    "expect": "TANGEDCO",
-   "got": "none:brief:none"
+   "got": "TANGEDCO"
   },
   {
    "text": "um can you brief me on tan gen co",
    "lang": "en",
    "expect": "TANGEDCO",
-   "got": "none:brief:none"
+   "got": "TANGEDCO"
   },
   {
    "text": "I want the update on TNEB electricity distribution",
    "lang": "en",
    "expect": "TANGEDCO",
-   "got": "GCC-ELE"
+   "got": "TANGEDCO"
   },
   {
    "text": "EB department status enna sir, report sollunga",
@@ -361,7 +361,7 @@
    "text": "தீயணைப்பு மற்றும் மீட்புப் பணிகள் துறை அறிக்கை கொடுங்க",
    "lang": "ta",
    "expect": "unknown",
-   "got": "unknown"
+   "got": "none:brief:none"
   }
  ]
 }

@@ -1198,7 +1198,8 @@ function assumed(heard: string, name: string, ta: string | null): Bilingual {
 async function bodyBrief(c: Ctx): Promise<Part> {
   const org = c.slots.org ?? null;
   const codes = org ? c.w.depts.filter((d) => d.code.startsWith(`${org}-`)).map((d) => d.code) : [c.s.dept as string];
-  const name = org ? (org === "GCC" ? "Greater Chennai Corporation" : org === "PWD" ? "Public Works Department" : org) : deptName(c.w, c.s.dept) ?? String(c.s.dept);
+  // the name as said aloud: no code in brackets ("Metro Water (CMWSSB)" is "Metro Water")
+  const name = (org ? (org === "GCC" ? "Greater Chennai Corporation" : org === "PWD" ? "Public Works Department" : org) : deptName(c.w, c.s.dept) ?? String(c.s.dept)).replace(/\s*\([^)]*\)\s*/g, " ").trim();
   const ta = org === "GCC" ? "பெருநகர சென்னை மாநகராட்சி" : org === "PWD" ? "பொதுப்பணித்துறை" : DEPT_TA[String(c.s.dept)] ?? null;
   const scope = scopeArg({ ...c.s, dept: org ? null : c.s.dept });
   const [fu, br] = await Promise.all([call(c, "dept_followups", { scope }), org ? Promise.resolve(null) : call(c, "briefing", { scope }).catch(() => null)]);
@@ -1215,7 +1216,7 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const age = freshness(c.asOf);
   if (!rows.length && reported == null) {
     return { title: `${name} · brief`, takeaway: null,
-      say: bi(`${pre.en}I have no records for ${name} ${when}. ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${age.ta}`),
+      say: bi(`${pre.en}I have no records for ${name} ${when}. ${src.en} ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${src.ta} ${age.ta}`),
       blocks: [{ kind: "Note", id: "empty", text: `No records for ${name} in this period. ${src.en}` }] };
   }
   // the one thing to say first: what needs attention, as a judgement made from the figures
@@ -1232,6 +1233,9 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const where = zEn ? ` The one to look at first is in ${zEn}.` : worst && org ? ` Most of it sits with ${clip(worst.name, 60)}.` : "";
   const whereTa = zTa ? ` முதலில் பார்க்க வேண்டியது ${zTa} பகுதியில்.` : worst && org ? ` பெரும்பகுதி ${DEPT_TA[String(worst.code)] ?? clip(worst.name, 60)} துறையிடம்.` : "";
   const advice = pressing ? " That backlog is the thing to chase today." : "";
+  // a place the data cannot narrow to: said, so the Collector knows the figures are the district's
+  const wide = c.slots.name && !c.s.zone ? ` I can't narrow these records to ${clip(c.slots.name, 40)}, so this is the whole district.` : "";
+  const wideTa = c.slots.name && !c.s.zone ? ` இவற்றை ${clip(c.slots.name, 40)} பகுதிக்கு மட்டும் பிரிக்க முடியவில்லை; இது மாவட்டம் முழுவதற்குமானது.` : "";
   const adviceTa = pressing ? " இந்த நிலுவையைத்தான் இன்று கேட்க வேண்டும்." : "";
   const points = [
     { text: clip(`${head}${stand ? `; ${stand}` : ""}.`, 400), incidentId: null },
@@ -1244,8 +1248,8 @@ async function bodyBrief(c: Ctx): Promise<Part> {
     title: `${name} · brief, ${PERIOD_EN[c.s.period]}`,
     takeaway: bi(`${head}${stand ? `; ${stand}` : ""}.`, `${headTa}${standTa ? `; ${standTa}` : ""}.`),
     // the name once: after "Taking that as X." it is not said again
-    say: bi(`${pre.en || `${name}: `}${cap1(head)}${stand ? `; ${stand}` : ""}.${where}${advice} ${src.en} ${age.en}`.replace(/\s+/g, " ").trim(),
-      `${pre.ta || `${ta ?? name}: `}${headTa}${standTa ? `; ${standTa}` : ""}.${whereTa}${adviceTa} ${src.ta} ${age.ta}`.replace(/\s+/g, " ").trim()),
+    say: bi(`${pre.en || `${name}: `}${cap1(head)}${stand ? `; ${stand}` : ""}.${where}${advice}${wide} ${src.en} ${age.en}`.replace(/\s+/g, " ").trim(),
+      `${pre.ta || `${ta ?? name}: `}${headTa}${standTa ? `; ${standTa}` : ""}.${whereTa}${adviceTa}${wideTa} ${src.ta} ${age.ta}`.replace(/\s+/g, " ").trim()),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
         ...(reported != null ? [{ key: "reported", label: "Reported", value: reported, unit: null, prev: null, delta: null, tone: "neutral" as const, spark: [] }] : []),
