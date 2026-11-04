@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { WORLD, START } from "./fixture";
 import { quickScreen } from "./quick";
 import { ACTION_LEVEL, cannotLine, NO_MODEL_LINE, REACH } from "./reach";
-import { riskOf } from "./risk";
+import { planRisk, riskOf, tapRisk } from "./risk";
 import { routeByRules } from "./router";
 import { localStageCommand, pushScreen, stageDigest, stageEmpty, stageReducer, type StageModel } from "./stagelocal";
 import type { StageDocT } from "./stage";
@@ -16,6 +16,17 @@ describe("the reach audit", () => {
       const step = { a } as unknown as Step;
       expect(riskOf(step), a).toBe(level === "read" ? "A" : level);
     }
+  });
+  it("what fills the tray is level C, so an unnamed sentence cannot run it; the brief only reads", () => {
+    expect(riskOf({ a: "draft" })).toBe("C");
+    expect(riskOf({ a: "mission", name: "rain" })).toBe("C");
+    expect(riskOf({ a: "mission", name: "brief" })).toBe("A");
+    expect(REACH.find((r) => r.what.includes("heavy rain"))?.level).toBe("C");
+    expect(REACH.find((r) => r.what.startsWith("Draft"))?.level).toBe("C");
+    expect(planRisk([{ a: "item", which: 1 }, { a: "draft" }])).toBe("C");
+    expect(tapRisk([{ a: "item", which: 1 }, { a: "draft" }])).toBe("A");
+    expect(tapRisk([{ a: "draft" }, { a: "remember", text: "x" }])).toBe("B");
+    expect(tapRisk([{ a: "send" }])).toBe("C");
   });
   it("every read, navigate and build action has words that reach it, in rules or the planner's bundles", () => {
     for (const r of REACH) {

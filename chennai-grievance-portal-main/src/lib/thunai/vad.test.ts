@@ -86,3 +86,19 @@ describe("ProbVad", () => {
     expect(v.heldMs(33 * 32)).toBeGreaterThan(900);
   });
 });
+
+describe("speech held", () => {
+  it("does not count the quiet after a short sound, so a cough never reaches the barge-in's 200 ms", () => {
+    const v = new ProbVad();
+    let at = 0, most = 0;
+    for (let i = 0; i < 5; i++) { at += 32; v.push(0.9, at, true); most = Math.max(most, v.heldMs(at)); }
+    for (let i = 0; i < 6; i++) { at += 32; v.push(0.05, at, true); most = Math.max(most, v.heldMs(at)); }
+    expect(most).toBeLessThan(200);
+  });
+  it("still reaches it for a person", () => {
+    const v = new ProbVad();
+    let at = 0;
+    for (let i = 0; i < 10; i++) { at += 32; v.push(0.9, at, true); }
+    expect(v.heldMs(at)).toBeGreaterThanOrEqual(200);
+  });
+});

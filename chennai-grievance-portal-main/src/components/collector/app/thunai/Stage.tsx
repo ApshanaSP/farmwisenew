@@ -19,6 +19,7 @@ import StageChart from "./StageChart";
 import "leaflet/dist/leaflet.css";
 import "../studio/studio.css";
 import { CountUp } from "./countup";
+import { tabStop } from "./hudstore";
 import "./stage.css";
 
 /** Jarvis mode is on: the tiles count up */
@@ -144,19 +145,17 @@ function Stage(p: Props) {
     const f = dic ? getComputedStyle(dic).getPropertyValue("--font-ui").trim() : "";
     if (f) setFont(f);
   }, []);
-  // focus moves in, stays in (Tab cycles inside), and returns to where it was on close; set up once, live values by ref
+  // focus moves in, stays in (Tab cycles inside, and through the HUD's own controls when the HUD is up), and returns to where it was on close; set up once, live values by ref
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     closeBtn.current?.focus({ preventScroll: true });
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (menuRef.current) setMenu(null); else aRef.current.close(); return; }
       if (e.key !== "Tab" || !root.current) return;
-      const f = [...root.current.querySelectorAll<HTMLElement>("button, [href], input, select, [tabindex]:not([tabindex='-1'])")].filter((x) => !x.hasAttribute("disabled") && x.offsetParent !== null);
-      if (!f.length) return;
-      const first = f[0], last = f[f.length - 1];
-      if (!root.current.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      const inBox = (box: Element | null) => (box ? [...box.querySelectorAll<HTMLElement>("button, [href], input, select, [tabindex]:not([tabindex='-1'])")].filter((x) => !x.hasAttribute("disabled") && x.offsetParent !== null) : []);
+      const at = document.activeElement as HTMLElement | null, hudEl = document.querySelector(".hud");
+      const next = tabStop(inBox(root.current), inBox(hudEl), at, e.shiftKey, !!at && (root.current.contains(at) || !!hudEl?.contains(at)));
+      if (next) { e.preventDefault(); next.focus(); }
     };
     window.addEventListener("keydown", key, true);
     return () => { window.removeEventListener("keydown", key, true); before?.focus?.({ preventScroll: true }); };
@@ -165,6 +164,7 @@ function Stage(p: Props) {
   const firstDoc = useRef(true);
   useEffect(() => {
     if (firstDoc.current) { firstDoc.current = false; return; }
+    if (document.activeElement?.closest?.(".hud")) return;
     if (!root.current?.contains(document.activeElement) || document.activeElement === document.body) titleRef.current?.focus({ preventScroll: true });
   }, [doc.id]);
 

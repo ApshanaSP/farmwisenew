@@ -43,12 +43,15 @@ export function repeats(t: string): boolean {
   return top >= 4 && top / w.length >= 0.4;
 }
 
-/** Whisper on near-silence sometimes writes its own prompt back; that is not what was said. */
-export function promptEcho(t: string): boolean {
+/**
+ * Whisper on near-silence sometimes writes its own prompt back; that is not what was said. A short run of the prompt's words
+ * ("storm water drain") can be a real sentence: it counts as echo only when the decode also looks like silence (`unsure`).
+ */
+export function promptEcho(t: string, unsure = true): boolean {
   const s = t.toLowerCase().replace(/[^\p{L}\s]/gu, " ").replace(/\s+/g, " ").trim();
   if (s.length < 12) return false;
   const p = PROMPT.toLowerCase().replace(/[^\p{L}\s]/gu, " ").replace(/\s+/g, " ");
-  if (p.includes(s)) return true;
+  if (p.includes(s) && (unsure || s.length >= 40)) return true;
   const hits = ["chennai district collector console", "storm water drain waterlogging", "chembarambakkam puzhal poondi", "gcc cmwssb tneb"].filter((x) => s.includes(x));
   return hits.length >= 1;
 }
@@ -63,7 +66,8 @@ export function scoreDecode(d: Decode): Scored {
   else if (noSpeech >= 0.6) why = "no-speech";
   else if (compression >= 2.4) why = "compression";
   else if (repeats(text)) why = "repeats";
-  else if (promptEcho(text)) why = "echo";
+  // the third racer's logprob is a stand-in, and it is sent no prompt to echo
+  else if (promptEcho(text, d.via !== "gemini" && (noSpeech >= 0.3 || logprob < -0.6))) why = "echo";
   // a forced Tamil decode must come back mostly in Tamil letters, a forced English one mostly in Latin
   else if (d.lang === "ta" && tamilShare(text) < 0.5) why = "script";
   else if (d.lang === "en" && latinShare(text) < 0.6) why = "script";
@@ -152,15 +156,16 @@ function invented(c: Scored, lane: Lane): boolean {
   return INVENTED.test(c.text) && (lane === "ambient" || c.logprob < -0.6 || (c.duration ?? 1) < 0.8);
 }
 
-/** What the ledger says about the lane's budget. */
-export function budget(lane: Lane): { ok: boolean; why: string | null; ambientThisMinute: number } {
+/** What the ledger says about the lane's budget, model by model: `models` keeps those with room; low only when none is left. */
+export function budget(lane: Lane, want: string[] = [MODEL_EN(), MODEL_TA()]): { ok: boolean; why: string | null; ambientThisMinute: number; models: string[] } {
   const l = ledger();
   const turbo = l.spent("groq", MODEL_EN(), 60_000, "ambient").requests, large = l.spent("groq", MODEL_TA(), 60_000, "ambient").requests;
   const ambient = turbo + large;
-  if (lane === "ambient" && ambient >= AMBIENT_PER_MIN) return { ok: false, why: "ambient-cap", ambientThisMinute: ambient };
-  const r = l.room("groq", MODEL_EN(), { audioS: 10 });
-  if (!r.ok) return { ok: false, why: r.why, ambientThisMinute: ambient };
-  return { ok: true, why: null, ambientThisMinute: ambient };
+  if (lane === "ambient" && ambient >= AMBIENT_PER_MIN) return { ok: false, why: "ambient-cap", ambientThisMinute: ambient, models: [] };
+  const rooms = want.map((m) => ({ m, r: l.room("groq", m, { audioS: 10 }) }));
+  const models = rooms.filter((x) => x.r.ok).map((x) => x.m);
+  if (!models.length) return { ok: false, why: rooms[0]?.r.why ?? null, ambientThisMinute: ambient, models };
+  return { ok: true, why: null, ambientThisMinute: ambient, models };
 }
 
 /** One utterance. `lane`: ambient gets one decode in the site's language; engaged and named get the parallel forced decodes. */
@@ -169,11 +174,12 @@ export async function hearUtterance(buf: ArrayBuffer, o: { lane: Lane; site: "en
   const audio = new Blob([buf], { type: "audio/wav" });
   const secs = wavSeconds(buf);
   const l = ledger();
-  const b = budget(o.lane);
-  if (!b.ok) { telemetry("stt_budget", { lane: o.lane, why: b.why }); return heard({ lane: o.lane, lang: o.site, ms: 0, budget: "low" }); }
-  const asks: { lang: "en" | "ta"; model: string }[] = o.lane === "ambient"
+  const wanted: { lang: "en" | "ta"; model: string }[] = o.lane === "ambient"
     ? [{ lang: o.site, model: o.site === "ta" ? MODEL_TA() : MODEL_EN() }]
     : [{ lang: "ta", model: MODEL_TA() }, { lang: "en", model: MODEL_EN() }];
+  const b = budget(o.lane, wanted.map((a) => a.model));
+  if (!b.ok) { telemetry("stt_budget", { lane: o.lane, why: b.why }); return heard({ lane: o.lane, lang: o.site, ms: 0, budget: "low" }); }
+  const asks = wanted.filter((a) => b.models.includes(a.model));
   const res = await Promise.allSettled(asks.map((a) => { l.record("groq", a.model, { audioS: secs, lane: o.lane }); return decode(audio, a.lang, a.model, o.signal, o.fetcher); }));
   const ms = Date.now() - t0;
   const good = res.filter((r): r is PromiseFulfilledResult<Decode> => r.status === "fulfilled").map((r) => r.value);

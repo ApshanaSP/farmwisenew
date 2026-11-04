@@ -148,6 +148,73 @@ describe("one round of thinking", () => {
     expect(b.result?.stage?.recipe).toBe("compare");
     expect(m.asked.length).toBeLessThanOrEqual(1);
   });
+  it("the plan cache keys on the whole sentence: a different panel or department never gets the last plan", async () => {
+    const step = { action: "panel", panel: "markets" };
+    const m = model(() => ({ kind: "do", lang: "en", reply: null, options: [], steps: [step] }));
+    const d = { ...deps(m), dataVersion: async () => "v1" };
+    await planRound(body("Show the markets panel", { turnId: "p1" }), WORLD, fakeHands(), "u", undefined, undefined, d);
+    expect(m.asked.length).toBe(1);
+    await planRound(body("Show the markets panel!", { turnId: "p2" }), WORLD, fakeHands(), "u", undefined, undefined, d);
+    expect(m.asked.length).toBe(1);
+    await planRound(body("Show the review panel", { turnId: "p3" }), WORLD, fakeHands(), "u", undefined, undefined, d);
+    expect(m.asked.length).toBe(2);
+  });
+  it("a repeat that leans on a recent turn is not answered from the cache", async () => {
+    const m = model(() => ({ kind: "do", lang: "en", reply: null, options: [], steps: [{ action: "panel", panel: "markets" }] }));
+    const d = { ...deps(m), dataVersion: async () => "v1" };
+    const turns = [{ heard: "severe cases in Adyar", did: "showed them" }];
+    for (const said of ["show that panel", "also show the markets panel"]) {
+      m.asked.length = 0;
+      await planRound(body(said, { turnId: "e1", turns }), WORLD, fakeHands(), "u", undefined, undefined, d);
+      await planRound(body(said, { turnId: "e2", turns }), WORLD, fakeHands(), "u", undefined, undefined, d);
+      expect(m.asked.length, said).toBe(2);
+    }
+  });
+  it("a say with a figure of the model's own and no placeholder falls back to the facts", async () => {
+    let n = 0;
+    const m = model(() => (n++ === 0
+      ? { kind: "do", lang: "en", reply: null, options: [], calls: [{ tool: "zones", period: null, zone: null, dept: null, cat: null, taluk: null, place: null, metric: null, text: null }], done: false, say: null, screen: null }
+      : { kind: "do", lang: "en", reply: null, options: [], calls: [], done: true, say: "Adyar has 9 severe incidents.", screen: { ...SCREEN_NULLS, recipe: "answer" } }));
+    const h = fakeHands();
+    await planRound(body("how many open complaints in total", { turnId: "lit" }), WORLD, h, "u", undefined, undefined, deps(m));
+    const r = await planRound(body("how many open complaints in total", { turnId: "lit", round: 1 }), WORLD, h, "u", undefined, undefined, deps(m));
+    expect(r.result?.stage?.recipe).toBe("answer");
+    expect(r.result?.say ?? "").not.toMatch(/Adyar has 9/);
+    expect(JSON.stringify(r.result?.stage?.blocks)).not.toMatch(/Adyar has 9/);
+  });
+  it("a say with no figure comes through the template unchanged", async () => {
+    let n = 0;
+    const m = model(() => (n++ === 0
+      ? { kind: "do", lang: "en", reply: null, options: [], calls: [{ tool: "zones", period: null, zone: null, dept: null, cat: null, taluk: null, place: null, metric: null, text: null }], done: false, say: null, screen: null }
+      : { kind: "do", lang: "en", reply: null, options: [], calls: [], done: true, say: "Adyar leads the list.", screen: { ...SCREEN_NULLS, recipe: "answer" } }));
+    const h = fakeHands();
+    await planRound(body("how many open complaints in total", { turnId: "plain" }), WORLD, h, "u", undefined, undefined, deps(m));
+    const r = await planRound(body("how many open complaints in total", { turnId: "plain", round: 1 }), WORLD, h, "u", undefined, undefined, deps(m));
+    expect(r.result?.say).toBe("Adyar leads the list.");
+  });
+  it("the router's time counts against the turn's 8 s: the planner gets what is left, not a fresh budget", async () => {
+    const real = Date.now.bind(Date);
+    let ahead = 0;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => real() + ahead);
+    try {
+      const names: string[] = [];
+      const generate = (async (c: JsonCall<unknown>) => {
+        names.push(c.name);
+        ahead = 9000; // the router took 9 s
+        return { object: { lane: "district" }, info: { step: c.name, provider: "groq", model: "m", ms: 9000, inputTokens: 10, outputTokens: 2, attempts: 1 } };
+      }) as never;
+      const r = await planRound(body("what is the status of everything", { turnId: "slow" }), WORLD, fakeHands(), "u", undefined, undefined, { llm: { generate, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false } });
+      expect(names).toEqual(["jarvis_router"]);
+      expect(r.result).toMatchObject({ kind: "none", note: "no-model" });
+    } finally { clock.mockRestore(); }
+  });
+  it("the map and a dataset are redacted on their way out too", async () => {
+    const f = fakeHands();
+    const h = safeHands({ ...f, map: async () => ({ total: 1, rows: [{ place_text: "Call 9876543210", phone: "9876543210" }] }), dataset: async () => ({ name: "d", rows: [{ id: "1", title: "Call 9876543210" }] as never }) });
+    expect(JSON.stringify(await h.map("schools"))).not.toMatch(/9876543210/);
+    expect(JSON.stringify(await h.dataset!("d"))).not.toMatch(/9876543210/);
+    expect(safeHands({ ...f, dataset: undefined }).dataset).toBeUndefined();
+  });
   it("every tool result is redacted on its way out, and repeated within 30 s from the cache", async () => {
     let n = 0;
     const h = safeHands({ ...fakeHands(), tool: async () => { n++; return { data: { rows: [{ title: "Call 9876543210", phone: "9876543210" }] }, facts: [] } as unknown as ToolResult; } });

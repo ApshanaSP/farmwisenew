@@ -16,6 +16,21 @@ describe("what stands out", () => {
     expect(modifiedZ([1, 2, 100].map((value, i) => ({ key: `k${i}`, value }))).value).toEqual([]);
     expect(modifiedZ([1, 2, 3, 4, 100].map((value, i) => ({ key: `k${i}`, value }))).caveat.en).toMatch(/Only 5/);
   });
+  it("the mean deviation stand-in does not flag one severe case among zones with none, and names itself", () => {
+    const list = (top: number) => Array.from({ length: 15 }, (_, i) => ({ key: `z${i}`, value: i === 0 ? top : 0 }));
+    const one = modifiedZ(list(1));
+    expect(one.value).toEqual([]);
+    expect(one.method).toMatch(/mean deviation 0\.07/);
+    expect(one.method).not.toMatch(/MAD 0/);
+    expect(modifiedZ(list(2)).value).toEqual([]);
+    expect(modifiedZ(list(9)).value.map((x) => x.key)).toEqual(["z0"]);
+    expect(modifiedZ([100, 100, 100, 100, 100, 100, 104, 100].map((value, i) => ({ key: `k${i}`, value }))).value).toEqual([]);
+  });
+  it("a very small p reads as p < 0.01, never p 0", () => {
+    const m = trendOf(Array.from({ length: 30 }, (_, i) => i)).method;
+    expect(m).toMatch(/p < 0\.01/);
+    expect(m).not.toMatch(/p 0\)/);
+  });
   it("c-chart: the latest count outside the limits is a signal; the limits do not include it", () => {
     const r = cChart([10, 12, 9, 11, 10, 13, 8, 11, 10, 40]);
     expect(r.value.latestOut).toBe(true);

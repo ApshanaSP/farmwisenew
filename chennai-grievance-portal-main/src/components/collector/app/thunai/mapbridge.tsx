@@ -12,15 +12,21 @@ let current: MapLike | null = null;
 /** the console's map says it exists (SatMap); null when it goes */
 export function setConsoleMap(m: MapLike | null) { current = m; }
 
+type Box = { left: number; top: number; right: number; bottom: number; width: number };
+/** a map point on the screen: Leaflet counts the map's own pixels, the console's CSS zoom scales them, the reticle is outside that zoom */
+export function toViewport(r: Box, p: { x: number; y: number }, ownWidth: number): { x: number; y: number } | null {
+  const k = r.width / (ownWidth || r.width);
+  const x = r.left + p.x * k, y = r.top + p.y * k;
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom ? { x, y } : null;
+}
+
 function onScreen(lat: number, lon: number): { x: number; y: number } | null {
   if (!current) return null;
   const box = current.getContainer();
   if (!box.isConnected) return null;
   const r = box.getBoundingClientRect();
   if (!r.width) return null;
-  const p = current.latLngToContainerPoint([lat, lon]);
-  const x = r.left + p.x, y = r.top + p.y;
-  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom ? { x, y } : null;
+  return toViewport(r, current.latLngToContainerPoint([lat, lon]), box.offsetWidth);
 }
 
 export function Reticle() {

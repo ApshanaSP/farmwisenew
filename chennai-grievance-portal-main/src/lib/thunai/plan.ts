@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { PANELS, type Lang, type PageKey, type PeriodKey, type ScreenState, type Sev, type Step, type View, type World } from "./types";
 import { detectLang } from "./normalise";
+import { figuresIn, zoneLabelsOut } from "./numbergate";
 import { parseWhen } from "./understand";
 
 const PAGES = ["overview", "briefing", "trends", "environment", "studio"] as const;
@@ -287,7 +288,10 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
   if (p.kind === "chat") return reply && !/\d/.test(reply) ? { kind: "chat", reply, lang } : { kind: "none", lang };
   if (p.kind === "refuse") return { kind: "refuse", reply: reply && !/\d/.test(reply) ? reply : lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.", lang };
   if (p.kind === "clarify") {
-    const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request).slice(0, 3);
+    // labels are shown as buttons: a figure in one must be the Collector's own or a real zone's number
+    const said = new Set(figuresIn(heard).map((f) => String(f.value)));
+    const labelOk = (l: string) => figuresIn(zoneLabelsOut(l, w.zones.map((z) => z.n))).every((f) => said.has(String(f.value)));
+    const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request && labelOk(o.label)).slice(0, 3);
     if (options.length >= 2) return { kind: "clarify", question: reply && !/\d/.test(reply) ? reply : lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?", options, lang };
     return { kind: "none", lang };
   }

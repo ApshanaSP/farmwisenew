@@ -115,7 +115,7 @@ export class EnergyVad {
   }
 
   /** The speech so far, ms (0 when quiet). */
-  heldMs(at: number): number { return this.speaking ? at - this.startAt : 0; }
+  heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
   /** Listen longer before ending the current or next sentence (a hold word). */
   extend(ms: number) { this.extraMs = ms; }
   reset() { this.speaking = false; this.above = 0; this.quietMs = 0; this.extraMs = 0; }
@@ -157,7 +157,7 @@ export class ProbVad {
     }
     return null;
   }
-  heldMs(at: number): number { return this.speaking ? at - this.startAt : 0; }
+  heldMs(at: number): number { return this.speaking ? at - this.startAt - this.quietMs : 0; }
   extend(ms: number) { this.extraMs = ms; }
   reset() { this.speaking = false; this.run = 0; this.quietMs = 0; this.extraMs = 0; }
 }

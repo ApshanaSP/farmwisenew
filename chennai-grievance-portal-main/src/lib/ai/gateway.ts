@@ -273,6 +273,9 @@ export function retryAfterSeconds(e: APICallError): number | null {
   return secs > 0 ? Math.max(1, Math.ceil(secs)) : null;
 }
 
+/** One call's rough tokens, before it is made or when the provider does not say. */
+const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: number }) => Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
+
 /** Ask a model for an object matching `schema`. Tries each configured provider; throws AiBusyError, AiUnavailableError or AiBudgetError. */
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
   const all = c.only ? providers(c.only.provider, c.chat).filter((p) => p.name === c.only!.provider) : providers(c.prefer, c.chat);
@@ -302,8 +305,8 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
     // a pool of models, each with its own free allowance: those resting after a refusal or without allowance left this
     // minute are skipped (no refused call costs the Collector time); among the rest, the least used goes first
     if (p.pool) {
-      const need = Math.ceil((c.system.length + c.prompt.length) / 3.5) + Math.round((c.maxOutputTokens ?? 1200) * 0.4);
-      const lead = (id: string) => { const k = (c.first ?? []).findIndex((f) => id.split("#")[0] === f); return k < 0 ? 100 : k; };
+      const need = roughTokens(c);
+      const lead =(id: string) => { const k = (c.first ?? []).findIndex((f) => id.split("#")[0] === f); return k < 0 ? 100 : k; };
       const only = c.only?.models;
       // the pooled keys are one organisation: a model cooling, or out of allowance, is so on all of them
       const models = p.pool(c.role).map((m, i) => ({ ...m, rank: lead(m.id) * 1000 + i, key: `${p.name}/${m.id}`, bare: `${p.name}/${m.id.split("#")[0]}` }))
@@ -325,7 +328,7 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       }
       // every model is out of this minute's allowance, but one frees up within seconds: waiting for it beats a template answer
       const soonest = p.pool(c.role).map((m) => ({ ...m, key: `${p.name}/${m.id}`, at: cooling.get(`${p.name}/${m.id}`) ?? 0 }))
-        .filter((m) => m.at > Date.now()).sort((a, b) => a.at - b.at)[0];
+        .filter((m) => m.at > Date.now() && (!only || only.includes(m.id.split("#")[0]) || only.includes(m.id))).sort((a, b) => a.at - b.at)[0];
       const waitMs = soonest ? soonest.at - Date.now() : Infinity;
       if (soonest && waitMs <= SHORT_WAIT_MS && soonest.at + 3000 < state.until) {
         console.info(`[assistant] ${c.name}: every ${p.name} model is at its per-minute limit; waiting ${(waitMs / 1000).toFixed(1)} s for ${soonest.key}`);
@@ -417,7 +420,8 @@ export function jsonIn(text: string): unknown {
 async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: LanguageModel,
   state: { busyFor: number | null; lastError: unknown; attempts: number; until?: number }): Promise<{ result?: JsonResult<T>; longBusy: boolean }> {
   const key = `${p.name}/${id}`;
-  if ((cooling.get(key) ?? 0) > Date.now()) return { longBusy: true };
+  // a 429 cools the bare model: the organisation's, so the other pooled keys are out too, even with this call's order already built
+  if ((cooling.get(key) ?? 0) > Date.now() || (cooling.get(key.split("#")[0]) ?? 0) > Date.now()) return { longBusy: true };
   for (let attempt = 0; attempt < 3; attempt++) {
     state.attempts++;
     const t0 = Date.now();
@@ -481,7 +485,11 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         if (draft !== null) {
           const parsed = (c.lenient ?? c.schema).safeParse(draft);
           if (parsed.success) {
-            const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts, inputTokens: 0, outputTokens: 0 };
+            // the provider reports no usage on this error, but the call did spend: the estimate goes to the budget, the ledger and the turn's count
+            const need = roughTokens(c);
+            const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts, inputTokens: need, outputTokens: 0 };
+            charge(c.user, need);
+            recordUse(key, need, c.lane);
             console.info(`[assistant] ${c.name} ${p.name}/${id}: provider rejected the draft; it passed our schema, used it`);
             return { result: { object: parsed.data, info }, longBusy: false };
           }

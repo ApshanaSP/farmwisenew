@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunks } from "./chunker";
+import { chunks, spokenPart } from "./chunker";
 import { allowedSet, figuresIn, fillTemplate, gateChunk } from "./numbergate";
 
 describe("the chunker", () => {
@@ -67,6 +67,31 @@ describe("the number gate on spoken chunks", () => {
     expect(figuresIn("Someone stone").length).toBe(0);
     expect(figuresIn("Covid-19 and A4 and INC-204").filter((f) => !f.words).length).toBe(0);
   });
+  it("digits glued to letters and both ends of a range are figures; codes are not", () => {
+    for (const [line, v] of [["The web spread in the 1990s", 1990], ["the 20th century", 20], ["5km away", 5], ["10k people", 10_000], ["500க்கும் மேற்பட்ட புகார்கள்", 500]] as const) expect(figuresIn(line).map((f) => f.value), line).toEqual([v]);
+    expect(figuresIn("10-20 people").map((f) => f.value)).toEqual([10, 20]);
+    expect(figuresIn("INC-20261004-983F0B, GCC-SWD, Covid-19, A4").length).toBe(0);
+  });
+  it("number words in every form a model writes them", () => {
+    const cases: [string, number][] = [["பதினைந்து", 15], ["இருபத்தைந்து", 25], ["ஐந்நூறு", 500], ["இரண்டாயிரம்", 2000], ["மூன்றில்", 3], ["பத்துக்கும்", 10], ["நூற்றுக்கணக்கான", 100], ["ஆயிரக்கணக்கான", 1000],
+      ["பன்னிரண்டு", 12], ["பத்தொன்பது", 19], ["தொண்ணூற்றாறு", 96], ["மூவாயிரம்", 3000], ["லட்சக்கணக்கான", 100_000], ["மூணு", 3], ["ரெண்டு", 2], ["இருபது", 20],
+      ["Thousands of complaints", 1000], ["hundreds of them", 100], ["millions", 1_000_000], ["half the wards", 0.5], ["twice as many", 2], ["double the cases", 2], ["a third of them", 1 / 3], ["rendu", 2]];
+    for (const [line, v] of cases) expect(figuresIn(line).map((f) => f.value), line).toEqual([v]);
+  });
+  it("ordinary words are not figures: a false figure here silences real speech", () => {
+    for (const line of ["One moment.", "The first one.", "The second one, then the third.", "Let me double-check that.", "Showing both of them.", "This quarter", "On behalf of the Collector", "Someone is on it.",
+      "ஒரு நிமிடம்.", "முதலாவது சம்பவத்தைத் திறக்கிறேன்.", "இரண்டாவது சம்பவம்", "மூன்றாம் கட்டம்", "இரண்டையும் காட்டுகிறேன்.", "நான் பார்க்கிறேன்.", "நான்கூட பார்க்கிறேன்", "அது இருக்கிறது.", "எண்ணிக்கை கூடியது.", "பத்திரிகை செய்தி",
+      "நூலகம் அருகே", "நூற்றாண்டு", "எழுதுகிறேன்", "எட்டப்பட்டது", "ஏழை மக்கள்", "ஆறுதல்", "லட்சியம்", "முப்படை", "முன்னூட்டம்", "அஞ்சல் நிலையம்", "கோடை மழை", "மூணாறு"]) expect(figuresIn(line).map((f) => f.raw), line).toEqual([]);
+  });
+  it("templates: a code-filled percent, a zone the turn named, never a prototype key", () => {
+    expect(fillTemplate("{n:f1} percent of complaints are resolved", { f1: 12 })).toBe("12 percent of complaints are resolved");
+    expect(fillTemplate("{n:f1} சதவீதம் தீர்க்கப்பட்டது", { f1: 12 })).toBe("12 சதவீதம் தீர்க்கப்பட்டது");
+    expect(fillTemplate("Fifty percent resolved, {n:f1} open", { f1: 12 })).toBeNull();
+    expect(fillTemplate("Zone 13 has {n:f1} open", { f1: 9 }, [13])).toBe("Zone 13 has 9 open");
+    expect(fillTemplate("Zone 13 has {n:f1} open", { f1: 9 }, [7])).toBeNull();
+    expect(fillTemplate("It says {n:constructor}", { f1: 9 })).toBeNull();
+    expect(fillTemplate("It says {n:toString}", Object.create(null))).toBeNull();
+  });
   it("speech templates: the model writes {n:key}, code fills", () => {
     expect(fillTemplate("Adyar has {n:severe} severe cases, Perungudi {n:p}.", { severe: 9, p: 4 })).toBe("Adyar has 9 severe cases, Perungudi 4.");
     expect(fillTemplate("Adyar has 9 severe cases.", {})).toBeNull();
@@ -101,5 +126,17 @@ describe("the number gate on spoken chunks", () => {
       expect(f).toBe(`Adyar has ${v} and ${v + 1} cases.`);
       expect(gateChunk(f!, allowedSet([v, v + 1])).ok).toBe(true);
     }
+  });
+});
+
+describe("spokenPart", () => {
+  it("keeps the whole of a decimal", () => {
+    expect(spokenPart("Highest: Meenambakkam at 33.4 °C, as of 28 Oct, 7:41 AM.")).toBe("Highest: Meenambakkam at 33.4 °C, as of 28 Oct, 7:41 AM.");
+    expect(spokenPart("Rain 12.5 mm. Then 3.4 mm. Then more.")).toBe("Rain 12.5 mm. Then 3.4 mm.");
+  });
+  it("keeps a dotted word, and stops at two sentences or about 240 characters", () => {
+    expect(spokenPart("See tn.gov.in for it. Two. Three.")).toBe("See tn.gov.in for it. Two.");
+    expect(spokenPart(`${"a".repeat(200)}. ${"b".repeat(100)}.`)).toBe(`${"a".repeat(200)}.`);
+    expect(spokenPart("அடையாறு 12.5. இரண்டாவது. மூன்றாவது।")).toBe("அடையாறு 12.5. இரண்டாவது.");
   });
 });

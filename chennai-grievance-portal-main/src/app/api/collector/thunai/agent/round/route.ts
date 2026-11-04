@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { asOf } from "@/lib/collector/intel";
+import { exportMeta } from "@/lib/collector/intel";
 import { collectorSession } from "@/lib/collector/guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { serverHands } from "@/lib/thunai/data";
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const mem = readMemory(s.userId);
   try {
     const out = await planRound(parsed.data, await serverWorld(), serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal), `collector:${s.userId}`,
-      { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: asOf });
+      { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? "") });
     return NextResponse.json(out);
   } catch (e) {
     if (req.signal.aborted) return new NextResponse(null, { status: 499 });

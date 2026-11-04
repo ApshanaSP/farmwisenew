@@ -46,14 +46,16 @@ export interface Slots {
   sort: "priority" | "complaints" | "time" | null;
   /** start clean: the console's own filters are not inherited (a Stage control's "All of Chennai") */
   fresh?: boolean;
+  /** complete: the open Stage's incident ids; those rows are completed, not the console's list */
+  ids?: string[];
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
   measure: null, by: null, order: "top", n: null, id: null, name: null, what: null, sort: null });
 
 export interface Hands {
-  /** a Data Studio dataset by name, as rows for "complete this data" */
-  dataset?: (name: string) => Promise<{ name: string; rows: InRow[] } | null>;
+  /** a Data Studio dataset by name, as rows for "complete this data"; total counts every row, read or not */
+  dataset?: (name: string) => Promise<{ name: string; rows: InRow[]; total?: number } | null>;
   /** the deterministic lookups "complete this data" fills from */
   lookups?: (w: World) => Lookups;
   tool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
@@ -99,6 +101,14 @@ export function spokenLabel(r: CaseRowT): string {
   return r.cat ? `${r.cat}${place ? ` at ${place}` : ""}` : safeText(r.title, 90);
 }
 const num = (v: unknown): number | null => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+/** Text cut to a catalog limit at a sentence end, else at a word: a working screen is never refused for its length. */
+export function fit(s: string, n: number): string {
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+  return end >= n / 3 ? cut.slice(0, end + 1) : cut.slice(0, Math.max(cut.lastIndexOf(" "), 1));
+}
+const fitBi = (b: Bilingual): Bilingual => ({ en: fit(b.en, 600), ta: fit(b.ta, 900) });
 
 /** The scope a screen covers, in words ("Adyar · flooding · this week"). */
 function scopeWords(w: World, s: ScopeT): Bilingual {
@@ -177,8 +187,8 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
       blocks: [{ kind: "Note", id: "err", text: `The data could not be read: ${clip((e as Error).message, 200)}` }] };
   }
   if (!part.blocks.length) part.blocks.push({ kind: "Note", id: "empty", text: "Nothing in the data matches this, for this scope." });
-  const doc: StageDocT = { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway, say: part.say, blocks: part.blocks.slice(0, 6), scope: s,
-    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10), asOf: c.asOf, notes: c.notes.slice(0, 4) };
+  const doc: StageDocT = { v: 1, id, recipe, title: clip(part.title, 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, 6), scope: s,
+    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: c.notes.slice(0, 4) };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   return { runs: c.runs, doc };
 }
@@ -273,7 +283,10 @@ async function insight(c: Ctx): Promise<Part> {
   const zrows = ((zr.data as { rows?: Row[] }).rows ?? []);
   const buckets = ((ser.data as { buckets?: Row[] }).buckets ?? []);
   const counts = buckets.map((b) => Number(b.n) || 0);
-  const labels = buckets.map((b) => when(b.from)?.split(",")[0] ?? "");
+  // 2-hour buckets swing with the time of day: no limits or trend are read from them (queries.ts refuses a normal band on them too)
+  const hourly = /hour|2h/.test(String((ser.data as { unit?: unknown }).unit ?? ""));
+  const labels = buckets.map((b) => (hourly ? when(b.from)?.split(", ")[1] ?? "" : when(b.from)?.split(",")[0] ?? ""));
+  if (hourly) c.notes.push(ta ? "2 மணி நேரக் கணக்குகள் நாளின் நேரத்தோடு மாறும்: அவற்றிலிருந்து வரம்போ போக்கோ கணிக்கவில்லை." : "Counts per 2 hours swing with the time of day, so no limits or trend are read from them.");
   const items: Extract<BlockT, { kind: "Findings" }>["items"] = [];
   const zoneLabel = (z: number) => (ta ? zoneTa(w, z) : zoneName(w, z)) ?? `Zone ${z}`;
   const open = modifiedZ(zrows.map((z) => ({ key: String(z.zone), value: Number(z.open ?? z.n ?? 0) })));
@@ -281,20 +294,21 @@ async function insight(c: Ctx): Promise<Part> {
   for (const o of open.value.slice(0, 2)) items.push({ title: ta ? `${zoneLabel(Number(o.key))}: மற்ற மண்டலங்களை விட ${o.z > 0 ? "அதிகம்" : "குறைவு"} திறந்த சம்பவங்கள்` : `${zoneLabel(Number(o.key))} has ${o.z > 0 ? "far more" : "far fewer"} open cases than the other zones`, value: o.value, unit: ta ? "திறந்தவை" : "open", method: open.method, n: open.n, caveat: ta ? open.caveat.ta : open.caveat.en, tone: "bad" });
   for (const o of severe.value.slice(0, 1)) if (!open.value.some((x) => x.key === o.key)) items.push({ title: ta ? `${zoneLabel(Number(o.key))}: கடுமையான சம்பவங்கள் அசாதாரணம்` : `${zoneLabel(Number(o.key))} stands out for severe cases`, value: o.value, unit: ta ? "கடுமையானவை" : "severe", method: severe.method, n: severe.n, caveat: ta ? severe.caveat.ta : severe.caveat.en, tone: "bad" });
   const chart = cChart(counts);
-  if (counts.length >= 4) items.push({ title: chart.value.latestOut ? (ta ? `கடைசிக் கால எண்ணிக்கை வரம்புக்கு வெளியே` : `The latest count is outside its usual limits`) : (ta ? `கடைசிக் கால எண்ணிக்கை வழக்கமான வரம்புக்குள்` : `The latest count is within its usual limits`), value: chart.value.latest, unit: ta ? "சம்பவங்கள்" : "incidents", method: chart.method, n: chart.n, caveat: ta ? chart.caveat.ta : chart.caveat.en, tone: chart.value.latestOut ? "bad" : "ok" });
+  const latestOut = !hourly && chart.value.latestOut;
+  if (!hourly && counts.length >= 4) items.push({ title: chart.value.latestOut ? (ta ? `கடைசிக் கால எண்ணிக்கை வரம்புக்கு வெளியே` : `The latest count is outside its usual limits`) : (ta ? `கடைசிக் கால எண்ணிக்கை வழக்கமான வரம்புக்குள்` : `The latest count is within its usual limits`), value: chart.value.latest, unit: ta ? "சம்பவங்கள்" : "incidents", method: chart.method, n: chart.n, caveat: ta ? chart.caveat.ta : chart.caveat.en, tone: chart.value.latestOut ? "bad" : "ok" });
   const trendS = trendOf(counts);
-  if (counts.length >= 4) items.push({ title: trendS.value.direction === "rising" ? (ta ? "போக்கு உயர்கிறது" : "The series is rising") : trendS.value.direction === "falling" ? (ta ? "போக்கு குறைகிறது" : "The series is falling") : (ta ? "தெளிவான போக்கு இல்லை" : "No clear trend"), value: trendS.value.slope, unit: ta ? "ஒரு காலத்துக்கு" : "per period", method: trendS.method, n: trendS.n, caveat: ta ? trendS.caveat.ta : trendS.caveat.en, tone: trendS.value.direction === "rising" ? "warn" : "ok" });
+  if (!hourly && counts.length >= 4) items.push({ title: trendS.value.direction === "rising" ? (ta ? "போக்கு உயர்கிறது" : "The series is rising") : trendS.value.direction === "falling" ? (ta ? "போக்கு குறைகிறது" : "The series is falling") : (ta ? "தெளிவான போக்கு இல்லை" : "No clear trend"), value: trendS.value.slope, unit: ta ? "ஒரு காலத்துக்கு" : "per period", method: trendS.method, n: trendS.n, caveat: ta ? trendS.caveat.ta : trendS.caveat.en, tone: trendS.value.direction === "rising" ? "warn" : "ok" });
   const d = (drv?.data ?? {}) as { categories?: Row[] };
   const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
   if (rise) items.push({ title: ta ? `வேகமாக உயர்வது: ${clip(rise.label, 60)}` : `Rising fastest: ${clip(rise.label, 60)}`, value: Number(rise.delta), unit: ta ? "கூடுதல்" : "more", method: `Against the period before (${Number(rise.prev)} to ${Number(rise.n)})`, n: 2, caveat: ta ? "இரண்டு காலங்களின் ஒப்பீடு மட்டுமே." : "A comparison of two periods only.", tone: "warn" });
   const title = ta ? "தனித்து நிற்பவை" : "What stands out";
   if (!items.length) return { title, takeaway: null, say: bi("Nothing stands out in this data.", "இந்தத் தரவில் தனித்து நிற்பது எதுவும் இல்லை."), blocks: [] };
   const lead = open.value[0];
-  const en = lead ? `${zoneName(w, Number(lead.key)) ?? ""} stands out: ${spoken(lead.value)} open cases against a typical ${spoken(lead.median)}.` : `No zone stands out from the rest${chart.value.latestOut ? ", but the latest count is outside its usual limits" : ""}.`;
-  const tam = lead ? `${zoneTa(w, Number(lead.key)) ?? ""} தனித்து நிற்கிறது: ${spoken(lead.value)} திறந்த சம்பவங்கள், வழக்கமாக ${spoken(lead.median)}.` : `எந்த மண்டலமும் தனித்து நிற்கவில்லை${chart.value.latestOut ? ", ஆனால் கடைசி எண்ணிக்கை வரம்புக்கு வெளியே" : ""}.`;
-  const marks = chart.value.signals.slice(0, 8).map((i) => ({ i, why: ta ? "வரம்புக்கு வெளியே" : "Outside the limits" }));
+  const en = lead ? `${zoneName(w, Number(lead.key)) ?? ""} stands out: ${spoken(lead.value)} open cases against a typical ${spoken(lead.median)}.` : `No zone stands out from the rest${latestOut ? ", but the latest count is outside its usual limits" : ""}.`;
+  const tam = lead ? `${zoneTa(w, Number(lead.key)) ?? ""} தனித்து நிற்கிறது: ${spoken(lead.value)} திறந்த சம்பவங்கள், வழக்கமாக ${spoken(lead.median)}.` : `எந்த மண்டலமும் தனித்து நிற்கவில்லை${latestOut ? ", ஆனால் கடைசி எண்ணிக்கை வரம்புக்கு வெளியே" : ""}.`;
+  const marks = hourly ? [] : chart.value.signals.slice(0, 8).map((i) => ({ i, why: ta ? "வரம்புக்கு வெளியே" : "Outside the limits" }));
   const blocks: BlockT[] = [{ kind: "Findings", id: "find", title, items: items.slice(0, 6) }];
-  if (counts.length) blocks.push({ kind: "Trend", id: "trend", title: ta ? "காலவாரி எண்ணிக்கை" : "Incidents over time", unit: "incidents", labels, values: counts, marks, normal: { lo: chart.value.lcl, hi: chart.value.ucl } });
+  if (counts.length) blocks.push({ kind: "Trend", id: "trend", title: ta ? "காலவாரி எண்ணிக்கை" : "Incidents over time", unit: "incidents", labels, values: counts, marks, normal: hourly ? null : { lo: chart.value.lcl, hi: chart.value.ucl } });
   blocks.push({ kind: "MapView", id: "map", title: ta ? "மண்டலங்கள்" : "The zones", rule: open.method, shade: { geo: "zone", label: "Open incidents", values: zrows.map((x) => ({ key: Number(x.zone), value: Number(x.open ?? x.n ?? 0) })) }, points: [], outline: open.value.map((o) => Number(o.key)).slice(0, 15) });
   return { title, takeaway: bi(en, tam), say: bi(en, tam), blocks };
 }
@@ -302,31 +316,51 @@ async function insight(c: Ctx): Promise<Part> {
 // ------------------------------------------------------------------ complete --
 
 /**
- * "Complete this data": the open Stage's list, a Studio dataset named in the sentence, or the unresolved incidents. A cell is
- * filled only from deterministic code (complete.ts) and shows its source; what cannot be filled is named. Nothing is guessed,
- * and follow-ups for what is left are offered as drafts for the tray.
+ * "Complete this data": the open Stage's list (slots.ids), a Studio dataset named in the sentence, or the unresolved incidents,
+ * one page of them, and the screen says how many of how many. A cell is filled only from deterministic code (complete.ts) and
+ * shows its source; what cannot be filled is named. Nothing is guessed, and follow-ups for what is left are offered as drafts.
  */
 async function complete(c: Ctx): Promise<Part> {
   const { w, s, slots } = c;
   const ta = /[஀-௿]/.test(c.heard);
   let input: InRow[] = [];
   let what = ta ? "தீர்க்கப்படாத சம்பவங்கள்" : "Unresolved incidents";
-  const asOfNow = await Promise.resolve(c.asOf);
+  let read = 0, total = 0;
+  const toIn = (x: CaseRowT, asOf: string | null | undefined): InRow => ({ id: x.id, title: x.title, zone: x.zone, zoneName: x.zoneName, ward: x.ward, place: x.place, dept: x.dept, deptName: x.deptName, cat: x.cat, lat: x.lat, lon: x.lon, t: x.t, hours: hoursBetween(x.t, asOf ?? c.asOf) });
   const ds = slots.name && c.h.dataset ? await c.h.dataset(slots.name) : null;
   if (ds) {
     c.runs.push("studio_dataset");
     c.sources.add(`Data Studio: ${ds.name}`);
-    what = ds.name;
-    input = ds.rows.slice(0, 30);
+    what = clip(ds.name, 100);
+    input = ds.rows.slice(0, 30).map((x) => ({ ...x, id: clip(x.id, 80) }));
+    read = input.length; total = ds.total ?? read;
+  } else if (slots.ids?.length) {
+    // the rows on the open Stage, one incident at a time, a few at once: an id the store no longer holds is said, not hidden
+    what = ta ? "இந்தப் பட்டியல்" : "This list";
+    c.runs.push("incident_detail");
+    c.sources.add("incident_detail");
+    const got: (ToolResult | null)[] = [];
+    for (let i = 0; i < slots.ids.length; i += 6) got.push(...await Promise.all(slots.ids.slice(i, i + 6).map((id) => c.h.tool("incident_detail", { id }).catch(() => null))));
+    for (const r of got) {
+      const inc = (r?.data as { incident?: Row } | null | undefined)?.incident;
+      if (!inc) continue;
+      c.asOf ??= r?.asOf ?? null;
+      input.push(toIn(caseRow(inc, w), r?.asOf));
+    }
+    read = total = input.length;
+    if (input.length < got.length) c.notes.push(ta ? `${got.length - input.length} வரிசைகளைப் படிக்க முடியவில்லை.` : `${got.length - input.length} of the ${got.length} rows could not be read.`);
   } else {
     const r = await call(c, "incidents", { scope: scopeArg(s), status: "open", sort: "sev" });
-    const rows = (((r.data as { rows?: Row[] }).rows) ?? []).map((x) => caseRow(x, w));
-    input = rows.map((x) => ({ id: x.id, title: x.title, zone: x.zone, zoneName: x.zoneName, ward: x.ward, place: x.place, dept: x.dept, deptName: x.deptName, cat: x.cat, lat: x.lat, lon: x.lon, t: x.t, hours: hoursBetween(x.t, r.asOf ?? asOfNow) }));
+    const data = r.data as { rows?: Row[]; total?: number };
+    input = (data.rows ?? []).map((x) => toIn(caseRow(x, w), r.asOf));
+    read = input.length; total = Math.max(Number(data.total) || 0, read);
     if (slots.fresh) input = input.filter((x) => !x.zone || !x.place || !x.dept);
   }
   const k: Lookups = c.h.lookups?.(w) ?? {};
   const res = completeRows(input, k);
-  const title = ta ? `${what}: நிரப்பியவை` : `${what}: completed`;
+  // the screen covers part of a longer list: said in its title (so the figures are on the Stage), its takeaway and its first words
+  const part = total > read;
+  const title = clip(ta ? `${what}: நிரப்பியவை${part ? ` (முதல் ${read}, மொத்தம் ${total})` : ""}` : `${what}: completed${part ? ` (first ${read} of ${total})` : ""}`, 160);
   if (!res.rows.length) return { title, takeaway: null, say: bi("Nothing here to complete.", "நிரப்ப வேண்டியது எதுவும் இல்லை."), blocks: [] };
   const COLS = [{ key: "ward", en: "Ward", ta: "வார்டு" }, { key: "zone", en: "Zone", ta: "மண்டலம்" }, { key: "place", en: "Place", ta: "இடம்" }, { key: "dept", en: "Department", ta: "துறை" }, { key: "age", en: "Open, hours", ta: "திறந்த மணி" }] as const;
   const shown = res.rows.slice(0, 30);
@@ -334,12 +368,15 @@ async function complete(c: Ctx): Promise<Part> {
     rows: shown.map((r) => ({ id: r.id, title: clip(r.title, 240), cells: COLS.map((x) => { const v = r.cells[x.key]; return { v: typeof v.v === "string" ? clip(v.v, 160) : v.v, src: v.src, filled: v.filled }; }) })),
     filled: res.filled, left: res.left, cannot: res.cannot.slice(0, 8).map((x) => ({ col: x.col, n: x.n, why: ta ? x.ta : x.why })) }];
   const leftWords = res.cannot.map((x) => `${spoken(x.n)} ${x.col}`).join(", ");
-  const say = bi(`I filled ${spoken(res.filled)} cells, each with its source. ${res.left ? `${spoken(res.left)} could not be filled: ${leftWords}. Nothing was guessed.` : "Nothing is left blank."}`,
-    `${spoken(res.filled)} இடங்களை நிரப்பினேன், ஒவ்வொன்றுக்கும் ஆதாரத்துடன். ${res.left ? `${spoken(res.left)} நிரப்ப முடியவில்லை. எதையும் ஊகிக்கவில்லை.` : "எதுவும் காலியாக இல்லை."}`);
+  const lead = part ? bi(`The first ${spoken(read)} of ${spoken(total)}. `, `மொத்தம் ${spoken(total)}-இல் முதல் ${spoken(read)}. `) : bi("", "");
+  // only gaps filled count: the age column is worked out for every row and fills nothing
+  const say = bi(`${lead.en}${res.filled ? `I filled ${spoken(res.filled)} cells, each with its source. ` : res.left ? "" : "Nothing is missing in these rows."}${res.left ? `${spoken(res.left)} could not be filled: ${leftWords}. Nothing was guessed.` : res.filled ? "Nothing is left blank." : ""}`,
+    `${lead.ta}${res.filled ? `${spoken(res.filled)} இடங்களை நிரப்பினேன், ஒவ்வொன்றுக்கும் ஆதாரத்துடன். ` : res.left ? "" : "இந்த வரிசைகளில் எதுவும் விடுபடவில்லை."}${res.left ? `${spoken(res.left)} நிரப்ப முடியவில்லை. எதையும் ஊகிக்கவில்லை.` : res.filled ? "எதுவும் காலியாக இல்லை." : ""}`);
   const ids = res.unresolved.slice(0, 10);
   const next: NextStepT[] = ids.length ? [{ label: bi(`Draft follow-ups for ${spoken(ids.length)} unresolved`, `தீர்க்கப்படாத ${spoken(ids.length)}-க்கு வரைவு`), kind: "draft", recipe: null, slots: null, ids, text: null }] : [];
   c.notes.push("A filled cell shows where the value came from. Blank cells are left blank on purpose.");
-  return { title, takeaway: bi(`${spoken(res.filled)} filled, ${spoken(res.left)} left.`, `${spoken(res.filled)} நிரப்பியது, ${spoken(res.left)} மீதம்.`), say, blocks, next };
+  if (res.derived) c.notes.push(ta ? "திறந்த மணி நேரம் பதிவின் நேரத்திலிருந்து கணக்கிடப்பட்டது; நிரப்பியதாக எண்ணப்படவில்லை." : "Open, hours is worked out from the report time and is not counted as filled.");
+  return { title, takeaway: bi(`${lead.en}${spoken(res.filled)} filled, ${spoken(res.left)} left.`, `${lead.ta}${spoken(res.filled)} நிரப்பியது, ${spoken(res.left)} மீதம்.`), say, blocks, next };
 }
 
 // ------------------------------------------------------------------ cases --

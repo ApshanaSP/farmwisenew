@@ -4,7 +4,7 @@
  * builders and the spoken-figure rule. The live model is measured separately (agent.live.ts).
  */
 import { describe, expect, it } from "vitest";
-import { runThunaiAgent, checkScreen, directScreen, type AgentPlan, type AgentResult } from "./agent";
+import { answerScreen, runThunaiAgent, checkScreen, directScreen, spellsNumber, type AgentPlan, type AgentResult } from "./agent";
 import { START, WORLD, withState } from "./fixture";
 import { fakeHands } from "./stagefake";
 import { figuresOf, figuresOk, stageContext, type BlockT, type StageContext, type StageDocT } from "./stage";
@@ -183,6 +183,46 @@ describe("scenario 12: talk, refusals, clarifications, steering", () => {
   });
   it("a chat reply with a figure in it is dropped (the model never says a number)", async () => {
     expect((await run("hi", [plan({ kind: "chat", reply: "Hi! There are 40 severe cases." })])).r.kind).toBe("none");
+  });
+  it("a figure spelled any way is dropped from model text; an ordinary reply is not", async () => {
+    for (const reply of ["Thousands of complaints are open.", "ஆயிரக்கணக்கான புகார்கள்.", "பதினைந்து புகார்கள் உள்ளன.", "இருபது சம்பவங்கள்.", "Twice as many as last week."]) {
+      expect(spellsNumber(reply), reply).toBe(true);
+      expect((await run("hi", [plan({ kind: "chat", reply })])).r.kind, reply).toBe("none");
+    }
+    for (const reply of ["One moment.", "The first one is the worst, take a look.", "Let me double-check.", "ஒரு நிமிடம்.", "முதலாவது சம்பவத்தைப் பாருங்கள்.", "அடையாறு நிலவரத்தைக் காட்டுகிறேன்."]) {
+      expect(spellsNumber(reply), reply).toBe(false);
+      expect((await run("hi", [plan({ kind: "chat", reply })])).r, reply).toMatchObject({ kind: "chat", reply });
+    }
+  });
+  it("a do reply keeps the digits the sentence and the plan hold: only spelled figures are dropped", async () => {
+    const step = { action: "view", zone: 7 } as never;
+    expect((await run("show zone 7", [plan({ reply: "Showing Zone 7.", steps: [step] })])).r.reply).toBe("Showing Zone 7.");
+    expect((await run("show zone 7", [plan({ reply: "Showing Zone 7, hundreds of cases.", steps: [step] })])).r.reply).toBeNull();
+  });
+  it("clarify labels are shown as buttons: an invented figure drops the option, and fewer than two drop the question", async () => {
+    const request = "show it";
+    const clarify = (labels: string[]) => plan({ kind: "clarify", reply: "Which one?", options: labels.map((label) => ({ label, request })) });
+    expect((await run("water problems", [clarify(["Adyar (312 open)", "Perungudi (98 open)"])])).r.kind).toBe("none");
+    expect((await run("water problems", [clarify(["Adyar", "Perungudi", "Ambattur (98 open)"])])).r.options.map((o) => o.label)).toEqual(["Adyar", "Perungudi"]);
+    expect((await run("water problems", [clarify(["Zone 13", "Zone 7"])])).r.options).toHaveLength(2);
+    expect((await run("water problems", [clarify(["Zone 99", "Zone 7"])])).r.kind).toBe("none");
+    expect((await run("the 40 open ones", [clarify(["The 40 open", "Hundreds more"])])).r.kind).toBe("none");
+    expect((await run("the 40 open ones", [clarify(["The 40 open", "Only severe"])])).r.options).toHaveLength(2);
+  });
+  it("slots.ids reaches the complete recipe, cleaned; other recipes never carry it", () => {
+    const ids = ["INC-20261004-983F0B", "INC-20261004-983F0B", "nope", 7, "INC-A1"];
+    expect(checkScreen({ recipe: "complete", ids }, world, null)?.slots.ids).toEqual(["INC-20261004-983F0B", "INC-A1"]);
+    expect(checkScreen({ recipe: "complete", ids: Array.from({ length: 40 }, (_, i) => `INC-${i}`) }, world, null)?.slots.ids).toHaveLength(30);
+    expect(checkScreen({ recipe: "complete", ids: ["nope"] }, world, null)?.slots.ids).toBeUndefined();
+    expect(checkScreen({ recipe: "cases", ids: ["INC-A1"] }, world, null)?.slots.ids).toBeUndefined();
+  });
+  it("an answer may name a zone its tools were asked about, and no other", () => {
+    const res = (zone: number) => [{ name: "zone_profile", result: { tool: "zone_profile", args: { zone }, scope: null, asOf: "2026-10-29 07:00:00", data: null, facts: [{ id: "f", label: "Open", value: 9 }], sources: [], incidentIds: [], testData: false, caveats: [] } }];
+    const scope = { period: "weekly", zone: null, dept: null, cat: null, taluk: null, sev: null } as const;
+    const say = "Zone 13 has 9 open.";
+    expect(answerScreen(plan({ say }), "q", res(13) as never, scope, "en").say.en).toBe(say);
+    expect(answerScreen(plan({ say }), "q", res(7) as never, scope, "en").say.en).not.toBe(say);
+    expect(answerScreen(plan({ say: "இருபது புகார்கள், Open 9." }), "q", res(13) as never, scope, "en").say.en).not.toMatch(/இருபது/);
   });
   it("pure steering is steps only", async () => {
     const { r } = await run("Zone 7, weekly", [plan({ steps: [{ ...nullStep(), action: "view", zone: 7 }, { ...nullStep(), action: "period", period: "weekly" }] })]);

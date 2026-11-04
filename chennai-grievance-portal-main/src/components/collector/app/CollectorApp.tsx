@@ -42,6 +42,7 @@ import { Bell, PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, typ
 import Thunai, { type ThunaiHost } from "./thunai/Thunai";
 import JarvisSwitch from "./thunai/JarvisSwitch";
 import JarvisPins from "./thunai/JarvisPins";
+import { savedTheme } from "./thunai/hudstore";
 import { LangSwitch, TopMenu } from "./TopMenu";
 import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
 import "./civic.css";
@@ -286,10 +287,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     return () => window.removeEventListener("jarvis:state", f);
   }, []);
   // Jarvis mode's near-black layer sits on the dark console, whatever theme is saved: a black veil over a white page goes grey
+  const hudOn = useRef(false);
+  hudOn.current = !!jv.hud;
   useEffect(() => {
-    const was = document.documentElement.dataset.theme;
-    if (jv.hud) document.documentElement.dataset.theme = "dark";
-    return () => { if (jv.hud && was) document.documentElement.dataset.theme = was; };
+    if (!jv.hud) return;
+    document.documentElement.dataset.theme = "dark";
+    return () => { let saved: string | null = null; try { saved = localStorage.getItem("diq-theme"); } catch { /* the default */ } document.documentElement.dataset.theme = savedTheme(saved); };
   }, [jv.hud]);
   const [layout, setLayoutState] = useState<Layout>(DEFAULT_LAYOUT);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
@@ -300,7 +303,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const toggleTheme = () => setTheme((t) => {
     const n = t === "dark" ? "light" : "dark";
     try { localStorage.setItem("diq-theme", n); } catch { /* not saved */ }
-    document.documentElement.dataset.theme = n;
+    // html stays dark under Jarvis mode; the saved theme comes back when the mode ends
+    if (!hudOn.current) document.documentElement.dataset.theme = n;
     return n;
   });
   const [palette, setPalette] = useState(false);
@@ -827,7 +831,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
-                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }}>
+                <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); try { localStorage.removeItem("thunai-pins"); } catch { /* no storage: nothing kept */ } window.location.href = "/login"; }}>
                   <I n="user" /><span><b>Sign out</b></span>
                 </button>
               </div>

@@ -127,7 +127,7 @@ function TaskList({ d, c }: { d: OverviewData; c: Console }) {
               <span className="att-btns">
                 <button className="att-ib" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)} title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
                 {proof ? (
-                  <button className={`att-act ok${done.has(i.id) ? " done" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it">
+                  <button className={`att-act ok${done.has(i.id) ? " done" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it" data-jarvis-never>
                     {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}<span>{done.has(i.id) ? "Verified" : "Verify"}</span>
                   </button>
                 ) : (

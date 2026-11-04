@@ -179,11 +179,11 @@ async function testShare(s: AssistantScope, now: string) {
   return { testData: sh.syn > 0, caveats: [] as string[], facts: [fact("scope.incidents", `Incidents reported, ${periodOf(s)}`, sh.n)] };
 }
 
-/** The fields of an incident row an answer may show: no free text beyond the title, no people. */
-function incRow(i: Row, withWhy = false) {
+/** The fields of an incident row an answer may show: no free text beyond the title and the place the record names, no people. */
+export function incRow(i: Row, withWhy = false) {
   return {
     id: String(i.id), title: i.title ?? null, type: i.type ?? null, cat: i.cat_code ?? i.cat ?? null, zone: i.zone ?? null,
-    zone_name: i.zone_name ?? null, ward: i.ward ?? null, dept: i.dept ?? null, dept_name: i.dept_name ?? null, sev: i.sev ?? null,
+    zone_name: i.zone_name ?? null, loc: i.loc ?? null, ward: i.ward ?? null, dept: i.dept ?? null, dept_name: i.dept_name ?? null, sev: i.sev ?? null,
     status: i.status ?? null, open: Number(i.open) === 1, complaints: Number(i.complaints ?? 0), t: i.t ?? null,
     lat: i.lat == null ? null : Number(i.lat), lon: i.lon == null ? null : Number(i.lon), sources: i.sources ?? null,
     priority: i.priority == null ? null : round(Number(i.priority)), overdue: Number(i.breached) === 1,
@@ -610,7 +610,7 @@ export const TOOLS = [
         scope: s, asOf: now, data: { rows, total: r.total, complaints: r.complaints, page: a.page, pageSize: 12 },
         facts: [fact("list.total", "Incidents matching", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
         sources: [fn("intel.list"), tbl("incidents")], incidentIds: rows.map((x) => x.id),
-        testData: true, caveats: a.allTime ? ["Covers all 180 days in the store, not only the period."] : [], untrusted: ["title"]
+        testData: true, caveats: a.allTime ? ["Covers all 180 days in the store, not only the period."] : [], untrusted: ["title", "loc"]
       };
     }
   }),

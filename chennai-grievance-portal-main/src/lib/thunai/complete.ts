@@ -24,13 +24,25 @@ export const SOURCES = {
 export interface Cell { v: string | number | null; src: string | null; filled: boolean }
 export interface InRow { id: string; title?: string | null; zone?: number | null; zoneName?: string | null; ward?: number | null; place?: string | null; dept?: string | null; deptName?: string | null; cat?: string | null; lat?: number | null; lon?: number | null; t?: string | null; hours?: number | null }
 export interface OutRow { id: string; title: string; cells: Record<"ward" | "zone" | "place" | "dept" | "age", Cell> }
-export interface Completed { rows: OutRow[]; filled: number; left: number; cannot: { col: string; n: number; why: string; ta: string }[]; unresolved: string[] }
+/** `filled` counts gaps filled; `derived` counts the cells worked out from what the row already holds (its age), which fill no gap. */
+export interface Completed { rows: OutRow[]; filled: number; derived: number; left: number; cannot: { col: string; n: number; why: string; ta: string }[]; unresolved: string[] }
 
 const have = (v: unknown) => v != null && v !== "" && v !== 0;
 const given = (v: string | number | null | undefined): Cell => ({ v: v ?? null, src: null, filled: false });
 
+/** One row of a Studio dataset, columns matched by their names. A zone column that holds a name is that zone's name, not a gap. */
+export function studioRow(r: Record<string, unknown>, i: number): InRow {
+  const pick = (re: RegExp) => { const k = Object.keys(r).find((x) => re.test(x)); return k ? r[k] : null; };
+  const text = (v: unknown) => (v == null ? null : String(v).trim() || null);
+  const ward = Number(String(pick(/^ward/i) ?? "").match(/\d+/)?.[0] ?? 0), zoneCol = pick(/^zone(_?no|_?num.*)?$/i), zone = Number(zoneCol);
+  const lat = Number(pick(/^lat/i)), lon = Number(pick(/^(lon|lng)/i));
+  return { id: String(pick(/^(id|incident_id|ref)/i) ?? `row ${i + 1}`).slice(0, 80), title: String(pick(/^(title|name|subject|description)/i) ?? `Row ${i + 1}`), ward: ward || null, zone: zone || null,
+    zoneName: text(pick(/^zone_?name$/i)) ?? (Number.isNaN(zone) ? text(zoneCol) : null), place: text(pick(/^(place|area|locality|location)/i)), dept: text(pick(/^(dept|department)/i)),
+    cat: text(pick(/^(cat|category|type)/i)), lat: lat || null, lon: lon || null };
+}
+
 export function completeRows(rows: InRow[], k: Lookups): Completed {
-  let filled = 0, left = 0;
+  let filled = 0, derived = 0, left = 0;
   const miss = { zone: 0, place: 0, dept: 0, ward: 0 };
   const unresolved = new Set<string>();
   const fill = (v: string | number, src: string): Cell => { filled++; return { v, src, filled: true }; };
@@ -62,7 +74,8 @@ export function completeRows(rows: InRow[], k: Lookups): Completed {
       else { miss.dept++; left++; unresolved.add(r.id); }
     }
     if (!have(r.ward) && !ward.filled) { miss.ward++; left++; }
-    const age: Cell = r.hours != null ? fill(Math.round(r.hours), SOURCES.derived) : given(null);
+    if (r.hours != null) derived++;
+    const age: Cell = r.hours != null ? { v: Math.round(r.hours), src: SOURCES.derived, filled: false } : given(null);
     return { id: r.id, title: r.title ?? r.id, cells: { ward, zone, place, dept, age } };
   });
   const cannot: Completed["cannot"] = [];
@@ -70,5 +83,5 @@ export function completeRows(rows: InRow[], k: Lookups): Completed {
   if (miss.place) cannot.push({ col: "place", n: miss.place, why: "the record names no place, and a place is never guessed", ta: "பதிவில் இடம் இல்லை; இடத்தை ஊகிப்பதில்லை" });
   if (miss.dept) cannot.push({ col: "department", n: miss.dept, why: "no category with a lead department", ta: "முன்னணித் துறை உள்ள வகை இல்லை" });
   if (miss.ward) cannot.push({ col: "ward", n: miss.ward, why: "no point on the map to place it in a ward", ta: "வார்டில் வைக்க வரைபடப் புள்ளி இல்லை" });
-  return { rows: out, filled, left, cannot, unresolved: [...unresolved] };
+  return { rows: out, filled, derived, left, cannot, unresolved: [...unresolved] };
 }

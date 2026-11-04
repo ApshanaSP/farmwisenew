@@ -57,6 +57,23 @@ describe("calling a model", () => {
     expect(await callLlm(base({ hedge: false }), { generate: a.generate, ledger: fresh(), bedrockOk: () => false })).toBeNull();
     expect(Date.now() - t0).toBeLessThan(8000);
   });
+  it("a rung that fails at once goes to the next at once, with the hedge on: it does not wait out the hedge's timer", async () => {
+    const a = answers({ "qwen/qwen3.8-27b": { fail: true }, "openai/gpt-oss-20b": { fail: true }, "openai/gpt-oss-120b": { fail: true } });
+    const t0 = Date.now();
+    const r = await callLlm(base(), { generate: a.generate, ledger: fresh(), bedrockOk: () => false });
+    expect(r?.model).toBe("gemini-3.5-flash-lite");
+    expect(r?.hedged).toBe(false);
+    expect(a.asked.length).toBe(4);
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+  it("the turn's deadline stops a rung that hangs", async () => {
+    const hung = { ms: 6000 };
+    const a = answers({ "qwen/qwen3.8-27b": hung, "openai/gpt-oss-20b": hung, "openai/gpt-oss-120b": hung, "gemini-3.5-flash-lite": hung });
+    const t0 = Date.now();
+    expect(await callLlm(base({ hedge: false, until: Date.now() + 150 }), { generate: a.generate, ledger: fresh(), bedrockOk: () => false })).toBeNull();
+    expect(a.aborted.length).toBe(1);
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
   it("hedges at the model's p95 and aborts the loser", async () => {
     const a = answers({ "qwen/qwen3.8-27b": { ms: 6000 }, "openai/gpt-oss-20b": { ms: 10 }, "openai/gpt-oss-120b": { ms: 6000 } });
     const r = await callLlm(base(), { generate: a.generate, ledger: fresh(), bedrockOk: () => false });

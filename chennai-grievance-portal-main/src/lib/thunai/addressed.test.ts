@@ -57,6 +57,61 @@ describe("the address gate", () => {
   });
 });
 
+describe("the name anywhere in the sentence", () => {
+  it("a name at the end keeps the command, and acts", () => {
+    expect(namedIn("Show me the severe cases, Jarvis")).toBe("show me the severe cases");
+    expect(gate("Show me the severe cases, Jarvis")).toMatchObject({ tier: 1, act: true, text: "show me the severe cases" });
+    expect(gate("அடையார் புகார்களைக் காட்டு ஜார்விஸ்")).toMatchObject({ tier: 1, act: true, text: "அடையார் புகார்களைக் காட்டு" });
+  });
+  it("the name alone stays the name alone", () => {
+    for (const t of ["Jarvis", "hey jarvis", "ஹாய் ஜார்விஸ்", "good morning Jarvis"]) expect(namedIn(t), t).toBe("");
+  });
+  it("the name talked about is no order, even when engaged", () => {
+    const near = { lastTurnAt: NOW - 5000 };
+    for (const t of ["Don't let Jarvis draft for the first three", "I told Jarvis to forget everything", "tell Jarvis to draft the first three", "ஜார்விஸ் கிட்ட சொன்னேன்"]) {
+      expect(namedIn(t), t).toBeNull();
+      expect(gate(t), t).toMatchObject({ tier: 0, act: false });
+      expect(gate(t, near), t).toMatchObject({ tier: 0, act: false });
+    }
+  });
+});
+
+describe("side talk that used to act", () => {
+  it("tier 3: Tamil verbs are whole words, chores and statements are not orders", () => {
+    for (const t of ["அடையார் ரோடு ஏன் இப்படி", "மழை வந்தா", "தண்ணீர் கொடு", "Give me some water", "Take me to the hospital", "Close the door, the rain is coming", "There are too many complaints in Adyar", "மழை வருது"]) {
+      expect(gate(t, { districtNoun: true }), t).toMatchObject({ tier: 0, act: false });
+      expect(gate(t, { districtNoun: true, rulesSure: true }), t).toMatchObject({ tier: 0, act: false });
+    }
+  });
+  it("tier 3: the same words as work still act", () => {
+    for (const t of ["give me a summary of the Adyar cases", "show water complaints in Adyar", "தண்ணீர் புகார்கள் கொடு", "take me to the trends page", "show cases that are open in Adyar"]) {
+      expect(gate(t, { districtNoun: true }), t).toMatchObject({ tier: 3, act: true });
+    }
+  });
+  it("tier 2: first person and questions about the room do not act", () => {
+    const near = { lastTurnAt: NOW - 5000 };
+    for (const t of ["I am going home", "where is my phone", "can you pass the salt", "நேத்து மழை ரொம்ப அதிகம்", "it was late"]) expect(gate(t, near), t).toMatchObject({ tier: 0, act: false });
+    for (const t of ["I want Adyar", "can you show Adyar", "where is the worst flooding", "இல்லை", "show complaints after 8 am in Adyar"]) expect(gate(t, near), t).toMatchObject({ tier: 2, act: true });
+    // அடையார் holds யார் but asks nothing
+    expect(gate("அடையார் ரோடு ரொம்ப ரொம்ப மோசம் தான் போல", near)).toMatchObject({ tier: 0, act: false });
+  });
+});
+
+describe("real commands that used to be ignored when engaged", () => {
+  const near = { lastTurnAt: NOW - 5000 };
+  it.each(["Show Anna Salai complaints", "What was the rainfall in Adyar", "did it rise?", "which zones had the most?", "show yesterday", "Show us Adyar", "நாளைக்கு மழை எவ்வளவு", "வரைபடம் பார்"])("%s", (t) => {
+    expect(gate(t, near)).toMatchObject({ tier: 2, act: true });
+  });
+  it("traffic and tea are topics once a district noun is there, chatter before", () => {
+    expect(gate("Show traffic complaints in Adyar", { ...near, districtNoun: true })).toMatchObject({ tier: 2, act: true });
+    expect(gate("Show traffic complaints in Adyar", { districtNoun: true })).toMatchObject({ tier: 3, act: true });
+    expect(gate("how is the traffic", near)).toMatchObject({ tier: 0, act: false });
+    expect(gate("anna is coming later", near)).toMatchObject({ tier: 0, act: false });
+    // the past stays side talk with nobody engaged, and with no request shape
+    expect(gate("What was the rainfall in Adyar", { districtNoun: true, rulesSure: true })).toMatchObject({ tier: 0, act: false });
+  });
+});
+
 describe("the self-hearing guard", () => {
   const said = "Comparing Adyar with Anna Nagar, the severe cases are on the screen";
   it("ignores a transcript that is mostly what Jarvis is saying", () => {

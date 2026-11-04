@@ -9,7 +9,7 @@
  */
 import { z } from "zod";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
-import { AGENT_TOOLS, AgentPlanLenient, callArgs, directScreen, finish, MAX_ROUNDS, DEADLINE_MS, type AgentCallT, type AgentPlan, type AgentResult, Call, Screen } from "./agent";
+import { AGENT_TOOLS, AgentPlanLenient, callArgs, directScreen, finish, MAX_ROUNDS, DEADLINE_MS, type AgentCallT, type AgentPlan, type AgentResult, Call, Screen, zonesNamed } from "./agent";
 import { PlanBody, screenOf } from "./brain";
 import { gloss } from "./gloss";
 import { isElliptical, resolveFrame } from "./frame";
@@ -46,16 +46,18 @@ export interface RoundOut { done: boolean; result: AgentResult | null; steps: St
 
 interface TurnData { t0: number; until: number; results: { name: string; result: ToolResult }[]; observations: string[]; called: Set<string>; tokens: number; calls: number; values: Record<string, number>; model: string | null; bundle: Bundle }
 const turns = new Map<string, TurnData>();
-function turnOf(id: string, bundle: Bundle): TurnData {
+/** `t0`: when the turn's first round began, so the router's time counts against the turn's 8 s */
+function turnOf(id: string, bundle: Bundle, t0: number): TurnData {
   const now = Date.now();
   for (const [k, v] of turns) if (now - v.t0 > 60_000) turns.delete(k);
   let t = turns.get(id);
-  if (!t) { t = { t0: now, until: now + DEADLINE_MS, results: [], observations: [], called: new Set(), tokens: 0, calls: 0, values: {}, model: null, bundle }; turns.set(id, t); }
+  if (!t) { t = { t0, until: t0 + DEADLINE_MS, results: [], observations: [], called: new Set(), tokens: 0, calls: 0, values: {}, model: null, bundle }; turns.set(id, t); }
   return t;
 }
 
-// ---- caches: tool results 30 s, plans 10 minutes keyed by (intent, slots, bundle, data_version). No semantic cache
+// ---- caches: tool results 30 s, plans 10 minutes keyed by (the sentence, its language, bundle, data_version). No semantic cache
 
+const PLAN_MS = 600_000;
 const toolCache = new Map<string, { at: number; p: Promise<ToolResult> }>();
 const planCache = new Map<string, { at: number; plan: AgentPlan }>();
 export const clearCaches = () => { toolCache.clear(); planCache.clear(); turns.clear(); };
@@ -77,19 +79,24 @@ export function safeHands(h: Hands, signal?: AbortSignal): Hands {
       return p;
     },
     severe: (s) => h.severe(s).then((r) => redact(r)),
-    news: (s) => h.news(s).then((r) => redact(r))
+    news: (s) => h.news(s).then((r) => redact(r)),
+    map: (q) => h.map(q).then((r) => redact(r)),
+    dataset: h.dataset ? (name) => h.dataset!(name).then((r) => redact(r)) : undefined
   };
 }
 
 const INTENTS: [string, RegExp][] = [["compare", /compare|versus|\bvs\b|ஒப்பிடு|oppidu/i], ["why", /\bwhy\b|reason|ஏன்|காரணம்|\byen\b/i], ["trend", /trend|over time|moved|போக்கு/i], ["rank", /\btop\b|worst|highest|most|lowest|best/i],
   ["map", /\bmap\b|வரைபட/i], ["dashboard", /dashboard|டாஷ்போர்டு/i], ["perf", /performance|slowest|செயல்பாடு/i], ["list", /\b(show|list)\b|காட்டு|kaattu/i]];
-/** (intent, slots, bundle, data version); null when the sentence has no plain intent, or an open Stage changes what it means */
-function planKey(text: string, w: World, bundle: Bundle, stage: StageContext | null, version: string): string | null {
-  if (stage) return null;
-  const t = ` ${text.toLowerCase().replace(/[^a-z0-9஀-௿]+/g, " ").trim()} `;
-  const intent = INTENTS.find(([, re]) => re.test(text))?.[0];
-  if (!intent) return null;
-  return [intent, zonesIn(t, w).join(","), catIn(t) ?? "", sevIn(t) ?? "", periodIn(t) ?? "", bundle, version].join("|");
+const LEANS = /\b(this|these|that|those|it|them|again|idha|idhu|adhu|andha)\b|இதை|இவற்றை|அதை|அந்த/i;
+/**
+ * (the whole sentence, its language, bundle, data version): only an exact repeat hits. Intent and slots alone left out the panel,
+ * the departments, the measure, so a different question got the last one's plan. null when the sentence has no plain intent, or
+ * an open Stage or a recent turn changes what it means.
+ */
+function planKey(text: string, lang: Lang, bundle: Bundle, stage: StageContext | null, recent: boolean, version: string): string | null {
+  if (stage || (recent && (isElliptical(text) || LEANS.test(text)))) return null;
+  if (!INTENTS.some(([, re]) => re.test(text))) return null;
+  return [text.toLowerCase().replace(/[^a-z0-9஀-௿]+/g, " ").trim(), lang, bundle, version].join("|");
 }
 
 // ---- the prompts: five small bundles
@@ -276,7 +283,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     if (lane === "general") {
       const r = await timed(lang === "ta" ? "பொது அறிவு" : "General knowledge", () => callLlm({ name: "jarvis_general", system: GENERAL_SYSTEM, prompt: b.text, schema: GeneralSchema, maxOutputTokens: 120, user, lane: "router", until, signal, hedge: false }, deps.llm)).catch((e) => { if ((e as Error).name === "AbortError") throw e; return null; });
       const reply = r?.object.reply?.trim();
-      if (!reply || figuresIn(reply).length) return out(plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback"), "general", { tokens: tokens + (r?.tokens ?? 0), calls: calls + (r ? 1 : 0) });
+      if (!reply || /[\d௦-௯]/.test(reply) || figuresIn(reply).length) return out(plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback"), "general", { tokens: tokens + (r?.tokens ?? 0), calls: calls + (r ? 1 : 0) });
       return out(plainReply("chat", lang, `${GENERAL_LABEL[lang]}${reply}`, t0, "general", r!.model), "general", { tokens: tokens + r!.tokens, calls: calls + 1 });
     }
 
@@ -301,24 +308,25 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     // 5. the plan cache
     const version = deps.dataVersion ? await deps.dataVersion().catch(() => "") : "";
     const bundle0 = route.bundle ?? "screens";
-    const key = planKey(b.text, world, bundle0, stage, version);
+    const key = planKey(b.text, lang, bundle0, stage, !!b.turns?.length, version);
     const hit = key ? planCache.get(key) : null;
-    if (hit && Date.now() - hit.at < 600_000) {
-      const t = turnOf(b.turnId, bundle0);
+    if (hit && Date.now() - hit.at < PLAN_MS) {
+      const t = turnOf(b.turnId, bundle0, t0);
       const r = await timed(lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data", () => finish(hit.plan, { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage }, { world, hands, llm: async () => { throw new Error("cached"); } }, { t0, rounds: 0, model: "cache", results: t.results, clock: Date.now, until: t.until }));
       if (r.kind !== "none") return out(served(r), "cache", { cached: true });
     }
-    const t = turnOf(b.turnId, bundle0);
+    const t = turnOf(b.turnId, bundle0, t0);
     t.tokens += tokens; t.calls += calls;
   }
 
   // 6. one model call
   const bundle: Bundle = b.round === 0 ? (routeByRules(b.text, world, !!stage).bundle ?? "screens") : "data";
-  const t = turnOf(b.turnId, bundle);
+  const t = turnOf(b.turnId, bundle, t0);
   const now = deps.now ?? Date.now;
   const input = { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage };
   const finishWith = async (plan: AgentPlan, note?: string) => {
-    if (plan.say && /\{n:/.test(plan.say)) plan = { ...plan, say: fillTemplate(plan.say, t.values) };
+    // every say goes through the template: a line with no figure comes back as it is, a figure the model wrote refuses the line
+    if (plan.say) plan = { ...plan, say: fillTemplate(plan.say, t.values, zonesNamed(t.results)) };
     const r = served(await timed(lang === "ta" ? "திரையை உருவாக்குகிறேன்" : "Building the screen", () => finish(plan, input, { world, hands, llm: async () => { throw new Error("no model here"); } }, { t0: t.t0, rounds: b.round + 1, model: t.model, results: t.results, clock: now, until: t.until })));
     return out({ ...r, note: note ?? r.note, ms: now() - t.t0 }, "planner");
   };
@@ -345,8 +353,12 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     const ran = await timed(lang === "ta" ? "தரவைப் படிக்கிறேன்" : `Reading ${plan.calls.map((c) => c.tool).join(", ").slice(0, 60)}`, () => executeCalls(plan.calls, { period: state.period }, hands, t, signal));
     if (ran) return { done: false, result: null, steps: [], trace, tokens: t.tokens, calls: t.calls, hops: r.hops, lane: "planner", cached: false };
   }
-  const key = b.round === 0 && deps.dataVersion ? planKey(b.text, world, bundle, stage, await deps.dataVersion().catch(() => "")) : null;
+  const key = b.round === 0 && deps.dataVersion ? planKey(b.text, lang, bundle, stage, !!b.turns?.length, await deps.dataVersion().catch(() => "")) : null;
   const res = await finishWith(plan);
-  if (key && res.result && res.result.kind === "do" && plan.calls.length === 0) planCache.set(key, { at: Date.now(), plan });
+  if (key && res.result && res.result.kind === "do" && plan.calls.length === 0) {
+    const nowMs = Date.now();
+    for (const [k, v] of planCache) if (nowMs - v.at > PLAN_MS) planCache.delete(k);
+    planCache.set(key, { at: nowMs, plan });
+  }
   return { ...res, hops: r.hops };
 }

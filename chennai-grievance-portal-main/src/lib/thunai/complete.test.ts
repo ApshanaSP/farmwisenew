@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { completeRows, SOURCES, type Lookups } from "./complete";
+import { incRow } from "@/lib/assistant/tools";
+import { completeRows, SOURCES, studioRow, type Lookups } from "./complete";
+import { WORLD } from "./fixture";
+import { caseRow } from "./screens";
 
 const K: Lookups = {
   wardZone: (w) => (w === 170 ? { zone: 13, name: "Adyar" } : null),
@@ -32,6 +35,26 @@ describe("complete this data", () => {
     expect(r.rows[1].cells.zone).toEqual({ v: "Royapuram", src: null, filled: false });
     // every filled value has a source; no cell is filled without one
     for (const row of r.rows) for (const c of Object.values(row.cells)) expect(c.filled ? !!c.src : !c.src).toBe(true);
+  });
+  it("the age is worked out, not filled: it is counted apart and fills no gap", () => {
+    const r = completeRows([{ id: "A", zone: 13, zoneName: "Adyar", ward: 1, place: "P", dept: "D", hours: 7.4 }], K);
+    expect(r.rows[0].cells.age).toEqual({ v: 7, src: SOURCES.derived, filled: false });
+    expect(r.filled).toBe(0);
+    expect(r.derived).toBe(1);
+  });
+  it("the incidents tool's real row keeps the place the record names", () => {
+    const row = incRow({ id: "INC-1", title: "Drain", loc: "Bridge Road", sev: "High", open: 1, complaints: 0 });
+    expect(caseRow(row, WORLD).place).toBe("Bridge Road");
+    const r = completeRows([{ ...caseRow(row, WORLD), ward: 170 }], K);
+    expect(r.cannot.map((c) => c.col)).not.toContain("place");
+  });
+  it("a Studio zone column holding a name is that zone's name, and its long id fits the catalog", () => {
+    const r = studioRow({ id: "x".repeat(100), zone: "Adyar", title: "Row" }, 0);
+    expect(r).toMatchObject({ zone: null, zoneName: "Adyar" });
+    expect(r.id.length).toBe(80);
+    expect(studioRow({ zone: 13, zone_name: "Adyar" }, 1)).toMatchObject({ id: "row 2", zone: 13, zoneName: "Adyar" });
+    expect(studioRow({ zone_no: "", ward: "Ward 170" }, 0)).toMatchObject({ zone: null, zoneName: null, ward: 170 });
+    expect(completeRows([studioRow({ zone: "Adyar", ward: 5, place: "P", dept: "D" }, 0)], K).cannot).toEqual([]);
   });
   it("a place is never worked out from a zone, and a place the gazetteer does not know gives no zone", () => {
     const r = completeRows([{ id: "A", zone: 13, zoneName: "Adyar", dept: "D", ward: 1 }, { id: "B", place: "Nowhere", dept: "D", ward: 77 }], K);

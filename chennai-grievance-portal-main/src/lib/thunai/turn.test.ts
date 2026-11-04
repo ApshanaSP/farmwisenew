@@ -180,3 +180,49 @@ describe("holding", () => {
     expect(r.act).toContainEqual({ a: "endSession" });
   });
 });
+
+describe("what the independent review found", () => {
+  const ASKED: TurnEvent[] = [...SENT, { type: "text", text: "show adyar" }];
+  it("the acknowledgement ending does not leave the question uncancellable", () => {
+    const { m } = play([...ASKED, { type: "ttsStart", ack: true }, { type: "ttsEnd", ack: true }]);
+    expect(m.state).toBe("thinking");
+    const r = play([{ type: "vadStart", at: 5000 }, { type: "tick", at: 5220, heldMs: 220 }], m);
+    expect(r.acts[1]).toContainEqual({ a: "cancelTurn" });
+    expect(r.m.gen).toBe(m.gen + 1);
+  });
+  it("an acknowledgement outliving a turn that finished silently still ends in listening", () => {
+    const { m } = play([...ASKED, { type: "ttsStart", ack: true }, { type: "answered" }, { type: "ttsEnd", ack: true }]);
+    expect(m.state).toBe("listening");
+  });
+  it("the answer's own voice ending is listening, and speech then starts a new sentence", () => {
+    const { m } = play([...ASKED, { type: "ttsStart", ack: true }, { type: "ttsEnd", ack: true }, { type: "ttsStart" }, { type: "ttsEnd" }]);
+    expect(m.state).toBe("listening");
+    expect(m.handling).toBe(false);
+  });
+  it("a transcript that comes back during a cough is kept and acted on when it was only a cough", () => {
+    const { m, acts } = play([...SENT, { type: "vadStart", at: 2000 }, { type: "text", text: "show adyar", gen: 1 }, { type: "vadEnd", at: 2400, ms: 120, short: true }]);
+    expect(acts[acts.length - 1]).toEqual([{ a: "dropCapture" }, { a: "handle", text: "show adyar", gen: 1 }]);
+    expect(m.state).toBe("thinking");
+  });
+  it("the same transcript loses when the sound was a person", () => {
+    const { m, acts } = play([...SENT, { type: "vadStart", at: 2000 }, { type: "text", text: "show adyar", gen: 1 }, { type: "tick", at: 2300, heldMs: 220 }, { type: "vadEnd", at: 2900, ms: 800, short: false }]);
+    expect(acts.flat()).not.toContainEqual({ a: "handle", text: "show adyar", gen: 1 });
+    expect(m.parked).toBeNull();
+    expect(m.state).toBe("thinking");
+  });
+  it("a cough with nothing in flight does not leave Jarvis thinking", () => {
+    const { m } = play([...SENT, { type: "vadStart", at: 2000 }, { type: "text", text: "", gen: 1 }, { type: "vadEnd", at: 2400, ms: 120, short: true }]);
+    expect(m.state).toBe("listening");
+  });
+  it("an answer that begins during a cough goes on, and one that begins under a person is cut", () => {
+    const base = play([...ASKED, { type: "vadStart", at: 2000 }, { type: "ttsStart" }]);
+    expect(turn(base.m, { type: "vadEnd", at: 2400, ms: 120, short: true }).m.state).toBe("speaking");
+    expect(turn(base.m, { type: "tick", at: 2300, heldMs: 220 }).act).toEqual([{ a: "cancelVoice" }, { a: "cancelTurn" }]);
+  });
+  it("an empty transcript or a stray continue while paused resumes the voice", () => {
+    const paused = play([...SPEAKING, { type: "ttsEnd" }, { type: "vadStart", at: 1 }, { type: "vadEnd", at: 900, ms: 700, short: false }, { type: "ttsStart", ack: true }, { type: "quickOnset", at: 950 }]);
+    expect(paused.m.state).toBe("paused");
+    expect(turn(paused.m, { type: "text", text: "", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
+    expect(turn(paused.m, { type: "text", text: "continue", gen: paused.m.gen }).act).toEqual([{ a: "dropCapture" }, { a: "resumeVoice" }]);
+  });
+});

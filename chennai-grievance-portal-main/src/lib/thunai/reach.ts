@@ -23,7 +23,7 @@ export const REACH: Reach[] = [
   { what: "Build a screen: cases, one case, news, readings, ranking, compare, trend, why, performance, dashboard, map, nearby, brief, prices, what first, what stands out, complete this data", level: "A", how: "recipes", say: "compare Adyar and Ambattur this week" },
   { what: "Work on the open screen: read, next, previous, sort, filter, view as table, map or chart, export", level: "A", how: "stage ops", say: "sort these by complaints" },
   { what: "Read a tool: KPIs, zones, departments, severity, resolution times, backlog, follow-ups, trends, taluks, hotspots, change drivers, a place, unusual rises, stories, environment, series, prices, contacts, gaps, the verification queue, incidents, one incident, the briefing, source health, a place's location, search", level: "read", how: "data bundle", say: "how many open complaints does Metro Water have" },
-  { what: "Get ready for heavy rain", level: "A", how: "step mission rain", say: "we expect heavy rain tonight, get everything ready" },
+  { what: "Get ready for heavy rain", level: "C", how: "step mission rain, to the tray only", say: "we expect heavy rain tonight, get everything ready" },
   { what: "Save this workspace", level: "B", how: "step workspace, spoken yes or a tap", say: "save this workspace as Collector's Daily Briefing" },
   { what: "Pin a screen to the Overview: it shows there as a chip and opens fresh from the data", level: "B", how: "stage op pin, spoken yes or a tap; JarvisPins on the Overview", say: "pin this to the Overview" },
   { what: "Remember a note, set a reminder, forget a note", level: "B", how: "steps remember, remind, forget", say: "remember that the Adyar bridge is closed" },
@@ -31,11 +31,11 @@ export const REACH: Reach[] = [
   { what: "Send, approve, delete, change an officer's record, anything outside this console", level: "never", how: "refused in code; the tray's button is the Collector's own tap", say: "send the drafts" }
 ];
 
-/** Every console action, and which level it has: the same table risk.ts runs. */
+/** Every console action, and which level it has: the same table risk.ts runs. mission is the brief's level; its rain form is C, as the row above says. */
 export const ACTION_LEVEL: Record<ActionName, Level> = {
-  page: "A", period: "A", view: "A", mapMode: "A", layer: "A", panel: "A", close: "A", item: "A", draft: "A", zoom: "A", ask: "A", map: "A", theme: "A", lang: "A", mode: "A", speed: "A", handsfree: "A", undo: "A",
+  page: "A", period: "A", view: "A", mapMode: "A", layer: "A", panel: "A", close: "A", item: "A", zoom: "A", ask: "A", map: "A", theme: "A", lang: "A", mode: "A", speed: "A", handsfree: "A", undo: "A",
   stop: "A", off: "A", repeat: "A", whatDid: "A", whereAmI: "A", explain: "A", numbers: "A", click: "A", scroll: "A", type: "A", clearText: "A", recall: "A", read: "A", help: "A", mission: "A",
-  workspace: "B", remember: "B", forget: "B", remind: "B", send: "C", confirm: "C"
+  workspace: "B", remember: "B", forget: "B", remind: "B", draft: "C", send: "C", confirm: "C"
 };
 
 /** Said when a request is outside what Jarvis can do. */

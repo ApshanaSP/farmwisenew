@@ -59,3 +59,15 @@ export function chunks(text: string): string[] {
   }
   return merged.flatMap(splitLong);
 }
+
+/** What Jarvis says aloud: the first sentence or two (about 240 characters); the panel and the screen show it all. A dot inside a figure or a word ends nothing. */
+export function spokenPart(text: string): string {
+  const parts = text.replace(/\s+/g, " ").trim().match(/(?:[^.!?।]|[.!?।](?=\S))+[.!?।]*(?:\s|$)/g) ?? [text];
+  let out = "", n = 0;
+  for (const p of parts) {
+    if (out && (out.length + p.length > 240 || n >= 2)) break;
+    out += p;
+    n++;
+  }
+  return out.trim() || text.slice(0, 240);
+}

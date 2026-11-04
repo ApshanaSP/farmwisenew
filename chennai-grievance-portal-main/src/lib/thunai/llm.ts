@@ -62,7 +62,7 @@ const bedrockReady = () => !!(process.env.AWS_BEARER_TOKEN_BEDROCK || process.en
 function ask<T>(c: LlmCall<T>, rung: Rung, g: Generate, now: () => number, stop: AbortSignal): Promise<JsonResult<T>> {
   return g<T>({
     role: "fast", name: c.name, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, temperature: 0, maxOutputTokens: c.maxOutputTokens, user: c.user,
-    lane: c.lane, timeoutMs: Math.max(800, Math.min(6000, c.until - now())), abortSignal: stop,
+    lane: c.lane, timeoutMs: Math.max(800, Math.min(6000, c.until - now())), abortSignal: AbortSignal.any([stop, AbortSignal.timeout(Math.max(1, c.until - now()))]),
     only: { provider: rung.provider, models: rung.model ? [rung.model] : [] }
   });
 }
@@ -99,6 +99,8 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
           console.info(`[jarvis llm] ${c.name}: hedging ${label} into ${next.provider}/${next.model}`);
           ask(c, next, g, now, c.signal ? AbortSignal.any([c.signal, b.signal]) : b.signal).then(res, rej);
         }, hedgeAfter(rung.model));
+        // a main that fails before the timer goes to the next rung now: the timer is only for a main that is slow
+        main.catch((e) => { if (!hedged) { if (timer) clearTimeout(timer); rej(e); } });
       })
       : null;
     try {
@@ -111,7 +113,9 @@ export async function callLlm<T>(c: LlmCall<T>, d: LlmDeps = {}): Promise<LlmRes
       hops.push(label);
       telemetry("llm", { model: r.info.model, provider: r.info.provider, ms: r.info.ms, tokens, lane: c.lane, hop: hops.length, ok: true });
       return { object: r.object, model: r.info.model, tokens, ms: now() - t0, hops, hedged };
-    } catch (e) {
+    } catch (x) {
+      // Promise.any wraps its losers; the first is main's own reason
+      const e = x instanceof AggregateError ? x.errors[0] : x;
       if (timer) clearTimeout(timer);
       a.abort(); b.abort();
       main.catch(() => undefined); hedge?.catch(() => undefined);

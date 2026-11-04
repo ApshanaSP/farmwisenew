@@ -68,5 +68,25 @@ export function coreOf(mode: JarvisMode, turn: TurnState, busy: boolean, offline
   if (turn === "speaking" || turn === "paused") return "speaking";
   if (turn === "hearing") return "hearing";
   if (turn === "thinking" || busy) return "thinking";
-  return "listening";
+  return turn === "off" ? "idle" : "listening";
 }
+
+/** the microphone is open: the conductor leaves "off" only once the tracks are live, and goes back when they stop */
+export const micOpen = (s: Pick<HudState, "mode" | "turn">) => s.mode === "on" && s.turn !== "off";
+
+/** the power-on plays once a session, never with reduced motion */
+export const powerOnDue = (reduced: boolean, seen: string | null) => !reduced && seen !== "1";
+
+/**
+ * Where Tab goes with a screen open: the Stage's controls, then the HUD's own, then round again. Null leaves it to the browser.
+ * Focus outside both (`inside` false) comes back to the Stage; focus in the HUD stays there.
+ */
+export function tabStop<T>(stage: T[], hudControls: T[], at: T | null, back: boolean, inside: boolean): T | null {
+  if (!inside) return stage[0] ?? hudControls[0] ?? null;
+  const [stageFirst, stageLast] = [stage[0], stage[stage.length - 1]], [hudFirst, hudLast] = [hudControls[0], hudControls[hudControls.length - 1]];
+  if (back) return at === stageFirst ? hudLast ?? stageLast : at === hudFirst ? stageLast ?? hudLast : null;
+  return at === stageLast ? hudFirst ?? stageFirst : at === hudLast ? stageFirst ?? hudFirst : null;
+}
+
+/** the saved theme, what html goes back to when Jarvis mode ends: it may have changed while the mode was on */
+export const savedTheme = (saved: string | null): "dark" | "light" => (saved === "dark" ? "dark" : "light");

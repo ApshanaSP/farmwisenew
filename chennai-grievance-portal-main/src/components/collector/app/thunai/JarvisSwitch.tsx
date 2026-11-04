@@ -5,7 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { useLang } from "@/lib/i18n/lang";
-import { hud } from "./hudstore";
+import { hud, micOpen } from "./hudstore";
 import "./jarvisswitch.css";
 
 const send = (detail: Record<string, unknown>) => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail }));
@@ -14,16 +14,16 @@ export default function JarvisSwitch() {
   const s = useSyncExternalStore(hud.subscribe, hud.get, hud.get);
   const [lang] = useLang();
   const ta = lang === "ta";
-  const on = s.mode === "on", muted = s.mode === "muted";
+  const on = s.mode === "on", muted = s.mode === "muted", live = micOpen(s);
   return (
     <div className={`jsw${on ? " on" : ""}${muted ? " muted" : ""}`} data-no-i18n>
       <button className="jsw-main" role="switch" aria-checked={s.mode !== "off"} onClick={() => send({ toggle: true })} title={ta ? "ஜார்விஸ் பயன்முறை (Ctrl+Shift+J)" : "Jarvis mode (Ctrl+Shift+J)"}>
         <i className="jsw-core" aria-hidden="true" />
         <span>{ta ? "ஜார்விஸ்" : "Jarvis"}</span>
       </button>
-      {s.mode !== "off" && !s.firstUse && (
+      {s.mode !== "off" && (!s.firstUse || live) && (
         <button className="jsw-mute" onClick={() => send({ mute: true })} aria-pressed={muted} title={ta ? "மௌனம் (Ctrl+Shift+M)" : "Mute (Ctrl+Shift+M)"}>
-          {muted ? (ta ? "மௌனம்" : "Muted") : <><i className="jsw-dot" aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</>}
+          {muted ? (ta ? "மௌனம்" : "Muted") : live ? <><i className="jsw-dot" aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</> : (ta ? "மைக் மூடியது" : "Mic closed")}
         </button>
       )}
       {s.denied && <span className="jsw-denied" role="alert">{ta ? "மைக் தடுக்கப்பட்டுள்ளது: முகவரிப் பட்டியில் அனுமதியுங்கள்" : "Microphone blocked: allow it in the address bar"}</span>}

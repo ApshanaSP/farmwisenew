@@ -23,13 +23,52 @@ export const canWake = () => !!Ctor();
 /** the name as speech services write it down (Jarvis is often heard as "jarvis", "jervis", "javis", "service" never counts) */
 const NAME = "(?:jarvis|jarviz|jarvish|jarwis|jervis|jarves|javis|jaarvis|ஜார்விஸ்|ஜார்விஸ|ஜார்வீஸ்|ஜாவிஸ்)";
 const GREET = "(?:hi|hey|hello|hai|ok|okay|yo|ஹாய்|ஹலோ|ஹே)";
-const WAKE = new RegExp(`(?:^|\\s)(?:${GREET}[\\s,.!]*)?${NAME}(?=$|[\\s,.!?])[\\s,.!?]*(.*)$`, "i");
+const WAKE = new RegExp(`(?:^|\\s)(${GREET}[\\s,.!]*)?${NAME}(?=$|[\\s,.!?])[\\s,.!?]*(.*)$`, "i");
+/** said before the name and meaning nothing: still the name alone */
+const FILLER = new RegExp(`^(?:(?:${GREET}|good (?:morning|afternoon|evening)|vanakkam|வணக்கம்|thanks|thank you|நன்றி|so|um|uh|hmm|ah|oh|well|please|pls|and|excuse me)[\\s,.!]*)*$`, "i");
+/** said after the name and asking nothing: the command is what came before it */
+const NOTHING_AFTER = /^(?:please|pls|thanks|thank you|now)?[.!?]*$/;
+/** the name talked about, not called: a negation or reported speech before it, or a word that makes it the object or subject */
+const NEGATED = /^(?:(?:please|so|and|but|no|ok|okay)\s+)*(?:dont|do not|never)(?=\s|$)|(?:^|\s)(?:i|we|you|he|she|they|why|who|should|could)\s+(?:dont|do not|didnt|did not|never|wont|wouldnt|shouldnt|cant|cannot)(?=\s|$)|வேண்டாம்|கூடாது|பண்ணாத|செய்யாத|(?:^|\s)(?:vendaam|vendam|koodathu|pannadha|pannadhe)(?=\s|$)/;
+const REPORTED = /(?:^|\s)(?:told|tells|telling|asked|asking|said|says|saying|heard|did (?:you|i|he|she|they|we))(?=\s|$)/;
+const JUST_BEFORE = /(?:^|\s)(?:tell|ask|let|did|does|is|was|has|to|about|with|by)$/;
+const JUST_AFTER = /^(?:kitta|kita|ku|கிட்ட|கிட்டே|இடம்|said|says|told|made|wrote|drafted|cant|cannot|wont|doesnt|didnt|isnt|wasnt)(?=\s|$)/;
+const ATTACHED = new RegExp(`${NAME}(?:['’]s|-?(?:ku|kitta)(?=\\s|$)|கிட்ட|கிட்டே|இடம்|க்கு|ஓட)`, "i");
+/** the words before the name belong to the command: an English verb opens them, or Tamil word order puts the verb after the name */
+const OPENS = /^(?:please\s+|pls\s+)?(?:show|open|compare|list|give|tell|read|find|sort|filter|draft|make|get|map|rank|go)(?=\s|$)/;
+const VERB_LAST = /(?:kaattu|kaatu|kattu|katu|kaami|sollu|sollunga|pannu|pannunga|podu|kudu|paaru|thira)$/;
 
-/** what follows the wake word, or null when the name was not said ("" when it was said alone) */
-export function wakeIn(text: string): string | null {
-  const m = WAKE.exec(text.toLowerCase().replace(/\s+/g, " ").trim());
+const clean = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim();
+const parts = (s: string) => {
+  const m = WAKE.exec(s);
   if (!m) return null;
-  return (m[1] ?? "").replace(/^(please|pls)\s+/, "").trim();
+  return { before: s.slice(0, m.index).replace(/[\s,.!?]+$/, ""), rest: (m[2] ?? "").replace(/^(please|pls)\s+/, "").trim(), greeted: !!m[1] };
+};
+const about = (p: { before: string; rest: string; greeted: boolean }) => {
+  const b = p.before.replace(/['’]/g, ""), r = p.rest.replace(/['’]/g, "");
+  if (NEGATED.test(b) || JUST_AFTER.test(r)) return true;
+  // "I said hi Jarvis, go to trends" is a call all the same
+  return !(p.greeted && r) && (REPORTED.test(b) || JUST_BEFORE.test(b));
+};
+
+/** The name is in the sentence but only talked about ("don't let Jarvis draft", "I told Jarvis to forget"): not an order. */
+export function talkedAbout(text: string): boolean {
+  const s = clean(text);
+  if (ATTACHED.test(s)) return true;
+  const p = parts(s);
+  return !!p && about(p);
+}
+
+/** the command said with the name, or null when the name was not called ("" when it was said alone) */
+export function wakeIn(text: string): string | null {
+  const s = clean(text), p = parts(s);
+  if (!p || about(p)) return null;
+  const idle = FILLER.test(p.before);
+  if (!p.rest) return idle ? "" : p.before.replace(/^(please|pls)\s+/, "");
+  if (idle) return p.rest;
+  if (NOTHING_AFTER.test(p.rest)) return p.before.replace(/^(please|pls)\s+/, "");
+  if (p.greeted) return p.rest;
+  return OPENS.test(p.before) || /[஀-௿]/.test(p.before) || VERB_LAST.test(p.rest) ? `${p.before} ${p.rest}` : p.rest;
 }
 
 export interface WakeOpts {

@@ -17,8 +17,11 @@
 
 /* the core, the ribbon under it */
 .hud-top { position: absolute; left: 50%; top: 6px; width: min(760px, 92vw); margin-left: calc(min(760px, 92vw) / -2); display: flex; flex-direction: column; align-items: center; }
-.hud-core { position: relative; width: 240px; height: 240px; margin-bottom: -144px; transform: scale(.4); transform-origin: top center; transition: transform .32s cubic-bezier(.2, .8, .2, 1), margin-bottom .32s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
-.hud-core.big { transform: scale(1); margin-bottom: 0; }
+.hud-core { position: relative; width: 240px; height: 240px; margin-bottom: -144px; transform: scale(.4); transform-origin: top center; transition: transform .32s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
+.hud-core.big { transform: scale(1); }
+/* the layout box never changes: what sits under the core moves by transform as it grows */
+.hud-under, .hud-cards { transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+.hud-core.big ~ .hud-under, .hud-core.big ~ .hud-cards { transform: translateY(144px); }
 .hud-canvas { position: absolute; inset: 0; width: 240px; height: 240px; }
 .hud-anchor { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; }
 .hud-dial { position: absolute; inset: 0; width: 240px; height: 240px; fill: none; stroke: var(--c-line); stroke-width: 1; }
@@ -43,6 +46,8 @@
 .hud-rail { position: absolute; top: 76px; bottom: 56px; width: 300px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
 .hud-rail.left { left: 16px; }
 .hud-rail.right { right: 16px; width: 330px; }
+/* a panel takes no clicks and steps aside for the console's own popovers, toasts and dialogs: the z-index of .dic keeps those under it */
+html:has(.dic .pop, .dic .alc-pop, .dic .toast, .dic .modal, .dic .scrim, .dic .pal, .dic .aq-overlay, .dic .ds-modal-veil) .hud-rail.right { visibility: hidden; }
 .hud-steps { list-style: none; margin: 0; padding: 8px 10px; background: var(--glass); border: 1px solid var(--c-line); display: grid; gap: 5px; font-size: 15px; }
 .hud-steps[lang="ta"] { font-size: 16px; }
 .hud-steps li { display: grid; grid-template-columns: 12px 1fr auto; gap: 7px; align-items: baseline; animation: hud-in .18s ease both; }
@@ -54,7 +59,7 @@
 @keyframes hud-pulse { 50% { opacity: .35; } }
 
 /* an answer: an angular glass panel */
-.hud-panel { background: var(--glass-2); padding: 12px 14px 10px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); border-top: 1px solid var(--c); pointer-events: auto; }
+.hud-panel { background: var(--glass-2); padding: 12px 14px 10px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); border-top: 1px solid var(--c); }
 .hud-panel h3 { margin: 0 0 4px; font-size: 16px; font-weight: 650; color: var(--ink); }
 .hud-panel p { margin: 0 0 8px; font-size: 16px; color: var(--ink); }
 .hud-panel dl { margin: 0 0 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -78,6 +83,9 @@
 
 /* the system strip: real numbers only */
 .hud-strip { position: absolute; left: 0; right: 0; bottom: 0; height: 36px; display: flex; align-items: center; gap: 18px; padding: 0 14px; background: var(--glass-2); border-top: 1px solid var(--c-line); font-size: 13px; color: var(--ink); pointer-events: none; white-space: nowrap; overflow: hidden; }
+/* the figures give way, never the buttons: the keyboard button is the only way to the composer */
+.hud-strip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hud-strip .hud-mic, .hud-btn { flex: none; }
 .hud-strip b { font-weight: 500; color: var(--ink-2); margin-right: .15em; }
 .hud-strip[lang="ta"] { font-size: 16px; gap: 14px; }
 .hud-mic { display: inline-flex; align-items: center; gap: 6px; font-weight: 650; color: var(--ink); }
@@ -91,12 +99,10 @@
 .hud-compose input { width: 100%; height: 42px; padding: 0 12px; font: inherit; font-size: 17px; color: var(--ink); background: var(--glass-2); border: 1px solid var(--c); outline: none; box-sizing: border-box; }
 .hud-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
-/* the power-on: dim, the core ignites, the rails slide in (1.2 s; transform and opacity only) */
+/* the power-on: dim, the core ignites, the rails slide in (1.2 s, once a session; transform and opacity only) */
 .hud.powering .hud-veil { animation: hud-veil 1.2s ease both; }
 .hud.powering .hud-core { animation: hud-ignite 1.2s cubic-bezier(.2, .8, .2, 1) both; }
 .hud-sweep { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--c); opacity: 0; animation: hud-sweep 1.2s .1s ease-out both; }
-.hud.powering.quick .hud-veil, .hud.powering.quick .hud-core, .hud.powering.quick .hud-strip, .hud.powering.quick .hud-rail { animation-duration: .4s; animation-delay: 0s; }
-.hud.powering.quick .hud-sweep { display: none; }
 .hud.powering .hud-strip { animation: hud-slide-b .9s .3s ease both; }
 .hud.powering .hud-rail.left { animation: hud-slide-l .9s .3s ease both; }
 .hud.powering .hud-rail.right { animation: hud-slide-r .9s .3s ease both; }

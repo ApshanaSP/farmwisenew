@@ -15,7 +15,7 @@ import type { Overview } from "@/lib/collector/intel";
 import { chartFacts, type ChartFacts } from "@/lib/thunai/explain";
 import { ZONE_NAMES, ZONE_TA_NAME } from "@/lib/thunai/lexicon";
 import { isPlainMove, isReflex, type Checked, type Turn } from "@/lib/thunai/plan";
-import { confirmGate, planRisk } from "@/lib/thunai/risk";
+import { confirmGate, planRisk, tapRisk } from "@/lib/thunai/risk";
 import { say as line } from "@/lib/thunai/say";
 import type { Lang, OutMode, PageKey, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "@/lib/thunai/types";
 import { describe as describeStep, PAGE_EN, PAGE_TA, PERIOD_EN, PERIOD_TA, SUGGEST, understand } from "@/lib/thunai/understand";
@@ -24,6 +24,7 @@ import type { MapGeo } from "@/lib/collector/geo";
 import type { AgentResult, StageOp } from "@/lib/thunai/agent";
 import { figuresOf, stageContext, type StageDocT } from "@/lib/thunai/stage";
 import { allowedSet, figuresIn } from "@/lib/thunai/numbergate";
+import { spokenPart as spoken } from "@/lib/thunai/chunker";
 import { ackFor, ackTemplated, localStageCommand, narrationOf, stageDigest, stageReducer, toCsv, type LocalCmd, type StageEffect, type StageModel } from "@/lib/thunai/stagelocal";
 import { cannotLine, NO_MODEL_LINE } from "@/lib/thunai/reach";
 import type { Console } from "../CollectorApp";
@@ -58,7 +59,7 @@ function screenFigures(doc: StageDocT, lang: Lang): Set<string> {
   const base = figuresOf(doc);
   if (doc.recipe === "answer") return base;
   const out = new Set(base);
-  for (const f of figuresIn(`${doc.say[lang] ?? ""} ${narrationOf(doc, lang).map((x) => x.text).join(" ")}`)) out.add(String(f.value));
+  for (const f of figuresIn(`${doc.say[lang] ?? ""} ${narrationOf(doc, lang).map((x) => x.text).join(" ")}`)) if (!Number.isNaN(f.value)) out.add(String(f.value));
   for (const v of allowedSet(narrationOf(doc, lang).flatMap((x) => (x.text.match(/\d+(?:\.\d+)?/g) ?? []).map(Number)))) out.add(v);
   return out;
 }
@@ -111,17 +112,9 @@ interface EnvData { rain?: { stations: Station[] }; aqi?: { stations: Station[] 
 
 const SEVS: Sev[] = ["Severe", "High", "Medium", "Low"];
 const NO_FIGURES = new Set<string>();
-const DANGER_BUTTON = /send|approve|confirm|delete|remove|discard|reject|submit|அனுப்பு|நீக்கு|உறுதி|ஒப்புதல்/i;
-/** What Jarvis says aloud: the first sentence or two (about 240 characters); the panel and the screen show it all. */
-function spoken(text: string): string {
-  const parts = text.replace(/\s+/g, " ").trim().match(/[^.!?।]+[.!?।]?(\s|$)/g) ?? [text];
-  let out = "";
-  for (const p of parts) {
-    if (out && (out.length + p.length > 240 || out.split(/[.!?।]/).length > 2)) break;
-    out += p;
-  }
-  return out.trim() || text.slice(0, 240);
-}
+const DANGER_BUTTON = /send|approve|confirm|delete|remove|discard|reject|submit|verify|close it|work is done|accept|அனுப்பு|நீக்கு|உறுதி|ஒப்புதல்|ஏற்க|நிராகரி/i;
+/** A line the model wrote beside a plan is said only if it holds no figure: the figures come from code. */
+const noFigure = (t?: string | null) => (t && !figuresIn(t).length ? t : undefined);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const store = { get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* not saved */ } } };
@@ -207,6 +200,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const conductor = useRef<Conductor | null>(null);
   const captions = useRef<Captions | null>(null);
   const [turnState, setTurnState] = useState<TurnState>("off");
+  const [offline, setOffline] = useState(false);
   const conv = mode === "on";
   const [activity, setActivity] = useState<"speech" | "reading" | "idle">("idle");
   const [micBlocked, setMicBlocked] = useState(false);
@@ -660,7 +654,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         setNumbers(null);
         if (!t) return line("notUnderstood", lang, { heard: heardText, examples: "show numbers, click 3" });
         // Jarvis never presses send, approve or delete, by number or by name
-        if (DANGER_BUTTON.test(t.name ?? t.el.textContent ?? "")) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
+        // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never)
+        if (t.el.closest("[data-jarvis-never]") || DANGER_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
         press(t.el);
         return null;
       }
@@ -702,12 +697,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const ids = steps.map(() => ++chipId.current);
     setChips(steps.map((s, i) => ({ id: ids[i], label: describeStep(s, worldRef.current, lang), state: "pending" })));
     setPhase("acting");
+    // an interruption, or a newer sentence, ends this plan where it stands: it never speaks or moves anything after that
+    const gen = turnGen.current, alive = () => gen === turnGen.current;
     abortMission.current = false;
     justOpened.current = null;
     const said: string[] = [];
     const t0 = performance.now();
     for (let i = 0; i < steps.length; i++) {
-      if (abortMission.current && steps[i].a !== "stop") break;
+      if ((abortMission.current || !alive()) && steps[i].a !== "stop") break;
       setChips((cs) => cs.map((c) => (c.id === ids[i] ? { ...c, state: "running" } : c)));
       try {
         await glide(steps[i]);
@@ -725,6 +722,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     audit(heardText, steps, `done by ${by}${note ? `; ${note}` : ""}`);
     if (!steps.some((s) => s.a === "whatDid" || s.a === "repeat")) remember(heardText, steps.map((s) => describeStep(s, worldRef.current, "en")).join("; "));
     changeMemory({ op: "recent", text: heardText });
+    if (!alive()) return;
     const speakLine = [note, ...said].filter(Boolean).join(" ");
     if (steps.some((s) => s.a === "off")) return;
     // a command on the dashboard (a page, a filter, a panel, the map): the insight screen closes and Jarvis becomes a
@@ -739,11 +737,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     else { earcon("done"); const done = steps.map((s) => describeStep(s, worldRef.current, lang)).join(" · "); setReply(done); showAlt(done, lang); setPhase(tray.length ? "waiting" : "ready"); }
   };
 
-  const ask = (card: AskCard) => {
+  const ask = (card: AskCard, allowed?: Set<string>) => {
     setAskOnce(card);
     setPhase("asking");
     earcon("need");
-    out(card.question, card.lang, "asking");
+    out(card.question, card.lang, "asking", allowed);
   };
   const fromRules = (r: Extract<Understood, { kind: "ask" }>): AskCard =>
     ({ question: r.question[r.lang], lang: r.lang, heard: r.heard, choices: r.choices.map((c) => ({ label: c.label[r.lang], en: c.label.en, steps: c.steps })) });
@@ -784,10 +782,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // --------------------------------------------------------------- the Stage (v2) --
   const loadPins = useCallback(() => {
     const fromMem = (memoryRef.current as unknown as { pins?: PinnedScreen[] } | null)?.pins;
-    if (fromMem) { setPins(fromMem); return; }
+    // the server's memory holds the pins; the Overview's chips read this browser's copy of them
+    if (fromMem) { setPins(fromMem); store.set("thunai-pins", JSON.stringify(fromMem)); window.dispatchEvent(new CustomEvent("jarvis:pins")); return; }
     try { setPins(JSON.parse(store.get("thunai-pins") ?? "[]")); } catch { setPins([]); }
   }, []);
   useEffect(() => { loadPins(); }, [memory, loadPins]);
+  useEffect(() => { void loadMemory(); }, [loadMemory]);
   const savePins = async (next: PinnedScreen[], op: Record<string, unknown>) => {
     setPins(next);
     store.set("thunai-pins", JSON.stringify(next));
@@ -829,6 +829,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         // steps the plan runs before it looks again; how they went goes back with the next round
         observations = [];
         for (const s of j.steps ?? []) {
+          if (signal?.aborted) return null;
           try { await runStep(s, listenLangRef.current, said); await hostRef.current.settled?.(); observations.push({ step: s.a, ok: true }); }
           catch (e) { observations.push({ step: s.a, ok: false, error: String((e as Error).message).slice(0, 150) }); }
         }
@@ -920,10 +921,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
 
   /** A screen from a Stage control or a local command: built by code from the data, no model. */
   const directStage = async (recipe: StageDocT["recipe"], slots: Record<string, unknown>, label: string, lang: Lang = listenLang, opts: { drafts?: boolean } = {}) => {
+    // it replaces what is in flight, and anything newer replaces it: a cancelled screen never appears
+    const gen = ++turnGen.current;
+    turnCtl.current?.abort();
+    const ctl = new AbortController();
+    turnCtl.current = ctl;
     setStageBusy(label);
     stopNarration();
     const t0 = performance.now();
-    const r = await callAgent(label, buildState(), { recipe, slots, lang });
+    const r = await callAgent(label, buildState(), { recipe, slots, lang }, ctl.signal);
+    if (gen !== turnGen.current) return;
     setStageBusy(null);
     if (!r?.stage) { earcon("blocked"); setReply(lang === "ta" ? "அந்தத் திரையை உருவாக்க முடியவில்லை." : "I could not build that screen."); return; }
     // an answer on Jarvis's screen leaves the dashboard as the Collector set it: its filters are not changed behind the
@@ -1033,8 +1040,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     out(q, lang, "asking");
   };
 
+  /** Esc, the HUD's stop, the Stage's stop: the voice and the question stop at once. The frame stays, and so does the screen. */
+  const interrupt = () => { stopSpeaking(); conductor.current?.stop(); cancelTurn(); }; // eslint-disable-line @typescript-eslint/no-use-before-define
+  const turnActive = () => speaking() || narrating || phase === "thinking" || phase === "acting" || !!stageBusy || !!(conductor.current && conductor.current.state !== "off" && conductor.current.state !== "listening");
+
   const stageActions = {
-    close: () => { if (narrating) stopNarration(); else closeStage(); },
+    close: () => { if (turnActive()) interrupt(); else closeStage(); },
     back: stageBack.length ? () => void applyLocal({ op: "back" }, listenLang) : null,
     ask: (t: string) => void handleRef.current(t, 0.95), // eslint-disable-line @typescript-eslint/no-use-before-define
     mic: () => setMode(modeRef.current === "on" ? "muted" : "on"), // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -1054,7 +1065,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     dept: (code: string, name: string) => void directStage("cases", { dept: code, status: "open", period: stageRef.current?.scope.period ?? null, sort: "priority", n: 15 }, name),
     station: (name: string, metric: string) => void directStage("readings", { metric: ["rain", "aqi", "lakes", "temp", "humidity"].includes(metric) ? metric : "rain", name }, name),
     read: () => readFrom(0, listenLang),
-    stop: () => stopNarration(),
+    stop: () => interrupt(),
     pin: () => void applyLocal({ op: "pin" }, listenLang),
     openPin: (p: PinnedScreen) => void directStage(p.recipe as StageDocT["recipe"], p.slots, p.title),
     unpin: (id: string) => void savePins(pins.filter((x) => x.id !== id), { op: "unpin", id }),
@@ -1085,6 +1096,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     forgetBookmark();
     if (!original) lastRequest.current = { text: said, lang: /[஀-௿]/.test(said) ? "ta" : "en" };
     hud.set({ ribbon: said, answer: "" });
+    captionRibbon.current = false;
     lastUserSpeech.current = Date.now();
     lastHeardAt.current = Date.now();
     setHeard(original ?? said); setInterim(""); setWrong(null); setReply(""); setAlt(""); altSeq.current++; lastBot.current = "";
@@ -1144,6 +1156,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     setPhase("thinking");
     setChips([]);
     const heardAs = original ?? said;
+    // "complete this data" with a list on the screen means those rows, not whatever the console's filters hold
+    const openRows = (stageRef.current?.blocks ?? []).flatMap((b) => (b.kind === "CaseList" ? b.rows.map((r) => r.id) : []));
+    if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
     // lane 1: an acknowledgement at once, then lane 2: the screen and the words. The acknowledgement never holds up the
     // answer: when the answer exists it speaks and the acknowledgement is cut. With the mode on the core shows the work,
     // with it off a soft heartbeat does
@@ -1164,11 +1179,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       // a line the model wrote can hold no figure at all: the gate on the chunks has none to allow
       if (ag.kind === "chat") { earcon("done"); remember(heardAs, ag.reply ?? ""); out(ag.reply ?? "", lang, "ready", NO_FIGURES); return; }
       if (ag.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${ag.reply}`); out(ag.reply ?? "", lang, "ready", NO_FIGURES); return; }
-      if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }); return; }
+      if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }, NO_FIGURES); return; }
       const risk = planRisk(ag.steps);
       const opRisk: "A" | "B" | "C" = ag.stageOp?.op === "save" || ag.stageOp?.op === "pin" ? "B" : ag.stageOp?.op === "draft" ? "C" : "A";
       if (needsName(risk > opRisk ? risk : opRisk, lang)) return;
-      if (ag.steps.length && risk !== "A") { gateB(ag.steps, heardAs, lang); return; }
+      if (ag.steps.length && tapRisk(ag.steps) !== "A") { gateB(ag.steps, heardAs, lang); return; }
       if (ag.stage) {
         // the screen is the answer: the dashboard's own filters stay as they were (only a command changes them)
         audit(heardAs, ag.steps, `screen ${ag.stage.recipe} (${ag.calls.length} data calls, ${ag.rounds} model rounds)`);
@@ -1181,11 +1196,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       if (ag.stageOp) {
         if (ag.steps.length) await run(ag.steps, lang, heardAs, "ai", undefined, true);
+        if (!alive()) return;
         remember(heardAs, `on the Stage: ${ag.stageOp.op}${ag.stageOp.n ? ` ${ag.stageOp.n}` : ""}`);
         await applyStageOp(ag.stageOp, lang);
         return;
       }
-      await run(ag.steps, lang, heardAs, "ai", ag.reply ?? undefined);
+      await run(ag.steps, lang, heardAs, "ai", noFigure(ag.reply));
       return;
     }
     // the agent could not answer: the built-in rules, then the analyst (the v1 planner asked the same busy provider again,
@@ -1195,15 +1211,15 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (ai && ai.plan.kind !== "none") {
       setBrain({ by: "ai", model: ai.model, ms: ai.ms });
       const p = ai.plan;
-      if (p.kind === "chat") { earcon("done"); remember(heardAs, p.reply); out(p.reply, p.lang, "ready"); return; }
-      if (p.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${p.reply}`); out(p.reply, p.lang, "ready"); return; }
+      if (p.kind === "chat") { earcon("done"); remember(heardAs, p.reply); out(p.reply, p.lang, "ready", NO_FIGURES); return; }
+      if (p.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, `refused: ${p.reply}`); out(p.reply, p.lang, "ready", NO_FIGURES); return; }
       if (p.kind === "clarify") {
-        ask({ question: p.question, lang: p.lang, heard: heardAs, choices: p.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) });
+        ask({ question: p.question, lang: p.lang, heard: heardAs, choices: p.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }, NO_FIGURES);
         return;
       }
       if (needsName(planRisk(p.steps), p.lang)) return;
-      if (planRisk(p.steps) !== "A") { gateB(p.steps, heardAs, p.lang); return; }
-      await run(p.steps, p.lang, heardAs, "ai", p.reply ?? undefined);
+      if (tapRisk(p.steps) !== "A") { gateB(p.steps, heardAs, p.lang); return; }
+      await run(p.steps, p.lang, heardAs, "ai", noFigure(p.reply));
       return;
     }
     // the brain was unreachable or found nothing real: the built-in rules answer, and the dock says so
@@ -1219,9 +1235,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       return;
     }
     if (rules.kind === "refuse") { earcon("blocked"); audit(said, [], "refused"); out(rules.why[rules.lang], rules.lang, "ready"); return; }
+    if (rules.kind === "ask" && rules.choices.some((c) => c.steps && planRisk(c.steps) !== "A") && needsName("C", rules.lang)) return;
     if (rules.kind === "ask") { ask(fromRules(rules)); return; }
     if (needsName(planRisk(rules.steps), rules.lang)) return;
-    if (planRisk(rules.steps) !== "A") { gateB(rules.steps, said, rules.lang); return; }
+    if (tapRisk(rules.steps) !== "A") { gateB(rules.steps, said, rules.lang); return; }
     if (rules.confidence < 0.6) {
       const what = rules.steps.map((x) => describeStep(x, worldRef.current, rules.lang)).join(", ");
       ask({ question: line("lowConfidence", rules.lang, { what }), lang: rules.lang, heard: said,
@@ -1237,7 +1254,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // --------------------------------------------------------------- missions --
   const mission = async (name: "brief" | "rain", lang: Lang) => {
     const h = hostRef.current;
-    abortMission.current = false;
+    const gen = turnGen.current, stopped = () => abortMission.current || gen !== turnGen.current;
     if (name === "brief") {
       h.c.setPage("briefing");
       let brief = null as null | { points: { text: string; ta: string | null }[] };
@@ -1246,7 +1263,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const pts = brief.points.slice(0, 5);
       setChips(pts.map((p, i) => ({ id: ++chipId.current, label: `${i + 1}. ${(lang === "ta" && p.ta ? p.ta : p.text).slice(0, 40)}…`, state: "pending" })));
       for (let i = 0; i < pts.length; i++) {
-        if (abortMission.current) { out(line("missionStopped", lang), lang); return; }
+        if (stopped()) return;
         setChips((cs) => cs.map((c, j) => (j === i ? { ...c, state: "running" } : j < i ? { ...c, state: "done" } : c)));
         const text = line("briefPoint", lang, { text: lang === "ta" && pts[i].ta ? pts[i].ta : pts[i].text });
         setReply(text);
@@ -1267,23 +1284,24 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const lakes = await read({ a: "read", what: "reservoir", name: null }, lang);
     setReply(lakes);
     mark(0, "done");
-    if (abortMission.current) return;
+    if (stopped()) return;
     mark(1, "running");
     h.c.setPage("overview");
     h.applyView({ cat: "FLOOD_WATERLOGGING" });
     h.c.setPeriod("daily");
     await hostRef.current.settled?.();
     mark(1, "done");
-    if (abortMission.current) return;
+    if (stopped()) return;
     mark(2, "running");
     h.c.askOnMap?.("hotspots of flooding and waterlogging");
     await hostRef.current.settled?.();
     mark(2, "done");
-    if (abortMission.current) return;
+    if (stopped()) return;
     mark(3, "running");
     const top = buildState().list.slice(0, 3);
     setReply(line("draftsMaking", lang, { n: top.length }));
     const drafts = (await Promise.all(top.map(draftFor))).filter((d): d is Draft => !!d);
+    if (stopped()) return;
     if (drafts.length) addToTray(drafts);
     mark(3, drafts.length ? "done" : "failed");
     mark(4, "running");
@@ -1298,10 +1316,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const analystSession = useRef<string | null>(null);
   const askAnalyst = async (q: string, lang: Lang) => {
     const c = hostRef.current.c;
+    const gen = turnGen.current, signal = turnCtl.current?.signal;
     setPhase("thinking");
     setReply(lang === "ta" ? "தரவில் தேடுகிறேன்…" : "Looking it up in the district's data…");
     try {
-      const res = await fetch("/api/collector/assistant/chat", { method: "POST", headers: { "Content-Type": "application/json" }, signal: turnCtl.current?.signal,
+      const res = await fetch("/api/collector/assistant/chat", { method: "POST", headers: { "Content-Type": "application/json" }, signal,
         body: JSON.stringify({ sessionId: analystSession.current, message: q, inputMode: "voice", language: lang === "ta" ? "ta" : "auto",
           consoleScope: { period: c.period, zone: c.zone, dept: c.dept, cat: c.cat, taluk: c.taluk } }) });
       if (!res.ok || !res.body) throw new Error("failed");
@@ -1318,7 +1337,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
           if (ev === "answer" && raw) { card = JSON.parse(raw) as Card; analystSession.current = (card as unknown as { sessionId?: string }).sessionId ?? analystSession.current; }
         }
       }
-      if (turnCtl.current?.signal.aborted) return;
+      if (gen !== turnGen.current) return;
       if (!card) throw new Error("no answer");
       const say = card.voiceSummary || card.headline;
       lastBot.current = say;
@@ -1345,6 +1364,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
 
   // --------------------------------------------------------------- Jarvis mode --
+  /** the ribbon is showing what the browser's captions caught, not a sentence that passed the gate */
+  const captionRibbon = useRef(false);
   /** Abort the question in flight: nothing it comes back with may speak or change the screen. The frame stays. */
   const cancelTurn = () => {
     turnGen.current++;
@@ -1361,7 +1382,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     via.current = "voice";
     if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
     setMini(true);
-    void handleRef.current(h.text, 0.95, undefined, { gate: h.gate, source: h.source }).finally(() => conductor.current?.answered());
+    // (an older turn finishing says nothing about the one now running)
+    void handleRef.current(h.text, 0.95, h.again ? h.text : undefined, { gate: h.gate, source: h.source }).finally(() => { if (conductor.current?.generation === h.gen) conductor.current.answered(); });
   };
   const onSentenceRef = useRef(onSentence);
   onSentenceRef.current = onSentence;
@@ -1373,9 +1395,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       siteLang: () => listenLangRef.current,
       onSentence: (h) => onSentenceRef.current(h),
       cancelTurn: () => cancelTurn(),
-      reissue: () => { const l = lastRequest.current; if (l) void handleRef.current(l.text, 0.95, l.text); },
+      onReach: (ok) => setOffline(!ok),
       onIgnored: (t) => { hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000); },
-      onState: (s) => { setTurnState(s); hud.set({ turn: s }); if (s === "listening" && !speaking()) lastTurnAt.current = lastTurnAt.current ?? null; },
+      onState: (s) => {
+        setTurnState(s); hud.set({ turn: s });
+        // back to listening with no request taken: what the captions caught is not left on the screen
+        if (s === "listening" && captionRibbon.current) { captionRibbon.current = false; hud.set({ ribbon: "" }); setInterim(""); }
+      },
       onLevel: (v) => hud.setLevel(v),
       onHearing: (a) => { setActivity(a); if (a !== "idle") lastHeardAt.current = Date.now(); },
       onBudget: (b) => hud.strip({ ambient: b.ambient, budgetLow: b.low }),
@@ -1386,7 +1412,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       },
       onEndSession: () => { setMode("off"); },
       onHold: () => { setNarrating(false); setReading(null); },
-      onNameOnly: () => { const l = listenLangRef.current; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); earcon("open"); lastTurnAt.current = Date.now(); },
+      onNameOnly: () => { const l = listenLangRef.current; captionRibbon.current = false; hud.set({ ribbon: l === "ta" ? "சொல்லுங்கள்…" : "Yes?", faint: "" }); earcon("open"); lastTurnAt.current = Date.now(); },
       rules: (t) => {
         const w = worldRef.current;
         const q = quickScreen(t, w);
@@ -1418,13 +1444,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (prev === next) return;
     modeRef.current = next;
     setModeState(next);
-    hud.set({ mode: next, notice: null, ...(next === "off" ? { ribbon: "", answer: "", faint: "", panels: [], steps: [], needsResume: false } : {}) });
+    hud.set({ mode: next, notice: null, ...(next === "off" ? { ribbon: "", answer: "", faint: "", panels: [], steps: [], needsResume: false, focus: null, firstUse: false } : {}) });
     if (why !== "hidden") store.set("jarvis-mode", next);
     if (next === "on") {
       if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
       setMini(true);
       setMicBlocked(false);
-      hud.set({ denied: false });
+      hud.set({ denied: false, needsResume: false });
       // the first time, the notice comes before the microphone: it opens when the Collector has read it
       if (!store.get("jarvis-mode-seen")) { hud.set({ firstUse: true }); return; }
       // the power-on's sound: one short synthesised tone, once a session, heard as an earcon so it cannot trigger a barge-in
@@ -1448,7 +1474,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (c.needsGesture) hud.set({ needsResume: true });
       }).catch(() => undefined);
       if (canCaption() && !captions.current) {
-        captions.current = new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => { if (modeRef.current === "on" && conductor.current?.state === "hearing") { hud.set({ ribbon: t }); setInterim(t); } });
+        captions.current = new Captions(listenLangRef.current === "ta" ? "ta-IN" : "en-IN", (t) => { if (modeRef.current === "on" && conductor.current?.state === "hearing") { captionRibbon.current = true; hud.set({ ribbon: t }); setInterim(t); } });
         captions.current.start();
       }
   };
@@ -1460,8 +1486,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   // the answer is on screen as soon as it exists; the core and the strip follow the real state
   const busyNow = phase === "thinking" || phase === "acting";
   useEffect(() => {
-    hud.set({ core: mode === "on" && (narrating || phase === "speaking") && turnState !== "holding" && turnState !== "interrupted" && turnState !== "hearing" ? "speaking" : coreOf(mode, turnState, busyNow, false) });
-  }, [mode, turnState, busyNow, narrating, phase]);
+    hud.set({ core: mode === "on" && (narrating || phase === "speaking") && turnState !== "holding" && turnState !== "interrupted" && turnState !== "hearing" ? "speaking" : coreOf(mode, turnState, busyNow, offline) });
+  }, [mode, turnState, busyNow, narrating, phase, offline]);
+  useEffect(() => {
+    const f = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", f);
+    window.addEventListener("offline", f);
+    return () => { window.removeEventListener("online", f); window.removeEventListener("offline", f); };
+  }, []);
   // how fresh the data is, as the console says it (real, or nothing)
   useEffect(() => { hud.strip({ freshness: host.ov?.now ? String(host.ov.now).slice(0, 16).replace("T", " ") : null }); }, [host.ov?.now]);
   const wasBusy = useRef(false);
@@ -1481,8 +1513,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     return undefined;
   }, []);
   useEffect(() => {
-    const click = () => {
+    const click = (e: Event) => {
       if (!hud.get().needsResume) return;
+      // the switch and the shortcut turn the mode on themselves: resuming first would make them toggle it off
+      const k = e as KeyboardEvent;
+      if (e.type === "keydown" && (k.ctrlKey || k.shiftKey || k.altKey || k.metaKey || /^(Control|Shift|Alt|Meta)$/.test(k.key))) return;
+      if ((e.target as Element | null)?.closest?.(".jsw-main")) return;
       hud.set({ needsResume: false });
       if (modeRef.current === "on") void conductor.current?.resumeAudio();
       else if (store.get("jarvis-mode") === "on") setModeRef.current("on", "boot");
@@ -1498,8 +1534,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       else if (!document.hidden && hiddenMuted.current) {
         hiddenMuted.current = false;
         setModeRef.current("on", "hidden");
-        hud.set({ notice: listenLangRef.current === "ta" ? "இந்தத் தாவல் மறைந்திருந்தபோது கேட்கவில்லை. இப்போது கேட்கிறேன்." : "I stopped listening while this tab was hidden. Listening again." });
-        setTimeout(() => hud.set({ notice: null }), 5000);
+        if (!hud.get().firstUse) {
+          hud.set({ notice: listenLangRef.current === "ta" ? "இந்தத் தாவல் மறைந்திருந்தபோது கேட்கவில்லை. இப்போது கேட்கிறேன்." : "I stopped listening while this tab was hidden. Listening again." });
+          setTimeout(() => hud.set({ notice: null }), 5000);
+        }
       }
     };
     document.addEventListener("visibilitychange", vis);
@@ -1604,7 +1642,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   useEffect(() => {
     const typing = () => /INPUT|TEXTAREA|SELECT/.test((document.activeElement as HTMLElement)?.tagName ?? "");
     const down = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === "t" || e.key === "T")) { e.preventDefault(); if (onRef.current) switchOff(); else switchOn(); return; }
+      // (with the mode on the panel is not there to open or close)
+      if (e.altKey && (e.key === "t" || e.key === "T")) { e.preventDefault(); if (modeRef.current !== "off") return; if (onRef.current) switchOff(); else switchOn(); return; }
       if (e.altKey && e.code === "Space") {
         e.preventDefault();
         if (e.repeat) return;
@@ -1616,18 +1655,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "m") { e.preventDefault(); if (modeRef.current !== "off") setMode(modeRef.current === "muted" ? "on" : "muted"); return; }
       if (!onRef.current) return;
       // Esc interrupts whatever the voice path: the mouth and the turn know, the browser's speech object does not
-      if (e.key === "Escape" && (speaking() || phase === "acting" || phase === "thinking" || narrating)) {
-        stopSpeaking(); abortMission.current = true;
-        conductor.current?.stop();
-        if (phase === "thinking" || phase === "acting") cancelTurn(); else { setNarrating(false); setReading(null); setPhase("ready"); }
-      }
+      if (e.key === "Escape" && turnActive()) interrupt();
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing()) { e.preventDefault(); void run([{ a: "undo", n: 1 }], listenLang, "Ctrl+Z", "rules"); }
     };
     const up = () => undefined;
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
-  }, [switchOn, switchOff, startListening, phase, listenLang, narrating]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [switchOn, switchOff, startListening, phase, listenLang, narrating, stageBusy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // the numbered badges follow the page while shown
   useEffect(() => {
@@ -1654,7 +1689,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         if (!isNew || b.sev !== "Severe") continue;
         const where = b.zone_name ?? "Chennai";
         signals.push({ key: `bell:${b.id}`, kind: "severe", lifeSafety: false, impact: 1, urgency: 1, confidence: 0.9, novelty: 1, actionability: 0.8, level: 1,
-          text: { en: `New severe incident: ${b.title ?? b.type ?? "incident"}, ${where}.`, ta: `புதிய கடுமையான நிகழ்வு: ${b.title ?? b.type ?? ""}, ${where}.` } });
+          text: { en: `New severe incident: ${b.type ?? "incident"}, ${where}.`, ta: `புதிய கடுமையான நிகழ்வு: ${b.type ?? ""}, ${where}.` } }); // never the title: titles can be a citizen's own words
       }
       for (const r of memoryRef.current?.reminders ?? []) {
         if (r.done || Date.parse(r.at) > now) continue;
@@ -1775,8 +1810,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       {/* the page behind the panel dims a little, as behind the chat; a click there closes the panel */}
       {on && mode === "off" && !stage && !mini && <div className="jv-veil" onClick={switchOff} aria-hidden="true" />}
       {mode !== "off" && (
-        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") openMic(); }}
-          onStop={() => { stopSpeaking(); abortMission.current = true; conductor.current?.stop(); if (phase === "thinking" || phase === "acting") cancelTurn(); else { setNarrating(false); setReading(null); setPhase("ready"); } }}>{waiting}</Hud>
+        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
+          onStop={interrupt}>{waiting}</Hud>
       )}
       {on && mode === "off" && (
         <Panel lang={listenLang} ear={ear} mini={mini} onExpand={() => setMini(false)} conv={conv} idleLeft={null} level={0} thread={thread} geo={geo ?? host.c.geo}

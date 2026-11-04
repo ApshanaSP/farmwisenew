@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import os from "os";
 import fs from "fs";
 import path from "path";
-import { choose, hearUtterance, promptEcho, PROMPT, repeats, scoreDecode, wavSeconds, type Decode } from "./stt";
+import { ledger } from "./ledger";
+import { choose, hearUtterance, MODEL_EN, MODEL_TA, promptEcho, PROMPT, repeats, scoreDecode, wavSeconds, type Decode } from "./stt";
 
 const dec = (lang: "en" | "ta", text: string, logprob = -0.3, extra: Partial<Decode["segments"][0]> = {}): Decode => ({ lang, model: lang === "ta" ? "whisper-large-v3" : "whisper-large-v3-turbo", text, segments: [{ avg_logprob: logprob, no_speech_prob: 0.02, compression_ratio: 1.3, ...extra }] });
 
@@ -25,6 +26,14 @@ describe("choosing between forced decodes", () => {
     expect(scoreDecode(dec("ta", "அடையாறு நிலவரம் சொல்லு", -1.2)).ok).toBe(true);
     expect(repeats("show me the severe cases in Adyar this week")).toBe(false);
     expect(promptEcho("show me the storm water drain complaints")).toBe(false);
+  });
+  it("a short run of the prompt's words is a real sentence unless the decode looks like silence", () => {
+    expect(scoreDecode(dec("ta", "அண்ணா நகர் வெள்ளம்", -0.3)).ok).toBe(true);
+    expect(scoreDecode(dec("en", "Storm water drain", -0.3)).ok).toBe(true);
+    expect(scoreDecode(dec("en", "Storm water drain", -0.9)).why).toBe("echo");
+    expect(scoreDecode(dec("en", "Storm water drain", -0.3, { no_speech_prob: 0.4 })).why).toBe("echo");
+    expect(scoreDecode(dec("en", "storm water drain, waterlogging, dengue", -0.3)).why).toBe("echo");
+    expect(scoreDecode({ ...dec("ta", "அண்ணா நகர் வெள்ளம்", -0.75), via: "gemini" }).ok).toBe(true);
   });
   it("reads a clip's length from the WAV header", () => {
     const b = new ArrayBuffer(44 + 32000), v = new DataView(b);
@@ -51,6 +60,23 @@ describe("hearing an utterance", () => {
     expect(seen.map((x) => `${x.lang}:${x.model}`).sort()).toEqual(["en:whisper-large-v3-turbo", "ta:whisper-large-v3"]);
     expect(seen.every((x) => x.prompt.includes("Adyar"))).toBe(true);
     expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", lang: "ta", noise: false });
+  });
+  it("each model's budget is its own: turbo cooling leaves a named turn on large-v3; large-v3 cooling stops Tamil ambient with no post", async () => {
+    const seen: string[] = [];
+    const fetcher = (async (_u: string, init: RequestInit) => { const f = init.body as FormData; seen.push(String(f.get("model"))); return ok("அடையாறு புகார்கள் காட்டு", "ta"); }) as unknown as typeof fetch;
+    ledger().cool("groq", MODEL_EN(), 30_000);
+    try {
+      const h = await hearUtterance(wav(), { lane: "named", site: "en", fetcher });
+      expect(seen).toEqual([MODEL_TA()]);
+      expect(h).toMatchObject({ text: "அடையாறு புகார்கள் காட்டு", noise: false });
+      expect(h.budget).toBeUndefined();
+    } finally { ledger().cool("groq", MODEL_EN(), -1); }
+    seen.length = 0;
+    ledger().cool("groq", MODEL_TA(), 30_000);
+    try {
+      expect((await hearUtterance(wav(), { lane: "ambient", site: "ta", fetcher })).budget).toBe("low");
+      expect(seen).toEqual([]);
+    } finally { ledger().cool("groq", MODEL_TA(), -1); }
   });
   it("an ambient sentence: one decode in the site's language, and the ninth in a minute is refused by the ledger", async () => {
     let calls = 0;

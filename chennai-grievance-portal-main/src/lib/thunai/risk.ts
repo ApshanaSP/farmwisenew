@@ -1,30 +1,38 @@
 /**
- * Every action's risk level. A: Thunai does it at once and offers undo (reading, moving around, filters, panels, drafts that
- * stay in the console). B: one tap or "yes" (it changes something saved). C: anything that can reach a person outside the
- * console; it needs "confirm" plus the count of what is in the tray.
+ * Every action's risk level. A: Thunai does it at once and offers undo (reading, moving around, filters, panels). B: one tap
+ * or "yes" (it changes something saved). C: anything that can reach a person outside the console, and whatever fills the tray
+ * for that (a draft, the rain mission): it needs the name or an open conversation, and sending needs "confirm" plus the count
+ * of what is in the tray.
  */
 import type { ActionName, Step } from "./types";
 
 export type Risk = "A" | "B" | "C";
 
 const RISK: Record<ActionName, Risk> = {
-  page: "A", period: "A", view: "A", mapMode: "A", layer: "A", panel: "A", close: "A", item: "A", draft: "A", zoom: "A",
+  page: "A", period: "A", view: "A", mapMode: "A", layer: "A", panel: "A", close: "A", item: "A", zoom: "A",
   ask: "A", map: "A", theme: "A", lang: "A", mode: "A", speed: "A", handsfree: "A", undo: "A", stop: "A", off: "A",
   repeat: "A", whatDid: "A", whereAmI: "A", explain: "A", numbers: "A", click: "A", scroll: "A", type: "A", clearText: "A",
   recall: "A", read: "A", help: "A", mission: "A",
   workspace: "B", remember: "B", forget: "B", remind: "B",
-  send: "C", confirm: "C"
+  draft: "C", send: "C", confirm: "C"
 };
 
 export function riskOf(step: Step): Risk {
   // opening a saved workspace only changes the view
   if (step.a === "workspace" && step.op === "open") return "A";
+  // the morning brief only reads; the rain mission drafts into the tray
+  if (step.a === "mission" && step.name === "rain") return "C";
   return RISK[step.a];
 }
 
 /** The highest risk of a plan. */
 export function planRisk(steps: Step[]): Risk {
   return steps.reduce<Risk>((r, s) => (riskOf(s) > r ? riskOf(s) : r), "A");
+}
+
+/** What a plan waits on once it is allowed to run: a draft or the rain mission only fills the tray, so they ask for no tap. */
+export function tapRisk(steps: Step[]): Risk {
+  return planRisk(steps.filter((s) => s.a !== "draft" && !(s.a === "mission" && s.name === "rain")));
 }
 
 /**

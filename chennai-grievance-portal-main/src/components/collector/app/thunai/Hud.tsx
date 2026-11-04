@@ -9,7 +9,7 @@
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { drawCore, drawStill } from "./hudcore";
-import { coreOf, hud, type CoreState, type HudPanel, type WorkStep } from "./hudstore";
+import { coreOf, hud, micOpen, powerOnDue, type CoreState, type HudPanel, type WorkStep } from "./hudstore";
 import { voiceLevel } from "./mouth";
 import { Reticle } from "./mapbridge";
 import { CountUp } from "./countup";
@@ -124,18 +124,18 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState("");
   const ta = lang === "ta";
-  // the power-on: the full 1.2 s once a session, a quick 0.4 s on later toggles; never with reduced motion; any click or key skips it
-  const [powered, setPowered] = useState(() => reducedMotion());
-  const [quick] = useState(() => { try { return sessionStorage.getItem("jarvis-powered") === "1"; } catch { return true; } });
+  // the power-on: 1.2 s, once a session, never repeated; never with reduced motion; any click or key skips it
+  const [powered, setPowered] = useState(() => { try { return !powerOnDue(reducedMotion(), sessionStorage.getItem("jarvis-powered")); } catch { return true; } });
+  // written with reduced motion too: the power-on's tone reads this flag
+  useEffect(() => { try { sessionStorage.setItem("jarvis-powered", "1"); } catch { /* it plays again: harmless */ } }, []);
   useEffect(() => {
     if (powered) return;
-    try { sessionStorage.setItem("jarvis-powered", "1"); } catch { /* it plays in full again: harmless */ }
     const done = () => setPowered(true);
-    const t = setTimeout(done, quick ? 400 : 1200);
+    const t = setTimeout(done, 1200);
     window.addEventListener("pointerdown", done, { once: true, capture: true });
     window.addEventListener("keydown", done, { once: true, capture: true });
     return () => { clearTimeout(t); window.removeEventListener("pointerdown", done, { capture: true }); window.removeEventListener("keydown", done, { capture: true }); };
-  }, [powered, quick]);
+  }, [powered]);
   // for screen readers: the answer, whole, half a second after it settles; never the partials
   const [said, setSaid] = useState("");
   useEffect(() => { const t = setTimeout(() => setSaid(s.answer), 500); return () => clearTimeout(t); }, [s.answer]);
@@ -145,10 +145,12 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
     const t = setInterval(() => { if (level.current) level.current.style.transform = `scaleX(${hud.level().toFixed(2)})`; }, 120);
     return () => clearInterval(t);
   }, []);
-  const word = STATE_WORD[s.core]?.[lang] ?? "";
+  const closedWord = ta ? "மைக் மூடியது" : "Mic closed";
+  // the mode is on but the microphone has not opened yet (the first-use notice, the browser's prompt): that is not "Muted"
+  const word = s.core === "idle" && s.mode === "on" ? closedWord : STATE_WORD[s.core]?.[lang] ?? "";
   const strip = s.strip;
   return (
-    <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : quick ? " powering quick" : " powering"}`} data-core={s.core} data-testid="hud" data-no-i18n lang={lang}>
+    <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : " powering"}`} data-core={s.core} data-testid="hud" data-no-i18n lang={lang}>
       <div className="hud-veil" aria-hidden="true" />
       {!powered && <div className="hud-sweep" aria-hidden="true" />}
       <div className="hud-top">
@@ -174,8 +176,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
         </div>
       )}
       <footer className="hud-strip" aria-label={ta ? "அமைப்பு" : "System"} lang={lang}>
-        {s.mode === "on" && !s.firstUse && <span className="hud-mic"><i aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</span>}
-        {s.mode === "muted" && <span className="hud-mic off">{ta ? "மைக் மூடியது" : "Mic closed"}</span>}
+        {micOpen(s) ? <span className="hud-mic"><i aria-hidden="true" />{ta ? "கேட்கிறது" : "Listening"}</span> : <span className="hud-mic off">{closedWord}</span>}
         <span><b>{ta ? "பதில்" : "Last answer"}</b> {strip.lastMs != null ? `${(strip.lastMs / 1000).toFixed(1)} s` : "--"}</span>
         <span><b>{ta ? "முதல் சொல்" : "First reply"}</b> {strip.ackMs != null ? `${(strip.ackMs / 1000).toFixed(1)} s` : "--"}</span>
         <span><b>{ta ? "பதில் குரல்" : "Answer spoken"}</b> {strip.findingMs != null ? `${(strip.findingMs / 1000).toFixed(1)} s` : "--"}</span>
@@ -193,7 +194,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder={ta ? "தட்டச்சு செய்யுங்கள்…" : "Type a request…"} autoFocus aria-label={ta ? "கேள்வி" : "Request"} lang={lang} />
         </form>
       )}
-      <Reticle />
+      {!stageOpen && <Reticle />}
       <div className="hud-live" aria-live="polite" lang={lang}>{said}</div>
     </div>
   );

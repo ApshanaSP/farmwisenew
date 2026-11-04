@@ -20,7 +20,7 @@ export interface SpeakOpts {
   allowed?: Set<string>;
 }
 export type VoicePath = "browser" | "pcm" | "text";
-export interface MouthHooks { onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: () => void; onGateRefused?: (raw: string[]) => void }
+export interface MouthHooks { onStart?: (path: VoicePath, ack: boolean) => void; onEnd?: (ack: boolean) => void; onGateRefused?: (raw: string[]) => void }
 
 let hooks: MouthHooks = {};
 export function setMouthHooks(h: MouthHooks) { hooks = h; }
@@ -191,7 +191,7 @@ async function run(s: Speech, my: number) {
   if (my !== token) return;
   speakingNow = false;
   cur = null;
-  hooks.onEnd?.();
+  hooks.onEnd?.(s.ack);
   s.o.onEnd?.();
 }
 
@@ -264,6 +264,7 @@ export function resumeVoice() {
 /** Everything stops; what was being said is kept for "continue". */
 export function stopVoice() {
   token++;
+  const was = speakingNow, ack = !!cur?.ack;
   if (cur && !cur.ack && cur.at < cur.pieces.length) bookmark = cur;
   cur = null;
   speakingNow = false;
@@ -271,6 +272,8 @@ export function stopVoice() {
   if (source) { try { source.onended = null; source.stop(); } catch { /* ended */ } source = null; }
   if (ctx && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
   browser.stopVoice();
+  // whoever cut it, the turn machine hears that the voice stopped: it must never show Speaking in silence
+  if (was) hooks.onEnd?.(ack);
 }
 
 /** "Continue": the interrupted answer from the chunk it was on. False when there is nothing to continue. */

@@ -108,8 +108,8 @@ export default function Connectors({ c, onOpen, onChanged }: { c: Console; onOpe
                   <b>The columns changed. Proposed mapping (new → old):</b>
                   <ul>{Object.entries(k.proposal.mapping).map(([n, m]) => <li key={n}><code>{n}</code> → {m ? <code>{m}</code> : <i>new column</i>}</li>)}</ul>
                   <div className="ds-out-acts">
-                    <button className="ds-btn" disabled={!!busy} onClick={() => act(k.id, "approve")}><I n="check" /><span lang={lang}>{t.approve}</span></button>
-                    <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "approveNew")}><span lang={lang}>{t.approveNew}</span></button>
+                    <button className="ds-btn" disabled={!!busy} onClick={() => act(k.id, "approve")} data-jarvis-never><I n="check" /><span lang={lang}>{t.approve}</span></button>
+                    <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "approveNew")} data-jarvis-never><span lang={lang}>{t.approveNew}</span></button>
                   </div>
                 </div>
               )}
@@ -117,8 +117,8 @@ export default function Connectors({ c, onOpen, onChanged }: { c: Console; onOpe
                 <div className="ds-conn-q" role="group" aria-label="Quarantine">
                   <b>Held in quarantine:</b> {k.quarantine.why} The last good data stays live.
                   <div className="ds-out-acts">
-                    <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "accept")}><I n="check" /><span lang={lang}>{t.accept}</span></button>
-                    <button className="ds-btn" disabled={!!busy} onClick={() => act(k.id, "reject")}><I n="x" /><span lang={lang}>{t.reject}</span></button>
+                    <button className="ds-ghost" disabled={!!busy} onClick={() => act(k.id, "accept")} data-jarvis-never><I n="check" /><span lang={lang}>{t.accept}</span></button>
+                    <button className="ds-btn" disabled={!!busy} onClick={() => act(k.id, "reject")} data-jarvis-never><I n="x" /><span lang={lang}>{t.reject}</span></button>
                   </div>
                 </div>
               )}

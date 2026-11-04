@@ -12,30 +12,48 @@ export const NEVER_REPLY = {
   ta: "அனுப்புவது, ஒப்புதல், நீக்குவது என் வேலை அல்ல. வரைவைத் தட்டில் வைக்கிறேன்; தட்டுவது உங்கள் கையில்."
 };
 
-const PERSON = /(citizen|complainant|complainer|petitioner|caller|person|people|resident|residents|applicant|informant|victim|who\s+(?:complained|filed|lodged|called|reported|raised|sent)|whoever\s+complained|the\s+one\s+who\s+complained|whose|யார்\s*(?:புகார்|கூப்பிட்)|புகார்\s*(?:தந்த|கொடுத்த|அளித்த|செய்த)|புகார்தாரர்|மனுதாரர்|குடிமக|pugar\s*(?:kuduthavar|kuduthavanga|kuduthadhu|panninavar|pannavanga)|yaaru\s+(?:pugar|complaint|complain))/i;
-const IDENTIFIER = /(phone|mobile|contact\s*(?:number|no|details)|whatsapp\s*number|number\s+of|\bnumber\b|\bdetails\b|\baddress\b|aadhaar|aadhar|aadar|voter\s*id|home\s*address|house\s*address|residential\s*address|email\s*(?:id|address)|personal\s*details|personal\s*info|தொலைபேசி|போன்\s*நம்பர்|மொபைல்|கைபேசி|ஆதார்|வீட்டு\s*முகவரி|முகவரி|phone\s*number|number\s*kudu|number\s*sollu)/i;
-const THEIR_WORDS = /((?:read|show|tell|give|what\s+did|what\s+exactly).{0,40}(?:complaint\s*text|what\s+(?:they|he|she)\s+(?:said|wrote)|exact\s+words|their\s+words|original\s+complaint|in\s+the\s+(?:original\s+)?complaint|word\s+for\s+word|citizen'?s?\s+(?:complaint|message|words))|what\s+did\s+the\s+citizen|(?:they|he|she)\s+say\s+in\s+the\s+complaint|புகாரில்\s*என்ன\s*(?:எழுதி|சொல்லி)|complaint\s*la\s*enna\s*(?:ezhudhi|sonna))/i;
-const NAME_OF = /(name|names|பெயர்|\bper\b|\bperu\b).{0,30}(citizen|complainant|caller|who\s+complained|person|people|resident|victim|petitioner|புகார்|குடிமக|pugar|complaint\s*kuduth)|(citizen|complainant|caller|resident|victim|petitioner|புகார்தாரர்|புகார்\s*(?:கொடுத்தவர்|தந்தவர்|செய்தவர்)|குடிமக|குடிமகன்|pugar\s*kuduthavar).{0,30}(name|names|பெயர்|\bper\b|\bperu\b)/i;
+const PERSON = /(citizen(?!s?\s+complaints?)|complainant|complainer|petitioner|caller|reporter|person|people|resident|residents|applicant|informant|victim|who\s+(?:complained|filed|lodged|called|reported|raised|sent|wrote)|whoever\s+complained|the\s+one\s+who\s+complained|whose|(?:^|\s)யாரு?\s*(?:புகார்|கூப்பிட்)|புகார்\s*(?:தந்த|கொடுத்த|குடுத்த|அளித்த|செய்த|பண்ண)|புகார்தாரர்|மனுதாரர்|குடிமக|(?:pugar|complaint)\s*(?:kuduthavar|kuduthavanga|kuduthadhu|panninavar|panninavanga|pannavar|pannavanga)|yaaru\s+(?:pugar|complaint|complain))/i;
+const IDENTIFIER = /(phone|mobile|contact\s*(?:number|no|details)|whatsapp\s*number|number\s+of|\bnumber\b|\bdetails\b|\baddress\b|aadhaar|aadhar|aadar|voter\s*id|home\s*address|house\s*address|residential\s*address|e-?mail\s*(?:id|address|of)|\b(?:their|his|her)\s+e-?mail|personal\s*details|personal\s*info|தொலைபேசி|போன்\s*நம்பர்|நம்பர்|மொபைல்|கைபேசி|ஆதார்|வீட்டு\s*முகவரி|முகவரி|(?:^|\s)எண்(?=$|\s)|phone\s*number|number\s*kudu|number\s*sollu)/i;
+const THEIR_WORDS = /((?:read|show|tell|give|what\s+did|what\s+exactly).{0,40}(?:complaint\s*text|what\s+(?:they|he|she)\s+(?:said|wrote)|exact\s+words|their\s+words|original\s+complaint|(?:what|words|written|said|wrote|says?).{0,15}in\s+the\s+(?:original\s+)?complaint|word\s+for\s+word|citizen(?:'s|s')\s+(?:complaint|message|words)\b|citizens?\s+(?:message|words))|\bread\b.{0,40}citizen'?s?'?\s+complaints?|what\s+did\s+the\s+citizen|(?:they|he|she)\s+say\s+in\s+the\s+complaint|புகாரில்\s*என்ன\s*(?:எழுதி|சொல்லி)|complaint\s*la\s*enna\s*(?:ezhudhi|sonna))/i;
+const NAME_OF = /\bnames?\s+of\b.{0,30}(?:person|people)|(name|names|பெயர்|\bperu\b).{0,30}(citizen(?!s?\s+complaints?)|complainant|caller|who\s+complained|resident|victim|petitioner|புகார்|குடிமக|pugar|complaint\s*kuduth)|(citizen(?!s?\s+complaints?)|complainant|caller|resident|victim|petitioner|புகார்தாரர்|புகார்\s*(?:கொடுத்தவர்|தந்தவர்|செய்தவர்)|குடிமக|குடிமகன்|pugar\s*kuduthavar).{0,30}(name|names|பெயர்|\bper\s*(?:enna|sollu|kudu|kaattu|$)|\bperu\b)/i;
+const STATE_ID = /(aadhaar|aadhar|aadar|voter\s*id|ஆதார்)/i;
+const PRIVATE_ID = /(home\s*address|residential\s*address|வீட்டு\s*முகவரி|முகவரி|personal\s*(details|info))/i;
+const DIALLED = /(?:phone|mobile|contact|whatsapp)\s*(?:numbers?|nos?|details)/i;
+/** a head-count, not somebody's number: "the number of people evacuated", "number of citizen complaints" */
+const HEAD_COUNT = /(?<!(?:phone|mobile|contact|whatsapp|aadhaar|aadhar)\s+)\bnumber\s+of\s+(?:(?!the\b)[\w'-]+\s+){0,2}(?:people|persons|residents|citizens|victims|applicants|callers|complainants|petitioners|complaints|grievances|cases|incidents)\b/gi;
+const WHO_DID = /^\s*(?:show me\s+)?who\s+(?:complained|complains|filed|lodged|reported|raised|called|rang|sent|wrote|gave|made)\b|^\s*(?:show me\s+)?who\b.*\b(?:complainant|complainer|caller|petitioner|informant|reporter)\b|^\s*(?:show me\s+)?yaaru\b.*(?:complain|pugar|kuduth)/i;
+const WHO_TA = /(?:^|\s)(?:யார்|யாரு|யாருடைய|யாரது)(?=$|[\s,.!?])/;
 
 /** Asks for a private fact about a citizen: refused in code. An officer's contact is a different thing (contacts tool). */
 export function asksPrivate(text: string): boolean {
   const t = text.trim();
-  if (/(officer|engineer|commissioner|department|dept|helpline|control room|அதிகாரி|துறை)/i.test(t) && !PERSON.test(t)) return false;
-  if (THEIR_WORDS.test(t) || NAME_OF.test(t)) return true;
   // "how many people", "the people's complaints": people as a count or a subject is not a request for a person's details
-  if (IDENTIFIER.test(t) && (PERSON.test(t) || /(aadhaar|aadhar|aadar|voter\s*id|ஆதார்|home\s*address|residential\s*address|வீட்டு\s*முகவரி|முகவரி|personal\s*(details|info))/i.test(t))) return !/^(how many|count|number of)\b/i.test(t);
+  const counting = /^(how many|count)\b/i.test(t) && !/\b(their|his|her|whose)\b/i.test(t);
+  if (THEIR_WORDS.test(t) || (STATE_ID.test(t) && !counting)) return true;
+  if (/(officer|engineer|commissioner|department|dept|helpline|control room|call cent(?:re|er)|complaint cell|அதிகாரி|துறை)/i.test(t) && !PERSON.test(t)) return false;
+  if (NAME_OF.test(t)) return true;
+  const c = t.replace(HEAD_COUNT, "a count");
+  if (IDENTIFIER.test(c) && (PERSON.test(c) || PRIVATE_ID.test(c))) return !counting;
+  if (DIALLED.test(c) && /(complaint|புகார|pugar)/i.test(c)) return !counting;
   // "who complained about the drain in Adyar", "yaaru complaint kuduthadhu"
-  if (/^\s*(?:show me\s+)?(who|யார்|yaaru)\b/i.test(t) && /(complain|filed|lodged|reported|raised|called|this one|புகார்|pugar)/i.test(t)) return true;
-  if (/யார்/.test(t) && /(புகார்)/.test(t)) return true;
+  if (WHO_DID.test(t)) return true;
+  if (WHO_TA.test(t) && /புகார/.test(t) && !/பொறுப்பு/.test(t)) return true;
   if (/\bcaller\b.*\b(mobile|number)\b|\b(pugar|complaint)\s+kuduth|yaaru\s+pugar/i.test(t) && /(per|peru|address|number|enna|kuduthadhu|pannadhu)/i.test(t)) return true;
   return false;
 }
+
+/** removing or closing everything: the forbidden act only when it names records; a filter or a panel is console work */
+const WIPES = /\b(remove|close all)\b/i;
+const RECORDS = /\b(complaints?|cases?|incidents?|records?|data|reports?|drafts?|entries|entry|files?|tickets?|grievances?|everything|everyone)\b|all\s+of\s+them|\b(?:them|these|those)\s*$|புகார்|சம்பவ|அறிக்கை|வரைவ/i;
+const CONSOLE_THING = /\b(filters?|panels?|chips?|layers?|highlights?|pins?|windows?)\b/i;
 
 /** Tells Jarvis to do what it never does: send, approve or delete (or to ignore its rules). */
 export function asksForbidden(text: string): boolean {
   const t = text.trim();
   if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி/i.test(t)) return true;
-  const verb = /\b(send|approve|authorise|authorize|sanction|delete|erase|wipe|remove|purge|dispatch|forward|e-?mail|sms|reject|submit|issue|publish|close all|mark .{0,20}resolved)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|அங்கீகரி|நீக்கு|நீக்குங்க|அழி|அழிங்க|delete pannu|anuppu|anupu|approve pannu|azhi|neekku)/i;
+  if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
+  // "issue" alone is a noun here ("what is the issue in this case"); only issuing something outward counts
+  const verb = /\b(send|approve|authorise|authorize|sanction|delete|erase|wipe|purge|dispatch|forward|e-?mail|sms|reject|submit|publish|mark .{0,20}resolved)\b|\bissue\s+(?:an?\s+|the\s+|this\s+|that\s+)?(?:notices?|orders?|instructions?|alerts?|letters?|circulars?|memos?|directives?|statements?|press\s+release)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|அங்கீகரி|நீக்கு|நீக்குங்க|அழி|அழிங்க)|\b(delete pannu|anuppu|anupu|approve pannu|azhi|neekku)\b/i;
   if (!verb.test(t)) return false;
   // "send" in the sense of a draft to the tray is still only a draft: the tray gate handles it; these name the outward act itself
   return /\b(all|every|old|complaints?|cases?|incidents?|records?|data|report|alert|message|notice|letter|mail|email|sms|it|this|that|them|these|the\s+drafts?|officers?|departments?|engineers?|commissioner|citizens?|press|media)\b|(எல்லா|புகார்|சம்பவ|அறிக்கை|செய்தி|கடிதம்|அதிகாரி|துறை|வரைவ|இதை|அதை)|(ellam|pugar|complaint|case|report|message|draft|officer)/i.test(t);
@@ -43,15 +61,22 @@ export function asksForbidden(text: string): boolean {
 
 // ---- redaction: every tool result, every string --
 
-const PHONE = /(?<![\d-])(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}(?![\d-])/g;
-const LANDLINE = /(?<![\d-])0\d{2,4}[\s-]\d{6,8}(?![\d-])/g;
+// counted by digits, in any grouping; never the rest of a number, an INC- id or a date and time
+const PHONE = /(?<!\d)(?<!\d[.,:/-])(?<!\binc-)(?:(?:\+?91|0{1,2}(?:91)?)[ .-]?)?[6-9]\d(?:[ .-]?\d){8}(?![\d:])/gi;
+const LANDLINE = /(?<!\d)(?<!\d[.,:/-])(?<!\binc-)(?:\+91[ .-]?[1-9]\d(?:[ .-]?\d){8}|0[1-9](?:[ .-]?\d){8,9})(?![\d:])/gi;
+/** a list of small numbers or a date is not a phone: no group of one digit, no dd-mm-yyyy */
+const dialled = (m: string) => {
+  const groups = m.replace(/^(?:\+?91|0{1,2}(?:91)?)[ .-]/, "").split(/[ .-]/);
+  return groups.length <= 5 && groups.every((g) => g.length >= 2) && !/^\d{1,2}[-. ]\d{1,2}[-. ]\d{4}/.test(m);
+};
+const maskPhone = (m: string) => (dialled(m) ? "[hidden]" : m);
 const AADHAAR = /(?<!\d)\d{4}[\s-]\d{4}[\s-]\d{4}(?!\d)|(?<![\d-])\d{12}(?![\d-])/g;
 const EMAIL = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 /** fields that hold a citizen's own words or identity: they never leave a tool */
 const PRIVATE_KEY = /^(complainant|complainant_.*|citizen|citizen_.*|reporter|reporter_.*|caller|caller_.*|phone|mobile|contact_no|contact_number|aadhaar|aadhar|email|name_of_.*|raw_text|complaint_text|complaint_body|description_raw|address_line.*|house_no)$/i;
 
 export function redactText(s: string): string {
-  return s.replace(AADHAAR, "[hidden]").replace(PHONE, "[hidden]").replace(LANDLINE, "[hidden]").replace(EMAIL, "[hidden]");
+  return s.replace(EMAIL, "[hidden]").replace(AADHAAR, "[hidden]").replace(PHONE, maskPhone).replace(LANDLINE, maskPhone);
 }
 
 /** A deep copy with citizens' identifiers masked and their private fields dropped. */

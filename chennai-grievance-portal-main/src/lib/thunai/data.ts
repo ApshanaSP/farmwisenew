@@ -13,7 +13,7 @@ import type { ToolResult } from "@/lib/assistant/types";
 import { datasetIds, getMeta, getRows } from "@/lib/studio/store";
 import { loadWardDataset, resolveWard } from "@/lib/wards";
 import { referenceLeads } from "./world";
-import type { Lookups, InRow } from "./complete";
+import { studioRow, type Lookups, type InRow } from "./complete";
 import type { World } from "./types";
 import type { ScopeT } from "./stage";
 
@@ -56,7 +56,7 @@ export interface Hands {
   severe: (s: ScopeT) => ReturnType<typeof consoleSevere>;
   news: (s: ScopeT) => ReturnType<typeof consoleNews>;
   map: (q: string) => Promise<AskResponse>;
-  dataset?: (name: string) => Promise<{ name: string; rows: InRow[] } | null>;
+  dataset?: (name: string) => Promise<{ name: string; rows: InRow[]; total: number } | null>;
   lookups?: (w: World) => Lookups;
 }
 
@@ -95,20 +95,14 @@ function lookups(w: World): Lookups {
 }
 
 /** A Data Studio dataset by name, its rows read as a table "complete this data" understands (columns matched by their names). */
-async function studioDataset(name: string): Promise<{ name: string; rows: InRow[] } | null> {
+async function studioDataset(name: string): Promise<{ name: string; rows: InRow[]; total: number } | null> {
   const q = name.toLowerCase();
   const id = datasetIds().find((x) => { const m = getMeta(x); return m && (m.name ?? "").toLowerCase().includes(q); });
   if (!id) return null;
   const meta = getMeta(id)!;
-  const pick = (r: Record<string, unknown>, re: RegExp) => { const k = Object.keys(r).find((x) => re.test(x)); return k ? r[k] : null; };
-  const rows = getRows(id).slice(0, 30).map((raw, i): InRow => {
-    const r = raw as unknown as Record<string, unknown>;
-    const ward = Number(pick(r, /^ward/i)), zone = Number(pick(r, /^zone(_?no|_?num.*)?$/i));
-    const lat = Number(pick(r, /^lat/i)), lon = Number(pick(r, /^(lon|lng)/i));
-    return { id: String(pick(r, /^(id|incident_id|ref)/i) ?? `row ${i + 1}`), title: String(pick(r, /^(title|name|subject|description)/i) ?? `Row ${i + 1}`), ward: ward || null, zone: zone || null, zoneName: (pick(r, /^zone_?name$/i) as string) ?? null,
-      place: (pick(r, /^(place|area|locality|location)/i) as string) ?? null, dept: (pick(r, /^(dept|department)/i) as string) ?? null, cat: (pick(r, /^(cat|category|type)/i) as string) ?? null, lat: lat || null, lon: lon || null };
-  });
-  return { name: String(meta.name ?? name), rows };
+  const all = getRows(id);
+  const rows = all.slice(0, 30).map((raw, i): InRow => studioRow(raw as unknown as Record<string, unknown>, i));
+  return { name: String(meta.name ?? name), rows, total: all.length };
 }
 
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {

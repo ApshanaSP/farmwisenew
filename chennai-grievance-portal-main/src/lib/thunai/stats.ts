@@ -19,17 +19,19 @@ const r2 = (x: number) => Math.round(x * 100) / 100;
 export interface Outlier { key: string; value: number; z: number; median: number }
 /**
  * Modified z-score: 0.6745 (x - median) / MAD, |z| >= 3.5 flagged (Iglewicz and Hoaglin). When over half the values are equal
- * MAD is 0, and the mean absolute deviation stands in, scaled by 1.2533.
+ * MAD is 0, and the mean absolute deviation stands in, scaled by 1.2533. That scale is tiny when nearly all are equal (one severe
+ * case against fourteen zones with none gives z = 12), so it flags only a gap beyond what chance gives a count: 3 sqrt(median), at least 3.
  */
 export function modifiedZ(items: { key: string; value: number }[], threshold = 3.5): Stat<Outlier[]> {
   const xs = items.map((x) => x.value), n = xs.length;
   const med = median(xs);
   const mad = median(xs.map((x) => Math.abs(x - med)));
   const meanAd = xs.reduce((a, x) => a + Math.abs(x - med), 0) / Math.max(1, n);
+  const minGap = mad ? 0 : Math.max(3, 3 * Math.sqrt(Math.abs(med)));
   const flagged = n < 4 || (!mad && !meanAd) ? [] : items
     .map((it) => ({ key: it.key, value: it.value, median: med, z: r2(mad ? (0.6745 * (it.value - med)) / mad : (it.value - med) / (1.2533 * meanAd)) }))
-    .filter((o) => Math.abs(o.z) >= threshold).sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
-  return { value: flagged, n, method: `Modified z-score (median ${r2(med)}, MAD ${r2(mad)}), flagged at ${threshold}`,
+    .filter((o) => Math.abs(o.z) >= threshold && Math.abs(o.value - med) >= minGap).sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  return { value: flagged, n, method: `Modified z-score (median ${r2(med)}, ${mad ? `MAD ${r2(mad)}` : `MAD is 0, so mean deviation ${r2(meanAd)}`}), flagged at ${threshold}`,
     caveat: n < 8 ? { en: `Only ${n} values: read this as a hint.`, ta: `${n} மதிப்புகள் மட்டுமே: இதை ஒரு குறிப்பாக மட்டும் கொள்ளுங்கள்.` }
       : { en: "It says which differ from the rest, not why.", ta: "எவை மற்றவற்றிலிருந்து வேறுபடுகின்றன என்று மட்டுமே சொல்கிறது, ஏன் என்று அல்ல." } };
 }
@@ -65,7 +67,7 @@ export function trendOf(series: number[]): Stat<TrendStat> {
   const slope = median(slopes);
   const significant = n >= 8 && p < 0.05;
   return { value: { slope: r2(slope), direction: !significant ? "flat" : slope > 0 ? "rising" : slope < 0 ? "falling" : "flat", s, z: r2(z), p: r2(p), significant }, n,
-    method: `Theil-Sen slope with a Mann-Kendall test (p ${r2(p)})`,
+    method: `Theil-Sen slope with a Mann-Kendall test (p ${p < 0.01 ? "< 0.01" : r2(p)})`,
     caveat: n < 8 ? { en: `Only ${n} points: too few to call a trend.`, ta: `${n} புள்ளிகள் மட்டுமே: போக்கு என்று சொல்ல இவை போதாது.` }
       : significant ? { en: "The direction is more than noise; the slope is approximate.", ta: "இந்தத் திசை சத்தத்தை விட அதிகம்; சரிவு தோராயமானது." }
         : { en: "No clear direction: the changes are within noise.", ta: "தெளிவான திசை இல்லை: மாற்றங்கள் சத்தத்துக்குள் உள்ளன." } };

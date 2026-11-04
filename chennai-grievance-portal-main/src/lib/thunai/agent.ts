@@ -14,6 +14,7 @@ import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { detectLang } from "./normalise";
+import { figuresIn, zoneLabelsOut } from "./numbergate";
 import { AiStep, checkPlan, codesText, stateCard, type AiPlan, type Context } from "./plan";
 import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
 import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
@@ -192,6 +193,10 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (s.what === "severe" || s.what === "hotspots" || s.what === "cases") out.what = s.what;
   if (s.sort === "priority" || s.sort === "complaints" || s.sort === "time") out.sort = s.sort;
   if (s.fresh === true) out.fresh = true;
+  if (recipe === "complete" && Array.isArray(s.ids)) {
+    const ids = [...new Set(s.ids.map((x) => clip(x, 64)).filter((x) => /^INC-[A-Za-z0-9_-]{1,60}$/.test(x)))].slice(0, 30);
+    if (ids.length) out.ids = ids;
+  }
   if (recipe === "case") {
     const id = clip(s.id, 80).toUpperCase();
     if (/^INC-[A-Z0-9-]{4,60}$/.test(id)) out.id = id;
@@ -240,9 +245,14 @@ export function stageOpFromSteps(steps: unknown, stage: StageContext | null): { 
   return null;
 }
 
-/** English and Tamil number words and Tamil digits: a model-written line must not carry a figure spelled out either. */
-const NUMBER_WORDS = /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|lakh|lakhs|crore|crores|dozen|dozens|million|billion|percent)\b|[\u0BE6-\u0BEF]|(இரண்டு|மூன்று|நான்கு|ஐந்து|ஆறு|ஏழு|எட்டு|ஒன்பது|பத்து|நூறு|ஆயிரம்|லட்சம்|கோடி)/i;
-export const spellsNumber = (t: string | null | undefined) => !!t && NUMBER_WORDS.test(t);
+/** A figure spelled out or in Tamil digits, by the speech gate's own reading: Latin digits have their own checks, against what was said and planned. */
+export const spellsNumber = (t: string | null | undefined) => !!t && (/[௦-௯]/.test(t) || figuresIn(t).some((f) => f.words));
+
+/** The zones a turn's tools were asked about: "Zone 13" in a line about them is a name, not a figure. */
+export function zonesNamed(results: { result: ToolResult }[]): number[] {
+  const of = (x: unknown) => (x as { zone?: unknown } | null | undefined)?.zone;
+  return results.flatMap(({ result: r }) => [of(r.args), of(r.args?.scope), of(r.scope)]).filter((z): z is number => typeof z === "number");
+}
 
 /** Button names a model may never press by name: anything that sends, approves, deletes or discards. */
 const DANGER = /send|approve|confirm|delete|remove|discard|reject|submit|அனுப்பு|நீக்கு|உறுதி/i;
@@ -492,7 +502,7 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   for (const f of facts) for (const v of [f.value, Math.round(f.value), Math.round(f.value * 10) / 10, Math.abs(f.value)]) allowed.add(String(v));
   const said = clip(plan.say, 600);
   // the Collector's own numbers are not evidence: an answer's figures must all come from the results
-  const ok = said && figuresOk(said, allowed) && !spellsNumber(said);
+  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said);
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");

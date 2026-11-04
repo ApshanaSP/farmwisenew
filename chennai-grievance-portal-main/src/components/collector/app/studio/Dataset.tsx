@@ -237,7 +237,7 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
         <a className="ds-icon" lang="ta" href={`/api/collector/studio/${m.id}?brief=pdf&lang=ta`} title="தரவுச் சுருக்கம் (PDF, தமிழ்)" aria-label="Dataset brief PDF in Tamil">த</a>
         {confirm ? (
-          <span className="ds-confirm">Delete?<button onClick={del}>Yes</button><button onClick={() => setConfirm(false)}>No</button></span>
+          <span className="ds-confirm">Delete?<button onClick={del} data-jarvis-never>Yes</button><button onClick={() => setConfirm(false)}>No</button></span>
         ) : <button className="ds-icon" onClick={() => setConfirm(true)} title="Delete this dataset"><I n="trash" /></button>}
       </div>
       </div>

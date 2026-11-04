@@ -24,6 +24,8 @@ export interface EarsHooks {
   onQuickEnd?: (wall: number) => void;
   /** every frame: the level (0..1) for the HUD, and the speech held so far (ms) */
   onFrame?: (level: number, heldMs: number) => void;
+  /** the microphone went away (unplugged, permission taken back) */
+  onDead?: () => void;
 }
 
 declare global {
@@ -117,6 +119,7 @@ export class Ears {
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
     const silero = await loadSilero();
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
+    this.stream?.getTracks().forEach((t) => { t.onended = () => { if (my === this.gen) this.hooks.onDead?.(); }; });
     this.silero = silero;
     this.kind = this.silero ? "silero" : "energy";
     const ctx = new AC();
