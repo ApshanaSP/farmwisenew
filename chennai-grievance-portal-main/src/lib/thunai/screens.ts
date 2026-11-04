@@ -13,6 +13,7 @@ import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { hoursBetween } from "./stagelocal";
 import { DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
+import { explainIssue, factSheet, plainWhat } from "./narrate";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -193,6 +194,17 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
     slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: c.notes.slice(0, 4) };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   return { runs: c.runs, doc };
+}
+
+/** The next step for one incident, from its kind; null when there is no step better than asking its own department. */
+function actionForOne(label: string): { en: string; ta: string } | null {
+  const l = label.toLowerCase();
+  if (/flood|waterlog|inundat|stagnat/.test(l)) return { en: "ask Storm Water Drains to send a pump and check the drain there", ta: "மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்" };
+  if (/garbage|waste|sanitat|debris/.test(l)) return { en: "ask the conservancy team to clear it", ta: "துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்" };
+  if (/vector|dengue|mosquito|malaria|fever/.test(l)) return { en: "ask Health for fogging around it", ta: "சுகாதாரத் துறையிடம் அங்கே புகை மருந்து அடிக்கச் சொல்லலாம்" };
+  if (/water supply|sewage|sewer|drinking|pipe/.test(l)) return { en: "ask Metrowater for a status by this evening", ta: "குடிநீர் வாரியத்திடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்" };
+  if (/road|pothole/.test(l)) return { en: "ask the roads department for a repair date", ta: "சாலைத் துறையிடம் சரிசெய்யும் தேதி கேட்கலாம்" };
+  return null;
 }
 
 function actionFor(label: string): { en: string; ta: string } {
@@ -449,7 +461,12 @@ async function cases(c: Ctx): Promise<Part> {
  */
 export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey): Bilingual {
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
-  const where = (r: CaseRowT) => { const l = spokenLabel(r); return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l; };
+  // a case is named by its short summary; a long title would be the record read out, so it is retold as its kind and place
+  const where = (r: CaseRowT) => {
+    let l = spokenLabel(r);
+    if (l.split(/\s+/).length >= 6) { const k = plainWhat(r.cat, r.title); l = `${k ? k.en : "an issue"}${r.place ? ` at ${r.place}` : ""}`; }
+    return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l;
+  };
   const late = rows.filter((r) => r.overdue);
   const first = late.length ? late.slice(0, 2) : rows.slice(0, 1);
   const byDept = new Map<string, number>();
@@ -468,7 +485,13 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
 }
 
 async function caseDetail(c: Ctx): Promise<Part> {
-  const id = c.slots.id;
+  let id = c.slots.id;
+  // "explain the flooding in Velachery": no number said, so the incident that matters most in what was named
+  if (!id && (c.s.zone || c.s.cat || c.slots.q)) {
+    const top = await call(c, "incidents", { scope: scopeArg(c.s), sev: null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
+    id = String(((top?.data as { rows?: Row[] } | undefined)?.rows ?? [])[0]?.id ?? "") || null;
+    if (!id) return { title: "Nothing open", takeaway: null, say: bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."), blocks: [{ kind: "Note", id: "none", text: "No open incident matches this." }] };
+  }
   if (!id) return { title: "Incident", takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
   const r = await call(c, "incident_detail", { id });
   const d = r.data as { incident: Row; reports: Row[]; officials: Row[] } | null;
@@ -484,9 +507,10 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const blocks: BlockT[] = [block];
   if (row.lat != null && row.lon != null) blocks.push({ kind: "MapView", id: "map", title: "Where", rule: null, shade: null, outline: [],
     points: [{ n: 1, id: row.id, lat: row.lat, lon: row.lon as number, label: row.title, sev: row.sev, value: null, hot: true }] });
-  const open = i.open_for ? `, open for ${i.open_for}` : "";
-  const say = bi(`${spokenLabel(row)}. ${row.sev ? `${row.sev}, ` : ""}${row.status ? `status ${row.status}` : ""}${open}. ${row.deptName ? `${row.deptName} handles it.` : ""}`.replace(/\s{2,}/g, " "),
-    `${spokenLabel(row)}. ${row.sev ? SEV_TA[row.sev] ?? row.sev : ""} நிலை${row.status ? `, ${row.status}` : ""}. ${row.deptName ? `${row.deptName} பொறுப்பு.` : ""}`);
+  // retold, not read out: a fact sheet from the record, then what is wrong, how long, why it matters and what I would do
+  const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
+  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(`${row.cat ?? ""} ${row.title}`), placeTa });
+  const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   return { title: row.title, takeaway: row.overdue ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
 }
 

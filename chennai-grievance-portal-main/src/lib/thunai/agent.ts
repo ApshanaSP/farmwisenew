@@ -207,7 +207,8 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
       const id2 = ids[Math.round(s.item) - 1];
       if (id2 && /^INC-/.test(id2)) out.id = id2;
     }
-    if (!out.id) return null;
+    // no number said: the incident that matters most in what was named (a zone, a kind, words)
+    if (!out.id && !(out.zones.length || out.cat || out.q)) return null;
   }
   if (recipe === "compare" && out.zones.length < 2 && out.depts.length < 2) return null;
   if (recipe === "nearby" && !out.q) return null;

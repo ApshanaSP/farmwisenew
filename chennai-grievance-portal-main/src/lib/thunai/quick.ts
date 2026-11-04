@@ -226,6 +226,9 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   return null;
 }
 
+/** asking for one issue to be explained (not a list, not a reason behind a rise) */
+const EXPLAIN = / (explain|explain to me|what s going on with|whats going on with|what is going on with|what s wrong with|whats wrong with|what is wrong with|what happened (with|to|at)|tell me more about the|tell me about the|vilakku|vilakkam|vilakkunga|puriyala|puriyalai|enna aachu) |விளக்கு|விளக்கம்|என்ன ஆச்சு|புரியல/;
+
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const t = norm(text);
@@ -234,6 +237,8 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
+  // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
+  if (EXPLAIN.test(t) && (cat || zones.length) && !isComparing(t)) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, period: period ?? "monthly", fresh: true } };
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
   // "what should I do about flooding in Adyar": what needs the Collector first, reasoned in code from the data
   if (ADVICE.test(t)) return { recipe: "advise", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
