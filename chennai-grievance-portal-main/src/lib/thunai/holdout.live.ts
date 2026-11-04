@@ -34,9 +34,10 @@ const world = { ...WORLD, ...referenceWorld(), zones: WORLD.zones.map((z) => ({ 
 // HOLDOUT_DIR=holdout2 is the set frozen on 4 Nov 2026 after eval/holdout had been read; a run refuses it if a hash has changed
 const SET_DIR = process.env.HOLDOUT_DIR ?? "holdout";
 const DIR = path.join(process.cwd(), "eval", SET_DIR);
-if (SET_DIR !== "holdout") for (const line of fs.readFileSync(path.join(DIR, "HASHES.txt"), "utf8").trim().split("\n")) {
+if (SET_DIR !== "holdout") for (const line of fs.readFileSync(path.join(DIR, "HASHES.txt"), "utf8").trim().split(/\r?\n/)) {
   const [hash, rel] = line.split(" *");
-  const now = crypto.createHash("sha256").update(fs.readFileSync(path.join(process.cwd(), rel))).digest("hex");
+  // git may change the line endings on checkout: the hash is of the text
+  const now = crypto.createHash("sha256").update(fs.readFileSync(path.join(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n")).digest("hex");
   if (now !== hash) throw new Error(`${rel} no longer matches its frozen hash`);
 }
 const items = () => fs.readFileSync(path.join(DIR, "understanding.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as HoldoutItem);
@@ -225,8 +226,10 @@ it.runIf(mode === "followups")("the 20 follow-ups, resolved in code from the ear
 it.runIf(mode === "planner2")("the shipped planner, through planRound, on the frozen sample", async () => {
   const which = process.env.HOLDOUT_SET ?? "final40";
   const sample = SET_DIR === "holdout" ? "planner40.json" : "live60.json";
-  const ids = JSON.parse(fs.readFileSync(path.join(DIR, sample), "utf8"))[which] as string[];
+  const lists = JSON.parse(fs.readFileSync(path.join(DIR, sample), "utf8")) as Record<string, string[]>;
   const all = items();
+  // for tuning, on the old set only: the Tamil sentences outside the 40, which no planner change was made against
+  const ids = which === "tamilrest" ? all.filter((x) => x.lang === "ta" && !lists.final40.includes(x.id)).map((x) => x.id) : lists[which];
   const set = ids.map((id) => all.find((x) => x.id === id)!);
   const gap = Number(process.env.LIVE_GAP_MS ?? 12_000);
   const models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];

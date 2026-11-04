@@ -19,9 +19,10 @@ export interface Rung { provider: ProviderName; model: string }
 
 /** The rungs in order: the Groq models with the most budget left first; those out of budget are not rungs at all. */
 export function ladder(need: number, l: Ledger = ledger(), bedrock = false): Rung[] {
+  // qwen first while the minute has room for this call and a margin (fastest, and on the held-out rows the most often right), else by what is left of the minute
+  const roomy = (x: { model: string; r: { left: { tpm: number } } }) => x.model === GROQ_MODELS[0] && x.r.left.tpm >= need * 1.5;
   const groq = GROQ_MODELS.map((model) => ({ model, r: l.room("groq", model, { tokens: need }) })).filter((x) => x.r.ok)
-    // qwen first when it fits one call (its output cap is small but it answers fastest), else by what is left of the minute
-    .sort((a, b) => Math.min(b.r.left.tpm, b.r.left.tpd) - Math.min(a.r.left.tpm, a.r.left.tpd))
+    .sort((a, b) => Number(roomy(b)) - Number(roomy(a)) || Math.min(b.r.left.tpm, b.r.left.tpd) - Math.min(a.r.left.tpm, a.r.left.tpd))
     .map((x): Rung => ({ provider: "groq", model: x.model }));
   const lite: Rung[] = l.room("gemini", LITE_MODEL, { tokens: need }).ok ? [{ provider: "gemini", model: LITE_MODEL }] : [];
   return [...groq, ...lite, ...(bedrock ? [{ provider: "bedrock" as const, model: "" }] : [])];

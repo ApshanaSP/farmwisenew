@@ -21,7 +21,9 @@ const PRIVATE_ID = /(home\s*address|residential\s*address|வீட்டு\s*�
 const DIALLED = /(?:phone|mobile|contact|whatsapp)\s*(?:numbers?|nos?|details)/i;
 /** a head-count, not somebody's number: "the number of people evacuated", "number of citizen complaints" */
 const HEAD_COUNT = /(?<!(?:phone|mobile|contact|whatsapp|aadhaar|aadhar)\s+)\bnumber\s+of\s+(?:(?!the\b)[\w'-]+\s+){0,2}(?:people|persons|residents|citizens|victims|applicants|callers|complainants|petitioners|complaints|grievances|cases|incidents)\b/gi;
-const WHO_DID = /^\s*(?:show me\s+)?who\s+(?:complained|complains|filed|lodged|reported|raised|called|rang|sent|wrote|gave|made)\b|^\s*(?:show me\s+)?who\b.*\b(?:complainant|complainer|caller|petitioner|informant|reporter)\b|^\s*(?:show me\s+)?yaaru\b.*(?:complain|pugar|kuduth)/i;
+/** "who wrote it" and "who sent this complaint" ask for a citizen; "who wrote the book Mahabharata" does not: these verbs need a citizen's thing, or a bare pointer, after them */
+const WHO_MADE = /^\s*(?:show me\s+)?who\s+(?:raised|sent|wrote|gave|made)\b.*\b(?:complaints?|grievances?|petitions?|tickets?|issues?|letters?|messages?|e-?mails?|mails?|reports?|this|that|it|them|these|those|one)\b|^\s*(?:show me\s+)?who\s+(?:raised|sent|wrote|gave|made)\s*[?.!]*\s*$/i;
+const WHO_DID = /^\s*(?:show me\s+)?who\s+(?:complained|complains|filed|lodged|reported|called|rang)\b|^\s*(?:show me\s+)?who\b.*\b(?:complainant|complainer|caller|petitioner|informant|reporter)\b|^\s*(?:show me\s+)?yaaru\b.*(?:complain|pugar|kuduth)/i;
 const WHO_TA = /(?:^|\s)(?:யார்|யாரு|யாருடைய|யாரது)(?=$|[\s,.!?])/;
 
 /** Asks for a private fact about a citizen: refused in code. An officer's contact is a different thing (contacts tool). */
@@ -36,7 +38,7 @@ export function asksPrivate(text: string): boolean {
   if (IDENTIFIER.test(c) && (PERSON.test(c) || PRIVATE_ID.test(c))) return !counting;
   if (DIALLED.test(c) && /(complaint|புகார|pugar)/i.test(c)) return !counting;
   // "who complained about the drain in Adyar", "yaaru complaint kuduthadhu"
-  if (WHO_DID.test(t)) return true;
+  if (WHO_DID.test(t) || WHO_MADE.test(t)) return true;
   if (WHO_TA.test(t) && /புகார/.test(t) && !/பொறுப்பு/.test(t)) return true;
   if (/\bcaller\b.*\b(mobile|number)\b|\b(pugar|complaint)\s+kuduth|yaaru\s+pugar/i.test(t) && /(per|peru|address|number|enna|kuduthadhu|pannadhu)/i.test(t)) return true;
   return false;

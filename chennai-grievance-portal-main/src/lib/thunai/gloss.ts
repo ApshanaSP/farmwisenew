@@ -66,7 +66,16 @@ const LEX: [string[], string][] = [
   [["mattum", "மட்டும்"], "only"],
   [["konjam", "கொஞ்சம்"], "a little/please"],
   [["neenga", "நீங்க"], "you"],
-  [["naan", "நான்"], "I"]
+  [["naan", "நான்"], "I"],
+  // English as it is said in Tamil letters: nothing in the sentence says what these are unless the model can sound them out
+  [["கம்ப்ளைன்ட்", "கம்ப்ளெயின்ட்", "கம்ப்ளைண்ட்", "கம்ப்ளெயிண்ட்"], "complaint"],
+  [["கேஸ்"], "case"], [["மேப்"], "map"], [["டேம்"], "dam/reservoir"], [["லேக்"], "lake"], [["ஒர்க்"], "work"], [["டீம்"], "team"],
+  [["பேஜ்"], "page"], [["ஸ்கிரீன்"], "screen"], [["ரிப்போர்ட்"], "report"], [["ஸ்டேட்டஸ்"], "status"], [["லிஸ்ட்"], "list"], [["ஏரியா"], "area"],
+  [["டிபார்ட்மென்ட்", "டிபார்ட்மெண்ட்"], "department"], [["ட்ரெண்ட்"], "trend"], [["டேஷ்போர்டு", "டாஷ்போர்டு"], "dashboard"], [["லெவல்"], "level"],
+  [["பில்டர்"], "filter"], [["சேவ்"], "save"], [["கிலோமீட்டர்"], "kilometre"], [["ஸ்பாட்"], "spot"], [["சைடு"], "side"], [["மந்த்"], "month"],
+  [["வீக்"], "week"], [["ரேட்"], "rate"], [["ஓபன்"], "open"], [["போன", "கடந்த"], "last/past"], [["நிலவரம்", "nilavaram"], "situation"],
+  [["மாறு", "மாத்து", "maathu", "mathu"], "change to"], [["சுத்தி", "சுற்றி", "suthi"], "around"], [["குடிநீர்"], "drinking water"], [["பட்டியல்"], "list"],
+  [["mosam", "mosama", "மோசம்", "மோசமா"], "bad"], [["aagala", "ஆகல"], "not done"], [["kooda", "கூட"], "with/compared to"]
 ];
 
 const LATIN = new Map<string, string>();

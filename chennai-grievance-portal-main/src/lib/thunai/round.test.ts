@@ -83,15 +83,55 @@ describe("one round of thinking", () => {
     expect(m.asked.length).toBe(1);
     expect(m.asked[0].system).not.toMatch(/saveWorkspace|mandi_prices/);
   });
+  it("Tamil and Tanglish get one wide call, with screens and steps together; English keeps its small bundle", async () => {
+    const m = model(() => ({ kind: "do", lang: "ta", reply: null, options: [], steps: [], stage: null, screen: { ...SCREEN_NULLS, recipe: "performance", by: "dept" } }));
+    const r = await planRound(body("ஸ்டார்ம் வாட்டர் ஒர்க் எப்படி போகுது", { turnId: "t-ta" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(r.result?.stage?.recipe).toBe("performance");
+    expect(m.asked.length).toBe(1);
+    expect(m.asked[0].system).toMatch(/saveWorkspace/);
+    expect(m.asked[0].system).toMatch(/Spoken Tamil/);
+    expect(m.asked[0].prompt).toMatch(/Gloss: |Code read/);
+    const en = model(() => ({ kind: "do", lang: "en", reply: null, options: [], screen: { ...SCREEN_NULLS, recipe: "brief" } }));
+    await planRound(body("something useful for my morning", { turnId: "t-en" }), WORLD, fakeHands(), "u", undefined, undefined, deps(en));
+    expect(en.asked[0].system).not.toMatch(/Spoken Tamil|saveWorkspace/);
+  });
+  it("a sentence the model only asks back about, or chats about, gets the rules' reading if they have one", async () => {
+    for (const kind of ["clarify", "chat"]) {
+      const m = model(() => ({ kind, lang: "en", reply: "Which one?", options: [{ label: "a", request: "a" }, { label: "b", request: "b" }], screen: null }));
+      const r = await planRound(body("how is dengue doing in Kodambakkam", { turnId: `t-${kind}` }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+      expect(m.asked.length).toBe(1);
+      expect(r.result).toMatchObject({ kind: "do", note: `rules-after-${kind}` });
+      expect(r.result?.stage?.recipe).toBe("cases");
+      expect(r.tokens).toBeGreaterThan(0);
+    }
+    const hello = model(() => ({ kind: "chat", lang: "en", reply: "Good morning.", options: [], screen: null }));
+    const h = await planRound(body("good morning there", { turnId: "t-hi" }), WORLD, fakeHands(), "u", undefined, undefined, deps(hello));
+    expect(h.result).toMatchObject({ kind: "chat", reply: "Good morning." });
+  });
+  it("a model's refusal stands: code does not overrule it with a screen", async () => {
+    const m = model(() => ({ kind: "refuse", lang: "en", reply: "I can't do that.", options: [], screen: null }));
+    const r = await planRound(body("how is dengue doing in Kodambakkam", { turnId: "t-ref" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(r.result?.kind).toBe("refuse");
+  });
+  it("a general question that reaches the planner is labelled, and a figure in it stops it being said", async () => {
+    const m = model(() => ({ kind: "general", lang: "en", reply: "A tall mountain in the Himalaya.", options: [], screen: null }));
+    const r = await planRound(body("tell me something about the Everest mountain", { turnId: "t-g1" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(r.result).toMatchObject({ kind: "chat", note: "general" });
+    expect(r.result?.reply).toMatch(/^General knowledge, not district data: A tall mountain/);
+    const f = model(() => ({ kind: "general", lang: "en", reply: "It is 8849 metres tall.", options: [], screen: null }));
+    const g = await planRound(body("how tall is the Everest mountain", { turnId: "t-g2" }), WORLD, fakeHands(), "u", undefined, undefined, deps(f));
+    expect(g.result?.note).toBe("general-fallback");
+    expect(g.result?.reply).not.toMatch(/8849/);
+  });
   it("token diet: every bundle's call is at most 2.5K tokens, and a later round is smaller", async () => {
     const big = { ...STATE };
-    for (const [text, stageNow] of [["put together something for me", null], ["go somewhere useful", null], ["remember this for me", null], ["how many open complaints in all", null], ["sort these for me", stage]] as const) {
+    for (const [text, stageNow] of [["put together something for me", null], ["go somewhere useful", null], ["remember this for me", null], ["how many open complaints in all", null], ["sort these for me", stage], ["ஏதாவது பயனுள்ளதா போடு", null]] as const) {
       const m = model(() => ({ kind: "chat", lang: "en", reply: "ok", options: [], calls: [], done: true, say: null, steps: [], stage: null, screen: null }));
       await planRound(body(text, { stage: stageNow, state: big as never, stageDigest: stageNow ? "x".repeat(1400) : null, turns: [{ heard: "h".repeat(120), did: "d".repeat(80) }, { heard: "h".repeat(120), did: "d".repeat(80) }], turnId: `t-${text}` }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
       const a = m.asked[0];
       expect(a, text).toBeTruthy();
       // the schema adds its fields: the screens bundle is the largest, about 400 tokens of schema
-      expect(Math.ceil((a.system.length + a.prompt.length) / 3.5), text).toBeLessThan(2100);
+      expect(Math.ceil((a.system.length + a.prompt.length) / 3.5), text).toBeLessThan(2300);
     }
   });
   it("rounds: the plan looks first, the facts stay on the server, later rounds send only the delta", async () => {

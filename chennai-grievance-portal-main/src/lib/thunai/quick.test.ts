@@ -30,6 +30,35 @@ describe("the fast lane leaves reasoning to the planner", () => {
   });
 });
 
+describe("the fast lane hands off when it is unsure", () => {
+  it.each([
+    ["one word of the sentence looks like a price", "Show me the police closure rates by zone"],
+    ["a topic named, with no request for its cases", "What is the freezing point of heavy water?"],
+    ["more of the sentence unknown than known", "Metro Water pipeline leakage inspection audit backlog"],
+    ["a map word it cannot fill", "Show the GIS overlay of broken streetlights in Manali"],
+    ["near something that is not a facility", "water stagnation spots near the Guindy flyover"],
+    ["asked to keep the view", "Pin this water level view as Monsoon Monitor"],
+    ["two kinds of question", "morning briefing on rain"],
+    ["two topics", "rain and air quality in Adyar"],
+    ["a comparison with one zone named", "Put Puzhal and Poondi side by side"],
+    ["how a topic is doing", "how is dengue doing in Kodambakkam"],
+    ["Tanglish it cannot account for", "Teynampet la kuppai yaarum eduthuttu pogave illa romba naala"],
+    ["Tamil it cannot account for", "போன மாசம் டெங்கு கொஞ்சம் கூடிக்கிட்டே வந்துச்சு போல"]
+  ])("%s", (_, t) => expect(q(t)).toBeNull());
+  it("keeps what it is sure of", () => {
+    expect(q("Why did garbage complaints spike in Manali")).toMatchObject({ recipe: "why", slots: { zones: [2], cat: "SOLID_WASTE" } });
+    expect(q("பூண்டி டேம் நிலவரம்")).toMatchObject({ recipe: "readings", slots: { metric: "lakes", name: "Poondi" } });
+    expect(q("how full is Chembarambakkam")).toMatchObject({ recipe: "readings", slots: { metric: "lakes", name: "Chembarambakkam" } });
+    expect(q("tomato rate at Koyambedu")).toMatchObject({ recipe: "prices" });
+    expect(q("any garbage complaints in Adyar")).toMatchObject({ recipe: "cases", slots: { zones: [13] } });
+    expect(q("அடையாறில் புகார்கள் காட்டு")).toMatchObject({ recipe: "cases", slots: { zones: [13] } });
+    expect(q("Adyar la complaints kaattu")).toMatchObject({ recipe: "cases", slots: { zones: [13] } });
+  });
+  it("still gives its reading to the frame, which asks with noBail", () => {
+    expect(quickScreen("Pin this water level view", WORLD, { noBail: true })).not.toBeNull();
+  });
+});
+
 describe("Jarvis's fast lane: everyday questions answered from the data with no model", () => {
   it("severe cases, in a place, in a period", () => {
     expect(q("Show me the severe cases")).toMatchObject({ recipe: "cases", slots: { sev: "Severe", period: "daily" } });

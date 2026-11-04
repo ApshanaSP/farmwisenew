@@ -25,7 +25,7 @@ function answers(script: Record<string, { ms?: number; fail?: boolean }>) {
 describe("the ladder", () => {
   it("goes Groq with the most budget first, then the next, then flash-lite", () => {
     const l = fresh();
-    l.record("groq", "qwen/qwen3.8-27b", { tokens: 7000 });
+    l.record("groq", "qwen/qwen3.8-27b", { tokens: 7500 });
     const r = ladder(500, l);
     expect(r[r.length - 1]).toEqual({ provider: "gemini", model: "gemini-3.5-flash-lite" });
     expect(r[r.length - 2].model).toBe("qwen/qwen3.8-27b");
@@ -37,6 +37,13 @@ describe("the ladder", () => {
     l.cool("groq", "openai/gpt-oss-20b", 60_000);
     expect(ladder(500, l).map((x) => x.model)).toEqual(["qwen/qwen3.8-27b", "gemini-3.5-flash-lite"]);
     expect(ladder(500, l, true).some((x) => x.provider === "bedrock")).toBe(true);
+  });
+  it("qwen comes first while the minute has room for this call and a margin, and gives way when it has not", () => {
+    const l = fresh();
+    l.record("groq", "qwen/qwen3.8-27b", { tokens: 6000 });
+    expect(ladder(1000, l)[0].model).toBe("qwen/qwen3.8-27b");
+    l.record("groq", "qwen/qwen3.8-27b", { tokens: 1000 });
+    expect(ladder(1000, l)[0].model).not.toBe("qwen/qwen3.8-27b");
   });
   it("never includes gemini-3.8-flash", () => {
     expect(ladder(100, fresh()).some((x) => x.model.includes("3.8-flash"))).toBe(false);

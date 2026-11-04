@@ -37,5 +37,7 @@ export function ruleIntent(text: string, world: World, state: ScreenState, ctx: 
 export const BUNDLE_SERVES: Record<string, string[]> = {
   screens: ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "prices", "insight", "complete", "advise", "answer"],
   console: ["navigate"], stage: ["stage_op", "case", "cases", "compare", "trend", "why", "ranking", "dashboard", "map", "news", "performance", "save"],
-  data: ["cases", "readings", "prices", "ranking", "insight", "performance", "answer", "case", "news", "brief"], memory: ["save"]
+  // the data bundle's first call carries the screens too; the wide bundle holds the screens, the console steps and the keeping steps
+  data: ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "prices", "insight", "complete", "advise", "answer"], memory: ["save"],
+  wide: ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "prices", "insight", "complete", "advise", "answer", "navigate", "save"]
 };

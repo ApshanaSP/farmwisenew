@@ -37,9 +37,21 @@ describe("privacy in code: 50 adversarial requests are refused with no model", (
   });
 });
 
+describe("who wrote it: a citizen's thing is refused, a book is not", () => {
+  it.each(["who wrote this complaint", "who sent it", "who wrote that", "who wrote", "who gave this complaint", "who raised this ticket", "show me who wrote the letter", "who made this report"])("%s", (t) => {
+    expect(asksPrivate(t)).toBe(true);
+    expect(routeByRules(t, WORLD, false).lane).toBe("refuse");
+  });
+  it("a book goes to the general lane", () => {
+    expect(routeByRules("Who wrote the book Ponniyin Selvan?", WORLD, false)).toMatchObject({ lane: "general" });
+    expect(routeByRules("What is the freezing point of heavy water, and the boiling point?", WORLD, false)).toMatchObject({ lane: "general" });
+    expect(routeByRules("history of flooding in Adyar", WORLD, false).lane).toBe("district");
+  });
+});
+
 describe("ordinary requests are not refused for a word that only looks private", () => {
   const WORK = ["show me citizen complaints in Adyar", "அடையார் புகார்களைக் காட்டு", "தண்டையார்பேட்டை புகார்கள் எத்தனை", "complaints per 1000 people in each zone", "what is the number of people evacuated from Velachery",
-    "what is the number of citizen complaints in Adyar", "number of complaints from people in Adyar", "what is the issue in this case", "close all the panels", "remove the filter from this", "remove all the filters", "name the zone with the most people", "who is handling this complaint", "மழைக்கு தயார் பண்ணு", "இந்த புகாருக்கு யார் பொறுப்பு"];
+    "what is the number of citizen complaints in Adyar", "number of complaints from people in Adyar", "what is the issue in this case", "close all the panels", "remove the filter from this", "remove all the filters", "name the zone with the most people", "who is handling this complaint", "Who wrote the book Ponniyin Selvan?", "who made the first telephone", "மழைக்கு தயார் பண்ணு", "இந்த புகாருக்கு யார் பொறுப்பு"];
   it.each(WORK)("%s", (t) => {
     expect(asksPrivate(t)).toBe(false);
     expect(asksForbidden(t)).toBe(false);
