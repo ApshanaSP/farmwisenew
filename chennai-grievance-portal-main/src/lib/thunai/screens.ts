@@ -414,7 +414,13 @@ async function cases(c: Ctx): Promise<Part> {
     const data = r.data as { rows: Row[]; total: number };
     rows = data.rows.map((x) => caseRow(x, w));
     if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
-    total = slots.status === "overdue" ? rows.length : data.total;
+    total = data.total;
+    if (slots.status === "overdue") {
+      // the list is one page of 12: the overdue total is counted for the whole scope, by department, never from that page (BUG-007)
+      const fu = await call(c, "dept_followups", { scope: scopeArg(s) }).catch(() => null);
+      const fr = ((fu?.data as { rows?: Row[] } | undefined)?.rows ?? []).filter((x) => !s.dept || x.code === s.dept);
+      total = fr.length ? Math.max(rows.length, fr.reduce((a, x) => a + (num(x.overdue) ?? 0), 0)) : rows.length;
+    }
     source = "list";
   }
   // the console's own list is shown whole ("the 6 severe cases" are the ones it shows, however many it shows now)
