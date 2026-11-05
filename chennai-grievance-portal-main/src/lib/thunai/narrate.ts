@@ -99,6 +99,15 @@ export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: s
   };
 }
 
+/** "to X" in Tamil, joined as the word ends: துறை -> துறையிடம், மாநகராட்சி -> மாநகராட்சியிடம், வாரியம் -> வாரியத்திடம், பிரிவு -> பிரிவிடம் */
+export function idam(word: string): string {
+  if (/[ைிீ]$/.test(word)) return `${word}யிடம்`;
+  if (/ம்$/.test(word)) return `${word.slice(0, -2)}த்திடம்`;
+  if (/ு$/.test(word)) return `${word.slice(0, -1)}ிடம்`;
+  if (/்$/.test(word)) return `${word.slice(0, -1)}ிடம்`;
+  return `${word}இடம்`;
+}
+
 const article = (s: string) => (/^(a|an|the|uncleared|standing|street|bad)\b/i.test(s) ? s : `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`);
 
 /** The retelling, in two to four short sentences. `label` is the record's own short name, used only when the kind is unknown. */
@@ -115,7 +124,7 @@ export function explainIssue(f: FactSheet, label: string, sources: string[] = []
   const t1 = `${f.placeTa ? `${f.placeTa} பகுதியில் ` : ""}${whatTa} இருக்கிறது.`;
   const t2 = age ? `${age.ta} தீர்க்கப்படாமல் இருக்கிறது${f.overdue ? ", கெடுவும் தாண்டிவிட்டது" : ""}.` : f.overdue ? "கெடு தாண்டிவிட்டது." : "";
   const t3 = f.complaints >= 2 ? `${f.complaints} பேர் புகார் கொடுத்திருக்கிறார்கள், நிறைய பேரைப் பாதிக்கிறது${f.serious ? "; இது கடுமையானவற்றில் ஒன்று" : ""}.` : f.serious ? "இது கடுமையானவற்றில் ஒன்று." : "";
-  const t4 = f.next ? `${f.next.ta}${f.overdue ? ", இன்றே" : ""}.` : f.who ? `${f.who.ta}விடம் ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "";
+  const t4 = f.next ? `${f.next.ta}${f.overdue ? ", இன்றே" : ""}.` : f.who ? `${idam(f.who.ta)} ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "";
   const ta = [t1, t2, t3, t4].filter(Boolean).join(" ");
   // the gates: a line that reads a record out, or carries a field, falls back to the plainest retelling
   const names = [f.place ?? "", f.placeTa ?? ""];

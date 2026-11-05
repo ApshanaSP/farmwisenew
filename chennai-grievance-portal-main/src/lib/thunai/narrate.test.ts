@@ -71,3 +71,8 @@ describe("a list's spoken line never reads a long title out", async () => {
     expect(say).toMatch(/standing water at Velachery/);
   });
 });
+
+describe("Tamil joins 'to X' as the word ends", async () => {
+  const { idam } = await import("./narrate");
+  it.each([["சுகாதாரத் துறை", "சுகாதாரத் துறையிடம்"], ["மாநகராட்சி", "மாநகராட்சியிடம்"], ["குடிநீர் வாரியம்", "குடிநீர் வாரியத்திடம்"], ["மழைநீர் வடிகால் பிரிவு", "மழைநீர் வடிகால் பிரிவிடம்"], ["காவல்துறை", "காவல்துறையிடம்"]])("%s", (w, want) => expect(idam(w)).toBe(want));
+});
