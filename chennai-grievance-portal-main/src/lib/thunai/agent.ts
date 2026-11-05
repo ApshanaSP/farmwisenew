@@ -10,6 +10,7 @@
  *
  * No imports with side effects: the model call and the data hands are injected (agent.test.ts uses fakes).
  */
+import { echoesRecords, recordText, stepsAskedFor } from "./injection";
 import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
@@ -431,14 +432,17 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   const base: AgentResult = { ...none(lang, run.t0, null, run.model), rounds: run.rounds, calls: run.results.map((r) => r.name) };
   // v1's checker reads the kind, the reply and the steps: unreal codes and figures the Collector did not say are dropped
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
-  if (v1.kind === "chat") return spellsNumber(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
+  // a line that repeats the records' own wording is an instruction hidden in the data speaking, not Jarvis (BUG-011)
+  const records = recordText(run.results);
+  if (v1.kind === "chat") return spellsNumber(v1.reply) || echoesRecords(v1.reply, records) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
   if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
   if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
   // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
-  let modelSteps = (v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? "")));
-  const reply = v1.kind === "do" && !spellsNumber(v1.reply) ? v1.reply : null;
+  // 3: steps beyond showing data (typing, the voice mode, theme, language, memory, drafts, presses) only when the Collector's own words asked
+  let modelSteps = stepsAskedFor((v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? ""))), input.text);
+  const reply = v1.kind === "do" && !spellsNumber(v1.reply) && !echoesRecords(v1.reply, records) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
   if (screen) screen = { ...screen, slots: dropCopiedFilters(screen.slots, input, w) };
   // an answer screen with nothing looked up has nothing to show: the plan's other parts (or the fallbacks) answer
@@ -503,8 +507,9 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   const allowed = new Set<string>();
   for (const f of facts) for (const v of [f.value, Math.round(f.value), Math.round(f.value * 10) / 10, Math.abs(f.value)]) allowed.add(String(v));
   const said = clip(plan.say, 600);
-  // the Collector's own numbers are not evidence: an answer's figures must all come from the results
-  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said);
+  // the Collector's own numbers are not evidence: an answer's figures must all come from the results; and an answer that repeats
+  // a record's wording is that record speaking (an instruction hidden in a title), so the facts are shown instead (BUG-011)
+  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !echoesRecords(said, recordText(results));
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");
