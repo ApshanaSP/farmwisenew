@@ -76,3 +76,14 @@ describe("Tamil joins 'to X' as the word ends", async () => {
   const { idam } = await import("./narrate");
   it.each([["சுகாதாரத் துறை", "சுகாதாரத் துறையிடம்"], ["மாநகராட்சி", "மாநகராட்சியிடம்"], ["குடிநீர் வாரியம்", "குடிநீர் வாரியத்திடம்"], ["மழைநீர் வடிகால் பிரிவு", "மழைநீர் வடிகால் பிரிவிடம்"], ["காவல்துறை", "காவல்துறையிடம்"]])("%s", (w, want) => expect(idam(w)).toBe(want));
 });
+
+describe("a new request with an open screen is not taken as a follow-up (BUG-020, found in the browser)", () => {
+  const noModel = { generate: async () => { throw new Error("no model"); } } as never;
+  it("explain the flooding complaint in Adyar, with a police brief open, explains a case", async () => {
+    const stage = { recipe: "brief", title: "Greater Chennai Police · brief, today", focus: null, slots: { dept: "POL-GCP", period: "daily" }, blocks: [{ kind: "Kpis", ids: [] }] };
+    const body = RoundBody.parse({ turnId: "frame-explain-1", round: 0, text: "explain the flooding complaint in Adyar", turns: [{ heard: "chennai city police report", did: "showed a screen" }], lastText: "chennai city police report", stage, direct: null,
+      state: { page: "overview", period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null, mapMode: "zones", panel: null, incident: null, listLength: 3, lastPlace: null, numbers: false } });
+    const r = (await planRound(body, world, fakeHands(), "t", { notes: [], habits: {} }, undefined, { llm: noModel })).result!;
+    expect(r.stage?.recipe).toBe("case");
+  });
+});

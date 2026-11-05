@@ -53,7 +53,8 @@ function lastFrame(i: FrameInput): { recipe: Recipe; slots: Record<string, unkno
 const ELLIPSIS_EN = /^ (and|what about|how about|same|same for|same in|also|now|then|no|not|actually|instead|only|just|in|for|at|but|ok|okay) /;
 const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
 const ELLIPSIS_TG = /^ (appo|apram|adhe|athe|illa|venam|vendaam|sari) | (la|le|ku|mattum|pathi)\??\s*$/;
-const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank)\b/;
+// a sentence that carries its own request (explain this issue, a report or status on something) is a new request, never "and in X?" (BUG-020)
+const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank|explain|brief|report|status|update|whats going on|what s going on|what is going on|whats wrong|vilakku|vilakkam)\b|விளக்கு|அறிக்கை|நிலவரம்/;
 
 const WHY = /^ (why|whats the reason|what is the reason|reason|cause|how come|yen|ஏன்|காரணம்|karanam)( [^ ]+){0,5} $/;
 const WEEKLY = / (weekly|this week|last week|week|வாரம்|இந்த வாரம்|vaaram) /, MONTHLY = / (monthly|this month|last month|month|மாதம்|இந்த மாதம்|கடந்த மாதம்|maasam|masam) /, DAILY = / (daily|today|இன்று|இன்னைக்கு|innaiku) /, QUARTER = / (quarterly|this quarter|last quarter|quarter|காலாண்டு) /;
