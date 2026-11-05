@@ -321,10 +321,9 @@ export async function insights(period: Period, zone: number | null, dept: string
     }
     return other.total ? [...lines, other] : lines;
   };
-  const nowD = new Date(now.replace(" ", "T") + "+05:30");
-  const monday = new Date(nowD.getTime() - ((nowD.getDay() + 6) % 7) * 864e5);
-  const weeks = Array.from({ length: 12 }, (_, j) => new Date(monday.getTime() - (12 - j) * 7 * 864e5).toISOString().slice(0, 10));
-  const months = Array.from({ length: 6 }, (_, j) => { const d = new Date(nowD.getFullYear(), nowD.getMonth() - (5 - j), 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
+  // the week and month keys are India calendar days, whatever the server's own time zone: the day comes from `now` (an IST wall
+  // clock) and the arithmetic is in UTC, so an IST server after midnight and a UTC server on a Monday morning agree (BUG-008)
+  const { weeks, months } = trendKeys(now);
 
   // the zone adding the most reports to each category, last 4 weeks against the 4 before
   const whereRising: Record<string, { zone: number; name: string; recent: number; before: number }> = {};
@@ -568,3 +567,13 @@ export async function pattern(p: PatternQuery) {
   };
 }
 export type PatternDetail = NonNullable<Awaited<ReturnType<typeof pattern>>>;
+
+/** The Trends page's 12 week keys (Mondays) and 6 month keys, as India calendar days, whatever the server's time zone. */
+export function trendKeys(now: string): { weeks: string[]; months: string[] } {
+  const [ny, nm, nd] = now.slice(0, 10).split("-").map(Number);
+  const today = Date.UTC(ny, nm - 1, nd);
+  const monday = today - ((new Date(today).getUTCDay() + 6) % 7) * 864e5;
+  const weeks = Array.from({ length: 12 }, (_, j) => new Date(monday - (12 - j) * 7 * 864e5).toISOString().slice(0, 10));
+  const months = Array.from({ length: 6 }, (_, j) => { const d = new Date(Date.UTC(ny, nm - 1 - (5 - j), 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; });
+  return { weeks, months };
+}
