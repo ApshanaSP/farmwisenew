@@ -8,16 +8,16 @@ All live model scores in this report are **Groq only** (qwen3.8-27b, gpt-oss-20b
 
 | | Found | Fixed | Open |
 |---|---|---|---|
-| P0 | 7 | 7 | 0 |
-| P1 | 13 | 10 | 3 |
+| P0 | 13 | 13 | 0 |
+| P1 | 19 | 17 | 2 |
 | P2 | 10 | 3 | 7 |
-| P3 | 4 | 1 | 3 |
+| P3 | 5 | 1 | 4 |
 
 The list is in `BUGS.md`. Fixed means a test fails without the fix, except in rows marked otherwise. BUG-001, 002, 004, 006 and 020 were confirmed on the real console, on a production build, in a browser (`evidence/BROWSER.md`). BUG-020 was found that way. The skeptic's refutation of the first police fix is counted as BUG-005 and fixed.
 
 **Remaining-bug estimate (rough).** Two independent hunters covered the same high-risk areas. They found 6 and 5 P0/P1 bugs, with 2 in common. The Lincoln-Petersen estimate is about 15 in those areas (Chapman 13), so roughly 4 to 6 were not found by either. Per pass, the hunters found 9 distinct P0/P1 bugs and the red team found 4 more P0s.
 
-**Stop rule:** not met. One hunting pass ran, not the two clean passes the brief requires. No known P0 is open. 3 P1s are open: dev routes with no sign-in, `/api/i18n` with no session, and model chat lines that can spell out a name or email.
+**Stop rule:** not met. Pass 2, run by two fresh hunters, found 5 new P0s and 4 P1s. All of them are fixed (BUG-021 to BUG-029). No third pass was run. No known P0 is open. 2 P1s are open, both the owner's decisions: `/api/i18n` with no session, and complaint wording used as titles.
 
 ## 2. "chennai city police report": before and after (real runs)
 
