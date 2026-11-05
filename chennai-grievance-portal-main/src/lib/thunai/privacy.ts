@@ -26,13 +26,22 @@ const WHO_MADE = /^\s*(?:show me\s+)?who\s+(?:raised|sent|wrote|gave|made)\b.*\b
 const WHO_DID = /^\s*(?:show me\s+)?who\s+(?:complained|complains|filed|lodged|reported|called|rang)\b|^\s*(?:show me\s+)?who\b.*\b(?:complainant|complainer|caller|petitioner|informant|reporter)\b|^\s*(?:show me\s+)?yaaru\b.*(?:complain|pugar|kuduth)/i;
 const WHO_TA = /(?:^|\s)(?:யார்|யாரு|யாருடைய|யாரது)(?=$|[\s,.!?])/;
 
+/** one complaint, by number or as "the complaint" */
+const ONE_FILING = /\binc-[a-z0-9-]+|\b(?:this|that|the)\s+(?:complaint|grievance|petition)\b|\bcomplaint\s*(?:no\.?|number|#)?\s*\d+|அந்த\s*புகார்|இந்த\s*புகார்/i;
+/** what belongs to whoever filed it: their contact, name, address, or the complaint's own text */
+const FILER_THING = /\b(phone|mobile|contact|number|whatsapp|e-?mail|address|name|aadhaar|aadhar|description|text|wording|message|filed\s+(?:it|this)|who\s+filed)\b|தொலைபேசி|நம்பர்|எண்|முகவரி|பெயர்|பேர்/i;
+
 /** Asks for a private fact about a citizen: refused in code. An officer's contact is a different thing (contacts tool). */
 export function asksPrivate(text: string): boolean {
   const t = text.trim();
+  if (/\bwhose\b.{0,40}(complaint|grievance|petition|inc-)|யாருடைய\s*புகார்|\byaar\w*\s+(kuduth|pannin|koduth)/i.test(t)) return true;
+  if (/(புகார்தாரர்|புகார்\s*கொடுத்தவர்|மனுதாரர்).{0,20}(பேர்|பெயர்|எண்|நம்பர்|முகவரி)/.test(t)) return true;
   // "how many people", "the people's complaints": people as a count or a subject is not a request for a person's details
   const counting = /^(how many|count)\b/i.test(t) && !/\b(their|his|her|whose)\b/i.test(t);
   if (THEIR_WORDS.test(t) || (STATE_ID.test(t) && !counting)) return true;
   if (/(officer|engineer|commissioner|department|dept|helpline|control room|call cent(?:re|er)|complaint cell|அதிகாரி|துறை)/i.test(t) && !PERSON.test(t)) return false;
+  // asked about one complaint by its number or as "the complaint": its filer, their contact, its own text (red team, BUG-010)
+  if (ONE_FILING.test(t) && FILER_THING.test(t)) return true;
   if (NAME_OF.test(t)) return true;
   const c = t.replace(HEAD_COUNT, "a count");
   if (IDENTIFIER.test(c) && (PERSON.test(c) || PRIVATE_ID.test(c))) return !counting;
@@ -73,12 +82,34 @@ const dialled = (m: string) => {
 };
 const maskPhone = (m: string) => (dialled(m) ? "[hidden]" : m);
 const AADHAAR = /(?<!\d)\d{4}[\s-]\d{4}[\s-]\d{4}(?!\d)|(?<![\d-])\d{12}(?![\d-])/g;
-const EMAIL = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
+const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w.-]+)?/g;
+/** "ramesh [at] gmail [dot] com", "ramesh at gmail dot com" */
+const EMAIL_SPOKEN = /[\w.+-]+\s*(?:\[at\]|\(at\)|\s+at\s+)\s*[\w-]+\s*(?:\[dot\]|\(dot\)|\s+dot\s+)\s*[a-z]{2,}/gi;
+/** a number said as words, eight digits or more: "nine eight four zero one ..." */
+const SPELLED = /(?:\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|double|triple)\b[\s,.-]*){8,}/gi;
+/** digits in any grouping (spaces, dots, dashes, slashes, brackets): counted, then judged as a phone or an Aadhaar */
+const RUN = /(?<![\w-])\+?\(?\d[\d .\/()-]{7,24}\d(?![\w])/g;
+const ODD_DIGITS = /[\uFF10-\uFF19\u0BE6-\u0BEF]/g;
 /** fields that hold a citizen's own words or identity: they never leave a tool */
-const PRIVATE_KEY = /^(complainant|complainant_.*|citizen|citizen_.*|reporter|reporter_.*|caller|caller_.*|phone|mobile|contact_no|contact_number|aadhaar|aadhar|email|name_of_.*|raw_text|complaint_text|complaint_body|description_raw|address_line.*|house_no)$/i;
+const PRIVATE_KEY = /^(complainant|complainant_.*|citizen|citizen_.*|reporter|reporter_.*|caller|caller_.*|phone|mobile|contact_no|contact_number|aadhaar|aadhar|email|name_of_.*|raw_text|complaint_text|complaint_body|description|description_raw|address_line.*|house_no)$/i;
+
+/** A run of digits that is someone's number: 10 from 6-9 (a mobile, with or without +91 / 0), a landline from 0, or 12 (Aadhaar). */
+function personalRun(m: string, before: string): boolean {
+  if (/:/.test(m) || /inc-$/i.test(before) || /\d{4}-\d{2}-\d{2}/.test(m) || /(?:^|\D)\d{1,2}[-./]\d{1,2}[-./]\d{2,4}(?:\D|$)/.test(m)) return false;
+  // a list of small numbers said with spaces or commas ("zones 6 7 8 9 10") is not a phone; single digits joined by dots or dashes are
+  const groups = m.trim().split(/[\s,]+/);
+  if (groups.length > 1 && groups.some((g) => /^\d$/.test(g))) return false;
+  const d = m.replace(/\D/g, "");
+  if (d.length === 12 && !/^91[6-9]/.test(d)) return true;
+  const local = d.replace(/^(?:0091|091|91|0)(?=[6-9]\d{9}$)/, "");
+  if (local.length === 10 && /^[6-9]/.test(local)) return true;
+  return /^0[1-9]\d{8,9}$/.test(d);
+}
 
 export function redactText(s: string): string {
-  return s.replace(EMAIL, "[hidden]").replace(AADHAAR, "[hidden]").replace(PHONE, maskPhone).replace(LANDLINE, maskPhone);
+  const t = s.replace(ODD_DIGITS, (c) => String((c.charCodeAt(0) - (c >= "\uFF10" && c <= "\uFF19" ? 0xFF10 : 0x0BE6)) % 10));
+  return t.replace(EMAIL_SPOKEN, "[hidden]").replace(EMAIL, "[hidden]").replace(SPELLED, "[hidden] ").replace(AADHAAR, "[hidden]").replace(PHONE, maskPhone).replace(LANDLINE, maskPhone)
+    .replace(RUN, (m, off: number, all: string) => (personalRun(m, all.slice(Math.max(0, off - 4), off)) ? "[hidden]" : m));
 }
 
 /** A deep copy with citizens' identifiers masked and their private fields dropped. */
@@ -95,4 +126,19 @@ export function redact<T>(v: T, depth = 0): T {
     return out as T;
   }
   return v;
+}
+
+/**
+ * Hands whose every result is redacted on its way out (the same rule round.ts's safeHands applies, without its cache), for any
+ * path that reads tools: no route may hand a model or the Stage a citizen's number, Aadhaar or own words (BUG-009).
+ */
+export function redactHands<H extends { tool: (n: string, a: Record<string, unknown>) => Promise<unknown>; severe: (s: never) => Promise<unknown>; news: (s: never) => Promise<unknown>; map: (q: string) => Promise<unknown>; dataset?: (n: string) => Promise<unknown> }>(h: H): H {
+  return {
+    ...h,
+    tool: (n: string, a: Record<string, unknown>) => h.tool(n, a).then((r) => redact(r)),
+    severe: (s: never) => h.severe(s).then((r) => redact(r)),
+    news: (s: never) => h.news(s).then((r) => redact(r)),
+    map: (q: string) => h.map(q).then((r) => redact(r)),
+    dataset: h.dataset ? (n: string) => h.dataset!(n).then((r) => redact(r)) : undefined
+  } as H;
 }
