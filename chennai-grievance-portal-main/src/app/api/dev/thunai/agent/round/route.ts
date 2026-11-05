@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/thunai/devguard";
 import { NextRequest, NextResponse } from "next/server";
 import { exportMeta } from "@/lib/collector/intel";
 import { serverHands } from "@/lib/thunai/data";
@@ -11,6 +12,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   // a measuring build (NEXT_PUBLIC_JARVIS_SPEC=1 at build time) keeps these; a normal production build does not
   if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_JARVIS_SPEC !== "1") return new NextResponse(null, { status: 404 });
+  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const parsed = RoundBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ done: true, result: { kind: "none" }, why: parsed.error.issues[0]?.message ?? "bad request" }, { status: 400 });
   try {

@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/thunai/devguard";
 import { NextRequest, NextResponse } from "next/server";
 import { PlanBody, screenOf, think } from "@/lib/thunai/brain";
 import { WORLD } from "@/lib/thunai/fixture";
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
 /** The dev test console's brain (/dev/thunai): the same Nova Lite planner on the reference lists. 404 in production. */
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
+  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const parsed = PlanBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ plan: { kind: "none" }, why: "bad request" }, { status: 400 });
   const { text, state, turns } = parsed.data;

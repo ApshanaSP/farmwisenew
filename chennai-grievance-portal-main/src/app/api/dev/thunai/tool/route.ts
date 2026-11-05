@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/thunai/devguard";
 import { NextRequest, NextResponse } from "next/server";
 import { ToolError } from "@/lib/assistant/tools";
 import { serverHands } from "@/lib/thunai/data";
@@ -12,6 +13,7 @@ const scope = (a: Record<string, unknown>): ScopeT => ({ period: "daily", zone: 
 /** Dev only: run one of Thunai's data calls for the stand-in console's checks (no session). 404 in production. */
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
+  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const body = (await req.json().catch(() => null)) as { tool?: string; args?: Record<string, unknown> } | null;
   if (!body?.tool || !/^[a-z_]{2,40}$/.test(body.tool)) return NextResponse.json({ error: "Send { tool, args }." }, { status: 400 });
   const h = serverHands(DEV_USER);

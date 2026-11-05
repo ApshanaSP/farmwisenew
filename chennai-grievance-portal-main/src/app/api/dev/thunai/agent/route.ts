@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/thunai/devguard";
 import { NextRequest, NextResponse } from "next/server";
 import { AgentBody, handleAgent } from "@/lib/thunai/agentServer";
 import { serverHands } from "@/lib/thunai/data";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 /** The dev test console's agent (/dev/thunai): the same agent on the local store, no sign-in. 404 in production. */
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
+  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
   const parsed = AgentBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ result: { kind: "none" }, why: parsed.error.issues[0]?.message ?? "bad request" }, { status: 400 });
   try {
