@@ -9,11 +9,11 @@ All live model scores in this report are **Groq only** (qwen3.8-27b, gpt-oss-20b
 | | Found | Fixed | Open |
 |---|---|---|---|
 | P0 | 7 | 7 | 0 |
-| P1 | 12 | 9 | 3 |
-| P2 | 9 | 3 | 6 |
-| P3 | 3 | 1 | 2 |
+| P1 | 13 | 10 | 3 |
+| P2 | 10 | 3 | 7 |
+| P3 | 4 | 1 | 3 |
 
-The list is in `BUGS.md`. Fixed means a test fails without the fix, except in rows marked otherwise. No fix has been confirmed in a browser yet; see section 7. The skeptic's refutation of the first police fix is counted as BUG-005 and fixed.
+The list is in `BUGS.md`. Fixed means a test fails without the fix, except in rows marked otherwise. BUG-001, 002, 004, 006 and 020 were confirmed on the real console, on a production build, in a browser (`evidence/BROWSER.md`). BUG-020 was found that way. The skeptic's refutation of the first police fix is counted as BUG-005 and fixed.
 
 **Remaining-bug estimate (rough).** Two independent hunters covered the same high-risk areas. They found 6 and 5 P0/P1 bugs, with 2 in common. The Lincoln-Petersen estimate is about 15 in those areas (Chapman 13), so roughly 4 to 6 were not found by either. Per pass, the hunters found 9 distinct P0/P1 bugs and the red team found 4 more P0s.
 
@@ -68,7 +68,7 @@ Scores are out of 10, rounded down. A skeptic review of scores above 7 was not r
 
 | Area | Score | Evidence | What would make it 10 |
 |---|---|---|---|
-| Correctness | 6 | 7 P0s fixed (counts, weekly keys, privacy, injection). An independent data check (`tests/qa/oracle`) found pipeline mismatches (933 cases past due but not flagged; the `kpis` complaints count). | The oracle compared against every screen; pipeline fixes; two clean hunting passes |
+| Correctness | 6 | 7 P0s fixed (counts, weekly keys, privacy, injection). On the real console, severe events (17) and open complaints (128) match the independent oracle exactly; ongoing incidents (237 against 240) and past deadline (12 against 13) differ, explained by the app's own build hooks. The oracle found pipeline issues (933 cases past due but not flagged; the `kpis` complaints count). | The oracle compared against every screen; pipeline fixes; two clean hunting passes |
 | Reliability | 5 | 2,180 tests green 3 times. No soak test, no provider-kill test, no restart test in this pass. | A 30-minute soak and the resilience tests in the brief |
 | Security and privacy | 5 | Redaction and refusals hardened, and the old route closed. Open: dev routes with no sign-in, `/api/i18n` with no session. | Close OPEN-2 and OPEN-3; a fresh red team finds nothing |
 | Data freshness and honesty | 5 | Generated feeds are labelled; briefs say how old the data is and where it comes from. Prices are 29 days old with no date; Ask District IQ still hides test data. | A live adapter for rain; the owner's decision on the labelling policy |
@@ -83,13 +83,13 @@ Scores are out of 10, rounded down. A skeptic review of scores above 7 was not r
 
 ## 6. Test strength (seeded faults)
 
-See `evidence/mutation.txt`. It is filled in by the seeded-fault run; if that file is missing, this was **not measured**.
+Hand-seeded faults (`evidence/mutation.txt`): **20 of 22 caught (91 %)** in the resolver, the gazetteer, the number gate, privacy, the speech gates, injection and narration. The two misses were real test gaps: the TANGEDCO "no records" reply and spelled-out English numbers. Tests were added for both, and the re-run caught **22 of 22**. Target ≥ 90 %: **met**. These are hand-seeded faults, not Stryker.
 
 ## 7. Not verified
 
 - The live Claude path, the Azure voice, and any real microphone.
 - Latency targets. The production latency run was not repeated.
-- The browser drive of the real console. See `evidence/` for what was captured. Anything not listed there is not verified in a browser.
+- Browser coverage: only what `evidence/BROWSER.md` lists, which is the sign-in page, the console KPIs against the oracle, and three Jarvis questions in the Chromium browser pane at 800x600. Edge, Chrome through Playwright, other viewports, Tamil overflow, keyboard and screen readers, and axe were **not run**.
 - `host-tunnel.bat`: read only, never run.
 - Writes to the real AWS store: never done. The store ran in dry-run mode on a local durable file.
 - Fixes that live only in the client (tray, Studio race, captions yes): verified by code reading and unit-tested helpers only.

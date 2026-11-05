@@ -1,0 +1,3174 @@
+{
+  "generated_at": "2026-11-05T00:30:43.736Z",
+  "now": "2026-11-05 06:00:42",
+  "snapshot_as_of": "2026-11-05 05:02:00",
+  "notes": [
+    "Store-level figures use is_open as stored. The console overlays Collector decisions (EFF, intel.ts:162) and drops news complaints routed to a department (ROUTED, intel.ts:573) from 'overdue' (intel.ts:1015); neither ops table is in the snapshot, so the two agree only while no decisions/assignments exist.",
+    "complaints = SUM(citizen_complaints) over all reported (insights.ts:119); complaints_open = over open only (KPI tile, intel.ts:707).",
+    "news_only = SUM(media_only) (insights.ts:120); news_only_open = open AND media_only (snapshot, intel.ts:1016)."
+  ],
+  "periods": {
+    "daily": {
+      "window": {
+        "from_exclusive": "2026-11-04 06:00:42",
+        "to_inclusive": "2026-11-05 06:00:42"
+      },
+      "district": {
+        "reported": 243,
+        "open": 240,
+        "severe": 17,
+        "severe_open": 16,
+        "overdue": 13,
+        "multi_source": 10,
+        "news_only": 16,
+        "news_only_open": 16,
+        "complaints": 129,
+        "complaints_open": 128
+      },
+      "previous": {
+        "reported": 171,
+        "open": 167,
+        "severe": 6,
+        "severe_open": 5,
+        "overdue": 34,
+        "multi_source": 8,
+        "news_only": 11,
+        "news_only_open": 11,
+        "complaints": 97,
+        "complaints_open": 97
+      },
+      "zones": {
+        "1": {
+          "name": "Thiruvottiyur",
+          "reported": 11,
+          "open": 11,
+          "severe": 2,
+          "severe_open": 2,
+          "overdue": 0,
+          "multi_source": 1,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 6,
+          "complaints_open": 6
+        },
+        "2": {
+          "name": "Manali",
+          "reported": 5,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "3": {
+          "name": "Madhavaram",
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "4": {
+          "name": "Tondiarpet",
+          "reported": 23,
+          "open": 23,
+          "severe": 3,
+          "severe_open": 3,
+          "overdue": 2,
+          "multi_source": 1,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 13,
+          "complaints_open": 13
+        },
+        "5": {
+          "name": "Royapuram",
+          "reported": 36,
+          "open": 35,
+          "severe": 6,
+          "severe_open": 5,
+          "overdue": 3,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 22,
+          "complaints_open": 22
+        },
+        "6": {
+          "name": "Thiru-Vi-Ka-Nagar",
+          "reported": 20,
+          "open": 20,
+          "severe": 1,
+          "severe_open": 1,
+          "overdue": 1,
+          "multi_source": 1,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 9,
+          "complaints_open": 9
+        },
+        "7": {
+          "name": "Ambattur",
+          "reported": 12,
+          "open": 12,
+          "severe": 2,
+          "severe_open": 2,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 7,
+          "complaints_open": 7
+        },
+        "8": {
+          "name": "Anna Nagar",
+          "reported": 19,
+          "open": 18,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 2,
+          "news_only_open": 2,
+          "complaints": 9,
+          "complaints_open": 8
+        },
+        "9": {
+          "name": "Teynampet",
+          "reported": 16,
+          "open": 16,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 10,
+          "complaints_open": 10
+        },
+        "10": {
+          "name": "Kodambakkam",
+          "reported": 31,
+          "open": 31,
+          "severe": 1,
+          "severe_open": 1,
+          "overdue": 2,
+          "multi_source": 2,
+          "news_only": 3,
+          "news_only_open": 3,
+          "complaints": 18,
+          "complaints_open": 18
+        },
+        "11": {
+          "name": "Valasaravakkam",
+          "reported": 10,
+          "open": 10,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 2,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 2,
+          "complaints_open": 2
+        },
+        "12": {
+          "name": "Alandur",
+          "reported": 7,
+          "open": 7,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 1,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 6,
+          "complaints_open": 6
+        },
+        "13": {
+          "name": "Adyar",
+          "reported": 13,
+          "open": 12,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 2,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 11,
+          "complaints_open": 11
+        },
+        "14": {
+          "name": "Perungudi",
+          "reported": 13,
+          "open": 13,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 11,
+          "complaints_open": 11
+        },
+        "15": {
+          "name": "Sholinganallur",
+          "reported": 7,
+          "open": 7,
+          "severe": 2,
+          "severe_open": 2,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        }
+      },
+      "no_zone": {
+        "reported": 17,
+        "open": 17,
+        "severe": 0,
+        "severe_open": 0,
+        "overdue": 2,
+        "multi_source": 0,
+        "news_only": 8,
+        "news_only_open": 8,
+        "complaints": 0,
+        "complaints_open": 0
+      },
+      "depts": {
+        "CMWSSB": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "DIST-DM": {
+          "known": true,
+          "reported": 9,
+          "open": 9,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-BLD": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-BRG": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-CNL": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-EDU": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-ELE": {
+          "known": true,
+          "reported": 23,
+          "open": 22,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 24,
+          "complaints_open": 23
+        },
+        "GCC-ENG": {
+          "known": true,
+          "reported": 15,
+          "open": 15,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 15,
+          "complaints_open": 15
+        },
+        "GCC-FMU": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-FWD": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-GAD": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-HLT": {
+          "known": true,
+          "reported": 13,
+          "open": 13,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 1,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 15,
+          "complaints_open": 15
+        },
+        "GCC-LND": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-MEC": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-PRK": {
+          "known": true,
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        },
+        "GCC-REV": {
+          "known": true,
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        },
+        "GCC-SWD": {
+          "known": true,
+          "reported": 40,
+          "open": 40,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 40,
+          "complaints_open": 40
+        },
+        "GCC-SWM": {
+          "known": true,
+          "reported": 14,
+          "open": 14,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 14,
+          "complaints_open": 14
+        },
+        "HLT-DMS": {
+          "known": true,
+          "reported": 2,
+          "open": 2,
+          "severe": 2,
+          "severe_open": 2,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "POL-GCP": {
+          "known": true,
+          "reported": 81,
+          "open": 80,
+          "severe": 5,
+          "severe_open": 5,
+          "overdue": 8,
+          "multi_source": 2,
+          "news_only": 15,
+          "news_only_open": 15,
+          "complaints": 5,
+          "complaints_open": 5
+        },
+        "PWD-BLD": {
+          "known": true,
+          "reported": 6,
+          "open": 6,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "PWD-WRD": {
+          "known": true,
+          "reported": 31,
+          "open": 30,
+          "severe": 10,
+          "severe_open": 9,
+          "overdue": 5,
+          "multi_source": 7,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 7,
+          "complaints_open": 7
+        },
+        "TNPCB": {
+          "known": true,
+          "reported": 0,
+          "open": 0,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        }
+      }
+    },
+    "weekly": {
+      "window": {
+        "from_exclusive": "2026-10-29 06:00:42",
+        "to_inclusive": "2026-11-05 06:00:42"
+      },
+      "district": {
+        "reported": 1260,
+        "open": 1096,
+        "severe": 47,
+        "severe_open": 38,
+        "overdue": 266,
+        "multi_source": 38,
+        "news_only": 97,
+        "news_only_open": 97,
+        "complaints": 673,
+        "complaints_open": 575
+      },
+      "previous": {
+        "reported": 1446,
+        "open": 472,
+        "severe": 66,
+        "severe_open": 22,
+        "overdue": 210,
+        "multi_source": 44,
+        "news_only": 94,
+        "news_only_open": 0,
+        "complaints": 874,
+        "complaints_open": 289
+      },
+      "zones": {
+        "1": {
+          "name": "Thiruvottiyur",
+          "reported": 66,
+          "open": 53,
+          "severe": 5,
+          "severe_open": 4,
+          "overdue": 15,
+          "multi_source": 4,
+          "news_only": 3,
+          "news_only_open": 3,
+          "complaints": 43,
+          "complaints_open": 34
+        },
+        "2": {
+          "name": "Manali",
+          "reported": 20,
+          "open": 18,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 5,
+          "multi_source": 0,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 8,
+          "complaints_open": 7
+        },
+        "3": {
+          "name": "Madhavaram",
+          "reported": 39,
+          "open": 34,
+          "severe": 1,
+          "severe_open": 1,
+          "overdue": 10,
+          "multi_source": 1,
+          "news_only": 4,
+          "news_only_open": 4,
+          "complaints": 25,
+          "complaints_open": 22
+        },
+        "4": {
+          "name": "Tondiarpet",
+          "reported": 101,
+          "open": 85,
+          "severe": 5,
+          "severe_open": 5,
+          "overdue": 22,
+          "multi_source": 6,
+          "news_only": 4,
+          "news_only_open": 4,
+          "complaints": 68,
+          "complaints_open": 59
+        },
+        "5": {
+          "name": "Royapuram",
+          "reported": 127,
+          "open": 116,
+          "severe": 13,
+          "severe_open": 9,
+          "overdue": 17,
+          "multi_source": 0,
+          "news_only": 5,
+          "news_only_open": 5,
+          "complaints": 66,
+          "complaints_open": 59
+        },
+        "6": {
+          "name": "Thiru-Vi-Ka-Nagar",
+          "reported": 126,
+          "open": 106,
+          "severe": 2,
+          "severe_open": 2,
+          "overdue": 18,
+          "multi_source": 4,
+          "news_only": 3,
+          "news_only_open": 3,
+          "complaints": 68,
+          "complaints_open": 54
+        },
+        "7": {
+          "name": "Ambattur",
+          "reported": 85,
+          "open": 72,
+          "severe": 5,
+          "severe_open": 5,
+          "overdue": 17,
+          "multi_source": 3,
+          "news_only": 4,
+          "news_only_open": 4,
+          "complaints": 58,
+          "complaints_open": 49
+        },
+        "8": {
+          "name": "Anna Nagar",
+          "reported": 109,
+          "open": 93,
+          "severe": 2,
+          "severe_open": 1,
+          "overdue": 20,
+          "multi_source": 2,
+          "news_only": 6,
+          "news_only_open": 6,
+          "complaints": 51,
+          "complaints_open": 41
+        },
+        "9": {
+          "name": "Teynampet",
+          "reported": 101,
+          "open": 86,
+          "severe": 2,
+          "severe_open": 1,
+          "overdue": 15,
+          "multi_source": 4,
+          "news_only": 3,
+          "news_only_open": 3,
+          "complaints": 72,
+          "complaints_open": 62
+        },
+        "10": {
+          "name": "Kodambakkam",
+          "reported": 115,
+          "open": 99,
+          "severe": 1,
+          "severe_open": 1,
+          "overdue": 19,
+          "multi_source": 3,
+          "news_only": 9,
+          "news_only_open": 9,
+          "complaints": 60,
+          "complaints_open": 52
+        },
+        "11": {
+          "name": "Valasaravakkam",
+          "reported": 54,
+          "open": 46,
+          "severe": 3,
+          "severe_open": 2,
+          "overdue": 9,
+          "multi_source": 3,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 21,
+          "complaints_open": 18
+        },
+        "12": {
+          "name": "Alandur",
+          "reported": 47,
+          "open": 46,
+          "severe": 1,
+          "severe_open": 0,
+          "overdue": 11,
+          "multi_source": 2,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 33,
+          "complaints_open": 33
+        },
+        "13": {
+          "name": "Adyar",
+          "reported": 100,
+          "open": 83,
+          "severe": 3,
+          "severe_open": 3,
+          "overdue": 21,
+          "multi_source": 5,
+          "news_only": 3,
+          "news_only_open": 3,
+          "complaints": 49,
+          "complaints_open": 40
+        },
+        "14": {
+          "name": "Perungudi",
+          "reported": 46,
+          "open": 38,
+          "severe": 1,
+          "severe_open": 1,
+          "overdue": 4,
+          "multi_source": 1,
+          "news_only": 2,
+          "news_only_open": 2,
+          "complaints": 32,
+          "complaints_open": 27
+        },
+        "15": {
+          "name": "Sholinganallur",
+          "reported": 43,
+          "open": 40,
+          "severe": 3,
+          "severe_open": 3,
+          "overdue": 8,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 19,
+          "complaints_open": 18
+        }
+      },
+      "no_zone": {
+        "reported": 81,
+        "open": 81,
+        "severe": 0,
+        "severe_open": 0,
+        "overdue": 55,
+        "multi_source": 0,
+        "news_only": 49,
+        "news_only_open": 49,
+        "complaints": 0,
+        "complaints_open": 0
+      },
+      "depts": {
+        "CMWSSB": {
+          "known": true,
+          "reported": 6,
+          "open": 6,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 6,
+          "multi_source": 0,
+          "news_only": 6,
+          "news_only_open": 6,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "DIST-DM": {
+          "known": true,
+          "reported": 33,
+          "open": 33,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 24,
+          "multi_source": 0,
+          "news_only": 4,
+          "news_only_open": 4,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-BLD": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-BRG": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-CNL": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-EDU": {
+          "known": true,
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        },
+        "GCC-ELE": {
+          "known": true,
+          "reported": 83,
+          "open": 71,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 33,
+          "multi_source": 2,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 86,
+          "complaints_open": 74
+        },
+        "GCC-ENG": {
+          "known": true,
+          "reported": 102,
+          "open": 96,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 10,
+          "multi_source": 0,
+          "news_only": 5,
+          "news_only_open": 5,
+          "complaints": 100,
+          "complaints_open": 94
+        },
+        "GCC-FMU": {
+          "known": true,
+          "reported": 2,
+          "open": 2,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 2,
+          "complaints_open": 2
+        },
+        "GCC-FWD": {
+          "known": true,
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        },
+        "GCC-GAD": {
+          "known": true,
+          "reported": 32,
+          "open": 31,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 2,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 34,
+          "complaints_open": 33
+        },
+        "GCC-HLT": {
+          "known": true,
+          "reported": 100,
+          "open": 81,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 9,
+          "multi_source": 2,
+          "news_only": 1,
+          "news_only_open": 1,
+          "complaints": 114,
+          "complaints_open": 93
+        },
+        "GCC-LND": {
+          "known": true,
+          "reported": 3,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 3,
+          "complaints_open": 3
+        },
+        "GCC-MEC": {
+          "known": true,
+          "reported": 1,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 1,
+          "complaints_open": 1
+        },
+        "GCC-PRK": {
+          "known": true,
+          "reported": 24,
+          "open": 23,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 3,
+          "multi_source": 2,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 26,
+          "complaints_open": 25
+        },
+        "GCC-REV": {
+          "known": true,
+          "reported": 22,
+          "open": 21,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 23,
+          "complaints_open": 22
+        },
+        "GCC-SWD": {
+          "known": true,
+          "reported": 123,
+          "open": 119,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 25,
+          "multi_source": 1,
+          "news_only": 9,
+          "news_only_open": 9,
+          "complaints": 120,
+          "complaints_open": 116
+        },
+        "GCC-SWM": {
+          "known": true,
+          "reported": 123,
+          "open": 74,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 32,
+          "multi_source": 2,
+          "news_only": 4,
+          "news_only_open": 4,
+          "complaints": 127,
+          "complaints_open": 75
+        },
+        "HLT-DMS": {
+          "known": true,
+          "reported": 5,
+          "open": 3,
+          "severe": 4,
+          "severe_open": 2,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "POL-GCP": {
+          "known": true,
+          "reported": 474,
+          "open": 424,
+          "severe": 20,
+          "severe_open": 20,
+          "overdue": 79,
+          "multi_source": 6,
+          "news_only": 67,
+          "news_only_open": 67,
+          "complaints": 7,
+          "complaints_open": 7
+        },
+        "PWD-BLD": {
+          "known": true,
+          "reported": 12,
+          "open": 12,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 3,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "PWD-WRD": {
+          "known": true,
+          "reported": 102,
+          "open": 83,
+          "severe": 23,
+          "severe_open": 16,
+          "overdue": 37,
+          "multi_source": 23,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 21,
+          "complaints_open": 21
+        },
+        "TNPCB": {
+          "known": true,
+          "reported": 4,
+          "open": 4,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 2,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        }
+      }
+    },
+    "monthly": {
+      "window": {
+        "from_exclusive": "2026-10-06 06:00:42",
+        "to_inclusive": "2026-11-05 06:00:42"
+      },
+      "district": {
+        "reported": 5561,
+        "open": 2014,
+        "severe": 239,
+        "severe_open": 88,
+        "overdue": 670,
+        "multi_source": 168,
+        "news_only": 431,
+        "news_only_open": 97,
+        "complaints": 3147,
+        "complaints_open": 1066
+      },
+      "previous": {
+        "reported": 4948,
+        "open": 236,
+        "severe": 187,
+        "severe_open": 23,
+        "overdue": 108,
+        "multi_source": 89,
+        "news_only": 231,
+        "news_only_open": 0,
+        "complaints": 2983,
+        "complaints_open": 65
+      },
+      "zones": {
+        "1": {
+          "name": "Thiruvottiyur",
+          "reported": 298,
+          "open": 99,
+          "severe": 16,
+          "severe_open": 8,
+          "overdue": 40,
+          "multi_source": 13,
+          "news_only": 12,
+          "news_only_open": 3,
+          "complaints": 182,
+          "complaints_open": 56
+        },
+        "2": {
+          "name": "Manali",
+          "reported": 99,
+          "open": 36,
+          "severe": 2,
+          "severe_open": 1,
+          "overdue": 15,
+          "multi_source": 0,
+          "news_only": 2,
+          "news_only_open": 1,
+          "complaints": 61,
+          "complaints_open": 19
+        },
+        "3": {
+          "name": "Madhavaram",
+          "reported": 234,
+          "open": 78,
+          "severe": 13,
+          "severe_open": 4,
+          "overdue": 34,
+          "multi_source": 10,
+          "news_only": 27,
+          "news_only_open": 4,
+          "complaints": 133,
+          "complaints_open": 42
+        },
+        "4": {
+          "name": "Tondiarpet",
+          "reported": 391,
+          "open": 139,
+          "severe": 16,
+          "severe_open": 8,
+          "overdue": 46,
+          "multi_source": 13,
+          "news_only": 13,
+          "news_only_open": 4,
+          "complaints": 261,
+          "complaints_open": 89
+        },
+        "5": {
+          "name": "Royapuram",
+          "reported": 565,
+          "open": 221,
+          "severe": 46,
+          "severe_open": 14,
+          "overdue": 67,
+          "multi_source": 10,
+          "news_only": 20,
+          "news_only_open": 5,
+          "complaints": 352,
+          "complaints_open": 141
+        },
+        "6": {
+          "name": "Thiru-Vi-Ka-Nagar",
+          "reported": 432,
+          "open": 175,
+          "severe": 14,
+          "severe_open": 4,
+          "overdue": 48,
+          "multi_source": 14,
+          "news_only": 13,
+          "news_only_open": 3,
+          "complaints": 262,
+          "complaints_open": 87
+        },
+        "7": {
+          "name": "Ambattur",
+          "reported": 319,
+          "open": 131,
+          "severe": 17,
+          "severe_open": 9,
+          "overdue": 45,
+          "multi_source": 10,
+          "news_only": 13,
+          "news_only_open": 4,
+          "complaints": 188,
+          "complaints_open": 71
+        },
+        "8": {
+          "name": "Anna Nagar",
+          "reported": 491,
+          "open": 182,
+          "severe": 25,
+          "severe_open": 6,
+          "overdue": 52,
+          "multi_source": 15,
+          "news_only": 16,
+          "news_only_open": 6,
+          "complaints": 266,
+          "complaints_open": 81
+        },
+        "9": {
+          "name": "Teynampet",
+          "reported": 476,
+          "open": 167,
+          "severe": 16,
+          "severe_open": 5,
+          "overdue": 57,
+          "multi_source": 23,
+          "news_only": 19,
+          "news_only_open": 3,
+          "complaints": 342,
+          "complaints_open": 116
+        },
+        "10": {
+          "name": "Kodambakkam",
+          "reported": 477,
+          "open": 177,
+          "severe": 12,
+          "severe_open": 2,
+          "overdue": 51,
+          "multi_source": 17,
+          "news_only": 18,
+          "news_only_open": 9,
+          "complaints": 257,
+          "complaints_open": 86
+        },
+        "11": {
+          "name": "Valasaravakkam",
+          "reported": 275,
+          "open": 98,
+          "severe": 13,
+          "severe_open": 3,
+          "overdue": 30,
+          "multi_source": 14,
+          "news_only": 5,
+          "news_only_open": 0,
+          "complaints": 176,
+          "complaints_open": 45
+        },
+        "12": {
+          "name": "Alandur",
+          "reported": 238,
+          "open": 95,
+          "severe": 9,
+          "severe_open": 5,
+          "overdue": 27,
+          "multi_source": 9,
+          "news_only": 4,
+          "news_only_open": 1,
+          "complaints": 141,
+          "complaints_open": 47
+        },
+        "13": {
+          "name": "Adyar",
+          "reported": 462,
+          "open": 159,
+          "severe": 19,
+          "severe_open": 10,
+          "overdue": 53,
+          "multi_source": 18,
+          "news_only": 32,
+          "news_only_open": 3,
+          "complaints": 262,
+          "complaints_open": 100
+        },
+        "14": {
+          "name": "Perungudi",
+          "reported": 200,
+          "open": 71,
+          "severe": 4,
+          "severe_open": 2,
+          "overdue": 18,
+          "multi_source": 2,
+          "news_only": 13,
+          "news_only_open": 2,
+          "complaints": 166,
+          "complaints_open": 52
+        },
+        "15": {
+          "name": "Sholinganallur",
+          "reported": 250,
+          "open": 103,
+          "severe": 14,
+          "severe_open": 7,
+          "overdue": 32,
+          "multi_source": 0,
+          "news_only": 7,
+          "news_only_open": 0,
+          "complaints": 98,
+          "complaints_open": 34
+        }
+      },
+      "no_zone": {
+        "reported": 354,
+        "open": 83,
+        "severe": 3,
+        "severe_open": 0,
+        "overdue": 55,
+        "multi_source": 0,
+        "news_only": 217,
+        "news_only_open": 49,
+        "complaints": 0,
+        "complaints_open": 0
+      },
+      "depts": {
+        "CMWSSB": {
+          "known": true,
+          "reported": 33,
+          "open": 6,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 6,
+          "multi_source": 0,
+          "news_only": 33,
+          "news_only_open": 6,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "DIST-DM": {
+          "known": true,
+          "reported": 147,
+          "open": 33,
+          "severe": 1,
+          "severe_open": 0,
+          "overdue": 24,
+          "multi_source": 0,
+          "news_only": 27,
+          "news_only_open": 4,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-BLD": {
+          "known": true,
+          "reported": 13,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 13,
+          "complaints_open": 5
+        },
+        "GCC-BRG": {
+          "known": true,
+          "reported": 7,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 3,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 7,
+          "complaints_open": 5
+        },
+        "GCC-CNL": {
+          "known": true,
+          "reported": 4,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 4,
+          "complaints_open": 1
+        },
+        "GCC-EDU": {
+          "known": true,
+          "reported": 22,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 22,
+          "complaints_open": 5
+        },
+        "GCC-ELE": {
+          "known": true,
+          "reported": 382,
+          "open": 88,
+          "severe": 3,
+          "severe_open": 0,
+          "overdue": 50,
+          "multi_source": 6,
+          "news_only": 12,
+          "news_only_open": 1,
+          "complaints": 409,
+          "complaints_open": 97
+        },
+        "GCC-ENG": {
+          "known": true,
+          "reported": 434,
+          "open": 223,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 90,
+          "multi_source": 1,
+          "news_only": 17,
+          "news_only_open": 5,
+          "complaints": 445,
+          "complaints_open": 239
+        },
+        "GCC-FMU": {
+          "known": true,
+          "reported": 4,
+          "open": 2,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 4,
+          "complaints_open": 2
+        },
+        "GCC-FWD": {
+          "known": true,
+          "reported": 8,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 8,
+          "complaints_open": 3
+        },
+        "GCC-GAD": {
+          "known": true,
+          "reported": 91,
+          "open": 49,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 4,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 96,
+          "complaints_open": 53
+        },
+        "GCC-HLT": {
+          "known": true,
+          "reported": 467,
+          "open": 111,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 35,
+          "multi_source": 9,
+          "news_only": 17,
+          "news_only_open": 1,
+          "complaints": 509,
+          "complaints_open": 128
+        },
+        "GCC-LND": {
+          "known": true,
+          "reported": 15,
+          "open": 8,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 15,
+          "complaints_open": 8
+        },
+        "GCC-MEC": {
+          "known": true,
+          "reported": 8,
+          "open": 2,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 8,
+          "complaints_open": 2
+        },
+        "GCC-PRK": {
+          "known": true,
+          "reported": 111,
+          "open": 34,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 12,
+          "multi_source": 3,
+          "news_only": 1,
+          "news_only_open": 0,
+          "complaints": 120,
+          "complaints_open": 38
+        },
+        "GCC-REV": {
+          "known": true,
+          "reported": 81,
+          "open": 31,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 83,
+          "complaints_open": 32
+        },
+        "GCC-SWD": {
+          "known": true,
+          "reported": 563,
+          "open": 226,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 131,
+          "multi_source": 8,
+          "news_only": 65,
+          "news_only_open": 9,
+          "complaints": 567,
+          "complaints_open": 261
+        },
+        "GCC-SWM": {
+          "known": true,
+          "reported": 577,
+          "open": 95,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 53,
+          "multi_source": 5,
+          "news_only": 15,
+          "news_only_open": 4,
+          "complaints": 608,
+          "complaints_open": 99
+        },
+        "HLT-DMS": {
+          "known": true,
+          "reported": 37,
+          "open": 3,
+          "severe": 28,
+          "severe_open": 2,
+          "overdue": 1,
+          "multi_source": 3,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 7,
+          "complaints_open": 0
+        },
+        "POL-GCP": {
+          "known": true,
+          "reported": 1977,
+          "open": 870,
+          "severe": 90,
+          "severe_open": 50,
+          "overdue": 128,
+          "multi_source": 24,
+          "news_only": 240,
+          "news_only_open": 67,
+          "complaints": 35,
+          "complaints_open": 20
+        },
+        "PWD-BLD": {
+          "known": true,
+          "reported": 54,
+          "open": 35,
+          "severe": 4,
+          "severe_open": 0,
+          "overdue": 26,
+          "multi_source": 2,
+          "news_only": 2,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "PWD-WRD": {
+          "known": true,
+          "reported": 509,
+          "open": 175,
+          "severe": 113,
+          "severe_open": 36,
+          "overdue": 104,
+          "multi_source": 107,
+          "news_only": 2,
+          "news_only_open": 0,
+          "complaints": 187,
+          "complaints_open": 68
+        },
+        "TNPCB": {
+          "known": true,
+          "reported": 17,
+          "open": 4,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 2,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        }
+      }
+    },
+    "quarterly": {
+      "window": {
+        "from_exclusive": "2026-08-07 06:00:42",
+        "to_inclusive": "2026-11-05 06:00:42"
+      },
+      "district": {
+        "reported": 15136,
+        "open": 2350,
+        "severe": 587,
+        "severe_open": 123,
+        "overdue": 815,
+        "multi_source": 303,
+        "news_only": 727,
+        "news_only_open": 97,
+        "complaints": 8942,
+        "complaints_open": 1134
+      },
+      "previous": {
+        "reported": 12774,
+        "open": 223,
+        "severe": 352,
+        "severe_open": 26,
+        "overdue": 54,
+        "multi_source": 47,
+        "news_only": 0,
+        "news_only_open": 0,
+        "complaints": 7859,
+        "complaints_open": 0
+      },
+      "zones": {
+        "1": {
+          "name": "Thiruvottiyur",
+          "reported": 806,
+          "open": 106,
+          "severe": 32,
+          "severe_open": 8,
+          "overdue": 43,
+          "multi_source": 23,
+          "news_only": 20,
+          "news_only_open": 3,
+          "complaints": 496,
+          "complaints_open": 58
+        },
+        "2": {
+          "name": "Manali",
+          "reported": 287,
+          "open": 39,
+          "severe": 6,
+          "severe_open": 1,
+          "overdue": 16,
+          "multi_source": 0,
+          "news_only": 2,
+          "news_only_open": 1,
+          "complaints": 184,
+          "complaints_open": 20
+        },
+        "3": {
+          "name": "Madhavaram",
+          "reported": 641,
+          "open": 96,
+          "severe": 28,
+          "severe_open": 6,
+          "overdue": 41,
+          "multi_source": 13,
+          "news_only": 35,
+          "news_only_open": 4,
+          "complaints": 385,
+          "complaints_open": 50
+        },
+        "4": {
+          "name": "Tondiarpet",
+          "reported": 1137,
+          "open": 164,
+          "severe": 38,
+          "severe_open": 10,
+          "overdue": 56,
+          "multi_source": 23,
+          "news_only": 19,
+          "news_only_open": 4,
+          "complaints": 820,
+          "complaints_open": 99
+        },
+        "5": {
+          "name": "Royapuram",
+          "reported": 1516,
+          "open": 252,
+          "severe": 97,
+          "severe_open": 19,
+          "overdue": 79,
+          "multi_source": 29,
+          "news_only": 30,
+          "news_only_open": 5,
+          "complaints": 875,
+          "complaints_open": 146
+        },
+        "6": {
+          "name": "Thiru-Vi-Ka-Nagar",
+          "reported": 1184,
+          "open": 204,
+          "severe": 39,
+          "severe_open": 5,
+          "overdue": 58,
+          "multi_source": 23,
+          "news_only": 24,
+          "news_only_open": 3,
+          "complaints": 717,
+          "complaints_open": 89
+        },
+        "7": {
+          "name": "Ambattur",
+          "reported": 954,
+          "open": 146,
+          "severe": 44,
+          "severe_open": 10,
+          "overdue": 52,
+          "multi_source": 22,
+          "news_only": 19,
+          "news_only_open": 4,
+          "complaints": 591,
+          "complaints_open": 74
+        },
+        "8": {
+          "name": "Anna Nagar",
+          "reported": 1316,
+          "open": 227,
+          "severe": 61,
+          "severe_open": 12,
+          "overdue": 74,
+          "multi_source": 32,
+          "news_only": 23,
+          "news_only_open": 6,
+          "complaints": 719,
+          "complaints_open": 93
+        },
+        "9": {
+          "name": "Teynampet",
+          "reported": 1347,
+          "open": 204,
+          "severe": 42,
+          "severe_open": 12,
+          "overdue": 71,
+          "multi_source": 35,
+          "news_only": 35,
+          "news_only_open": 3,
+          "complaints": 996,
+          "complaints_open": 124
+        },
+        "10": {
+          "name": "Kodambakkam",
+          "reported": 1330,
+          "open": 205,
+          "severe": 31,
+          "severe_open": 4,
+          "overdue": 64,
+          "multi_source": 30,
+          "news_only": 22,
+          "news_only_open": 9,
+          "complaints": 782,
+          "complaints_open": 93
+        },
+        "11": {
+          "name": "Valasaravakkam",
+          "reported": 831,
+          "open": 121,
+          "severe": 45,
+          "severe_open": 6,
+          "overdue": 43,
+          "multi_source": 23,
+          "news_only": 7,
+          "news_only_open": 0,
+          "complaints": 544,
+          "complaints_open": 48
+        },
+        "12": {
+          "name": "Alandur",
+          "reported": 664,
+          "open": 104,
+          "severe": 33,
+          "severe_open": 5,
+          "overdue": 33,
+          "multi_source": 20,
+          "news_only": 5,
+          "news_only_open": 1,
+          "complaints": 419,
+          "complaints_open": 47
+        },
+        "13": {
+          "name": "Adyar",
+          "reported": 1296,
+          "open": 193,
+          "severe": 48,
+          "severe_open": 14,
+          "overdue": 63,
+          "multi_source": 25,
+          "news_only": 46,
+          "news_only_open": 3,
+          "complaints": 680,
+          "complaints_open": 100
+        },
+        "14": {
+          "name": "Perungudi",
+          "reported": 564,
+          "open": 83,
+          "severe": 9,
+          "severe_open": 3,
+          "overdue": 27,
+          "multi_source": 3,
+          "news_only": 14,
+          "news_only_open": 2,
+          "complaints": 452,
+          "complaints_open": 57
+        },
+        "15": {
+          "name": "Sholinganallur",
+          "reported": 663,
+          "open": 122,
+          "severe": 28,
+          "severe_open": 8,
+          "overdue": 40,
+          "multi_source": 2,
+          "news_only": 12,
+          "news_only_open": 0,
+          "complaints": 282,
+          "complaints_open": 36
+        }
+      },
+      "no_zone": {
+        "reported": 600,
+        "open": 84,
+        "severe": 6,
+        "severe_open": 0,
+        "overdue": 55,
+        "multi_source": 0,
+        "news_only": 414,
+        "news_only_open": 49,
+        "complaints": 0,
+        "complaints_open": 0
+      },
+      "depts": {
+        "CMWSSB": {
+          "known": true,
+          "reported": 60,
+          "open": 6,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 6,
+          "multi_source": 0,
+          "news_only": 60,
+          "news_only_open": 6,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "DIST-DM": {
+          "known": true,
+          "reported": 164,
+          "open": 33,
+          "severe": 1,
+          "severe_open": 0,
+          "overdue": 24,
+          "multi_source": 0,
+          "news_only": 30,
+          "news_only_open": 4,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "GCC-BLD": {
+          "known": true,
+          "reported": 27,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 27,
+          "complaints_open": 5
+        },
+        "GCC-BRG": {
+          "known": true,
+          "reported": 20,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 3,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 20,
+          "complaints_open": 5
+        },
+        "GCC-CNL": {
+          "known": true,
+          "reported": 12,
+          "open": 1,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 12,
+          "complaints_open": 1
+        },
+        "GCC-EDU": {
+          "known": true,
+          "reported": 55,
+          "open": 5,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 55,
+          "complaints_open": 5
+        },
+        "GCC-ELE": {
+          "known": true,
+          "reported": 1123,
+          "open": 89,
+          "severe": 6,
+          "severe_open": 0,
+          "overdue": 51,
+          "multi_source": 15,
+          "news_only": 36,
+          "news_only_open": 1,
+          "complaints": 1195,
+          "complaints_open": 98
+        },
+        "GCC-ENG": {
+          "known": true,
+          "reported": 1267,
+          "open": 255,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 122,
+          "multi_source": 2,
+          "news_only": 30,
+          "news_only_open": 5,
+          "complaints": 1323,
+          "complaints_open": 275
+        },
+        "GCC-FMU": {
+          "known": true,
+          "reported": 12,
+          "open": 2,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 12,
+          "complaints_open": 2
+        },
+        "GCC-FWD": {
+          "known": true,
+          "reported": 31,
+          "open": 3,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 31,
+          "complaints_open": 3
+        },
+        "GCC-GAD": {
+          "known": true,
+          "reported": 289,
+          "open": 49,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 4,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 303,
+          "complaints_open": 53
+        },
+        "GCC-HLT": {
+          "known": true,
+          "reported": 1316,
+          "open": 111,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 35,
+          "multi_source": 14,
+          "news_only": 72,
+          "news_only_open": 1,
+          "complaints": 1365,
+          "complaints_open": 128
+        },
+        "GCC-LND": {
+          "known": true,
+          "reported": 36,
+          "open": 8,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 36,
+          "complaints_open": 8
+        },
+        "GCC-MEC": {
+          "known": true,
+          "reported": 18,
+          "open": 2,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 0,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 18,
+          "complaints_open": 2
+        },
+        "GCC-PRK": {
+          "known": true,
+          "reported": 346,
+          "open": 36,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 14,
+          "multi_source": 6,
+          "news_only": 4,
+          "news_only_open": 0,
+          "complaints": 364,
+          "complaints_open": 40
+        },
+        "GCC-REV": {
+          "known": true,
+          "reported": 235,
+          "open": 32,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 1,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 247,
+          "complaints_open": 33
+        },
+        "GCC-SWD": {
+          "known": true,
+          "reported": 1607,
+          "open": 237,
+          "severe": 1,
+          "severe_open": 0,
+          "overdue": 142,
+          "multi_source": 14,
+          "news_only": 97,
+          "news_only_open": 9,
+          "complaints": 1705,
+          "complaints_open": 276
+        },
+        "GCC-SWM": {
+          "known": true,
+          "reported": 1712,
+          "open": 99,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 57,
+          "multi_source": 6,
+          "news_only": 21,
+          "news_only_open": 4,
+          "complaints": 1838,
+          "complaints_open": 103
+        },
+        "HLT-DMS": {
+          "known": true,
+          "reported": 101,
+          "open": 3,
+          "severe": 57,
+          "severe_open": 2,
+          "overdue": 1,
+          "multi_source": 9,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 18,
+          "complaints_open": 0
+        },
+        "POL-GCP": {
+          "known": true,
+          "reported": 5357,
+          "open": 1093,
+          "severe": 264,
+          "severe_open": 82,
+          "overdue": 160,
+          "multi_source": 44,
+          "news_only": 369,
+          "news_only_open": 67,
+          "complaints": 67,
+          "complaints_open": 20
+        },
+        "PWD-BLD": {
+          "known": true,
+          "reported": 160,
+          "open": 51,
+          "severe": 17,
+          "severe_open": 0,
+          "overdue": 42,
+          "multi_source": 11,
+          "news_only": 6,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        },
+        "PWD-WRD": {
+          "known": true,
+          "reported": 1171,
+          "open": 221,
+          "severe": 241,
+          "severe_open": 39,
+          "overdue": 150,
+          "multi_source": 182,
+          "news_only": 2,
+          "news_only_open": 0,
+          "complaints": 306,
+          "complaints_open": 77
+        },
+        "TNPCB": {
+          "known": true,
+          "reported": 17,
+          "open": 4,
+          "severe": 0,
+          "severe_open": 0,
+          "overdue": 2,
+          "multi_source": 0,
+          "news_only": 0,
+          "news_only_open": 0,
+          "complaints": 0,
+          "complaints_open": 0
+        }
+      }
+    }
+  },
+  "sums": {
+    "daily": {
+      "zones_plus_no_zone_vs_district": [],
+      "zone_not_in_ref_wards": 0,
+      "depts_vs_district": [],
+      "lead_dept_null": 0,
+      "lead_dept_not_in_ref_departments": []
+    },
+    "weekly": {
+      "zones_plus_no_zone_vs_district": [],
+      "zone_not_in_ref_wards": 0,
+      "depts_vs_district": [],
+      "lead_dept_null": 0,
+      "lead_dept_not_in_ref_departments": []
+    },
+    "monthly": {
+      "zones_plus_no_zone_vs_district": [],
+      "zone_not_in_ref_wards": 0,
+      "depts_vs_district": [],
+      "lead_dept_null": 0,
+      "lead_dept_not_in_ref_departments": []
+    },
+    "quarterly": {
+      "zones_plus_no_zone_vs_district": [],
+      "zone_not_in_ref_wards": 0,
+      "depts_vs_district": [],
+      "lead_dept_null": 0,
+      "lead_dept_not_in_ref_departments": []
+    }
+  },
+  "members": {
+    "incidents": 27910,
+    "members": 33990,
+    "events": 33990,
+    "duplicate_incident_ids": {
+      "n": 0,
+      "examples": []
+    },
+    "duplicate_event_ids": {
+      "n": 0,
+      "examples": []
+    },
+    "events_in_more_than_one_incident": {
+      "n": 0,
+      "examples": []
+    },
+    "member_rows_without_incident": {
+      "n": 0,
+      "examples": []
+    },
+    "incidents_without_members": {
+      "n": 0,
+      "examples": []
+    },
+    "member_events_not_in_events": {
+      "n": 0,
+      "examples": []
+    },
+    "events_not_in_any_incident": {
+      "n": 0,
+      "examples": []
+    },
+    "member_count_mismatch": {
+      "n": 0,
+      "examples": []
+    },
+    "source_count_mismatch": {
+      "n": 0,
+      "examples": []
+    },
+    "complaints_vs_grievance_members": {
+      "n": 0,
+      "examples": []
+    },
+    "first_reported_not_min_member": {
+      "n": 0,
+      "examples": []
+    },
+    "media_only_with_non_news_source": {
+      "n": 0,
+      "examples": []
+    }
+  },
+  "dates": {
+    "incidents": {
+      "first_reported_in_future": {
+        "n": 0,
+        "examples": []
+      },
+      "closed_before_reported": {
+        "n": 0,
+        "examples": []
+      },
+      "verified_before_reported": {
+        "n": 0,
+        "examples": []
+      },
+      "last_update_before_reported": {
+        "n": 0,
+        "examples": []
+      },
+      "deadline_before_reported": {
+        "n": 0,
+        "examples": []
+      },
+      "occurred_after_reported": {
+        "n": 5,
+        "examples": [
+          {
+            "incident_id": "INC-20261103-1A4D71",
+            "occurred_at_est": "2026-11-05 00:00:00",
+            "first_reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "incident_id": "INC-20261103-A41A60",
+            "occurred_at_est": "2026-11-06 00:00:00",
+            "first_reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "incident_id": "INC-20261103-A46CB2",
+            "occurred_at_est": "2026-11-07 00:00:00",
+            "first_reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "incident_id": "INC-20261104-46BBF4",
+            "occurred_at_est": "2026-11-08 00:00:00",
+            "first_reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "incident_id": "INC-20261104-7574E3",
+            "occurred_at_est": "2026-11-09 00:00:00",
+            "first_reported_at": "2026-11-04 18:59:29"
+          }
+        ]
+      },
+      "closed_in_future": {
+        "n": 0,
+        "examples": []
+      },
+      "open_but_closed_at_set": {
+        "n": 0,
+        "examples": []
+      },
+      "closed_without_closed_at": {
+        "n": 748,
+        "examples": [
+          {
+            "incident_id": "INC-20260518-7338E3",
+            "status_std": "Lapsed"
+          },
+          {
+            "incident_id": "INC-20260625-5851E2",
+            "status_std": "Lapsed"
+          },
+          {
+            "incident_id": "INC-20260809-3B59C3",
+            "status_std": "Lapsed"
+          },
+          {
+            "incident_id": "INC-20260809-E444EF",
+            "status_std": "Lapsed"
+          },
+          {
+            "incident_id": "INC-20260810-4E9968",
+            "status_std": "Lapsed"
+          }
+        ]
+      },
+      "is_open_disagrees_with_status": {
+        "n": 0,
+        "examples": []
+      },
+      "open_past_due_not_flagged": {
+        "n": 938,
+        "examples": [
+          {
+            "incident_id": "INC-20260510-8B18E0",
+            "first_reported_at": "2026-05-10 19:35:07",
+            "sla_due_at": "2026-05-17 19:35:07",
+            "sla_breached": 0
+          },
+          {
+            "incident_id": "INC-20260511-96BA5C",
+            "first_reported_at": "2026-05-11 23:49:29",
+            "sla_due_at": "2026-05-18 23:49:29",
+            "sla_breached": 0
+          },
+          {
+            "incident_id": "INC-20260513-ED3774",
+            "first_reported_at": "2026-05-13 17:16:58",
+            "sla_due_at": "2026-05-13 19:16:58",
+            "sla_breached": 0
+          },
+          {
+            "incident_id": "INC-20260514-13DED0",
+            "first_reported_at": "2026-05-14 23:50:01",
+            "sla_due_at": "2026-05-21 23:50:01",
+            "sla_breached": 0
+          },
+          {
+            "incident_id": "INC-20260514-415A7D",
+            "first_reported_at": "2026-05-14 10:51:10",
+            "sla_due_at": "2026-05-21 10:51:10",
+            "sla_breached": 0
+          }
+        ]
+      },
+      "open_flagged_but_not_yet_due": {
+        "n": 0,
+        "examples": []
+      },
+      "zone_name_disagrees_with_ref_zones": {
+        "n": 0,
+        "examples": []
+      }
+    },
+    "events": {
+      "reported_in_future": {
+        "n": 0,
+        "examples": []
+      },
+      "closed_before_reported": {
+        "n": 0,
+        "examples": []
+      },
+      "occurred_after_reported": {
+        "n": 5,
+        "examples": [
+          {
+            "event_id": "IMDW-202611050000",
+            "occurred_at": "2026-11-05 00:00:00",
+            "reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "event_id": "IMDW-202611060000",
+            "occurred_at": "2026-11-06 00:00:00",
+            "reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "event_id": "IMDW-202611070000",
+            "occurred_at": "2026-11-07 00:00:00",
+            "reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "event_id": "IMDW-202611080000",
+            "occurred_at": "2026-11-08 00:00:00",
+            "reported_at": "2026-11-04 18:59:29"
+          },
+          {
+            "event_id": "IMDW-202611090000",
+            "occurred_at": "2026-11-09 00:00:00",
+            "reported_at": "2026-11-04 18:59:29"
+          }
+        ]
+      }
+    },
+    "actions": {
+      "completed_before_assigned": {
+        "n": 0,
+        "examples": []
+      },
+      "due_before_assigned": {
+        "n": 0,
+        "examples": []
+      },
+      "verified_before_completed": {
+        "n": 0,
+        "examples": []
+      }
+    }
+  },
+  "latest_dates": {
+    "actions": {
+      "rows": 5426,
+      "latest": "2026-12-28 00:00:00",
+      "columns": {
+        "assigned_at": {
+          "max": "2026-11-05 03:43:10",
+          "after_now": 0
+        },
+        "due_at": {
+          "max": "2026-12-28 00:00:00",
+          "after_now": 330
+        },
+        "completed_at": {
+          "max": "2026-11-05 02:57:23",
+          "after_now": 0
+        },
+        "verified_at": {
+          "max": "2026-11-05 02:43:52",
+          "after_now": 0
+        }
+      }
+    },
+    "agent_runs": {
+      "rows": 6,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "as_of": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "alerts": {
+      "rows": 68,
+      "latest": "2026-11-09 00:00:00",
+      "columns": {
+        "date": {
+          "max": "2026-11-09 00:00:00",
+          "after_now": 4
+        },
+        "created_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "anomalies": {
+      "rows": 3,
+      "latest": "2026-11-04 00:00:00",
+      "columns": {
+        "date": {
+          "max": "2026-11-04 00:00:00",
+          "after_now": 0
+        }
+      }
+    },
+    "briefings": {
+      "rows": 4,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "as_of": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "briefing_notes": {
+      "rows": 23,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "written_at": {
+          "max": "2026-11-05 03:18:14",
+          "after_now": 0
+        },
+        "as_of": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "daily_counts": {
+      "rows": 22087,
+      "latest": "2026-11-05 00:00:00",
+      "columns": {
+        "date": {
+          "max": "2026-11-05 00:00:00",
+          "after_now": 0
+        }
+      }
+    },
+    "data_quality": {
+      "rows": 20,
+      "latest": null,
+      "columns": {}
+    },
+    "documents": {
+      "rows": 18545,
+      "latest": "2026-11-05 05:04:51",
+      "columns": {
+        "published_at": {
+          "max": "2026-11-05 04:44:25",
+          "after_now": 0
+        },
+        "fetched_at": {
+          "max": "2026-11-05 05:04:51",
+          "after_now": 0
+        }
+      }
+    },
+    "events": {
+      "rows": 33990,
+      "latest": "2026-11-09 00:00:00",
+      "columns": {
+        "occurred_at": {
+          "max": "2026-11-09 00:00:00",
+          "after_now": 4
+        },
+        "reported_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        },
+        "closed_at": {
+          "max": "2026-11-05 05:08:00",
+          "after_now": 0
+        },
+        "status_at": {
+          "max": "2026-11-05 05:08:00",
+          "after_now": 0
+        },
+        "first_action_at": {
+          "max": "2026-11-05 06:30:13",
+          "after_now": 1
+        }
+      }
+    },
+    "forecasts": {
+      "rows": 188,
+      "latest": "2026-11-10 00:00:00",
+      "columns": {
+        "issued_at": {
+          "max": "2026-11-04 18:21:02",
+          "after_now": 0
+        },
+        "valid_from": {
+          "max": "2026-11-10 00:00:00",
+          "after_now": 20
+        }
+      }
+    },
+    "gaps": {
+      "rows": 66,
+      "latest": "2026-11-05 01:46:50",
+      "columns": {
+        "first_reported_at": {
+          "max": "2026-11-05 01:46:50",
+          "after_now": 0
+        }
+      }
+    },
+    "hotspots": {
+      "rows": 342,
+      "latest": "2026-11-05 02:30:10",
+      "columns": {
+        "first_seen": {
+          "max": "2026-10-08 17:05:31",
+          "after_now": 0
+        },
+        "last_seen": {
+          "max": "2026-11-05 02:30:10",
+          "after_now": 0
+        }
+      }
+    },
+    "incidents": {
+      "rows": 27910,
+      "latest": "2026-12-28 00:00:00",
+      "columns": {
+        "first_reported_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        },
+        "occurred_at_est": {
+          "max": "2026-11-09 00:00:00",
+          "after_now": 4
+        },
+        "last_update_at": {
+          "max": "2026-11-05 05:08:00",
+          "after_now": 0
+        },
+        "verified_at": {
+          "max": "2026-11-05 05:48:25",
+          "after_now": 0
+        },
+        "closed_at": {
+          "max": "2026-11-05 05:08:00",
+          "after_now": 0
+        },
+        "sla_due_at": {
+          "max": "2026-12-04 17:02:00",
+          "after_now": 992
+        },
+        "next_action_due": {
+          "max": "2026-12-28 00:00:00",
+          "after_now": 123
+        }
+      }
+    },
+    "incident_members": {
+      "rows": 33990,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "reported_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "incident_timeline": {
+      "rows": 142638,
+      "latest": "2026-11-05 05:48:25",
+      "columns": {
+        "at": {
+          "max": "2026-11-05 05:48:25",
+          "after_now": 0
+        }
+      }
+    },
+    "kpis": {
+      "rows": 128,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "window_start": {
+          "max": "2026-11-04 05:02:00",
+          "after_now": 0
+        },
+        "window_end": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "link_pairs": {
+      "rows": 2172,
+      "latest": null,
+      "columns": {}
+    },
+    "metrics": {
+      "rows": 18,
+      "latest": null,
+      "columns": {}
+    },
+    "observations": {
+      "rows": 31643,
+      "latest": "2026-11-09 00:00:00",
+      "columns": {
+        "observed_at": {
+          "max": "2026-11-09 00:00:00",
+          "after_now": 4
+        }
+      }
+    },
+    "observation_signals": {
+      "rows": 190,
+      "latest": "2026-11-05 04:10:00",
+      "columns": {
+        "observed_at": {
+          "max": "2026-11-05 04:10:00",
+          "after_now": 0
+        }
+      }
+    },
+    "pwd_works": {
+      "rows": 258,
+      "latest": "2028-07-02 00:00:00",
+      "columns": {
+        "start_date": {
+          "max": "2026-11-05 00:00:00",
+          "after_now": 0
+        },
+        "target_date": {
+          "max": "2028-07-02 00:00:00",
+          "after_now": 116
+        },
+        "completion_date": {
+          "max": "2026-11-05 00:00:00",
+          "after_now": 0
+        }
+      }
+    },
+    "ref_categories": {
+      "rows": 35,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_departments": {
+      "rows": 27,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_facilities": {
+      "rows": 197,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_offices": {
+      "rows": 21,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_taluks": {
+      "rows": 18,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_wards": {
+      "rows": 200,
+      "latest": null,
+      "columns": {}
+    },
+    "ref_zones": {
+      "rows": 15,
+      "latest": null,
+      "columns": {}
+    },
+    "review_queue": {
+      "rows": 460,
+      "latest": "2026-11-05 05:02:00",
+      "columns": {
+        "created_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "source_health": {
+      "rows": 8,
+      "latest": "2026-11-05 05:12:38",
+      "columns": {
+        "last_run_at": {
+          "max": "2026-11-05 05:12:38",
+          "after_now": 0
+        },
+        "last_success_at": {
+          "max": "2026-11-05 05:12:38",
+          "after_now": 0
+        },
+        "newest_record_at": {
+          "max": "2026-11-05 05:02:00",
+          "after_now": 0
+        }
+      }
+    },
+    "world_calendar": {
+      "rows": 181,
+      "latest": "2026-11-05 00:00:00",
+      "columns": {
+        "date": {
+          "max": "2026-11-05 00:00:00",
+          "after_now": 0
+        }
+      }
+    }
+  },
+  "kpis_table_vs_oracle": {
+    "rows_checked": 64,
+    "mismatches": 80,
+    "by_column": {
+      "complaints_filed": 36,
+      "complaints_open": 44
+    },
+    "examples": [
+      {
+        "period": "daily",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 133,
+        "oracle": 129
+      },
+      {
+        "period": "daily",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 131,
+        "oracle": 128
+      },
+      {
+        "period": "daily",
+        "zone": 5,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 23,
+        "oracle": 22
+      },
+      {
+        "period": "daily",
+        "zone": 8,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 10,
+        "oracle": 9
+      },
+      {
+        "period": "daily",
+        "zone": 8,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 9,
+        "oracle": 8
+      },
+      {
+        "period": "daily",
+        "zone": 9,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 12,
+        "oracle": 10
+      },
+      {
+        "period": "daily",
+        "zone": 9,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 12,
+        "oracle": 10
+      },
+      {
+        "period": "weekly",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 686,
+        "oracle": 674
+      },
+      {
+        "period": "weekly",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 563,
+        "oracle": 576
+      },
+      {
+        "period": "weekly",
+        "zone": 1,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 32,
+        "oracle": 34
+      },
+      {
+        "period": "weekly",
+        "zone": 3,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 26,
+        "oracle": 25
+      },
+      {
+        "period": "weekly",
+        "zone": 4,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 70,
+        "oracle": 68
+      },
+      {
+        "period": "weekly",
+        "zone": 4,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 58,
+        "oracle": 59
+      },
+      {
+        "period": "weekly",
+        "zone": 5,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 58,
+        "oracle": 59
+      },
+      {
+        "period": "weekly",
+        "zone": 6,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 53,
+        "oracle": 54
+      },
+      {
+        "period": "weekly",
+        "zone": 7,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 60,
+        "oracle": 59
+      },
+      {
+        "period": "weekly",
+        "zone": 7,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 48,
+        "oracle": 50
+      },
+      {
+        "period": "weekly",
+        "zone": 8,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 52,
+        "oracle": 51
+      },
+      {
+        "period": "weekly",
+        "zone": 9,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 77,
+        "oracle": 72
+      },
+      {
+        "period": "weekly",
+        "zone": 10,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 61,
+        "oracle": 60
+      },
+      {
+        "period": "weekly",
+        "zone": 12,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 34,
+        "oracle": 33
+      },
+      {
+        "period": "weekly",
+        "zone": 12,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 30,
+        "oracle": 33
+      },
+      {
+        "period": "weekly",
+        "zone": 13,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 48,
+        "oracle": 49
+      },
+      {
+        "period": "weekly",
+        "zone": 13,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 39,
+        "oracle": 40
+      },
+      {
+        "period": "weekly",
+        "zone": 15,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 20,
+        "oracle": 19
+      },
+      {
+        "period": "weekly",
+        "zone": 15,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 16,
+        "oracle": 18
+      },
+      {
+        "period": "monthly",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 3160,
+        "oracle": 3148
+      },
+      {
+        "period": "monthly",
+        "zone": null,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 953,
+        "oracle": 1067
+      },
+      {
+        "period": "monthly",
+        "zone": 1,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 54,
+        "oracle": 56
+      },
+      {
+        "period": "monthly",
+        "zone": 2,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 63,
+        "oracle": 61
+      },
+      {
+        "period": "monthly",
+        "zone": 2,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 18,
+        "oracle": 19
+      },
+      {
+        "period": "monthly",
+        "zone": 3,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 132,
+        "oracle": 133
+      },
+      {
+        "period": "monthly",
+        "zone": 3,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 40,
+        "oracle": 42
+      },
+      {
+        "period": "monthly",
+        "zone": 4,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 267,
+        "oracle": 261
+      },
+      {
+        "period": "monthly",
+        "zone": 4,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 83,
+        "oracle": 89
+      },
+      {
+        "period": "monthly",
+        "zone": 5,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 351,
+        "oracle": 352
+      },
+      {
+        "period": "monthly",
+        "zone": 5,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 115,
+        "oracle": 141
+      },
+      {
+        "period": "monthly",
+        "zone": 6,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_filed",
+        "kpis_table": 264,
+        "oracle": 262
+      },
+      {
+        "period": "monthly",
+        "zone": 6,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 79,
+        "oracle": 87
+      },
+      {
+        "period": "monthly",
+        "zone": 7,
+        "window_end": "2026-11-05 05:02:00",
+        "column": "complaints_open",
+        "kpis_table": 66,
+        "oracle": 71
+      }
+    ]
+  },
+  "daily_counts_vs_events": [
+    {
+      "source": "cpcb",
+      "daily_counts_total": 0,
+      "events_total": 17
+    },
+    {
+      "source": "grievance",
+      "daily_counts_total": 16575,
+      "events_total": 16801
+    },
+    {
+      "source": "hospital",
+      "daily_counts_total": 133,
+      "events_total": 133
+    },
+    {
+      "source": "imd",
+      "daily_counts_total": 0,
+      "events_total": 134
+    },
+    {
+      "source": "news",
+      "daily_counts_total": 1296,
+      "events_total": 1296
+    },
+    {
+      "source": "police",
+      "daily_counts_total": 12728,
+      "events_total": 12728
+    },
+    {
+      "source": "pwd",
+      "daily_counts_total": 2881,
+      "events_total": 2881
+    }
+  ]
+}

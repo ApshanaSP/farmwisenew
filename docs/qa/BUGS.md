@@ -14,7 +14,7 @@
 - **(5)** The fix was checked in a real browser.
 - **(6)** A skeptic tried to break it.
 
-Each row says which parts are met. "Browser" is not met for any row yet; see `FINAL_REPORT.md`, which says what was and was not driven in a browser.
+Each row says which parts are met. Part 5 (browser) was met for BUG-001, 002, 004, 006 and 020 on a production build; see `evidence/BROWSER.md`.
 
 Sources:
 - `hunt/hunterA.md`, `hunt/hunterB.md` (two independent hunters)
@@ -28,12 +28,12 @@ Sources:
 
 | Id | Sev | What was wrong | Root cause (one sentence) | Test (fails without the fix) | DoF met | Commit |
 |---|---|---|---|---|---|---|
-| BUG-001 | P1 | "chennai city police report" gave a police case list, not a brief | No layer read "a report on a named body", and the planner's brief screen took no department. | `briefturn.test.ts` (23 of 24 fail reverted) | 1 2 3 4 6 | 8ad7bfb |
-| BUG-002 | P0 | "Mumbai police", "filter Coimbatore police" put the Greater Chennai Police filter on | Department matching took any alias word anywhere, with no check of what qualified it. | `entities.test.ts` foreign cases | 1 2 3 4 6 | 8ad7bfb |
+| BUG-001 | P1 | "chennai city police report" gave a police case list, not a brief | No layer read "a report on a named body", and the planner's brief screen took no department. | `briefturn.test.ts` (23 of 24 fail reverted) | 1 2 3 4 5 6 | 8ad7bfb |
+| BUG-002 | P0 | "Mumbai police", "filter Coimbatore police" put the Greater Chennai Police filter on | Department matching took any alias word anywhere, with no check of what qualified it. | `entities.test.ts` foreign cases | 1 2 3 4 5 6 | 8ad7bfb |
 | BUG-003 | P2 | The district brief said "today's brief" for any period | A fixed word in the template. | `speechsweep.test.ts` | 1 3 | 8ad7bfb |
-| BUG-004 | P1 | Explaining an issue read its fields out ("Severe, status Open, open for 6 hours. X handles it.") | The case screen's spoken line was a join of record fields. | `narrate.test.ts` (5 fail reverted) | 1 2 3 4 | 595b7a5 |
+| BUG-004 | P1 | Explaining an issue read its fields out ("Severe, status Open, open for 6 hours. X handles it.") | The case screen's spoken line was a join of record fields. | `narrate.test.ts` (5 fail reverted) | 1 2 3 4 5 | 595b7a5 |
 | BUG-005 | P1 | The first resolver version was refuted by the skeptic (see below) | "Unknown" rested on missing evidence (any word the registry did not know), brief words were matched by sound, and no other lane was protected. | `briefturn.test.ts` "skeptic's breaks" (37 cases) | 1 3 4 6 | 136faa4 |
-| BUG-006 | P2 | Generated police, PWD and hospital feeds were shown as "Live" and "Healthy" | The UI ignored `source_health.kind`, which already says "synthetic generator". | none (UI text) | 3 4 | a18493c |
+| BUG-006 | P2 | Generated police, PWD and hospital feeds were shown as "Live" and "Healthy" | The UI ignored `source_health.kind`, which already says "synthetic generator". | none (UI text) | 3 4 5 | a18493c |
 | BUG-007 | P0 | "Show overdue cases" said 40 overdue cases as 12 | The total was counted from one 12-row page. | `overdue.test.ts` (fails reverted) | 1 2 3 | 72706c6 |
 | BUG-008 | P0 | Weekly Trends were all 0 after midnight on an IST server, and lost the last week on a UTC server on Monday morning | The week keys mixed the server's local weekday with UTC dates. | `trendkeys.test.ts` (2 of 5 fail reverted) | 1 2 3 | 35b7f0a |
 | BUG-009 | P0 | The older `/api/collector/thunai/agent` route sent unredacted tool data to the model and refused nothing | Redaction and privacy refusal were added to `/round` only. | `injection.test.ts` "/agent route" | 1 2 3 | a15c0a7 |
@@ -46,6 +46,7 @@ Sources:
 | BUG-016 | P2 | A "yes" heard only by captions dismissed the save card and was sent on as a new request | Any input that was not an accepted yes or no cleared the card. | none (client); code read | 3 | 3e39ead |
 | BUG-017 | P1 | "There is only one severe case" passed the number gate with nothing allowed | "one" was left out of the number words on purpose. | `numbergate.one.test.ts` | 1 3 | 9288718 |
 | BUG-018 | P1 | "Yesterday" meant the 24 hours before the last 24 | No calendar day in Asia/Kolkata was used. | `yesterday.test.ts` | 1 3 | 6807c8e |
+| BUG-020 | P1 | With a police brief open, "explain the flooding complaint in Adyar" re-scoped the brief to Adyar (found in the browser) | Any short sentence with a new place was read as "and in X?" unless it held a show or list verb. | `narrate.test.ts` BUG-020 (fails reverted) | 1 2 3 5 | 42e01c4 |
 | BUG-019 | P3 | The Tamil retelling said "துறைவிடம்" | A suffix glued on without Tamil joining rules. | `narrate.test.ts` idam | 1 3 | 7cb4822 |
 
 Also caught along the way:
@@ -79,6 +80,8 @@ After the fix, all of these are regression tests in `briefturn.test.ts`, and all
 | OPEN-8 | P2 | The pipeline's `kpis` table disagrees with the oracle on complaints (daily 132 vs 123). The console computes from incidents, not this table. | oracle | The pipeline needs checking. |
 | OPEN-9 | P2 | Remaining honesty items from the data audit: map layers "On the ground now" over synthetic beds and PWD works; Ask District IQ told never to say data is synthetic; a 29-day-old price line with no date; conditions with no time. | `DATA_SOURCES.md` items 4–11 | Partly owner decisions (prompt policy). Listed in the notes. |
 | OPEN-10 | P3 | Holiday dates are hard-coded for one year ("since Pongal" in 2027 uses 2026). | `fastpath.ts:675` (A9 = B7) | Lunar dates need a source; not invented. |
+| OPEN-12 | P2 | Case screens and lists show the complaint's own wording as the title. The rules say no citizen's own words on screen. | base console, all incident lists | Owner's decision: it is how the whole console names incidents. |
+| OPEN-13 | P3 | The number gate checks compound English number words one by one, so even an allowed 23 said as "twenty three" is held back. Safe. | `numbergate.ts` | Code-built speech uses digits. |
 | OPEN-11 | P3 | 4 IMD forecast events are stored as incidents with future times; 756 Lapsed incidents have no `closed_at`; `daily_counts` has 228 fewer grievance rows than events. | oracle | Pipeline data. |
 
 ## Remaining-bug estimate (rough)
