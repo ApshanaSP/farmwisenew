@@ -1,0 +1,282 @@
+[
+ {
+  "pair": 1,
+  "said": "uh can you pull up the brief on the madras corporation",
+  "after": null,
+  "A": "[screen: Greater Chennai Corporation · brief, today] Taking that as Greater Chennai Corporation. 162 cases are open across its departments; 54 are past the deadline. Most of it sits with Storm Water Drain. That backlog is the thing to chase today. Most complaint records here are test filings. These records are a few days old.",
+  "B": "[screen: Briefing · today] 4 points in today's brief. 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period."
+ },
+ {
+  "pair": 2,
+  "said": "storm water drain department, how are things, give me their report",
+  "after": null,
+  "A": "[screen: Storm Water Drains · brief, today] Taking that as Storm Water Drains. 158 new incidents came in today; 162 cases are still open, and 54 are past the deadline. The one to look at first is in Royapuram. That backlog is the thing to chase today. Most complaint records here are test filings. These records are a few days old.",
+  "B": "[screen: Cases · Drinking water supply · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 3,
+  "said": "give me the flood monitoring cell update",
+  "after": null,
+  "A": "[screen: Cases · Flooding & waterlogging · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "B": "[screen: Cases · Flooding & waterlogging · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 4,
+  "said": "மெட்ரோ வாட்டர் பற்றி ஒரு அறிக்கை கொடுங்க",
+  "after": null,
+  "A": "[screen: Metro Water · brief, today] சென்னை குடிநீர் வாரியம் என்று எடுத்துக்கொள்கிறேன். இன்று 158 புதிய சம்பவங்கள் வந்தன. முதலில் பார்க்க வேண்டியது ராயபுரம் பகுதியில். இங்குள்ள பெரும்பாலான புகார்கள் சோதனைப் பதிவுகள். இந்தப் பதிவுகள் சில நாட்கள் பழையவை.",
+  "B": "[screen: Briefing · today] இன்றைய சுருக்கத்தில் 4 குறிப்புகள். 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period."
+ },
+ {
+  "pair": 5,
+  "said": "பொதுப்பணித்துறை நீர்வளம் பற்றி சுருக்கமா சொல்லு",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · PWD Water Resources · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: PWD Water Resources · brief, today] பொதுப்பணித்துறை நீர்வளம்: இன்று 158 புதிய சம்பவங்கள் வந்தன. முதலில் பார்க்க வேண்டியது ராயபுரம் பகுதியில். இங்குள்ள பொதுப்பணித் துறைப் பதிவுகள் சோதனைத் தரவு. இந்தப் பதிவுகள் சில நாட்கள் பழையவை."
+ },
+ {
+  "pair": 6,
+  "said": "மாநகர காவல் துறை நிலவரம் சொல்லுங்க",
+  "after": null,
+  "A": "[screen: Briefing · today] இன்றைய சுருக்கத்தில் 4 குறிப்புகள். 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period.",
+  "B": "[screen: Greater Chennai Police · brief, today] பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 158 புதிய சம்பவங்கள் வந்தன; 392 இன்னும் நிலுவையில்; 76 கெடு தாண்டியவை. முதலில் பார்க்க வேண்டியது ராயபுரம் பகுதியில். இந்த நிலுவையைத்தான் இன்று கேட்க வேண்டும். இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இந்தப் பதிவுகள் சில நாட்கள் பழையவை."
+ },
+ {
+  "pair": 7,
+  "said": "metro water report konjam kudu",
+  "after": null,
+  "A": "[screen: Drinking water supply dashboard · today] 153 drinking water supply reports today, down 3% on the period before. 21 severe. Most in Anna Nagar.",
+  "B": "[screen: Metro Water · brief, today] Metro Water: 158 new incidents came in today. The one to look at first is in Royapuram. Most complaint records here are test filings. These records are a few days old."
+ },
+ {
+  "pair": 8,
+  "said": "PWD water resources report paakalaam",
+  "after": null,
+  "A": "[screen: Drinking water supply dashboard · today] 153 drinking water supply reports today, down 3% on the period before. 21 severe. Most in Anna Nagar.",
+  "B": "[screen: PWD Water Resources · brief, today] PWD Water Resources: 158 new incidents came in today. The one to look at first is in Royapuram. The PWD records here are generated test data. These records are a few days old."
+ },
+ {
+  "pair": 9,
+  "said": "Sholinganallur zone brief venum",
+  "after": null,
+  "A": "[screen: Briefing · today] 4 points in the brief for today. 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period.",
+  "B": "[screen: Briefing · today] 4 points in today's brief. 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period."
+ },
+ {
+  "pair": 10,
+  "said": "what is happening with that waterlogging complaint near Velachery, say it simply",
+  "after": null,
+  "A": "[screen: Flooding & waterlogging dashboard · today] 153 flooding & waterlogging reports today, down 3% on the period before. 21 severe. Most in Anna Nagar.",
+  "B": "[screen: Bed Capacity Critical at Stanley Medical College] There's a hospital under strain at Stanley Hospital. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today."
+ },
+ {
+  "pair": 11,
+  "said": "break down the garbage dump fire at Kodungaiyur for me",
+  "after": null,
+  "A": "[screen: Garbage & solid waste dashboard · today] 153 garbage & solid waste reports today, down 3% on the period before. 21 severe. Most in Anna Nagar.",
+  "B": "[screen: Bed Capacity Critical at Stanley Medical College] There's a hospital under strain at Stanley Hospital. It's been open for several hours, and it's past its deadline. It's one of the serious ones. I'd ask the health department for an update today."
+ },
+ {
+  "pair": 12,
+  "said": "explain the top one",
+  "after": null,
+  "A": "(no answer: none)",
+  "B": "(no answer: none)"
+ },
+ {
+  "pair": 13,
+  "said": "வேளச்சேரி வெள்ள புகார் பற்றி எளிமையா விளக்குங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள்: வேளச்சேரி வெள்ள புகார் · Flooding & waterlogging · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: சம்பவங்கள்: வேளச்சேரி வெள்ள புகார் · Flooding & waterlogging · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 14,
+  "said": "அம்பத்தூர் மின்வெட்டு புகார் என்னன்னு விளக்கமா சொல்லுங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · அம்பத்தூர் · இந்த வாரம்] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: சம்பவங்கள் · அம்பத்தூர் · இந்த வாரம்] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 15,
+  "said": "பெருங்குடியில கழிவுநீர் தேங்குற பிரச்சனை என்னன்னு சொல்லுங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · பெருங்குடி · Drainage & sewage · இந்த வாரம்] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: சம்பவங்கள் · பெருங்குடி · Drainage & sewage · இந்த வாரம்] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 16,
+  "said": "Velachery flooding complaint pathi simple ah explain pannu",
+  "after": null,
+  "A": "[screen: Bed Capacity Critical at Stanley Medical College] ராயபுரம் பகுதியில் நெருக்கடியில் உள்ள மருத்துவமனை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறைவிடம் இன்றே நிலவரம் கேட்கலாம்.",
+  "B": "பொது அறிவு, மாவட்டத் தரவு அல்ல: வேலச்சேரி சென்னை மாவட்டத்தில் இல்லை, எனவே அங்குள்ள வெள்ள புகார்களை இந்த கன்சோலில் காட்ட முடியாது."
+ },
+ {
+  "pair": 17,
+  "said": "Tondiarpet la street light illa nu complaint, adhu enna problem",
+  "after": null,
+  "A": "[screen: Cases · Tondiarpet · Street lights & electrical hazards · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: Cases · Tondiarpet · Street lights & electrical hazards · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 18,
+  "said": "Ambattur power cut complaint ah simple ah sollu",
+  "after": null,
+  "A": "[screen: Cases · Ambattur · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: Cases · Ambattur · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 19,
+  "said": "give me the coimbatore commissionerate update",
+  "after": null,
+  "A": "I have no data on Coimbatore Commissionerate. This console holds Chennai district's own records; I can brief you on the corporation, the police, Metrowater, PWD or any zone.",
+  "B": "[screen: Briefing · today] 4 points in today's brief. 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period."
+ },
+ {
+  "pair": 20,
+  "said": "chennai traffic police department brief",
+  "after": null,
+  "A": "[screen: Briefing · today] 4 points in today's brief. 158 incidents were reported in Chennai district (last 24 hours), 16% fewer than the previous period.",
+  "B": "[screen: Greater Chennai Police · brief, today] Taking that as Greater Chennai Police. 158 new incidents came in today; 392 cases are still open, and 76 are past the deadline. The one to look at first is in Royapuram. That backlog is the thing to chase today. These are generated police test records, not an official police report. These records are a few days old."
+ },
+ {
+  "pair": 21,
+  "said": "தாம்பரம் மாநகர காவல் அறிக்கை கொடுங்க",
+  "after": null,
+  "A": "Tambaram Police பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் உள்ளது பெருநகர சென்னை காவல்துறை, அதைப் பற்றிச் சொல்லலாம்.",
+  "B": "(no answer: none)"
+ },
+ {
+  "pair": 22,
+  "said": "கோயம்புத்தூர் மாநகராட்சி பற்றி சொல்லுங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "எதைச் சொல்கிறீர்கள்?"
+ },
+ {
+  "pair": 23,
+  "said": "Tambaram commissionerate report kudu",
+  "after": null,
+  "A": "Which one do you mean?",
+  "B": "I have no data on Tambaram Commissionerate. This console holds Chennai district's own records; I can brief you on the corporation, the police, Metrowater, PWD or any zone."
+ },
+ {
+  "pair": 24,
+  "said": "Bengaluru BBMP report paakalaam",
+  "after": null,
+  "A": "I can only access Chennai district records, not Bengaluru BBMP reports.",
+  "B": "[screen: Incidents dashboard · today] 153 incidents reports today, down 3% on the period before. 21 severe. Most in Anna Nagar."
+ },
+ {
+  "pair": 25,
+  "said": "and in Adyar?",
+  "after": "how many drainage complaints are open in Velachery",
+  "A": "[screen: Cases · Adyar · Drainage & sewage · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "B": "[screen: Cases · Adyar · Drainage & sewage · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 26,
+  "said": "and the police?",
+  "after": "brief me on metrowater",
+  "A": "[screen: Incidents dashboard · today] 153 incidents reports today, down 3% on the period before. 21 severe. Most in Anna Nagar.",
+  "B": "[screen: Department performance · today] Slowest: Greater Chennai Police, open incidents 36 days old on average. Then PWD Water Resources at 31 and Storm Water Drain at 7."
+ },
+ {
+  "pair": 27,
+  "said": "அடையாறுல?",
+  "after": "வேளச்சேரியில் எத்தனை வடிகால் புகார்கள் இருக்கு",
+  "A": "[screen: சம்பவங்கள் · அடையாறு · Drainage & sewage · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: சம்பவங்கள் · அடையாறு · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 28,
+  "said": "ஏன்?",
+  "after": "எந்த மண்டலத்தில் அதிக குப்பை புகார்கள்",
+  "A": "[screen: Why · Garbage & solid waste · this week] இந்த வாரம் 50 சம்பவங்கள், முந்தைய காலத்தில் 40. Street lights & electrical hazards 4 கூடியது, Drainage & sewage 4 கூடியது; 4 மழை நாட்களில் 23 மழை தொடர்பானவை.",
+  "B": "[screen: Why · Garbage & solid waste · this week] இந்த வாரம் 50 சம்பவங்கள், முந்தைய காலத்தில் 40. Street lights & electrical hazards 4 கூடியது, Drainage & sewage 4 கூடியது; 4 மழை நாட்களில் 23 மழை தொடர்பானவை."
+ },
+ {
+  "pair": 29,
+  "said": "Adyar la?",
+  "after": "Velachery la evlo drainage complaints irukku",
+  "A": "[screen: Cases · Adyar · Drainage & sewage · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "B": "[screen: Cases · Adyar · Drainage & sewage · this week] 23 cases this week; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 30,
+  "said": "illa, Thoraipakkam sonnen",
+  "after": "Taramani la flooding cases kaattu",
+  "A": "[screen: Cases: Thoraipakkam · today] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: Cases: Thoraipakkam · Flooding & waterlogging · today] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 31,
+  "said": "show me open garbage complaints in Royapuram",
+  "after": null,
+  "A": "[screen: Cases · Royapuram · Garbage & solid waste · today] 23 cases today; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "B": "[screen: Cases: open garbage complaints in Royapuram · Royapuram · Garbage & solid waste · today] 23 cases today; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 32,
+  "said": "திருவொற்றியூர்ல தெருவிளக்கு புகார்கள் காட்டுங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · திருவொற்றியூர் · Street lights & electrical hazards · இந்த வாரம்] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: Bed Capacity Critical at Stanley Medical College] ராயபுரம் பகுதியில் நெருக்கடியில் உள்ள மருத்துவமனை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. சுகாதாரத் துறைவிடம் இன்றே நிலவரம் கேட்கலாம்."
+ },
+ {
+  "pair": 33,
+  "said": "Valasaravakkam la road damage complaints list pannu",
+  "after": null,
+  "A": "[screen: Cases · Valasaravakkam · Roads, footpaths & bridges · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "[screen: Cases · Valasaravakkam · Roads, footpaths & bridges · this week] இந்த வாரம் 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+ },
+ {
+  "pair": 34,
+  "said": "compare Adyar and Perungudi on water complaints",
+  "after": null,
+  "A": "[screen: Adyar vs Perungudi · this week] Adyar: 4 severe and 101 open. Perungudi: 2 severe and 53 open. The biggest gap is open complaints: Adyar 64 against Perungudi 20.",
+  "B": "[screen: Adyar vs Perungudi · this week] Adyar: 4 severe and 101 open. Perungudi: 2 severe and 53 open. The biggest gap is open complaints: Adyar 64 against Perungudi 20."
+ },
+ {
+  "pair": 35,
+  "said": "கடந்த ஆறு மாதத்தில் மின் புகார்கள் போக்கு எப்படி",
+  "after": null,
+  "A": "[screen: Street lights & electrical hazards · the last 90 days] கடந்த 90 நாட்களில் Street lights & electrical hazards: 249 சம்பவங்கள். உச்சம் 29 Aug அளவில் 29. பின்பாதியில் 52% அதிகம்.",
+  "B": "[screen: Street lights & electrical hazards · the last 90 days] கடந்த 90 நாட்களில் Street lights & electrical hazards: 249 சம்பவங்கள். உச்சம் 29 Aug அளவில் 29. பின்பாதியில் 52% அதிகம்."
+ },
+ {
+  "pair": 36,
+  "said": "mosquito complaints trend paakalaam last few weeks",
+  "after": null,
+  "A": "[screen: Vector- & water-borne disease · this week] 249 incidents of vector- & water-borne disease this week. The peak was 29 around 29 Aug. The second half had 52% more than the first.",
+  "B": "[screen: Vector- & water-borne disease · this week] 249 incidents of vector- & water-borne disease this week. The peak was 29 around 29 Aug. The second half had 52% more than the first."
+ },
+ {
+  "pair": 37,
+  "said": "what complaints are there near Marina beach",
+  "after": null,
+  "A": "[screen: Cases: Marina Beach · today] 23 cases today; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number.",
+  "B": "[screen: Cases: Marina Beach complaints · today] 23 cases today; here are the 4 that matter most. 2 are past their deadline and need you first: Wall collapse at Chetpet in Royapuram, and Hospital beds critical at Stanley in Royapuram. PWD Water Resources holds 2 of them. Say \"read them\", or \"open\" and a number."
+ },
+ {
+  "pair": 38,
+  "said": "புகார்கள் பக்கத்தை திறங்க",
+  "after": null,
+  "A": "[screen: சம்பவங்கள் · இன்று] இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Wall collapse at Chetpet in Royapuram, Hospital beds critical at Stanley in Royapuram. PWD Water Resources வசம் 2. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+  "B": "(no answer: navigate)"
+ },
+ {
+  "pair": 39,
+  "said": "rain tab open pannu",
+  "after": null,
+  "A": "(no answer: navigate)",
+  "B": "(no answer: navigate)"
+ },
+ {
+  "pair": 40,
+  "said": "send this report to the minister on whatsapp",
+  "after": null,
+  "A": "I never send, approve or delete. I can draft it for your tray, and the tap is yours.",
+  "B": "I never send, approve or delete. I can draft it for your tray, and the tap is yours."
+ }
+]
