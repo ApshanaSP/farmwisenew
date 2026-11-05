@@ -10,6 +10,7 @@
  *
  * No imports with side effects: the model call and the data hands are injected (agent.test.ts uses fakes).
  */
+import { redactText } from "./privacy";
 import { echoesRecords, recordText, stepsAskedFor } from "./injection";
 import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
@@ -434,9 +435,11 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
   // a line that repeats the records' own wording is an instruction hidden in the data speaking, not Jarvis (BUG-011)
   const records = recordText(run.results);
-  if (v1.kind === "chat") return spellsNumber(v1.reply) || echoesRecords(v1.reply, records) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
+  // and a model's own line that would carry a citizen's number or email (even spelled out, "ramesh at gmail dot com") is not said (OPEN-1)
+  const leaks = (s: string | null | undefined) => !!s && redactText(s) !== s;
+  if (v1.kind === "chat") return spellsNumber(v1.reply) || echoesRecords(v1.reply, records) || leaks(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) || leaks(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) || leaks(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
   // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);

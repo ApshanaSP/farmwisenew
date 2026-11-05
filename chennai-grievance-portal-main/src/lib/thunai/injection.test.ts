@@ -50,3 +50,15 @@ describe("the older /agent route is as private as /round (BUG-009)", () => {
     expect(JSON.stringify(r)).not.toMatch(/98401/);
   });
 });
+
+describe("a model's own line never spells a citizen's contact (OPEN-1, red team C5)", () => {
+  it.each(["You can reach Ramesh at ramesh at gmail dot com.", "The caller left 98401 23456 as the number.", "Her mail is ramesh@gmail"])("%s is not said", async (line) => {
+    const plan = { kind: "chat", lang: "en", reply: line, say: null, screen: null, steps: [], calls: [], options: [], stage: null } as unknown as AgentPlan;
+    const r = await finish(plan, input, { world, hands: fakeHands(), llm: async () => { throw new Error("x"); } }, { ...run, results: [] });
+    expect(r.reply ?? "").not.toBe(line);
+  });
+  it("a plain line is still said", async () => {
+    const plan = { kind: "chat", lang: "en", reply: "You're welcome.", say: null, screen: null, steps: [], calls: [], options: [], stage: null } as unknown as AgentPlan;
+    expect((await finish(plan, input, { world, hands: fakeHands(), llm: async () => { throw new Error("x"); } }, { ...run, results: [] })).reply).toBe("You're welcome.");
+  });
+});
