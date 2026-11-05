@@ -273,7 +273,9 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
   if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {
-    return { recipe: "cases", slots: { sev, cat, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,
+    // "past the deadline", "overdue": only those (BUG-024)
+    const status = /\b(overdue|past (the |their )?deadline|deadline (passed|crossed|missed))\b|கெடு தாண்ட|காலக்கெடு/.test(t) ? "overdue" : null;
+    return { recipe: "cases", slots: { sev, cat, status, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,
       // a new question starts clean: a filter an earlier answer put on the console (Fire, say) must not narrow it
       fresh: true } };
   }

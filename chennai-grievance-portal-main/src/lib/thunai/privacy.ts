@@ -107,7 +107,8 @@ function personalRun(m: string, before: string): boolean {
 }
 
 export function redactText(s: string): string {
-  const t = s.replace(ODD_DIGITS, (c) => String((c.charCodeAt(0) - (c >= "\uFF10" && c <= "\uFF19" ? 0xFF10 : 0x0BE6)) % 10));
+  // no-break spaces and Unicode dashes between digits are separators like any other (BUG-025)
+  const t = s.replace(/(?<=\d)[    ‐-―−](?=\d)/g, " ").replace(ODD_DIGITS, (c) => String((c.charCodeAt(0) - (c >= "\uFF10" && c <= "\uFF19" ? 0xFF10 : 0x0BE6)) % 10));
   return t.replace(EMAIL_SPOKEN, "[hidden]").replace(EMAIL, "[hidden]").replace(SPELLED, "[hidden] ").replace(AADHAAR, "[hidden]").replace(PHONE, maskPhone).replace(LANDLINE, maskPhone)
     .replace(RUN, (m, off: number, all: string) => (personalRun(m, all.slice(Math.max(0, off - 4), off)) ? "[hidden]" : m));
 }

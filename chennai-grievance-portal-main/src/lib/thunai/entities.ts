@@ -342,7 +342,8 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
 }
 
 /** Words that make a sentence something other than a request for a brief on a body. */
-const NOT_A_BRIEF = /\b(draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட/i;
+// keeping something or typing it (remember, remind, save, pin, type into the search box) is not a brief either (BUG-022)
+const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட/i;
 
 /** A locality in the sentence and its zone, if the data gives it one ("Velachery police report"), by name or alias. */
 function locality(text: string, w: World): { name: string; zone: number | null } | null {

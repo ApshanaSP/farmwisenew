@@ -24,6 +24,10 @@ export interface FactSheet {
 }
 
 const PLAIN: [RegExp, string, string][] = [
+  // the specific before the general (BUG-023): an accident is not a damaged road; a warning or a relief need is not standing water
+  [/accident/i, "a road accident", "சாலை விபத்து"],
+  [/relief/i, "people who need flood relief", "வெள்ள நிவாரணம் தேவைப்படுவோர்"],
+  [/risk|signal|warning|alert/i, "a flood warning", "வெள்ள எச்சரிக்கை"],
   [/flood|waterlog|inundat|stagnat/i, "standing water", "தண்ணீர் தேக்கம்"],
   [/drain|sewage|sewer/i, "a sewage overflow", "கழிவுநீர் வழிதல்"],
   [/pothole|road damage|road/i, "a damaged road", "சேதமான சாலை"],

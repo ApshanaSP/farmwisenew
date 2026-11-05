@@ -199,11 +199,12 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
 /** The next step for one incident, from its kind; null when there is no step better than asking its own department. */
 function actionForOne(label: string): { en: string; ta: string } | null {
   const l = label.toLowerCase();
+  if (/accident|relief|risk|signal|warning|alert/.test(l)) return null;
   if (/flood|waterlog|inundat|stagnat/.test(l)) return { en: "ask Storm Water Drains to send a pump and check the drain there", ta: "மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்" };
   if (/garbage|waste|sanitat|debris/.test(l)) return { en: "ask the conservancy team to clear it", ta: "துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்" };
   if (/vector|dengue|mosquito|malaria|fever/.test(l)) return { en: "ask Health for fogging around it", ta: "சுகாதாரத் துறையிடம் அங்கே புகை மருந்து அடிக்கச் சொல்லலாம்" };
   if (/water supply|sewage|sewer|drinking|pipe/.test(l)) return { en: "ask Metrowater for a status by this evening", ta: "குடிநீர் வாரியத்திடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்" };
-  if (/road|pothole/.test(l)) return { en: "ask the roads department for a repair date", ta: "சாலைத் துறையிடம் சரிசெய்யும் தேதி கேட்கலாம்" };
+  if (/pothole|road damage|damaged road/.test(l)) return { en: "ask the roads department for a repair date", ta: "சாலைத் துறையிடம் சரிசெய்யும் தேதி கேட்கலாம்" };
   return null;
 }
 
