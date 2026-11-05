@@ -20,7 +20,7 @@ import { outsideIn } from "./outside";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
-export interface Registry { entities: Entity[]; vocab: Set<string>; places: Set<string>; topics: Set<string>; seen: Map<string, string | null> }
+export interface Registry { entities: Entity[]; vocab: Set<string>; places: Set<string>; topics: Set<string>; seen: Map<string, string | null>; near: Map<string, Map<string, { s: number; via: "exact" | "edit" | "sound" }>> }
 
 export type Resolution =
   | { kind: "entity"; entity: Entity; conf: number; via: "exact" | "initials" | "edit" | "sound"; heard: string; brief: boolean; second: Entity | null }
@@ -111,7 +111,7 @@ export function registry(w: World): Registry {
   for (const c of Object.values(CAT_ALIASES).flat()) for (const x of words(c)) { places.add(x); topics.add(x); } // topics explain a word too
   // a one-word alias that is also a topic ("water" for Metrowater) is too weak to name the body: "water level" is not Metrowater
   for (const e of entities) e.aliases = e.aliases.filter((a) => !(a.length === 1 && topics.has(a[0])));
-  const reg = { entities, vocab, places, topics, seen: new Map<string, string | null>() };
+  const reg = { entities, vocab, places, topics, seen: new Map<string, string | null>(), near: new Map() };
   cache.set(w, reg);
   return reg;
 }
@@ -164,6 +164,17 @@ function wordScoreRaw(heard: string, want: string): { s: number; via: "exact" | 
   return null;
 }
 
+/** Every registry word a heard word is close to, with its score: worked out once per word, so matching an alias is a lookup. */
+function nearOf(w: string, reg: Registry): Map<string, { s: number; via: "exact" | "edit" | "sound" }> {
+  let m = reg.near.get(w);
+  if (m) return m;
+  m = new Map();
+  for (const v of reg.vocab) { const r = wordScore(w, v); if (r) m.set(v, r); }
+  if (reg.near.size > 5000) reg.near.clear();
+  reg.near.set(w, m);
+  return m;
+}
+
 /** The registry word a heard word stands for, if any (spelling and sound folded). */
 function vocabWord(w: string, reg: Registry): string | null {
   if (reg.vocab.has(w) || QUAL.has(w)) return w;
@@ -206,7 +217,7 @@ export function resolveEntity(text: string, w: World): Resolution {
         let s = 1, via: Hit["via"] = a.length === 1 && a[0].length <= 4 && a[0] === initials(e.name) ? "initials" : "exact";
         let ok = true, missed = 0;
         for (let j = 0; j < a.length && ok; j++) {
-          const r = wordScore(idx[k + j].x, a[j]);
+          const r = nearOf(idx[k + j].x, reg).get(a[j]) ?? null;
           // a one-word alias of three letters (an acronym) matches only exactly
           if (!r || (a[j].length <= 3 && r.via !== "exact")) {
             // a name of three words or more survives one word misheard inside it, the others heard right

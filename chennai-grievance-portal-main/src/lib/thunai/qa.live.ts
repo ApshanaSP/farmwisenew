@@ -170,3 +170,26 @@ it.runIf(mode === "one")("one sentence through the shipped planner, Groq only (f
   write(`one-${(process.env.QA_ONE_NAME ?? "x")}`, row);
   console.log("ONE", JSON.stringify(row));
 });
+
+// the code lanes as planRound runs them now: the resolver's brief step (2b) before the rules. Added after the first run, when that
+// lane was built; QA_LIVE=rules stays as it was so the first and final rules figures compare like for like
+it.runIf(mode === "rules2")("rules, router and the resolver's brief step, no model", async () => {
+  const { briefTurn } = await import("./entities");
+  const rows = items().map((x) => {
+    const g = gold(x);
+    const b = briefTurn(x.text, world);
+    if (b) {
+      const s = b.kind === "screen" ? (b.slots as { dept?: string; org?: string; zones?: number[] }) : null;
+      const ent = s ? s.dept ?? s.org ?? (s.zones?.length ? `ZONE-${s.zones[0]}` : null) : b.kind === "reply" ? b.entity ?? null : null;
+      const got = b.kind === "screen" ? "brief" : b.kind === "reply" ? (b.entity ? "brief" : "unknown") : "clarify";
+      const want = x.expect?.entity ?? x.entity ?? null;
+      return { id: x.id, lang: x.lang, gold: g, got, ok: hits(g, got) && (g !== "brief" || !want || want === ent || (want === "GCC" && !!ent?.startsWith("GCC"))), deferred: false, family: x.family };
+    }
+    if (offTopic(x.text, world)) return { id: x.id, lang: x.lang, gold: g, got: "general", ok: hits(g, "general"), deferred: false, family: x.family };
+    const r = ruleIntent(x.text, world, START, { after: x.after ?? null });
+    return { id: x.id, lang: x.lang, gold: g, got: r.intent ?? "defer", ok: !!r.intent && hits(g, r.intent), deferred: !r.intent, family: x.family };
+  });
+  const fam = Object.fromEntries([...new Set(rows.map((r) => r.family ?? "other"))].map((f) => [f, { n: rows.filter((r) => (r.family ?? "other") === f).length, right: rows.filter((r) => (r.family ?? "other") === f && r.ok).length }]));
+  write("rules2", { at: new Date().toISOString(), summary: byLang(rows as Scored[]), byFamily: fam, rows });
+  console.log("RULES2", JSON.stringify({ summary: byLang(rows as Scored[]).all, byFamily: fam }));
+});

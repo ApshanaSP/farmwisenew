@@ -1,0 +1,1701 @@
+{
+ "at": "2026-11-05T00:07:44.951Z",
+ "summary": {
+  "all": {
+   "n": 180,
+   "right": 91,
+   "deferred": 57,
+   "wrong": 32,
+   "capacity": 0,
+   "pct": {
+    "p": 50.6,
+    "lo": 43.3,
+    "hi": 57.8
+   }
+  },
+  "en": {
+   "n": 79,
+   "right": 40,
+   "deferred": 25,
+   "wrong": 14,
+   "capacity": 0,
+   "pct": {
+    "p": 50.6,
+    "lo": 39.8,
+    "hi": 61.4
+   }
+  },
+  "ta": {
+   "n": 49,
+   "right": 23,
+   "deferred": 15,
+   "wrong": 11,
+   "capacity": 0,
+   "pct": {
+    "p": 46.9,
+    "lo": 33.7,
+    "hi": 60.6
+   }
+  },
+  "tanglish": {
+   "n": 52,
+   "right": 28,
+   "deferred": 17,
+   "wrong": 7,
+   "capacity": 0,
+   "pct": {
+    "p": 53.8,
+    "lo": 40.5,
+    "hi": 66.7
+   }
+  }
+ },
+ "byFamily": {
+  "agency": {
+   "n": 44,
+   "right": 31
+  },
+  "explain": {
+   "n": 33,
+   "right": 5
+  },
+  "unknown": {
+   "n": 26,
+   "right": 15
+  },
+  "followup": {
+   "n": 21,
+   "right": 9
+  },
+  "other": {
+   "n": 52,
+   "right": 28
+  },
+  "general": {
+   "n": 4,
+   "right": 3
+  }
+ },
+ "rows": [
+  {
+   "id": "q001",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q002",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q003",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "agency"
+  },
+  {
+   "id": "q004",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q005",
+   "lang": "en",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q006",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q007",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q008",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q009",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q010",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "agency"
+  },
+  {
+   "id": "q011",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q012",
+   "lang": "en",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q013",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q014",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q015",
+   "lang": "en",
+   "gold": "brief",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q016",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q017",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "agency"
+  },
+  {
+   "id": "q018",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q019",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q020",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q021",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q022",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q023",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q024",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q025",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q026",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q027",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q028",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q029",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q030",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q031",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q032",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q033",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q034",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q035",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q036",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q037",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q038",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q039",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q040",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q041",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q042",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q043",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q044",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "agency"
+  },
+  {
+   "id": "q045",
+   "lang": "en",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q046",
+   "lang": "en",
+   "gold": "explain",
+   "got": "general",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q047",
+   "lang": "en",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q048",
+   "lang": "en",
+   "gold": "explain",
+   "got": "case",
+   "ok": true,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q049",
+   "lang": "en",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q050",
+   "lang": "en",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q051",
+   "lang": "en",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q052",
+   "lang": "en",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q053",
+   "lang": "en",
+   "gold": "explain",
+   "got": "general",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q054",
+   "lang": "en",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q055",
+   "lang": "en",
+   "gold": "explain",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q056",
+   "lang": "en",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q057",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q058",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q059",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q060",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q061",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q062",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q063",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q064",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "case",
+   "ok": true,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q065",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q066",
+   "lang": "ta",
+   "gold": "explain",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q067",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "case",
+   "ok": true,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q068",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q069",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q070",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q071",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q072",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q073",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "case",
+   "ok": true,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q074",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q075",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "case",
+   "ok": true,
+   "deferred": false,
+   "family": "explain"
+  },
+  {
+   "id": "q076",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q077",
+   "lang": "tanglish",
+   "gold": "explain",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "explain"
+  },
+  {
+   "id": "q078",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q079",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q080",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q081",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q082",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q083",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q084",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q085",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q086",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q087",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q088",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q089",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q090",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q091",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q092",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q093",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q094",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q095",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q096",
+   "lang": "ta",
+   "gold": "unknown",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q097",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q098",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q099",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q100",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q101",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "unknown",
+   "ok": true,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q102",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "brief",
+   "ok": false,
+   "deferred": false,
+   "family": "unknown"
+  },
+  {
+   "id": "q103",
+   "lang": "tanglish",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "unknown"
+  },
+  {
+   "id": "q104",
+   "lang": "en",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q105",
+   "lang": "en",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q106",
+   "lang": "en",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q107",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q108",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q109",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q110",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q111",
+   "lang": "en",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q112",
+   "lang": "en",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q113",
+   "lang": "en",
+   "gold": "unknown",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q114",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q115",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q116",
+   "lang": "ta",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q117",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q118",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q119",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q120",
+   "lang": "tanglish",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q121",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q122",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q123",
+   "lang": "tanglish",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "followup"
+  },
+  {
+   "id": "q124",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "followup"
+  },
+  {
+   "id": "q125",
+   "lang": "en",
+   "gold": "cases",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q126",
+   "lang": "ta",
+   "gold": "cases",
+   "got": "case",
+   "ok": false,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q127",
+   "lang": "tanglish",
+   "gold": "cases",
+   "got": "cases",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q128",
+   "lang": "en",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q129",
+   "lang": "ta",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q130",
+   "lang": "tanglish",
+   "gold": "news",
+   "got": "news",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q131",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q132",
+   "lang": "ta",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q133",
+   "lang": "tanglish",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q134",
+   "lang": "en",
+   "gold": "readings",
+   "got": "readings",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q135",
+   "lang": "en",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q136",
+   "lang": "ta",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q137",
+   "lang": "tanglish",
+   "gold": "ranking",
+   "got": "ranking",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q138",
+   "lang": "en",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q139",
+   "lang": "tanglish",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q140",
+   "lang": "ta",
+   "gold": "compare",
+   "got": "compare",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q141",
+   "lang": "en",
+   "gold": "trend",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q142",
+   "lang": "ta",
+   "gold": "trend",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q143",
+   "lang": "tanglish",
+   "gold": "trend",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q144",
+   "lang": "en",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q145",
+   "lang": "ta",
+   "gold": "why",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q146",
+   "lang": "tanglish",
+   "gold": "why",
+   "got": "why",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q147",
+   "lang": "en",
+   "gold": "performance",
+   "got": "unknown",
+   "ok": false,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q148",
+   "lang": "ta",
+   "gold": "performance",
+   "got": "cases",
+   "ok": false,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q149",
+   "lang": "tanglish",
+   "gold": "performance",
+   "got": "performance",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q150",
+   "lang": "en",
+   "gold": "dashboard",
+   "got": "dashboard",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q151",
+   "lang": "tanglish",
+   "gold": "dashboard",
+   "got": "navigate",
+   "ok": false,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q152",
+   "lang": "en",
+   "gold": "map",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q153",
+   "lang": "ta",
+   "gold": "map",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q154",
+   "lang": "en",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q155",
+   "lang": "tanglish",
+   "gold": "nearby",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q156",
+   "lang": "en",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q157",
+   "lang": "ta",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q158",
+   "lang": "tanglish",
+   "gold": "prices",
+   "got": "prices",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q159",
+   "lang": "en",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q160",
+   "lang": "ta",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q161",
+   "lang": "tanglish",
+   "gold": "navigate",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q162",
+   "lang": "en",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q163",
+   "lang": "tanglish",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q164",
+   "lang": "ta",
+   "gold": "save",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q165",
+   "lang": "en",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q166",
+   "lang": "ta",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q167",
+   "lang": "tanglish",
+   "gold": "insight",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q168",
+   "lang": "en",
+   "gold": "complete",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q169",
+   "lang": "tanglish",
+   "gold": "complete",
+   "got": "complete",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q170",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q171",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q172",
+   "lang": "ta",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q173",
+   "lang": "tanglish",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q174",
+   "lang": "en",
+   "gold": "refuse",
+   "got": "refuse",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q175",
+   "lang": "en",
+   "gold": "brief",
+   "got": "brief",
+   "ok": true,
+   "deferred": false,
+   "family": "other"
+  },
+  {
+   "id": "q176",
+   "lang": "ta",
+   "gold": "brief",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "other"
+  },
+  {
+   "id": "q177",
+   "lang": "en",
+   "gold": "general",
+   "got": "general",
+   "ok": true,
+   "deferred": false,
+   "family": "general"
+  },
+  {
+   "id": "q178",
+   "lang": "ta",
+   "gold": "general",
+   "got": "general",
+   "ok": true,
+   "deferred": false,
+   "family": "general"
+  },
+  {
+   "id": "q179",
+   "lang": "tanglish",
+   "gold": "general",
+   "got": "general",
+   "ok": true,
+   "deferred": false,
+   "family": "general"
+  },
+  {
+   "id": "q180",
+   "lang": "en",
+   "gold": "general",
+   "got": "defer",
+   "ok": false,
+   "deferred": true,
+   "family": "general"
+  }
+ ]
+}
