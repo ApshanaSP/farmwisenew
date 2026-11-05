@@ -690,8 +690,17 @@ const MAX_HOURS = 180 * 24;
  */
 export function customWindow(text: string, now?: string): { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string } | null {
   // yesterday: the day before the last 24 hours (the previous day's window, compared with the day before it)
-  if (/\b(yesterday|nethu|neththu|nethaiki)\b|நேற்று/i.test(text) && !/\b(since|from) yesterday\b/i.test(text)) return { hours: 24, label: "previous day", period: "daily", offset: 1 };
   const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
+  if (/\b(yesterday|nethu|neththu|nethaiki)\b|நேற்று/i.test(text) && !/\b(since|from) yesterday\b/i.test(text)) {
+    // the calendar day before today in India (midnight to midnight IST), not the 24 hours before the last 24 (BUG-018)
+    if (Number.isFinite(nowMs)) {
+      const today = now!.slice(0, 10);
+      const y = new Date(Date.parse(`${today}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);
+      const label = new Date(`${y}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+      return { hours: 24, label: `yesterday (${label})`, period: "daily", offset: 1, range: { from: `${y} 00:00:00`, to: `${today} 00:00:00` } };
+    }
+    return { hours: 24, label: "previous day", period: "daily", offset: 1 };
+  }
   const periodOf = (h: number): Period => (h <= 24 ? "daily" : h <= 168 ? "weekly" : h <= 720 ? "monthly" : "quarterly");
   const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   const day = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
