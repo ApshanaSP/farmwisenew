@@ -1,0 +1,26 @@
+Seeded faults on critical logic (hand-written, one at a time, file restored after each; never committed)
+
+CAUGHT   src/lib/thunai/entities.ts: if (heard === want) return { s: 1, via: "exact" };   // the same pair
+CAUGHT   src/lib/thunai/entities.ts: const conf = via === "exact" ? 0.97
+CAUGHT   src/lib/thunai/entities.ts: if (outside && (heads.length
+CAUGHT   src/lib/thunai/entities.ts: if (ws.some((w) => BRIEF_WORDS.has(w))) return true;
+CAUGHT   src/lib/thunai/entities.ts: (h.e.kind === "zone" ? 0 : 10)
+CAUGHT   src/lib/thunai/entities.ts: if (NOT_A_BRIEF.test(
+CAUGHT   src/lib/thunai/entities.ts: if (e.noRecords) return
+CAUGHT   src/lib/thunai/outside.ts: if (w === o ||
+CAUGHT   src/lib/thunai/numbergate.ts: if (EN_WORDS[w] != null) out.push
+CAUGHT   src/lib/thunai/numbergate.ts: out.push({ raw: m[0], value: 1, words: true });
+CAUGHT   src/lib/thunai/privacy.ts: if (d.length === 12 && !/^91[6-9]/.test(d)) return true;
+CAUGHT   src/lib/thunai/privacy.ts: if (local.length === 10 && /^[6-9]/.test(local)) return true;
+CAUGHT   src/lib/thunai/privacy.ts: if (ONE_FILING.test(t) && FILER_THING.test(t)) return true;
+CAUGHT   src/lib/thunai/privacy.ts: if (PRIVATE_KEY.test(k)) continue;
+CAUGHT   src/lib/thunai/privacy.ts: const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w.-]+)?/g;
+CAUGHT   src/lib/thunai/speechcheck.ts: if (grams.has(g.join(" "))) return g.join(" ");
+CAUGHT   src/lib/thunai/speechcheck.ts: [/\bINC-[A-Za-z0-9_-]+/, "incident id"],
+CAUGHT   src/lib/thunai/speechcheck.ts: [/\b\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2})?/, "ISO date"],
+CAUGHT   src/lib/thunai/narrate.ts: if (hours < 24 * 10) return { en: "about a week"
+CAUGHT   src/lib/thunai/injection.ts: return steps.filter((s) => { const re = ASKED[s.a]; return !re || re.t
+CAUGHT   src/lib/thunai/injection.ts: !!line && copiedRun(line, records) != null
+CAUGHT   src/lib/thunai/screens.ts: if (code.startsWith("POL-")) return bi("These are generated police tes
+
+22 of 22 seeded faults caught (100 %).

@@ -37,3 +37,10 @@ it("the generality canaries reach the right body", () => {
   for (const r of out.filter((x) => x.got !== x.expect)) console.log("MISS", r.expect, "<-", r.got, "|", r.text);
   expect(right / out.length).toBeGreaterThanOrEqual(0.9);
 });
+
+it("a body in the reference table with no records gets an honest 'no records yet'", () => {
+  const t = briefTurn("TANGEDCO status", world);
+  expect(t?.kind).toBe("reply");
+  expect(t && "entity" in t ? t.entity : null).toBe("TANGEDCO");
+  expect(t?.kind === "reply" ? t.text.en : "").toMatch(/has no records in this data yet/);
+});
