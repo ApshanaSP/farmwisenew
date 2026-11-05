@@ -9,6 +9,7 @@
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
  * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
+import { KEEP_BUTTON, workspaceIds } from "./guards";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Overview } from "@/lib/collector/intel";
@@ -538,15 +539,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       out(line(k, lang, { n: tray.length, said: n ?? "" }), lang, tray.length ? "waiting" : "ready");
       return;
     }
-    let sent = 0;
+    let sent = 0, opened = 0;
+    const kept: typeof tray = [];
     for (const d of tray) {
-      if (!d.sandbox) { hostRef.current.c.openAction(d.incidentId); continue; }
-      try { await post(`/api/collector/incidents/${encodeURIComponent(d.incidentId)}/action`, { subject: d.subject, body: d.body }); sent++; } catch { /* stays */ }
+      if (!d.sandbox) { hostRef.current.c.openAction(d.incidentId); opened++; continue; }
+      // a draft whose send fails (or whose "Confirm it's you" was cancelled) stays in the tray, and is said to have stayed (BUG-012)
+      try { await post(`/api/collector/incidents/${encodeURIComponent(d.incidentId)}/action`, { subject: d.subject, body: d.body }); sent++; } catch { kept.push(d); }
     }
-    audit(null, [{ a: "confirm", n }], `sent ${sent} of ${tray.length} (sandbox only)`, { how, count: n ?? undefined });
-    setTray([]); setTrayShownAt(null);
-    earcon("done");
-    out(sent === tray.length ? line("sent", lang, { n: sent }) : line("approvedOnly", lang), lang);
+    audit(null, [{ a: "confirm", n }], `sent ${sent} of ${tray.length} (sandbox only); ${kept.length} kept; ${opened} opened in the incident panel`, { how, count: n ?? undefined });
+    setTray(kept); setTrayShownAt(kept.length ? Date.now() : null);
+    earcon(kept.length ? "blocked" : "done");
+    out(kept.length ? line("sendKept", lang, { n: kept.length, sent }) : sent === tray.length ? line("sent", lang, { n: sent }) : line("approvedOnly", lang), lang, kept.length ? "waiting" : "ready");
   };
 
   // --------------------------------------------------------------- one step --
@@ -620,7 +623,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         try {
           const r = await fetch("/api/collector/workspaces");
           const j = await r.json();
-          const list: { id: number; name: string }[] = j.workspaces ?? j.items ?? j ?? [];
+          // GET /api/collector/workspaces gives name groups with their versions, newest first (lib/collector/workspaces.ts) (BUG-013)
+          const list = workspaceIds(j.workspaces ?? j.items ?? j);
           const q = (step.name ?? "").toLowerCase();
           const w = list.find((x) => x.name.toLowerCase() === q) ?? list.find((x) => x.name.toLowerCase().includes(q) || q.includes(x.name.toLowerCase()));
           if (!w) return line("noWorkspace", lang, { name: step.name });
@@ -660,6 +664,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         // Jarvis never presses send, approve or delete, by number or by name
         // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never)
         if (t.el.closest("[data-jarvis-never]") || DANGER_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
+        // saving, pinning or a bare "Yes" keeps something (level B): a spoken click never presses it, the Collector's tap does (BUG-014)
+        if (KEEP_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`.trim())) return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
         press(t.el);
         return null;
       }
@@ -1128,7 +1134,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
       // a yes from Whisper, typed text or a tap; browser captions can catch Jarvis's own voice, so theirs never counts
-      if (/^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said) && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); if (p.act) p.act(); else await run(p.steps, p.lang, p.heard, "rules"); return; }
+      const yes = /^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said);
+      if (yes && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); if (p.act) p.act(); else await run(p.steps, p.lang, p.heard, "rules"); return; }
+      // the captions may have heard Jarvis's own voice: the card stays and waits for a yes it can trust (BUG-016)
+      if (yes) { out(line("yesNotTrusted", pendingB.lang), pendingB.lang, "waiting"); return; }
       if (/^(no|cancel|வேண்டாம்|illa|vendaam)$/i.test(said)) { setPendingB(null); setPhase("ready"); return; }
       setPendingB(null);
     }
@@ -1376,13 +1385,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
   /** a question about the open dataset: the Studio's engine plans it (AI, else rules) and counts it from the rows */
   const askDataset = async (sd: StudioContext, q: string, lang: Lang) => {
+    // like askAnalyst: an answer that comes back after a newer turn or a stop is dropped (BUG-015)
+    const gen = turnGen.current, signal = turnCtl.current?.signal;
+    const stale = () => gen !== turnGen.current || !!signal?.aborted;
     setPhase("thinking");
     setReply(lang === "ta" ? `${sd.name} தரவில் கணக்கிடுகிறேன்…` : `Counting it in ${sd.name}…`);
     try {
       const last = studioPlan.current?.id === sd.id ? studioPlan.current.plan : null;
       const res = await fetch(`/api/collector/studio/${sd.id}`, { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ask", question: q, context: last ? { filters: (last as { filters?: unknown[] }).filters ?? [] } : null }) });
+        body: JSON.stringify({ action: "ask", question: q, context: last ? { filters: (last as { filters?: unknown[] }).filters ?? [] } : null }), signal });
       const a = await res.json() as StudioReply & { error?: string };
+      if (stale()) return;
       if (!res.ok) throw new Error(a.error ?? "failed");
       if (a.plan) studioPlan.current = { id: sd.id, plan: a.plan };
       const say = a.kind === "unsupported" ? (a.note ?? (lang === "ta" ? "இந்தத் தரவில் அதற்குப் பதில் இல்லை." : "This data cannot answer that.")) : (a.answer ?? "");
@@ -1391,6 +1404,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       earcon("done");
       out(say, lang, "ready");
     } catch {
+      if (stale()) return;
       earcon("blocked");
       out(lang === "ta" ? "இந்தத் தரவிடம் இப்போது கேட்க முடியவில்லை. மீண்டும் முயலுங்கள்." : "The dataset could not be asked just now. Please try again.", lang, "ready");
     }

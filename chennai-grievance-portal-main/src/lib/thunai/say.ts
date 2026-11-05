@@ -33,6 +33,8 @@ const T: Record<string, { en: string; ta: string }> = {
   trayEmpty: { en: "Nothing is waiting for approval.", ta: "ஒப்புதலுக்கு எதுவும் காத்திருக்கவில்லை." },
   sent: { en: "Sent {n} through the test channel.", ta: "சோதனை வழியில் {n} அனுப்பப்பட்டது." },
   approvedOnly: { en: "Approved. Send it from the incident panel.", ta: "ஒப்புதல் அளிக்கப்பட்டது. நிகழ்வுப் பலகையிலிருந்து அனுப்புங்கள்." },
+  sendKept: { en: "{n} could not be sent and are still in the tray. {sent} went through.", ta: "{n} அனுப்ப முடியவில்லை, இன்னும் தட்டில் உள்ளன. {sent} அனுப்பப்பட்டன." },
+  yesNotTrusted: { en: "I couldn't hear that yes clearly. Tap the card, or say yes again.", ta: "அந்த ஆம் தெளிவாகக் கேட்கவில்லை. அட்டையைத் தட்டுங்கள், அல்லது மீண்டும் ஆம் என்று சொல்லுங்கள்." },
   saved: { en: "Saved as {name}.", ta: "{name} என்று சேமித்தேன்." },
   remembered: { en: "I'll remember that.", ta: "நினைவில் வைத்துக்கொண்டேன்." },
   forgotten: { en: "Forgotten.", ta: "மறந்துவிட்டேன்." },
