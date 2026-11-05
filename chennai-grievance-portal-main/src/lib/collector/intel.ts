@@ -855,9 +855,10 @@ export async function overview(period: Period, zone: number | null, dept: string
        FROM source_health ORDER BY FIELD(source, 'grievance', 'police', 'pwd', 'hospital', 'news', 'imd', 'cpcb', 'cfm')`
     ),
     q(
+      // the bell keeps to a department view too: an officer's overview never carries another department's incidents (BUG-026)
       `SELECT ${ROW} ${FROM} WHERE ${EFF.open} = 1 AND i.severity_level IN ('Severe', 'High') AND NOT ${ROUTED}
-       AND ${periodWindow(period, now).sql} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
-      periodWindow(period, now).params
+       AND ${periodWindow(period, now).sql}${dept ? " AND i.lead_dept = ?" : ""} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
+      [...periodWindow(period, now).params, ...(dept ? [dept] : [])]
     ),
     q(
       `SELECT i.lead_dept AS code, dp.name, dp.head, SUM(${EFF.open}) AS open, COUNT(*) AS n,
@@ -1495,6 +1496,9 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
     ...checks.map((r) => row("Closed work to check", r, taskBecause(r).join("; ")))
   ];
 }
+
+/** The columns of exportRows(), in the order every CSV writes them. */
+export const EXPORT_COLS = ["list", "id", "what", "where", "department", "severity", "why", "reported", "past_deadline", "complaints"];
 
 // ---------------------------------------------------------- departments --
 

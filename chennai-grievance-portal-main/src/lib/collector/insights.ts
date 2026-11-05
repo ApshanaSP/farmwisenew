@@ -5,6 +5,7 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, PLACE_FILTERS, asOf, explain, periodSince, periodWindow, type Focus, type Period } from "@/lib/collector/intel";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
@@ -13,6 +14,9 @@ import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
 import { unusualEnough } from "@/lib/reference/metrics";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 /** An empty price table, for the parts that do not show prices. */
 const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
@@ -38,7 +42,7 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
 }
 
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, i.is_open AS open,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, ${OPEN} AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
   i.ai_summary, i.ai_attention, i.ai_next_step,
@@ -115,22 +119,22 @@ export async function insights(period: Period, zone: number | null, dept: string
   const rw = where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) });
 
   const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomaliesAll, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
-    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open,
-              SUM(i.is_open = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints,
+    when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open,
+              SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints,
               SUM(i.source_count > 1) AS multi, SUM(i.media_only) AS news_only
        FROM incidents i WHERE ${w.sql}`, w.params)),
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params)),
     // candidates for "needs your attention": open, highest priority first (explain() decides which need the Collector)
-    when(B, () => q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND i.is_open = 1 ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
+    when(B, () => q(`SELECT ${INC} ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 ORDER BY i.priority_score DESC LIMIT 30`, w.params)),
     // next open action per open incident in scope (pipeline action list, SOP order)
     when(B, () => q(`SELECT a.incident_id AS id, a.dept_code, a.owner, a.text, a.status, DATE_FORMAT(a.due_at, '%Y-%m-%d %H:%i:%s') AS due,
               ROW_NUMBER() OVER (PARTITION BY a.incident_id ORDER BY a.status = 'In progress' DESC, a.due_at, a.action_id) AS rn
        FROM actions a JOIN incidents i ON i.incident_id = a.incident_id
-       WHERE ${w.sql} AND i.is_open = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params)),
+       WHERE ${w.sql} AND ${OPEN} = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params)),
     when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(i.sla_breached) AS overdue,
               SUM(i.severity_level IN ('Severe', 'High')) AS serious, SUM(i.awaiting_collector) AS awaiting,
               SUM(i.citizen_complaints) AS complaints
-       ${FROM} WHERE ${w.sql} AND i.is_open = 1 GROUP BY i.lead_dept, dp.name, dp.head
+       ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 GROUP BY i.lead_dept, dp.name, dp.head
        ORDER BY serious DESC, overdue DESC, open DESC`, w.params)),
     // in the news, no department record
     when(B, () => q(`SELECT ${INC}, g.suggested_action, g.gap_strength FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
@@ -146,8 +150,8 @@ export async function insights(period: Period, zone: number | null, dept: string
     when(T || (B && !!s.taluk), () => q(`SELECT t.taluk_code AS code, t.name, COALESCE(x.open, 0) AS open, COALESCE(x.severe, 0) AS severe, COALESCE(x.overdue, 0) AS overdue,
               COALESCE(x.reported, 0) AS reported, COALESCE(y.reported, 0) AS prev
        FROM ref_taluks t
-       LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(i.is_open) AS open, SUM(i.is_open = 1 AND i.severity_level = 'Severe') AS severe,
-                         SUM(i.is_open = 1 AND i.sla_breached = 1) AS overdue
+       LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND i.severity_level = 'Severe') AS severe,
+                         SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue
                   FROM incidents i WHERE ${where({ ...s, taluk: null }, now, { hours: 720 }).sql} GROUP BY i.taluk_code) x ON x.taluk_code = t.taluk_code
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported FROM incidents i
                   WHERE ${where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql} GROUP BY i.taluk_code) y ON y.taluk_code = t.taluk_code
@@ -155,13 +159,15 @@ export async function insights(period: Period, zone: number | null, dept: string
       [...where({ ...s, taluk: null }, now, { hours: 720 }).params, ...where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).params])),
     // a.*: kind / rise_days / q_value exist only in builds with slow-rise detection (older ones read as one-day spikes)
     when(T || B, () => q(`SELECT a.*, DATE_FORMAT(a.date, '%Y-%m-%d') AS day, a.category_code AS cat, a.zone_no AS zone
-       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""} ORDER BY a.date DESC, a.ratio DESC`,
-      zone ? [now, zone] : [now])),
+       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""}
+       ${dept ? "AND a.category_code IN (SELECT DISTINCT d.category_code FROM incidents d WHERE d.lead_dept = ?)" : ""} ORDER BY a.date DESC, a.ratio DESC`,
+      // a department's view keeps to the kinds of incident that department leads (BUG-027)
+      [now, ...(zone ? [zone] : []), ...(dept ? [dept] : [])])),
     when(T, () => q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
               DATE_FORMAT(first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(last_seen, '%Y-%m-%d') AS last_seen
        FROM hotspots WHERE incidents_30d >= 3 ORDER BY incidents_30d DESC LIMIT 60`)),
     // open incidents with no zone: judged by locreview.ts (most are not a location problem)
-    when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND i.is_open = 1
+    when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
        ORDER BY i.priority_score DESC LIMIT 600`, rw.params)),
     when(T, () => q(`SELECT ward_no, zone_no, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`)),
     when(T, () => q(`SELECT item_type, COUNT(*) AS n FROM review_queue WHERE status IN ('open', 'pending', 'new') OR status IS NULL GROUP BY item_type`)),
@@ -180,8 +186,8 @@ export async function insights(period: Period, zone: number | null, dept: string
   // outside the district), so the ranking adds up to the total
   const tw = where({ ...s, taluk: null }, now, { hours: 720 });
   const [noTaluk] = T
-    ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.severity_level = 'Severe'), 0) AS severe,
-              COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
+    ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(${OPEN} = 1 AND i.severity_level = 'Severe'), 0) AS severe,
+              COALESCE(SUM(${OPEN} = 1 AND i.sla_breached = 1), 0) AS overdue
        FROM incidents i WHERE ${tw.sql} AND ${PLACE_FILTERS.notaluk}`, tw.params)
     : [];
 
@@ -240,8 +246,8 @@ export async function insights(period: Period, zone: number | null, dept: string
     Promise.all(anomalies.slice(0, 8).map((a) => {
       const days = a.kind === "slow_rise" ? Math.max(1, Number(a.rise_days) || 1) : 1;
       return q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i
-        WHERE i.category_code = ? AND i.zone_no = ? AND DATE(i.first_reported_at) > DATE(?) - INTERVAL ? DAY AND DATE(i.first_reported_at) <= DATE(?)
-        ORDER BY i.first_reported_at DESC LIMIT 12`, [a.cat, a.zone, a.day, days, a.day]).catch(orEmpty("insights:241"));
+        WHERE i.category_code = ? AND i.zone_no = ? AND DATE(i.first_reported_at) > DATE(?) - INTERVAL ? DAY AND DATE(i.first_reported_at) <= DATE(?)${dept ? " AND i.lead_dept = ?" : ""}
+        ORDER BY i.first_reported_at DESC LIMIT 12`, [a.cat, a.zone, a.day, days, a.day, ...(dept ? [dept] : [])]).catch(orEmpty("insights:241"));
     })),
     Promise.all(hotspots.slice(0, 20).map((h) => q(`SELECT ${TITLE} AS title, i.place_text AS loc FROM incidents i WHERE i.hotspot_id = ?
       ORDER BY i.first_reported_at DESC LIMIT 12`, [h.id]).catch(orEmpty("insights:244"))))
@@ -295,7 +301,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const perDept = new Map<string, Row[]>();
   const topByDept = await when(B, () => q(
     `SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
-                    ${FROM} WHERE ${w.sql} AND i.is_open = 1) x WHERE rk <= 3`, w.params));
+                    ${FROM} WHERE ${w.sql} AND ${OPEN} = 1) x WHERE rk <= 3`, w.params));
   for (const i of topByDept) (perDept.get(i.dept) ?? perDept.set(i.dept, []).get(i.dept)!).push(i);
   const deptActions = deptRows.map((d) => ({
     code: d.code, name: d.name ?? d.code, head: d.head, open: Number(d.open), overdue: Number(d.overdue ?? 0), serious: Number(d.serious ?? 0),
@@ -347,7 +353,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   // open incidents this server placed from their reports (derive.ts), shown on the map; only on the AWS store
   const placedRows = T ? await q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.zone_name, i.lat, i.lon, p.place, p.how,
       DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
-    FROM _placed p JOIN incidents i ON i.incident_id = p.incident_id WHERE ${rw.sql} AND i.is_open = 1
+    FROM _placed p JOIN incidents i ON i.incident_id = p.incident_id WHERE ${rw.sql} AND ${OPEN} = 1
     ORDER BY i.first_reported_at DESC LIMIT 120`, rw.params).catch(orEmpty("insights:349")) : [];
   const wards: Ward[] = wardRows.map((r) => ({ ward_no: Number(r.ward_no), zone_no: Number(r.zone_no), lat: Number(r.lat), lon: Number(r.lon) }));
   const places = T ? reviewLocations(unplaced, wards, await placeResolver().catch(() => () => null)) : null;
@@ -442,7 +448,7 @@ export async function pattern(p: PatternQuery) {
       incidentsOf(`i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY AND i.first_reported_at < ${MON}`, [p.cat, now, now, now, now]),
       q(`SELECT dp.name, COUNT(*) AS n ${FROM} WHERE i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY AND i.first_reported_at < ${MON}
          GROUP BY dp.name ORDER BY n DESC LIMIT 2`, [p.cat, now, now, now, now]),
-      q(`SELECT COALESCE(SUM(i.is_open), 0) AS n FROM incidents i WHERE i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY
+      q(`SELECT COALESCE(SUM(${OPEN}), 0) AS n FROM incidents i WHERE i.category_code = ? AND i.first_reported_at >= ${MON} - INTERVAL 28 DAY
          AND i.first_reported_at < ${MON}`, [p.cat, now, now, now, now])
     ]);
     const byW = new Map(weeks.map((x) => [Number(x.w), Number(x.n)]));

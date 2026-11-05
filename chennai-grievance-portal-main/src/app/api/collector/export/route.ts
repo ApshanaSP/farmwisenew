@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireConfirm } from "@/lib/security/stepup";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { csvCell } from "@/lib/csv";
-import { exportRows, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
+import { EXPORT_COLS, exportRows, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
 
 export const dynamic = "force-dynamic";
 
 // the Collector's action list: incidents that need them, then closed work to check (see exportRows)
-const COLS = ["list", "id", "what", "where", "department", "severity", "why", "reported", "past_deadline", "complaints"];
+const COLS = EXPORT_COLS;
 
 export async function GET(req: NextRequest) {
   const s = await collectorSession();
