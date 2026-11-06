@@ -1,0 +1,892 @@
+{
+ "label": "baseline",
+ "complete": true,
+ "command": "npx vitest run --sequence.shuffle --sequence.seed=<seed> --reporter=json --reporter=dot --outputFile.json=<tmp>",
+ "held_semaphore": "vitest-full 2",
+ "runs_per_time_zone": 10,
+ "node": "v24.21.0",
+ "started": "2026-11-06T13:13:45.281Z",
+ "finished": "2026-11-06T13:38:46.221Z",
+ "time_zones_checked": {
+  "UTC": {
+   "offset": 0,
+   "zone": "UTC"
+  },
+  "Asia/Kolkata": {
+   "offset": -330,
+   "zone": "Asia/Calcutta"
+  }
+ },
+ "runs_done": 20,
+ "runs_with_any_failure": 20,
+ "tests_that_failed": 16,
+ "failures": [
+  {
+   "name": "9.5 a daily site, a week of runs a site that fails is Failing, retried after 15 min, 1 h, then 3 h, and recovers",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "first_failure_message": "AssertionError: expected 42 to be 48 // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:95:39\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 19,
+   "by_time_zone": {
+    "UTC": 9,
+    "Asia/Kolkata": 10
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "9.5 a daily site, a week of runs a missing day is Late, then Healthy when the file appears",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    16,
+    18,
+    19,
+    20
+   ],
+   "first_failure_message": "Error: Unknown connector.\n    at runConnector1 (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:268:17)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:263:30\n    at exclusive (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:259:22)\n    at Module.runConnector (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:263:10)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:69:24\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 17,
+   "by_time_zone": {
+    "UTC": 7,
+    "Asia/Kolkata": 10
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "9.5 a daily site, a week of runs a renamed column pauses it with a self-heal proposal; approval maps it and resumes",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    9,
+    10,
+    11,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "first_failure_message": "Error: Unknown connector.\n    at runConnector1 (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:268:17)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:263:30\n    at exclusive (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:259:22)\n    at Module.runConnector (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:263:10)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:104:21\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 17,
+   "by_time_zone": {
+    "UTC": 9,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "9.5 a daily site, a week of runs rows falling by 80% are held in quarantine: the last good data stays live",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    1,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "first_failure_message": "TypeError: Cannot read properties of null (reading 'rows')\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:123:31\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 17,
+   "by_time_zone": {
+    "UTC": 9,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "9.5 a daily site, a week of runs a watch that is crossed after a run is recorded for the console",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    1,
+    2,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected false to be true // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:143:104\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 14,
+   "by_time_zone": {
+    "UTC": 8,
+    "Asia/Kolkata": 6
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "9.5 schedules, backfill, snapshots and API periods pause and resume, and the file-name pattern reads its dates",
+   "file": "src/lib/studio/connectors.test.ts",
+   "failed_in_runs": [
+    2,
+    3,
+    6,
+    8,
+    9,
+    10,
+    12,
+    14,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "Error: Unknown connector.\n    at Module.setPaused (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.ts:406:17)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connectors.test.ts:200:5\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\n    at runTest (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)",
+   "times_failed": 12,
+   "by_time_zone": {
+    "UTC": 4,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "profile photo upload refuses HTML that claims to be a PNG, and writes nothing",
+   "file": "src/app/api/profile/photo/route.test.ts",
+   "failed_in_runs": [
+    2,
+    3,
+    6,
+    8,
+    9,
+    10,
+    12,
+    14,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected [ Array(1) ] to deeply equal []\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\app\\api\\profile\\photo\\route.test.ts:23:23\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 12,
+   "by_time_zone": {
+    "UTC": 4,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "source routes validate before touching the store refuses an id that is not a number",
+   "file": "src/app/api/collector/sources/[id]/route.test.ts",
+   "failed_in_runs": [
+    2,
+    3,
+    6,
+    8,
+    9,
+    10,
+    12,
+    14,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected [ [ 'update', 404, …(2) ], …(1) ] to deeply equal []\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\app\\api\\collector\\sources\\[id]\\route.test.ts:22:21\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 12,
+   "by_time_zone": {
+    "UTC": 4,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "hearing an utterance an ambient sentence: one decode in the site's language, and the ninth in a minute is refused by the ledger",
+   "file": "src/lib/thunai/stt.test.ts",
+   "failed_in_runs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    9,
+    12,
+    14,
+    19,
+    20
+   ],
+   "first_failure_message": "AssertionError: expected 7 to be 8 // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\stt.test.ts:87:19\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 11,
+   "by_time_zone": {
+    "UTC": 5,
+    "Asia/Kolkata": 6
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "signing in with a browser reuses the kept session, and signs in again by itself when it has expired",
+   "file": "src/lib/studio/connect.test.ts",
+   "failed_in_runs": [
+    2,
+    4,
+    6,
+    8,
+    9,
+    10,
+    14,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected 'fresh' to be 'reused' // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\studio\\connect.test.ts:175:28\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 11,
+   "by_time_zone": {
+    "UTC": 3,
+    "Asia/Kolkata": 8
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "hearing an utterance an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with the prompt",
+   "file": "src/lib/thunai/stt.test.ts",
+   "failed_in_runs": [
+    2,
+    5,
+    6,
+    8,
+    9,
+    10,
+    14,
+    16,
+    17,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected [] to deeply equal [ 'en:whisper-large-v3-turbo', …(1) ]\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\stt.test.ts:60:60\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 11,
+   "by_time_zone": {
+    "UTC": 4,
+    "Asia/Kolkata": 7
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "records finds the repeated cards on a page, skipping the menu",
+   "file": "src/lib/collector/sourcemap.test.ts",
+   "failed_in_runs": [
+    1,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected '2026-10-02T00:00:00.000Z' to be '2026-10-01T18:30:00.000Z' // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\collector\\sourcemap.test.ts:48:59\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\n    at runTest (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\n    at runSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)",
+   "times_failed": 10,
+   "by_time_zone": {
+    "UTC": 10,
+    "Asia/Kolkata": 0
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "hearing an utterance Whisper unsure of an engaged turn: the third racer is asked, and is not asked for an ambient sentence or a sure one",
+   "file": "src/lib/thunai/stt.test.ts",
+   "failed_in_runs": [
+    2,
+    3,
+    5,
+    6,
+    11,
+    12,
+    15,
+    20
+   ],
+   "first_failure_message": "AssertionError: expected false to be true // Object.is equality\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\stt.test.ts:101:67\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 8,
+   "by_time_zone": {
+    "UTC": 4,
+    "Asia/Kolkata": 4
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "hearing an utterance each model's budget is its own: turbo cooling leaves a named turn on large-v3; large-v3 cooling stops Tamil ambient with no post",
+   "file": "src/lib/thunai/stt.test.ts",
+   "failed_in_runs": [
+    2,
+    3,
+    6,
+    9,
+    10,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected [] to deeply equal [ 'whisper-large-v3' ]\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\stt.test.ts:70:20\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 6,
+   "by_time_zone": {
+    "UTC": 3,
+    "Asia/Kolkata": 3
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "the skeptic's breaks a long sentence resolves inside 20 ms at p95",
+   "file": "src/lib/thunai/briefturn.test.ts",
+   "failed_in_runs": [
+    14,
+    18,
+    19
+   ],
+   "first_failure_message": "AssertionError: expected 27.623599999999897 to be less than 20\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\thunai\\briefturn.test.ts:102:46\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20",
+   "times_failed": 3,
+   "by_time_zone": {
+    "UTC": 1,
+    "Asia/Kolkata": 2
+   },
+   "file_differs_from_commit": false
+  },
+  {
+   "name": "contact questions go to the officials' directory recognises contact phrasing, not counts or officer checks",
+   "file": "src/lib/assistant/__tests__/decide.test.ts",
+   "failed_in_runs": [
+    20
+   ],
+   "first_failure_message": "Error: STACK_TRACE_ERROR\n    at task (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:638:27)\n    at Object.<anonymous> (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:662:16)\n    at Object.<anonymous> (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:458:28)\n    at chain (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:369:14)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\src\\lib\\assistant\\__tests__\\decide.test.ts:106:3\n    at file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:734:40\n    at runWithSuite (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:1849:8)\n    at Object.collect (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:734:10)\n    at Object.collect (file:///E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/node_modules/@vitest/runner/dist/chunk-hooks.js:738:54)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at collectTests (file:///E",
+   "times_failed": 1,
+   "by_time_zone": {
+    "UTC": 0,
+    "Asia/Kolkata": 1
+   },
+   "file_differs_from_commit": false
+  }
+ ],
+ "skipped_in_only_some_runs": [],
+ "skipped_in_every_run": 13,
+ "slowest_tests": [
+  {
+   "name": "signing in with a browser reuses the kept session, and signs in again by itself when it has expired",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 20799
+  },
+  {
+   "name": "contact questions go to the officials' directory recognises contact phrasing, not counts or officer checks",
+   "file": "src/lib/assistant/__tests__/decide.test.ts",
+   "max_ms": 15034
+  },
+  {
+   "name": "a department's view keeps to that department emerging patterns and their example headlines keep to the department (BUG-027)",
+   "file": "src/lib/collector/deptscope.test.ts",
+   "max_ms": 11482
+  },
+  {
+   "name": "a department's view keeps to that department the briefing counts open incidents with the Collector's decisions on top (BUG-028)",
+   "file": "src/lib/collector/deptscope.test.ts",
+   "max_ms": 10542
+  },
+  {
+   "name": "signing in with a browser signs in on the site's own form, reads the data the page loads, and keeps the session",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 8902
+  },
+  {
+   "name": "citizen -> officer -> Collector -> citizen the resident sees the Collector's verification and the completion photo",
+   "file": "src/lib/loop.sqlite.test.ts",
+   "max_ms": 7819
+  },
+  {
+   "name": "password only a right password starts a staff session at once, with no second step",
+   "file": "src/app/api/auth/password-only.test.ts",
+   "max_ms": 6863
+  },
+  {
+   "name": "9.7 numbers: every headline and bar recomputed from the raw rows each KPI and each by-column bar equals an independent sum over the raw file",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 6235
+  },
+  {
+   "name": "signing in with a browser says plainly when the password is wrong",
+   "file": "src/lib/studio/connect.test.ts",
+   "max_ms": 5539
+  },
+  {
+   "name": "9.4 every DATA fixture's dashboard breaks no chart rule 0 hard violations over every panel",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 5507
+  },
+  {
+   "name": "9.10 a 50,000-row file is read, cleaned, designed, checked and mined in under 20 s, and memory settles",
+   "file": "src/lib/studio/perf.test.ts",
+   "max_ms": 4781
+  },
+  {
+   "name": "OCR: a picture of a table and a scanned PDF reads 90%+ of the cells right, and says it was read by OCR and how sure it is",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 4295
+  },
+  {
+   "name": "calling a model no hedge with under 40 % of a minute's budget on the hedge's model",
+   "file": "src/lib/thunai/llm.test.ts",
+   "max_ms": 3885
+  },
+  {
+   "name": "9.1 the outcome of every link fixture d-ocr-scan ends in DATA",
+   "file": "src/lib/studio/outcomes.test.ts",
+   "max_ms": 3884
+  },
+  {
+   "name": "calling a model hedges at the model's p95 and aborts the loser",
+   "file": "src/lib/thunai/llm.test.ts",
+   "max_ms": 3642
+  }
+ ],
+ "paths_changed_during_hunt": [
+  "M chennai-grievance-portal-main/tests/qa/oracle/load.mjs",
+  " M chennai-grievance-portal-main/tsconfig.json",
+  "?? chennai-grievance-portal-main/tests/e2e/pass4-client-fixes.spec.ts",
+  "?? chennai-grievance-portal-main/tests/e2e/pass4-client.harness.ts",
+  "?? chennai-grievance-portal-main/tests/qa/oracle/pinned.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/_probe_inv.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-client_browser.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-narrate_and_figures.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-privacy_injection.browser.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-privacy_injection.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-ui_honesty.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/audit-understanding.browser.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/decision-matrix.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/eslintrc.scan.json",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/golden-diff.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/golden-preload.cjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/golden.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/lib/golden-inventory.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/lib/golden-normalise.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/lib/golden-plan.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/lib/golden-sentences.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/lib/secret-scan.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/noisy-gen.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/playwright.client.config.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/same-number-brief.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/same-number.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/same-number.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scan-bundle.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scan-findings.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scan-history.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scan-lfs.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scan-runtime.mjs",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/scans-code.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/tmp-audit-nf-check.test.ts",
+  "?? chennai-grievance-portal-main/tests/qa/pass4/zz-audit-probe.test.ts"
+ ],
+ "runs": [
+  {
+   "n": 1,
+   "tz": "UTC",
+   "seed": 1929234556,
+   "duration_s": 84.5,
+   "lock_wait_s": 15.3,
+   "other_vitest_slot_busy": true,
+   "passed": 2312,
+   "failed": 7,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1929234556"
+  },
+  {
+   "n": 2,
+   "tz": "Asia/Kolkata",
+   "seed": 958374858,
+   "duration_s": 67.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2307,
+   "failed": 12,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=958374858"
+  },
+  {
+   "n": 3,
+   "tz": "UTC",
+   "seed": 307512762,
+   "duration_s": 102.6,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2308,
+   "failed": 11,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=307512762"
+  },
+  {
+   "n": 4,
+   "tz": "Asia/Kolkata",
+   "seed": 1462431211,
+   "duration_s": 41.6,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2313,
+   "failed": 6,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1462431211"
+  },
+  {
+   "n": 5,
+   "tz": "UTC",
+   "seed": 68759001,
+   "duration_s": 47.6,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2311,
+   "failed": 8,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=68759001"
+  },
+  {
+   "n": 6,
+   "tz": "Asia/Kolkata",
+   "seed": 1399952716,
+   "duration_s": 52.5,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2309,
+   "failed": 10,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1399952716"
+  },
+  {
+   "n": 7,
+   "tz": "UTC",
+   "seed": 389316830,
+   "duration_s": 82.1,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2313,
+   "failed": 6,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=389316830"
+  },
+  {
+   "n": 8,
+   "tz": "Asia/Kolkata",
+   "seed": 1114788294,
+   "duration_s": 54.3,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2309,
+   "failed": 10,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1114788294"
+  },
+  {
+   "n": 9,
+   "tz": "UTC",
+   "seed": 4220957,
+   "duration_s": 66.2,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2306,
+   "failed": 13,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=4220957"
+  },
+  {
+   "n": 10,
+   "tz": "Asia/Kolkata",
+   "seed": 1183032787,
+   "duration_s": 81.5,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2308,
+   "failed": 11,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1183032787"
+  },
+  {
+   "n": 11,
+   "tz": "UTC",
+   "seed": 1874324702,
+   "duration_s": 76.3,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2312,
+   "failed": 7,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1874324702"
+  },
+  {
+   "n": 12,
+   "tz": "Asia/Kolkata",
+   "seed": 1446341201,
+   "duration_s": 61.3,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2311,
+   "failed": 8,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1446341201"
+  },
+  {
+   "n": 13,
+   "tz": "UTC",
+   "seed": 875816383,
+   "duration_s": 41.8,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2315,
+   "failed": 4,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=875816383"
+  },
+  {
+   "n": 14,
+   "tz": "Asia/Kolkata",
+   "seed": 1833234340,
+   "duration_s": 58.8,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2307,
+   "failed": 12,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1833234340"
+  },
+  {
+   "n": 15,
+   "tz": "UTC",
+   "seed": 1677116899,
+   "duration_s": 81.1,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": false,
+   "passed": 2315,
+   "failed": 4,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1677116899"
+  },
+  {
+   "n": 16,
+   "tz": "Asia/Kolkata",
+   "seed": 1326321562,
+   "duration_s": 86.4,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2309,
+   "failed": 10,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1326321562"
+  },
+  {
+   "n": 17,
+   "tz": "UTC",
+   "seed": 1786391176,
+   "duration_s": 64.8,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2309,
+   "failed": 10,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1786391176"
+  },
+  {
+   "n": 18,
+   "tz": "Asia/Kolkata",
+   "seed": 1442436491,
+   "duration_s": 84.2,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2308,
+   "failed": 11,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1442436491"
+  },
+  {
+   "n": 19,
+   "tz": "UTC",
+   "seed": 1676174483,
+   "duration_s": 98,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2305,
+   "failed": 14,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=UTC npx vitest run --sequence.shuffle --sequence.seed=1676174483"
+  },
+  {
+   "n": 20,
+   "tz": "Asia/Kolkata",
+   "seed": 1999893004,
+   "duration_s": 118.2,
+   "lock_wait_s": 0,
+   "other_vitest_slot_busy": true,
+   "passed": 2312,
+   "failed": 7,
+   "skipped": 13,
+   "todo": 0,
+   "total": 2332,
+   "files": 163,
+   "exit_code": 1,
+   "timed_out": false,
+   "commit": "cd14265",
+   "repro": "TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1999893004"
+  }
+ ]
+}

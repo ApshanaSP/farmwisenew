@@ -1,0 +1,3733 @@
+{
+ "sql": [
+  {
+   "at": "src/lib/assistant/compile.ts:284",
+   "spans": [
+    "hint",
+    "select.join(\", \")",
+    "from",
+    "W",
+    "group",
+    "order"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:286",
+   "spans": [
+    "hint",
+    "from",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:287",
+   "spans": [
+    "hint",
+    "from",
+    "W",
+    "group.replace(/`([a-z0-9_]+)`/g, (m, a) => dimSql(dims.find((d) => d.alias === a)!))"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:300",
+   "spans": [
+    "hint",
+    "select.join(\", \")",
+    "from",
+    "shifted.join(\" AND \")",
+    "group",
+    "order"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:383",
+   "spans": [
+    "LIMITS.queryMs",
+    "q(timeDim.col.name)",
+    "c.parts.from",
+    "c.parts.where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:396",
+   "spans": [
+    "LIMITS.queryMs",
+    "q(catDim.col.name)",
+    "c.parts.from",
+    "c.parts.where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:174",
+   "spans": [
+    "COLS",
+    "FROM",
+    "w.sql",
+    "by"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:175",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:186",
+   "spans": [
+    "COLS",
+    "FROM",
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:187",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:201",
+   "spans": [
+    "COLS",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:218",
+   "spans": [
+    "cols",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:219",
+   "spans": [
+    "cols",
+    "p.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:232",
+   "spans": [
+    "w.sql",
+    "done"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:233",
+   "spans": [
+    "p.sql",
+    "done"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:248",
+   "spans": [
+    "hrs",
+    "w.sql",
+    "done"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:252",
+   "spans": [
+    "hrs",
+    "p.sql",
+    "done"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:270",
+   "spans": [
+    "w.sql",
+    "match"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:271",
+   "spans": [
+    "w.sql",
+    "match"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:279",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:282",
+   "spans": [
+    "p.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:292",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:294",
+   "spans": [
+    "p.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:302",
+   "spans": [
+    "COLS",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:340",
+   "spans": [
+    "COLS",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:350",
+   "spans": [
+    "COLS",
+    "dist",
+    "FROM",
+    "near.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/incidents.ts:365",
+   "spans": [
+    "COLS",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/news.ts:107",
+   "spans": [
+    "storyIds?.length ? \"AND (d.story_id IN (?) OR d.doc_id IN (?))\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/assistant/news.ts:128",
+   "spans": [
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:43",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:64",
+   "spans": [
+    "OPEN",
+    "zone ? \"AND i.zone_no = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:77",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:87",
+   "spans": [
+    "w.sql",
+    "minOutlets > 1 ? \"AND i.outlet_count >= ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:136",
+   "spans": [
+    "counts",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:137",
+   "spans": [
+    "key",
+    "counts",
+    "where",
+    "NOT_A_LOCALITY"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:139",
+   "spans": [
+    "counts",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:142",
+   "spans": [
+    "OPEN",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:145",
+   "spans": [
+    "TITLE",
+    "OPEN",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:150",
+   "spans": [
+    "LOCALITY",
+    "where",
+    "NOT_A_LOCALITY"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:182",
+   "spans": [
+    "OPEN",
+    "w.sql",
+    "inCodes"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:186",
+   "spans": [
+    "wp.sql",
+    "inCodes"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:187",
+   "spans": [
+    "w.sql",
+    "inCodes"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:189",
+   "spans": [
+    "LOCALITY",
+    "w.sql",
+    "inCodes"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:208",
+   "spans": [
+    "ids.map(() => \"?\").join(\",\")"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:249",
+   "spans": [
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:285",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:421",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:424",
+   "spans": [
+    "wp.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:425",
+   "spans": [
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:428",
+   "spans": [
+    "wp.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:429",
+   "spans": [
+    "LOCALITY",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:431",
+   "spans": [
+    "LOCALITY",
+    "wp.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:433",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/queries.ts:436",
+   "spans": [
+    "TITLE",
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/tools.ts:112",
+   "spans": [
+    "parts.join(\" AND \")"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/tools.ts:238",
+   "spans": [
+    "score",
+    "parts.length ? `WHERE ${parts.join(\" AND \")}` : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/assistant/tools.ts:239",
+   "spans": [
+    "parts.join(\" AND \")"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/warnings.ts:94",
+   "spans": [
+    "TITLE",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/assistant/warnings.ts:97",
+   "spans": [
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:170",
+   "spans": [
+    "q(t)",
+    "q(c)",
+    "SQL_TYPE[k]"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:173",
+   "spans": [
+    "q(t)",
+    "cols.map(([c, k]) => `${q(c)} ${SQL_TYPE[k]}`).join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:217",
+   "spans": [
+    "q(s.table)",
+    "cols.join(\", \")",
+    "pk?.length ? \" WITHOUT ROWID\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:219",
+   "spans": [
+    "q(s.table)",
+    "s.columns.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:336",
+   "spans": [
+    "lit(t)"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:337",
+   "spans": [
+    "q(t)",
+    "q(c)"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:343",
+   "spans": [
+    "q(t)",
+    "q(c)"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:347",
+   "spans": [
+    "q(t)",
+    "cols.map(q).join(\", \")",
+    "cols.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:353",
+   "spans": [
+    "name(\"ins\")",
+    "q(t)",
+    "lit(t)",
+    "keyJson(\"NEW\", s.key)",
+    "name(\"upd\")",
+    "q(t)",
+    "lit(t)",
+    "keyJson(\"OLD\", s.key)",
+    "lit(t)",
+    "keyJson(\"NEW\", s.key)",
+    "name(\"del\")",
+    "q(t)",
+    "lit(t)",
+    "keyJson(\"OLD\", s.key)"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:373",
+   "spans": [
+    "key.includes(\"rowid\") ? \"rowid AS rowid, \" : \"\"",
+    "q(t)",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:431",
+   "spans": [
+    "LOCAL_IDS",
+    "LOCAL_IDS",
+    "LOCAL_IDS"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:449",
+   "spans": [
+    "key.includes(\"rowid\") ? \"rowid AS rowid, \" : \"\"",
+    "q(t)",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:453",
+   "spans": [
+    "q(t)",
+    "where"
+   ]
+  },
+  {
+   "at": "src/lib/aws/store.ts:456",
+   "spans": [
+    "q(t)",
+    "cols.map((c) => (c === \"rowid\" ? \"rowid\" : q(c))).join(\", \")",
+    "cols.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/actionmail.ts:298",
+   "spans": [
+    "OPEN",
+    "part.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:218",
+   "spans": [
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:221",
+   "spans": [
+    "prev.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:222",
+   "spans": [
+    "INC",
+    "FROM",
+    "W",
+    "SEV_ORDER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:224",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:226",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:228",
+   "spans": [
+    "INC",
+    "FROM",
+    "W",
+    "SEV_ORDER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:229",
+   "spans": [
+    "OPEN",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:232",
+   "spans": [
+    "FROM",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:233",
+   "spans": [
+    "s.zone ? \"AND a.zone_no = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:327",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:329",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:330",
+   "spans": [
+    "INC",
+    "FROM",
+    "W",
+    "SEV_ORDER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:369",
+   "spans": [
+    "MON",
+    "MON",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:373",
+   "spans": [
+    "MON",
+    "MON",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:382",
+   "spans": [
+    "INC",
+    "FROM",
+    "MON",
+    "MON",
+    "SEV_ORDER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:60",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:62",
+   "spans": [
+    "P"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:65",
+   "spans": [
+    "INC",
+    "FROM",
+    "cw.sql",
+    "f.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:68",
+   "spans": [
+    "FROM",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:70",
+   "spans": [
+    "INC",
+    "SEV_ORDER",
+    "FROM",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:72",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:74",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:79",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:80",
+   "spans": [
+    "P"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:81",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:83",
+   "spans": [
+    "INC",
+    "FROM",
+    "OPEN",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:85",
+   "spans": [
+    "closed.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:86",
+   "spans": [
+    "INC",
+    "FROM",
+    "closed.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:88",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:89",
+   "spans": [
+    "P"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:90",
+   "spans": [
+    "wk.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:91",
+   "spans": [
+    "pwk.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:92",
+   "spans": [
+    "wk.sql",
+    "f.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/briefbook.ts:95",
+   "spans": [
+    "INC",
+    "FROM",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/conflicts.ts:324",
+   "spans": [
+    "NEWS_COLS"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:56",
+   "spans": [
+    "LAKE.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:67",
+   "spans": [
+    "LAKE.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:85",
+   "spans": [
+    "optional.map((c) => `, ${c}`).join(\"\")",
+    "optional.map(() => \", NULL\").join(\"\")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:189",
+   "spans": [
+    "part.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:197",
+   "spans": [
+    "part.map(() => \"?\").join(\", \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:328",
+   "spans": [
+    "table",
+    "col"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:336",
+   "spans": [
+    "has(db, \"documents\", \"is_incident\") ? \", is_incident = 0\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:345",
+   "spans": [
+    "table"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:346",
+   "spans": [
+    "table"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:351",
+   "spans": [
+    "table",
+    "col",
+    "col"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:352",
+   "spans": [
+    "table",
+    "col"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:372",
+   "spans": [
+    "en"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:402",
+   "spans": [
+    "aiCol",
+    "enCol"
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:431",
+   "spans": [
+    "has(db, \"documents\", \"title_en\") ? \"title_en\" : \"NULL AS title_en\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:435",
+   "spans": [
+    "has(db, \"incidents\", \"place_text\") ? \"place_text\" : \"NULL\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:477",
+   "spans": [
+    "has(db, \"incidents\", \"family\") ? \", family = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:504",
+   "spans": [
+    "review ? \", needs_review = 1, review_reason = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/derive.ts:531",
+   "spans": [
+    "text"
+   ]
+  },
+  {
+   "at": "src/lib/collector/effective.ts:35",
+   "spans": [
+    "decisionsTable"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:122",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:126",
+   "spans": [
+    "pw.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:128",
+   "spans": [
+    "INC",
+    "FROM",
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:130",
+   "spans": [
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:134",
+   "spans": [
+    "FROM",
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:140",
+   "spans": [
+    "INC",
+    "where(s, now).sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:144",
+   "spans": [
+    "FROM",
+    "where(s, now, { hours: 12 * 7 * 24, noCat: true }).sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:147",
+   "spans": [
+    "FROM",
+    "where(s, now, { hours: 180 * 24, noCat: true }).sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:150",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "OPEN",
+    "where({ ...s, taluk: null }, now, { hours: 720 }).sql",
+    "where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:161",
+   "spans": [
+    "zone ? \"AND a.zone_no = ?\" : \"\"",
+    "dept ? \"AND a.category_code IN (SELECT DISTINCT d.category_code FROM incidents d WHERE d.l"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:170",
+   "spans": [
+    "INC",
+    "FROM",
+    "rw.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:179",
+   "spans": [
+    "MON",
+    "MON",
+    "MON",
+    "MON",
+    "zone ? \"AND i.zone_no = ?\" : \"\"",
+    "dept ? \"AND i.lead_dept = ?\" : \"\"",
+    "s.taluk ? \"AND i.taluk_code = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:189",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "OPEN",
+    "tw.sql",
+    "PLACE_FILTERS.notaluk"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:248",
+   "spans": [
+    "TITLE",
+    "dept ? \" AND i.lead_dept = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:252",
+   "spans": [
+    "TITLE"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:303",
+   "spans": [
+    "INC",
+    "FROM",
+    "w.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:354",
+   "spans": [
+    "TITLE",
+    "rw.sql",
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:427",
+   "spans": [
+    "INC",
+    "FROM",
+    "sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:442",
+   "spans": [
+    "MON",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:445",
+   "spans": [
+    "MON",
+    "MON",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:449",
+   "spans": [
+    "FROM",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:451",
+   "spans": [
+    "OPEN",
+    "MON",
+    "MON"
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:495",
+   "spans": [
+    "p.zone ? \"AND a.zone_no = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/insights.ts:503",
+   "spans": [
+    "zoneSql",
+    "before"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:160",
+   "spans": [
+    "decisions"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:246",
+   "spans": [
+    "NEWS_TIERS",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:267",
+   "spans": [
+    "ROW",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:595",
+   "spans": [
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:714",
+   "spans": [
+    "cols",
+    "cur.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:715",
+   "spans": [
+    "cols",
+    "prev.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:717",
+   "spans": [
+    "cols",
+    "cur.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:745",
+   "spans": [
+    "core",
+    "FOR_COLLECTOR",
+    "sent",
+    "CLUSTER",
+    "core",
+    "FOR_COLLECTOR",
+    "sent",
+    "CLUSTER",
+    "scope"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:784",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "all.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:793",
+   "spans": [
+    "EFF.open",
+    "TITLE",
+    "EFF.status",
+    "w.sql",
+    "PINNABLE",
+    "EFF.open",
+    "SEV_RANK"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:801",
+   "spans": [
+    "PINNABLE",
+    "PINNABLE",
+    "PINNABLE",
+    "PINNABLE",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:809",
+   "spans": [
+    "ROW",
+    "FROM",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:814",
+   "spans": [
+    "ROW",
+    "sent",
+    "CLUSTER",
+    "CLUSTER",
+    "CLUSTER",
+    "sent",
+    "FROM",
+    "qWhere"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:820",
+   "spans": [
+    "ROW",
+    "CLUSTER",
+    "CLUSTER",
+    "CLUSTER",
+    "SEV_RANK",
+    "FROM",
+    "sevWhere"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:827",
+   "spans": [
+    "CLUSTER",
+    "SEV_RANK",
+    "sevWhere"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:832",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:837",
+   "spans": [
+    "FROM",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:843",
+   "spans": [
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:848",
+   "spans": [
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:859",
+   "spans": [
+    "ROW",
+    "FROM",
+    "EFF.open",
+    "ROUTED",
+    "periodWindow(period, now).sql",
+    "dept ? \" AND i.lead_dept = ?\" : \"\"",
+    "SEV_RANK"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:864",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "FROM",
+    "nd.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:872",
+   "spans": [
+    "FROM",
+    "EFF.open",
+    "zone ? \"AND i.zone_no = ?\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:879",
+   "spans": [
+    "EFF.open",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:888",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "all.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:909",
+   "spans": [
+    "CLUSTER",
+    "qWhere",
+    "CLUSTER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1015",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "ROUTED",
+    "EFF.open",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1030",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "EFF.open",
+    "ROUTED",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1037",
+   "spans": [
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1125",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1131",
+   "spans": [
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1133",
+   "spans": [
+    "EFF.open",
+    "DECIDED(\"'verify','reject','resolve'\")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1139",
+   "spans": [
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1157",
+   "spans": [
+    "EFF.open",
+    "EFF.open",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1162",
+   "spans": [
+    "FROM",
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1167",
+   "spans": [
+    "TITLE",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1216",
+   "spans": [
+    "ROW",
+    "CLUSTER",
+    "FROM"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1226",
+   "spans": [
+    "TITLE",
+    "EFF.status",
+    "EFF.open",
+    "CLUSTER"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1393",
+   "spans": [
+    "ROW",
+    "CLUSTER",
+    "CLUSTER",
+    "CLUSTER",
+    "SEV_RANK",
+    "FROM",
+    "W",
+    "order",
+    "dir"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1399",
+   "spans": [
+    "CLUSTER",
+    "FROM",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1424",
+   "spans": [
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1441",
+   "spans": [
+    "ROW",
+    "FROM",
+    "w.sql",
+    "inTitle"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1443",
+   "spans": [
+    "FROM",
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1456",
+   "spans": [
+    "newsWhere.sql"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1459",
+   "spans": [
+    "TITLE"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1483",
+   "spans": [
+    "ROW",
+    "FROM",
+    "w.sql",
+    "EFF.open",
+    "ROUTED"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1484",
+   "spans": [
+    "ROW",
+    "sent",
+    "FROM",
+    "FOR_COLLECTOR",
+    "DECIDED(\"'verify','reject','resolve','reopen'\")",
+    "sent",
+    "extra.map((x) => `AND ${x}`).join(\" \")",
+    "SEV_RANK"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1530",
+   "spans": [
+    "ROW",
+    "FROM",
+    "w.sql",
+    "EFF.open",
+    "ROUTED"
+   ]
+  },
+  {
+   "at": "src/lib/collector/intel.ts:1532",
+   "spans": [
+    "ROW",
+    "FROM",
+    "w.sql",
+    "EFF.open"
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:83",
+   "spans": [
+    "mapped ? \"mapping IS NOT NULL\" : \"0\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:215",
+   "spans": [
+    "run.ok ? \"last_ok_at = NOW(),\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:452",
+   "spans": [
+    "ITEM_COLS",
+    "ITEM_FROM",
+    "where.join(\" AND \")",
+    "Math.min(200, opts.limit ?? 50)"
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:477",
+   "spans": [
+    "ITEM_COLS",
+    "ITEM_FROM",
+    "where.join(\" AND \")",
+    "Math.min(200, limit)"
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:479",
+   "spans": [
+    "ITEM_COLS",
+    "ITEM_FROM",
+    "where.join(\" AND \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/sources.ts:481",
+   "spans": [
+    "ITEM_FROM",
+    "where.join(\" AND \")"
+   ]
+  },
+  {
+   "at": "src/lib/collector/threads.ts:153",
+   "spans": [
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/complaint-progress.ts:120",
+   "spans": [
+    "fmt(\"at\")"
+   ]
+  },
+  {
+   "at": "src/lib/complaint-progress.ts:122",
+   "spans": [
+    "fmt(\"decided_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/complaint-progress.ts:161",
+   "spans": [
+    "fmt(\"created_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/map/world.ts:64",
+   "spans": [
+    "TITLE"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:96",
+   "spans": [
+    "TITLE",
+    "STAGE_SQL"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:222",
+   "spans": [
+    "b.sql",
+    "FLAG_SQL.serious",
+    "FLAG_SQL.overdue",
+    "DUE_SQL",
+    "win.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:227",
+   "spans": [
+    "b.sql",
+    "win.sql",
+    "OPEN_STAGES",
+    "SEV_ORDER",
+    "OFFICER.mapPins"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:230",
+   "spans": [
+    "b.sql",
+    "win.sql",
+    "OPEN_STAGES"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:232",
+   "spans": [
+    "b.sql",
+    "areaKey",
+    "areaLabel",
+    "win.sql",
+    "OPEN_STAGES",
+    "areaKey",
+    "OFFICER.areaBars"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:235",
+   "spans": [
+    "b.sql",
+    "win.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:237",
+   "spans": [
+    "b.sql",
+    "ROW",
+    "win.sql",
+    "OFFICER.newsItems"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:240",
+   "spans": [
+    "b.sql",
+    "win.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:247",
+   "spans": [
+    "fmt(\"newest_record_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:251",
+   "spans": [
+    "b.sql",
+    "ROW",
+    "win.sql",
+    "OPEN_STAGES"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:336",
+   "spans": [
+    "b.sql",
+    "win.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:350",
+   "spans": [
+    "fmt(\"d.decided_at\")",
+    "TITLE",
+    "s.zone ? \"AND i.zone_no = ?\" : \"\"",
+    "s.taluk ? \"AND i.taluk_code = ?\" : \"\"",
+    "Math.max(1, Math.min(50, limit))"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:411",
+   "spans": [
+    "b.sql",
+    "ROW",
+    "W",
+    "order",
+    "per",
+    "Math.max(0, f.page) * per"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:412",
+   "spans": [
+    "b.sql",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:437",
+   "spans": [
+    "b.sql",
+    "ROW",
+    "fmt(\"w.sla_due_at\")",
+    "fmt(\"w.closed_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:450",
+   "spans": [
+    "fmt(\"at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:451",
+   "spans": [
+    "fmt(\"at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:453",
+   "spans": [
+    "fmt(\"decided_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:455",
+   "spans": [
+    "fmt(\"m.reported_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:457",
+   "spans": [
+    "fmt(\"published_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:460",
+   "spans": [
+    "fmt(\"sent_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/data.ts:463",
+   "spans": [
+    "fmt(\"created_at\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:147",
+   "spans": [
+    "w.sql",
+    "pv.sql",
+    "w.sql",
+    "pv.sql",
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:150",
+   "spans": [
+    "OPEN",
+    "w.sql",
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:153",
+   "spans": [
+    "w.sql",
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:201",
+   "spans": [
+    "OPEN",
+    "OPEN",
+    "OPEN",
+    "OPEN",
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:207",
+   "spans": [
+    "prev.sql",
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:208",
+   "spans": [
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:211",
+   "spans": [
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:214",
+   "spans": [
+    "OPEN",
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:217",
+   "spans": [
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:265",
+   "spans": [
+    "fmt(\"MAX(reported_at)\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:273",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:278",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:280",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:281",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:282",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:324",
+   "spans": [
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:330",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:334",
+   "spans": [
+    "a.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:341",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:343",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:450",
+   "spans": [
+    "ONGOING",
+    "ONGOING",
+    "ONGOING",
+    "ONGOING",
+    "kind",
+    "t.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:455",
+   "spans": [
+    "ONGOING",
+    "kind",
+    "t.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:456",
+   "spans": [
+    "kind",
+    "t.sql",
+    "ONGOING"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:489",
+   "spans": [
+    "fmt(\"MAX(reported_at)\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:497",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:500",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:502",
+   "spans": [
+    "W"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:533",
+   "spans": [
+    "fmt(\"MAX(observed_at)\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:540",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:544",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:548",
+   "spans": [
+    "fmt(\"MAX(observed_at)\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:584",
+   "spans": [
+    "fmt(\"MAX(observed_at)\")"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:590",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:593",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:594",
+   "spans": [
+    "w.sql"
+   ]
+  },
+  {
+   "at": "src/lib/officer/insights.ts:595",
+   "spans": [
+    "periodWindow(s.period, newest, \"i.first_reported_at\").sql"
+   ]
+  },
+  {
+   "at": "src/lib/rehearsal/impacts.ts:214",
+   "spans": [
+    "words.map(() => \"LOWER(COALESCE(title_en, title)) LIKE ? OR title LIKE ?\").join(\" OR \")"
+   ]
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:64",
+   "spans": [
+    "TITLE",
+    "marks"
+   ]
+  },
+  {
+   "at": "src/lib/studio/link.ts:31",
+   "spans": [
+    "OPEN"
+   ]
+  },
+  {
+   "at": "src/lib/studio/link.ts:182",
+   "spans": [
+    "OPEN",
+    "sampleZones.length ? \"AND zone_no IN (?)\" : \"\""
+   ]
+  },
+  {
+   "at": "src/lib/studio/link.ts:216",
+   "spans": [
+    "OPEN",
+    "codes.length ? \"AND category_code IN (?)\" : \"\""
+   ]
+  }
+ ],
+ "fetch": [
+  {
+   "at": "src/app/api/jarvis/say/route.ts:37",
+   "arg": "`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`"
+  },
+  {
+   "at": "src/app/api/jarvis/say/route.ts:47",
+   "arg": "`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`"
+  },
+  {
+   "at": "src/app/citizen/file-complaint/page.tsx:269",
+   "arg": "`/api/locations/wards${zoneId ? \"?zoneId=\" + zoneId : \"\"}`"
+  },
+  {
+   "at": "src/app/citizen/file-complaint/page.tsx:336",
+   "arg": "`/api/locations/resolve-ward?lat=${sel.coords.lat}&lng=${sel.coords.lng}`"
+  },
+  {
+   "at": "src/app/citizen/track-complaints/page.tsx:80",
+   "arg": "`/api/complaints?${params.toString()}`"
+  },
+  {
+   "at": "src/app/citizen/track-complaints/page.tsx:108",
+   "arg": "`/api/complaints/${code}`"
+  },
+  {
+   "at": "src/components/collector/app/askmap/Chrome.tsx:41",
+   "arg": "`/api/map/layers/${id}`"
+  },
+  {
+   "at": "src/components/collector/app/assistant/AssistantDialog.tsx:103",
+   "arg": "`/api/collector/assistant/sessions/${id}`"
+  },
+  {
+   "at": "src/components/collector/app/assistant/AssistantDialog.tsx:247",
+   "arg": "`/api/collector/assistant/pins?id=${id}`"
+  },
+  {
+   "at": "src/components/collector/app/CollectorApp.tsx:207",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/collector/app/CollectorApp.tsx:364",
+   "arg": "dev ? \"/api/rehearsal/dev?kind=geo\" : \"/api/collector/geo\""
+  },
+  {
+   "at": "src/components/collector/app/Conflicts.tsx:90",
+   "arg": "`/api/collector/conflicts?ids=${encodeURIComponent(key)}&title=${encodeURIComponent(title)}${id ? `&id=${encod"
+  },
+  {
+   "at": "src/components/collector/app/Detail.tsx:42",
+   "arg": "url"
+  },
+  {
+   "at": "src/components/collector/app/Detail.tsx:96",
+   "arg": "`/api/collector/incidents/${encodeURIComponent(id)}`"
+  },
+  {
+   "at": "src/components/collector/app/Insights.tsx:595",
+   "arg": "`/api/collector/pattern?${q}`"
+  },
+  {
+   "at": "src/components/collector/app/lib.tsx:49",
+   "arg": "url"
+  },
+  {
+   "at": "src/components/collector/app/Nearby.tsx:98",
+   "arg": "`/api/collector/nearby?event=${encodeURIComponent(e.id)}`"
+  },
+  {
+   "at": "src/components/collector/app/NewsPreview.tsx:30",
+   "arg": "`/api/collector/news?ids=${encodeURIComponent(s.docIds.join(\",\"))}`"
+  },
+  {
+   "at": "src/components/collector/app/NewsPreview.tsx:52",
+   "arg": "`/api/collector/news/article?id=${encodeURIComponent(a.id)}`"
+  },
+  {
+   "at": "src/components/collector/app/Overlays.tsx:47",
+   "arg": "`/api/collector/list?${p}`"
+  },
+  {
+   "at": "src/components/collector/app/Overlays.tsx:242",
+   "arg": "`/api/collector/report?${q()}`"
+  },
+  {
+   "at": "src/components/collector/app/Overlays.tsx:257",
+   "arg": "`/api/collector/export?${q()}`"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/ImpactView.tsx:51",
+   "arg": "api.impacts + lens"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/ImpactView.tsx:56",
+   "arg": "api.live"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/PlanSheet.tsx:34",
+   "arg": "planUrl"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/PlanSheet.tsx:43",
+   "arg": "planUrl"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/RainView.tsx:62",
+   "arg": "api.impacts + l"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/RainView.tsx:69",
+   "arg": "api.state"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/RainView.tsx:69",
+   "arg": "api.rains"
+  },
+  {
+   "at": "src/components/collector/app/rehearsal/RainView.tsx:79",
+   "arg": "api.state"
+  },
+  {
+   "at": "src/components/collector/app/Sources.tsx:30",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/collector/app/studio/client.ts:9",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/collector/app/studio/client.ts:23",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/collector/app/TakeAction.tsx:29",
+   "arg": "`/api/collector/incidents/${encodeURIComponent(id)}/action`"
+  },
+  {
+   "at": "src/components/collector/app/TakeAction.tsx:43",
+   "arg": "`/api/collector/incidents/${encodeURIComponent(id)}/action`"
+  },
+  {
+   "at": "src/components/collector/app/thunai/conductor.ts:308",
+   "arg": "`${this.h.hearUrl()}?lane=${lane}&lang=${this.h.siteLang()}`"
+  },
+  {
+   "at": "src/components/collector/app/thunai/StudioAnswer.tsx:28",
+   "arg": "`/api/collector/studio/${s.id}`"
+  },
+  {
+   "at": "src/components/collector/app/thunai/Thunai.tsx:126",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/collector/app/thunai/Thunai.tsx:521",
+   "arg": "hostRef.current.draftUrl?.(incidentId) ?? `/api/collector/incidents/${encodeURIComponent(incidentId)}/action`"
+  },
+  {
+   "at": "src/components/collector/app/thunai/Thunai.tsx:1395",
+   "arg": "`/api/collector/studio/${sd.id}`"
+  },
+  {
+   "at": "src/components/collector/app/Workspace.tsx:38",
+   "arg": "url"
+  },
+  {
+   "at": "src/components/officer/BeforeRainTasks.tsx:76",
+   "arg": "url"
+  },
+  {
+   "at": "src/components/officer/BeforeRainTasks.tsx:90",
+   "arg": "dev ? \"/api/rehearsal/dev?kind=route\" : \"/api/rehearsal/route\""
+  },
+  {
+   "at": "src/components/officer/BeforeRainTasks.tsx:139",
+   "arg": "dev ? `/api/rehearsal/dev?kind=done&dept=${encodeURIComponent(dev)}` : \"/api/rehearsal/tasks\""
+  },
+  {
+   "at": "src/components/officer/Drawer.tsx:59",
+   "arg": "`/api/officer/grievances/${encodeURIComponent(id)}`"
+  },
+  {
+   "at": "src/components/officer/OfficerApp.tsx:115",
+   "arg": "path"
+  },
+  {
+   "at": "src/components/officer/Overlays.tsx:43",
+   "arg": "`/api/officer/grievances?${p}`"
+  },
+  {
+   "at": "src/components/officer/Report.tsx:73",
+   "arg": "`/api/officer/grievances/${encodeURIComponent(row.id)}/report`"
+  },
+  {
+   "at": "src/instrumentation-node.ts:57",
+   "arg": "`http://127.0.0.1:${port}${path}`"
+  },
+  {
+   "at": "src/instrumentation-node.ts:66",
+   "arg": "`http://127.0.0.1:${port}${path}`"
+  },
+  {
+   "at": "src/lib/aws/store.ts:115",
+   "arg": "`${API_URL}/intel/snapshot`"
+  },
+  {
+   "at": "src/lib/aws/store.ts:126",
+   "arg": "t.url"
+  },
+  {
+   "at": "src/lib/aws/store.ts:303",
+   "arg": "`${API_URL}${route}`"
+  },
+  {
+   "at": "src/lib/aws/store.ts:311",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/aws/store.ts:404",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/collector/alerts.ts:147",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/collector/lakes.ts:96",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/collector/nearby.ts:192",
+   "arg": "`https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${ED[lang]}`"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:532",
+   "arg": "`https://api.github.com/repos/${DATALOAD}/actions/workflows/dataload.yml/dispatches`"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:562",
+   "arg": "AGM"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:647",
+   "arg": "`https://api.agmarknet.gov.in/v1/price-trend/wholesale-prices-weekly?report_mode=Districtwise&commodity=${id}`"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:706",
+   "arg": "`https://api.agmarknet.gov.in/v1/prices-and-arrivals/commodity-market/daily-report-state-marketwise?date=${day"
+  },
+  {
+   "at": "src/lib/rehearsal/cfmlive.ts:43",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/rehearsal/traffic.ts:48",
+   "arg": "`https://api.tomtom.com/traffic/map/4/tile/flow/relative0/${z}/${x}/${y}.png?key=${encodeURIComponent(key)}&ti"
+  },
+  {
+   "at": "src/lib/rehearsal/traffic.ts:70",
+   "arg": "url"
+  },
+  {
+   "at": "src/lib/studio/connect/adapters.ts:21",
+   "arg": "AGM"
+  }
+ ],
+ "redirect": [
+  {
+   "at": "src/app/login/page.tsx:28",
+   "arg": "to || \"/\""
+  },
+  {
+   "at": "src/components/collector/app/assistant/Figure.tsx:195",
+   "arg": "a.href = href"
+  },
+  {
+   "at": "src/components/collector/app/Insights.tsx:969",
+   "arg": "a.href = url"
+  },
+  {
+   "at": "src/components/collector/app/Overlays.tsx:263",
+   "arg": "a.href = url"
+  },
+  {
+   "at": "src/components/collector/app/thunai/export.ts:14",
+   "arg": "a.href = URL.createObjectURL(blob)"
+  },
+  {
+   "at": "src/middleware.ts:59",
+   "arg": "url"
+  },
+  {
+   "at": "src/middleware.ts:110",
+   "arg": "url"
+  }
+ ],
+ "fsPath": [
+  {
+   "at": "src/app/api/i18n/route.ts:18",
+   "args": "process.cwd(), \"data\", \"i18n\", `${to}.json`"
+  },
+  {
+   "at": "src/app/api/i18n/route.ts:26",
+   "args": "FILE(to), \"utf8\""
+  },
+  {
+   "at": "src/app/api/i18n/route.ts:35",
+   "args": "path.dirname(FILE(to)), { recursive: true }"
+  },
+  {
+   "at": "src/app/api/i18n/route.ts:37",
+   "args": "FILE(to), JSON.stringify(sorted, null, 1), \"utf8\""
+  },
+  {
+   "at": "src/app/api/profile/photo/route.ts:40",
+   "args": "uploadDir, { recursive: true }"
+  },
+  {
+   "at": "src/app/api/profile/photo/route.ts:44",
+   "args": "uploadDir, filename"
+  },
+  {
+   "at": "src/app/api/profile/photo/route.ts:46",
+   "args": "filePath, buffer"
+  },
+  {
+   "at": "src/app/thunai-ort/[file]/route.ts:21",
+   "args": "process.cwd(), \"node_modules\", \"onnxruntime-web\", \"dist\", params.file"
+  },
+  {
+   "at": "src/lib/assistant/embed.ts:26",
+   "args": "DIR, `incidents-${MODEL.replace(/[^a-z0-9]+/gi, \"_\")}`"
+  },
+  {
+   "at": "src/lib/assistant/embed.ts:131",
+   "args": "`${FILE}.json`"
+  },
+  {
+   "at": "src/lib/assistant/embed.ts:248",
+   "args": "path.join(process.cwd(), \"data\", \"lancedb\", \"incid"
+  },
+  {
+   "at": "src/lib/assistant/lance.ts:23",
+   "args": "process.cwd(), \"data\", \"embeddings\", `incidents-${MODEL.replace(/[^a-z0-9]+/gi, \"_\")}`"
+  },
+  {
+   "at": "src/lib/assistant/lance.ts:103",
+   "args": "`${LEGACY}.json`, \"utf8\""
+  },
+  {
+   "at": "src/lib/assistant/lance.ts:105",
+   "args": "`${LEGACY}.bin`"
+  },
+  {
+   "at": "src/lib/assistant/scope.ts:43",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/assistant/spell.ts:65",
+   "args": "path.join(process.cwd(), \"node_modules\", \"word-lis, \"utf8\""
+  },
+  {
+   "at": "src/lib/aws/store.ts:124",
+   "args": "CACHE_DIR, `${name}-${t.sha}.json.gz`"
+  },
+  {
+   "at": "src/lib/aws/store.ts:125",
+   "args": "file"
+  },
+  {
+   "at": "src/lib/aws/store.ts:129",
+   "args": "CACHE_DIR, { recursive: true }"
+  },
+  {
+   "at": "src/lib/aws/store.ts:130",
+   "args": "file, gz"
+  },
+  {
+   "at": "src/lib/aws/store.ts:131",
+   "args": "CACHE_DIR"
+  },
+  {
+   "at": "src/lib/aws/store.ts:133",
+   "args": "path.join(CACHE_DIR, old), { force: true }"
+  },
+  {
+   "at": "src/lib/aws/store.ts:133",
+   "args": "CACHE_DIR, old"
+  },
+  {
+   "at": "src/lib/aws/store.ts:138",
+   "args": "await download(name, t)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:287",
+   "args": "CACHE_DIR, \"durable.sqlite\""
+  },
+  {
+   "at": "src/lib/aws/store.ts:419",
+   "args": "file + f, { force: true }"
+  },
+  {
+   "at": "src/lib/aws/store.ts:476",
+   "args": "CACHE_DIR"
+  },
+  {
+   "at": "src/lib/aws/store.ts:481",
+   "args": "path.join(CACHE_DIR, f), { force: true }"
+  },
+  {
+   "at": "src/lib/aws/store.ts:481",
+   "args": "CACHE_DIR, f"
+  },
+  {
+   "at": "src/lib/aws/store.ts:487",
+   "args": "CACHE_DIR, `durable-${Date.now()}.sqlite`"
+  },
+  {
+   "at": "src/lib/aws/store.ts:518",
+   "args": "CACHE_DIR, { recursive: true }"
+  },
+  {
+   "at": "src/lib/aws/store.ts:519",
+   "args": "DURABLE_FILE"
+  },
+  {
+   "at": "src/lib/aws/store.ts:537",
+   "args": "CACHE_DIR, `durable-p${process.pid}.sqlite`"
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:49",
+   "args": "FILE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:56",
+   "args": "path.dirname(FILE), { recursive: true }"
+  },
+  {
+   "at": "src/lib/collector/aibrief.ts:56",
+   "args": "FILE, JSON.stringify(Object.fromEntries(c))"
+  },
+  {
+   "at": "src/lib/collector/alerts.ts:156",
+   "args": "SACHET_FILE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/alerts.ts:172",
+   "args": "SACHET_FILE, JSON.stringify({ at: g.at, items: mine })"
+  },
+  {
+   "at": "src/lib/collector/analysis.ts:77",
+   "args": "FILE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/analysis.ts:84",
+   "args": "path.dirname(FILE), { recursive: true }"
+  },
+  {
+   "at": "src/lib/collector/analysis.ts:84",
+   "args": "FILE, JSON.stringify(Object.fromEntries(c))"
+  },
+  {
+   "at": "src/lib/collector/fulltext.ts:33",
+   "args": "CACHE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/fulltext.ts:40",
+   "args": "path.dirname(CACHE), { recursive: true }"
+  },
+  {
+   "at": "src/lib/collector/fulltext.ts:40",
+   "args": "CACHE, JSON.stringify(g.cache)"
+  },
+  {
+   "at": "src/lib/collector/lakes.ts:83",
+   "args": "FILE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/lakes.ts:88",
+   "args": "path.dirname(FILE), { recursive: true }"
+  },
+  {
+   "at": "src/lib/collector/lakes.ts:89",
+   "args": "FILE + \".tmp\", JSON.stringify(s)"
+  },
+  {
+   "at": "src/lib/collector/nearby.ts:183",
+   "args": "FILE, \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/nearby.ts:208",
+   "args": "path.dirname(FILE), { recursive: true }"
+  },
+  {
+   "at": "src/lib/collector/nearby.ts:208",
+   "args": "FILE, JSON.stringify(next)"
+  },
+  {
+   "at": "src/lib/collector/nlp.ts:21",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/collector/sources.ts:497",
+   "args": "PIPE_DIR, \"output\", \".dashboard-refresh.lock\""
+  },
+  {
+   "at": "src/lib/collector/sources.ts:544",
+   "args": "path.join(PIPE_DIR, \"run_pipeline.py\")"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:544",
+   "args": "PIPE_DIR, \"run_pipeline.py\""
+  },
+  {
+   "at": "src/lib/collector/sources.ts:545",
+   "args": "LOCK"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:545",
+   "args": "LOCK"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:546",
+   "args": "LOCK, new Date().toISOString()"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:548",
+   "args": "LOCK"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:29",
+   "args": "process.env.COMPLAINT_UPLOAD_DIR || path.join(proc"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:41",
+   "args": "root, { recursive: true }"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:42",
+   "args": "path.join(root, name), buf, { flag: \"wx\" }"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:42",
+   "args": "root, name"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:43",
+   "args": "path.join(root, `${name}.owner.json`), JSON.stringify({ userId: ownerUserId, at: new Date, { flag: \"wx\" }"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:43",
+   "args": "root, `${name}.owner.json`"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:51",
+   "args": "path.join(mediaRoot(), `${name}.owner.json`), \"utf8\""
+  },
+  {
+   "at": "src/lib/complaint-media.ts:51",
+   "args": "mediaRoot(), `${name}.owner.json`"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:61",
+   "args": "path.join(mediaRoot(), name)"
+  },
+  {
+   "at": "src/lib/complaint-media.ts:61",
+   "args": "mediaRoot(), name"
+  },
+  {
+   "at": "src/lib/dataset/append.ts:47",
+   "args": "file"
+  },
+  {
+   "at": "src/lib/dataset/append.ts:65",
+   "args": "file, \"utf8\""
+  },
+  {
+   "at": "src/lib/dataset/append.ts:79",
+   "args": "path.dirname(file), { recursive: true }"
+  },
+  {
+   "at": "src/lib/db.ts:20",
+   "args": "ca, \"utf8\""
+  },
+  {
+   "at": "src/lib/mailer.ts:19",
+   "args": "file, \"utf8\""
+  },
+  {
+   "at": "src/lib/map/world.ts:45",
+   "args": "path.join(LAYER_DIR(), \"meta.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/map/world.ts:45",
+   "args": "LAYER_DIR(), \"meta.json\""
+  },
+  {
+   "at": "src/lib/map/world.ts:48",
+   "args": "path.join(LAYER_DIR(), `${id}.geojson`), \"utf8\""
+  },
+  {
+   "at": "src/lib/map/world.ts:48",
+   "args": "LAYER_DIR(), `${id}.geojson`"
+  },
+  {
+   "at": "src/lib/map/world.ts:56",
+   "args": "path.join(LAYER_DIR(), \"meta.json\")"
+  },
+  {
+   "at": "src/lib/map/world.ts:56",
+   "args": "LAYER_DIR(), \"meta.json\""
+  },
+  {
+   "at": "src/lib/map/world.ts:303",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/map/world.ts:358",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/officer/photos.ts:18",
+   "args": "process.env.OFFICER_UPLOAD_DIR || path.join(proces"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:38",
+   "args": "uploadRoot(), dir"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:39",
+   "args": "full, { recursive: true }"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:43",
+   "args": "path.join(full, name), f.buf, { flag: \"wx\" }"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:43",
+   "args": "full, name"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:50",
+   "args": "path.join(uploadRoot(), dir), { recursive: true, force: true }"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:50",
+   "args": "uploadRoot(), dir"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:56",
+   "args": "path.join(uploadRoot(), dir, name)"
+  },
+  {
+   "at": "src/lib/officer/photos.ts:56",
+   "args": "uploadRoot(), dir, name"
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:110",
+   "args": "FILE()"
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:112",
+   "args": "path.join(path.dirname(FILE()), \"elevation.bin\")"
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:112",
+   "args": "path.dirname(FILE()), \"elevation.bin\""
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:114",
+   "args": "FILE()"
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:128",
+   "args": "path.join(path.dirname(FILE()), \"elevation.bin\")"
+  },
+  {
+   "at": "src/lib/rehearsal/graph.ts:128",
+   "args": "path.dirname(FILE()), \"elevation.bin\""
+  },
+  {
+   "at": "src/lib/rehearsal/impacts.ts:687",
+   "args": "path.join(LAYERS(), `${id}.geojson`), \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/impacts.ts:687",
+   "args": "LAYERS(), `${id}.geojson`"
+  },
+  {
+   "at": "src/lib/rehearsal/impacts.ts:690",
+   "args": "path.join(LAYERS(), \"transit.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/impacts.ts:690",
+   "args": "LAYERS(), \"transit.json\""
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:12",
+   "args": "path.join(process.cwd(), \"data\", \"roads\", \"graph.b"
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:12",
+   "args": "CACHE()"
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:15",
+   "args": "CACHE()"
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:16",
+   "args": "path.join(CACHE(), f)"
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:16",
+   "args": "CACHE(), f"
+  },
+  {
+   "at": "src/lib/rehearsal/realdata.ts:34",
+   "args": "path.join(process.cwd(), \"..\", \"district_intel\", \", \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:91",
+   "args": "path.join(COLLECTORS(), \"district_intel\", \"output\", \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:91",
+   "args": "COLLECTORS(), \"district_intel\", \"output\", \"state\", \"grievance_rain_days.txt\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:120",
+   "args": "path.join(COLLECTORS(), \"cfm_dss_collector\", \"data, \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:120",
+   "args": "COLLECTORS(), \"cfm_dss_collector\", \"data\", \"cfm_dss_gate_operations_chennai.csv\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:137",
+   "args": "COLLECTORS(), \"cfm_dss_collector\", \"data\", \"raw_cache\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:138",
+   "args": "root"
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:140",
+   "args": "path.join(root, d)"
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:140",
+   "args": "root, d"
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:142",
+   "args": "path.join(root, d, f), \"utf8\""
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:142",
+   "args": "root, d, f"
+  },
+  {
+   "at": "src/lib/studio/briefpdf.ts:29",
+   "args": "path.join(dir, file)"
+  },
+  {
+   "at": "src/lib/studio/briefpdf.ts:29",
+   "args": "dir, file"
+  },
+  {
+   "at": "src/lib/studio/connect/gate.ts:84",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/connect/vault.ts:18",
+   "args": "DIR, `${id}.auth`"
+  },
+  {
+   "at": "src/lib/studio/connect/vault.ts:29",
+   "args": "DIR, { recursive: true }"
+  },
+  {
+   "at": "src/lib/studio/connect/vault.ts:31",
+   "args": "tmp, encryptSecret(JSON.stringify(v)), { mode: 0o600 }"
+  },
+  {
+   "at": "src/lib/studio/connect/vault.ts:36",
+   "args": "file(id), \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/connect/vault.ts:39",
+   "args": "file(id), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:30",
+   "args": "process.env.STUDIO_DIR || path.join(process.cwd(),, \"connectors\""
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:96",
+   "args": "DIR(), `${id}${ext}`"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:98",
+   "args": "path.dirname(p), { recursive: true }"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:100",
+   "args": "tmp, data"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:103",
+   "args": "file(id, \".json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:106",
+   "args": "DIR()"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:108",
+   "args": "file(id, e), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:110",
+   "args": "file(id, \".table.json.gz\")"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:112",
+   "args": "file(id, \".held.json.gz\")"
+  },
+  {
+   "at": "src/lib/studio/connectors.ts:113",
+   "args": "file(id, \".held.json.gz\"), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/samples.ts:26",
+   "args": "path.join(process.cwd(), \"data\", \"studio-samples\","
+  },
+  {
+   "at": "src/lib/studio/samples.ts:26",
+   "args": "process.cwd(), \"data\", \"studio-samples\", info.file"
+  },
+  {
+   "at": "src/lib/studio/samples.ts:33",
+   "args": "path.join(process.cwd(), \"data\", \"studio-samples\","
+  },
+  {
+   "at": "src/lib/studio/samples.ts:33",
+   "args": "process.cwd(), \"data\", \"studio-samples\", s.file"
+  },
+  {
+   "at": "src/lib/studio/store.ts:33",
+   "args": "DIR, { recursive: true }"
+  },
+  {
+   "at": "src/lib/studio/store.ts:37",
+   "args": "tmp, data"
+  },
+  {
+   "at": "src/lib/studio/store.ts:42",
+   "args": "DIR, `${id}${ext}`"
+  },
+  {
+   "at": "src/lib/studio/store.ts:69",
+   "args": "DIR"
+  },
+  {
+   "at": "src/lib/studio/store.ts:73",
+   "args": "path.join(DIR, f)"
+  },
+  {
+   "at": "src/lib/studio/store.ts:73",
+   "args": "DIR, f"
+  },
+  {
+   "at": "src/lib/studio/store.ts:76",
+   "args": "path.join(DIR, f)"
+  },
+  {
+   "at": "src/lib/studio/store.ts:76",
+   "args": "DIR, f"
+  },
+  {
+   "at": "src/lib/studio/store.ts:86",
+   "args": "DIR"
+  },
+  {
+   "at": "src/lib/studio/store.ts:90",
+   "args": "p(id, \".json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/store.ts:93",
+   "args": "p(id, \".src\")"
+  },
+  {
+   "at": "src/lib/studio/store.ts:98",
+   "args": "p(id, \".rows.json.gz\")"
+  },
+  {
+   "at": "src/lib/studio/store.ts:109",
+   "args": "p(id, \".cand.json.gz\")"
+  },
+  {
+   "at": "src/lib/studio/store.ts:117",
+   "args": "p(id, \".pending.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/store.ts:120",
+   "args": "p(id, \".pending.json\"), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/store.ts:122",
+   "args": "p(id, ext), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/store.ts:129",
+   "args": "p(id, \".pick.json.gz\")"
+  },
+  {
+   "at": "src/lib/studio/store.ts:133",
+   "args": "p(id, ext), { force: true }"
+  },
+  {
+   "at": "src/lib/studio/store.ts:143",
+   "args": "f"
+  },
+  {
+   "at": "src/lib/studio/store.ts:145",
+   "args": "f"
+  },
+  {
+   "at": "src/lib/studio/store.ts:184",
+   "args": "DIR"
+  },
+  {
+   "at": "src/lib/studio/store.ts:211",
+   "args": "path.join(DIR, \"board.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/studio/store.ts:211",
+   "args": "DIR, \"board.json\""
+  },
+  {
+   "at": "src/lib/studio/store.ts:213",
+   "args": "DIR, \"board.json\""
+  },
+  {
+   "at": "src/lib/thunai/agent.live.ts:129",
+   "args": "path.join(dir, `thunai-agent-live-${which}.json`), JSON.stringify(rows, null, 1)"
+  },
+  {
+   "at": "src/lib/thunai/agent.live.ts:129",
+   "args": "dir, `thunai-agent-live-${which}.json`"
+  },
+  {
+   "at": "src/lib/thunai/brain.live.ts:88",
+   "args": "\"docs-thunai-live\", { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/brain.live.ts:89",
+   "args": "\"docs-thunai-live/brain-live.txt\", rows.join(\"\\n\") + summary"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:36",
+   "args": "process.cwd(), \"eval\", SET_DIR"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:37",
+   "args": "path.join(DIR, \"HASHES.txt\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:37",
+   "args": "DIR, \"HASHES.txt\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:40",
+   "args": "path.join(process.cwd(), rel), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:40",
+   "args": "process.cwd(), rel"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:43",
+   "args": "path.join(DIR, \"understanding.jsonl\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:43",
+   "args": "DIR, \"understanding.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:48",
+   "args": "path.join(DIR, \"results\"), { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:48",
+   "args": "DIR, \"results\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:48",
+   "args": "path.join(DIR, \"results\", `${TAG}-${name}.json`), JSON.stringify(data, null, 1)"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:48",
+   "args": "DIR, \"results\", `${TAG}-${name}.json`"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:93",
+   "args": "path.join(DIR, \"planner40.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:93",
+   "args": "DIR, \"planner40.json\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:125",
+   "args": "path.join(DIR, \"recorded\"), { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:125",
+   "args": "DIR, \"recorded\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:126",
+   "args": "path.join(DIR, \"recorded\", `${TAG}-${which}.jsonl`, replies.map((x) => JSON.stringify(x)).join(\"\\n\") +"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:126",
+   "args": "DIR, \"recorded\", `${TAG}-${which}.jsonl`"
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:153",
+   "args": "path.join(DIR, \"ambient.jsonl\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:153",
+   "args": "DIR, \"ambient.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:174",
+   "args": "path.join(DIR, \"ambient.jsonl\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:174",
+   "args": "DIR, \"ambient.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:195",
+   "args": "path.join(DIR, process.env.FOLLOWUPS ?? \"followups, \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:195",
+   "args": "DIR, process.env.FOLLOWUPS ?? \"followups.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:229",
+   "args": "path.join(DIR, sample), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/holdout.live.ts:229",
+   "args": "DIR, sample"
+  },
+  {
+   "at": "src/lib/thunai/ledger.ts:115",
+   "args": "dir, { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/ledger.ts:118",
+   "args": "dir, \"ledger.sqlite\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:29",
+   "args": "path.join(DIR, \"QA_HASHES.txt\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:29",
+   "args": "DIR, \"QA_HASHES.txt\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:31",
+   "args": "path.join(process.cwd(), rel), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:31",
+   "args": "process.cwd(), rel"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:35",
+   "args": "path.join(DIR, \"qa-understanding.jsonl\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:35",
+   "args": "DIR, \"qa-understanding.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:38",
+   "args": "path.join(DIR, \"results\"), { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:38",
+   "args": "DIR, \"results\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:38",
+   "args": "path.join(DIR, \"results\", `qa-${TAG}-${name}.json`, JSON.stringify(data, null, 1)"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:38",
+   "args": "DIR, \"results\", `qa-${TAG}-${name}.json`"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:77",
+   "args": "DIR, \"results\", `qa-${TAG}-live40.json`"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:78",
+   "args": "f, \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:82",
+   "args": "f, JSON.stringify(j, null, 1)"
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:109",
+   "args": "path.join(DIR, \"qa-live40.json\"), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/qa.live.ts:109",
+   "args": "DIR, \"qa-live40.json\""
+  },
+  {
+   "at": "src/lib/thunai/store.ts:31",
+   "args": "dir(), `memory-${Number(user)}.json`"
+  },
+  {
+   "at": "src/lib/thunai/store.ts:35",
+   "args": "file(user), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/store.ts:41",
+   "args": "dir(), { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/store.ts:43",
+   "args": "`${f}.tmp`, JSON.stringify(m, null, 1)"
+  },
+  {
+   "at": "src/lib/thunai/store.ts:92",
+   "args": "dir(), \"audit.jsonl\""
+  },
+  {
+   "at": "src/lib/thunai/store.ts:97",
+   "args": "auditFile(), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/store.ts:103",
+   "args": "dir(), { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/store.ts:106",
+   "args": "auditFile(), \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/stt.live.ts:24",
+   "args": "path.join(process.cwd(), \"eval\", \"holdout\", \"tamil, \"utf8\""
+  },
+  {
+   "at": "src/lib/thunai/stt.live.ts:28",
+   "args": "path.join(process.env.ASR_DIR!, it2.file)"
+  },
+  {
+   "at": "src/lib/thunai/stt.live.ts:28",
+   "args": "process.env.ASR_DIR!, it2.file"
+  },
+  {
+   "at": "src/lib/thunai/stt.live.ts:46",
+   "args": "path.join(process.cwd(), \"eval\", \"holdout\", \"resul, JSON.stringify({ at: new Date().toISOString(), sit"
+  },
+  {
+   "at": "src/lib/thunai/telemetry.ts:15",
+   "args": "dir, { recursive: true }"
+  },
+  {
+   "at": "src/lib/thunai/telemetry.ts:18",
+   "args": "dir, \"telemetry.ndjson\""
+  },
+  {
+   "at": "src/lib/thunai/world.ts:23",
+   "args": "path.join(process.cwd(), \"data\", \"gcc-reference\", , \"utf8\""
+  },
+  {
+   "at": "src/lib/wards.ts:48",
+   "args": "BOUNDARY_DIR, \"gcc-wards.geojson\""
+  },
+  {
+   "at": "src/lib/wards.ts:49",
+   "args": "BOUNDARY_DIR, \"gcc-wards.meta.json\""
+  },
+  {
+   "at": "src/lib/wards.ts:70",
+   "args": "GEOJSON_PATH"
+  },
+  {
+   "at": "src/lib/wards.ts:82",
+   "args": "GEOJSON_PATH, \"utf8\""
+  },
+  {
+   "at": "src/lib/wards.ts:83",
+   "args": "META_PATH"
+  },
+  {
+   "at": "src/lib/wards.ts:84",
+   "args": "META_PATH, \"utf8\""
+  }
+ ],
+ "spawn": [
+  {
+   "at": "src/app/api/jarvis/say/route.ts:56",
+   "arg": "/\"retryDelay\":\\s*\"(\\d+)s\"/.exec(body)"
+  },
+  {
+   "at": "src/app/api/jarvis/say/route.ts:67",
+   "arg": "/rate=(\\d+)/.exec(mime)"
+  },
+  {
+   "at": "src/components/collector/app/askmap/actions.ts:15",
+   "arg": "/filename=\"([^\"]+)\"/.exec(res.headers.get(\"content-disposition\") ?? \"\")"
+  },
+  {
+   "at": "src/components/collector/app/BriefingBook.tsx:75",
+   "arg": "/last (.+)$/i.exec(label)"
+  },
+  {
+   "at": "src/components/collector/app/BriefingBook.tsx:230",
+   "arg": "/^(.+?)\\s+(?:(?:were|was|have been|has been)\\s+(?:reported|recorded|logged|received|seen)|came\\s+in)(?:\\s+mainly)?(?:\\s+"
+  },
+  {
+   "at": "src/components/collector/app/Shell.tsx:128",
+   "arg": "/[ T](\\d{2}):/.exec(now)"
+  },
+  {
+   "at": "src/components/collector/app/studio/Studio.tsx:140",
+   "arg": "exec()"
+  },
+  {
+   "at": "src/components/collector/app/thunai/wake.ts:43",
+   "arg": "WAKE.exec(s)"
+  },
+  {
+   "at": "src/components/i18n/Translator.tsx:51",
+   "arg": "/^\\s*/.exec(src)"
+  },
+  {
+   "at": "src/components/i18n/Translator.tsx:51",
+   "arg": "/\\s*$/.exec(src)"
+  },
+  {
+   "at": "src/instrumentation-node.ts:52",
+   "arg": "/(?:-p|--port)[ =](\\d+)/.exec(argv)"
+  },
+  {
+   "at": "src/lib/ai/gateway.ts:306",
+   "arg": "/try again in (?:(\\d+)h)?(?:(\\d+)m)?(?:([\\d.]+)s)?/i.exec(e.message)"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:376",
+   "arg": "exec(c.countSql, c.countParams)"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:383",
+   "arg": "exec(`SELECT /*+ MAX_EXECUTION_TIME(${LIMITS.queryMs}) */ COUNT(DISTINCT DATE(b.${q(timeDim.col.name)})) AS n FROM ${c.p"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:395",
+   "arg": "exec( `SELECT /*+ MAX_EXECUTION_TIME(${LIMITS.queryMs}) */ b.${q(catDim.col.name)} AS k FROM ${c.parts.from} WHERE ${c.p"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:399",
+   "arg": "exec(compiled.sql.replace(/ LIMIT \\?$/, \"\"), compiled.params.slice(0, -1))"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:416",
+   "arg": "exec(compiled.sql, compiled.params)"
+  },
+  {
+   "at": "src/lib/assistant/compile.ts:422",
+   "arg": "exec(c.previous.sql, c.previous.params)"
+  },
+  {
+   "at": "src/lib/assistant/guard.ts:92",
+   "arg": "re.exec(message)"
+  },
+  {
+   "at": "src/lib/assistant/lang.ts:197",
+   "arg": "re.exec(question)"
+  },
+  {
+   "at": "src/lib/aws/dialect.ts:61",
+   "arg": "/^[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?/.exec(sql.slice(i))"
+  },
+  {
+   "at": "src/lib/aws/dialect.ts:65",
+   "arg": "/^[A-Za-z_$][A-Za-z0-9_$]*/.exec(sql.slice(i))"
+  },
+  {
+   "at": "src/lib/aws/dialect.ts:351",
+   "arg": "/^(\\d{4})-(\\d{2})-(\\d{2})(?:[ T](\\d{2}):(\\d{2})(?::(\\d{2}))?)?/.exec(String(s))"
+  },
+  {
+   "at": "src/lib/aws/dialect.ts:449",
+   "arg": "/^(-)?(\\d+):(\\d{2})(?::(\\d{2}))?/.exec(String(t))"
+  },
+  {
+   "at": "src/lib/aws/store.ts:170",
+   "arg": "db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} ${SQL_TYPE[k]}`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:173",
+   "arg": "db.exec(`CREATE TABLE ${q(t)} (${cols.map(([c, k]) => `${q(c)} ${SQL_TYPE[k]}`).join(\", \")})`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:204",
+   "arg": "db.exec(\"PRAGMA busy_timeout = 5000\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:209",
+   "arg": "db.exec(\"BEGIN\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:217",
+   "arg": "db.exec(`CREATE TABLE ${q(s.table)} (${cols.join(\", \")})${pk?.length ? \" WITHOUT ROWID\" : \"\"}`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:223",
+   "arg": "db.exec(`CREATE INDEX ${q(`ix_${s.table}_${c}`)} ON ${q(s.table)} (${q(c)})`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:226",
+   "arg": "db.exec(\"CREATE TABLE _export_meta (k TEXT PRIMARY KEY, v TEXT)\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:229",
+   "arg": "db.exec(`CREATE VIEW ${q(v)} AS ${translate(sql)}`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:230",
+   "arg": "db.exec(\"COMMIT\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:231",
+   "arg": "db.exec(\"ANALYZE\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:250",
+   "arg": "s.db.exec(\"DETACH DATABASE durable\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:264",
+   "arg": "db.exec(\"ATTACH DATABASE ':memory:' AS information_schema\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:265",
+   "arg": "db.exec(`DROP TABLE IF EXISTS information_schema.tables; DROP TABLE IF EXISTS information_schema.columns; CREATE TABLE i"
+  },
+  {
+   "at": "src/lib/aws/store.ts:334",
+   "arg": "db.exec(ddl)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:337",
+   "arg": "db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)} TEXT`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:343",
+   "arg": "db.exec(`ALTER TABLE ${q(t)} ADD COLUMN ${q(c)}`)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:353",
+   "arg": "db.exec(`CREATE TRIGGER ${name(\"ins\")} AFTER INSERT ON ${q(t)} BEGIN INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${ke"
+  },
+  {
+   "at": "src/lib/aws/store.ts:421",
+   "arg": "conn.exec(\"PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:422",
+   "arg": "conn.exec(\"BEGIN\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:423",
+   "arg": "conn.exec(\"CREATE TABLE _changes (id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT NOT NULL, k TEXT NOT NULL)\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:424",
+   "arg": "conn.exec(\"CREATE TABLE _keys (t TEXT PRIMARY KEY, key TEXT NOT NULL)\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:431",
+   "arg": "conn.exec(`UPDATE sqlite_sequence SET seq = ${LOCAL_IDS} WHERE seq < ${LOCAL_IDS} AND name <> '_changes'; INSERT INTO sq"
+  },
+  {
+   "at": "src/lib/aws/store.ts:434",
+   "arg": "conn.exec(\"COMMIT\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:442",
+   "arg": "to.conn.exec(\"BEGIN\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:451",
+   "arg": "to.conn.exec(\"SAVEPOINT kept\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:459",
+   "arg": "to.conn.exec(\"RELEASE kept\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:462",
+   "arg": "to.conn.exec(\"ROLLBACK TO kept; RELEASE kept\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:465",
+   "arg": "to.conn.exec(\"COMMIT\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:467",
+   "arg": "to.conn.exec(\"ROLLBACK\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:651",
+   "arg": "(await db()).exec(\"BEGIN\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:661",
+   "arg": "(await db()).exec(how)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:664",
+   "arg": "(await db()).exec(\"ROLLBACK\")"
+  },
+  {
+   "at": "src/lib/aws/store.ts:675",
+   "arg": "END.exec(text)"
+  },
+  {
+   "at": "src/lib/aws/store.ts:713",
+   "arg": "db.exec(\"PRAGMA busy_timeout = 5000\")"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:44",
+   "arg": "db.exec(\"BEGIN\")"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:45",
+   "arg": "db.exec(\"COMMIT\")"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:45",
+   "arg": "db.exec(\"ROLLBACK\")"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:120",
+   "arg": "db.exec(`ALTER TABLE incidents ADD COLUMN headline TEXT`)"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:239",
+   "arg": "db.exec(`CREATE TABLE IF NOT EXISTS _placed (incident_id TEXT PRIMARY KEY, place TEXT, how TEXT)`)"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:494",
+   "arg": "db.exec(`ALTER TABLE incidents ADD COLUMN dead_reported REAL`)"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:516",
+   "arg": "db.exec(`ALTER TABLE incidents ADD COLUMN cluster_id TEXT`)"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:517",
+   "arg": "db.exec(`ALTER TABLE incidents ADD COLUMN cluster_size INTEGER`)"
+  },
+  {
+   "at": "src/lib/collector/derive.ts:546",
+   "arg": "db.exec(`CREATE INDEX IF NOT EXISTS ix_incidents_cluster ON incidents (cluster_id)`)"
+  },
+  {
+   "at": "src/lib/collector/nearby.ts:80",
+   "arg": "re.exec(title)"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:48",
+   "arg": "exec(auditSql(), auditArgs(actor, action, table, recordId, before, after))"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:208",
+   "arg": "exec( `INSERT INTO ${ops(\"source_runs\")} (source_id, started_at, finished_at, ok, http_status, items_seen, items_new, lo"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:214",
+   "arg": "exec( `UPDATE ${ops(\"sources\")} SET last_run_at = NOW(), status = ?, last_error = ?, ${run.ok ? \"last_ok_at = NOW(),\" : "
+  },
+  {
+   "at": "src/lib/collector/sources.ts:271",
+   "arg": "exec(`UPDATE ${ops(\"sources\")} SET session_enc = ?, session_expires_at = NOW() + INTERVAL 30 MINUTE WHERE source_id = ?`"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:408",
+   "arg": "exec( `INSERT IGNORE INTO ${ops(\"source_items\")} (source_id, hash, url, title, body, published_at, lang, category_code, "
+  },
+  {
+   "at": "src/lib/collector/sources.ts:429",
+   "arg": "exec( `UPDATE ${ops(\"source_items\")} SET zone_no = ?, ward_no = ?, taluk_code = ?, place = ?, place_conf = ?, lat = ?, l"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:547",
+   "arg": "spawn(\"python\", [\"run_pipeline.py\", \"refresh\"], { cwd: PIPE_DIR, detached: true, stdio: \"ignore\", windowsHide: true })"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:606",
+   "arg": "exec( `INSERT INTO ${ops(\"mandi_prices\")} (date, scope, commodity, cmdt_group, price, arrival, msp) VALUES (?, ?, ?, ?, "
+  },
+  {
+   "at": "src/lib/collector/sources.ts:663",
+   "arg": "exec( `INSERT INTO ${ops(\"mandi_weekly\")} (week_start, week_label, scope, commodity, price, districts, chg_week, chg_mon"
+  },
+  {
+   "at": "src/lib/collector/sources.ts:718",
+   "arg": "exec( `INSERT INTO ${ops(\"mandi_market_prices\")} (date, market, commodity, variety, cmdt_group, min_price, max_price, mo"
+  },
+  {
+   "at": "src/lib/map/resolve.ts:62",
+   "arg": "re.exec(text)"
+  },
+  {
+   "at": "src/lib/map/resolve.ts:62",
+   "arg": "re.exec(text)"
+  },
+  {
+   "at": "src/lib/map/resolve.ts:96",
+   "arg": "g.exec(text)"
+  },
+  {
+   "at": "src/lib/map/resolve.ts:96",
+   "arg": "g.exec(text)"
+  },
+  {
+   "at": "src/lib/rehearsal/intent.ts:33",
+   "arg": "/\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*/.exec(t)"
+  },
+  {
+   "at": "src/lib/rehearsal/intent.ts:35",
+   "arg": "/\\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\s+(\\d{1,2})\\b/.exec(t)"
+  },
+  {
+   "at": "src/lib/rehearsal/source.ts:109",
+   "arg": "/warning\\s+([\\d.]+),\\s*danger\\s+([\\d.]+)/i.exec(String(r.detail ?? \"\"))"
+  },
+  {
+   "at": "src/lib/session-cookies.ts:104",
+   "arg": "SLOTTED_NAME.exec(name)"
+  },
+  {
+   "at": "src/lib/session-cookies.ts:114",
+   "arg": "SLOTTED_NAME.exec(name)"
+  },
+  {
+   "at": "src/lib/studio/formats.ts:199",
+   "arg": "re.exec(src)"
+  },
+  {
+   "at": "src/lib/studio/formats.ts:234",
+   "arg": "tok.exec(content)"
+  },
+  {
+   "at": "src/lib/studio/ocr.ts:144",
+   "arg": "re.exec(src)"
+  },
+  {
+   "at": "src/lib/thunai/chunker.ts:17",
+   "arg": "/(?:^|[\\s(])([\\p{L}]{1,3})$/u.exec(t.slice(Math.max(0, i - 4), i))"
+  },
+  {
+   "at": "src/lib/thunai/ledger.ts:88",
+   "arg": "db.exec(`CREATE TABLE IF NOT EXISTS spend (at INTEGER, org TEXT, model TEXT, requests INTEGER, tokens INTEGER, audio_s R"
+  },
+  {
+   "at": "src/lib/thunai/ledger.ts:119",
+   "arg": "db.exec(\"PRAGMA journal_mode=WAL; PRAGMA busy_timeout=2000;\")"
+  },
+  {
+   "at": "src/lib/thunai/normalise.ts:71",
+   "arg": "/^(\\d{1,3})(st|nd|rd|th|aavadhu|vadhu|ku|kku|la|a)$/.exec(tok)"
+  },
+  {
+   "at": "src/lib/thunai/numbergate.ts:42",
+   "arg": "re.exec(w)"
+  },
+  {
+   "at": "src/lib/thunai/numbergate.ts:57",
+   "arg": "num.exec(d)"
+  },
+  {
+   "at": "src/lib/thunai/quick.ts:49",
+   "arg": "/ zone (\\d{1,2}) /.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/quick.ts:267",
+   "arg": "VEG.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/quick.ts:284",
+   "arg": "/ (\\d{1,2}) /.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/quick.ts:285",
+   "arg": "/ (\\d{1,2}) /.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/turn.ts:88",
+   "arg": "HOLD_LEAD.exec(t.trim())"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:140",
+   "arg": "/\\bin (\\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)\\b/.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:150",
+   "arg": "/\\bat (\\d{1,2})(?::(\\d{2}))? ?(am|pm)?\\b|(\\d{1,2})(?::(\\d{2}))? ?(am|pm)\\b|(\\d{1,2}) மணிக்கு/.exec(t)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:205",
+   "arg": "/^(undo|go back|back|revert|previous view|pazhaya padi|பழையபடி மாத்து|பழையபடி|திரும்பிப் போ|go back pannu|undo pannu)(?="
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:215",
+   "arg": "/^(click|press|tap|select|hit|அழுத்து|கிளிக்)( on)? (.+)$/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:221",
+   "arg": "/^(scroll|go|move|page)? ?(down|up)$|^scroll (down|up)( a bit| more)?$|^(scroll to (the )?)?(top|bottom)$|^(கீழே|மேலே)( "
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:237",
+   "arg": "/^(.+?)\\s*(nu |என்று |என )?(நினைவில் வை|நினைவில் வச்சுக்க|ஞாபகம் வச்சுக்க|nyabagam vechuko|nyabagam vachuko)$/.exec(hear"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:240",
+   "arg": "/^remind me (?:(.+?) )?to (.+?)(?: (on .+|at .+|tomorrow.*|today.*|in \\d+ .+))?$/i.exec(heard.trim())"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:250",
+   "arg": "/^(yes )?(confirm|உறுதி|uruthi|உறுதிப்படுத்து)( send| pannu| செய்)?( (\\d{1,2}))?( (pannu|செய்))?$/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:261",
+   "arg": "/say (that|it) in (tamil|english)|(இதைத் )?தமிழில் சொல்|tamil la sollu|idha tamil la sollu/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:272",
+   "arg": "/^save (this |the view |this view |the screen |it )?(as )?(.+)$/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:276",
+   "arg": "/^(?:idha |இதை )?['‘]?(.+?)['’]?\\s*(?:nu save pannu|என்று சேமி|ன்னு சேமி)$/i.exec(heard.trim())"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:278",
+   "arg": "/^open (my )?(workspace|saved view|view) (.+)$|^open (my )?(.+) (workspace|view)$/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:287",
+   "arg": "/^(ask|ask district iq|ask the assistant|ask the chatbot)( to| about| whether| if)?\\s+(.+)$/.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:291",
+   "arg": "/(district iq|டிஸ்ட்ரிக்ட் ஐகியூ)[\\w\\s-]*?(kitta|கிட்ட|விடம்)?\\s*(kelu|கேள்)/i.exec(heard)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:311",
+   "arg": "WARD.exec(s)"
+  },
+  {
+   "at": "src/lib/thunai/understand.ts:468",
+   "arg": "/\\b(\\d{1,2}) (one|incident|item|row)\\b|number (\\d{1,2})\\b/.exec(s)"
+  }
+ ],
+ "filesParsed": 538
+}

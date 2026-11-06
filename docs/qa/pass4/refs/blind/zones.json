@@ -1,0 +1,62 @@
+[
+ {
+  "zone_no": 1,
+  "zone_name": "Thiruvottiyur"
+ },
+ {
+  "zone_no": 2,
+  "zone_name": "Manali"
+ },
+ {
+  "zone_no": 3,
+  "zone_name": "Madhavaram"
+ },
+ {
+  "zone_no": 4,
+  "zone_name": "Tondiarpet"
+ },
+ {
+  "zone_no": 5,
+  "zone_name": "Royapuram"
+ },
+ {
+  "zone_no": 6,
+  "zone_name": "Thiru-Vi-Ka-Nagar"
+ },
+ {
+  "zone_no": 7,
+  "zone_name": "Ambattur"
+ },
+ {
+  "zone_no": 8,
+  "zone_name": "Anna Nagar"
+ },
+ {
+  "zone_no": 9,
+  "zone_name": "Teynampet"
+ },
+ {
+  "zone_no": 10,
+  "zone_name": "Kodambakkam"
+ },
+ {
+  "zone_no": 11,
+  "zone_name": "Valasaravakkam"
+ },
+ {
+  "zone_no": 12,
+  "zone_name": "Alandur"
+ },
+ {
+  "zone_no": 14,
+  "zone_name": "Perungudi"
+ },
+ {
+  "zone_no": 13,
+  "zone_name": "Adyar"
+ },
+ {
+  "zone_no": 15,
+  "zone_name": "Sholinganallur"
+ }
+]

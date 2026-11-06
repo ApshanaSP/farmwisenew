@@ -1,0 +1,39 @@
+{
+  "gitleaks": {
+    "version": "8.30.1",
+    "licence": "MIT (the zip's LICENSE file and the GitHub repo both say so)",
+    "source": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip",
+    "sha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e",
+    "sha256_matches_published_checksums_file": true,
+    "where": "session scratchpad, not the repo",
+    "commands": [
+      "gitleaks git <worktree> --redact --no-banner --exit-code 0 --report-format json --report-path gitleaks-history.json",
+      "gitleaks git <worktree> --redact --no-banner --exit-code 0 --report-format json --report-path gitleaks-history-no-textconv.json --log-opts=\"--all --full-history --no-textconv\""
+    ]
+  },
+  "osv_scanner": {
+    "version": "2.7.0",
+    "licence": "Apache-2.0 (GitHub repo licence field)",
+    "source": "https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_windows_amd64.exe",
+    "sha256": "9964ed64ec9a387391eb4cc006ad5c531154821aef29b793e02c448de4686438",
+    "sha256_matches_published_checksums_file": true,
+    "where": "session scratchpad, not the repo",
+    "command": "osv-scanner scan source --format json --lockfile package-lock.json"
+  },
+  "semgrep": {
+    "version": "1.184.0",
+    "licence": "LGPL-2.1-or-later for the engine (pip metadata), run as a tool only. The rule packs come from the Semgrep registry; their licence was not checked here.",
+    "windows_python_3_14": "It runs. `python -m semgrep` does NOT: that entry point only prints a deprecation line and exits 2. `semgrep.exe` runs once the pip Scripts folder is on PATH (it starts pysemgrep from there). Used PYTHONUTF8=1.",
+    "command": "semgrep scan --metrics=off --disable-version-check --config p/javascript --config p/typescript --config p/react --config p/nextjs --config p/nodejs --config p/secrets --config p/owasp-top-ten --config p/security-audit --json --output semgrep-raw.json -j 3 --timeout 20 --max-target-bytes 2000000 src scripts next.config.js",
+    "result": "326 of 728 community rules applied to 807 files tracked by git, 99.8% of lines parsed, 4 findings. 15 files parsed in part only: 13 test or golden files, src/lib/studio/connect/discover.ts and src/lib/studio/formats.ts."
+  },
+  "npm_audit": { "npm": "11.19.0", "node": "24.21.0", "commands": ["npm audit --omit=dev --json", "npm audit --json"] },
+  "written_for_this_scan": {
+    "tests/qa/pass4/scan-bundle.mjs": "the client bundle search asked for in the brief",
+    "tests/qa/pass4/scan-history.mjs": "every file version in every commit, including inside .gz, .docx, .xlsx and .pptx files, for today's exact .env values and for key shapes",
+    "tests/qa/pass4/scan-lfs.mjs": "the same for the Git LFS objects, which are not in the commits",
+    "tests/qa/pass4/scan-runtime.mjs": "OTP, image optimizer, /dev routes, WebSocket upgrade and zod memory checks on a local test server",
+    "tests/qa/pass4/scan-findings.test.ts": "the findings as tests",
+    "tests/qa/pass4/lib/secret-scan.mjs": "shared helpers; hits are names only"
+  }
+}

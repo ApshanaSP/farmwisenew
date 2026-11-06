@@ -1,0 +1,212 @@
+[
+ {
+  "category_code": "FLOOD_WATERLOGGING",
+  "label": "Flooding & waterlogging",
+  "family": "FLOOD",
+  "lead_dept": "GCC-SWD"
+ },
+ {
+  "category_code": "FLOOD_RELIEF",
+  "label": "Flood relief needs",
+  "family": "FLOOD",
+  "lead_dept": "DIST-DM"
+ },
+ {
+  "category_code": "WATERBODY_INFRA",
+  "label": "Lakes, bunds & sluices",
+  "family": "FLOOD",
+  "lead_dept": "PWD-WRD"
+ },
+ {
+  "category_code": "FLOOD_RISK_SIGNAL",
+  "label": "Weather & flood warnings",
+  "family": "FLOOD",
+  "lead_dept": "DIST-DM"
+ },
+ {
+  "category_code": "DRAINAGE_SEWAGE",
+  "label": "Drainage & sewage",
+  "family": "DRAINAGE",
+  "lead_dept": "GCC-SWD"
+ },
+ {
+  "category_code": "DRAIN_WORKS_SAFETY",
+  "label": "Drain works site safety",
+  "family": "DRAINAGE",
+  "lead_dept": "GCC-SWD"
+ },
+ {
+  "category_code": "ROAD_DAMAGE",
+  "label": "Roads, footpaths & bridges",
+  "family": "ROADS_TRAFFIC",
+  "lead_dept": "GCC-ENG"
+ },
+ {
+  "category_code": "ROAD_ACCIDENT",
+  "label": "Road accident",
+  "family": "ROADS_TRAFFIC",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "TRAFFIC_OBSTRUCTION",
+  "label": "Traffic obstruction & parking",
+  "family": "ROADS_TRAFFIC",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "ENCROACHMENT",
+  "label": "Encroachment & unauthorised construction",
+  "family": "STRUCTURES_LAND",
+  "lead_dept": "GCC-ENG"
+ },
+ {
+  "category_code": "BUILDING_SAFETY",
+  "label": "Unsafe buildings & walls",
+  "family": "STRUCTURES_LAND",
+  "lead_dept": "PWD-BLD"
+ },
+ {
+  "category_code": "SOLID_WASTE",
+  "label": "Garbage & solid waste",
+  "family": "WASTE_SANITATION",
+  "lead_dept": "GCC-SWM"
+ },
+ {
+  "category_code": "SANITATION_TOILETS",
+  "label": "Public toilets & open defecation",
+  "family": "WASTE_SANITATION",
+  "lead_dept": "GCC-HLT"
+ },
+ {
+  "category_code": "STREETLIGHT_ELECTRICAL",
+  "label": "Street lights & electrical hazards",
+  "family": "ELECTRICAL",
+  "lead_dept": "GCC-ELE"
+ },
+ {
+  "category_code": "DARK_SPOT_SAFETY",
+  "label": "Dark spots & public safety",
+  "family": "PUBLIC_SAFETY",
+  "lead_dept": "GCC-ELE"
+ },
+ {
+  "category_code": "VECTOR_DISEASE",
+  "label": "Vector- & water-borne disease",
+  "family": "HEALTH",
+  "lead_dept": "GCC-HLT"
+ },
+ {
+  "category_code": "FOOD_SAFETY",
+  "label": "Food safety & meat hygiene",
+  "family": "HEALTH",
+  "lead_dept": "GCC-HLT"
+ },
+ {
+  "category_code": "STRAY_ANIMALS",
+  "label": "Stray animals",
+  "family": "HEALTH",
+  "lead_dept": "GCC-HLT"
+ },
+ {
+  "category_code": "HEALTH_SERVICES",
+  "label": "Health services & hospital capacity",
+  "family": "HEALTH",
+  "lead_dept": "HLT-DMS"
+ },
+ {
+  "category_code": "AIR_POLLUTION",
+  "label": "Air pollution",
+  "family": "ENVIRONMENT",
+  "lead_dept": "TNPCB"
+ },
+ {
+  "category_code": "TREES_PARKS",
+  "label": "Trees, parks & playgrounds",
+  "family": "GREEN",
+  "lead_dept": "GCC-PRK"
+ },
+ {
+  "category_code": "CRIME_PROPERTY",
+  "label": "Theft, snatching & fraud",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "CRIME_VIOLENT",
+  "label": "Violent crime",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "CRIMES_AGAINST_WOMEN",
+  "label": "Crimes against women & children",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "SUICIDE_SELF_HARM",
+  "label": "Suicide & self-harm",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "FIRE_EXPLOSION",
+  "label": "Fire & explosion",
+  "family": "PUBLIC_SAFETY",
+  "lead_dept": "DIST-DM"
+ },
+ {
+  "category_code": "MISSING_PERSON",
+  "label": "Missing person",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "DRUGS_LIQUOR",
+  "label": "Drugs & illicit liquor",
+  "family": "CRIME",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "PUBLIC_ORDER",
+  "label": "Protests & public nuisance",
+  "family": "PUBLIC_ORDER",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "POLICE_OTHER",
+  "label": "Other police matters",
+  "family": "PUBLIC_ORDER",
+  "lead_dept": "POL-GCP"
+ },
+ {
+  "category_code": "PUBLIC_WORKS",
+  "label": "Public works quality & worksites",
+  "family": "WORKS",
+  "lead_dept": "GCC-ENG"
+ },
+ {
+  "category_code": "WATER_SUPPLY",
+  "label": "Drinking water supply",
+  "family": "DRAINAGE",
+  "lead_dept": "CMWSSB"
+ },
+ {
+  "category_code": "CIVIC_FACILITIES",
+  "label": "Civic buildings & facilities",
+  "family": "WORKS",
+  "lead_dept": "GCC-GAD"
+ },
+ {
+  "category_code": "ADMIN_SERVICES",
+  "label": "Tax, certificates & electoral services",
+  "family": "ADMIN",
+  "lead_dept": "GCC-REV"
+ },
+ {
+  "category_code": "OTHER",
+  "label": "Other / unclassified",
+  "family": "OTHER",
+  "lead_dept": "GCC-GAD"
+ }
+]

@@ -1,0 +1,15 @@
+
+   We detected TypeScript in your project and reconfigured your tsconfig.json file for you. Strict-mode is set to false by default.
+   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+   	- include was updated to add '.next-lintscan/types/**/*.ts'
+
+? How would you like to configure ESLint? https://nextjs.org/docs/basic-features/eslint
+[?25l❯  Strict (recommended)
+   Base
+   Cancel ⚠ If you set up ESLint yourself, we recommend adding the Next.js ESLint plugin. See https://nextjs.org/docs/basic-features/eslint#migrating-existing-config
+exit=1
+
+# Not configured: the repo has no ESLint config, so next lint stopped at its set-up prompt and no choice was made.
+# It also added a line to tsconfig.json, restored at once with git checkout -- tsconfig.json.
+# A report-only run with a config kept outside the app is in eslint-scan.json.

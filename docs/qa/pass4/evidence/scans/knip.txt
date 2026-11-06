@@ -1,0 +1,551 @@
+Unused files (1)
+src/components/AuthHeroPanel.tsx
+Unused dependencies (3)
+@huggingface/transformers  package.json:50:6
+animejs                    package.json:54:6
+word-list                  package.json:76:6
+Unused devDependencies (9)
+@axe-core/playwright            package.json:81:6
+@stryker-mutator/core           package.json:83:6
+@stryker-mutator/vitest-runner  package.json:84:6
+@vitest/coverage-v8             package.json:91:6
+autocannon                      package.json:92:6
+eslint                          package.json:94:6
+eslint-config-next              package.json:95:6
+fast-check                      package.json:96:6
+madge                           package.json:98:6
+Unlisted dependencies (5)
+fast-png  scripts/build-elevation.mjs:17:24    
+jiti      scripts/build-embeddings.cjs:14:22   
+jiti      scripts/build-lance.cjs:17:22        
+fflate    scripts/build-transit-layer.mjs:15:38
+jiti      scripts/eval-assistant.cjs:19:22     
+Unused exports (382)
+ChartResponse                                   src/components/collector/app/assistant/Figure.tsx:45:14      
+MapResponse                                     src/components/collector/app/assistant/Figure.tsx:47:14      
+TableResponse                                   src/components/collector/app/assistant/Figure.tsx:49:14      
+when                                  function  src/components/collector/app/assistant/Responses.tsx:16:17   
+SevBadge                              function  src/components/collector/app/assistant/Responses.tsx:23:17   
+IncidentCard                          function  src/components/collector/app/assistant/Responses.tsx:44:17   
+EvidenceList                          function  src/components/collector/app/assistant/Responses.tsx:111:17  
+NewsStoryCard                         function  src/components/collector/app/assistant/Responses.tsx:134:17  
+micBusy                               function  src/components/collector/app/assistant/speech.ts:56:17       
+TASK_RULE                                       src/components/collector/app/Attention.tsx:15:14             
+Emph                                  function  src/components/collector/app/BriefingBook.tsx:63:17          
+sentences                             function  src/components/collector/app/BriefingBook.tsx:69:17          
+isTestFeed                                      src/components/collector/app/CollectorApp.tsx:983:14         
+diffFields                                      src/components/collector/app/Conflicts.tsx:10:14             
+spikeLine                                       src/components/collector/app/Insights.tsx:56:14              
+download                              function  src/components/collector/app/Insights.tsx:966:17             
+pad2                                            src/components/collector/app/lib.tsx:87:14                   
+ACCENT                                          src/components/collector/app/lib.tsx:99:14                   
+shortDept                                       src/components/collector/app/lib.tsx:138:14                  
+isNews                                          src/components/collector/app/lib.tsx:149:14                  
+Spark                                 function  src/components/collector/app/lib.tsx:231:17                  
+Donut                                 function  src/components/collector/app/lib.tsx:387:17                  
+TOPIC_IC                                        src/components/collector/app/Nearby.tsx:9:14                 
+feedName                                        src/components/collector/app/Overlays.tsx:172:14             
+FeedsBody                             function  src/components/collector/app/Overlays.tsx:174:17             
+NewsStory                             function  src/components/collector/app/Overview.tsx:416:17             
+outletLine                            function  src/components/collector/app/Overview.tsx:431:17             
+NewsItem                              function  src/components/collector/app/Overview.tsx:446:17             
+dayName                                         src/components/collector/app/rehearsal/RainBand.tsx:53:14    
+STATION_STYLE                                   src/components/collector/app/SatMap.tsx:18:14                
+Rail                                  function  src/components/collector/app/Shell.tsx:78:17                 
+Pager                                 function  src/components/collector/app/Shell.tsx:135:17                
+settle                                function  src/components/collector/app/Shell.tsx:201:17                
+STAGE_COL                                       src/components/collector/app/Stories.tsx:11:14               
+asRows                                function  src/components/collector/app/studio/Dataset.tsx:345:17       
+AMBIENT_PER_MIN                                 src/components/collector/app/thunai/conductor.ts:14:14       
+levelAllowed                                    src/components/collector/app/thunai/conductor.ts:381:10      
+visible                               function  src/components/collector/app/thunai/dom.ts:13:17             
+accessibleName                        function  src/components/collector/app/thunai/dom.ts:25:17             
+loadSilero                            function  src/components/collector/app/thunai/ears.ts:41:17            
+downsample                            function  src/components/collector/app/thunai/ears.ts:221:17           
+toWav                                 function  src/components/collector/app/thunai/ears.ts:233:17           
+coreOf                                          src/components/collector/app/thunai/Hud.tsx:204:10           
+pairsOf                               function  src/components/collector/app/thunai/JarvisQuestions.tsx:13:17
+setJarvisVoice                        function  src/components/collector/app/thunai/mouth.ts:69:17           
+voicesFor                                       src/components/collector/app/thunai/mouth.ts:75:14           
+voiceInfo                             function  src/components/collector/app/thunai/mouth.ts:91:17           
+prefetch                              function  src/components/collector/app/thunai/mouth.ts:124:17          
+speakAck                              function  src/components/collector/app/thunai/mouth.ts:226:17          
+voiceScore                   browser  function  src/components/collector/app/thunai/voice.ts:27:17           
+voiceGender                  browser  function  src/components/collector/app/thunai/voice.ts:53:17           
+chunks                       browser  function  src/components/collector/app/thunai/voice.ts:93:17           
+speakLines                   browser  function  src/components/collector/app/thunai/voice.ts:112:17          
+KPI_LABELS                                      src/components/collector/app/Workspace.tsx:22:14             
+translate                             function  src/components/i18n/Translator.tsx:43:17                     
+NextStep                              function  src/components/officer/Cards.tsx:35:17                       
+SourceIcons                           function  src/components/officer/Cards.tsx:56:17                       
+MapCard                               function  src/components/officer/Cards.tsx:69:17                       
+NewsCard                              function  src/components/officer/Cards.tsx:172:17                      
+TrendCard                             function  src/components/officer/Cards.tsx:197:17                      
+TypeCard                              function  src/components/officer/Cards.tsx:224:17                      
+AreaCard                              function  src/components/officer/Cards.tsx:237:17                      
+ModuleTile                            function  src/components/officer/Insights.tsx:52:17                    
+STATUS_CHAIN                                    src/components/StatusTracker.tsx:16:14                       
+chainFor                              function  src/components/StatusTracker.tsx:33:17                       
+readTheme                             function  src/components/ThemeToggle.tsx:8:17                          
+chartBase                             function  src/components/ui/chartTheme.ts:63:17                        
+axis                                  function  src/components/ui/chartTheme.ts:82:17                        
+barStyle                                        src/components/ui/chartTheme.ts:93:14                        
+lineStyle                             function  src/components/ui/chartTheme.ts:95:17                        
+TopProgress                           function  src/components/ui/index.tsx:507:17                           
+crossfade                                       src/components/ui/motion.ts:33:14                            
+pageSlide                                       src/components/ui/motion.ts:40:14                            
+roll                                            src/components/ui/motion.ts:47:14                            
+collapse                                        src/components/ui/motion.ts:76:14                            
+shake                                           src/components/ui/motion.ts:81:14                            
+COMPOSER_VERSION                                src/lib/ai/prompts/composer.ts:9:14                          
+CHART_RULES                                     src/lib/ai/prompts/composer.ts:52:14                         
+PLANNER_VERSION                                 src/lib/ai/prompts/planner.ts:5:14                           
+ROUTER_VERSION                                  src/lib/ai/prompts/router.ts:8:14                            
+ANSWERS                                         src/lib/ai/prompts/router.ts:11:14                           
+INTENTS                                         src/lib/ai/prompts/router.ts:15:14                           
+ROUTER_SYSTEM                                   src/lib/ai/prompts/router.ts:70:14                           
+ROUTE_TAG                                       src/lib/assistant/__tests__/golden/cases.ts:21:14            
+SEP                                             src/lib/assistant/__tests__/golden/cases.ts:27:14            
+AGENT_VERSION                                   src/lib/assistant/agent.ts:14:14                             
+SHOW_KINDS                                      src/lib/assistant/agent.ts:22:14                             
+ACTIONS                                         src/lib/assistant/agent.ts:24:14                             
+AGENT_SYSTEM                                    src/lib/assistant/agent.ts:71:14                             
+agentPrompt                           function  src/lib/assistant/agent.ts:205:17                            
+POLICY                                          src/lib/assistant/catalog.ts:56:14                           
+EXCLUDED_TABLES                                 src/lib/assistant/catalog.ts:352:14                          
+MAX_PANELS                                      src/lib/assistant/chartspec.ts:20:14                         
+MAX_SLICES                                      src/lib/assistant/chartspec.ts:21:14                         
+MAX_CATEGORIES                                  src/lib/assistant/chartspec.ts:22:14                         
+MAX_LINES                                       src/lib/assistant/chartspec.ts:23:14                         
+MeasureSchema                                   src/lib/assistant/compile.ts:26:14                           
+DimensionSchema                                 src/lib/assistant/compile.ts:27:14                           
+FilterSchema                                    src/lib/assistant/compile.ts:28:14                           
+TimeRangeSchema                                 src/lib/assistant/compile.ts:34:14                           
+QuerySchema                                     src/lib/assistant/compile.ts:42:14                           
+readOnly                              function  src/lib/assistant/compile.ts:331:23                          
+emptyContext                                    src/lib/assistant/context.ts:64:14                           
+present                               function  src/lib/assistant/datasets.ts:57:17                          
+FAST_OF                                         src/lib/assistant/decide.ts:39:14                            
+importantProblems                     function  src/lib/assistant/decide.ts:52:17                            
+DEPT_ALIASES                                    src/lib/assistant/deptwords.ts:9:14                          
+buildIndex                            function  src/lib/assistant/embed.ts:170:23                            
+useThreads                            function  src/lib/assistant/embed.ts:238:17                            
+EXAMPLES                                        src/lib/assistant/examples.ts:12:14                          
+countNoun                             function  src/lib/assistant/fastpath.ts:771:17                         
+HELP_TOPICS                                     src/lib/assistant/help.ts:6:14                               
+reasonsOf                             function  src/lib/assistant/incidents.ts:102:17                        
+itemOf                                function  src/lib/assistant/incidents.ts:149:17                        
+INSIGHT_LABEL                                   src/lib/assistant/insightcards.ts:113:14                     
+INTENTS                                         src/lib/assistant/intent.ts:11:14                            
+syncLance                             function  src/lib/assistant/lance.ts:188:17                            
+lanceReady                            function  src/lib/assistant/lance.ts:305:23                            
+lanceStatus                           function  src/lib/assistant/lance.ts:309:23                            
+LANGS                                           src/lib/assistant/lang.ts:14:14                              
+tamilShare                            function  src/lib/assistant/lang.ts:32:17                              
+sttHint                               function  src/lib/assistant/lang.ts:122:17                             
+formatIndian                          function  src/lib/assistant/lang.ts:129:17                             
+refusal                               function  src/lib/assistant/lang.ts:242:17                             
+inOurNews                             function  src/lib/assistant/pipeline.ts:200:23                         
+deptsNamed                            function  src/lib/assistant/pipeline.ts:217:17                         
+sinceReset                            function  src/lib/assistant/pipeline.ts:254:17                         
+DEFAULT_PERIOD                                  src/lib/assistant/pipeline.ts:263:14                         
+ONLY_SMALLTALK                                  src/lib/assistant/pipeline.ts:268:14                         
+periodFromWords                       function  src/lib/assistant/pipeline.ts:272:17                         
+storySearchText                       function  src/lib/assistant/pipeline.ts:315:17                         
+needsQuery                            function  src/lib/assistant/pipeline.ts:349:17                         
+zoneAtRank                            function  src/lib/assistant/pipeline.ts:358:17                         
+PERIOD_KEYS                                     src/lib/assistant/scope.ts:15:14                             
+DISTRICT_DAY                                    src/lib/assistant/scope.ts:27:14                             
+numberedPlace                         function  src/lib/assistant/tools.ts:44:23                             
+keywordsOf                            function  src/lib/assistant/tools.ts:63:17                             
+findIncidents                         function  src/lib/assistant/tools.ts:255:23                            
+TOOLS                                           src/lib/assistant/tools.ts:395:14                            
+repeatedFigures                       function  src/lib/assistant/verify.ts:314:17                           
+WARNING_Q                                       src/lib/assistant/warnings.ts:20:14                          
+resolveSlot                           function  src/lib/auth.ts:40:17                                        
+tokenVersion                          function  src/lib/auth.ts:83:23                                        
+touchSlot                             function  src/lib/auth.ts:127:17                                       
+requireRole                           function  src/lib/auth.ts:180:17                                       
+storeInfo                             function  src/lib/aws/store.ts:602:23                                  
+BATCH_MAX                                       src/lib/collector/actionmail.ts:283:14                       
+cachedFor                             function  src/lib/collector/aibrief.ts:62:17                           
+briefHour                                       src/lib/collector/aibrief.ts:107:14                          
+TOPICS                                          src/lib/collector/aibrief.ts:140:14                          
+ist                                             src/lib/collector/alerts.ts:114:14                           
+sachetChennai                         function  src/lib/collector/alerts.ts:154:23                           
+NEWS_HOURS                                      src/lib/collector/alerts.ts:232:14                           
+HAZARD_FEEDS                                    src/lib/collector/alerts.ts:377:14                           
+CLUSTER_DEFAULTS                                src/lib/collector/cluster.ts:53:14                           
+EVENT_CATEGORIES                                src/lib/collector/cluster.ts:67:14                           
+FEED_LABEL                                      src/lib/collector/freshness.ts:14:14                         
+feedLabel                                       src/lib/collector/freshness.ts:18:14                         
+normTitle                             function  src/lib/collector/fulltext.ts:97:17                          
+DISTRICTS                                       src/lib/collector/nearby.ts:48:14                            
+TOPIC_LABEL                                     src/lib/collector/nearby.ts:89:14                            
+QUERIES                                         src/lib/collector/nearby.ts:145:14                           
+CASUALTY_HOURS                                  src/lib/collector/newssanity.ts:140:14                       
+ensureMappingColumn                   function  src/lib/collector/onboard.ts:352:17                          
+clean                                           src/lib/collector/sourcemap.ts:47:14                         
+rssRecords                            function  src/lib/collector/sourcemap.ts:74:17                         
+jsonRecords                           function  src/lib/collector/sourcemap.ts:135:17                        
+htmlRecords                           function  src/lib/collector/sourcemap.ts:264:17                        
+replaceStale                          function  src/lib/collector/sources.ts:424:17                          
+MEDIA_TYPES                                     src/lib/complaint-media.ts:15:14                             
+mediaRoot                             function  src/lib/complaint-media.ts:28:17                             
+incidentsOf                           function  src/lib/complaint-progress.ts:97:23                          
+PASSWORD_RULES                                  src/lib/constants.ts:27:14                                   
+decryptAadhaar                        function  src/lib/crypto.ts:18:17                                      
+appendStatusChangeToDataset           function  src/lib/dataset/append.ts:152:17                             
+EXTENSION_COLUMNS                               src/lib/dataset/intel.ts:29:14                               
+languageOf                                      src/lib/dataset/intel.ts:33:14                               
+severity                                        src/lib/dataset/intel.ts:34:14                               
+duplicateGroup                                  src/lib/dataset/intel.ts:35:14                               
+COMPLAINT_COLUMNS                               src/lib/dataset/sql.ts:15:14                                 
+HISTORY_COLUMNS                                 src/lib/dataset/sql.ts:16:14                                 
+setLang                               function  src/lib/i18n/lang.ts:16:17                                   
+verifySmtp                            function  src/lib/mailer.ts:42:23                                      
+factPack                              function  src/lib/map/analyst.ts:36:17                                 
+LAYER_READY                                     src/lib/map/answer.ts:14:14                                  
+filterWords                                     src/lib/map/answer.ts:306:10                                 
+SEV_ORDER                                       src/lib/map/execute.ts:691:10                                
+WARDS                                           src/lib/map/fixture.ts:18:14                                 
+CANAL                                           src/lib/map/fixture.ts:78:14                                 
+LAKE                                            src/lib/map/fixture.ts:80:14                                 
+corridorPolygons                      function  src/lib/map/geom.ts:109:17                                   
+PeriodSchema                                    src/lib/map/plan.ts:18:14                                    
+FilterSchema                                    src/lib/map/plan.ts:25:14                                    
+AreaRefSchema                                   src/lib/map/plan.ts:40:14                                    
+StepSchema                                      src/lib/map/plan.ts:52:14                                    
+PlanSchema                                      src/lib/map/plan.ts:67:14                                    
+periodDays                            function  src/lib/map/plan.ts:77:17                                    
+NEAR_M                                          src/lib/map/resolve.ts:44:14                                 
+FACILITIES                                      src/lib/map/route.ts:20:14                                   
+parse                                 function  src/lib/map/route.ts:243:17                                  
+buildPlan                             function  src/lib/map/route.ts:313:17                                  
+noSuchArea                            function  src/lib/map/route.ts:430:17                                  
+mergeFollowUp                         function  src/lib/map/route.ts:571:17                                  
+POINT_LAYERS                                    src/lib/map/types.ts:191:14                                  
+LINE_LAYERS                                     src/lib/map/types.ts:192:14                                  
+WireStep                                        src/lib/map/wire.ts:12:14                                    
+word                                            src/lib/map/words.ts:73:14                                   
+osmMeta                               function  src/lib/map/world.ts:44:17                                   
+condsOf                               function  src/lib/map/world.ts:189:17                                  
+baseName                              function  src/lib/map/world.ts:213:17                                  
+DEFAULT_REMARK_HINT                             src/lib/officer/departments.ts:63:14                         
+PHOTO_TYPES                                     src/lib/officer/photos.ts:11:14                              
+uploadRoot                            function  src/lib/officer/photos.ts:17:17                              
+isStage                               function  src/lib/officer/stages.ts:34:17                              
+getResendCooldown                     function  src/lib/otp.ts:169:23                                        
+SQL                                             src/lib/reference/metrics.ts:61:14                           
+MISSED_CLAIM                                    src/lib/reference/metrics.ts:109:14                          
+STALE_DAYS                                      src/lib/reference/metrics.ts:127:14                          
+MIN_UNUSUAL                                     src/lib/reference/metrics.ts:139:14                          
+STALE_H                                         src/lib/rehearsal/cfmlive.ts:12:14                           
+HEAVY_HOUR_MM                                   src/lib/rehearsal/cfmlive.ts:14:14                           
+HEAVY_DAY_MM                                    src/lib/rehearsal/cfmlive.ts:15:14                           
+segDistM                              function  src/lib/rehearsal/graph.ts:164:17                            
+edgeDistM                             function  src/lib/rehearsal/graph.ts:204:17                            
+MEMORY_PREC_M                                   src/lib/rehearsal/memory.ts:51:14                            
+MEMORY_DEFAULTS                                 src/lib/rehearsal/memory.ts:78:14                            
+TIER_NONE                                       src/lib/rehearsal/memory.ts:80:14                            
+SLOW_FACTOR                                     src/lib/rehearsal/memory.ts:308:14                           
+otherEnd                                        src/lib/rehearsal/memory.ts:315:10                           
+CHOKE_M                                         src/lib/rehearsal/places.ts:12:14                            
+DRY_M                                           src/lib/rehearsal/places.ts:14:14                            
+DRY_NEAR_M                                      src/lib/rehearsal/places.ts:16:14                            
+DRY_HOSPITAL_MIN                                src/lib/rehearsal/places.ts:18:14                            
+RIBBON_M                                        src/lib/rehearsal/places.ts:20:14                            
+DEPT                                            src/lib/rehearsal/playbook.ts:36:14                          
+DUE_H                                           src/lib/rehearsal/playbook.ts:38:14                          
+PUMP_CLUSTER_M                                  src/lib/rehearsal/playbook.ts:40:14                          
+PUMP_CLUSTER_MIN                                src/lib/rehearsal/playbook.ts:41:14                          
+mins                                            src/lib/rehearsal/playbook.ts:174:10                         
+T_HELP_CHOICES                                  src/lib/rehearsal/reach.ts:12:14                             
+SNAP_M                                          src/lib/rehearsal/reach.ts:14:14                             
+CUT_SHARE                                       src/lib/rehearsal/reach.ts:16:14                             
+snapFacility                          function  src/lib/rehearsal/reach.ts:93:17                             
+cacheTable                            function  src/lib/rehearsal/realdata.ts:14:17                          
+TEST_CATS                                       src/lib/rehearsal/replay.ts:12:14                            
+MIN_TESTED                                      src/lib/rehearsal/replay.ts:14:14                            
+seeded                                function  src/lib/rehearsal/replay.ts:41:17                            
+FLOODED_M                                       src/lib/rehearsal/report.ts:11:14                            
+HEAVY_MM                                        src/lib/rehearsal/source.ts:178:14                           
+CFM_SITE                                        src/lib/rehearsal/source.ts:179:14                           
+TAG                                             src/lib/rehearsal/tasks.ts:24:14                             
+PHOTO_OK_M                                      src/lib/rehearsal/tasks.ts:26:14                             
+trafficKey                                      src/lib/rehearsal/traffic.ts:15:14                           
+tileInDistrict                        function  src/lib/rehearsal/traffic.ts:30:17                           
+LEVELS                                          src/lib/rehearsal/trigger.ts:10:14                           
+COLOUR                                          src/lib/rehearsal/trigger.ts:11:14                           
+COLOUR_TA                                       src/lib/rehearsal/trigger.ts:12:14                           
+GAUGE_NEAR_M                                    src/lib/rehearsal/trigger.ts:14:14                           
+LAKE_WATCH_PCT                                  src/lib/rehearsal/trigger.ts:16:14                           
+fmtDay                                function  src/lib/rehearsal/trigger.ts:134:17                          
+MIN_SECRET_BYTES                                src/lib/secrets.ts:8:14                                      
+maskEmail                                       src/lib/security/factors.ts:66:14                            
+landing                               function  src/lib/security/session.ts:17:17                            
+GRANT_TTL_S                                     src/lib/security/stepup.ts:23:14                             
+ACTION_WORD                                     src/lib/security/stepup.ts:25:14                             
+PORTAL_COOKIE_NAMES                             src/lib/session-cookies.ts:14:14                             
+COOKIE_OPTIONS                                  src/lib/session-cookies.ts:45:14                             
+mask                                  function  src/lib/studio/ai.ts:33:17                                   
+altText                               function  src/lib/studio/chartlint.ts:162:17                           
+browserReady                          function  src/lib/studio/connect/browser.ts:213:23                     
+mayRead                               function  src/lib/studio/connect/discover.ts:30:23                     
+shapeKey                                        src/lib/studio/connect/discover.ts:74:14                     
+anchors                               function  src/lib/studio/connect/discover.ts:144:17                    
+nextPageLink                          function  src/lib/studio/connect/discover.ts:191:17                    
+EXPLORE                                         src/lib/studio/connect/explore.ts:12:14                      
+dataRank                              function  src/lib/studio/connect/explore.ts:18:17                      
+SCORE_MIN                                       src/lib/studio/connect/gate.ts:19:14                         
+gateB                                 function  src/lib/studio/connect/gate.ts:63:17                         
+fileError                             function  src/lib/studio/connect/index.ts:45:17                        
+dcatFrom                                        src/lib/studio/connect/platforms.ts:186:14                   
+checkedLines                          function  src/lib/studio/connect/resolve.ts:42:17                      
+outcomeOfError                        function  src/lib/studio/connect/resolve.ts:51:17                      
+dateRangeOf                           function  src/lib/studio/connect/resolve.ts:89:17                      
+pickCards                             function  src/lib/studio/connect/resolve.ts:149:17                     
+gateAll                               function  src/lib/studio/connect/resolve.ts:175:17                     
+dropVault                             function  src/lib/studio/connect/vault.ts:39:17                        
+saveConnector                         function  src/lib/studio/connectors.ts:104:17                          
+lateNow                               function  src/lib/studio/connectors.ts:149:17                          
+guessKey                              function  src/lib/studio/connectors.ts:160:17                          
+suspicious                            function  src/lib/studio/connectors.ts:191:17                          
+applyMode                             function  src/lib/studio/connectors.ts:206:17                          
+retain                                function  src/lib/studio/connectors.ts:231:17                          
+typeColumn                            function  src/lib/studio/dashboard.ts:77:17                            
+colLabel                              function  src/lib/studio/engine.ts:20:17                               
+directUrl                             function  src/lib/studio/fetchurl.ts:25:17                             
+FIXTURE_HOST                                    src/lib/studio/fetchurl.ts:43:14                             
+statusError                           function  src/lib/studio/fetchurl.ts:111:17                            
+nameOf                                function  src/lib/studio/fetchurl.ts:157:17                            
+fetchLink                             function  src/lib/studio/fetchurl.ts:168:23                            
+unent                                           src/lib/studio/formats.ts:89:14                              
+toneRank                                        src/lib/studio/insights.ts:630:14                            
+MIN_ZONES                                       src/lib/studio/link.ts:44:14                                 
+OCR_LOW                                         src/lib/studio/ocr.ts:15:14                                  
+OCR_MAX_PIXELS                                  src/lib/studio/ocr.ts:54:14                                  
+pixels                                function  src/lib/studio/ocr.ts:56:17                                  
+wordsToGrid                           function  src/lib/studio/ocr.ts:73:17                                  
+MAX_ROWS                                        src/lib/studio/parse.ts:34:14                                
+MAX_COLS                                        src/lib/studio/parse.ts:35:14                                
+NeedsOcr                              class     src/lib/studio/parse.ts:41:14                                
+stripPage                                       src/lib/studio/parse.ts:171:14                               
+unitOf                                function  src/lib/studio/profile.ts:39:17                              
+guessRole                             function  src/lib/studio/profile.ts:97:17                              
+TIER_LABEL                                      src/lib/studio/readiness.ts:123:14                           
+zoneName                                        src/lib/studio/refs.ts:74:14                                 
+talukName                                       src/lib/studio/refs.ts:75:14                                 
+SAMPLES                                         src/lib/studio/samples.ts:11:14                              
+openValuesOf                          function  src/lib/studio/spec.ts:15:17                                 
+defaultAgg                            function  src/lib/studio/spec.ts:61:17                                 
+defaultQuestions                      function  src/lib/studio/spec.ts:100:17                                
+openWordOf                            function  src/lib/studio/spec.ts:140:17                                
+looksRequest                                    src/lib/thunai/addressed.ts:101:14                           
+AGENT_V                                         src/lib/thunai/agent.ts:25:14                                
+STAGE_OPS                                       src/lib/thunai/agent.ts:37:14                                
+checkStageOp                          function  src/lib/thunai/agent.ts:224:17                               
+stageOpFromSteps                      function  src/lib/thunai/agent.ts:238:17                               
+dropCopiedFilters                     function  src/lib/thunai/agent.ts:278:17                               
+syncSteps                             function  src/lib/thunai/agent.ts:314:17                               
+scopeAfter                            function  src/lib/thunai/agent.ts:369:17                               
+within                                function  src/lib/thunai/agent.ts:379:17                               
+stageFigures                                    src/lib/thunai/agent.ts:542:14                               
+hashLine                              function  src/lib/thunai/audit.ts:22:17                                
+consoleSevere                         function  src/lib/thunai/data.ts:40:23                                 
+consoleNews                           function  src/lib/thunai/data.ts:45:23                                 
+mapAnswer                             function  src/lib/thunai/data.ts:50:23                                 
+registry                              function  src/lib/thunai/entities.ts:71:17                             
+sentenceWords                         function  src/lib/thunai/entities.ts:133:17                            
+orgDepts                                        src/lib/thunai/entities.ts:294:14                            
+orgName                                         src/lib/thunai/entities.ts:295:14                            
+wilson                                function  src/lib/thunai/holdout.ts:14:17                              
+tally                                 function  src/lib/thunai/holdout.ts:24:17                              
+LIMITS                                          src/lib/thunai/ledger.ts:25:14                               
+LITE_MODEL                                      src/lib/thunai/llm.ts:16:14                                  
+estimate                                        src/lib/thunai/llm.ts:18:14                                  
+hedgeAfter                            function  src/lib/thunai/llm.ts:36:17                                  
+plainWho                              function  src/lib/thunai/narrate.ts:128:17                             
+taNumber                              function  src/lib/thunai/normalise.ts:63:17                            
+enNumber                              function  src/lib/thunai/normalise.ts:69:17                            
+LAYERS                                          src/lib/thunai/plan.ts:17:14                                 
+unsureWhy                             function  src/lib/thunai/quick.ts:207:17                               
+executeCalls                          function  src/lib/thunai/round.ts:210:23                               
+bundleByRules                         function  src/lib/thunai/router.ts:42:17                               
+numbersIn                             function  src/lib/thunai/say.ts:76:17                                  
+when                                  function  src/lib/thunai/screens.ts:80:17                              
+spokenLabel                           function  src/lib/thunai/screens.ts:101:17                             
+fit                                   function  src/lib/thunai/screens.ts:108:17                             
+recordsOf                             function  src/lib/thunai/screens.ts:1188:17                            
+freshness                             function  src/lib/thunai/screens.ts:1196:17                            
+CaseRow                                         src/lib/thunai/stage.ts:15:14                                
+Block                                           src/lib/thunai/stage.ts:25:14                                
+BLOCK_KINDS                                     src/lib/thunai/stage.ts:70:14                                
+Scope                                           src/lib/thunai/stage.ts:75:14                                
+NextStep                                        src/lib/thunai/stage.ts:80:14                                
+StageDoc                                        src/lib/thunai/stage.ts:85:14                                
+idsOf                                 function  src/lib/thunai/stage.ts:132:17                               
+SEVERE                                          src/lib/thunai/stagefake.ts:12:14                            
+NEWS                                            src/lib/thunai/stagefake.ts:29:14                            
+problemOf                             function  src/lib/thunai/stagelocal.ts:267:17                          
+AMBIENT_PER_MIN                                 src/lib/thunai/stt.ts:21:14                                  
+INVENTED                                        src/lib/thunai/stt.ts:26:14                                  
+THIRD_MODEL                                     src/lib/thunai/stt.ts:103:14                                 
+third                                 function  src/lib/thunai/stt.ts:109:23                                 
+decode                                function  src/lib/thunai/stt.ts:129:23                                 
+SttBusy                               class     src/lib/thunai/stt.ts:148:14                                 
+budget                                function  src/lib/thunai/stt.ts:160:17                                 
+isStopOnly                                      src/lib/thunai/turn.ts:83:14                                 
+SEV_TA                                          src/lib/thunai/understand.ts:574:14                          
+VAD_DEFAULTS                                    src/lib/thunai/vad.ts:53:14                                  
+PROB_DEFAULTS                                   src/lib/thunai/vad.ts:130:14                                 
+passwordSchema                                  src/lib/validators.ts:7:14                                   
+emailSchema                                     src/lib/validators.ts:38:14                                  
+pincodeSchema                                   src/lib/validators.ts:45:14                                  
+aadhaarSchema                                   src/lib/validators.ts:49:14                                  
+Unused exported types (128)
+Visit                      interface  src/components/collector/app/askmap/actions.ts:42:18          
+ChartProps                 interface  src/components/collector/app/assistant/ChartRenderer.tsx:41:18
+DeptNav                    interface  src/components/collector/app/CollectorApp.tsx:80:18           
+RainTheme                  type       src/components/collector/app/rehearsal/rainLayer.ts:17:13     
+RainPickKind               type       src/components/collector/app/rehearsal/rainLayer.ts:18:13     
+RailItem                   interface  src/components/collector/app/Shell.tsx:76:18                  
+NodeState                  type       src/components/collector/app/studio/Pipeline.tsx:14:13        
+MapPin                     interface  src/components/collector/app/studio/StudioMap.tsx:20:18       
+StageDraft                 interface  src/components/collector/app/thunai/Stage.tsx:30:18           
+StageActions               interface  src/components/collector/app/thunai/Stage.tsx:32:18           
+StageChartSpec             type       src/components/collector/app/thunai/StageChart.tsx:20:13      
+HeaderNavItem              interface  src/components/Header.tsx:14:18                               
+Role                       type       src/lib/ai/gateway.ts:25:13                                   
+AgentShow                  type       src/lib/assistant/agent.ts:69:13                              
+AgentRun                   interface  src/lib/assistant/agent.ts:145:18                             
+Cell                       type       src/lib/assistant/answer.ts:22:13                             
+ColumnRole                 type       src/lib/assistant/catalog.ts:20:13                            
+Drift                      interface  src/lib/assistant/catalog.ts:423:18                           
+ViewSeries                 interface  src/lib/assistant/chartspec.ts:220:18                         
+BuildOptions               interface  src/lib/assistant/embed.ts:160:18                             
+Rec                        interface  src/lib/assistant/lance.ts:60:18                              
+SyncReport                 interface  src/lib/assistant/lance.ts:114:18                             
+PlaceCount                 interface  src/lib/assistant/queries.ts:100:18                           
+PlacePoint                 interface  src/lib/assistant/queries.ts:101:18                           
+ToolName                   type       src/lib/assistant/tools.ts:1215:13                            
+AgentStep                  interface  src/lib/collector/actionmail.ts:42:18                         
+Topic                      type       src/lib/collector/aibrief.ts:141:13                           
+DayPoint                   interface  src/lib/collector/aibrief.ts:142:18                           
+Step                       interface  src/lib/collector/aibrief.ts:348:18                           
+Hazard                     type       src/lib/collector/alerts.ts:33:13                             
+SourceSays                 interface  src/lib/collector/alerts.ts:236:18                            
+StaleFeed                  interface  src/lib/collector/alerts.ts:237:18                            
+BriefingBook               type       src/lib/collector/briefbook.ts:205:13                         
+FullStatus                 type       src/lib/collector/fulltext.ts:22:13                           
+LakeRow                    interface  src/lib/collector/lakes.ts:30:18                              
+LakeStation                interface  src/lib/collector/lakes.ts:126:18                             
+Report                     interface  src/lib/collector/nearby.ts:221:18                            
+Detected                   type       src/lib/collector/onboard.ts:31:13                            
+StepId                     type       src/lib/collector/onboard.ts:32:13                            
+StepState                  type       src/lib/collector/onboard.ts:33:13                            
+LoginNeed                  interface  src/lib/collector/onboard.ts:37:18                            
+AddedItems                 type       src/lib/collector/sources.ts:492:13                           
+CollectionStatus           type       src/lib/collector/sources.ts:521:13                           
+Milestone                  interface  src/lib/collector/storyai.ts:21:18                            
+Threads                    type       src/lib/collector/threads.ts:372:13                           
+Language                   type       src/lib/dataset/intel.ts:11:13                                
+Priority                   type       src/lib/dataset/intel.ts:12:13                                
+Severity                   interface  src/lib/dataset/intel.ts:14:18                                
+SeverityContext            interface  src/lib/dataset/intel.ts:20:18                                
+Near                       type       src/lib/map/answer.ts:307:15                                  
+Shape                      type       src/lib/map/camera.ts:12:13                                   
+ChipOption                 interface  src/lib/map/chips.ts:11:18                                    
+Group                      interface  src/lib/map/execute.ts:22:18                                  
+Cluster                    interface  src/lib/map/execute.ts:23:18                                  
+AreaScore                  interface  src/lib/map/execute.ts:24:18                                  
+AreaCount                  interface  src/lib/map/execute.ts:25:18                                  
+Coll                       type       src/lib/map/execute.ts:27:13                                  
+PlaceKind                  type       src/lib/map/resolve.ts:14:13                                  
+Chip                       interface  src/lib/map/route.ts:131:18                                   
+Reading                    interface  src/lib/map/types.ts:137:18                                   
+PolyLayer                  type       src/lib/map/types.ts:190:13                                   
+ListFlagKey                type       src/lib/officer/data.ts:140:13                                
+InsightKpi                 interface  src/lib/officer/insights.ts:28:18                             
+InsightChart               interface  src/lib/officer/insights.ts:29:18                             
+InsightTable               interface  src/lib/officer/insights.ts:30:18                             
+OfficerStep                type       src/lib/officer/stages.ts:12:13                               
+SqlCtx                     interface  src/lib/reference/metrics.ts:60:18                            
+Source                     type       src/lib/rehearsal/impacts.ts:39:13                            
+RainHit                    interface  src/lib/rehearsal/impacts.ts:62:18                            
+Hit                        interface  src/lib/rehearsal/memory.ts:82:18                             
+JobKind                    type       src/lib/rehearsal/playbook.ts:14:13                           
+Detour                     interface  src/lib/rehearsal/reach.ts:32:18                              
+StreetCheck                interface  src/lib/rehearsal/report.ts:13:18                             
+ReportPoint                interface  src/lib/rehearsal/report.ts:14:18                             
+RainDay                    interface  src/lib/rehearsal/source.ts:26:18                             
+LakeNow                    interface  src/lib/rehearsal/trigger.ts:36:18                            
+RChoke                     interface  src/lib/rehearsal/types.ts:40:18                              
+RFacility                  interface  src/lib/rehearsal/types.ts:42:18                              
+RWard                      interface  src/lib/rehearsal/types.ts:63:18                              
+RDry                       interface  src/lib/rehearsal/types.ts:65:18                              
+RLake                      interface  src/lib/rehearsal/types.ts:67:18                              
+RGauge                     interface  src/lib/rehearsal/types.ts:68:18                              
+RRelease                   interface  src/lib/rehearsal/types.ts:69:18                              
+RRain                      interface  src/lib/rehearsal/types.ts:89:18                              
+RReport                    interface  src/lib/rehearsal/types.ts:91:18                              
+RBacktest                  interface  src/lib/rehearsal/types.ts:103:18                             
+LintIssue                  interface  src/lib/studio/chartlint.ts:29:18                             
+GateInfo                   interface  src/lib/studio/connect/resolve.ts:35:18                       
+Health                     type       src/lib/studio/connectors.ts:33:13                            
+Band                       type       src/lib/studio/rank.ts:21:13                                  
+RowKind                    type       src/lib/studio/readiness.ts:15:13                             
+WardRef                    interface  src/lib/studio/refs.ts:9:18                                   
+ZoneRef                    interface  src/lib/studio/refs.ts:10:18                                  
+TalukRef                   interface  src/lib/studio/refs.ts:11:18                                  
+CategoryRef                interface  src/lib/studio/refs.ts:12:18                                  
+DeptRef                    interface  src/lib/studio/refs.ts:13:18                                  
+Agg                        type       src/lib/studio/types.ts:117:13                                
+GroupBy                    type       src/lib/studio/types.ts:119:13                                
+FilterOp                   type       src/lib/studio/types.ts:120:13                                
+OutcomeKind                type       src/lib/studio/types.ts:479:13                                
+Tier                       type       src/lib/thunai/addressed.ts:13:13                             
+Cell                       interface  src/lib/thunai/complete.ts:24:18                              
+OutRow                     interface  src/lib/thunai/complete.ts:26:18                              
+EntityKind                 type       src/lib/thunai/entities.ts:21:13                              
+Entity                     interface  src/lib/thunai/entities.ts:22:18                              
+Registry                   interface  src/lib/thunai/entities.ts:23:18                              
+AiStepT                    type       src/lib/thunai/plan.ts:45:13                                  
+TraceItem                  interface  src/lib/thunai/round.ts:42:18                                 
+Lane                       type       src/lib/thunai/router.ts:13:13                                
+Metric                     type       src/lib/thunai/screens.ts:21:13                               
+Measure                    type       src/lib/thunai/screens.ts:24:13                               
+BlockKind                  type       src/lib/thunai/stage.ts:69:13                                 
+Caveat                     interface  src/lib/thunai/stats.ts:9:18                                  
+Note                       interface  src/lib/thunai/store.ts:13:18                                 
+Reminder                   interface  src/lib/thunai/store.ts:14:18                                 
+Pin                        interface  src/lib/thunai/store.ts:27:18                                 
+Seg                        interface  src/lib/thunai/stt.ts:28:18                                   
+WardFeature                interface  src/lib/wards.ts:19:18                                        
+Gender                     type       src/types/index.ts:25:13                                      
+UserProfileRow             interface  src/types/index.ts:27:18                                      
+ZoneRow                    interface  src/types/index.ts:50:18                                      
+LocalityRow                interface  src/types/index.ts:58:18                                      
+StreetRow                  interface  src/types/index.ts:64:18                                      
+DepartmentRow              interface  src/types/index.ts:70:18                                      
+ComplaintTypeRow           interface  src/types/index.ts:76:18                                      
+ComplaintRow               interface  src/types/index.ts:94:18                                      
+ComplaintStatusHistoryRow  interface  src/types/index.ts:128:18                                     
+ApiError                   interface  src/types/index.ts:138:18                                     
+Duplicate exports (3)
+encryptAadhaar|encryptSecret  src/lib/crypto.ts     
+decryptAadhaar|decryptSecret  src/lib/crypto.ts     
+isHoldOnly|isStopOnly         src/lib/thunai/turn.ts
+Configuration hints (12)
+.next*/**                 tests/qa/pass4/knip.json  Remove from ignore                                           
+data/**                   tests/qa/pass4/knip.json  Remove from ignore                                           
+tmp/**                    tests/qa/pass4/knip.json  Remove from ignore                                           
+uploads/**                tests/qa/pass4/knip.json  Remove from ignore                                           
+exports/**                tests/qa/pass4/knip.json  Remove from ignore                                           
+src/middleware.ts         tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+src/instrumentation.ts    tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+next.config.js            tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+postcss.config.js         tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+tailwind.config.ts        tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+playwright.config.ts      tests/qa/pass4/knip.json  Remove redundant entry pattern                               
+.css                      tests/qa/pass4/knip.json  Compiled extension excluded by project (imports not followed)

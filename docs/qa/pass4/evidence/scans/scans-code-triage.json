@@ -1,0 +1,1179 @@
+{
+ "note": "Report only. `who` in the reach lists: tests or scripts means the NAME appears in such a file (a word match), nobody means it appears in neither. prod-reach.cjs follows real TypeScript symbols from the Next.js entry points, so it is the list to trust; knip counts an export as used if anything at all imports it, and most of its 'unused exports' are used inside their own file.",
+ "tools": {
+  "knip": "6.44.1, config tests/qa/pass4/knip.json (and knip.prod.json for production entries only)",
+  "madge": "8.0.0",
+  "reach": "tests/qa/pass4/prod-reach.cjs",
+  "typescript": "the app's own, with a temporary config in the scratchpad extending the app's and adding noUncheckedIndexedAccess"
+ },
+ "knip": {
+  "counts": {
+   "files": 1,
+   "dependencies": 3,
+   "devDependencies": 9,
+   "unlisted": 5,
+   "exports": 382,
+   "types": 128,
+   "duplicates": 3
+  }
+ },
+ "reach": {
+  "summary": [
+   "Top-level values in src: 5397. Reachable from production entry points: 5215. Not reachable: 182 (only tests name them: 71; only scripts: 10; nobody: 101).",
+   "Modules never loaded in production: src/lib/map/fixture.ts, src/lib/rehearsal/realdata.ts, src/lib/thunai/agent.cases.ts, src/lib/thunai/holdout.ts, src/lib/thunai/rules.ts, src/lib/thunai/stagefake.ts, src/components/AuthHeroPanel.tsx"
+  ],
+  "deadFiles": [
+   {
+    "file": "src/components/AuthHeroPanel.tsx",
+    "verdict": "dead: nothing imports it"
+   }
+  ],
+  "modulesOnlyForTestsAndEval": [
+   "src/lib/map/fixture.ts",
+   "src/lib/rehearsal/realdata.ts",
+   "src/lib/thunai/agent.cases.ts",
+   "src/lib/thunai/holdout.ts",
+   "src/lib/thunai/rules.ts",
+   "src/lib/thunai/stagefake.ts"
+  ],
+  "safetyNamedChecked": {
+   "src/lib/auth.ts:requireRole": "No caller. Routes use collectorSession, the officer guard and assistantSession instead. Nothing depends on it.",
+   "src/lib/otp.ts:getResendCooldown": "No caller. createOtp (otp.ts:44) enforces the same cooldown itself.",
+   "src/lib/studio/connect/gate.ts:gateB": "No caller. resolve.ts applies the same rule directly with earns() (resolve.ts:185, 293, 305).",
+   "src/lib/studio/connect/vault.ts:dropVault": "No caller, and this one matters: see scans-code-4.",
+   "src/lib/officer/stages.ts:isStage": "No caller and no user input reaches a stage; parseTab guards the one parameter. It has the same `in` slip as scans-code-3.",
+   "src/lib/mailer.ts:verifySmtp": "No caller. A start-up check that nobody runs; sending still reports its own errors.",
+   "src/lib/constants.ts:PASSWORD_RULES": "No caller. validators.ts passwordSchema holds the real rule.",
+   "src/lib/dataset/append.ts:appendStatusChangeToDataset": "No caller, though its comment says to call it after every status update: see scans-code-5.",
+   "src/lib/thunai/agent.ts:stageFigures": "Comment says kept for the checker's tests; no test uses it.",
+   "src/lib/thunai/turn.ts:isStopOnly": "An alias of isHoldOnly with no caller."
+  },
+  "nobody": [
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/AuthHeroPanel.tsx",
+    "line": 13,
+    "name": "AuthHeroPanel"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/askmap/AskMapPanel.tsx",
+    "line": 44,
+    "name": "SELLING"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/assistant/Figure.tsx",
+    "line": 45,
+    "name": "ChartResponse"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/assistant/Figure.tsx",
+    "line": 47,
+    "name": "MapResponse"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/assistant/Figure.tsx",
+    "line": 49,
+    "name": "TableResponse"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/BriefingBook.tsx",
+    "line": 386,
+    "name": "FromDatasets"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/CollectorApp.tsx",
+    "line": 965,
+    "name": "FreshWarn"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 87,
+    "name": "pad2"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 138,
+    "name": "shortDept"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 149,
+    "name": "isNews"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 225,
+    "name": "uid"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 387,
+    "name": "Donut"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/Overlays.tsx",
+    "line": 168,
+    "name": "FEED_NAME"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/Overlays.tsx",
+    "line": 172,
+    "name": "feedName"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/Overlays.tsx",
+    "line": 174,
+    "name": "FeedsBody"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/reportPdf.ts",
+    "line": 38,
+    "name": "sourcesText"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/reportPdf.ts",
+    "line": 219,
+    "name": "sevBar"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/Shell.tsx",
+    "line": 135,
+    "name": "Pager"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/collector/app/Sources.tsx",
+    "line": 133,
+    "name": "AddSource"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/mouth.ts",
+    "line": 69,
+    "name": "setJarvisVoice"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/mouth.ts",
+    "line": 75,
+    "name": "voicesFor"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/mouth.ts",
+    "line": 91,
+    "name": "voiceInfo"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/mouth.ts",
+    "line": 124,
+    "name": "prefetch"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/mouth.ts",
+    "line": 226,
+    "name": "speakAck"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/voice.ts",
+    "line": 62,
+    "name": "voicesFor"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 14,
+    "name": "NONE"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 15,
+    "name": "noop"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 56,
+    "name": "SourceIcons"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 69,
+    "name": "MapCard"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 172,
+    "name": "NewsCard"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 197,
+    "name": "TrendCard"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 224,
+    "name": "TypeCard"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Cards.tsx",
+    "line": 237,
+    "name": "AreaCard"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/officer/Insights.tsx",
+    "line": 52,
+    "name": "ModuleTile"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/chartTheme.ts",
+    "line": 63,
+    "name": "chartBase"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/chartTheme.ts",
+    "line": 93,
+    "name": "barStyle"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/chartTheme.ts",
+    "line": 95,
+    "name": "lineStyle"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/index.tsx",
+    "line": 507,
+    "name": "TopProgress"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/motion.ts",
+    "line": 33,
+    "name": "crossfade"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/motion.ts",
+    "line": 40,
+    "name": "pageSlide"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/components/ui/motion.ts",
+    "line": 81,
+    "name": "shake"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/ai/prompts/composer.ts",
+    "line": 9,
+    "name": "COMPOSER_VERSION"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/ai/prompts/planner.ts",
+    "line": 5,
+    "name": "PLANNER_VERSION"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/ai/prompts/router.ts",
+    "line": 8,
+    "name": "ROUTER_VERSION"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/agent.ts",
+    "line": 14,
+    "name": "AGENT_VERSION"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/assistant/chartspec.ts",
+    "line": 16,
+    "name": "CATEGORY_TYPES"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/context.ts",
+    "line": 64,
+    "name": "emptyContext"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/insightcards.ts",
+    "line": 113,
+    "name": "INSIGHT_LABEL"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/intent.ts",
+    "line": 11,
+    "name": "INTENTS"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/lang.ts",
+    "line": 14,
+    "name": "LANGS"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/lang.ts",
+    "line": 122,
+    "name": "sttHint"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/lang.ts",
+    "line": 129,
+    "name": "formatIndian"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/assistant/scope.ts",
+    "line": 27,
+    "name": "DISTRICT_DAY"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/auth.ts",
+    "line": 180,
+    "name": "requireRole"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/aws/store.ts",
+    "line": 602,
+    "name": "storeInfo"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/collector/aibrief.ts",
+    "line": 62,
+    "name": "cachedFor"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/collector/nearby.ts",
+    "line": 89,
+    "name": "TOPIC_LABEL"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/constants.ts",
+    "line": 27,
+    "name": "PASSWORD_RULES"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/dataset/append.ts",
+    "line": 152,
+    "name": "appendStatusChangeToDataset"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/mailer.ts",
+    "line": 42,
+    "name": "verifySmtp"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/map/geom.ts",
+    "line": 109,
+    "name": "corridorPolygons"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/map/insights.ts",
+    "line": 30,
+    "name": "pc"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/map/insights.ts",
+    "line": 161,
+    "name": "rerun"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/map/insights.ts",
+    "line": 169,
+    "name": "gridSpots"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/map/types.ts",
+    "line": 191,
+    "name": "POINT_LAYERS"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/map/types.ts",
+    "line": 192,
+    "name": "LINE_LAYERS"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/officer/stages.ts",
+    "line": 34,
+    "name": "isStage"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/otp.ts",
+    "line": 169,
+    "name": "getResendCooldown"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/rehearsal/reach.ts",
+    "line": 12,
+    "name": "T_HELP_CHOICES"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/rehearsal/source.ts",
+    "line": 179,
+    "name": "CFM_SITE"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/studio/ai.ts",
+    "line": 126,
+    "name": "storySchema"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/studio/ai.ts",
+    "line": 142,
+    "name": "STORY_SYSTEM"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/connect/browser.ts",
+    "line": 213,
+    "name": "browserReady"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/connect/gate.ts",
+    "line": 63,
+    "name": "gateB"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/connect/platforms.ts",
+    "line": 186,
+    "name": "dcatFrom"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/connect/vault.ts",
+    "line": 39,
+    "name": "dropVault"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/fetchurl.ts",
+    "line": 168,
+    "name": "fetchLink"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/insights.ts",
+    "line": 630,
+    "name": "toneRank"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/parse.ts",
+    "line": 238,
+    "name": "dataLinksIn"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/studio/readiness.ts",
+    "line": 123,
+    "name": "TIER_LABEL"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/agent.ts",
+    "line": 25,
+    "name": "AGENT_V"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/agent.ts",
+    "line": 542,
+    "name": "stageFigures"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/entities.ts",
+    "line": 294,
+    "name": "orgDepts"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/entities.ts",
+    "line": 295,
+    "name": "orgName"
+   },
+   {
+    "who": "nobody",
+    "kind": "local",
+    "file": "src/lib/thunai/plan.ts",
+    "line": 66,
+    "name": "PAGE_NAME"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/stage.ts",
+    "line": 70,
+    "name": "BLOCK_KINDS"
+   },
+   {
+    "who": "nobody",
+    "kind": "export",
+    "file": "src/lib/thunai/turn.ts",
+    "line": 83,
+    "name": "isStopOnly"
+   }
+  ],
+  "testsOnly": [
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 88,
+    "name": "sum"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/components/collector/app/reportPdf.ts",
+    "line": 49,
+    "name": "reasons"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/components/collector/app/reportPdf.ts",
+    "line": 241,
+    "name": "trend"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/collector/app/Shell.tsx",
+    "line": 78,
+    "name": "Rail"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/collector/app/thunai/hudstore.ts",
+    "line": 120,
+    "name": "savedTheme"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/ui/chartTheme.ts",
+    "line": 82,
+    "name": "axis"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/ui/motion.ts",
+    "line": 47,
+    "name": "roll"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/components/ui/motion.ts",
+    "line": 76,
+    "name": "collapse"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/catalog.ts",
+    "line": 461,
+    "name": "joinable"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/lance.ts",
+    "line": 305,
+    "name": "lanceReady"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/lance.ts",
+    "line": 309,
+    "name": "lanceStatus"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/lang.ts",
+    "line": 109,
+    "name": "replyLanguage"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/lang.ts",
+    "line": 242,
+    "name": "refusal"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/assistant/limits.ts",
+    "line": 85,
+    "name": "grainFor"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/lib/assistant/tools.ts",
+    "line": 186,
+    "name": "inr"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/aws/store.ts",
+    "line": 237,
+    "name": "applyBuildHooks"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/aws/store.ts",
+    "line": 242,
+    "name": "poolOver"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/collector/intel.ts",
+    "line": 65,
+    "name": "OPEN_STATUSES"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/collector/searchwords.ts",
+    "line": 41,
+    "name": "matchesAll"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/dataset/intel.ts",
+    "line": 34,
+    "name": "severity"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/map/camera.ts",
+    "line": 154,
+    "name": "followUpMoves"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/lib/map/insights.ts",
+    "line": 29,
+    "name": "n"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/map/insights.ts",
+    "line": 32,
+    "name": "insightsFor"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/lib/map/insights.ts",
+    "line": 179,
+    "name": "mode"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/map/words.ts",
+    "line": 73,
+    "name": "word"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/reference/metrics.ts",
+    "line": 61,
+    "name": "SQL"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/studio/ai.ts",
+    "line": 149,
+    "name": "storyAI"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/studio/chartlint.ts",
+    "line": 186,
+    "name": "violations"
+   },
+   {
+    "who": "tests",
+    "kind": "local",
+    "file": "src/lib/studio/drill.ts",
+    "line": 24,
+    "name": "cap"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/studio/drill.ts",
+    "line": 103,
+    "name": "attention"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/studio/parse.ts",
+    "line": 46,
+    "name": "parseFile"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/studio/refs.ts",
+    "line": 74,
+    "name": "zoneName"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/thunai/insight.ts",
+    "line": 82,
+    "name": "aggregate"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/thunai/reach.ts",
+    "line": 12,
+    "name": "REACH"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/thunai/reach.ts",
+    "line": 35,
+    "name": "ACTION_LEVEL"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/thunai/round.ts",
+    "line": 64,
+    "name": "clearCaches"
+   },
+   {
+    "who": "tests",
+    "kind": "export",
+    "file": "src/lib/thunai/stagelocal.ts",
+    "line": 160,
+    "name": "pushScreen"
+   }
+  ],
+  "scriptsOnly": [
+   {
+    "who": "scripts",
+    "kind": "local",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 224,
+    "name": "gid"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/components/collector/app/lib.tsx",
+    "line": 231,
+    "name": "Spark"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/assistant/embed.ts",
+    "line": 238,
+    "name": "useThreads"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/dataset/intel.ts",
+    "line": 29,
+    "name": "EXTENSION_COLUMNS"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/dataset/intel.ts",
+    "line": 33,
+    "name": "languageOf"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/dataset/intel.ts",
+    "line": 35,
+    "name": "duplicateGroup"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/dataset/sql.ts",
+    "line": 15,
+    "name": "COMPLAINT_COLUMNS"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/dataset/sql.ts",
+    "line": 16,
+    "name": "HISTORY_COLUMNS"
+   },
+   {
+    "who": "scripts",
+    "kind": "export",
+    "file": "src/lib/studio/refs.ts",
+    "line": 75,
+    "name": "talukName"
+   }
+  ]
+ },
+ "dependencies": [
+  {
+   "name": "animejs",
+   "kind": "dependency",
+   "verdict": "dead: no file imports it"
+  },
+  {
+   "name": "word-list",
+   "kind": "dependency",
+   "verdict": "used: spell.ts reads node_modules/word-list/words.txt by path (knip cannot see this). Keep."
+  },
+  {
+   "name": "@huggingface/transformers",
+   "kind": "dependency",
+   "verdict": "used: embed.ts and three scripts load it by path, and package.json overrides it for LanceDB. Keep."
+  },
+  {
+   "name": "eslint, eslint-config-next",
+   "kind": "devDependency",
+   "verdict": "installed but never run: no ESLint config in the repo (scans-code-6)"
+  },
+  {
+   "name": "@axe-core/playwright, @stryker-mutator/core, @stryker-mutator/vitest-runner, @vitest/coverage-v8, autocannon, fast-check, madge",
+   "kind": "devDependency",
+   "verdict": "this QA pass's own tools (docs/qa/pass4/TOOLS.md), flagged only because no committed test uses them yet. Not dead."
+  },
+  {
+   "name": "jiti",
+   "kind": "unlisted",
+   "verdict": "scripts/build-embeddings.cjs, build-lance.cjs, eval-assistant.cjs require it; it comes only through tailwindcss and vite (scans-code-9)"
+  },
+  {
+   "name": "fast-png",
+   "kind": "unlisted",
+   "verdict": "scripts/build-elevation.mjs imports it; it comes only through jspdf (scans-code-9)"
+  },
+  {
+   "name": "fflate",
+   "kind": "unlisted",
+   "verdict": "scripts/build-transit-layer.mjs imports it; it comes only through jspdf (scans-code-9)"
+  }
+ ],
+ "cycles": {
+  "total": 39,
+  "typeOnly": 37,
+  "runtime": 2,
+  "verdict": "No finding. Every cycle through CollectorApp, OfficerApp, lib/assistant/context and lib/studio/parse is `import type` on the way back, so it does not exist at run time. Two cycles exist at run time; neither reads the other module at load time and neither crosses server and client.",
+  "runtimeCycles": [
+   {
+    "cycle": "lib/map/ask.ts > lib/map/followups.ts > lib/map/suggest.ts",
+    "side": "server only",
+    "verdict": "safe: WORDS, placeLookup and followUps are read only inside functions. Loaded first from each module in a fresh graph: all defined (tests/qa/pass4/scans-code.test.ts)."
+   },
+   {
+    "cycle": "components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Drill.tsx",
+    "side": "both use client",
+    "verdict": "safe: AnimatedNum, DataTable and Drill are used only while drawing (same test)."
+   }
+  ],
+  "all": [
+   "lib/assistant/context.ts > lib/assistant/answer.ts",
+   "lib/studio/parse.ts > lib/studio/formats.ts",
+   "lib/studio/parse.ts > lib/studio/ocr.ts",
+   "lib/map/ask.ts > lib/map/followups.ts",
+   "lib/map/ask.ts > lib/map/followups.ts > lib/map/suggest.ts",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Added.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/BriefingBook.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Conflicts.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Attention.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Insights.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Insights.tsx > components/collector/app/Stories.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Nearby.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/YourData.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/TakeAction.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/NewsPreview.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Overlays.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Sources.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/Workspace.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Connectors.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Analyst.tsx",
+   "components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Analyst.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/DataCard.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Drill.tsx",
+   "components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Drill.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Insights.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Source.tsx",
+   "components/collector/app/CollectorApp.tsx > components/collector/app/thunai/Thunai.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Board.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Board.tsx > components/officer/OfficerAttention.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Drawer.tsx > components/officer/Cards.tsx > components/officer/Insights.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Drawer.tsx > components/officer/Cards.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Drawer.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/InsightsPage.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Overlays.tsx",
+   "components/officer/OfficerApp.tsx > components/officer/Report.tsx"
+  ]
+ },
+ "tscStrict": {
+  "errors": 2804,
+  "errorsOutsideTests": 2496,
+  "files": 280,
+  "baselineErrors": 0,
+  "byFile": "evidence/scans/tsc-strict-by-file.txt",
+  "raw": "evidence/scans/tsc-strict.txt",
+  "notRead": "Only the critical modules and the API routes were read line by line. The rest were grouped by file and not read.",
+  "critical": [
+   {
+    "module": "src/lib/thunai/privacy.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/thunai/injection.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/thunai/outside.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/thunai/frame.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/thunai/speechcheck.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/collector/effective.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/csv.ts",
+    "errors": 0
+   },
+   {
+    "module": "guards: src/components/collector/app/thunai/guards.ts, src/lib/assistant/guard.ts, src/lib/collector/guard.ts, src/lib/officer/guard.ts, src/lib/thunai/devguard.ts",
+    "errors": 0
+   },
+   {
+    "module": "src/lib/thunai/numbergate.ts",
+    "errors": 5,
+    "verdict": "66 and 72: a required regex group and keys the regex limits, safe. 69 and 70: guarded by != null, but `constructor` comes from Object.prototype: REAL, scans-code-2."
+   },
+   {
+    "module": "src/lib/thunai/entities.ts",
+    "errors": 61,
+    "verdict": "All safe. 90-102: split and ORGS guarded by includes and the set of known prefixes. 219-243: loop bounds keep every index inside idx and a. 263: heads.length checked. 275-288: sorted is not empty because hits is not empty (269). 326: options always has two."
+   },
+   {
+    "module": "src/lib/thunai/narrate.ts",
+    "errors": 1,
+    "verdict": "159: a required regex group, safe."
+   },
+   {
+    "module": "src/lib/thunai/quick.ts",
+    "errors": 5,
+    "verdict": "50: a required group. 268: one of the two VEG groups always matched. Safe."
+   },
+   {
+    "module": "src/lib/assistant/compile.ts",
+    "errors": 8,
+    "verdict": "113-133: split only when the name has a dot, so the second part exists (an empty one gets a CompileError). 128-129: join starts with `table.`. 275: measures.length checked. Safe."
+   },
+   {
+    "module": "src/lib/netsafe.ts",
+    "errors": 22,
+    "verdict": "v4Private runs only after net.isIPv4; v6 groups are checked to be exactly eight. Safe."
+   },
+   {
+    "module": "src/lib/rate-limit.ts",
+    "errors": 1,
+    "verdict": "75: hops >= 1 and chain.length >= hops, so the index is in range. Safe."
+   }
+  ],
+  "sameClassFound": [
+   "src/lib/thunai/normalise.ts:73 and :97 (`tok in EN_NUM`, `tok in LOAN`): scans-code-1",
+   "src/lib/collector/intel.ts:46 (`v in PERIODS`): scans-code-3",
+   "src/lib/officer/stages.ts:35 (`v in STAGE_LABEL`): the same slip in dead code"
+  ],
+  "apiRoutes": "42 strict errors in 12 route files, read: each index follows a length check, or a zod failure that always has an issue. No finding.",
+  "protoProbe": "evidence/scans/proto-key-probe.log: 11,319 calls across the pure text functions compared a plain word with each Object.prototype name. Real differences only in normalise, enNumber, understand and figuresIn. The redactHands lines are the probe passing a string where an object belongs, and the gateChunk lines are the probe passing a World as the allowed set: neither is a bug."
+ },
+ "eslint": {
+  "nextLint": "not configured: stopped at the set-up prompt (evidence/scans/next-lint.txt)",
+  "reportOnly": "evidence/scans/eslint-scan.json, next/core-web-vitals with a config outside the app: 0 rules-of-hooks errors; 6 exhaustive-deps warnings, all read, none shown to cause a bug (Studio.tsx:116 startPick, Shell.tsx:252 askMap, CollectorApp.tsx:365 dev, Stage.tsx:644 reading, SatMap.tsx:699, ComplaintTypeSelector.tsx:102); 6 no-img-element; 1 no-unescaped-entities (AskOverlay.tsx:78). The 24 'Definition for rule not found' lines come from inline eslint-disable comments naming @typescript-eslint rules that next/core-web-vitals does not load, not from the code."
+ }
+}

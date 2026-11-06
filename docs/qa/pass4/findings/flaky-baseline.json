@@ -1,0 +1,162 @@
+[
+  {
+    "id": "FLAKY-1", "area": "Connected sources: reading dates", "severity": "P1",
+    "title": "parseWhen reads a date with a month name in the server's time zone, so on a UTC server it is 5 h 30 min late",
+    "what_happens": "The test 'records finds the repeated cards on a page, skipping the menu' failed in all 10 UTC runs and in none of the 10 IST runs. On a UTC machine parseWhen('02 Oct 2026') gives 2026-10-02T00:00Z, which is 05:30 in Chennai. The saved test also shows '02 Oct 2026 23:30' moving to the next Chennai day. This is a real product bug, not a test problem. The owner's laptop is in India, so it cannot be seen there. railway.json and package.json set no TZ, and DEPLOYMENT.md describes a Railway deployment; a server not set to India time would have this bug.",
+    "what_should_happen": "A date with no time zone is Chennai time on any server, as the comment at sourcemap.ts:352 says.",
+    "repro": "From chennai-grievance-portal-main: TZ=UTC npx vitest run src/lib/collector/sourcemap.test.ts (fails; passes with TZ=Asia/Kolkata). Saved as it.fails: npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/flaky-parsewhen-tz.test.ts",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json (failed in runs 1,3,5,...,19); tests/qa/pass4/flaky-parsewhen-tz.test.ts",
+    "root_cause_guess": "src/lib/collector/sourcemap.ts:355 `new Date(s)` takes the string first and reads it in the machine's zone. The Chennai-time branch at lines 357-360 is reached only by forms new Date cannot read. The result goes into each item's published time at sourcemap.ts:374.",
+    "class": "time zone: date read in the server's zone", "lang": "all"
+  },
+  {
+    "id": "FLAKY-2", "area": "Tests: Ask District IQ routing", "severity": "P2",
+    "title": "'recognises contact phrasing' ran out of its 15 s limit under load",
+    "what_happens": "Failed in 1 of 20 runs (run 20, Asia/Kolkata, the slowest run at 118 s, while another full test run overlapped it). It took 15034 ms against the 15 s limit. The message is only Vitest's stack marker STACK_TRACE_ERROR, which is how the JSON report showed the timeout. Alone it passes in about 4 to 5 s with the same seed. The product is not at fault.",
+    "what_should_happen": "A test of one regular expression does not depend on how long a heavy import takes on a busy machine.",
+    "repro": "Only on a busy machine: TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1999893004. Alone it passes: npx vitest run src/lib/assistant/__tests__/decide.test.ts --sequence.shuffle --sequence.seed=1999893004",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json (run 20, slowest_tests)",
+    "root_cause_guess": "src/lib/assistant/__tests__/decide.test.ts:107 imports @/lib/assistant/pipeline inside the test, so the import counts against testTimeout (vitest.config.ts:9). The test uses only the CONTACT regular expression. Likely cause, from the timing; not reproduced on purpose, so as not to load a shared machine.",
+    "class": "timing: import cost counted against the test's limit", "lang": "all"
+  },
+  {
+    "id": "FLAKY-3", "area": "Tests: Jarvis entity resolver", "severity": "P2",
+    "title": "'a long sentence resolves inside 20 ms at p95' fails when the machine is busy",
+    "what_happens": "Failed in 3 of 20 runs (14, 18, 19), with a p95 of 27.6 ms in the first failure. Alone, with the same three seeds, it passes, and the whole test takes 131 to 263 ms for its 60 tries. This does not show a slow resolver. OPEN-15, a test with the same kind of clock limit, did not fail in these 20 runs.",
+    "what_should_happen": "A speed limit is measured where nothing else competes for the CPU, not inside a full parallel test run.",
+    "repro": "Only on a busy machine: TZ=Asia/Kolkata npx vitest run --sequence.shuffle --sequence.seed=1833234340. Alone it passes: npx vitest run src/lib/thunai/briefturn.test.ts --sequence.shuffle --sequence.seed=1833234340",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json (runs 14, 18, 19)",
+    "root_cause_guess": "src/lib/thunai/briefturn.test.ts:102 checks wall-clock time over 60 samples, so 3 slow samples are enough to fail. Likely cause: CPU contention from the other test files and agents. Not reproduced on purpose, so as not to load a shared machine.",
+    "class": "timing: wall-clock limit inside a parallel run", "lang": "all"
+  },
+  {
+    "id": "FLAKY-4", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'a site that fails is Failing...' needs earlier tests to have run",
+    "what_happens": "Failed in 19 of 20 runs: 'Unknown connector' when it runs before the test that creates the connector, or 'expected 42 to be 48' when the missing-day test has not run. It passes only in the written order. The product is not at fault.",
+    "what_should_happen": "Each test creates what it needs and passes in any order.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"a site that fails\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:44 and :48: one connector, created only in the 'days 1-7' test, is shared along with `clock` (:32) and the fixture site's state. :95 expects the 48 rows the earlier tests built up.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-5", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'a missing day is Late, then Healthy...' needs earlier tests to have run",
+    "what_happens": "Failed in 17 of 20 runs, with 'Unknown connector', or 'expected late to be new' when other tests have moved the connector along. The product is not at fault.",
+    "what_should_happen": "Each test creates what it needs and passes in any order.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"a missing day\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:69 uses the connector created only at :48, and :78 expects the 42 rows of the 'days 1-7' test plus 6.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-6", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'a renamed column pauses it...' needs earlier tests to have run",
+    "what_happens": "Failed in 17 of 20 runs, with 'Unknown connector', or 'expected late to be drift' when the other tests ran in a different order. The product is not at fault.",
+    "what_should_happen": "Each test creates what it needs and passes in any order.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"a renamed column\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:104-105 runs the connector created at :48 and expects the state the earlier tests leave behind.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-7", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'rows falling by 80%...' needs earlier tests to have run",
+    "what_happens": "Failed in 17 of 20 runs. Run first, it fails with 'Cannot read properties of null (reading rows)'. The product is not at fault.",
+    "what_should_happen": "Each test creates what it needs and passes in any order.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"rows falling\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:123 reads the table of the connector created only at :48.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-8", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'a watch that is crossed...' needs earlier tests to have run",
+    "what_happens": "Failed in 14 of 20 runs, with 'Unknown connector', or with no watch recorded ('expected false to be true'). The product is not at fault.",
+    "what_should_happen": "Each test creates what it needs and passes in any order.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"a watch that is crossed\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:142-143 runs the connector created at :48. Watches are checked only after a run that brought new data (src/lib/studio/connectors.ts:354), so the test needs the earlier tests to have left the connector ready for day 12.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-9", "area": "Tests: Studio connectors", "severity": "P2",
+    "title": "'pause and resume...' uses a connector made in another describe block",
+    "what_happens": "Failed in 12 of 20 runs with 'Unknown connector'. The product is not at fault.",
+    "what_should_happen": "The test creates its own connector.",
+    "repro": "npx vitest run src/lib/studio/connectors.test.ts -t \"pause and resume\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connectors.test.ts:200 uses ds_connsim0001, created at :48 in the first describe block. Shuffling puts this describe block first.",
+    "class": "test order: a story split across tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-10", "area": "Tests: Jarvis speech", "severity": "P2",
+    "title": "'an ambient sentence... the ninth in a minute is refused' shares its budget with the other tests",
+    "what_happens": "Failed in 11 of 20 runs: 'expected 7 to be 8' after the third-racer test spent an ambient decode, or 0 calls after the 429 test cooled the models. Running it with only that one other test shows each failure. Alone it passes. The product is not at fault.",
+    "what_should_happen": "Each test starts with an empty ledger.",
+    "repro": "npx vitest run src/lib/thunai/stt.test.ts --sequence.shuffle --sequence.seed=1929234556",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/thunai/ledger.ts:187 keeps one shared ledger for the process, and :133 opens its store once. So the new THUNAI_DIR in src/lib/thunai/stt.test.ts:49 has no effect after the first test. stt.test.ts:104 spends an ambient decode inside the real 60 s window.",
+    "class": "test order: state shared through a module singleton", "lang": "all"
+  },
+  {
+    "id": "FLAKY-11", "area": "Tests: Jarvis speech", "severity": "P2",
+    "title": "'an engaged turn: two parallel forced decodes' fails after the 429 test",
+    "what_happens": "Failed in 11 of 20 runs with no decode at all ('expected [] to deeply equal [...]'). Alone it passes, and it fails when the 429 test runs just before it. The product is not at fault: a cooled model should be left alone.",
+    "what_should_happen": "Each test starts with an empty ledger.",
+    "repro": "npx vitest run src/lib/thunai/stt.test.ts --sequence.shuffle --sequence.seed=958374858",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/thunai/stt.test.ts:107 returns 429, so src/lib/thunai/stt.ts:140 cools the model for 30 s of real time in the shared ledger (ledger.ts:187). The 429 test is last in the written order, which hides this.",
+    "class": "test order: state shared through a module singleton", "lang": "all"
+  },
+  {
+    "id": "FLAKY-12", "area": "Tests: Jarvis speech", "severity": "P2",
+    "title": "'Whisper unsure of an engaged turn: the third racer is asked' fails after the 429 test",
+    "what_happens": "Failed in 8 of 20 runs ('expected false to be true'): Gemini is not asked. It fails when the 429 test runs just before it, and the likely reason is that no Whisper decode ran to be unsure of. The product is not at fault.",
+    "what_should_happen": "Each test starts with an empty ledger.",
+    "repro": "npx vitest run src/lib/thunai/stt.test.ts --sequence.shuffle --sequence.seed=958374858",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/thunai/stt.test.ts:101, through the cooling set at src/lib/thunai/stt.ts:140 and kept in the shared ledger (ledger.ts:187).",
+    "class": "test order: state shared through a module singleton", "lang": "all"
+  },
+  {
+    "id": "FLAKY-13", "area": "Tests: Jarvis speech", "severity": "P2",
+    "title": "'each model's budget is its own' fails after the 429 test",
+    "what_happens": "Failed in 6 of 20 runs ('expected [] to deeply equal [whisper-large-v3]'): no decode runs. It fails when the 429 test runs just before it. The product is not at fault.",
+    "what_should_happen": "Each test starts with an empty ledger.",
+    "repro": "npx vitest run src/lib/thunai/stt.test.ts --sequence.shuffle --sequence.seed=958374858",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/thunai/stt.test.ts:70 expects large-v3 to have room, but the 429 test has cooled it in the shared ledger (stt.ts:140, ledger.ts:187).",
+    "class": "test order: state shared through a module singleton", "lang": "all"
+  },
+  {
+    "id": "FLAKY-14", "area": "Tests: Studio browser sign-in", "severity": "P2",
+    "title": "'reuses the kept session' takes its session from the test before it",
+    "what_happens": "Failed in 11 of 20 runs ('expected fresh to be reused'). Run before the sign-in test, it has no session to reuse. The product is not at fault.",
+    "what_should_happen": "The test signs in first, then checks the session is reused.",
+    "repro": "npx vitest run src/lib/studio/connect.test.ts -t \"reuses the kept session\"",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/lib/studio/connect.test.ts:159 `let session` is set by the first test at :169 and read at :174.",
+    "class": "test order: a value passed between tests", "lang": "all"
+  },
+  {
+    "id": "FLAKY-15", "area": "Tests: profile photo route", "severity": "P2",
+    "title": "'refuses HTML that claims to be a PNG, and writes nothing' counts the other test's write",
+    "what_happens": "Failed in 12 of 20 runs, every time the 'real PNG' test ran first ('expected [Array(1)] to deeply equal []'). The list held that test's write, and the route still returned 400 for the HTML. The product is not at fault, but this safety test goes red for the wrong reason.",
+    "what_should_happen": "The list of writes is emptied before each test.",
+    "repro": "npx vitest run src/app/api/profile/photo/route.test.ts --sequence.shuffle --sequence.seed=958374858",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/app/api/profile/photo/route.test.ts:5 `h.written` is never reset; :23 expects it to be empty.",
+    "class": "test order: a shared mock not reset", "lang": "all"
+  },
+  {
+    "id": "FLAKY-16", "area": "Tests: Collector source routes", "severity": "P2",
+    "title": "'refuses an id that is not a number' counts the other test's calls",
+    "what_happens": "Failed in 12 of 20 runs, every time the PATCH test ran first ('expected [[update, 404, ...], ...] to deeply equal []'). The calls listed were that test's, with valid ids. The product is not at fault, but this validation test goes red for the wrong reason.",
+    "what_should_happen": "The list of calls is emptied before each test.",
+    "repro": "npx vitest run \"src/app/api/collector/sources/\\[id\\]/route.test.ts\" --sequence.shuffle --sequence.seed=958374858",
+    "evidence": "docs/qa/pass4/evidence/flaky/baseline.json",
+    "root_cause_guess": "src/app/api/collector/sources/[id]/route.test.ts:4 `h.calls` is never reset; :22 expects it to be empty.",
+    "class": "test order: a shared mock not reset", "lang": "all"
+  }
+]
