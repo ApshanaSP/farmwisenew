@@ -106,27 +106,30 @@ describe("same number everywhere", () => {
 
   // ---------------------------------------------------------------- open findings --
 
-  it.fails("same-number-1 Jarvis's dashboard list, headed 'most serious first', starts with the most serious case", () => {
+  it("same-number-1 Jarvis's dashboard list, headed 'most serious first', starts with the most serious case", () => {
     const r = get(ADYAR_W, "thunai/round:dashboard", /first row's severity rank/);
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-1 Jarvis's past-deadline list for the district this week gives the same count as the tile, not 'no cases'", () => {
+  it("same-number-1 Jarvis's past-deadline list for the district this week gives the same count as the tile, not 'no cases'", () => {
     const r = get(DISTRICT_W, "thunai/round:cases(overdue)", "total"), tile = get(DISTRICT_W, "collector/overview", "snapshot.overdue");
     expect(r?.value).toBe(tile?.value);
   });
-  it.fails("same-number-1 the same list reached by words: 'cases past deadline this week'", () => {
+  it("same-number-1 the same list reached by words: 'cases past deadline this week'", () => {
     const r = get(DISTRICT_W, "thunai/round:text", /cases past deadline this week/), tile = get(DISTRICT_W, "collector/overview", "snapshot.overdue");
     expect(r?.value).toBe(tile?.value);
   });
+  // lane b (RC-08): kept as it.fails on purpose. The screen now counts the whole list (39 incidents, the console's past-deadline filter), but this oracle
+  // counts GROUPS of one problem (37). audit-understanding-2 and AUD-NF-3 need the incident count, and the tiles count incidents, so the oracle's unit is
+  // the odd one out. Needs the owner's call on the unit; see docs/qa/pass4/lanes/b.md.
   it.fails("same-number-2 'Past their deadline' beside 'Severe cases, this week' counts the whole list, not the rows on screen", () => {
     const r = get(DISTRICT_W, "thunai/round:cases(severe)", "kpi.late");
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-2 'Past their deadline' beside 'All cases, this week' counts the whole list, not the rows on screen", () => {
+  it("same-number-2 'Past their deadline' beside 'All cases, this week' counts the whole list, not the rows on screen", () => {
     const r = get(SWM_W, "thunai/round:cases(open)", "kpi.late");
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-3 Jarvis's department performance for Solid Waste shows Solid Waste's open count, not the district's", () => {
+  it("same-number-3 Jarvis's department performance for Solid Waste shows Solid Waste's open count, not the district's", () => {
     const r = get(SWM_W, "thunai/round:performance", "kpi.open");
     expect(r?.value).toBe(r?.oracle);
   });
@@ -134,7 +137,7 @@ describe("same number everywhere", () => {
     const r = get(MIX_W, "assistant/tools:zone_profile", "zone.13.active");
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-5 a dashboard for one zone does not say 'Most in' another zone", () => {
+  it("same-number-5 a dashboard for one zone does not say 'Most in' another zone", () => {
     expect(notes.filter((n) => n.kind === "wrong-place").map((n) => `${n.scope}: ${n.say}`)).toEqual([]);
   });
   it.fails("same-number-6 the Briefing's 'routine, nothing to do' figure is the PDF's routine figure", () => {
@@ -160,11 +163,11 @@ describe("same number everywhere", () => {
     const r = in_(DISTRICT_W).filter((x) => x.surface === "collector/insights?part=trends" && /\.bar\[/.test(x.figure))[0];
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-11 zone performance's 'Reported' is the reported figure on the same screen's trend", () => {
+  it("same-number-11 zone performance's 'Reported' is the reported figure on the same screen's trend", () => {
     const r = get(DISTRICT_W, "thunai/round:performance(zone)", "kpi.n");
     expect(r?.value).toBe(get(DISTRICT_W, "thunai/round:performance(zone)", "Trend.values.sum")?.value);
   });
-  it.fails("same-number-13 a card's tile named 'Reported' holds the reported figure", () => {
+  it("same-number-13 a card's tile named 'Reported' holds the reported figure", () => {
     const r = get(DISTRICT_W, "assistant/chat:card label", /past-deadline card/);
     expect(r?.value).toBe(r?.oracle);
   });
@@ -188,21 +191,21 @@ describe("same number everywhere", () => {
     const out = oracle.hooks.removed.filter((r: any) => r.hook === "news-media-only@1" && oracle.rawRow(String(r.id))?.dead > 0).map((r: any) => r.id);
     expect(out).toEqual([]);
   });
-  it.fails("same-number-20 'past deadline by department' is not answered with 'no incidents match'", async () => {
+  it("same-number-20 'past deadline by department' is not answered with 'no incidents match'", async () => {
     const c = await askDistrictIq("past deadline by department this week");
     expect(String(c?.headline)).not.toMatch(/^No incidents/);
   });
-  it.fails("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
+  it("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
     const c = await askDistrictIq("complaints by department this week");
     expect(String(c?.headline)).not.toMatch(/open incidents/);
   });
-  it.fails("same-number-21 Jarvis's spoken lines read as sentences", () => {
+  it("same-number-21 Jarvis's spoken lines read as sentences", () => {
     expect(lines.filter((l) => /incidents reports|incidents of incidents/.test(String(l.say))).map((l) => l.say)).toEqual([]);
   });
   it.fails("same-number-22 'Resolved this week' on the tile is the count resolved this week", () => {
     expect(get(DISTRICT_W, "collector/overview", "kpi.cur.resolved")?.value).toBe(get(DISTRICT_W, "assistant/chat:resolved", "Resolved")?.value);
   });
-  it.fails("same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it", () => {
+  it("same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it", () => {
     const r = get(DISTRICT_W, "thunai/round:cases(severe)", "kpi.total")?.value;
     expect([get(DISTRICT_W, "collector/overview", "kpi.cur.severe")?.value, get(DISTRICT_W, "collector/overview", "kpi.cur.severe_open")?.value]).toContain(r);
   });

@@ -63,6 +63,8 @@ export interface Hands {
   lookups?: (w: World) => Lookups;
   tool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
   severe: (s: ScopeT) => Promise<{ rows: Row[]; counts: Record<string, number>; asOf: string }>;
+  /** the console's incident list with its whole count, for a status the tool cannot filter ("overdue"); see data.ts consoleList */
+  list?: (s: ScopeT, f: { sev: string | null; status: string | null; q: string | null; sort: "sev" | "t" | "c"; page?: number }) => Promise<{ rows: Row[]; total: number; incidents?: number; asOf: string }>;
   news: (s: ScopeT) => Promise<{ rows: Row[]; total: number; asOf: string }>;
   map: (q: string) => Promise<Row>;
 }
@@ -161,6 +163,31 @@ const scopeArg = (s: ScopeT, extra: Partial<ScopeT> = {}) => {
   return { period: x.period, zone: x.zone, dept: x.dept, cat: x.cat, taluk: x.taluk };
 };
 
+/**
+ * One read of the incident list, the only place a screen asks for it. Two rules live here so no screen can break them: severity order is
+ * ascending in the store (dir 1; the tool's default direction puts the LEAST serious first, which made "most serious first" lists, and
+ * every count taken from their first page, wrong), and a count about the list ("past deadline") comes from the console's own filter
+ * (status "overdue"), never from the rows of one page of 12.
+ */
+async function incidentList(c: Ctx, f: { sev?: Sev | null; status: "open" | "overdue" | null; q?: string | null; sort: "sev" | "t" | "c"; page?: number }, scope: ScopeT = c.s): Promise<{ rows: Row[]; total: number; incidents: number }> {
+  const sev = f.sev ?? null, q = f.q ?? null, page = f.page ?? 0;
+  if (c.h.list) {
+    c.runs.push("incidents");
+    c.sources.add("incidents");
+    const r = await c.h.list(scope, { sev, status: f.status, q, sort: f.sort, page });
+    c.asOf ??= r.asOf;
+    return { rows: r.rows, total: r.total, incidents: r.incidents ?? r.total };
+  }
+  const r = await call(c, "incidents", { scope: scopeArg(scope), sev, status: f.status === "overdue" ? "open" : f.status, q, sort: f.sort, dir: f.sort === "sev" ? 1 : -1, page });
+  const d = r.data as { rows?: Row[]; total?: number };
+  return { rows: d.rows ?? [], total: Number(d.total ?? 0), incidents: Number(d.total ?? 0) };
+}
+/** How many of the list's incidents are past their deadline, counted over the whole list: null when the hands cannot count it. */
+async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<number | null> {
+  if (!c.h.list) return null;
+  return (await incidentList(c, { sev, status: "overdue", q, sort: "sev" })).incidents;
+}
+
 type Part = { title: string; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[] };
 
 const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
@@ -229,17 +256,20 @@ async function advise(c: Ctx): Promise<Part> {
   const { w, s } = c;
   const ta = /[஀-௿]/.test(c.heard);
   const where = s.zone ? bi(` in ${zoneName(w, s.zone)}`, ` ${zoneTa(w, s.zone) ?? zoneName(w, s.zone)} பகுதியில்`) : bi("", "");
-  const [inc, drv] = await Promise.all([
-    call(c, "incidents", { scope: scopeArg(s), status: "open", sort: "sev" }).catch(() => null),
+  const [inc, late, drv] = await Promise.all([
+    incidentList(c, { status: "open", sort: "sev" }).catch(() => null),
+    // the cases past their deadline, whole scope: the first of them is the one to ring about, not the first one on a page of open cases
+    c.h.list ? incidentList(c, { status: "overdue", sort: "sev" }).catch(() => null) : Promise.resolve(null),
     call(c, "change_drivers", { scope: scopeArg(s) }).catch(() => null)
   ]);
-  const rows = (((inc?.data as { rows?: Row[] } | undefined)?.rows) ?? []).map((x) => caseRow(x, w)).slice(0, 8);
+  const rows = (inc?.rows ?? []).map((x) => caseRow(x, w)).slice(0, 8);
+  const lateRows = (late?.rows ?? []).map((x) => caseRow(x, w));
   const d = (drv?.data ?? {}) as { totals?: Row; categories?: Row[]; places?: Row[] };
   const points: { en: string; ta: string; id: string | null }[] = [];
   const holder = (r: CaseRowT) => r.deptName ?? r.dept ?? null;
   const at = (r: CaseRowT) => r.place ?? r.zoneName ?? null;
   // 1. the case past its deadline that matters most (else the most urgent open case)
-  const first = rows.find((r) => r.overdue) ?? rows[0];
+  const first = lateRows[0] ?? rows.find((r) => r.overdue) ?? rows[0];
   if (first) {
     const h = holder(first), p = at(first);
     points.push(first.overdue
@@ -249,13 +279,19 @@ async function advise(c: Ctx): Promise<Part> {
         ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""}${h ? `; ${h} வசம் உள்ளது` : ""}.`, id: first.id });
   }
   // 2. a department sitting on several overdue cases
-  const overdue = rows.filter((r) => r.overdue);
-  if (overdue.length > 1) {
+  // 2. a department sitting on several overdue cases: the count is the whole scope's, the department is read from the most serious of them
+  const overdue = late ? lateRows : rows.filter((r) => r.overdue);
+  const overdueAll = late ? late.total : overdue.length;
+  if (overdueAll > 1) {
     const by = new Map<string, number>();
     for (const r of overdue) { const h = holder(r); if (h) by.set(h, (by.get(h) ?? 0) + 1); }
     const [dept, n] = [...by.entries()].sort((a, b) => b[1] - a[1])[0] ?? [null, 0];
-    points.push({ en: `${spoken(overdue.length)} of the ${spoken(rows.length)} most urgent open cases are past their deadline${dept && n > 1 ? `, ${spoken(n)} of them with ${dept}: ask for a status today` : ""}.`,
-      ta: `அவசரமான ${spoken(rows.length)} திறந்த சம்பவங்களில் ${spoken(overdue.length)} காலக்கெடு தாண்டியவை${dept && n > 1 ? `; அவற்றில் ${spoken(n)} ${dept} வசம்: இன்றே நிலவரம் கேளுங்கள்` : ""}.`, id: null });
+    const of = late ? `${spoken(overdueAll)} open cases are past their deadline` : `${spoken(overdue.length)} of the ${spoken(rows.length)} most urgent open cases are past their deadline`;
+    const ofTa = late ? `${spoken(overdueAll)} திறந்த சம்பவங்கள் காலக்கெடு தாண்டியவை` : `அவசரமான ${spoken(rows.length)} திறந்த சம்பவங்களில் ${spoken(overdue.length)} காலக்கெடு தாண்டியவை`;
+    const part = late && overdueAll > overdue.length ? ` of the ${spoken(overdue.length)} most serious` : "";
+    const partTa = late && overdueAll > overdue.length ? `மிகத் தீவிரமான ${spoken(overdue.length)}-இல்` : "";
+    points.push({ en: `${of}${dept && n > 1 ? `, ${spoken(n)}${part} with ${dept}: ask for a status today` : ""}.`,
+      ta: `${ofTa}${dept && n > 1 ? `; ${partTa ? `${partTa} ` : ""}${spoken(n)} ${dept} வசம்: இன்றே நிலவரம் கேளுங்கள்` : ""}.`, id: null });
   }
   // 3. what is rising fastest, with the ask that fits it
   const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
@@ -365,9 +401,8 @@ async function complete(c: Ctx): Promise<Part> {
     read = total = input.length;
     if (input.length < got.length) c.notes.push(ta ? `${got.length - input.length} வரிசைகளைப் படிக்க முடியவில்லை.` : `${got.length - input.length} of the ${got.length} rows could not be read.`);
   } else {
-    const r = await call(c, "incidents", { scope: scopeArg(s), status: "open", sort: "sev" });
-    const data = r.data as { rows?: Row[]; total?: number };
-    input = (data.rows ?? []).map((x) => toIn(caseRow(x, w), r.asOf));
+    const data = await incidentList(c, { status: "open", sort: "sev" });
+    input = data.rows.map((x) => toIn(caseRow(x, w), c.asOf));
     read = input.length; total = Math.max(Number(data.total) || 0, read);
     if (slots.fresh) input = input.filter((x) => !x.zone || !x.place || !x.dept);
   }
@@ -401,6 +436,10 @@ async function cases(c: Ctx): Promise<Part> {
   const sev = slots.sev;
   const n = Math.min(Math.max(slots.n ?? 12, 1), 30);
   let rows: CaseRowT[]; let total: number; let source: "console-severity" | "list";
+  // how many of the whole list are past their deadline: counted over the list the figure is about, never over the rows on screen
+  let lateAll: number | null = null;
+  let groupsTotal: number | null = null;
+  const sortKey = slots.sort === "complaints" ? "c" : slots.sort === "time" ? "t" : "sev";
   // "the severe cases": exactly the console's severity panel for this scope
   if (sev && !slots.q && !slots.status) {
     c.runs.push("console_severe");
@@ -410,38 +449,49 @@ async function cases(c: Ctx): Promise<Part> {
     rows = r.rows.filter((x) => x.sev === sev).map((x) => caseRow(x, w));
     total = Number(r.counts[sev] ?? rows.length);
     source = "console-severity";
+    lateAll = await lateTotal(c, sev, null);
+  } else if (slots.status === "overdue" && c.h.list) {
+    // the console's own past-deadline filter: its rows and its whole count (BUG-007, BUG-021)
+    const r = await incidentList(c, { sev, status: "overdue", q: slots.q, sort: sortKey });
+    rows = r.rows.map((x) => caseRow(x, w));
+    // rows are groups of one problem, the count is of incidents, as the console's past-deadline tile counts them
+    total = lateAll = r.incidents;
+    groupsTotal = r.total;
+    source = "list";
   } else {
-    const r = await call(c, "incidents", { scope: scopeArg(s), sev, status: slots.status === "overdue" ? "open" : slots.status, q: slots.q, sort: slots.sort === "complaints" ? "c" : slots.sort === "time" ? "t" : "sev" });
-    const data = r.data as { rows: Row[]; total: number };
-    rows = data.rows.map((x) => caseRow(x, w));
+    const r = await incidentList(c, { sev, status: slots.status === "overdue" ? "open" : slots.status, q: slots.q, sort: sortKey });
+    rows = r.rows.map((x) => caseRow(x, w));
     if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
-    total = data.total;
+    total = r.total;
     if (slots.status === "overdue") {
-      // the list is one page of 12: the overdue total is counted for the whole scope, never from that page (BUG-007). With no
-      // severity or words to narrow it, the departments' follow-ups count it; with them, the filtered list is read page by page
-      // (the follow-ups know nothing of severity or words, so their count would be the wrong one)
+      // hands without the console list (a test's): the list is one page of 12, so the overdue total is counted for the whole scope from
+      // the departments' follow-ups, or the filtered list is read page by page
       if (!sev && !slots.q) {
         const fu = await call(c, "dept_followups", { scope: scopeArg(s) }).catch(() => null);
         const fr = ((fu?.data as { rows?: Row[] } | undefined)?.rows ?? []).filter((x) => !s.dept || x.code === s.dept);
         total = fr.length ? Math.max(rows.length, fr.reduce((a, x) => a + (num(x.overdue) ?? 0), 0)) : rows.length;
       } else {
-        let seen = data.rows.length, page = 0;
+        let seen = r.rows.length, page = 0;
         const more: CaseRowT[] = [];
-        while (seen < data.total && page < 8) {
+        while (seen < r.total && page < 8) {
           page++;
-          const p = await call(c, "incidents", { scope: scopeArg(s), sev, status: "open", q: slots.q, sort: "sev", page }).catch(() => null);
-          const pr = ((p?.data as { rows?: Row[] } | undefined)?.rows ?? []);
-          if (!pr.length) break;
-          seen += pr.length;
-          more.push(...pr.map((x) => caseRow(x, w)).filter((x) => x.overdue));
+          const p = await incidentList(c, { sev, status: "open", q: slots.q, sort: "sev", page }).catch(() => null);
+          if (!p?.rows.length) break;
+          seen += p.rows.length;
+          more.push(...p.rows.map((x) => caseRow(x, w)).filter((x) => x.overdue));
         }
         total = rows.length + more.length;
       }
+      lateAll = total;
+    } else {
+      lateAll = await lateTotal(c, sev, slots.q);
     }
     source = "list";
   }
   // the console's own list is shown whole ("the 6 severe cases" are the ones it shows, however many it shows now)
   rows = sortRows(rows, slots.sort).slice(0, source === "console-severity" ? 30 : n);
+  // the list is complete when the rows shown are all of it: only then is a count over its rows (who holds most) a count of the list
+  const complete = rows.length >= (groupsTotal ?? total);
   const sevWord = sev ? sev.toLowerCase() : "";
   const scope = scopeWords(w, { ...s, sev: null });
   const asTa = /[஀-௿]/.test(c.heard);
@@ -458,15 +508,19 @@ async function cases(c: Ctx): Promise<Part> {
       blocks: [{ kind: "Note", id: "none", text: inherited ? `No incidents match this view. The console still has these filters on: ${filters.en}.` : "No incidents match this view." }],
       next: inherited ? [{ label: { en: "All of Chennai", ta: "முழு சென்னை" }, kind: "direct", recipe: "cases", slots: { ...slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, ids: [], text: null }] : [] };
   }
-  const overdue = rows.filter((r) => r.overdue).length;
-  const say = casesSay(rows, total, sev, s.period);
-  const takeaway = overdue ? bi(`${overdue} of the ${rows.length} shown ${overdue === 1 ? "is" : "are"} past ${overdue === 1 ? "its" : "their"} deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${overdue} காலக்கெடுவைத் தாண்டியவை.`) : null;
+  const lateShown = rows.filter((r) => r.overdue).length;
+  const late = lateAll ?? lateShown;
+  const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete });
+  // the figure is the list's own: "of the whole list" when the screen shows part of it, "of those shown" only when the count could not be made
+  const takeaway = late ? (lateAll != null
+    ? bi(`${late} of the ${total} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${total}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)
+    : bi(`${late} of the ${rows.length} shown ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)) : null;
   const pts = points(rows);
   const blocks: BlockT[] = [];
-  const late = rows.filter((r) => r.overdue).length;
   const byDept = new Map<string, number>();
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
-  const lead = [...byDept.entries()].sort((a, b) => b[1] - a[1])[0];
+  // "held by" counts the rows it is given, so it is shown only for a list shown whole
+  const lead = complete ? [...byDept.entries()].sort((a, b) => b[1] - a[1])[0] : undefined;
   blocks.push({ kind: "Kpis", id: "kpis", title: "Key numbers", items: [
     { key: "total", label: L(`${sev ?? "All"} cases, ${PERIOD_EN[s.period]}`, `${sev ? SEV_TA[sev] : "எல்லா"} சம்பவங்கள், ${PERIOD_TA[s.period]}`), value: total, unit: null, prev: null, delta: null, tone: sev === "Severe" ? "bad" : "neutral", spark: [] },
     { key: "late", label: L("Past their deadline", "காலக்கெடு தாண்டியவை"), value: late, unit: null, prev: null, delta: null, tone: late ? "bad" : "good", spark: [] },
@@ -482,7 +536,7 @@ async function cases(c: Ctx): Promise<Part> {
  * their deadline), who holds most of them, and what to say next. Names come from each incident's own short summary,
  * never an id or a citizen's words; every figure is a count of the rows.
  */
-export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey): Bilingual {
+export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean } = {}): Bilingual {
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
   // a case is named by its short summary; a long title would be the record read out, so it is retold as its kind and place
   const where = (r: CaseRowT) => {
@@ -491,18 +545,21 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
     return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l;
   };
   const late = rows.filter((r) => r.overdue);
+  // the past-deadline figure is the whole list's when the caller counted it; the rows shown only name the cases
+  const lateN = opts.late ?? late.length;
   const first = late.length ? late.slice(0, 2) : rows.slice(0, 1);
   const byDept = new Map<string, number>();
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
-  const [lead] = [...byDept.entries()].sort((a, b) => b[1] - a[1]);
+  // who holds most is a count over the rows given: said only for a list given whole
+  const [lead] = (opts.complete ?? rows.length >= total) ? [...byDept.entries()].sort((a, b) => b[1] - a[1]) : [];
   const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${PERIOD_EN[period]}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
   const need = late.length
-    ? `${late.length === 1 ? "One is past its deadline and needs" : `${spoken(late.length)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
-    : `The most urgent: ${where(first[0])}.`;
+    ? `${lateN === 1 ? "One is past its deadline and needs" : `${spoken(lateN)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
+    : `${lateN ? `${lateN === 1 ? "One is" : `${spoken(lateN)} are`} past the deadline, not among these. ` : ""}The most urgent: ${where(first[0])}.`;
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்.`,
-    late.length ? `${spoken(late.length)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(where).join(", ")}.` : `மிக அவசரமானது: ${where(first[0])}.`,
+    late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(where).join(", ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${where(first[0])}.`,
     lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
@@ -511,8 +568,8 @@ async function caseDetail(c: Ctx): Promise<Part> {
   let id = c.slots.id;
   // "explain the flooding in Velachery": no number said, so the incident that matters most in what was named
   if (!id && (c.s.zone || c.s.cat || c.slots.q)) {
-    const top = await call(c, "incidents", { scope: scopeArg(c.s), sev: c.s.sev ?? null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
-    id = String(((top?.data as { rows?: Row[] } | undefined)?.rows ?? [])[0]?.id ?? "") || null;
+    const top = await incidentList(c, { sev: c.s.sev ?? null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
+    id = String(top?.rows[0]?.id ?? "") || null;
     if (!id) return { title: "Nothing open", takeaway: null, say: bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."), blocks: [{ kind: "Note", id: "none", text: "No open incident matches this." }] };
   }
   if (!id) return { title: "Incident", takeaway: null, say: bi("Which incident? Say its number on the list.", "எந்தச் சம்பவம்? பட்டியலில் அதன் எண்ணைச் சொல்லுங்கள்."), blocks: [] };
@@ -1069,13 +1126,13 @@ async function dashboard(c: Ctx): Promise<Part> {
     call(c, "overview_kpis", { scope: scopeArg(s) }),
     call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
     call(c, "hotspots", { scope: scopeArg(s) }).catch(() => null),
-    call(c, "incidents", { scope: scopeArg(s), sort: "sev", status: "open" })
+    incidentList(c, { sort: "sev", status: "open" })
   ]);
   const t = await seriesBlock(c, s, `${subject} over time`);
   const kd = k.data as { cur: Record<string, number>; prev: Record<string, number>; series: Record<string, number[]> };
   const zrows = (zr.data as { rows: Row[] }).rows;
   const zr5 = rank(zrows, (x) => Number(x.n), 5);
-  const rows = ((list.data as { rows: Row[] }).rows ?? []).map((x) => caseRow(x, w)).slice(0, 8);
+  const rows = list.rows.map((x) => caseRow(x, w)).slice(0, 8);
   const hot = ((hs?.data as { rows: Row[] } | undefined)?.rows ?? []).filter((x) => !s.cat || x.cat === s.cat).slice(0, 8);
   const pts: PointT[] = [...points(rows, 3), ...hot.map((x, i) => ({ n: null, id: String(x.id), lat: Number(x.lat), lon: Number(x.lon), label: `Hotspot: ${clip(x.top_place, 60)} (${spoken(Number(x.incidents_30d))} in 30 days)`, sev: null, value: Number(x.incidents_30d), hot: i === 0 }))];
   const tile = (key: string, label: string, tone: "bad" | "neutral") => ({ key, label, value: Number(kd.cur?.[key] ?? 0), unit: null, prev: num(kd.prev?.[key]), delta: num(kd.prev?.[key]) != null ? Number(kd.cur?.[key] ?? 0) - Number(kd.prev[key]) : null,
@@ -1101,7 +1158,7 @@ async function dashboard(c: Ctx): Promise<Part> {
       { kind: "Ranking", id: "zones", title: "Zones with the most", unit: "incidents", method: `${subject} reported by zone, ${PERIOD_EN[s.period]}.`, order: "top",
         items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: `${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
       t.block,
-      { kind: "CaseList", id: "cases", title: "Open cases, most serious first", source: "list", sev: null, total: Number((list.data as { total: number }).total ?? rows.length), rows }
+      { kind: "CaseList", id: "cases", title: "Open cases, most serious first", source: "list", sev: null, total: Number(list.total ?? rows.length), rows }
     ] };
 }
 

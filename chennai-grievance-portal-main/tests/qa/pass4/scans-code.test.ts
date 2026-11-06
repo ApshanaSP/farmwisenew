@@ -48,13 +48,13 @@ describe("scans-code-2: the number gate on the same word", () => {
     expect(figuresIn("The contractor has not finished the drain.")).toEqual([]);
     expect(gateChunk("The contractor has not finished the drain.", allowedSet([])).ok).toBe(true);
   });
-  it.fails("scans-code-2 \"constructor\" is not a figure", () => {
+  it("scans-code-2 \"constructor\" is not a figure", () => {
     expect(figuresIn(line)).toEqual([]);
   });
-  it.fails("scans-code-2 the gate lets a line with no figure through", () => {
+  it("scans-code-2 the gate lets a line with no figure through", () => {
     expect(gateChunk(line, allowedSet([])).ok).toBe(true);
   });
-  it.fails("scans-code-2 a template with no figure is not refused", () => {
+  it("scans-code-2 a template with no figure is not refused", () => {
     expect(fillTemplate(line, {})).toBe(line);
   });
 });

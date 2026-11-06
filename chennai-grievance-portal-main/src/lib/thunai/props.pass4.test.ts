@@ -151,7 +151,7 @@ describe("number gate (property)", () => {
   });
   // figuresIn matches ASCII digits and Tamil digits only; fullwidth, Arabic-Indic and Devanagari digits are invisible to the gate
   const NATIVE = { fw: (d: string) => String.fromCharCode(0xff10 + Number(d)), ar: (d: string) => String.fromCharCode(0x0660 + Number(d)), dev: (d: string) => String.fromCharCode(0x0966 + Number(d)) };
-  it.fails("property-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate", () => {
+  it("property-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate", () => {
     fc.assert(fc.property(fc.integer({ min: 20, max: 99999 }), fc.constantFrom("fw", "ar", "dev"), (n, k) => {
       const t = String(n).replace(/\d/g, NATIVE[k as keyof typeof NATIVE]);
       expect(gateChunk(`there are ${t} open cases`, new Set()).ok, t).toBe(false);

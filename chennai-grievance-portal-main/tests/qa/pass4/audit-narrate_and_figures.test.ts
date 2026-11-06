@@ -139,18 +139,18 @@ describe("BUG-019: the original Tamil join", () => {
 // -------------------------------------------------------------- reopened --
 
 describe("BUG-007 reopened", () => {
-  it.fails.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
+  it.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
     const c = await list({ period, zone: null, dept: null, sev: null, status: "overdue", q: null, sort: "t", dir: -1, page: 0, scope: "period" } as never);
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", period, fresh: true, zones: [] });
     expect(r.stage!.say.en).not.toMatch(/^There are no cases/);
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
+  it("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
     const r = await said("show overdue cases", fakePlan({ kind: "do", lang: "en", reply: null, options: [], screen: screenOf({ status: "overdue", period: "weekly" }) }));
     expect(blockOf(r.result, "CaseList")?.total).toBeGreaterThan(0);
   });
-  it.fails.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
+  it.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
     const r = (await said(text)).result!;
     expect(blockOf(r, "CaseList")?.total).toBeGreaterThan(0);
   });
@@ -159,16 +159,16 @@ describe("BUG-007 reopened", () => {
 describe("BUG-018 reopened: 'yesterday' is the day before yesterday", () => {
   const YDAY = "2026-11-05", BEFORE = "2026-11-04";
   it("the data has a difference to see", async () => expect(await countDay(YDAY)).not.toBe(await countDay(BEFORE)));
-  it.fails.each(["how many incidents yesterday", "nethu evlo incidents"])("AUD-NF-2 %s counts 5 Nov, not 4 Nov", async (message) => {
+  it.each(["how many incidents yesterday", "nethu evlo incidents"])("AUD-NF-2 %s counts 5 Nov, not 4 Nov", async (message) => {
     const a = await askChat(message);
     expect(firstNumber((a as { card: { headline: string } }).card.headline)).toBe(await countDay(YDAY));
   });
-  it.fails.each(["how many incidents yesterday"])("AUD-NF-2 %s compares with the day before it", async (message) => {
+  it.each(["how many incidents yesterday"])("AUD-NF-2 %s compares with the day before it", async (message) => {
     const a = await askChat(message);
     const before = Number(String((a as { card: { answerMarkdown: string } }).card.answerMarkdown).match(/\(([\d,]+) in the period before\)/)?.[1]?.replace(/,/g, ""));
     expect(before).toBe(await countDay(BEFORE));
   });
-  it.fails("AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints", async () => {
+  it("AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints", async () => {
     const a = await askChat("நேற்று எத்தனை புகார்கள்");
     const [r] = await q(`SELECT SUM(i.citizen_complaints) AS n FROM incidents i WHERE i.first_reported_at >= ? AND i.first_reported_at < ?`, [`${YDAY} 00:00:00`, `2026-11-06 00:00:00`]);
     expect(firstNumber((a as { card: { headline: string } }).card.headline)).toBe(Number(r.n));
@@ -183,17 +183,19 @@ describe("BUG-021 partly", () => {
     expect(blockOf(r, "CaseList")?.total).toBeLessThan(all.incidents);
     expect(blockOf(r, "CaseList")?.total).toBeLessThanOrEqual(sev.incidents);
   });
-  it.fails.each(["weekly", "monthly", "quarterly"])("AUD-NF-3 %s: 'severe overdue' says the console's count of incidents", async (period) => {
+  it.each(["weekly", "monthly", "quarterly"])("AUD-NF-3 %s: 'severe overdue' says the console's count of incidents", async (period) => {
     const c = await consoleCount(period, "Severe");
     const r = await direct("cases", { status: "overdue", sev: "Severe", period, fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
+  // lane b (RC-08): kept as it.fails on purpose. It asks for the console's number of GROUPS (rows), while the three tests above ask for the number of
+  // INCIDENTS, the unit of every console tile. Both cannot hold; the screen says incidents (the tile's unit), so this one stays red. See docs/qa/pass4/lanes/b.md.
   it.fails("AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages", async () => {
     const c = await consoleCount("quarterly", "Severe");
     const r = await direct("cases", { status: "overdue", sev: "Severe", period: "quarterly", fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.total);
   });
-  it.fails.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
+  it.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
     const c = await consoleCount(period, "High");
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", sev: "High", period, fresh: true, zones: [] });
@@ -229,17 +231,17 @@ describe("new: a place named in 'explain' is dropped when a topic was heard", ()
 
 describe("BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any)", () => {
   it.each(["There is only one severe case open in Adyar.", "One complaint came in today.", "Just one incident is open."])("held: %s", (line) => expect(gateChunk(line, new Set()).ok).toBe(false));
-  it.fails.each(["Only one is open in Adyar.", "There is a single severe case open in Adyar.", "Only one severe flooding case is open in Adyar.", "There's just one flood in Adyar.", "அடையாறில் ஒரே ஒரு கடுமையான சம்பவம் மட்டுமே உள்ளது.", "ஒரு புகார் மட்டும் வந்துள்ளது.", "Adyar la oru severe case dhaan irukku.", "Adyar la onnu dhaan open la irukku."])("AUD-NF-6 %s", (line) => {
+  it.each(["Only one is open in Adyar.", "There is a single severe case open in Adyar.", "Only one severe flooding case is open in Adyar.", "There's just one flood in Adyar.", "அடையாறில் ஒரே ஒரு கடுமையான சம்பவம் மட்டுமே உள்ளது.", "ஒரு புகார் மட்டும் வந்துள்ளது.", "Adyar la oru severe case dhaan irukku.", "Adyar la onnu dhaan open la irukku."])("AUD-NF-6 %s", (line) => {
     expect(figuresIn(line).length).toBeGreaterThan(0);
   });
-  it.fails("AUD-NF-6 through the real round, a fake model's line is said as it is", async () => {
+  it("AUD-NF-6 through the real round, a fake model's line is said as it is", async () => {
     const r = await said("is Adyar ok right now tell me plainly", fakePlan({ kind: "chat", lang: "en", reply: "There is a single severe case open in Adyar.", options: [] }));
     expect(r.result?.reply ?? "").not.toMatch(/single severe case/);
   });
 });
 
 describe("BUG-019 partly: a name with no Tamil gets the suffix glued on", () => {
-  it.fails.each([["DIST-DM", "District Disaster Management"], ["TNPCB", "Pollution Control Board"]])("AUD-NF-7 %s", (code, name) => {
+  it.each([["DIST-DM", "District Disaster Management"], ["TNPCB", "Pollution Control Board"]])("AUD-NF-7 %s", (code, name) => {
     expect(idam(plainWho(code, name)!.ta)).not.toMatch(/[A-Za-z]இடம்/);
   });
 });
@@ -366,7 +368,7 @@ describe("new, found on the way", () => {
     expect(r.result?.stage?.recipe).toBe("cases");
     expect(r.result?.stage?.slots.status).toBe("overdue");
   });
-  it.fails("AUD-NF-11 two complaints are not 'a lot of residents'", async () => {
+  it("AUD-NF-11 two complaints are not 'a lot of residents'", async () => {
     const { explainIssue, factSheet } = await import("@/lib/thunai/narrate");
     const row = { id: "x", title: "t", sev: "High", status: "Open", zone: 13, zoneName: "Adyar", place: "Guindy", ward: 1, dept: "GCC-SWD", deptName: "SWD", complaints: 2, t: null, overdue: false, lat: null, lon: null, why: null, cat: "Flooding & waterlogging" } as CaseRowT;
     expect(explainIssue(factSheet(row, { openFor: "4 days" }), "x").en).not.toMatch(/a lot of residents/);
@@ -375,7 +377,7 @@ describe("new, found on the way", () => {
     const r = (await said(text)).result!;
     expect(r.stage!.title).not.toMatch(/today|இன்று/);
   });
-  it.fails("AUD-NF-13 a sewage case held by the drains team: the step names who holds it", async () => {
+  it("AUD-NF-13 a sewage case held by the drains team: the step names who holds it", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.category_code = 'DRAINAGE_SEWAGE' AND i.lead_dept = 'GCC-SWD' ORDER BY i.first_reported_at DESC LIMIT 1`);
     const r = await direct("case", { id: t.id, fresh: true });
     expect(r.stage!.say.en).not.toMatch(/I'd ask Metrowater/);
@@ -388,19 +390,19 @@ describe("new, found on the way", () => {
   });
   // the rules' lane: no model key in the process, so these are the answers when no model can be reached
   // (நேற்று எத்தனை சம்பவங்கள், "no incidents", is in the real-run log only: in this process it reaches the meaning search, whose model file is an LFS pointer here, AUD-NF-21)
-  it.fails.each([["how many were resolved yesterday", /resolved/i], ["how many deaths yesterday", /death/i]])("AUD-NF-15 %s answers what was asked", async (message, want) => {
+  it.each([["how many were resolved yesterday", /resolved/i], ["how many deaths yesterday", /death/i]])("AUD-NF-15 %s answers what was asked", async (message, want) => {
     const a = await askChat(message as string);
     expect(String((a as { card: { headline: string } }).card.headline)).toMatch(want as RegExp);
   });
-  it.fails.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-NF-15 %s is about yesterday", async (message) => {
+  it.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-NF-15 %s is about yesterday", async (message) => {
     const a = await askChat(message);
     expect(String((a as { card: { headline: string } }).card.headline)).toMatch(/நேற்று/);
   });
-  it.fails("AUD-NF-16 the English reads right: 'in the last 30 days'", async () => {
+  it("AUD-NF-16 the English reads right: 'in the last 30 days'", async () => {
     const r = await direct("cases", { sev: "Severe", status: "overdue", period: "monthly", fresh: true, zones: [] });
     expect(r.stage!.say.en).not.toMatch(/cases the last 30 days/);
   });
-  it.fails("AUD-NF-17 a Tamil spoken list has no English sentence in it", async () => {
+  it("AUD-NF-17 a Tamil spoken list has no English sentence in it", async () => {
     const r = (await said("இந்த வாரம் கெடு தாண்டிய கடுமையான சம்பவங்கள் காட்டு")).result!;
     expect(r.stage!.say.ta).not.toMatch(/standing water at|[a-z]+ [a-z]+ at [A-Z]/);
   });
@@ -416,14 +418,14 @@ describe("new, found on the way", () => {
     const a = await askChat("how many overdue incidents this week");
     expect(String((a as { card: { answerMarkdown: string } }).card.answerMarkdown)).toMatch(/past their deadline/);
   });
-  it.fails.each(["evlo overdue cases indha week", "indha week evlo overdue incidents", "indha week evlo open cases"])("AUD-NF-22 %s is not said as every incident reported", async (message) => {
+  it.each(["evlo overdue cases indha week", "indha week evlo overdue incidents", "indha week evlo open cases"])("AUD-NF-22 %s is not said as every incident reported", async (message) => {
     const a = await askChat(message);
     const n = firstNumber((a as { card: { headline: string } }).card.headline);
     const [all] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.first_reported_at > '2026-10-30 18:08:00' AND i.first_reported_at <= '2026-11-06 18:08:00'`);
     expect(n).toBeLessThan(Number(all.n)); // the count itself is the filtered one
     expect(String((a as { card: { answerMarkdown: string } }).card.answerMarkdown)).not.toMatch(/[\d,]+ incidents report aagirukku/);
   });
-  it.fails("AUD-NF-22 Tamil, with a fake router at the boundary that understood 'overdue': not said as every incident reported", async () => {
+  it("AUD-NF-22 Tamil, with a fake router at the boundary that understood 'overdue': not said as every incident reported", async () => {
     const { fastPath } = await import("@/lib/assistant/fastpath");
     const { detectIntent } = await import("@/lib/assistant/intent");
     const { refNames } = await import("@/lib/assistant/scope");
@@ -432,13 +434,13 @@ describe("new, found on the way", () => {
     const fp = await fastPath({ message: "இந்த வாரம் கெடு தாண்டிய சம்பவங்கள் எத்தனை", lang: "ta", scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null } as never, names: await refNames(), now: await asOf(), lockDept: null, ctx: null, place: null }, decided);
     expect(String(fp!.card.answerMarkdown)).not.toMatch(/பதிவாகியுள்ளன/);
   });
-  it.fails("AUD-NF-19 a closed case's screen has no 'past deadline' flag beside what is said", async () => {
+  it("AUD-NF-19 a closed case's screen has no 'past deadline' flag beside what is said", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.status_std = 'Resolved' AND i.sla_breached = 1 AND i.incident_id NOT IN (SELECT incident_id FROM ${ops("collector_decisions")}) ORDER BY i.first_reported_at DESC LIMIT 1`);
     const r = await direct("case", { id: t.id, fresh: true });
     expect(r.stage!.takeaway).toBeNull();
     expect(blockOf(r, "CaseDetail")?.incident?.overdue).toBe(false);
   });
-  it.fails("AUD-NF-19 Ask District IQ: a closed case's status is not 'and past its deadline'", async () => {
+  it("AUD-NF-19 Ask District IQ: a closed case's status is not 'and past its deadline'", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.status_std = 'Resolved' AND i.sla_breached = 1 AND i.incident_id NOT IN (SELECT incident_id FROM ${ops("collector_decisions")}) ORDER BY i.first_reported_at DESC LIMIT 1 OFFSET 1`);
     const a = await askChat(`what is the status of ${t.id}`);
     expect(String((a as { card: { answerMarkdown: string } }).card.answerMarkdown)).not.toMatch(/past its deadline/);

@@ -21,11 +21,11 @@ describe("parseWhen on a server in UTC", () => {
     expect(parseWhen("2026-10-02 23:30")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");
   });
 
-  it.fails("FLAKY-1 a date with a month name and no zone is Chennai time", () => {
+  it("FLAKY-1 a date with a month name and no zone is Chennai time", () => {
     expect(parseWhen("02 Oct 2026")?.toISOString()).toBe("2026-10-01T18:30:00.000Z");
   });
 
-  it.fails("FLAKY-1 a late evening with a month name stays on its own Chennai day", () => {
+  it("FLAKY-1 a late evening with a month name stays on its own Chennai day", () => {
     expect(parseWhen("02 Oct 2026 23:30")?.toISOString()).toBe("2026-10-02T18:00:00.000Z");
   });
 });

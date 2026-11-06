@@ -1,0 +1,14 @@
+# failing before the fix (in-process run, pinned snapshot): RC-15
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-019 partly: a name with no Tamil gets the suffix glued on > AUD-NF-7 DIST-DM
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-019 partly: a name with no Tamil gets the suffix glued on > AUD-NF-7 TNPCB
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-11 two complaints are not 'a lot of residents'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-16 the English reads right: 'in the last 30 days'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-17 a Tamil spoken list has no English sentence in it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 a body it does not know is not said back in made-up spelling
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 இந்த மாதம் சுருக்கம்: the Tamil line has no English sentence
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 சுருக்கம் சொல்லு: the Tamil line has no English sentence
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 a list over a period: not "59 severe cases the last 30 days"
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 one incident: not "1 incident were reported"
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 relief: not "There's people"
+# RC-15 (server run)
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-21 Jarvis's spoken lines read as sentences

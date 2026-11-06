@@ -1,0 +1,7 @@
+# failing before the fix, same-number.test.ts on the frozen pinned server (port 3152), build of unchanged code
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-1 Jarvis's dashboard list, headed 'most serious first', starts with the most serious case
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-1 Jarvis's past-deadline list for the district this week gives the same count as the tile, not 'no cases'
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-1 the same list reached by words: 'cases past deadline this week'
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-2 'Past their deadline' beside 'All cases, this week' counts the whole list, not the rows on screen
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-2 'Past their deadline' beside 'Severe cases, this week' counts the whole list, not the rows on screen
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it

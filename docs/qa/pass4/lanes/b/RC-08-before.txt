@@ -1,0 +1,29 @@
+# failing before the fix (in-process run, pinned snapshot): RC-08
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 daily: overdue cases with no severity are listed, not 'no cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 indha week overdue cases kaattu
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 monthly: overdue cases with no severity are listed, not 'no cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 overdue cases this week
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 quarterly: overdue cases with no severity are listed, not 'no cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 weekly: overdue cases with no severity are listed, not 'no cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-007 reopened > AUD-NF-1 காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 daily: overdue High cases are not 'no high cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 monthly: 'severe overdue' says the console's count of incidents
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 monthly: overdue High cases are not 'no high cases'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 quarterly: 'severe overdue' says the console's count of incidents
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 weekly: 'severe overdue' says the console's count of incidents
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-021 partly > AUD-NF-3 weekly: overdue High cases are not 'no high cases'
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 cases past the deadline this week: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 high priority cases past the deadline this week: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases in Adyar kaattu: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases in Adyar: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases this week: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases today: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue complaints this month: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue garbage complaints this week: the list is not empty
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 அடையாறு கெடு தாண்டிய புகார்கள் காட்டு: the list is not e
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 இந்த வாரம் கெடு தாண்டிய புகார்கள் காட்டு: the list i
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 severe cases past deadline this week: every case on an overdue list is overdue, so the two figures agree
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 severe cases this week: the figure counts more than the page
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 the line does not say fewer are late than the list counts

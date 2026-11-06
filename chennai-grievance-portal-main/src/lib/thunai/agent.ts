@@ -301,7 +301,7 @@ export function callArgs(c: AgentCallT, base: ScopeT): { name: string; args: Rec
     case "zone_profile": return { name: c.tool, args: { scope, zone: c.zone } };
     case "place_breakdown": case "developing_stories": return { name: c.tool, args: { scope, place: clip(c.place, 60) || null } };
     case "news_gaps": return { name: c.tool, args: { scope } };
-    case "incidents": return { name: c.tool, args: { scope, q: clip(c.text, 80) || null, sort: "sev" } };
+    case "incidents": return { name: c.tool, args: { scope, q: clip(c.text, 80) || null, sort: "sev", dir: 1 } };
     case "incident_detail": return { name: c.tool, args: { id: clip(c.text, 64).toUpperCase() } };
     case "briefing": return { name: c.tool, args: { scope } };
     case "source_health": return { name: c.tool, args: {} };

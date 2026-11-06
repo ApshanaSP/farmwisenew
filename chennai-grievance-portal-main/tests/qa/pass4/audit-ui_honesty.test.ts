@@ -33,7 +33,7 @@ vi.mock("@/lib/ai/gateway", async (orig) => {
     object: plan({ calls: o.name.endsWith("0") ? [look] : [], lang: /[஀-௿]/.test(o.prompt.slice(-400)) ? "ta" : "en" }), info: { model: "fake-model" } }) };
 });
 
-const PORT = 3134;
+const PORT = Number(process.env.QA_UI_HONESTY_PORT ?? 3134);
 const BASE = `http://127.0.0.1:${PORT}`;
 const SHOTS = path.resolve(APP_ROOT, "..", "docs", "qa", "pass4", "evidence", "bug-audit");
 // .officer is the department contact's card (a name and a phone number): covered, so no such number reaches the committed pictures
@@ -510,19 +510,19 @@ describe("BUG-006: reopened, and what was found on the way (open: it.fails until
   });
 
   // ---- the rules lane answering something else, with figures (no model on this server)
-  it.fails("audit-ui_honesty-6: 'Are all the data feeds live?' is not answered with severe events", () => {
+  it("audit-ui_honesty-6: 'Are all the data feeds live?' is not answered with severe events", () => {
     expect(seen.answers.allLive.answerMarkdown).toMatch(/feed/i);
   });
-  it.fails("audit-ui_honesty-6: 'How many feeds are live?' is answered with the feeds (it gets an empty incident search, or an error while an index is on disk)", () => {
+  it("audit-ui_honesty-6: 'How many feeds are live?' is answered with the feeds (it gets an empty incident search, or an error while an index is on disk)", () => {
     expect(seen.answers.howManyLive.answerMarkdown).toMatch(/feed/i);
   });
-  it.fails("audit-ui_honesty-6: 'Is the hospital data real?' is not answered with bed occupancy", () => {
+  it("audit-ui_honesty-6: 'Is the hospital data real?' is not answered with bed occupancy", () => {
     expect(seen.answers.hospitalReal.answerMarkdown).not.toMatch(/bed occupancy/);
   });
-  it.fails("audit-ui_honesty-6: Tanglish 'hospital data fake-a?' is not answered with bed occupancy", () => {
+  it("audit-ui_honesty-6: Tanglish 'hospital data fake-a?' is not answered with bed occupancy", () => {
     expect(seen.answers.tgHospitalFake.answerMarkdown).not.toMatch(/bed occupancy/);
   });
-  it.fails("audit-ui_honesty-6: Tamil 'is the police data real or test data?' is not answered with the top incidents", () => {
+  it("audit-ui_honesty-6: Tamil 'is the police data real or test data?' is not answered with the top incidents", () => {
     expect(seen.answers.taPoliceReal.answerMarkdown).not.toMatch(/சம்பவங்கள்/);
   });
 
@@ -552,12 +552,12 @@ describe("BUG-006: reopened, and what was found on the way (open: it.fails until
   }, 170_000);
 
   // ---- Tamil gets less than English and Tanglish on the same questions (no model on this server)
-  it.fails("audit-ui_honesty-8: Tamil questions about the feeds are understood, as the English and Tanglish ones are", () => {
+  it("audit-ui_honesty-8: Tamil questions about the feeds are understood, as the English and Tanglish ones are", () => {
     expect(seen.answers.whichHealthy.datasets?.[0]?.id).toBe("feeds");
     expect(seen.answers.tgAllLive.datasets?.[0]?.id).toBe("feeds");
     for (const a of [seen.answers.taAllLive, seen.answers.taStatus]) expect(a.kind).not.toBe("clarify");
   });
-  it.fails("audit-ui_honesty-8: Tamil 'is there test data?' reaches the same answer as English", () => {
+  it("audit-ui_honesty-8: Tamil 'is there test data?' reaches the same answer as English", () => {
     expect(seen.answers.realOrTest.kind).toBe("answer");
     expect(seen.answers.taTest.kind).not.toBe("clarify");
   });

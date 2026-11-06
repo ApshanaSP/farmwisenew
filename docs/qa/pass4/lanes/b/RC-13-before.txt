@@ -1,0 +1,14 @@
+# failing before the fix (in-process run, pinned snapshot): RC-13
+ FAIL  src/lib/thunai/props.pass4.test.ts > number gate (property) > property-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Adyar la onnu dhaan open la irukku.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Adyar la oru severe case dhaan irukku.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Only one is open in Adyar.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Only one severe flooding case is open in Adyar.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 There is a single severe case open in Adyar.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 There's just one flood in Adyar.
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 through the real round, a fake model's line is said as it is
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 அடையாறில் ஒரே ஒரு கடுமையான ச
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 ஒரு புகார் மட்டும் வந்துள்ள�
+ FAIL  tests/qa/pass4/scans-code.test.ts > scans-code-2: the number gate on the same word > scans-code-2 "constructor" is not a figure
+ FAIL  tests/qa/pass4/scans-code.test.ts > scans-code-2: the number gate on the same word > scans-code-2 a template with no figure is not refused
+ FAIL  tests/qa/pass4/scans-code.test.ts > scans-code-2: the number gate on the same word > scans-code-2 the gate lets a line with no figure through
