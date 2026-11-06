@@ -33,3 +33,8 @@ data/thunai/
 # Playwright output
 test-results/
 playwright-report/
+
+# QA pass 4 tools
+.stryker-tmp/
+coverage/
+reports/
