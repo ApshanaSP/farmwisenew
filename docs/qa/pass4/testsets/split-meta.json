@@ -1,0 +1,143 @@
+{
+ "seed": 20261106,
+ "method": "mulberry32, per family and language, largest remainder",
+ "open": 180,
+ "sealed": 270,
+ "strata": {
+  "brief/en": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "brief/ta": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "brief/tanglish": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "explain/en": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "explain/ta": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "explain/tanglish": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "followup/en": {
+   "total": 14,
+   "open": 6,
+   "sealed": 8
+  },
+  "followup/ta": {
+   "total": 13,
+   "open": 5,
+   "sealed": 8
+  },
+  "followup/tanglish": {
+   "total": 13,
+   "open": 5,
+   "sealed": 8
+  },
+  "list/en": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "list/ta": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "list/tanglish": {
+   "total": 20,
+   "open": 8,
+   "sealed": 12
+  },
+  "noisy/en": {
+   "total": 17,
+   "open": 7,
+   "sealed": 10
+  },
+  "noisy/ta": {
+   "total": 17,
+   "open": 7,
+   "sealed": 10
+  },
+  "noisy/tanglish": {
+   "total": 16,
+   "open": 6,
+   "sealed": 10
+  },
+  "numbers/en": {
+   "total": 13,
+   "open": 5,
+   "sealed": 8
+  },
+  "numbers/ta": {
+   "total": 14,
+   "open": 6,
+   "sealed": 8
+  },
+  "numbers/tanglish": {
+   "total": 13,
+   "open": 5,
+   "sealed": 8
+  },
+  "offtopic/en": {
+   "total": 4,
+   "open": 2,
+   "sealed": 2
+  },
+  "offtopic/ta": {
+   "total": 3,
+   "open": 1,
+   "sealed": 2
+  },
+  "offtopic/tanglish": {
+   "total": 3,
+   "open": 1,
+   "sealed": 2
+  },
+  "other_body/en": {
+   "total": 27,
+   "open": 11,
+   "sealed": 16
+  },
+  "other_body/ta": {
+   "total": 27,
+   "open": 11,
+   "sealed": 16
+  },
+  "other_body/tanglish": {
+   "total": 26,
+   "open": 10,
+   "sealed": 16
+  },
+  "privacy_safety/en": {
+   "total": 17,
+   "open": 7,
+   "sealed": 10
+  },
+  "privacy_safety/ta": {
+   "total": 17,
+   "open": 7,
+   "sealed": 10
+  },
+  "privacy_safety/tanglish": {
+   "total": 16,
+   "open": 6,
+   "sealed": 10
+  }
+ }
+}

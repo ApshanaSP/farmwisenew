@@ -10,7 +10,7 @@ You are one fresh agent in a large QA run of District IQ. Read this before doing
 - Never print, log or commit `.env` values, passwords, keys or tokens. Test-account details are in the gitignored `data/aws-cache/qa/test-collector.txt`: read them in code, never echo them.
 - Never open `Task_6 (2).pdf`, and never use anything in it.
 - Never write to the real store. Never send real email. Never run `host-tunnel.bat`, and never expose the app publicly. Attack only this local app, on 127.0.0.1.
-- Never read `docs/qa/pass4/testsets/sealed.jsonl.gz`, or decompress it. Only the final gate may run it.
+- Never read `docs/qa/pass4/testsets/sealed.jsonl.gz` or `authoring-trail.json.gz`, or decompress them. Only the final gate may run the sealed set.
 - Never edit a frozen test set, never put its sentences in code, never weaken or delete a test to get green, never lower a target after seeing a result.
 - Do not change the accepted decisions: password-only sign-in, the light Jarvis HUD and bottom bar, the Rain tabs, Claude in the console's AI steps, `host-server.bat`, `host-tunnel.bat`.
 - Do not change the owner's decisions; report them with evidence and a ready patch: how test data is described (Ask District IQ's prompt versus Jarvis's briefs), sign-in on `/api/i18n`, complaint wording used as titles (OPEN-12), sending overheard speech to an AI, anything needing a new account, key or payment.
