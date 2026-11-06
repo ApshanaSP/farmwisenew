@@ -19,7 +19,7 @@ const post = (url: string, body: string) => new NextRequest(`http://127.0.0.1${u
 describe("open findings", () => {
   // The real run that crashed the server is in docs/qa/pass4/evidence/scans/runtime-prod-zod-probe.json. Here, the cause: zod makes one issue object per bad
   // element, even with .max(80) on the array, and nothing refuses the body before that. 300,000 elements is 0.6 MB of request.
-  it.fails("SCAN-1 a request to /api/i18n cannot make the server build one error object per array element", async () => {
+  it("SCAN-1 a request to /api/i18n cannot make the server build one error object per array element", async () => {
     const spy = vi.spyOn(ZodType.prototype, "safeParse");
     vi.resetModules();
     const { POST } = await import("@/app/api/i18n/route");

@@ -1,0 +1,5 @@
+[31m     → expected 300001 to be less than 1000[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/scan-findings.test.ts[2m > [22mopen findings[2m > [22mSCAN-1 a request to /api/i18n cannot make the server build one error object per array element
+[31m[1mAssertionError[22m: expected 300001 to be less than 1000[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m6 skipped[39m[90m (7)[39m

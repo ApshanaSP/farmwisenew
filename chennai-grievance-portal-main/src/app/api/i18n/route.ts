@@ -5,6 +5,7 @@
  * gets it at once and the AI is not asked again. A translation that drops or adds a "#" is thrown away (a number must
  * never change). Open to every page (the login page is in Tamil too), so it is rate-limited and takes short texts only.
  */
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -64,7 +65,9 @@ Return every item with its index.`;
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
   if (!checkRateLimit(`i18n:${ip}`, ipLimit(ip, 60), 60).allowed) return NextResponse.json({ error: "Too many requests." }, { status: 429 });
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  const { body, tooLarge } = await readJsonCapped(req, 64 * 1024);
+  if (tooLarge) return tooLargeResponse();
+  const parsed = Body.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const to = parsed.data.lang;
   const map = await load(to);

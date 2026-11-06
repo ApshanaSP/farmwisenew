@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { forgotPasswordRequestSchema } from "@/lib/validators";
@@ -17,7 +18,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
-    const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
+    const { body, tooLarge } = await readJsonCapped(req); // a malformed body is a 400 from the schema, not a 500; a huge one is a 413
+    if (tooLarge) return tooLargeResponse();
     const parsed = forgotPasswordRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });

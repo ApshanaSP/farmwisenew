@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { assistantSession } from "@/lib/assistant/access";
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const gate = checkRateLimit(`map:${s.userId}`, 40, 60);
   if (!gate.allowed) return NextResponse.json({ error: `Too many questions in a minute. Try again in ${gate.retryAfterSeconds} s.` }, { status: 429 });
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  const { body, tooLarge } = await readJsonCapped(req);
+  if (tooLarge) return tooLargeResponse();
+  const parsed = Body.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "That question could not be read. Please try again." }, { status: 400 });
   const b = parsed.data;
   if (!b.text && !b.plan && !b.context.drawn && !b.context.ward && !b.context.incidentId) return NextResponse.json({ error: "Type a question first." }, { status: 400 });
