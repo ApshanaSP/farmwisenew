@@ -1,0 +1,2981 @@
+[
+ {
+  "id": "BUG-020",
+  "name": "original",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-original-0-open.png"
+  },
+  "asked": {
+   "text": "explain the flooding complaint in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "case",
+    "title": "[the complaint title, not copied here]",
+    "slots": {
+     "period": "monthly",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "There's standing water at [place]. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "There's standing water at [place]. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-original.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "tamil, the natural 'tell me about'",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-reopened-0-open.png"
+  },
+  "asked": {
+   "text": "அடையாறு வெள்ள புகார் பத்தி சொல்லு",
+   "answer": {
+    "http": 200,
+    "lane": "frame",
+    "kind": "do",
+    "note": "frame:new-place",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 0 new incidents came in today. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 0 புதிய சம்பவங்கள் வந்தன. இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இது இன்றைய பதிவுகளின்படி.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-reopened.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "tanglish",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tanglish-reopened-0-open.png"
+  },
+  "asked": {
+   "text": "Adyar flooding complaint pathi sollu",
+   "answer": {
+    "http": 200,
+    "lane": "frame",
+    "kind": "do",
+    "note": "frame:new-place",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 0 new incidents came in today. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 0 புதிய சம்பவங்கள் வந்தன. இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இது இன்றைய பதிவுகளின்படி.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tanglish-reopened.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "english, describe",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-describe-reopened-0-open.png"
+  },
+  "asked": {
+   "text": "describe the flooding complaint in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "frame",
+    "kind": "do",
+    "note": "frame:new-place",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 0 new incidents came in today. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 0 new incidents came in today. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-describe-reopened.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "control: a real follow-up still re-scopes",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-control-0-open.png"
+  },
+  "asked": {
+   "text": "and in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "frame",
+    "kind": "do",
+    "note": "frame:new-place",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 5 new incidents came in today; 5 cases are still open, and none is past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 5 new incidents came in today; 5 cases are still open, and none is past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-control.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "chennai city police report",
+  "asked": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug001-police-brief.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "Mumbai police",
+  "asked": {
+   "text": "Mumbai police",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug002-mumbai.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "filter Coimbatore police",
+  "asked": {
+   "text": "filter Coimbatore police",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug002-filter-coimbatore.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "மும்பை போலீஸ்",
+  "asked": {
+   "text": "மும்பை போலீஸ்",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட்டு, போக்குகள் பக்கத்துக்குப் போ போன்ற எளிய கோரிக்கைகள் வேலை செய்யும்.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "Coimbatore police filter pannu",
+  "asked": {
+   "text": "Coimbatore police filter pannu",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட்டு, போக்குகள் பக்கத்துக்குப் போ போன்ற எளிய கோரிக்கைகள் வேலை செய்யும்.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "show Delhi police cases",
+  "asked": {
+   "text": "show Delhi police cases",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "filter Mumbai police cases",
+  "asked": {
+   "text": "filter Mumbai police cases",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "remember to check the police report",
+  "asked": {
+   "text": "remember to check the police report",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Remember: to check the police report?",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": "Remember: to check the police report? | Yes | No"
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-remember.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "remind me at 5 pm to read the police report",
+  "asked": {
+   "text": "remind me at 5 pm to read the police report",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Remind you 7 Nov, 5:00 pm: read the police report?",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": "Remind you 7 Nov, 5:00 pm: read the police report? | Yes | No"
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு",
+  "asked": {
+   "text": "போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 61 புதிய சம்பவங்கள் வந்தன; 61 இன்னும் நிலுவையில்; 5 கெடு தாண்டியவை. இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இது இன்றைய பதிவுகளின்படி.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-tamil-remind-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "police report ah nyabagam vechukko",
+  "asked": {
+   "text": "police report ah nyabagam vechukko",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு",
+  "asked": {
+   "text": "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-tamil-save-filter-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "filter Kumbakonam police",
+  "asked": {
+   "text": "filter Kumbakonam police",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug002-filter-kumbakonam-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "கும்பகோணம் போலீஸ் பில்டர் போடு",
+  "asked": {
+   "text": "கும்பகோணம் போலீஸ் பில்டர் போடு",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "Nagercoil police filter pannu",
+  "asked": {
+   "text": "Nagercoil police filter pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "Kumbakonam police report",
+  "asked": {
+   "text": "Kumbakonam police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug030-kumbakonam-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "மாநில காவல்துறை அறிக்கை",
+  "asked": {
+   "text": "மாநில காவல்துறை அறிக்கை",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      2
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 0 new incidents came in today. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "Working on it",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug030-state-police-manali.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "இந்த வாரம் நிலவரம்",
+  "asked": {
+   "text": "இந்த வாரம் நிலவரம்",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:edit",
+    "recipe": "brief",
+    "title": "Briefing · this week",
+    "slots": {
+     "period": "weekly",
+     "zones": [
+      3
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "8 points in the brief for this week. 44 incidents were reported in Madhavaram (last 7 days), 6% fewer than the previous period."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "இந்த வாரம் சுருக்கத்தில் 8 குறிப்புகள். 44 incidents were reported in Madhavaram (last 7 days), 6% fewer than the previous period.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug005-this-week-madhavaram.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Briefing · this week"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "ஆட்சியர் சுருக்கம்",
+  "asked": {
+   "text": "ஆட்சியர் சுருக்கம்",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:edit",
+    "recipe": "brief",
+    "title": "Briefing · today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "6 points in the brief for today. 24 incidents were reported in Adyar (last 24 hours), 71% more than the previous period."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "இன்று சுருக்கத்தில் 6 குறிப்புகள். 24 incidents were reported in Adyar (last 24 hours), 71% more than the previous period.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug005-collector-summary-adyar.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Briefing · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "Anna Salai police report",
+  "asked": {
+   "text": "Anna Salai police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      8
+     ],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 7 new incidents came in today; 7 cases are still open, and none is past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 7 new incidents came in today; 7 cases are still open, and none is past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug005-anna-salai-anna-nagar.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-024",
+  "name": "overdue cases this week",
+  "asked": {
+   "text": "overdue cases this week",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Cases · this week",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "There are no cases this week for this view."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "There are no cases this week for this view.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug024-overdue-says-none.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Cases · this week"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-024",
+  "name": "severe cases past deadline this week",
+  "asked": {
+   "text": "severe cases past deadline this week",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Severe cases · this week",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "37 severe cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 9 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "37 severe cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 9 of them. Say \"read them\", or \"open\" and a number.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug024-overdue-kpi-understated.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Severe cases · this week"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-032",
+  "name": "explain the garbage complaint in Mylapore",
+  "asked": {
+   "text": "explain the garbage complaint in Mylapore",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "case",
+    "title": "[the complaint title, not copied here]",
+    "slots": {
+     "period": "monthly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": "SOLID_WASTE",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "There's uncleared garbage at [place]. It's been open for a couple of hours. I'd ask the conservancy team to clear it."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "There's uncleared garbage at [place]. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug032-mylapore-korukkupet.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "[the complaint title, not copied here]"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "corporation brief open, describe",
+  "opened": {
+   "text": "give me the corporation update",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Corporation · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true,
+     "org": "GCC"
+    },
+    "say": "Taking that as Greater Chennai Corporation. 143 cases are open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Corporation. 143 cases are open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-corporation-open-0-open.png"
+  },
+  "asked": {
+   "text": "describe the flooding complaint in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "frame",
+    "kind": "do",
+    "note": "frame:new-place",
+    "recipe": "brief",
+    "title": "Greater Chennai Corporation · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true,
+     "org": "GCC"
+    },
+    "say": "Taking that as Greater Chennai Corporation. 1 case is open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Corporation. 1 case is open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-corporation-open.png"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "corporation brief open, original",
+  "opened": {
+   "text": "give me the corporation update",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Corporation · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true,
+     "org": "GCC"
+    },
+    "say": "Taking that as Greater Chennai Corporation. 143 cases are open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Corporation. 143 cases are open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "asked": {
+   "text": "explain the flooding complaint in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "case",
+    "title": "[the complaint title, not copied here]",
+    "slots": {
+     "period": "monthly",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "There's standing water at [place]. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "There's standing water at [place]. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "remind me at 5 pm to check the severe cases",
+  "asked": {
+   "text": "remind me at 5 pm to check the severe cases",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Severe cases · today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-severe-reminder-lost.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Severe cases · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "remind me to read the news",
+  "asked": {
+   "text": "remind me to read the news",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "news",
+    "title": "News · this week",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "12 headlines. Reading them now."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "12 headlines. Reading them now.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "News · this week"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "remind me to check the corporation update",
+  "asked": {
+   "text": "remind me to check the corporation update",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "brief",
+    "title": "Briefing · today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "say": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Briefing · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "கடுமையான புகார்கள் பார்க்க நினைவூட்டு",
+  "asked": {
+   "text": "கடுமையான புகார்கள் பார்க்க நினைவூட்டு",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "கடுமையான சம்பவங்கள் · இன்று",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "கடுமையான சம்பவங்கள் · இன்று"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-032",
+  "name": "low lying areas in Adyar",
+  "asked": {
+   "text": "low lying areas in Adyar",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "Low cases · Adyar · today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Low",
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "8 low cases today. The most urgent: standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy in Adyar. Storm Water Drain holds 2 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "8 low cases today. The most urgent: standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy in Adyar. Storm Water Drain holds 2 of them. Say \"read them\", or \"open\" and a number.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/new-low-lying-adyar.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Low cases · Adyar · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-032",
+  "name": "High Court report",
+  "asked": {
+   "text": "High Court report",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "High cases · today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "High",
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "45 high cases today; here are the 12 that matter most. 5 are past their deadline and need you first: Road accident at Vadapalani, Kodambakkam, and Violent crime at Neelankarai, Sholinganallur. Greater Chennai Police holds 6 of them. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "45 high cases today; here are the 12 that matter most. 5 are past their deadline and need you first: Road accident at Vadapalani, Kodambakkam, and Violent crime at Neelankarai, Sholinganallur. Greater Chennai Police holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/new-high-court.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "High cases · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-032",
+  "name": "high tide in Royapuram",
+  "asked": {
+   "text": "high tide in Royapuram",
+   "answer": {
+    "http": 200,
+    "lane": "quick",
+    "kind": "do",
+    "note": "quick",
+    "recipe": "cases",
+    "title": "High cases · Royapuram · today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      5
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "High",
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "say": "3 high cases today. The most urgent: standing water at Bajanai Koil Main Road, in Royapuram. Say \"read them\", or \"open\" and a number."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "3 high cases today. The most urgent: standing water at Bajanai Koil Main Road, in Royapuram. Say \"read them\", or \"open\" and a number.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "High cases · Royapuram · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "London police report",
+  "asked": {
+   "text": "London police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug030-london.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "துபாய் போலீஸ் அறிக்கை",
+  "asked": {
+   "text": "துபாய் போலீஸ் அறிக்கை",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "Manila report",
+  "asked": {
+   "text": "Manila report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:sound",
+    "recipe": "brief",
+    "title": "Briefing · today",
+    "slots": {
+     "period": "daily",
+     "zones": [
+      2
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "4 points in the brief for today. 1 incident were reported in Manali (last 24 hours), 80% fewer than the previous period."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "4 points in the brief for today. 1 incident were reported in Manali (last 24 hours), 80% fewer than the previous period.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug005-manila-manali.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "stage": "Briefing · today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "சென்னை போலீஸ் ரிப்போர்ட் கொடு",
+  "asked": {
+   "text": "சென்னை போலீஸ் ரிப்போர்ட் கொடு",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug001-tamil-give-filter-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": "VECTOR_DISEASE",
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "போலீஸ் நிலவரம் சொல்லு",
+  "asked": {
+   "text": "போலீஸ் நிலவரம் சொல்லு",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug001-tamil-status-filter-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "சென்னை போலீஸ் ரிப்போர்ட்",
+  "asked": {
+   "text": "சென்னை போலீஸ் ரிப்போர்ட்",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "போலீஸ் அறிக்கை",
+  "asked": {
+   "text": "போலீஸ் அறிக்கை",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "சென்னை காவல்துறை அறிக்கை",
+  "asked": {
+   "text": "சென்னை காவல்துறை அறிக்கை",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 61 புதிய சம்பவங்கள் வந்தன; 61 இன்னும் நிலுவையில்; 5 கெடு தாண்டியவை. இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இது இன்றைய பதிவுகளின்படி.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug001-tamil-kavalthurai-control.png"
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "chennai police report kudu",
+  "asked": {
+   "text": "chennai police report kudu",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-001",
+  "name": "police nilavaram sollu",
+  "asked": {
+   "text": "police nilavaram sollu",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "பெருநகர சென்னை காவல்துறை என்று எடுத்துக்கொள்கிறேன். இன்று 61 புதிய சம்பவங்கள் வந்தன; 61 இன்னும் நிலுவையில்; 5 கெடு தாண்டியவை. இவை சோதனைக்காக உருவாக்கப்பட்ட காவல் பதிவுகள், அதிகாரப்பூர்வ காவல் அறிக்கை அல்ல. இது இன்றைய பதிவுகளின்படி.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": "Greater Chennai Police · brief, today"
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "கும்பகோணம் போலீஸ் அறிக்கை",
+  "asked": {
+   "text": "கும்பகோணம் போலீஸ் அறிக்கை",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "திருச்சி போலீஸ் ரிப்போர்ட்",
+  "asked": {
+   "text": "திருச்சி போலீஸ் ரிப்போர்ட்",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "chat",
+    "note": "unknown-entity",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": "Trichy Police பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் உள்ளது பெருநகர சென்னை காவல்துறை, அதைப் பற்றிச் சொல்லலாம்."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Trichy Police பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் உள்ளது பெருநகர சென்னை காவல்துறை, அதைப் பற்றிச் சொல்லலாம்.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-030",
+  "name": "ரயில்வே போலீஸ் அறிக்கை",
+  "asked": {
+   "text": "ரயில்வே போலீஸ் அறிக்கை",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "chat",
+    "note": "unknown-entity",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": "Railway Police பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் உள்ளது பெருநகர சென்னை காவல்துறை, அதைப் பற்றிச் சொல்லலாம்."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Railway Police பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் உள்ளது பெருநகர சென்னை காவல்துறை, அதைப் பற்றிச் சொல்லலாம்.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "மயிலாப்பூர் போலீஸ் ரிப்போர்ட்",
+  "asked": {
+   "text": "மயிலாப்பூர் போலீஸ் ரிப்போர்ட்",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": "TLK-MYL",
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "அண்ணா சாலை போலீஸ் அறிக்கை",
+  "asked": {
+   "text": "அண்ணா சாலை போலீஸ் அறிக்கை",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug005-anna-salai-tamil-road-filter.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": "ROAD_DAMAGE",
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "போலீஸ் செய்தி",
+  "asked": {
+   "text": "போலீஸ் செய்தி",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-005",
+  "name": "போலீஸுக்கு கடிதம் எழுது",
+  "asked": {
+   "text": "போலீஸுக்கு கடிதம் எழுது",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-003",
+  "name": "போலீஸ் அறிக்கை இந்த மாதம்",
+  "asked": {
+   "text": "போலீஸ் அறிக்கை இந்த மாதம்",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "Opening the microphone",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "police report save pannu",
+  "asked": {
+   "text": "police report save pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-tanglish-save-filter-reopened.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "police report ah type pannu",
+  "asked": {
+   "text": "police report ah type pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "police report paakanum nu remind pannu",
+  "asked": {
+   "text": "police report paakanum nu remind pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "போலீஸ் அறிக்கையை மெயில் அனுப்பு",
+  "asked": {
+   "text": "போலீஸ் அறிக்கையை மெயில் அனுப்பு",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug022-tamil-mail-filter.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து",
+  "asked": {
+   "text": "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "severe cases paaka remind pannu",
+  "asked": {
+   "text": "severe cases paaka remind pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": "Severe",
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-022",
+  "name": "Adyar flooding complaints paaka remind pannu",
+  "asked": {
+   "text": "Adyar flooding complaints paaka remind pannu",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": 13,
+   "cat": "FLOOD_WATERLOGGING",
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "filter London police",
+  "asked": {
+   "text": "filter London police",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "ListeningGo ahead, no need to say my name.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-002",
+  "name": "filter Tambaram police",
+  "asked": {
+   "text": "filter Tambaram police",
+   "answer": {
+    "http": 200,
+    "lane": "no-model",
+    "kind": "none",
+    "note": "no-model",
+    "recipe": null,
+    "title": null,
+    "slots": null,
+    "say": null
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "I cannot reason right now: no model is answering. Plain requests still work, like show the severe cases, or go to the trends page.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "filtersAfter": {
+   "dept": null,
+   "zone": null,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "police brief open, Tamil only Adyar",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-only-adyar-0-open.png"
+  },
+  "asked": {
+   "text": "அடையாறு மட்டும்",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "\"அடையாறு\" எதிலும் இல்லை.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-only-adyar.png"
+  },
+  "stageUp": true,
+  "stageAfter": true,
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "police brief open, only Adyar",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "asked": {
+   "text": "only Adyar",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "None of these mention adyar.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "stageUp": true,
+  "stageAfter": true,
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "police brief open, Tanglish Adyar mattum",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "asked": {
+   "text": "Adyar mattum",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "None of these mention adyar.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": null
+  },
+  "stageUp": true,
+  "stageAfter": true,
+  "pageErrors": []
+ },
+ {
+  "id": "BUG-020",
+  "name": "police brief open, Tamil police word",
+  "opened": {
+   "text": "chennai city police report",
+   "answer": {
+    "http": 200,
+    "lane": "resolve",
+    "kind": "do",
+    "note": "resolve:exact",
+    "recipe": "brief",
+    "title": "Greater Chennai Police · brief, today",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "POL-GCP",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "say": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records."
+   },
+   "roundAsked": true,
+   "seen": {
+    "said": "Taking that as Greater Chennai Police. 61 new incidents came in today; 61 cases are still open, and 5 are past the deadline. These are generated police test records, not an official police report. This is from today's records.",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-police-word-open-0-open.png"
+  },
+  "asked": {
+   "text": "அடையாறு போலீஸ் நிலவரம்",
+   "answer": null,
+   "roundAsked": false,
+   "seen": {
+    "said": "",
+    "stage": null,
+    "state": "AnsweringTalk any time to stop me.",
+    "cards": ""
+   },
+   "shot": "docs/qa/pass4/evidence/bug-audit/bug020-tamil-police-word-open.png"
+  },
+  "filtersAfter": {
+   "dept": "POL-GCP",
+   "zone": 13,
+   "cat": null,
+   "sev": null,
+   "taluk": null,
+   "stage": null
+  },
+  "stageUp": true,
+  "stageAfter": true,
+  "pageErrors": []
+ }
+]

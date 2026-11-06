@@ -1,0 +1,38 @@
+[
+  {
+    "id": "BUG-012",
+    "original_input": "Two sandbox drafts in the tray ('Show me the severe cases', then 'draft for the first two'). Tap Approve and send 2, then a real failed send, or cancel Confirm it's you.",
+    "path_driven": "Playwright, production build (.next-qa), signed in as the Collector on 127.0.0.1:3135. The drafts came from the real draft route. Failed send: page.route abort (connectionrefused) and a 500. Cancel: the real Confirm it's you box, its Cancel, its X, Esc and a click on the veil. Sends went to the server's own store, dry-run, SMTP off.",
+    "variations_tried": ["request aborted", "500 from the server", "Cancel then Esc", "click on the veil", "cancel one, confirm the other", "both confirmed (control)", "retry after a failure, really sent", "tap again within 2 seconds of a failure", "Tamil screen with a Tamil request", "Tanglish request 'severe cases kaattu'", "Approve with the Jarvis screen open", "double tap on Approve", "spoken confirm 2 / உறுதி 2 / uruthi 2 pannu", "two live drafts (one field changed at the boundary)"],
+    "result": "partly",
+    "what_was_seen": "DRAFT, full run to confirm. The original failure is gone on the original path: abort, 500, cancel and veil all keep both drafts and say '2 could not be sent and are still in the tray. 0 went through.' Nothing says Approved. Cancel one and confirm the other says '1 could not be sent and are still in the tray. 1 went through.' with one left. Retry says 'Sent 2 through the test channel.' and the tray empties. Tamil says '2 அனுப்ப முடியவில்லை, இன்னும் தட்டில் உள்ளன. 0 அனுப்பப்பட்டன.' Not fixed: with two live drafts the tray still empties and says 'Approved. Send it from the incident panel.' with nothing sent and only one panel open. With the Jarvis screen open the password box is hidden behind the screen.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/client_browser.observed.json; bug012-*.png; tests/e2e/pass4-client-fixes.spec.ts"
+  },
+  {
+    "id": "BUG-014",
+    "original_input": "Say 'click save new version', 'click pin', 'click unpin'; on Studio > Data card say 'click yes'.",
+    "path_driven": "Playwright, production build, as the Collector. The real microphone path: a fixture plays into a fake microphone, the real detector cuts it, and only Whisper's text is mocked with page.route. Tanglish and Tamil plans a model would give come from a fake model at the boundary (agent/round), because the server has no model key.",
+    "variations_tried": ["save new version by name in English and Tamil script, and by number", "Tanglish and Tamil with a fake model", "Pin on an Ask District IQ answer (fake answer at the boundary)", "Pin this screen on an open Jarvis screen", "Unpin on the Studio board", "Yes on the Data card by number, English and Tamil screens", "Yes by name", "Add to dashboard by number", "harmless control by name and by number"],
+    "result": "reopened",
+    "what_was_seen": "DRAFT, full run to confirm. Save new version and Unpin are refused: 'Saving and pinning need your tap. Say \"save this\" and I'll ask first.' The bare Yes is still pressed: 'Jarvis, click 34' on the Yes button sent POST action=family and the card then read 'set by you'; Jarvis's only reply was 'Click 34'. The Tamil screen did the same with ஆம். Add to dashboard is pressed the same way.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/bug014-datacard-before-en.png, bug014-datacard-after-en.png, bug014-add-to-dashboard.png; client_browser.observed.json"
+  },
+  {
+    "id": "BUG-015",
+    "original_input": "On the Studio page ask a dataset question, then ask a new one or say stop before the reply arrives. The first answer is held back with page.route and let go afterwards.",
+    "path_driven": "Playwright, production build. Questions go to the real Studio engine (rules only, no model on this server); only the first answer's delivery is held.",
+    "variations_tried": ["newer question typed in English, Tamil script and Tanglish", "typed stop, நிறுத்து, niruthu", "Esc", "Close Jarvis", "spoken question then spoken stop", "spoken question then Jarvis stop", "typed question then bare spoken stop"],
+    "result": "partly",
+    "what_was_seen": "DRAFT, full run to confirm. A newer question or a typed stop aborts the request and the late answer never shows. Not fixed: a typed question followed by a bare spoken 'stop' in a fresh session was ignored by the address gate and '16 case reports match; the latest are listed.' was spoken. After a spoken stop or Esc the card stays on 'Counting it in Fever & dengue surveillance (sample)…' for good.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/client_browser.observed.json; bug015-*.png"
+  },
+  {
+    "id": "BUG-016",
+    "original_input": "A save card up, Whisper unreachable (a real failed request, and a 503), then 'yes' heard only by the browser's captions.",
+    "path_driven": "Playwright, production build. window.SpeechRecognition is a stand-in the test makes speak; Whisper fails for real through page.route; the card is the real save card and a tap really saves.",
+    "variations_tried": ["Whisper unreachable", "Whisper 503", "every word on the accepted list in English, Tamil script and Tanglish", "while the voice is speaking", "the ribbon's recogniser", "a pin card", "ஆமாம், yes please, யெஸ், ஓகே, aamam, seri seri, okay da by captions and by Whisper", "Jarvis's own question caught by captions"],
+    "result": "partly",
+    "what_was_seen": "DRAFT, full run to confirm. The exact input holds: the card stays, nothing goes on, Jarvis says 'I couldn't hear that yes clearly. Tap the card, or say yes again.' and a tap saves. Other everyday ways of saying yes still dismiss the card and go on as a new request: 'ஆமாம்', 'yes please', 'யெஸ்', 'ஓகே', 'aamam', 'seri seri'. Whisper hearing the same words loses the card too and saves nothing. Jarvis's own question caught by captions replaces the card with 'Save this view as Monsoon??'.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/client_browser.observed.json; bug016-*.png"
+  }
+]

@@ -1,0 +1,79 @@
+{
+ "route": "POST /api/collector/thunai/agent/round with direct {recipe:'case', slots:{id}}",
+ "sampled": 226,
+ "by_status": {
+  "Resolved": 113,
+  "Under review": 11,
+  "Rejected": 9,
+  "In progress": 38,
+  "Lapsed": 18,
+  "Assigned": 11,
+  "Open": 16,
+  "Awaiting verification": 10
+ },
+ "not_found_after_build_hooks": 6,
+ "field_labels_in_line": 0,
+ "closed": {
+  "n": 140,
+  "told_as_open_en": 0,
+  "told_as_open_ta": 0,
+  "takeaway_set": 0,
+  "past_deadline_flag_on_block": 67
+ },
+ "open": {
+  "n": 86,
+  "told_as_closed": 0,
+  "two_or_three_complaints_said_a_lot_of_residents": 2
+ },
+ "tamil_to_x_forms": {
+  "மாநகராட்சியிடம்": 37,
+  "துறையிடம்": 7,
+  "காவல்துறையிடம்": 12,
+  "வாரியத்திடம்": 9,
+  "பிரிவிடம்": 7,
+  "Managementஇடம்": 3,
+  "பொதுப்பணித்துறையிடம்": 7,
+  "Boardஇடம்": 2
+ },
+ "named_step_total": 19,
+ "named_step_other_agency": {
+  "DRAINAGE_SEWAGE held by GCC-SWD: I'd ask Metrowater": 5,
+  "SOLID_WASTE held by GCC-ENG: I'd ask the conservancy team": 2,
+  "DRAINAGE_SEWAGE held by PWD-WRD: I'd ask Metrowater": 2,
+  "OTHER held by GCC-HLT: I'd ask the conservancy team": 1,
+  "FLOOD_WATERLOGGING held by PWD-WRD: I'd ask Storm Water Drains": 1,
+  "OTHER held by GCC-EDU: I'd ask Metrowater": 1
+ },
+ "samples": [
+  {
+   "status": "Resolved",
+   "dept": "PWD-WRD",
+   "en": "There was an unsafe building or wall at Mathur. It's marked resolved, so there's nothing to chase unless it comes back.",
+   "ta": "மாதவரம் பகுதியில் பாதுகாப்பற்ற கட்டடம் அல்லது சுவர் இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்."
+  },
+  {
+   "status": "Rejected",
+   "dept": "GCC-HLT",
+   "en": "There was a stray animal problem at Velan 1St Cross Street, Virugambakkam, Virugambakkam. It was rejected and closed, so no work is pending on it.",
+   "ta": "கோடம்பாக்கம் பகுதியில் தெரு விலங்குகள் பிரச்சினை இருந்தது. இது நிராகரிக்கப்பட்டு முடிக்கப்பட்டது; இதில் நிலுவை வேலை எதுவும் இல்லை."
+  },
+  {
+   "status": "Lapsed",
+   "dept": "DIST-DM",
+   "en": "There were people who need flood relief at Parrys. It lapsed without being marked fixed, so it's worth checking whether the problem is still there.",
+   "ta": "ராயபுரம் பகுதியில் வெள்ள நிவாரணம் தேவைப்படுவோர் இருந்தது. சரிசெய்யப்பட்ட பதிவு இல்லாமல் இது காலாவதியானது; பிரச்சினை இன்னும் இருக்கிறதா என்று பார்ப்பது நல்லது."
+  },
+  {
+   "status": "In progress",
+   "dept": "GCC-ENG",
+   "en": "There's a damaged road at 40Feet Scheme Road, Nungambakkam, Nungambakkam. It's been open for well over three weeks, and it's past its deadline. I'd ask the roads department for a repair date today.",
+   "ta": "தேனாம்பேட்டை பகுதியில் சேதமான சாலை இருக்கிறது. மூன்று வாரங்களுக்கும் மேலாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. சாலைத் துறையிடம் சரிசெய்யும் தேதி கேட்கலாம், இன்றே."
+  },
+  {
+   "status": "Open",
+   "dept": "DIST-DM",
+   "en": "There's a weather or flood warning at Chennai district. It's been open for a couple of days, and it's past its deadline. I'd ask District Disaster Management for an update today.",
+   "ta": "Chennai district பகுதியில் வானிலை அல்லது வெள்ள எச்சரிக்கை இருக்கிறது. இரண்டு நாட்களாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. District Disaster Managementஇடம் இன்றே நிலவரம் கேட்கலாம்."
+  }
+ ]
+}

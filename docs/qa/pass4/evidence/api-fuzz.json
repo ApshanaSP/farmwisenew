@@ -1,0 +1,306 @@
+{
+ "generated": "2026-11-06T17:25:17.903Z",
+ "port": 3140,
+ "seed": 4,
+ "bigMb": 20,
+ "minutes": 1.8,
+ "routesTotal": 116,
+ "budgetStopped": false,
+ "noisyTablesIgnored": [],
+ "summary": {
+  "requests": 4669,
+  "status5xx": 2,
+  "stack": 16,
+  "partialWrite": 1,
+  "crash": 0,
+  "hang": 0,
+  "skippedForBudget": 0
+ },
+ "crashes": [],
+ "groups": [
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?period=constructor",
+   "status": 500,
+   "ms": 911,
+   "problems": [
+    "500"
+   ],
+   "sample": "{\"error\":\"Could not load the briefing.\"}",
+   "count": 2,
+   "cases": [
+    "collector/query:?period=constructor=500",
+    "collector/query:?period=__proto__=500"
+   ]
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?__proto__[admin]=1&constructor[prototyp",
+   "status": 200,
+   "ms": 1563,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor",
+   "count": 16,
+   "cases": [
+    "collector/query:?__proto__[admin]=1&constructor[prototyp=200",
+    "collector/query:?zone=%00&taluk=%00=200",
+    "collector/query:?limit=-1&offset=-5=200",
+    "collector/query:?limit=99999999999&page=1e308=200",
+    "collector/query:?period=daily&period=weekly&period[]=x=200",
+    "collector/query:?dept=%27%20OR%201%3D1--=200"
+   ]
+  },
+  {
+   "route": "/api/collector/jobs/route-news",
+   "method": "POST",
+   "who": "anonymous",
+   "case": "form-urlencoded",
+   "status": 401,
+   "ms": 199,
+   "problems": [
+    "rows-changed-after-rejected-write:{\"_changes\":[85,139],\"source_items\":[770,818],\"source_runs\":[109,111]}"
+   ],
+   "sample": "{\"error\":\"Not authorised\"}",
+   "count": 1,
+   "cases": [
+    "anonymous/form-urlencoded=401"
+   ]
+  }
+ ],
+ "problemRows": [
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?period=constructor",
+   "status": 500,
+   "ms": 911,
+   "problems": [
+    "500"
+   ],
+   "sample": "{\"error\":\"Could not load the briefing.\"}"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?period=__proto__",
+   "status": 500,
+   "ms": 902,
+   "problems": [
+    "500"
+   ],
+   "sample": "{\"error\":\"Could not load the briefing.\"}"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?__proto__[admin]=1&constructor[prototyp",
+   "status": 200,
+   "ms": 1563,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?zone=%00&taluk=%00",
+   "status": 200,
+   "ms": 1380,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?limit=-1&offset=-5",
+   "status": 200,
+   "ms": 1385,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?limit=99999999999&page=1e308",
+   "status": 200,
+   "ms": 1326,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?period=daily&period=weekly&period[]=x",
+   "status": 200,
+   "ms": 1276,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?dept=%27%20OR%201%3D1--",
+   "status": 200,
+   "ms": 1418,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?id=null&code=undefined",
+   "status": 200,
+   "ms": 1341,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?lat=NaN&lon=Infinity",
+   "status": 200,
+   "ms": 1196,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?format=../../etc/passwd",
+   "status": 200,
+   "ms": 1473,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "query:?meta=1&since=-1",
+   "status": 200,
+   "ms": 1264,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:cat=weird",
+   "status": 200,
+   "ms": 1289,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:dept=weird",
+   "status": 200,
+   "ms": 1262,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:part=weird",
+   "status": 200,
+   "ms": 1252,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:period=weird",
+   "status": 200,
+   "ms": 1344,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:taluk=weird",
+   "status": 200,
+   "ms": 1300,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/insights",
+   "method": "GET",
+   "who": "collector",
+   "case": "param:zone=weird",
+   "status": 200,
+   "ms": 1328,
+   "problems": [
+    "stack-or-internal-path-in-body"
+   ],
+   "sample": "{\"now\":\"2026-11-06 18:08:00\",\"scope\":\"Chennai district\",\"book\":{\"status\":{\"level\":\"alert\",\"reasons\":[\"IMD orange warning for Chennai\",\"Cyclone Murasu in 5 news outlets\",\"CFM-DSS flood gauges not repor"
+  },
+  {
+   "route": "/api/collector/jobs/route-news",
+   "method": "POST",
+   "who": "anonymous",
+   "case": "form-urlencoded",
+   "status": 401,
+   "ms": 199,
+   "problems": [
+    "rows-changed-after-rejected-write:{\"_changes\":[85,139],\"source_items\":[770,818],\"source_runs\":[109,111]}"
+   ],
+   "sample": "{\"error\":\"Not authorised\"}"
+  }
+ ]
+}

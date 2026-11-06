@@ -1,0 +1,22 @@
+QA pass 4, audit-ui_honesty-13. Lines copied from data/aws-cache/qa/run/srv-3134.log, real server, no model key, production build.
+The launcher overwrites that log on every start, so the lines are kept here. Paths shortened to <app>.
+
+With an index in data/lancedb and the model file a 134-byte git-lfs pointer, one question:
+  assistant chat failed 04000c32-af30-47da-a9ee-d2ec2d3b1b34 Error: Load model from <app>\.cache\models\Xenova\multilingual-e5-base\onnx\model_quantized.onnx failed:Protobuf parsing failed.
+      at Worker.<anonymous> (<app>\.next-qa\server\chunks\337.js:1:1492)
+  [assistant] search index: incidents: embedding 300 of 27923 (0 reused, 12849 left for later)
+  [assistant] search index sync failed: Load model from <app>\.cache\models\Xenova\multilingual-e5-base\onnx\model_quantized.onnx failed:Protobuf parsing failed.
+
+What the person sees (SSE event: error), HTTP 200:
+  Something went wrong while answering. Please try again.
+Seen for: "How many feeds are live?" 5 of 5 times over 2 servers, one on --frozen and one on --frozen --ticking;
+"Tell me about the fallen tree near Adyar"; "Any reports about a sinkhole?"; "பள்ளம் பற்றிய புகார் உள்ளதா?".
+Count on the second server after 28 questions: 7 "assistant chat failed", 28 "search index sync failed".
+
+With no index on disk (the folder was emptied at 21:59:59 by something other than this job, then the server restarted), the same questions:
+  How many feeds are live?                  -> No incidents or news reports match that in the last 90 days.
+  Tell me about the fallen tree near Adyar  -> No incidents or news reports match that in the last 90 days.
+  Any reports about a sinkhole?             -> No incidents or news reports match that in the last 90 days.
+  பள்ளம் பற்றிய புகார் உள்ளதா?               -> இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை
+No "assistant chat failed" in that run. The index was not put back to repeat the first case, because every server of this worktree shares that folder.
+Stat only: the main checkout has the 278,647,662-byte model and no data/lancedb folder.

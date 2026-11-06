@@ -1,0 +1,239 @@
+[
+  {
+    "id": "BUG-004",
+    "original_input": "Explaining an issue on the case screen, as in \"explain the flooding complaint in Adyar\". Original line: \"Severe, status Open, open for 6 hours. X handles it.\"",
+    "path_driven": "POST /api/collector/thunai/agent/round as the Collector on server 3131 (clock from 12:00 IST, store's as-of 18:08 IST), in two separate runs: this run (tests/qa/pass4/audit-narrate_and_figures.drive.mjs narrate) sent 11 sentences through the quick lane and {direct: {recipe: 'case', slots: {id}}} for 213 incidents, two newest of every status and lead department from tests/qa/oracle/pinned.mjs; the earlier run sent 226. Also typed in the real Jarvis bar in Chromium (earlier run).",
+    "variations_tried": [
+      "explain the flooding complaint in Adyar",
+      "explain this flooding issue in Adyar",
+      "what's going on with the garbage in Anna Nagar",
+      "explain the garbage complaint in Royapuram",
+      "tell me about the street light complaint in Velachery",
+      "Adyar flooding enna aachu",
+      "Anna Nagar kuppai enna aachu",
+      "அடையாறு வெள்ளம் விளக்கு",
+      "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க",
+      "அண்ணா நகர் குப்பை புகார் விளக்கவும்",
+      "தேனாம்பேட்டை கொசு பிரச்சினை விளக்கு",
+      "explain the mosquito complaint in Teynampet",
+      "Perungudi la kuppai problem enna aachu",
+      "பெருங்குடி தெருவிளக்கு புகார் விளக்கு"
+    ],
+    "result": "holds",
+    "what_was_seen": "No line reads fields out, in 213 of 213 screens this run and 220 the earlier run: no field label, no status read out, no id, no code. \"There's standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.\" The Tamil: \"அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது.\" BUG-004's own failure is gone. WHICH case it retells is wrong, though: AUD-NF-4 (the least severe) and AUD-NF-5 (the wrong place). Smaller problems in the retelling: AUD-NF-11, AUD-NF-13.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (narrate); docs/qa/pass4/evidence/bug-audit/narrate_and_figures-case-sweep.json; tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-004, BUG-031 block)"
+  },
+  {
+    "id": "BUG-019",
+    "original_input": "The Tamil retelling of a case held by a துறை: \"துறைவிடம்\".",
+    "path_driven": "POST /api/collector/thunai/agent/round, direct case screens for every lead department (213 this run, 226 the earlier run), reading stage.say.ta; Tamil sentences through the quick lane.",
+    "variations_tried": [
+      "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க",
+      "அடையாறு தெருவிளக்கு புகார் என்ன ஆச்சு",
+      "தேனாம்பேட்டை கொசு பிரச்சினை விளக்கு",
+      "cases held by GCC-*, POL-*, PWD-*, HLT-DMS, CMWSSB, DIST-DM, TNPCB",
+      "Tanglish asks (Adyar flooding enna aachu) are answered in English, say.en, so the join does not arise there",
+      "பெருங்குடி தெருவிளக்கு புகார் விளக்கு",
+      "அண்ணா நகர் குப்பை புகார் விளக்கவும்"
+    ],
+    "result": "partly",
+    "what_was_seen": "The original is fixed: \"துறையிடம்\", no \"துறைவிடம்\" in any screen. Forms seen this run: Managementஇடம் (2), பிரிவிடம் (13), மாநகராட்சியிடம் (71), துறையிடம் (18), வாரியத்திடம் (8), காவல்துறையிடம் (3), பொதுப்பணித்துறையிடம் (5), Boardஇடம் (2). The same class is still there for a department with no Tamil name: \"District Disaster Managementஇடம் நிலவரம் கேட்கலாம்.\" and \"Pollution Control Boardஇடம் இன்றே நிலவரம் கேட்கலாம்.\" (4 of 213, finding AUD-NF-7).",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (narrate.sweep.bad_join, join_forms); test AUD-NF-7"
+  },
+  {
+    "id": "BUG-031",
+    "original_input": "A Resolved case retold as open, with a job to do: \"It's been open for several hours... I'd ask them to send a pump\".",
+    "path_driven": "POST /api/collector/thunai/agent/round, direct case by id on real Resolved, Rejected and Lapsed incidents (91 this run, 140 the earlier one), and open ones (122, 86). Then real decisions on 3131: POST /api/collector/decisions with the confirm step (resolve, reject, reopen), and the case screen asked again. By a sentence (explain <id>), a fake model at the boundary picks the case, in tests, because the server has no model.",
+    "variations_tried": [
+      "Resolved, Rejected, Lapsed by the pipeline",
+      "closed by the Collector's resolve and reject",
+      "a Resolved case reopened by the Collector",
+      "both spoken languages (say.en, say.ta)",
+      "explain INC-20261105-8CA458, INC-20261105-8CA458 enna aachu, INC-20261105-8CA458 விளக்கு: these three need the planner, and the server has no model, so they answered no-model; the same screen was driven by id instead"
+    ],
+    "result": "holds",
+    "what_was_seen": "0 of 91 closed cases told as open in either language, 0 of 122 open told as closed (the earlier run: 0 of 140, 0 of 86). \"There was standing water at Guindy Industrial Estate (Guindy Industrial Estate Storm Water Channel). It's marked resolved, so there's nothing to chase unless it comes back.\" \"There was a street light or electrical problem at Silandhi Kuttai Main Road, Silandhi Kuttai, Villivakkam. It was rejected and closed, so no work is pending on it.\" \"There was a drainage or sewage problem at Ennore. It lapsed without being marked fixed, so it's worth checking whether the problem is still there.\" Tamil: \"அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்.\" A case reopened by the Collector is told as open: \"There's a traffic blockage at Ward 100. It's been open for about a day. I'd ask the police for an update.\". Beside it: right after a decision the screen stays on the old story for up to a minute (AUD-NF-10), the reopened case's age is the pipeline's old figure (AUD-NF-14), and closed cases still carry the Past deadline flag (AUD-NF-19).",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (narrate, decisions); narrate_and_figures-case-sweep.json; narrate_and_figures-decisions.json; tests/qa/pass4/audit-narrate_and_figures.test.ts"
+  },
+  {
+    "id": "BUG-007",
+    "original_input": "\"Show overdue cases\": 40 overdue cases said as 12.",
+    "path_driven": "POST /api/collector/thunai/agent/round as the Collector, sentences and {direct: {recipe: 'cases', slots: {status: 'overdue', period, zones}}}, compared with GET /api/collector/list?status=overdue and tests/qa/oracle/pinned.mjs. \"show overdue cases\" itself needs the planner: the no-key server answers no-model, so a fake model at the boundary picked the same screen in the test. Also typed in the Jarvis bar in Chromium (earlier run).",
+    "variations_tried": [
+      "show overdue cases (fake model)",
+      "overdue cases this week",
+      "show me overdue cases today",
+      "indha week overdue cases kaattu",
+      "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்",
+      "200 scopes: 4 periods by district and 15 zones, by severity",
+      "innaiku overdue cases enna",
+      "இன்று காலக்கெடு தாண்டிய சம்பவங்கள் (no-model on this server)",
+      "100 scopes this run: 4 periods by district and zones 13, 4, 5, 9, by severity"
+    ],
+    "result": "reopened",
+    "what_was_seen": "Worse than the original. Asked for overdue cases, Jarvis says there are none: \"There are no cases this week for this view.\" Tamil: \"இந்தப் பார்வையில் இந்த வாரம்  சம்பவங்கள் இல்லை.\" The screen says \"No incidents match this view.\" The console's list equals the oracle in 100 of 100 scopes: today 11, this week 339, 30 days 742, 90 days 888, and Jarvis says none for all four. This run 20 of 20 no-severity scopes with overdue cases say none (the earlier, wider sweep: 44 of 56). Ask District IQ gives the right figure for the same question: \"339 incidents reported in the last 7 days are past their deadline\". Cause: the tool's page of 12 is sorted Low severity first, and the overdue rows are filtered out of that one page. The old test used a fake tool whose rows were all overdue.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (overdue); docs/qa/pass4/evidence/bug-audit/narrate_and_figures-bug007-no-cases.png; narrate_and_figures-bug007-no-cases-tanglish.png; narrate_and_figures-overdue-sweep.json; narrate_and_figures-browser.json; test AUD-NF-1"
+  },
+  {
+    "id": "BUG-021",
+    "original_input": "\"Severe overdue cases\" said every overdue case's count.",
+    "path_driven": "POST /api/collector/thunai/agent/round, quick-lane sentences and direct screens, compared with GET /api/collector/list?status=overdue&sev= and tests/qa/oracle/pinned.mjs, in 66 severity scopes with overdue cases this run and 136 scopes the earlier run.",
+    "variations_tried": [
+      "severe overdue cases",
+      "severe cases past the deadline",
+      "which severe cases are overdue",
+      "overdue severe cases this week",
+      "overdue severe cases this month",
+      "overdue high priority cases in Adyar",
+      "severe overdue cases innaiku",
+      "overdue severe cases Adyar la",
+      "இந்த வாரம் கெடு தாண்டிய கடுமையான சம்பவங்கள் காட்டு",
+      "கடுமையான காலக்கெடு தாண்டிய சம்பவங்கள் (no-model on this server)",
+      "Severe, High, Medium, Low by each period and zone"
+    ],
+    "result": "partly",
+    "what_was_seen": "The original is gone: \"6 severe cases today\" is right (console and oracle 6), not all 11. But not the same figure as the console: this week \"37 severe cases\" (console and oracle 39, Ask District IQ 39; 37 is the groups), 30 days 59 (61), 90 days 60 (oracle 65, groups 63: the count stops after nine pages, so it is neither). Of 35 scopes that spoke, 12 differ from the console's incidents. At High, Medium and Low it fails as BUG-007 does: \"There are no high cases today for this view.\" while the console has 5, \"There are no high cases this week for this view.\" while it has 139. 31 of 66 severity scopes with overdue cases say none.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (overdue.scopes); narrate_and_figures-overdue-sweep.json; test AUD-NF-3"
+  },
+  {
+    "id": "BUG-008",
+    "original_input": "Trends > weekly after midnight on an IST server (all 0), and on a UTC server on Monday morning (last week lost).",
+    "path_driven": "GET /api/collector/insights?period=monthly&part=trends as the Collector on a second server (3132), started 8 times with --frozen <ISO> --env TZ=..., compared with weekly counts from tests/qa/oracle/pinned.mjs (tests/qa/pass4/audit-narrate_and_figures.drive.mjs tz).",
+    "variations_tried": [
+      "UTC, 2026-11-07 00:30:00 IST (utc-after-ist-midnight-sat)",
+      "UTC, 2026-11-09 03:00:00 IST (utc-monday-0300-ist)",
+      "Asia/Kolkata, 2026-11-09 00:30:00 IST (ist-monday-0030)",
+      "America/New_York, 2026-11-09 10:00:00 IST (newyork-monday-1000-ist)",
+      "Pacific/Auckland, 2026-11-08 17:30:00 IST (auckland-local-monday-ist-sunday)",
+      "Asia/Kolkata, 2026-11-07 00:30:00 IST (ist-after-midnight-sat)",
+      "America/Los_Angeles, 2026-11-07 23:50:00 IST (losangeles-sat-2350-ist)",
+      "Asia/Kolkata, 2026-11-08 23:59:00 IST (ist-sunday-2359)"
+    ],
+    "result": "holds",
+    "what_was_seen": "The original failures are gone. In all 8 runs the 12 keys are Mondays, the last key is the last whole week, the last week is kept on a Monday morning in UTC and in New York, and every week but the oldest equals the oracle exactly. utc-after-ist-midnight-sat: keys 2026-08-10 to 2026-10-26, all Mondays true, 0 empty weeks, totals 272,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164, oracle 1083,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164 | utc-monday-0300-ist: keys 2026-08-17 to 2026-11-02, all Mondays true, 0 empty weeks, totals 974,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998, oracle 987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998 | ist-monday-0030: keys 2026-08-17 to 2026-11-02, all Mondays true, 0 empty weeks, totals 983,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998, oracle 987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998 | newyork-monday-1000-ist: keys 2026-08-17 to 2026-11-02, all Mondays true, 0 empty weeks, totals 943,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998, oracle 987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164,998 | auckland-local-monday-ist-sunday: keys 2026-08-10 to 2026-10-26, all Mondays true, 0 empty weeks, totals 42,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164, oracle 1083,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164 | ist-after-midnight-sat: keys 2026-08-10 to 2026-10-26, all Mondays true, 0 empty weeks, totals 272,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164, oracle 1083,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164 | losangeles-sat-2350-ist: keys 2026-08-10 to 2026-10-26, all Mondays true, 0 empty weeks, totals 126,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164, oracle 1083,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164 | ist-sunday-2359: keys 2026-08-10 to 2026-10-26, all Mondays true, 1 empty weeks, totals 0,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164, oracle 1083,987,1196,1065,1071,1176,1109,1142,1172,1214,1506,1164. One smaller thing: the oldest week is cut by the 84-day window, so the line starts low, and at Sunday 23:59 IST its point is 0 where the oracle has 1,083 (AUD-NF-18). Two first attempts of the driver died with a connection reset (ECONNRESET) on 3132, at different clocks; both passed when run again. The logs of those two attempts were overwritten by the next start, so the cause is not known; the logs of the runs again show no error. Not counted as a finding, since it did not come back.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (tz); narrate_and_figures-tz.json; tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-008 block)"
+  },
+  {
+    "id": "BUG-017",
+    "original_input": "A model line, \"There is only one severe case open in Adyar\", spoken with no figures allowed.",
+    "path_driven": "planRound with a fake model at the boundary (no model is called) returning the chat line, then what the round passes on; figuresIn and gateChunk from the same module the browser's speech uses.",
+    "variations_tried": [
+      "There is only one severe case open in Adyar.",
+      "One complaint came in today.",
+      "Just one incident is open.",
+      "Only one is open in Adyar.",
+      "There is a single severe case open in Adyar.",
+      "Only one severe flooding case is open in Adyar.",
+      "There's just one flood in Adyar.",
+      "There are 3 severe cases open in Adyar.",
+      "There are three severe cases open in Adyar.",
+      "அடையாறில் ஒரே ஒரு கடுமையான சம்பவம் மட்டுமே உள்ளது.",
+      "ஒரு புகார் மட்டும் வந்துள்ளது.",
+      "Adyar la oru severe case dhaan irukku.",
+      "Adyar la onnu dhaan open la irukku."
+    ],
+    "result": "partly",
+    "what_was_seen": "The original and its near forms are stopped, and digits and number words are stopped on the server (\"kind none, note checker\"). Other ways of saying one still pass with nothing allowed. Through the round: \"There is a single severe case open in Adyar.\" comes back as kind chat, said as it is. figuresIn finds no figure in any of the Tamil and Tanglish forms: the fix covers English only (AUD-NF-6). Run again in this session with the tests' expected failures turned off, to see the real reason: each of the seven forms fails with figuresIn finding no figure, and the round's line comes back as \"There is a single severe case open in Adyar.\" No model is called anywhere: this path needs a model, so a fake one gives the line.",
+    "evidence": "tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-017 blocks, AUD-NF-6)"
+  },
+  {
+    "id": "BUG-018",
+    "original_input": "\"how many incidents yesterday\": the 24 hours before the last 24.",
+    "path_driven": "POST /api/collector/assistant/chat (Ask District IQ) on 3131 (now 6 Nov 18:08 IST), and on 3132 with UTC, Asia/Kolkata, America/New_York, Pacific/Auckland, America/Los_Angeles across IST midnight and a Monday morning; each calendar day's figures from tests/qa/oracle/pinned.mjs beside it. Also in the Ask District IQ panel in Chromium (earlier run).",
+    "variations_tried": [
+      "how many incidents yesterday",
+      "how many severe incidents yesterday",
+      "how many incidents in Adyar yesterday",
+      "how many incidents were closed yesterday",
+      "yesterday's incidents",
+      "நேற்று எத்தனை புகார்கள்",
+      "நேற்று எத்தனை புகார்கள் வந்தன",
+      "நேற்று எத்தனை சம்பவங்கள்",
+      "நேற்றைய புகார்கள் எத்தனை",
+      "நேத்து எவ்வளவு புகார்",
+      "nethu evlo incidents",
+      "nethu evlo complaints",
+      "nethu Adyar la evlo incidents",
+      "neththu evlo severe cases",
+      "how many were resolved yesterday",
+      "how many deaths yesterday",
+      "நேற்று அடையாறில் எத்தனை புகார்கள்"
+    ],
+    "result": "reopened",
+    "what_was_seen": "The label says 5 Nov and the figures are 4 Nov, every time: \"239 incidents were reported in yesterday (5 Nov) (174 in the period before): 17 severe, 222 still open, 4 deaths.\" The oracle: 5 Nov 245 reported, 18 severe, 236 open, 21 deaths; 4 Nov 239, 17, 222, 4; 3 Nov 174 (the \"period before\"). Adyar \"13\" (5 Nov 17, 4 Nov 13). Closed \"148\" (5 Nov 165, 4 Nov 148). Tamil \"133 புகார்கள் · நேற்று\" (5 Nov 150, 4 Nov 133). Tanglish \"netru 239 incidents report aagirukku (munnadi 174)\". The same across time zones and clocks: utc-after-ist-midnight-sat: \"245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.\" oracle 2026-11-06 149, day before 245 | utc-monday-0300-ist: \"0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.\" oracle 2026-11-08 0, day before 0 | ist-monday-0030: \"0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.\" oracle 2026-11-08 0, day before 0 | newyork-monday-1000-ist: \"0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.\" oracle 2026-11-08 0, day before 0 | auckland-local-monday-ist-sunday: \"149 incidents were reported in yesterday (7 Nov) (245 in the period before): 3 severe, 149 still open, 1 death.\" oracle 2026-11-07 0, day before 149 | ist-after-midnight-sat: \"245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.\" oracle 2026-11-06 149, day before 245 | losangeles-sat-2350-ist: \"245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.\" oracle 2026-11-06 149, day before 245 | ist-sunday-2359: \"149 incidents were reported in yesterday (7 Nov) (245 in the period before): 3 severe, 149 still open, 1 death.\" oracle 2026-11-07 0, day before 149. The fix returned both range and offset: 1, and the window code moves the range back by the offset. The test checked customWindow's range only. Other yesterday forms that do not reach this code: AUD-NF-12, AUD-NF-15.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (yesterday, tz); narrate_and_figures-yesterday.json; narrate_and_figures-tz.json; narrate_and_figures-bug018-yesterday.png; test AUD-NF-2"
+  },
+  {
+    "id": "BUG-026",
+    "original_input": "GET /api/officer/overview as a department officer: board.bell held other departments' severe incidents.",
+    "path_driven": "GET /api/officer/overview as officerA (GCC-SWM), officerB (GCC-ELE), officerC (CMWSSB): every INC id anywhere in the JSON looked up in tests/qa/oracle/pinned.mjs, routed cases set aside. 24 reads this run.",
+    "variations_tried": [
+      "daily, weekly, monthly, quarterly",
+      "?zone=13 and ?zone=4",
+      "?dept=POL-GCP and ?dept=GCC-SWD spoofed by each officer"
+    ],
+    "result": "holds",
+    "what_was_seen": "0 ids from another department in 1434 ids read over 24 responses, the same as the earlier run. The bell, severity list and news keep to the officer's department. A spoofed ?dept= still returns the officer's own department. CMWSSB's bell is empty, correctly.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (officer.overview); narrate_and_figures-officer.json; tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-026 block)"
+  },
+  {
+    "id": "BUG-027",
+    "original_input": "GET /api/collector/assistant/insights as an officer, and the Collector's briefing with a department filter: anomalies from every department, each with another department's example headline.",
+    "path_driven": "GET /api/collector/assistant/insights and /api/officer/insights as officers A, B, C; GET /api/collector/insights?period=daily&dept=<code> as the Collector (the same insights() an officer's chips read), with zone 4 too; the reports behind each pattern counted, by department, inside the pattern's own window, in tests/qa/oracle/pinned.mjs.",
+    "variations_tried": [
+      "GCC-SWM, GCC-ELE, CMWSSB as officers",
+      "Collector's filter on GCC-SWD, POL-GCP, PWD-WRD, GCC-LND, GCC-BRG, GCC-EDU, GCC-HLT, TNPCB",
+      "with and without a zone"
+    ],
+    "result": "partly",
+    "what_was_seen": "The example headlines now keep to the department (\"Rain-hit wall caves in near MKB Nagar Bus Stand\" for POL-GCP, empty for one with no report), and officers A, B, C get no other department's pattern. But the filter is by category across all time, so a department with no report behind the pattern still gets it. GCC-EDU and GCC-HLT: \"Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.\" The oracle: all 8 are TNPCB's. GCC-LND and GCC-BRG: \"Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.\" The oracle: GCC-SWD 5, PWD-WRD 3, POL-GCP 2, none theirs. POL-GCP is told the same 10, of which 2 are its own. Finding AUD-NF-8.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (officer); narrate_and_figures-officer.json; test AUD-NF-8"
+  },
+  {
+    "id": "BUG-028",
+    "original_input": "The Collector resolves or rejects an incident, then opens the briefing: the closed incident still counted.",
+    "path_driven": "POST /api/collector/decisions with the real confirm step (password on the local test account, dry-run store), then GET /api/collector/insights and /api/collector/overview, before, right after, 65 seconds after and over 11 minutes after (tests/qa/pass4/audit-narrate_and_figures.drive.mjs decisions), on a server with its own durable file.",
+    "variations_tried": [
+      "resolve a High case",
+      "reject a Severe overdue case",
+      "resolve a news-only overdue case",
+      "reopen a Resolved case"
+    ],
+    "result": "partly",
+    "what_was_seen": "The counts follow at once and match the oracle read from the server's own durable file: open 236 to 233 (oracle 233), overdue 11 to 9, \"233 incidents are still open, 9 of them past the deadline; 9 severe events.\", the attention list and follow-ups drop the cases, and the KPI tile agrees (ongoing 233). The Briefing Book does not: its department rows keep the pipeline's status: the rejected case still reads \"In progress\", the resolved one \"Under review\", even 11 minutes later. Its good news counts only pipeline closures: resolved stays 175 while the KPI tile went from 3 to 5, and a case the Collector reopened stays in it (test). BriefingBook.tsx draws that status. Finding AUD-NF-9.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (decisions); narrate_and_figures-decisions.json; test AUD-NF-9"
+  },
+  {
+    "id": "BUG-029",
+    "original_input": "GET /api/collector/assistant/export?period=daily: event, area, location, status always blank.",
+    "path_driven": "GET /api/collector/assistant/export as the Collector and as officers A and B; the CSV parsed and each column counted for blanks; each id's department checked in tests/qa/oracle/pinned.mjs.",
+    "variations_tried": [
+      "period=daily, weekly, monthly",
+      "zone=13",
+      "dept=GCC-SWD",
+      "officer own department",
+      "officer with ?dept=POL-GCP"
+    ],
+    "result": "holds",
+    "what_was_seen": "10 columns (list, id, what, where, department, severity, why, reported, past_deadline, complaints), 0 blank cells in every column over 7 exports of 11 to 346 rows, no uneven rows, no unknown ids. Officers get only their own department, with a spoofed ?dept= ignored (0 rows of another department). On the way: the console's export answers 428 (confirm it's you) and this one does not (AUD-NF-20).",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (csv); narrate_and_figures-csv.json; tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-029 block)"
+  },
+  {
+    "id": "BUG-035",
+    "original_input": "A case closed by a decision stays open in Ask District IQ's figures, the officer's insights, the warnings, the AI brief's figures, news, threads, action mail and Data Studio's link.",
+    "path_driven": "Real decisions on 3131 (POST /api/collector/decisions with confirm), then each surface: POST /api/collector/assistant/chat as Collector and officer; GET /api/officer/insights and /overview; the warning answer; GET /api/collector/overview stories; POST /api/map/ask and /api/map/send draft; the Jarvis round. The AI brief through a fake model at the gateway, capturing the facts it is given; Data Studio's list on the real store in the test, since no dataset exists to drive its route.",
+    "variations_tried": [
+      "how many open incidents today",
+      "open incidents by zone today",
+      "which department has the most open incidents",
+      "how many overdue incidents today",
+      "what is the status of <id>",
+      "is there a cyclone warning?",
+      "as officer: how many open incidents today",
+      "read right after, 65 s after, and minutes after"
+    ],
+    "result": "partly",
+    "what_was_seen": "The figures do follow: Ask District IQ \"233 incidents still open · last 24 hours\" from 236, the officer \"22 incidents still open · last 24 hours\" from \"23 incidents still open · last 24 hours\", officer insights \"Closed=4% (1 of 23)\", \"Open past deadline=0 (of 22 still open)\", the map's draft leaves the closed case out (has it: false), the warning's list and the AI brief's facts (earlier run and test), Data Studio's list says closed (test). But not everywhere at once, which is what the fix's own test title says. Right after, Jarvis still retells the closed case as open: \"There's a street light or electrical problem at Perumal Koil 3Rd Colony. It's been open for about a day. It's one of the serious ones. I'd ask the corporation for an update.\"; 65 s later: \"There was a street light or electrical problem at Perumal Koil 3Rd Colony. It's marked resolved, so there's nothing to chase unless it comes back.\". Right after, Jarvis's brief says \"reported=239 severe=9 overdue=11 newsOnly=13\" while the console says overdue 9. The departments answer keeps PWD Water Resources at 242 right after and 241 at 65 s. A developing story still says open true right after its only case is resolved, and false 11 minutes later. Data Studio's cross-link has the same 10-minute cache, read in code only. A reopened case: \"It is open; closed on 2026-11-05 15:49:39.\" (AUD-NF-14). A rejected one: \"It is rejected, and past its deadline.\" (AUD-NF-19). News: the overview's news row for the closed case reads status Resolved, open 0. Action mail: the Map's batch draft leaves closed cases out; the Take action button is hidden on a closed case (Detail.tsx:173), though the route still drafts \"needs your immediate attention\" if called by hand (HTTP 200), which no screen reaches, so it is noted, not a finding. Finding AUD-NF-10.",
+    "evidence": "docs/qa/pass4/evidence/bug-audit/narrate_and_figures-recheck.json (decisions, after, story); narrate_and_figures-decisions.json; tests/qa/pass4/audit-narrate_and_figures.test.ts (BUG-035 blocks, AUD-NF-10)"
+  }
+]

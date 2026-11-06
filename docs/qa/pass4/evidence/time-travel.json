@@ -1,0 +1,1813 @@
+{
+ "ran_at": "2026-11-06T17:16:36.838Z",
+ "moments": [
+  {
+   "moment": "before-asof",
+   "why": "clock earlier than the store's as-of: the console must use the as-of",
+   "iso": "2026-11-05T18:31:00.000Z",
+   "tz": "UTC",
+   "clockWallIST": "2026-11-06 00:01:00",
+   "checks": [
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "reported",
+     "app": 239,
+     "oracle": 239,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe",
+     "app": 9,
+     "oracle": 9,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaints",
+     "app": 147,
+     "oracle": 147,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "ongoing",
+     "app": 236,
+     "oracle": 236,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "resolved",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe_open",
+     "app": 8,
+     "oracle": 8,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaint_inc",
+     "app": 143,
+     "oracle": 143,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "urgent",
+     "app": 54,
+     "oracle": 54,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "daily",
+     "app": 239,
+     "oracle": 239,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "reported",
+     "app": 1357,
+     "oracle": 1357,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe",
+     "app": 65,
+     "oracle": 65,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaints",
+     "app": 692,
+     "oracle": 692,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "ongoing",
+     "app": 1167,
+     "oracle": 1167,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "resolved",
+     "app": 182,
+     "oracle": 182,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe_open",
+     "app": 54,
+     "oracle": 54,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaint_inc",
+     "app": 610,
+     "oracle": 610,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "urgent",
+     "app": 307,
+     "oracle": 307,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "weekly",
+     "app": 1357,
+     "oracle": 1357,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "reported",
+     "app": 5574,
+     "oracle": 5574,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe",
+     "app": 251,
+     "oracle": 251,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaints",
+     "app": 1174,
+     "oracle": 1174,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "ongoing",
+     "app": 2074,
+     "oracle": 2074,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "resolved",
+     "app": 3084,
+     "oracle": 3084,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe_open",
+     "app": 102,
+     "oracle": 102,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaint_inc",
+     "app": 985,
+     "oracle": 985,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "urgent",
+     "app": 537,
+     "oracle": 537,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "monthly",
+     "app": 5574,
+     "oracle": 5574,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "reported",
+     "app": 15115,
+     "oracle": 15115,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe",
+     "app": 596,
+     "oracle": 596,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaints",
+     "app": 1238,
+     "oracle": 1238,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "ongoing",
+     "app": 2411,
+     "oracle": 2411,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "resolved",
+     "app": 11784,
+     "oracle": 11784,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe_open",
+     "app": 137,
+     "oracle": 137,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaint_inc",
+     "app": 1040,
+     "oracle": 1040,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "urgent",
+     "app": 666,
+     "oracle": 666,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "quarterly",
+     "app": 15115,
+     "oracle": 15115,
+     "ok": true
+    },
+    {
+     "surface": "insights.briefing",
+     "status": 200,
+     "now": "2026-11-06 18:08:00",
+     "ok": true
+    },
+    {
+     "surface": "insights.trends",
+     "status": 200,
+     "now": "2026-11-06 18:08:00",
+     "ok": true
+    },
+    {
+     "surface": "officer/overview",
+     "status": 200,
+     "ok": true
+    },
+    {
+     "surface": "briefing.name",
+     "name": "Briefing 2026-11-06 (daily)",
+     "expectDate": "2026-11-06",
+     "ok": true
+    },
+    {
+     "surface": "chat:yesterday",
+     "headline": "133 citizen complaints · yesterday (5 Nov)",
+     "n": 133,
+     "expected": {
+      "cal": 150,
+      "roll": 148
+     },
+     "matches": [],
+     "ok": false
+    },
+    {
+     "surface": "chat:this week",
+     "headline": "787 citizen complaints · last 7 days",
+     "n": 787,
+     "expected": {
+      "roll7": 787
+     },
+     "matches": [
+      "roll7"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:last month",
+     "headline": "3,255 citizen complaints · last 30 days",
+     "n": 3255,
+     "expected": {
+      "roll30": 3255
+     },
+     "matches": [
+      "roll30"
+     ],
+     "ok": true
+    }
+   ],
+   "oracleNow": "2026-11-06 18:08:00"
+  },
+  {
+   "moment": "before-asof",
+   "why": "clock earlier than the store's as-of: the console must use the as-of",
+   "iso": "2026-11-05T18:31:00.000Z",
+   "tz": "Asia/Kolkata",
+   "clockWallIST": "2026-11-06 00:01:00",
+   "checks": [
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "reported",
+     "app": 239,
+     "oracle": 239,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe",
+     "app": 9,
+     "oracle": 9,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaints",
+     "app": 147,
+     "oracle": 147,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "ongoing",
+     "app": 236,
+     "oracle": 236,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "resolved",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe_open",
+     "app": 8,
+     "oracle": 8,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaint_inc",
+     "app": 143,
+     "oracle": 143,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "urgent",
+     "app": 54,
+     "oracle": 54,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "daily",
+     "app": 239,
+     "oracle": 239,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "reported",
+     "app": 1357,
+     "oracle": 1357,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe",
+     "app": 65,
+     "oracle": 65,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaints",
+     "app": 692,
+     "oracle": 692,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "ongoing",
+     "app": 1167,
+     "oracle": 1167,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "resolved",
+     "app": 182,
+     "oracle": 182,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe_open",
+     "app": 54,
+     "oracle": 54,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaint_inc",
+     "app": 610,
+     "oracle": 610,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "urgent",
+     "app": 307,
+     "oracle": 307,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "weekly",
+     "app": 1357,
+     "oracle": 1357,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "reported",
+     "app": 5574,
+     "oracle": 5574,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe",
+     "app": 251,
+     "oracle": 251,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaints",
+     "app": 1174,
+     "oracle": 1174,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "ongoing",
+     "app": 2074,
+     "oracle": 2074,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "resolved",
+     "app": 3084,
+     "oracle": 3084,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe_open",
+     "app": 102,
+     "oracle": 102,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaint_inc",
+     "app": 985,
+     "oracle": 985,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "urgent",
+     "app": 537,
+     "oracle": 537,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "monthly",
+     "app": 5574,
+     "oracle": 5574,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "reported",
+     "app": 15115,
+     "oracle": 15115,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe",
+     "app": 596,
+     "oracle": 596,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaints",
+     "app": 1238,
+     "oracle": 1238,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "ongoing",
+     "app": 2411,
+     "oracle": 2411,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "resolved",
+     "app": 11784,
+     "oracle": 11784,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe_open",
+     "app": 137,
+     "oracle": 137,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaint_inc",
+     "app": 1040,
+     "oracle": 1040,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "urgent",
+     "app": 666,
+     "oracle": 666,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "quarterly",
+     "app": 15115,
+     "oracle": 15115,
+     "ok": true
+    },
+    {
+     "surface": "insights.briefing",
+     "status": 200,
+     "now": "2026-11-06 18:08:00",
+     "ok": true
+    },
+    {
+     "surface": "insights.trends",
+     "status": 200,
+     "now": "2026-11-06 18:08:00",
+     "ok": true
+    },
+    {
+     "surface": "officer/overview",
+     "status": 200,
+     "ok": true
+    },
+    {
+     "surface": "briefing.name",
+     "name": "Briefing 2026-11-06 (daily)",
+     "expectDate": "2026-11-06",
+     "ok": true
+    },
+    {
+     "surface": "chat:yesterday",
+     "headline": "133 citizen complaints · yesterday (5 Nov)",
+     "n": 133,
+     "expected": {
+      "cal": 150,
+      "roll": 148
+     },
+     "matches": [],
+     "ok": false
+    },
+    {
+     "surface": "chat:this week",
+     "headline": "787 citizen complaints · last 7 days",
+     "n": 787,
+     "expected": {
+      "roll7": 787
+     },
+     "matches": [
+      "roll7"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:last month",
+     "headline": "3,255 citizen complaints · last 30 days",
+     "n": 3255,
+     "expected": {
+      "roll30": 3255
+     },
+     "matches": [
+      "roll30"
+     ],
+     "ok": true
+    }
+   ],
+   "oracleNow": "2026-11-06 18:08:00"
+  },
+  {
+   "moment": "just-before-ist-midnight",
+   "why": "23:59:30 IST on 6 Nov",
+   "iso": "2026-11-06T18:29:30.000Z",
+   "tz": "UTC",
+   "clockWallIST": "2026-11-06 23:59:30",
+   "checks": [
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "reported",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaints",
+     "app": 97,
+     "oracle": 97,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "ongoing",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "resolved",
+     "app": 0,
+     "oracle": 0,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe_open",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaint_inc",
+     "app": 93,
+     "oracle": 93,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "urgent",
+     "app": 28,
+     "oracle": 28,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "daily",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "reported",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe",
+     "app": 60,
+     "oracle": 60,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaints",
+     "app": 677,
+     "oracle": 677,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "ongoing",
+     "app": 1142,
+     "oracle": 1142,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "resolved",
+     "app": 160,
+     "oracle": 160,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe_open",
+     "app": 51,
+     "oracle": 51,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaint_inc",
+     "app": 596,
+     "oracle": 596,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "urgent",
+     "app": 294,
+     "oracle": 294,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "weekly",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "reported",
+     "app": 5515,
+     "oracle": 5515,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe",
+     "app": 248,
+     "oracle": 248,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaints",
+     "app": 1172,
+     "oracle": 1172,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "ongoing",
+     "app": 2073,
+     "oracle": 2073,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "resolved",
+     "app": 3030,
+     "oracle": 3030,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe_open",
+     "app": 102,
+     "oracle": 102,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaint_inc",
+     "app": 983,
+     "oracle": 983,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "urgent",
+     "app": 537,
+     "oracle": 537,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "monthly",
+     "app": 5515,
+     "oracle": 5515,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "reported",
+     "app": 15080,
+     "oracle": 15080,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe",
+     "app": 595,
+     "oracle": 595,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaints",
+     "app": 1238,
+     "oracle": 1238,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "ongoing",
+     "app": 2415,
+     "oracle": 2415,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "resolved",
+     "app": 11745,
+     "oracle": 11745,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe_open",
+     "app": 137,
+     "oracle": 137,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaint_inc",
+     "app": 1040,
+     "oracle": 1040,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "urgent",
+     "app": 666,
+     "oracle": 666,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "quarterly",
+     "app": 15080,
+     "oracle": 15080,
+     "ok": true
+    },
+    {
+     "surface": "insights.briefing",
+     "status": 200,
+     "now": "2026-11-06 23:59:30",
+     "ok": true
+    },
+    {
+     "surface": "insights.trends",
+     "status": 200,
+     "now": "2026-11-06 23:59:30",
+     "ok": true
+    },
+    {
+     "surface": "officer/overview",
+     "status": 200,
+     "ok": true
+    },
+    {
+     "surface": "briefing.name",
+     "name": "Briefing 2026-11-06 (daily)",
+     "expectDate": "2026-11-06",
+     "ok": true
+    },
+    {
+     "surface": "chat:yesterday",
+     "headline": "133 citizen complaints · yesterday (5 Nov)",
+     "n": 133,
+     "expected": {
+      "cal": 150,
+      "roll": 150
+     },
+     "matches": [],
+     "ok": false
+    },
+    {
+     "surface": "chat:this week",
+     "headline": "759 citizen complaints · last 7 days",
+     "n": 759,
+     "expected": {
+      "roll7": 759
+     },
+     "matches": [
+      "roll7"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:last month",
+     "headline": "3,202 citizen complaints · last 30 days",
+     "n": 3202,
+     "expected": {
+      "roll30": 3202
+     },
+     "matches": [
+      "roll30"
+     ],
+     "ok": true
+    }
+   ],
+   "oracleNow": "2026-11-06 23:59:30"
+  },
+  {
+   "moment": "just-before-ist-midnight",
+   "why": "23:59:30 IST on 6 Nov",
+   "iso": "2026-11-06T18:29:30.000Z",
+   "tz": "Asia/Kolkata",
+   "clockWallIST": "2026-11-06 23:59:30",
+   "checks": [
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "reported",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaints",
+     "app": 97,
+     "oracle": 97,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "ongoing",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "resolved",
+     "app": 0,
+     "oracle": 0,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe_open",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaint_inc",
+     "app": 93,
+     "oracle": 93,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "urgent",
+     "app": 28,
+     "oracle": 28,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "daily",
+     "app": 150,
+     "oracle": 150,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "reported",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe",
+     "app": 60,
+     "oracle": 60,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaints",
+     "app": 677,
+     "oracle": 677,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "ongoing",
+     "app": 1142,
+     "oracle": 1142,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "resolved",
+     "app": 160,
+     "oracle": 160,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe_open",
+     "app": 51,
+     "oracle": 51,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaint_inc",
+     "app": 596,
+     "oracle": 596,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "urgent",
+     "app": 294,
+     "oracle": 294,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "weekly",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "reported",
+     "app": 5515,
+     "oracle": 5515,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe",
+     "app": 248,
+     "oracle": 248,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaints",
+     "app": 1172,
+     "oracle": 1172,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "ongoing",
+     "app": 2073,
+     "oracle": 2073,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "resolved",
+     "app": 3030,
+     "oracle": 3030,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe_open",
+     "app": 102,
+     "oracle": 102,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaint_inc",
+     "app": 983,
+     "oracle": 983,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "urgent",
+     "app": 537,
+     "oracle": 537,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "monthly",
+     "app": 5515,
+     "oracle": 5515,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "reported",
+     "app": 15080,
+     "oracle": 15080,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe",
+     "app": 595,
+     "oracle": 595,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaints",
+     "app": 1238,
+     "oracle": 1238,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "ongoing",
+     "app": 2415,
+     "oracle": 2415,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "resolved",
+     "app": 11745,
+     "oracle": 11745,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe_open",
+     "app": 137,
+     "oracle": 137,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaint_inc",
+     "app": 1040,
+     "oracle": 1040,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "urgent",
+     "app": 666,
+     "oracle": 666,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "quarterly",
+     "app": 15080,
+     "oracle": 15080,
+     "ok": true
+    },
+    {
+     "surface": "insights.briefing",
+     "status": 200,
+     "now": "2026-11-06 23:59:30",
+     "ok": true
+    },
+    {
+     "surface": "insights.trends",
+     "status": 200,
+     "now": "2026-11-06 23:59:30",
+     "ok": true
+    },
+    {
+     "surface": "officer/overview",
+     "status": 200,
+     "ok": true
+    },
+    {
+     "surface": "briefing.name",
+     "name": "Briefing 2026-11-06 (daily)",
+     "expectDate": "2026-11-06",
+     "ok": true
+    },
+    {
+     "surface": "chat:yesterday",
+     "headline": "133 citizen complaints · yesterday (5 Nov)",
+     "n": 133,
+     "expected": {
+      "cal": 150,
+      "roll": 150
+     },
+     "matches": [],
+     "ok": false
+    },
+    {
+     "surface": "chat:this week",
+     "headline": "759 citizen complaints · last 7 days",
+     "n": 759,
+     "expected": {
+      "roll7": 759
+     },
+     "matches": [
+      "roll7"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:last month",
+     "headline": "3,202 citizen complaints · last 30 days",
+     "n": 3202,
+     "expected": {
+      "roll30": 3202
+     },
+     "matches": [
+      "roll30"
+     ],
+     "ok": true
+    }
+   ],
+   "oracleNow": "2026-11-06 23:59:30"
+  },
+  {
+   "moment": "just-after-ist-midnight",
+   "why": "00:01 IST on 7 Nov (still 6 Nov in UTC)",
+   "iso": "2026-11-06T18:31:00.000Z",
+   "tz": "UTC",
+   "clockWallIST": "2026-11-07 00:01:00",
+   "checks": [
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "reported",
+     "app": 149,
+     "oracle": 149,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaints",
+     "app": 97,
+     "oracle": 97,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "ongoing",
+     "app": 149,
+     "oracle": 149,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "resolved",
+     "app": 0,
+     "oracle": 0,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "severe_open",
+     "app": 3,
+     "oracle": 3,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "complaint_inc",
+     "app": 93,
+     "oracle": 93,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "daily",
+     "figure": "urgent",
+     "app": 27,
+     "oracle": 27,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "daily",
+     "app": 149,
+     "oracle": 149,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "reported",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe",
+     "app": 60,
+     "oracle": 60,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaints",
+     "app": 677,
+     "oracle": 677,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "ongoing",
+     "app": 1142,
+     "oracle": 1142,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "resolved",
+     "app": 160,
+     "oracle": 160,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "severe_open",
+     "app": 51,
+     "oracle": 51,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "complaint_inc",
+     "app": 596,
+     "oracle": 596,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "weekly",
+     "figure": "urgent",
+     "app": 294,
+     "oracle": 294,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "weekly",
+     "app": 1309,
+     "oracle": 1309,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "reported",
+     "app": 5513,
+     "oracle": 5513,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe",
+     "app": 248,
+     "oracle": 248,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaints",
+     "app": 1172,
+     "oracle": 1172,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "ongoing",
+     "app": 2073,
+     "oracle": 2073,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "resolved",
+     "app": 3029,
+     "oracle": 3029,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "severe_open",
+     "app": 102,
+     "oracle": 102,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "complaint_inc",
+     "app": 983,
+     "oracle": 983,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "monthly",
+     "figure": "urgent",
+     "app": 537,
+     "oracle": 537,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "monthly",
+     "app": 5513,
+     "oracle": 5513,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "reported",
+     "app": 15078,
+     "oracle": 15078,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe",
+     "app": 595,
+     "oracle": 595,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaints",
+     "app": 1238,
+     "oracle": 1238,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "ongoing",
+     "app": 2415,
+     "oracle": 2415,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "resolved",
+     "app": 11743,
+     "oracle": 11743,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "severe_open",
+     "app": 137,
+     "oracle": 137,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "complaint_inc",
+     "app": 1040,
+     "oracle": 1040,
+     "ok": true
+    },
+    {
+     "surface": "overview",
+     "period": "quarterly",
+     "figure": "urgent",
+     "app": 666,
+     "oracle": 666,
+     "ok": true
+    },
+    {
+     "surface": "list.total",
+     "period": "quarterly",
+     "app": 15078,
+     "oracle": 15078,
+     "ok": true
+    },
+    {
+     "surface": "insights.briefing",
+     "status": 200,
+     "now": "2026-11-07 00:01:00",
+     "ok": true
+    },
+    {
+     "surface": "insights.trends",
+     "status": 200,
+     "now": "2026-11-07 00:01:00",
+     "ok": true
+    },
+    {
+     "surface": "officer/overview",
+     "status": 200,
+     "ok": true
+    },
+    {
+     "surface": "briefing.name",
+     "name": "Briefing 2026-11-07 (daily)",
+     "expectDate": "2026-11-07",
+     "ok": true
+    },
+    {
+     "surface": "chat:yesterday",
+     "headline": "150 citizen complaints · yesterday (6 Nov)",
+     "n": 150,
+     "expected": {
+      "cal": 97,
+      "roll": 150
+     },
+     "matches": [
+      "roll"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:this week",
+     "headline": "759 citizen complaints · last 7 days",
+     "n": 759,
+     "expected": {
+      "roll7": 759
+     },
+     "matches": [
+      "roll7"
+     ],
+     "ok": true
+    },
+    {
+     "surface": "chat:last month",
+     "headline": "3,202 citizen complaints · last 30 days",
+     "n": 3202,
+     "expected": {
+      "roll30": 3202
+     },
+     "matches": [
+      "roll30"
+     ],
+     "ok": true
+    }
+   ],
+   "oracleNow": "2026-11-07 00:01:00"
+  }
+ ],
+ "problems": [
+  {
+   "moment": "before-asof",
+   "tz": "UTC",
+   "what": "Jarvis \"yesterday\" number matches no window",
+   "headline": "133 citizen complaints · yesterday (5 Nov)",
+   "n": 133,
+   "expected": {
+    "cal": 150,
+    "roll": 148
+   }
+  },
+  {
+   "moment": "before-asof",
+   "tz": "Asia/Kolkata",
+   "what": "Jarvis \"yesterday\" number matches no window",
+   "headline": "133 citizen complaints · yesterday (5 Nov)",
+   "n": 133,
+   "expected": {
+    "cal": 150,
+    "roll": 148
+   }
+  },
+  {
+   "moment": "just-before-ist-midnight",
+   "tz": "UTC",
+   "what": "Jarvis \"yesterday\" number matches no window",
+   "headline": "133 citizen complaints · yesterday (5 Nov)",
+   "n": 133,
+   "expected": {
+    "cal": 150,
+    "roll": 150
+   }
+  },
+  {
+   "moment": "just-before-ist-midnight",
+   "tz": "Asia/Kolkata",
+   "what": "Jarvis \"yesterday\" number matches no window",
+   "headline": "133 citizen complaints · yesterday (5 Nov)",
+   "n": 133,
+   "expected": {
+    "cal": 150,
+    "roll": 150
+   }
+  }
+ ]
+}

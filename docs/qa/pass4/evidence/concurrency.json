@@ -1,0 +1,158 @@
+{
+ "ran_at": "2026-11-06T17:19:27.804Z",
+ "cases": [
+  {
+   "name": "complaint: three simultaneous identical submits make one complaint",
+   "ok": true,
+   "statuses": [
+    200,
+    200,
+    200
+   ],
+   "codes": [
+    "2026-285TQR"
+   ],
+   "duplicates": [
+    false,
+    true,
+    true
+   ]
+  },
+  {
+   "name": "complaint: two tabs with different complaints keep both",
+   "ok": true,
+   "statuses": [
+    200,
+    200
+   ],
+   "codes": [
+    "2026-035TAM",
+    "2026-796HZB"
+   ]
+  },
+  {
+   "name": "complaint: the same words from a different citizen are not merged",
+   "ok": true,
+   "status": 200,
+   "code": "2026-421AQJ"
+  },
+  {
+   "name": "officers: four simultaneous approvals of one case record exactly one approval",
+   "ok": true,
+   "id": "INC-20261106-707839",
+   "statuses": [
+    201,
+    409,
+    409,
+    409
+   ],
+   "approvalsInTimeline": 1
+  },
+  {
+   "name": "officers: another department's officer cannot approve it",
+   "ok": true,
+   "status": 404
+  },
+  {
+   "name": "decisions: the same decision sent twice at once is accepted without a server error",
+   "ok": true,
+   "statuses": [
+    201,
+    201
+   ],
+   "bodies": [
+    "{\"saved\":[{\"incident_id\":\"INC-20261106-AD9834\",\"decision_id\":1000000001,\"escalated_to_level\":null}]}",
+    "{\"saved\":[{\"incident_id\":\"INC-20261106-AD9834\",\"decision_id\":1000000001,\"escalated_to_level\":null}]}"
+   ],
+   "historyKeys": 405
+  },
+  {
+   "name": "decisions: after a resolve the incident reads as closed",
+   "ok": true,
+   "status": 200,
+   "st": "Resolved"
+  },
+  {
+   "name": "decisions: opposite decisions at once leave one consistent state and no server error",
+   "ok": true,
+   "statuses": [
+    201,
+    201
+   ],
+   "finalStatus": "Rejected"
+  },
+  {
+   "name": "decisions: reads during a decision give the old or the new figure, never another",
+   "ok": true,
+   "decisionStatus": 201,
+   "before": 1165,
+   "final": 1164,
+   "seen": [
+    1165,
+    1164
+   ],
+   "statuses": [
+    "200,200"
+   ],
+   "reads": 3
+  },
+  {
+   "name": "decisions: the resolved case leaves the open count (one fewer)",
+   "ok": true,
+   "before": 1165,
+   "final": 1164,
+   "note": "a resolved incident that was routed to a department may still count as open"
+  },
+  {
+   "name": "answers: after a stop the server still answers, and the next answer is for the next question",
+   "ok": true,
+   "stopped": {},
+   "health": 200,
+   "next": 200,
+   "headline": "787 citizen complaints · last 7 days",
+   "rid": "5d7106b9-8857-4dd6-ad71-ac8708366aa2"
+  },
+  {
+   "name": "answers: three questions at once each get their own answer",
+   "ok": true,
+   "results": [
+    {
+     "q": "how many citizen complaints this week",
+     "status": 200,
+     "headline": "787 citizen complaints · last 7 days"
+    },
+    {
+     "q": "how many severe incidents this week",
+     "status": 200,
+     "headline": "65 incidents · last 7 days"
+    },
+    {
+     "q": "how many incidents are open past deadline this week",
+     "status": 200,
+     "headline": "339 incidents past their deadline · last 7 days"
+    }
+   ],
+   "mixed": []
+  },
+  {
+   "name": "answers: the same question from two tabs gives the same figure",
+   "ok": true,
+   "out": [
+    {
+     "status": 200,
+     "headline": "787 citizen complaints · last 7 days"
+    },
+    {
+     "status": 200,
+     "headline": "787 citizen complaints · last 7 days"
+    }
+   ]
+  }
+ ],
+ "problems": [],
+ "serverLogErrors": [
+  "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+  "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+  "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed."
+ ]
+}

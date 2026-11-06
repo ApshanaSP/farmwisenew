@@ -1,0 +1,136 @@
+{
+ "jarvisYesterday": {
+  "severe cases yesterday": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Severe cases · today",
+   "period": "daily",
+   "total": 8,
+   "sevs": "Severe,Severe,Severe,Severe,Severe,Severe",
+   "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PW",
+   "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganal"
+  },
+  "how many severe cases yesterday": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Severe cases · today",
+   "period": "daily",
+   "total": 8,
+   "sevs": "Severe,Severe,Severe,Severe,Severe,Severe",
+   "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PW",
+   "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganal"
+  },
+  "நேற்று கடுமையான சம்பவங்கள்": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "கடுமையான சம்பவங்கள் · இன்று",
+   "period": "daily",
+   "total": 8,
+   "sevs": "Severe,Severe,Severe,Severe,Severe,Severe",
+   "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PW",
+   "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganal"
+  },
+  "nethu severe cases": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Severe cases · today",
+   "period": "daily",
+   "total": 8,
+   "sevs": "Severe,Severe,Severe,Severe,Severe,Severe",
+   "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PW",
+   "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganal"
+  },
+  "yesterday's overdue severe cases": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Severe cases · today",
+   "period": "daily",
+   "total": 6,
+   "sevs": "Severe,Severe,Severe,Severe,Severe,Severe",
+   "en": "6 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds",
+   "ta": "இன்று 6 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resource"
+  },
+  "cases in Adyar yesterday": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Cases · Adyar · this week",
+   "period": "weekly",
+   "total": 105,
+   "sevs": "Low,Low,Low,Low,Low,Low",
+   "en": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read t",
+   "ta": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+  }
+ },
+ "closedById": {
+  "explain INC-20261105-8CA458": {
+   "lane": "no-model",
+   "note": "no-model",
+   "en": null,
+   "ta": null
+  },
+  "INC-20261105-8CA458 enna aachu": {
+   "lane": "no-model",
+   "note": "no-model",
+   "en": null,
+   "ta": null
+  },
+  "INC-20261105-8CA458 விளக்கு": {
+   "lane": "no-model",
+   "note": "no-model",
+   "en": null,
+   "ta": null
+  }
+ },
+ "list": {
+  "cases in Adyar this week": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Cases · Adyar · this week",
+   "period": "weekly",
+   "total": 105,
+   "sevs": "Low,Low,Low,Low,Low,Low",
+   "en": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read t",
+   "ta": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+  },
+  "Adyar flooding cases this week": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Cases · Adyar · Flooding & waterlogging · this week",
+   "period": "weekly",
+   "total": 18,
+   "sevs": "Low,Low,Medium,Medium,High,High",
+   "en": "18 cases this week; here are the 12 that matter most. 5 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar.",
+   "ta": "இந்த வாரம் 18 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Flooding & waterlogging at Adayar in Adyar, standing water at Guindy Industrial Estate in Adyar. PWD Water Resources வசம் 5."
+  },
+  "Teynampet cases innaiku": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "Cases · Teynampet · today",
+   "period": "daily",
+   "total": 27,
+   "sevs": "Low,Low,Low,Low,Low,Low",
+   "en": "27 cases today; here are the 12 that matter most. The most urgent: a hospital or health service problem at Palani Amman Koil South 1St Street, Mattan Kuppam, Triplicane in Teynampet. Storm Water Drain",
+   "ta": "இன்று 27 சம்பவங்கள். மிக அவசரமானது: a hospital or health service problem at Palani Amman Koil South 1St Street, Mattan Kuppam, Triplicane in Teynampet. Storm Water Drain வசம் 3. \"படி\" அல்லது \"திற\" என்"
+  },
+  "அடையாறு சம்பவங்கள் இந்த வாரம்": {
+   "lane": "quick",
+   "note": "quick",
+   "recipe": "cases",
+   "title": "சம்பவங்கள் · அடையாறு · இந்த வாரம்",
+   "period": "weekly",
+   "total": 105,
+   "sevs": "Low,Low,Low,Low,Low,Low",
+   "en": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read t",
+   "ta": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+  }
+ }
+}

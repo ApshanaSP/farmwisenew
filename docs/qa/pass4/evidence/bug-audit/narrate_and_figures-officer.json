@@ -1,0 +1,325 @@
+{
+ "overview_by_period": {
+  "officerA/daily": {
+   "dept": "GCC-SWM",
+   "bell": 0,
+   "bellOther": 0,
+   "ids": 83,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerA/weekly": {
+   "dept": "GCC-SWM",
+   "bell": 2,
+   "bellOther": 0,
+   "ids": 251,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerA/monthly": {
+   "dept": "GCC-SWM",
+   "bell": 2,
+   "bellOther": 0,
+   "ids": 334,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerA/quarterly": {
+   "dept": "GCC-SWM",
+   "bell": 2,
+   "bellOther": 0,
+   "ids": 343,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerA/spoof": {
+   "status": 200,
+   "bellDepts": [
+    "GCC-SWM"
+   ]
+  },
+  "officerB/daily": {
+   "dept": "GCC-ELE",
+   "bell": 2,
+   "bellOther": 0,
+   "ids": 103,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerB/weekly": {
+   "dept": "GCC-ELE",
+   "bell": 6,
+   "bellOther": 0,
+   "ids": 284,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerB/monthly": {
+   "dept": "GCC-ELE",
+   "bell": 6,
+   "bellOther": 0,
+   "ids": 353,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerB/quarterly": {
+   "dept": "GCC-ELE",
+   "bell": 6,
+   "bellOther": 0,
+   "ids": 373,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerB/spoof": {
+   "status": 200,
+   "bellDepts": [
+    "GCC-ELE"
+   ]
+  },
+  "officerC/daily": {
+   "dept": "CMWSSB",
+   "bell": 0,
+   "bellOther": 0,
+   "ids": 0,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerC/weekly": {
+   "dept": "CMWSSB",
+   "bell": 0,
+   "bellOther": 0,
+   "ids": 14,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerC/monthly": {
+   "dept": "CMWSSB",
+   "bell": 0,
+   "bellOther": 0,
+   "ids": 32,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerC/quarterly": {
+   "dept": "CMWSSB",
+   "bell": 0,
+   "bellOther": 0,
+   "ids": 41,
+   "otherDeptIds": 0,
+   "otherPaths": {}
+  },
+  "officerC/spoof": {
+   "status": 200,
+   "bellDepts": []
+  }
+ },
+ "overview_by_zone": {
+  "officerA period=weekly&zone=13": {
+   "dept": "GCC-SWM",
+   "bell": [
+    "GCC-SWM"
+   ],
+   "severity": [
+    "GCC-SWM"
+   ],
+   "news": [
+    "GCC-SWM"
+   ],
+   "byCategory": [
+    "Garbage & solid waste"
+   ],
+   "otherIds": 0
+  },
+  "officerA period=monthly&zone=4": {
+   "dept": "GCC-SWM",
+   "bell": [
+    "GCC-SWM"
+   ],
+   "severity": [
+    "GCC-SWM"
+   ],
+   "news": [],
+   "byCategory": [
+    "Garbage & solid waste"
+   ],
+   "otherIds": 0
+  },
+  "officerA period=quarterly": {
+   "dept": "GCC-SWM",
+   "bell": [
+    "GCC-SWM"
+   ],
+   "severity": [
+    "GCC-SWM"
+   ],
+   "news": [
+    "GCC-SWM"
+   ],
+   "byCategory": [
+    "Garbage & solid waste"
+   ],
+   "otherIds": 0
+  },
+  "officerB period=weekly&zone=13": {
+   "dept": "GCC-ELE",
+   "bell": [
+    "GCC-ELE"
+   ],
+   "severity": [
+    "GCC-ELE"
+   ],
+   "news": [],
+   "byCategory": [
+    "Street lights & electrical hazards"
+   ],
+   "otherIds": 0
+  },
+  "officerB period=monthly&zone=4": {
+   "dept": "GCC-ELE",
+   "bell": [
+    "GCC-ELE"
+   ],
+   "severity": [
+    "GCC-ELE"
+   ],
+   "news": [
+    "GCC-ELE"
+   ],
+   "byCategory": [
+    "Street lights & electrical hazards"
+   ],
+   "otherIds": 0
+  },
+  "officerB period=quarterly": {
+   "dept": "GCC-ELE",
+   "bell": [
+    "GCC-ELE"
+   ],
+   "severity": [
+    "GCC-ELE"
+   ],
+   "news": [
+    "GCC-ELE"
+   ],
+   "byCategory": [
+    "Street lights & electrical hazards",
+    "Other / unclassified"
+   ],
+   "otherIds": 0
+  },
+  "officerC period=weekly&zone=13": {
+   "dept": "CMWSSB",
+   "bell": [],
+   "severity": [],
+   "news": [],
+   "byCategory": [],
+   "otherIds": 0
+  },
+  "officerC period=monthly&zone=4": {
+   "dept": "CMWSSB",
+   "bell": [],
+   "severity": [],
+   "news": [],
+   "byCategory": [],
+   "otherIds": 0
+  },
+  "officerC period=quarterly": {
+   "dept": "CMWSSB",
+   "bell": [],
+   "severity": [
+    "CMWSSB"
+   ],
+   "news": [
+    "CMWSSB"
+   ],
+   "byCategory": [
+    "Drinking water supply"
+   ],
+   "otherIds": 0
+  }
+ },
+ "emerging_by_department": {
+  "collector/GCC-SWM": [],
+  "collector/GCC-ELE": [],
+  "collector/CMWSSB": [],
+  "collector/GCC-SWD": [
+   {
+    "cat": "FLOOD_WATERLOGGING",
+    "zone": "Tondiarpet"
+   }
+  ],
+  "collector/POL-GCP": [
+   {
+    "cat": "FLOOD_WATERLOGGING",
+    "zone": "Tondiarpet"
+   }
+  ],
+  "collector/HLT-DMS": [],
+  "collector/PWD-WRD": [
+   {
+    "cat": "FLOOD_WATERLOGGING",
+    "zone": "Tondiarpet"
+   }
+  ],
+  "officerA/chips": [
+   {
+    "kind": "change",
+    "key": "change:2026-11-06",
+    "idDepts": []
+   }
+  ],
+  "officerA/officerInsights": {
+   "ids": 0,
+   "otherDept": 0
+  },
+  "officerB/chips": [
+   {
+    "kind": "change",
+    "key": "change:2026-11-06",
+    "idDepts": []
+   },
+   {
+    "kind": "attention",
+    "key": "attention:INC-20261106-DDB161",
+    "idDepts": [
+     "GCC-ELE"
+    ]
+   },
+   {
+    "kind": "attention",
+    "key": "attention:INC-20261105-45E2DD",
+    "idDepts": [
+     "GCC-ELE"
+    ]
+   }
+  ],
+  "officerB/officerInsights": {
+   "ids": 0,
+   "otherDept": 0
+  },
+  "officerC/chips": [],
+  "officerC/officerInsights": {
+   "ids": 0,
+   "otherDept": 0
+  }
+ },
+ "emerging_reports_behind_the_pattern": {
+  "flooding, Tondiarpet, 4 Nov": {
+   "PWD-WRD": 3,
+   "GCC-SWD": 5,
+   "POL-GCP": 2
+  },
+  "air pollution, Manali, 25 Oct to 3 Nov": {
+   "TNPCB": 8
+  },
+  "air pollution, Tondiarpet, 27 to 31 Oct": {
+   "TNPCB": 8
+  }
+ },
+ "seen_with_collector_dept_filter": [
+  "GCC-EDU: Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual. (no example, no report of its own)",
+  "GCC-HLT: the same two air pollution lines (no example)",
+  "GCC-LND and GCC-BRG: Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual. (no example)",
+  "POL-GCP: the same 10 reports, of which 2 are its own"
+ ]
+}

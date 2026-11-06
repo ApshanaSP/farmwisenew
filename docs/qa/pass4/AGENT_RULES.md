@@ -31,6 +31,9 @@ node tests/qa/pass4/server.mjs stop --port <p>
 - The pinned snapshot is `data/aws-cache/qa/pinned` (build id in `info.json`). Every figure must be compared within this one build.
 - Test accounts (`test-collector.txt`, JSON lines, keys `collector`, `officerA` GCC-SWM, `officerB` GCC-ELE, `officerC` CMWSSB, `citizenA`, `citizenB`). Sign in with POST `/api/auth/login` `{email, password}`. The login sets a per-portal cookie (`dcd_session_collector`, `dcd_session_officer`, `dcd_session_citizen`).
 
+## Silence
+The owner is using this computer. Test browsers must make no sound. Launch every browser with the `--mute-audio` argument. A watcher also mutes any Playwright browser's sound, but never rely on it, and never use the computer's speakers or change its volume.
+
 ## Sharing one machine
 The machine has 12 threads and 16 GB. Wrap heavy commands in the semaphore:
 ```

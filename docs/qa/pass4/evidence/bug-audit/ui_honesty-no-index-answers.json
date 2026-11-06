@@ -1,0 +1,88 @@
+[
+ {
+  "q": "Any reports about a sinkhole?",
+  "kind": "answer",
+  "headline": "No incidents or news reports match that in the last 90 days",
+  "caveats": [
+   "Searched the incident records for the words \"report\", \"sinkhole\" in the last 90 days; the meaning search is not available right now."
+  ],
+  "error": null
+ },
+ {
+  "q": "Any sinkhole?",
+  "kind": "answer",
+  "headline": "5 matching incidents in the last 90 days",
+  "caveats": [
+   "Searched the incident records for the words \"sinkhole\" in the last 90 days; the meaning search is not available right now."
+  ],
+  "error": null
+ },
+ {
+  "q": "Is there a sinkhole?",
+  "kind": "answer",
+  "headline": "625 incidents matching",
+  "caveats": [],
+  "error": null
+ },
+ {
+  "q": "Show news about the sinkhole",
+  "kind": "answer",
+  "headline": "Top district news · last 7 days",
+  "caveats": [
+   "News rests mostly on headlines and short summaries; open a source for the full report."
+  ],
+  "error": null
+ },
+ {
+  "q": "Any reports about a fallen tree?",
+  "kind": "answer",
+  "headline": "No incidents or news reports match that in the last 90 days",
+  "caveats": [
+   "Searched the incident records for the words \"report\", \"fallen\", \"tree\" in the last 90 days; the meaning search is not available right now."
+  ],
+  "error": null
+ },
+ {
+  "q": "Any fallen tree?",
+  "kind": "answer",
+  "headline": "No incidents or news reports match that in the last 90 days",
+  "caveats": [
+   "Searched the incident records for the words \"fallen\", \"tree\" in the last 90 days; the meaning search is not available right now."
+  ],
+  "error": null
+ },
+ {
+  "q": "சிங்க்ஹோல் பற்றிய செய்தி உள்ளதா?",
+  "kind": "answer",
+  "headline": "Top district news · last 7 days",
+  "caveats": [
+   "News rests mostly on headlines and short summaries; open a source for the full report."
+  ],
+  "error": null
+ },
+ {
+  "q": "பள்ளம் பற்றிய புகார் உள்ளதா?",
+  "kind": "answer",
+  "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+  "caveats": [
+   "Searched the incident records for the words \"பள்ளம்\", \"பற்றிய\", \"புகார்\", \"உள்ளதா\" in the last 90 days; the meaning search is not available right now."
+  ],
+  "error": null
+ },
+ {
+  "q": "sinkhole report irukka?",
+  "kind": "answer",
+  "headline": "Idho figures: Incidents matching: 625",
+  "caveats": [],
+  "error": null
+ },
+ {
+  "q": "sinkhole news irukka?",
+  "kind": "answer",
+  "headline": "Top district news · last 7 days",
+  "caveats": [
+   "News rests mostly on headlines and short summaries; open a source for the full report."
+  ],
+  "error": null
+ }
+]

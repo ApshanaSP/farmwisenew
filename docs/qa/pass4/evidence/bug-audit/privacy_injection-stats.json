@@ -1,0 +1,15 @@
+{
+ "build": "2026-11-06 18:21:19|76734f481810",
+ "incidents": 28097,
+ "title_with_phone": 0,
+ "title_with_landline": 0,
+ "title_with_mail": 3,
+ "place_with_phone": 0,
+ "place_six_words_or_more": 10579,
+ "place_ten_words_or_more": 746,
+ "place_door_number": 0,
+ "title_with_instruction_word": 0,
+ "title_90_chars_or_less": 25185,
+ "open_severe": 164,
+ "open_severe_title_90_or_less": 164
+}

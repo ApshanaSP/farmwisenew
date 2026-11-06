@@ -1,0 +1,157 @@
+{
+ "now": "2026-11-06 18:08:00 IST (the store's as-of)",
+ "raw_table": {
+  "5 Nov (yesterday)": {
+   "reported": 249,
+   "severe": 18,
+   "deaths": 21,
+   "complaints": 150,
+   "adyar": 18,
+   "resolved_by_closed_at": 165
+  },
+  "4 Nov (the day before)": {
+   "reported": 242,
+   "severe": 17,
+   "deaths": 4,
+   "complaints": 133,
+   "adyar": 13,
+   "resolved_by_closed_at": 148
+  },
+  "3 Nov": {
+   "reported": 174,
+   "severe": 8,
+   "deaths": 4,
+   "complaints": 100,
+   "adyar": 17,
+   "resolved_by_closed_at": 158
+  }
+ },
+ "asked": [
+  {
+   "q": "how many incidents yesterday",
+   "headline": "239 incidents · yesterday (5 Nov)",
+   "answer": "239 incidents were reported in yesterday (5 Nov) (174 in the period before): 17 severe, 222 still open, 4 deaths.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "how many severe incidents yesterday",
+   "headline": "17 incidents · yesterday (5 Nov)",
+   "answer": "17 incidents were reported in yesterday (5 Nov) (8 in the period before): 17 severe, 15 still open, 2 deaths.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "how many incidents in Adyar yesterday",
+   "headline": "13 incidents · yesterday (5 Nov)",
+   "answer": "13 incidents were reported in yesterday (5 Nov) in Adyar zone (17 in the period before): 0 severe, 12 still open.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "how many incidents were closed yesterday",
+   "headline": "148 incidents resolved · yesterday (5 Nov)",
+   "answer": "148 incidents were closed as resolved in yesterday (5 Nov) (158 in the period before), 2 of them severe; 82 were closed after the deadline.",
+   "lane": [
+    "count_resolved"
+   ]
+  },
+  {
+   "q": "yesterday's incidents",
+   "headline": "Incidents · yesterday (5 Nov)",
+   "answer": "239 incidents in yesterday (5 Nov); the eight newest are listed.",
+   "lane": [
+    "recent_incidents"
+   ]
+  },
+  {
+   "q": "நேற்று எத்தனை புகார்கள்",
+   "headline": "133 புகார்கள் · நேற்று",
+   "answer": "நேற்று 133 குடிமக்கள் புகார்கள் உள்ளன (115 சம்பவங்கள்; 114 இன்னும் நிலுவையில்).",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "நேற்று எத்தனை புகார்கள் வந்தன",
+   "headline": "133 புகார்கள் · நேற்று",
+   "answer": "நேற்று 133 குடிமக்கள் புகார்கள் உள்ளன (115 சம்பவங்கள்; 114 இன்னும் நிலுவையில்).",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "நேற்று எத்தனை சம்பவங்கள்",
+   "headline": null,
+   "answer": "",
+   "lane": []
+  },
+  {
+   "q": "நேற்றைய புகார்கள் எத்தனை",
+   "headline": "147 புகார்கள் · கடந்த 24 மணி நேரத்தில்",
+   "answer": "கடந்த 24 மணி நேரத்தில் 147 குடிமக்கள் புகார்கள் உள்ளன (143 சம்பவங்கள்; 143 இன்னும் நிலுவையில்).",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "நேத்து எவ்வளவு புகார்",
+   "headline": "9,113 புகார்கள் · கடந்த 90 நாட்களில்",
+   "answer": "கடந்த 90 நாட்களில் 9,113 குடிமக்கள் புகார்கள் உள்ளன (8,165 சம்பவங்கள்; 1,039 இன்னும் நிலுவையில்).",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "nethu evlo incidents",
+   "headline": "239 incidents · netru",
+   "answer": "netru 239 incidents report aagirukku (munnadi 174): 17 severe, 222 innum open, 4 per uyirizhappu.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "nethu evlo complaints",
+   "headline": "133 complaints · netru",
+   "answer": "netru 133 citizen complaints irukku (115 incidents; 114 innum open).",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "nethu Adyar la evlo incidents",
+   "headline": "13 incidents · netru",
+   "answer": "Adyar zone-la netru 13 incidents report aagirukku (munnadi 17): 0 severe, 12 innum open.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "neththu evlo severe cases",
+   "headline": "17 incidents · netru",
+   "answer": "netru 17 incidents report aagirukku (munnadi 8): 17 severe, 15 innum open, 2 per uyirizhappu.",
+   "lane": [
+    "count_incidents"
+   ]
+  },
+  {
+   "q": "how many were resolved yesterday",
+   "headline": "9 severe events · 147 open citizen complaints · 236 ongoing incidents",
+   "answer": "In the previous day (yesterday): **9** severe events, **147** open citizen complaints, **236** ongoing incidents, **3** resolved this day.",
+   "lane": [
+    "overview_kpis"
+   ]
+  },
+  {
+   "q": "how many deaths yesterday",
+   "headline": "9 severe events · 147 open citizen complaints · 236 ongoing incidents",
+   "answer": "In the previous day (yesterday): **9** severe events, **147** open citizen complaints, **236** ongoing incidents, **3** resolved this day.",
+   "lane": [
+    "overview_kpis"
+   ]
+  }
+ ]
+}

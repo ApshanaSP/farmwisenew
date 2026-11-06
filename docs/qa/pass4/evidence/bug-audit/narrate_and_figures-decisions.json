@@ -1,0 +1,741 @@
+{
+ "server": "3131",
+ "targets": {
+  "T1": "INC-20261106-DDB161 (GCC-ELE, High, resolved by the Collector)",
+  "T2": "INC-20261105-5C94BB (PWD-WRD, Severe, overdue, rejected)",
+  "T3": "INC-20261105-EE9D37 (POL-GCP, High, overdue, in a developing story, resolved)",
+  "T4": "INC-20261105-8CA458 (PWD-WRD, Severe, Resolved by the pipeline, reopened)"
+ },
+ "before": {
+  "tag": "before",
+  "overview": {
+   "kpi": {
+    "severe": 9,
+    "complaints": 147,
+    "ongoing": 236,
+    "resolved": 3,
+    "severe_open": 8,
+    "complaint_inc": 143,
+    "urgent": 54,
+    "reported": 239
+   },
+   "sevCounts": {
+    "Severe": 8,
+    "High": 45,
+    "Medium": 85,
+    "Low": 88
+   },
+   "sevHas": {
+    "T1": true,
+    "T2": true,
+    "T3": true,
+    "T4": false
+   },
+   "bellHas": {
+    "T1": false,
+    "T2": true,
+    "T3": false,
+    "T4": false
+   },
+   "zone4": {
+    "zone": 4,
+    "name": "Tondiarpet",
+    "n": 33,
+    "open": 33,
+    "complaints": 24,
+    "severe": 0
+   },
+   "zone13": {
+    "zone": 13,
+    "name": "Adyar",
+    "n": 24,
+    "open": 23,
+    "complaints": 13,
+    "severe": 1
+   },
+   "deptEle": {
+    "code": "GCC-ELE",
+    "name": "Street Lighting & Electrical",
+    "head": "Executive Engineer (Electrical)",
+    "open": 23,
+    "n": 23,
+    "severe": 0,
+    "unverified": 0
+   },
+   "deptPwd": {
+    "code": "PWD-WRD",
+    "name": "PWD Water Resources",
+    "head": "Superintending Engineer (WRD)",
+    "open": 26,
+    "n": 29,
+    "severe": 7,
+    "unverified": 0
+   },
+   "deptPol": {
+    "code": "POL-GCP",
+    "name": "Greater Chennai Police",
+    "head": "Deputy Commissioner of Police",
+    "open": 61,
+    "n": 61,
+    "severe": 2,
+    "unverified": 0
+   },
+   "snapshot": {
+    "overdue": 11,
+    "serious": 54,
+    "newsOnly": 13
+   },
+   "thread": [
+    {
+     "open": true,
+     "sev": "High"
+    }
+   ]
+  },
+  "briefing": {
+   "stats": {
+    "reported": 239,
+    "change": 3,
+    "open": 236,
+    "overdue": 11,
+    "severe": 9,
+    "multi": 3,
+    "newsOnly": 13,
+    "handledByDepts": 230
+   },
+   "line2": "236 incidents are still open, 11 of them past the deadline; 9 severe events.",
+   "attention": [
+    "INC-20261105-5C94BB",
+    "INC-20261105-EE9D37"
+   ],
+   "deptEle": {
+    "open": 23,
+    "overdue": 0,
+    "serious": 2
+   },
+   "deptPwd": {
+    "open": 26,
+    "overdue": 6,
+    "serious": 17
+   },
+   "followUps": {
+    "INC-20261106-DDB161": true,
+    "INC-20261105-5C94BB": false,
+    "INC-20261105-EE9D37": true,
+    "INC-20261105-8CA458": false
+   },
+   "hotspotFlood004": null,
+   "hotspotEle003": null,
+   "bookGlance": {
+    "ai": null,
+    "opening": {
+     "en": "Today saw about the same number of incidents as the previous period. Immediate attention is required for severe flooding and waterlogging at Pulianthope in Anna Nagar and Ice House in Teynampet. We must also watch the rising categories of street lights and electrical hazards, garbage and solid waste, and road accidents, along with the IMD warning level 2 for 06 Nov.",
+     "ta": "இன்றைய காலகட்டத்தில் முந்தைய காலகட்டத்தை ஒப்பிட்டால் ஏறக்குறைய அதே எண்ணிக்கையிலான சம்பவங்கள் பதிவாகியுள்ளன. அண்ணா நகர் புளியந்தோப்பு மற்றும் தேனாம்பேட்டை ஐஸ் ஹவுஸ் பகுதிகளில் ஏற்பட்டுள்ள கடுமையான வெள்ளப்பெருக்கு மற்றும் தேக்கத்திற்கு உடனடி கவனம் தேவைப்படுகிறது. மேலும், மின்சார அபாயங்கள், குப்பை மற்றும் சாலை விபத்துகள் போன்ற அதிகரித்து வரும் வகைகளையும், 06 Nov தேதிக்கான IMD எச்சரிக்கை நிலையையும் நாம் கவனிக்க வேண்டும்."
+    },
+    "tiles": {
+     "reported": 239,
+     "change": 3,
+     "severe": 9,
+     "deaths": 14,
+     "injured": 28,
+     "awaiting": 0,
+     "leftToDepts": 61,
+     "newsOnly": 13
+    }
+   },
+   "bookDepartments": "[{\"code\":\"PWD-WRD\",\"name\":\"PWD Water Resources\",\"head\":\"Superintending Engineer (WRD)\",\"n\":29,\"severe\":7,\"dead\":0,\"items\":[{\"id\":\"INC-20260515-B939EB\",\"title\":\"Ice House: uprooted tree blocks road\",\"type\":\"Flooding & waterlogging\",\"zone\":\"Teynampet\",\"loc\":\"Ice House\",\"sev\":\"Severe\",\"status\":\"In progress\",\"t\":\"2026-11-06 05:59:00\",\"dead\":0},{\"id\":\"INC-20261105-5C94BB\",\"title\":\"Call recd: canal wate"
+  },
+  "officer": {
+   "counts": {
+    "new": 19,
+    "action": 4,
+    "sent": 0,
+    "verified": 0,
+    "returned": 0,
+    "serious": 2,
+    "overdue": 0,
+    "newSerious": 2,
+    "due": 2
+   },
+   "boardKpi": {
+    "severe": 0,
+    "complaints": 23,
+    "ongoing": 23,
+    "resolved": 0,
+    "severe_open": 0,
+    "complaint_inc": 23,
+    "urgent": 2,
+    "reported": 23
+   },
+   "bell": [
+    "INC-20261105-45E2DD",
+    "INC-20261106-DDB161"
+   ],
+   "queueNew": true,
+   "queueAction": false
+  },
+  "officerCase": {
+   "http": 200,
+   "stage": "new",
+   "status": "Under review"
+  },
+  "officerChips": [
+   "change:2026-11-06",
+   "attention:INC-20261106-DDB161",
+   "attention:INC-20261105-45E2DD"
+  ],
+  "officerInsights": [
+   "patterns: Busiest ward=Ward 48 (Tondiarpet · 2 grievances, 2 open)",
+   "work: Closed=0% (0 of 23)",
+   "work: Closed on time=— (within the deadline)",
+   "work: Open past deadline=0 (of 23 still open)"
+  ],
+  "chat": {
+   "how many open incidents today": "236 incidents still open · last 24 hours | **236** incidents reported in the last 24 hours are still open, 8 of them severe; 14 deaths recorded in them.",
+   "open incidents by zone today": "Tondiarpet leads with 33 open incidents | Highest open incidents: Tondiarpet (33), Teynampet (28), Adyar (23), Royapuram (22), Kodambakkam (21).",
+   "which department has the most open incidents": "Greater Chennai Police leads with 1,059 open incidents | Highest open incidents: Greater Chennai Police (1,059), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (242), Public Health (GCC) (113).",
+   "what is the status of INC-20261106-DDB161": "It is under review.",
+   "what is the status of INC-20261105-5C94BB": "It is in progress, and **past its deadline**.",
+   "what is the status of INC-20261105-8CA458": "It is resolved, and **past its deadline**; closed on 2026-11-06 16:38:47."
+  },
+  "warningHasT2": false,
+  "chatOverdue": "11 incidents past their deadline · last 24 hours | **11** incidents reported in the last 24 hours are past their deadline, 6 of them severe; 13 deaths recorded in them.",
+  "chatOfficer": "23 incidents still open · last 24 hours",
+  "map": {
+   "http": 200,
+   "hasT1": true,
+   "openTile": null
+  },
+  "caseT1": {
+   "en": "There's a street light or electrical problem at Azeez Nagar 3Rd Street, Azeez Nagar, Korukkupet. It's been open for a couple of hours. I'd ask the corporation for an update.",
+   "ta": "தண்டையார்பேட்டை பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. 2 பேர் புகார் கொடுத்திருக்கிறார்கள், நிறைய பேரைப் பாதிக்கிறது; இது கடுமையானவற்றில் ஒன்று. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்.",
+   "takeaway": null,
+   "status": "Under review",
+   "overdue": false,
+   "what0": "Open for 1 hours"
+  },
+  "caseT2": {
+   "en": "There's standing water at Saidapet (Adyar River - Saidapet stretch). It's been open for several hours, and it's past its deadline. I'd ask Storm Water Drains to send a pump and check the drain there today.",
+   "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம், இன்றே.",
+   "takeaway": "Past its deadline.",
+   "status": "In progress",
+   "overdue": true,
+   "what0": "Open for 18 hours"
+  },
+  "caseT4": {
+   "en": "There was standing water at Arumbakkam (Cooum River - Arumbakkam stretch). It's marked resolved, so there's nothing to chase unless it comes back.",
+   "ta": "அண்ணா நகர் பகுதியில் தண்ணீர் தேக்கம் இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்.",
+   "takeaway": null,
+   "status": "Resolved",
+   "overdue": true,
+   "what0": "Canal overflow at Arumbakkam (Cooum River - Arumbakkam stretch), Anna Nagar."
+  },
+  "jarvisSevereOverdue": {
+   "total": 6,
+   "hasT2": true,
+   "say": "6 severe cases today. 6 are past their deadline and need you first: standing wat"
+  },
+  "jarvisBrief": {
+   "say": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+   "kpi": "reported=239 severe=9 overdue=11 newsOnly=13"
+  },
+  "detailT2": {
+   "status": "In progress",
+   "open": 1
+  }
+ },
+ "right_after": {
+  "tag": "after",
+  "overview": {
+   "kpi": {
+    "severe": 9,
+    "complaints": 146,
+    "ongoing": 234,
+    "resolved": 4,
+    "severe_open": 8,
+    "complaint_inc": 142,
+    "urgent": 52,
+    "reported": 239
+   },
+   "sevCounts": {
+    "Severe": 8,
+    "High": 43,
+    "Medium": 86,
+    "Low": 88
+   },
+   "sevHas": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": true
+   },
+   "bellHas": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": true
+   },
+   "zone4": {
+    "zone": 4,
+    "name": "Tondiarpet",
+    "n": 33,
+    "open": 32,
+    "complaints": 23,
+    "severe": 0
+   },
+   "zone13": {
+    "zone": 13,
+    "name": "Adyar",
+    "n": 24,
+    "open": 22,
+    "complaints": 13,
+    "severe": 1
+   },
+   "deptEle": {
+    "code": "GCC-ELE",
+    "name": "Street Lighting & Electrical",
+    "head": "Executive Engineer (Electrical)",
+    "open": 22,
+    "n": 23,
+    "severe": 0,
+    "unverified": 0
+   },
+   "deptPwd": {
+    "code": "PWD-WRD",
+    "name": "PWD Water Resources",
+    "head": "Superintending Engineer (WRD)",
+    "open": 26,
+    "n": 29,
+    "severe": 7,
+    "unverified": 0
+   },
+   "deptPol": {
+    "code": "POL-GCP",
+    "name": "Greater Chennai Police",
+    "head": "Deputy Commissioner of Police",
+    "open": 60,
+    "n": 61,
+    "severe": 2,
+    "unverified": 0
+   },
+   "snapshot": {
+    "overdue": 10,
+    "serious": 52,
+    "newsOnly": 12
+   },
+   "thread": [
+    {
+     "open": true,
+     "sev": "High"
+    }
+   ]
+  },
+  "briefing": {
+   "stats": {
+    "reported": 239,
+    "change": 3,
+    "open": 234,
+    "overdue": 10,
+    "severe": 9,
+    "multi": 3,
+    "newsOnly": 13,
+    "handledByDepts": 228
+   },
+   "line2": "234 incidents are still open, 10 of them past the deadline; 9 severe events.",
+   "attention": [],
+   "deptEle": {
+    "open": 22,
+    "overdue": 0,
+    "serious": 1
+   },
+   "deptPwd": {
+    "open": 26,
+    "overdue": 6,
+    "serious": 17
+   },
+   "followUps": {
+    "INC-20261106-DDB161": false,
+    "INC-20261105-5C94BB": false,
+    "INC-20261105-EE9D37": false,
+    "INC-20261105-8CA458": false
+   },
+   "hotspotFlood004": null,
+   "hotspotEle003": null,
+   "bookGlance": {
+    "ai": null,
+    "opening": {
+     "en": "Today saw about the same number of incidents as the previous period. Immediate attention is required for severe flooding and waterlogging at Pulianthope in Anna Nagar and Ice House in Teynampet. We must also watch the rising categories of street lights and electrical hazards, garbage and solid waste, and road accidents, along with the IMD warning level 2 for 06 Nov.",
+     "ta": "இன்றைய காலகட்டத்தில் முந்தைய காலகட்டத்தை ஒப்பிட்டால் ஏறக்குறைய அதே எண்ணிக்கையிலான சம்பவங்கள் பதிவாகியுள்ளன. அண்ணா நகர் புளியந்தோப்பு மற்றும் தேனாம்பேட்டை ஐஸ் ஹவுஸ் பகுதிகளில் ஏற்பட்டுள்ள கடுமையான வெள்ளப்பெருக்கு மற்றும் தேக்கத்திற்கு உடனடி கவனம் தேவைப்படுகிறது. மேலும், மின்சார அபாயங்கள், குப்பை மற்றும் சாலை விபத்துகள் போன்ற அதிகரித்து வரும் வகைகளையும், 06 Nov தேதிக்கான IMD எச்சரிக்கை நிலையையும் நாம் கவனிக்க வேண்டும்."
+    },
+    "tiles": {
+     "reported": 239,
+     "change": 3,
+     "severe": 9,
+     "deaths": 14,
+     "injured": 28,
+     "awaiting": 0,
+     "leftToDepts": 61,
+     "newsOnly": 13
+    }
+   },
+   "bookDepartments": "[{\"code\":\"PWD-WRD\",\"name\":\"PWD Water Resources\",\"head\":\"Superintending Engineer (WRD)\",\"n\":29,\"severe\":7,\"dead\":0,\"items\":[{\"id\":\"INC-20260515-B939EB\",\"title\":\"Ice House: uprooted tree blocks road\",\"type\":\"Flooding & waterlogging\",\"zone\":\"Teynampet\",\"loc\":\"Ice House\",\"sev\":\"Severe\",\"status\":\"In progress\",\"t\":\"2026-11-06 05:59:00\",\"dead\":0},{\"id\":\"INC-20261105-5C94BB\",\"title\":\"Call recd: canal wate"
+  },
+  "officer": {
+   "counts": {
+    "new": 18,
+    "action": 4,
+    "sent": 0,
+    "verified": 1,
+    "returned": 0,
+    "serious": 1,
+    "overdue": 0,
+    "newSerious": 1,
+    "due": 1
+   },
+   "boardKpi": {
+    "severe": 0,
+    "complaints": 22,
+    "ongoing": 22,
+    "resolved": 1,
+    "severe_open": 0,
+    "complaint_inc": 22,
+    "urgent": 1,
+    "reported": 23
+   },
+   "bell": [
+    "INC-20261105-45E2DD"
+   ],
+   "queueNew": false,
+   "queueAction": false
+  },
+  "officerCase": {
+   "http": 200,
+   "stage": "verified",
+   "status": "Under review"
+  },
+  "officerChips": [
+   "change:2026-11-06",
+   "attention:INC-20261106-DDB161",
+   "attention:INC-20261105-45E2DD"
+  ],
+  "officerInsights": [
+   "patterns: Busiest ward=Ward 51 (Royapuram · 2 grievances, 2 open)",
+   "work: Closed=4% (1 of 23)",
+   "work: Closed on time=100% (within the deadline)",
+   "work: Open past deadline=0 (of 22 still open)"
+  ],
+  "chat": {
+   "how many open incidents today": "234 incidents still open · last 24 hours | **234** incidents reported in the last 24 hours are still open, 8 of them severe; 13 deaths recorded in them.",
+   "open incidents by zone today": "Tondiarpet leads with 32 open incidents | Highest open incidents: Tondiarpet (32), Teynampet (28), Royapuram (22), Adyar (22), Kodambakkam (20).",
+   "which department has the most open incidents": "Greater Chennai Police leads with 1,059 open incidents | Highest open incidents: Greater Chennai Police (1,059), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (242), Public Health (GCC) (113).",
+   "what is the status of INC-20261106-DDB161": "It is resolved.",
+   "what is the status of INC-20261105-5C94BB": "It is rejected, and **past its deadline**.",
+   "what is the status of INC-20261105-8CA458": "It is open, and **past its deadline**; closed on 2026-11-06 16:38:47."
+  },
+  "warningHasT2": false,
+  "chatOverdue": "10 incidents past their deadline · last 24 hours | **10** incidents reported in the last 24 hours are past their deadline, 6 of them severe; 12 deaths recorded in them.",
+  "chatOfficer": "22 incidents still open · last 24 hours",
+  "map": {
+   "http": 200,
+   "hasT1": true,
+   "openTile": null
+  },
+  "caseT1": {
+   "en": "There's a street light or electrical problem at Azeez Nagar 3Rd Street, Azeez Nagar, Korukkupet. It's been open for a couple of hours. I'd ask the corporation for an update.",
+   "ta": "தண்டையார்பேட்டை பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. 2 பேர் புகார் கொடுத்திருக்கிறார்கள், நிறைய பேரைப் பாதிக்கிறது; இது கடுமையானவற்றில் ஒன்று. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்.",
+   "takeaway": null,
+   "status": "Under review",
+   "overdue": false,
+   "what0": "Open for 1 hours"
+  },
+  "caseT2": {
+   "en": "There's standing water at Saidapet (Adyar River - Saidapet stretch). It's been open for several hours, and it's past its deadline. I'd ask Storm Water Drains to send a pump and check the drain there today.",
+   "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம், இன்றே.",
+   "takeaway": "Past its deadline.",
+   "status": "In progress",
+   "overdue": true,
+   "what0": "Open for 18 hours"
+  },
+  "caseT4": {
+   "en": "There was standing water at Arumbakkam (Cooum River - Arumbakkam stretch). It's marked resolved, so there's nothing to chase unless it comes back.",
+   "ta": "அண்ணா நகர் பகுதியில் தண்ணீர் தேக்கம் இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்.",
+   "takeaway": null,
+   "status": "Resolved",
+   "overdue": true,
+   "what0": "Canal overflow at Arumbakkam (Cooum River - Arumbakkam stretch), Anna Nagar."
+  },
+  "jarvisSevereOverdue": {
+   "total": 6,
+   "hasT2": true,
+   "say": "6 severe cases today. 6 are past their deadline and need you first: standing wat"
+  },
+  "jarvisBrief": {
+   "say": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+   "kpi": "reported=239 severe=9 overdue=11 newsOnly=13"
+  },
+  "detailT2": {
+   "status": "Rejected",
+   "open": 0
+  }
+ },
+ "after_65_seconds": {
+  "tag": "after+65s",
+  "overview": {
+   "kpi": {
+    "severe": 9,
+    "complaints": 146,
+    "ongoing": 234,
+    "resolved": 4,
+    "severe_open": 8,
+    "complaint_inc": 142,
+    "urgent": 52,
+    "reported": 239
+   },
+   "sevCounts": {
+    "Severe": 8,
+    "High": 43,
+    "Medium": 86,
+    "Low": 88
+   },
+   "sevHas": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": true
+   },
+   "bellHas": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": true
+   },
+   "zone4": {
+    "zone": 4,
+    "name": "Tondiarpet",
+    "n": 33,
+    "open": 32,
+    "complaints": 23,
+    "severe": 0
+   },
+   "zone13": {
+    "zone": 13,
+    "name": "Adyar",
+    "n": 24,
+    "open": 22,
+    "complaints": 13,
+    "severe": 1
+   },
+   "deptEle": {
+    "code": "GCC-ELE",
+    "name": "Street Lighting & Electrical",
+    "head": "Executive Engineer (Electrical)",
+    "open": 22,
+    "n": 23,
+    "severe": 0,
+    "unverified": 0
+   },
+   "deptPwd": {
+    "code": "PWD-WRD",
+    "name": "PWD Water Resources",
+    "head": "Superintending Engineer (WRD)",
+    "open": 26,
+    "n": 29,
+    "severe": 7,
+    "unverified": 0
+   },
+   "deptPol": {
+    "code": "POL-GCP",
+    "name": "Greater Chennai Police",
+    "head": "Deputy Commissioner of Police",
+    "open": 60,
+    "n": 61,
+    "severe": 2,
+    "unverified": 0
+   },
+   "snapshot": {
+    "overdue": 10,
+    "serious": 52,
+    "newsOnly": 12
+   },
+   "thread": [
+    {
+     "open": true,
+     "sev": "High"
+    }
+   ]
+  },
+  "briefing": {
+   "stats": {
+    "reported": 239,
+    "change": 3,
+    "open": 234,
+    "overdue": 10,
+    "severe": 9,
+    "multi": 3,
+    "newsOnly": 13,
+    "handledByDepts": 228
+   },
+   "line2": "234 incidents are still open, 10 of them past the deadline; 9 severe events.",
+   "attention": [],
+   "deptEle": {
+    "open": 22,
+    "overdue": 0,
+    "serious": 1
+   },
+   "deptPwd": {
+    "open": 26,
+    "overdue": 6,
+    "serious": 17
+   },
+   "followUps": {
+    "INC-20261106-DDB161": false,
+    "INC-20261105-5C94BB": false,
+    "INC-20261105-EE9D37": false,
+    "INC-20261105-8CA458": false
+   },
+   "hotspotFlood004": null,
+   "hotspotEle003": null,
+   "bookGlance": {
+    "ai": null,
+    "opening": {
+     "en": "Today saw about the same number of incidents as the previous period. Immediate attention is required for severe flooding and waterlogging at Pulianthope in Anna Nagar and Ice House in Teynampet. We must also watch the rising categories of street lights and electrical hazards, garbage and solid waste, and road accidents, along with the IMD warning level 2 for 06 Nov.",
+     "ta": "இன்றைய காலகட்டத்தில் முந்தைய காலகட்டத்தை ஒப்பிட்டால் ஏறக்குறைய அதே எண்ணிக்கையிலான சம்பவங்கள் பதிவாகியுள்ளன. அண்ணா நகர் புளியந்தோப்பு மற்றும் தேனாம்பேட்டை ஐஸ் ஹவுஸ் பகுதிகளில் ஏற்பட்டுள்ள கடுமையான வெள்ளப்பெருக்கு மற்றும் தேக்கத்திற்கு உடனடி கவனம் தேவைப்படுகிறது. மேலும், மின்சார அபாயங்கள், குப்பை மற்றும் சாலை விபத்துகள் போன்ற அதிகரித்து வரும் வகைகளையும், 06 Nov தேதிக்கான IMD எச்சரிக்கை நிலையையும் நாம் கவனிக்க வேண்டும்."
+    },
+    "tiles": {
+     "reported": 239,
+     "change": 3,
+     "severe": 9,
+     "deaths": 14,
+     "injured": 28,
+     "awaiting": 0,
+     "leftToDepts": 61,
+     "newsOnly": 13
+    }
+   },
+   "bookDepartments": "[{\"code\":\"PWD-WRD\",\"name\":\"PWD Water Resources\",\"head\":\"Superintending Engineer (WRD)\",\"n\":29,\"severe\":7,\"dead\":0,\"items\":[{\"id\":\"INC-20260515-B939EB\",\"title\":\"Ice House: uprooted tree blocks road\",\"type\":\"Flooding & waterlogging\",\"zone\":\"Teynampet\",\"loc\":\"Ice House\",\"sev\":\"Severe\",\"status\":\"In progress\",\"t\":\"2026-11-06 05:59:00\",\"dead\":0},{\"id\":\"INC-20261105-5C94BB\",\"title\":\"Call recd: canal wate"
+  },
+  "officer": {
+   "counts": {
+    "new": 18,
+    "action": 4,
+    "sent": 0,
+    "verified": 1,
+    "returned": 0,
+    "serious": 1,
+    "overdue": 0,
+    "newSerious": 1,
+    "due": 1
+   },
+   "boardKpi": {
+    "severe": 0,
+    "complaints": 22,
+    "ongoing": 22,
+    "resolved": 1,
+    "severe_open": 0,
+    "complaint_inc": 22,
+    "urgent": 1,
+    "reported": 23
+   },
+   "bell": [
+    "INC-20261105-45E2DD"
+   ],
+   "queueNew": false,
+   "queueAction": false
+  },
+  "officerCase": {
+   "http": 200,
+   "stage": "verified",
+   "status": "Under review"
+  },
+  "officerChips": [
+   "change:2026-11-06",
+   "attention:INC-20261106-DDB161",
+   "attention:INC-20261105-45E2DD"
+  ],
+  "officerInsights": [
+   "patterns: Busiest ward=Ward 51 (Royapuram · 2 grievances, 2 open)",
+   "work: Closed=4% (1 of 23)",
+   "work: Closed on time=100% (within the deadline)",
+   "work: Open past deadline=0 (of 22 still open)"
+  ],
+  "chat": {
+   "how many open incidents today": "234 incidents still open · last 24 hours | **234** incidents reported in the last 24 hours are still open, 8 of them severe; 13 deaths recorded in them.",
+   "open incidents by zone today": "Tondiarpet leads with 32 open incidents | Highest open incidents: Tondiarpet (32), Teynampet (28), Royapuram (22), Adyar (22), Kodambakkam (20).",
+   "which department has the most open incidents": "Greater Chennai Police leads with 1,058 open incidents | Highest open incidents: Greater Chennai Police (1,058), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (242), Public Health (GCC) (113).",
+   "what is the status of INC-20261106-DDB161": "It is resolved.",
+   "what is the status of INC-20261105-5C94BB": "It is rejected, and **past its deadline**.",
+   "what is the status of INC-20261105-8CA458": "It is open, and **past its deadline**; closed on 2026-11-06 16:38:47."
+  },
+  "warningHasT2": false,
+  "chatOverdue": "10 incidents past their deadline · last 24 hours | **10** incidents reported in the last 24 hours are past their deadline, 6 of them severe; 12 deaths recorded in them.",
+  "chatOfficer": "22 incidents still open · last 24 hours",
+  "map": {
+   "http": 200,
+   "hasT1": false,
+   "openTile": null
+  },
+  "caseT1": {
+   "en": "There was a street light or electrical problem at Azeez Nagar 3Rd Street, Azeez Nagar, Korukkupet. It's marked resolved, so there's nothing to chase unless it comes back.",
+   "ta": "தண்டையார்பேட்டை பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்.",
+   "takeaway": null,
+   "status": "Resolved",
+   "overdue": false,
+   "what0": "Electric shock due to street light at Azeez Nagar 3Rd Street, Azeez Nagar, Korukkupet, Tondiarpet."
+  },
+  "caseT2": {
+   "en": "There was standing water at Saidapet (Adyar River - Saidapet stretch). It was rejected and closed, so no work is pending on it.",
+   "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருந்தது. இது நிராகரிக்கப்பட்டு முடிக்கப்பட்டது; இதில் நிலுவை வேலை எதுவும் இல்லை.",
+   "takeaway": null,
+   "status": "Rejected",
+   "overdue": true,
+   "what0": "Canal overflow at Saidapet (Adyar River - Saidapet stretch)."
+  },
+  "caseT4": {
+   "en": "There's standing water at Arumbakkam (Cooum River - Arumbakkam stretch). It's been open for about a day, and it's past its deadline. I'd ask Storm Water Drains to send a pump and check the drain there today.",
+   "ta": "அண்ணா நகர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. ஏறக்குறைய ஒரு நாளாக தீர்க்கப்படாமல் இருக்கிறது, கெடுவும் தாண்டிவிட்டது. இது கடுமையானவற்றில் ஒன்று. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம், இன்றே.",
+   "takeaway": "Past its deadline.",
+   "status": "Open",
+   "overdue": true,
+   "what0": "Open for 20 hours"
+  },
+  "jarvisSevereOverdue": {
+   "total": 6,
+   "hasT2": false,
+   "say": "6 severe cases today. 6 are past their deadline and need you first: standing wat"
+  },
+  "jarvisBrief": {
+   "say": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+   "kpi": "reported=239 severe=9 overdue=10 newsOnly=13"
+  },
+  "detailT2": {
+   "status": "Rejected",
+   "open": 0
+  }
+ },
+ "briefing_book_after": {
+  "T1_item_status": "Under review",
+  "T2_item_status": "In progress",
+  "good_serious_still_lists_T4": true,
+  "good_resolved": 175
+ },
+ "thread_T3_open": {
+  "right after": true,
+  "65 s after": true,
+  "about 5 minutes after (13:27:10 UTC)": true,
+  "13:33:09 UTC": false,
+  "note": "threads are cached 10 minutes: threads.ts:357"
+ },
+ "map_send_draft_after": "the draft for street light complaints in Tondiarpet holds 12 ids with T1 gone; closed 0",
+ "warnings_after_closing_the_top_item": {
+  "target": "INC-20261105-0476D7",
+  "before": [
+   "1. ",
+   "2. ",
+   "3. ",
+   "4. ",
+   "5. ",
+   "**M"
+  ],
+  "left_the_list": true
+ }
+}

@@ -1,0 +1,308 @@
+{
+ "ran_at": "2026-11-06T17:20:47.366Z",
+ "oracleNow": "2026-11-06 18:08:00",
+ "pairs": 336,
+ "cases": 28,
+ "results": [
+  {
+   "case": "period=monthly zone=13 dept=GCC-ELE taluk=TLK-TBM cat=STREETLIGHT_ELECTRICAL sev=High status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=any dept=CMWSSB taluk=any cat=STREETLIGHT_ELECTRICAL sev=Severe status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=9 dept=any taluk=TLK-ALD cat=any sev=Low status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=13 dept=GCC-SWM taluk=TLK-MYL cat=DRAINAGE_SEWAGE sev=any status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=monthly zone=5 dept=GCC-SWM taluk=TLK-ALD cat=SOLID_WASTE sev=Severe status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=5 dept=any taluk=TLK-MYL cat=any sev=High status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=9 dept=CMWSSB taluk=TLK-TBM cat=SOLID_WASTE sev=any status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=9 dept=CMWSSB taluk=TLK-TBM cat=SOLID_WASTE sev=any status=any",
+   "surface": "collector/export",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true
+  },
+  {
+   "case": "period=daily zone=any dept=GCC-ELE taluk=TLK-MYL cat=SOLID_WASTE sev=Low status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=5 dept=CMWSSB taluk=any cat=any sev=Low status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=any dept=any taluk=TLK-ALD cat=DRAINAGE_SEWAGE sev=Severe status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=13 dept=GCC-SWM taluk=TLK-TBM cat=DRAINAGE_SEWAGE sev=Low status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=9 dept=GCC-ELE taluk=any cat=DRAINAGE_SEWAGE sev=High status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=5 dept=GCC-ELE taluk=TLK-ALD cat=STREETLIGHT_ELECTRICAL sev=any status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=monthly zone=13 dept=any taluk=any cat=any sev=any status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 281,
+   "oracle": 281,
+   "ok": true,
+   "appComplaints": 168,
+   "oracleComplaints": 168
+  },
+  {
+   "case": "period=weekly zone=any dept=GCC-ELE taluk=TLK-TBM cat=any sev=Severe status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=13 dept=CMWSSB taluk=TLK-ALD cat=DRAINAGE_SEWAGE sev=Severe status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=monthly zone=9 dept=CMWSSB taluk=TLK-MYL cat=STREETLIGHT_ELECTRICAL sev=Low status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=9 dept=GCC-SWM taluk=TLK-ALD cat=any sev=High status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=9 dept=any taluk=any cat=STREETLIGHT_ELECTRICAL sev=High status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 1,
+   "oracle": 1,
+   "ok": true,
+   "appComplaints": 1,
+   "oracleComplaints": 1
+  },
+  {
+   "case": "period=daily zone=13 dept=any taluk=TLK-TBM cat=SOLID_WASTE sev=any status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=5 dept=CMWSSB taluk=TLK-TBM cat=SOLID_WASTE sev=High status=Resolved",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=any dept=GCC-SWM taluk=TLK-ALD cat=STREETLIGHT_ELECTRICAL sev=any status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=weekly zone=any dept=GCC-SWM taluk=TLK-ALD cat=STREETLIGHT_ELECTRICAL sev=any status=any",
+   "surface": "collector/export",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true
+  },
+  {
+   "case": "period=daily zone=any dept=GCC-SWM taluk=any cat=SOLID_WASTE sev=High status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=5 dept=any taluk=TLK-MYL cat=any sev=Severe status=any",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=monthly zone=5 dept=GCC-ELE taluk=TLK-TBM cat=DRAINAGE_SEWAGE sev=High status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=quarterly zone=any dept=GCC-ELE taluk=TLK-MYL cat=DRAINAGE_SEWAGE sev=any status=open",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=daily zone=9 dept=CMWSSB taluk=TLK-MYL cat=SOLID_WASTE sev=Severe status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  },
+  {
+   "case": "period=monthly zone=any dept=CMWSSB taluk=TLK-MYL cat=STREETLIGHT_ELECTRICAL sev=any status=Rejected",
+   "surface": "collector/list",
+   "status": 200,
+   "app": 0,
+   "oracle": 0,
+   "ok": true,
+   "appComplaints": 0,
+   "oracleComplaints": 0
+  }
+ ],
+ "problems": [],
+ "notReached": [
+  "map layers/ask/export (the plan format was not driven in this run)"
+ ]
+}

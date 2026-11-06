@@ -1,0 +1,232 @@
+[
+  {
+    "id": "same-number-1", "area": "Jarvis: cases, dashboard, advice", "severity": "P0",
+    "title": "Jarvis says there are no past-deadline cases while the tile says 339, and shows the least serious cases as 'most serious first'",
+    "what_happens": "Weekly district: asked for cases past deadline, by a Stage control or in words ('cases past deadline this week'), Jarvis says 'There are no cases this week for this view.' The tile says 339 (daily 11, monthly 742, quarterly 888; Adyar this week 26; Solid Waste this week 29). The dashboard's list headed 'Open cases, most serious first' starts with a Low case in every scope, and the open-cases line says 'here are the 12 that matter most. The most urgent: uncleared garbage...' over Low rows. Adyar this week: the first page is 12 Low rows while 3 Severe rows are open.",
+    "what_should_happen": "The past-deadline list gives the tile's count and lists those cases. Lists and advice said to be most serious first start with the most serious case.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-1. By id: same-number-extras.json, list_order_adyar_weekly.",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (thunai/round:cases(overdue), thunai/round:dashboard, thunai/round:text), same-number-extras.json",
+    "root_cause_guess": "src/lib/thunai/screens.ts:414 (also 233, 368, 432, 514, 1072) asks the incidents tool for sort 'sev' and no direction. src/lib/assistant/tools.ts:615 defaults dir to -1, and src/lib/collector/intel.ts:1385,1390 turns that into FIELD(sev, 'Severe', ...) DESC, which is Low first (the console's own buttons pass dir 1). screens.ts:417 then filters one page of 12 for overdue, and screens.ts:450 reads the empty page as 'no cases'. The correct total computed at screens.ts:426 is never reached.",
+    "class": "wrong sort direction; a count taken from one page", "lang": "all"
+  },
+  {
+    "id": "same-number-2", "area": "Jarvis: cases", "severity": "P0",
+    "title": "'Past their deadline' and 'Held by' beside a list's total count only the 12 rows on screen",
+    "what_happens": "Weekly district, Severe cases: the tiles read 'Severe cases, this week 52', 'Past their deadline 12', 'Held by PWD Water Resources 11', and the spoken line says '12 are past their deadline'. Over the whole list of 52 it is 37 past deadline and 27 held by that department. On 'All cases, this week' the tile says 0 past deadline against 339. The 25 rows not counted are named in same-number-extras.json (severe_weekly.late).",
+    "what_should_happen": "A figure beside a list's total counts the same list, or says it is about the rows shown.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-2",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (thunai/round:cases(severe) kpi.late, kpi.held by; thunai/round:cases(open) kpi.late), same-number-extras.json",
+    "root_cause_guess": "src/lib/thunai/screens.ts:466-469 count rows after the slice; the tiles at 472-473 carry them under the total at 471. casesSay (screens.ts:485) does the same when speaking.",
+    "class": "a count taken from one page", "lang": "all"
+  },
+  {
+    "id": "same-number-3", "area": "Jarvis: department performance", "severity": "P0",
+    "title": "Jarvis's department performance for one department shows the whole district's open figure",
+    "what_happens": "Solid Waste this week: the tile 'Open, this week' says 1167. Solid Waste's own figure is 67 (today 236 against 18, this quarter 2411 against 96). The past-deadline tile beside it is Solid Waste's own, 29. So one tile is for the district and the next for the department, under a scope that says Solid Waste.",
+    "what_should_happen": "Both tiles are for the department in scope, or the screen says it is the whole district.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-3",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (thunai/round:performance kpi.open)",
+    "root_cause_guess": "src/lib/thunai/screens.ts:993 adds up every row of deptMeasures; the departments tool never takes the department filter (intel.ts:760), while dept_followups does (so overdue is right).",
+    "class": "a filter applied to one tile and not the next", "lang": "all"
+  },
+  {
+    "id": "same-number-4", "area": "Ask District IQ: zone_profile", "severity": "P0",
+    "title": "zone_profile with a department chosen says the zone has 0 open incidents and 0 open complaints",
+    "what_happens": "Adyar and Solid Waste this week: facts 'Open incidents in Adyar: 0' and 'Open citizen complaints in Adyar: 0'. The oracle and overview_kpis say 6 and 6 (monthly: read in same-number.json).",
+    "what_should_happen": "The real figures, or no such fact.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-4. Needs ASSISTANT_TOOLS_API=1 on the server. The tool route is called directly; no model.",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (assistant/tools:zone_profile)",
+    "root_cause_guess": "src/lib/assistant/tools.ts:465: snap0 is null when the overview's snapshot is of the department kind, and the facts at 477 read snap?.active, which becomes 0.",
+    "class": "missing value read as 0", "lang": "all"
+  },
+  {
+    "id": "same-number-5", "area": "Jarvis: dashboard, trend", "severity": "P1",
+    "title": "A dashboard for one zone says 'Most in' another zone",
+    "what_happens": "Adyar this week: '112 incidents reports this week, up 4% on the period before. 4 severe. Most in Royapuram.' The takeaway says Royapuram has the most of a district total. 7 of the 8 zone scopes read do this (the eighth is Royapuram itself). Jarvis's trend screen for Adyar also ranks every zone under a scope that says Adyar.",
+    "what_should_happen": "In a zone's view it names what is highest inside the zone, or says clearly that it is comparing all zones.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-5",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (notes, kind wrong-place)",
+    "root_cause_guess": "src/lib/thunai/screens.ts:1070 reads the zones tool with zone null, and the spoken line at 1096 uses its top row. Same at 904 and 927 in trend().",
+    "class": "a figure from a wider scope said as if it were this scope's", "lang": "all"
+  },
+  {
+    "id": "same-number-6", "area": "Briefing page", "severity": "P0",
+    "title": "The Briefing calls 1,161 open incidents routine, 'nothing to do', while the PDF and CSV of the same scope say 293 need the Collector",
+    "what_happens": "Weekly district: Briefing '1,161 other open incidents are routine: the departments are handling them, nothing to do.' PDF: 293 need attention, 874 routine. 287 rows called routine on the Briefing are on the action list (ids in same-number-extras.json, routine.weekly.those_ids). Daily: 230 against 189 (41 rows); monthly and quarterly are in the same file.",
+    "what_should_happen": "One count of what needs the Collector, and 'routine' means the rest.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-6",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (collector/insights?part=briefing stats.handledByDepts), same-number-extras.json",
+    "root_cause_guess": "src/lib/collector/insights.ts:235-242: attention is cut to 6 with slice(0, 6), then handledByDepts = open - attention.length. Shown at src/components/collector/app/Insights.tsx:199-200 and written at insights.ts:370.",
+    "class": "a count taken from a shortened list", "lang": "all"
+  },
+  {
+    "id": "same-number-7", "area": "PDF report, CSV action list", "severity": "P0",
+    "title": "'Need your attention' counts only those among the top 400 open incidents read, so the PDF and CSV undercount and 'routine' is too high",
+    "what_happens": "By the app's own rule (explain().needsYou) over every open incident: weekly 328, monthly 684, quarterly 861. The PDF and CSV say 293, 347, 359. So the PDF's 'the other 874 are routine' includes 35 rows that meet the rule (weekly), and 337 and 502 for the longer periods. The rows are named in same-number-exportcap.json. The PDF does not say the count is cut.",
+    "what_should_happen": "Count all of them, or say the figure is of the first 400 read.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number-brief.test.ts -t same-number-7 (real store on the pinned snapshot; a fake model at the boundary, no model is called)",
+    "evidence": "docs/qa/pass4/evidence/same-number-exportcap.json",
+    "root_cause_guess": "src/lib/collector/intel.ts:1530 LIMIT 400, then 1535 and 1541-1542. src/components/collector/app/reportPdf.ts:117 prints it.",
+    "class": "a count taken from a capped query", "lang": "all"
+  },
+  {
+    "id": "same-number-8", "area": "Briefing page: only in the news", "severity": "P0",
+    "title": "Three numbers on one Briefing for 'only in the news': 77, 60 and 56 (monthly 321, 60 and 56)",
+    "what_happens": "Weekly district: the figure says 77 seen only in the news, the written briefing says '60 incidents', the list that opens from the figure holds 56. Monthly: the figure says 321, of which 243 are lapsed and left out of the list; 78 are not; the written line says 60 and the list 56. Ask District IQ's news_gaps says 77 and 78, the right count for rows not lapsed. The 21 rows not on the weekly list are named in same-number-extras.json (news_only.weekly).",
+    "what_should_happen": "The written line says how many there are. The figure, the list and the written line either agree or say why not ('the 56 highest priority of 77').",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-8",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (collector/insights?part=briefing md, gaps), same-number-extras.json",
+    "root_cause_guess": "src/lib/collector/insights.ts:143 LIMIT 60; 372 writes gaps.length as the count; 386 then drops rows about elsewhere; 382 takes news_only over all rows including lapsed ones. newsGapTotal (src/lib/assistant/queries.ts:85) already counts it right.",
+    "class": "a count taken from a capped query", "lang": "all"
+  },
+  {
+    "id": "same-number-9", "area": "Ask District IQ and Jarvis: lists", "severity": "P0",
+    "title": "'Incidents matching' and 'All cases' count groups, so they do not match the tile",
+    "what_happens": "Monthly district: Ask District IQ says 'In the last 30 days: 5,112 incidents matching' with no filter; the tile says 5,574 reported. Weekly: Jarvis says '1085 cases this week' and a tile 'All cases, this week 1085'; the console's tile says 1,167 still open. The console's own list route gives both figures (total for paging, incidents for the tile) and notes why; the tool passes on only the first.",
+    "what_should_happen": "A figure called incidents or cases is the count of incidents, the same as the tile.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-9",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (assistant/chat:list, thunai/round:cases(open) kpi.total(groups)). The rows inside another row's group are in same-number-extras.json (groups_vs_incidents).",
+    "root_cause_guess": "src/lib/collector/intel.ts:1399,1403 (total is COUNT(DISTINCT cluster), incidents is COUNT(*)). src/lib/assistant/tools.ts:626-627 passes r.total and calls it 'Incidents matching'; src/lib/assistant/datasets.ts:171 and src/lib/thunai/screens.ts:418,471 read it.",
+    "class": "a count of groups called a count of incidents", "lang": "all"
+  },
+  {
+    "id": "same-number-10", "area": "Trends data, Ask District IQ chart", "severity": "P0",
+    "title": "The first of the '12 complete weeks' holds only the end of its week: 315 against 1,083",
+    "what_happens": "Weekly trend, week of 10 Aug: the bars add up to 315. That whole week has 1,083 incidents. The query window is a rolling 84 days from the console's now (start 14 Aug 18:08), so 768 rows of that week are cut off. Ask District IQ's category_trends draws all 12 bars under 'Last 12 complete weeks', which shows a false low first week; the fact 'last 12 weeks' then carries the rolling total, which differs from the bars (Solid Waste 1,756 against 1,669). The Trends page itself uses only the last 8 bars, so it is not affected.",
+    "what_should_happen": "The query covers the whole of the first week.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-10",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (trends.weekly.bar[...] against the whole week; assistant/tools:category_trends), same-number-extras.json (first_bar)",
+    "root_cause_guess": "src/lib/collector/insights.ts:145-146 where(..., { hours: 12 * 7 * 24 }) against trendKeys at 582. Subtitle at src/lib/assistant/datasets.ts:228.",
+    "class": "time window", "lang": "all"
+  },
+  {
+    "id": "same-number-11", "area": "Jarvis: zone performance", "severity": "P0",
+    "title": "Zone performance's 'Reported, this week' says 1,306 beside a trend of 1,357, and it drops any zone filter",
+    "what_happens": "Weekly district: the tiles read 'Reported, this week 1306' and 'Open 1116'. The tiles elsewhere and the trend on the same screen say 1,357 and 1,167. The 51 rows with no zone are not added. With Adyar chosen the screen stays on the district while its scope says Adyar.",
+    "what_should_happen": "'Reported' and 'Open' are the whole scope's, or say 'in zones'. A zone filter is honoured or the screen says it covers all zones.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-11",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (thunai/round:performance(zone)), same-number-extras.json (no_zone)",
+    "root_cause_guess": "src/lib/thunai/screens.ts:1037 adds up the zones tool's rows; 1032 and 1035 read with zone null.",
+    "class": "a sum of parts that leaves a part out", "lang": "all"
+  },
+  {
+    "id": "same-number-12", "area": "AI day brief", "severity": "P2",
+    "title": "The AI brief's facts end at the top of the hour, the tile at the console's now, so one page can show two figures",
+    "what_happens": "Weekly: the tile says 1,357 reported, the facts the AI writes from say 1,356. Open 1,167 against 1,166. In the tile only: INC-20261106-6EAFF2, INC-20261106-896A64, INC-20261106-AD9834 (reported after 18:00). In the brief only: INC-20261030-525A8F, INC-20261030-BD67A7. The brief needs a model, so this was read at the boundary with a fake model.",
+    "what_should_happen": "The same window as the tile, or the write-up says its time.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number-brief.test.ts -t same-number-12",
+    "evidence": "tests/qa/pass4/same-number-brief.test.ts, docs/qa/pass4/evidence/same-number-extras.json (ai_window)",
+    "root_cause_guess": "src/lib/collector/aibrief.ts:107 briefHour, used at 212, 322, 366 (so the write-up can be kept for the hour).",
+    "class": "time window", "lang": "all"
+  },
+  {
+    "id": "same-number-13", "area": "Ask District IQ: count cards", "severity": "P1",
+    "title": "A card's tile says 'Reported' over a count of something else",
+    "what_happens": "Asked 'how many incidents are past their deadline this week', the card's tile reads 'Reported 339', with the period before beside it. Asked 'how many open incidents in Adyar this week' it reads 'Reported 91'. The reported figures are 1,357 and 112. The sentence under the tile is right.",
+    "what_should_happen": "The tile is named for what it counts.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-13",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (assistant/chat:card label)",
+    "root_cause_guess": "src/lib/assistant/fastpath.ts:368 labels c.n 'Reported' whatever the filter.",
+    "class": "a label that does not fit the figure", "lang": "all"
+  },
+  {
+    "id": "same-number-14", "area": "Jarvis: briefs by words", "severity": "P1",
+    "title": "'This quarter' in a brief on a body or zone gives today's brief",
+    "what_happens": "'give me the briefing for Adyar this quarter' answers '24 incidents were reported in Adyar (last 24 hours)'. 'solid waste management report this quarter' answers with today's 18. The answer says it is for today, so it is not hidden, but it is not what was asked. 'Week' and 'month' are read; 'quarter' and 'last 90 days' are not. Read through the code lane, with no model.",
+    "what_should_happen": "The quarter.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-14",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (notes, kind said-period-not-followed)",
+    "root_cause_guess": "src/lib/thunai/entities.ts:343 knows week and month and falls back to daily. src/lib/thunai/lexicon.ts:107 has the quarter words.",
+    "class": "a word dropped from the scope", "lang": "en"
+  },
+  {
+    "id": "same-number-15", "area": "Past deadline, every surface (pipeline data)", "severity": "P2",
+    "title": "The store's past-deadline flag misses open incidents whose due time has passed: 339 against 505 this week (OPEN-7)",
+    "what_happens": "Every surface agrees on the store's flag. But this week 166 open incidents have a due time that has passed and the flag at 0 (daily 11 of 22, monthly and quarterly in same-number-extras.json). The incident's own screen shows that due time. No flagged row is still inside its due time. Reported, not patched: this is the district_intel pipeline's rule.",
+    "what_should_happen": "The owner decides what 'past deadline' means; the pipeline flags by that rule.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-15",
+    "evidence": "docs/qa/pass4/evidence/same-number-extras.json (deadline_flag)",
+    "root_cause_guess": "district_intel pipeline, sla_breached (OPEN-7). Not this repo's code.",
+    "class": "pipeline data", "lang": "all"
+  },
+  {
+    "id": "same-number-16", "area": "Backlog card and tool (pipeline data)", "severity": "P3",
+    "title": "The backlog counts rows dated after the console's now (OPEN-11)",
+    "what_happens": "Five DIST-DM rows are dated 2026-11-06 19:11:33, after the build and the console's now (INC-20261103-A41A60, INC-20261103-A46CB2, INC-20261105-3B6CB7, INC-20261105-46BBF4, INC-20261105-7574E3). No period window counts them. The backlog has no date filter, so DIST-DM reads 43 there against 38.",
+    "what_should_happen": "The pipeline does not store forecast rows as incidents with future times. Reported, not patched.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-16",
+    "evidence": "docs/qa/pass4/evidence/same-number-extras.json (future_rows)",
+    "root_cause_guess": "district_intel pipeline (OPEN-11); src/lib/assistant/queries.ts:66 has no date bound.",
+    "class": "pipeline data", "lang": "all"
+  },
+  {
+    "id": "same-number-17", "area": "Decisions and officer steps", "severity": "P2",
+    "title": "Collector decisions and officer steps point at incidents that are not in this build",
+    "what_happens": "All 6 decisions in the durable store (INC-20261002-96FD26, INC-20260926-42DCD3, INC-20260925-2B958A, INC-20260927-B15416, INC-20260919-566998, INC-20260924-3CD4E7) and the 5 officer steps are on ids missing from this build, though their dates are inside the 180 days it holds. Their screens answer 404 and the decisions change no figure. So a decision can be lost when a later build gives the same problem another id, or drops it.",
+    "what_should_happen": "The owner looks at whether incident ids stay the same from build to build, or whether these rows were test rows that should be cleared.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-17",
+    "evidence": "docs/qa/pass4/evidence/same-number-extras.json (orphans)",
+    "root_cause_guess": "Not known. Either the pipeline's ids changed between builds or these are old test rows.",
+    "class": "pipeline data", "lang": "all"
+  },
+  {
+    "id": "same-number-18", "area": "Saved workspaces", "severity": "P2",
+    "title": "A workspace saved on a copy that does not save to AWS cannot be opened: 404",
+    "what_happens": "Saving a briefing as a workspace works and it is listed, with id 1000000001. Opening it answers 404 'Workspace not found.' The route takes ids of up to 9 digits, and a copy that does not save numbers its own rows from 1,000,000,000. So on every such copy (a teammate's clone, a test server) a saved workspace can never be reopened. The PC that saves to AWS gets lower ids and was not tested.",
+    "what_should_happen": "The route accepts the ids the store gives.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-18",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (notes, kind workspace-not-openable)",
+    "root_cause_guess": "src/app/api/collector/workspaces/[id]/route.ts:10 against src/lib/aws/store.ts:298.",
+    "class": "a limit that does not fit the data", "lang": "all"
+  },
+  {
+    "id": "same-number-19", "area": "Build hook: news-only rows (owner's decision)", "severity": "P2",
+    "title": "The hook that leaves out 'sites that are not news media' takes out 144 incidents, most from real news sites, with 6 deaths",
+    "what_happens": "news-media-only@1 removes news-only incidents with no outlet on its list. 131 of the 144 are from outlets the data itself calls regional: Oneindia Tamil 30, ABP Nadu 17, Samayam Tamil 10, Vikatan 6, and so on (publishers in same-number-extras.json, hooks_removed). Examples: INC-20260924-C6A723, an accident with 4 dead, from Oneindia Tamil; INC-20261021-C1FFE1, a dengue death near Tambaram, from Oneindia Tamil; INC-20261009-749A06, a worker electrocuted, from Ommcom News. These rows are in no figure on any screen. Every screen agrees, so this is not a mismatch between screens; it is the reason raw and screen differ.",
+    "what_should_happen": "The owner decides whether a regional news site counts, and whether a row with a recorded death may be left out by a publisher list. Left as it is: not changed here.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-19",
+    "evidence": "docs/qa/pass4/evidence/same-number-hooks.json, same-number-extras.json (hooks_removed)",
+    "root_cause_guess": "src/lib/collector/derive.ts:299-310, src/lib/collector/newsrel.ts:115 (an unlisted web address means not news media).",
+    "class": "owner's decision", "lang": "all"
+  },
+  {
+    "id": "same-number-20", "area": "Ask District IQ: code lanes", "severity": "P1",
+    "title": "With no model, 'past deadline by department' says no incidents match, and 'complaints by department' answers about open incidents",
+    "what_happens": "'past deadline by department this week' answers 'No incidents or news reports match that in the last 7 days', with 339 past deadline. 'complaints by department this week' answers 'Greater Chennai Police leads with 405 open incidents': another measure, said confidently. Read with no model on the server. With a model the route could differ; that was not tested here.",
+    "what_should_happen": "The figure asked for, or a plain 'I cannot break that down'.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-20",
+    "evidence": "tests/qa/pass4/same-number.test.ts; docs/qa/pass4/evidence/same-number.json (lines)",
+    "root_cause_guess": "src/lib/assistant/guard.ts:165 sends any sentence with 'department' to the departments tool; src/lib/assistant/pipeline.ts:385 sends the other to search_records.",
+    "class": "a confident answer about another measure", "lang": "en"
+  },
+  {
+    "id": "same-number-21", "area": "Jarvis: spoken lines", "severity": "P3",
+    "title": "Spoken lines read '1357 incidents reports this week' and '112 incidents of incidents this week'",
+    "what_happens": "The subject word is repeated or left in the wrong form on the dashboard and trend screens.",
+    "what_should_happen": "A plain sentence.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-21",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (lines)",
+    "root_cause_guess": "src/lib/thunai/screens.ts:914 and 1096.",
+    "class": "wording", "lang": "en"
+  },
+  {
+    "id": "same-number-22", "area": "Overview tile: resolved", "severity": "P2",
+    "title": "The tile 'Resolved this week' says 182 where 1,166 were resolved this week",
+    "what_happens": "The tile counts incidents reported in the period and resolved since (its small print says '% of reported'). Ask District IQ and the Briefing's good-news line count by closing time: 1,166. Both are right for what they count, but the tile's name says the other. 984 rows closed this week were reported before it (ids in same-number-extras.json, resolved_weekly).",
+    "what_should_happen": "The tile's name says what it counts, for example 'Of this week's reports, resolved'.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-22",
+    "evidence": "docs/qa/pass4/evidence/same-number.json (kpi.cur.resolved, assistant/chat:resolved, book.good.resolved)",
+    "root_cause_guess": "src/components/collector/app/Overview.tsx:68.",
+    "class": "a label that does not fit the figure", "lang": "all"
+  },
+  {
+    "id": "same-number-23", "area": "Jarvis: severe cases", "severity": "P2",
+    "title": "Jarvis says '52 severe cases this week' where the tile says 65 and the line under it 54",
+    "what_happens": "52 is the severity panel's count: open, one row per group. 65 counts closed ones as well; 54 is open and counts every incident. The rows: 11 closed (named in same-number-extras.json, severe_weekly.closed_ids); INC-20261022-D1B3AB and INC-20261105-6B3555 sit inside another severe row's group. The panel on the console shows the same 52 under the same tile, so it is one definition with the panel, but Jarvis says only 'severe cases'.",
+    "what_should_happen": "Say 'open' and 'groups' when it is not the tile's figure, or give the tile's figure.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/same-number.test.ts -t same-number-23",
+    "evidence": "docs/qa/pass4/evidence/same-number-extras.json (severe_weekly)",
+    "root_cause_guess": "src/lib/thunai/screens.ts:411 and casesSay at 485.",
+    "class": "a definition not said", "lang": "all"
+  }
+]

@@ -1,0 +1,563 @@
+{
+ "server": "3132, one start per row: server.mjs start --port 3132 --frozen <iso> --env TZ=<tz>; oracle from the pinned raw incidents table. The app's weekly figures are a little under the raw table because the app's own build hooks drop some rows",
+ "runs": [
+  {
+   "run": "IST server, Sat 00:30 IST",
+   "tz": "Asia/Kolkata",
+   "frozen": "2026-11-06T19:00:00.000Z",
+   "ist": "2026-11-07 00:30:00",
+   "http": 200,
+   "asOf": "2026-11-07 00:30:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "lastKey": "2026-10-26",
+   "expectedLast": "2026-10-26",
+   "allMondays": true,
+   "appWeekly": [
+    272,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracleWeekly": [
+    272,
+    988,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "245 incidents · yesterday (6 Nov)",
+    "md": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "oracleYesterday": {
+     "date": "2026-11-06",
+     "n": 150,
+     "severe": 3
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-05",
+     "n": 249,
+     "severe": 18
+    }
+   },
+   "yesterdayTa": "150 புகார்கள் · நேற்று | நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "245 incidents · netru | netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+   "oracleComplaints": {
+    "yesterday": 97,
+    "dayBefore": 150
+   },
+   "overviewNow": "2026-11-07 00:30:00",
+   "reported24h": 148
+  },
+  {
+   "run": "UTC server, Sat 00:30 IST",
+   "tz": "UTC",
+   "frozen": "2026-11-06T19:00:00.000Z",
+   "ist": "2026-11-07 00:30:00",
+   "http": 200,
+   "asOf": "2026-11-07 00:30:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "lastKey": "2026-10-26",
+   "expectedLast": "2026-10-26",
+   "allMondays": true,
+   "appWeekly": [
+    272,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracleWeekly": [
+    272,
+    988,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "245 incidents · yesterday (6 Nov)",
+    "md": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "oracleYesterday": {
+     "date": "2026-11-06",
+     "n": 150,
+     "severe": 3
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-05",
+     "n": 249,
+     "severe": 18
+    }
+   },
+   "yesterdayTa": "150 புகார்கள் · நேற்று | நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "245 incidents · netru | netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+   "oracleComplaints": {
+    "yesterday": 97,
+    "dayBefore": 150
+   },
+   "overviewNow": "2026-11-07 00:30:00",
+   "reported24h": 148
+  },
+  {
+   "run": "UTC server, Mon 03:00 IST (Sun in UTC)",
+   "tz": "UTC",
+   "frozen": "2026-11-08T21:30:00.000Z",
+   "ist": "2026-11-09 03:00:00",
+   "http": 200,
+   "asOf": "2026-11-09 03:00:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "lastKey": "2026-11-02",
+   "expectedLast": "2026-11-02",
+   "allMondays": true,
+   "appWeekly": [
+    974,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracleWeekly": [
+    975,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187,
+    1010
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "0 incidents · yesterday (8 Nov)",
+    "md": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "oracleYesterday": {
+     "date": "2026-11-08",
+     "n": 0,
+     "severe": 0
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-07",
+     "n": 0,
+     "severe": 0
+    }
+   },
+   "yesterdayTa": "0 புகார்கள் · நேற்று | நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "0 incidents · netru | netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+   "oracleComplaints": {
+    "yesterday": 0,
+    "dayBefore": 0
+   },
+   "overviewNow": "2026-11-09 03:00:00",
+   "reported24h": 0
+  },
+  {
+   "run": "IST server, Mon 00:30 IST",
+   "tz": "Asia/Kolkata",
+   "frozen": "2026-11-08T19:00:00.000Z",
+   "ist": "2026-11-09 00:30:00",
+   "http": 200,
+   "asOf": "2026-11-09 00:30:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "lastKey": "2026-11-02",
+   "expectedLast": "2026-11-02",
+   "allMondays": true,
+   "appWeekly": [
+    983,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracleWeekly": [
+    984,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187,
+    1010
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "0 incidents · yesterday (8 Nov)",
+    "md": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "oracleYesterday": {
+     "date": "2026-11-08",
+     "n": 0,
+     "severe": 0
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-07",
+     "n": 0,
+     "severe": 0
+    }
+   },
+   "yesterdayTa": "0 புகார்கள் · நேற்று | நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "0 incidents · netru | netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+   "oracleComplaints": {
+    "yesterday": 0,
+    "dayBefore": 0
+   },
+   "overviewNow": "2026-11-09 00:30:00",
+   "reported24h": 0
+  },
+  {
+   "run": "New York server, Mon 10:00 IST (Sun 23:30 local)",
+   "tz": "America/New_York",
+   "frozen": "2026-11-09T04:30:00.000Z",
+   "ist": "2026-11-09 10:00:00",
+   "http": 200,
+   "asOf": "2026-11-09 10:00:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "lastKey": "2026-11-02",
+   "expectedLast": "2026-11-02",
+   "allMondays": true,
+   "appWeekly": [
+    943,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracleWeekly": [
+    944,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187,
+    1010
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "0 incidents · yesterday (8 Nov)",
+    "md": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "oracleYesterday": {
+     "date": "2026-11-08",
+     "n": 0,
+     "severe": 0
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-07",
+     "n": 0,
+     "severe": 0
+    }
+   },
+   "yesterdayTa": "0 புகார்கள் · நேற்று | நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "0 incidents · netru | netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+   "oracleComplaints": {
+    "yesterday": 0,
+    "dayBefore": 0
+   },
+   "overviewNow": "2026-11-09 10:00:00",
+   "reported24h": 0
+  },
+  {
+   "run": "Los Angeles server, Sat 23:50 IST",
+   "tz": "America/Los_Angeles",
+   "frozen": "2026-11-07T18:20:00.000Z",
+   "ist": "2026-11-07 23:50:00",
+   "http": 200,
+   "asOf": "2026-11-07 23:50:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "lastKey": "2026-10-26",
+   "expectedLast": "2026-10-26",
+   "allMondays": true,
+   "appWeekly": [
+    126,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracleWeekly": [
+    126,
+    988,
+    1201,
+    1068,
+    1074,
+    1185,
+    1117,
+    1159,
+    1200,
+    1242,
+    1542,
+    1187
+   ],
+   "weeklyZero": 0,
+   "monthKeys": [
+    "2026-06",
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11"
+   ],
+   "monthTotals": [
+    4223,
+    4435,
+    4715,
+    4781,
+    5523,
+    1149
+   ],
+   "yesterday": {
+    "asked": "how many incidents yesterday",
+    "head": "245 incidents · yesterday (6 Nov)",
+    "md": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "oracleYesterday": {
+     "date": "2026-11-06",
+     "n": 150,
+     "severe": 3
+    },
+    "oracleDayBefore": {
+     "date": "2026-11-05",
+     "n": 249,
+     "severe": 18
+    }
+   },
+   "yesterdayTa": "150 புகார்கள் · நேற்று | நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+   "yesterdayTg": "245 incidents · netru | netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+   "oracleComplaints": {
+    "yesterday": 97,
+    "dayBefore": 150
+   },
+   "overviewNow": "2026-11-07 23:50:00",
+   "reported24h": 0
+  }
+ ]
+}

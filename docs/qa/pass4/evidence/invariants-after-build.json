@@ -1,0 +1,219 @@
+{
+ "note": "The same SQL checks, with the main tables replaced by what the real store holds after the app's build steps. Ids and text are not copied here.",
+ "rows_before_and_after": {
+  "incidents": [
+   28097,
+   27923
+  ],
+  "events": [
+   34332,
+   34332
+  ],
+  "incident_members": [
+   34332,
+   34112
+  ],
+  "documents": [
+   19081,
+   19081
+  ],
+  "actions": [
+   5601,
+   5582
+  ],
+  "incident_timeline": [
+   143676,
+   143649
+  ],
+  "gaps": [
+   62,
+   54
+  ],
+  "alerts": [
+   66,
+   53
+  ]
+ },
+ "changed": [
+  {
+   "name": "incident_lapsed_without_closed_at",
+   "stored": 763,
+   "after_build": 611,
+   "meaning": "by design: dropped news-only incidents take some Lapsed ones with them. This is the number on screen."
+  },
+  {
+   "name": "incident_zone_without_ward",
+   "stored": 0,
+   "after_build": 78,
+   "meaning": "by design: the build places some news at zone level."
+  },
+  {
+   "name": "incident_pin_outside_own_ward",
+   "stored": 456,
+   "after_build": 462,
+   "meaning": "by design: the same placing step moves some pins."
+  },
+  {
+   "name": "duplicate_news_url_in_one_incident",
+   "stored": 49,
+   "after_build": 46,
+   "meaning": "by design: fewer incidents, so fewer repeats."
+  },
+  {
+   "name": "outlet_count_is_not_publishers",
+   "stored": 124,
+   "after_build": 95,
+   "meaning": "by design: merged incidents recount outlets as publishers."
+  },
+  {
+   "name": "incident_id_date_differs_from_first_report",
+   "stored": 472,
+   "after_build": 467,
+   "meaning": "by design: fewer incidents."
+  },
+  {
+   "name": "member_rows_vs_events",
+   "stored": 0,
+   "after_build": 181,
+   "meaning": "INV-1: events still point at incidents the build took out."
+  },
+  {
+   "name": "incident_dead_vs_reports",
+   "stored": 0,
+   "after_build": 2,
+   "meaning": "by design: the build lowers or holds some death counts on news-only incidents."
+  },
+  {
+   "name": "kpis_incidents",
+   "stored": 0,
+   "after_build": 73,
+   "meaning": "not shown: the app never reads the kpis table (catalog.ts:360 keeps it from Ask District IQ too)."
+  },
+  {
+   "name": "kpis_severe",
+   "stored": 0,
+   "after_build": 4,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_high",
+   "stored": 0,
+   "after_build": 40,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_open",
+   "stored": 0,
+   "after_build": 46,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_past_deadline_open",
+   "stored": 0,
+   "after_build": 23,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_news_only",
+   "stored": 0,
+   "after_build": 67,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_resolved_vs_closed_in_window",
+   "stored": 0,
+   "after_build": 24,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_resolved_counts_rejected",
+   "stored": 92,
+   "after_build": 101,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "kpis_median_first_action",
+   "stored": 0,
+   "after_build": 4,
+   "meaning": "not shown: see kpis_incidents."
+  },
+  {
+   "name": "metrics_vs_raw_counts",
+   "stored": 0,
+   "after_build": 1,
+   "meaning": "not shown as a figure: the pipeline's own run record."
+  },
+  {
+   "name": "ward_incidents_30d",
+   "stored": 0,
+   "after_build": 35,
+   "meaning": "not shown: the planner is told not to count from ref_wards (prompts/planner.ts:22)."
+  },
+  {
+   "name": "ward_open_incidents",
+   "stored": 0,
+   "after_build": 13,
+   "meaning": "not shown: see ward_incidents_30d."
+  },
+  {
+   "name": "ward_open_past_deadline",
+   "stored": 0,
+   "after_build": 7,
+   "meaning": "not shown: see ward_incidents_30d."
+  },
+  {
+   "name": "gap_differs_from_incident",
+   "stored": 0,
+   "after_build": 1,
+   "meaning": "by design: the merged incident's facts changed; the app joins from incidents."
+  },
+  {
+   "name": "briefing_incidents_vs_incidents",
+   "stored": 0,
+   "after_build": 4,
+   "meaning": "not shown: the app reads only the briefing's summary sentences, which state no totals (insights.ts:212)."
+  },
+  {
+   "name": "orphan_event_without_incident",
+   "stored": 0,
+   "after_build": 181,
+   "meaning": "INV-1: events still point at incidents the build took out (newsMedia, derive.ts:311)."
+  },
+  {
+   "name": "orphan_action_without_incident",
+   "stored": 0,
+   "after_build": 43,
+   "meaning": "INV-1: actions left behind. No screen lists them without their incident."
+  },
+  {
+   "name": "orphan_timeline_without_incident",
+   "stored": 0,
+   "after_build": 136,
+   "meaning": "INV-1: timeline rows left behind. No screen lists them without their incident."
+  },
+  {
+   "name": "orphan_document_without_incident",
+   "stored": 0,
+   "after_build": 181,
+   "meaning": "INV-1: an article linked to an incident that is gone. The search box opens it."
+  },
+  {
+   "name": "orphan_gap_without_incident",
+   "stored": 0,
+   "after_build": 8,
+   "meaning": "INV-1: gap rows left behind. The app joins gaps from incidents, so none shows."
+  },
+  {
+   "name": "null_parent_rows",
+   "stored": 0,
+   "after_build": 39,
+   "meaning": "by design: dropIncidents unlinks the reports of incidents it takes out."
+  },
+  {
+   "name": "review_gap_incident_missing",
+   "stored": 0,
+   "after_build": 16,
+   "meaning": "INV-1: the review queue still counts gaps for dropped incidents (insights.ts:173 counts by type only)."
+  }
+ ]
+}

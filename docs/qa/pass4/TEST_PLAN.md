@@ -49,3 +49,7 @@ Phases run in the order given in the prompt, section 6. `STATE.md` records where
 ## Definition of "fixed"
 
 As section 7 of the prompt says: a test failed before the fix and fails again on revert; root cause written; class sweep saved and class guard exists; golden-master diff explained; checked on the real path; reviewer read it and skeptic tried to break it. Each row in `BUGS.md` states which of these parts are met.
+
+## Fast track (owner's order, 6 Nov 2026, 22:35 IST)
+
+The owner asked for the rest of the run to finish within 5 hours, so about 03:35 IST on 7 Nov. Scale is cut to fit, and fewer agents are used. Targets above are not changed. Anything the fast track leaves out appears in the final report as not run, and any target it leaves unmeasured stays unmet.

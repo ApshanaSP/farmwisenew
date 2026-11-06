@@ -1,0 +1,16 @@
+{
+ "a": "baseline-abef9da",
+ "b": "baseline-abef9da-repeat",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 0,
+ "added": 0,
+ "removed": 0,
+ "context": {},
+ "routes": [],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": []
+}

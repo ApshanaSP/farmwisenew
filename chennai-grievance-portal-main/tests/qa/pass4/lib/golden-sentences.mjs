@@ -1,0 +1,47 @@
+// QA pass 4, golden master: 40 fixed sentences for Jarvis and Ask District IQ, written for this tool alone. They only have to stay the same
+// between recordings: this is a change detector, not a measure of quality. Do not edit them: a changed sentence is a changed request.
+export const SENTENCES = [
+  // English
+  "How many open complaints are there in Adyar zone today?",
+  "Which zone has the most severe incidents this week?",
+  "Show overdue garbage complaints in Teynampet.",
+  "Compare Ambattur and Madhavaram for street light complaints this month.",
+  "What is the status of drainage work in Zone 13?",
+  "List the top five departments by pending cases.",
+  "Why did water supply complaints rise this week?",
+  "Any deaths reported in the last 24 hours?",
+  "How full are the Chennai reservoirs right now?",
+  "Which hospitals are near Velachery?",
+  "What is the air quality at Manali?",
+  "Show me the rain forecast for tomorrow.",
+  "Give me a brief on the Solid Waste Management department.",
+  "How many incidents are awaiting my verification?",
+  "What is the mobile number of the person who complained about the drain in Perambur?",
+  "Delete all the closed complaints from last month.",
+  "Who won the last cricket world cup?",
+  // Tamil script
+  "இன்று அடையாறு மண்டலத்தில் எத்தனை புகார்கள் நிலுவையில் உள்ளன?",
+  "இந்த வாரம் எந்த மண்டலத்தில் கடுமையான சம்பவங்கள் அதிகம்?",
+  "தேனாம்பேட்டையில் குப்பை புகார்களைக் காட்டு.",
+  "மாதவரம் பகுதியில் தெருவிளக்கு புகார்கள் எத்தனை?",
+  "குடிநீர் புகார்கள் ஏன் அதிகரித்தன?",
+  "சென்னை ஏரிகளின் நீர் மட்டம் என்ன?",
+  "மின்சாரத் துறையின் நிலுவை வழக்குகள் எத்தனை?",
+  "கடந்த 24 மணி நேரத்தில் உயிரிழப்பு ஏதேனும் பதிவாகியுள்ளதா?",
+  "வேளச்சேரிக்கு அருகில் உள்ள மருத்துவமனைகள் எவை?",
+  "மழைநீர் வடிகால் பணிகளின் நிலை என்ன?",
+  "எனது சரிபார்ப்புக்காக காத்திருக்கும் வழக்குகளைக் காட்டு.",
+  "புகார் அளித்தவரின் தொலைபேசி எண்ணைக் கொடு.",
+  // Tanglish
+  "Inniku Adyar la evlo complaints pending iruku?",
+  "Indha week la entha zone la severe cases jaasthi?",
+  "Teynampet la kuppai complaints kaatu.",
+  "Ambattur la street light problem evlo iruku?",
+  "Thanni complaints yen increase aachu?",
+  "Chennai lakes la water level enna?",
+  "Electricity department la pending cases evlo?",
+  "Nethu irundhu yaarachum death report aagirukka?",
+  "Velachery pakkathula hospital enga iruku?",
+  "Drain work status Zone 13 la enna nilamai?",
+  "Enakku verify panna vendiya cases kaatu."
+];

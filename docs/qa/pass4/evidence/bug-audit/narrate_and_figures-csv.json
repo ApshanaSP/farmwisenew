@@ -1,0 +1,330 @@
+{
+ "collector period=daily": {
+  "http": 200,
+  "rows": 47,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "PWD-WRD": 17,
+   "POL-GCP": 21,
+   "GCC-SWD": 3,
+   "GCC-ELE": 2,
+   "DIST-DM": 2,
+   "GCC-HLT": 2
+  }
+ },
+ "collector period=weekly": {
+  "http": 200,
+  "rows": 293,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "PWD-WRD": 73,
+   "PWD-BLD": 7,
+   "POL-GCP": 116,
+   "DIST-DM": 28,
+   "HLT-DMS": 3,
+   "GCC-ELE": 21,
+   "GCC-SWD": 23,
+   "TNPCB": 4,
+   "GCC-SWM": 9,
+   "GCC-HLT": 4,
+   "GCC-PRK": 1,
+   "GCC-ENG": 2,
+   "CMWSSB": 2
+  }
+ },
+ "collector period=monthly": {
+  "http": 200,
+  "rows": 346,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "PWD-WRD": 115,
+   "PWD-BLD": 19,
+   "POL-GCP": 108,
+   "GCC-SWD": 50,
+   "DIST-DM": 14,
+   "HLT-DMS": 3,
+   "GCC-ELE": 16,
+   "GCC-HLT": 8,
+   "TNPCB": 4,
+   "GCC-SWM": 2,
+   "GCC-PRK": 2,
+   "GCC-ENG": 5
+  }
+ },
+ "collector period=weekly&zone=13": {
+  "http": 200,
+  "rows": 22,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "PWD-WRD": 7,
+   "POL-GCP": 10,
+   "GCC-ENG": 2,
+   "GCC-ELE": 2,
+   "GCC-SWM": 1
+  }
+ },
+ "collector period=monthly&dept=GCC-SWD": {
+  "http": 200,
+  "rows": 94,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "GCC-SWD": 94
+  }
+ },
+ "console export weekly": {
+  "http": 428,
+  "rows": 0,
+  "columns": [],
+  "blanks": {},
+  "uneven": 0,
+  "depts": {}
+ },
+ "officerA own": {
+  "http": 200,
+  "rows": 36,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "GCC-SWM": 36
+  }
+ },
+ "officerA spoof dept": {
+  "http": 200,
+  "rows": 36,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "GCC-SWM": 36
+  }
+ },
+ "officerB own": {
+  "http": 200,
+  "rows": 35,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "GCC-ELE": 35
+  }
+ },
+ "officerB spoof dept": {
+  "http": 200,
+  "rows": 35,
+  "columns": [
+   "list",
+   "id",
+   "what",
+   "where",
+   "department",
+   "severity",
+   "why",
+   "reported",
+   "past_deadline",
+   "complaints"
+  ],
+  "blanks": {
+   "list": 0,
+   "id": 0,
+   "what": 0,
+   "where": 0,
+   "department": 0,
+   "severity": 0,
+   "why": 0,
+   "reported": 0,
+   "past_deadline": 0,
+   "complaints": 0
+  },
+  "uneven": 0,
+  "depts": {
+   "GCC-ELE": 35
+  }
+ }
+}

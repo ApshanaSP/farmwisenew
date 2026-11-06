@@ -1,0 +1,241 @@
+{
+ "incidents": 27923,
+ "step_does_not_fit": 619,
+ "of_them_open": 41,
+ "by_category_and_step": {
+  "PUBLIC_ORDER -> metrowater": 167,
+  "DRAINAGE_SEWAGE -> conservancy": 123,
+  "SANITATION_TOILETS -> metrowater": 52,
+  "ENCROACHMENT -> conservancy": 50,
+  "TRAFFIC_OBSTRUCTION -> pump": 39,
+  "AIR_POLLUTION -> conservancy": 36,
+  "OTHER -> conservancy": 24,
+  "WATERBODY_INFRA -> conservancy": 19,
+  "OTHER -> metrowater": 17,
+  "PUBLIC_WORKS -> conservancy": 17,
+  "STREETLIGHT_ELECTRICAL -> pump": 15,
+  "PUBLIC_ORDER -> conservancy": 13,
+  "STREETLIGHT_ELECTRICAL -> conservancy": 12,
+  "DRAINAGE_SEWAGE -> pump": 7,
+  "PUBLIC_WORKS -> metrowater": 7,
+  "WATERBODY_INFRA -> pump": 5,
+  "TREES_PARKS -> pump": 3,
+  "WATER_SUPPLY -> conservancy": 2,
+  "BUILDING_SAFETY -> pump": 2,
+  "ROAD_DAMAGE -> metrowater": 2,
+  "STRAY_ANIMALS -> fogging": 1,
+  "ROAD_DAMAGE -> pump": 1,
+  "WATER_SUPPLY -> pump": 1,
+  "CRIME_PROPERTY -> conservancy": 1,
+  "MISSING_PERSON -> pump": 1,
+  "TRAFFIC_OBSTRUCTION -> repair date": 1,
+  "SOLID_WASTE -> pump": 1
+ },
+ "open": [
+  {
+   "id": "INC-20260523-B2BD8B",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20260602-D2D745",
+   "code": "WATERBODY_INFRA",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20260620-072A86",
+   "code": "WATERBODY_INFRA",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20260901-1F3EDD",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20260925-B891B9",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261002-958861",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261002-9CCAA8",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261005-0FD209",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261008-C51614",
+   "code": "WATERBODY_INFRA",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261009-AE290B",
+   "code": "STREETLIGHT_ELECTRICAL",
+   "step": "pump"
+  },
+  {
+   "id": "INC-20261013-2FB93F",
+   "code": "PUBLIC_WORKS",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261013-C51EEA",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261014-36A882",
+   "code": "PUBLIC_WORKS",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261014-A33003-1",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261019-F7C5ED",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261021-64381D",
+   "code": "STREETLIGHT_ELECTRICAL",
+   "step": "pump"
+  },
+  {
+   "id": "INC-20261021-7BB6F0",
+   "code": "PUBLIC_WORKS",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261022-26AA4E",
+   "code": "STREETLIGHT_ELECTRICAL",
+   "step": "pump"
+  },
+  {
+   "id": "INC-20261022-A1B022",
+   "code": "PUBLIC_WORKS",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261024-441B0E",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261024-D73083",
+   "code": "PUBLIC_ORDER",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261026-6D606F",
+   "code": "OTHER",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261027-7989DA",
+   "code": "PUBLIC_ORDER",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261028-62DF1F",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261029-42F880",
+   "code": "OTHER",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261029-E54091",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261030-1CD3C4",
+   "code": "SANITATION_TOILETS",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261030-AE844C",
+   "code": "WATERBODY_INFRA",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261030-DCA9CD",
+   "code": "SANITATION_TOILETS",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261031-345A17",
+   "code": "WATER_SUPPLY",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261031-3F58A9",
+   "code": "PUBLIC_ORDER",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261031-4768DD",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261103-040004",
+   "code": "OTHER",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261103-17A0B9",
+   "code": "STREETLIGHT_ELECTRICAL",
+   "step": "pump"
+  },
+  {
+   "id": "INC-20261103-E065D3",
+   "code": "ENCROACHMENT",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261104-37B61C",
+   "code": "STREETLIGHT_ELECTRICAL",
+   "step": "pump"
+  },
+  {
+   "id": "INC-20261104-5346DE",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261104-716F84",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261105-13C3BF",
+   "code": "DRAINAGE_SEWAGE",
+   "step": "conservancy"
+  },
+  {
+   "id": "INC-20261105-B03F8E",
+   "code": "OTHER",
+   "step": "metrowater"
+  },
+  {
+   "id": "INC-20261105-D3CEEC",
+   "code": "TRAFFIC_OBSTRUCTION",
+   "step": "pump"
+  }
+ ]
+}
