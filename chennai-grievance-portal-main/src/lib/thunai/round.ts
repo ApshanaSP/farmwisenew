@@ -345,7 +345,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     const hit = key ? planCache.get(key) : null;
     if (hit && Date.now() - hit.at < PLAN_MS) {
       const t = turnOf(b.turnId, bundle0, t0);
-      const r = await timed(lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data", () => finish(hit.plan, { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage }, { world, hands, llm: async () => { throw new Error("cached"); } }, { t0, rounds: 0, model: "cache", results: t.results, clock: Date.now, until: t.until }));
+      const r = await timed(lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data", () => finish(hit.plan, { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage, screen: b.stageDigest ? [b.stageDigest] : [] }, { world, hands, llm: async () => { throw new Error("cached"); } }, { t0, rounds: 0, model: "cache", results: t.results, clock: Date.now, until: t.until }));
       if (r.kind !== "none") return out(served(r), "cache", { cached: true });
     }
     const t = turnOf(b.turnId, bundle0, t0);
@@ -356,7 +356,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   const bundle: Bundle = b.round === 0 ? (routeByRules(b.text, world, !!stage).bundle ?? "screens") : "data";
   const t = turnOf(b.turnId, bundle, t0);
   const now = deps.now ?? Date.now;
-  const input = { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage };
+  const input = { text: b.text, state, ctx: { turns: b.turns, notes: mem.notes, habits: mem.habits, now: Date.now() }, stage, screen: b.stageDigest ? [b.stageDigest] : [] };
   const finishWith = async (plan: AgentPlan, note?: string) => {
     // every say goes through the template: a line with no figure comes back as it is, a figure the model wrote refuses the line
     if (plan.say) plan = { ...plan, say: fillTemplate(plan.say, t.values, zonesNamed(t.results)) };

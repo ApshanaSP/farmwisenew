@@ -13,7 +13,11 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, asOf, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -143,7 +147,7 @@ async function patterns(dept: string, s: InsightScope, now: string): Promise<Bui
     q(`SELECT i.category_label AS l, SUM(${w.sql}) AS cur, SUM(${pv.sql}) AS prev FROM incidents i
        WHERE i.lead_dept = ? AND ((${w.sql}) OR (${pv.sql}))${a.sql} GROUP BY i.category_label ORDER BY cur DESC, prev DESC LIMIT 12`,
       [...w.params, ...pv.params, dept, ...w.params, ...pv.params, ...a.params]),
-    q(`SELECT i.ward_no AS ward, MAX(i.zone_name) AS zone, COUNT(*) AS n, SUM(i.is_open) AS open FROM incidents i
+    q(`SELECT i.ward_no AS ward, MAX(i.zone_name) AS zone, COUNT(*) AS n, SUM(${OPEN}) AS open FROM incidents i
        WHERE i.lead_dept = ? AND ${w.sql}${a.sql} AND i.ward_no IS NOT NULL GROUP BY i.ward_no ORDER BY n DESC, open DESC LIMIT 8`,
       [dept, ...w.params, ...a.params]),
     q(`SELECT COUNT(*) AS n, SUM(i.citizen_complaints > 0) AS portal, SUM(i.outlet_count > 0) AS news, SUM(i.sources LIKE '%police%') AS police,
@@ -194,20 +198,20 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
   const W = `i.lead_dept = ? AND ${w.sql}${a.sql}`, P = [dept, ...w.params, ...a.params];
   const since = periodSince(s.period, now);
   const [[k], [kp], byType, byZone, repeats, [dec]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.is_open = 0) AS closed, SUM(i.is_open = 1 AND i.sla_breached = 1) AS overdue,
-              SUM(i.is_open = 1) AS open, SUM(i.severity_level IN ('Severe', 'High')) AS serious,
-              AVG(CASE WHEN i.is_open = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60 END) AS hrs,
+    q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0) AS closed, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue,
+              SUM(${OPEN} = 1) AS open, SUM(i.severity_level IN ('Severe', 'High')) AS serious,
+              AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60 END) AS hrs,
               AVG(i.hours_to_first_action) AS first_h, SUM(i.citizen_complaints) AS complaints,
-              SUM(i.is_open = 0 AND COALESCE(i.sla_breached, 0) = 0) AS on_time
+              SUM(${OPEN} = 0 AND COALESCE(i.sla_breached, 0) = 0) AS on_time
        FROM incidents i WHERE ${W}`, P),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.lead_dept = ? AND ${prev.sql}${a.sql}`, [dept, ...prev.params, ...a.params]),
     q(`SELECT i.category_label AS l, COUNT(*) AS n,
-              AVG(CASE WHEN i.is_open = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 1440 END) AS days
+              AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 1440 END) AS days
        FROM incidents i WHERE ${W} GROUP BY i.category_label ORDER BY n DESC LIMIT 8`, P),
-    q(`SELECT i.zone_name AS l, SUM(i.is_open = 1 AND i.sla_breached = 1) AS v FROM incidents i WHERE ${W} AND i.zone_name IS NOT NULL
+    q(`SELECT i.zone_name AS l, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS v FROM incidents i WHERE ${W} AND i.zone_name IS NOT NULL
        GROUP BY i.zone_name HAVING v > 0 ORDER BY v DESC LIMIT 8`, P),
     // places that keep coming back: the pipeline's hotspots, with this department's incidents in the window
-    q(`SELECT h.top_place AS place, i.category_label AS type, COUNT(*) AS n, SUM(i.is_open) AS open, h.incidents AS total
+    q(`SELECT h.top_place AS place, i.category_label AS type, COUNT(*) AS n, SUM(${OPEN}) AS open, h.incidents AS total
        FROM incidents i JOIN hotspots h ON h.hotspot_id = i.hotspot_id WHERE ${W}
        GROUP BY h.hotspot_id, h.top_place, i.category_label, h.incidents ORDER BY n DESC, total DESC LIMIT 8`, P),
     q(`SELECT SUM(d.decision IN ('verify', 'resolve')) AS verified, SUM(d.decision = 'reopen') AS returned

@@ -16,7 +16,7 @@ import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES } from "./lexicon";
 import { editDistance } from "./normalise";
 import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
-import { outsideIn } from "./outside";
+import { outsideIn, taOutside } from "./outside";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -121,6 +121,8 @@ function toRoman(text: string): string[] {
   const out: string[] = [];
   for (const tok of text.normalize("NFC").split(/\s+/).filter(Boolean)) {
     if (!/[஀-௿]/.test(tok)) { out.push(...words(tok)); continue; }
+    const far = taOutside(tok);
+    if (far) { out.push(far); continue; }
     const term = TA_TERMS.find(([ta]) => !ta.includes(" ") && (tok === ta || tok.startsWith(ta.replace(/்$/, ""))));
     out.push(term ? term[1] : romanise(tok).replace(/\s+/g, ""));
   }

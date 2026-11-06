@@ -13,7 +13,7 @@ import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { hoursBetween } from "./stagelocal";
 import { DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
-import { explainIssue, factSheet, plainWhat } from "./narrate";
+import { closedAs, explainIssue, factSheet, plainWhat } from "./narrate";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -511,7 +511,7 @@ async function caseDetail(c: Ctx): Promise<Part> {
   let id = c.slots.id;
   // "explain the flooding in Velachery": no number said, so the incident that matters most in what was named
   if (!id && (c.s.zone || c.s.cat || c.slots.q)) {
-    const top = await call(c, "incidents", { scope: scopeArg(c.s), sev: null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
+    const top = await call(c, "incidents", { scope: scopeArg(c.s), sev: c.s.sev ?? null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
     id = String(((top?.data as { rows?: Row[] } | undefined)?.rows ?? [])[0]?.id ?? "") || null;
     if (!id) return { title: "Nothing open", takeaway: null, say: bi("I can't find an open issue like that in the data.", "அப்படி ஒரு திறந்த பிரச்சினை தரவில் இல்லை."), blocks: [{ kind: "Note", id: "none", text: "No open incident matches this." }] };
   }
@@ -524,7 +524,8 @@ async function caseDetail(c: Ctx): Promise<Part> {
   const what = (i.why?.what ?? []).map((x: unknown) => clip(x, 300)).slice(0, 6);
   const officials = (d.officials ?? []).slice(0, 4).map((o) => ({ name: clip(o.name, 80), role: clip(o.designation, 120) }));
   const timeline = (d.reports ?? []).slice(0, 20).map((x) => ({ t: clip(x.t, 30), source: clip(x.publisher ?? x.source, 60), text: clip(x.title ?? x.what, 300) }));
-  if (i.open_for) what.unshift(`Open for ${clip(i.open_for, 40)}`);
+  const closed = closedAs(row.status, i.open);
+  if (i.open_for && !closed) what.unshift(`Open for ${clip(i.open_for, 40)}`);
   const block: BlockT = { kind: "CaseDetail", id: "case", incident: { ...row, what: what.slice(0, 6), why: clip(i.why?.why?.[0], 300) || null, next: clip(i.why?.next, 300) || null,
     deadline: when(i.sla_due), officials }, timeline };
   const blocks: BlockT[] = [block];
@@ -532,9 +533,9 @@ async function caseDetail(c: Ctx): Promise<Part> {
     points: [{ n: 1, id: row.id, lat: row.lat, lon: row.lon as number, label: row.title, sev: row.sev, value: null, hot: true }] });
   // retold, not read out: a fact sheet from the record, then what is wrong, how long, why it matters and what I would do
   const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
-  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(`${row.cat ?? ""} ${row.title}`), placeTa });
+  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(`${row.cat ?? ""} ${row.title}`), placeTa, open: i.open });
   const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
-  return { title: row.title, takeaway: row.overdue ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
+  return { title: row.title, takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
 }
 
 // ------------------------------------------------------------------ news --

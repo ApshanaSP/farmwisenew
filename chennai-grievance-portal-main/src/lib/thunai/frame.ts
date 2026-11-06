@@ -4,6 +4,7 @@
  * check and the fast lane, from the open Stage, the recent turns and the last place. The frame stays after a cancel, so a
  * correction refines the request that was cut off. Pure.
  */
+import { EXPLAIN_TA } from "./lexicon";
 import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { StageContext } from "./stage";
@@ -37,7 +38,7 @@ const PICK_NOUN = / (one|case|item|row|incident|complaint|that|thing|ஒன்�
 export function isElliptical(text: string): boolean {
   const t = norm(text);
   const words = t.trim().split(" ").filter(Boolean);
-  return ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(text.trim()) || (words.length <= 3 && !LIKE_NEW_REQUEST.test(t));
+  return ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(text.trim()) || (words.length <= 3 && !isNewRequest(t));
 }
 
 /** the last recipe and slots: the open Stage's, else what the last sentence would have been */
@@ -54,7 +55,8 @@ const ELLIPSIS_EN = /^ (and|what about|how about|same|same for|same in|also|now|
 const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
 const ELLIPSIS_TG = /^ (appo|apram|adhe|athe|illa|venam|vendaam|sari) | (la|le|ku|mattum|pathi)\??\s*$/;
 // a sentence that carries its own request (explain this issue, a report or status on something) is a new request, never "and in X?" (BUG-020)
-const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank|explain|brief|report|status|update|whats going on|what s going on|what is going on|whats wrong|vilakku|vilakkam)\b|விளக்கு|அறிக்கை|நிலவரம்/;
+const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank|explain|brief|report|status|update|whats going on|what s going on|what is going on|whats wrong|vilakku|vilakkam)\b|அறிக்கை|நிலவரம்/;
+const isNewRequest = (t: string) => LIKE_NEW_REQUEST.test(t) || EXPLAIN_TA.test(t);
 
 const WHY = /^ (why|whats the reason|what is the reason|reason|cause|how come|yen|ஏன்|காரணம்|karanam)( [^ ]+){0,5} $/;
 const WEEKLY = / (weekly|this week|last week|week|வாரம்|இந்த வாரம்|vaaram) /, MONTHLY = / (monthly|this month|last month|month|மாதம்|இந்த மாதம்|கடந்த மாதம்|maasam|masam) /, DAILY = / (daily|today|இன்று|இன்னைக்கு|innaiku) /, QUARTER = / (quarterly|this quarter|last quarter|quarter|காலாண்டு) /;
@@ -80,7 +82,7 @@ export function resolveFrame(i: FrameInput): Frame {
 
   const hasNewPlace = zonesIn(t, i.world);
   const short = words.length <= 6;
-  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !LIKE_NEW_REQUEST.test(t));
+  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !isNewRequest(t));
   const slots = { ...last.slots };
 
   // "why?", "why so many?", "ஏன் இந்த தாமதம்?": the reason for what is on screen (a why naming a new place is a new question)

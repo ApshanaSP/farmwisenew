@@ -144,6 +144,8 @@ export interface AgentInput {
   state: ScreenState;
   ctx: Context;
   stage: StageContext | null;
+  /** what the screen shows, as the model read it this turn: titles and headlines on it can carry text written by anyone */
+  screen?: string[];
 }
 
 export function agentPrompt(a: AgentInput, w: World, observations: string[], round: number): string {
@@ -434,12 +436,13 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   // v1's checker reads the kind, the reply and the steps: unreal codes and figures the Collector did not say are dropped
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
   // a line that repeats the records' own wording is an instruction hidden in the data speaking, not Jarvis (BUG-011)
-  const records = recordText(run.results);
+  // and the screen counts: with no tool run this turn, it is the only record the model has read (BUG-034)
+  const records = [...recordText(run.results), ...(input.screen ?? []), ...(input.stage?.title ? [input.stage.title] : [])];
   // and a model's own line that would carry a citizen's number or email (even spelled out, "ramesh at gmail dot com") is not said (OPEN-1)
   const leaks = (s: string | null | undefined) => !!s && redactText(s) !== s;
   if (v1.kind === "chat") return spellsNumber(v1.reply) || echoesRecords(v1.reply, records) || leaks(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) || leaks(v1.reply) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) || leaks(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
+  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) || leaks(v1.reply) || echoesRecords(v1.reply, records) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) || leaks(v1.question) || echoesRecords(v1.question, records) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
   // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
@@ -487,7 +490,7 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   }
   const scope0 = scopeAfter(input.state, modelSteps);
   let stage: StageDocT;
-  if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang);
+  if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang, input.screen);
   else {
     try {
       stage = (await within(buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text), Math.max(2500, run.until - run.clock() + 2000), "the data took too long")).doc;
@@ -505,14 +508,14 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
  * The answer screen for a question no recipe fits: the model's sentences when every figure in them is one the tools
  * returned (else the figures themselves, labelled), and the facts it rests on.
  */
-export function answerScreen(plan: AgentPlan, heard: string, results: { name: string; result: ToolResult }[], scope: ScopeT, lang: Lang): StageDocT {
+export function answerScreen(plan: AgentPlan, heard: string, results: { name: string; result: ToolResult }[], scope: ScopeT, lang: Lang, screen: string[] = []): StageDocT {
   const facts: Fact[] = results.flatMap((r) => r.result.facts as Fact[]);
   const allowed = new Set<string>();
   for (const f of facts) for (const v of [f.value, Math.round(f.value), Math.round(f.value * 10) / 10, Math.abs(f.value)]) allowed.add(String(v));
   const said = clip(plan.say, 600);
   // the Collector's own numbers are not evidence: an answer's figures must all come from the results; and an answer that repeats
   // a record's wording is that record speaking (an instruction hidden in a title), so the facts are shown instead (BUG-011)
-  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !echoesRecords(said, recordText(results));
+  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !echoesRecords(said, [...recordText(results), ...screen]);
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");

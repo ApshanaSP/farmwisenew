@@ -39,12 +39,18 @@ export const DEPT_ALIASES: Record<string, string[]> = {
   "GCC-HLT": ["health department", "corporation health", "public health", "சுகாதாரத் துறை"],
   "GCC-ELE": ["electrical department", "electrical", "electricity"],
   "HLT-DMS": ["hospitals", "medical services", "மருத்துவத் துறை"],
-  "TNPCB": ["pollution control board", "tnpcb", "pcb", "மாசு கட்டுப்பாடு வாரியம்"],
+  "TNPCB": ["pollution control board", "tamil nadu pollution control board", "tnpcb", "pcb", "மாசு கட்டுப்பாடு வாரியம்", "தமிழ்நாடு மாசு கட்டுப்பாட்டு வாரியம்", "மாசு கட்டுப்பாட்டு வாரியம்"],
   "GCC-PRK": ["parks department", "parks"],
   "CMWSSB": ["metro water", "metrowater", "cmwssb", "water board", "metro water board", "குடிநீர் வாரியம்", "மெட்ரோ வாட்டர்", "water"],
   "GCC-GAD": ["general administration"],
   "GCC-REV": ["revenue", "tax department"]
 };
+
+/**
+ * "Explain" in Tamil, on text with a space at each end. விளக்கு alone also means a lamp and sits inside தெருவிளக்கு (a street light), so it counts only as the
+ * sentence's last word, with no street or power word before it (BUG-032).
+ */
+export const EXPLAIN_TA = / (?:விளக்குங்க|விளக்குங்கள்|விளக்கவும்|விளக்கி|விளக்கம்|விளக்கமா|விளக்கமாக) |(?<! தெரு| மின்) விளக்கு $/;
 
 /** department code -> its name in Tamil, as said aloud (the Tamil voice says this, never the English name) */
 export const DEPT_TA: Record<string, string> = {
@@ -56,7 +62,7 @@ export const DEPT_TA: Record<string, string> = {
 
 /** category code -> spoken names */
 export const CAT_ALIASES: Record<string, string[]> = {
-  FLOOD_WATERLOGGING: ["flooding", "flood", "floods", "waterlogging", "water logging", "waterlogged", "water stagnation", "stagnation",
+  FLOOD_WATERLOGGING: [" வெள்ள ", " வெள்ளப் ", "flooding", "flood", "floods", "waterlogging", "water logging", "waterlogged", "water stagnation", "stagnation",
     "inundation", "rain water", "மழைநீர் தேக்கம்", "நீர்த்தேக்கம்", "தண்ணீர் தேக்கம்", "வெள்ளம்", "mazhai thanni", "thanni thekkam", "vellam"],
   DRAINAGE_SEWAGE: ["drainage", "sewage", "sewer", "sewage overflow", "கழிவுநீர்", "சாக்கடை", "saakkadai"],
   ROAD_DAMAGE: ["road", "roads", "pothole", "potholes", "road damage", "footpath", "சாலை", "பள்ளம்", "road damage complaints"],

@@ -6,7 +6,7 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, DEPT_ALIASES, SEV_WORDS, ZONES } from "./lexicon";
+import { CAT_ALIASES, DEPT_ALIASES, EXPLAIN_TA, SEV_WORDS, ZONES } from "./lexicon";
 import { fuzzyNames } from "./xlit";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
@@ -226,8 +226,14 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   return null;
 }
 
-/** asking for one issue to be explained (not a list, not a reason behind a rise) */
-const EXPLAIN = / (explain|explain to me|what s going on with|whats going on with|what is going on with|what s wrong with|whats wrong with|what is wrong with|what happened (with|to|at)|tell me more about the|tell me about the|vilakku|vilakkam|vilakkunga|puriyala|puriyalai|enna aachu) |விளக்கு|விளக்கம்|என்ன ஆச்சு|புரியல/;
+/** asking for one issue to be explained */
+const EXPLAIN = / (explain|explain to me|whats going on with|what is going on with|whats wrong with|what is wrong with|what happened (with|to|at)|tell me (more )?about the [a-z ]{0,40}(complaint|issue|case|incident|problem)|vilakku|vilakkam|vilakkama|vilakkunga|puriyala|puriyalai|enna aachu|ennanu|enna problem|simple ah|simpleah) |என்ன ஆச்சு|என்னன்னு|புரியல/;
+/** not one issue: a list, a count, a rise, a trend or the reason behind one (BUG-032) */
+/** the words of asking: with a place and nothing but these, the Collector named no topic ("explain the complaint in Adyar") */
+const ASKING = new Set(("explain to me tell more about the a an of in at on with whats what is going wrong happened complaint issue case incident problem this that please here there today week month " +
+  "simple simpleah ah sollu sollunga enna aachu ennanu la le nu adhu vilakku vilakkam vilakkama vilakkunga puriyala puriyalai " +
+  "புகார் பிரச்சனை பிரச்சினை சம்பவம் பற்றி பத்தி சொல்லு சொல்லுங்க சொல்லுங்கள் விளக்கு விளக்குங்க விளக்குங்கள் விளக்கவும் விளக்கி விளக்கம் விளக்கமா விளக்கமாக என்னன்னு என்ன ஆச்சு புரியல உள்ள இருக்கும் வந்த இந்த அந்த கொஞ்சம் பகுதி பகுதியில் மண்டலம் மண்டலத்தில் எளிமையா").split(" "));
+const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|list|rise|rising|increase|increasing|spike|spiking|jump|drop|fall|falling|trend|trends|why|pattern|patterns|high|low|many|count|stats|statistics) |புகார்கள்|சம்பவங்கள்|பிரச்சனைகள்|பிரச்சினைகள்|ஏன்|அதிகரி|போக்கு|பட்டியல்/;
 
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
@@ -238,7 +244,14 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
-  if (EXPLAIN.test(t) && (cat || zones.length) && !isComparing(t)) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, period: period ?? "monthly", fresh: true } };
+  if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
+    // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
+    const zoneWords = zones.flatMap((n) => [...(ZONES[n]?.en ?? []), ...(ZONES[n]?.ta ?? []), w.zones.find((z) => z.n === n)?.name ?? ""]).flatMap((x) => norm(x).trim().split(" "));
+    const isZoneWord = (x: string) => zoneWords.some((z) => z && (x === z || x === `${z}la` || (/[஀-௿]/.test(z) && z.length >= 4 && x.startsWith(z.replace(/[்ுூ]$/, "")))));
+    const namedOther = !cat && t.trim().split(" ").some((x) => !ASKING.has(x) && !isZoneWord(x));
+    if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
+    if (!o.noBail) return null;
+  }
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
   // "what should I do about flooding in Adyar": what needs the Collector first, reasoned in code from the data
   if (ADVICE.test(t)) return { recipe: "advise", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };

@@ -6,12 +6,16 @@
  * wrote one (number-checked), else the article's own summary. The chat model writes none of it.
  */
 import { RowDataPacket } from "mysql2";
-import intelPool from "@/lib/collector/db";
+import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { categories, resolvePlace } from "@/lib/collector/nlp";
 import { hasPhrase, tokens, topicWords, type Topic } from "@/lib/assistant/intent";
 import type { NewsStory } from "@/lib/assistant/answer";
 import { embed } from "@/lib/assistant/embed";
 import { orEmpty } from "@/lib/fallback";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -121,7 +125,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   }
   const incIds = [...new Set(docs.map((d) => d.linked_incident_id).filter(Boolean))];
   const [incs, notes, depts] = await Promise.all([
-    incIds.length ? q(`SELECT i.incident_id AS id, i.severity_level AS sev, i.priority_score AS priority, i.is_open AS open, i.media_only,
+    incIds.length ? q(`SELECT i.incident_id AS id, i.severity_level AS sev, i.priority_score AS priority, ${OPEN} AS open, i.media_only,
                               i.citizen_complaints AS complaints, i.dead, i.category_code AS cat, i.category_label AS label, i.zone_no AS zone,
                               i.zone_name, i.place_text AS loc, i.lead_dept AS dept, dp.name AS dept_name, i.status_std AS status, i.ai_summary
                        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE i.incident_id IN (?)`, [incIds]) : Promise.resolve([] as Row[]),

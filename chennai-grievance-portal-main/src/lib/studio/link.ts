@@ -6,11 +6,15 @@
  * (fever after flooding). The result is an association, said as such; the incidents behind it open in the console.
  */
 import type { RowDataPacket } from "mysql2";
-import intelPool from "@/lib/collector/db";
+import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import type { DRow } from "@/lib/studio/clean";
 import type { Refs } from "@/lib/studio/refs";
 import type { LinkIncident, LinkResult, Spec } from "@/lib/studio/types";
 import { addDays, daysBetween, spearman, weekStart } from "@/lib/studio/values";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 interface Inc { z: number | null; w: number | null; c: string; f: string; o: boolean; news: boolean; late: boolean; d: string }
 
@@ -24,7 +28,7 @@ async function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   const c = global.__studioInc;
   if (c && Date.now() - c.at < 10 * 60_000) return c;
   const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT zone_no, ward_no, category_code, family, is_open, outlet_count, sla_breached, first_reported_at FROM incidents WHERE first_reported_at IS NOT NULL`
+    `SELECT zone_no, ward_no, category_code, family, ${OPEN} AS is_open, outlet_count, sla_breached, first_reported_at FROM incidents i WHERE first_reported_at IS NOT NULL`
   );
   const list: Inc[] = rows.map((r) => ({
     z: r.zone_no == null ? null : Number(r.zone_no), w: r.ward_no == null ? null : Number(r.ward_no), c: String(r.category_code), f: String(r.family),
@@ -175,7 +179,7 @@ export async function crossLink(rows: DRow[], spec: Spec, window: { from: string
   let sample: LinkIncident[] = [];
   try {
     const [rs] = await intelPool.query<RowDataPacket[]>(
-      `SELECT incident_id, title, zone_name, severity_level, is_open, first_reported_at, outlet_count FROM incidents
+      `SELECT incident_id, title, zone_name, severity_level, ${OPEN} AS is_open, first_reported_at, outlet_count FROM incidents i
        WHERE category_code IN (?) ${sampleZones.length ? "AND zone_no IN (?)" : ""} AND first_reported_at >= ? AND first_reported_at <= ?
        ORDER BY is_open DESC, priority_score DESC LIMIT 6`,
       sampleZones.length ? [best.cand.codes, sampleZones, from, `${to} 23:59:59`] : [best.cand.codes, from, `${to} 23:59:59`]
@@ -209,7 +213,7 @@ export async function incidentsFor(zones: number[], codes: string[], limit = 8):
   const from = addDays(store.to, -89);
   try {
     const [rs] = await intelPool.query<RowDataPacket[]>(
-      `SELECT incident_id, title, zone_name, severity_level, is_open, first_reported_at, outlet_count FROM incidents
+      `SELECT incident_id, title, zone_name, severity_level, ${OPEN} AS is_open, first_reported_at, outlet_count FROM incidents i
        WHERE zone_no IN (?) ${codes.length ? "AND category_code IN (?)" : ""} AND first_reported_at >= ?
        ORDER BY is_open DESC, priority_score DESC LIMIT ?`,
       codes.length ? [zones, codes, from, limit] : [zones, from, limit]

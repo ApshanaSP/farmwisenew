@@ -11,9 +11,13 @@
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, exportMeta, scopeWhere } from "@/lib/collector/intel";
 import type { AssistantScope } from "@/lib/assistant/scope";
 import { orEmpty } from "@/lib/fallback";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 const REAL_LAKES = process.env.DATA_BACKEND === "aws";
 
@@ -39,8 +43,8 @@ export async function zoneAttention(s: AssistantScope, now: string): Promise<Zon
     `SELECT z.zone_no AS zone, z.zone_name AS name,
             COALESCE(SUM(CASE i.severity_level WHEN 'Severe' THEN 3 WHEN 'High' THEN 1 ELSE 0 END), 0) AS score,
             COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.severity_level = 'High'), 0) AS high,
-            COUNT(i.incident_id) AS n, COALESCE(SUM(i.is_open), 0) AS open,
-            COALESCE(SUM(CASE WHEN i.is_open = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints
+            COUNT(i.incident_id) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
+            COALESCE(SUM(CASE WHEN ${OPEN} = 1 THEN i.citizen_complaints ELSE 0 END), 0) AS complaints
      FROM (SELECT DISTINCT zone_no, zone_name FROM ref_wards) z
      LEFT JOIN incidents i ON i.zone_no = z.zone_no AND ${w.sql}
      GROUP BY z.zone_no, z.zone_name ORDER BY score DESC, severe DESC, open DESC, z.zone_no`,
@@ -59,7 +63,7 @@ export async function deptBacklog(zone: number | null): Promise<BacklogRow[]> {
   const rows = await q(
     `SELECT i.lead_dept AS code, dp.name, AVG(i.hours_open) AS h, COUNT(*) AS n, SUM(i.sla_breached = 1) AS overdue
      FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
-     WHERE i.is_open = 1 ${zone ? "AND i.zone_no = ?" : ""} GROUP BY i.lead_dept, dp.name HAVING n >= 5 ORDER BY h DESC`,
+     WHERE ${OPEN} = 1 ${zone ? "AND i.zone_no = ?" : ""} GROUP BY i.lead_dept, dp.name HAVING n >= 5 ORDER BY h DESC`,
     zone ? [zone] : []
   );
   return rows.map((r) => ({ code: String(r.code), name: String(r.name ?? r.code), hours: n(r.h), n: n(r.n), overdue: n(r.overdue) }));
@@ -126,7 +130,7 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
   const params = place ? [...w.params, `%${place.replace(/[%_\\]/g, (c) => `\\${c}`)}%`] : w.params;
   const where = `${w.sql}${like}`;
   const key = place ? `NULLIF(TRIM(SUBSTRING(i.place_text, 1, 80)), '')` : LOCALITY;
-  const counts = `COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe,
+  const counts = `COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe,
     COALESCE(SUM(i.severity_level = 'High'), 0) AS high`;
   const [total, localities, wards, types, points, wardPlaces] = await Promise.all([
     q(`SELECT ${counts}, COALESCE(SUM(i.is_synthetic_any), 0) AS syn FROM incidents i WHERE ${where}`, params),
@@ -135,10 +139,10 @@ export async function placeBreakdown(s: AssistantScope, now: string, place: stri
     q(`SELECT i.ward_no AS ward, ${counts}, MIN(rw.centroid_lat) AS lat, MIN(rw.centroid_lon) AS lon, MIN(i.zone_name) AS zone_name
        FROM incidents i LEFT JOIN ref_wards rw ON rw.ward_no = i.ward_no
        WHERE ${where} AND i.ward_no IS NOT NULL GROUP BY i.ward_no ORDER BY n DESC, severe DESC, i.ward_no LIMIT 25`, params),
-    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
+    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe
        FROM incidents i WHERE ${where} GROUP BY i.category_code ORDER BY n DESC LIMIT 12`, params),
-    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.severity_level AS sev, i.is_open AS open, i.place_text AS place, i.lat, i.lon,
+    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.severity_level AS sev, ${OPEN} AS open, i.place_text AS place, i.lat, i.lon,
          i.priority_score AS priority
        FROM incidents i WHERE ${where} AND i.lat IS NOT NULL AND i.lon IS NOT NULL
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 400`, params),
@@ -175,7 +179,7 @@ export async function categoryFigures(s: AssistantScope, now: string, codes: str
   const w = scopeWhere(base, now), wp = scopeWhere({ ...base, offset: 1 } as typeof base, now);
   const inCodes = `i.category_code IN (${codes.map(() => "?").join(",")})`;
   const [cur, prev, zones, places] = await Promise.all([
-    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
+    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.severity_level = 'High'), 0) AS high,
          COALESCE(SUM(i.citizen_complaints), 0) AS complaints, COALESCE(SUM(i.is_synthetic_any), 0) AS syn
        FROM incidents i WHERE ${w.sql} AND ${inCodes} GROUP BY i.category_code`, [...w.params, ...codes]),
@@ -243,7 +247,7 @@ export async function incidentSeries(s: AssistantScope, now: string): Promise<Se
   const secs = (p.hours * 3600) / p.buckets;
   const rows = await q(
     `SELECT FLOOR(TIMESTAMPDIFF(SECOND, ? - INTERVAL ? HOUR, i.first_reported_at) / ?) AS b, COUNT(*) AS n,
-            SUM(i.severity_level = 'Severe') AS severe, SUM(i.is_open) AS open
+            SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open
      FROM incidents i WHERE ${w.sql} GROUP BY b`,
     [now, p.hours, secs, ...w.params]
   );
@@ -414,11 +418,11 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
   const w = scopeWhere(base, now), wp = scopeWhere({ ...base, offset: 1 } as typeof base, now);
   const days = Math.max(1, Math.round(PERIODS[s.period].hours / 24));
   const [tot, totPrev, cats, catsPrev, places, placesPrev, depts, top, rain] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.is_open), 0) AS open,
-         COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue, COALESCE(SUM(i.dead), 0) AS dead, COALESCE(SUM(i.injured), 0) AS injured,
+    q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(${OPEN}), 0) AS open,
+         COALESCE(SUM(${OPEN} = 1 AND i.sla_breached = 1), 0) AS overdue, COALESCE(SUM(i.dead), 0) AS dead, COALESCE(SUM(i.injured), 0) AS injured,
          COALESCE(SUM(i.rain_coupled = 1), 0) AS rain, COALESCE(SUM(i.is_synthetic_any), 0) AS syn FROM incidents i WHERE ${w.sql}`, w.params),
     q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe FROM incidents i WHERE ${wp.sql}`, wp.params),
-    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.is_open), 0) AS open,
+    q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(i.rain_coupled = 1), 0) AS rain
        FROM incidents i WHERE ${w.sql} GROUP BY i.category_code`, w.params),
     q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n FROM incidents i WHERE ${wp.sql} GROUP BY i.category_code`, wp.params),
@@ -426,11 +430,11 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
        GROUP BY i.category_code, place HAVING place IS NOT NULL AND LOWER(place) NOT IN ('chennai', 'chennai district') ORDER BY n DESC LIMIT 300`, w.params),
     q(`SELECT i.category_code AS code, ${LOCALITY} AS place, COUNT(*) AS n FROM incidents i WHERE ${wp.sql}
        GROUP BY i.category_code, place HAVING place IS NOT NULL AND LOWER(place) NOT IN ('chennai', 'chennai district') ORDER BY n DESC LIMIT 300`, wp.params),
-    q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(i.is_open), 0) AS open, COALESCE(SUM(i.is_open = 1 AND i.sla_breached = 1), 0) AS overdue
+    q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(${OPEN} = 1 AND i.sla_breached = 1), 0) AS overdue
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE ${w.sql} AND i.lead_dept IS NOT NULL
        GROUP BY name HAVING overdue > 0 ORDER BY overdue DESC, open DESC LIMIT 4`, w.params),
     q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.sla_breached AS overdue,
-         i.dead, i.injured, i.priority_reasons AS reasons FROM incidents i WHERE ${w.sql} AND i.is_open = 1
+         i.dead, i.injured, i.priority_reasons AS reasons FROM incidents i WHERE ${w.sql} AND ${OPEN} = 1
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 3`, w.params),
     q(`SELECT COALESCE(SUM(date > DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS cur,
          COALESCE(SUM(date <= DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS prev

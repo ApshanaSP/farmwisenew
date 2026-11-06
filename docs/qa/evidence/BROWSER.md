@@ -35,3 +35,19 @@ The Collector's decisions and routings (6 and 7 rows) touch no incident in the c
 ## Seen but not changed
 
 The case screen's title is the complaint's own text ("Rain water is stagnating ... mosquitoes are breeding"). The base console shows these titles everywhere. Whether that counts as "a citizen's own words on screen" is the owner's call (OPEN-12).
+
+## Second drive: after BUG-030 to BUG-035 (6 Nov 2026)
+
+Production build of the fixes, `next start` on 127.0.0.1:3021, dry-run store, with a local test Collector added to the local copy only. One question was typed in the Jarvis panel; the rest were sent to the real `/api/collector/thunai/agent/round` route from the signed-in page. All answered by code, with no model.
+
+| Asked | Result |
+|---|---|
+| திருச்சி காவல்துறை அறிக்கை, சேலம் போலீஸ் ரிப்போர்ட் | "no data" on Trichy Police and Salem Police |
+| railway police report | "I have no data on Railway Police" |
+| அடையாறு தெருவிளக்கு புகார்கள் காட்டு (typed in the panel) | The list: 7 street-light cases in Adyar |
+| tell me about the severe cases in Adyar | The list, kept to severe cases |
+| explain the flooding complaint in Adyar; அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க | The same flooding case in both languages. The Tamil one first returned a construction case, which is how the last part of BUG-032 was found |
+| A Resolved case and a Lapsed case, by id | "There was standing water at Guindy. It's marked resolved..."; "There was a drainage or sewage problem at Ennore. It lapsed without being marked fixed..." |
+| chennai city police report; Mumbai police report | The police brief; "no data" on Mumbai Police |
+
+**Not covered:** a microphone, the live Claude path, Edge. BUG-034 and BUG-035 were tested against the code and the real snapshot, not by hand in this drive. Running the server made the app's own background jobs call Groq (headlines, story steps), some of which hit rate limits.

@@ -21,11 +21,15 @@ import { bodyHash, emailRef, stampHtml } from "@/lib/security/stamp";
 import type { Factor } from "@/lib/security/factors";
 import { z } from "zod";
 import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import pool from "@/lib/db";
 import { incident, type Plain } from "@/lib/collector/intel";
 import { generateJson } from "@/lib/ai/gateway";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
 import { orEmpty } from "@/lib/fallback";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 type Row = Record<string, any>;
 
@@ -292,7 +296,7 @@ async function deptCases(ids: string[], dept: string): Promise<Row[]> {
   for (let k = 0; k < ids.length; k += 500) {
     const part = ids.slice(k, k + 500);
     out.push(...await q(`SELECT i.incident_id AS id, COALESCE(i.headline, i.title) AS title, i.severity_level AS sev, i.place_text AS place, i.zone_name, i.ward_no AS ward,
-        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, i.priority_score AS priority, i.is_open AS open
+        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, i.priority_score AS priority, ${OPEN} AS open
       FROM incidents i WHERE i.lead_dept = ? AND i.incident_id IN (${part.map(() => "?").join(", ")})`, [dept, ...part]).catch(orEmpty("actionmail:batch")));
   }
   return out.sort((a, b) => Number(b.priority) - Number(a.priority) || String(a.id).localeCompare(String(b.id)));

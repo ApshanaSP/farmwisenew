@@ -24,9 +24,13 @@
 import crypto from "crypto";
 import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { categories } from "@/lib/collector/nlp";
 import { orEmpty } from "@/lib/fallback";
 import { roughKm } from "@/lib/map/geom";
+
+/** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
+const OPEN = effectiveSql(ops("collector_decisions")).open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -148,7 +152,7 @@ async function load(now: string, days: number): Promise<Doc[]> {
   const [news, added, ws] = await Promise.all([
     q(`SELECT d.doc_id AS id, d.story_id AS story, d.linked_incident_id AS inc, d.publisher, d.title, d.title_en, d.url, d.lang, d.category_code AS cat,
               d.department AS ddept, d.place_text AS place, d.geo_level, d.lat, d.lon, i.zone_no AS izone, i.taluk_code AS italuk, i.lead_dept AS idept,
-              i.severity_level AS sev, i.is_open AS open, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
+              i.severity_level AS sev, ${OPEN} AS open, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM documents d LEFT JOIN incidents i ON i.incident_id = d.linked_incident_id
        WHERE d.source_kind = 'news' AND d.is_district = 1 AND d.published_at > (? - INTERVAL ? DAY) AND d.published_at <= ?
          AND (d.is_incident = 1 OR d.linked_incident_id IS NOT NULL OR d.report_type IN ('incident', 'crime', 'civic_complaint', 'court')

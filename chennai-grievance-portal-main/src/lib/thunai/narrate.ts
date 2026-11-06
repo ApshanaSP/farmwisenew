@@ -21,32 +21,101 @@ export interface FactSheet {
   who: { en: string; ta: string } | null;
   /** the next step, in plain words, from code */
   next: { en: string; ta: string } | null;
+  /** how it was closed; null while it is open */
+  closed: ClosedAs | null;
 }
 
+export type ClosedAs = "resolved" | "rejected" | "lapsed" | "closed";
+
+/** How an incident was closed, from its status and open flag (decisions already laid on); null while it is open. */
+export function closedAs(status: unknown, open?: unknown): ClosedAs | null {
+  const s = String(status ?? "").toLowerCase();
+  if (/resolved|closed|done/.test(s)) return "resolved";
+  if (/rejected/.test(s)) return "rejected";
+  if (/lapsed/.test(s)) return "lapsed";
+  return open != null && Number(open) === 0 ? "closed" : null;
+}
+
+/** What is left to say about a closed case: nothing to chase, or (a lapse has no fix on record) a check worth making. */
+const CLOSED: Record<ClosedAs, { en: string; ta: string }> = {
+  resolved: { en: "It's marked resolved, so there's nothing to chase unless it comes back.", ta: "இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்." },
+  rejected: { en: "It was rejected and closed, so no work is pending on it.", ta: "இது நிராகரிக்கப்பட்டு முடிக்கப்பட்டது; இதில் நிலுவை வேலை எதுவும் இல்லை." },
+  lapsed: { en: "It lapsed without being marked fixed, so it's worth checking whether the problem is still there.", ta: "சரிசெய்யப்பட்ட பதிவு இல்லாமல் இது காலாவதியானது; பிரச்சினை இன்னும் இருக்கிறதா என்று பார்ப்பது நல்லது." },
+  closed: { en: "It's closed, so there's nothing to chase unless it comes back.", ta: "இது முடிக்கப்பட்டது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்." }
+};
+
+/**
+ * Every category the store holds, by its code and its label: named no more strongly than the category itself says, so an unsafe wall
+ * is not "a structure that has given way" (BUG-033). null: the category says nothing, so the issue goes unnamed.
+ */
+const KINDS: [string, string, string | null, string | null][] = [
+  ["SOLID_WASTE", "Garbage & solid waste", "uncleared garbage", "அகற்றப்படாத குப்பை"],
+  ["CRIME_PROPERTY", "Theft, snatching & fraud", "a crime report", "குற்றப் புகார்"],
+  ["STREETLIGHT_ELECTRICAL", "Street lights & electrical hazards", "a street light or electrical problem", "தெருவிளக்கு அல்லது மின் பிரச்சினை"],
+  ["ROAD_ACCIDENT", "Road accident", "a road accident", "சாலை விபத்து"],
+  ["FLOOD_WATERLOGGING", "Flooding & waterlogging", "standing water", "தண்ணீர் தேக்கம்"],
+  ["DRAINAGE_SEWAGE", "Drainage & sewage", "a drainage or sewage problem", "வடிகால் அல்லது கழிவுநீர் பிரச்சினை"],
+  ["ROAD_DAMAGE", "Roads, footpaths & bridges", "a damaged road", "சேதமான சாலை"],
+  ["PUBLIC_ORDER", "Protests & public nuisance", "a protest or public nuisance", "போராட்டம் அல்லது பொதுத் தொல்லை"],
+  ["TRAFFIC_OBSTRUCTION", "Traffic obstruction & parking", "a traffic blockage", "போக்குவரத்து நெரிசல்"],
+  ["CRIME_VIOLENT", "Violent crime", "a crime report", "குற்றப் புகார்"],
+  ["SANITATION_TOILETS", "Public toilets & open defecation", "a public toilet or open defecation problem", "பொதுக் கழிப்பறை அல்லது திறந்தவெளி மலம் கழிப்புப் பிரச்சினை"],
+  ["ADMIN_SERVICES", "Tax, certificates & electoral services", "a tax, certificate or election service problem", "வரி, சான்றிதழ் அல்லது தேர்தல் சேவைப் பிரச்சினை"],
+  ["ENCROACHMENT", "Encroachment & unauthorised construction", "an encroachment or unauthorised construction", "ஆக்கிரமிப்பு அல்லது அனுமதியற்ற கட்டுமானம்"],
+  ["DRAIN_WORKS_SAFETY", "Drain works site safety", "a safety problem at a drain worksite", "வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை"],
+  ["OTHER", "Other / unclassified", null, null],
+  ["TREES_PARKS", "Trees, parks & playgrounds", "a tree or park problem", "மரம் அல்லது பூங்கா பிரச்சினை"],
+  ["MISSING_PERSON", "Missing person", "a missing person report", "காணாமல் போனவர் புகார்"],
+  ["VECTOR_DISEASE", "Vector- & water-borne disease", "a mosquito or water-borne disease problem", "கொசு அல்லது நீர்வழி நோய்ப் பிரச்சினை"],
+  ["CRIMES_AGAINST_WOMEN", "Crimes against women & children", "a crime report", "குற்றப் புகார்"],
+  ["BUILDING_SAFETY", "Unsafe buildings & walls", "an unsafe building or wall", "பாதுகாப்பற்ற கட்டடம் அல்லது சுவர்"],
+  ["STRAY_ANIMALS", "Stray animals", "a stray animal problem", "தெரு விலங்குகள் பிரச்சினை"],
+  ["DARK_SPOT_SAFETY", "Dark spots & public safety", "a dark spot or public safety problem", "இருண்ட பகுதி அல்லது பொதுப் பாதுகாப்புப் பிரச்சினை"],
+  ["DRUGS_LIQUOR", "Drugs & illicit liquor", "a drugs or illicit liquor report", "போதைப்பொருள் அல்லது கள்ளச்சாராயப் புகார்"],
+  ["HEALTH_SERVICES", "Health services & hospital capacity", "a hospital or health service problem", "மருத்துவமனை அல்லது சுகாதாரச் சேவைப் பிரச்சினை"],
+  ["PUBLIC_WORKS", "Public works quality & worksites", "a public works or worksite problem", "பொதுப்பணி அல்லது பணியிடப் பிரச்சினை"],
+  ["FOOD_SAFETY", "Food safety & meat hygiene", "a food safety problem", "உணவுப் பாதுகாப்புப் பிரச்சினை"],
+  ["WATERBODY_INFRA", "Lakes, bunds & sluices", "a lake or bund problem", "ஏரி அல்லது கரைப் பிரச்சினை"],
+  ["FLOOD_RELIEF", "Flood relief needs", "people who need flood relief", "வெள்ள நிவாரணம் தேவைப்படுவோர்"],
+  ["AIR_POLLUTION", "Air pollution", "bad air", "காற்று மாசு"],
+  ["FLOOD_RISK_SIGNAL", "Weather & flood warnings", "a weather or flood warning", "வானிலை அல்லது வெள்ள எச்சரிக்கை"],
+  ["POLICE_OTHER", "Other police matters", "a police matter", "காவல் துறை விவகாரம்"],
+  ["CIVIC_FACILITIES", "Civic buildings & facilities", "a problem at a civic building", "பொதுக் கட்டடத்தில் பிரச்சினை"],
+  ["WATER_SUPPLY", "Drinking water supply", "a drinking-water problem", "குடிநீர்ப் பிரச்சினை"],
+  ["FIRE_EXPLOSION", "Fire & explosion", "a fire", "தீ விபத்து"],
+  ["SUICIDE_SELF_HARM", "Suicide & self-harm", "a self-harm report", "தற்கொலை தொடர்பான புகார்"]
+];
+const BY_KIND = new Map<string, { en: string; ta: string } | null>(KINDS.flatMap(([code, label, en, ta]) => {
+  const v = en && ta ? { en, ta } : null;
+  return [[code.toLowerCase(), v], [label.toLowerCase(), v]] as [string, { en: string; ta: string } | null][];
+}));
+
+/** For a record with no known category: whole words only ("street" holds no tree, "wallet" no wall, "broad" no road), the specific before the general (BUG-023, BUG-033). */
 const PLAIN: [RegExp, string, string][] = [
-  // the specific before the general (BUG-023): an accident is not a damaged road; a warning or a relief need is not standing water
   [/accident/i, "a road accident", "சாலை விபத்து"],
-  [/relief/i, "people who need flood relief", "வெள்ள நிவாரணம் தேவைப்படுவோர்"],
-  [/risk|signal|warning|alert/i, "a flood warning", "வெள்ள எச்சரிக்கை"],
+  [/\brelief\b/i, "people who need flood relief", "வெள்ள நிவாரணம் தேவைப்படுவோர்"],
+  [/\bflood\w*\b.*\b(risk|signal|warning|alert)|\b(risk|signal|warning|alert)\b.*\bflood|\b(cyclone|rain)\b.*\b(warning|alert)/i, "a flood warning", "வெள்ள எச்சரிக்கை"],
   [/flood|waterlog|inundat|stagnat/i, "standing water", "தண்ணீர் தேக்கம்"],
-  [/drain|sewage|sewer/i, "a sewage overflow", "கழிவுநீர் வழிதல்"],
-  [/pothole|road damage|road/i, "a damaged road", "சேதமான சாலை"],
-  [/garbage|waste|sanitat|debris/i, "uncleared garbage", "அகற்றப்படாத குப்பை"],
-  [/street ?light|electrical/i, "street lights out", "எரியாத தெருவிளக்குகள்"],
-  [/vector|dengue|mosquito|malaria|fever/i, "a mosquito and fever problem", "கொசு, காய்ச்சல் பிரச்சினை"],
-  [/hospital|bed|health service/i, "a hospital under strain", "நெருக்கடியில் உள்ள மருத்துவமனை"],
-  [/fire|explosion/i, "a fire", "தீ விபத்து"],
+  [/\bdrains?\b|\bdrainage\b|sewage|sewer/i, "a drainage or sewage problem", "வடிகால் அல்லது கழிவுநீர் பிரச்சினை"],
+  [/\b(fallen|uprooted)\b.*\btrees?\b|\btrees?\b.*\b(fell|fallen|uprooted)\b/i, "a fallen tree", "விழுந்த மரம்"],
+  [/pothole|road damage|damaged road|broken road/i, "a damaged road", "சேதமான சாலை"],
+  [/garbage|\bwaste\b|sanitat|debris/i, "uncleared garbage", "அகற்றப்படாத குப்பை"],
+  [/\bstreet ?lights?\b|\belectrical\b/i, "a street light or electrical problem", "தெருவிளக்கு அல்லது மின் பிரச்சினை"],
+  [/vector|dengue|mosquito|malaria|\bfever\b/i, "a mosquito and fever problem", "கொசு, காய்ச்சல் பிரச்சினை"],
+  [/hospital.*\b(beds?|capacity|critical|strain)\b|\bbeds?\b.*\b(critical|full|short)\b|health service/i, "a hospital under strain", "நெருக்கடியில் உள்ள மருத்துவமனை"],
+  [/\bfires?\b|explosion/i, "a fire", "தீ விபத்து"],
   [/water supply|drinking water/i, "a drinking-water problem", "குடிநீர்ப் பிரச்சினை"],
-  [/accident/i, "a road accident", "சாலை விபத்து"],
   [/traffic|parking/i, "a traffic blockage", "போக்குவரத்து நெரிசல்"],
-  [/wall|collapse|building/i, "a structure that has given way", "இடிந்த கட்டமைப்பு"],
-  [/tree/i, "a fallen tree", "விழுந்த மரம்"],
-  [/crime|theft|snatch|assault|murder/i, "a crime report", "குற்றப் புகார்"],
-  [/air|pollution|smoke/i, "bad air", "காற்று மாசு"]
+  [/\bcollaps|\bcaved in\b/i, "a structure that has given way", "இடிந்த கட்டமைப்பு"],
+  [/\bwalls?\b|\bbuildings?\b/i, "an unsafe building or wall", "பாதுகாப்பற்ற கட்டடம் அல்லது சுவர்"],
+  [/\bcrime\b|theft|snatch|assault|murder/i, "a crime report", "குற்றப் புகார்"],
+  [/\bair (quality|pollution)\b|pollution|\bsmoke\b|\baqi\b/i, "bad air", "காற்று மாசு"]
 ];
 
-/** The problem in plain words, from its category (or, failing that, its own short label). */
+/** The problem in plain words: from its category when the store knows it, else from whatever its record says of itself. */
 export function plainWhat(cat: string | null, label: string | null): { en: string; ta: string } | null {
+  const known = cat ? BY_KIND.get(cat.trim().toLowerCase()) : undefined;
+  if (known !== undefined) return known;
   for (const src of [cat, label]) {
     if (!src) continue;
     const hit = PLAIN.find(([re]) => re.test(src));
@@ -91,7 +160,7 @@ export function hoursOf(openFor: unknown): number | null {
   return u.startsWith("min") ? n / 60 : u.startsWith("h") ? n : u.startsWith("d") ? n * 24 : u.startsWith("w") ? n * 168 : n * 720;
 }
 
-export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: string | null; now?: number; next?: { en: string; ta: string } | null; placeTa?: string | null } = {}): FactSheet {
+export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: string | null; now?: number; next?: { en: string; ta: string } | null; placeTa?: string | null; open?: unknown } = {}): FactSheet {
   let hours = hoursOf(extra.openFor);
   if (hours == null && extra.firstAt) {
     const m = String(extra.firstAt).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
@@ -99,7 +168,7 @@ export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: s
   }
   return {
     what: plainWhat(row.cat, row.why ?? row.title), place: row.place ?? row.zoneName ?? null, placeTa: extra.placeTa ?? row.zoneName ?? row.place ?? null,
-    hours, overdue: row.overdue, serious: row.sev === "Severe" || row.sev === "High", complaints: row.complaints, who: plainWho(row.dept, row.deptName), next: extra.next ?? null
+    hours, overdue: row.overdue, serious: row.sev === "Severe" || row.sev === "High", complaints: row.complaints, who: plainWho(row.dept, row.deptName), next: extra.next ?? null, closed: closedAs(row.status, extra.open)
   };
 }
 
@@ -112,11 +181,21 @@ export function idam(word: string): string {
   return `${word}இடம்`;
 }
 
-const article = (s: string) => (/^(a|an|the|uncleared|standing|street|bad)\b/i.test(s) ? s : `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`);
+const article = (s: string) => (/^(a|an|the|uncleared|standing|street|bad|people)\b/i.test(s) ? s : `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`);
 
 /** The retelling, in two to four short sentences. `label` is the record's own short name, used only when the kind is unknown. */
 export function explainIssue(f: FactSheet, label: string, sources: string[] = []): Bilingual {
   const what = f.what ? article(f.what.en) : "an issue";
+  // a closed case is told as closed: not how long it has been open, or what to ask anyone to do about it (BUG-031)
+  if (f.closed) {
+    const said = CLOSED[f.closed];
+    const was = /^people\b/.test(what) ? "There were" : "There was";
+    const first = `${was} ${what}${f.place ? ` at ${f.place}` : ""}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
+    const plain = `${was} ${what}${f.place ? ` at ${f.place}` : ""}.`;
+    const ta = `${f.placeTa ? `${f.placeTa} பகுதியில் ` : ""}${f.what ? f.what.ta : "ஒரு பிரச்சினை"} இருந்தது. ${said.ta}`;
+    const en = `${first} ${said.en}`;
+    return { en: speechProblem(en, sources, [f.place ?? "", f.placeTa ?? ""]) ? `${plain} ${said.en}` : en, ta };
+  }
   const s1 = `There's ${what}${f.place ? ` at ${f.place}` : ""}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
   const age = ageWords(f.hours);
   const s2 = age ? `It's been open for ${age.en}${f.overdue ? ", and it's past its deadline" : ""}.` : f.overdue ? "It's past its deadline." : "";

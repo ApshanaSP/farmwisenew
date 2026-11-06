@@ -595,7 +595,7 @@ export async function routeNewsComplaints(): Promise<{ added: string[]; withdraw
     `SELECT i.incident_id AS id, i.lead_dept AS dept, i.category_label AS type, i.zone_name,
             GROUP_CONCAT(CONCAT(COALESCE(d.report_type, ''), '|', COALESCE(d.is_incident, 0)) SEPARATOR '\n') AS docs
      FROM incidents i JOIN documents d ON d.linked_incident_id = i.incident_id
-     WHERE i.is_open = 1 AND i.media_only = 1 AND i.category_code IN (?) AND i.first_reported_at > (? - INTERVAL 30 DAY)
+     WHERE ${EFF.open} = 1 AND i.media_only = 1 AND i.category_code IN (?) AND i.first_reported_at > (? - INTERVAL 30 DAY)
      GROUP BY i.incident_id, i.lead_dept, i.category_label, i.zone_name`,
     [NEWS_COMPLAINT_CATS, now]
   );
@@ -1223,7 +1223,7 @@ export async function incident(id: string) {
   if (!inc) return null;
   // the other incidents of its group (the same problem in the same area, CLUSTER): their reports are this incident's too
   const group = await q(
-    `SELECT i.incident_id AS id, ${TITLE} AS title, i.severity_level AS sev, i.status_std AS status, i.is_open AS open, i.place_text AS loc,
+    `SELECT i.incident_id AS id, ${TITLE} AS title, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, i.place_text AS loc,
             i.citizen_complaints AS complaints, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
      FROM incidents i WHERE ${CLUSTER} = ? AND i.incident_id <> ? ORDER BY i.first_reported_at LIMIT 40`,
     [inc.grp, id]

@@ -41,6 +41,7 @@ async function seed() {
     CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, lead_dept TEXT, category_label TEXT, category_code TEXT, zone_name TEXT,
       is_open INTEGER, media_only INTEGER, first_reported_at TEXT);
     CREATE TABLE documents (doc_id TEXT, linked_incident_id TEXT, report_type TEXT, is_incident INTEGER);
+    CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY, incident_id TEXT, decision TEXT);
     CREATE TABLE dept_assignments (incident_id TEXT PRIMARY KEY, dept_code TEXT, contact_id INTEGER, officer_name TEXT,
       officer_designation TEXT, officer_phone TEXT, reason TEXT, status TEXT DEFAULT 'Assigned', assigned_by TEXT, assigned_at TEXT);
     CREATE TABLE official_contacts (contact_id INTEGER, dept_code TEXT, name TEXT, designation TEXT, phone TEXT, "rank" INTEGER);
