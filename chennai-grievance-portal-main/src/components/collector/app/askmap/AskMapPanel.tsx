@@ -18,6 +18,7 @@ import { SEV_HEX } from "../lib";
 import { canListen, listen } from "../assistant/speech";
 import { answerGist, splitHead, type MapAsk, type Turn } from "./useMapAsk";
 import { Grip, useDragPanel } from "./dragPanel";
+import { istDate } from "@/lib/ist-dates";
 
 const T = {
   en: {
@@ -611,4 +612,4 @@ const fmtWhen = (s: string) => {
   const d = new Date(s.replace(" ", "T") + "Z");
   return Number.isNaN(d.getTime()) ? s : `${d.getUTCDate()} ${d.toLocaleString("en-IN", { month: "short", timeZone: "UTC" })} ${d.getUTCFullYear()}, ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 };
-const fmtDay = (s: string) => { const d = new Date(s); return Number.isNaN(d.getTime()) ? s : `built ${d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`; };
+const fmtDay = (s: string) => { const d = istDate(s); return d ? `built ${d}` : s; };

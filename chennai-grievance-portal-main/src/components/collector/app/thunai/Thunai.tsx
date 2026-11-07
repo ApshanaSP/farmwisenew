@@ -48,6 +48,7 @@ import { otherLang } from "@/lib/i18n/line";
 import "./thunai.css";
 import type { StudioContext } from "../studio/Dataset";
 import type { StudioReply } from "./StudioAnswer";
+import { istDateTime } from "@/lib/ist-dates";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
   // a Tamil line with no Tamil voice on this device is shown, not read out by an English voice
@@ -180,7 +181,7 @@ const pct = (st: Station) => {
   return st.capacity && s != null ? Math.round((s / st.capacity) * 100) : null;
 };
 const lastOf = (st: Station) => st.series?.[st.series.length - 1] ?? null;
-const whenOf = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "the latest reading");
+const whenOf = (iso: string | null | undefined) => (iso ? istDateTime(iso) || "the latest reading" : "the latest reading");
 
 export default function Thunai({ host }: { host: ThunaiHost }) {
   const hostRef = useRef(host);

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { fmtValue } from "@/lib/assistant/chartspec";
 import type { ActionGroup, EvidenceItem, IncidentDetail, IncidentItem, Kpi, NewsStory } from "@/lib/assistant/answer";
 import { I, type IconName } from "../icons";
+import { IST } from "@/lib/ist-dates";
 
 const SEV_CLASS: Record<string, string> = { Severe: "sev", High: "high", Medium: "med", Low: "low" };
 const SOURCE_ICON: Record<string, IconName> = { news: "news", police: "shield", grievance: "user", pwd: "cone", hospital: "health" };
@@ -15,9 +16,11 @@ const SOURCE_ICON: Record<string, IconName> = { news: "news", police: "shield", 
 /** "3 Oct, 9:59 PM" from "2026-10-03 21:59:45". */
 export function when(t: string | null | undefined): string {
   if (!t) return "";
-  const d = new Date(t.replace(" ", "T"));
+  // a stored time is an IST wall-clock string: read it as Chennai time and print it as Chennai time (RC-16)
+  const iso = t.replace(" ", "T");
+  const d = new Date(/(Z|[+-]\d\d:?\d\d)$/i.test(iso) ? iso : `${iso}+05:30`);
   if (Number.isNaN(d.getTime())) return t;
-  return `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`;
+  return `${d.toLocaleDateString("en-GB", { ...IST, day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-IN", { ...IST, hour: "numeric", minute: "2-digit" })}`;
 }
 
 export function SevBadge({ s }: { s: string }) {

@@ -288,7 +288,7 @@ export async function insights(period: Period, zone: number | null, dept: string
 
   const emerging = anomalies.slice(0, 8).map(({ category_code: _c, zone_no: _z, ...a }, k) => {
     const date = String(a.day), kind = a.kind === "slow_rise" ? "slow_rise" : "spike", days = kind === "slow_rise" ? Math.max(1, Number(a.rise_days) || 1) : 1;
-    const on = new Date(date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const on = new Date(date + "T00:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", day: "numeric", month: "short" });
     return {
       ...a, date, kind, days, perDay: Number(a.expected) / days, label: catLabel.get(a.cat) ?? a.cat, zone_name: zn.get(Number(a.zone)) ?? null,
       noun: CAT_NOUN[a.cat] ?? null, ...exampleOf(spikeEx[k] ?? []),
@@ -433,7 +433,7 @@ function usual(perDay: number) {
   const every = Math.max(2, Math.round(1 / Math.max(perDay, 0.01)));
   return every > 60 ? "almost never" : `about 1 every ${every} days`;
 }
-const dayWord = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const dayWord = (d: string) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
 
 /**
  * One unusual spike or recurring hotspot for the Trends page: what happened in plain words,
@@ -481,9 +481,9 @@ export async function pattern(p: PatternQuery) {
     const chg = before ? Math.round(((recent - before) / before) * 100) : null;
     const series = Array.from({ length: 12 }, (_, j) => {
       const w = 11 - j;
-      const d0 = new Date(now.slice(0, 10) + "T00:00:00");
-      const start = new Date(d0.getTime() - ((d0.getDay() + 6) % 7) * 864e5 - (w + 1) * 7 * 864e5); // the week's Monday
-      return { label: start.toLocaleDateString("en-GB", { day: "numeric", month: "short" }), n: byW.get(w) ?? 0, hl: w < 4 };
+      const d0 = new Date(now.slice(0, 10) + "T00:00:00Z");
+      const start = new Date(d0.getTime() - ((d0.getUTCDay() + 6) % 7) * 864e5 - (w + 1) * 7 * 864e5); // the week's Monday
+      return { label: start.toLocaleDateString("en-GB", { timeZone: "UTC", day: "numeric", month: "short" }), n: byW.get(w) ?? 0, hl: w < 4 };
     });
     const zs = zonesChg.map((z) => ({ name: zn.get(Number(z.zone)) ?? `Zone ${z.zone}`, recent: Number(z.recent), before: Number(z.before_), d: Number(z.recent) - Number(z.before_) }));
     const up = zs.filter((z) => z.d > 0).sort((a, b) => b.d - a.d).slice(0, 3);
@@ -583,7 +583,7 @@ export async function pattern(p: PatternQuery) {
     `The latest was on ${dayWord(h.last_seen)}${lastGap != null ? `, ${lastGap === 0 ? "the same day as" : `${lastGap} day${lastGap === 1 ? "" : "s"} after`} the one before` : ""}. ${open} ${open === 1 ? "is" : "are"} still open.`,
     `Closing each complaint has not stopped it coming back, so a lasting fix at this spot is worth asking ${deptsOf(rows).join(" and ") || "the department"} for.`
   ];
-  const monthName = (m: string) => new Date(m + "-01T00:00:00").toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+  const monthName = (m: string) => new Date(m + "-01T00:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", month: "short", year: "numeric" });
   return {
     kind: "hotspot" as const, title: `${((n) => n[0].toUpperCase() + n.slice(1))((CAT_NOUN[h.cat] ?? [label, label])[1])} keep coming back near ${String(h.top_place).replace(/^(.*?)\s*\((.+)\)\s*$/, "$2, $1")}`, when: `${dayWord(h.first_seen)} to ${dayWord(h.last_seen)}`, lead,
     stats: [

@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { I } from "../icons";
 import { jarvisLog, type JLog } from "./jarvislog";
+import { IST, istDate } from "@/lib/ist-dates";
 
 export interface QPair { q: JLog; a: JLog[] }
 
@@ -20,9 +21,9 @@ export function pairsOf(list: JLog[]): QPair[] {
 }
 
 const when = (at: number) => {
-  const d = new Date(at);
-  const today = new Date().toDateString() === d.toDateString();
-  return d.toLocaleString("en-IN", today ? { hour: "numeric", minute: "2-digit" } : { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  // "today" is Chennai's today, in the server's zone and the browser's alike (RC-16)
+  const today = istDate(at) === istDate(Date.now());
+  return new Date(at).toLocaleString("en-IN", { ...IST, ...(today ? {} : { day: "numeric", month: "short" }), hour: "numeric", minute: "2-digit" });
 };
 
 export function useQuestionCount(): number {

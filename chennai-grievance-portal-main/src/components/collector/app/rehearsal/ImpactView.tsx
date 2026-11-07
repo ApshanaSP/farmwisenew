@@ -315,7 +315,7 @@ function LiveBox({ live, on, set }: { live: { enabled: boolean; at: string | nul
   return (
     <section className="rv-live on">
       <h4><span className="dot" />Live traffic now <span className={`rv-tag k-live`} style={{ marginLeft: "auto" }}>Live</span></h4>
-      <p>{live.incidents.length ? `${plural(jams, "jam")}, ${plural(closed, "closed road")}${flood ? `, ${plural(flood, "flooded road")}` : ""} over the district${live.at ? `, as of ${new Date(live.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}` : ""}.` : "No traffic incident over the district right now."}</p>
+      <p>{live.incidents.length ? `${plural(jams, "jam")}, ${plural(closed, "closed road")}${flood ? `, ${plural(flood, "flooded road")}` : ""} over the district${live.at ? `, as of ${new Date(live.at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" })}` : ""}.` : "No traffic incident over the district right now."}</p>
       <label><input type="checkbox" checked={on} onChange={(e) => set(e.target.checked)} />Show live speeds and incidents on the map (TomTom)</label>
       {live.why && <p>{live.why}</p>}
     </section>

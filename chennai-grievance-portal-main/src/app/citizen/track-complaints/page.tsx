@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 import { ComplaintStatus } from "@/types";
 import { isPhotoPath, privateMediaName } from "@/lib/complaint-media-path";
+import { istDate } from "@/lib/ist-dates";
 
 const MiniMap = dynamic(() => import("@/components/citizen/MiniMap"), { ssr: false });
 
@@ -35,7 +36,8 @@ const SHORT: Record<string, string> = {
   "Complaint Filed": "Filed", "Pending Approval": "Pending approval", "Approved by Department Officer": "Approved", "In Progress": "In progress",
   "Completed - Pending Collector Verification": "Awaiting Collector", "Verified by Collector": "Verified", "Resolved by Department": "Resolved", Rejected: "Rejected"
 };
-const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+/** Chennai's day, whatever zone the browser or the server runs in (RC-16) */
+const fmtDate = istDate;
 
 /** Track complaints: the list (search by code, status chips) on the left, the selected complaint's journey on the right. */
 export default function TrackComplaintsPage() {

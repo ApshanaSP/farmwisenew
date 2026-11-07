@@ -1,0 +1,100 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+
+ [31m❯[39m src/lib/ist-dates.pass4.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 516[2mms[22m[39m
+[31m   [31m×[31m RC-16: dates are printed in Chennai's time zone, on any server and in any browser[2m > [22mno toLocaleDateString, toLocaleTimeString, date toLocaleString or Intl.DateTimeFormat call leaves the zone out[39m[32m 265[2mms[22m[39m
+[31m     → expected [ …(24) ] to deeply equal [][39m
+   [32m✓[39m RC-16: dates are printed in Chennai's time zone, on any server and in any browser[2m > [22mthe guard sees the calls it is meant to see (a guard that matches nothing guards nothing)[32m 244[2mms[22m[39m
+[31m   [31m×[31m RC-16: the shared Chennai date helpers[2m > [22mprint the Chennai day for an instant near midnight, whatever the process zone is[39m[32m 4[2mms[22m[39m
+[31m     → Cannot find module '@/lib/ist-dates' imported from 'E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/ist-dates.pass4.test.ts'.
+
+- If you rely on tsconfig.json's "paths" to resolve modules, please install "vite-tsconfig-paths" plugin to handle module resolution.
+- Make sure you don't have relative aliases in your Vitest config. Use absolute paths instead. Read more: https://vitest.dev/guide/common-errors[39m
+[31m   [31m×[31m RC-16: the shared Chennai date helpers[2m > [22msay nothing for a value that is not a date, instead of 'Invalid Date'[39m[32m 2[2mms[22m[39m
+[31m     → Cannot find module '@/lib/ist-dates' imported from 'E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/ist-dates.pass4.test.ts'.
+
+- If you rely on tsconfig.json's "paths" to resolve modules, please install "vite-tsconfig-paths" plugin to handle module resolution.
+- Make sure you don't have relative aliases in your Vitest config. Use absolute paths instead. Read more: https://vitest.dev/guide/common-errors[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/lib/ist-dates.pass4.test.ts[2m > [22mRC-16: dates are printed in Chennai's time zone, on any server and in any browser[2m > [22mno toLocaleDateString, toLocaleTimeString, date toLocaleString or Intl.DateTimeFormat call leaves the zone out
+[31m[1mAssertionError[22m: expected [ …(24) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "app/citizen/track-complaints/page.tsx:38",[39m
+[31m+   "components/citizen/CitizenHome.tsx:16",[39m
+[31m+   "components/citizen/CitizenHome.tsx:20",[39m
+[31m+   "components/collector/app/askmap/AskMapPanel.tsx:614",[39m
+[31m+   "components/collector/app/assistant/Responses.tsx:20",[39m
+[31m+   "components/collector/app/assistant/Responses.tsx:20",[39m
+[31m+   "components/collector/app/Insights.tsx:44",[39m
+[31m+   "components/collector/app/lib.tsx:67",[39m
+[31m+   "components/collector/app/lib.tsx:69",[39m
+[31m+   "components/collector/app/lib.tsx:71",[39m
+[31m+   "components/collector/app/rehearsal/ImpactView.tsx:318",[39m
+[31m+   "components/collector/app/thunai/JarvisLogView.tsx:15",[39m
+[31m+   "components/collector/app/thunai/JarvisQuestions.tsx:25",[39m
+[31m+   "components/collector/app/thunai/Thunai.tsx:183",[39m
+[31m+   "components/ComplaintTypeSelector.tsx:284",[39m
+[31m+   "components/officer/format.ts:16",[39m
+[31m+   "components/officer/format.ts:17",[39m
+[31m+   "components/StatusTracker.tsx:38",[39m
+[31m+   "lib/assistant/scope.ts:97",[39m
+[31m+   "lib/assistant/scope.ts:98",[39m
+[31m+   "lib/collector/insights.ts:291",[39m
+[31m+   "lib/collector/insights.ts:436",[39m
+[31m+   "lib/collector/insights.ts:486",[39m
+[31m+   "lib/collector/insights.ts:586",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m src/lib/ist-dates.pass4.test.ts:[2m54:23[22m[39m
+    [90m 52| [39mdescribe("RC-16: dates are printed in Chennai's time zone, on any serv…
+    [90m 53| [39m  it("no toLocaleDateString, toLocaleTimeString, date toLocaleString o…
+    [90m 54| [39m    [34mexpect[39m([34munzoned[39m())[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   | [39m                      [31m^[39m
+    [90m 55| [39m  })[33m;[39m
+    [90m 56| [39m  it("the guard sees the calls it is meant to see (a guard that matche…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/lib/ist-dates.pass4.test.ts[2m > [22mRC-16: the shared Chennai date helpers[2m > [22mprint the Chennai day for an instant near midnight, whatever the process zone is
+[31m[1mError[22m: Cannot find module '@/lib/ist-dates' imported from 'E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/ist-dates.pass4.test.ts'.
+
+- If you rely on tsconfig.json's "paths" to resolve modules, please install "vite-tsconfig-paths" plugin to handle module resolution.
+- Make sure you don't have relative aliases in your Vitest config. Use absolute paths instead. Read more: https://vitest.dev/guide/common-errors[39m
+[36m [2m❯[22m src/lib/ist-dates.pass4.test.ts:[2m65:38[22m[39m
+    [90m 63| [39m[34mdescribe[39m([32m"RC-16: the shared Chennai date helpers"[39m[33m,[39m () [33m=>[39m {
+    [90m 64| [39m  it("print the Chennai day for an instant near midnight, whatever the…
+    [90m 65| [39m    [35mconst[39m { istDate[33m,[39m istDateTime } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/lib/ist-dates"[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m 66| [39m    [90m// 20:00 UTC on 6 Nov is 01:30 on 7 Nov in Chennai[39m
+    [90m 67| [39m    [34mexpect[39m([34mistDate[39m([32m"2026-11-06T20:00:00Z"[39m))[33m.[39m[34mtoBe[39m([32m"7 Nov 2026"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/lib/ist-dates.pass4.test.ts[2m > [22mRC-16: the shared Chennai date helpers[2m > [22msay nothing for a value that is not a date, instead of 'Invalid Date'
+[31m[1mError[22m: Cannot find module '@/lib/ist-dates' imported from 'E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/ist-dates.pass4.test.ts'.
+
+- If you rely on tsconfig.json's "paths" to resolve modules, please install "vite-tsconfig-paths" plugin to handle module resolution.
+- Make sure you don't have relative aliases in your Vitest config. Use absolute paths instead. Read more: https://vitest.dev/guide/common-errors[39m
+[36m [2m❯[22m src/lib/ist-dates.pass4.test.ts:[2m72:38[22m[39m
+    [90m 70| [39m  })[33m;[39m
+    [90m 71| [39m  it("say nothing for a value that is not a date, instead of 'Invalid …
+    [90m 72| [39m    [35mconst[39m { istDate[33m,[39m istDateTime } [33m=[39m [35mawait[39m [35mimport[39m([32m"@/lib/ist-dates"[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m 73| [39m    [34mexpect[39m([34mistDate[39m([32m"not a date"[39m))[33m.[39m[34mtoBe[39m([32m""[39m)[33m;[39m
+    [90m 74| [39m    [34mexpect[39m([34mistDateTime[39m(undefined))[33m.[39m[34mtoBe[39m([32m""[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 14:47:46
+[2m   Duration [22m 1.58s[2m (transform 54ms, setup 0ms, collect 39ms, tests 516ms, environment 0ms, prepare 113ms)[22m
+

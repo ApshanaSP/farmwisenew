@@ -41,7 +41,7 @@ function NextSteps({ steps, title = "Suggested next steps" }: { steps: { who: st
     </div>
   );
 }
-const day = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const day = (d: string) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
 
 /** "about 1 a day", "about 1 every 3 days": what is normal for a place, in words. */
 const usual = (perDay: number) => (perDay >= 0.95 ? `about ${Math.round(perDay)} a day` : `about 1 every ${Math.max(2, Math.round(1 / Math.max(perDay, 0.01)))} days`);

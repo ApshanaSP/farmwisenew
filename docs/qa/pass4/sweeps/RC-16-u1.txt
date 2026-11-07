@@ -1,0 +1,12 @@
+RC-16 sweep (U1): every date or clock print in src, 8 Nov
+command: grep -rnE 'toLocale(Date|Time)String|toLocaleString|Intl.DateTimeFormat|getHours|getDate|getMonth|getDay|getFullYear' src (not tests)
+
+Fixed (no time zone named, or a date-only string read in the runtime zone):
+app/citizen/track-complaints/page.tsx:38, components/ComplaintTypeSelector.tsx:284, components/StatusTracker.tsx:38, components/collector/app/askmap/AskMapPanel.tsx:614, assistant/Responses.tsx:20, Insights.tsx:44, rehearsal/ImpactView.tsx:318, thunai/JarvisLogView.tsx:15, thunai/JarvisQuestions.tsx:25, thunai/Thunai.tsx:183, lib/collector/insights.ts:291,436,485-486,586
+
+Already right: CitizenHome, collector/app/lib.tsx, officer/format.ts (IST spread), reportPdf x2, lib/assistant/*, lib/officer/insights.ts, lib/map/conditions.ts, lib/rehearsal/* (UTC on a date string).
+
+Left on purpose (browser clock of the person using it, never printed with a date): collector/app/assistant/AssistantDialog.tsx:292 and Thunai.tsx:1771-1772 (greeting by hour, runs only in the browser), Shell.tsx:128 (reads the hour from the data's own string first), Insights.tsx:88 (string without zone read and printed in one zone); Footer.tsx year now printed in Chennai too.
+Server side getDate/getFullYear: lib/complaint-code.ts:25, complaint-media.ts:33, officer/photos.ts:31 build ids and file names (not shown as a date); lib/thunai/* use the injected state.now. Other lanes own lib/; listed only.
+
+Guard: src/lib/ist-dates.pass4.test.ts scans every non-test .ts/.tsx in src and fails on any toLocaleDateString, toLocaleTimeString, date toLocaleString or Intl.DateTimeFormat without timeZone (a spread of IST counts).

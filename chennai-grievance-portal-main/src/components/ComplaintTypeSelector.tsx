@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
+import { istDate } from "@/lib/ist-dates";
 
 export interface Subcomplaint {
   id: number;
@@ -281,7 +282,7 @@ export default function ComplaintTypeSelector({
         <p className="mt-4 border-t border-canvas-border pt-3 text-[11px] leading-relaxed text-ink-subtle">
           Complaint types imported from the Greater Chennai Corporation grievance portal (
           <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-navy-600">source</a>
-          ) on {new Date(source.fetchedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}.
+          ) on {istDate(source.fetchedAt)}.
         </p>
       )}
     </div>

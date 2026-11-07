@@ -1,4 +1,5 @@
 import Logo from "@/components/Logo";
+import { IST } from "@/lib/ist-dates";
 
 /** District IQ · Chennai Intelligent District Governance Platform · Helpline 1913 */
 export default function Footer({ compact = false }: { compact?: boolean }) {
@@ -17,7 +18,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
           </p>
         </div>
         <p className="text-[12.5px] text-ink-subtle">
-          24&times;7 &middot; &copy; {new Date().getFullYear()} District Administration, Chennai
+          24&times;7 &middot; &copy; {new Date().toLocaleDateString("en-IN", { ...IST, year: "numeric" })} District Administration, Chennai
         </p>
       </div>
     </footer>
