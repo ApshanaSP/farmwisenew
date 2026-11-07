@@ -329,7 +329,7 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
     else if (lead?.title && r.title && String(r.title) !== String(r.type) && !String(r.title).startsWith(String(r.type)))
       sentences.push(`Reported as: “${String(r.title).slice(0, 200)}”.`);
     const by = [...new Set(reports.map((x) => SOURCE_LABEL[x.source] ?? x.source))].slice(0, 3).join(", ").toLowerCase();
-    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${missed ? " and past its deadline" : ""}.`);
+    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${missed ? (num(r.open) === 1 ? " and past its deadline" : ", and was closed after its deadline") : ""}.`);
   }
   return {
     ...base, whatHappened: sentences.join(" "), facts: why.facts, attention: why.needsYou ? why.attention : [], timeline,

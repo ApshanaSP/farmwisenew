@@ -500,7 +500,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       card.headline = d.intent === "INCIDENT_TIMELINE" ? `How it unfolded: ${x.title}` : x.title;
       card.answerMarkdown = d.focus === "where" ? `It happened at ${[x.location, x.ward != null ? `Ward ${x.ward}` : null, x.zone ? `${x.zone} zone` : null, x.taluk ? `${x.taluk} taluk` : null].filter(Boolean).join(", ") || "an unrecorded place"}.`
         : d.focus === "when" ? `It was first reported on ${x.occurredAt ?? "an unrecorded date"}.`
-          : d.focus === "status" ? `${YES_NO.test(i.message) ? `${/resolved|closed|verified|completed/i.test(x.status) ? "Yes" : "No"}, it is` : "It is"} ${x.status.toLowerCase()}${x.deadlineMissed ? ", and **past its deadline**" : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
+          : d.focus === "status" ? `${YES_NO.test(i.message) ? `${/resolved|closed|verified|completed/i.test(x.status) ? "Yes" : "No"}, it is` : "It is"} ${x.status.toLowerCase()}${x.deadlineMissed ? (x.closedAt ? ", and was closed after its deadline" : ", and **past its deadline**") : ""}${x.closedAt ? `; closed on ${x.closedAt}` : ""}.`
             : d.focus === "who" ? `${x.department ?? "The department"} is responsible${x.officials.length ? `: ${x.officials.map((o) => `${o.name}${o.designation ? `, ${o.designation}` : ""}`).join("; ")}` : ""}.`
               : x.whatHappened;
       card.context = { ...ctxBase, lastResponseType: "incident_detail", selectedIncidentId: id, selectedNewsStoryId: null, selectedTitle: x.title };

@@ -13,7 +13,7 @@ import { completeRows, type InRow, type Lookups } from "./complete";
 import { cChart, modifiedZ, trendOf } from "./stats";
 import { hoursBetween } from "./stagelocal";
 import { DEPT_TA, ZONES, ZONE_TA_NAME as ZONE_TA } from "./lexicon";
-import { closedAs, explainIssue, factSheet, plainWhat } from "./narrate";
+import { closedAs, explainIssue, factSheet, idam, plainWhat, plainWho } from "./narrate";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -132,7 +132,7 @@ export function caseRow(r: Row, w: World): CaseRowT {
     id: String(r.id), title: safeText(r.title, 240) || String(r.id), sev: r.sev ?? r.severity ?? null, status: r.status ?? null, zone,
     zoneName: r.zone_name ?? r.zoneName ?? zoneName(w, zone), place: clip(r.loc ?? r.place ?? r.place_text, 120) || null, ward: num(r.ward),
     dept: r.dept ?? null, deptName: r.dept_name ?? r.deptName ?? null, complaints: Number(r.complaints ?? 0) || 0, t: r.t ?? r.first ?? null,
-    overdue: Number(r.breached) === 1 || r.overdue === true, lat: num(r.lat), lon: num(r.lon), why: why || null, cat: r.type ?? r.catLabel ?? r.cat ?? null
+    overdue: (Number(r.breached) === 1 || r.overdue === true) && !closedAs(r.status, r.open), lat: num(r.lat), lon: num(r.lon), why: why || null, cat: r.type ?? r.catLabel ?? r.cat ?? null
   };
 }
 
@@ -224,16 +224,24 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   return { runs: c.runs, doc };
 }
 
-/** The next step for one incident, from its kind; null when there is no step better than asking its own department. */
-function actionForOne(label: string): { en: string; ta: string } | null {
-  const l = label.toLowerCase();
-  if (/accident|relief|risk|signal|warning|alert/.test(l)) return null;
-  if (/flood|waterlog|inundat|stagnat/.test(l)) return { en: "ask Storm Water Drains to send a pump and check the drain there", ta: "மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்" };
-  if (/garbage|waste|sanitat|debris/.test(l)) return { en: "ask the conservancy team to clear it", ta: "துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்" };
-  if (/vector|dengue|mosquito|malaria|fever/.test(l)) return { en: "ask Health for fogging around it", ta: "சுகாதாரத் துறையிடம் அங்கே புகை மருந்து அடிக்கச் சொல்லலாம்" };
-  if (/water supply|sewage|sewer|drinking|pipe/.test(l)) return { en: "ask Metrowater for a status by this evening", ta: "குடிநீர் வாரியத்திடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்" };
-  if (/pothole|road damage|damaged road/.test(l)) return { en: "ask the roads department for a repair date", ta: "சாலைத் துறையிடம் சரிசெய்யும் தேதி கேட்கலாம்" };
-  return null;
+/**
+ * The next step for one case, from its own category code and the body that HOLDS it (its department field), never from words in its title:
+ * the step is "ask <the holder> ..." so it cannot name another agency than the one with the case (RC-12, PB-113, PB-159, PB-175).
+ * Null when the category has no step better than asking its own department, or the holder is not on the record.
+ */
+const STEP_BY_CAT: Record<string, { en: string; ta: string }> = {
+  FLOOD_WATERLOGGING: { en: "to send a pump and check the drain there", ta: "பம்பு அனுப்பி வடிகாலைச் சரிபார்க்கச் சொல்லலாம்" },
+  SOLID_WASTE: { en: "to clear it", ta: "அகற்றச் சொல்லலாம்" },
+  SANITATION_TOILETS: { en: "to clear it", ta: "அகற்றச் சொல்லலாம்" },
+  VECTOR_DISEASE: { en: "for fogging around it", ta: "அங்கே புகை மருந்து அடிக்கச் சொல்லலாம்" },
+  WATER_SUPPLY: { en: "for a status by this evening", ta: "இன்று மாலைக்குள் நிலவரம் கேட்கலாம்" },
+  DRAINAGE_SEWAGE: { en: "for a status by this evening", ta: "இன்று மாலைக்குள் நிலவரம் கேட்கலாம்" },
+  ROAD_DAMAGE: { en: "for a repair date", ta: "சரிசெய்யும் தேதி கேட்கலாம்" }
+};
+export function actionForOne(catCode: unknown, dept: string | null, deptNameText: string | null): { en: string; ta: string } | null {
+  const step = Object.hasOwn(STEP_BY_CAT, String(catCode ?? "")) ? STEP_BY_CAT[String(catCode)] : null;
+  const who = plainWho(dept, deptNameText);
+  return step && who ? { en: `ask ${who.en} ${step.en}`, ta: `${idam(who.ta)} ${step.ta}` } : null;
 }
 
 function actionFor(label: string): { en: string; ta: string } {
@@ -598,7 +606,7 @@ async function caseDetail(c: Ctx): Promise<Part> {
     points: [{ n: 1, id: row.id, lat: row.lat, lon: row.lon as number, label: row.title, sev: row.sev, value: null, hot: true }] });
   // retold, not read out: a fact sheet from the record, then what is wrong, how long, why it matters and what I would do
   const placeTa = row.zone ? zoneTa(c.w, row.zone) : null;
-  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(`${row.cat ?? ""} ${row.title}`), placeTa, open: i.open });
+  const facts = factSheet(row, { openFor: i.open_for, firstAt: i.t ?? i.first ?? null, next: actionForOne(i.cat ?? i.category_code, row.dept, row.deptName), placeTa, open: i.open });
   const say = explainIssue(facts, spokenLabel(row), [row.title, ...(i.why?.what ?? []).map(String), ...timeline.map((x) => x.text)]);
   return { title: row.title, takeaway: row.overdue && !closed ? bi("Past its deadline.", "காலக்கெடு தாண்டியது.") : null, say, blocks };
 }

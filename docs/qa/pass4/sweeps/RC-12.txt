@@ -1,0 +1,28 @@
+RC-12 sweep, 7 Nov 2026: flags read from the pipeline flag alone, and next steps read from title words
+--- sla_breached / breached read by Jarvis and Ask (non-test)
+src/lib/thunai/quick.ts:116:const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|b
+src/lib/thunai/screens.ts:135:    overdue: (Number(r.breached) === 1 || r.overdue === true) && !closedAs(r.status, r.open), lat: num(r.lat), lon: num(
+src/lib/thunai/stagefake.ts:14:    loc: "Chetpet", lat: 13.0796, lon: 80.2612, sev: "Severe", status: "In progress", complaints: 0, t: "2026-10-28 07:
+src/lib/thunai/stagefake.ts:17:    complaints: 2, t: "2026-10-28 12:00:00", breached: 0, dept: "POL-GCP", dept_name: "Greater Chennai Police", why: { 
+src/lib/thunai/stagefake.ts:19:    sev: "Severe", status: "Open", complaints: 0, t: "2026-10-29 00:00:00", breached: 1, dept: "HLT-DMS", dept_name: "G
+src/lib/thunai/stagefake.ts:21:    t: "2026-10-29 06:30:00", breached: 0, dept: "PWD-WRD", dept_name: "PWD Water Resources", why: null },
+src/lib/thunai/stagefake.ts:23:    status: "Open", complaints: 1, t: "2026-10-29 05:00:00", breached: 0, dept: "GCC-HLT", dept_name: "GCC Public Healt
+src/lib/thunai/stagefake.ts:25:    t: "2026-10-29 03:00:00", breached: 0, dept: "POL-GCP", dept_name: "Greater Chennai Police", why: null },
+src/lib/thunai/stagefake.ts:80:    incidents: (a) => res({ rows: SEVERE.slice(0, 4).map((r) => ({ ...r, place: r.loc, overdue: r.breached === 1, cat: 
+src/lib/assistant/catalog.ts:79:      hours_to_first_action: ["measure", "hours to the first action", { unit: "hours" }], sla_breached: ["flag", "past
+src/lib/assistant/incidents.ts:59:  i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reas
+src/lib/assistant/intent.ts:203:export const OVERDUE = /\b(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadl
+src/lib/assistant/warnings.ts:96:    `SELECT ${TITLE} AS title, i.place_text AS loc, i.zone_name AS zone, i.severity_level AS sev, i.sla_breached AS o
+src/lib/assistant/warnings.ts:101:  return { items: rows.map((r) => ({ title: String(r.title), loc: r.loc ? String(r.loc) : null, zone: r.zone ? Strin
+src/lib/collector/actionmail.ts:300:        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at,
+src/lib/collector/aibrief.ts:131:  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at
+src/lib/collector/briefbook.ts:44:  i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla
+src/lib/collector/insights.ts:54:  i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_
+src/lib/collector/intel.ts:242:  i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.hours_open, i.severity_reaso
+src/lib/collector/intel.ts:489:  const dl = deadlineState(r.sla_due ?? null, istWall(), r.breached ?? r.sla_breached);
+src/lib/collector/intel.ts:1538:    past_deadline: deadlineState(r.sla_due ?? null, now, r.breached).overdue ? "Yes" : "No", complaints: r.complaints
+--- title-word next steps (actionFor, still used by the district advice screen: it names a kind of problem across many cases, not one case)
+247:function actionFor(label: string): { en: string; ta: string } {
+308:    const act = actionFor(String(rise.label ?? rise.code ?? ""));
+--- fixed: caseRow.overdue needs an open case; actionForOne reads category code + holder (plainWho), exported and hasOwn-guarded; warnings.ts reads sla_breached for a list of open cases (checked: its query is open-only)
+--- Ask District IQ's status sentence (incidents.ts) says 'past its deadline' only for an open case, and 'was closed after its deadline' for a closed one; isPastDeadline keeps its lane-d rule (a closed case keeps the flag as a fact: deadline.pass4.test.ts), unchanged

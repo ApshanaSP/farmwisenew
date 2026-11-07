@@ -1,0 +1,29 @@
+RC-12 before (run 7 Nov 13:28 and 13:33 on the same tree before the RC-12 change; failing lines of the full files)
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-13 a sewage case held by the drains team: the step names who holds it
+AssertionError: expected 'There\'s a drainage or sewage problem…' not to match /I'd ask Metrowater/
+
+- Expected: 
+/I'd ask Metrowater/
+--
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-19 a closed case's screen has no 'past deadline' flag beside what is said
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+--
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-19 Ask District IQ: a closed case's status is not 'and past its deadline'
+AssertionError: expected 'It is resolved, and **past its deadli…' not to match /past its deadline/
+
+- Expected: 
+/past its deadline/
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261031-345A17, a drinking-water problem: not "ask 
+AssertionError: expected 'There\'s a drinking-water problem at …' not to match /conservancy team to clear it/
+
+- Expected: 
+/conservancy team to clear it/
+--
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261030-AE844C, a lake or bund problem: not "ask th
+AssertionError: expected 'There\'s a lake or bund problem at Pu…' not to match /conservancy team to clear it/
+
+- Expected: 
+/conservancy team to clear it/
