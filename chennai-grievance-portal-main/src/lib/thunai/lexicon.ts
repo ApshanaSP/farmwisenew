@@ -43,7 +43,9 @@ export const DEPT_ALIASES: Record<string, string[]> = {
   "GCC-PRK": ["parks department", "parks"],
   "CMWSSB": ["metro water", "metrowater", "cmwssb", "water board", "metro water board", "குடிநீர் வாரியம்", "மெட்ரோ வாட்டர்", "water"],
   "GCC-GAD": ["general administration"],
-  "GCC-REV": ["revenue", "tax department", "property tax department", "property tax"]
+  "GCC-REV": ["revenue", "tax department", "property tax department", "property tax"],
+  // the district's own revenue administration (the Collector's), not the Corporation's Revenue: "district revenue" is the longer name, so it wins over the word "revenue" (RC-02, open-baseline-37)
+  "DIST-REV": ["district revenue", "district revenue administration", "மாவட்ட வருவாய்"]
 };
 
 /**
@@ -76,7 +78,9 @@ export const CAT_ALIASES: Record<string, string[]> = {
   ROAD_ACCIDENT: ["accident", "accidents", "road accident", "road accidents", "விபத்து"],
   TRAFFIC_OBSTRUCTION: ["traffic", "parking", "traffic jam", "போக்குவரத்து"],
   SOLID_WASTE: ["garbage", "waste", "trash", "rubbish", "solid waste", "குப்பை", "kuppai"],
-  STREETLIGHT_ELECTRICAL: ["streetlight", "streetlights", "street light", "street lights", "electrical hazard", "தெருவிளக்கு", "தெரு விளக்கு"],
+  // a drain-works site (a pit left open where the drain is being built) is that category, not the road's "pothole": the longer phrase wins over "பள்ளம்" (RC-02, open-baseline-38)
+  DRAIN_WORKS_SAFETY: ["drain work", "drain works", "drain worksite", "drain work site", "வடிகால் வேலை", "வடிகால் பணி", "வடிகால் பணியிட"],
+  STREETLIGHT_ELECTRICAL: ["streetlight", "streetlights", "street light", "street lights", "electrical hazard", "தெருவிளக்கு", "தெரு விளக்கு", "மின்விளக்கு", "மின் விளக்கு", "street lamp", "lamp post", "high mast"],
   VECTOR_DISEASE: ["mosquito", "mosquitoes", "dengue", "malaria", "fever", "vector", "கொசு", "டெங்கு", "காய்ச்சல்", "kosu"],
   HEALTH_SERVICES: ["hospital", "hospital capacity", "health services", "மருத்துவமனை"],
   AIR_POLLUTION: ["air pollution", "pollution", "smoke", "காற்று மாசு"],
@@ -98,21 +102,34 @@ export const CAT_ALIASES: Record<string, string[]> = {
   FOOD_SAFETY: ["food safety", "hotel hygiene", "food poisoning"]
 };
 
+/**
+ * The Tamil word for severe is also the everyday word for harsh: "கடுமையான வெயில்" is harsh sun, "கடுமையான குளிர்" harsh cold, not a list of severe cases. Beside a word of the weather or the
+ * land it is the weather's adjective (RC-03, audit-understanding-21). Closed list: the nouns of weather and season a Collector can say; any other noun leaves it a severity.
+ */
+export const HARSH_BESIDE = /(?:கடுமையான|கடுமை)\s*(?:வெயில்|வெப்பம்|குளிர்|மழை|புயல்|காற்று|வறட்சி|பனி|மூடுபனி|கோடை|குளிர்காலம்)/;
 export const SEV_WORDS: [string, Sev][] = [
   ["critical", "Severe"], ["severe", "Severe"], ["urgent", "Severe"], ["serious", "Severe"], ["அவசரமானவை", "Severe"], ["அவசர", "Severe"],
   ["கடுமையான", "Severe"], ["தீவிர", "Severe"], ["high", "High"], ["medium", "Medium"], ["moderate", "Medium"], ["low", "Low"],
   ["நடுத்தர", "Medium"], ["குறைந்த", "Low"]
 ];
 
+/**
+ * The words for each window: ONE table, read by the fast lane (quick.ts periodIn), by the rules lane (PERIOD_WORDS below) and so by every language. A word added for one lane or one
+ * language is added here, so "pona vaaram" cannot be a week in one lane and nothing in another (QA pass 4, RC-06). "last week" and "last month" are the matching console window
+ * (the last 7 and 30 days) in all three languages (BUG-003, an accepted decision); a stretch the console does not hold ("two weeks ago", "yesterday") is not in this table.
+ */
+export const PERIOD_TABLE: Record<PeriodKey, string[]> = {
+  daily: ["last 24 hours", "24 hours", "today", "daily", "இன்று", "இன்னைக்கு", "இன்றைய", "தினசரி", "innaiku", "innaikku", "inniki"],
+  weekly: ["last 7 days", "7 days", "this week", "this weeks", "last week", "last weeks", "weekly", "week", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாராந்திரம்", "வாரம்", "வாரத்துக்கு", "வாரந்தோறும்",
+    "vaaram", "vaara", "vaarathukku"],
+  monthly: ["last 30 days", "30 days", "this month", "this months", "last month", "last months", "monthly", "month", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "மாசத்துக்கு", "மாதத்தோடு",
+    "maasam", "maatham", "maasathukku"],
+  quarterly: ["last 90 days", "90 days", "3 months", "three months", "this quarter", "last quarter", "quarterly", "quarter", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"]
+};
+/** the rules lane's list: the table, and the words only that lane reads ("day", for the token reader) */
 export const PERIOD_WORDS: [string, PeriodKey][] = [
-  ["last 24 hours", "daily"], ["24 hours", "daily"], ["today", "daily"], ["daily", "daily"], ["day", "daily"], ["இன்று", "daily"],
-  ["இன்னைக்கு", "daily"], ["இன்றைய", "daily"], ["தினசரி", "daily"], ["innaiku", "daily"], ["innaikku", "daily"],
-  ["last 7 days", "weekly"], ["7 days", "weekly"], ["this week", "weekly"], ["last week", "weekly"], ["weekly", "weekly"], ["week", "weekly"],
-  ["வாராந்திர", "weekly"], ["வாராந்திரம்", "weekly"], ["வாரம்", "weekly"], ["வாரத்துக்கு", "weekly"], ["வாரத்துக்கு", "weekly"],
-  ["last 30 days", "monthly"], ["30 days", "monthly"], ["this month", "monthly"], ["last month", "monthly"], ["monthly", "monthly"], ["month", "monthly"],
-  ["மாதம்", "monthly"], ["மாசம்", "monthly"], ["மாசத்துக்கு", "monthly"], ["மாதத்தோடு", "monthly"], ["maasam", "monthly"],
-  ["last 90 days", "quarterly"], ["90 days", "quarterly"], ["3 months", "quarterly"], ["this quarter", "quarterly"], ["last quarter", "quarterly"],
-  ["quarterly", "quarterly"], ["quarter", "quarterly"], ["காலாண்டு", "quarterly"]
+  ...(Object.entries(PERIOD_TABLE) as [PeriodKey, string[]][]).flatMap(([k, ws]) => ws.map((w): [string, PeriodKey] => [w, k])),
+  ["day", "daily"]
 ];
 
 export const PAGE_WORDS: [string, PageKey][] = [

@@ -6,7 +6,7 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, HARSH_BESIDE, KEEPING, PERIOD_TABLE, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
 import { foreignIn } from "./entities";
 import { betterCategory, saidStems } from "./catlabels";
 import { CATEGORY_LABELS } from "./narrate";
@@ -139,6 +139,7 @@ export function deptWordIn(t: string): string | null {
   return null;
 }
 export function sevIn(t: string): Sev | null {
+  t = t.replace(new RegExp(HARSH_BESIDE, "g"), " ");
   for (const [word, sev] of SEV_WORDS) if (!WEAK_SEV.has(word) && has(t, [word.toLowerCase()])) return sev;
   // high, low, medium are severities only beside a word that says so (RC-03)
   const tk = t.trim().split(" ");
@@ -152,12 +153,22 @@ export function sevIn(t: string): Sev | null {
  */
 const CALENDAR_EN = /\b(yesterdays?|day before( yesterday)?|next (week|month|quarter)s?)\b|\b(nethu|neththu|netru|netraiya|pona (vaaram|maasam|maatham)|kadantha (vaaram|maasam|maatham)|last (vaaram|maasam)|adutha (vaaram|maasam))\b/;
 const CALENDAR_TA = ["நேற்று", "நேத்து", "நேற்றைய", "கடந்த வாரம்", "கடந்த வார", "போன வாரம்", "போன வார", "கடந்த மாதம்", "கடந்த மாத", "கடந்த மாசம்", "போன மாதம்", "போன மாசம்", "போன மாச", "கடந்த காலாண்டு", "போன காலாண்டு", "முந்தைய வாரம்", "முந்தைய மாதம்", "அடுத்த வாரம்", "அடுத்த மாதம்"];
-export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0);
+/**
+ * A time that is not one of the console's windows and is not "last week/month" either: "two weeks ago", "a month ago", "3 months back", "last year", "next week" (and the Tamil and
+ * Tanglish words for them). The matching window (the last 7 or 30 days) is the answer to "last week", never to "two weeks ago": that is a different stretch of time (RC-06, SK-5).
+ * `t` is the sentence as a lane reads it (lower case, number words or digits), `raw` the Tamil letters as spoken.
+ */
+const UNIT = "(?:days?|weeks?|months?|quarters?|years?)";
+const AGO_EN = new RegExp(String.raw`\b(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,3}|couple of|few|several|many) ${UNIT} (?:ago|back|before|earlier|prior)\b|\b(?:week|month|quarter|year) before last\b|\blast year\b|\bnext (?:week|month|quarter|year)s?\b`);
+const AGO_TG = /\b(?:oru|rendu|irandu|moonu|naalu|anju|\d{1,3}) (?:naal|vaaram|maasam|maatham|varusham) (?:munnaadi|munnadi|mundhi|mundhaiya|munbu|mun|pinnadi|back)\b|\badutha (?:vaaram|maasam|maatham|varusham)\b|\bpona (?:varusham|varudam)\b/;
+const AGO_TA = /(?:நாள்|நாட்கள்|வாரம்|வாரங்கள்|வாரத்துக்கு|மாதம்|மாதங்கள்|மாசம்|மாசத்துக்கு|ஆண்டு|வருடம்|வருஷம்)(?:த்துக்கு|க்கு|கள்)?\s*(?:முன்பு|முன்னாடி|முன்னர்|முன்)(?![஀-௿])|அடுத்த (?:வாரம்|வார|மாதம்|மாத|மாசம்|காலாண்டு|ஆண்டு|வருடம்|வருஷம்)|(?:கடந்த|போன) (?:ஆண்டு|வருடம்|வருஷம்)/;
+export const unheldWindowIn = (t: string, raw = t): boolean => AGO_EN.test(t) || AGO_TG.test(t) || AGO_TA.test(raw);
+export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0) || unheldWindowIn(t);
 export function periodIn(t: string): PeriodKey | null {
-  if (has(t, ["today", "now", "24 hours", "இன்று", "இன்னைக்கு", "innaiku", "inniki", "ippo"])) return "daily";
-  if (has(t, ["this week", "this weeks", "last weeks", "week", "weekly", "7 days", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாரம்", "vaaram", "வாரந்தோறும்"])) return "weekly";
-  if (has(t, ["this month", "this months", "last months", "month", "monthly", "30 days", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "maasam"])) return "monthly";
-  if (has(t, ["quarter", "quarterly", "3 months", "three months", "90 days", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"])) return "quarterly";
+  // the one table of period words (lexicon.ts PERIOD_TABLE); "now" and "ippo" are daily only in this lane (a spoken "now" is no window in the rules lane's token reader)
+  if (has(t, [...PERIOD_TABLE.daily, "now", "ippo"])) return "daily";
+  // the quarter first: "மூன்று மாதம்" (three months) holds the word for a month, and was read as the last 30 days
+  for (const k of ["quarterly", "weekly", "monthly"] as const) if (has(t, PERIOD_TABLE[k])) return k;
   return null;
 }
 
@@ -276,6 +287,9 @@ const LIST_ASK = /\b(show|list|display|any|which|give|pull|bring|get|where|kaatt
 
 const isPrice = (t: string) => has(t, PRICE) || (has(t, PRICE_WEAK) && (VEG.test(t) || MARKET.test(t))) || (VEG.test(t) && /(price|rate|cost|விலை|vilai|எவ்வளவு|evvalavu|how much)/.test(t));
 
+/** a word some other reader of this lane takes as a filter (a status, a severity, a window): it is not an unread topic */
+const readAsSlot = (x: string): boolean => statusIn(` ${x} `) != null || sevIn(` ${x} `) != null || periodIn(` ${x} `) != null;
+
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
@@ -283,6 +297,9 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   const all = t.trim().split(" ");
   const left = all.filter((x) => !explained(x, w)).length;
   if (left >= 3 || (left >= 2 && left / all.length > 0.4)) return "unknown-words";
+  // a kind of complaint no category names ("the power cut complaint", "noise complaints"): listing every case of the place would answer about something else. The word in front of
+  // "complaint" that nothing here reads is the topic; the planner, which can search the records, takes it (RC-05, audit-understanding-16)
+  if (!cat) for (let i = 1; i < all.length; i++) if (/^(complaints?|issues?|problems?|grievances?)$/.test(all[i]) && /^[a-z]{3,}$/.test(all[i - 1]) && !explained(all[i - 1], w) && !readAsSlot(all[i - 1])) return "unknown-topic";
   if (SUBJECTS.test(text.toLowerCase())) return "other-subject";
   if (SAVE_ASK.test(t)) return "save";
   if (MAPISH.test(t) && !has(t, ON_MAP)) return "map-word";

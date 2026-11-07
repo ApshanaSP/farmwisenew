@@ -130,3 +130,105 @@ describe("an order Jarvis does not carry out, and a note to keep, are not filter
     expect(r.kind, r.said).toBe("clarify");
   });
 });
+
+// RC-06 (lane a's leftovers): "last week" and "last month" are the console's matching window (the last 7 and 30 days) in English, Tamil letters and Tanglish alike (BUG-003,
+// an accepted decision, kept); a stretch the console does not hold ("two weeks ago", "a month ago", "last year", "next week") is asked about, in every language, never answered with
+// the current window.
+describe("last week and last month mean the same window in all three languages (PB-043..PB-050 class)", () => {
+  it("the table: every word of the one period table reads as its own window in the fast lane", async () => {
+    const { periodIn } = await import("@/lib/thunai/quick");
+    const { PERIOD_TABLE } = await import("@/lib/thunai/lexicon");
+    const bad: string[] = [];
+    for (const [k, ws] of Object.entries(PERIOD_TABLE)) for (const w of ws) if (periodIn(` ${w} `) !== k) bad.push(`${w} -> ${periodIn(` ${w} `)} (want ${k})`);
+    expect(bad).toEqual([]);
+  });
+  it.each([
+    ["weekly", "show severe cases last week", "கடந்த வாரம் கடுமையான புகார்கள் காட்டு", "pona vaaram severe cases kaattu"],
+    ["monthly", "show severe cases last month", "போன மாசம் கடுமையான புகார்கள் காட்டு", "kadantha maasam severe cases kaattu"],
+    ["weekly", "show overdue cases last week", "கடந்த வாரம் காலக்கெடு தாண்டிய புகார்கள்", "pona vaaram deadline thaandiya cases kaattu"]
+  ])("%s: the same window whatever the language", async (period, en, ta, tg) => {
+    const got: string[] = [];
+    for (const text of [en, ta, tg]) { const r = await say(text); got.push(String(r.slots.period ?? r.sim.period)); }
+    expect(got, `${en} | ${ta} | ${tg}`).toEqual([period, period, period]);
+  });
+  it.each([
+    "show severe cases two weeks ago", "cases a month ago", "severe cases last year", "cases next week",
+    "இரண்டு வாரம் முன்பு கடுமையான புகார்கள்", "ஒரு மாசம் முன்னாடி புகார்கள்", "அடுத்த வாரம் புகார்கள்",
+    "rendu vaaram munnaadi severe cases kaattu", "adutha vaaram cases kaattu"
+  ])("%s is asked about, not answered with the current window", async (text) => {
+    const r = await say(text);
+    expect(r.kind, r.said).toBe("clarify");
+    expect(r.said).not.toMatch(/last 7 days|கடந்த 7 நாட்கள்|last 30 days/i);
+    expect(r.steps.some((s) => s.a === "period" || s.a === "view")).toBe(false);
+  });
+  it("the matching windows are still answered (the guard of the guard)", async () => {
+    for (const text of ["severe cases this week", "இந்த வாரம் கடுமையான புகார்கள்", "3 months severe cases", "மூன்று மாதம் கடுமையான புகார்கள்"]) {
+      const r = await say(text);
+      expect(r.kind, `${text}: ${r.said}`).not.toBe("clarify");
+    }
+  });
+});
+
+// RC-02, RC-03, RC-05 (lane a's leftovers): a place or a topic the rules cannot apply is said, not dropped; a word of the data is read by its longest name; an everyday word is not a filter
+describe("a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024)", () => {
+  it.each([
+    ["Latin letters", "Chetpet police report", /Chetpet/],
+    ["a street name", "Anna Salai police report", /Anna Salai/],
+    ["Tamil letters", "தி நகர் போலீஸ் அறிக்கை", /தி நகர்/],
+    ["a second place", "Kilpauk police report", /Kilpauk/]
+  ])("a place of ours that no zone holds, %s: the brief says it cannot narrow to it", async (_n, text, name) => {
+    const r = await say(text);
+    expect(r.said, r.said).toMatch(name);
+    expect(r.said, r.said).toMatch(/can't narrow|பிரிக்க முடியவில்லை/);
+  });
+  it.each(["today's police report", "senior citizen police report", "Adyar police report", "full police report"])("the guard: %s names no place it cannot narrow to", async (text) => {
+    const r = await say(text);
+    expect(r.said, r.said).not.toMatch(/can't narrow|பிரிக்க முடியவில்லை/);
+  });
+  it.each([
+    ["English, a long question", "District Revenue section at the Collectorate, where are we on things?"],
+    ["Tanglish", "District Revenue pakkam enna nelamai"],
+    ["a short request", "District Revenue report"]
+  ])("the longer name of a body with no records here is not the Corporation's Revenue: %s", async (_n, text) => {
+    const r = await say(text);
+    const dept = (r.steps.find((s) => s.a === "view") as { view?: { dept?: string } } | undefined)?.view?.dept ?? (r.stage?.slots as { dept?: string } | undefined)?.dept ?? null;
+    expect(dept, r.said).not.toBe("GCC-REV");
+    expect(r.said, r.said).not.toMatch(/Tax & Licence/);
+  });
+  it("the guard: the Corporation's own revenue words still reach the Corporation's Revenue", async () => {
+    const r = await say("property tax department status");
+    const dept = (r.steps.find((s) => s.a === "view") as { view?: { dept?: string } } | undefined)?.view?.dept ?? (r.stage?.slots as { dept?: string } | undefined)?.dept ?? null;
+    expect(dept, r.said).toBe("GCC-REV");
+  });
+  it.each([
+    ["drain works pit, Tamil letters", "ஆலந்தூர்ல வடிகால் வேலை நடக்குற இடத்துல பள்ளம் மூடாம விட்டுட்டாங்க", "DRAIN_WORKS_SAFETY"],
+    ["drain works, English", "unsafe pit at the drain works site in Alandur", "DRAIN_WORKS_SAFETY"],
+    ["a plain pothole is still the road's", "pothole on the road in Alandur", "ROAD_DAMAGE"]
+  ])("%s", async (_n, text, cat) => {
+    const r = await say(text);
+    const got = (r.steps.find((s) => s.a === "view") as { view?: { cat?: string } } | undefined)?.view?.cat ?? r.cat;
+    expect(got, r.said).toBe(cat);
+  });
+  it.each([
+    ["Tamil lamp words", "அடையாறு மின் விளக்கு புகார்கள்"],
+    ["Tamil lamp words, other order", "மின்விளக்கு புகார் அடையாறு"],
+    ["Tanglish", "Adyar la theru vilakku complaints kaattu"]
+  ])("street-light words in %s read as the street-light category", async (_n, text) => {
+    const r = await say(text);
+    expect(r.cat ?? (r.slots as { cat?: string }).cat, r.said).toBe("STREETLIGHT_ELECTRICAL");
+  });
+  it.each(["கடுமையான வெயில்", "கடுமையான குளிர் இருக்கு", "கடுமையான வெப்பம் பற்றி சொல்லு"])("%s is the weather, not severe cases", async (text) => {
+    const r = await say(text);
+    expect((r.slots as { sev?: string | null }).sev ?? null, r.said).toBeNull();
+    expect(r.steps.some((s) => s.a === "view" && (s as { view?: { sev?: string } }).view?.sev), r.said).toBe(false);
+  });
+  it("the guard: a real severity in Tamil is still one", async () => {
+    const r = await say("கடுமையான புகார்கள் காட்டு");
+    const sev = (r.steps.find((s) => s.a === "view") as { view?: { sev?: string } } | undefined)?.view?.sev ?? (r.slots as { sev?: string }).sev;
+    expect(sev, r.said).toBe("Severe");
+  });
+  it.each(["the power cut complaint in Ambattur", "noise complaints in Adyar this week"])("%s: a topic no category names is not answered with every case of the place", async (text) => {
+    const r = await say(text);
+    expect(r.stage?.recipe === "cases" && !(r.stage?.slots as { cat?: string | null } | undefined)?.cat && !(r.stage?.slots as { q?: string | null } | undefined)?.q, r.said).toBe(false);
+  });
+});

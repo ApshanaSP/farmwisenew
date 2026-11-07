@@ -12,7 +12,7 @@
  * outside the district in the taluk table) in front of an agency word makes the sentence about some other body: it is
  * reported as unknown, never forced onto ours.
  */
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, SUBJECTS, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, PERIOD_TABLE, SUBJECTS, ZONES } from "./lexicon";
 import { editDistance, skeleton } from "./normalise";
 import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
@@ -93,7 +93,8 @@ export function registry(w: World): Registry {
     for (const a of raw) {
       if (!a) continue;
       const ws = /[஀-௿]/.test(a) ? toRoman(a) : words(a);
-      const c = core(ws);
+      // "district" is a qualifier of the Corporation's names, but it is the distinguishing word of the District's own bodies (District Revenue is not the Corporation's Revenue)
+      const c = id.startsWith("DIST-") ? ws.filter((x) => x !== "the" && x !== "of") : core(ws);
       const key = c.join(" ");
       if (!c.length || seen.has(key)) continue;
       seen.add(key); aliases.push(c);
@@ -259,6 +260,9 @@ export function resolveEntity(text: string, w: World): Resolution {
         const conf = via === "exact" ? 0.97 : via === "initials" ? 0.92 : via === "edit" ? 0.86 : 0.8;
         hits.push({ e, s: conf, via, start: idx[k].i, end: idx[k + a.length - 1].i, len: a.length });
       }
+      // a name that itself holds a qualifier ("district revenue": "district" is a qualifier, taken out of idx above) matches as said, in the content words; it is the longer name, so it beats
+      // the one word "revenue" of another department (RC-02, open-baseline-37)
+      if (a.length >= 2 && a.some((x) => QUAL.has(x))) for (let k = 0; k + a.length <= content.length; k++) if (a.every((x, j) => content[k + j] === x)) hits.push({ e, s: 0.97, via: "exact", start: k, end: k + a.length - 1, len: a.length });
       // a one-word name heard as two or three short pieces ("tay nam pet", "tan ged co"): the pieces joined, by spelling or sound
       if (a.length === 1 && a[0].length >= 6) {
         for (let k = 0; k < idx.length; k++) for (const span of [2, 3]) {
@@ -476,6 +480,8 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   const slots: Record<string, unknown> = e.kind === "dept" ? { dept: e.id, zones: zone ? [zone] : [] } : e.kind === "org" ? { org: e.id, zones: zone ? [zone] : [] } : { zones: [Number(e.id.slice(5))] };
   // a locality the data cannot place in a zone is said, not dropped: the brief says it covers the district
   if (loc && loc.zone == null) slots.name = loc.name;
+  // a place of the Corporation's own list that the data cannot place in a zone ("Chetpet police report", Tamil "தி நகர்") is said the same way, never dropped (RC-02, audit-understanding-10)
+  else if (!loc && !zone && e.kind !== "zone") { const u = unplacedPlace(text, w, e); if (u) slots.name = u; }
   return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? "daily", fresh: true } };
 }
 
@@ -497,6 +503,32 @@ function singlePlaces(w: World) {
   }
   return r;
 }
+/**
+ * A place of ours in a request for a body's brief that no zone holds: what is left of the sentence once the body, the brief words, the window, the grammar and plain English words are taken out is
+ * one or two words that are all places of the Corporation's own list (AREA_WORDS, LOCALITY_WORDS: reference data, areas-localities.json) or the one-letter and street words that go with them. Its name as
+ * the user said it, or null. Any word that is not a place leaves the sentence to the lanes that read it (so "today's police report" and "senior citizen police report" are never taken for a place).
+ */
+function unplacedPlace(text: string, w: World, e: Entity): string | null {
+  const reg = registry(w);
+  const own = new Set(e.aliases.flat());
+  const left = sentenceWords(text.slice(0, 300)).filter((x) => !FILLER.has(x) && !BRIEF_WORDS.has(x) && !QUAL.has(x) && !POSTS.has(x) && !HEADS.has(x) && !own.has(x) && !periodWord(x));
+  const rest = left.filter((x) => !stopWord(x) || AREA_WORDS.has(x) || LOCALITY_WORDS.has(x));
+  if (!rest.length || rest.length > 2) return null;
+  const placeLike = (x: string) => AREA_WORDS.has(x) || LOCALITY_WORDS.has(x) || reg.places.has(x);
+  if (!rest.some(placeLike)) return null;
+  // the others are the short stems Tamil letters leave ("thi" of தி நகர்) or street words, never an English word or a word of another kind
+  if (!rest.every((x) => placeLike(x) || x.length <= 3)) return null;
+  if (rest.some((x) => !placeLike(x) && isEnglishWord(x) && x.length > 2)) return null;
+  // said as the user said it: a Tamil sentence keeps its Tamil words ("தி நகர்"), the roman spelling of a word the user wrote in Tamil letters is not said back
+  if (/[஀-௿]/.test(text)) {
+    const said = nameAsSaid(text, rest.join(" "));
+    return text.includes("நகர்") ? said.replace(/nagar/gi, "நகர்") : said;
+  }
+  return cap(nameAsSaid(text, rest.join(" ")));
+}
+/** the window words of the one period table, as single words, so a window is never read as a place */
+const periodWord = (x: string): boolean => PERIOD_TABLE.daily.concat(PERIOD_TABLE.weekly, PERIOD_TABLE.monthly, PERIOD_TABLE.quarterly).some((p) => p === x);
+
 /** A locality in the sentence and its zone, if the data gives it one ("Velachery police report"), by name or alias. */
 function locality(text: string, w: World): { name: string; zone: number | null } | null {
   const ws = sentenceWords(text);

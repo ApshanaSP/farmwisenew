@@ -36,13 +36,13 @@ describe("lane a skeptic", () => {
       expect(r.recipe === "complete" && !r.slots.status, t).toBe(false);
     }
   }, 120_000);
-  it.fails("SK-5 windows not held are shown as the last 7 days: 'cases next week', 'two weeks ago' in Tamil, and 'a month ago' as the last 30 days", async () => {
+  it("SK-5 windows not held are shown as the last 7 days: 'cases next week', 'two weeks ago' in Tamil, and 'a month ago' as the last 30 days", async () => {
     expect((await ask("cases next week")).said).not.toMatch(/last 7 days/i);
     expect((await ask("இரண்டு வாரம் முன்பு புகார்கள்")).said).not.toMatch(/கடந்த 7/);
     const m = await ask("cases a month ago");
     expect(m.lane === "quick" && m.slots.period === "monthly").toBe(false);
   }, 120_000);
-  it.fails("SK-6 'open cases in Adyar' goes to the zone page and the open filter is dropped without a word", async () => {
+  it("SK-6 'open cases in Adyar' goes to the zone page and the open filter is dropped without a word", async () => {
     const r = await ask("open cases in Adyar");
     expect(r.lane).not.toBe("rules-instant");
   }, 120_000);

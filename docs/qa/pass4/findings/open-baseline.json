@@ -655,7 +655,8 @@
     "row_id": "en-brief-15",
     "mechanism": "M13",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-38",
@@ -672,7 +673,8 @@
     "row_id": "ta-explain-19",
     "mechanism": "M13",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-39",

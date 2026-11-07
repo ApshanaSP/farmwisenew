@@ -11,7 +11,7 @@ describe("jprobe", () => { it.skipIf(!process.env.QS)("p", async () => {
   for (const conv of (process.env.QS ?? "").split("##").filter(Boolean)) {
     clearCaches(); vi.setSystemTime(new Date(FROZEN));
     const sim = new ClientSim(w.world, {}, w.list);
-    for (const s of conv.split("||")) { const o = await sim.handle(s); out.push(`Q: ${s}\n  kind=${o.kind} said=${o.said}\n  steps=${JSON.stringify(o.steps).slice(0, 200)} zone=${sim.zone} cat=${sim.cat} slots=${JSON.stringify(o.stage?.slots ?? null).slice(0, 160)} recipe=${o.stage?.recipe}`);
+    for (const s of conv.split("||")) { const o = await sim.handle(s); out.push(`Q: ${s}\n  kind=${o.kind} said=${o.said}\n  steps=${JSON.stringify(o.steps).slice(0, 200)} zone=${sim.zone} period=${(sim as never as { period: string }).period} cat=${sim.cat} slots=${JSON.stringify(o.stage?.slots ?? null).slice(0, 160)} recipe=${o.stage?.recipe}`);
       if (process.env.NARR && o.stage) out.push(`  NARR(ta)=${JSON.stringify(narrationOf(o.stage as never, "ta").map((x) => x.text))}`); }
   }
   fs.writeFileSync(process.env.OUT!, out.join("\n"));

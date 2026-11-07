@@ -15,12 +15,13 @@
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
 import { foreignIn, noData } from "./entities";
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, HARSH_BESIDE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
   ZONES } from "./lexicon";
 import { betterCategory, saidStems } from "./catlabels";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
+import { statusIn, unheldWindowIn } from "./quick";
 
 const TA = /[஀-௿]/;
 
@@ -83,6 +84,21 @@ function lastStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null 
   return keep.length ? keep[keep.length - 1] : null;
 }
 
+/**
+ * The kind of complaint, when a sentence names two without taking the first back: the one said in more words is the topic ("வடிகால் வேலை ... பள்ளம்", a pit at a drain-works site, is the
+ * drain-works category, not the road's pothole). Between equals the last said stands, as in lastStanding (RC-02, open-baseline-38).
+ */
+function longestStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null {
+  const last = lastStanding(ms, tokens);
+  if (!last) return null;
+  const kept = ms.filter((m, i) => {
+    const until = i + 1 < ms.length ? ms[i + 1].start : tokens.length;
+    for (let k = m.end; k < until; k++) if (REPAIR.has(tokens[k])) return false;
+    return true;
+  });
+  return kept.reduce((best, m) => (m.end - m.start >= best.end - best.start ? m : best), last);
+}
+
 // ------------------------------------------------------------------ dictionaries --
 
 /** Does the sentence name a zone, a taluk, a department or a kind of complaint? Then a verb like "explain" is about that, not about the screen. */
@@ -104,7 +120,10 @@ function zoneDict(world: World): [string, number][] {
 }
 function deptDict(world: World): [string, string][] {
   const out: [string, string][] = [];
-  for (const d of world.depts) {
+  // the bodies that have no records in this build (District Revenue, TANGEDCO) are listed too, so that their own longer name wins over a word of another department ("district revenue" is
+  // not the Corporation's "revenue"); a sentence that names one is handed on, and the lane that knows it has no records says so (RC-02, open-baseline-37)
+  const bodies = (world.bodies ?? []).filter((b) => !world.depts.some((d) => d.code === b.code));
+  for (const d of [...world.depts, ...bodies]) {
     out.push([d.name.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim(), d.code]);
     for (const a of DEPT_ALIASES[d.code] ?? []) out.push([a, d.code]);
   }
@@ -363,6 +382,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has. It is never answered with the current one (RC-06),
   // and it is not a refusal either: the rest of the sentence (the place, the topic) is read, and the Collector is asked which window to show it in (QA4 G1, ta-explain-14, ta-noisy-07)
   const oneDayBack = /\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard);
+  // "two weeks ago", "a month ago", "last year", "next week": also not a window the console holds, and not the current one either (SK-5)
+  const otherTime = !oneDayBack && unheldWindowIn(s, heard.toLowerCase());
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];
@@ -440,6 +461,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // high, low, medium count only beside a word that says severity ("High Court", "low lying" do not) (RC-03)
   const sevAll = mentions(tk, SEV_WORDS, taken).filter((m) => {
     const w = tk.slice(m.start, m.end).join(" ");
+    // "கடுமையான வெயில்" is harsh sun, not severe cases: beside a word of the weather the adjective is the weather's (RC-03)
+    if (/^(?:கடுமையான|கடுமை)$/.test(w) && HARSH_BESIDE.test(`${w} ${tk[m.end] ?? ""}`)){ for (let k = m.start; k < m.end; k++) taken[k] = false; return false; }
     if (!WEAK_SEV.has(w)) return true;
     if (SEV_NOUN.has(tk[m.end] ?? "") || SEV_NOUN.has(tk[m.start - 1] ?? "")) return true;
     for (let k = m.start; k < m.end; k++) taken[k] = false;
@@ -450,7 +473,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const zoneM = lastStanding(zoneMs, tk);
   const talukM = lastStanding(talukMs, tk);
   const deptM = lastStanding(deptMs, tk);
-  const catM = lastStanding(catMs, tk);
+  // a body this console holds no records of: no department filter is put on for it, and the sentence is handed on to the lane that says so
+  if (deptM && !world.depts.some((d) => d.code === deptM.value)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  const catM = longestStanding(catMs, tk);
   if (zoneM) { view.zone = zoneM.value; match = Math.min(match, zoneM.score); }
   if (talukM) { view.taluk = talukM.value; match = Math.min(match, talukM.score); }
   if (deptM) { view.dept = deptM.value; match = Math.min(match, deptM.score); }
@@ -526,6 +551,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   // assemble: page first, then the filters as one transaction, then period, map, panel, item
   const hasView = Object.keys(view).length > 0;
+  // a status ("open cases", "pending", "unresolved", "past the deadline") is a filter the console's view cannot hold: a view step with only the place would drop it without a word, so the rules hand the
+  // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
+  if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });
   if (hasView) steps.push({ a: "view", view });
   if (perM) steps.push({ a: "period", period: perM.value as PeriodKey });
@@ -542,10 +570,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
     steps.push({ a: "draft" });
   }
 
-  if (oneDayBack) {
+  if (oneDayBack || otherTime) {
     const base = steps.filter((x) => x.a === "view" || x.a === "page");
     return { kind: "ask", lang, heard,
-      question: b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?"),
+      question: oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
+        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?"),
       choices: [
         { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
         { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },
