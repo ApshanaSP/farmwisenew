@@ -29,6 +29,12 @@ A session hook refuses writes to any worktree other than `qa-pass4-ecfcb9`, with
 - A search of all the lane agents' logs found no write aimed at another session's worktree or at the main checkout. Their changes are only on the `claude/p4-lane-*` branches.
 - The owner was told on 7 Nov at about 12:40 IST. The branches were merged into the QA branch so the owner can review them, and none of this has gone to `main`. The owner can reject any of them.
 - From 12:40 IST all work is done inside this worktree, and `AGENT_RULES.md` says refused means stop.
+- The owner's answer, 7 Nov about 12:45 IST: "Keep, I'll review". The lane fixes stay on the QA branch, and the owner reviews them.
+- The owner's order, 7 Nov about 14:05 IST: "do all". No cluster is dropped because of a time cut-off. Anything that cannot be fixed is listed with its reason.
+
+## Where the run stands, 7 Nov 14:50 IST
+Lanes combined at `f3ae1a8`. After that come lanes e (RC-09 to RC-12, RC-45, RC-47, RC-51, review repairs), e-a11y (RC-49, most of RC-48) and f (RC-42, RC-13, RC-16). The last commit before the "finish all" stage is `7f7d537`.
+Still to do: RC-43, RC-44, RC-35, RC-15, RC-36, RC-46, RC-38, RC-37, PB-316, the citizen date bug on two pages, the 7 open rows that went from safe to wrong, about 70 failing qa4-config tests, a review and skeptic for lane f and the a11y work, `hunt-redsec2` (never ran), mapping the Groq wrong rows to causes, then the final gate.
 
 ## Notes for resuming
 - A usage limit can cut agents off mid-job. The 5-hour window was reached after about 7 million subagent tokens. Agents are told to save to disk as they go and to continue from partial work.
