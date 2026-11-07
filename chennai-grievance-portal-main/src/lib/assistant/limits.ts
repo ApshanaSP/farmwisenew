@@ -27,6 +27,7 @@ export const LIMITS = {
   messageChars: 1500
 } as const;
 
+import { aboutTheData } from "@/lib/assistant/help";
 /** Words that ask for everything at once (layer 1, before the model is asked). */
 const BULK = [
   /\b(all|every|entire|whole|full|complete)\b.{0,30}\b(incidents?|complaints?|records?|rows?|list|data(set)?|events?|reports?)\b/i,
@@ -37,6 +38,8 @@ const BULK = [
   /\b(ella(a)?m|ellaa|ella|mothama|motham|muzhusa|muzhusum)\b.{0,30}\b(incidents?|complaints?|data|list|records?)\b/i
 ];
 export function looksBulk(text: string): boolean {
+  // "are all the data feeds live?" asks about the feeds, it does not ask for every record (RC-11, PB-014)
+  if (aboutTheData(text) && !/export|download|dump|பதிவிறக்/i.test(text)) return false;
   return BULK.some((re) => re.test(text));
 }
 

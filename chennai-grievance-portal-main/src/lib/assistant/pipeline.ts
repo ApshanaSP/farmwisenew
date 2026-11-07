@@ -419,7 +419,7 @@ function needsPicture(question: string, results: ToolResult[], routerSays: boole
 
 /** Tools whose rule match is specific enough to beat the planner. */
 const PREFER_TOOL = new Set(["departments", "zones", "dept_backlog", "resolution_times", "verification_queue", "environment", "mandi_prices", "hotspots", "news_gaps",
-  "developing_stories", "source_health", "taluks", "incident_series", "place_breakdown"]);
+  "developing_stories", "source_health", "dept_followups", "taluks", "incident_series", "place_breakdown"]);
 
 function applyScope(base: Scope, r: Row, n: RefNames): Scope {
   const s: Scope = { ...base };
