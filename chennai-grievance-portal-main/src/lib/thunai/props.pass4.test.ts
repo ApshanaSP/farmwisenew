@@ -15,7 +15,7 @@ const ctxA = fc.constantFrom("call ", "my number is ", "", "contact: ", "எண�
 const ctxB = fc.constantFrom(" please", "", " thanks.", " அவசரம்");
 const mobile = fc.tuple(fc.integer({ min: 6, max: 9 }), digits(9)).map(([a, r]) => `${a}${r}`);
 // split a digit string into groups of the given sizes joined by (possibly different) separators
-const grouped = (d: string, sizes: number[], seps: string[]) => {
+const grouped = (d: string, sizes: readonly number[], seps: string[]) => {
   let i = 0, out = "";
   sizes.forEach((s, k) => { out += (k ? seps[k - 1] : "") + d.slice(i, i + s); i += s; });
   return out;
@@ -38,31 +38,31 @@ describe("redaction (property)", () => {
       expect(/[0-9௦-௯]/.test(o), JSON.stringify(s) + " -> " + o).toBe(false);
     }), P);
   });
-  it.fails("property-2: a mobile number in Tamil digits with a Unicode dash or no-break space is hidden", () => {
+  it("property-2: a mobile number in Tamil digits with a Unicode dash or no-break space is hidden", () => {
     fc.assert(fc.property(mobile, fc.constantFrom([5, 5], [3, 3, 4]), fc.constantFrom(" ", "–", "—", "−", "‐"), (d, sizes, sp) => {
       const o = redactText(`எண் ${toTa(grouped(d, sizes, [sp, sp, sp]))} தாருங்கள்`);
       expect(/[0-9௦-௯]/.test(o), o).toBe(false);
     }), { ...P, numRuns: 50 });
   });
-  it.fails("property-2b: an Aadhaar number in Tamil digits with a Unicode dash or no-break space is hidden", () => {
+  it("property-2b: an Aadhaar number in Tamil digits with a Unicode dash or no-break space is hidden", () => {
     fc.assert(fc.property(digits(12), fc.constantFrom(" ", "–", "—", "−"), (d, sp) => {
       const o = redactText(`aadhaar ${toTa(grouped(d, [4, 4, 4], [sp, sp]))} end`);
       expect(/[0-9௦-௯]/.test(o), o).toBe(false);
     }), { ...P, numRuns: 50 });
   });
-  it.fails("property-3: a mobile number with a 0, 91 or +91 prefix and a 2-4-4 grouping ('0-60.0000 0000') is hidden", () => {
+  it("property-3: a mobile number with a 0, 91 or +91 prefix and a 2-4-4 grouping ('0-60.0000 0000') is hidden", () => {
     fc.assert(fc.property(mobile, fc.array(fc.constantFrom(" ", "-", "."), { minLength: 3, maxLength: 3 }), fc.constantFrom("0", "91", "+91"), (d, seps, cc) => {
       const s = `call ${cc}${seps[0]}${grouped(d, [2, 4, 4], seps.slice(1))} please`;
       expect(hidden(redactText(s)), s).toBe(true);
     }), { ...P, numRuns: 60 });
   });
-  it.fails("property-7: a zero-width or direction mark inside a mobile number does not stop it being hidden", () => {
+  it("property-7: a zero-width or direction mark inside a mobile number does not stop it being hidden", () => {
     fc.assert(fc.property(mobile, fc.constantFrom("​", "‌", "‍", "⁠", "﻿", "­", "‎", "‏"), fc.integer({ min: 1, max: 9 }), (d, mark, k) => {
       const o = redactText(`number ${d.slice(0, k)}${mark}${d.slice(k)} ok`);
       expect(/[0-9]/.test(o), JSON.stringify(o)).toBe(false);
     }), { ...P, numRuns: 60 });
   });
-  it.fails("property-4: a mobile number with every digit spaced ('9 8 4 0 1 2 3 4 5 6') is hidden", () => {
+  it("property-4: a mobile number with every digit spaced ('9 8 4 0 1 2 3 4 5 6') is hidden", () => {
     fc.assert(fc.property(mobile, fc.constantFrom(" ", " "), (d, sp) => {
       const o = redactText(`number ${d.split("").join(sp)} ok`);
       expect(/\d/.test(o), o).toBe(false);

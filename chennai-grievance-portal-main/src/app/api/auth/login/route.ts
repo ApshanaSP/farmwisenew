@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
@@ -13,7 +14,8 @@ const GENERIC_ERROR = "Invalid email or password.";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
+    const { body, tooLarge } = await readJsonCapped(req); // a malformed body is a 400 from the schema, not a 500; a huge one is a 413
+    if (tooLarge) return tooLargeResponse();
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {

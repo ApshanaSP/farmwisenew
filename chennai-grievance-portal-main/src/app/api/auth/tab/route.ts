@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { copySlot } from "@/lib/auth";
 import { UNSLOTTED, isSlot } from "@/lib/session-cookies";
@@ -7,7 +8,9 @@ import { UNSLOTTED, isSlot } from "@/lib/session-cookies";
  * cookies, "-") into the tab's new slot `to` (lib/tab-session.ts). Only this browser's own cookies are copied.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
+  const { body: raw, tooLarge } = await readJsonCapped(req, 4 * 1024);
+  if (tooLarge) return tooLargeResponse();
+  const body = raw as { from?: string | null; to?: string } | null;
   const from = body?.from === UNSLOTTED ? null : body?.from;
   const to = body?.to;
   if (!isSlot(to) || (from !== null && !isSlot(from)) || from === to) {

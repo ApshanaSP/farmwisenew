@@ -89,7 +89,7 @@ function reportReq(id: string, step: string) {
   f.append("photos", new Blob([PNG], { type: "image/png" }), "done.png");
   return new NextRequest(`http://127.0.0.1/api/officer/grievances/${id}/report`, { method: "POST", body: f });
 }
-const ctx = (id: string) => ({ params: { id } });
+const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 const kpi = async () => (await intel.overview(W, null)).kpi.cur as Record<string, number>;
 const listCount = async (status: string, q: string) => (await intel.list({ period: W, zone: null, dept: null, sev: null, status, q, sort: "t", dir: -1, page: 0, scope: "period" })).incidents;
 const page = async (id: string) => (await intel.incident(id))!.incident;
@@ -107,7 +107,7 @@ async function fileComplaint(id: string, owner: number): Promise<string> {
 }
 async function tracker(code: string, who: unknown = CITIZEN_A) {
   h.who = { citizen: who };
-  const r = await complaintRoute.GET(new NextRequest(`http://127.0.0.1/api/complaints/${code}`), { params: { code } });
+  const r = await complaintRoute.GET(new NextRequest(`http://127.0.0.1/api/complaints/${code}`), { params: Promise.resolve({ code }) });
   return { http: r.status, body: await r.json() as Record<string, any> };
 }
 

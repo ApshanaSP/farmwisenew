@@ -46,7 +46,10 @@ declare global {
   var __rehearsalPast: { key: string; v: { asOf: string; rains: PastRain[] } } | undefined;
 }
 
-export class RehearsalUnavailable extends Error {}
+/** The service cannot answer now (503). */
+export class RehearsalUnavailable extends Error { status = 503; }
+/** What was asked for is not in the record (404): an unknown rain is not a broken service. */
+export class RehearsalNotFound extends RehearsalUnavailable { status = 404; }
 
 /** raised when the way the base is built changes, so a running server rebuilds it */
 const ENGINE_VERSION = 3;
@@ -124,13 +127,20 @@ const joinLine = (g: RoadGraph, edges: number[]): Line => {
   return out;
 };
 
+/** The past rain named by a replay id; null for a live moment; an id that is not in the record is "not found" wherever it is read. */
+function replayOf(b: { events: RainEvent[] }, replay: string | null | undefined) {
+  if (!replay) return null;
+  const ev = b.events.find((e) => e.id === replay);
+  if (!ev) throw new RehearsalNotFound("No such rain in the record.");
+  return ev;
+}
+
 export async function rehearsalState(o: StateOpts = {}): Promise<RehearsalState> {
   const t0 = Date.now();
   const b = await base();
   const now = await consoleNow();
   const tHelp = o.tHelp && [5, 10, 15].includes(o.tHelp) ? o.tHelp : T_HELP_MIN;
-  const ev = o.replay ? b.events.find((e) => e.id === o.replay) ?? null : null;
-  if (o.replay && !ev) throw new RehearsalUnavailable("No such rain in the record.");
+  const ev = replayOf(b, o.replay);
   // a live moment: the console's now, to the minute (so polling within a minute reuses the cache)
   const asOf = ev ? replayAsOf(ev) : now.slice(0, 16) + ":00";
   const live = !ev;
@@ -339,7 +349,7 @@ export async function facilityReach(id: string, o: StateOpts): Promise<{ kept: L
   const b = await base();
   const f = b.facilities.find((x) => x.id === id);
   if (!f) return null;
-  const ev = o.replay ? b.events.find((e) => e.id === o.replay) ?? null : null;
+  const ev = replayOf(b, o.replay);
   const now = await consoleNow();
   const asOf = ev ? replayAsOf(ev) : now.slice(0, 13) + ":00:00";
   const tHelp = o.tHelp && [5, 10, 15].includes(o.tHelp) ? o.tHelp : T_HELP_MIN;
@@ -360,7 +370,7 @@ export async function routeBetween(a: { lat: number; lon: number }, z: { lat: nu
   if (u < 0 || v < 0) return null;
   let factor: Float32Array | undefined;
   if (state === "rehearsal") {
-    const ev = o.replay ? b.events.find((e) => e.id === o.replay) ?? null : null;
+    const ev = replayOf(b, o.replay);
     const now = await consoleNow();
     const asOf = ev ? replayAsOf(ev) : now.slice(0, 13) + ":00:00";
     factor = rehearsalFactor(moment(b, asOf, T_HELP_MIN).mem);

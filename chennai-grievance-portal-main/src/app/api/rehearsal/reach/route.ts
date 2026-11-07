@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     if (!r) return NextResponse.json({ error: "Not found." }, { status: 404 });
     return NextResponse.json(r, { headers: { "Cache-Control": "private, max-age=60" } });
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     return failed(e, "the reach of help");
   }
 }

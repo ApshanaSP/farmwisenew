@@ -129,10 +129,10 @@ describe("scans-code-4: a link with a saved sign-in that went through the picker
     expect(fs.existsSync(path.join(dir, `${made.id}.auth`))).toBe(false);
     expect(fs.existsSync(path.join(dir, `${made.id}.json`))).toBe(false);
   });
-  it.fails("scans-code-4 no saved sign-in is left after the dataset is deleted", () => {
+  it("scans-code-4 no saved sign-in is left after the dataset is deleted", () => {
     expect(getVault(made.token!)).toBeNull();
   });
-  it.fails("scans-code-4 nothing the picker saved is left after the dataset is deleted", () => {
+  it("scans-code-4 nothing the picker saved is left after the dataset is deleted", () => {
     expect(made.after).toEqual([]);
   });
 });

@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AiBudgetError, AiBusyError, AiUnavailableError } from "@/lib/ai/gateway";
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const gate = checkRateLimit(`map-insight:${s.userId}`, 20, 60);
   if (!gate.allowed) return NextResponse.json({ error: "Too many requests." }, { status: 429 });
-  const body = await req.json().catch(() => null);
+  const { body, tooLarge } = await readJsonCapped(req, 256 * 1024);
+  if (tooLarge) return tooLargeResponse();
   const c = checkPlan(z.object({ plan: z.unknown() }).safeParse(body).data?.plan);
   if (!c.ok) return NextResponse.json({ error: "Nothing to read." }, { status: 400 });
   try {

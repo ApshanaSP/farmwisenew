@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** A before-rain task's photo, for the Collector or an officer of the task's department. */
-export async function GET(_req: NextRequest, { params }: { params: { dir: string; name: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ dir: string; name: string }> }) {
+  const params = await ctx.params;
   const sessions = await getActiveSessions();
   if (!sessions.length) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   if (!DIR_RE.test(params.dir) || !NAME_RE.test(params.name)) return NextResponse.json({ error: "Not found" }, { status: 404 });

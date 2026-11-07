@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const formData = await req.formData();
+  const formData = await req.formData().catch(() => null); // not multipart: a 400, not a 500
+  if (!formData) return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   const file = formData.get("photo") as File | null;
 
   if (!file) {

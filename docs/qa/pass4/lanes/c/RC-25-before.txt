@@ -1,0 +1,18 @@
+   × open findings > SCAN-5 decryption refuses an authentication tag shorter than the 16 bytes encryption writes 34ms
+   × open findings > SCAN-8 production refuses the JWT_SECRET placeholder that .env.example carries 2ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for a tunnel's host 2ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for forwarded for a stranger 1ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for a stranger behind a proxy that appends this PC 1ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for cloudflare's header 1ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for a forwarded host that is not local 1ms
+   × checked and sound: keep it that way > SCAN-4 no code on a dev server for the Forwarded header 2ms
+   × RC-25 class guard: routes that hand out the console's data go through the step-up, and no code is echoed without asking where from > every route that serves a CSV of incidents calls requireConfirm 140ms
+   × RC-25 class guard: routes that hand out the console's data go through the step-up, and no code is echoed without asking where from > every route that echoes a dev code passes the request's headers to devOtpForResponse 93ms
+   × RC-25 class guard: routes that hand out the console's data go through the step-up, and no code is echoed without asking where from > the assistant's CSV link is fetched, so the console's confirm box can answer a 428 (a plain
+   × RC-25 class guard: routes that hand out the console's data go through the step-up, and no code is echoed without asking where from > a secret that is a phrase of words, or says change/replace/your, is not a secret in product
+   × OPEN-2: the dev routes' guard > audit-privacy_injection-8: a plain local request, with the headers Next itself adds, is allowed 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 261 passed (274)
+   × CSV cells (property) > property-5: a cell like -2+3 or -1+cmd|' /C calc'!A0 (starts '-' and a digit, but is a formula) is written as text 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 13 passed (14)

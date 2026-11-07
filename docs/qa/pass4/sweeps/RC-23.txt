@@ -1,0 +1,16 @@
+# sweep RC-23
+## unguarded formData()
+src/app/api/collector/studio/route.ts:69:    try { form = await req.formData(); } catch { return NextResponse.json({ error: "The upload could not be read." }, { status: 4
+src/app/api/complaints/media/route.ts:26:    const v = (await req.formData()).get("media");
+src/app/api/officer/grievances/[id]/report/route.ts:21:  const form = await req.formData().catch(() => null);
+src/app/api/profile/photo/route.ts:18:  const formData = await req.formData();
+src/app/api/rehearsal/dev/route.ts:53:      const form = await req.formData();
+src/app/api/rehearsal/tasks/route.ts:29:  const form = await req.formData().catch(() => null);
+## body read with .catch(() => null) then used
+src/app/api/collector/decisions/route.ts-48-  if (body && typeof body.incidentId === "string" && !body.incidentIds) body.incidentIds = [body.incidentId];
+src/app/api/dev/thunai/tool/route.ts-18-  if (!body?.tool || !/^[a-z_]{2,40}$/.test(body.tool)) return NextResponse.json({ error: "Send { tool, args }." }, { status: 400 
+src/app/api/profile/mobile-otp/request/route.ts-16-  const parsed = mobileSchema.safeParse(body.mobileNumber);
+src/app/api/profile/mobile-otp/verify/route.ts-22-  const mobileParsed = mobileSchema.safeParse(body.mobileNumber);
+src/app/api/profile/mobile-otp/verify/route.ts-23-  const otpParsed = otpSchema.safeParse(body.otp);
+## bare req.json() / request.json() (throws on bad JSON)
+src/app/api/rehearsal/dev/route.ts:59:    const b = await req.json();

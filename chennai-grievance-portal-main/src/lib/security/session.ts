@@ -25,7 +25,7 @@ export async function startSession(u: SignedIn, how: { factor: Factor | null; ip
   const token = await signToken({ userId: u.id, email: u.email, role: u.role, departmentId: u.department_id, tv: u.tv }, staff ? `${staffHours()}h` : undefined);
   const res = NextResponse.json({ message: "Login successful", redirectTo: landing(u.role), role: u.role, ...extra });
   await migrateLegacyCookie(res);
-  setAuthCookie(res, token, portal, staff ? staffHours() * 3600 : undefined);
+  await setAuthCookie(res, token, portal, staff ? staffHours() * 3600 : undefined);
   await securityLog(u.email, "auth:signin", String(u.id), { factor: how.factor ?? "password", ip: how.ip, ua: how.ua?.slice(0, 120) ?? null });
   return res;
 }

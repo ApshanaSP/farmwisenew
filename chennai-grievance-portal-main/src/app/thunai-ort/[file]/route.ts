@@ -14,7 +14,8 @@ const FILES: Record<string, string> = {
   "ort-wasm-simd-threaded.wasm": "application/wasm"
 };
 
-export async function GET(_req: Request, { params }: { params: { file: string } }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ file: string }> }) {
+  const params = await ctx.params;
   const type = Object.hasOwn(FILES, params.file) ? FILES[params.file] : null;
   if (!type) return new NextResponse(null, { status: 404 });
   try {

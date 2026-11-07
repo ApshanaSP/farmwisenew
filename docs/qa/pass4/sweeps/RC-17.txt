@@ -1,0 +1,22 @@
+# sweep RC-17: routes reading a body with no session check
+47
+src/app/api/auth/forgot-password/request-otp/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/li
+src/app/api/auth/forgot-password/request-otp/route.ts:21:    const { body, tooLarge } = await readJsonCapped(r
+src/app/api/auth/forgot-password/reset-password/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@
+src/app/api/auth/forgot-password/reset-password/route.ts:12:    const { body, tooLarge } = await readJsonCappe
+src/app/api/auth/forgot-password/verify-otp/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib
+src/app/api/auth/forgot-password/verify-otp/route.ts:15:    const { body, tooLarge } = await readJsonCapped(re
+src/app/api/auth/login/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/auth/login/route.ts:17:    const { body, tooLarge } = await readJsonCapped(req); // a malformed bo
+src/app/api/auth/register/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/auth/register/route.ts:20:    const { body, tooLarge } = await readJsonCapped(req); // a malformed
+src/app/api/auth/tab/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/auth/tab/route.ts:11:  const { body: raw, tooLarge } = await readJsonCapped(req, 4 * 1024);
+src/app/api/i18n/route.ts:8:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/i18n/route.ts:68:  const { body, tooLarge } = await readJsonCapped(req, 64 * 1024);
+src/app/api/jarvis/say/route.ts:9:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/jarvis/say/route.ts:77:  const capped = await readJsonCapped(req);
+src/app/api/map/ask/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/map/ask/route.ts:38:  const { body, tooLarge } = await readJsonCapped(req);
+src/app/api/map/insight/route.ts:1:import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
+src/app/api/map/insight/route.ts:19:  const { body, tooLarge } = await readJsonCapped(req, 256 * 1024);

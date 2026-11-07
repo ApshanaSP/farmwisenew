@@ -6,6 +6,7 @@
  * AZURE_SPEECH_REGION (ta-IN Pallavi, en-IN Neerja); no such key exists yet, so that branch has never run: Not verified.
  * TTS_PROVIDER: auto (the default, and what the older value "browser" now means), azure or gemini.
  */
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession } from "@/lib/collector/guard";
@@ -73,7 +74,9 @@ export async function POST(req: NextRequest) {
   const az = provider() !== "gemini" && !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION);
   if (!process.env.GEMINI_API_KEY && !az) return NextResponse.json({ error: "no-tts" }, { status: 503 });
   if (!checkRateLimit(`jarvis-say:${s.email}`, 60, 60).allowed) return NextResponse.json({ error: "busy" }, { status: 429 });
-  const b = Body.safeParse(await req.json().catch(() => null));
+  const capped = await readJsonCapped(req);
+  if (capped.tooLarge) return tooLargeResponse();
+  const b = Body.safeParse(capped.body);
   if (!b.success) return NextResponse.json({ error: "Bad request." }, { status: 400 });
   const { text, lang } = b.data;
   const voice = b.data.voice ?? "Despina";

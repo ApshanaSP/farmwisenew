@@ -317,7 +317,7 @@ describe("with a fake model at the boundary (no live model in this phase)", () =
   const generate = (object: unknown) => async <U,>(c: JsonCall<U>): Promise<JsonResult<U>> => ({ object: object as U, info: { step: c.name, provider: "groq", model: "fake", ms: 1, inputTokens: 1, outputTokens: 1 } } as never);
   const withModel = (text: string, object: unknown) => planRound(RoundBody.parse({ turnId: `au-${n++}`, round: 0, text, state: START, turns: [], lastText: null, stage: null, stageDigest: null, direct: null }), world, hands, "audit", { notes: [], habits: {} }, undefined, { llm: { generate: generate(object) as never, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false } });
   for (const s of ["filter Coimbatore police", "Mumbai police", "மும்பை போலீஸ்"])
-    it.fails(`audit-understanding-18 ${s}: code does not let a model put our police filter on for another city's police`, async () => {
+    it(`audit-understanding-18 ${s}: code does not let a model put our police filter on for another city's police`, async () => {
       const r = await withModel(s, { kind: "do", lang: "en", reply: null, steps: [{ a: "view", zone: null, dept: "POL-GCP", cat: null, taluk: null, sev: null }], options: [], screen: null, stage: null, lane: "district" });
       expect(JSON.stringify(r.result?.steps ?? [])).not.toContain("POL-GCP");
     });

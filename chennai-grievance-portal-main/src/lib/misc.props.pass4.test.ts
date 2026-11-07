@@ -25,7 +25,7 @@ describe("CSV cells (property)", () => {
     fc.assert(fc.property(fc.double({ noNaN: true, noDefaultInfinity: true, min: -1e9, max: 1e9 }), (n) => { expect(csvCell(String(n))).toBe(String(n)); }), P);
   });
   // a cell that starts '-' and a digit is passed through as a number even when it is a formula (DDE payload, '-2+3')
-  it.fails("property-5: a cell like -2+3 or -1+cmd|' /C calc'!A0 (starts '-' and a digit, but is a formula) is written as text", () => {
+  it("property-5: a cell like -2+3 or -1+cmd|' /C calc'!A0 (starts '-' and a digit, but is a formula) is written as text", () => {
     fc.assert(fc.property(fc.integer({ min: 0, max: 99 }), fc.constantFrom("+3", "*2", "+cmd|' /C calc'!A0", "-1", "+SUM(A1:A9)"), (a, rest) => {
       const s = `-${a}${rest}`;
       expect(csvCell(s).replace(/^"/, "").startsWith("'"), s).toBe(true);

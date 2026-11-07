@@ -1,0 +1,28 @@
+# sweep RC-20 and RC-21
+## RC-21: every writer of an encrypted or secret file, and its remover
+src/lib/collector/onboard.ts:381:        au?.username || null, au?.secret ? encryptSecret(au.secret) : null, Math.max(60, Math.min(1440, a.refreshMinutes)), act
+src/lib/collector/sources.ts:143:        s.username || null, s.secret ? encryptSecret(s.secret) : null, Math.max(15, Math.min(1440, s.refreshMinutes ?? 60)), ac
+src/lib/collector/sources.ts:272:    [encryptSecret(cookie), s.source_id]);
+src/lib/studio/connect/vault.ts:31:  fs.writeFileSync(tmp, encryptSecret(JSON.stringify(v)), { mode: 0o600 });
+
+## callers of saveVault / dropVault / dropPick / sweepUnkept
+src/lib/studio/connect/vault.ts:28:export function saveVault(id: string, v: Vaulted) {
+src/lib/studio/connect/vault.ts:39:export function dropVault(id: string) { try { fs.rmSync(file(id), { force: true }); } catch { /* gone */ } }
+src/lib/studio/connect/vault.ts:44:  if (v) saveVault(id, { ...v, session, sessionAt: session ? new Date().toISOString() : null });
+src/lib/studio/connectors.ts:109:export function deleteConnector(id: string) { dropVault(id); for (const e of [".json", ".table.json.gz", ".held.json.
+src/lib/studio/pipeline.ts:171:    if (auth.mode !== "none") saveVault(token, { auth, session: c.session, sessionAt: c.session ? new Date().toISOStrin
+src/lib/studio/pipeline.ts:179:    if (auth.mode !== "none") saveVault(id, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString()
+src/lib/studio/pipeline.ts:195:  if (auth.mode !== "none") saveVault(id, { auth, session: c.session, sessionAt: c.session ? new Date().toISOString() :
+src/lib/studio/pipeline.ts:257:  if (vault) saveVault(id, vault);
+src/lib/studio/store.ts:128:export function savePick(id: string, x: SavedPick) { sweepUnkept(); write(p(id, ".pick.json.gz"), zlib.gzipSync(JSON.strin
+src/lib/studio/store.ts:130:export function dropPick(token: string) {
+src/lib/studio/store.ts:139:export function sweepUnkept(maxAgeMs = KEEP_UNKEPT_MS, now = Date.now()): number {
+src/lib/studio/store.ts:160:  try { dropPick(fs.readFileSync(p(id, ".pickof"), "utf8").trim()); } catch { /* not made from a picker */ }
+
+## RC-20: every place the Studio's rules or engine pick a count where a measure was named, or add a window without saying so
+src/lib/studio/ask.ts:12:export function rulesAsk(question: string, spec: Spec, profile: ColumnProfile[], zoneNames: string[]): AskOut {
+src/lib/studio/engine.ts:277:export function answerText(p: PanelData, spec: Spec): string {
+src/lib/studio/pipeline.ts:8:import { rulesAsk } from "@/lib/studio/ask";
+src/lib/studio/pipeline.ts:784:    out = rulesAsk(question, meta.spec, meta.profile, zones);
+src/lib/studio/pipeline.ts:793:  const answer = ta ? answerTa(panel, meta.spec) : answerText(panel, meta.spec);
+src/lib/studio/pipeline.ts:804:function answerTa(p: PanelData, spec: Spec): string {

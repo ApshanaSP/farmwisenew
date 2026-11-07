@@ -1,0 +1,43 @@
+# sweep RC-25
+## callers of devOtpForResponse
+src/app/api/auth/forgot-password/request-otp/route.ts:5:import { createOtp, devOtpForResponse } from "@/lib/otp";
+src/app/api/auth/forgot-password/request-otp/route.ts:51:      const devOtp = devOtpForResponse(result.otp, req.headers);
+src/app/api/profile/mobile-otp/request/route.ts:5:import { createOtp, devOtpForResponse } from "@/lib/otp";
+src/app/api/profile/mobile-otp/request/route.ts:37:  const devOtp = devOtpForResponse(result.otp, req.headers);
+src/lib/otp.ts:242:export function devOtpForResponse(otp: string, headers: { get(name: string): string | null }): string | undefined {
+## routes with csvCell and whether requireConfirm
+src/app/api/collector/assistant/export/route.ts: 2
+src/app/api/collector/export/route.ts: 2
+src/app/api/collector/studio/[id]/route.ts: 2
+## createDecipheriv
+src/lib/crypto.ts:25:  const decipher = crypto.createDecipheriv("aes-256-gcm", KEY(), iv, { authTagLength: 16 });
+## strongSecret callers
+src/lib/crypto.ts:8:const KEY = () => (key ??= crypto.createHash("sha256").update(encryptionSecret()).digest()); // 32 bytes
+src/lib/jwt.ts:12:const secretKey = () => (key ??= new TextEncoder().encode(jwtSecret()));
+src/lib/secrets.ts:28:export function strongSecret(name: string, value: string | undefined, devFallback: string): string {
+src/lib/secrets.ts:36:export function jwtSecret(): string {
+src/lib/secrets.ts:37:  return strongSecret("JWT_SECRET", process.env.JWT_SECRET, "dev_only_insecure_secret_change_me");
+src/lib/secrets.ts:44:export function encryptionSecret(): string {
+src/lib/secrets.ts:46:  if (own && own.trim()) return strongSecret("AADHAAR_ENCRYPTION_KEY", own, "dev_only_key");
+src/lib/secrets.ts:47:  return strongSecret("JWT_SECRET (used as AADHAAR_ENCRYPTION_KEY)", process.env.JWT_SECRET, "dev_only_key");
+src/lib/secrets.ts:52:  jwtSecret();
+src/lib/secrets.ts:53:  encryptionSecret();
+src/lib/security/stamp.ts:19:const K = () => (key ??= crypto.createHash("sha256").update(`district-iq email|${jwtSecret()}`).digest());
+src/lib/security/tickets.ts:13:const ticketKey = () => (key ??= new Uint8Array(crypto.createHash("sha256").update(`district-iq ticket|${jwtSecret()}`)
+## localOnly callers
+src/app/api/dev/thunai/agent/round/route.ts:15:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 40
+src/app/api/dev/thunai/agent/route.ts:13:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
+src/app/api/dev/thunai/draft/route.ts:11:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
+src/app/api/dev/thunai/hear/route.ts:13:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
+src/app/api/dev/thunai/plan/route.ts:14:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
+src/app/api/dev/thunai/tool/route.ts:16:  if (!localOnly(req.headers)) return new NextResponse(null, { status: 404 });
+src/lib/otp.ts:246:  if (!localOnly(headers)) return undefined;
+src/lib/thunai/devguard.ts:22:export function localOnly(headers: { get(name: string): string | null }): boolean {
+## csvCell users (client or server)
+src/app/api/collector/assistant/export/route.ts
+src/app/api/collector/export/route.ts
+src/app/api/collector/studio/[id]/route.ts
+src/components/collector/app/assistant/Figure.tsx
+src/lib/csv.ts
+src/lib/map/ask.ts
+src/lib/thunai/stagelocal.ts

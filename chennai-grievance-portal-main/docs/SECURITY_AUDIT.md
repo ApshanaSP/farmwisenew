@@ -19,6 +19,15 @@ The direct `postcss` is 8.5.28, which is not affected.
 plain `<img>`), so the Image Optimization API is switched off. Two critical advisories and three image DoS advisories
 live in that API.
 
+> **Update 7 Nov 2026 (QA pass 4, RC-22):** the site now runs on **Next 15.5.29 with React 19**. That closes the critical Windows
+> remote code execution advisory (GHSA-p293-qw3h-jr36, fixed in 15.5.24), the App Router DoS advisories and the WebSocket upgrade
+> advisory. Next 14 has no patched release. `npm audit --omit=dev` is down from one critical to two high and one moderate: the
+> bundled `postcss` (build time only) and zod 3 (see the table at the end). Everything below that says "Next 14" is the state
+> before this update and is kept for the record.
+> **The WebSocket row below was wrong:** "No: no WebSocket server" is not true. Next's own server handles an upgrade request
+> whatever the app does: a raw upgrade request with an absolute address made the built server run its proxy code and try port 80
+> on this PC (QA pass 4, SCAN-3). Whether this reaches the site through a public tunnel was not tested. The same upgrade closes it.
+
 Everything left needs a **major upgrade**, and that is the owner's decision: Next 14 → 16, zod 3 → 4, vitest 3 → 5.
 
 ## Act first: Windows remote code execution
@@ -45,7 +54,7 @@ upgrade below closes the advisory properly.
 | Middleware bypass in Pages Router with i18n (GHSA-36qx-fr4f-26g5) | No: App Router, no i18n | None needed |
 | Middleware redirect cache poisoning, RSC cache poisoning / confusion (GHSA-3g8h-86w9-wvmq, GHSA-vfv6-92ff-j949, GHSA-wfc6-r584-vfw7, GHSA-68g3-v927-f742, GHSA-4633-3j49-mh5q) | Low: needs a shared cache or CDN in front, and there is none | None now; re-check before putting a CDN in front |
 | XSS with CSP nonces (GHSA-ffhc-5mcf-pf4q), XSS in `beforeInteractive` scripts (GHSA-gx5p-jg67-6x7h) | No: no nonces, no `beforeInteractive` | None needed |
-| SSRF with WebSocket upgrades (GHSA-c4j6-fc7j-m34r) | No: no WebSocket server (dev hot reload only) | None needed |
+| SSRF with WebSocket upgrades (GHSA-c4j6-fc7j-m34r) | **Yes** (corrected 7 Nov: the built-in server handles upgrade requests whatever the app does; QA pass 4 SCAN-3 saw it try port 80 on this PC) | The Next 15.5 upgrade closes it. Keep the site off a public tunnel until it is deployed |
 
 **Upgrade path:** `next@16` with `eslint-config-next@16` (React 19 is required). It is a major upgrade: the App Router
 caching defaults, `next.config` keys (`experimental.serverComponentsExternalPackages` → `serverExternalPackages`,

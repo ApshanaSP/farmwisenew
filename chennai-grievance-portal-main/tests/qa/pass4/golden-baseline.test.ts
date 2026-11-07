@@ -43,7 +43,7 @@ describe("golden-master baseline findings, on a real server", () => {
     expect((await get(`/api/collector/search?q=${encodeURIComponent("மழை")}`)).status).toBe(200);
   });
   // these leave no piece at all: every one answers 500
-  it.fails.each(["குப்பை", "சாலை", "புகார்", "குடிநீர்", "தீ", "நோய்", "கொசு", "பேருந்து"])("GB-1: the console's search box answers the Tamil word %s", async (word) => {
+  it.each(["குப்பை", "சாலை", "புகார்", "குடிநீர்", "தீ", "நோய்", "கொசு", "பேருந்து"])("GB-1: the console's search box answers the Tamil word %s", async (word) => {
     expect((await get(`/api/collector/search?q=${encodeURIComponent(word)}`)).status).toBe(200);
   });
 
@@ -51,11 +51,11 @@ describe("golden-master baseline findings, on a real server", () => {
     const rains = (await (await get("/api/rehearsal/rains")).json()) as { rains: { id: string }[] };
     expect((await get(`/api/rehearsal/state?replay=${rains.rains[0].id}`)).status).toBe(200);
   });
-  it.fails("GB-2: a rain that is not in the record is 'not found', not 'service unavailable'", async () => {
+  it("GB-2: a rain that is not in the record is 'not found', not 'service unavailable'", async () => {
     expect((await get("/api/rehearsal/state?replay=rain-1999-01-01")).status).toBe(404);
   });
 
-  it.fails("GB-3: a workspace saved on this server can be opened by the id the save gave it", async () => {
+  it("GB-3: a workspace saved on this server can be opened by the id the save gave it", async () => {
     const saved = await fetch(`${BASE}/api/collector/workspaces`, { method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ name: "GB-3 test", filters: { period: "weekly" }, layout: { panels: {} } }) });
     expect(saved.status).toBeLessThan(300);
     const list = (await (await get("/api/collector/workspaces")).json()) as { workspaces: { name: string; versions: { id: number }[] }[] };

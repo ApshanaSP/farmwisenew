@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   const tv = await revokeSessions(s.userId);
   const portal = roleToPortal(s.role)!;
   const res = NextResponse.json({ ok: true });
-  setAuthCookie(res, await signToken({ userId: s.userId, email: s.email, role: s.role, departmentId: s.departmentId, tv }, `${staffHours()}h`), portal, staffHours() * 3600);
+  await setAuthCookie(res, await signToken({ userId: s.userId, email: s.email, role: s.role, departmentId: s.departmentId, tv }, `${staffHours()}h`), portal, staffHours() * 3600);
   await securityLog(s.email, "auth:signout_others", String(s.userId), { ip });
   return res;
 }

@@ -11,7 +11,9 @@
  * No imports with side effects: the model call and the data hands are injected (agent.test.ts uses fakes).
  */
 import { redactText } from "./privacy";
-import { echoesRecords, recordText, stepsAskedFor } from "./injection";
+import { recordText, stepsAskedFor } from "./injection";
+import { lineProblem, safeOptions, turnRecords } from "./exitgate";
+import { resolveEntity } from "./entities";
 import { z } from "zod";
 import { observe } from "@/lib/assistant/agent";
 import type { Fact, ToolResult } from "@/lib/assistant/types";
@@ -437,19 +439,30 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   const v1 = checkPlan({ kind: plan.kind, lang: plan.lang, reply: plan.reply, steps: plan.steps ?? [], options: plan.options ?? [] } as AiPlan, w, input.text, input.state.now);
   // a line that repeats the records' own wording is an instruction hidden in the data speaking, not Jarvis (BUG-011)
   // and the screen counts: with no tool run this turn, it is the only record the model has read (BUG-034)
-  const records = [...recordText(run.results), ...(input.screen ?? []), ...(input.stage?.title ? [input.stage.title] : [])];
-  // and a model's own line that would carry a citizen's number or email (even spelled out, "ramesh at gmail dot com") is not said (OPEN-1)
-  const leaks = (s: string | null | undefined) => !!s && redactText(s) !== s;
-  if (v1.kind === "chat") return spellsNumber(v1.reply) || echoesRecords(v1.reply, records) || leaks(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: spellsNumber(v1.reply) || leaks(v1.reply) || echoesRecords(v1.reply, records) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
-  if (v1.kind === "clarify") return { ...base, kind: "clarify", reply: spellsNumber(v1.question) || leaks(v1.question) || echoesRecords(v1.question, records) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options: v1.options, ms: run.clock() - run.t0 };
+  const records = [...recordText(run.results), ...(input.screen ?? []), ...(input.stage?.title ? [input.stage.title] : []), ...turnRecords(input.ctx?.turns)];
+  // the one exit gate (exitgate.ts): every line the model wrote, of every kind, is asked the same question before it is said
+  const bad = (s: string | null | undefined, refusal = false) => !!s && (spellsNumber(s) || !!lineProblem(s, { records, refusal }));
+  if (v1.kind === "chat") return bad(v1.reply) ? { ...base, note: "checker", ms: run.clock() - run.t0 } : { ...base, kind: "chat", reply: v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "refuse") return { ...base, kind: "refuse", reply: bad(v1.reply, true) ? (lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.") : v1.reply, ms: run.clock() - run.t0 };
+  if (v1.kind === "clarify") {
+    // each button is a line too: one that fails is dropped, and a question with fewer than two choices left is not asked
+    const options = safeOptions(v1.options, { records });
+    if (options.length < 2) return { ...base, note: "checker", ms: run.clock() - run.t0 };
+    return { ...base, kind: "clarify", reply: bad(v1.question) ? (lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : v1.question, options, ms: run.clock() - run.t0 };
+  }
   if (plan.kind === "refuse" || plan.kind === "chat") return { ...base, kind: "none", ms: run.clock() - run.t0, note: "checker" };
   // 2: the model never presses a sending, approving or deleting button by name, and presses by name only when asked to click
   const pressOk = /\b(click|press|tap)\b|அழுத்து|கிளிக்/i.test(input.text);
   // 3: steps beyond showing data (typing, the voice mode, theme, language, memory, drafts, presses) only when the Collector's own words asked
   let modelSteps = stepsAskedFor((v1.kind === "do" ? v1.steps : []).filter((s) => s.a !== "click" || (s.n != null ? pressOk || !!input.state.numbers : pressOk && !DANGER.test(s.name ?? ""))), input.text);
-  const reply = v1.kind === "do" && !spellsNumber(v1.reply) && !echoesRecords(v1.reply, records) ? v1.reply : null;
+  const reply = v1.kind === "do" && !bad(v1.reply) ? v1.reply : null;
   let screen = checkScreen(plan.screen, w, input.stage);
+  // a body of another city ("Mumbai police", "Coimbatore corporation") is not ours: whatever the model made of it, our department filter is not put on
+  const another = (() => { const r = resolveEntity(input.text, w); return r.kind === "unknown" && r.outside; })();
+  if (another) {
+    modelSteps = modelSteps.map((s) => (s.a === "view" && s.view.dept ? { ...s, view: { ...s.view, dept: null } } : s));
+    if (screen) screen = { ...screen, slots: { ...screen.slots, dept: null, depts: [] } };
+  }
   if (screen) screen = { ...screen, slots: dropCopiedFilters(screen.slots, input, w) };
   // an answer screen with nothing looked up has nothing to show: the plan's other parts (or the fallbacks) answer
   if (screen?.recipe === "answer" && !run.results.length) screen = null;
@@ -490,7 +503,7 @@ export async function finish(plan: AgentPlan, input: AgentInput, d: AgentDeps, r
   }
   const scope0 = scopeAfter(input.state, modelSteps);
   let stage: StageDocT;
-  if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang, input.screen);
+  if (screen.recipe === "answer") stage = answerScreen(plan, input.text, run.results, scope0, lang, [...(input.screen ?? []), ...(input.stage?.title ? [input.stage.title] : []), ...turnRecords(input.ctx?.turns)]);
   else {
     try {
       stage = (await within(buildScreen(screen.recipe, screen.slots, scope0, w, d.hands, input.text), Math.max(2500, run.until - run.clock() + 2000), "the data took too long")).doc;
@@ -515,7 +528,7 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   const said = clip(plan.say, 600);
   // the Collector's own numbers are not evidence: an answer's figures must all come from the results; and an answer that repeats
   // a record's wording is that record speaking (an instruction hidden in a title), so the facts are shown instead (BUG-011)
-  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !echoesRecords(said, [...recordText(results), ...screen]);
+  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !lineProblem(said, { records: [...recordText(results), ...screen] });
   const top = facts.slice(0, 8).map((f) => ({ ...f, label: safeText(f.label, 160) }));
   const fallback = top.length ? top.slice(0, 2).map((f) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(". ") + "." : "";
   const text = ok ? said : fallback || (lang === "ta" ? "இதற்கான தரவு கிடைக்கவில்லை." : "The data has nothing on this.");

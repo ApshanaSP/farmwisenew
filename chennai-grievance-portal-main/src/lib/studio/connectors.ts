@@ -23,6 +23,7 @@ import path from "path";
 import zlib from "zlib";
 import { fileLinksIn, schemaHash } from "@/lib/studio/connect/discover";
 import { dateIn } from "@/lib/studio/connect/series";
+import { dropVault } from "@/lib/studio/connect/vault";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
 import { parseFileAsync, type Cell, type Table } from "@/lib/studio/parse";
 import { editDistance, normKey, parseDate, parseNum } from "@/lib/studio/values";
@@ -105,7 +106,7 @@ export function saveConnector(c: Connector) { write(file(c.id, ".json"), JSON.st
 export function listConnectors(): Connector[] {
   try { return fs.readdirSync(DIR()).filter((f) => /^ds_[a-z0-9]+\.json$/.test(f)).map((f) => getConnector(f.slice(0, -5))).filter((c): c is Connector => !!c); } catch { return []; }
 }
-export function deleteConnector(id: string) { for (const e of [".json", ".table.json.gz", ".held.json.gz"]) fs.rmSync(file(id, e), { force: true }); }
+export function deleteConnector(id: string) { dropVault(id); for (const e of [".json", ".table.json.gz", ".held.json.gz"]) fs.rmSync(file(id, e), { force: true }); }
 /** The connector's own table (all it has gathered: the appended rows, the snapshots). */
 export function getTable(id: string): Table | null { try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(file(id, ".table.json.gz"))).toString("utf8")); } catch { return null; } }
 function saveTable(id: string, t: Table) { write(file(id, ".table.json.gz"), zlib.gzipSync(JSON.stringify(t))); }

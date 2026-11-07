@@ -19,7 +19,7 @@ import { placeRows } from "@/lib/studio/place";
 import { profileTable } from "@/lib/studio/profile";
 import { refs as loadRefs, type Refs } from "@/lib/studio/refs";
 import { mergeSpec, respec, rulesSpec } from "@/lib/studio/spec";
-import { dropPending, findBySource, getCandidates, getMeta, getPending, getPick, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, savePick, saveSource } from "@/lib/studio/store";
+import { dropPending, findBySource, notePickOf, getCandidates, getMeta, getPending, getPick, getRows, getSource, listDatasets, newId, saveCandidates, saveDataset, saveMeta, savePending, savePick, saveSource } from "@/lib/studio/store";
 import { type Connected } from "@/lib/studio/connect";
 import { choose, safeDecode, schemaHash, tableHash, type Found } from "@/lib/studio/connect/discover";
 import { OutcomeStop, duplicateOutcome, findDuplicate, readLink, resolveLink } from "@/lib/studio/connect/resolve";
@@ -255,6 +255,7 @@ export async function ingestPick(token: string, choice: PickChoice, user: string
   const id = newId();
   saveCandidates(id, saved.found.some((f) => f.cand.id === chosen.cand.id) ? saved.found : [chosen, ...saved.found]);
   if (vault) saveVault(id, vault);
+  notePickOf(id, token);
   const info = connectInfo(page, chosen, auth, every);
   info.history = [{ at: info.fetchedAt, ok: true, rows: chosen.table.rows.length, changed: true, note: `Chosen in the picker · ${chosen.cand.label}` }];
   const card = saved.pick.cards.find((x) => x.id === picked[0].cand.id);
@@ -801,6 +802,10 @@ export async function ask(id: string, question: string, user: string, context?: 
 
 /** The answer in Tamil: the computed figure and the leader, in Tamil words. */
 function answerTa(p: PanelData, spec: Spec): string {
+  const t = answerTaCore(p, spec);
+  return p.plan.filters.some((x) => x.op === "latest") && p.rows ? `${t} சமீபத்திய காலம் மட்டும்.` : t;
+}
+function answerTaCore(p: PanelData, spec: Spec): string {
   const f = (v: number) => fmtNum(v, p.format, p.unit);
   if (p.kpi) return `${p.title}: ${f(p.kpi.value)} (${p.rows.toLocaleString("en-IN")} வரிசைகளிலிருந்து கணக்கிடப்பட்டது).`;
   if (!p.values.length) return "இந்தக் கேள்விக்குப் பொருந்தும் வரிசைகள் இல்லை.";

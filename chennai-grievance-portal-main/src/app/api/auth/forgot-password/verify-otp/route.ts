@@ -1,3 +1,4 @@
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 import { NextRequest, NextResponse } from "next/server";
 import { forgotPasswordVerifySchema } from "@/lib/validators";
 import { verifyOtp } from "@/lib/otp";
@@ -11,7 +12,8 @@ const OTP_ERROR_MESSAGES: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
+    const { body, tooLarge } = await readJsonCapped(req); // a malformed body is a 400 from the schema, not a 500; a huge one is a 413
+    if (tooLarge) return tooLargeResponse();
     const parsed = forgotPasswordVerifySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
