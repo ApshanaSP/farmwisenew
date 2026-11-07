@@ -375,6 +375,8 @@ describe("new, found on the way", () => {
   it.each(["severe cases yesterday", "நேற்று கடுமையான சம்பவங்கள்", "nethu severe cases"])("AUD-NF-12 Jarvis, %s: not today's list", async (text) => {
     const r = (await said(text)).result!;
     expect(r.stage?.title ?? "").not.toMatch(/today|இன்று/);
+    // handed on to the planner (kind none, no screen, no steps): the words that say the window is missing are the planner's, which no model answers here (review point 4)
+    expect([r.kind, r.stage, r.steps.length]).toEqual(["none", null, 0]);
   });
   it.fails("AUD-NF-13 a sewage case held by the drains team: the step names who holds it", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.category_code = 'DRAINAGE_SEWAGE' AND i.lead_dept = 'GCC-SWD' ORDER BY i.first_reported_at DESC LIMIT 1`);

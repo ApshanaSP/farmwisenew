@@ -15,22 +15,22 @@ async function ask(text: string) {
 }
 
 describe("lane a skeptic", () => {
-  it.fails("SK-1 overdue cases in one zone: the overdue filter is read from one page, so a zone with 3 overdue severe cases says none", async () => {
+  it("SK-1 overdue cases in one zone: the overdue filter is read from one page, so a zone with 3 overdue severe cases says none", async () => {
     const sev = await ask("overdue severe cases in Tondiarpet");
     expect(sev.said).toMatch(/3 are past their deadline/);
     const all = await ask("overdue cases in Tondiarpet");
     expect(all.said).not.toMatch(/no cases/i);
   }, 120_000);
-  it.fails("SK-2 'overdue cases this week' with no zone says there are none while Manali alone has 4", async () => {
+  it("SK-2 'overdue cases this week' with no zone says there are none while Manali alone has 4", async () => {
     expect((await ask("overdue cases this week")).said).not.toMatch(/no cases/i);
   }, 120_000);
-  it.fails("SK-3 'resolved cases' / 'closed cases' is answered with all cases, the status word is dropped", async () => {
+  it("SK-3 'resolved cases' / 'closed cases' is answered with all cases, the status word is dropped", async () => {
     for (const t of ["resolved cases this week", "closed cases in Adyar"]) {
       const r = await ask(t);
       expect(r.lane === "quick" && r.recipe === "cases" && !r.slots.status, t).toBe(false);
     }
   }, 120_000);
-  it.fails("SK-4 Tamil 'unresolved complaints' drops the status and says nothing is missing from the rows (recipe complete)", async () => {
+  it("SK-4 Tamil 'unresolved complaints' drops the status and says nothing is missing from the rows (recipe complete)", async () => {
     for (const t of ["தீர்க்கப்படாத புகார்கள்", "தீர்க்கப்படாத புகார்கள் அடையாறில்"]) {
       const r = await ask(t);
       expect(r.recipe === "complete" && !r.slots.status, t).toBe(false);

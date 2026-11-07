@@ -115,8 +115,10 @@ export function catIn(t: string): string | null {
  */
 const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|breach|exceeded|exceeding|violated)( the| their| its| a)? (deadline|due date|sla|time limit)\b|\bdeadline (passed|crossed|missed|miss|over|exceeded|breached|mudinj[a-z]*|thaand[a-z]*|thand[a-z]*)\b|\bnot (resolved|closed|done|attended|fixed) (in|on|within) time\b|\blate (cases|complaints|ones|severe)\b|\b(thaamadham|thamadham|thaamathamaana)\b|தாமத|கெடு (தாண்ட|முடிந்த|மீறி|கடந்த)|காலக்கெடு|கெடுவை/;
 const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
-export function statusIn(t: string): "overdue" | "open" | null {
-  return OVERDUE_RE.test(t) ? "overdue" : OPEN_RE.test(t) ? "open" : null;
+/** finished cases: "resolved", "closed", "solved" (English), the Tamil and Tanglish words; a lane that dropped this word answered with every case (SK-3) */
+const RESOLVED_RE = /\b(resolved|closed|solved|completed|settled|rectified|mudinjadhu|mudinja|theerthu vecha|theerthaachu)\b|தீர்க்கப்பட்ட|தீர்க்கப்பட்டவை|முடிக்கப்பட்ட|முடிந்த|தீர்வான|மூடப்பட்ட/;
+export function statusIn(t: string): "overdue" | "open" | "resolved" | null {
+  return OVERDUE_RE.test(t) ? "overdue" : OPEN_RE.test(t) ? "open" : RESOLVED_RE.test(t) ? "resolved" : null;
 }
 /** the department a sentence names, by its own words in any language: a filter the lane cannot apply must not be dropped (RC-05) */
 export function deptWordIn(t: string): string | null {
@@ -170,7 +172,7 @@ const COMPARE = ["compare", "comparison", "versus", "vs", "side by side", "stack
   // English as it is said in Tamil, in either script
   "கம்பேர்", "கம்பேரிசன்", "கம்பேரு", "கம்பார்", "compare pannu", "compare panni", "vithiyasam", "வித்தியாசம் சொல்லு"];
 const INSIGHT = ["stand out", "stands out", "standing out", "outlier", "outliers", "anomaly", "anomalies", "unusual", "abnormal", "spike", "spikes", "odd one", "out of line", "red flag", "red flags", "தனித்து", "அசாதாரண", "வித்தியாசம்", "வித்தியாசமா", "unusual a", "weird"];
-const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill what", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved location", "unresolved locations", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
+const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill what", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved location", "unresolved locations", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத இடம்", "தீர்க்கப்படாத இடங்கள்", "இடம் தெரியாத"];
 const PERFORMANCE = ["performance", "department wise", "department-wise", "departmentwise", "zone wise", "zone-wise", "zonewise", "slowest department", "fastest department", "slowest", "turnaround", "செயல்பாடு", "துறைவாரி", "மண்டலவாரி", "performance eppadi"];
 const RANK = ["top", "worst", "highest", "lowest", "most", "least", "best", "rank", "ranking", "அதிகம்", "அதிக", "குறைவு", "மோசமான", "romba"];
 const TREND = ["trend", "trends", "over time", "how has", "moved", "movement", "graph", "போக்கு", "ட்ரெண்ட்", "trend enna"];
@@ -308,7 +310,8 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
   if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
+  // "open" is a command ("open the map") unless it says which cases ("open cases in Adyar"): that is a filter, never a bail (SK-6)
+  if (!o.noBail && (/ open (?!(cases?|complaints?|incidents?|issues?|problems?|ones)\b)/.test(t) || has(t, ["same", "also", "only", "instead", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"]))) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
