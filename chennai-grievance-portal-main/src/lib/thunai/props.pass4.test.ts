@@ -15,7 +15,7 @@ const ctxA = fc.constantFrom("call ", "my number is ", "", "contact: ", "எண�
 const ctxB = fc.constantFrom(" please", "", " thanks.", " அவசரம்");
 const mobile = fc.tuple(fc.integer({ min: 6, max: 9 }), digits(9)).map(([a, r]) => `${a}${r}`);
 // split a digit string into groups of the given sizes joined by (possibly different) separators
-const grouped = (d: string, sizes: number[], seps: string[]) => {
+const grouped = (d: string, sizes: readonly number[], seps: string[]) => {
   let i = 0, out = "";
   sizes.forEach((s, k) => { out += (k ? seps[k - 1] : "") + d.slice(i, i + s); i += s; });
   return out;

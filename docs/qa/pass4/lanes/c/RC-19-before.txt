@@ -1,0 +1,30 @@
+   × the v1 /plan route, the same class as BUG-009 > audit-privacy_injection-3: /plan refuses a citizen's details in code, before any model 11ms
+   × the v1 /plan route, the same class as BUG-009 > audit-privacy_injection-3: /plan does not say a model's line that spells a contact 4ms
+   × the v1 /plan route, the same class as BUG-009 > audit-privacy_injection-3: /plan drops steps the Collector did not ask for 5ms
+   × BUG-011: an instruction in a record > audit-privacy_injection-5: type stays dropped when the sentence only happens to hold the word: what type of complaints are in Adyar 2ms
+   × BUG-011: an instruction in a record > audit-privacy_injection-5: theme stays dropped when the sentence only happens to hold the word: street light complaints in Adyar 1ms
+   × BUG-011: an instruction in a record > audit-privacy_injection-5: lang stays dropped when the sentence only happens to hold the word: Tamil Nadu pollution board complaints 1ms
+   × BUG-011: an instruction in a record > audit-privacy_injection-5: mode stays dropped when the sentence only happens to hold the word: why did the officer not talk to residents 1ms
+   × BUG-011: an instruction in a record > audit-privacy_injection-5: forget stays dropped when the sentence only happens to hold the word: மறைமலை நகர் புகார்கள் 1ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a line of kind general, copied from the screen, is not said 7ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a clarify button, copied from the screen, is not shown 8ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a line copied from a recent turn is not said 7ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a English instruction under six words, copied from the screen, is not said 7ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a Tamil instruction under six words, copied from the screen, is not said 6ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: a Tanglish instruction under six words, copied from the screen, is not said 8ms
+   × BUG-034: a model's line copied from what it read > audit-privacy_injection-6: the record's instruction said in Tamil is not said 7ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: a do line that spells a contact is not said 6ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: an answer line that spells a contact is not said 6ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: a general line that spells a contact is not said 4ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: a clarify button that spells a contact is not shown 6ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: a chat line that names a citizen is not said 5ms
+   × OPEN-1: a model's line that spells a contact > audit-privacy_injection-7: a chat line that Tanglish, a name is not said 7ms
+   × the refusals' other gaps > audit-privacy_injection-12: a private ask sent as round 1 of a turn is still refused 3ms
+   × BUG-011 and BUG-034: a real record's words, copied by the fake model > audit-privacy_injection-6: a line of kind general copied from the real screen is not said 14ms
+   × BUG-011 and BUG-034: a real record's words, copied by the fake model > audit-privacy_injection-6: a clarify button copied from the real screen is not shown 8ms
+   × BUG-011 and BUG-034: a real record's words, copied by the fake model > audit-privacy_injection-6: a Tamil instruction copied from the real screen is not said 15ms
+   × with a fake model at the boundary (no live model in this phase) > audit-understanding-18 filter Coimbatore police: code does not let a model put our police filter on for another city's police 8ms
+   × with a fake model at the boundary (no live model in this phase) > audit-understanding-18 Mumbai police: code does not let a model put our police filter on for another city's police 5ms
+   × with a fake model at the boundary (no live model in this phase) > audit-understanding-18 மும்பை போலீஸ்: code does not let a model put our police filter on for another city's police 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  28 failed | 593 passed (621)

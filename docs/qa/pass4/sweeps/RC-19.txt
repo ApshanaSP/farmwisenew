@@ -1,0 +1,25 @@
+# sweep RC-19: every place a model's line can reach the Collector, and whether the exit gate (exitgate.ts lineProblem/safeOptions) stands in front
+## model callers in thunai and its routes
+src/lib/thunai/agentServer.ts:79:      const ask = (prefer: "groq" | "bedrock" | "gemini", signal: AbortSignal) => generateJson({
+src/lib/thunai/brain.ts:48:    const r = await generateJson({
+src/lib/thunai/round.ts:319:      const r = await timed(lang === "ta" ? "புரிந்துகொள்கிறேன்" : "Working out what was asked", () => cal
+src/lib/thunai/round.ts:325:      const r = await timed(lang === "ta" ? "பொது அறிவு" : "General knowledge", () => callLlm({ name: "jarvis_general", syst
+src/lib/thunai/round.ts:378:  const ask = (s: string, sch: typeof schema) => timed(lang === "ta" ? "யோசிக்கிறேன்" : "Thinking", () => callLlm({ na
+
+## who uses the gate
+src/lib/thunai/agent.ts:15:import { lineProblem, safeOptions, turnRecords } from "./exitgate";
+src/lib/thunai/agent.ts:444:  const bad = (s: string | null | undefined, refusal = false) => !!s && (spellsNumber(s) || !!lineProblem(s, { records, re
+src/lib/thunai/agent.ts:449:    const options = safeOptions(v1.options, { records });
+src/lib/thunai/agent.ts:531:  const ok = said && figuresOk(zoneLabelsOut(said, zonesNamed(results)), allowed) && !spellsNumber(said) && !lineProblem(s
+src/lib/thunai/brain.ts:12:import { lineProblem, safeOptions, turnRecords } from "./exitgate";
+src/lib/thunai/brain.ts:23:  const bad = (s: string | null | undefined, refusal = false) => !!s && !!lineProblem(s, { records, refusal });
+src/lib/thunai/brain.ts:28:      const options = safeOptions(plan.options, { records });
+src/lib/thunai/round.ts:21:import { lineProblem, turnRecords } from "./exitgate";
+
+## older routes that call think/handleAgent/planRound
+src/app/api/collector/thunai/agent/round/route.ts
+src/app/api/collector/thunai/agent/route.ts
+src/app/api/collector/thunai/plan/route.ts
+src/app/api/dev/thunai/agent/round/route.ts
+src/app/api/dev/thunai/agent/route.ts
+src/app/api/dev/thunai/plan/route.ts

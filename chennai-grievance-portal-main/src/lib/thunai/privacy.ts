@@ -16,7 +16,7 @@ const PERSON = /(citizen(?!s?\s+complaints?)|complainants?|complainer|petitioner
 const IDENTIFIER = /(\bcontact\b|\bwhatsapp\b|\bresidence\b|\b(?:lives?|living|stays?|staying|resides?)\b|\b(?:dial|ring|reach)\b|\bcall\b|e-?mail|பேரு|பேர்|பெயர்|மின்னஞ்சல்|மெயில்|வசி|வீடு|எங்கே|யார்|யாரு|\bveedu\b|\byaaru?\b|phone|mobile|contact\s*(?:number|no|details)|whatsapp\s*number|number\s+of|\bnumber\b|\bdetails\b|\baddress\b|aadhaar|aadhar|aadar|voter\s*id|home\s*address|house\s*address|residential\s*address|e-?mail\s*(?:id|address|of)|\b(?:their|his|her)\s+e-?mail|personal\s*details|personal\s*info|தொலைபேசி|போன்\s*நம்பர்|நம்பர்|மொபைல்|கைபேசி|ஆதார்|வீட்டு\s*முகவரி|முகவரி|(?:^|\s)எண்(?=$|\s)|phone\s*number|number\s*kudu|number\s*sollu)/i;
 const THEIR_WORDS = /((?:read|show|tell|give|what\s+did|what\s+exactly).{0,40}(?:complaint\s*text|what\s+(?:they|he|she)\s+(?:said|wrote)|exact\s+words|their\s+words|original\s+complaint|(?:what|words|written|said|wrote|says?).{0,15}in\s+the\s+(?:original\s+)?complaint|word\s+for\s+word|citizen(?:'s|s')\s+(?:complaint|message|words)\b|citizens?\s+(?:message|words))|\bread\b.{0,40}citizen'?s?'?\s+complaints?|what\s+did\s+the\s+citizen|(?:they|he|she)\s+say\s+in\s+the\s+complaint|புகாரில்\s*என்ன\s*(?:எழுதி|சொல்லி)|complaint\s*la\s*enna\s*(?:ezhudhi|sonna))/i;
 /** what someone said or wrote: asked about a filer (a person word, a pronoun) or about "the complaint" */
-const SAID_WRITE = /\b(?:what|exactly\s+what|read|tell|show)\b.{0,45}\b(?:he|she|they|it|citizens?|residents?|persons?|people|complainants?|callers?|reporters?)\b.{0,25}\b(?:wrote|written|write|said|says?|saying)\b|\b(?:he|she|they|citizens?|residents?|persons?|complainants?|callers?)\b.{0,20}\b(?:wrote|written|said)\b.{0,25}\b(?:complaint|petition|message)|(?:அவர்|அவங்க|அவள்|அவன்)\S*.{0,25}(?:சொன்ன|எழுதி|எழுதின)|(?:pugar|complaint)\s*la\s*enna\s*(?:ezhudhi|ezhuthi|sonna)/i;
+const SAID_WRITE = /\b(?:what|exactly\s+what|read|tell|show)\b.{0,45}\b(?:he|she|they|citizens?|residents?|persons?|people|complainants?|callers?|reporters?)\b.{0,25}\b(?:wrote|written|write|said|says?|saying)\b|\b(?:he|she|they|citizens?|residents?|persons?|complainants?|callers?)\b.{0,20}\b(?:wrote|written|said)\b.{0,25}\b(?:complaint|petition|message)|(?:அவர்|அவங்க|அவள்|அவன்)\S*.{0,25}(?:சொன்ன|எழுதி|எழுதின)|(?:pugar|complaint)\s*la\s*enna\s*(?:ezhudhi|ezhuthi|sonna)/i;
 /** he, she, they, their, avanga, அவங்க: a pronoun for whoever filed, with an ask for their details */
 const FILER_POSS = /\b(?:that|the)\s+(?:girl|boy|woman|man|lady|child|kid|victim|survivor)(?:'s)?\b|அந்த\s*(?:பொண்ணு|பெண்|பையன்|குழந்தை|ஆளு?|நபர்)\S*|\b(?:their|his|her|them|avanga(?:loda)?|avarudaya|avar(?:oda)?|aval(?:oda)?|avan(?:oda)?|andha\s+(?:aal|aalu)|aalu?|aal)\b|(?:^|\s)(?:அவங்க\S*|அவர\S*|அவரு\S*|அவள\S*|அவன\S*|அவளோட|அவனோட|அவரோட|அந்த\s*(?:ஆள்|நபர்)\S*|ஆள்\S*)/i;
 /** the details of a person: name, contact, home */
@@ -115,7 +115,7 @@ const REVEAL_RULES = /\b(?:print|show|reveal|repeat|tell|read|output|display|sha
 /** Tells Jarvis to do what it never does: send, approve or delete (or to ignore its rules). */
 export function asksForbidden(text: string): boolean {
   const t = stripFormat(text).trim();
-  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி/i.test(t)) return true;
+  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(t)) return true;
   if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
   if (OBEY_RECORD.test(t) || REVEAL_RULES.test(t) || MONEY_VERB.test(t)) return true;
   if (!CONSOLE_THING.test(t)) {
@@ -123,10 +123,10 @@ export function asksForbidden(text: string): boolean {
     if (CHANGE_VERB.test(t) && STATE_WORD.test(t) && RECORDISH.test(t)) return true;
   }
   // "issue" alone is a noun here ("what is the issue in this case"); only issuing something outward counts
-  const verb = /\b(send|approve|authorise|authorize|sanction|delete|erase|wipe|purge|dispatch|forward|e-?mail|sms|reject|submit|publish|mark .{0,20}resolved)\b|\bissue\s+(?:an?\s+|the\s+|this\s+|that\s+)?(?:notices?|orders?|instructions?|alerts?|letters?|circulars?|memos?|directives?|statements?|press\s+release)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|அங்கீகரி|நீக்கு|நீக்குங்க|அழி|அழிங்க)|\b(delete pannu|anuppu|anupu|approve pannu|azhi|neekku)\b/i;
+  const verb = /\b(send|approve|authorise|authorize|sanction|delete|erase|wipe|purge|dispatch|forward|e-?mail|sms|reject|submit|publish|mark .{0,20}resolved)\b|\bissue\s+(?:an?\s+|the\s+|this\s+|that\s+)?(?:notices?|orders?|instructions?|alerts?|letters?|circulars?|memos?|directives?|statements?|press\s+release)\b|(அனுப்பு|அனுப்பி|அனுப்புங்க|ஒப்புதல் கொடு|ஒப்புதல் தா|ஒப்புதல்\s*(?:செய்|அளி|வழங்கு)|அங்கீகரி|நீக்கு|நீக்குங்க|அழி|அழிங்க)|\b(anuppu|anupu|azhi|neekku)\b|\b(?:approve|delete)\s+pann\w*/i;
   if (!verb.test(t)) return false;
   // "send" in the sense of a draft to the tray is still only a draft: the tray gate handles it; these name the outward act itself
-  return /\b(all|every|old|complaints?|cases?|incidents?|records?|data|report|alert|message|notice|letter|mail|email|sms|it|this|that|them|these|the\s+drafts?|officers?|departments?|engineers?|commissioner|citizens?|press|media)\b|(எல்லா|புகார்|சம்பவ|அறிக்கை|செய்தி|கடிதம்|அதிகாரி|துறை|வரைவ|இதை|அதை)|(ellam|pugar|complaint|case|report|message|draft|officer)/i.test(t);
+  return /\b(all|every|old|complaints?|cases?|incidents?|records?|data|report|alert|message|notice|letter|mail|email|sms|it|this|that|them|these|the\s+drafts?|\btray\b|\binc-[a-z0-9-]+|officers?|departments?|engineers?|commissioner|citizens?|press|media)\b|(எல்லா|புகார்|சம்பவ|அறிக்கை|செய்தி|கடிதம்|அதிகாரி|துறை|வரைவ|இதை|அதை)|(ellam|pugar|complaint|case|report|message|draft|officer)/i.test(t);
 }
 
 // ---- redaction: every tool result, every string --

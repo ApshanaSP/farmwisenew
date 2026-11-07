@@ -9,20 +9,48 @@ import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
 import { AiPlanLenient, AiPlanSchema, checkPlan, systemPrompt, userPrompt, type Checked, type Context } from "./plan";
 import type { ScreenState, World } from "./types";
+import { lineProblem, safeOptions, turnRecords } from "./exitgate";
+import { stepsAskedFor } from "./injection";
+import { asksForbidden, asksPrivate, NEVER_REPLY, PRIVACY_REPLY } from "./privacy";
 
 const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock" ? "bedrock" : "groq");
 
 export interface BrainResult { plan: Checked; ms: number; model: string | null; error?: string }
 
+/** The older /plan route has the same gates as /round and /agent: the model's plan goes through the one exit gate (exitgate.ts) and the asked-for-steps gate (BUG-009 class, RC-19). */
+function vet(plan: Checked, text: string, ctx: Context): Checked {
+  const records = turnRecords(ctx.turns);
+  const bad = (s: string | null | undefined, refusal = false) => !!s && !!lineProblem(s, { records, refusal });
+  switch (plan.kind) {
+    case "chat": return bad(plan.reply) ? { kind: "none", lang: plan.lang } : plan;
+    case "refuse": return bad(plan.reply, true) ? { ...plan, reply: plan.lang === "ta" ? NEVER_REPLY.ta : NEVER_REPLY.en } : plan;
+    case "clarify": {
+      const options = safeOptions(plan.options, { records });
+      if (options.length < 2) return { kind: "none", lang: plan.lang };
+      return { ...plan, question: bad(plan.question) ? (plan.lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?") : plan.question, options };
+    }
+    case "do": {
+      const steps = stepsAskedFor(plan.steps, text);
+      const reply = bad(plan.reply) ? null : plan.reply;
+      return steps.length || reply ? { ...plan, steps, reply, dropped: plan.dropped + (plan.steps.length - steps.length) } : { kind: "none", lang: plan.lang };
+    }
+    default: return plan;
+  }
+}
+
 export async function think(text: string, state: ScreenState, world: World, ctx: Context, user: string, timeoutMs = 4000): Promise<BrainResult> {
   const t0 = Date.now();
+  const lang = /[஀-௿]/.test(text) ? "ta" : "en";
+  // refused in code before any model, as on /round and /agent
+  if (asksPrivate(text)) return { plan: { kind: "refuse", reply: PRIVACY_REPLY[lang], lang }, ms: 0, model: null };
+  if (asksForbidden(text)) return { plan: { kind: "refuse", reply: NEVER_REPLY[lang], lang }, ms: 0, model: null };
   try {
     const r = await generateJson({
       // on Groq the "reasoning" list starts with gpt-oss-120b; Nova Lite is the "fast" model on Bedrock
       role: provider() === "groq" ? "reasoning" : "fast", name: "thunai_plan", schema: AiPlanSchema, lenient: AiPlanLenient, system: systemPrompt(world),
       prompt: userPrompt(text, state, world, ctx), temperature: 0, maxOutputTokens: 900, user, prefer: provider(), timeoutMs
     });
-    return { plan: checkPlan(r.object, world, text, ctx.now ?? Date.now()), ms: Date.now() - t0, model: r.info.model };
+    return { plan: vet(checkPlan(r.object, world, text, ctx.now ?? Date.now()), text, ctx), ms: Date.now() - t0, model: r.info.model };
   } catch (e) {
     return { plan: { kind: "none", lang: /[஀-௿]/.test(text) ? "ta" : "en" }, ms: Date.now() - t0, model: null, error: (e as Error).message.slice(0, 200) };
   }
