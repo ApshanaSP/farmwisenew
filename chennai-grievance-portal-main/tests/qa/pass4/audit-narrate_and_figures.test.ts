@@ -139,18 +139,18 @@ describe("BUG-019: the original Tamil join", () => {
 // -------------------------------------------------------------- reopened --
 
 describe("BUG-007 reopened", () => {
-  it.fails.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
+  it.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
     const c = await list({ period, zone: null, dept: null, sev: null, status: "overdue", q: null, sort: "t", dir: -1, page: 0, scope: "period" } as never);
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", period, fresh: true, zones: [] });
     expect(r.stage!.say.en).not.toMatch(/^There are no cases/);
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
+  it("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
     const r = await said("show overdue cases", fakePlan({ kind: "do", lang: "en", reply: null, options: [], screen: screenOf({ status: "overdue", period: "weekly" }) }));
     expect(blockOf(r.result, "CaseList")?.total).toBeGreaterThan(0);
   });
-  it.fails.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
+  it.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
     const r = (await said(text)).result!;
     expect(blockOf(r, "CaseList")?.total).toBeGreaterThan(0);
   });
@@ -188,12 +188,12 @@ describe("BUG-021 partly", () => {
     const r = await direct("cases", { status: "overdue", sev: "Severe", period, fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages", async () => {
+  it("AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages", async () => {
     const c = await consoleCount("quarterly", "Severe");
     const r = await direct("cases", { status: "overdue", sev: "Severe", period: "quarterly", fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.total);
   });
-  it.fails.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
+  it.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
     const c = await consoleCount(period, "High");
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", sev: "High", period, fresh: true, zones: [] });

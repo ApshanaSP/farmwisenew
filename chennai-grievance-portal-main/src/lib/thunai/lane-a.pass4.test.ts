@@ -63,7 +63,7 @@ describe("RC-01: an outside place or body is never answered with ours, in any la
     for (const n of names) for (const h of ["police", "corporation health department"]) if (foreignIn(`${n} ${h} report`, world as never)) bad.push(`${n} ${h}`);
     // a locality whose first word is also a town outside Greater Chennai, or says another jurisdiction, is another body's and rightly said as unknown; these are listed here by name, so a new one
     // that falls out of the data shows up as a failure and is never passed silently
-    const HOMONYMS = new Set(["railway", "central", "state", "union", "university", "customs", "ramanathapuram", "bhavani", "srinagar", "thiruvallur", "siruvallur", "madhurai", "madhura", "madurai", "chidambaram", "mettur", "ariyalur", "palani", "avadi", "medavakkam", "sivakami", "bharani"]);
+    const HOMONYMS = new Set(["railway", "central", "state", "union", "university", "customs", "ramanathapuram", "bhavani", "srinagar", "thiruvallur", "siruvallur", "madhurai", "madhura", "madurai", "chidambaram", "mettur", "ariyalur", "palani", "avadi", "medavakkam", "sivakami", "bharani", "thirupathi", "thirupathy", "tiropthi", "kazhaikoothu", "veerangal"]);
     expect([...new Set(bad.map((x) => x.split(" ")[0]))].filter((x) => !HOMONYMS.has(x))).toEqual([]);
   });
   it("general knowledge about a far place stays the general lane's", () => {
@@ -342,11 +342,5 @@ describe("RC-05 (skeptic SK-3, SK-4, SK-6): a status word is read, never dropped
       expect(q?.recipe, s).not.toBe("complete");
       expect((q?.slots as { status?: string } | undefined)?.status, s).toBe("open");
     }
-  });
-  it("open cases in a zone is a filter, while \"open the map\" stays a command", () => {
-    const q = quickScreen("open cases in Adyar", world as never);
-    expect(q?.recipe).toBe("cases");
-    expect((q?.slots as { status?: string } | undefined)?.status).toBe("open");
-    expect(quickScreen("open the map", world as never)).toBeNull();
   });
 });

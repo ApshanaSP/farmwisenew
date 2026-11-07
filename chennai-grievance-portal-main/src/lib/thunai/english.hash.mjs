@@ -1,6 +1,6 @@
 // the hash of the English-word filter, shared by the generator script and the runtime (plain JS so both can import it)
-export const BLOOM_BYTES = 229376;
-export const BLOOM_K = 4;
+export const BLOOM_BYTES = 400000;
+export const BLOOM_K = 8;
 export function bloomIndexes(w) {
   let h1 = 0x811c9dc5, h2 = 0x01000193 ^ 0x9e3779b9;
   for (let i = 0; i < w.length; i++) {

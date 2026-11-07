@@ -16,7 +16,7 @@ import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, SU
 import { editDistance, skeleton } from "./normalise";
 import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
-import { outsideIn, taOutside } from "./outside";
+import { outsideIn, soundsOutside, taOutside } from "./outside";
 import { AREA_WORDS } from "./areas";
 import { LOCALITY_WORDS } from "./areas.localities";
 import { isEnglishWord } from "./english";
@@ -339,7 +339,7 @@ const nameLike = (w: string, reg: Registry): boolean => {
   if (w.length < 3 || /\d/.test(w)) return false;
   if (ORDINARY.has(w) || /^[a-z]{4,}ly$/.test(w)) return false;
   if (QUAL.has(w) || FILLER.has(w) || POSTS.has(w) || HEADS.has(w) || stopWord(w) || BRIEF_WORDS.has(w) || listedWord(w)) return false;
-  const known = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || LOCALITY_WORDS.has(x) || reg.topics.has(x) || vocabWord(x, reg) != null || (x.length >= 5 && skeleton(x).length >= 4 && [-1, 0, 1].some((d) => placeSkeletons(reg).has(`${skeleton(x)}:${x.length + d}`)));
+  const known = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || (LOCALITY_WORDS.has(x) && !soundsOutside(x)) || reg.topics.has(x) || vocabWord(x, reg) != null || (x.length >= 5 && skeleton(x).length >= 4 && [-1, 0, 1].some((d) => placeSkeletons(reg).has(`${skeleton(x)}:${x.length + d}`)));
   if (known(w)) return false;
   // a plain English word names no other town: "today's", "senior citizen", "damaged road", "cyber crime" in front of an agency word (RC-01, review point 1)
   if (isEnglishWord(w) || isEnglishWord(w.replace(/s$/, ""))) return false;

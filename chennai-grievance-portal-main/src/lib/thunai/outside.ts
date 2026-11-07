@@ -4,6 +4,7 @@
  * states, and the large cities of India. A body named with one of these is that place's body, never ours. Reference data, checked
  * by spelling (one edit on long names); the district's own zones, wards and localities are never in it.
  */
+import { skeleton } from "./normalise";
 const ONE = ["tambaram", "avadi", "pallavaram", "chromepet", "selaiyur", "medavakkam", "poonamallee", "tiruvallur", "thiruvallur", "chengalpattu", "chengai", "kanchipuram", "kancheepuram",
   "ariyalur", "coimbatore", "kovai", "cuddalore", "dharmapuri", "dindigul", "erode", "kallakurichi", "kanyakumari", "karur", "krishnagiri", "madurai", "mayiladuthurai", "nagapattinam",
   "namakkal", "nilgiris", "ooty", "perambalur", "pudukkottai", "ramanathapuram", "ranipet", "salem", "sivaganga", "tenkasi", "thanjavur", "theni", "thoothukudi", "tuticorin",
@@ -86,4 +87,11 @@ export function outsideIn(ws: string[], twoOnly = false): string | null {
   if (twoOnly) return null;
   for (const w of ws) for (const o of ONE) if (w === o || (o.length >= 7 && w.length >= 7 && near1(w, o))) return SAID[o] ?? o;
   return null;
+}
+
+/** Does this word sound like a place outside Greater Chennai, spelled another way ("thirupathi" for "tirupati")? Used so that a word on the Corporation's locality list (a street or a nagar of the same name) is not taken for ours when it is also a known town elsewhere (RC-01). */
+export function soundsOutside(word: string): boolean {
+  if (outsideIn([word]) || taOutside(word)) return true;
+  const k = skeleton(word);
+  return k.length >= 4 && ONE.some((o) => o.length >= 6 && skeleton(o) === k);
 }
