@@ -95,7 +95,7 @@ describe("what the model reads, on the real tools' data", () => {
     seen.agent_prompt_detail = p.slice(0, 900);
     expect(secretsIn(p)).toEqual([]);
   });
-  it.fails.each([["Q04 other separators", "Water stagnation, call", ["98415", "98416", "98417", "98418", "98419", "98420", "98421"]], ["Q06 other digit scripts", "மழைநீர் தேக்கம், ரமேஷ்", ["९८४२२", "٩٨٤٢٣"]], ["Q07 other address forms", "Flooding, mail", ["gmail", "ஜிமெயில்"]], ["Q08 Tamil and Tanglish words", "Road flooded", ["ஒன்பது எட்டு", "onbadhu"]]])("audit-privacy_injection-2: /agent: %s are hidden before the model reads them", async (name, q, gone) => {
+  it.each([["Q04 other separators", "Water stagnation, call", ["98415", "98416", "98417", "98418", "98419", "98420", "98421"]], ["Q06 other digit scripts", "மழைநீர் தேக்கம், ரமேஷ்", ["९८४२२", "٩٨٤٢٣"]], ["Q07 other address forms", "Flooding, mail", ["gmail", "ஜிமெயில்"]], ["Q08 Tamil and Tanglish words", "Road flooded", ["ஒன்பது எட்டு", "onbadhu"]]])("audit-privacy_injection-2: /agent: %s are hidden before the model reads them", async (name, q, gone) => {
     const { p, secrets } = await read(q as string);
     seen[`agent_prompt_${name}`] = plantedOnly(p);
     seen[`agent_secrets_${name}`] = secrets;
