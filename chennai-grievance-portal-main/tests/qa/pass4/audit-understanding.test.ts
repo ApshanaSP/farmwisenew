@@ -195,7 +195,7 @@ describe("BUG-033 holds: every category keeps its own name, on real records", ()
 
 describe("audit-understanding-1 P0: overdue cases are said not to exist", () => {
   for (const s of ["overdue cases this week", "overdue cases today", "overdue cases in Adyar", "cases past the deadline this week", "overdue complaints this month", "overdue garbage complaints this week", "overdue cases in Adyar kaattu", "இந்த வாரம் கெடு தாண்டிய புகார்கள் காட்டு", "அடையாறு கெடு தாண்டிய புகார்கள் காட்டு", "high priority cases past the deadline this week"])
-    it.fails(`audit-understanding-1 ${s}: the list is not empty`, async () => expect(listOf(await round(s))?.rows.length ?? 0).toBeGreaterThan(0));
+    (s === "high priority cases past the deadline this week" ? it.fails : it)(`audit-understanding-1 ${s}: the list is not empty`, async () => expect(listOf(await round(s))?.rows.length ?? 0).toBeGreaterThan(0));
   it("the severe list of the same week has overdue cases, so the empty answers are false", async () => {
     expect(listOf(await round("severe cases past deadline this week"))!.total).toBeGreaterThan(0);
     expect(listOf(await round("overdue high priority cases in Adyar"))!.total).toBeGreaterThan(0);

@@ -105,3 +105,33 @@ Written as each cluster is committed. Branch claude/p4-lane-d. Plain words.
   class as ?period=constructor); GET /api/collector/search?q=குப்பை answers 500 in the baseline and now; the same-number "pairs" tests for
   "reported" and "severe" read partial counts (severity mix, zone counts) under the label "reported", so they fail on the harness's own
   rows (red in every run here); PB-209 (see RC-29); the Jarvis "All cases" total reads data.total (lane c).
+
+## Review round (7 Nov): what was accepted and what was not
+
+Inputs: `reviews/d-skeptic.md` (read). `reviews/d-review.md` was named in the brief but does not exist in the worktree, on this branch, or in any commit; nothing from it could be judged. If it is written later, it is still to do.
+
+Judged on the evidence (each point has a failing `it.fails` test that the skeptic also ran as a plain `it` to prove it fails on the assertion). I re-ran them before and after. All six were accepted:
+
+| Point | Judgement | What was done |
+|---|---|---|
+| DSK-4a, DSK-4b (P1) | Accepted. Real run: INC-20261106-BAE416 open, due 12:42, console time 18:08, the list says overdue, its detail and follow-up row said not. | Mechanism: `isPastDeadline` in `metrics.ts` is the row twin of `pastDueSql` (open: flag or due time gone; closed: the flag; the console's time from `asOf`). Used by the Briefing attention and follow-up rows, Ask District IQ case detail and its sentence, AI brief lines, action-mail facts and cases, the flood-prep warning rows, the Studio link, the analysis facts, `incRow` for the tools, and list rows carry `overdue`. The RC-34 guard had excused `sla_breached AS breached`; the new guard in `src/lib/reference/deadline.pass4.test.ts` fails on any JS read of `.breached` that does not go through `isPastDeadline` or `deadlineState`. |
+| DSK-1 (P1) | Accepted. The gate knew more stops than the voice machine, so "stop it", "enough", "நிறுத்துங்க" went to `handle`. | One list: `isHoldOnly` now includes `isStopWord`, so a stop the gate knows also cancels the turn. |
+| DSK-2 (P2) | Accepted. | `STOP_CORE` in `addressed.ts` takes "நிறுத்தவும்", "stop pannunga", "nirutthunga", "போதும் நிறுத்து", and a tail of "please", "jarvis", "pls". |
+| DSK-5 (P2) | Accepted. | AM reads முற்பகல், as PM reads பிற்பகல். |
+| DSK-6 (P2) | Accepted (fails safe, but it is the everyday reply). | The yes list takes "Yes, please.", ஆமாங்க, சரிங்க, seringa, "yes do it", ஆமாம் சார், and "தயவுசெய்து". |
+| DSK-3 (P3) | Accepted. | The keep-button yes takes a mark (. ! ✓ ✔). |
+
+The skeptic's `it.fails` became `it` for all of them; `d-skeptic.test.ts` now passes 33 of 33.
+
+Not fixed, with the reason:
+- `src/lib/rehearsal/source.ts` and `realdata.ts` read the raw flag. Rain replays a past moment (`mem.asOf`), so the console's time is the wrong clock for it; it needs its own as-of version of the rule. Left open (P2, class DSK-4).
+- `src/lib/thunai/screens.ts` caseRow still reads `r.breached` first; it is correct for any row that carries `overdue` (list rows and tool rows now do). Rows from an older cached answer would not.
+- The browser walks (`audit-ui_honesty`, `tests/e2e/pass4-client-fixes.spec.ts`) were still not run.
+- The full qa4 suite has tests that are red in every run here (listed in the section above); see the result noted under "Test runs" below.
+
+Golden: `lane-d2` recorded; 82 requests changed against `lane-d`, all explained in `golden/explained/lane-d.md` (last section).
+
+### Test runs after the fixes (7 Nov, 11:57 IST)
+- `npx tsc --noEmit --incremental false`: clean outside test files (the test-file type errors were there before).
+- `npx vitest run`: 171 files passed, 2 skipped; 2,429 tests passed.
+- `vitest.qa4.config.ts` on the rebuilt `.next-qa`: 12 red, none from these fixes. Ten were `it.fails` in `audit-understanding-1` (overdue cases said not to exist) that now pass, so the guard showed "Expect test to fail": changed to `it` (the eleventh sentence, "high priority cases past the deadline this week", still fails and stays `it.fails`). The other reds are the ones that already did not run here: `same-number` and `model-lifecycle` (they need a server on ports 3120 and 3142 that this config does not start), `audit-ui_honesty` (browser walk could not sign in), `grader.test.ts` (a syntax error in `grader/findings.mjs` at import, not touched), and the `audit-privacy_injection.realgate` titles check (complaint wording used as titles, OPEN-12, an owner decision).
