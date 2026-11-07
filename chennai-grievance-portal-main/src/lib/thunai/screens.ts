@@ -1055,8 +1055,10 @@ async function deptPerformance(c: Ctx): Promise<Part> {
   const { s } = c;
   const d = await deptMeasures(c);
   const slowest = rank(d.filter((x) => x.days != null), (x) => Number(x.days), 8);
-  const totalOpen = d.reduce((a, x) => a + Number(x.open ?? 0), 0);
-  const overdue = d.reduce((a, x) => a + Number(x.overdue ?? 0), 0);
+  // one department asked: its own open and past-deadline figures, not the sum of every department's (RC-09, PB-060)
+  const mine = s.dept ? d.filter((x) => x.code === s.dept) : d;
+  const totalOpen = mine.reduce((a, x) => a + Number(x.open ?? 0), 0);
+  const overdue = mine.reduce((a, x) => a + Number(x.overdue ?? 0), 0);
   const closeDays = median(d.filter((x) => x.closeDays != null).map((x) => Number(x.closeDays)));
   const onTime = median(d.filter((x) => x.onTimePct != null).map((x) => Number(x.onTimePct)));
   const t = await seriesBlock(c, s, "Still open, by when reported");
@@ -1066,7 +1068,7 @@ async function deptPerformance(c: Ctx): Promise<Part> {
   t.block.normal = null;
   const heatRows = slowest.slice(0, 8).map((x) => x.item);
   const cols = [{ k: "open", l: "Open" }, { k: "overdue", l: "Past deadline" }, { k: "serious", l: "Severe or high" }, { k: "awaiting", l: "Awaiting you" }, { k: "days", l: "Avg age (days)" }, { k: "closeDays", l: "Days to close" }];
-  const title = `Department performance · ${PERIOD_EN[s.period]}`;
+  const title = `Department performance${s.dept ? ` · ${deptName(c.w, s.dept) ?? s.dept}` : ""} · ${PERIOD_EN[s.period]}`;
   if (!slowest.length) return { title, takeaway: null, say: bi("No department has enough open incidents to rank.", "வரிசைப்படுத்த போதுமான தரவு இல்லை."), blocks: [] };
   const [a, b, cc] = slowest;
   const say = bi(
@@ -1078,7 +1080,7 @@ async function deptPerformance(c: Ctx): Promise<Part> {
     takeaway: vm.ratio ? bi(`${a.item.name}'s open incidents are ${spoken(vm.ratio)}× older than the median department's.`, `${a.item.name}-இன் திறந்த சம்பவங்கள் இடைநிலைத் துறையை விட ${spoken(vm.ratio)} மடங்கு பழையவை.`) : null,
     say, blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "open", label: `Open, ${PERIOD_EN[s.period]}`, value: totalOpen, unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
+        { key: "open", label: `Open${s.dept ? `, ${deptName(c.w, s.dept) ?? s.dept}` : ""}, ${PERIOD_EN[s.period]}`, value: totalOpen, unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
         { key: "overdue", label: "Past deadline", value: overdue, unit: null, prev: null, delta: null, tone: "bad", spark: [] },
         { key: "close", label: "Median days to close", value: round(closeDays ?? 0, 1), unit: "days", prev: null, delta: null, tone: "neutral", spark: [] },
         { key: "ontime", label: "Median closed on time", value: round(onTime ?? 0, 0), unit: "%", prev: null, delta: null, tone: "neutral", spark: [] }
@@ -1100,7 +1102,7 @@ async function zonePerformance(c: Ctx): Promise<Part> {
   const t = await seriesBlock(c, { ...s, zone: null }, "Incidents reported over time");
   const cols = [{ k: "n", l: "Reported" }, { k: "severe", l: "Severe" }, { k: "high", l: "High" }, { k: "open", l: "Open" }, { k: "complaints", l: "Complaints" }];
   const tot = (k: string) => rows.reduce((a, x) => a + Number(x[k] ?? 0), 0);
-  const title = `Zone performance · ${PERIOD_EN[s.period]}`;
+  const title = `Zone performance · all zones · ${PERIOD_EN[s.period]}`;
   const [a, b] = ranked;
   if (!a) return { title, takeaway: null, say: bi("No zone data for this period.", "இந்தக் காலத்துக்கு மண்டலத் தரவு இல்லை."), blocks: [] };
   const vm = vsMedian(a.value, rows.map((x) => Number(x.score)));
@@ -1110,7 +1112,8 @@ async function zonePerformance(c: Ctx): Promise<Part> {
       `${zoneTa(w, Number(a.item.zone))}: ${spoken(Number(a.item.severe))} கடுமையான, ${spoken(Number(a.item.open))} திறந்தவை.${b ? ` அடுத்து ${zoneTa(w, Number(b.item.zone))}.` : ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
-        { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: tot("n"), unit: null, prev: tot("n_prev") || null, delta: tot("n_prev") ? tot("n") - tot("n_prev") : null, tone: "neutral", spark: t.values.slice(-30) },
+        // the trend beside it counts every incident, those with no zone too: the tile is that count, so the two agree (RC-09, PB-067)
+        { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
         { key: "severe", label: "Severe", value: tot("severe"), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
         { key: "open", label: "Open", value: tot("open"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
         { key: "complaints", label: "Open complaints", value: tot("complaints"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
@@ -1149,7 +1152,8 @@ async function dashboard(c: Ctx): Promise<Part> {
   const rep = Number(kd.cur?.reported ?? t.total);
   const prev = num(kd.prev?.reported);
   const ch = change(rep, prev);
-  const topZone = zr5[0] && zr5[0].value > 0 ? zr5[0] : undefined;
+  // one zone asked: no "most in" another zone; the ranking is of zones, which a zone's own dashboard is not (RC-09, PB-142)
+  const topZone = !s.zone && zr5[0] && zr5[0].value > 0 ? zr5[0] : undefined;
   // nothing reported: say so plainly instead of ranking zeros
   if (!rep && !zrows.some((x) => Number(x.n) > 0)) {
     return { title, takeaway: bi(`No ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
@@ -1300,6 +1304,9 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const att = ((br?.data as { attention?: Row[] })?.attention ?? []).filter((a) => !a.dept || codes.includes(String(a.dept)));
   const worst = [...rows].sort((a, b) => (num(b.open) ?? 0) - (num(a.open) ?? 0))[0];
   const pre = assumed(c.heard, name, ta);
+  // one zone asked: the brief says so in its title and its lines (RC-09, PB-096); the figures above are already filtered to it
+  const zAsked = c.s.zone ? zoneName(c.w, c.s.zone) : null;
+  const inZone = zAsked ? ` in ${zAsked} zone` : "", inZoneTa = zAsked ? ` ${zoneTa(c.w, c.s.zone) ?? zAsked} பகுதியில்` : "";
   const when = PERIOD_EN[c.s.period], whenTa = PERIOD_TA[c.s.period];
   const src = recordsOf(org ? `${org}-` : codes[0]);
   const age = freshness(c.asOf);
@@ -1310,8 +1317,8 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   }
   // the one thing to say first: what needs attention, as a judgement made from the figures
   const pressing = overdue > 0 && open > 0 && overdue / open >= 0.15;
-  const head = reported != null ? `${plural(reported, "new incident", "new incidents")} came in ${when}` : `${plural(open, "case is", "cases are")} open across its departments`;
-  const headTa = reported != null ? `${whenTa} ${spoken(reported)} புதிய சம்பவங்கள் வந்தன` : `அதன் துறைகளில் ${spoken(open)} வழக்குகள் நிலுவையில் உள்ளன`;
+  const head = reported != null ? `${plural(reported, "new incident", "new incidents")} came in ${when}${inZone}` : `${plural(open, "case is", "cases are")} open across its departments${inZone}`;
+  const headTa = reported != null ? `${whenTa}${inZoneTa} ${spoken(reported)} புதிய சம்பவங்கள் வந்தன` : `அதன் துறைகளில்${inZoneTa} ${spoken(open)} வழக்குகள் நிலுவையில் உள்ளன`;
   // no follow-up row for the body says nothing about its open cases: say nothing, rather than "nothing is open"
   const stand = !rows.length ? "" : open || overdue
     ? `${reported != null ? `${plural(open, "case is", "cases are")} still open, and ` : ""}${overdue ? `${plural(overdue, "is", "are")} past the deadline` : "none is past the deadline"}`
@@ -1334,7 +1341,7 @@ async function bodyBrief(c: Ctx): Promise<Part> {
     { text: `${src.en} ${age.en}`, incidentId: null }
   ].slice(0, 10);
   return {
-    title: `${name} · brief, ${PERIOD_EN[c.s.period]}`,
+    title: `${name}${zAsked ? ` · ${zAsked}` : ""} · brief, ${PERIOD_EN[c.s.period]}`,
     takeaway: bi(`${head}${stand ? `; ${stand}` : ""}.`, `${headTa}${standTa ? `; ${standTa}` : ""}.`),
     // the name once: after "Taking that as X." it is not said again
     say: bi(`${pre.en || `${name}: `}${cap1(head)}${stand ? `; ${stand}` : ""}.${where}${advice}${wide} ${src.en} ${age.en}`.replace(/\s+/g, " ").trim(),

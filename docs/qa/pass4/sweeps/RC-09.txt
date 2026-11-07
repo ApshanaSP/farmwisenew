@@ -1,0 +1,20 @@
+RC-09 sweep, 7 Nov 2026: screens that read a figure from a wider scope than the one asked
+--- calls that drop a filter on purpose (zones tool with zone null, in screens.ts)
+331:    call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
+623:  const r0 = await c.h.news(zone ? { ...s, zone: null } : s);
+649:    const sr = await call(c, "search_records", { text: zoneName, scope: scopeArg({ ...s, zone: null }), kinds: ["news"] }).catch(() => null);
+717:          items: ps.map((p, i) => ({ key: p.market, label: p.market, value: Math.round(p.per_kg), rank: i + 1, sub: `${p.date}${p.prev_per_kg != null ? ` · was ₹${
+728:      items: list.map((x, i) => ({ key: x.commodity, label: x.commodity, value: Math.round(x.avg_per_kg!), rank: i + 1, sub: x.avg_prev_per_kg != null ? `was ₹${Mat
+791:    items = ranked.map((r) => ({ key: String(r.item.place_id ?? r.item.place), label: clip(r.item.place, 120), value: round(r.value, 1), rank: r.rank, sub: when(r.ite
+813:      sub: `${spoken(Number(x.item.severe ?? 0))} severe`, zone: null, lat: num(x.item.lat), lon: num(x.item.lon), action: "none" as const }));
+833:      sub: `${spoken(Number(x.item.open ?? 0))} open`, zone: null, lat: null, lon: null, action: "dept" as const }));
+898:  const base = { ...s, zone: null };
+941:  const sides = pick.map((x) => ({ key: String(x.code), label: clip(x.name, 80), zone: null, values: Object.fromEntries(metrics.map((m) => [m.key, Number(x[m.key] ?? 
+969:  const zr = await call(c, "zones", { scope: scopeArg({ ...s, zone: null }) });
+1090:          sub: `${spoken(Number(x.item.open ?? x.item.backlogOpen ?? 0))} open · ${spoken(Number(x.item.overdue ?? 0))} past deadline`, zone: null, lat: null, lon: 
+1099:  const r = await call(c, "zones", { scope: scopeArg({ ...s, zone: null }) });
+1102:  const t = await seriesBlock(c, { ...s, zone: null }, "Incidents reported over time");
+1138:    call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
+1235:      items: ranked.map((x, i) => ({ key: String(x.p.id), label: clip(x.p.name ?? `${x.p.kind} (no name on the map)`, 120), value: x.m, rank: i + 1, sub: x.to ? safe
+--- fixed: deptPerformance totals (one department), zonePerformance Reported tile (trend total) and title (all zones), dashboard Most in (not for one zone), bodyBrief title and lines (zone named, English and Tamil)
+--- guard: tests/qa/pass4/e-scope.test.ts class guard runs seven recipes with a zone filter and needs the zone or 'all zones' in the title or line
