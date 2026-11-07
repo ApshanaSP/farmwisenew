@@ -1,7 +1,7 @@
 {
  "baseline_code": "9db7beb",
- "head": "713f8d3",
- "method": "Recorded rows (open-baseline-groq, steady-groq-1..3, skeptic-groq) read with the grader checks; code lanes read at HEAD and replayed with no model (results/groq-causes-head.json and groq-causes-head-steady.json, same sample and seed); detectLang run over every recorded sentence. No model was called.",
+ "head": "892e449",
+ "method": "Recorded rows (open-baseline-groq, steady-groq-1..3, skeptic-groq) read with the grader checks; code lanes read at HEAD and replayed with no model (same sample and seed; the replay files were not kept, to repeat: QA_P4_SET=open QA_P4_SAMPLE=60 QA_P4_SEED=20261106 QA_P4_LABEL=x npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/grader/run.test.ts, and the same with SAMPLE=20 SEED=20261107); detectLang run over every recorded sentence. No model was called.",
  "likely_changed_means": "yes = the lane, step or screen that produced the recorded wrong output no longer produces it at HEAD (replay or code read); it is not a claim that the row is now right. no = that code path is unchanged. unknown = depends on what the model returns.",
  "causes": {
   "G-1": {

@@ -1,11 +1,11 @@
 # Groq rows: which lane answered and why it was wrong
 
-Baseline code 9db7beb, read at HEAD 713f8d3. Rows: the 38 wrong rows of results/open-baseline-groq.json (27 confident wrong), plus 14 rows that were wrong only in the steady runs or the skeptic rerun. No model was called for this note.
+Baseline code 9db7beb, read at HEAD 892e449. Rows: the 38 wrong rows of results/open-baseline-groq.json (27 confident wrong), plus 14 rows that were wrong only in the steady runs or the skeptic rerun. No model was called for this note.
 
 ## How this was worked out
 - The recorded rows give the lane, the failed grader checks and what was said. They do not keep the model's raw output, so for a model-lane row the cause is read from the slots the screen shows (recipe, zone, department, topic, period, q) and from the code that builds the line. Where that is not enough the confidence column says so.
 - Lane planner in the rows is the model lane (one Groq call). The others are code: quick (fast lane), resolve (a brief on a body), frame (follow-up), rules-instant (the browser's own rules), refuse.
-- Likely changed was checked by replaying the same 60 rows (and the 20 steady rows) through the real code lanes at HEAD with no model key (results/groq-causes-head.json and groq-causes-head-steady.json), by running detectLang over every recorded sentence, and by reading the diff from 9db7beb to HEAD. A model-lane row still reaches the model at HEAD (replay lane no-model), so for those the answer is no or unknown.
+- Likely changed was checked by replaying the same 60 rows (and the 20 steady rows) through the real code lanes at HEAD with no model key (same sample and seed; command in groq-causes.json under method), by running detectLang over every recorded sentence, and by reading the diff from 9db7beb to HEAD. A model-lane row still reaches the model at HEAD (replay lane no-model), so for those the answer is no or unknown.
 - yes means the lane, step or screen that produced the recorded wrong output no longer produces it. It does not mean the row is now right, and no live improvement is claimed.
 
 ## Counts by cause (the 38 rows; confident wrong in brackets)
