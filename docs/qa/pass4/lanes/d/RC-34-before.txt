@@ -1,0 +1,11 @@
+   × data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 Ask District IQ's 'within the deadline' counts incidents closed by their due time 388ms
+   × data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 the resolution_times answer states the true share 397ms
+   × data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 the officer's 'Closed on time' tile counts incidents closed by their due time 620ms
+   × data invariants: what the app does with the data > INV-4 (OPEN-7): past deadline > INV-4 an incident the case page calls missed is on the Past deadline list 96ms
+   × data invariants: what the app does with the data > INV-4 (OPEN-7): past deadline > INV-4 the Past deadline list holds every open incident whose due time has gone 145ms
+ FAIL  tests/qa/pass4/invariants-app.test.ts > data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 Ask District IQ's 'within the deadline' counts incidents clo
+ FAIL  tests/qa/pass4/invariants-app.test.ts > data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 the resolution_times answer states the true share
+ FAIL  tests/qa/pass4/invariants-app.test.ts > data invariants: what the app does with the data > INV-3: closed within the deadline > INV-3 the officer's 'Closed on time' tile counts incidents closed 
+ FAIL  tests/qa/pass4/invariants-app.test.ts > data invariants: what the app does with the data > INV-4 (OPEN-7): past deadline > INV-4 an incident the case page calls missed is on the Past deadline l
+ FAIL  tests/qa/pass4/invariants-app.test.ts > data invariants: what the app does with the data > INV-4 (OPEN-7): past deadline > INV-4 the Past deadline list holds every open incident whose due time 
+      Tests  5 failed | 12 passed (17)

@@ -36,3 +36,25 @@ describe("RC-27 class guard: no raw pipeline flag in a figure", () => {
     });
   }
 });
+
+// RC-34 class guard: "past its deadline" and "closed on time" have one rule each (metrics.ts pastDueSql, closedOnTimeSql). A figure
+// that reads the pipeline's sla_breached flag alone counts a closed-months-late incident as on time and leaves open incidents whose due
+// time has gone off the tile that the case page calls missed.
+describe("RC-34 class guard: no raw sla_breached in a figure", () => {
+  const FIGURE_FILES = [...FILES, "lib/officer/data.ts"];
+  for (const file of FIGURE_FILES) {
+    it(`${file} counts past-deadline and on-time through metrics.ts`, () => {
+      const lines = fs.readFileSync(path.join(ROOT, file), "utf8").split(/\r?\n/);
+      const bad = lines
+        .map((text, n) => ({ text, n: n + 1 }))
+        .filter(({ text }) => /sla_breached/.test(text) && !/^\s*(\/\/|\*|\/\*)/.test(text))
+        // the row's own field for the explain() text, which re-derives the state from the due time (deadlineState)
+        .filter(({ text }) => !/sla_breached AS breached/.test(text))
+        .filter(({ text }) => !/i[.]sla_breached, i[.]is_open/.test(text)) // the officer board's source columns; its flags go through flagSql
+        .filter(({ text }) => !/r[.]breached [?][?] r[.]sla_breached/.test(text)) // explain()'s fallback when a row has no due time
+        // a due-soon list: not flagged AND due in the future is the same date rule
+        .filter(({ text }) => !/COALESCE\(w\.sla_breached, 0\) = 0 AND w\.sla_due_at >/.test(text));
+      expect(bad.map((b) => `${file}:${b.n} ${b.text.trim().slice(0, 100)}`)).toEqual([]);
+    });
+  }
+});

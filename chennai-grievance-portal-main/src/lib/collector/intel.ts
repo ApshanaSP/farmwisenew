@@ -18,7 +18,7 @@ import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
 import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/effective";
 import { orEmpty, orNull } from "@/lib/fallback";
-import { deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "@/lib/reference/metrics";
+import { deadlineState, falseDeadlineClaims, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
 
 /** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
@@ -1027,7 +1027,7 @@ export async function snapCommon(s: Scope, now: string) {
   const w = scopeWhere(s, now);
   const [r] = await q(
     `SELECT COALESCE(SUM(${EFF.open} = 1 AND i.severity_level IN ('Severe', 'High')), 0) AS serious,
-            COALESCE(SUM(${EFF.open} = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}), 0) AS overdue,
+            COALESCE(SUM(${EFF.open} = 1 AND ${pastDueSql(now)} AND NOT ${ROUTED}), 0) AS overdue,
             COALESCE(SUM(${EFF.open} = 1 AND i.media_only = 1), 0) AS news_only
      FROM incidents i WHERE ${w.sql}`,
     w.params
@@ -1042,7 +1042,7 @@ async function deptSnapshot(code: string, s: Scope, now: string) {
     q(`SELECT code, name, org, head, route FROM ref_departments WHERE code = ?`, [code]),
     q(
       `SELECT SUM(${EFF.open}) AS open, SUM(${EFF.open} = 1 AND ${EFF.verified} = 1) AS verified,
-              SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1 AND ${EFF.open} = 1 AND NOT ${ROUTED}) AS overdue
+              SUM(i.severity_level = 'Severe') AS severe, SUM(${pastDueSql(now)} AND ${EFF.open} = 1 AND NOT ${ROUTED}) AS overdue
        FROM incidents i WHERE ${w.sql}`,
       w.params
     ),
@@ -1382,7 +1382,7 @@ export async function list(f: ListFilter) {
   else if (st === "unverified") where.push(`${EFF.open} = 1 AND ${EFF.verified} = 0`);
   // verified work still open, and what the Collector has just verified ("Verify and close" closes it: its row says verified)
   else if (st === "verified") where.push(`${EFF.verified} = 1 AND (${EFF.open} = 1 OR ${EFF.latest} = 'verify')`);
-  else if (st === "overdue") where.push(`${EFF.open} = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}`);
+  else if (st === "overdue") where.push(`${EFF.open} = 1 AND ${pastDueSql(now)} AND NOT ${ROUTED}`);
   else if (st === "awaiting")
     where.push(`((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR} AND NOT ${DECIDED("'verify','reject','resolve','reopen'")})
       OR ${await sentByOfficer()})`);

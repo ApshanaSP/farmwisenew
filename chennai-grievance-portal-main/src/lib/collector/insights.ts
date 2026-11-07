@@ -13,7 +13,7 @@ import { briefingBook } from "@/lib/collector/briefbook";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
-import { unusualEnough } from "@/lib/reference/metrics";
+import { pastDueSql, unusualEnough } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -126,7 +126,7 @@ export async function insights(period: Period, zone: number | null, dept: string
 
   const [k, kp, top, nextActs, deptRows, gaps, weekly, monthly, taluks, anomaliesAll, hotspots, unplaced, wardRows, review, zoneNames, env, catZones] = await Promise.all([
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open,
-              SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints,
+              SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue, SUM(i.citizen_complaints) AS complaints,
               SUM(i.source_count > 1) AS multi, SUM(i.media_only) AS news_only
        FROM incidents i WHERE ${w.sql}`, w.params)),
     when(B, () => q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${pw.sql}`, pw.params)),
@@ -137,7 +137,7 @@ export async function insights(period: Period, zone: number | null, dept: string
               ROW_NUMBER() OVER (PARTITION BY a.incident_id ORDER BY a.status = 'In progress' DESC, a.due_at, a.action_id) AS rn
        FROM actions a JOIN incidents i ON i.incident_id = a.incident_id
        WHERE ${w.sql} AND ${OPEN} = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params)),
-    when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(i.sla_breached) AS overdue,
+    when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(${pastDueSql(now)}) AS overdue,
               SUM(i.severity_level IN ('Severe', 'High')) AS serious, SUM(i.awaiting_collector) AS awaiting,
               SUM(i.citizen_complaints) AS complaints
        ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 GROUP BY i.lead_dept, dp.name, dp.head
@@ -157,7 +157,7 @@ export async function insights(period: Period, zone: number | null, dept: string
               COALESCE(x.reported, 0) AS reported, COALESCE(y.reported, 0) AS prev
        FROM ref_taluks t
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported, SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND i.severity_level = 'Severe') AS severe,
-                         SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue
+                         SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue
                   FROM incidents i WHERE ${where({ ...s, taluk: null }, now, { hours: 720 }).sql} GROUP BY i.taluk_code) x ON x.taluk_code = t.taluk_code
        LEFT JOIN (SELECT i.taluk_code, COUNT(*) AS reported FROM incidents i
                   WHERE ${where({ ...s, taluk: null }, now, { hours: 720, offset: 1 }).sql} GROUP BY i.taluk_code) y ON y.taluk_code = t.taluk_code
@@ -193,7 +193,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const tw = where({ ...s, taluk: null }, now, { hours: 720 });
   const [noTaluk] = T
     ? await q(`SELECT COUNT(*) AS reported, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(${OPEN} = 1 AND i.severity_level = 'Severe'), 0) AS severe,
-              COALESCE(SUM(${OPEN} = 1 AND i.sla_breached = 1), 0) AS overdue
+              COALESCE(SUM(${OPEN} = 1 AND ${pastDueSql(now)}), 0) AS overdue
        FROM incidents i WHERE ${tw.sql} AND ${PLACE_FILTERS.notaluk}`, tw.params)
     : [];
 

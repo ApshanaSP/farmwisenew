@@ -33,7 +33,7 @@ vi.mock("@/lib/ai/gateway", async (orig) => {
     object: plan({ calls: o.name.endsWith("0") ? [look] : [], lang: /[஀-௿]/.test(o.prompt.slice(-400)) ? "ta" : "en" }), info: { model: "fake-model" } }) };
 });
 
-const PORT = 3134;
+const PORT = Number(process.env.QA_UI_HONESTY_PORT || 3134);
 const BASE = `http://127.0.0.1:${PORT}`;
 const SHOTS = path.resolve(APP_ROOT, "..", "docs", "qa", "pass4", "evidence", "bug-audit");
 // .officer is the department contact's card (a name and a phone number): covered, so no such number reaches the committed pictures
@@ -592,17 +592,17 @@ describe("BUG-006: reopened, and what was found on the way (open: it.fails until
     expect(pinnedCount("documents", ["title", "body"], "sinkhole")).toBeGreaterThanOrEqual(50);
     expect((await keywordSearch("Any sinkhole?")).incidents).toBeGreaterThanOrEqual(5);
   });
-  it.fails("audit-ui_honesty-14: with no index, asking for 'reports' about a sinkhole still finds the incidents the store holds", async () => {
+  it("audit-ui_honesty-14: with no index, asking for 'reports' about a sinkhole still finds the incidents the store holds", async () => {
     expect((await keywordSearch("Any reports about a sinkhole?")).incidents).toBeGreaterThanOrEqual(5);
   });
-  it.fails("audit-ui_honesty-14: with no index, the fallback looks in the news before saying no news report matches", async () => {
+  it("audit-ui_honesty-14: with no index, the fallback looks in the news before saying no news report matches", async () => {
     expect((await keywordSearch("Any sinkhole?")).news).toBeGreaterThan(0);
   });
   it.fails("audit-ui_honesty-14: on the real route, 'Any reports about a sinkhole?' does not say that no reports match", () => {
     expect(seen.answers.sinkholeReports.headline).not.toMatch(/No incidents or news reports match/);
   });
 
-  it.fails("audit-ui_honesty-13: a model that cannot load also falls back to keywords, and does not end the answer in an error", async () => {
+  it("audit-ui_honesty-13: a model that cannot load also falls back to keywords, and does not end the answer in an error", async () => {
     await expect(searchWith(() => new Error("Load model from model_quantized.onnx failed:Protobuf parsing failed."))).resolves.toBeNull();
   });
 });

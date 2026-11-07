@@ -7,6 +7,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
+import { closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
 import { explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
@@ -78,7 +79,7 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   if (f.sev === "Severe") parts.push("i.severity_level = 'Severe'");
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
   if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
-  if (f.overdue) parts.push("i.sla_breached = 1");
+  if (f.overdue) parts.push(pastDueSql(now));
   if (f.roads?.length) {
     parts.push(`(${f.roads.map(() => "LOWER(COALESCE(i.place_text, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ?").join(" OR ")})`);
     for (const r of f.roads) params.push(`%${r}%`, `%${r}%`);
@@ -231,7 +232,7 @@ export async function countResolved(f: IncidentFilters, now: string) {
   const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
   const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
+    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(NOT ${closedOnTimeSql(EFF.closedAt)}) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
 }
@@ -248,7 +249,7 @@ export async function resolutionTimes(f: IncidentFilters, now: string) {
   const hrs = `TIMESTAMPDIFF(MINUTE, i.first_reported_at, ${EFF.closedAt}) / 60`;
   const [rows, prev] = await Promise.all([
     q(`SELECT i.lead_dept AS code, COALESCE(dp.name, i.lead_dept) AS name, COUNT(*) AS n, AVG(${hrs}) AS hours,
-              SUM(COALESCE(i.sla_breached, 0) = 0) AS on_time
+              SUM(${closedOnTimeSql(EFF.closedAt)}) AS on_time
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
        WHERE ${w.sql} AND ${done} AND i.lead_dept IS NOT NULL GROUP BY i.lead_dept, dp.name HAVING COUNT(*) >= 3 ORDER BY hours`, w.params),
     q(`SELECT i.lead_dept AS code, AVG(${hrs}) AS hours FROM incidents i WHERE ${p.sql} AND ${done} AND i.lead_dept IS NOT NULL

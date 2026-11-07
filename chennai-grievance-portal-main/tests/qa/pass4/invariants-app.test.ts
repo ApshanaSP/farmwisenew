@@ -83,21 +83,21 @@ describe("data invariants: what the app does with the data", () => {
     const closedByDue = async (extra = "", p: unknown[] = []) => q(`SELECT COUNT(*) AS n, SUM(i.closed_at <= i.sla_due_at) AS within FROM incidents i
       WHERE i.status_std = 'Resolved' AND i.is_open = 0 AND i.closed_at > ? - INTERVAL 90 DAY AND i.closed_at <= ?${extra}`, [now, now, ...p]);
 
-    it.fails("INV-3 Ask District IQ's 'within the deadline' counts incidents closed by their due time", async () => {
+    it("INV-3 Ask District IQ's 'within the deadline' counts incidents closed by their due time", async () => {
       const rows = await resolutionTimes({ period: "quarterly" } as never, now);
       const [truth] = await closedByDue();
       expect(rows.reduce((a, r) => a + r.n, 0)).toBe(Number(truth.n)); // the same incidents
       expect(rows.reduce((a, r) => a + r.onTime, 0)).toBe(Number(truth.within)); // app 6,585; closed by the due time 2,923
     });
 
-    it.fails("INV-3 the resolution_times answer states the true share", async () => {
+    it("INV-3 the resolution_times answer states the true share", async () => {
       const r: any = await runTool("resolution_times" as never, { scope: { period: "quarterly" } });
       const [truth] = await closedByDue();
       expect(r.facts.find((f: any) => f.id === "resolution.on_time_pct").value).toBe(Math.round((Number(truth.within) / Number(truth.n)) * 100));
     });
 
     // Police has "response" deadlines: 77% on the tile, 8% closed by the due time. Departments with "resolution" deadlines are right, because their flag does follow closing.
-    it.fails("INV-3 the officer's 'Closed on time' tile counts incidents closed by their due time", async () => {
+    it("INV-3 the officer's 'Closed on time' tile counts incidents closed by their due time", async () => {
       const mods = await deptInsights("POL-GCP", { period: "quarterly", zone: null, taluk: null });
       const tile = mods.flatMap((m) => m.kpis ?? []).find((k) => k.label === "Closed on time");
       expect(tile).toBeTruthy();
@@ -129,13 +129,13 @@ describe("data invariants: what the app does with the data", () => {
       expect(String(i.sla_due) < now).toBe(true);
     });
 
-    it.fails("INV-4 an incident the case page calls missed is on the Past deadline list", async () => {
+    it("INV-4 an incident the case page calls missed is on the Past deadline list", async () => {
       const [m] = await missedButNotFlagged();
       const r = await list({ ...LIST, status: "overdue", q: m.id } as never);
       expect(r.incidents).toBe(1);
     });
 
-    it.fails("INV-4 the Past deadline list holds every open incident whose due time has gone", async () => {
+    it("INV-4 the Past deadline list holds every open incident whose due time has gone", async () => {
       const r = await list({ ...LIST, status: "overdue" } as never);
       const [t] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.is_open = 1 AND i.sla_due_at < ? AND i.first_reported_at <= ?
         AND NOT EXISTS (SELECT 1 FROM dept_assignments da WHERE da.incident_id = i.incident_id)`, [now, now]);

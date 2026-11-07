@@ -28,3 +28,15 @@ Written as each cluster is committed. Branch claude/p4-lane-d. Plain words.
   scripts/create-assistant-ro-user.sql grants the read-only assistant user only the four decision columns it needs.
 - Class guard: src/lib/collector/effective.guard.pass4.test.ts fails on any raw pipeline flag in a figure file, outside a short
   listed set with a reason each. Sweep: docs/qa/pass4/sweeps/RC-27.txt.
+
+## RC-34: two definitions of overdue and on time
+- Root cause: "past deadline" was the pipeline's sla_breached flag on the tiles and lists, but a date comparison (due time before now) on
+  the case page and in the explain text, so 914 open incidents were "missed" on the case and absent from the tile and list. "Closed on
+  time" was the same flag negated, and the flag is not about closing: an incident closed months late still counted as on time (app 6,585
+  of a true 2,923 in 90 days; police 77% on the tile against 8% by dates).
+- Why tests missed it: no test compared closed_at with sla_due_at, or the case page with the list.
+- Fix: metrics.ts pastDueSql(now, alias) (flag OR due time gone by the console's time) and closedOnTimeSql(closedAt) (closed by the due
+  time, using the effective closed time) are the only rules; every tile, list, snapshot, brief, officer tile and Ask District IQ count uses
+  them. OPEN-7 (the pipeline's flag) is not patched in the data; the console just no longer depends on it.
+- Guard: effective.guard.pass4.test.ts "RC-34 class guard" fails on any raw sla_breached in a figure file; metrics.test.ts tests both
+  functions, including that a bad time is never put in SQL. Sweep: docs/qa/pass4/sweeps/RC-34.txt.

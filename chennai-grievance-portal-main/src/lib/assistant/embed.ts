@@ -279,8 +279,9 @@ export async function semanticSearch(query: string, filter: { zone?: number | nu
   if (!ix || !ix.ids.length) return null;
   let q: Float32Array;
   try { q = (await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs; } catch (e) {
-    if (e instanceof ModelNotReady) return null; // keyword search answers until the model is ready
-    throw e;
+    // not ready, a damaged or missing model file, a failed load: whatever the reason, the keyword search answers (the caller says so)
+    if (!(e instanceof ModelNotReady)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
+    return null;
   }
   const cats = filter.cats?.length ? new Set(filter.cats) : null;
   const hits: Hit[] = [];

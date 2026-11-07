@@ -545,7 +545,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                 {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
                   <button key={f.did} className="pop-i" onClick={() => { setPop(null); c.openGrievance(f.id); }}>
                     <span className={`bell-dot ${f.ok ? "" : "s-high"}`} style={f.ok ? { background: "var(--ok)" } : undefined} aria-hidden="true" />
-                    <span><b>{f.ok ? "Collector verified" : "Collector returned for rework"}: {f.title ?? f.type}</b>
+                    <span><b>{f.ok ? "Collector verified" : f.decision === "reject" ? "Collector rejected" : "Collector returned for rework"}: {f.title ?? f.type}</b>
                       <small>{rel(f.at, c.now)}{!seen || String(f.at) > seen ? " · new" : ""}</small></span>
                   </button>
                 )) : <div className="empty">No notifications in this period.</div>}
@@ -660,7 +660,7 @@ function Collected({ ov, live, onClick }: { ov: OfficerOverview; live: number; o
   const all = !!s && s.total > 0 && s.missing.length === 0;
   const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
   const sub = s && !all ? `${s.done.length} of ${s.total} feeds current · ${live}/${ov.feeds.length} live` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
-  const tip = "Every source is collected hourly by the district intelligence pipeline." +
+  const tip = "The district intelligence pipeline collects its real feeds hourly; generated department feeds are test data and are not counted live." +
     (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "") + " Click for the data feeds.";
   return (
     <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick} data-pop>

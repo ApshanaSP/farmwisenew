@@ -69,7 +69,7 @@ describe("the search index when the model is not there", () => {
     model.embed = () => { throw new ModelNotReady(); };
     await expect(hybridSearch("incidents", "flooding")).resolves.toBeNull();
   });
-  it.fails("GB-4: when the model cannot load at all, search also falls back to keywords (null), and does not throw", async () => {
+  it("GB-4: when the model cannot load at all, search also falls back to keywords (null), and does not throw", async () => {
     model.embed = () => { throw new Error("the model file is damaged"); };
     await expect(hybridSearch("incidents", "flooding")).resolves.toBeNull();
   });

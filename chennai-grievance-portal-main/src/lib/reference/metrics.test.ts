@@ -67,3 +67,14 @@ describe("an unusual rise needs enough reports (R-18)", () => {
     expect(unusualEnough({} as any)).toBe(false);
   });
 });
+
+describe("RC-34: one rule for past deadline and on time", () => {
+  it("past due is the flag or the due time gone by the console's time", async () => {
+    const { pastDueSql, closedOnTimeSql } = await import("./metrics");
+    expect(pastDueSql("2026-11-06 12:00:00")).toBe("(COALESCE(i.sla_breached, 0) = 1 OR COALESCE(i.sla_due_at < '2026-11-06 12:00:00', 0) = 1)");
+    expect(pastDueSql("2026-11-06 12:00:00", "w")).toContain("w.sla_due_at <");
+    // a bad time is never put in the SQL
+    expect(pastDueSql("2026-11-06'; DROP TABLE x; --")).toBe("(COALESCE(i.sla_breached, 0) = 1)");
+    expect(closedOnTimeSql("X.closed")).toBe("(X.closed IS NOT NULL AND i.sla_due_at IS NOT NULL AND X.closed <= i.sla_due_at)");
+  });
+});

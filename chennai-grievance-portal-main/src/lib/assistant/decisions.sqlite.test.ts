@@ -26,14 +26,15 @@ function fresh() {
   registerFunctions(db);
   db.exec(`
     CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, title TEXT, lead_dept TEXT, zone_no INTEGER, zone_name TEXT, severity_level TEXT, is_open INTEGER, citizen_complaints INTEGER,
-      first_reported_at TEXT, hours_open REAL, sla_breached INTEGER, category_code TEXT, taluk_code TEXT, status_std TEXT);
+      first_reported_at TEXT, hours_open REAL, sla_breached INTEGER, sla_due_at TEXT, category_code TEXT, taluk_code TEXT, status_std TEXT);
+    CREATE TABLE metrics (metric TEXT, value TEXT);
     CREATE TABLE collector_decisions (decision_id INTEGER PRIMARY KEY, incident_id TEXT, decision TEXT);
     CREATE TABLE ref_wards (ward_no INTEGER, zone_no INTEGER, zone_name TEXT);
     CREATE TABLE ref_departments (code TEXT, name TEXT);
     INSERT INTO ref_wards VALUES (178, 13, 'Adyar');
     INSERT INTO ref_departments VALUES ('GCC-SWD', 'Storm Water Drain');
   `);
-  const ins = db.prepare(`INSERT INTO incidents VALUES (?, 't', 'GCC-SWD', 13, 'Adyar', 'High', ?, 2, ?, 5, 0, 'FLOOD_WATERLOGGING', NULL, 'Open')`);
+  const ins = db.prepare(`INSERT INTO incidents VALUES (?, 't', 'GCC-SWD', 13, 'Adyar', 'High', ?, 2, ?, 5, 0, NULL, 'FLOOD_WATERLOGGING', NULL, 'Open')`);
   for (let k = 1; k <= 6; k++) ins.run(`INC-${k}`, 1, "2026-11-05 09:00:00");
   ins.run("INC-7", 0, "2026-11-05 09:00:00"); // closed by the pipeline
   return db;

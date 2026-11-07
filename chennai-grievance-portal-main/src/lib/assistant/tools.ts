@@ -31,7 +31,8 @@ import {
 } from "@/lib/assistant/queries";
 import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
-import intelPool, { TITLE } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
 import { MIN_PCT_BASE } from "@/lib/reference/metrics";
 
@@ -98,22 +99,40 @@ const TOPIC_WORDS = new Set(["murder", "accident", "crash", "flood", "flooding",
   "fire", "protest", "drain", "drainage", "sewage", "pothole", "streetlight", "suicide", "rape", "harassment", "missing", "drug", "ganja", "liquor", "collapse",
   "stray", "dog", "water", "power", "crime", "asphyxiation", "gas", "lake", "bund"]);
 
+/** The Collector's decisions on the pipeline's status (effective.ts): the keyword lane shows the status the console shows. */
+const EFF = effectiveSql(ops("collector_decisions"));
+
 /** Incidents whose title or place contains every word, newest first (the search's fallback when the meaning index is not ready). */
 async function keywordIncidents(words: string[], since: number | null, until: number, zone: number | null, cat: string | null, dept: string | null): Promise<Row[]> {
   const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
-  const parts = words.map(() => "(LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)");
-  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
+  // the title the console shows (the headline over the raw title) or the raw one, or the place
+  const parts = words.map(() => `(LOWER(COALESCE(${TITLE}, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)`);
+  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
   if (since != null) (parts.push("i.first_reported_at > ?"), params.push(ist(since)));
   parts.push("i.first_reported_at <= ?"); params.push(ist(until));
   if (zone != null) (parts.push("i.zone_no = ?"), params.push(zone));
   if (cat) (parts.push("i.category_code = ?"), params.push(cat));
   if (dept) (parts.push("i.lead_dept = ?"), params.push(dept));
   const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT i.incident_id AS id, i.title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.dead,
+    `SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, ${EFF.status} AS status, i.dead,
             DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i') AS t
      FROM incidents i WHERE ${parts.join(" AND ")} ORDER BY i.first_reported_at DESC LIMIT 12`, params);
   return rows as Row[];
 }
+/** News headlines whose title holds every word (the search's fallback when the meaning index is not ready). */
+async function keywordNews(words: string[], since: number | null, until: number): Promise<Row[]> {
+  const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const parts = words.map(() => "(LOWER(COALESCE(d.title, '')) LIKE ? OR LOWER(COALESCE(d.title_en, '')) LIKE ?)");
+  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
+  if (since != null) (parts.push("d.published_at > ?"), params.push(ist(since)));
+  parts.push("d.published_at <= ?"); params.push(ist(until));
+  const [rows] = await intelPool.query<RowDataPacket[]>(
+    `SELECT d.doc_id AS id, d.title, d.publisher, d.url, d.place_text AS place, d.linked_incident_id AS incident, d.dead,
+            DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i') AS t
+     FROM documents d WHERE d.source_kind = 'news' AND d.is_district = 1 AND ${parts.join(" AND ")} ORDER BY d.published_at DESC LIMIT 8`, params);
+  return rows as Row[];
+}
+
 type Body = Omit<ToolResult, "tool" | "args">;
 
 export class ToolError extends Error {}
@@ -574,7 +593,7 @@ export const TOOLS = [
         scope, asOf: now,
         data: { rows: rows.map((r) => ({ ...r, hours: round(r.hours), days: round(r.hours / 24), prevHours: r.prevHours == null ? null : round(r.prevHours),
           onTimePct: r.n ? Math.round((r.onTime / r.n) * 100) : 0 })), closed, avgHours: round(avg), onTime },
-        facts, sources: [fn("incidents.resolutionTimes"), tbl("incidents", "first_reported_at, closed_at, sla_breached")], incidentIds: [], testData: false,
+        facts, sources: [fn("incidents.resolutionTimes"), tbl("incidents", "first_reported_at, closed_at, sla_due_at")], incidentIds: [], testData: false,
         caveats: ["Counted by when each incident was closed as resolved; time is from the first report to closing. Departments with fewer than 3 closed are left out."]
       };
     }
@@ -648,20 +667,27 @@ export const TOOLS = [
       const zone = s.zone ?? (place?.zone != null ? Number(place.zone) : null);
       const f = { since: a.allTime ? null : nowT - PERIODS[s.period].hours * 3600, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
       const [inc, news] = await Promise.all([
-        a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve([]),
-        a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve([])
+        // a kind not asked for is not searched: null, the same as "no index", so the fallback below runs when every asked kind has none
+        a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve(null),
+        a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve(null)
       ]);
       // no meaning index yet: the question's own words, matched against incident titles and places in the period
       if (inc === null && news === null) {
-        const words = keywordsOf(a.text);
-        const rows = words.length ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
+        // the words that say what happened: "any reports about a sinkhole" searches "sinkhole", not "report" (ASKING words say what is asked)
+        const words = keywordsOf(a.text).filter((w) => !ASKING.has(w) && !GENERIC_WORDS.has(w));
+        const rows = words.length && a.kinds.includes("incidents") ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
+        const newsRows = words.length && a.kinds.includes("news") ? await keywordNews(words, f.since, f.until).catch(orEmpty("tools:keyword news")) : [];
+        const articles = newsRows.map((r) => ({ id: String(r.id), title: r.title, publisher: r.publisher, place: r.place ?? null, url: r.url ?? null, incident: r.incident || null,
+          dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
         const incidents = rows.map((r) => ({ id: String(r.id), title: r.title, type: r.type, zone_name: r.zone_name, place: r.place, sev: r.sev, status: r.status,
           dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
-        return { scope: s, asOf: now, data: { found: incidents.length > 0, query: a.text, zone, incidents, news: [] },
-          facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length), fact("search.news", "News reports matching the description (best 8 shown)", 0)],
+        return { scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles },
+          facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length), fact("search.news", "News reports matching the description (best 8 shown)", articles.length)],
           sources: [tbl("incidents", `title or place contains: ${words.join(", ") || "(no words to search)"}`)], incidentIds: incidents.map((x) => x.id), testData: false,
-          caveats: [`Searched the incident records for the words ${words.map((w) => `"${w}"`).join(", ") || "in the question"}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`],
-          untrusted: ["title", "incidents"] };
+          caveats: [words.length
+            ? `Searched the incident records and news headlines for the words ${words.map((w) => `"${w}"`).join(", ")}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`
+            : "Could not search: the meaning search is not available right now, and the question has no word to look for in the titles. Nothing was searched, so this is not a finding that nothing matches."],
+          untrusted: ["title", "incidents", "news"] };
       }
       // a match: in the keyword results, or close in meaning. A subject the district's data has no word for ("earthquakes")
       // matches only records that name it: the nearest records in meaning are something else, and were once reported as

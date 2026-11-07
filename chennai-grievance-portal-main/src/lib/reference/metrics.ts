@@ -138,3 +138,26 @@ export function dataAge(day: string | null | undefined, now: string): { days: nu
  */
 export const MIN_UNUSUAL = 5;
 export const unusualEnough = (a: { observed?: unknown }) => Number(a.observed ?? 0) >= MIN_UNUSUAL;
+
+// ------------------------------------------------- RC-34: one rule each --
+
+/**
+ * SQL: "past its deadline", the ONE rule every figure, list and brief uses (RC-34). An incident is past its deadline when the
+ * pipeline flagged it or its due time has gone by the console's time. The pipeline's flag alone left 914 open incidents that the
+ * case page calls missed off the Past deadline tile and list (OPEN-7 is the pipeline's; the console no longer depends on it).
+ * `now` is the console's IST time ("YYYY-MM-DD HH:MM:SS"); anything else falls back to the flag.
+ */
+export function pastDueSql(now: string, a = "i"): string {
+  const ok = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(String(now));
+  return ok
+    ? `(COALESCE(${a}.sla_breached, 0) = 1 OR COALESCE(${a}.sla_due_at < '${now}', 0) = 1)`
+    : `(COALESCE(${a}.sla_breached, 0) = 1)`;
+}
+
+/**
+ * SQL: "closed within its deadline" is closing by the due time, never the pipeline's flag (which is set from the due time at the
+ * moment of a refresh, so an incident closed months late could still count as on time). `closedAt` is the effective closed time.
+ */
+export function closedOnTimeSql(closedAt: string, due = "i.sla_due_at"): string {
+  return `(${closedAt} IS NOT NULL AND ${due} IS NOT NULL AND ${closedAt} <= ${due})`;
+}

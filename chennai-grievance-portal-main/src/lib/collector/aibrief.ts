@@ -17,7 +17,7 @@ import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
-import { pctChange, unusualEnough } from "@/lib/reference/metrics";
+import { pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
@@ -227,7 +227,7 @@ async function dayFacts(s: BriefScope) {
     q(`SELECT i.zone_name AS name, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0 AND i.zone_name IS NOT NULL
        GROUP BY 1 ORDER BY n DESC LIMIT 3`, WP),
     q(`SELECT ${INC} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND i.sla_breached = 1 AND i.citizen_complaints > 0${f.sql}`, f.params),
+    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND ${pastDueSql(await asOf())} AND i.citizen_complaints > 0${f.sql}`, f.params),
     // My Tasks' figure (metrics.ts awaiting_check), not every open item flagged for the Collector
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT dp.name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe ${FROM} WHERE ${W} GROUP BY dp.name ORDER BY n DESC LIMIT 5`, WP),
@@ -326,7 +326,7 @@ export async function deptBrief(s: BriefScope, dept: string, user: string): Prom
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
   const [tot, kinds, rows, name] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
-              SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints FROM incidents i WHERE ${W}`, WP),
+              SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND ${pastDueSql(await asOf())}) AS overdue, SUM(i.citizen_complaints) AS complaints FROM incidents i WHERE ${W}`, WP),
     q(`SELECT i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
     q(`SELECT ${INC} ${FROM} WHERE ${W} ORDER BY COALESCE(i.dead, 0) DESC, ${SEV_ORDER}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 15`, WP),
     q(`SELECT name FROM ref_departments WHERE code = ?`, [dept])
