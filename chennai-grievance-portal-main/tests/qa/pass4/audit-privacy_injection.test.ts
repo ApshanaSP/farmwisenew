@@ -325,7 +325,7 @@ describe("BUG-013: opening a workspace by voice", () => {
   it("the id comes from the real route's shape (name groups with versions, newest first)", () => {
     expect(workspaceIds([{ name: "QA Daily", versions: [{ id: 7, version: 2 }, { id: 5, version: 1 }] }])).toEqual([{ name: "QA Daily", id: 7 }]);
   });
-  const open = async (id: string) => (await GET(new Request("http://127.0.0.1/x") as never, { params: { id } })).status;
+  const open = async (id: string) => (await GET(new Request("http://127.0.0.1/x") as never, { params: Promise.resolve({ id }) })).status;
   it("a small id opens", async () => expect(await open("801")).toBe(200));
   // a copy that does not save numbers its own rows from 1000000001 (store.ts LOCAL_IDS)
   it("audit-privacy_injection-9: an id with ten digits, as saved on any copy that does not save, opens", async () => expect(await open("1000000003")).toBe(200));

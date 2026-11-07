@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 /** Take action on a severe incident, step 1-3: the agent reads it, finds the officer and drafts the email (nothing is sent). */
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   if (!ID.test(params.id)) return NextResponse.json({ error: "Invalid incident id." }, { status: 400 });
@@ -21,7 +22,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 /** Step 4: the Collector approved the email ({ subject, body }); it is sent under the EMAIL_MODE rules and recorded. */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   if (!ID.test(params.id)) return NextResponse.json({ error: "Invalid incident id." }, { status: 400 });

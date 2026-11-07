@@ -5,7 +5,8 @@ import { parseStoreId } from "@/lib/store-id";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const id = parseStoreId(params.id);

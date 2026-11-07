@@ -1,0 +1,30 @@
+import { accounts } from "file:///E:/farm/.claude/worktrees/p4-lane-c/chennai-grievance-portal-main/tests/qa/seed-local-users.mjs";
+const B = "http://127.0.0.1:3153";
+const c = accounts().find((a) => a.key === "collector");
+const r = await fetch(B + "/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: c.email, password: c.password }) });
+const cookie = r.headers.getSetCookie().map((x) => x.split(";")[0]).join("; ");
+console.log("login", r.status);
+const g = async (u) => (await fetch(B + u, { headers: { cookie } })).status;
+console.log("search en", await g("/api/collector/search?q=garbage"));
+for (const w of ["குப்பை", "சாலை", "தீ", "புகார்"]) console.log("search", w, await g("/api/collector/search?q=" + encodeURIComponent(w)));
+console.log("rain 1999", await g("/api/rehearsal/state?replay=rain-1999-01-01"));
+console.log("overview", await g("/api/collector/overview"));
+const s = await fetch(B + "/api/collector/workspaces", { method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ name: "RC24 probe", filters: { period: "weekly" }, layout: { panels: {} } }) });
+console.log("ws save", s.status);
+const l = await (await fetch(B + "/api/collector/workspaces", { headers: { cookie } })).json();
+const id = l.workspaces?.find((w) => w.name === "RC24 probe")?.versions?.[0]?.id;
+console.log("ws id", id, "open", await g("/api/collector/workspaces/" + id));
+for (const [name, h, body] of [["photo json", { "content-type": "application/json" }, "{}"]]) {
+  const cit = accounts().find((a) => a.key === "citizenA");
+  const lr = await fetch(B + "/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: cit.email, password: cit.password }) });
+  const ck = lr.headers.getSetCookie().map((x) => x.split(";")[0]).join("; ");
+  const pr = await fetch(B + "/api/profile/photo", { method: "POST", headers: { cookie: ck, ...h }, body });
+  console.log(name, pr.status);
+  const mo = await fetch(B + "/api/profile/mobile-otp/request", { method: "POST", headers: { cookie: ck, "content-type": "application/json" }, body: "{not json" });
+  console.log("mobile bad json", mo.status);
+}
+console.log("export assistant (expect 428)", await g("/api/collector/assistant/export?period=weekly"));
+console.log("export console (expect 428)", await g("/api/collector/export?period=weekly"));
+const big = await fetch(B + "/api/i18n", { method: "POST", headers: { "content-type": "application/json" }, body: `{"lang":"ta","texts":[${"0,".repeat(299999)}0]}` });
+console.log("i18n big", big.status);
+console.log("server alive", (await fetch(B + "/login")).status);

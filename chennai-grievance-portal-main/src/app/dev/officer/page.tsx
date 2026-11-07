@@ -13,8 +13,9 @@ export const metadata = { title: "Officer console preview · District IQ" };
  * a dry-run store, from this PC: everywhere else it does not exist). ?dept=GCC-SWD. Its own API calls still need the
  * officer's sign-in, so actions and reloads fail here; the first screen is the real one.
  */
-export default async function DevOfficerPage({ searchParams }: { searchParams: { dept?: string } }) {
-  const host = (headers().get("host") ?? "").split(":")[0];
+export default async function DevOfficerPage(props: { searchParams: Promise<{ dept?: string }> }) {
+  const searchParams = await props.searchParams;
+  const host = ((await headers()).get("host") ?? "").split(":")[0];
   if (process.env.NODE_ENV === "production" || process.env.AWS_STORE_DRY_RUN !== "1" || !(host === "localhost" || host === "127.0.0.1")) notFound();
   const dept = await deptProfile(/^[A-Z0-9-]{2,20}$/.test(searchParams.dept ?? "") ? searchParams.dept! : "GCC-SWD");
   if (!dept) notFound();

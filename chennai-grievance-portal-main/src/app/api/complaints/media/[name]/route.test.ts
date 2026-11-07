@@ -33,7 +33,7 @@ const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0
 let dir = "";
 const as = async (s: typeof h.session, name = NAME) => {
   h.session = s;
-  return (await GET(new NextRequest(`http://localhost/api/complaints/media/${name}`), { params: { name } })).status;
+  return (await GET(new NextRequest(`http://localhost/api/complaints/media/${name}`), { params: Promise.resolve({ name }) })).status;
 };
 
 beforeAll(() => {

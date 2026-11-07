@@ -162,3 +162,23 @@ describe("RC-25 class guard: routes that hand out the console's data go through 
     vi.unstubAllEnvs();
   });
 });
+
+// ---------------------------------------------------------------------------------------------------------------- RC-22
+describe("RC-22 class guard: the framework is on a release that has the Windows RCE fix, and the code reads request state the way that release wants", () => {
+  it("next is 15.5.24 or later (GHSA-p293-qw3h-jr36 is fixed from there; Next 14 has no patched release)", () => {
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, "node_modules/next/package.json"), "utf8")).version as string;
+    const [a, b, c] = v.split(".").map((x) => parseInt(x, 10));
+    expect(a > 15 || (a === 15 && (b > 5 || (b === 5 && c >= 24))), v).toBe(true);
+    expect(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).dependencies.next).toMatch(/^\^?(1[5-9]|[2-9]\d)\./);
+  });
+  it("cookies(), headers() and a route's params are always awaited", () => {
+    const files = walk(path.join(ROOT, "src")).filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\./.test(f));
+    const bad: string[] = [];
+    for (const f of files) {
+      const s = fs.readFileSync(f, "utf8");
+      if (/\b(?<!await )(?<![.\w])(cookies|headers)\(\)\.(get|getAll|has)\b/.test(s) && /from "next\/headers"/.test(s)) bad.push(path.relative(ROOT, f));
+      if (/\{ params \}: \{ params: \{/.test(s)) bad.push(`${path.relative(ROOT, f)} (params not a Promise)`);
+    }
+    expect(bad).toEqual([]);
+  });
+});

@@ -15,7 +15,8 @@ const PatchSchema = z.object({
 }).refine((b) => b.enabled !== undefined || b.refreshMinutes !== undefined, { message: "Say what to change." });
 
 /** POST: run the source now. PATCH: pause/resume or change the refresh interval. DELETE: remove an added source. */
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const id = sourceId(params.id);
@@ -28,7 +29,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const id = sourceId(params.id);
@@ -44,7 +46,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const id = sourceId(params.id);

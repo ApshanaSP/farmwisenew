@@ -4,7 +4,8 @@ import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
 import { progressFor, withProgress } from "@/lib/complaint-progress";
 
-export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ code: string }> }) {
+  const params = await ctx.params;
   const session = await getSessionFromCookies();
   if (!session || session.role !== "citizen") {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

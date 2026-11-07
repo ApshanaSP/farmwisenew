@@ -12,5 +12,8 @@ if (!Number.isNaN(at)) {
     constructor(...a) { if (a.length === 0) super(now()); else super(...a); }
     static now() { return now(); }
   }
+  // Next 15 re-wraps Date from its OWN properties only (node-environment-extensions/date.js), so the statics a subclass inherits (UTC, parse) are lost: own copies
+  FakeDate.UTC = Real.UTC;
+  FakeDate.parse = Real.parse;
   globalThis.Date = FakeDate;
 }

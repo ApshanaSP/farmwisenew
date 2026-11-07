@@ -6,12 +6,12 @@ import { roleToPortal } from "@/lib/session-cookies";
 // sign-ins (lib/session-cookies.ts), so a duplicated tab, or the officer console in the next tab, stays signed in.
 // The account's other sessions are not revoked here; a password change or reset still ends all of them.
 export async function POST() {
-  let portal = resolvePortal();
+  let portal = await resolvePortal();
   const session = portal ? await getPortalSession(portal) : await getSessionFromCookies();
   if (!portal) portal = session ? roleToPortal(session.role) : null;
 
   const res = NextResponse.json({ message: "Logged out" });
   await migrateLegacyCookie(res);
-  if (portal) clearAuthCookie(res, portal);
+  if (portal) await clearAuthCookie(res, portal);
   return res;
 }

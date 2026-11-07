@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
  * A completion-report photo, for the Collector, an officer of the department that sent it, or a citizen whose complaint
  * is in the grievance the report is on (their tracker shows the work done).
  */
-export async function GET(_req: NextRequest, { params }: { params: { dir: string; name: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ dir: string; name: string }> }) {
+  const params = await ctx.params;
   // every sign-in this browser holds: photos open in a new tab, with no page to say which portal asked
   const sessions = await getActiveSessions();
   if (!sessions.length) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

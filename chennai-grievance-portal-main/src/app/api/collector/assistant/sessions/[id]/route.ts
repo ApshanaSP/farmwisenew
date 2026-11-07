@@ -6,7 +6,8 @@ import { sessionMessages } from "@/lib/assistant/store";
 export const dynamic = "force-dynamic";
 
 /** One conversation's messages and answer cards, for reopening it. */
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await assistantSession();
   if (s instanceof NextResponse) return s;
   if (!/^[0-9a-f-]{36}$/.test(params.id)) return NextResponse.json({ error: "Invalid conversation id." }, { status: 400 });
