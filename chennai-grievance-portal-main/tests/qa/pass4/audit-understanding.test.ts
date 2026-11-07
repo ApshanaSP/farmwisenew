@@ -116,7 +116,7 @@ describe("BUG-020 holds for the original words", () => {
 
   // audit-understanding-7: the same request in other everyday words
   for (const s of ["describe the flooding complaint in Adyar", "summarize the flooding complaint in Adyar", "what's the flooding complaint in Adyar", "அடையாறு வெள்ள புகார் பத்தி சொல்லு", "அடையாறு வெள்ளம் பத்தி சொல்லுங்க", "அடையாறுல வெள்ளம் புகார் என்ன ஆச்சு", "Adyar flooding complaint pathi sollu", "Adyar flooding complaint enna aachu"])
-    it.fails(`audit-understanding-7 police brief open, ${s}: not the police brief re-scoped`, async () => expect(isPoliceBrief(await round(s, { stage, turns }))).toBe(false));
+    it(`audit-understanding-7 police brief open, ${s}: not the police brief re-scoped`, async () => expect(isPoliceBrief(await round(s, { stage, turns }))).toBe(false));
 });
 
 describe("audit-understanding-7, other screens open", () => {
@@ -126,7 +126,7 @@ describe("audit-understanding-7, other screens open", () => {
     expect(stageOf(await round("explain the flooding complaint in Adyar", { stage, turns: [{ heard: "give me the corporation update", did: "brief" }] }))?.recipe).toBe("case");
   });
   for (const [open, s] of [["give me the corporation update", "describe the flooding complaint in Adyar"], ["give me the corporation update", "அடையாறு வெள்ள புகார் பத்தி சொல்லு"], ["Metrowater report", "Adyar flooding complaint pathi sollu"], ["சென்னை காவல்துறை அறிக்கை", "describe the flooding complaint in Adyar"]] as const)
-    it.fails(`audit-understanding-7 ${open} open, ${s}: not that body's brief re-scoped`, async () => {
+    it(`audit-understanding-7 ${open} open, ${s}: not that body's brief re-scoped`, async () => {
       const d = stageOf(await round(open))!;
       const stage = { recipe: d.recipe, title: d.title, focus: null, slots: d.slots, blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 30) })) } as StageContext;
       expect(stageOf(await round(s, { stage, turns: [{ heard: open, did: "brief" }] }))?.recipe).not.toBe("brief");
@@ -424,7 +424,7 @@ describe("audit-understanding-24 P1: the rules hear words starting with கொ a
 
 describe("audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control)", () => {
   for (const t of ["only Adyar", "அடையாறு மட்டும்", "Adyar mattum"])
-    it.fails(`audit-understanding-25 police brief open, ${t}: not "None of these mention"`, async () => {
+    it(`audit-understanding-25 police brief open, ${t}: not "None of these mention"`, async () => {
       const m = pushScreen(stageEmpty, stageOf(await round("chennai city police report"))!);
       const cmd = localStageCommand(t) as LocalCmd;
       expect(JSON.stringify(cmd ? stageReducer(m, cmd).fx : [])).not.toMatch(/None of these mention/);

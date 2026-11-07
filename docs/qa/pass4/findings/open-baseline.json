@@ -277,7 +277,8 @@
     "row_id": "en-followup-08",
     "mechanism": "M06",
     "model_needed": false,
-    "lane": "frame"
+    "lane": "frame",
+    "fixed": true
   },
   {
     "id": "open-baseline-17",

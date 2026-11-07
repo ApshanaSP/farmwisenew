@@ -5,6 +5,14 @@
  */
 import type { BlockT, CaseRowT, StageDocT } from "./stage";
 import type { Lang } from "./types";
+import { ZONES } from "./lexicon";
+
+/** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
+const zoneNamed = (x: string): number | null => {
+  const s = x.trim().toLowerCase();
+  for (const [n, z] of Object.entries(ZONES)) if (z.en.some((e) => s === e || s.startsWith(`${e} `) || s.endsWith(` ${e}`)) || z.ta.some((e) => s.startsWith(e.replace(/[்ுூ]$/, "")))) return Number(n);
+  return null;
+};
 
 export type LocalCmd =
   | { op: "filter"; text: string }
@@ -135,6 +143,9 @@ export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx:
     case "sort": return { m: { ...m, doc: sortStage(doc, cmd.by) }, fx: [{ fx: "earcon" }, { fx: "say", en: `Sorted by ${cmd.by}.`, ta: "வரிசைப்படுத்தினேன்.", speak: false }] };
     case "filter": {
       const r = filterStage(doc, cmd.text);
+      // "only Adyar" on a screen whose rows do not name it (a brief, a ranking): the Collector named a place, so the screen is rebuilt for it, and never told that nothing mentions it (RC-07)
+      const named = !r.kept ? zoneNamed(cmd.text) : null;
+      if (named != null) return { m, fx: [{ fx: "rebuild", recipe: doc.recipe, slots: { ...doc.slots, zones: [named], fresh: true }, label: { en: cmd.text, ta: cmd.text }, clearConsole: false }] };
       if (!r.kept) return { m, fx: [{ fx: "say", en: `None of these mention ${cmd.text}.`, ta: `"${cmd.text}" எதிலும் இல்லை.`, speak: true }] };
       return { m: { ...m, doc: r.doc, filter: cmd.text }, fx: [{ fx: "say", en: `${r.kept} of the ${r.of} shown are about ${cmd.text}.`, ta: `${r.of}-இல் ${r.kept} மட்டும்.`, speak: true }] };
     }

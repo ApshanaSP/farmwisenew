@@ -271,3 +271,24 @@ describe("RC-06: periods", () => {
     expect(quickScreen("top 5 zones by complaints", world as never)?.recipe).toBe("ranking");
   });
 });
+
+// RC-07: a follow-up has a positive sign; a new request with a place in it is never folded into the open screen; the Stage's own filter never says "none mention" about a place.
+import { localStageCommand, pushScreen, stageEmpty, stageReducer } from "./stagelocal";
+describe("RC-07: follow-ups and the Stage's filter", () => {
+  const briefStage = { recipe: "brief", title: "Greater Chennai Police · brief, today", focus: null, slots: { dept: "POL-GCP", zones: [], period: "daily" }, blocks: [] };
+  const frame = (text: string) => resolveFrame({ text, stage: briefStage as never, turns: [{ heard: "police report", did: "brief" }], lastPlace: null, lastText: "police report", world: world as never }).kind;
+  it("a request of five or six words with a place and a topic is a new request, in three languages", () => {
+    for (const s of ["describe the flooding complaint in Adyar", "summarize the garbage complaints in Ambattur", "Adyar flooding complaint pathi sollu", "அடையாறு வெள்ள புகார் பத்தி சொல்லு", "அடையாறு வெள்ளம் பத்தி சொல்லுங்க"]) expect(frame(s), s).toBe("none");
+  });
+  it("a follow-up that points back, or is a word or two, is still one", () => {
+    for (const s of ["and in Adyar?", "same for Ambattur", "only Adyar", "Adyar", "what about Ambattur"]) expect(frame(s), s).not.toBe("none");
+  });
+  it("only a place, on a screen whose rows do not name it, rebuilds the screen for the place, and never says none mention it", () => {
+    const m = pushScreen(stageEmpty, { ...briefStage, id: "s1", say: { en: "", ta: "" }, scope: {} } as never);
+    for (const t of ["only Adyar", "Adyar mattum", "அடையாறு மட்டும்"]) {
+      const cmd = localStageCommand(t) as never;
+      const fx = JSON.stringify(cmd ? stageReducer(m, cmd).fx : []);
+      expect(fx, t).not.toMatch(/None of these mention/);
+    }
+  });
+});

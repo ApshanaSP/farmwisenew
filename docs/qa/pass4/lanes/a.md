@@ -73,3 +73,15 @@ Fix (mechanism). One table (periodIn, in quick.ts) read by the fast lane and by 
 Class guard. lane-a.pass4.test.ts RC-06: every word of the table through the fast lane's reader and through a brief on a body, same window; the calendar words through every lane.
 
 Result. audit-understanding-11, AUD-NF-12 (the test now accepts a refusal with no screen and still fails on a screen titled today) and same-number-14 are plain tests; open-baseline-15 fixed; confident wrong 20 to 18. Not changed on purpose: English "last week", "last month" and "last quarter" stay the matching window named in the title (BUG-003, an accepted earlier decision and tested by it); the grader's rows en-brief-09, en-list-13, ta-brief-14 and their duplicates (PB-043 to PB-050) count that as the wrong window and stay open.
+
+## RC-07: a request re-scoped or a word dropped between lanes
+
+Root cause. frame.ts treated any sentence of six words or fewer with no listed verb as a follow-up, so "describe the flooding complaint in Adyar" (a new request) re-scoped the open police brief to Adyar; the Tamil word for "about" anywhere also made a sentence a follow-up. stagelocal.ts took any "only X" as a text filter over the rows on show, so "only Adyar" on a brief said "None of these mention Adyar", about a place the Collector had just named. The explain lane let an extra topic word through (RC-05 part).
+
+Why earlier tests missed it. Follow-ups and explain were tested with the listed verbs and a screen of cases; the closed lists made the tests pass.
+
+Fix (mechanism). A follow-up has a positive sign (a word that points back: and, same, only, what about, no; or one to three words), not the absence of a verb; the Tamil about word counts only as a question ending. A Stage text filter that matches no row and names a zone rebuilds the screen for that zone. The explain lane's extra topic word bails (RC-05).
+
+Class guard. lane-a.pass4.test.ts RC-07: new requests of five and six words in three languages with a brief open stay new; real follow-ups stay follow-ups; only a place never says "none mention it".
+
+Result. audit-understanding-7, -25, -14 and AUD-NF-5 are plain tests; confident wrong 18 to 17. Open: audit-understanding-8 (explain naming a place with no zone: the lane does not answer with another place's case, but does not name the place either; the planner has to).

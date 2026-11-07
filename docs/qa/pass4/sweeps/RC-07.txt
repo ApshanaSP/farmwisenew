@@ -1,0 +1,14 @@
+# RC-07 sweep: where a word or place is dropped between lanes
+## frame.ts ellipsis: before
+87:  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !isNewRequest(t));
+## stagelocal.ts: every 'only X' and text filter
+11:const zoneNamed = (x: string): number | null => {
+18:  | { op: "filter"; text: string }
+71:  if (only && only[1].length >= 3 && !/\b(severe|critical|high|medium|low|open|week|month|today|quarter)\b|கடுமை|அவசர|திறந்த|வாரம
+147:      const named = !r.kept ? zoneNamed(cmd.text) : null;
+149:      if (!r.kept) return { m, fx: [{ fx: "say", en: `None of these mention ${cmd.text}.`, ta: `"${cmd.text}" எதிலும் இல்லை.`, speak: true }] 
+## quick.ts explain branch: the words that are not asking, zone or topic words (namedOther)
+323:    const namedOther = t.trim().split(" ").some((x) => !ASKING.has(x) && !LISTED.has(x) && !isZoneWord(x) && !isCatWord(x));
+324:    if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
+## result
+a follow-up needs a sign that points back or is one to three words; ELLIPSIS_TA no longer takes the Tamil word for about anywhere; the Stage's text filter on a place the rows do not name rebuilds the screen for that place; the explain lane names a second topic word as another topic (RC-05) and does not fold it into the first

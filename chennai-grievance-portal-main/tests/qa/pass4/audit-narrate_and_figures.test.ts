@@ -217,12 +217,12 @@ describe("new: the issue or list that 'matters most' is the least severe (the li
 });
 
 describe("new: a place named in 'explain' is dropped when a topic was heard", () => {
-  it.fails.each([["explain the flooding complaint in Velachery", /velachery/i], ["explain the garbage complaint in Mylapore", /mylapore/i], ["Velachery flooding enna aachu", /velachery/i], ["வேளச்சேரி வெள்ள புகார் விளக்கு", /velachery/i], ["மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க", /mylapore/i]])("AUD-NF-5 %s is about that place", async (text, place) => {
+  it.each([["explain the flooding complaint in Velachery", /velachery/i], ["explain the garbage complaint in Mylapore", /mylapore/i], ["Velachery flooding enna aachu", /velachery/i], ["வேளச்சேரி வெள்ள புகார் விளக்கு", /velachery/i], ["மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க", /mylapore/i]])("AUD-NF-5 %s is about that place", async (text, place) => {
     const r = (await said(text)).result;
     const inc = blockOf(r, "CaseDetail")?.incident;
     if (inc) expect(`${inc.place ?? ""} ${inc.title ?? ""}`).toMatch(place as RegExp);
   });
-  it.fails.each(["explain the garbage complaint in Madurai", "explain the flooding complaint in Mumbai", "மதுரை குப்பை புகார் விளக்கு"])("AUD-NF-5 %s is not answered with a Chennai case", async (text) => {
+  it.each(["explain the garbage complaint in Madurai", "explain the flooding complaint in Mumbai", "மதுரை குப்பை புகார் விளக்கு"])("AUD-NF-5 %s is not answered with a Chennai case", async (text) => {
     expect(blockOf((await said(text)).result, "CaseDetail")).toBeUndefined();
   });
 });
