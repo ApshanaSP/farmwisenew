@@ -151,6 +151,7 @@ export function cameraFor(c: CameraInput, v: Viewport): Shot[] {
  * How much a follow-up should move the camera: a radius, severity, period or status edit keeps the view (the rings grow
  * or the dropped pins fade); a comparison pulls back to frame both; anything else is a new shot.
  */
-export function followUpMoves(edited: string | null): boolean {
+export function followUpMoves(edited: string | null, sameShape = false): boolean {
+  if (edited === "chip" && sameShape) return false; // a chip that leaves the shape of the question as it was keeps the view
   return !(edited === "distance" || edited === "severity" || edited === "period" || edited === "status" || edited === "facility" || edited === "group");
 }

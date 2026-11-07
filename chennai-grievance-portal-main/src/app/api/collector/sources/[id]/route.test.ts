@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ calls: [] as unknown[][] }));
 vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email: "c@x", userId: 1, role: "collector" }), failed: () => new Response(null, { status: 500 }) }));
@@ -14,6 +14,7 @@ import { DELETE, PATCH, POST } from "./route";
 const req = (body?: unknown) => new NextRequest("http://localhost/api/collector/sources/1", { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) });
 
 describe("source routes validate before touching the store", () => {
+  beforeEach(() => { h.calls.length = 0; });
   it("refuses an id that is not a number", async () => {
     for (const id of ["abc", "1;DROP", "-3", "0", "1e3"]) {
       expect((await POST(req(), { params: Promise.resolve({ id }) })).status).toBe(400);

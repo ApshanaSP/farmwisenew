@@ -40,6 +40,22 @@ const deps = (watches?: Deps["watches"]): Deps => ({
 const fileTable = async (d: number): Promise<Table> => { const f = await fetchOnce(`${BASE}/live/files/Reservoir_Levels_${String(d).padStart(2, "0")}-10-2026.xlsx`); return parseFileAsync(f.buf, f.name, f.contentType, f.url); };
 const key = (t: Table) => t.rows.map((r) => `${r[0]}|${r[t.headers.indexOf("Date")]}`);
 
+const CLEAN = { day: 1, missing: "", renameFrom: 0, dropOn: 0, failing: 0 };
+/** A connector of its own, brought to the end of day `through` the way a real one gets there (QA4 RC-36: each test used to take the
+ *  connector the test before it had left, so a shuffled order failed). A drift is approved and a quarantine is refused on the way. */
+async function connectorThrough(id: string, through: number): Promise<void> {
+  await setLive(CLEAN);
+  clock = at(1);
+  createConnector({ id, name: "Reservoirs", url: `${BASE}/live/reservoirs`, locate: "newest-file-matching", pattern: "Reservoir_Levels_{DD-MM-YYYY}.xlsx", table: await fileTable(1), seen: ["2026-10-01"] }, clock);
+  for (let d = 2; d <= through; d++) {
+    await setLive({ ...CLEAN, day: d, renameFrom: d >= 10 ? 10 : 0 });
+    clock = at(d);
+    const run = await runConnector(id, deps());
+    if (run.kind === "drift") await approveProposal(id, deps());
+    else if (run.kind === "quarantine") await judgeQuarantine(id, deps(), false);
+  }
+}
+
 describe("9.5 a daily site, a week of runs", () => {
   const id = "ds_connsim0001";
   it("days 1-7: seven runs append the new day's rows, with no duplicates", async () => {
@@ -64,6 +80,8 @@ describe("9.5 a daily site, a week of runs", () => {
   }, 60_000);
 
   it("a missing day is Late, then Healthy when the file appears", async () => {
+    const id = "ds_connsim0011";
+    await connectorThrough(id, 7);
     await setLive({ day: 8, missing: "8" });
     clock = at(8, 10, 0); // a day and two and a half hours after day 7's data (grace: 2 hours)
     const late = await runConnector(id, deps());
@@ -79,6 +97,8 @@ describe("9.5 a daily site, a week of runs", () => {
   }, 60_000);
 
   it("a site that fails is Failing, retried after 15 min, 1 h, then 3 h, and recovers", async () => {
+    const id = "ds_connsim0012";
+    await connectorThrough(id, 8);
     await setLive({ failing: 1, day: 9 });
     clock = at(9);
     const gaps: number[] = [];
@@ -99,6 +119,8 @@ describe("9.5 a daily site, a week of runs", () => {
   }, 60_000);
 
   it("a renamed column pauses it with a self-heal proposal; approval maps it and resumes", async () => {
+    const id = "ds_connsim0013";
+    await connectorThrough(id, 9);
     await setLive({ day: 10, renameFrom: 10 });
     clock = at(10);
     const r = await runConnector(id, deps());
@@ -118,7 +140,9 @@ describe("9.5 a daily site, a week of runs", () => {
   }, 60_000);
 
   it("rows falling by 80% are held in quarantine: the last good data stays live", async () => {
-    await setLive({ day: 11, dropOn: 11 });
+    const id = "ds_connsim0014";
+    await connectorThrough(id, 10);
+    await setLive({ day: 11, renameFrom: 10, dropOn: 11 });
     clock = at(11);
     const before = getTable(id)!.rows.length;
     const r = await runConnector(id, deps());
@@ -131,7 +155,9 @@ describe("9.5 a daily site, a week of runs", () => {
   }, 60_000);
 
   it("a watch that is crossed after a run is recorded for the console", async () => {
-    await setLive({ day: 12, dropOn: 0 });
+    const id = "ds_connsim0015";
+    await connectorThrough(id, 11);
+    await setLive({ day: 12, renameFrom: 10, dropOn: 0 });
     clock = at(12);
     const watch: Deps["watches"] = async (c) => {
       const t = getTable(c.id)!;
@@ -156,7 +182,7 @@ describe("9.5 schedules, backfill, snapshots and API periods", () => {
   });
 
   it("a backfill of 10 days reads at most those files, at the polite rate", async () => {
-    await setLive({ day: 20, missing: "", renameFrom: 0, dropOn: 0, failing: 0 });
+    await setLive({ ...CLEAN, day: 20 });
     clock = at(20);
     const id = "ds_connsim0002";
     const c = createConnector({ id, name: "Backfill", url: `${BASE}/live/reservoirs`, locate: "newest-file-matching", pattern: "Reservoir_Levels_{DD-MM-YYYY}.xlsx", table: await fileTable(20), seen: ["2026-10-20"] }, clock);
@@ -170,6 +196,7 @@ describe("9.5 schedules, backfill, snapshots and API periods", () => {
 
   it("snapshots mode keeps each run with its date: a trend after 3 runs", async () => {
     const id = "ds_connsim0003";
+    await setLive(CLEAN);
     clock = at(1);
     const f = await fetchOnce(`${BASE}/d/with_totals.csv`);
     const first = await parseFileAsync(f.buf, f.name, f.contentType, f.url);
@@ -181,7 +208,7 @@ describe("9.5 schedules, backfill, snapshots and API periods", () => {
   }, 60_000);
 
   it("an API with a date parameter is asked for the new periods only", async () => {
-    await setLive({ day: 7 });
+    await setLive({ ...CLEAN, day: 7 });
     const id = "ds_connsim0004";
     clock = at(5);
     const f = await fetchOnce(`${BASE}/live/api/levels?date=2026-10-05`);
@@ -193,14 +220,15 @@ describe("9.5 schedules, backfill, snapshots and API periods", () => {
     expect(getTable(id)!.rows.length).toBe(12);
   }, 60_000);
 
-  it("pause and resume, and the file-name pattern reads its dates", () => {
+  it("pause and resume, and the file-name pattern reads its dates", async () => {
+    await connectorThrough("ds_connsim0001p", 2);
     const m = patternMatcher("Reservoir_Levels_{DD-MM-YYYY}.xlsx");
     expect(m("Reservoir_Levels_27-10-2026.xlsx")).toBe("2026-10-27");
     expect(m("Rainfall_27-10-2026.xlsx")).toBeNull();
-    setPaused("ds_connsim0001", true, at(13));
-    expect(getConnector("ds_connsim0001")!.status).toBe("paused");
-    expect(isDue(getConnector("ds_connsim0001")!, at(20))).toBe(false);
-    setPaused("ds_connsim0001", false, at(13));
-    expect(isDue(getConnector("ds_connsim0001")!, at(13))).toBe(true);
+    setPaused("ds_connsim0001p", true, at(13));
+    expect(getConnector("ds_connsim0001p")!.status).toBe("paused");
+    expect(isDue(getConnector("ds_connsim0001p")!, at(20))).toBe(false);
+    setPaused("ds_connsim0001p", false, at(13));
+    expect(isDue(getConnector("ds_connsim0001p")!, at(13))).toBe(true);
   });
 });
