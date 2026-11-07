@@ -7,7 +7,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { explain, incident as incidentFull, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
+import { explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
@@ -56,16 +56,18 @@ const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, 
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, ${EFF.status} AS status,
   ${OPEN} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
-  i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, i.verified,
+  i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, ${EFF.verified} AS verified,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due,
-  DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at`;
+  DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
-function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at") {
+function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at", openEnd = false) {
   const h = hours ?? f.hours ?? null;
   const k = off + (f.offset ?? 0);
   // a calendar window (a month, "since 1 October"): its exact bounds; the window before it has the same length
-  const w = f.range ? rangeWindow(f.range, k, col) : periodWindow(f.period, now, col, k, h ?? undefined);
+  const w = f.range ? rangeWindow(f.range, k, col)
+    : openEnd && k === 0 ? periodSinceWindow(f.period, now, col, h ?? undefined) // closed time: a decision made since the refresh counts
+    : periodWindow(f.period, now, col, k, h ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
   if (f.ward) (parts.push("i.ward_no = ?"), params.push(f.ward));
@@ -226,7 +228,7 @@ export async function countIncidents(f: IncidentFilters, now: string) {
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
 export async function countResolved(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
-  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
+  const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
   const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
@@ -241,9 +243,9 @@ export async function countResolved(f: IncidentFilters, now: string) {
  */
 export async function resolutionTimes(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
-  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
-  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND i.closed_at >= i.first_reported_at`;
-  const hrs = "TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60";
+  const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
+  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND ${EFF.closedAt} >= i.first_reported_at`;
+  const hrs = `TIMESTAMPDIFF(MINUTE, i.first_reported_at, ${EFF.closedAt}) / 60`;
   const [rows, prev] = await Promise.all([
     q(`SELECT i.lead_dept AS code, COALESCE(dp.name, i.lead_dept) AS name, COUNT(*) AS n, AVG(${hrs}) AS hours,
               SUM(COALESCE(i.sla_breached, 0) = 0) AS on_time

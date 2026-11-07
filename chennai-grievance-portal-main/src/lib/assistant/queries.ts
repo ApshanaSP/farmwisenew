@@ -17,7 +17,8 @@ import type { AssistantScope } from "@/lib/assistant/scope";
 import { orEmpty } from "@/lib/fallback";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 const REAL_LAKES = process.env.DATA_BACKEND === "aws";
 
@@ -205,9 +206,9 @@ export async function categoryFigures(s: AssistantScope, now: string, codes: str
 export async function incidentsByIds(ids: string[]): Promise<Row[]> {
   if (!ids.length) return [];
   const rows = await q(
-    `SELECT incident_id AS id, title, category_label AS type, zone_name, place_text AS place, severity_level AS sev, status_std AS status,
-            DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i') AS t, is_synthetic_any AS syn
-     FROM incidents WHERE incident_id IN (${ids.map(() => "?").join(",")})`, ids);
+    `SELECT i.incident_id AS id, i.title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, ${EFF.status} AS status,
+            DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i') AS t, i.is_synthetic_any AS syn
+     FROM incidents i WHERE i.incident_id IN (${ids.map(() => "?").join(",")})`, ids);
   const by = new Map(rows.map((r) => [String(r.id), r]));
   return ids.map((id) => by.get(id)).filter((r): r is Row => !!r);
 }
@@ -433,7 +434,7 @@ export async function changeDrivers(s: AssistantScope, now: string): Promise<Dri
     q(`SELECT COALESCE(dp.name, i.lead_dept) AS name, COALESCE(SUM(${OPEN}), 0) AS open, COALESCE(SUM(${OPEN} = 1 AND i.sla_breached = 1), 0) AS overdue
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE ${w.sql} AND i.lead_dept IS NOT NULL
        GROUP BY name HAVING overdue > 0 ORDER BY overdue DESC, open DESC LIMIT 4`, w.params),
-    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.sla_breached AS overdue,
+    q(`SELECT i.incident_id AS id, ${TITLE} AS title, i.place_text AS place, i.severity_level AS sev, ${EFF.status} AS status, i.sla_breached AS overdue,
          i.dead, i.injured, i.priority_reasons AS reasons FROM incidents i WHERE ${w.sql} AND ${OPEN} = 1
        ORDER BY i.priority_score DESC, i.first_reported_at DESC LIMIT 3`, w.params),
     q(`SELECT COALESCE(SUM(date > DATE(?) - INTERVAL ? DAY AND rain_event = 1), 0) AS cur,

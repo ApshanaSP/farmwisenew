@@ -15,7 +15,8 @@ import { embed } from "@/lib/assistant/embed";
 import { orEmpty } from "@/lib/fallback";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -127,7 +128,7 @@ export async function topStories(f: NewsFilters, now: string, n = 6, storyIds?: 
   const [incs, notes, depts] = await Promise.all([
     incIds.length ? q(`SELECT i.incident_id AS id, i.severity_level AS sev, i.priority_score AS priority, ${OPEN} AS open, i.media_only,
                               i.citizen_complaints AS complaints, i.dead, i.category_code AS cat, i.category_label AS label, i.zone_no AS zone,
-                              i.zone_name, i.place_text AS loc, i.lead_dept AS dept, dp.name AS dept_name, i.status_std AS status, i.ai_summary
+                              i.zone_name, i.place_text AS loc, i.lead_dept AS dept, dp.name AS dept_name, ${EFF.status} AS status, i.ai_summary
                        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept WHERE i.incident_id IN (?)`, [incIds]) : Promise.resolve([] as Row[]),
     q(`SELECT item_key, text_en, extra FROM briefing_notes WHERE section = 'news'`).catch(orEmpty("news:79")),
     q(`SELECT code, name FROM ref_departments`)

@@ -289,8 +289,8 @@ describe("the actions move what they are designed to move", () => {
     expect(seen.reopen.stage).toBe("action");
     expect(seen.reopen.page.why.needsYou).toBe(true);
   });
-  it("verify leaves the console's status (effective.ts) and tells the officer and the citizen it is checked", () => {
-    expect(seen.verify.page).toMatchObject({ status: "In progress", open: 1, decision: "verify" });
+  it("verify closes the incident on the console (effective.ts, RC-26) and tells the officer and the citizen it is checked", () => {
+    expect(seen.verify.page).toMatchObject({ status: "Resolved", open: 0, decision: "verify" });
     expect(seen.verify.stage).toBe("verified");
     expect(seen.verify.tracker).toBe("Verified by Collector");
   });
@@ -372,84 +372,84 @@ describe("who may act", () => {
 });
 
 describe("gaps still open", () => {
-  it.fails("DECISIONS-1: resolve, reopen, resolve within two minutes ends resolved (the third answers 201 and is dropped)", () => {
+  it("DECISIONS-1: resolve, reopen, resolve within two minutes ends resolved (the third answers 201 and is dropped)", () => {
     expect(seen.flip).toMatchObject({ status: "Resolved", open: 0, decision: "resolve" });
   });
-  it.fails("DECISIONS-1: reopen, resolve, reopen within two minutes ends open", () => {
+  it("DECISIONS-1: reopen, resolve, reopen within two minutes ends open", () => {
     expect(seen.flipBack).toMatchObject({ status: "Open", open: 1, decision: "reopen" });
   });
-  it.fails("DECISIONS-1: a second Send back on a new report is recorded (the screens' own buttons, within two minutes)", () => {
+  it("DECISIONS-1: a second Send back on a new report is recorded (the screens' own buttons, within two minutes)", () => {
     expect(seen.sendBackTwice.http).toEqual([201, 201]);
     expect(seen.sendBackTwice.stageAfterFirstBack).toBe("action");
     expect(seen.sendBackTwice.stage).toBe("action");
   });
-  it.fails("DECISIONS-15: an officer's report on an incident the Collector reopened reaches My Tasks", () => {
+  it("DECISIONS-15: an officer's report on an incident the Collector reopened reaches My Tasks", () => {
     expect(seen.reopenThenSend.http).toBe(201);
     expect(seen.reopenThenSend.stage).toBe("sent");
     expect(seen.reopenThenSend.after - seen.reopenThenSend.before).toBe(1);
   });
-  it.fails("DECISIONS-2: \"Verify and close\" closes the incident on the console too, as it does for the officer and the citizen", () => {
+  it("DECISIONS-2: \"Verify and close\" closes the incident on the console too, as it does for the officer and the citizen", () => {
     expect(seen.verify.after.ongoing - seen.verify.before.ongoing).toBe(-1);
   });
-  it.fails("DECISIONS-2: the officer's page does not show two open figures once a case is verified", () => {
+  it("DECISIONS-2: the officer's page does not show two open figures once a case is verified", () => {
     expect(seen.verify.officerOpen).toBe(seen.verify.boardOpen);
   });
-  it.fails("DECISIONS-3: an escalate after a resolve does not reopen the incident on the console while the officer and the citizen see it closed", () => {
+  it("DECISIONS-3: an escalate after a resolve does not reopen the incident on the console while the officer and the citizen see it closed", () => {
     expect(seen.resolveEscalate.page.open).toBe(0);
     expect(seen.resolveEscalate.stage).toBe("verified");
   });
-  it.fails("DECISIONS-4: the search box's rows and Ask District IQ's search tool carry the decided status", () => {
+  it("DECISIONS-4: the search box's rows and Ask District IQ's search tool carry the decided status", () => {
     expect(seen.resolve.after.search).toMatchObject({ status: "Resolved", open: 0 });
   });
-  it.fails("DECISIONS-4: search_records' keyword lane carries the decided status", () => {
+  it("DECISIONS-4: search_records' keyword lane carries the decided status", () => {
     expect(seen.resolve.after.searchRecords.status).toBe("Resolved");
   });
-  it.fails("DECISIONS-18: after a reject and a reopen, the citizen no longer reads the reason it was rejected", () => {
+  it("DECISIONS-18: after a reject and a reopen, the citizen no longer reads the reason it was rejected", () => {
     expect(seen.rejectBack.reopened.remarks ?? "").not.toContain("the reason it was rejected");
   });
-  it.fails("DECISIONS-16: an officer's send leaves one row per incident on the action list (CSV)", () => {
+  it("DECISIONS-16: an officer's send leaves one row per incident on the action list (CSV)", () => {
     expect(seen.officerSend.csv.length).toBe(1);
   });
-  it.fails("DECISIONS-17: with no index, search_records still answers when only incidents are asked for", () => {
+  it("DECISIONS-17: with no index, search_records still answers when only incidents are asked for", () => {
     expect(seen.resolve.after.searchIncidentsOnly?.id).toBe(ID.resolve);
   });
-  it.fails("DECISIONS-17: with no index, search_records finds an incident by the title the console shows", () => {
+  it("DECISIONS-17: with no index, search_records finds an incident by the title the console shows", () => {
     expect(seen.resolve.after.searchByTitle?.id).toBe(ID.resolve);
   });
-  it.fails("DECISIONS-5: an officer's own close is not listed as a Collector's decision", () => {
+  it("DECISIONS-5: an officer's own close is not listed as a Collector's decision", () => {
     expect(seen.officerClose.feedback).toBe(false);
   });
-  it.fails("DECISIONS-5: an officer's own close does not count in \"Collector's checks\"", () => {
+  it("DECISIONS-5: an officer's own close does not count in \"Collector's checks\"", () => {
     expect(seen.officerClose.checksAfter).toBe(seen.officerClose.checksBefore);
   });
-  it.fails("DECISIONS-6: a case returned with reject reaches the officer who must act on it", () => {
+  it("DECISIONS-6: a case returned with reject reaches the officer who must act on it", () => {
     expect(seen.reject.feedback).toBe(true);
   });
-  it.fails("DECISIONS-7: a reopened severe incident is back on the Collector's action list (CSV)", () => {
+  it("DECISIONS-7: a reopened severe incident is back on the Collector's action list (CSV)", () => {
     expect(seen.reopen.page.why.needsYou).toBe(true);
     expect(seen.reopen.inExport).toBe(true);
   });
-  it.fails("DECISIONS-8: Ask District IQ's \"how many resolved\" counts a Collector's resolve", () => {
+  it("DECISIONS-8: Ask District IQ's \"how many resolved\" counts a Collector's resolve", () => {
     expect(seen.resolve.after.counted.n - seen.resolve.before.counted.n).toBe(1);
   });
-  it.fails("DECISIONS-8: the Briefing's \"resolved\" counts a Collector's resolve", () => {
+  it("DECISIONS-8: the Briefing's \"resolved\" counts a Collector's resolve", () => {
     expect(seen.resolve.after.book - seen.resolve.before.book).toBe(1);
   });
-  it.fails("DECISIONS-9: a hotspot's \"N open\" on Trends follows a decision", () => {
+  it("DECISIONS-9: a hotspot's \"N open\" on Trends follows a decision", () => {
     expect(seen.resolve.after.hotspot - seen.resolve.before.hotspot).toBe(-1);
   });
-  it.fails("DECISIONS-10: a pattern's incident row shows the decided status, not \"In progress (closed)\"", () => {
+  it("DECISIONS-10: a pattern's incident row shows the decided status, not \"In progress (closed)\"", () => {
     expect(seen.resolve.after.pattern).toMatchObject({ status: "Resolved", open: 0 });
   });
-  it.fails("DECISIONS-10: a reopened incident under Needs your attention does not say Resolved", () => {
+  it("DECISIONS-10: a reopened incident under Needs your attention does not say Resolved", () => {
     expect(seen.reopen.attention).toBeTruthy();
     expect(seen.reopen.attention.status).toBe("Open");
   });
-  it.fails("DECISIONS-10: the Briefing book's department row shows the decided status", () => {
+  it("DECISIONS-10: the Briefing book's department row shows the decided status", () => {
     expect(seen.resolve.after.bookRow).toBeTruthy();
     expect(seen.resolve.after.bookRow.status).toBe("Resolved");
   });
-  it.fails("DECISIONS-11: an incident the Collector verified is in the list's verified filter, as its row says", () => {
+  it("DECISIONS-11: an incident the Collector verified is in the list's verified filter, as its row says", () => {
     expect(seen.verifyNoFlag.rowVerified).toBe(1);
     expect(seen.verifyNoFlag.verifiedFilter).toBe(1);
   });
@@ -507,13 +507,13 @@ describe("OPEN-16: the two readers on the pipeline's flag", () => {
     expect(h.plannerCalls).toBeGreaterThan(0);
     expect(Number.isNaN(shownFigure())).toBe(false);
   });
-  it.fails("DECISIONS-13: a model-written query's \"still open\" follows the Collector's decision", () => {
+  it("DECISIONS-13: a model-written query's \"still open\" follows the Collector's decision", () => {
     expect(planned.openAfter).toBe(0);
   });
-  it.fails("DECISIONS-13: a model-written query's status filter follows the Collector's decision", () => {
+  it("DECISIONS-13: a model-written query's status filter follows the Collector's decision", () => {
     expect(planned.resolvedAfter).toBe(1);
   });
-  it.fails("DECISIONS-13: the whole path, a question through a fake model's plan, answers with the decided figure", () => {
+  it("DECISIONS-13: the whole path, a question through a fake model's plan, answers with the decided figure", () => {
     expect(shownFigure()).toBe(0);
   });
 });
@@ -563,13 +563,13 @@ describe("OPEN-16: the search index", () => {
     expect(found.closedPage.open).toBe(1);
     expect(found.afterAny?.id).toBe(ID.index);
   });
-  it.fails("DECISIONS-14: after a resolve and a sync, the open-only search no longer returns the incident", () => {
+  it("DECISIONS-14: after a resolve and a sync, the open-only search no longer returns the incident", () => {
     expect(found.after).toBeNull();
   });
-  it.fails("DECISIONS-14: after a reopen and a sync, the open-only search finds the incident", () => {
+  it("DECISIONS-14: after a reopen and a sync, the open-only search finds the incident", () => {
     expect(found.closedAfter?.id).toBe(ID.indexClosed);
   });
-  it.fails("DECISIONS-14: the index's record carries the decided status, which search_records shows", () => {
+  it("DECISIONS-14: the index's record carries the decided status, which search_records shows", () => {
     expect(found.afterAny.rec.status).toBe("Resolved");
     expect(Number(found.afterAny.rec.open)).toBe(0);
   });

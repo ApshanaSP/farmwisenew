@@ -25,7 +25,8 @@ import { orEmpty } from "@/lib/fallback";
 import { alertLane, type AlertLane } from "@/lib/collector/alerts";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -126,7 +127,7 @@ function filters(s: BriefScope, a = "i") {
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const SRC: Record<string, string> = { grievance: "citizen complaints", police: "police", pwd: "PWD", news: "news", hospital: "hospital", imd: "IMD" };
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
-  i.severity_level AS sev, i.status_std AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
+  i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
   i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 

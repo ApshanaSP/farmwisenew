@@ -277,7 +277,7 @@ describe("after a decision (BUG-028, BUG-035)", () => {
     expect((await insights("daily", null, null)).briefing.attention.map((a: Row) => a.id)).not.toContain(t.id);
     await decide(String(t.id), "reopen");
   });
-  it.fails("AUD-NF-9 BUG-028 the Briefing Book's rows say the case's status after a decision", async () => {
+  it("AUD-NF-9 BUG-028 the Briefing Book's rows say the case's status after a decision", async () => {
     const [t] = await q(`SELECT i.incident_id AS id, i.lead_dept AS dept FROM incidents i WHERE i.is_open = 1 AND i.severity_level = 'Severe' AND i.first_reported_at > '2026-11-05 18:08:00' AND i.first_reported_at <= '2026-11-06 18:08:00' ORDER BY i.first_reported_at DESC LIMIT 1`);
     await decide(String(t.id), "reject");
     try {
@@ -286,7 +286,7 @@ describe("after a decision (BUG-028, BUG-035)", () => {
       expect(item?.status).toBe("Rejected");
     } finally { await decide(String(t.id), "reopen"); }
   });
-  it.fails("AUD-NF-9 BUG-028 a reopened case leaves the Briefing Book's good news", async () => {
+  it("AUD-NF-9 BUG-028 a reopened case leaves the Briefing Book's good news", async () => {
     const book0 = (await insights("daily", null, null)).book as { good: { serious: Row[] } };
     const id = String(book0.good.serious[0]?.id);
     await decide(id, "reopen");
@@ -380,7 +380,7 @@ describe("new, found on the way", () => {
     const r = await direct("case", { id: t.id, fresh: true });
     expect(r.stage!.say.en).not.toMatch(/I'd ask Metrowater/);
   });
-  it.fails("AUD-NF-14 a reopened case is not 'open ... closed on'", async () => {
+  it("AUD-NF-14 a reopened case is not 'open ... closed on'", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.status_std = 'Resolved' AND i.closed_at IS NOT NULL AND i.first_reported_at > '2026-11-02 00:00:00' AND i.incident_id NOT IN (SELECT incident_id FROM ${ops("collector_decisions")}) ORDER BY i.first_reported_at DESC LIMIT 1`);
     await decide(String(t.id), "reopen");
     const a = await askChat(`what is the status of ${t.id}`);

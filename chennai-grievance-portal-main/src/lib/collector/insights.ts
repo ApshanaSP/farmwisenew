@@ -16,7 +16,13 @@ import { orEmpty } from "@/lib/fallback";
 import { unusualEnough } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
+/**
+ * A hotspot's open count with the Collector's decisions laid on: the pipeline's own count, moved by what the decisions
+ * changed among the hotspot's incidents (the pipeline's flag read raw ignored a resolve, RC-27).
+ */
+const HOT_OPEN = `h.open + COALESCE((SELECT SUM(${OPEN}) - SUM(${EFF.pipelineOpen}) FROM incidents i WHERE i.hotspot_id = h.hotspot_id), 0)`;
 
 /** An empty price table, for the parts that do not show prices. */
 const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
@@ -42,7 +48,7 @@ function where(s: Scope, now: string, opts: { hours?: number; offset?: number; n
 }
 
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, ${OPEN} AS open,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.confidence,
   i.ai_summary, i.ai_attention, i.ai_next_step,
@@ -163,9 +169,9 @@ export async function insights(period: Period, zone: number | null, dept: string
        ${dept ? "AND a.category_code IN (SELECT DISTINCT d.category_code FROM incidents d WHERE d.lead_dept = ?)" : ""} ORDER BY a.date DESC, a.ratio DESC`,
       // a department's view keeps to the kinds of incident that department leads (BUG-027)
       [now, ...(zone ? [zone] : []), ...(dept ? [dept] : [])])),
-    when(T, () => q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
-              DATE_FORMAT(first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(last_seen, '%Y-%m-%d') AS last_seen
-       FROM hotspots WHERE incidents_30d >= 3 ORDER BY incidents_30d DESC LIMIT 60`)),
+    when(T, () => q(`SELECT h.hotspot_id AS id, h.category_code AS cat, h.incidents, h.incidents_30d, ${HOT_OPEN} AS open, h.lat, h.lon, h.wards, h.top_place,
+              DATE_FORMAT(h.first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(h.last_seen, '%Y-%m-%d') AS last_seen
+       FROM hotspots h WHERE h.incidents_30d >= 3 ORDER BY h.incidents_30d DESC LIMIT 60`)),
     // open incidents with no zone: judged by locreview.ts (most are not a location problem)
     when(T, () => q(`SELECT ${INC}, i.lat, i.lon, i.dead, i.injured ${FROM} WHERE ${rw.sql} AND i.zone_no IS NULL AND ${OPEN} = 1
        ORDER BY i.priority_score DESC LIMIT 600`, rw.params)),
@@ -541,8 +547,8 @@ export async function pattern(p: PatternQuery) {
     };
   }
 
-  const [h] = await q(`SELECT hotspot_id AS id, category_code AS cat, incidents, incidents_30d, open, lat, lon, wards, top_place,
-    DATE_FORMAT(first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(last_seen, '%Y-%m-%d') AS last_seen FROM hotspots WHERE hotspot_id = ?`, [p.id]);
+  const [h] = await q(`SELECT h.hotspot_id AS id, h.category_code AS cat, h.incidents, h.incidents_30d, ${HOT_OPEN} AS open, h.lat, h.lon, h.wards, h.top_place,
+    DATE_FORMAT(h.first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(h.last_seen, '%Y-%m-%d') AS last_seen FROM hotspots h WHERE h.hotspot_id = ?`, [p.id]);
   if (!h) return null;
   const label = catLabel.get(h.cat) ?? h.cat;
   const [rows, months] = await Promise.all([

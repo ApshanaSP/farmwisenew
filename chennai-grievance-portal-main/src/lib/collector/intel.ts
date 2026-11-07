@@ -16,7 +16,7 @@ import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
 import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
-import { decisionEffect, effectiveSql } from "@/lib/collector/effective";
+import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/effective";
 import { orEmpty, orNull } from "@/lib/fallback";
 import { deadlineState, falseDeadlineClaims, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
@@ -109,6 +109,14 @@ export function periodWindow(period: Period, now: string, col = "i.first_reporte
   return { sql: `${col} > (? - INTERVAL ? HOUR) AND ${col} <= (? - INTERVAL ? HOUR)`, params: [now, h * (off + 1), now, h * off] };
 }
 
+/**
+ * The current window of a time that can be later than the last refresh (a Collector's decision is made now, the as-of is the
+ * pipeline's): no upper bound, so a decision made since the refresh counts "so far" (the earlier windows keep both bounds).
+ */
+export function periodSinceWindow(period: Period, now: string, col: string, hours?: number): { sql: string; params: unknown[] } {
+  return { sql: `${col} > (? - INTERVAL ? HOUR)`, params: [now, hours ?? PERIODS[period].hours] };
+}
+
 /** Start of the period as an IST wall-clock string ("YYYY-MM-DD HH:MM:SS"). */
 export function periodSince(period: Period, now: string): string {
   const t = new Date(now.replace(" ", "T") + "Z").getTime() - PERIODS[period].hours * 3600_000;
@@ -179,7 +187,7 @@ const SENT_BY_OFFICER = `EXISTS (SELECT 1 FROM ${ops("officer_steps")} s WHERE s
                     AND d.decision IN ('verify', 'reject', 'resolve', 'reopen') AND d.decided_at >= s.at))`;
 /** Open, severe and sent to the Collector from the officer console, not yet decided; FALSE without the officer tables. */
 async function sentByOfficer(): Promise<string> {
-  return (await officerOpsReady()) ? `(i.is_open = 1 AND i.severity_level = 'Severe' AND ${SENT_BY_OFFICER})` : "(1 = 0)";
+  return (await officerOpsReady()) ? `(${EFF.open} = 1 AND i.severity_level = 'Severe' AND ${SENT_BY_OFFICER})` : "(1 = 0)";
 }
 
 /** The officer's latest completion report per incident, for the task card: remarks, who sent it, and the photos. */
@@ -219,7 +227,7 @@ async function officerReportsFull(id: string): Promise<Row[]> {
 /** Columns every incident row on the console carries. */
 const ROW = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat_code, i.family,
   i.lead_dept AS dept, dp.name AS dept_name, i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc,
-  i.lat, i.lon, i.severity_level AS sev, i.status_std AS status, i.is_open AS open, i.verified,
+  i.lat, i.lon, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${EFF.verified} AS verified,
   i.citizen_complaints AS complaints, i.outlet_count AS outlets, i.sources, i.source_count, i.channels,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, i.summary, i.priority_score AS priority,
   i.sla_breached AS breached, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
@@ -381,13 +389,15 @@ async function decisionsFor(ids: string[]): Promise<Record<string, Row>> {
   if (!ids.length) return {};
   const r = await q(
     `SELECT incident_id, decision, escalate_to, note, decided_by,
-            DATE_FORMAT(decided_at, '%Y-%m-%d %H:%i:%s') AS decided_at FROM (
-       SELECT d.*, ROW_NUMBER() OVER (PARTITION BY incident_id ORDER BY decision_id DESC) rn
-       FROM ${ops("collector_decisions")} d WHERE incident_id IN (?) AND decision <> 'note') x
-     WHERE rn = 1`,
+            DATE_FORMAT(decided_at, '%Y-%m-%d %H:%i:%s') AS decided_at
+     FROM ${ops("collector_decisions")} WHERE incident_id IN (?) AND decision <> 'note' ORDER BY decision_id`,
     [ids]
   );
-  return Object.fromEntries(r.map((d) => [d.incident_id, d]));
+  // the latest decision is what the row shows; the latest one with an effect (effective.ts) decides its status, so an
+  // escalate after a resolve is shown without reopening it
+  const out: Record<string, Row> = {};
+  for (const d of r) out[d.incident_id] = { ...d, eff: decisionEffect(d.decision) ? d : out[d.incident_id]?.eff };
+  return out;
 }
 
 async function withDecisions<T extends Row>(rows: T[]): Promise<T[]> {
@@ -676,14 +686,18 @@ export async function contactsFor(dept: string | null, zone: number | null): Pro
   }
 }
 
-function overlay<T extends Row>(r: T, d: Row | undefined): T {
+/**
+ * A row with the Collector's latest decision on it: `d` is shown, `eff` (the latest one with an effect) decides the
+ * status and the verified mark, the same rule as the SQL (effective.ts), so an escalate after a resolve stays closed.
+ */
+function overlay<T extends Row>(r: T, d: Row | undefined, eff: Row | undefined = d?.eff ?? d): T {
   if (!d) return r;
   const out: Row = { ...r, decision: d.decision, decided_at: d.decided_at };
-  if (d.decision === "verify") out.verified = 1;
+  delete out.eff;
   if (d.decision === "escalate") out.escalated = 1;
-  const e = decisionEffect(d.decision); // resolve and reject close, reopen opens (effective.ts, shared with the SQL)
+  const e = decisionEffect(eff?.decision); // resolve, verify and reject close, reopen opens
   if (e) Object.assign(out, { open: e.open, status: e.status });
-  if (d.decision === "resolve") out.verified = 1;
+  if (decisionVerifies(eff?.decision)) out.verified = 1;
   return out as T;
 }
 
@@ -1027,7 +1041,7 @@ async function deptSnapshot(code: string, s: Scope, now: string) {
   const [info, k, topZone, contacts, common] = await Promise.all([
     q(`SELECT code, name, org, head, route FROM ref_departments WHERE code = ?`, [code]),
     q(
-      `SELECT SUM(${EFF.open}) AS open, SUM(${EFF.open} = 1 AND i.verified = 1) AS verified,
+      `SELECT SUM(${EFF.open}) AS open, SUM(${EFF.open} = 1 AND ${EFF.verified} = 1) AS verified,
               SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1 AND ${EFF.open} = 1 AND NOT ${ROUTED}) AS overdue
        FROM incidents i WHERE ${w.sql}`,
       w.params
@@ -1213,7 +1227,7 @@ function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | 
 
 export async function incident(id: string) {
   const [inc] = await q(
-    `SELECT ${ROW}, DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at,
+    `SELECT ${ROW}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
             DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.depts_involved, i.dead, i.injured,
             i.persons_affected, i.vulnerable, dp.head AS dept_head, dp.org AS dept_org, i.confidence, i.needs_review, i.review_reason,
             i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp
@@ -1283,6 +1297,7 @@ export async function incident(id: string) {
   ].sort((a, b) => String(a.t).localeCompare(String(b.t)));
 
   const last = decisions.filter((d) => d.decision !== "note").slice(-1)[0];
+  const lastEffect = decisions.filter((d) => decisionEffect(d.decision)).slice(-1)[0];
   // the group's sources added up: every report it unfolded from
   const all: SourceCounts = { grievance: 0, police: 0, pwd: 0, hospital: 0, imd: 0, news: 0, outlets: [], total: 0 };
   for (const k of ids) {
@@ -1295,7 +1310,7 @@ export async function incident(id: string) {
   const listed = [...new Set(reports.filter((r) => r.source === "news" && r.publisher).map((r) => String(r.publisher)))];
   if (listed.length) all.outlets = [...new Set([...listed, ...all.outlets])];
   const complaints = Number(inc.complaints) + group.reduce((n, g) => n + Number(g.complaints ?? 0), 0);
-  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined), src: all.total || all.outlets.length ? all : null, complaints };
+  const row: Row = { ...overlay(inc, last ? { ...last, decided_at: last.t } : undefined, lastEffect ? { ...lastEffect, decided_at: lastEffect.t } : undefined), src: all.total || all.outlets.length ? all : null, complaints };
   return {
     incident: { ...row, why: explain(row) } as Row,
     /** the other incidents merged into this one: the same problem in the same area */
@@ -1364,8 +1379,9 @@ export async function list(f: ListFilter) {
   // "open" matches the severity tile: news complaints handed to a department are not listed as incidents.
   if (st === "awaiting" && f.scope === "period") { /* the rule is set above */ }
   else if (st === "open") where.push(`${EFF.open} = 1 AND NOT ${ROUTED}`);
-  else if (st === "unverified") where.push(`${EFF.open} = 1 AND i.verified = 0 AND NOT ${DECIDED("'verify','reject','resolve'")}`);
-  else if (st === "verified") where.push(`${EFF.open} = 1 AND i.verified = 1`);
+  else if (st === "unverified") where.push(`${EFF.open} = 1 AND ${EFF.verified} = 0`);
+  // verified work still open, and what the Collector has just verified ("Verify and close" closes it: its row says verified)
+  else if (st === "verified") where.push(`${EFF.verified} = 1 AND (${EFF.open} = 1 OR ${EFF.latest} = 'verify')`);
   else if (st === "overdue") where.push(`${EFF.open} = 1 AND i.sla_breached = 1 AND NOT ${ROUTED}`);
   else if (st === "awaiting")
     where.push(`((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR} AND NOT ${DECIDED("'verify','reject','resolve','reopen'")})
@@ -1438,7 +1454,7 @@ export async function search(text: string) {
       const inTitle = groups.length ? groups.map((g) => `(CASE WHEN ${g.map(() => `${TITLE} LIKE ?`).join(" OR ")} THEN 1 ELSE 0 END)`).join(" + ") : "0";
       const titleParams = groups.flatMap((g) => g.map((x) => `%${x}%`));
       return Promise.all([
-        q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, i.is_open DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
+        q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, ${EFF.open} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
           [...w.params, ...titleParams]),
         q(`SELECT COUNT(*) AS n ${FROM} WHERE ${w.sql}`, w.params)
       ]);
@@ -1485,7 +1501,9 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
          AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${sent}) ${extra.map((x) => `AND ${x}`).join(" ")}
        ORDER BY ${SEV_RANK}, i.last_update_at ASC LIMIT 100`, xp)
   ]);
-  const need = open.map((r) => ({ r, p: explain(r) })).filter((x) => x.p.needsYou);
+  // one row per incident: closed work the department sent for checking is listed as such, not also as needing attention
+  const checking = new Set(checks.map((r) => String(r.id)));
+  const need = open.map((r) => ({ r, p: explain(r) })).filter((x) => x.p.needsYou && !checking.has(String(x.r.id)));
   const row = (list: string, r: Row, why: string) => ({
     list, id: r.id, what: r.title || r.type, where: [r.ward ? `Ward ${r.ward}` : null, r.zone_name].filter(Boolean).join(", ") || "Chennai",
     department: r.dept_name ?? r.dept, severity: r.sev, why, reported: String(r.t).slice(0, 16),
