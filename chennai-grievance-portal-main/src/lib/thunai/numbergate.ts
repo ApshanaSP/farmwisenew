@@ -66,8 +66,9 @@ export function figuresIn(text: string): Figure[] {
     const w = m[1].toLowerCase();
     if (seenWord.has(w)) continue;
     if (w === "double" && /^[\s-]*(check|click|tap)/i.test(t.slice((m.index ?? 0) + w.length))) continue;
-    if (EN_WORDS[w] != null) out.push({ raw: m[1], value: EN_WORDS[w], words: true });
-    else if (TG_WORDS[w] != null) out.push({ raw: m[1], value: TG_WORDS[w], words: true });
+    // a word like constructor or toString is a property of every object, not a number word (scans-code-2, the same class as RC-14)
+    if (Object.hasOwn(EN_WORDS, w)) out.push({ raw: m[1], value: EN_WORDS[w], words: true });
+    else if (Object.hasOwn(TG_WORDS, w)) out.push({ raw: m[1], value: TG_WORDS[w], words: true });
   }
   for (const m of t.matchAll(/(?<![\p{L}])(?:a|one)\s+(third|quarter|fifth|tenth)\s+of(?![\p{L}])/giu)) out.push({ raw: m[0], value: EN_PARTS[m[1].toLowerCase()], words: true });
   // "one" before a thing counted is a figure ("only one severe case open"); "one moment", "the second one" are not (BUG-017)

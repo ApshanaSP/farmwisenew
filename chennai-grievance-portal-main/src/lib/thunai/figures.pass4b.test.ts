@@ -74,6 +74,15 @@ describe("figures about a list come from the whole list (RC-08)", () => {
     const b = await buildScreen("cases", { ...emptySlots(), status: "overdue", sev: "High", period: "weekly" }, scope, world, pagedHands(true), "overdue high cases");
     expect(list(b)!.total).toBe(LATE.filter((x) => x.sev === "High").length);
   });
+  // found at the merge of lanes a to d: the severity panel counts its own rows (52) and the past-deadline figure counts incidents (54): a part larger than the whole
+  it("a past-deadline figure is never said to be \"N of M\" with N larger than M (severity panel rows against incidents)", async () => {
+    const hands = pagedHands(true);
+    hands.severe = async () => ({ rows: ALL.filter((x) => x.sev === "High").slice(0, 2), counts: { High: 2 }, asOf: "2026-11-06 18:00:00" }) as never;
+    const b = await buildScreen("cases", { ...emptySlots(), sev: "High", period: "weekly" }, scope, world, hands, "high cases");
+    const t = b.doc.takeaway?.en ?? "";
+    for (const m of t.matchAll(/(\d+) of the (\d+)/g)) expect(Number(m[1])).toBeLessThanOrEqual(Number(m[2]));
+    expect(t).toMatch(/past (its|their) deadline/);
+  });
   it("who holds most is not said of a list shown in part", async () => {
     const b = await buildScreen("cases", { ...emptySlots(), status: "open", period: "weekly" }, scope, world, pagedHands(true), "open cases");
     expect(JSON.stringify(b.doc.blocks.find((x) => x.kind === "Kpis"))).not.toMatch(/Held by/);

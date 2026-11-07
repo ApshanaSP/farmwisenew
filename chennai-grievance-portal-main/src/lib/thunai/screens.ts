@@ -517,7 +517,10 @@ async function cases(c: Ctx): Promise<Part> {
   const late = lateAll ?? lateShown;
   const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete });
   // the figure is the list's own: "of the whole list" when the screen shows part of it, "of those shown" only when the count could not be made
-  const takeaway = late ? (lateAll != null
+  // the severity panel counts its own rows and the past-deadline figure counts incidents, so a part can be larger than the whole ("54 of the 52"): then it is said without the whole
+  const takeaway = late ? (lateAll != null && late > total
+    ? bi(`${late} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${late} காலக்கெடுவைத் தாண்டியவை.`)
+    : lateAll != null
     ? bi(`${late} of the ${total} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${total}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)
     : bi(`${late} of the ${rows.length} shown ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)) : null;
   const pts = points(rows);
