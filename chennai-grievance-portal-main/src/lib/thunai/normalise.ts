@@ -8,6 +8,7 @@
  * - Tamil-script loan words become their English token (ஜோன் -> zone, ஃபில்டர் -> filter).
  * - Tamil case endings are left on the token; link.ts matches Tamil names by stem, so அடையாற்றில் still reaches Adyar.
  */
+import { digitValue } from "./digits";
 
 const TA_NUM: [string, number][] = [
   ["பத்தொன்பது", 19], ["பதினெட்டு", 18], ["பதினேழு", 17], ["பதினாறு", 16], ["பதினைந்து", 15], ["பதினஞ்சு", 15],
@@ -78,7 +79,7 @@ export function normalise(input: string): Normalised {
   const tamil = /[஀-௿]/.test(input);
   const cleaned = input
     .normalize("NFC")
-    .replace(/[௦-௯]/g, (d) => String(d.charCodeAt(0) - 0x0be6)) // Tamil digits
+    .replace(/\p{Nd}/gu, (d) => String(digitValue(d))) // digits of every script (RC-13)
     .toLowerCase()
     // "filter-a", "zone-ku", "Adyar-la": Tanglish case endings glued with a hyphen
     .replace(/-(a|ah|ku|kku|la|le|oda|ode|ai|um|nu|ah|kitta)\b/g, " ")

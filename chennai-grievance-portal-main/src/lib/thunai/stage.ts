@@ -5,6 +5,7 @@
  * renders only these kinds (components/collector/app/thunai/Stage.tsx), so a reply can never carry UI code or a number
  * the data does not hold.
  */
+import { asciiDigits } from "./digits";
 import { z } from "zod";
 
 const num = z.number().finite();
@@ -164,6 +165,7 @@ export function figuresOf(d: Pick<StageDocT, "blocks">): Set<string> {
 /** True when every figure in `text` is one the Stage holds (or the Collector said). */
 export function figuresOk(text: string, allowed: Set<string>, heard = ""): boolean {
   const norm = (x: string) => String(Number(x.replace(/,/g, "")));
-  const own = new Set((heard.match(/\d+(?:\.\d+)?/g) ?? []).map(norm));
-  return (text.match(/\d+(?:,\d{2,3})*(?:\.\d+)?/g) ?? []).map(norm).every((x) => allowed.has(x) || own.has(x));
+  // digits of every script are figures (RC-13)
+  const own = new Set((asciiDigits(heard).match(/\d+(?:\.\d+)?/g) ?? []).map(norm));
+  return (asciiDigits(text).match(/\d+(?:,\d{2,3})*(?:\.\d+)?/g) ?? []).map(norm).every((x) => allowed.has(x) || own.has(x));
 }

@@ -149,10 +149,9 @@ describe("number gate (property)", () => {
       expect(gateChunk(`${w} சம்பவங்கள்`, allowedOf([v!])).ok, w).toBe(true);
     }), P);
   });
-  // figuresIn matches ASCII digits and Tamil digits only; fullwidth, Arabic-Indic and Devanagari digits are invisible to the gate
-  const NATIVE = { fw: (d: string) => String.fromCharCode(0xff10 + Number(d)), ar: (d: string) => String.fromCharCode(0x0660 + Number(d)), dev: (d: string) => String.fromCharCode(0x0966 + Number(d)) };
-  // open: lane b flipped this to it() before any lane fixed it (the gate still lets fullwidth, Arabic-Indic and Devanagari figures through); back to it.fails at the merge
-  it.fails("property-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate", () => {
+    const NATIVE = { fw: (d: string) => String.fromCharCode(0xff10 + Number(d)), ar: (d: string) => String.fromCharCode(0x0660 + Number(d)), dev: (d: string) => String.fromCharCode(0x0966 + Number(d)) };
+  // RC-13 fixed: the gate reads the digits of every script (digits.ts); numbergate.pass4.test.ts runs the same property over all Unicode decimal digits
+  it("property-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate", () => {
     fc.assert(fc.property(fc.integer({ min: 20, max: 99999 }), fc.constantFrom("fw", "ar", "dev"), (n, k) => {
       const t = String(n).replace(/\d/g, NATIVE[k as keyof typeof NATIVE]);
       expect(gateChunk(`there are ${t} open cases`, new Set()).ok, t).toBe(false);

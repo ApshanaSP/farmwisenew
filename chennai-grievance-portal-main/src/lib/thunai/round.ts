@@ -233,7 +233,7 @@ export async function executeCalls(calls: AgentCallT[], base: { period: string }
 const generalReply = (reply: string | null | undefined, lang: Lang, t0: number, model: string | null, records: string[] = []): AgentResult => {
   const said = reply?.trim();
   // the one exit gate: a general line is a line like any other (a contact, a citizen's name, a record's words, an order to send or approve)
-  if (!said || /[\d௦-௯]/.test(said) || figuresIn(said).length || lineProblem(said, { records })) return plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback");
+  if (!said || /\p{Nd}/u.test(said) || figuresIn(said).length || lineProblem(said, { records })) return plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback");
   return plainReply("chat", lang, `${GENERAL_LABEL[lang]}${said}`, t0, "general", model);
 };
 const none = (lang: Lang, t0: number, note: string | null): AgentResult => ({ kind: "none", lang, reply: null, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: Date.now() - t0, note });

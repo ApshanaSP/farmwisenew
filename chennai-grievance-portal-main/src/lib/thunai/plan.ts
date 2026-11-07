@@ -285,14 +285,14 @@ export function checkPlan(p: AiPlan, w: World, heard: string, now = Date.now()):
   const lang: Lang = p.lang === "ta" ? "ta" : "en";
   const reply = clip(p.reply, 200);
   const steps = (list: AiStepT[] | null | undefined) => spread(list ?? []).map((s) => checkStep(s, w, heard, now));
-  if (p.kind === "chat") return reply && !/\d/.test(reply) ? { kind: "chat", reply, lang } : { kind: "none", lang };
-  if (p.kind === "refuse") return { kind: "refuse", reply: reply && !/\d/.test(reply) ? reply : lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.", lang };
+  if (p.kind === "chat") return reply && !/\p{Nd}/u.test(reply) ? { kind: "chat", reply, lang } : { kind: "none", lang };
+  if (p.kind === "refuse") return { kind: "refuse", reply: reply && !/\p{Nd}/u.test(reply) ? reply : lang === "ta" ? "இதை என்னால் செய்ய முடியாது." : "I can't do that from the console.", lang };
   if (p.kind === "clarify") {
     // labels are shown as buttons: a figure in one must be the Collector's own or a real zone's number
     const said = new Set(figuresIn(heard).map((f) => String(f.value)));
     const labelOk = (l: string) => figuresIn(zoneLabelsOut(l, w.zones.map((z) => z.n))).every((f) => said.has(String(f.value)));
     const options = (p.options ?? []).map((o) => ({ label: clip(o.label, 60), request: clip(o.request, 200) })).filter((o) => o.label && o.request && labelOk(o.label)).slice(0, 3);
-    if (options.length >= 2) return { kind: "clarify", question: reply && !/\d/.test(reply) ? reply : lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?", options, lang };
+    if (options.length >= 2) return { kind: "clarify", question: reply && !/\p{Nd}/u.test(reply) ? reply : lang === "ta" ? "எதைச் சொல்கிறீர்கள்?" : "Which one do you mean?", options, lang };
     return { kind: "none", lang };
   }
   const raw = steps(p.steps);

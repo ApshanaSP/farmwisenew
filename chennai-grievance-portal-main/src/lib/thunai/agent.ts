@@ -254,7 +254,8 @@ export function stageOpFromSteps(steps: unknown, stage: StageContext | null): { 
 }
 
 /** A figure spelled out or in Tamil digits, by the speech gate's own reading: Latin digits have their own checks, against what was said and planned. */
-export const spellsNumber = (t: string | null | undefined) => !!t && (/[௦-௯]/.test(t) || figuresIn(t).some((f) => f.words));
+/** a figure in words, or in the digits of any script but ASCII (those are the figures the data supplies): code only, never a model line (RC-13) */
+export const spellsNumber = (t: string | null | undefined) => !!t && (/(?![0-9])\p{Nd}/u.test(t) || figuresIn(t).some((f) => f.words));
 
 /** The zones a turn's tools were asked about: "Zone 13" in a line about them is a name, not a figure. */
 export function zonesNamed(results: { result: ToolResult }[]): number[] {
