@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { Building2, User, Wrench } from "lucide-react";
-import { CountUp, LiveDot } from "@/components/ui";
+import { CountUp } from "@/components/ui";
 import { EASE_OUT, reduced } from "@/components/ui/motion";
 import { MAP_H, MAP_W, WARDS_D, ZONE_PINS } from "./chennaiMap";
 
@@ -93,7 +93,7 @@ export default function AuthHero({ headline, children }: { headline: ReactNode; 
           <motion.span initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
             style={{ background: "var(--h-chip)", color: "var(--h-text-2)", boxShadow: "inset 0 0 0 1px var(--h-line-strong)" }}>
-            <LiveDot /> Across Chennai&apos;s 15 zones
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: "var(--h-text-2)" }} aria-hidden="true" /> Across Chennai&apos;s 15 zones
           </motion.span>
           <motion.h2 initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.6, delay: 0.08, ease: EASE_OUT }}
             className="mt-6 text-balance text-[2.15rem] font-semibold leading-[1.08] tracking-[-0.03em]" style={{ color: "var(--h-text)" }}>

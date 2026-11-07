@@ -310,7 +310,7 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
   if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
+  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;

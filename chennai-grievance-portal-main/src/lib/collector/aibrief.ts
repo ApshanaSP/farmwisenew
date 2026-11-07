@@ -16,8 +16,8 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
-import { pctChange, unusualEnough } from "@/lib/reference/metrics";
+import { PERIODS, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { isPastDeadline, pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
@@ -25,7 +25,8 @@ import { orEmpty } from "@/lib/fallback";
 import { alertLane, type AlertLane } from "@/lib/collector/alerts";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -126,14 +127,14 @@ function filters(s: BriefScope, a = "i") {
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const SRC: Record<string, string> = { grievance: "citizen complaints", police: "police", pwd: "PWD", news: "news", hospital: "hospital", imd: "IMD" };
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
-  i.severity_level AS sev, i.status_std AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
-  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
+  i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
+  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 
 /** One incident as a line of facts. */
 const incLine = (i: Row) => `- [${i.id}] ${when(i.t)} · ${one(i.title, 140)} · ${i.type} · ${[i.loc, i.zone_name].filter(Boolean).join(", ") || "Chennai"} · ` +
   `${i.sev}${n(i.dead) ? ` · ${n(i.dead)} dead` : ""}${n(i.injured) ? ` · ${n(i.injured)} injured` : ""}${n(i.complaints) ? ` · ${n(i.complaints)} citizen complaints` : ""}` +
-  ` · ${i.status}${n(i.breached) && n(i.open) ? " (past deadline)" : ""} · ${i.dept_name ?? "department not set"} · from ${String(i.sources ?? "").split("|").map((x) => SRC[x] ?? x).join(", ")}`;
+  ` · ${i.status}${n(i.open) && isPastDeadline(i, asOfNow()) ? " (past deadline)" : ""} · ${i.dept_name ?? "department not set"} · from ${String(i.sources ?? "").split("|").map((x) => SRC[x] ?? x).join(", ")}`;
 
 // --------------------------------------------------------------- key points --
 
@@ -226,7 +227,7 @@ async function dayFacts(s: BriefScope) {
     q(`SELECT i.zone_name AS name, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0 AND i.zone_name IS NOT NULL
        GROUP BY 1 ORDER BY n DESC LIMIT 3`, WP),
     q(`SELECT ${INC} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND i.sla_breached = 1 AND i.citizen_complaints > 0${f.sql}`, f.params),
+    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND ${pastDueSql(await asOf())} AND i.citizen_complaints > 0${f.sql}`, f.params),
     // My Tasks' figure (metrics.ts awaiting_check), not every open item flagged for the Collector
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT dp.name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe ${FROM} WHERE ${W} GROUP BY dp.name ORDER BY n DESC LIMIT 5`, WP),
@@ -325,7 +326,7 @@ export async function deptBrief(s: BriefScope, dept: string, user: string): Prom
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
   const [tot, kinds, rows, name] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
-              SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue, SUM(i.citizen_complaints) AS complaints FROM incidents i WHERE ${W}`, WP),
+              SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND ${pastDueSql(await asOf())}) AS overdue, SUM(i.citizen_complaints) AS complaints FROM incidents i WHERE ${W}`, WP),
     q(`SELECT i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
     q(`SELECT ${INC} ${FROM} WHERE ${W} ORDER BY COALESCE(i.dead, 0) DESC, ${SEV_ORDER}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 15`, WP),
     q(`SELECT name FROM ref_departments WHERE code = ?`, [dept])

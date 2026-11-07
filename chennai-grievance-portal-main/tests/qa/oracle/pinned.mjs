@@ -52,7 +52,8 @@ export function snapshotAsOf() {
 }
 export const consoleNow = (clock = FROZEN_WALL) => { const a = snapshotAsOf(); return a > clock ? a : clock; };
 
-const EFFECT = { resolve: { open: false, status: "Resolved" }, reject: { open: false, status: "Rejected" }, reopen: { open: true, status: "Open" } };
+// RC-26 (lane d): the latest decision WITH an effect decides; "Verify and close" closes, a note and an escalate have none (the same table as effective.ts)
+const EFFECT = { resolve: { open: false, status: "Resolved" }, verify: { open: false, status: "Resolved" }, reject: { open: false, status: "Rejected" }, reopen: { open: true, status: "Open" } };
 
 function shape(r) {
   return {
@@ -67,21 +68,24 @@ function shape(r) {
 const FIELD_OF_COLUMN = { zone_no: "zone", zone_name: "zoneName", ward_no: "ward", taluk_code: "taluk", lead_dept: "dept", category_code: "cat", severity_level: "sev", status_std: "status", citizen_complaints: "complaints",
   place_text: "place", source_count: "sources", member_count: "members", dead: "dead", injured: "injured" };
 
-/** Layers the Collector's latest decision (not a note) and the routing on a row: the same rule as the app's EFF, written out here. */
-function overlay(row, latest, routed) {
+/** Layers the Collector's latest decision with an effect and the routing on a row: the same rule as the app's EFF, written out here. A closing
+ *  decision's time is the row's closing time (reopened: none), and a resolve and a verify leave the row verified (RC-27, effective.ts). */
+function overlay(row, latest, routed, latestAt = new Map()) {
   const d = latest.get(row.id);
   const e = d ? EFFECT[d] : null;
-  return { ...row, decision: d ?? null, open: e ? e.open : row.rawOpen, effStatus: e ? e.status : row.status, routed: routed.has(row.id) };
+  const closed = e ? (e.open ? null : (latestAt.get(row.id) != null ? wallMs(latestAt.get(row.id)) : row.closed)) : row.closed;
+  const verified = d === "resolve" || d === "verify" ? true : row.verified;
+  return { ...row, decision: d ?? null, open: e ? e.open : row.rawOpen, effStatus: e ? e.status : row.status, routed: routed.has(row.id), closed, verified };
 }
 
 export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durableFile = null } = {}) {
   const now = consoleNow(clock), nowMs = wallMs(now);
   const durable = durableRows(durableFile);
-  const latest = new Map();
-  for (const d of [...durable.decisions].sort((a, b) => Number(a.decision_id) - Number(b.decision_id))) if (d.decision !== "note") latest.set(String(d.incident_id), d.decision);
+  const latest = new Map(), latestAt = new Map();
+  for (const d of [...durable.decisions].sort((a, b) => Number(a.decision_id) - Number(b.decision_id))) if (EFFECT[d.decision]) { latest.set(String(d.incident_id), d.decision); latestAt.set(String(d.incident_id), d.decided_at); }
   const routed = new Set(durable.assignments.map((a) => String(a.incident_id)));
   const rawRows = pinTable("incidents").map(shape);
-  const overlaid = rawRows.map((r) => overlay(r, latest, routed));
+  const overlaid = rawRows.map((r) => overlay(r, latest, routed, latestAt));
   const hooks = fs.existsSync(hooksFile) ? JSON.parse(fs.readFileSync(hooksFile, "utf8")) : { removed: [], changed: [], clusters: {} };
   const removedBy = new Map(hooks.removed.map((x) => [String(x.id), x.hook]));
   const changes = new Map();
@@ -117,8 +121,10 @@ export const DEFS = {
   serious_open: { what: "Severe or High and open", test: (r) => r.open && (r.sev === "Severe" || r.sev === "High") },
   serious_all: { what: "Severe or High, open or closed", test: (r) => r.sev === "Severe" || r.sev === "High" },
   urgent: { what: "Severe or High, open and not routed", test: (r) => r.open && !r.routed && (r.sev === "Severe" || r.sev === "High") },
-  overdue_flag: { what: "open with the store's past-deadline flag (routed ones count)", test: (r) => r.open && r.breached },
-  overdue: { what: "open with the store's past-deadline flag, not routed (the glossary's 'Past deadline, still open')", test: (r) => r.open && r.breached && !r.routed },
+  // RC-34 (lane d): past deadline is ONE rule: the store's flag, or the due time gone by the console's now (the case page already said so)
+  overdue_store_flag: { what: "open with the store's own past-deadline flag, alone (the pipeline's flag, OPEN-7: it misses open incidents whose due time has gone)", test: (r) => r.open && r.breached },
+  overdue_flag: { what: "open and past its deadline: the store's flag or the due time gone (routed ones count)", test: (r, o) => r.open && (r.breached || (r.due != null && r.due <= o.nowMs)) },
+  overdue: { what: "open and past its deadline (the flag or the due time gone), not routed (the glossary's 'Past deadline, still open')", test: (r, o) => r.open && (r.breached || (r.due != null && r.due <= o.nowMs)) && !r.routed },
   overdue_due: { what: "open and its due time has passed by the console's now, whatever the store's flag says", test: (r, o) => r.open && r.due != null && r.due <= o.nowMs },
   news_only: { what: "seen only in the news, open or closed", test: (r) => r.mediaOnly },
   news_only_open: { what: "seen only in the news and open", test: (r) => r.mediaOnly && r.open },
@@ -155,8 +161,9 @@ export class Oracle {
     const kept = rows.filter((r) => !d.test || d.test(r, this));
     return { value: d.sum ? kept.reduce((a, r) => a + num(r[d.sum]), 0) : kept.length, ids: kept.map((r) => r.id) };
   }
-  value(defName, scope, layer = "effective") { return this.apply(defName, this.rows(scope, layer)).value; }
-  ids(defName, scope, layer = "effective") { return this.apply(defName, this.rows(scope, layer)).ids; }
+  // RC-29 (lane d): "resolved" in a window is closed in the window (by its closing time), on every surface, as Ask District IQ counts it
+  value(defName, scope, layer = "effective") { return defName === "resolved" && layer === "effective" ? this.resolvedByClose(scope).length : this.apply(defName, this.rows(scope, layer)).value; }
+  ids(defName, scope, layer = "effective") { return defName === "resolved" && layer === "effective" ? this.resolvedByClose(scope).map((r) => r.id) : this.apply(defName, this.rows(scope, layer)).ids; }
 
   /** Groups of the same problem in the same area (the app's cluster_id), counted once. */
   groups(defName, scope) { return new Set(this.apply(defName, this.rows(scope)).ids.map((id) => this.groupOf(id))).size; }
@@ -234,13 +241,13 @@ export class Oracle {
   /** The backlog card and tool: every open row at any date, grouped by department, departments with 5 or more only. */
   backlog(zone = null) {
     const by = new Map();
-    for (const r of this.openAnyDate({ zone })) { if (r.dept == null) continue; const c = by.get(r.dept) ?? { n: 0, overdue: 0, ids: [] }; c.n++; if (r.breached) c.overdue++; c.ids.push(r.id); by.set(r.dept, c); }
+    for (const r of this.openAnyDate({ zone })) { if (r.dept == null) continue; const c = by.get(r.dept) ?? { n: 0, overdue: 0, ids: [] }; c.n++; if (r.breached || (r.due != null && r.due <= this.nowMs)) c.overdue++; c.ids.push(r.id); by.set(r.dept, c); }
     for (const [k, v] of by) if (v.n < 5) by.delete(k);
     return by;
   }
   /** Closed as resolved with its closing time in the window, whenever it was reported (the Briefing's good news, resolution_times). */
   resolvedByClose(scope) {
-    const h = (scope.hours ?? HOURS[scope.period]) * 3600_000, k = scope.offset ?? 0, lo = this.nowMs - h * (k + 1), hi = this.nowMs - h * k;
+    const h = (scope.hours ?? HOURS[scope.period]) * 3600_000, k = scope.offset ?? 0, lo = this.nowMs - h * (k + 1), hi = k === 0 ? Infinity : this.nowMs - h * k; // the current window has no upper bound: a decision made since the refresh counts (RC-27)
     return this.effective.filter((r) => !r.open && r.effStatus === "Resolved" && r.closed != null && r.closed > lo && r.closed <= hi && r.t != null && r.closed >= r.t
       && (scope.zone == null || r.zone === Number(scope.zone)) && (scope.dept == null || r.dept === scope.dept));
   }

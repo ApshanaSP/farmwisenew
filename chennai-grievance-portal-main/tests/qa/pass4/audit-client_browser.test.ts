@@ -20,23 +20,24 @@ const CONDUCTOR = read("src/components/collector/app/thunai/conductor.ts");
 const guarded = (label: string) => `${label} ${label}`.trim();
 
 describe("the click guard, on the string it really sees", () => {
-  it("the guard still builds its test string from the name and the text", () => {
-    expect(THUNAI).toContain("KEEP_BUTTON.test(`${t.name ?? \"\"} ${t.el.textContent ?? \"\"}`.trim())");
+  it("the guard builds its test from the name and the text, each alone and together (keepsSomething)", () => {
+    expect(THUNAI).toContain("keepsSomething(t.name, t.el.textContent)");
+    expect(read("src/components/collector/app/thunai/guards.ts")).toContain("[n, t, `${n} ${t}`.trim()].some(");
   });
   it.each(["Save new version", "Pin"])("holds: %s", (b) => expect(KEEP_BUTTON.test(guarded(b))).toBe(true));
   it("holds: Unpin (a name with no text in the button)", () => expect(KEEP_BUTTON.test("Unpin")).toBe(true));
 
-  it.fails("audit-client_browser-1: a bare Yes button is caught by the guard (name and text together read 'Yes Yes')", () => {
+  it("audit-client_browser-1: a bare Yes button is caught by the guard (name and text together read 'Yes Yes')", () => {
     expect(KEEP_BUTTON.test(guarded("Yes"))).toBe(true);
   });
-  it.fails("audit-client_browser-1: the Tamil Yes on the Data card is caught by the guard", () => {
+  it("audit-client_browser-1: the Tamil Yes on the Data card is caught by the guard", () => {
     expect(KEEP_BUTTON.test(guarded("ஆம்"))).toBe(true);
   });
-  it.fails("audit-client_browser-1: the Data card's Yes carries data-jarvis-never, as the guard's own comment says it must", () => {
+  it("audit-client_browser-1: the Data card's Yes carries data-jarvis-never, as the guard's own comment says it must", () => {
     const line = read("src/components/collector/app/studio/DataCard.tsx").split("\n").find((l) => l.includes("{t.yes}"));
     expect(line).toContain("data-jarvis-never");
   });
-  it.fails("audit-client_browser-2: Add to dashboard, the Studio's own pin, is caught by the guard", () => {
+  it("audit-client_browser-2: Add to dashboard, the Studio's own pin, is caught by the guard", () => {
     expect(KEEP_BUTTON.test("Add this chart to the dashboard (Environment page) Add to dashboard")).toBe(true);
   });
 });
@@ -46,13 +47,13 @@ describe("the save card's yes list", () => {
   const yes = () => { const m = /^\/(.+)\/i$/.exec(String(list)); return new RegExp(m![1], "i"); };
   it("the list can be read from the code", () => expect(list).toBeTruthy());
   it.each(["yes", "Yes.", "ok", "ஆம்", "சரி", "aama", "seri"])("holds: %s", (w) => expect(yes().test(w)).toBe(true));
-  it.fails("audit-client_browser-3: ஆமாம், the everyday Tamil yes, counts as a yes", () => expect(yes().test("ஆமாம்")).toBe(true));
-  it.fails("audit-client_browser-3: 'yes please' counts as a yes", () => expect(yes().test("yes please")).toBe(true));
+  it("audit-client_browser-3: ஆமாம், the everyday Tamil yes, counts as a yes", () => expect(yes().test("ஆமாம்")).toBe(true));
+  it("audit-client_browser-3: 'yes please' counts as a yes", () => expect(yes().test("yes please")).toBe(true));
 });
 
 describe("Confirm it's you over Jarvis's screen", () => {
   const z = (file: string, re: RegExp) => Number(re.exec(read(file))?.[1]);
-  it.fails("audit-client_browser-4: the password box stands above Jarvis's screen and bar", () => {
+  it("audit-client_browser-4: the password box stands above Jarvis's screen and bar", () => {
     const box = z("src/components/security/confirm.css", /\.cfm-veil\{[^}]*z-index:(\d+)/);
     const screen = z("src/components/collector/app/thunai/stage.css", /\.st-root \{[\s\S]*?z-index: (\d+)/);
     expect(box).toBeGreaterThan(screen);
@@ -60,15 +61,15 @@ describe("Confirm it's you over Jarvis's screen", () => {
 });
 
 describe("the rest of the audit's findings, as far as they can be read without a browser", () => {
-  it.fails("audit-client_browser-6: the tray does not tell the Collector to say a thing Jarvis refuses", () => {
+  it("audit-client_browser-6: the tray does not tell the Collector to say a thing Jarvis refuses", () => {
     expect(THUNAI).not.toContain('Say "confirm ${tray.length}"');
   });
-  it.fails("audit-client_browser-8: stopping a turn clears the 'Counting it' line the turn put up", () => {
+  it("audit-client_browser-8: stopping a turn clears the 'Counting it' line the turn put up", () => {
     const body = /const cancelTurn = \(\) => \{[\s\S]*?\r?\n {2}\};/.exec(THUNAI)?.[0] ?? "";
     expect(body).toContain("turnGen.current++");
     expect(body).toMatch(/setReply\(""\)/);
   });
-  it.fails("audit-client_browser-9: a spoken stop cancels the turn in flight, also when the question was typed", () => {
+  it("audit-client_browser-9: a spoken stop cancels the turn in flight, also when the question was typed", () => {
     // listening (a typed question is not known to the turn machine), then speech, then the words "stop"
     let m = turn(turnStart(), { type: "open" }).m;
     m = turn(m, { type: "vadStart", at: 0 }).m;
@@ -77,18 +78,18 @@ describe("the rest of the audit's findings, as far as they can be read without a
     expect(r.m.state).toBe("holding");
     expect(r.act.map((a) => a.a)).toContain("cancelTurn");
   });
-  it.fails("audit-client_browser-9: a bare stop while Jarvis is working passes the address gate", () => {
+  it("audit-client_browser-9: a bare stop while Jarvis is working passes the address gate", () => {
     const g = addressed({ text: "stop", lastTurnAt: null, now: Date.now(), rulesSure: true, districtNoun: false });
     expect(g.act).toBe(true);
   });
-  it.fails("audit-client_browser-9: நிறுத்து while Jarvis is working passes the address gate", () => {
+  it("audit-client_browser-9: நிறுத்து while Jarvis is working passes the address gate", () => {
     const g = addressed({ text: "நிறுத்து", lastTurnAt: null, now: Date.now(), rulesSure: true, districtNoun: false });
     expect(g.act).toBe(true);
   });
-  it.fails("audit-client_browser-10: show numbers counts as an instant control, so the dataset lane does not take it", () => {
+  it("audit-client_browser-10: show numbers counts as an instant control, so the dataset lane does not take it", () => {
     expect(isReflex([{ a: "numbers", show: true, names: false }], START)).toBe(true);
   });
-  it.fails("audit-client_browser-11: captions check for Jarvis's own voice, as Whisper's words do", () => {
+  it("audit-client_browser-11: captions check for Jarvis's own voice, as Whisper's words do", () => {
     const body = /private fromCaptions\(text: string\) \{[\s\S]*?\r?\n {2}\}/.exec(CONDUCTOR)?.[0] ?? "";
     expect(body).toContain("gateFor");
     expect(body).toContain("selfHeard");
@@ -96,10 +97,10 @@ describe("the rest of the audit's findings, as far as they can be read without a
   it("audit-client_browser-12: a sentence that starts with click is not read as a request for a screen", () => {
     expect(quickScreen("click trends", WORLD)).toBeNull();
   });
-  it.fails("audit-client_browser-15: each Confirm it's you box starts empty: it has a key of its own", () => {
+  it("audit-client_browser-15: each Confirm it's you box starts empty: it has a key of its own", () => {
     expect(read("src/components/security/Confirm.tsx")).toMatch(/<ConfirmBox key=/);
   });
-  it.fails("audit-client_browser-16: a control is found by the word on it, not only by its title", () => {
+  it("audit-client_browser-16: a control is found by the word on it, not only by its title", () => {
     const el = { getAttribute: (k: string) => (k === "title" ? "Export, workspaces, customize, theme and language" : null), innerText: "Menu", textContent: "Menu" } as unknown as Element;
     const { accessibleName } = dom;
     expect(accessibleName(el).toLowerCase()).toContain("menu");

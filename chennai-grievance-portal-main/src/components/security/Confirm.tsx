@@ -18,12 +18,13 @@ type Method = "email" | "password";
 const GRANT_HEADER = "x-diq-grant";
 
 export default function ConfirmHost() {
-  const [ask, setAsk] = useState<(Ask & { done: (grant: string | null) => void; why: string | null }) | null>(null);
+  const [ask, setAsk] = useState<(Ask & { id: number; done: (grant: string | null) => void; why: string | null }) | null>(null);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const seq = useRef(0); // one key per box, so a second box never starts with the first one's typed password (audit-client_browser-15)
 
   useEffect(() => {
     const prev = window.fetch;
-    const open = (a: Ask, why: string | null) => new Promise<string | null>((done) => setAsk({ ...a, why, done: (g) => { setAsk(null); done(g); } }));
+    const open = (a: Ask, why: string | null) => new Promise<string | null>((done) => setAsk({ ...a, why, id: ++seq.current, done: (g) => { setAsk(null); done(g); } }));
     const wrapped: typeof window.fetch = async (input, init) => {
       const r = await prev(input, init);
       if (r.status !== 428) return r;
@@ -42,7 +43,7 @@ export default function ConfirmHost() {
     return () => { if (window.fetch === wrapped) window.fetch = prev; };
   }, []);
 
-  return ask ? <ConfirmBox ask={ask} why={ask.why} onDone={ask.done} /> : null;
+  return ask ? <ConfirmBox key={ask.id} ask={ask} why={ask.why} onDone={ask.done} /> : null;
 }
 
 function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone: (grant: string | null) => void }) {

@@ -1,0 +1,6 @@
+   × the search index when the model is not there > GB-4: when the model cannot load at all, search also falls back to keywords (null), and does not throw 5ms
+   × gaps still open > DECISIONS-17: with no index, search_records still answers when only incidents are asked for 0ms
+   × gaps still open > DECISIONS-17: with no index, search_records finds an incident by the title the console shows 0ms
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-17: with no index, search_records still answers when only incidents are asked for
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-17: with no index, search_records finds an incident by the title the console shows
+ FAIL  tests/qa/pass4/golden-baseline.test.ts > the search index when the model is not there > GB-4: when the model cannot load at all, search also falls back to keywords (null), and does not throw

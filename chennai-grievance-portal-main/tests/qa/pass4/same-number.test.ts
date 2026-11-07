@@ -106,15 +106,15 @@ describe("same number everywhere", () => {
 
   // ---------------------------------------------------------------- open findings --
 
-  it.fails("same-number-1 Jarvis's dashboard list, headed 'most serious first', starts with the most serious case", () => {
+  it("same-number-1 Jarvis's dashboard list, headed 'most serious first', starts with the most serious case", () => {
     const r = get(ADYAR_W, "thunai/round:dashboard", /first row's severity rank/);
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-1 Jarvis's past-deadline list for the district this week gives the same count as the tile, not 'no cases'", () => {
+  it("same-number-1 Jarvis's past-deadline list for the district this week gives the same count as the tile, not 'no cases'", () => {
     const r = get(DISTRICT_W, "thunai/round:cases(overdue)", "total"), tile = get(DISTRICT_W, "collector/overview", "snapshot.overdue");
     expect(r?.value).toBe(tile?.value);
   });
-  it.fails("same-number-1 the same list reached by words: 'cases past deadline this week'", () => {
+  it("same-number-1 the same list reached by words: 'cases past deadline this week'", () => {
     const r = get(DISTRICT_W, "thunai/round:text", /cases past deadline this week/), tile = get(DISTRICT_W, "collector/overview", "snapshot.overdue");
     expect(r?.value).toBe(tile?.value);
   });
@@ -130,14 +130,14 @@ describe("same number everywhere", () => {
     const r = get(SWM_W, "thunai/round:performance", "kpi.open");
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-4 zone_profile with a department filter gives the zone's open figure, not 0", () => {
+  it("same-number-4 zone_profile with a department filter gives the zone's open figure, not 0", () => {
     const r = get(MIX_W, "assistant/tools:zone_profile", "zone.13.active");
     expect(r?.value).toBe(r?.oracle);
   });
   it.fails("same-number-5 a dashboard for one zone does not say 'Most in' another zone", () => {
     expect(notes.filter((n) => n.kind === "wrong-place").map((n) => `${n.scope}: ${n.say}`)).toEqual([]);
   });
-  it.fails("same-number-6 the Briefing's 'routine, nothing to do' figure is the PDF's routine figure", () => {
+  it("same-number-6 the Briefing's 'routine, nothing to do' figure is the PDF's routine figure", () => {
     const r = get(DISTRICT_W, "collector/insights?part=briefing", /handledByDepts/);
     expect(r?.value).toBe(r?.oracle);
   });
@@ -156,7 +156,7 @@ describe("same number everywhere", () => {
   it.fails("same-number-9 Jarvis's 'All cases, this week' is the tile's still-open figure", () => {
     expect(get(DISTRICT_W, "thunai/round:cases(open)", "kpi.total(groups)")?.value).toBe(get(DISTRICT_W, "collector/overview", "kpi.cur.ongoing")?.value);
   });
-  it.fails("same-number-10 the first of the '12 complete weeks' holds that whole week", () => {
+  it("same-number-10 the first of the '12 complete weeks' holds that whole week", () => {
     const r = in_(DISTRICT_W).filter((x) => x.surface === "collector/insights?part=trends" && /\.bar\[/.test(x.figure))[0];
     expect(r?.value).toBe(r?.oracle);
   });
@@ -173,7 +173,7 @@ describe("same number everywhere", () => {
     expect(r?.result?.stage?.scope?.period).toBe("quarterly");
   });
   it.fails("same-number-15 the store's past-deadline flag covers every open incident whose due time has passed (OPEN-7, the pipeline's)", () => {
-    expect(oracle.value("overdue_flag", { period: "weekly" })).toBe(oracle.value("overdue_due", { period: "weekly" }));
+    expect(oracle.value("overdue_store_flag", { period: "weekly" })).toBe(oracle.value("overdue_due", { period: "weekly" }));
   });
   it.fails("same-number-16 the backlog counts no incident dated after the console's now (OPEN-11, the pipeline's)", () => {
     expect(notes.filter((n) => n.kind === "dated-after-now")).toEqual([]);
@@ -188,7 +188,7 @@ describe("same number everywhere", () => {
     const out = oracle.hooks.removed.filter((r: any) => r.hook === "news-media-only@1" && oracle.rawRow(String(r.id))?.dead > 0).map((r: any) => r.id);
     expect(out).toEqual([]);
   });
-  it.fails("same-number-20 'past deadline by department' is not answered with 'no incidents match'", async () => {
+  it("same-number-20 'past deadline by department' is not answered with 'no incidents match'", async () => {
     const c = await askDistrictIq("past deadline by department this week");
     expect(String(c?.headline)).not.toMatch(/^No incidents/);
   });
@@ -199,7 +199,7 @@ describe("same number everywhere", () => {
   it.fails("same-number-21 Jarvis's spoken lines read as sentences", () => {
     expect(lines.filter((l) => /incidents reports|incidents of incidents/.test(String(l.say))).map((l) => l.say)).toEqual([]);
   });
-  it.fails("same-number-22 'Resolved this week' on the tile is the count resolved this week", () => {
+  it("same-number-22 'Resolved this week' on the tile is the count resolved this week", () => {
     expect(get(DISTRICT_W, "collector/overview", "kpi.cur.resolved")?.value).toBe(get(DISTRICT_W, "assistant/chat:resolved", "Resolved")?.value);
   });
   it.fails("same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it", () => {

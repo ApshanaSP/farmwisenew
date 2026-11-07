@@ -152,7 +152,7 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
   try {
     const codes = await codesOf(incidentIds);
     if (!codes.length) return 0;
-    const [rows] = await pool.query<RowDataPacket[]>(`SELECT id, complaint_code, status, created_at FROM complaints WHERE complaint_code IN (?)`, [codes]);
+    const [rows] = await pool.query<RowDataPacket[]>(`SELECT id, complaint_code, status, remarks, created_at FROM complaints WHERE complaint_code IN (?)`, [codes]);
     const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at })));
     let changed = 0;
     for (const r of rows) {
@@ -184,6 +184,19 @@ export async function citizenMayViewReport(userId: number, photoDir: string): Pr
   if (!codes.length) return false;
   const [own] = await pool.query<RowDataPacket[]>(`SELECT 1 FROM complaints WHERE user_id = ? AND complaint_code IN (?) LIMIT 1`, [userId, codes]);
   return own.length > 0;
+}
+
+/**
+ * The remarks to show with the progress laid over a complaint. A rejection's reason belongs to the rejection: once the
+ * complaint has moved on (the Collector sent it back) the reason is dropped, whether it was copied into the stored
+ * remarks or not. Other remarks (the complaint's own) stay (RC-26, PB-180).
+ */
+export function remarksFor(stored: unknown, p: Progress | null | undefined): string | null {
+  const own = stored == null || stored === "" ? null : String(stored);
+  if (!p) return own;
+  if (p.status === "Rejected") return p.remarks ?? own;
+  const reasons = new Set(p.journey.filter((j) => j.status === "Rejected").map((j) => j.remarks));
+  return own != null && reasons.has(own) ? null : own;
 }
 
 /** The complaint's own history with the progress laid over it (oldest first); the progress decides the status. */

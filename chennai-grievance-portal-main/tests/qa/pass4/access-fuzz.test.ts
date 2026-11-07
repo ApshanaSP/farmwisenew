@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { login } from "./lib/access-lib.mjs";
 
-const base = "http://127.0.0.1:3140";
+const base = `http://127.0.0.1:${process.env.QA_ACCESS_FUZZ_PORT || 3140}`;
 const up = await fetch(`${base}/login`).then((r) => r.status < 500).catch(() => false);
 describe.skipIf(!up)("profile photo upload", () => {
   it("access-fuzz-2: a request that is not multipart gets 400, not 500", async () => {

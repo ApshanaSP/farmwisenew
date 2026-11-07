@@ -244,6 +244,8 @@ export class Conductor {
   private engage() { this.engaged = Date.now(); this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length }); }
   private fromCaptions(text: string) {
     const lang = /[஀-௿]/.test(text) ? "ta" : "en";
+    // Jarvis's own voice, heard back by the captions, is not a sentence (as for Whisper's words: accept())
+    if (selfHeard(text.trim(), this.sayingAtOnset ?? nowSaying())) return;
     // the same gate as Whisper's words: side talk goes no further than this browser
     const gate = this.gateFor(text);
     if (!gate.act) { this.h.onIgnored(text); return; }

@@ -1,0 +1,18 @@
+   × the click guard, on the string it really sees > the guard builds its test from the name and the text, each alone and together (keepsSomething) 14ms
+   × the click guard, on the string it really sees > audit-client_browser-1: a bare Yes button is caught by the guard (name and text together read 'Yes Yes') 2ms
+   × the click guard, on the string it really sees > audit-client_browser-1: the Tamil Yes on the Data card is caught by the guard 1ms
+   × the click guard, on the string it really sees > audit-client_browser-1: the Data card's Yes carries data-jarvis-never, as the guard's own comment says it must 3ms
+   × the click guard, on the string it really sees > audit-client_browser-2: Add to dashboard, the Studio's own pin, is caught by the guard 1ms
+   × the save card's yes list > audit-client_browser-3: ஆமாம், the everyday Tamil yes, counts as a yes 1ms
+   × the save card's yes list > audit-client_browser-3: 'yes please' counts as a yes 1ms
+   × Confirm it's you over Jarvis's screen > audit-client_browser-4: the password box stands above Jarvis's screen and bar 2ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-6: the tray does not tell the Collector to say a thing Jarvis refuses 4ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-8: stopping a turn clears the 'Counting it' line the turn put up 1ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-9: a spoken stop cancels the turn in flight, also when the question was typed 3ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-9: a bare stop while Jarvis is working passes the address gate 3ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-9: நிறுத்து while Jarvis is working passes the address gate 2ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-10: show numbers counts as an instant control, so the dataset lane does not take it 1ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-11: captions check for Jarvis's own voice, as Whisper's words do 1ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-12: a sentence that starts with click is not read as a request for a screen 6ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-15: each Confirm it's you box starts empty: it has a key of its own 2ms
+   × the rest of the audit's findings, as far as they can be read without a browser > audit-client_browser-16: a control is found by the word on it, not only by its title 1ms

@@ -1,0 +1,11 @@
+# RC-26 sweep: every place that reads 'the latest decision' or dedupes a decision
+src/app/api/collector/decisions/route.ts:88:       AND d.decided_at >= NOW() - INTERVAL 2 MINUTE
+src/app/api/complaints/route.ts:24:      WHERE c.user_id = ? AND c.title = ? AND c.description = ? AND c.ward_number = ? AND c.created_at >= NOW() - INTERVAL 2 MINUTE
+src/lib/assistant/__tests__/golden/cases.ts:35:const EFF_OPEN = `(CASE (SELECT d.decision FROM district_intel_ops.collector_decisions d WHERE d.incident_id = i.incident_id AND d.decision <> 
+src/lib/collector/intel.ts:187:                    AND d.decision IN ('verify', 'reject', 'resolve', 'reopen') AND d.decided_at >= s.at))`;
+src/lib/collector/intel.ts:393:     FROM ${ops("collector_decisions")} WHERE incident_id IN (?) AND decision <> 'note' ORDER BY decision_id`,
+src/lib/map/map.golden.ts:39:  const dec = await run(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => []);
+src/lib/map/world.ts:378:    q(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => [] as Row[]),
+src/lib/officer/data.ts:106:          WHERE d.decision IN ('verify', 'reopen', 'resolve', 'reject')) x WHERE rn = 1),
+src/lib/officer/data.ts:355:     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >
+src/lib/officer/insights.ts:217:    q(`SELECT SUM(d.decision IN ('verify', 'resolve')) AS verified, SUM(d.decision IN ('reopen', 'reject')) AS returned

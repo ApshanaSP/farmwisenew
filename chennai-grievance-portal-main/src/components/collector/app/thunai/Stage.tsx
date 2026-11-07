@@ -543,7 +543,7 @@ function BlockBody(p: BP) {
         {!p.tray.length ? <p className="st-empty">{T(lang, "No drafts waiting. Say \"draft action for 2\" on a list of cases.", "காத்திருக்கும் வரைவுகள் இல்லை.")}</p> : (
           <>
             <ol className="st-drafts">{p.tray.map((d, i) => <li key={d.incidentId}><span className="n">{i + 1}</span><b>{d.title}</b><small>{d.to ?? T(lang, "no recipient on record", "பெறுநர் இல்லை")}{d.sandbox ? T(lang, " · sandbox delivery", " · சோதனை வழி") : T(lang, " · send from the Take action panel", "")}</small></li>)}</ol>
-            <p className="st-hint">{T(lang, `Nothing is sent until you say "confirm ${p.tray.length}" or press the button.`, `"உறுதி ${p.tray.length}" என்று சொல்லும் வரை எதுவும் அனுப்பப்படாது.`)}</p>
+            <p className="st-hint">{T(lang, "Nothing is sent until you press the button. Jarvis cannot send by voice.", "பொத்தானை அழுத்தும் வரை எதுவும் அனுப்பப்படாது. குரலால் அனுப்ப முடியாது.")}</p>
             <div className="st-row"><button className="st-btn primary" onClick={a.confirmTray}><I n="send" />{T(lang, `Approve and send ${p.tray.length}`, `${p.tray.length} அனுப்பு`)}</button><button className="st-btn" onClick={a.discardTray}>{T(lang, "Discard", "நீக்கு")}</button></div>
           </>
         )}

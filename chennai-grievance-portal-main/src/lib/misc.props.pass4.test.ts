@@ -6,7 +6,7 @@ import { csvCell } from "./csv";
 import { checkRateLimit, addFailure, failuresOver, clearFailures, getClientIp } from "./rate-limit";
 import { trendKeys } from "./collector/insights";
 import { addDays, daysBetween, weekStart } from "./studio/values";
-import { effectiveSql, effectiveStatus } from "./collector/effective";
+import { decisionEffect, effectiveSql, effectiveStatus } from "./collector/effective";
 import { expand, registerFunctions, setDatabaseNames, translate } from "./aws/dialect";
 
 const P = { seed: 4242, numRuns: 300 };
@@ -158,7 +158,7 @@ describe("effectiveStatus and its SQL agree (property)", () => {
       const [s, p] = expand(translate(`SELECT i.incident_id AS id, ${EFF.open} AS o, ${EFF.status} AS st FROM incidents i ORDER BY id`), []);
       const got = db.prepare(s).all(...(p as never[])) as { id: string; o: number; st: string }[];
       rows.forEach((r, i) => {
-        const latest = [...r.decisions].reverse().find((d) => d !== "note") ?? null;
+        const latest = [...r.decisions].reverse().find((d) => decisionEffect(d)) ?? null; // the latest with an effect (a note and an escalate have none)
         const want = effectiveStatus(r.is_open, r.status, latest);
         const g = got.find((x) => x.id === `I${i}`)!;
         expect({ o: Number(g.o), st: g.st }, JSON.stringify(r)).toEqual({ o: want.open, st: want.status });

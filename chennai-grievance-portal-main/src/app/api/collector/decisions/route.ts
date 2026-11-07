@@ -81,11 +81,20 @@ export async function POST(req: NextRequest) {
     await conn.beginTransaction();
     const saved: { incident_id: string; decision_id: number; escalated_to_level: string | null }[] = [];
     // a double click sends the same decision twice: the one just made by the same person on the same incident is kept,
-    // not recorded (and audited) a second time
-    const [recent] = await conn.query<RowDataPacket[]>(
-      `SELECT incident_id, decision_id FROM ${ops("collector_decisions")} WHERE incident_id IN (?) AND decision = ? AND decided_by = ?
-       AND decided_at >= NOW() - INTERVAL 2 MINUTE`, [d.incidentIds, d.decision, session.email]);
-    const again = new Map(recent.map((r) => [String(r.incident_id), Number(r.decision_id)]));
+    // not recorded (and audited) a second time. It is a double click only while nothing has happened since: a later
+    // decision of any kind (a resolve, a reopen, then a resolve again are three real decisions) or a later step or
+    // report from the department makes the new one real.
+    const sameAs = `SELECT d.incident_id, d.decision_id, d.escalate_to FROM ${ops("collector_decisions")} d WHERE d.incident_id IN (?) AND d.decision = ? AND d.decided_by = ?
+       AND d.decided_at >= NOW() - INTERVAL 2 MINUTE
+       AND NOT EXISTS (SELECT 1 FROM ${ops("collector_decisions")} x WHERE x.incident_id = d.incident_id AND x.decision_id > d.decision_id)`;
+    const noLaterStep = ` AND NOT EXISTS (SELECT 1 FROM ${ops("officer_steps")} s WHERE s.incident_id = d.incident_id AND s.at >= d.decided_at)`;
+    const args = [d.incidentIds, d.decision, session.email];
+    let recent: RowDataPacket[];
+    try { [recent] = await conn.query<RowDataPacket[]>(sameAs + noLaterStep, args); }
+    catch { [recent] = await conn.query<RowDataPacket[]>(sameAs, args); } // before the officer tables are set up
+    // an escalate to another department is a new decision
+    const target = new Map(incs.map((i) => [String(i.incident_id), d.escalateTo || i.lead_dept]));
+    const again = new Map(recent.filter((r) => d.decision !== "escalate" || String(r.escalate_to ?? "") === String(target.get(String(r.incident_id)) ?? "")).map((r) => [String(r.incident_id), Number(r.decision_id)]));
     for (const inc of incs) {
       if (d.decision !== "note" && again.has(String(inc.incident_id))) {
         saved.push({ incident_id: inc.incident_id, decision_id: again.get(String(inc.incident_id))!, escalated_to_level: null });

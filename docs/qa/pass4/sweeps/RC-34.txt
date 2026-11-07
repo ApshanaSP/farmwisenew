@@ -1,0 +1,20 @@
+# RC-34 sweep: every read of sla_breached in src after the fix (the class guard allows only projections and explain()'s fallback)
+src/lib/assistant/catalog.ts:79:      hours_to_first_action: ["measure", "hours to the first action", { unit: "hours" }], sla_breached: ["flag", "past its deadline"],
+src/lib/assistant/incidents.ts:59:  i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
+src/lib/assistant/warnings.ts:94:    `SELECT ${TITLE} AS title, i.place_text AS loc, i.zone_name AS zone, i.severity_level AS sev, i.sla_breached AS overdue FROM incidents i
+src/lib/collector/actionmail.ts:299:        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, i.priority_score AS priority, ${OPEN} AS open
+src/lib/collector/aibrief.ts:131:  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
+src/lib/collector/briefbook.ts:44:  i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
+src/lib/collector/insights.ts:52:  i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
+src/lib/collector/intel.ts:233:  i.sla_breached AS breached, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
+src/lib/collector/intel.ts:480:  const dl = deadlineState(r.sla_due ?? null, istWall(), r.breached ?? r.sla_breached);
+src/lib/map/world.ts:66:              i.priority_score AS priority, i.priority_reasons AS reasons, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.sla_breached AS breached,
+src/lib/officer/data.ts:111:               i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
+src/lib/officer/data.ts:140:const DUE_SQL = `w.stage IN ('new', 'approved', 'action', 'sent') AND COALESCE(w.sla_breached, 0) = 0 AND w.sla_due_at > ? AND w.sla_due_at <= ? + INTERVAL 1 DAY`
+src/lib/reference/metrics.ts:65:  past_deadline: (c: SqlCtx) => `${c.open} = 1 AND ${c.a ?? "i"}.sla_breached = 1 AND NOT ${c.routed}`,
+src/lib/reference/metrics.ts:153:    ? `(COALESCE(${a}.sla_breached, 0) = 1 OR COALESCE(${a}.sla_due_at < '${now}', 0) = 1)`
+src/lib/reference/metrics.ts:154:    : `(COALESCE(${a}.sla_breached, 0) = 1)`;
+src/lib/rehearsal/realdata.ts:30:    place: r.place_text, priority: Number(r.priority_score) || 0, breached: Number(r.sla_breached) === 1, status: r.status_std ?? ""
+src/lib/rehearsal/source.ts:66:              i.priority_score AS priority, i.sla_breached AS breached, i.status_std AS status, i.is_open AS open
+src/lib/studio/link.ts:31:    `SELECT zone_no, ward_no, category_code, family, ${OPEN} AS is_open, outlet_count, sla_breached, first_reported_at FROM incidents i WHERE first_reported_at IS N
+src/lib/studio/link.ts:35:    o: Number(r.is_open) === 1, news: Number(r.outlet_count) > 0, late: Number(r.sla_breached) === 1, d: String(r.first_reported_at).slice(0, 10)

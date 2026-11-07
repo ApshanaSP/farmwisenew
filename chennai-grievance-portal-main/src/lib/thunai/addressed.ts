@@ -25,6 +25,11 @@ export interface GateInput {
 
 export const ENGAGED_MS = 20_000;
 
+/** a bare stop: it only ever stops Jarvis, so it needs no name and no recent turn (a typed question, or a long answer, is stopped by it) */
+const STOP_CORE = "stop|stop it|stop that|stop this|enough|nirutthu|niruthu|nirutha|nirutthunga|niruthunga|nirutthungal|stop pannu|stop pannunga|stop pannungal|நிறுத்து|நிறுத்துங்க|நிறுத்துங்கள்|நிறுத்துங்கோ|நிறுத்தவும்|போதும் நிறுத்து";
+const STOP_WORD = new RegExp("^ (?:jarvis )?(?:" + STOP_CORE + ")(?: (?:jarvis|please|pls|plz|ji))* $");
+export const isStopWord = (text: string): boolean => STOP_WORD.test(norm(text));
+
 const norm = (s: string) => ` ${s.toLowerCase().normalize("NFC").replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 
 /** Things people say to each other: other people as the subject or object, past and future plans, chatter. */
@@ -109,6 +114,7 @@ export function addressed(i: GateInput): Addressed {
   if (named != null) return { tier: 1, act: true, text: named || text, maxLevel: "C", why: "named" };
   // the name talked about: someone else is being spoken to, engaged or not
   if (talkedAbout(text)) return { tier: 0, act: false, text, maxLevel: null, why: "about" };
+  if (isStopWord(text)) return { tier: 3, act: true, text, maxLevel: "A", why: "stop" };
   const engaged = i.lastTurnAt != null && i.now - i.lastTurnAt <= ENGAGED_MS;
   if (engaged && looksRequest(text) && !looksSide(text, true, i.districtNoun) && !chore(text, true)) return { tier: 2, act: true, text, maxLevel: "C", why: "engaged" };
   if (looksSide(text, false, i.districtNoun)) return { tier: 0, act: false, text, maxLevel: null, why: "side" };

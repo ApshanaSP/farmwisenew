@@ -27,7 +27,11 @@ export function accessibleName(el: Element): string {
   const label = h.getAttribute("aria-label") || h.getAttribute("title") || (h as HTMLInputElement).placeholder || "";
   const lb = h.getAttribute("aria-labelledby");
   const by = lb ? lb.split(" ").map((id) => document.getElementById(id)?.textContent ?? "").join(" ") : "";
-  return (label || by || h.innerText || h.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60);
+  // the word on the control as well as its title: "Menu" on a button titled "Export, workspaces, customize, ...", so "click menu" finds it
+  const shown = (h.innerText || h.textContent || "").replace(/\s+/g, " ").trim();
+  const named = (label || by).replace(/\s+/g, " ").trim();
+  const both = named && shown && !named.toLowerCase().includes(shown.toLowerCase()) ? `${shown} ${named}` : named || shown;
+  return both.slice(0, 80);
 }
 
 export interface Clickable { n: number; el: HTMLElement; name: string; x: number; y: number }

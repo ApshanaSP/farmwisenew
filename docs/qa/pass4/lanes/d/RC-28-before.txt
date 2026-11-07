@@ -1,0 +1,6 @@
+   × gaps still open > DECISIONS-5: an officer's own close is not listed as a Collector's decision 0ms
+   × gaps still open > DECISIONS-5: an officer's own close does not count in "Collector's checks" 0ms
+   × gaps still open > DECISIONS-6: a case returned with reject reaches the officer who must act on it 0ms
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-5: an officer's own close is not listed as a Collector's decision
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-5: an officer's own close does not count in "Collector's checks"
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-6: a case returned with reject reaches the officer who must act on it

@@ -34,9 +34,9 @@ function store() {
       SUM(${EFF.open} = 1) AS ongoing, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved FROM incidents i`)[0];
   const listOpen = () => all(`SELECT i.incident_id AS id FROM incidents i WHERE ${EFF.open} = 1 ORDER BY id`).map((r) => r.id);
   const listStatus = (st: string) => all(`SELECT i.incident_id AS id FROM incidents i WHERE ${EFF.status} = ? ORDER BY id`, [st]).map((r) => r.id);
-  // what the list's overlay() shows for each row: the latest decision that is not a note
+  // what the list's overlay() shows for each row: the latest decision with an effect
   const overlayRows = () => all(`SELECT i.incident_id AS id, i.is_open, i.status_std, ${EFF.open} AS eff_open, ${EFF.status} AS eff_status,
-      (SELECT d.decision FROM collector_decisions d WHERE d.incident_id = i.incident_id AND d.decision <> 'note' ORDER BY d.decision_id DESC LIMIT 1) AS latest
+      (SELECT d.decision FROM collector_decisions d WHERE d.incident_id = i.incident_id AND d.decision IN ('resolve', 'verify', 'reject', 'reopen') ORDER BY d.decision_id DESC LIMIT 1) AS latest
       FROM incidents i ORDER BY id`);
   return { decide, kpi, listOpen, listStatus, overlayRows };
 }
@@ -70,7 +70,7 @@ describe("KPI tiles and lists use the same effective status (KPI-001)", () => {
     sameAsOverlay(s.overlayRows());
   });
 
-  it("reject closes; reopening a pipeline-resolved incident opens it; verify leaves the status", () => {
+  it("reject closes; reopening a pipeline-resolved incident opens it; verify closes it, and an escalate after a resolve does not reopen it", () => {
     const s = store();
     s.decide("B", "reject");
     s.decide("C", "reopen");
@@ -79,7 +79,9 @@ describe("KPI tiles and lists use the same effective status (KPI-001)", () => {
     expect(s.listStatus("Rejected")).toEqual(["B"]);
     sameAsOverlay(s.overlayRows());
     s.decide("A", "verify");
-    expect(s.kpi()).toMatchObject({ ongoing: 2 });
+    expect(s.kpi()).toMatchObject({ ongoing: 1 });
+    s.decide("A", "escalate");
+    expect(s.kpi()).toMatchObject({ ongoing: 1 });
     sameAsOverlay(s.overlayRows());
   });
 });

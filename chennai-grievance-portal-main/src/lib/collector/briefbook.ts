@@ -7,13 +7,14 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, awaitingCheck, explain, periodWindow, type Period } from "@/lib/collector/intel";
+import { PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
 import { pctChange } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -39,7 +40,7 @@ function filters(s: BookScope, a = "i") {
 const CRIME = ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "SUICIDE_SELF_HARM", "DRUGS_LIQUOR", "PUBLIC_ORDER", "ROAD_ACCIDENT", "MISSING_PERSON"];
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, i.status_std AS status, ${OPEN} AS open,
+  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.dead, i.injured, i.lat, i.lon,
   i.ai_summary, i.ai_attention, i.ai_next_step, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
@@ -52,7 +53,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const P = `${prev.sql}${f.sql}`, PP = [...prev.params, ...f.params];
   const whole = !s.zone && !s.dept && !s.cat && !s.taluk;
   const cw = periodWindow(s.period, now, "i.first_reported_at", 0, Math.max(PERIODS[s.period].hours, 24 * 7));
-  const closed = periodWindow(s.period, now, "i.closed_at");
+  const closed = periodSinceWindow(s.period, now, EFF.closedAt);
   const wk = periodWindow(s.period, now, "i.first_reported_at", 0, 168), pwk = periodWindow(s.period, now, "i.first_reported_at", 1, 168);
 
   const [tiles, tilesPrev, awaiting, critical, deptRows, deptItems, zones, zoneKinds, notes, warn, beds, law, lawPrev, kinds, oldest,
@@ -82,8 +83,8 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
        GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
     q(`SELECT ${INC}, DATEDIFF(?, i.first_reported_at) AS days ${FROM} WHERE ${OPEN} = 1 AND i.citizen_complaints > 0${f.sql}
        AND i.first_reported_at > (? - INTERVAL 180 DAY) ORDER BY i.first_reported_at LIMIT 1`, [now, ...f.params, now]),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${closed.sql}${f.sql} AND i.status_std = 'Resolved'`, [...closed.params, ...f.params]),
-    q(`SELECT ${INC} ${FROM} WHERE ${closed.sql}${f.sql} AND i.status_std = 'Resolved' AND i.severity_level IN ('Severe', 'High')
+    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved'`, [...closed.params, ...f.params]),
+    q(`SELECT ${INC} ${FROM} WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved' AND i.severity_level IN ('Severe', 'High')
        ORDER BY i.severity_level = 'Severe' DESC, i.priority_score DESC LIMIT 3`, [...closed.params, ...f.params]),
     q(`SELECT i.category_code AS cat, i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} GROUP BY 1, 2`, WP),
     q(`SELECT i.category_code AS cat, COUNT(*) AS n FROM incidents i WHERE ${P} GROUP BY 1`, PP),
