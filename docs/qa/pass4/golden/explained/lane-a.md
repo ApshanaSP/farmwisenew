@@ -23,3 +23,7 @@ The first golden run (before the fixes in the last commit of lane a) showed two 
 ## Not changed
 
 No request of the Ask District IQ, officer, citizen, map or export routes changed; no figure outside the Jarvis round changed. RC-02, RC-03, RC-04, RC-06 and RC-07 changed no recorded request: their sentences are in the grader's open set and the audit tests, not in this recording.
+
+## Second pass (review and skeptic fixes)
+
+Recorded again as `lane-a2` (same 3272 requests, same pinned snapshot, frozen clock, no model key; a fresh production build of the fixed code). Diff `lane-a` to `lane-a2`: 0 changed, 0 added, 0 removed (only the build id around the requests differs). The fixes of the second pass (plain English words and localities before an agency word, overdue and resolved status, the Tamil word for unresolved) change no recorded request; their sentences are in the unit tests, tests/qa/pass4/a-skeptic.test.ts and the audit tests. Diff: docs/qa/pass4/golden/diffs/lane-a__lane-a2.md.
