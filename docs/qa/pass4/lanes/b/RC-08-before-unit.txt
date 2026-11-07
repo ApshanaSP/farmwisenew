@@ -1,0 +1,20 @@
+   × figures about a list come from the whole list (RC-08) > past deadline beside an open list counts the whole list, not its first page (console list) 10ms
+     → expected 4 to be 30 // Object.is equality
+   × figures about a list come from the whole list (RC-08) > the severity-ordered list starts with the most serious (console list) 2ms
+     → expected 'Low' to be 'Severe' // Object.is equality
+   ✓ figures about a list come from the whole list (RC-08) > past deadline beside an open list counts the whole list, not its first page (tool pages only) 1ms
+   × figures about a list come from the whole list (RC-08) > the severity-ordered list starts with the most serious (tool pages only) 1ms
+     → expected 'Low' to be 'Severe' // Object.is equality
+   × figures about a list come from the whole list (RC-08) > the past-deadline list holds the whole count and the rows of the most serious first 1ms
+     → expected 130 to be 30 // Object.is equality
+   ✓ figures about a list come from the whole list (RC-08) > a severe-and-late request counts the late severe ones, one page or more 0ms
+   × figures about a list come from the whole list (RC-08) > who holds most is not said of a list shown in part 1ms
+     → expected '{"kind":"Kpis","id":"kpis","title":"K…' not to match /Held by/
+   × figures about a list come from the whole list (RC-08) > the dashboard, advise, complete and case screens ask for severity order ascending (dir 1) 7ms
+     → {"scope":{"period":"weekly","zone":null,"dept":null,"cat":null,"taluk":null},"sort":"sev","status":"open"}: expected undefined to be 1 // Object.is equality
+   × class guard: no screen reads the incident list on its own (RC-08) > screens.ts calls the incidents tool only inside incidentList 1ms
+     → expected 6 to be 1 // Object.is equality
+   × class guard: no screen reads the incident list on its own (RC-08) > every thunai source that asks the incidents tool for severity order also says the direction 3ms
+     → agent.ts: case "incidents": return { name: c.tool, args: { scope, q: clip(c.text, 80) || null, sort: "sev" } };: expected '    case "incidents": return { name: …' to match /dir:/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 2 passed (10)

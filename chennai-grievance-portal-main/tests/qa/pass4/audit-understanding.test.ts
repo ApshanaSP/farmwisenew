@@ -203,16 +203,16 @@ describe("audit-understanding-1 P0: overdue cases are said not to exist", () => 
 });
 
 describe("audit-understanding-2 P0: past-deadline figures are counted from one page", () => {
-  it.fails("audit-understanding-2 severe cases past deadline this week: every case on an overdue list is overdue, so the two figures agree", async () => {
+  it("audit-understanding-2 severe cases past deadline this week: every case on an overdue list is overdue, so the two figures agree", async () => {
     const r = await round("severe cases past deadline this week");
     expect(kpi(r, "late")).toBe(listOf(r)!.total);
   });
-  it.fails("audit-understanding-2 the line does not say fewer are late than the list counts", async () => {
+  it("audit-understanding-2 the line does not say fewer are late than the list counts", async () => {
     const r = await round("severe cases past deadline this week");
     const total = listOf(r)!.total;
     expect(stageOf(r)!.say.en).toContain(`${total} are past their deadline`);
   });
-  it.fails("audit-understanding-2 severe cases this week: the figure counts more than the page", async () => {
+  it("audit-understanding-2 severe cases this week: the figure counts more than the page", async () => {
     const r = await round("severe cases this week");
     const overdue = listOf(await round("severe cases past deadline this week"))!.total;
     expect(kpi(r, "late")).toBe(overdue);
@@ -293,8 +293,8 @@ describe("audit-understanding-14 P1: other words for a rise still give one case 
 
 describe("audit-understanding-15 P1: a body's brief for one zone does not say which zone", () => {
   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/], ["Adyar police report", /Adyar/], ["Adyar corporation update", /Adyar/]] as const) {
-    it.fails(`audit-understanding-15 ${s}: the spoken line names it`, async () => expect(stageOf(await round(s))?.say.en).toMatch(zone));
-    it.fails(`audit-understanding-15 ${s}: the title names it`, async () => expect(stageOf(await round(s))?.title).toMatch(zone));
+    it(`audit-understanding-15 ${s}: the spoken line names it`, async () => expect(stageOf(await round(s))?.say.en).toMatch(zone));
+    it(`audit-understanding-15 ${s}: the title names it`, async () => expect(stageOf(await round(s))?.title).toMatch(zone));
   }
 });
 
@@ -309,8 +309,8 @@ describe("audit-understanding-16 P2: a topic the rules cannot read is dropped fr
 
 describe("audit-understanding-17 P2: a Tamil answer carries an English sentence", () => {
   for (const s of ["இந்த மாதம் சுருக்கம்", "சுருக்கம் சொல்லு"])
-    it.fails(`audit-understanding-17 ${s}: the Tamil line has no English sentence`, async () => expect(stageOf(await round(s))?.say.ta).not.toMatch(/incidents were reported/));
-  it.fails("audit-understanding-17 a body it does not know is not said back in made-up spelling", async () => expect((await round("தீயணைப்பு துறை அறிக்கை")).result?.reply).not.toMatch(/Tiyanaippu/));
+    it(`audit-understanding-17 ${s}: the Tamil line has no English sentence`, async () => expect(stageOf(await round(s))?.say.ta).not.toMatch(/incidents were reported/));
+  it("audit-understanding-17 a body it does not know is not said back in made-up spelling", async () => expect((await round("தீயணைப்பு துறை அறிக்கை")).result?.reply).not.toMatch(/Tiyanaippu/));
 });
 
 describe("with a fake model at the boundary (no live model in this phase)", () => {
@@ -325,7 +325,7 @@ describe("with a fake model at the boundary (no live model in this phase)", () =
 
 describe("audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names)", () => {
   for (const [id, code] of [["INC-20261031-345A17", "a drinking-water problem"], ["INC-20261030-AE844C", "a lake or bund problem"]] as const)
-    it.fails(`audit-understanding-19 ${id}, ${code}: not "ask the conservancy team to clear it"`, async () => {
+    it(`audit-understanding-19 ${id}, ${code}: not "ask the conservancy team to clear it"`, async () => {
       const d = stageOf(await round("audit", { direct: { recipe: "case", slots: { id }, lang: "en" } }))!;
       expect(d.say.en).toContain(code);
       expect(d.say.en).not.toMatch(/conservancy team to clear it/);
@@ -333,13 +333,13 @@ describe("audit-understanding-19 P2: the next step is still read from loose word
 });
 
 describe("audit-understanding-20 P3: lines that do not read as English", () => {
-  it.fails("audit-understanding-20 one incident: not \"1 incident were reported\"", async () => expect(stageOf(await round("Manali status"))!.say.en).not.toMatch(/\b1 incident were\b/));
-  it.fails("audit-understanding-20 relief: not \"There's people\"", async () => {
+  it("audit-understanding-20 one incident: not \"1 incident were reported\"", async () => expect(stageOf(await round("Manali status"))!.say.en).not.toMatch(/\b1 incident were\b/));
+  it("audit-understanding-20 relief: not \"There's people\"", async () => {
     const l = await round("audit", { direct: { recipe: "cases", slots: { cat: "FLOOD_RELIEF", zones: [], period: "quarterly", n: 30, fresh: true }, lang: "en" } });
     const open = listOf(l)!.rows.find((x) => !/Resolved|Rejected|Lapsed/.test(String(x.status)))!;
     expect(stageOf(await round("audit", { direct: { recipe: "case", slots: { id: open.id }, lang: "en" } }))!.say.en).not.toMatch(/^There's people/);
   });
-  it.fails("audit-understanding-20 a list over a period: not \"59 severe cases the last 30 days\"", async () => expect(stageOf(await round("severe cases past the deadline this month"))!.say.en).not.toMatch(/cases the last 30 days/));
+  it("audit-understanding-20 a list over a period: not \"59 severe cases the last 30 days\"", async () => expect(stageOf(await round("severe cases past the deadline this month"))!.say.en).not.toMatch(/cases the last 30 days/));
 });
 
 describe("audit-understanding-19, how far it reaches: every incident in the pinned build, as the case screen labels it", () => {

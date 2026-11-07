@@ -1,0 +1,15 @@
+# failing before the fix (in-process run, pinned snapshot): RC-10
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday compares with the day before it
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday counts 5 Nov, not 4 Nov
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 nethu evlo incidents counts 5 Nov, not 4 Nov
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many deaths yesterday answers what was asked
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many were resolved yesterday answers what was asked
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேத்து எவ்வளவு புகார் is about yesterday
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேற்றைய புகார்கள் எத்தனை is about yesterday
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 Tamil, with a fake router at the boundary that understood 'overdue': not said as every incident reported
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 evlo overdue cases indha week is not said as every incident reported
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo open cases is not said as every incident reported
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo overdue incidents is not said as every incident reported
+# RC-10 (server run)
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-13 a card's tile named 'Reported' holds the reported figure

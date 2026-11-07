@@ -1,0 +1,3 @@
+# failing before the fix (in-process run, pinned snapshot): RC-16
+ FAIL  tests/qa/pass4/flaky-parsewhen-tz.test.ts > parseWhen on a server in UTC > FLAKY-1 a date with a month name and no zone is Chennai time
+ FAIL  tests/qa/pass4/flaky-parsewhen-tz.test.ts > parseWhen on a server in UTC > FLAKY-1 a late evening with a month name stays on its own Chennai day

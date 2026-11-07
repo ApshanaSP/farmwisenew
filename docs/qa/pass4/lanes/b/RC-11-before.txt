@@ -1,0 +1,3 @@
+# RC-11 (server run)
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-20 'complaints by department' answers about complaints, not open incidents
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-20 'past deadline by department' is not answered with 'no incidents match'

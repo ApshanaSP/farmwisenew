@@ -1,0 +1,6740 @@
+{
+ "a": "baseline-abef9da",
+ "b": "lane-b-rc08b",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 16,
+ "added": 0,
+ "removed": 0,
+ "context": {
+  "next_build_id": {
+   "a": "uoCyfOgnc3qJwf1N3gZ7P",
+   "b": "h4RGVyekAFQC94NXXBiN6"
+  }
+ },
+ "routes": [
+  {
+   "route": "/api/collector/thunai/agent/round",
+   "requests": 14,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.blocks[*].points[*].id",
+     "count": 76
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].lat",
+     "count": 76
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].lon",
+     "count": 76
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].label",
+     "count": 76
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].sev",
+     "count": 60
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].id",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].title",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].place",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].t",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].lat",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].lon",
+     "count": 36
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].dept",
+     "count": 34
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/thunai/agent",
+   "requests": 2,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.blocks[*].rows[*].id",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].title",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].sev",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].place",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].ward",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].t",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].lat",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].lon",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].id",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].lat",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].lon",
+     "count": 12
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].label",
+     "count": 12
+    }
+   ]
+  }
+ ],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": [
+  {
+   "id": "b709a6b7afee2afd",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 10663,
+    "b": 11797
+   },
+   "path_count": 231,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway",
+     "a": null,
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "114 cases this week; here are the 12 that matter most. The most urgent: uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel ... (263 chars)",
+     "b": "122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Durgadevi Nagar 5... (339 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 114 சம்பவங்கள். மிக அவசரமானது: uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet in ... (230 chars)",
+     "b": "இந்த வாரம் 122 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Durgadevi Nagar 5Th Cross St 2Nd Lane, Du... (317 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 114,
+     "b": 122
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 0,
+     "b": 35
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].tone",
+     "a": "good",
+     "b": "bad"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 114,
+     "b": 122
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].id",
+     "a": "INC-20261106-896A64",
+     "b": "INC-20261104-EA19E3"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].title",
+     "a": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "b": "குப்பை பிரச்சினை: Burning of Garbage at Dumping Ground"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].status",
+     "a": "Open",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].place",
+     "a": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "b": "Durgadevi Nagar 5Th Cross St 2Nd Lane, Durga Devi Nagar, Tondiarpet"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].ward",
+     "a": 48,
+     "b": 38
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].t",
+     "a": "2026-11-06 18:08:00",
+     "b": "2026-11-04 00:52:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lat",
+     "a": 13.1145099,
+     "b": 13.1297495
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lon",
+     "a": 80.2837677,
+     "b": 80.2746615
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].id",
+     "a": "INC-20261106-2AB4CB",
+     "b": "INC-20261103-8989A6"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].title",
+     "a": "Issue regarding removal of garbage in our street",
+     "b": "Huge garbage dump near Murugan Temple bus stop, not cleared for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].status",
+     "a": "Under review",
+     "b": "Awaiting verification"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].zone",
+     "a": 1,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].zoneName",
+     "a": "Thiruvottiyur",
+     "b": "Valasaravakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].place",
+     "a": "Market Lane, Market Lane, Ernavoor",
+     "b": "Thirumalai Street Meenashi Nagar, Thirumalai Nagar, Nerkundram"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].ward",
+     "a": 4,
+     "b": 148
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].t",
+     "a": "2026-11-06 17:02:00",
+     "b": "2026-11-03 08:45:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lat",
+     "a": 13.188725250000001,
+     "b": 13.0552512
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lon",
+     "a": 80.3043275,
+     "b": 80.1812026
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].id",
+     "a": "INC-20261106-A649ED",
+     "b": "INC-20261106-6A381C"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].title",
+     "a": "Cleanliness in footpath: this stretch in our street needs attention for the past 9 days",
+     "b": "Cleanliness in footpath problem irukku, konjam indha road-a paarunga"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].zone",
+     "a": 4,
+     "b": 8
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].zoneName",
+     "a": "Tondiarpet",
+     "b": "Anna Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].place",
+     "a": "Cauvery Nagar 1St Street, Cauvery Nagar, Kodungaiyur",
+     "b": "Nehru 3Rd Cross Street"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].ward",
+     "a": 36,
+     "b": 94
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].t",
+     "a": "2026-11-06 10:59:00",
+     "b": "2026-11-06 16:31:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lat",
+     "a": 13.1267982,
+     "b": 13.1044204
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lon",
+     "a": 80.2505136,
+     "b": 80.2014606
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].id",
+     "a": "INC-20261106-DF91D4",
+     "b": "INC-20261106-0B725B"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].title",
+     "a": "Solomon Avenue la kadai vechurukken. Engal street la garbage one week ah eduklala, romba smell varudhu",
+     "b": "Daily Thiruvalluvar Salai vazhiya dhaan poren"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].status",
+     "a": "Assigned",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].zone",
+     "a": 14,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].zoneName",
+     "a": "Perungudi",
+     "b": "Manali"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].place",
+     "a": "Solomon Avenue, Thoraipakkam, Raman Nagar",
+     "b": "Thiruvalluvar Salai, Ponniammanmedu Main Road, Madhavaram"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].ward",
+     "a": 186,
+     "b": 20
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].t",
+     "a": "2026-11-06 09:23:00",
+     "b": "2026-11-06 13:18:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lat",
+     "a": 12.9509021,
+     "b": 13.1721729
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lon",
+     "a": 80.2443085,
+     "b": 80.2567106
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].id",
+     "a": "INC-20261106-2E1851",
+     "b": "INC-20261106-707839"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].title",
+     "a": "Cleaning of Water Table: the problem in our area has continued for the last 8 days",
+     "b": "Bin full ah overflow aagudhu, road fulla kuppai irukku"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].zone",
+     "a": 5,
+     "b": 6
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].zoneName",
+     "a": "Royapuram",
+     "b": "Thiru-Vi-Ka-Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].place",
+     "a": "Goyya Thoppu (T N S C B Quarters H Block), Pudupet, Pudupet",
+     "b": "Vasugi Nagar 2Nd Cross, Kannigapuram, Pulianthope"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].ward",
+     "a": 63,
+     "b": 72
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].t",
+     "a": "2026-11-06 08:25:00",
+     "b": "2026-11-06 11:22:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lat",
+     "a": 13.0706452,
+     "b": 13.103349
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lon",
+     "a": 80.2655741,
+     "b": 80.2689739
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].id",
+     "a": "INC-20261106-0E2C3D",
+     "b": "INC-20261106-EC69F1"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].title",
+     "a": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now",
+     "b": "Kosapet people sarbaaga indha complaint. Daily evening kuppai erikiranga, pugai romba jaasthi, moochu vida mudiyala"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].zone",
+     "a": 9,
+     "b": 5
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].zoneName",
+     "a": "Teynampet",
+     "b": "Royapuram"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].place",
+     "a": "Pallam Street, Opp Bharath Petrol Bunk, Krishnapuram",
+     "b": "Sachidanandam 1St Street, Kosapet, Kosapet"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].ward",
+     "a": 119,
+     "b": 58
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].t",
+     "a": "2026-11-06 08:23:00",
+     "b": "2026-11-06 08:45:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lat",
+     "a": 13.0506905,
+     "b": 13.0860179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lon",
+     "a": 80.2710942,
+     "b": 80.2649479
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-90EDE7"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].title",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "சாலை ஓரத்தில் குப்பை மலை போல் குவிந்துள்ளது. ஒரு வாரமாக யாரும் அகற்றவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].zone",
+     "a": 13,
+     "b": 4
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].zoneName",
+     "a": "Adyar",
+     "b": "Tondiarpet"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].place",
+     "a": "Urur Alcot Kuppam Road, Alcot Kuppam, Urur",
+     "b": "Corporation Colony 1St Street, Corporation Colony, Tondiarpet"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].ward",
+     "a": 173,
+     "b": 37
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].t",
+     "a": "2026-11-06 02:15:00",
+     "b": "2026-11-06 08:04:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lat",
+     "a": 13.0194877,
+     "b": 13.1196146
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lon",
+     "a": 80.252074,
+     "b": 80.2672793
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].id",
+     "a": "INC-20261105-4745E0",
+     "b": "INC-20261106-8134C4"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].title",
+     "a": "எங்கள் பகுதியில் Absenteeism of Sweepers பிரச்சினை உள்ளது",
+     "b": "The garbage bin in our street is overflowing for the last 12 days; waste is spilling onto the road"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].zone",
+     "a": 5,
+     "b": 7
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].zoneName",
+     "a": "Royapuram",
+     "b": "Ambattur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].place",
+     "a": "Reserve Bank Service Road, Parrys, Parrys",
+     "b": "Supervisor Kudieruppu, Ambattur Estate, Mannurpet"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].ward",
+     "a": 60,
+     "b": 87
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].t",
+     "a": "2026-11-05 22:39:00",
+     "b": "2026-11-06 07:25:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lat",
+     "a": 13.0904658,
+     "b": 13.0941153
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lon",
+     "a": 80.2880523,
+     "b": 80.17762
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].id",
+     "a": "INC-20261105-097D1B",
+     "b": "INC-20261106-A1916E"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].title",
+     "a": "Road orathula kuppai malai maari irukku, yaarum edukala",
+     "b": "Cleaning of Water Table: the problem in our street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].status",
+     "a": "Assigned",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].zone",
+     "a": 6,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].zoneName",
+     "a": "Thiru-Vi-Ka-Nagar",
+     "b": "Valasaravakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].place",
+     "a": "Samudriya Colony 4Th Street, Samudriya Colony, Kolathur",
+     "b": "Gandhi Street 12Th Street, Ganga Nagar, Maduravoyal"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].ward",
+     "a": 65,
+     "b": 146
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].t",
+     "a": "2026-11-05 21:51:00",
+     "b": "2026-11-06 07:16:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lat",
+     "a": 13.1171368,
+     "b": 13.051145178835352
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lon",
+     "a": 80.20860454999999,
+     "b": 80.16353884717437
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].id",
+     "a": "INC-20261105-7F006B",
+     "b": "INC-20261106-170973"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].title",
+     "a": "Issue regarding garbage lorry without net in our street",
+     "b": "Removal of Debris: the problem on Perumal Koil St has continued for the past 9 days"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].zone",
+     "a": 4,
+     "b": 7
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].zoneName",
+     "a": "Tondiarpet",
+     "b": "Ambattur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].place",
+     "a": "Vallalar 4Th High Road",
+     "b": "Perumal Koil St, Ambattur Thrumalaipriya Nagar, Ambattur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].ward",
+     "a": 41,
+     "b": 81
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].t",
+     "a": "2026-11-05 21:23:00",
+     "b": "2026-11-06 06:41:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lat",
+     "a": 13.1278195,
+     "b": 13.124119
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lon",
+     "a": 80.270452,
+     "b": 80.1518468
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].id",
+     "a": "INC-20261105-E4D78A",
+     "b": "INC-20261105-063807"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].title",
+     "a": "Drivers struggle unable to unload 86 tonnes of onions transported in 4 lorries from Chennai..!!",
+     "b": "The garbage bin near Mosque is overflowing for the past 12 days; waste is spilling onto the road"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].status",
+     "a": "Open",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].zone",
+     "a": null,
+     "b": 12
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].zoneName",
+     "a": null,
+     "b": "Alandur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].place",
+     "a": "Chennai",
+     "b": "Mount Poothamalli Salai, Mount Poothamalli Salai, Manapakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].ward",
+     "a": null,
+     "b": 159
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].complaints",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].t",
+     "a": "2026-11-05 17:25:50",
+     "b": "2026-11-05 18:38:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lat",
+     "a": 13.0827,
+     "b": 12.9945703
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lon",
+     "a": 80.2707,
+     "b": 80.17051485
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].id",
+     "a": "INC-20261105-761165",
+     "b": "INC-20261105-C22076"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].title",
+     "a": "Huge garbage dump near Railway station entrance, not cleared for two weeks now",
+     "b": "Daily Ambedkar Park vazhiya dhaan poren. Transfer Station Smell problem engal area la irukku, health department konjam paarunga"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].zone",
+     "a": 1,
+     "b": 14
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].zoneName",
+     "a": "Thiruvottiyur",
+     "b": "Perungudi"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].place",
+     "a": "Sri Ram Nagar 5Th Cross Street",
+     "b": "Ambedkar Park, Thoraipakkam, Raman Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].ward",
+     "a": 3,
+     "b": 186
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].dept",
+     "a": "GCC-SWM",
+     "b": "GCC-HLT"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].deptName",
+     "a": "Solid Waste Management",
+     "b": "Public Health (GCC)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].t",
+     "a": "2026-11-05 14:51:00",
+     "b": "2026-11-05 17:17:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lat",
+     "a": 13.2004224,
+     "b": 12.9556819
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lon",
+     "a": 80.3126446,
+     "b": 80.2409485
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-896A64",
+     "b": "INC-20261104-EA19E3"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.1145099,
+     "b": 13.1297495
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2837677,
+     "b": 80.2746615
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "b": "குப்பை பிரச்சினை: Burning of Garbage at Dumping Ground"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261106-2AB4CB",
+     "b": "INC-20261103-8989A6"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.188725250000001,
+     "b": 13.0552512
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.3043275,
+     "b": 80.1812026
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Issue regarding removal of garbage in our street",
+     "b": "Huge garbage dump near Murugan Temple bus stop, not cleared for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261106-A649ED",
+     "b": "INC-20261106-6A381C"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.1267982,
+     "b": 13.1044204
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2505136,
+     "b": 80.2014606
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Cleanliness in footpath: this stretch in our street needs attention for the past 9 days",
+     "b": "Cleanliness in footpath problem irukku, konjam indha road-a paarunga"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261106-DF91D4",
+     "b": "INC-20261106-0B725B"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 12.9509021,
+     "b": 13.1721729
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2443085,
+     "b": 80.2567106
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Solomon Avenue la kadai vechurukken. Engal street la garbage one week ah eduklala, romba smell varudhu",
+     "b": "Daily Thiruvalluvar Salai vazhiya dhaan poren"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261106-2E1851",
+     "b": "INC-20261106-707839"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0706452,
+     "b": 13.103349
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2655741,
+     "b": 80.2689739
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Cleaning of Water Table: the problem in our area has continued for the last 8 days",
+     "b": "Bin full ah overflow aagudhu, road fulla kuppai irukku"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261106-0E2C3D",
+     "b": "INC-20261106-EC69F1"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 13.0506905,
+     "b": 13.0860179
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2710942,
+     "b": 80.2649479
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now",
+     "b": "Kosapet people sarbaaga indha complaint. Daily evening kuppai erikiranga, pugai romba jaasthi, moochu vida mudiyala"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-90EDE7"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.0194877,
+     "b": 13.1196146
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.252074,
+     "b": 80.2672793
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "சாலை ஓரத்தில் குப்பை மலை போல் குவிந்துள்ளது. ஒரு வாரமாக யாரும் அகற்றவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261105-4745E0",
+     "b": "INC-20261106-8134C4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.0904658,
+     "b": 13.0941153
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.2880523,
+     "b": 80.17762
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "எங்கள் பகுதியில் Absenteeism of Sweepers பிரச்சினை உள்ளது",
+     "b": "The garbage bin in our street is overflowing for the last 12 days; waste is spilling onto the road"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261105-097D1B",
+     "b": "INC-20261106-A1916E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 13.1171368,
+     "b": 13.051145178835352
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.20860454999999,
+     "b": 80.16353884717437
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "Road orathula kuppai malai maari irukku, yaarum edukala",
+     "b": "Cleaning of Water Table: the problem in our street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261105-7F006B",
+     "b": "INC-20261106-170973"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.1278195,
+     "b": 13.124119
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.270452,
+     "b": 80.1518468
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "Issue regarding garbage lorry without net in our street",
+     "b": "Removal of Debris: the problem on Perumal Koil St has continued for the past 9 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].id",
+     "a": "INC-20261105-E4D78A",
+     "b": "INC-20261105-063807"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lat",
+     "a": 13.0827,
+     "b": 12.9945703
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lon",
+     "a": 80.2707,
+     "b": 80.17051485
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].label",
+     "a": "Drivers struggle unable to unload 86 tonnes of onions transported in 4 lorries from Chennai..!!",
+     "b": "The garbage bin near Mosque is overflowing for the past 12 days; waste is spilling onto the road"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].id",
+     "a": "INC-20261105-761165",
+     "b": "INC-20261105-C22076"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lat",
+     "a": 13.2004224,
+     "b": 12.9556819
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lon",
+     "a": 80.3126446,
+     "b": 80.2409485
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].label",
+     "a": "Huge garbage dump near Railway station entrance, not cleared for two weeks now",
+     "b": "Daily Ambedkar Park vazhiya dhaan poren. Transfer Station Smell problem engal area la irukku, health department konjam paarunga"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.next.length",
+     "a": 2,
+     "b": 3
+    },
+    {
+     "path": "$.result.stage.next[0]",
+     "a": "(same keys)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Show them on a map",
+     "b": "Draft for the 2 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "வரைபடத்தில் காட்டு",
+     "b": "காலக்கெடு தாண்டிய 2-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].kind",
+     "a": "direct",
+     "b": "draft"
+    },
+    {
+     "path": "$.result.stage.next[0].recipe",
+     "a": "map",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].slots",
+     "a": "{object with 19 keys}",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 0,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "(absent)",
+     "b": "INC-20261104-EA19E3"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "(absent)",
+     "b": "INC-20261103-8989A6"
+    },
+    {
+     "path": "$.result.stage.next[1].label.en",
+     "a": "Which department is slowest?",
+     "b": "Show them on a map"
+    },
+    {
+     "path": "$.result.stage.next[1].label.ta",
+     "a": "எந்தத் துறை மெதுவாக உள்ளது?",
+     "b": "வரைபடத்தில் காட்டு"
+    },
+    {
+     "path": "$.result.stage.next[1].recipe",
+     "a": "performance",
+     "b": "map"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.by",
+     "a": "dept",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.zones",
+     "a": "(absent)",
+     "b": "[array of 0]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.dept",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.depts",
+     "a": "(absent)",
+     "b": "[array of 0]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.cat",
+     "a": "(absent)",
+     "b": "SOLID_WASTE"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.taluk",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sev",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.status",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.q",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.metric",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.measure",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.order",
+     "a": "(absent)",
+     "b": "top"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.n",
+     "a": "(absent)",
+     "b": 20
+    },
+    {
+     "path": "$.result.stage.next[1].slots.id",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.name",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.what",
+     "a": "(absent)",
+     "b": "severe"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sort",
+     "a": "(absent)",
+     "b": "priority"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.fresh",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[2]",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": "114 cases this week; here are the 12 that matter most. The most urgent: uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel ... (263 chars)",
+     "b": "122 cases this week; here are the 12 that matter most. 35 are past their deadline and need you first: uncleared garbage at Durgadevi Nagar 5... (339 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ea25e31de4431e9c",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 12225,
+    "b": 11951
+   },
+   "path_count": 10,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "12 of the 12 shown are past their deadline.",
+     "b": "39 of the 52 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 12 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "52-இல் 39 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "52 severe cases this week; here are the 12 that matter most. 12 are past their deadline and need you first: standing water at Pulianthope (B... (319 chars)",
+     "b": "52 severe cases this week; here are the 12 that matter most. 39 are past their deadline and need you first: standing water at Pulianthope (B... (281 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 12,
+     "b": 39
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.sources.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.sources[1]",
+     "a": "(absent)",
+     "b": "incidents"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    }
+   ]
+  },
+  {
+   "id": "bc94a14cdfe5ac48",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 7383,
+    "b": 7359
+   },
+   "path_count": 33,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "5 of the 5 shown are past their deadline.",
+     "b": "5 of the 5 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 5-இல் 5 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "5-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road), ... (298 chars)",
+     "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloy... (301 chars)",
+     "b": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in ... (312 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.041418,
+     "b": 13.06198355
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2590202,
+     "b": 80.28117234999999
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now",
+     "b": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.0365913,
+     "b": 13.033772
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2732008,
+     "b": 80.2715343
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Complaint about cleanliness in footpath opp. St. Mary's Church",
+     "b": "Garbage at the dumping ground is burning since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.06198355,
+     "b": 13.0516776
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.28117234999999,
+     "b": 80.263255
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261102-8EC358",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.033772,
+     "b": 13.041418
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2715343,
+     "b": 80.2590202
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Garbage at the dumping ground is burning since last Monday",
+     "b": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261030-CB8991",
+     "b": "INC-20261101-774B5E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0516776,
+     "b": 13.0365913
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.263255,
+     "b": 80.2732008
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days",
+     "b": "Complaint about cleanliness in footpath opp. St. Mary's Church"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.sources.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.sources[1]",
+     "a": "dept_followups",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.next[0].ids",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road), ... (298 chars)",
+     "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ac136777a4aee429",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11213,
+    "b": 12145
+   },
+   "path_count": 240,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway",
+     "a": null,
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "23 cases today; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension i... (224 chars)",
+     "b": "24 cases today; here are the 12 that matter most. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Sa... (197 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம்... (190 chars)",
+     "b": "இன்று 24 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). \"படி\" அல... (178 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 23,
+     "b": 24
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].tone",
+     "a": "good",
+     "b": "bad"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 23,
+     "b": 24
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].title",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].place",
+     "a": "Vallalar Extn Extension",
+     "b": "Saidapet (Adyar River - Saidapet stretch)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].ward",
+     "a": 178,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].dept",
+     "a": "GCC-ENG",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].deptName",
+     "a": "Roads & Building Permissions",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].t",
+     "a": "2026-11-06 15:18:00",
+     "b": "2026-11-05 23:41:50"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].cat",
+     "a": "Encroachment & unauthorised construction",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].title",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].place",
+     "a": "Indra Nagar 1St Street, Model School, Cholapuram",
+     "b": "Ekkattuthangal"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].ward",
+     "a": 181,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].dept",
+     "a": "GCC-SWD",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].deptName",
+     "a": "Storm Water Drain",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].t",
+     "a": "2026-11-06 15:12:00",
+     "b": "2026-11-06 00:25:39"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lat",
+     "a": 12.9881968,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lon",
+     "a": 80.2608459,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].cat",
+     "a": "Drain works site safety",
+     "b": "Road accident"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].title",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].place",
+     "a": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+     "b": "Guindy"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].t",
+     "a": "2026-11-06 13:33:00",
+     "b": "2026-11-05 23:59:31"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lat",
+     "a": 13.0002073,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lon",
+     "a": 80.2172367,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261106-31714F"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].title",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].place",
+     "a": "Ramasamy Avenue, Vannanthurai, Adayar",
+     "b": "Sathya Street, Anbazhagan Nagar, Taramani"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].ward",
+     "a": 171,
+     "b": 180
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].dept",
+     "a": "GCC-ELE",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].t",
+     "a": "2026-11-06 09:41:00",
+     "b": "2026-11-06 17:54:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lat",
+     "a": 13.0086046,
+     "b": 12.9850693
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lon",
+     "a": 80.2312455,
+     "b": 80.2465486
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Drainage & sewage"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-237615"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].title",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "There is no storm water drain near Post Office"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].status",
+     "a": "Assigned",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].place",
+     "a": "Ist Street, Malaviya Avenue, Thiruvanmiyur",
+     "b": "Besant Nagar 31St Cross Street, M.G.R.Colony, Besant Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].ward",
+     "a": 182,
+     "b": 176
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].dept",
+     "a": "GCC-ELE",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].t",
+     "a": "2026-11-06 09:10:00",
+     "b": "2026-11-06 16:31:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lat",
+     "a": 12.9858182,
+     "b": 13.00681855
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lon",
+     "a": 80.2576242,
+     "b": 80.26698275
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Drainage & sewage"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261106-76D3A4"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].title",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].status",
+     "a": "Under review",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].place",
+     "a": "Mount Road 2Nd Lane, Mount Road, Guindy",
+     "b": "Thiruvanmiyur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].ward",
+     "a": 174,
+     "b": 182
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].dept",
+     "a": "GCC-HLT",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].deptName",
+     "a": "Public Health (GCC)",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].t",
+     "a": "2026-11-06 08:06:00",
+     "b": "2026-11-06 16:03:03"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lat",
+     "a": 12.9964664,
+     "b": 12.983381
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lon",
+     "a": 80.2355736,
+     "b": 80.266957
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].cat",
+     "a": "Dark spots & public safety",
+     "b": "Traffic obstruction & parking"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261106-825456"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].title",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Velachery: 8-sovereign gold chain snatched"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].status",
+     "a": "In progress",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].place",
+     "a": "Guindy",
+     "b": "Velachery"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].ward",
+     "a": 174,
+     "b": 177
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].t",
+     "a": "2026-11-06 03:10:40",
+     "b": "2026-11-06 15:59:35"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lat",
+     "a": 13.003529,
+     "b": 12.980429
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lon",
+     "a": 80.223409,
+     "b": 80.217218
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-8D75F0"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].title",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "The storm water drain work near Pillaiyar Kovil has no barricading; a two-wheeler fell into the pit"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].place",
+     "a": "Urur Alcot Kuppam Road, Alcot Kuppam, Urur",
+     "b": "Periyar 5Th Salai"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].ward",
+     "a": 173,
+     "b": 179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].dept",
+     "a": "GCC-SWM",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].deptName",
+     "a": "Solid Waste Management",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].t",
+     "a": "2026-11-06 02:15:00",
+     "b": "2026-11-06 13:58:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lat",
+     "a": 13.0194877,
+     "b": 12.9752654
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lon",
+     "a": 80.252074,
+     "b": 80.2275944
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].cat",
+     "a": "Garbage & solid waste",
+     "b": "Drain works site safety"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].id",
+     "a": "INC-20261106-31714F",
+     "b": "INC-20261106-D39D78"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].title",
+     "a": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "b": "Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].status",
+     "a": "Under review",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].place",
+     "a": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "b": "Adambakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].ward",
+     "a": 180,
+     "b": 174
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].t",
+     "a": "2026-11-06 17:54:00",
+     "b": "2026-11-06 13:13:14"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lat",
+     "a": 12.9850693,
+     "b": 12.99689967275567
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lon",
+     "a": 80.2465486,
+     "b": 80.20843154376522
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].cat",
+     "a": "Drainage & sewage",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].id",
+     "a": "INC-20261106-237615",
+     "b": "INC-20261106-0AE07E"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].title",
+     "a": "There is no storm water drain near Post Office",
+     "b": "காலை முதல். Guindy Industrial Estate Sathya Nagar 2nd St தாழ்வான பகுதியில் தண்ணீர் வடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].place",
+     "a": "Besant Nagar 31St Cross Street, M.G.R.Colony, Besant Nagar",
+     "b": "Guindy Industrial Estate (Guindy Industrial Estate Storm Water Channel)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].ward",
+     "a": 176,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].t",
+     "a": "2026-11-06 16:31:00",
+     "b": "2026-11-06 09:08:39"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lat",
+     "a": 13.00681855,
+     "b": 13.01179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lon",
+     "a": 80.26698275,
+     "b": 80.210108
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].cat",
+     "a": "Drainage & sewage",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].id",
+     "a": "INC-20261106-76D3A4",
+     "b": "INC-20261106-204F2B"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].title",
+     "a": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus",
+     "b": "தெருவிளக்கு இரண்டு வாரங்களாக எரியவில்லை. இரவில் பெண்கள் நடந்து செல்ல பயப்படுகிறார்கள்"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].status",
+     "a": "Open",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].place",
+     "a": "Thiruvanmiyur",
+     "b": "Lakshmi Nagar 1St Cross Street, Adambakkam, Adambakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].ward",
+     "a": 182,
+     "b": 178
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].dept",
+     "a": "POL-GCP",
+     "b": "GCC-ELE"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].deptName",
+     "a": "Greater Chennai Police",
+     "b": "Street Lighting & Electrical"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].complaints",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].t",
+     "a": "2026-11-06 16:03:03",
+     "b": "2026-11-06 07:03:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lat",
+     "a": 12.983381,
+     "b": 12.981065494705549
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lon",
+     "a": 80.266957,
+     "b": 80.21751140355502
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].cat",
+     "a": "Traffic obstruction & parking",
+     "b": "Street lights & electrical hazards"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].id",
+     "a": "INC-20261106-825456",
+     "b": "INC-20261105-706AC2"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].title",
+     "a": "Velachery: 8-sovereign gold chain snatched",
+     "b": "Mosquito Menace தொடர்பான பிரச்சினை எங்கள் பகுதியில் உள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].status",
+     "a": "Open",
+     "b": "Assigned"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].place",
+     "a": "Velachery",
+     "b": "Sardar Patel Road, Rajbhavan, Guindy"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].ward",
+     "a": 177,
+     "b": 174
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].dept",
+     "a": "POL-GCP",
+     "b": "GCC-HLT"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].deptName",
+     "a": "Greater Chennai Police",
+     "b": "Public Health (GCC)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].complaints",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].t",
+     "a": "2026-11-06 15:59:35",
+     "b": "2026-11-05 21:09:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lat",
+     "a": 12.980429,
+     "b": 12.9933308
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lon",
+     "a": 80.217218,
+     "b": 80.232466
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].cat",
+     "a": "Theft, snatching & fraud",
+     "b": "Vector- & water-borne disease"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 12.9881968,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2608459,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.0002073,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2172367,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261106-31714F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0086046,
+     "b": 12.9850693
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2312455,
+     "b": 80.2465486
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-237615"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 12.9858182,
+     "b": 13.00681855
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2576242,
+     "b": 80.26698275
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "There is no storm water drain near Post Office"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261106-76D3A4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 12.9964664,
+     "b": 12.983381
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2355736,
+     "b": 80.266957
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261106-825456"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.003529,
+     "b": 12.980429
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.223409,
+     "b": 80.217218
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Velachery: 8-sovereign gold chain snatched"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-8D75F0"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.0194877,
+     "b": 12.9752654
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.252074,
+     "b": 80.2275944
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "The storm water drain work near Pillaiyar Kovil has no barricading; a two-wheeler fell into the pit"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261106-31714F",
+     "b": "INC-20261106-D39D78"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 12.9850693,
+     "b": 12.99689967275567
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2465486,
+     "b": 80.20843154376522
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "b": "Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261106-237615",
+     "b": "INC-20261106-0AE07E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.00681855,
+     "b": 13.01179
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.26698275,
+     "b": 80.210108
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "There is no storm water drain near Post Office",
+     "b": "காலை முதல். Guindy Industrial Estate Sathya Nagar 2nd St தாழ்வான பகுதியில் தண்ணீர் வடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].id",
+     "a": "INC-20261106-76D3A4",
+     "b": "INC-20261106-204F2B"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lat",
+     "a": 12.983381,
+     "b": 12.981065494705549
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lon",
+     "a": 80.266957,
+     "b": 80.21751140355502
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].label",
+     "a": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus",
+     "b": "தெருவிளக்கு இரண்டு வாரங்களாக எரியவில்லை. இரவில் பெண்கள் நடந்து செல்ல பயப்படுகிறார்கள்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].id",
+     "a": "INC-20261106-825456",
+     "b": "INC-20261105-706AC2"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lat",
+     "a": 12.980429,
+     "b": 12.9933308
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lon",
+     "a": 80.217218,
+     "b": 80.232466
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].label",
+     "a": "Velachery: 8-sovereign gold chain snatched",
+     "b": "Mosquito Menace தொடர்பான பிரச்சினை எங்கள் பகுதியில் உள்ளது"
+    },
+    {
+     "path": "$.result.stage.next.length",
+     "a": 2,
+     "b": 3
+    },
+    {
+     "path": "$.result.stage.next[0]",
+     "a": "(same keys)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Show them on a map",
+     "b": "Draft for the 1 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "வரைபடத்தில் காட்டு",
+     "b": "காலக்கெடு தாண்டிய 1-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].kind",
+     "a": "direct",
+     "b": "draft"
+    },
+    {
+     "path": "$.result.stage.next[0].recipe",
+     "a": "map",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].slots",
+     "a": "{object with 19 keys}",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "(absent)",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.next[1].label.en",
+     "a": "Which department is slowest?",
+     "b": "Show them on a map"
+    },
+    {
+     "path": "$.result.stage.next[1].label.ta",
+     "a": "எந்தத் துறை மெதுவாக உள்ளது?",
+     "b": "வரைபடத்தில் காட்டு"
+    },
+    {
+     "path": "$.result.stage.next[1].recipe",
+     "a": "performance",
+     "b": "map"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.by",
+     "a": "dept",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.zones",
+     "a": "(absent)",
+     "b": "[array of 1]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.dept",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.depts",
+     "a": "(absent)",
+     "b": "[array of 0]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.cat",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.taluk",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sev",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.status",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.q",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.metric",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.measure",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.order",
+     "a": "(absent)",
+     "b": "top"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.n",
+     "a": "(absent)",
+     "b": 20
+    },
+    {
+     "path": "$.result.stage.next[1].slots.id",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.name",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.what",
+     "a": "(absent)",
+     "b": "severe"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sort",
+     "a": "(absent)",
+     "b": "priority"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.fresh",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[2]",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம்... (190 chars)",
+     "b": "இன்று 24 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). \"படி\" அல... (178 chars)"
+    },
+    {
+     "path": "$.trace[1].label",
+     "a": "23 சம்பவங்களைப் படித்தேன்",
+     "b": "24 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "f1e6ac2ad90ac282",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 12498,
+    "b": 12224
+   },
+   "path_count": 10,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "12 of the 12 shown are past their deadline.",
+     "b": "39 of the 52 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 12 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "52-இல் 39 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "52 severe cases this week; here are the 12 that matter most. 12 are past their deadline and need you first: standing water at Pulianthope (B... (319 chars)",
+     "b": "52 severe cases this week; here are the 12 that matter most. 39 are past their deadline and need you first: standing water at Pulianthope (B... (281 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 12,
+     "b": 39
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.sources.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.sources[1]",
+     "a": "(absent)",
+     "b": "incidents"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    }
+   ]
+  },
+  {
+   "id": "484c3e63acc4f70c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11166,
+    "b": 11103
+   },
+   "path_count": 63,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "7 of the 10 shown are past their deadline.",
+     "b": "5 of the 11 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 10-இல் 7 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "11-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "10 cases this week. 7 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road),... (329 chars)",
+     "b": "11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 7,
+     "b": 5
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-0E2C3D",
+     "b": "INC-20261105-00A77C"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.0506905,
+     "b": 13.0310491
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2710942,
+     "b": 80.2716261
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now",
+     "b": "People are burning garbage near Children's park gate every evening"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261102-FDC61F",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.0441146,
+     "b": 13.06198355
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2511946,
+     "b": 80.28117234999999
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday",
+     "b": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.041418,
+     "b": 13.033772
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2590202,
+     "b": 80.2715343
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now",
+     "b": "Garbage at the dumping ground is burning since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0386679,
+     "b": 13.0516776
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2553095,
+     "b": 80.263255
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Garbage at the dumping ground is burning for over a week",
+     "b": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261106-0E2C3D"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0365913,
+     "b": 13.0506905
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2732008,
+     "b": 80.2710942
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Complaint about cleanliness in footpath opp. St. Mary's Church",
+     "b": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-FDC61F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 13.059412,
+     "b": 13.0441146
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2291796,
+     "b": 80.2511946
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Issue regarding cleaning of water table in our area",
+     "b": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261105-00A77C",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.0310491,
+     "b": 13.041418
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.2716261,
+     "b": 80.2590202
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "People are burning garbage near Children's park gate every evening",
+     "b": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.06198355,
+     "b": 13.0386679
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.28117234999999,
+     "b": 80.2553095
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Garbage at the dumping ground is burning for over a week"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261102-8EC358",
+     "b": "INC-20261101-774B5E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 13.033772,
+     "b": 13.0365913
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2715343,
+     "b": 80.2732008
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "Garbage at the dumping ground is burning since last Monday",
+     "b": "Complaint about cleanliness in footpath opp. St. Mary's Church"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261030-CB8991",
+     "b": "INC-20261031-11E3F4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.0516776,
+     "b": 13.059412
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.263255,
+     "b": 80.2291796
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days",
+     "b": "Issue regarding cleaning of water table in our area"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[2]",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[3]",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.trace[1].label",
+     "a": "10 சம்பவங்களைப் படித்தேன்",
+     "b": "11 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "0401451bde1ac789",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 5985,
+    "b": 5945
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "1 of the 2 shown is past its deadline.",
+     "b": "1 of the 2 is past its deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 2-இல் 1 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "2-இல் 1 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  },
+  {
+   "id": "fa394469d1d31521",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11480,
+    "b": 10927
+   },
+   "path_count": 260,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway",
+     "a": null,
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extens... (229 chars)",
+     "b": "112 cases this week; here are the 12 that matter most. 26 are past their deadline and need you first: standing water at Saidapet (Adyar Rive... (248 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drai... (196 chars)",
+     "b": "இந்த வாரம் 112 சம்பவங்கள். 26 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), s... (226 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 105,
+     "b": 112
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 0,
+     "b": 26
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].tone",
+     "a": "good",
+     "b": "bad"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 105,
+     "b": 112
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].title",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].place",
+     "a": "Vallalar Extn Extension",
+     "b": "Saidapet (Adyar River - Saidapet stretch)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].ward",
+     "a": 178,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].dept",
+     "a": "GCC-ENG",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].deptName",
+     "a": "Roads & Building Permissions",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].t",
+     "a": "2026-11-06 15:18:00",
+     "b": "2026-11-05 23:41:50"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].cat",
+     "a": "Encroachment & unauthorised construction",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261105-BFD2E3"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].title",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].place",
+     "a": "Indra Nagar 1St Street, Model School, Cholapuram",
+     "b": "Little Mount"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].ward",
+     "a": 181,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].t",
+     "a": "2026-11-06 15:12:00",
+     "b": "2026-11-05 16:12:45"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lat",
+     "a": 12.9881968,
+     "b": 13.013665
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lon",
+     "a": 80.2608459,
+     "b": 80.214627
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].cat",
+     "a": "Drain works site safety",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261101-86BE85"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].title",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Two-wheeler skids and falls near Kathipara Junction, SIDCO Industrial Estate"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].place",
+     "a": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+     "b": "Little Mount"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].dept",
+     "a": "GCC-SWD",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].deptName",
+     "a": "Storm Water Drain",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].t",
+     "a": "2026-11-06 13:33:00",
+     "b": "2026-11-01 17:56:45"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lat",
+     "a": 13.0002073,
+     "b": 13.00804
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lon",
+     "a": 80.2172367,
+     "b": 80.220817
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].cat",
+     "a": "Flooding & waterlogging",
+     "b": "Road accident"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261030-2795BA"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].title",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "Youths attacked near Adyar; three injured"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].status",
+     "a": "Under review",
+     "b": "Resolved"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].place",
+     "a": "Ramasamy Avenue, Vannanthurai, Adayar",
+     "b": "Adyar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].ward",
+     "a": 171,
+     "b": 176
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].dept",
+     "a": "GCC-ELE",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].t",
+     "a": "2026-11-06 09:41:00",
+     "b": "2026-10-30 23:31:18"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lat",
+     "a": 13.0086046,
+     "b": 13.000391
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lon",
+     "a": 80.2312455,
+     "b": 80.261085
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Violent crime"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].title",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].status",
+     "a": "Assigned",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].place",
+     "a": "Ist Street, Malaviya Avenue, Thiruvanmiyur",
+     "b": "Ekkattuthangal"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].ward",
+     "a": 182,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].dept",
+     "a": "GCC-ELE",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].t",
+     "a": "2026-11-06 09:10:00",
+     "b": "2026-11-06 00:25:39"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lat",
+     "a": 12.9858182,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lon",
+     "a": 80.2576242,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Road accident"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].title",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].place",
+     "a": "Mount Road 2Nd Lane, Mount Road, Guindy",
+     "b": "Guindy"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].dept",
+     "a": "GCC-HLT",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].deptName",
+     "a": "Public Health (GCC)",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].t",
+     "a": "2026-11-06 08:06:00",
+     "b": "2026-11-05 23:59:31"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lat",
+     "a": 12.9964664,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lon",
+     "a": 80.2355736,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].cat",
+     "a": "Dark spots & public safety",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261105-5A5202"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].title",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Viaya Nagar Bazaar St road full ah thanni, 2 adi"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].status",
+     "a": "In progress",
+     "b": "Resolved"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].place",
+     "a": "Guindy",
+     "b": "Vijaya Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].ward",
+     "a": 174,
+     "b": 179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].dept",
+     "a": "POL-GCP",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].deptName",
+     "a": "Greater Chennai Police",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].t",
+     "a": "2026-11-06 03:10:40",
+     "b": "2026-11-05 15:10:42"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lat",
+     "a": 13.003529,
+     "b": 12.97665
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lon",
+     "a": 80.223409,
+     "b": 80.226544
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].cat",
+     "a": "Theft, snatching & fraud",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20260708-E4914B"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].title",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "Families stranded by flooding at Adayar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].place",
+     "a": "Urur Alcot Kuppam Road, Alcot Kuppam, Urur",
+     "b": "Adayar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].ward",
+     "a": 173,
+     "b": 171
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].dept",
+     "a": "GCC-SWM",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].deptName",
+     "a": "Solid Waste Management",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].t",
+     "a": "2026-11-06 02:15:00",
+     "b": "2026-11-05 09:17:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lat",
+     "a": 13.0194877,
+     "b": 13.0095899
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lon",
+     "a": 80.252074,
+     "b": 80.2345246
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].cat",
+     "a": "Garbage & solid waste",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].id",
+     "a": "INC-20261105-AEA89B",
+     "b": "INC-20261105-BE0B74"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].title",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (36 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Baby Nagar: Sannathi St fully flooded near church, about 1.5 ft"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].status",
+     "a": "Under review",
+     "b": "Resolved"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].place",
+     "a": "Karpagam Garden 1St Main Road, Karpagam Garden, Adyar",
+     "b": "Baby Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].ward",
+     "a": 176,
+     "b": 179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].dept",
+     "a": "GCC-REV",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].deptName",
+     "a": "Revenue (Tax & Licence)",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].t",
+     "a": "2026-11-05 17:25:00",
+     "b": "2026-11-05 05:27:57"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lat",
+     "a": 13.0113646,
+     "b": 12.980688
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lon",
+     "a": 80.2636974,
+     "b": 80.224547
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].cat",
+     "a": "Tax, certificates & electoral services",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].id",
+     "a": "INC-20261105-75A900",
+     "b": "INC-20261104-39E85E"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].title",
+     "a": "தினமும் Sathya Street வழியாகச் செல்கிறேன். Stagnation of Water தொடர்பாக புகார்",
+     "b": "rain water stagnant knee-deep on balaji nagar main rd, guindy industrial estate near subway"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].place",
+     "a": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "b": "Guindy Industrial Estate"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].ward",
+     "a": 180,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].t",
+     "a": "2026-11-05 15:17:00",
+     "b": "2026-11-04 23:51:27"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lat",
+     "a": 12.9923533,
+     "b": 13.010222
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lon",
+     "a": 80.2437516,
+     "b": 80.211094
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].id",
+     "a": "INC-20261105-43648D",
+     "b": "INC-20261104-1D6F0C"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].title",
+     "a": "Unsafe dark spots/ corners: this stretch near Aavin milk booth needs attention for two weeks now",
+     "b": "Families stranded by flooding at Velachery"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].place",
+     "a": "Ganesh Nagar, Rajaji Nagar, Thiruvanmiyur",
+     "b": "Velachery"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].ward",
+     "a": 182,
+     "b": 177
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].dept",
+     "a": "GCC-ENG",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].deptName",
+     "a": "Roads & Building Permissions",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].t",
+     "a": "2026-11-05 05:02:00",
+     "b": "2026-11-04 20:55:32"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lat",
+     "a": 12.9841197,
+     "b": 12.983325
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lon",
+     "a": 80.2553945,
+     "b": 80.216688
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].cat",
+     "a": "Dark spots & public safety",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].id",
+     "a": "INC-20261104-4BA92A",
+     "b": "INC-20261104-A0AEDD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].title",
+     "a": "The storm water drain work behind Vegetable market has no barricading; a two-wheeler fell into the pit",
+     "b": "Tree falls across road at Taramani"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].place",
+     "a": "V P Hall Compounds, Central, Central",
+     "b": "Taramani"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].ward",
+     "a": 172,
+     "b": 180
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].dept",
+     "a": "GCC-SWD",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].deptName",
+     "a": "Storm Water Drain",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].t",
+     "a": "2026-11-04 21:02:00",
+     "b": "2026-11-04 12:32:35"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lat",
+     "a": 13.0232746,
+     "b": 12.983729
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lon",
+     "a": 80.2392068,
+     "b": 80.242002
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].cat",
+     "a": "Drain works site safety",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261105-BFD2E3"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 12.9881968,
+     "b": 13.013665
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2608459,
+     "b": 80.214627
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261101-86BE85"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.0002073,
+     "b": 13.00804
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2172367,
+     "b": 80.220817
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Two-wheeler skids and falls near Kathipara Junction, SIDCO Industrial Estate"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261030-2795BA"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0086046,
+     "b": 13.000391
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2312455,
+     "b": 80.261085
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "Youths attacked near Adyar; three injured"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 12.9858182,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2576242,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 12.9964664,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2355736,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261105-5A5202"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.003529,
+     "b": 12.97665
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.223409,
+     "b": 80.226544
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Viaya Nagar Bazaar St road full ah thanni, 2 adi"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20260708-E4914B"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.0194877,
+     "b": 13.0095899
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.252074,
+     "b": 80.2345246
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "Families stranded by flooding at Adayar"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261105-AEA89B",
+     "b": "INC-20261105-BE0B74"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 13.0113646,
+     "b": 12.980688
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2636974,
+     "b": 80.224547
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (36 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Baby Nagar: Sannathi St fully flooded near church, about 1.5 ft"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261105-75A900",
+     "b": "INC-20261104-39E85E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 12.9923533,
+     "b": 13.010222
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.2437516,
+     "b": 80.211094
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "தினமும் Sathya Street வழியாகச் செல்கிறேன். Stagnation of Water தொடர்பாக புகார்",
+     "b": "rain water stagnant knee-deep on balaji nagar main rd, guindy industrial estate near subway"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].id",
+     "a": "INC-20261105-43648D",
+     "b": "INC-20261104-1D6F0C"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lat",
+     "a": 12.9841197,
+     "b": 12.983325
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lon",
+     "a": 80.2553945,
+     "b": 80.216688
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].label",
+     "a": "Unsafe dark spots/ corners: this stretch near Aavin milk booth needs attention for two weeks now",
+     "b": "Families stranded by flooding at Velachery"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].id",
+     "a": "INC-20261104-4BA92A",
+     "b": "INC-20261104-A0AEDD"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lat",
+     "a": 13.0232746,
+     "b": 12.983729
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lon",
+     "a": 80.2392068,
+     "b": 80.242002
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].label",
+     "a": "The storm water drain work behind Vegetable market has no barricading; a two-wheeler fell into the pit",
+     "b": "Tree falls across road at Taramani"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.next.length",
+     "a": 2,
+     "b": 3
+    },
+    {
+     "path": "$.result.stage.next[0]",
+     "a": "(same keys)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Show them on a map",
+     "b": "Draft for the 6 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "வரைபடத்தில் காட்டு",
+     "b": "காலக்கெடு தாண்டிய 6-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].kind",
+     "a": "direct",
+     "b": "draft"
+    },
+    {
+     "path": "$.result.stage.next[0].recipe",
+     "a": "map",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].slots",
+     "a": "{object with 19 keys}",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 0,
+     "b": 5
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "(absent)",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "(absent)",
+     "b": "INC-20261105-BFD2E3"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[2]",
+     "a": "(absent)",
+     "b": "INC-20260708-E4914B"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[3]",
+     "a": "(absent)",
+     "b": "INC-20261104-39E85E"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "(absent)",
+     "b": "INC-20261104-1D6F0C"
+    },
+    {
+     "path": "$.result.stage.next[1].label.en",
+     "a": "Which department is slowest?",
+     "b": "Show them on a map"
+    },
+    {
+     "path": "$.result.stage.next[1].label.ta",
+     "a": "எந்தத் துறை மெதுவாக உள்ளது?",
+     "b": "வரைபடத்தில் காட்டு"
+    },
+    {
+     "path": "$.result.stage.next[1].recipe",
+     "a": "performance",
+     "b": "map"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.by",
+     "a": "dept",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.zones",
+     "a": "(absent)",
+     "b": "[array of 1]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.dept",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.depts",
+     "a": "(absent)",
+     "b": "[array of 0]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.cat",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.taluk",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sev",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.status",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.q",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.metric",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.measure",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.order",
+     "a": "(absent)",
+     "b": "top"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.n",
+     "a": "(absent)",
+     "b": 20
+    },
+    {
+     "path": "$.result.stage.next[1].slots.id",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.name",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.what",
+     "a": "(absent)",
+     "b": "severe"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sort",
+     "a": "(absent)",
+     "b": "priority"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.fresh",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[2]",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drai... (196 chars)",
+     "b": "இந்த வாரம் 112 சம்பவங்கள். 26 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), s... (226 chars)"
+    },
+    {
+     "path": "$.trace[1].label",
+     "a": "105 சம்பவங்களைப் படித்தேன்",
+     "b": "112 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "f09bcf697432c0ab",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 10780,
+    "b": 10717
+   },
+   "path_count": 63,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "7 of the 10 shown are past their deadline.",
+     "b": "5 of the 11 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 10-இல் 7 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "11-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "10 cases this week. 7 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road),... (329 chars)",
+     "b": "11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 7,
+     "b": 5
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-0E2C3D",
+     "b": "INC-20261105-00A77C"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.0506905,
+     "b": 13.0310491
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2710942,
+     "b": 80.2716261
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now",
+     "b": "People are burning garbage near Children's park gate every evening"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261102-FDC61F",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.0441146,
+     "b": 13.06198355
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2511946,
+     "b": 80.28117234999999
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday",
+     "b": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.041418,
+     "b": 13.033772
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2590202,
+     "b": 80.2715343
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now",
+     "b": "Garbage at the dumping ground is burning since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0386679,
+     "b": 13.0516776
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2553095,
+     "b": 80.263255
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Garbage at the dumping ground is burning for over a week",
+     "b": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261106-0E2C3D"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0365913,
+     "b": 13.0506905
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2732008,
+     "b": 80.2710942
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Complaint about cleanliness in footpath opp. St. Mary's Church",
+     "b": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-FDC61F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 13.059412,
+     "b": 13.0441146
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2291796,
+     "b": 80.2511946
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Issue regarding cleaning of water table in our area",
+     "b": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261105-00A77C",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.0310491,
+     "b": 13.041418
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.2716261,
+     "b": 80.2590202
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "People are burning garbage near Children's park gate every evening",
+     "b": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.06198355,
+     "b": 13.0386679
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.28117234999999,
+     "b": 80.2553095
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Garbage at the dumping ground is burning for over a week"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261102-8EC358",
+     "b": "INC-20261101-774B5E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 13.033772,
+     "b": 13.0365913
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2715343,
+     "b": 80.2732008
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "Garbage at the dumping ground is burning since last Monday",
+     "b": "Complaint about cleanliness in footpath opp. St. Mary's Church"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261030-CB8991",
+     "b": "INC-20261031-11E3F4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.0516776,
+     "b": 13.059412
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.263255,
+     "b": 80.2291796
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days",
+     "b": "Issue regarding cleaning of water table in our area"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[2]",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[3]",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.trace[1].label",
+     "a": "10 சம்பவங்களைப் படித்தேன்",
+     "b": "11 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "f025856d46a1ca5f",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 6322,
+    "b": 6279
+   },
+   "path_count": 6,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "2 of the 3 shown are past their deadline.",
+     "b": "1 of the 3 is past its deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 3-இல் 2 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "3-இல் 1 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "3 cases this week. 2 are past their deadline and need you first: a street light or electrical problem at Church Road, Padi, Mogappair in Amb... (333 chars)",
+     "b": "3 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Church Road, Padi, Mogappair in Amb... (333 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)"
+    }
+   ]
+  },
+  {
+   "id": "9ef6d6c5b729a804",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 5107,
+    "b": 5067
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "2 of the 2 shown are past their deadline.",
+     "b": "2 of the 2 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 2-இல் 2 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "2-இல் 2 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  },
+  {
+   "id": "374abbf925411872",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 2",
+   "fields": {},
+   "bytes": {
+    "a": 7335,
+    "b": 7311
+   },
+   "path_count": 33,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "5 of the 5 shown are past their deadline.",
+     "b": "5 of the 5 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 5-இல் 5 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "5-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road), ... (298 chars)",
+     "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloy... (301 chars)",
+     "b": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in ... (312 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.041418,
+     "b": 13.06198355
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2590202,
+     "b": 80.28117234999999
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now",
+     "b": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.0365913,
+     "b": 13.033772
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2732008,
+     "b": 80.2715343
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Complaint about cleanliness in footpath opp. St. Mary's Church",
+     "b": "Garbage at the dumping ground is burning since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.06198355,
+     "b": 13.0516776
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.28117234999999,
+     "b": 80.263255
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261102-8EC358",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.033772,
+     "b": 13.041418
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2715343,
+     "b": 80.2590202
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Garbage at the dumping ground is burning since last Monday",
+     "b": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261030-CB8991",
+     "b": "INC-20261101-774B5E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0516776,
+     "b": 13.0365913
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.263255,
+     "b": 80.2732008
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days",
+     "b": "Complaint about cleanliness in footpath opp. St. Mary's Church"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.sources.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.sources[1]",
+     "a": "dept_followups",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.next[0].ids",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road), ... (298 chars)",
+     "b": "5 cases this week. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in Teynampet,... (309 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ef7c2b826ce05b4d",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 17",
+   "fields": {},
+   "bytes": {
+    "a": 11129,
+    "b": 12061
+   },
+   "path_count": 240,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway",
+     "a": null,
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "23 cases today; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension i... (224 chars)",
+     "b": "24 cases today; here are the 12 that matter most. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Sa... (197 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம்... (190 chars)",
+     "b": "இன்று 24 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). \"படி\" அல... (178 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 23,
+     "b": 24
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].tone",
+     "a": "good",
+     "b": "bad"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 23,
+     "b": 24
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].title",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].place",
+     "a": "Vallalar Extn Extension",
+     "b": "Saidapet (Adyar River - Saidapet stretch)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].ward",
+     "a": 178,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].dept",
+     "a": "GCC-ENG",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].deptName",
+     "a": "Roads & Building Permissions",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].t",
+     "a": "2026-11-06 15:18:00",
+     "b": "2026-11-05 23:41:50"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[0].cat",
+     "a": "Encroachment & unauthorised construction",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].title",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].place",
+     "a": "Indra Nagar 1St Street, Model School, Cholapuram",
+     "b": "Ekkattuthangal"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].ward",
+     "a": 181,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].dept",
+     "a": "GCC-SWD",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].deptName",
+     "a": "Storm Water Drain",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].t",
+     "a": "2026-11-06 15:12:00",
+     "b": "2026-11-06 00:25:39"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lat",
+     "a": 12.9881968,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].lon",
+     "a": 80.2608459,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].cat",
+     "a": "Drain works site safety",
+     "b": "Road accident"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].title",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].place",
+     "a": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+     "b": "Guindy"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].t",
+     "a": "2026-11-06 13:33:00",
+     "b": "2026-11-05 23:59:31"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lat",
+     "a": 13.0002073,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].lon",
+     "a": 80.2172367,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261106-31714F"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].title",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].place",
+     "a": "Ramasamy Avenue, Vannanthurai, Adayar",
+     "b": "Sathya Street, Anbazhagan Nagar, Taramani"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].ward",
+     "a": 171,
+     "b": 180
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].dept",
+     "a": "GCC-ELE",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].t",
+     "a": "2026-11-06 09:41:00",
+     "b": "2026-11-06 17:54:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lat",
+     "a": 13.0086046,
+     "b": 12.9850693
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].lon",
+     "a": 80.2312455,
+     "b": 80.2465486
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[3].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Drainage & sewage"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-237615"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].title",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "There is no storm water drain near Post Office"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].status",
+     "a": "Assigned",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].place",
+     "a": "Ist Street, Malaviya Avenue, Thiruvanmiyur",
+     "b": "Besant Nagar 31St Cross Street, M.G.R.Colony, Besant Nagar"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].ward",
+     "a": 182,
+     "b": 176
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].dept",
+     "a": "GCC-ELE",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].deptName",
+     "a": "Street Lighting & Electrical",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].t",
+     "a": "2026-11-06 09:10:00",
+     "b": "2026-11-06 16:31:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lat",
+     "a": 12.9858182,
+     "b": 13.00681855
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].lon",
+     "a": 80.2576242,
+     "b": 80.26698275
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].cat",
+     "a": "Street lights & electrical hazards",
+     "b": "Drainage & sewage"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261106-76D3A4"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].title",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].status",
+     "a": "Under review",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].place",
+     "a": "Mount Road 2Nd Lane, Mount Road, Guindy",
+     "b": "Thiruvanmiyur"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].ward",
+     "a": 174,
+     "b": 182
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].dept",
+     "a": "GCC-HLT",
+     "b": "POL-GCP"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].deptName",
+     "a": "Public Health (GCC)",
+     "b": "Greater Chennai Police"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].t",
+     "a": "2026-11-06 08:06:00",
+     "b": "2026-11-06 16:03:03"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lat",
+     "a": 12.9964664,
+     "b": 12.983381
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].lon",
+     "a": 80.2355736,
+     "b": 80.266957
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[5].cat",
+     "a": "Dark spots & public safety",
+     "b": "Traffic obstruction & parking"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261106-825456"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].title",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Velachery: 8-sovereign gold chain snatched"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].status",
+     "a": "In progress",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].place",
+     "a": "Guindy",
+     "b": "Velachery"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].ward",
+     "a": 174,
+     "b": 177
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].t",
+     "a": "2026-11-06 03:10:40",
+     "b": "2026-11-06 15:59:35"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lat",
+     "a": 13.003529,
+     "b": 12.980429
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[6].lon",
+     "a": 80.223409,
+     "b": 80.217218
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-8D75F0"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].title",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "The storm water drain work near Pillaiyar Kovil has no barricading; a two-wheeler fell into the pit"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].place",
+     "a": "Urur Alcot Kuppam Road, Alcot Kuppam, Urur",
+     "b": "Periyar 5Th Salai"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].ward",
+     "a": 173,
+     "b": 179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].dept",
+     "a": "GCC-SWM",
+     "b": "GCC-SWD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].deptName",
+     "a": "Solid Waste Management",
+     "b": "Storm Water Drain"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].t",
+     "a": "2026-11-06 02:15:00",
+     "b": "2026-11-06 13:58:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lat",
+     "a": 13.0194877,
+     "b": 12.9752654
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].lon",
+     "a": 80.252074,
+     "b": 80.2275944
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[7].cat",
+     "a": "Garbage & solid waste",
+     "b": "Drain works site safety"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].id",
+     "a": "INC-20261106-31714F",
+     "b": "INC-20261106-D39D78"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].title",
+     "a": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "b": "Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].status",
+     "a": "Under review",
+     "b": "Open"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].place",
+     "a": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "b": "Adambakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].ward",
+     "a": 180,
+     "b": 174
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].t",
+     "a": "2026-11-06 17:54:00",
+     "b": "2026-11-06 13:13:14"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lat",
+     "a": 12.9850693,
+     "b": 12.99689967275567
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].lon",
+     "a": 80.2465486,
+     "b": 80.20843154376522
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[8].cat",
+     "a": "Drainage & sewage",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].id",
+     "a": "INC-20261106-237615",
+     "b": "INC-20261106-0AE07E"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].title",
+     "a": "There is no storm water drain near Post Office",
+     "b": "காலை முதல். Guindy Industrial Estate Sathya Nagar 2nd St தாழ்வான பகுதியில் தண்ணீர் வடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].status",
+     "a": "Under review",
+     "b": "In progress"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].place",
+     "a": "Besant Nagar 31St Cross Street, M.G.R.Colony, Besant Nagar",
+     "b": "Guindy Industrial Estate (Guindy Industrial Estate Storm Water Channel)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].ward",
+     "a": 176,
+     "b": 170
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].dept",
+     "a": "GCC-SWD",
+     "b": "PWD-WRD"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].deptName",
+     "a": "Storm Water Drain",
+     "b": "PWD Water Resources"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].complaints",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].t",
+     "a": "2026-11-06 16:31:00",
+     "b": "2026-11-06 09:08:39"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lat",
+     "a": 13.00681855,
+     "b": 13.01179
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].lon",
+     "a": 80.26698275,
+     "b": 80.210108
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].cat",
+     "a": "Drainage & sewage",
+     "b": "Flooding & waterlogging"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].id",
+     "a": "INC-20261106-76D3A4",
+     "b": "INC-20261106-204F2B"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].title",
+     "a": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus",
+     "b": "தெருவிளக்கு இரண்டு வாரங்களாக எரியவில்லை. இரவில் பெண்கள் நடந்து செல்ல பயப்படுகிறார்கள்"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].status",
+     "a": "Open",
+     "b": "Under review"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].place",
+     "a": "Thiruvanmiyur",
+     "b": "Lakshmi Nagar 1St Cross Street, Adambakkam, Adambakkam"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].ward",
+     "a": 182,
+     "b": 178
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].dept",
+     "a": "POL-GCP",
+     "b": "GCC-ELE"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].deptName",
+     "a": "Greater Chennai Police",
+     "b": "Street Lighting & Electrical"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].complaints",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].t",
+     "a": "2026-11-06 16:03:03",
+     "b": "2026-11-06 07:03:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lat",
+     "a": 12.983381,
+     "b": 12.981065494705549
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].lon",
+     "a": 80.266957,
+     "b": 80.21751140355502
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[10].cat",
+     "a": "Traffic obstruction & parking",
+     "b": "Street lights & electrical hazards"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].id",
+     "a": "INC-20261106-825456",
+     "b": "INC-20261105-706AC2"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].title",
+     "a": "Velachery: 8-sovereign gold chain snatched",
+     "b": "Mosquito Menace தொடர்பான பிரச்சினை எங்கள் பகுதியில் உள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].status",
+     "a": "Open",
+     "b": "Assigned"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].place",
+     "a": "Velachery",
+     "b": "Sardar Patel Road, Rajbhavan, Guindy"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].ward",
+     "a": 177,
+     "b": 174
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].dept",
+     "a": "POL-GCP",
+     "b": "GCC-HLT"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].deptName",
+     "a": "Greater Chennai Police",
+     "b": "Public Health (GCC)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].complaints",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].t",
+     "a": "2026-11-06 15:59:35",
+     "b": "2026-11-05 21:09:00"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lat",
+     "a": 12.980429,
+     "b": 12.9933308
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].lon",
+     "a": 80.217218,
+     "b": 80.232466
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[11].cat",
+     "a": "Theft, snatching & fraud",
+     "b": "Vector- & water-borne disease"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-176CA8",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 12.9710944,
+     "b": 13.010337
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2154243,
+     "b": 80.206788
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும்",
+     "b": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Severe"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261106-8DB9EB",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 12.9881968,
+     "b": 13.019162
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2608459,
+     "b": 80.203481
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "வடிகால் பணி நடக்கும் இடத்தில் தடுப்பு வேலி இல்லை",
+     "b": "Two-wheeler skids near Ekkattuthangal Metro Station; rider injured"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261106-8D91A1",
+     "b": "INC-20261105-5814DE"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.0002073,
+     "b": 13.006499
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2172367,
+     "b": 80.216759
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Knee-deep water stagnation in our area; vehicles cannot pass",
+     "b": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "High"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261106-B9921A",
+     "b": "INC-20261106-31714F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0086046,
+     "b": 12.9850693
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2312455,
+     "b": 80.2465486
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "தெருவிளக்கு பிரச்சினை: Overhead cable wires running in a haphazard manner",
+     "b": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261106-6D186D",
+     "b": "INC-20261106-237615"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 12.9858182,
+     "b": 13.00681855
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2576242,
+     "b": 80.26698275
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Street light problem: Non burning of Street lights",
+     "b": "There is no storm water drain near Post Office"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261106-1E7825",
+     "b": "INC-20261106-76D3A4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 12.9964664,
+     "b": 12.983381
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2355736,
+     "b": 80.266957
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Complaint regarding inadequate lighting in and around the toilet opp",
+     "b": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261106-21ACC4",
+     "b": "INC-20261106-825456"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.003529,
+     "b": 12.980429
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.223409,
+     "b": 80.217218
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "Guindy: mobile phone lifted in crowd",
+     "b": "Velachery: 8-sovereign gold chain snatched"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261106-7AB184",
+     "b": "INC-20261106-8D75F0"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.0194877,
+     "b": 12.9752654
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.252074,
+     "b": 80.2275944
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "Issue regarding spilling of garbage from lorry on Urur Alcot Kuppam Road",
+     "b": "The storm water drain work near Pillaiyar Kovil has no barricading; a two-wheeler fell into the pit"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261106-31714F",
+     "b": "INC-20261106-D39D78"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 12.9850693,
+     "b": 12.99689967275567
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2465486,
+     "b": 80.20843154376522
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "b": "Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261106-237615",
+     "b": "INC-20261106-0AE07E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.00681855,
+     "b": 13.01179
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.26698275,
+     "b": 80.210108
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "There is no storm water drain near Post Office",
+     "b": "காலை முதல். Guindy Industrial Estate Sathya Nagar 2nd St தாழ்வான பகுதியில் தண்ணீர் வடியவில்லை"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].id",
+     "a": "INC-20261106-76D3A4",
+     "b": "INC-20261106-204F2B"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lat",
+     "a": 12.983381,
+     "b": 12.981065494705549
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].lon",
+     "a": 80.266957,
+     "b": 80.21751140355502
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[10].label",
+     "a": "Fallen tree disrupts traffic near Thiruvanmiyur Bus Terminus",
+     "b": "தெருவிளக்கு இரண்டு வாரங்களாக எரியவில்லை. இரவில் பெண்கள் நடந்து செல்ல பயப்படுகிறார்கள்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].id",
+     "a": "INC-20261106-825456",
+     "b": "INC-20261105-706AC2"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lat",
+     "a": 12.980429,
+     "b": 12.9933308
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].lon",
+     "a": 80.217218,
+     "b": 80.232466
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[11].label",
+     "a": "Velachery: 8-sovereign gold chain snatched",
+     "b": "Mosquito Menace தொடர்பான பிரச்சினை எங்கள் பகுதியில் உள்ளது"
+    },
+    {
+     "path": "$.result.stage.next.length",
+     "a": 2,
+     "b": 3
+    },
+    {
+     "path": "$.result.stage.next[0]",
+     "a": "(same keys)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Show them on a map",
+     "b": "Draft for the 1 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "வரைபடத்தில் காட்டு",
+     "b": "காலக்கெடு தாண்டிய 1-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].kind",
+     "a": "direct",
+     "b": "draft"
+    },
+    {
+     "path": "$.result.stage.next[0].recipe",
+     "a": "map",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].slots",
+     "a": "{object with 19 keys}",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "(absent)",
+     "b": "INC-20261105-5C94BB"
+    },
+    {
+     "path": "$.result.stage.next[1].label.en",
+     "a": "Which department is slowest?",
+     "b": "Show them on a map"
+    },
+    {
+     "path": "$.result.stage.next[1].label.ta",
+     "a": "எந்தத் துறை மெதுவாக உள்ளது?",
+     "b": "வரைபடத்தில் காட்டு"
+    },
+    {
+     "path": "$.result.stage.next[1].recipe",
+     "a": "performance",
+     "b": "map"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.by",
+     "a": "dept",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.zones",
+     "a": "(absent)",
+     "b": "[array of 1]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.dept",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.depts",
+     "a": "(absent)",
+     "b": "[array of 0]"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.cat",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.taluk",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sev",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.status",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.q",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.metric",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.measure",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.order",
+     "a": "(absent)",
+     "b": "top"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.n",
+     "a": "(absent)",
+     "b": 20
+    },
+    {
+     "path": "$.result.stage.next[1].slots.id",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.name",
+     "a": "(absent)",
+     "b": null
+    },
+    {
+     "path": "$.result.stage.next[1].slots.what",
+     "a": "(absent)",
+     "b": "severe"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.sort",
+     "a": "(absent)",
+     "b": "priority"
+    },
+    {
+     "path": "$.result.stage.next[1].slots.fresh",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[2]",
+     "a": "(absent)",
+     "b": "{object with 6 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம்... (190 chars)",
+     "b": "இன்று 24 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). \"படி\" அல... (178 chars)"
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "23 சம்பவங்களைப் படித்தேன்",
+     "b": "24 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "e2bf5af9ffe285e3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 18",
+   "fields": {},
+   "bytes": {
+    "a": 12414,
+    "b": 12140
+   },
+   "path_count": 10,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "12 of the 12 shown are past their deadline.",
+     "b": "39 of the 52 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 12 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "52-இல் 39 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "52 severe cases this week; here are the 12 that matter most. 12 are past their deadline and need you first: standing water at Pulianthope (B... (319 chars)",
+     "b": "52 severe cases this week; here are the 12 that matter most. 39 are past their deadline and need you first: standing water at Pulianthope (B... (281 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items.length",
+     "a": 3,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 12,
+     "b": 39
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[2]",
+     "a": "{object with 8 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.stage.sources.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.sources[1]",
+     "a": "(absent)",
+     "b": "incidents"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 12 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (290 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 39 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)"
+    }
+   ]
+  },
+  {
+   "id": "61ed15dc04e17ba5",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 19",
+   "fields": {},
+   "bytes": {
+    "a": 11082,
+    "b": 11019
+   },
+   "path_count": 63,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "7 of the 10 shown are past their deadline.",
+     "b": "5 of the 11 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 10-இல் 7 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "11-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "10 cases this week. 7 are past their deadline and need you first: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Lloyds Road),... (329 chars)",
+     "b": "11 cases this week; here are the 10 that matter most. 5 are past their deadline and need you first: uncleared garbage at Rasha Hydhar Street... (344 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[0].value",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 7,
+     "b": 5
+    },
+    {
+     "path": "$.result.stage.blocks[1].total",
+     "a": 10,
+     "b": 11
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows",
+     "a": "(same items)",
+     "b": "(in another order)"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].id",
+     "a": "INC-20261106-0E2C3D",
+     "b": "INC-20261105-00A77C"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lat",
+     "a": 13.0506905,
+     "b": 13.0310491
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].lon",
+     "a": 80.2710942,
+     "b": 80.2716261
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].label",
+     "a": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now",
+     "b": "People are burning garbage near Children's park gate every evening"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[0].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].id",
+     "a": "INC-20261102-FDC61F",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lat",
+     "a": 13.0441146,
+     "b": 13.06198355
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].lon",
+     "a": 80.2511946,
+     "b": 80.28117234999999
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].label",
+     "a": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday",
+     "b": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[1].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].id",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lat",
+     "a": 13.041418,
+     "b": 13.033772
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].lon",
+     "a": 80.2590202,
+     "b": 80.2715343
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].label",
+     "a": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now",
+     "b": "Garbage at the dumping ground is burning since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[2].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].id",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lat",
+     "a": 13.0386679,
+     "b": 13.0516776
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].lon",
+     "a": 80.2553095,
+     "b": 80.263255
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].label",
+     "a": "Garbage at the dumping ground is burning for over a week",
+     "b": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[3].sev",
+     "a": "Low",
+     "b": "Medium"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].id",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261106-0E2C3D"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lat",
+     "a": 13.0365913,
+     "b": 13.0506905
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].lon",
+     "a": 80.2732008,
+     "b": 80.2710942
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[4].label",
+     "a": "Complaint about cleanliness in footpath opp. St. Mary's Church",
+     "b": "Nuisance by Garbage Tractor/Truck: the problem in our street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].id",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-FDC61F"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lat",
+     "a": 13.059412,
+     "b": 13.0441146
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].lon",
+     "a": 80.2291796,
+     "b": 80.2511946
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[5].label",
+     "a": "Issue regarding cleaning of water table in our area",
+     "b": "Garbage Lorry without Net: the problem on Nehru 4th St has continued since last Monday"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].id",
+     "a": "INC-20261105-00A77C",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lat",
+     "a": 13.0310491,
+     "b": 13.041418
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].lon",
+     "a": 80.2716261,
+     "b": 80.2590202
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].label",
+     "a": "People are burning garbage near Children's park gate every evening",
+     "b": "Removal of Debris: the problem on Rotary Nagar Ixth Street has continued for two weeks now"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[6].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].id",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lat",
+     "a": 13.06198355,
+     "b": 13.0386679
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].lon",
+     "a": 80.28117234999999,
+     "b": 80.2553095
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].label",
+     "a": "எங்கள் குடியிருப்போர் நலச் சங்கம் (47 குடும்பங்கள்) சார்பாக எழுதுகிறேன்",
+     "b": "Garbage at the dumping ground is burning for over a week"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[7].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].id",
+     "a": "INC-20261102-8EC358",
+     "b": "INC-20261101-774B5E"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lat",
+     "a": 13.033772,
+     "b": 13.0365913
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].lon",
+     "a": 80.2715343,
+     "b": 80.2732008
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].label",
+     "a": "Garbage at the dumping ground is burning since last Monday",
+     "b": "Complaint about cleanliness in footpath opp. St. Mary's Church"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[8].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].id",
+     "a": "INC-20261030-CB8991",
+     "b": "INC-20261031-11E3F4"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lat",
+     "a": 13.0516776,
+     "b": 13.059412
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].lon",
+     "a": 80.263255,
+     "b": 80.2291796
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].label",
+     "a": "Burning of Garbage: the problem near Pillaiyar Kovil has continued for the past 4 days",
+     "b": "Issue regarding cleaning of water table in our area"
+    },
+    {
+     "path": "$.result.stage.blocks[2].points[9].sev",
+     "a": "Medium",
+     "b": "Low"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[0]",
+     "a": "INC-20261102-132638",
+     "b": "INC-20261103-22C9F8"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261102-8EC358"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[2]",
+     "a": "INC-20261101-774B5E",
+     "b": "INC-20261030-CB8991"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[3]",
+     "a": "INC-20261031-11E3F4",
+     "b": "INC-20261102-132638"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261103-22C9F8",
+     "b": "INC-20261101-C8D6E1"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 10 சம்பவங்கள். 7 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rotary Nagar Ixth Street, Rotary Nagar (Llo... (332 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)"
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "10 சம்பவங்களைப் படித்தேன்",
+     "b": "11 சம்பவங்களைப் படித்தேன்"
+    }
+   ]
+  },
+  {
+   "id": "f0ed9bee243901b3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 20",
+   "fields": {},
+   "bytes": {
+    "a": 5901,
+    "b": 5861
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "1 of the 2 shown is past its deadline.",
+     "b": "1 of the 2 is past its deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 2-இல் 1 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "2-இல் 1 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  }
+ ]
+}

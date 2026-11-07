@@ -1,0 +1,22 @@
+# RC-08 sweep: figures counted from rows on a page, and list order calls (after the fix)
+## filter(...overdue) / filter(r.overdue) over rows
+src/lib/thunai/next.ts:19:  const late = list?.rows.filter((r) => r.overdue) ?? [];
+src/lib/thunai/screens.ts:283:  const overdue = late ? lateRows : rows.filter((r) => r.overdue);
+src/lib/thunai/screens.ts:464:    if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
+src/lib/thunai/screens.ts:481:          more.push(...p.rows.map((x) => caseRow(x, w)).filter((x) => x.overdue));
+src/lib/thunai/screens.ts:511:  const lateShown = rows.filter((r) => r.overdue).length;
+src/lib/thunai/screens.ts:547:  const late = rows.filter((r) => r.overdue);
+## sort: "sev" in a tool call (dir must follow)
+src/lib/thunai/agent.ts:304:    case "incidents": return { name: c.tool, args: { scope, q: clip(c.text, 80) || null, sort: "sev", dir: 1 } };
+src/lib/thunai/data.ts:50:export async function consoleList(s: ScopeT, f: { sev: string | null; status: string | null; q: string | null; sort: "sev" | "t" | "c"; page?: number }) {
+src/lib/thunai/screens.ts:67:  list?: (s: ScopeT, f: { sev: string | null; status: string | null; q: string | null; sort: "sev" | "t" | "c"; page?: number }) => Promise<{ rows: Row[]; total: number; i
+src/lib/thunai/screens.ts:172:async function incidentList(c: Ctx, f: { sev?: Sev | null; status: "open" | "overdue" | null; q?: string | null; sort: "sev" | "t" | "c"; page?: number }, scope: ScopeT =
+src/lib/thunai/screens.ts:188:  return (await incidentList(c, { sev, status: "overdue", q, sort: "sev" })).incidents;
+src/lib/thunai/screens.ts:260:    incidentList(c, { status: "open", sort: "sev" }).catch(() => null),
+src/lib/thunai/screens.ts:262:    c.h.list ? incidentList(c, { status: "overdue", sort: "sev" }).catch(() => null) : Promise.resolve(null),
+src/lib/thunai/screens.ts:404:    const data = await incidentList(c, { status: "open", sort: "sev" });
+src/lib/thunai/screens.ts:478:          const p = await incidentList(c, { sev, status: "open", q: slots.q, sort: "sev", page }).catch(() => null);
+src/lib/thunai/screens.ts:571:    const top = await incidentList(c, { sev: c.s.sev ?? null, status: "open", q: c.slots.q, sort: "sev" }).catch(() => null);
+src/lib/thunai/screens.ts:1129:    incidentList(c, { sort: "sev", status: "open" })
+## direct tool incidents calls in thunai
+src/lib/thunai/screens.ts:181:  const r = await call(c, "incidents", { scope: scopeArg(scope), sev, status: f.status === "overdue" ? "open" : f.status, q, sort: f.sort, dir: f.sort === "sev" ? 1 : -1,
