@@ -111,6 +111,12 @@ const CHANGE_VERB = /\b(?:change|modify|alter|edit|rewrite|overwrite|downgrade|r
 const STATE_WORD = /\b(?:status|severity|priority|closed?|resolved|low|high|severe|critical|pending)\b|-?ன்னு|\bnu\b/i;
 const RECORDISH = /\b(?:fir|cases?|complaints?|incidents?|records?|severity|status|all|every|ellam|pending|inc-[a-z0-9-]+)\b|எல்லா|புகார|சம்பவ|வழக்கு|கேஸ்/i;
 const CLOSE_VERB = /\b(?:close|closing|reopen)\b|\bclose\s*pann|மூடு|மூடி|க்ளோஸ்/i;
+/**
+ * "close aachu", "approve aayiduchu", "க்ளோஸ் ஆச்சு": a verb with a Tanglish or Tamil "it happened" after it says the thing was done; it is a statement or a question about
+ * the past, not an order, so the verb is not read as one (QA4 G1, metamorphic m30: "evlo complaints close aachu" was refused as an order to close). Only the done phrase is taken
+ * out, so an order beside it ("close aachu, now close all of them") still counts.
+ */
+const DONE_PHRASE = /\b[a-z][a-z-]*\s*(?:aa(?:chu|chi|yiduchu|yiruchu|giduchu|girukku|nadhu|nathu|gi)|achu)\b|\S+\s*ஆ(?:ச்சு|யிடுச்சு|யிருக்கு|னது|கிடுச்சு|கிவிட்டது)/gi;
 const MONEY_VERB = /\b(?:release|disburse|allocate|sanction|transfer|withdraw|waive)\b.{0,50}\b(?:funds?|relief|money|amount|budget|compensation|lakhs?|crores?|rs\.?|rupees)\b|(?:நிதி|பணம்|இழப்பீடு|லட்சம்|கோடி).{0,40}(?:விடுவி|ஒதுக்கு|ரிலீஸ்|கொடு)|\b(?:fund|nidhi|lakhs?)\b.{0,30}\b(?:release|oduk|ondhuk)\w*\s*pann/i;
 /** an order to do what a record says, or to show the rules Jarvis runs by */
 const OBEY_RECORD = /\b(?:do|follow|obey|act\s+on|carry\s+out|execute)\s+(?:what|as|whatever|the\s+instructions?)\b.{0,40}\b(?:says?|said|written|instructions?|asks?|tells?)\b|சொன்ன\s*மாதிரி\s*(?:செய்|பண்ணு)|\bas\s+(?:it|the\s+(?:complaint|note|record|message))\s+says\b/i;
@@ -118,7 +124,7 @@ const REVEAL_RULES = /\b(?:print|show|reveal|repeat|tell|read|output|display|sha
 
 /** Tells Jarvis to do what it never does: send, approve or delete (or to ignore its rules). */
 export function asksForbidden(text: string): boolean {
-  const t = stripFormat(text).trim();
+  const t = stripFormat(text).trim().replace(DONE_PHRASE, " ");
   if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(t)) return true;
   if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
   if (OBEY_RECORD.test(t) || REVEAL_RULES.test(t) || MONEY_VERB.test(t)) return true;
