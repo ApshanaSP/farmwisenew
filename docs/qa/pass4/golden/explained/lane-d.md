@@ -1,0 +1,20 @@
+# Golden diff explained: baseline-abef9da to lane-d
+
+Compared 3272 requests with 3272: 244 changed, 0 added, 0 removed, no status changes, 0 problems in the recording (2 answers with a 5xx are the same two as in the baseline; see the baseline manifest). The raw comparison is `docs/qa/pass4/golden/diffs/baseline-abef9da__lane-d.md`. The build id differs, as it must. Every changed route is explained below, by cluster. Nothing is unexplained.
+
+| Route (requests changed) | What changed | Cluster |
+|---|---|---|
+| /api/collector/list (70) | every row gains `sla_due` (the due time the case page already used, so the explain text and the CSV date the deadline the same way); `status=overdue` lists now hold every open incident whose due time has gone (not only the pipeline's flag), so the first rows differ; `status=Resolved` lists incidents closed in the period, as the tile counts them | RC-34, RC-29 |
+| /api/collector/overview (32), /api/collector/report (18) | `kpi.cur/prev/series.resolved` is what was closed in the window (weekly district 182 became 1,166, the count Ask District IQ already gave); `snapshot.overdue` and the severity rows use the one past-deadline rule (weekly district 339 became 505); rows gain `sla_due`; "most urgent" ordering and the reasons follow the date rule | RC-29, RC-34 |
+| /api/collector/insights (21) | Trends: the 12 weeks and 6 months are whole buckets (the oldest week 315 became 1,083); `briefing.stats.overdue`, headline and `taluks.*.overdue` use the one rule; `briefing.stats.newsOnly` is the length of the list shown (77 became 73: headlines about another district are hidden once, up front); `handledByDepts` is open minus all that need the Collector | RC-29, RC-34 |
+| /api/collector/export (4), /api/collector/assistant/export (3) | the action list has every open incident that meets the attention rules (weekly 293 became 392): the 400-row cap on the rows read is gone; `past_deadline` follows the due time | RC-29, RC-34 |
+| /api/collector/audit (1) | the three audited export row counts (52, 293, 47 became 66, 392, 50) are the same change | RC-29 |
+| /api/collector/search (4) | rows gain `sla_due` | RC-34 |
+| /api/collector/incidents/[id] (19) | the key order changes because `sla_due` moved into the shared row; the two incidents the golden session resolves now show Resolved, `open` 0, a `closed_at` (the decision's time) and no "needs you" reasons, because the case page reads the decision overlay like every list | RC-34, RC-26, RC-27 |
+| /api/collector/assistant/chat (7), /api/collector/thunai/agent (1), /api/collector/thunai/agent/round (10) | Ask District IQ and Jarvis say the new figures: past-deadline counts (one rule), the first line of a list is its most severe case (the sort default), "Incidents matching" is the incident count, resolved is closed in the period, and a list headed "most serious first" now has a takeaway because its first row is severe | RC-34, RC-29 |
+| /api/map/ask (21) | Ask the Map's `overdue` flags and counts use the one rule (weekly 339 became 505 in the glance), and its decisions overlay uses the decisions with an effect | RC-34, RC-26 |
+| /api/officer/overview (30), /api/officer/insights (1) | every feed carries its `kind` (so the officer's chip and list do not count generated feeds live); the department's own close no longer appears as "Collector verified" in `feedback` and `lastDecision`; the map legend counts every open grievance, not the capped pins; `board.kpi.*.resolved` as above; the officer's "Closed on time" is closing by the due time (14% became 13%) | RC-28, RC-32, RC-34, RC-29 |
+| /api/collector/sources (1) | each feed has `generated`, and the three generated feeds have status `test` instead of `ok` | RC-32 |
+| /api/rehearsal/impacts (1) | Rain's Traffic source line for the generated police and complaint records has kind `generated` and says so | RC-32 |
+
+Nothing else changed: no route gained or lost a status, no body grew an unexpected field, and the 3,028 other requests are byte for byte the same after normalising.
