@@ -29,7 +29,7 @@ describe("open findings", () => {
     expect(Math.max(0, ...issues)).toBeLessThan(1000);
   });
 
-  it.fails("SCAN-6 a malformed body on the mobile code request is a 400, as the route's own comment says, not a 500", async () => {
+  it("SCAN-6 a malformed body on the mobile code request is a 400, as the route's own comment says, not a 500", async () => {
     vi.resetModules();
     const { POST } = await import("@/app/api/profile/mobile-otp/request/route");
     const res = await POST(post("/api/profile/mobile-otp/request", "{not json"));

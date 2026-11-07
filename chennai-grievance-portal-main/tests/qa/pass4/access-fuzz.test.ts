@@ -5,7 +5,7 @@ import { login } from "./lib/access-lib.mjs";
 const base = "http://127.0.0.1:3140";
 const up = await fetch(`${base}/login`).then((r) => r.status < 500).catch(() => false);
 describe.skipIf(!up)("profile photo upload", () => {
-  it.fails("access-fuzz-2: a request that is not multipart gets 400, not 500", async () => {
+  it("access-fuzz-2: a request that is not multipart gets 400, not 500", async () => {
     const { cookie } = await login(base, "citizenA");
     const r = await fetch(`${base}/api/profile/photo`, { method: "POST", headers: { cookie, "content-type": "application/json" }, body: "{}" });
     expect(r.status).toBe(400);

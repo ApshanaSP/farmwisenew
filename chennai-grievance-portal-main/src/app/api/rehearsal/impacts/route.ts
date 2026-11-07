@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     return NextResponse.json(await impacts(lens), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     return failed(e, `the rain's ${lens}`);
   }
 }

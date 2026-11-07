@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!r) return NextResponse.json({ error: "One of the places is too far from a road." }, { status: 404 });
     return NextResponse.json(r);
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     return failed(e, "the route");
   }
 }

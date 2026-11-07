@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       default: return NextResponse.json(await rehearsalState(o));
     }
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("rehearsal dev", e);
     return NextResponse.json({ error: String((e as Error).message) }, { status: 500 });
   }

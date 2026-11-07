@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const drafts = await Promise.all(depts.map((d) => draftDept(jobs, d, p.deptName(d), p.headline)));
     return NextResponse.json({ rehearsal: p.rid, drafts });
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     return failed(e, "the rehearsal plan");
   }
 }

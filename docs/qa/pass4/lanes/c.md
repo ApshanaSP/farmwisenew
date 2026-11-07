@@ -37,3 +37,12 @@
 - Class guards: src/lib/studio/ask.pass4.test.ts (every sample file: a named measure is summed, not counted) and src/lib/studio/secrets-kept.pass4.test.ts (every file kind in the store header is removed by delete or the sweep; dropVault has a caller).
 - Three languages: English, Tamil script and Tanglish are tested at the rules level on the real fever sample. The real server path (browser tests audit-client_browser-13, test.fail removed) is run after the final build.
 - Tests: scans-code-4 (two) it.fails to it; the three audit-client_browser-13 browser tests lost test.fail().
+
+## RC-23 (PB-108, PB-151, PB-233, PB-256): fixed in code and route-level tests; GB-1, GB-2 and access-fuzz-2 are changed to run and are run on a server after the final build
+- Root cause: four handlers trusted their input. searchGroups cut a word at every Tamil vowel sign (a combining mark), left only single letters, returned no group, and the SQL built from no group was invalid (500). The photo route called formData() with no catch. The mobile code routes read body.mobileNumber from a body that was null after a bad JSON. An unknown rain id was thrown as "service unavailable" (503) and read three different ways in three places.
+- Why earlier tests missed it: they sent well-formed requests and English or short-Tamil words.
+- Fix: a word is letters plus marks plus digits, and text with words never gives no groups; the photo route and both mobile routes answer 400; RehearsalNotFound (404) is separate from RehearsalUnavailable (503), every route sends the error's own status, and one replayOf() reads a replay id in all three places (two used to treat an unknown id as live).
+- Sweep: docs/qa/pass4/sweeps/RC-23.txt (every formData and every body read with catch-null).
+- Class guards (tests/qa/pass4/lane-c.guards.test.ts): no route reads a form without a catch; none reads a field of a null-able body without a check; a property test that any text with a letter, in any script, makes a search group; rehearsal routes send the error's status.
+- Three languages: Tamil words (8 from the findings plus others), English, and Tanglish as Latin letters are all words now. Real server rows (GB-1, GB-2, access-fuzz-2) are run after the build.
+- Tests: SCAN-6, GB-1 (8 words), GB-2 and access-fuzz-2 it.fails changed to it. GB-3 (RC-24) stays it.fails.

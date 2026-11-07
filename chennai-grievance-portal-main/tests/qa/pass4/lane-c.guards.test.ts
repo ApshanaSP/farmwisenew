@@ -1,7 +1,8 @@
 // QA pass 4, lane c: class guards. Each one fails if its kind of bug comes back anywhere in the code.
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
+import { describe, expect, it, vi } from "vitest";
 
 const ROOT = path.resolve(__dirname, "../../..");
 function walk(dir: string, out: string[] = []): string[] {
@@ -33,5 +34,79 @@ describe("RC-17 readJsonCapped", () => {
     expect(await readJsonCapped(ok)).toEqual({ body: { a: 1 }, tooLarge: false });
     const bad = new Request("http://127.0.0.1/x", { method: "POST", body: "{nope" });
     expect(await readJsonCapped(bad)).toEqual({ body: null, tooLarge: false });
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------- RC-23
+describe("RC-23 class guard: a bad body or a Tamil word is a 400 or an answer, never a throw", () => {
+  it("every route that reads a form does it behind a catch", () => {
+    const bad = routes.filter((f) => {
+      const s = fs.readFileSync(f, "utf8");
+      const reads = [...s.matchAll(/\.formData\(\)/g)];
+      if (!reads.length) return false;
+      return reads.some((m) => { const around = s.slice(Math.max(0, m.index! - 80), m.index! + 60); return !/catch|try\s*\{/.test(around) && !/try\s*\{/.test(s.slice(0, m.index!).split("\n").slice(-3).join("\n")); });
+    }).map((f) => path.relative(ROOT, f));
+    // rehearsal/dev reads its form inside one try for the whole handler (a dev-only route)
+    expect(bad.filter((f) => !/rehearsal[\/]dev/.test(f))).toEqual([]);
+  });
+  it("no route reads a field of a body it read with .catch(() => null) without a null check", () => {
+    const bad: string[] = [];
+    for (const f of routes) {
+      const lines = fs.readFileSync(f, "utf8").split("\n");
+      lines.forEach((l, i) => {
+        const m = l.match(/const (\w+) = await (?:req|request)\.json\(\)\.catch\(\(\) => null\)/);
+        if (!m) return;
+        const v = m[1];
+        // the first use must be guarded: v?.x, v && ..., !v, v ?? ..., or a schema parse of v itself
+        const next = lines.slice(i + 1, i + 8).find((x) => new RegExp(String.raw`\b${v}\b`).test(x)) ?? "";
+        if (new RegExp(String.raw`\b${v}\.[A-Za-z]|\b${v}\[`).test(next) && !new RegExp(String.raw`${v}\?\.|${v}\s*&&|!${v}\b|${v}\s*\?\?|${v}\s*\|\|`).test(next)) bad.push(`${path.relative(ROOT, f)}:${i + 2}`);
+      });
+    }
+    expect(bad).toEqual([]);
+  });
+  it("every rehearsal route says 404 for what is not in the record and 503 only for an unavailable service", async () => {
+    const { RehearsalNotFound, RehearsalUnavailable } = await import("@/lib/rehearsal/engine");
+    expect(new RehearsalNotFound("x").status).toBe(404);
+    expect(new RehearsalUnavailable("x").status).toBe(503);
+    expect(new RehearsalNotFound("x")).toBeInstanceOf(RehearsalUnavailable);
+    const hard = routes.filter((f) => /api[\/]rehearsal/.test(f)).filter((f) => /RehearsalUnavailable\) return NextResponse\.json\([^)]*status: 503/.test(fs.readFileSync(f, "utf8")));
+    expect(hard.map((f) => path.relative(ROOT, f))).toEqual([]);
+  });
+});
+
+describe("RC-23 searchGroups: a Tamil word is a word", () => {
+  it.each(["குப்பை", "சாலை", "புகார்", "குடிநீர்", "தீ", "நோய்", "கொசு", "பேருந்து", "மழை", "வெள்ளம் அடையாறு"])("%s makes at least one group", async (w) => {
+    const { searchGroups } = await import("@/lib/collector/searchwords");
+    expect(searchGroups(w).length).toBeGreaterThan(0);
+    expect(searchGroups(w)[0].includes(w.split(" ")[0])).toBe(true);
+  });
+  it("any text with a letter in it makes a group, in any script, so the SQL built from it is never empty", async () => {
+    const { searchGroups } = await import("@/lib/collector/searchwords");
+    const fc = await import("fast-check");
+    fc.assert(fc.property(fc.string({ unit: "grapheme", minLength: 1, maxLength: 30 }), (s) => {
+      const hasLetter = /[\p{L}\p{N}]/u.test(s);
+      const g = searchGroups(s);
+      return hasLetter ? g.length > 0 && g.every((x) => x.length > 0) : true;
+    }), { numRuns: 400 });
+  });
+});
+
+describe("RC-23 routes: a request that is not what the route reads", () => {
+  it("the photo route gets a 400 for a request that is not multipart", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/auth", () => ({ getSessionFromCookies: async () => ({ userId: 1, email: "a@example.invalid", role: "citizen" }) }));
+    vi.doMock("@/lib/db", () => ({ default: { query: async () => [[]] } }));
+    const { POST } = await import("@/app/api/profile/photo/route");
+    const res = await POST(new NextRequest("http://127.0.0.1/api/profile/photo", { method: "POST", body: "{}", headers: { "content-type": "application/json" } }));
+    expect(res.status).toBe(400);
+  });
+  it.each(["request", "verify"])("mobile-otp %s gets a 400 for a body that is not JSON", async (which) => {
+    vi.resetModules();
+    vi.doMock("@/lib/auth", () => ({ getSessionFromCookies: async () => ({ userId: 1, email: "a@example.invalid", role: "citizen" }) }));
+    vi.doMock("@/lib/db", () => ({ default: { query: async () => [[]] } }));
+    vi.doMock("@/lib/mailer", () => ({ sendMail: async () => {}, otpEmailHtml: () => "" }));
+    const { POST } = await import(`@/app/api/profile/mobile-otp/${which}/route`);
+    const res = await POST(new NextRequest(`http://127.0.0.1/api/profile/mobile-otp/${which}`, { method: "POST", body: "{not json", headers: { "content-type": "application/json" } }));
+    expect(res.status).toBe(400);
   });
 });

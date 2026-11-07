@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
-  const mobileParsed = mobileSchema.safeParse(body.mobileNumber);
-  const otpParsed = otpSchema.safeParse(body.otp);
+  const mobileParsed = mobileSchema.safeParse(body?.mobileNumber);
+  const otpParsed = otpSchema.safeParse(body?.otp);
   if (!mobileParsed.success || !otpParsed.success) {
     return NextResponse.json({ error: "Invalid mobile number or OTP." }, { status: 400 });
   }
