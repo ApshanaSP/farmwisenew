@@ -90,3 +90,18 @@ Written as each cluster is committed. Branch claude/p4-lane-d. Plain words.
   sentence with "click" to the agent; each Confirm box has its own key and stands above Jarvis's screen.
 - Class guard: guards.pass4.test.ts (the guard on name, text and both, and no joined-string call), the 29 audit-client_browser tests
   (they read the real source). The browser walk (tests/e2e/pass4-client-fixes.spec.ts) was not run here.
+
+## RC-28, RC-30 and what was not run
+- RC-28 (officer console): the department's own close is not read as the Collector's work (decided_role), a reject reaches the officer as
+  "Collector rejected", the feed chip uses each feed's kind (the officer overview now carries it), the map legend counts every open
+  grievance, and the tooltip no longer says every source is hourly. DECISIONS-5 and -6 pass. The audit-ui_honesty-2 walk needs a browser
+  session; it could not sign in here (the frozen test clock gives the session cookie an expiry the headless browser refuses), so that
+  part is checked through the golden diff (every feed has a kind, the officer feedback list drops the department's own close).
+- RC-30 (search): any failure to embed, not only "not ready", falls back to keywords; the keyword lane searches the words that say what
+  happened (not "reports"), looks in the news too, and says it did not search when it had no word to look for. DECISIONS-17 and GB-4 pass.
+- Not run: the browser walks audit-ui_honesty and tests/e2e/pass4-client-fixes.spec.ts. Their it.fails for audit-ui_honesty-1, -2, -3, -9, -10,
+  -11, -12 are unchanged; -13 and -14 were changed to it() by the earlier agent on the strength of the code-path tests.
+- Found and not fixed (other lanes or the owner): src/lib/thunai/normalise.ts uses `tok in EN_NUM` and `tok in LOAN` on spoken words (same
+  class as ?period=constructor); GET /api/collector/search?q=குப்பை answers 500 in the baseline and now; the same-number "pairs" tests for
+  "reported" and "severe" read partial counts (severity mix, zone counts) under the label "reported", so they fail on the harness's own
+  rows (red in every run here); PB-209 (see RC-29); the Jarvis "All cases" total reads data.total (lane c).
