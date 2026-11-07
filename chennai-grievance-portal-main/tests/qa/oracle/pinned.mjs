@@ -68,21 +68,24 @@ function shape(r) {
 const FIELD_OF_COLUMN = { zone_no: "zone", zone_name: "zoneName", ward_no: "ward", taluk_code: "taluk", lead_dept: "dept", category_code: "cat", severity_level: "sev", status_std: "status", citizen_complaints: "complaints",
   place_text: "place", source_count: "sources", member_count: "members", dead: "dead", injured: "injured" };
 
-/** Layers the Collector's latest decision (not a note) and the routing on a row: the same rule as the app's EFF, written out here. */
-function overlay(row, latest, routed) {
+/** Layers the Collector's latest decision with an effect and the routing on a row: the same rule as the app's EFF, written out here. A closing
+ *  decision's time is the row's closing time (reopened: none), and a resolve and a verify leave the row verified (RC-27, effective.ts). */
+function overlay(row, latest, routed, latestAt = new Map()) {
   const d = latest.get(row.id);
   const e = d ? EFFECT[d] : null;
-  return { ...row, decision: d ?? null, open: e ? e.open : row.rawOpen, effStatus: e ? e.status : row.status, routed: routed.has(row.id) };
+  const closed = e ? (e.open ? null : (latestAt.get(row.id) != null ? wallMs(latestAt.get(row.id)) : row.closed)) : row.closed;
+  const verified = d === "resolve" || d === "verify" ? true : row.verified;
+  return { ...row, decision: d ?? null, open: e ? e.open : row.rawOpen, effStatus: e ? e.status : row.status, routed: routed.has(row.id), closed, verified };
 }
 
 export function loadOracle({ clock = FROZEN_WALL, hooksFile = HOOKS_FILE, durableFile = null } = {}) {
   const now = consoleNow(clock), nowMs = wallMs(now);
   const durable = durableRows(durableFile);
-  const latest = new Map();
-  for (const d of [...durable.decisions].sort((a, b) => Number(a.decision_id) - Number(b.decision_id))) if (EFFECT[d.decision]) latest.set(String(d.incident_id), d.decision);
+  const latest = new Map(), latestAt = new Map();
+  for (const d of [...durable.decisions].sort((a, b) => Number(a.decision_id) - Number(b.decision_id))) if (EFFECT[d.decision]) { latest.set(String(d.incident_id), d.decision); latestAt.set(String(d.incident_id), d.decided_at); }
   const routed = new Set(durable.assignments.map((a) => String(a.incident_id)));
   const rawRows = pinTable("incidents").map(shape);
-  const overlaid = rawRows.map((r) => overlay(r, latest, routed));
+  const overlaid = rawRows.map((r) => overlay(r, latest, routed, latestAt));
   const hooks = fs.existsSync(hooksFile) ? JSON.parse(fs.readFileSync(hooksFile, "utf8")) : { removed: [], changed: [], clusters: {} };
   const removedBy = new Map(hooks.removed.map((x) => [String(x.id), x.hook]));
   const changes = new Map();
@@ -244,7 +247,7 @@ export class Oracle {
   }
   /** Closed as resolved with its closing time in the window, whenever it was reported (the Briefing's good news, resolution_times). */
   resolvedByClose(scope) {
-    const h = (scope.hours ?? HOURS[scope.period]) * 3600_000, k = scope.offset ?? 0, lo = this.nowMs - h * (k + 1), hi = this.nowMs - h * k;
+    const h = (scope.hours ?? HOURS[scope.period]) * 3600_000, k = scope.offset ?? 0, lo = this.nowMs - h * (k + 1), hi = k === 0 ? Infinity : this.nowMs - h * k; // the current window has no upper bound: a decision made since the refresh counts (RC-27)
     return this.effective.filter((r) => !r.open && r.effStatus === "Resolved" && r.closed != null && r.closed > lo && r.closed <= hi && r.t != null && r.closed >= r.t
       && (scope.zone == null || r.zone === Number(scope.zone)) && (scope.dept == null || r.dept === scope.dept));
   }

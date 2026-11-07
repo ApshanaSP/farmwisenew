@@ -1,0 +1,4 @@
+RC-32 tests are the audit-ui_honesty walk (a real browser on a built server) and ta.pass4.test.ts (new). The walk could not be run in this
+environment (sign-in redirected to localhost in the headless browser, so the page never reached the console). Before the fix, by reading the
+code: Sources.tsx STATUS had no test status, so the three generated feeds showed "Healthy"; impacts.ts:386 tagged the generated police and
+complaint line kind "real"; AuthHero.tsx rendered <LiveDot /> in the chip; ta.ts:28 translated "#:# PM" with மதியம் (noon).

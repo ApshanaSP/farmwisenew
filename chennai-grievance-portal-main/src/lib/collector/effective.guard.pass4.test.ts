@@ -64,7 +64,7 @@ describe("RC-34 class guard: no raw sla_breached in a figure", () => {
 describe("RC-29 class guard: counted lists are not cut", () => {
   const src = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");
   it("intel.ts reads every open incident behind the attention count", () => {
-    const body = src("lib/collector/intel.ts").split("export async function attentionRows")[1]?.split("\n}\n")[0] ?? "";
+    const body = src("lib/collector/intel.ts").split("export async function attentionRows")[1]?.split(/\r?\n[}]\r?\n/)[0] ?? "";
     expect(body).toContain("explain(r)");
     expect(body).not.toMatch(/LIMIT/);
   });

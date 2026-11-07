@@ -132,7 +132,7 @@ export class Book {
 
 /** Every kind of difference seen, first match wins: [surface, figure, class, finding id or null, why in words]. A difference not listed here is UNEXPLAINED. */
 export const KNOWN = [
-  [/^collector\/insights\?part=briefing$/, /^stats\.newsOnly$/, "by-design", "RC-29", "The Briefing hides headlines about another district (newsrel.elsewhere) once, up front, so its line, its list and its figure are one number; the oracle counts every news-only incident that is not lapsed."],
+  [/^(collector\/insights\?part=briefing|thunai\/round:brief)$/, /^(stats|kpi)\.newsOnly$/, "by-design", "RC-29", "The Briefing hides headlines about another district (newsrel.elsewhere) once, up front, so its line, its list and its figure are one number; the oracle counts every news-only incident that is not lapsed."],
   [/^thunai\/round:dashboard$/, /first row's severity rank/, "bug", "same-number-1", "Jarvis asks the list for severity order with the default direction, which puts Low first; the block is headed 'most serious first'."],
   [/^thunai\/round:advise$/, /severity rank/, "bug", "same-number-1", "The same list order: 'First: ...' comes from the page of the least serious cases."],
   [/^thunai\/round:cases\(overdue\)$/, /^total$/, "bug", "same-number-1", "The past-deadline list filters only the first page of 12, and that page is the least serious cases, so it finds none and says there are none."],
@@ -294,7 +294,7 @@ async function readBriefing(h, b, s) {
     for (const x of d.book.where) { b.add(s, sv, `book.where.${x.zone}.n`, x.n, "reported", { over: { zone: x.zone } }); b.add(s, sv, `book.where.${x.zone}.severe`, x.severe, "severe", { over: { zone: x.zone } }); }
     for (const x of d.book.citizens.kinds) b.add(s, sv, `book.citizens.${x.label}`, x.n, "complaints_all", { filter: (r) => r.catLabel === x.label });
     const lo = o.nowMs - HOURS[s.period] * 3600_000;
-    const res = o.rows({ ...s, hours: 100000 }).filter((r) => r.status === "Resolved" && r.closed != null && r.closed > lo && r.closed <= o.nowMs);
+    const res = o.rows({ ...s, hours: 100000 }).filter((r) => !r.open && r.effStatus === "Resolved" && r.closed != null && r.closed > lo); // with decisions on top; no upper bound (a decision made since the refresh counts)
     b.add(s, sv, "book.good.resolved", d.book.good.resolved, "custom", { custom: () => ({ value: res.length, ids: res.map((r) => r.id) }), label: "resolved (by closing time)" });
   }
   return d;
@@ -852,7 +852,7 @@ async function readExports(h, b, s, use) {
     const inScope = new Set(within.map((x) => x.id));
     const outside = need.filter((r) => !inScope.has(r.id)).map((r) => r.id);
     b.add(s, sv, "needs-attention rows outside the scope's open list", outside.length, "custom", { custom: () => ({ value: 0 }), note: outside.slice(0, 12).join(" ") || undefined, label: "export row check" });
-    const wrongField = need.filter((r) => { const x = b.o.row(r.id); return x && ((r.past_deadline === "Yes") !== x.breached || String(r.severity) !== x.sev); }).map((r) => r.id);
+    const wrongField = need.filter((r) => { const x = b.o.row(r.id); return x && ((r.past_deadline === "Yes") !== (x.breached || (x.due != null && x.due <= b.o.nowMs)) || String(r.severity) !== x.sev); }).map((r) => r.id);
     b.add(s, sv, "needs-attention rows whose severity or deadline differ from the store", wrongField.length, "custom", { custom: () => ({ value: 0 }), note: wrongField.slice(0, 12).join(" ") || undefined, label: "export row check" });
     if (rep) b.add(s, sv, "needs-attention rows vs the PDF report's total", need.length, "custom", { custom: () => ({ value: rep.attentionTotal }), label: "needs your attention" });
     const aw = b.o.awaitingCheck(s);
