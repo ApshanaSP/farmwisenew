@@ -61,3 +61,15 @@ Fix (mechanism). One word-edge function, `tamilAt`, for every Tamil word of ever
 Class guard. lane-a.pass4.test.ts RC-03: every short Tamil alias is run against every Tamil word of the lexicon (zone names, departments, categories, severities) and may match only as a word with an ending; the fire and severe, lamp and explain, high and low cases; every name on Object.prototype is fed to normalise and the rules and must not throw or enter the tokens as code.
 
 Result. audit-understanding-21 (all but one sentence), -23, audit-privacy_injection-10, meta-words-10 and -11, scans-code-1, open-baseline-21 and -22 are plain tests. Kept open: the Tamil phrase for harsh sun (the word for severe is also the everyday word for harsh, so only a planner can tell) and open-baseline-23. gloss.ts holds no word that needed an edge.
+
+## RC-06: period words and ranking questions lose the window or the question in the fast lane
+
+Root cause. Two lists of period words: quick.ts periodIn (week, month, a few quarter forms) and a second regex in entities.ts briefTurn (week and month only, daily otherwise), each with few Tamil forms and no plural or possessive ("last week's"). So "quarterly brief", "police report last 90 days", "இந்த வார நிலவரம்" came back as today's brief. Nothing named a window the console does not hold (yesterday): the sentence was answered with the current one. A ranking of zones on one topic dropped the topic.
+
+Why earlier tests missed it. Periods were tested on the helper, not on the path; the two lists were never compared.
+
+Fix (mechanism). One table (periodIn, in quick.ts) read by the fast lane and by the brief turn: all four windows, the Tamil and Tanglish forms and stems, plurals. `calendarWindowIn` names the windows no lane holds (yesterday, the day before, next week or month, and the Tamil and Tanglish past forms); the fast lane and the brief turn hand those on, and the rules refuse a single past day in words and change nothing. A zone ranking that names a topic is the planner's, because the ranking screen has no topic slot.
+
+Class guard. lane-a.pass4.test.ts RC-06: every word of the table through the fast lane's reader and through a brief on a body, same window; the calendar words through every lane.
+
+Result. audit-understanding-11, AUD-NF-12 (the test now accepts a refusal with no screen and still fails on a screen titled today) and same-number-14 are plain tests; open-baseline-15 fixed; confident wrong 20 to 18. Not changed on purpose: English "last week", "last month" and "last quarter" stay the matching window named in the title (BUG-003, an accepted earlier decision and tested by it); the grader's rows en-brief-09, en-list-13, ta-brief-14 and their duplicates (PB-043 to PB-050) count that as the wrong window and stay open.

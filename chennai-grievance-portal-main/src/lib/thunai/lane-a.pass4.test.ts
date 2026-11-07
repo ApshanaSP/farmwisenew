@@ -240,3 +240,34 @@ describe("RC-03: word edges, in every script", () => {
     expect(isNavCommand("காணாம போனவங்க கேஸ்", [{ a: "view", view: { zone: 2 } }] as never)).toBe(false);
   });
 });
+
+// RC-06: one period table; a window the console does not hold is never answered with the current one.
+import { calendarWindowIn, periodIn } from "./quick";
+describe("RC-06: periods", () => {
+  const WINDOWS: [string, string][] = [["today", "daily"], ["this week", "weekly"], ["weekly brief", "weekly"], ["this month", "monthly"], ["monthly", "monthly"], ["quarterly brief", "quarterly"], ["last 90 days", "quarterly"], ["this quarter", "quarterly"],
+    ["இன்று", "daily"], ["இந்த வாரம்", "weekly"], ["இந்த வார", "weekly"], ["வாராந்திர", "weekly"], ["இந்த மாத", "monthly"], ["காலாண்டு", "quarterly"], ["innaiku", "daily"], ["vaaram", "weekly"], ["maasam", "monthly"]];
+  it("each word of the table is the same window in the fast lane and in a brief on a body or a zone", () => {
+    for (const [w, p] of WINDOWS) {
+      expect(periodIn(` ${w} `), w).toBe(p);
+      const turn = briefTurn(`Adyar police report ${w}`, world as never);
+      if (turn?.kind === "screen") expect((turn.slots as { period?: string }).period, `brief ${w}`).toBe(p);
+    }
+  });
+  it("yesterday, last week, last month, last quarter and the Tamil and Tanglish words for them are windows the console does not hold", () => {
+    for (const s of ["yesterday", "yesterdays brief", "next week", "the day before yesterday", "நேற்றைய சுருக்கம்", "போன மாசம்", "கடந்த வாரம்", "அடுத்த வாரம்", "nethu severe cases", "pona vaaram"]) expect(calendarWindowIn(` ${s} `), s).toBe(true);
+    for (const s of ["last 24 hours", "last 7 days", "last 30 days", "this week", "இந்த வாரம்"]) expect(calendarWindowIn(` ${s} `), s).toBe(false);
+  });
+  it("no lane answers such a window with the current one", () => {
+    for (const s of ["severe cases yesterday", "yesterdays brief", "நேற்று கடுமையான சம்பவங்கள்", "கடந்த வாரம் நிலவரம்", "pona vaaram brief sollu", "next weeks brief"]) {
+      expect(quickScreen(s, world as never), `quick: ${s}`).toBeNull();
+      expect(briefTurn(s, world as never)?.kind === "screen", `brief: ${s}`).toBe(false);
+    }
+    const u = rules("severe cases yesterday");
+    expect(u.kind === "refuse" || !(u.steps ?? []).some((x) => x.a === "view")).toBe(true);
+  });
+  it("a ranking of zones on one topic is the planner's, not a list of cases or a ranking of all kinds", () => {
+    expect(quickScreen("kuppai complaints edha zone-la romba adhigam", world as never)).toBeNull();
+    expect(quickScreen("top 5 zones by garbage complaints", world as never)).toBeNull();
+    expect(quickScreen("top 5 zones by complaints", world as never)?.recipe).toBe("ranking");
+  });
+});

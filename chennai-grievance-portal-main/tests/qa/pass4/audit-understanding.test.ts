@@ -266,14 +266,14 @@ describe("audit-understanding-10 P1: a locality the reference does not spell is 
 
 describe("audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003)", () => {
   for (const [s, want] of [["quarterly brief", "the last 90 days"], ["police report last quarter", "the last 90 days"], ["police report for the last 90 days", "the last 90 days"], ["police report quarterly", "the last 90 days"], ["இந்த வார நிலவரம்", "this week"], ["இந்த மாத சுருக்கம்", "the last 30 days"], ["வாராந்திர சுருக்கம்", "this week"], ["இந்த வார போலீஸ் அறிக்கை", "this week"], ["இந்த மாத காவல்துறை அறிக்கை", "the last 30 days"], ["last week's brief", "this week"], ["police report for the last 7 days", "this week"], ["இந்த வாரத்தின் சுருக்கம்", "this week"], ["இந்த மாதத்தின் சுருக்கம்", "the last 30 days"], ["மாதாந்திர சுருக்கம்", "the last 30 days"], ["மாதாந்திர போலீஸ் அறிக்கை", "the last 30 days"]] as const)
-    it.fails(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
+    it(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
   for (const s of ["yesterday's brief", "நேற்றைய சுருக்கம்", "netru brief sollu", "police report yesterday", "நேற்று நிலவரம்"])
-    it.fails(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));
+    it(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));
 });
 
 describe("audit-understanding-11, another week asked for: this week is given as if it were the one", () => {
   for (const s of ["கடந்த வாரம் நிலவரம்", "அடுத்த வாரம் நிலவரம்", "pona vaaram brief sollu"])
-    it.fails(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/this week/));
+    it(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/this week/));
 });
 
 describe("audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023)", () => {

@@ -339,6 +339,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
   if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|\b(save|type|note|pin|write|draft|bookmark)( ah| a)? (pannu|panni|pannunga|pannidu|seiyu)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has; say so, change nothing (RC-06)
+  if (/\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard)) return { kind: "refuse", lang, heard, why: b("I only hold the last 24 hours, 7, 30 and 90 days, and yesterday on its own is not one of them. Nothing was changed.", "நான் கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே வைத்திருக்கிறேன்; நேற்று மட்டும் அதில் இல்லை. எதுவும் மாற்றப்படவில்லை.") };
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];

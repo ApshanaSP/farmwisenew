@@ -168,7 +168,7 @@ describe("same number everywhere", () => {
     const r = get(DISTRICT_W, "assistant/chat:card label", /past-deadline card/);
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-14 'this quarter' said with a body or a zone brief is the quarter", async () => {
+  it("same-number-14 'this quarter' said with a body or a zone brief is the quarter", async () => {
     const r = await saidToJarvis("give me the briefing for Adyar this quarter");
     expect(r?.result?.stage?.scope?.period).toBe("quarterly");
   });

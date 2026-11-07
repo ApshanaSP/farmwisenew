@@ -18,7 +18,7 @@ import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
 import { outsideIn, taOutside } from "./outside";
 import { AREA_WORDS } from "./areas";
-import { isListedExact, listedWord } from "./quick";
+import { calendarWindowIn, isListedExact, listedWord, periodIn } from "./quick";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -43,8 +43,8 @@ const INST = new Set(["college", "colleges", "university", "universities", "inst
 /** words that sit in front of an agency word and name no place: a verb, a pronoun, a place word of the console (in Tamil and Tanglish too) */
 const NAME_STOP_WORDS = ("salai veedhi theru sandhu kuruku kovil bazaar bazar junction flyover bridge signal subway avenue colony layout extension main cross lane park beach ward wards zone zones zonal taluk division divisional regional area areas street road station stations control room helpline emergency helpdesk public civic municipal " +
   "indha intha idha andha antha adha namma nam enga unga ungal engal avanga ivanga ellam ellaam anaithu ella romba rombha migavum konjam sema mudhal muthal adutha irukura irukkura irukkira irukkum irukku iruku irukka irukkaa ullathu ulla ullatha " +
-  "atsiyar aatsiyar atchiyar aatchiyar maanila maanilam anga anka inga ange ingae thaan dhaan kitta kitte pakkam pakkathula pakkathil kudu kodu koduthu sollu solluga podunga paaru paarunga pathi patri pathina paththi yaaru yaar ethu edhu enna aachu aanadhu nadandhathu nadanthathu nadakkuthu nadakkudhu " +
-  "ஆட்சியர் அங்க இங்க அங்கே இங்கே மாநில மாநிலம் கடந்த இன்றைய நேற்றைய இந்த அந்த நம்ம நம் எங்க உங்க எல்லா மொத்த முழு போன நேத்து இன்னைக்கு இப்போ இருக்கிற இருக்கும் உள்ள").split(" ");
+  "vaara maatha vaaram maasam varam matham atsiyar aatsiyar atchiyar aatchiyar maanila maanilam anga anka inga ange ingae thaan dhaan kitta kitte pakkam pakkathula pakkathil kudu kodu koduthu sollu solluga podunga paaru paarunga pathi patri pathina paththi yaaru yaar ethu edhu enna aachu aanadhu nadandhathu nadanthathu nadakkuthu nadakkudhu " +
+  "வார மாத காலாண்டு வாராந்திர மாதாந்திர ஆட்சியர் அங்க இங்க அங்கே இங்கே மாநில மாநிலம் கடந்த இன்றைய நேற்றைய இந்த அந்த நம்ம நம் எங்க உங்க எல்லா மொத்த முழு போன நேத்து இன்னைக்கு இப்போ இருக்கிற இருக்கும் உள்ள").split(" ");
 let nameStop: Set<string> | null = null;
 const stopWord = (w: string) => (nameStop ??= new Set(NAME_STOP_WORDS.flatMap((x) => [x, ...(/[஀-௿]/.test(x) ? toRoman(x) : [])]))).has(w);
 /** posts that sit on a body ("police commissioner", "corporation commissioner"): about the body */
@@ -403,6 +403,9 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   // not a request for a brief on a body, whatever words it shares with one: drafting or sending, an incident by number, a comparison,
   // the news, a reading, a place to find, the map, or "report a pothole" (reporting something, not asking for a report)
   if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `) || KEEPING.test(text) || CHANGE_RECORD.test(text)) return null;
+  // the one period table (quick.ts) reads every lane's window; a window the console does not hold (yesterday, last week, last month) is not answered with the current one (RC-06)
+  const tn = ` ${text.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim()} `;
+  if (calendarWindowIn(tn)) return null;
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
@@ -427,7 +430,7 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   const slots: Record<string, unknown> = e.kind === "dept" ? { dept: e.id, zones: zone ? [zone] : [] } : e.kind === "org" ? { org: e.id, zones: zone ? [zone] : [] } : { zones: [Number(e.id.slice(5))] };
   // a locality the data cannot place in a zone is said, not dropped: the brief says it covers the district
   if (loc && loc.zone == null) slots.name = loc.name;
-  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: /\b(week|weekly|this week)\b|வாரம்|vaaram/i.test(text) ? "weekly" : /\bmonth|monthly\b|மாதம்|maasam/i.test(text) ? "monthly" : "daily", fresh: true } };
+  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? "daily", fresh: true } };
 }
 
 /** Words that make a sentence something other than a request for a brief on a body. */

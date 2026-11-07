@@ -1,0 +1,13 @@
+# RC-06 sweep: every place a period is read
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:433:  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? "daily", fres
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:113:    const period = periodIn(t) ?? (DAILY.test(t) ? "daily" : WEEKLY.test(t) ? "weekly" : MONTHLY.test(t) ? "mont
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:131:  if (short && periodIn(t) && !catIn(t)) {
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:132:    const period = periodIn(t);
+chennai-grievance-portal-main/src/lib/thunai/lexicon.ts:104:export const PERIOD_WORDS: [string, PeriodKey][] = [
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:143:export function periodIn(t: string): PeriodKey | null {
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:313:  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
+chennai-grievance-portal-main/src/lib/thunai/round.ts:165:  const hints = [zonesIn(t, w).length ? `zones ${zonesIn(t, w).join(",")}` : "", places.length ? `places ${place
+chennai-grievance-portal-main/src/lib/thunai/understand.ts:18:import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, LAYER_WORDS, PAGE_WORDS, PANEL_W
+chennai-grievance-portal-main/src/lib/thunai/understand.ts:364:  const perM = lastStanding(mentions(tk, PERIOD_WORDS, taken), tk);
+## result
+quick.ts periodIn is the one table (weekly, monthly, quarterly forms in English, Tamil, Tanglish, plurals); entities.ts briefTurn no longer has its own week and month regex, it calls periodIn; calendarWindowIn names the windows no lane holds (yesterday, next week or month, and the Tamil and Tanglish past forms) and quickScreen and briefTurn hand them on; understand.ts refuses a single past day in words; ranking on one topic is the planner's

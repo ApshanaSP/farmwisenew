@@ -371,9 +371,10 @@ describe("new, found on the way", () => {
     const row = { id: "x", title: "t", sev: "High", status: "Open", zone: 13, zoneName: "Adyar", place: "Guindy", ward: 1, dept: "GCC-SWD", deptName: "SWD", complaints: 2, t: null, overdue: false, lat: null, lon: null, why: null, cat: "Flooding & waterlogging" } as CaseRowT;
     expect(explainIssue(factSheet(row, { openFor: "4 days" }), "x").en).not.toMatch(/a lot of residents/);
   });
-  it.fails.each(["severe cases yesterday", "நேற்று கடுமையான சம்பவங்கள்", "nethu severe cases"])("AUD-NF-12 Jarvis, %s: not today's list", async (text) => {
+  // the console holds no window for a single past day, so Jarvis now says so and shows no screen; a screen titled today would still fail here
+  it.each(["severe cases yesterday", "நேற்று கடுமையான சம்பவங்கள்", "nethu severe cases"])("AUD-NF-12 Jarvis, %s: not today's list", async (text) => {
     const r = (await said(text)).result!;
-    expect(r.stage!.title).not.toMatch(/today|இன்று/);
+    expect(r.stage?.title ?? "").not.toMatch(/today|இன்று/);
   });
   it.fails("AUD-NF-13 a sewage case held by the drains team: the step names who holds it", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.category_code = 'DRAINAGE_SEWAGE' AND i.lead_dept = 'GCC-SWD' ORDER BY i.first_reported_at DESC LIMIT 1`);

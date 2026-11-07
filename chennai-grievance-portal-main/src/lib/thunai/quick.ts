@@ -133,11 +133,18 @@ export function sevIn(t: string): Sev | null {
   if (has(t, ["serious", "critical", "urgent", "danger", "dangerous", "கடுமையான", "கடுமை", "அவசர", "severe"])) return "Severe";
   return null;
 }
+/**
+ * A window the console does not hold: yesterday, the day before, next week or month (and the Tamil and Tanglish words for them, with last week and last month, which the Tamil lanes
+ * have never mapped to a window). The windows it holds are the last 24 hours, 7, 30 and 90 days; a lane that answered these with the current window would say the wrong period with a straight face, so it hands them on (RC-06). English "last week/month/quarter" stay the matching window, named in the screen's title (BUG-003, an accepted decision).
+ */
+const CALENDAR_EN = /\b(yesterdays?|day before( yesterday)?|next (week|month|quarter)s?)\b|\b(nethu|neththu|netru|netraiya|pona (vaaram|maasam|maatham)|kadantha (vaaram|maasam|maatham)|last (vaaram|maasam)|adutha (vaaram|maasam))\b/;
+const CALENDAR_TA = ["நேற்று", "நேத்து", "நேற்றைய", "கடந்த வாரம்", "கடந்த வார", "போன வாரம்", "போன வார", "கடந்த மாதம்", "கடந்த மாத", "கடந்த மாசம்", "போன மாதம்", "போன மாசம்", "போன மாச", "கடந்த காலாண்டு", "போன காலாண்டு", "முந்தைய வாரம்", "முந்தைய மாதம்", "அடுத்த வாரம்", "அடுத்த மாதம்"];
+export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0);
 export function periodIn(t: string): PeriodKey | null {
   if (has(t, ["today", "now", "24 hours", "இன்று", "இன்னைக்கு", "innaiku", "inniki", "ippo"])) return "daily";
-  if (has(t, ["this week", "week", "weekly", "7 days", "இந்த வாரம்", "வாரம்", "vaaram"])) return "weekly";
-  if (has(t, ["this month", "month", "monthly", "30 days", "இந்த மாதம்", "மாதம்", "maasam"])) return "monthly";
-  if (has(t, ["quarter", "3 months", "90 days", "காலாண்டு"])) return "quarterly";
+  if (has(t, ["this week", "this weeks", "last weeks", "week", "weekly", "7 days", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாரம்", "vaaram", "வாரந்தோறும்"])) return "weekly";
+  if (has(t, ["this month", "this months", "last months", "month", "monthly", "30 days", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "maasam"])) return "monthly";
+  if (has(t, ["quarter", "quarterly", "3 months", "three months", "90 days", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"])) return "quarterly";
   return null;
 }
 
@@ -296,6 +303,8 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (foreignIn(text, w)) return null;
   // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
   if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
+  // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
+  if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
@@ -344,7 +353,10 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
-  if (has(t, RANK) && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
+  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
+  if (has(t, RANK) && cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
