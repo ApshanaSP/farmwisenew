@@ -203,7 +203,9 @@ export function readableTime(t: unknown): string | null {
 }
 
 /** 310.9 hours as "13 days" (a Collector reads days, not hours, past two days) */
-const openFor = (hours: number | null) => hours == null ? null : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
+/** An incident the store dates after its as-of time (a forecast stored as an incident, OPEN-11) has not been open at all: never "-1 hours" (RC-38, PB-234) */
+const openedHours = (h: number | null) => (h == null ? null : Math.max(0, h));
+const openFor = (hours: number | null) => hours == null ? null : hours < 0 ? "not started yet" : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
 const inr = (v: number) => v.toLocaleString("en-IN");
 const periodOf = (s: AssistantScope) => PERIODS[s.period].label.toLowerCase();
 
@@ -371,7 +373,7 @@ async function incidentBody(id: string, now: string): Promise<Body | null> {
   const i = d.incident;
   const data = {
     incident: { ...incRow(i), why: i.why, summary: i.summary ?? null, place: i.loc ?? null, closed_at: i.closed_at ?? null, sla_due: i.sla_due ?? null,
-      hours_open: i.hours_open == null ? null : round(Number(i.hours_open)), dead: Number(i.dead ?? 0), injured: Number(i.injured ?? 0), taluk: i.taluk_name ?? null,
+      hours_open: i.hours_open == null ? null : round(openedHours(Number(i.hours_open))!), dead: Number(i.dead ?? 0), injured: Number(i.injured ?? 0), taluk: i.taluk_name ?? null,
       dept_head: i.dept_head ?? null, src: i.src ?? null, first_reported: readableTime(i.t), open_for: openFor(i.hours_open == null ? null : Number(i.hours_open)) },
     // report titles, sources and times; complaint text stays in the console
     reports: d.reports.map((r) => ({ t: readableTime(r.t), source: r.source, what: r.what, title: r.title ?? null, publisher: r.publisher ?? null, url: r.url ?? null, first: r.first })),

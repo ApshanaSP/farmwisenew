@@ -19,15 +19,15 @@
   ],
   "actions": [
    5601,
-   5582
+   5539
   ],
   "incident_timeline": [
    143676,
-   143649
+   143513
   ],
   "gaps": [
    62,
-   54
+   46
   ],
   "alerts": [
    66,
@@ -56,7 +56,7 @@
   {
    "name": "duplicate_news_url_in_one_incident",
    "stored": 49,
-   "after_build": 46,
+   "after_build": 38,
    "meaning": "by design: fewer incidents, so fewer repeats."
   },
   {
@@ -70,12 +70,6 @@
    "stored": 472,
    "after_build": 467,
    "meaning": "by design: fewer incidents."
-  },
-  {
-   "name": "member_rows_vs_events",
-   "stored": 0,
-   "after_build": 181,
-   "meaning": "INV-1: events still point at incidents the build took out."
   },
   {
    "name": "incident_dead_vs_reports",
@@ -174,39 +168,9 @@
    "meaning": "not shown: the app reads only the briefing's summary sentences, which state no totals (insights.ts:212)."
   },
   {
-   "name": "orphan_event_without_incident",
-   "stored": 0,
-   "after_build": 181,
-   "meaning": "INV-1: events still point at incidents the build took out (newsMedia, derive.ts:311)."
-  },
-  {
-   "name": "orphan_action_without_incident",
-   "stored": 0,
-   "after_build": 43,
-   "meaning": "INV-1: actions left behind. No screen lists them without their incident."
-  },
-  {
-   "name": "orphan_timeline_without_incident",
-   "stored": 0,
-   "after_build": 136,
-   "meaning": "INV-1: timeline rows left behind. No screen lists them without their incident."
-  },
-  {
-   "name": "orphan_document_without_incident",
-   "stored": 0,
-   "after_build": 181,
-   "meaning": "INV-1: an article linked to an incident that is gone. The search box opens it."
-  },
-  {
-   "name": "orphan_gap_without_incident",
-   "stored": 0,
-   "after_build": 8,
-   "meaning": "INV-1: gap rows left behind. The app joins gaps from incidents, so none shows."
-  },
-  {
    "name": "null_parent_rows",
    "stored": 0,
-   "after_build": 39,
+   "after_build": 220,
    "meaning": "by design: dropIncidents unlinks the reports of incidents it takes out."
   },
   {

@@ -105,21 +105,20 @@ export async function PUT(req: NextRequest) {
 
   const data = parsed.data;
 
-  // Validate ward number falls within the selected zone's real range.
+  // A ward must be one of the selected zone's own wards. zone_wards holds one row per GCC ward, taken from the ward boundaries,
+  // so it is exact: a zone's ward numbers are not always one run (zone 14's range wraps around Adyar's ward 175), which a
+  // start-to-end check lets through (RC-38, PB-200).
   if (data.zoneId && data.wardNumber) {
-    const [zoneRows] = await pool.query<RowDataPacket[]>(
-      "SELECT ward_start, ward_end FROM zones WHERE id = ?",
-      [data.zoneId]
-    );
+    const [zoneRows] = await pool.query<RowDataPacket[]>("SELECT id FROM zones WHERE id = ?", [data.zoneId]);
     if (zoneRows.length === 0) {
       return NextResponse.json({ error: "Invalid zone selected." }, { status: 400 });
     }
-    const { ward_start, ward_end } = zoneRows[0];
-    if (data.wardNumber < ward_start || data.wardNumber > ward_end) {
-      return NextResponse.json(
-        { error: `Ward number must be between ${ward_start} and ${ward_end} for the selected zone.` },
-        { status: 400 }
-      );
+    const [wardRows] = await pool.query<RowDataPacket[]>(
+      "SELECT 1 FROM zone_wards WHERE zone_id = ? AND ward_number = ? LIMIT 1",
+      [data.zoneId, data.wardNumber]
+    );
+    if (wardRows.length === 0) {
+      return NextResponse.json({ error: `Ward ${data.wardNumber} is not a ward of the selected zone.` }, { status: 400 });
     }
   }
 

@@ -45,16 +45,28 @@ describe("data invariants: what the app does with the data", () => {
     const dangling = () => q(`SELECT d.doc_id AS id, d.linked_incident_id AS inc, d.title_en AS en FROM documents d
       WHERE d.linked_incident_id IS NOT NULL AND d.title_en IS NOT NULL AND NOT EXISTS (SELECT 1 FROM incidents i WHERE i.incident_id = d.linked_incident_id) ORDER BY d.published_at DESC`);
 
-    it.fails("INV-1 no article is left linked to an incident the build took out", async () => {
+    it("INV-1 no article is left linked to an incident the build took out", async () => {
       expect((await dangling()).length).toBe(0);
     });
 
-    it.fails("INV-1 a news result in the search box opens an incident that exists", async () => {
-      const [d] = await dangling();
-      const words = String(d.en).split(/\s+/).filter((w) => w.length > 4).slice(0, 4).join(" ");
-      const hit = (await search(words)).news.find((n: any) => n.id === d.id);
-      expect(hit, "the article is found by its own words").toBeTruthy();
-      expect(await incident(String(hit!.incident))).not.toBeNull(); // CollectorApp.tsx:786 opens n.incident when it has one
+    it("INV-1 a news result in the search box opens an incident that exists", async () => {
+      // the articles whose incident the build took out (stored link, no such incident now): the build used to leave the link, so the
+      // search box offered an incident the case page could not open. Premise: the build still drops some, or this proves nothing.
+      const stored = openPinned();
+      const linked = stored.db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title_en AS en FROM documents WHERE linked_incident_id IS NOT NULL AND title_en IS NOT NULL`).all() as any[];
+      stored.db.close();
+      const live = new Set((await q(`SELECT incident_id AS id FROM incidents`)).map((r) => String(r.id)));
+      const dropped = linked.filter((d) => !live.has(String(d.inc)));
+      expect(dropped.length, "the build still drops incidents that articles were linked to").toBeGreaterThan(0);
+      let found = 0;
+      for (const d of dropped.slice(0, 12)) {
+        const words = String(d.en).split(/\s+/).filter((w) => w.length > 4).slice(0, 4).join(" ");
+        const hit = (await search(words)).news.find((n: any) => n.id === d.id);
+        if (!hit) continue;
+        found++;
+        if (hit.incident != null) expect(await incident(String(hit.incident)), `${hit.id} opens ${hit.incident}`).not.toBeNull(); // CollectorApp.tsx:786 opens n.incident when it has one
+      }
+      expect(found, "at least one such article is found by its own words").toBeGreaterThan(0);
     });
 
     it("the other path out of the build (dropIncidents) leaves no link behind, so the rule is known", async () => {
@@ -67,7 +79,7 @@ describe("data invariants: what the app does with the data", () => {
   describe("INV-2: personal data in a news headline", () => {
     const leakyTitles = async (text: string) => (await search(text)).news.filter((n: any) => PHONE.test(String(n.title)) || EMAIL.test(String(n.title)));
 
-    it.fails("INV-2 the search box shows no phone number or email in a news headline", async () => {
+    it("INV-2 the search box shows no phone number or email in a news headline", async () => {
       const found = [...(await leakyTitles("kamakoti Nagar")), ...(await leakyTitles("Nanganallur")), ...(await leakyTitles("gmail"))];
       expect(found.length).toBe(0);
     });
@@ -151,7 +163,7 @@ describe("data invariants: what the app does with the data", () => {
       expect(r.incidents).toBe(0);
     });
 
-    it.fails("INV-5 the incident's answer never says it has been open for less than no time", async () => {
+    it("INV-5 the incident's answer never says it has been open for less than no time", async () => {
       const r: any = await runTool("incident_detail" as never, { id: (await future())[0].id });
       expect(r.data.incident.hours_open).toBeGreaterThanOrEqual(0);
       expect(String(r.data.incident.open_for)).not.toMatch(/^-/);
@@ -172,7 +184,7 @@ describe("data invariants: what the app does with the data", () => {
       expect(await put(14, 5)).toBe(400);
     });
 
-    it.fails("INV-6 the route refuses Adyar's ward 175 for zone 14, whose range wraps around Adyar", async () => {
+    it("INV-6 the route refuses Adyar's ward 175 for zone 14, whose range wraps around Adyar", async () => {
       const [w] = await q(`SELECT zone_id FROM zone_wards WHERE ward_number = 175`);
       expect(Number(w.zone_id)).toBe(13);
       expect(await put(14, 175)).toBe(400);

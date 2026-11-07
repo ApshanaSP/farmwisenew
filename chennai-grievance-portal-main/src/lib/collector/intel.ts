@@ -10,6 +10,7 @@
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import intelPool, { CLUSTER, OPS_DB, TITLE, ops } from "@/lib/collector/db";
 import "@/lib/collector/derive";
+import { redactText } from "@/lib/thunai/privacy";
 import { clusterNews, isNewsMedia, mediaKind, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
 import { addedItems, audit, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
@@ -301,7 +302,7 @@ export async function newsStories(period: Period, now: string) {
       id: String(lead.doc_id),
       title: cleanHeadline(english(lead)),
       /** the headline as published, when it is not in English */
-      original: lead.lang !== "en" ? String(lead.title) : null,
+      original: lead.lang !== "en" ? redactText(String(lead.title)) : null,
       url: lead.url ?? null,
       loc: i?.zone_name ?? place,
       t: g[0].t, // newest article of the story
@@ -323,7 +324,7 @@ export async function newsStories(period: Period, now: string) {
 /** A report's headline in English: its own, or the translation of a Tamil headline. */
 const english = (r: Row) => String((r.lang !== "en" && r.title_en) || r.title || "");
 /** Hashtags and a trailing "| Outlet - news" trimmed. */
-const cleanHeadline = (t: string) => t.replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
+const cleanHeadline = (t: string) => redactText(t).replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
 const wallMs = (t: string) => Date.parse(String(t).replace(" ", "T") + "+05:30");
 
 /** The reports of a news story, for the news preview: headline, translation, outlet, full text (or summary), what the AI read. */
@@ -341,7 +342,8 @@ export async function newsArticles(ids: string[]) {
     const { ai_people, ai_orgs, ai_dead, ai_injured, ai_status, ai_place, publisher_domain, publisher_tier, ...x } = r;
     const ai = Object.fromEntries(Object.entries({ place: ai_place, people: ai_people, organisations: ai_orgs, dead: ai_dead, injured: ai_injured, status: ai_status })
       .filter(([, v]) => v != null && v !== "" && v !== 0));
-    return { ...x, kind: mediaKind(x.publisher, publisher_domain, publisher_tier), body: x.body && String(x.body).trim().length > 80 ? String(x.body) : null,
+    return { ...x, title: redactText(String(x.title ?? "")), title_en: x.title_en == null ? x.title_en : redactText(String(x.title_en)), summary: x.summary == null ? x.summary : redactText(String(x.summary)),
+      kind: mediaKind(x.publisher, publisher_domain, publisher_tier), body: x.body && String(x.body).trim().length > 80 ? String(x.body) : null,
       ai: Object.keys(ai).length ? ai : null };
   });
 }
@@ -926,7 +928,7 @@ export async function overview(period: Period, zone: number | null, dept: string
 
   const [taskRows, newsRows, sevList, bellRows] = await Promise.all([
     withDecisions(tasks).then(withSources),
-    withDecisions(news).then(withSources),
+    withDecisions(news.map((r) => (r.news_title == null ? r : { ...r, news_title: redactText(String(r.news_title)) }))).then(withSources),
     withDecisions(sevRows).then(withSources),
     withDecisions(bell).then(withSources)
   ]);
@@ -1237,7 +1239,7 @@ function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | 
   if (d.ai_status) ai.status = String(d.ai_status).replace(/_/g, " ");
   if (d.ai_place) ai.place = String(d.ai_place);
   return {
-    ...(d.lang === "ta" && d.title_en ? { title_en: String(d.title_en) } : {}),
+    ...(d.lang === "ta" && d.title_en ? { title_en: redactText(String(d.title_en)) } : {}),
     ...(Object.keys(ai).length ? { ai } : {})
   };
 }
@@ -1301,14 +1303,14 @@ export async function incident(id: string) {
       const d = docOf.get(m.event_id);
       return {
         t: m.t, source: m.source, what: SOURCE_WORD[m.source] ?? m.source, channel: m.channel, inc: m.inc, docId: d?.doc_id ?? null,
-        title: d?.title ?? m.title, text: m.source === "news" ? null : m.text, publisher: d?.publisher ?? null, url: d?.url ?? null,
+        title: redactText(String(d?.title ?? m.title ?? "")), text: m.source === "news" ? null : m.text, publisher: d?.publisher ?? null, url: d?.url ?? null,
         kind: d ? mediaKind(d.publisher, d.publisher_domain, d.publisher_tier) : null,
         lang: d?.lang ?? null, first: m.role === "first_report", ...(d ? newsDetails(d) : {}),
         link: m.role === "first_report" ? null : m.link_prob == null ? null : Number(m.link_prob), method: m.link_method ?? null
       };
     }),
     ...documents.filter((d) => (!d.event_id || !seen.has(d.event_id)) && media(d)).map((d) => ({
-      t: d.t, source: "news", what: "News report", channel: "media", inc: d.linked_incident_id ?? id, docId: d.doc_id, title: d.title, text: null,
+      t: d.t, source: "news", what: "News report", channel: "media", inc: d.linked_incident_id ?? id, docId: d.doc_id, title: redactText(String(d.title ?? "")), text: null,
       publisher: d.publisher, url: d.url, lang: d.lang, first: false, kind: mediaKind(d.publisher, d.publisher_domain, d.publisher_tier), ...newsDetails(d)
     }))
   ].sort((a, b) => String(a.t).localeCompare(String(b.t)));
@@ -1492,7 +1494,10 @@ export async function search(text: string) {
     code ? q(`SELECT e.incident_id AS id, ${TITLE} AS title FROM events e JOIN incidents i ON i.incident_id = e.incident_id
        WHERE e.source = 'grievance' AND e.source_record_id = ? LIMIT 1`, [code]).catch(orEmpty("intel:search-complaint")) : Promise.resolve([] as Row[])
   ]);
-  return { zones, depts, incidents: incs, incidentsTotal: Number(incTotal[0]?.n ?? incs.length), news, sources, complaints: filed.map((f) => ({ ...f, code })) };
+  // a headline is a news outlet's text, but some carry a private person's address, phone or email: the console never shows those,
+  // the same rule Jarvis's path applies (thunai/privacy.ts, RC-38, PB-199)
+  const safeNews = news.map((n) => ({ ...n, title: redactText(String(n.title ?? "")) }));
+  return { zones, depts, incidents: incs, incidentsTotal: Number(incTotal[0]?.n ?? incs.length), news: safeNews, sources, complaints: filed.map((f) => ({ ...f, code })) };
 }
 
 // ---------------------------------------------------------------- export --
