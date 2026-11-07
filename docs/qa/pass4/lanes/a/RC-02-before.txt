@@ -1,0 +1,27 @@
+RC-02: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+Also failing before (it.fails, now plain it): audit-understanding-6 (Anna alone is Anna Nagar), -24 (words starting with கொ are the mosquito), most of -5 (everyday Tamil words heard as zones); open-baseline-5, -6, -39, -41, -42 fixed. Still open: audit-understanding-10 (Chetpet and T Nagar localities not narrowed), the rest of -5 is fixed, open-baseline-37 (District Revenue is the Corporation's Revenue), -38 (drain works topic), -40 (second one, explain).
+
+ta-other_body-03 | grade=wrong CONFIDENT-WRONG | lane=resolve | குலு மணாலில ரோடு எல்லாம் பனியால ப்ளாக் ஆயிடுச்சாமே, அங்க நிலவரம் என்ன?
+   said: இன்று சுருக்கத்தில் 5 குறிப்புகள். 15 incidents were reported in Anna Nagar (last 24 hours), 6% fewer than the previous period.
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+ta-other_body-13 | grade=wrong CONFIDENT-WRONG | lane=resolve | அண்ணா யூனிவர்சிட்டி buildings section நிலவரம் சொல்லு.
+   said: இன்று சுருக்கத்தில் 5 குறிப்புகள். 15 incidents were reported in Anna Nagar (last 24 hours), 6% fewer than the previous period.
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+en-brief-15 | grade=wrong CONFIDENT-WRONG | lane=no-model | District Revenue section at the Collectorate, where are we on things?
+   said: Revenue (Tax & Licence)
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+ta-explain-19 | grade=wrong CONFIDENT-WRONG | lane=no-model | ஆலந்தூர்ல வடிகால் வேலை நடக்குற இடத்துல பள்ளத்த மூடாம விட்டுட்டாங்களாம், என்ன ஆச்சு?
+   said: மண்டலம் 12 · ஆலந்தூர் · Roads, footpaths & bridges
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+ta-numbers-14 | grade=wrong CONFIDENT-WRONG | lane=no-model | கொலை, அடிதடி கேஸ், இந்த வருஷத்து total?
+   said: Vector- & water-borne disease
+   reasons: ["moved the console onto the wrong thing","5_language failed","6_scope failed"]
+en-followup-03 | grade=wrong CONFIDENT-WRONG | lane=no-model | second one, explain
+   said: Item 2
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+en-numbers-05 | grade=wrong CONFIDENT-WRONG | lane=no-model | Top five zones by open cases
+   said: Zone 5 · Royapuram · Top incident
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+tanglish-followup-10 | grade=wrong CONFIDENT-WRONG | lane=no-model | adha close pannidu
+   said: ஏரி நிலவரம்
+   reasons: ["guessed and answered where it should ask"]

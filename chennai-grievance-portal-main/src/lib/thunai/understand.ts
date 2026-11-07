@@ -32,7 +32,8 @@ function wordScore(tok: string, w: string): number {
   if (TA.test(w)) return taMatch(tok, w) ? 0.95 : 0;
   // near spellings only for longer words: "water" must not become "weather", nor "incident" "accident"
   if (/\d/.test(w) || w.length < 6 || tok.length < 6 || TA.test(tok) || tok[0] !== w[0]) return 0;
-  if (skeleton(tok) === skeleton(w) && Math.abs(tok.length - w.length) <= 3) return 0.85;
+  // by sound only for names of seven letters or more: a six-letter skeleton is shared with ordinary words (pannidu, "do it", is Poondi by skeleton) (RC-02)
+  if (w.length >= 7 && tok.length >= 7 && skeleton(tok) === skeleton(w) && Math.abs(tok.length - w.length) <= 3) return 0.85;
   const d = editDistance(tok, w, 2);
   return d <= (w.length >= 10 ? 2 : 1) ? 0.8 : 0;
 }
@@ -365,6 +366,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
     for (const j of [i + 1, i - 1]) {
       if (j >= 0 && j < tk.length && /^\d{1,3}$/.test(tk[j]) && !taken[j]) {
         const v = Number(tk[j]);
+        // "top 5 zones", "first three zones": a count of zones, not zone 5 (RC-02)
+        if (j < i && (tok === "zones" || /^(top|first|last|bottom|worst|best|highest|lowest|முதல்|கடைசி)$/.test(tk[j - 1] ?? ""))) return;
         if (v >= 1 && v <= 15) { zoneNumMentions.push({ value: v, start: Math.min(i, j), end: Math.max(i, j) + 1, score: 1 }); taken[i] = taken[j] = true; }
         return;
       }

@@ -167,3 +167,33 @@ describe("RC-05: topic, status and filters are read the same in every language a
     expect(quickScreen("explain the flooding complaint in Adyar", world as never)?.recipe).toBe("case");
   });
 });
+
+// RC-02: everyday words and foreign names never become a zone, a body, a reservoir or a case by sound or by a near spelling.
+import { resolveEntity } from "./entities";
+import { taMatch } from "./normalise";
+describe("RC-02: no entity from an everyday sentence", () => {
+  // sentences with no place or body in them, in the three languages; the data's names must not be heard in them
+  const EVERYDAY = ["this week's status", "give me the quarterly summary", "what is there to see", "do it now", "close it", "tell me about the state", "was there any news today", "how are we doing this month",
+    "indha vaaram nilavaram enna", "quarterly summary sollu", "adha close pannidu", "angu enna nadakkudhu", "inge vandhu paaru", "oru nimidam wait pannu", "maanila arasu pathi sollu", "ennaku konjam help pannu",
+    "இந்த வாரம் நிலவரம்", "காலாண்டு சுருக்கம்", "ஆட்சியர் அறிக்கை", "மாநில நிலவரம்", "அங்க என்ன நடக்குது", "கொடு", "கொடுத்து விடு", "என்னிடம் சொல்லு", "இதை நிறுத்து"];
+  it("resolves to no body and no zone", () => {
+    const bad: string[] = [];
+    for (const s of EVERYDAY) { const r = resolveEntity(s, world as never); if (r.kind === "entity" || r.kind === "ambiguous") bad.push(`${s} -> ${r.kind === "entity" ? r.entity.id : "ambiguous"}`); }
+    expect(bad).toEqual([]);
+  });
+  it("a place named only by its first word is ambiguous, so it is no place (Anna Salai, Anna University)", () => {
+    for (const s of ["Anna Salai status", "Anna flyover report", "அண்ணா சாலை அறிக்கை"]) { const r = resolveEntity(s, world as never); expect(r.kind === "entity" && r.entity.id === "ZONE-8", s).toBe(false); }
+    const full = resolveEntity("Anna Nagar zone report", world as never);
+    expect(full.kind === "entity" && full.entity.id).toBe("ZONE-8");
+  });
+  it("a Tamil name that ends in -u needs the whole name before it takes a case ending (கொசு is not கொடு)", () => {
+    expect(taMatch("கொடு", "கொசு")).toBe(false);
+    expect(taMatch("கொடைக்கானல்", "கொசு")).toBe(false);
+    expect(taMatch("கொசுவை", "கொசு")).toBe(false);
+    expect(taMatch("அடையாற்றில்", "அடையாறு")).toBe(true);
+  });
+  it("a misheard name keeps its first letter; a number before the word zones is a count", () => {
+    expect(resolveEntity("Adayar report", world as never).kind === "entity").toBe(true);
+    expect(rules("top five zones by open cases").steps?.some((x) => x.a === "view" && (x.view as { zone?: number | null } | undefined)?.zone === 5)).toBeFalsy();
+  });
+});

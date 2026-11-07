@@ -18,7 +18,7 @@ import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
 import { outsideIn, taOutside } from "./outside";
 import { AREA_WORDS } from "./areas";
-import { listedWord } from "./quick";
+import { isListedExact, listedWord } from "./quick";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -43,8 +43,8 @@ const INST = new Set(["college", "colleges", "university", "universities", "inst
 /** words that sit in front of an agency word and name no place: a verb, a pronoun, a place word of the console (in Tamil and Tanglish too) */
 const NAME_STOP_WORDS = ("salai veedhi theru sandhu kuruku kovil bazaar bazar junction flyover bridge signal subway avenue colony layout extension main cross lane park beach ward wards zone zones zonal taluk division divisional regional area areas street road station stations control room helpline emergency helpdesk public civic municipal " +
   "indha intha idha andha antha adha namma nam enga unga ungal engal avanga ivanga ellam ellaam anaithu ella romba rombha migavum konjam sema mudhal muthal adutha irukura irukkura irukkira irukkum irukku iruku irukka irukkaa ullathu ulla ullatha " +
-  "kitta kitte pakkam pakkathula pakkathil kudu kodu koduthu sollu solluga podunga paaru paarunga pathi patri pathina paththi yaaru yaar ethu edhu enna aachu aanadhu nadandhathu nadanthathu nadakkuthu nadakkudhu " +
-  "கடந்த இன்றைய நேற்றைய இந்த அந்த நம்ம நம் எங்க உங்க எல்லா மொத்த முழு போன நேத்து இன்னைக்கு இப்போ இருக்கிற இருக்கும் உள்ள").split(" ");
+  "atsiyar aatsiyar atchiyar aatchiyar maanila maanilam anga anka inga ange ingae thaan dhaan kitta kitte pakkam pakkathula pakkathil kudu kodu koduthu sollu solluga podunga paaru paarunga pathi patri pathina paththi yaaru yaar ethu edhu enna aachu aanadhu nadandhathu nadanthathu nadakkuthu nadakkudhu " +
+  "ஆட்சியர் அங்க இங்க அங்கே இங்கே மாநில மாநிலம் கடந்த இன்றைய நேற்றைய இந்த அந்த நம்ம நம் எங்க உங்க எல்லா மொத்த முழு போன நேத்து இன்னைக்கு இப்போ இருக்கிற இருக்கும் உள்ள").split(" ");
 let nameStop: Set<string> | null = null;
 const stopWord = (w: string) => (nameStop ??= new Set(NAME_STOP_WORDS.flatMap((x) => [x, ...(/[஀-௿]/.test(x) ? toRoman(x) : [])]))).has(w);
 /** posts that sit on a body ("police commissioner", "corporation commissioner"): about the body */
@@ -64,7 +64,7 @@ const FILLER = new Set(("a an the this that these those is are was were be am do
   // greetings, the name, and the words that only say what kind of report
   "jarvis hey hello hi hai full detailed complete quick short annual tonight tonights tonight's general many nearest near some few one").split(" "));
 /** Tamil terms in Tamil letters, by stem: matched as the start of a word, so case endings still find them */
-const TA_TERMS: [string, string][] = [["காலேஜ்", "college"], ["கல்லூரி", "college"], ["யுனிவர்சிட்டி", "university"], ["பல்கலைக்கழகம்", "university"], ["அசோசியேஷன்", "association"], ["சங்கம்", "association"], ["கவுன்சில்", "council"], ["இன்ஸ்டிடியூட்", "institute"], ["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
+const TA_TERMS: [string, string][] = [["காலேஜ்", "college"], ["யூனிவர்சிட்டி", "university"], ["யூனிவர்சிடி", "university"], ["யுனிவர்சிடி", "university"], ["கல்லூரி", "college"], ["யுனிவர்சிட்டி", "university"], ["பல்கலைக்கழகம்", "university"], ["அசோசியேஷன்", "association"], ["சங்கம்", "association"], ["கவுன்சில்", "council"], ["இன்ஸ்டிடியூட்", "institute"], ["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
   ["நிலவரம்", "status"], ["சுருக்கம்", "brief"], ["அப்டேட்", "update"], ["கிரேட்டர்", "greater"], ["கிரேட்டர", "greater"], ["சென்னை", "chennai"], ["மெட்ராஸ்", "madras"], ["மாநகராட்சி", "corporation"], ["கார்ப்பரேஷன்", "corporation"],
   ["மாநகர", "city"], ["நகர", "city"], ["சிட்டி", "city"], ["குடிநீர் வாரியம்", "metrowater"], ["மெட்ரோ வாட்டர்", "metrowater"], ["பொதுப்பணித்துறை", "pwd"], ["பொதுப்பணி", "pwd"], ["மின்வாரியம்", "tangedco"], ["மின் வாரியம்", "tangedco"],
   ["துறை", "department"], ["வாரியம்", "board"], ["ஆணையர்", "commissioner"], ["கமிஷனர்", "commissioner"], ["என்ன", "enna"], ["சொல்லு", "sollu"], ["கோயம்புத்தூர்", "coimbatore"], ["கோவை", "coimbatore"], ["தாம்பரம்", "tambaram"], ["ஆவடி", "avadi"], ["மும்பை", "mumbai"]];
@@ -96,6 +96,8 @@ export function registry(w: World): Registry {
       if (!c.length || seen.has(key)) continue;
       seen.add(key); aliases.push(c);
     }
+    // a one-word alias that is only the first word of the same entity's longer name ("anna" of "anna nagar") is ambiguous: Anna Salai, Anna University (RC-02)
+    if (kind === "zone") for (let i = aliases.length - 1; i >= 0; i--) { const a = aliases[i]; if (a.length === 1 && a[0].length <= 5 && aliases.some((o) => o.length >= 2 && o[0] === a[0])) aliases.splice(i, 1); }
     entities.push({ id, kind, name, ta, aliases });
   };
   const orgs = new Set<string>();
@@ -133,12 +135,16 @@ export function registry(w: World): Registry {
 /** Tamil words to the roman words the registry speaks: known terms by stem, others by sound. */
 function toRoman(text: string): string[] {
   const out: string[] = [];
+  let prevName = false; // the word before was a name, not one of the terms
   for (const tok of text.normalize("NFC").split(/\s+/).filter(Boolean)) {
-    if (!/[஀-௿]/.test(tok)) { out.push(...words(tok)); continue; }
+    if (!/[஀-௿]/.test(tok)) { out.push(...words(tok)); prevName = false; continue; }
     const far = taOutside(tok);
-    if (far) { out.push(far); continue; }
+    if (far) { out.push(far); prevName = false; continue; }
+    // "நகர்" after a name is the "-nagar" of the name (அண்ணா நகர்), not the word for the city (RC-02)
+    if (tok === "நகர்" && prevName) { out.push("nagar"); prevName = false; continue; }
     const term = TA_TERMS.find(([ta]) => !ta.includes(" ") && (tok === ta || tok.startsWith(ta.replace(/்$/, ""))));
     out.push(term ? term[1] : romanise(tok).replace(/\s+/g, ""));
+    prevName = !term;
   }
   return out;
 }
@@ -159,8 +165,11 @@ export function sentenceWords(text: string): string[] {
 
 /** How close a heard word is to a registry word: 1 the same, 0.86 one edit (two on long words), 0.8 the same sound, 0 no. */
 const scored = new Map<string, { s: number; via: "exact" | "edit" | "sound" } | null>();
+/** an ordinary word of any of the three languages (grammar, the lanes' own words, verbs, adverbs): it is a name only when it is spelt exactly as one (RC-02) */
+const plainWord = (w: string): boolean => stopWord(w) || BRIEF_WORDS.has(w) || FILLER.has(w) || ORDINARY.has(w) || isListedExact(w);
 function wordScore(heard: string, want: string): { s: number; via: "exact" | "edit" | "sound" } | null {
   if (heard === want) return { s: 1, via: "exact" };
+  if (plainWord(heard)) return null;
   // the same pair comes up for every alias of every body in every sentence: worked out once
   const key = `${heard}|${want}`;
   if (scored.has(key)) return scored.get(key)!;
@@ -170,9 +179,10 @@ function wordScore(heard: string, want: string): { s: number; via: "exact" | "ed
   return r;
 }
 function wordScoreRaw(heard: string, want: string): { s: number; via: "exact" | "edit" | "sound" } | null {
+  // a heard word is one of ours only when it starts the same way: "inta" is not "madavaram" and "anka" ("there") is not "anna" (RC-02)
   if (heard.length >= 4 && want.length >= 4) {
     const d = editDistance(heard, want, 2);
-    if (d <= 1 || (d === 2 && Math.min(heard.length, want.length) >= 7)) return { s: 0.86, via: "edit" };
+    if (heard[0] === want[0] && (d <= 1 || (d === 2 && Math.min(heard.length, want.length) >= 7))) return { s: 0.86, via: "edit" };
     const a = phonetic(heard).replace(/ /g, ""), b = phonetic(want).replace(/ /g, "");
     const skel = (k: string) => k[0] + k.slice(1).replace(/[aeiou]/g, "");
     if (a.length >= 4 && (a === b || (skel(a) === skel(b) && skel(a).length >= 3))) return { s: 0.8, via: "sound" };
@@ -424,6 +434,20 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
 // keeping something or typing it (remember, remind, save, pin, type into the search box) is not a brief either (BUG-022)
 const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட|டவுன்லோட்|பதிவிறக்க|ஒப்பிடு|ஒப்பீடு|ஸ்டேஷன்|காவல் நிலைய|எக்ஸ்போர்ட்|பிரிண்ட்|ஷேர்|பகிர்/i;
 
+/** the one-word place names of this World with their spelling-folded form, worked out once */
+const SINGLES = new WeakMap<World, { k: string; s: string; name: string; zone: number | null }[]>();
+function singlePlaces(w: World) {
+  let r = SINGLES.get(w);
+  if (!r) {
+    r = [];
+    for (const p of w.places) for (const n of [p.name, ...p.aliases]) {
+      const ks = /[஀-௿]/.test(n) ? toRoman(n) : words(n);
+      if (ks.length === 1 && ks[0].length >= 5) r.push({ k: ks[0], s: skeleton(ks[0]), name: p.name, zone: p.zone });
+    }
+    SINGLES.set(w, r);
+  }
+  return r;
+}
 /** A locality in the sentence and its zone, if the data gives it one ("Velachery police report"), by name or alias. */
 function locality(text: string, w: World): { name: string; zone: number | null } | null {
   const ws = sentenceWords(text);
@@ -433,6 +457,14 @@ function locality(text: string, w: World): { name: string; zone: number | null }
       const k = (/[஀-௿]/.test(n) ? toRoman(n) : words(n)).join(" ");
       if (k.length >= 4 && flat.includes(` ${k} `)) return { name: p.name, zone: p.zone };
     }
+  }
+  // a locality spelt another way ("Mylapur" for Mylapore): the same letters and sound, the same first letter, about the same length (RC-02)
+  const sk = singlePlaces(w);
+  for (const x of ws.slice(0, 80)) {
+    if (x.length < 5 || plainWord(x)) continue;
+    const s = skeleton(x);
+    if (s.length < 4) continue;
+    for (const q of sk) if (q.k[0] === x[0] && Math.abs(q.k.length - x.length) <= 1 && q.s === s) return { name: q.name, zone: q.zone };
   }
   return null;
 }

@@ -86,7 +86,8 @@
     "row_id": "ta-other_body-03",
     "mechanism": "M02",
     "model_needed": false,
-    "lane": "resolve"
+    "lane": "resolve",
+    "fixed": true
   },
   {
     "id": "open-baseline-6",
@@ -103,7 +104,8 @@
     "row_id": "ta-other_body-13",
     "mechanism": "M02",
     "model_needed": false,
-    "lane": "resolve"
+    "lane": "resolve",
+    "fixed": true
   },
   {
     "id": "open-baseline-7",
@@ -680,7 +682,8 @@
     "row_id": "ta-numbers-14",
     "mechanism": "M13",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-40",
@@ -714,7 +717,8 @@
     "row_id": "en-numbers-05",
     "mechanism": "M14",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-42",
@@ -731,7 +735,8 @@
     "row_id": "tanglish-followup-10",
     "mechanism": "M15",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-43",

@@ -231,12 +231,12 @@ describe("audit-understanding-4 P0: another place's or kind of body gets a Chenn
 
 describe("audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005)", () => {
   for (const [s, zone] of [["இந்த வாரம் நிலவரம்", 3], ["இந்த வாரம் சுருக்கம் சொல்லு", 3], ["இந்த வாரம் அறிக்கை", 3], ["காலாண்டு சுருக்கம்", 12], ["காலாண்டு அறிக்கை", 12], ["ஆட்சியர் சுருக்கம்", 13], ["ஆட்சியர் நிலவரம்", 13], ["மாநில நிலவரம்", 2], ["மாநில காவல்துறை அறிக்கை", 2], ["maanila report", 2], ["Manila report", 2], ["ஆட்சியர் அறிக்கை", 13], ["மாவட்ட ஆட்சியர் சுருக்கம்", 13]] as const)
-    it.fails(`audit-understanding-5 ${s}: not zone ${zone}`, async () => expect(zonesOf(await round(s))).not.toContain(zone));
+    it(`audit-understanding-5 ${s}: not zone ${zone}`, async () => expect(zonesOf(await round(s))).not.toContain(zone));
 });
 
 describe("audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005)", () => {
   for (const s of ["Anna Salai police report", "அண்ணா சாலை போலீஸ் அறிக்கை", "Anna Salai la police report", "Anna Salai status", "Anna University status", "Anna University police report", "Anna Arivalayam status", "Anna flyover report"])
-    it.fails(`audit-understanding-6 ${s}: not Anna Nagar's figures`, async () => expect(zonesOf(await round(s))).not.toContain(8));
+    it(`audit-understanding-6 ${s}: not Anna Nagar's figures`, async () => expect(zonesOf(await round(s))).not.toContain(8));
 });
 
 describe("audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032)", () => {
@@ -417,7 +417,7 @@ describe("audit-understanding-23 P0: in the browser, a sentence with போல�
 
 describe("audit-understanding-24 P1: the rules hear words starting with கொ as கொசு, mosquito", () => {
   for (const t of ["சென்னை போலீஸ் ரிப்போர்ட் கொடு", "கொடைக்கானல் போலீஸ் அறிக்கை"])
-    it.fails(`audit-understanding-24 ${t}: no Vector disease filter`, () => expect(JSON.stringify(rules(t).steps ?? [])).not.toContain("VECTOR_DISEASE"));
+    it(`audit-understanding-24 ${t}: no Vector disease filter`, () => expect(JSON.stringify(rules(t).steps ?? [])).not.toContain("VECTOR_DISEASE"));
 });
 
 describe("audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control)", () => {

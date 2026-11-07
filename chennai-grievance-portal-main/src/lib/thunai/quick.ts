@@ -205,6 +205,8 @@ export function listedWord(word: string): boolean {
   romanListed ??= [...new Set([...LISTED].filter((x) => /[஀-௿]/.test(x)).map((x) => romanise(x).replace(/\s+/g, "")))];
   return romanListed.some((r) => r === word || (r.length >= 4 && word.startsWith(r) && /^(a|u|i|e|ai|ku|kku|ukku|ukkum|la|le|il|in|um|ul|al|ala|oda|ode|irundhu|gal|kal|ngal)$/.test(word.slice(r.length))));
 }
+/** is this exact (Latin) word on one of the fast lane's own lists? (not romanised Tamil: "polis" is the Corporation's police, spelt as heard) */
+export const isListedExact = (word: string): boolean => LISTED.has(word);
 const WORLD_WORDS = new WeakMap<World, Set<string>>();
 function worldWords(w: World): Set<string> {
   let s = WORLD_WORDS.get(w);

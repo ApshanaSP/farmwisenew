@@ -37,3 +37,15 @@ Fix (mechanism). `statusIn()` is the one reader of "past the deadline" and "stil
 Class guard. lane-a.pass4.test.ts RC-05: no spoken name belongs to two categories; the same four questions in English, Tanglish and Tamil have the same topic; every deadline and open phrase gives one status; water never beats lakes; ward and department words bail; metamorphic.test.ts is the gate (known file shrinks: keys m18:tanglish, m21:tanglish, m28:ta, m29:ta, m07:ta, m28:polite removed).
 
 Result. meta-words-4 to -9, audit-understanding-12, -13, -14 and open-baseline-18 are plain tests. Not fixed in this cluster: audit-understanding-16 (power cut has no category in the data, so it is left to the agent, but the fast lane still answers it with the zone list) and the remaining Tamil rewrites in meta-words-1 and -2.
+
+## RC-02: fuzzy and sound matching turns everyday words and foreign names into zones, bodies, reservoirs, cases
+
+Root cause. Two matchers (entities.ts for bodies and zones, understand.ts for the rules' slots) accepted a one-letter or two-letter difference or an equal sound with no second signal: the first letter could differ, an ordinary word (the Tamil for this week, summary, Collector, state, "there", "do it") could be a name, a six-letter skeleton matched a reservoir (pannidu is Poondi), pieces of an ordinary phrase were joined into a name, a zone's first word alone (Anna) was a name, the Tamil word for the city swallowed the nagar of a name, and a short Tamil name ending in -u was cut to a two-letter stem (கொ matched கொடு, "give").
+
+Why earlier tests missed it. Tests used clean names. There was no test with sentences that hold no place at all.
+
+Fix (mechanism). A heard word is one of ours only if it starts like the name; an ordinary word (stop words, brief words, the lanes' own listed words, adverbs and verbs) matches only when spelt exactly; sound matches for reservoirs only from seven letters; the Tamil stem cut needs a name of five letters or more; a one-word partial name of a zone is dropped (the full Anna Nagar still works); the Tamil nagar after a name stays nagar; a locality spelt another way is found by folded spelling (worked out once per World, bounded for very long input); a number before the word zones is a count.
+
+Class guard. lane-a.pass4.test.ts RC-02: 25 everyday sentences in three languages that hold no place must resolve to no body and no zone; Anna Salai and Anna University are not Anna Nagar; the taMatch short-name cases; first letter and count.
+
+Result. audit-understanding-5, -6, -24 are plain tests; open-baseline 5, 6, 39, 41, 42 fixed; confident wrong 26 to 21. Open in this cluster: audit-understanding-10 (Chetpet and T Nagar are not narrowed: the Corporation's list holds them but the data's places do not), open-baseline-37, -38, -40 (a body or topic in the planner's reach, and "second one" in a follow-up), PB-020 in Tamil with the Collector word.
