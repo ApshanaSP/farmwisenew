@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { GRANT_HEADER, issueGrant, requireConfirm, scopeHash } from "./stepup";
+import { GRANT_HEADER, SOFT_HEADER as SOFT_HEADER_NAME, issueGrant, requireConfirm, scopeHash } from "./stepup";
 import { signToken } from "@/lib/jwt";
 import { emailRef, normRef } from "./stamp";
 import { crossSite } from "@/middleware";
@@ -41,6 +41,74 @@ describe("Confirm it's you (step-up)", () => {
   it("does not take a session token as a grant", async () => {
     const session = await signToken(S);
     expect((await requireConfirm(req(session), S, "send_email", "", SCOPE)).ok).toBe(false);
+  });
+});
+
+describe("PB-316: the browser asks without a console error, the guard is the same", () => {
+  const soft = (grant?: string) => new NextRequest("http://x/api/officer/grievances/INC-1/report", { method: "POST", headers: { "x-diq-confirm": "json", ...(grant ? { [GRANT_HEADER]: grant } : {}) } });
+
+  it("a browser that says it can read it is answered 200 with the same body and a header, so the console logs no failed request", async () => {
+    const r = await requireConfirm(soft(), S, "officer_report", "Send the report", SCOPE);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.res.status).toBe(200);
+    expect(r.res.headers.get("x-diq-confirm")).toBe("required");
+    expect(r.res.headers.get("cache-control")).toBe("no-store");
+    const j = await r.res.json();
+    expect(j.confirm).toMatchObject({ action: "officer_report", summary: "Send the report", scope: scopeHash(SCOPE) });
+  });
+
+  it("still never lets the action through without a grant, whatever the request says", async () => {
+    for (const h of [{ "x-diq-confirm": "json" }, { "x-diq-confirm": "json", [GRANT_HEADER]: "not-a-grant" }, { "x-diq-confirm": "anything" }, {}] as Record<string, string>[]) {
+      const r = await requireConfirm(new NextRequest("http://x/api/map/send", { method: "POST", headers: h }), S, "send_email", "Send", SCOPE);
+      expect(r.ok, JSON.stringify(h)).toBe(false);
+    }
+  });
+
+  it("a caller that does not send the header still gets the 428", async () => {
+    const r = await requireConfirm(req(), S, "send_email", "Send", SCOPE);
+    expect(r.ok === false && r.res.status).toBe(428);
+    expect(r.ok === false && r.res.headers.get("x-diq-confirm")).toBeNull();
+  });
+
+  it("a grant for the exact action still passes when the header is there", async () => {
+    const g = await issueGrant(S, "send_email", scopeHash(SCOPE), "password");
+    const r = await requireConfirm(soft(g), S, "send_email", "Send", { ...SCOPE });
+    expect(r.ok).toBe(true);
+  });
+
+  it("a grant for something else gets the 200 confirm again, not the action", async () => {
+    const g = await issueGrant(S, "send_email", scopeHash(SCOPE), "password");
+    const r = await requireConfirm(soft(g), S, "send_email", "Send", { ...SCOPE, body: SCOPE.body + " Now." });
+    expect(r.ok).toBe(false);
+    if (!r.ok) { expect(r.res.status).toBe(200); expect((await r.res.json()).error).toMatch(/for something else/); }
+  });
+});
+
+describe("PB-316 class guard: every guarded route hands back requireConfirm's own answer, and the console asks the soft way", () => {
+  const fs = require("node:fs") as typeof import("node:fs"), path = require("node:path") as typeof import("node:path");
+  const root = path.resolve(__dirname, "../..");
+  const routes: string[] = [];
+  (function walk(d: string) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.name === "route.ts") routes.push(f); } })(path.join(root, "app/api"));
+
+  it("every route that calls requireConfirm returns `c.res` untouched when it says no (so the 200 or the 428 is decided in one place)", () => {
+    const guarded = routes.filter((f) => /requireConfirm\(/.test(fs.readFileSync(f, "utf8")));
+    expect(guarded.length).toBeGreaterThanOrEqual(9);
+    for (const f of guarded) {
+      const src = fs.readFileSync(f, "utf8");
+      const calls = (src.match(/requireConfirm\(/g) ?? []).length - (src.match(/import \{[^}]*requireConfirm/g) ?? []).length;
+      expect((src.match(/if \(!c\.ok\) return c\.res;/g) ?? []).length, path.relative(root, f)).toBeGreaterThanOrEqual(calls);
+    }
+  });
+
+  it("the confirm host sends x-diq-confirm on the console's own requests and turns the 200 answer back into a 428 for its callers", () => {
+    const src = fs.readFileSync(path.join(root, "components/security/Confirm.tsx"), "utf8");
+    expect(src).toMatch(/SOFT_HEADER\]: "json"/);
+    expect(src).toMatch(/status: 428/);
+    expect(src).toMatch(/SOFT_ANSWER\) === "required"/);
+    // the header names agree with the server's
+    expect(src).toContain(`SOFT_HEADER = "x-diq-confirm"`);
+    expect(`${SOFT_HEADER_NAME}`).toBe("x-diq-confirm");
   });
 });
 

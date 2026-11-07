@@ -1,0 +1,21 @@
+RC-48 / PB-316 sweep (U1)
+Guarded routes (all call requireConfirm and return c.res as it is): grep -rln requireConfirm src/app
+  src/app/api/collector/assistant/export/route.ts
+  src/app/api/collector/decisions/route.ts
+  src/app/api/collector/export/route.ts
+  src/app/api/collector/incidents/[id]/action/route.ts
+  src/app/api/collector/sources/onboard/approve/route.ts
+  src/app/api/collector/studio/[id]/route.ts
+  src/app/api/map/export/route.ts
+  src/app/api/map/send/route.ts
+  src/app/api/officer/grievances/[id]/report/route.ts
+  src/app/api/rehearsal/plan/route.ts
+-> one place decides the status (lib/security/stepup.ts); guard test in src/lib/security/stepup.test.ts checks every route returns c.res.
+
+Other client code that expects a 4xx in a normal flow (a browser logs every one as a console error): grep -rnE 'status === (4[0-9][0-9])|r.status == 4' src/components src/app
+src/components/collector/app/thunai/conductor.ts:311:    if (r.status === 429) return { text: "", lang: this.h.siteLang(), budget: "low" as const };
+src/components/officer/OfficerApp.tsx:120:  if (r.status === 401 && !window.location.pathname.startsWith("/dev/")) { window.location.href = "/login?redirect=/officer"; th
+src/app/api/jarvis/say/route.ts:54:  if (r.status === 429) {
+
+Real-browser run: tests/qa/pass4/stepup-console.mjs (collector export and officer report): no console error, no failed request, box shown, cancel leaves a 428 for the caller, password leads to the real 200.
+Console errors on every page in 4 widths and 2 languages: docs/qa/pass4/evidence/axe.json console arrays (0).
