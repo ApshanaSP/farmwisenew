@@ -1,0 +1,9 @@
+# sweep RC-24: every place a row id is read from a URL or limited by digits
+src/app/api/collector/sources/[id]/route.ts:5:import { parseStoreId } from "@/lib/store-id";
+src/app/api/collector/sources/[id]/route.ts:10:const sourceId = parseStoreId;
+src/app/api/collector/workspaces/[id]/route.ts:4:import { parseStoreId } from "@/lib/store-id";
+src/app/api/collector/workspaces/[id]/route.ts:11:  const id = parseStoreId(params.id);
+src/app/api/rehearsal/traffic/[z]/[x]/[y]/route.ts:12:  const buf = await flowTile(Number(params.z), Number(params.x), Number(params.y.replace(/\.png$/, "")));
+298:const LOCAL_IDS = 1_000_000_000;
+431:    conn.exec(`UPDATE sqlite_sequence SET seq = ${LOCAL_IDS} WHERE seq < ${LOCAL_IDS} AND name <> '_changes';
+432:               INSERT INTO sqlite_sequence (name, seq) SELECT name, ${LOCAL_IDS} FROM sqlite_master

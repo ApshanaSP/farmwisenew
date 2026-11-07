@@ -46,3 +46,12 @@
 - Class guards (tests/qa/pass4/lane-c.guards.test.ts): no route reads a form without a catch; none reads a field of a null-able body without a check; a property test that any text with a letter, in any script, makes a search group; rehearsal routes send the error's status.
 - Three languages: Tamil words (8 from the findings plus others), English, and Tanglish as Latin letters are all words now. Real server rows (GB-1, GB-2, access-fuzz-2) are run after the build.
 - Tests: SCAN-6, GB-1 (8 words), GB-2 and access-fuzz-2 it.fails changed to it. GB-3 (RC-24) stays it.fails.
+
+## RC-24 (PB-085, PB-196, PB-212): fixed in code and unit tests; GB-3 and same-number-18 are changed to run and are run on a server after the final build
+- Root cause: the workspace and source routes each wrote their own rule for an id ("at most nine digits"); a copy that does not save to AWS numbers its own rows from 1,000,000,000 (ten digits), so every workspace it saved was refused when opened.
+- Why earlier tests missed it: tests used small ids (801); nothing tied the route's rule to how the store makes ids.
+- Fix: one rule, src/lib/store-id.ts parseStoreId (a positive integer within the signed 32-bit range the tables use), used by both routes.
+- Sweep: docs/qa/pass4/sweeps/RC-24.txt (these were the only two digit-count id rules).
+- Class guard: lane-c.guards.test.ts reads LOCAL_IDS out of lib/aws/store.ts and requires parseStoreId to take it and the ids above it, and fails if any [id] route limits an id by its count of digits.
+- Three languages: not language-dependent (ids are digits). Real path: server rows after the final build.
+- Tests: audit-privacy_injection-9, GB-3 and same-number-18 it.fails changed to it.

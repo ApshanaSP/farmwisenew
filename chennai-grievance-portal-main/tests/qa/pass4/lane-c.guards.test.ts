@@ -110,3 +110,18 @@ describe("RC-23 routes: a request that is not what the route reads", () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ---------------------------------------------------------------------------------------------------------------- RC-24
+describe("RC-24 class guard: a row id is read by one rule that agrees with how the store numbers rows", () => {
+  it("parseStoreId takes every id a copy that does not save can make (from LOCAL_IDS up) and refuses what is not an id", async () => {
+    const { parseStoreId } = await import("@/lib/store-id");
+    const store = fs.readFileSync(path.join(ROOT, "src/lib/aws/store.ts"), "utf8");
+    const local = Number(store.match(/LOCAL_IDS\s*=\s*([\d_]+)/)![1].replace(/_/g, ""));
+    for (const n of [1, 801, 999_999_999, local, local + 1, local + 3, local + 5_000_000]) expect(parseStoreId(String(n)), String(n)).toBe(n);
+    for (const bad of ["0", "-1", "1.5", "abc", "", "00000000001x", "99999999999", "2147483648", " 5", "5 "]) expect(parseStoreId(bad), JSON.stringify(bad)).toBeNull();
+  });
+  it("no [id] route limits an id by its number of digits", () => {
+    const bad = routes.filter((f) => /\[id\]/.test(f)).filter((f) => /\^\x5cd\{1,\d\}\$/.test(fs.readFileSync(f, "utf8"))).map((f) => path.relative(ROOT, f));
+    expect(bad).toEqual([]);
+  });
+});

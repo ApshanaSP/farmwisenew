@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { removeSource, runSource, updateSource } from "@/lib/collector/sources";
+import { parseStoreId } from "@/lib/store-id";
 
 export const dynamic = "force-dynamic";
 
 /** A source id as the store numbers them; anything else is refused before it reaches a query. */
-const sourceId = (raw: string): number | null => (/^\d{1,9}$/.test(raw) && Number(raw) > 0 ? Number(raw) : null);
+const sourceId = parseStoreId;
 const invalid = () => NextResponse.json({ error: "Invalid source id." }, { status: 400 });
 const PatchSchema = z.object({
   enabled: z.boolean().optional(),

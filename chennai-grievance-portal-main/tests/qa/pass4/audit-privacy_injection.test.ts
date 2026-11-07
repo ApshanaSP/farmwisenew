@@ -328,7 +328,7 @@ describe("BUG-013: opening a workspace by voice", () => {
   const open = async (id: string) => (await GET(new Request("http://127.0.0.1/x") as never, { params: { id } })).status;
   it("a small id opens", async () => expect(await open("801")).toBe(200));
   // a copy that does not save numbers its own rows from 1000000001 (store.ts LOCAL_IDS)
-  it.fails("audit-privacy_injection-9: an id with ten digits, as saved on any copy that does not save, opens", async () => expect(await open("1000000003")).toBe(200));
+  it("audit-privacy_injection-9: an id with ten digits, as saved on any copy that does not save, opens", async () => expect(await open("1000000003")).toBe(200));
   const opens = (t: string) => { const r = understand(t, screenOf(STATE as never), world as never, { speechConf: 0.95 }) as { kind: string; steps?: { a: string; op?: string; name?: string }[] }; return r.kind === "do" && (r.steps ?? []).some((x) => x.a === "workspace" && x.op === "open"); };
   it.each(["open workspace Monday review", "open my Monday review workspace", "open saved view Monday review", "OPEN WORKSPACE MONDAY REVIEW"])("English opens the named workspace: %s", (t) => expect(opens(t)).toBe(true));
   // these are done by the rules at once (isNavCommand), so a model is never asked: a live model would not change this

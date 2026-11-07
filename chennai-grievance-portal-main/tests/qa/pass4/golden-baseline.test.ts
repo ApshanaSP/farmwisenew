@@ -55,7 +55,7 @@ describe("golden-master baseline findings, on a real server", () => {
     expect((await get("/api/rehearsal/state?replay=rain-1999-01-01")).status).toBe(404);
   });
 
-  it.fails("GB-3: a workspace saved on this server can be opened by the id the save gave it", async () => {
+  it("GB-3: a workspace saved on this server can be opened by the id the save gave it", async () => {
     const saved = await fetch(`${BASE}/api/collector/workspaces`, { method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ name: "GB-3 test", filters: { period: "weekly" }, layout: { panels: {} } }) });
     expect(saved.status).toBeLessThan(300);
     const list = (await (await get("/api/collector/workspaces")).json()) as { workspaces: { name: string; versions: { id: number }[] }[] };

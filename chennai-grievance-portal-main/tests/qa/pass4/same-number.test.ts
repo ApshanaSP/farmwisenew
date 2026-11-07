@@ -181,7 +181,7 @@ describe("same number everywhere", () => {
   it.fails("same-number-17 every Collector decision points at an incident in this build", () => {
     expect(oracle.durable.decisions.filter((d: any) => !oracle.rawRow(String(d.incident_id))).map((d: any) => d.incident_id)).toEqual([]);
   });
-  it.fails("same-number-18 a workspace saved on a copy that does not save to AWS can be opened", () => {
+  it("same-number-18 a workspace saved on a copy that does not save to AWS can be opened", () => {
     expect(notes.filter((n) => n.kind === "workspace-not-openable")).toEqual([]);
   });
   it.fails("same-number-19 no news-only incident with a recorded death is left out as 'not news media' (owner's decision)", () => {
