@@ -161,3 +161,8 @@ export function pastDueSql(now: string, a = "i"): string {
 export function closedOnTimeSql(closedAt: string, due = "i.sla_due_at"): string {
   return `(${closedAt} IS NOT NULL AND ${due} IS NOT NULL AND ${closedAt} <= ${due})`;
 }
+
+/** SQL: "closed late" is closing after the due time. Closed with no due time on record is neither on time nor late. */
+export function closedLateSql(closedAt: string, due = "i.sla_due_at"): string {
+  return `(${closedAt} IS NOT NULL AND ${due} IS NOT NULL AND ${closedAt} > ${due})`;
+}

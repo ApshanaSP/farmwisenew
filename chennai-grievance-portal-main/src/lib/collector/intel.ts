@@ -43,7 +43,7 @@ export type Overview = Awaited<ReturnType<typeof overview>>;
 export type IncidentDetail = NonNullable<Awaited<ReturnType<typeof incident>>>;
 
 export function parsePeriod(v: unknown): Period {
-  return typeof v === "string" && v in PERIODS ? (v as Period) : "daily";
+  return typeof v === "string" && Object.prototype.hasOwnProperty.call(PERIODS, v) ? (v as Period) : "daily";
 }
 export function parseZone(v: unknown): number | null {
   const n = Number(v);
@@ -124,8 +124,11 @@ export function periodSince(period: Period, now: string): string {
 }
 
 /** WHERE clause over `incidents i` for a period window, zone and department. */
-export function scopeWhere(s: Scope, now: string): { sql: string; params: unknown[] } {
-  const win = periodWindow(s.period, now, "i.first_reported_at", s.offset ?? 0);
+export function scopeWhere(s: Scope, now: string, closed = false): { sql: string; params: unknown[] } {
+  // `closed`: the window is when the incident was closed (the Collector's decision counts at once), not when it was reported
+  const win = closed
+    ? ((s.offset ?? 0) === 0 ? periodSinceWindow(s.period, now, EFF.closedAt) : periodWindow(s.period, now, EFF.closedAt, s.offset ?? 0))
+    : periodWindow(s.period, now, "i.first_reported_at", s.offset ?? 0);
   const parts = [win.sql];
   const params: unknown[] = [...win.params];
   if (s.zone) {
@@ -230,7 +233,7 @@ const ROW = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i
   i.lat, i.lon, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open, ${EFF.verified} AS verified,
   i.citizen_complaints AS complaints, i.outlet_count AS outlets, i.sources, i.source_count, i.channels,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, i.summary, i.priority_score AS priority,
-  i.sla_breached AS breached, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
+  i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.hours_open, i.severity_reasons, i.priority_reasons, i.attention_reason, i.officer,
   i.media_only, i.awaiting_collector, i.police_reports, DATE_FORMAT(i.last_update_at, '%Y-%m-%d %H:%i:%s') AS updated,
   i.ai_summary, i.ai_attention, i.ai_next_step`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
@@ -719,26 +722,34 @@ export async function kpiBlock(s: Scope, now: string) {
   // the breakdowns under each tile (severe still open, incidents behind the complaints, severe or high among the ongoing,
   // all reported) use the same effective status as the tiles
   const cols = `SUM(i.severity_level = 'Severe') AS severe, SUM(CASE WHEN ${EFF.open} = 1 THEN i.citizen_complaints ELSE 0 END) AS complaints,
-    SUM(${EFF.open} = 1 AND NOT ${ROUTED}) AS ongoing, SUM(${EFF.open} = 0 AND ${EFF.status} = 'Resolved') AS resolved,
+    SUM(${EFF.open} = 1 AND NOT ${ROUTED}) AS ongoing,
     SUM(i.severity_level = 'Severe' AND ${EFF.open} = 1) AS severe_open, SUM(${EFF.open} = 1 AND i.citizen_complaints > 0) AS complaint_inc,
     SUM(${EFF.open} = 1 AND NOT ${ROUTED} AND (i.severity_level = 'Severe' OR i.severity_level = 'High')) AS urgent, COUNT(*) AS reported`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
   const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
-  const [c, pv, series] = await Promise.all([
+  // "Resolved" is what was closed in the window (by when it closed), the same as Ask District IQ's count: not what was reported in the
+  // window and is closed now (182 against 1,166 resolved this week, PB-214)
+  const done = `${EFF.open} = 0 AND ${EFF.status} = 'Resolved'`;
+  const curC = scopeWhere(s, now, true), prevC = scopeWhere({ ...s, offset: 1 }, now, true);
+  const [c, pv, series, rc, rp, rs] = await Promise.all([
     q(`SELECT ${cols} FROM incidents i WHERE ${cur.sql}`, cur.params),
     q(`SELECT ${cols} FROM incidents i WHERE ${prev.sql}`, prev.params),
     q(
       `SELECT FLOOR(TIMESTAMPDIFF(SECOND, ?, i.first_reported_at) / ?) AS b, ${cols}
        FROM incidents i WHERE ${cur.sql} GROUP BY b`,
       [since, bucketSecs, ...cur.params]
-    )
+    ),
+    q(`SELECT COUNT(*) AS resolved FROM incidents i WHERE ${curC.sql} AND ${done}`, curC.params),
+    q(`SELECT COUNT(*) AS resolved FROM incidents i WHERE ${prevC.sql} AND ${done}`, prevC.params),
+    q(`SELECT FLOOR(TIMESTAMPDIFF(SECOND, ?, ${EFF.closedAt}) / ?) AS b, COUNT(*) AS resolved FROM incidents i WHERE ${curC.sql} AND ${done} GROUP BY b`,
+      [since, bucketSecs, ...curC.params])
   ]);
-  const keys = Object.keys(c[0] ?? {});
-  const num = (r: Row | undefined) => Object.fromEntries(keys.map((k) => [k, Number(r?.[k] ?? 0)]));
+  const keys = [...Object.keys(c[0] ?? {}), "resolved"];
+  const num = (r: Row | undefined, closed: Row | undefined) => Object.fromEntries(keys.map((k) => [k, Number((k === "resolved" ? closed : r)?.[k] ?? 0)]));
   return {
-    cur: num(c[0]),
-    prev: num(pv[0]),
-    series: Object.fromEntries(keys.map((k) => [k, bucketSeries(series, p.buckets, k)]))
+    cur: num(c[0], rc[0]),
+    prev: num(pv[0], rp[0]),
+    series: Object.fromEntries(keys.map((k) => [k, bucketSeries(k === "resolved" ? rs : series, p.buckets, k)]))
   };
 }
 
@@ -1164,7 +1175,7 @@ async function districtSnapshot(s: Scope, now: string) {
   };
 }
 
-async function areaSnapshot(zone: number, s: Scope, now: string) {
+export async function areaSnapshot(zone: number, s: Scope, now: string) {
   const w = scopeWhere(s, now);
   const [k, keyDept, latest, zoneOfficer, common] = await Promise.all([
     q(
@@ -1228,7 +1239,7 @@ function newsDetails(d: Row): { title_en?: string; ai?: Record<string, string | 
 export async function incident(id: string) {
   const [inc] = await q(
     `SELECT ${ROW}, DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at,
-            DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.depts_involved, i.dead, i.injured,
+            i.depts_involved, i.dead, i.injured,
             i.persons_affected, i.vulnerable, dp.head AS dept_head, dp.org AS dept_org, i.confidence, i.needs_review, i.review_reason,
             i.taluk_code, tk.name AS taluk_name, i.spread_m, ${CLUSTER} AS grp
      ${FROM} LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code WHERE i.incident_id = ?`,
@@ -1362,7 +1373,7 @@ export async function list(f: ListFilter) {
       AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${await sentByOfficer()})`);
     params.push(...tw.params);
   } else if (f.scope === "period") {
-    const w = scopeWhere({ period: f.period, zone: f.zone, dept: f.dept }, now);
+    const w = scopeWhere({ period: f.period, zone: f.zone, dept: f.dept }, now, st === "Resolved"); // Resolved: closed in the window, as the tile counts it (PB-214)
     where.push(w.sql);
     params.push(...w.params);
   } else {
@@ -1486,6 +1497,17 @@ export async function search(text: string) {
  * work waiting for the Collector's check (the My Tasks rule). Routine incidents stay with
  * the departments and are only counted in the PDF.
  */
+/**
+ * Every open incident in a scope that the Collector's attention rules pick (explain().needsYou), highest priority first, and how many
+ * open incidents the scope has in all. The ONE place this is counted: the Briefing, the PDF report and the CSV all read it, so "need
+ * your attention" and "routine" are the same figures everywhere. Nothing is cut off: a cap on the rows read (it was 400) made the
+ * count depend on the cap, and "routine" was open minus the six shown (1,161).
+ */
+export async function attentionRows(w: { sql: string; params: unknown[] }): Promise<{ need: (Row & { why: ReturnType<typeof explain> })[]; ongoing: number }> {
+  const open = await q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED} ORDER BY i.priority_score DESC`, w.params);
+  return { need: open.map((r) => ({ ...r, why: explain(r) })).filter((r) => r.why.needsYou), ongoing: open.length };
+}
+
 export async function exportRows(period: Period, zone: number | null, dept: string | null, focus: Focus = {}) {
   const now = await asOf();
   const w = scopeWhere({ period, zone, dept, ...focus }, now);
@@ -1495,19 +1517,19 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
   if (focus.cat) { extra.push("i.category_code = ?"); xp.push(focus.cat); }
   if (focus.taluk) { extra.push("i.taluk_code = ?"); xp.push(focus.taluk); }
   const sent = await sentByOfficer();
-  const [open, checks] = await Promise.all([
-    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED} ORDER BY i.priority_score DESC LIMIT 400`, w.params),
+  const [attn, checks] = await Promise.all([
+    attentionRows(w),
     q(`SELECT ${ROW}, ${sent} AS officer_sent ${FROM} WHERE ((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
          AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${sent}) ${extra.map((x) => `AND ${x}`).join(" ")}
        ORDER BY ${SEV_RANK}, i.last_update_at ASC LIMIT 100`, xp)
   ]);
   // one row per incident: closed work the department sent for checking is listed as such, not also as needing attention
   const checking = new Set(checks.map((r) => String(r.id)));
-  const need = open.map((r) => ({ r, p: explain(r) })).filter((x) => x.p.needsYou && !checking.has(String(x.r.id)));
+  const need = attn.need.filter((r) => !checking.has(String(r.id))).map((r) => ({ r, p: r.why }));
   const row = (list: string, r: Row, why: string) => ({
     list, id: r.id, what: r.title || r.type, where: [r.ward ? `Ward ${r.ward}` : null, r.zone_name].filter(Boolean).join(", ") || "Chennai",
     department: r.dept_name ?? r.dept, severity: r.sev, why, reported: String(r.t).slice(0, 16),
-    past_deadline: Number(r.breached) ? "Yes" : "No", complaints: r.complaints
+    past_deadline: deadlineState(r.sla_due ?? null, now, r.breached).overdue ? "Yes" : "No", complaints: r.complaints
   });
   return [
     ...need.map(({ r, p }) => row("Needs your attention", r, p.attention.join("; "))),
@@ -1543,21 +1565,21 @@ export async function report(period: Period, zone: number | null, dept: string |
   const ov = await overview(period, zone, dept, focus);
   const now = ov.now;
   const w = scopeWhere({ period, zone, dept, ...focus }, now);
-  const [cands, news] = await Promise.all([
-    // the incidents that need the Collector: open, highest priority first, kept only if explain() says so
-    q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED} ORDER BY i.priority_score DESC LIMIT 400`, w.params),
+  const [attn, news] = await Promise.all([
+    // the incidents that need the Collector: open, highest priority first, kept only if explain() says so (all of them: attentionRows)
+    attentionRows(w),
     // in the news, with no department record
     q(`SELECT ${ROW} ${FROM} WHERE ${w.sql} AND ${EFF.open} = 1 AND i.media_only = 1 ORDER BY i.priority_score DESC LIMIT 5`, w.params)
   ]);
   // the report lists the 10 most urgent; the rest are on the dashboard and in the action list (CSV)
-  const allNeed = cands.map((r) => ({ ...r, why: explain(r) })).filter((r) => r.why.needsYou);
+  const allNeed = attn.need;
   const [a, g] = await Promise.all([withSources(allNeed.slice(0, 10)), withSources(news)]);
   return {
     ...ov,
     report: {
       attention: a,
       attentionTotal: allNeed.length,
-      routine: Math.max(0, ov.kpi.cur.ongoing - allNeed.length),
+      routine: Math.max(0, attn.ongoing - allNeed.length),
       newsOnly: g.map((r) => ({ ...r, why: explain(r) }))
     }
   };

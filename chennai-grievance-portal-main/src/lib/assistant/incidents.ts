@@ -7,7 +7,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
+import { closedLateSql, closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
 import { explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
@@ -232,7 +232,7 @@ export async function countResolved(f: IncidentFilters, now: string) {
   const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
   const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(NOT ${closedOnTimeSql(EFF.closedAt)}) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
+    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${closedLateSql(EFF.closedAt)}) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
 }

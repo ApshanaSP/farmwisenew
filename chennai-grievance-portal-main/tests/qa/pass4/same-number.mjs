@@ -103,6 +103,8 @@ export class Book {
     const s = { ...scope, ...(opt.over ?? {}) };
     let exp, raw = null, ids = null;
     if (opt.custom) { const c = opt.custom(); exp = c.value; ids = c.ids ?? null; raw = c.raw ?? null; }
+    // RC-29 (lane d): "resolved" in a window is closed in the window, by its closing time, on every surface
+    else if (def === "resolved" && !opt.filter) { const done = this.o.resolvedByClose(s); exp = done.length; raw = exp; ids = done.map((r) => r.id); }
     else {
       const f = opt.filter ?? (() => true);
       const a = this.o.apply(def, this.o.rows(s).filter(f)), b = this.o.apply(def, this.o.rows(s, "raw").filter(f));
@@ -130,6 +132,7 @@ export class Book {
 
 /** Every kind of difference seen, first match wins: [surface, figure, class, finding id or null, why in words]. A difference not listed here is UNEXPLAINED. */
 export const KNOWN = [
+  [/^collector\/insights\?part=briefing$/, /^stats\.newsOnly$/, "by-design", "RC-29", "The Briefing hides headlines about another district (newsrel.elsewhere) once, up front, so its line, its list and its figure are one number; the oracle counts every news-only incident that is not lapsed."],
   [/^thunai\/round:dashboard$/, /first row's severity rank/, "bug", "same-number-1", "Jarvis asks the list for severity order with the default direction, which puts Low first; the block is headed 'most serious first'."],
   [/^thunai\/round:advise$/, /severity rank/, "bug", "same-number-1", "The same list order: 'First: ...' comes from the page of the least serious cases."],
   [/^thunai\/round:cases\(overdue\)$/, /^total$/, "bug", "same-number-1", "The past-deadline list filters only the first page of 12, and that page is the least serious cases, so it finds none and says there are none."],
@@ -305,7 +308,11 @@ async function readTrends(h, b, s) {
   const monday = (t) => { const x = new Date(t); const day = (x.getUTCDay() + 6) % 7; return fmtWall(Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()) - day * 864e5).slice(0, 10); };
   const month = (t) => fmtWall(t).slice(0, 7);
   const check = (name, data, hours, keyOf) => {
-    const rows = o.rows({ ...s, period: undefined, hours });
+    // RC-29 (lane d): the Trends buckets are whole buckets: the 12 complete weeks (Monday to Monday) and the 6 calendar months up to now,
+    // not a rolling window that cuts the oldest of each
+    const rows = name === "weekly"
+      ? o.inStretch(`${data.keys[0]} 00:00:00`, fmtWall(wallMs(`${data.keys[data.keys.length - 1]} 00:00:00`) + 7 * 864e5), s)
+      : o.inStretch(`${data.keys[0]}-01 00:00:00`, fmtWall(o.nowMs + 1000), s);
     const listed = new Set(data.lines.map((l) => l.cat));
     let bad = 0, cells = 0; const wrong = [];
     for (const l of data.lines) {
@@ -570,7 +577,7 @@ async function readChatMore(h, b, s) {
     b.add(s, `${sv}:resolved`, "Resolved", kpi(cr, "Resolved").value, "custom", { custom: () => ({ value: now.length, ids: now.map((r) => r.id) }), label: "resolved (by closing time)" });
     b.add(s, `${sv}:resolved`, "Resolved.prev", kpi(cr, "Resolved").prev, "custom", { custom: () => ({ value: prev.length }), label: "resolved (by closing time, period before)" });
     if (kpi(cr, "Severe")) b.add(s, `${sv}:resolved`, "Severe", kpi(cr, "Severe").value, "custom", { custom: () => ({ value: now.filter((r) => r.sev === "Severe").length }), label: "severe, resolved by closing time" });
-    if (kpi(cr, "Closed late")) b.add(s, `${sv}:resolved`, "Closed late", kpi(cr, "Closed late").value, "custom", { custom: () => ({ value: now.filter((r) => r.breached).length }), label: "resolved past the deadline" });
+    if (kpi(cr, "Closed late")) b.add(s, `${sv}:resolved`, "Closed late", kpi(cr, "Closed late").value, "custom", { custom: () => ({ value: now.filter((r) => r.closed != null && r.due != null && r.closed > r.due).length }), label: "resolved past the deadline" });
   }
   // a card's tile named "Reported" on a question about something else: the tile must be the reported figure, or carry another name
   const co = await ask(`how many incidents are past their deadline ${when}`);

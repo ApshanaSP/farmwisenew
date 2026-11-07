@@ -9,7 +9,7 @@
  * Rows never carry citizens' details: no complaint text, reporter, phone or email.
  */
 import { z } from "zod";
-import { PERIODS, asOf, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
+import { PERIODS, areaSnapshot, asOf, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
 import { insights, type Insights } from "@/lib/collector/insights";
 import { threads } from "@/lib/collector/threads";
 import { mapGeo } from "@/lib/collector/geo";
@@ -133,6 +133,8 @@ async function keywordNews(words: string[], since: number | null, until: number)
   return rows as Row[];
 }
 
+/** the direction of each list sort that puts what matters first: the severity rank runs Severe = 1, so most severe first is ascending (the console's own buttons send 1) */
+const NATURAL_DIR = { t: -1, sev: 1, c: -1, r: 1, d: 1 } as const;
 type Body = Omit<ToolResult, "tool" | "args">;
 
 export class ToolError extends Error {}
@@ -481,7 +483,8 @@ export const TOOLS = [
       const d = await ov(s);
       const [ranks, names] = await Promise.all([zoneAttention({ ...scope, zone: null }, d.now), refNames()]);
       const at = ranks.findIndex((r) => r.zone === zone);
-      const snap0 = d.snapshot.kind === "area" ? d.snapshot : null;
+      // with a department chosen the overview's snapshot is the department's, not the zone's: ask for the zone's own (same scope, so open and complaints are the zone's under that filter, never an empty 0)
+      const snap0 = d.snapshot.kind === "area" ? d.snapshot : await areaSnapshot(zone, s, d.now).catch(orNull("tools:zone snapshot"));
       // an earlier window ("yesterday"): the zone's own records for that day, not the console's current snapshot
       const day = scope.offset ? await windowRows({ period: s.period, zone, dept: s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk, offset: scope.offset }, d.now, 5) : null;
       const snap = day && snap0 ? { ...snap0, active: day.open, complaints: day.complaints } : snap0;
@@ -631,19 +634,22 @@ export const TOOLS = [
       status: z.enum(LIST_STATUSES).nullable().default(null),
       q: z.string().trim().max(80).nullable().default(null),
       sort: z.enum(["t", "sev", "c", "r", "d"]).default("t"),
-      dir: z.union([z.literal(1), z.literal(-1)]).default(-1),
+      /** left out: the sort's own natural direction (newest first, most severe first, most complaints first, A to Z) */
+      dir: z.union([z.literal(1), z.literal(-1)]).nullable().default(null),
       page: z.number().int().min(0).max(8).default(0),
       allTime: z.boolean().default(false)
     }),
     async run(a) {
       const s = a.scope;
       const r = await list({ period: s.period, zone: s.zone, dept: s.dept, sev: a.sev, cat: s.cat, taluk: s.taluk, status: a.status, q: a.q || null,
-        sort: a.sort, dir: a.dir, page: a.page, scope: a.allTime ? "all" : "period" });
+        sort: a.sort, dir: a.dir ?? NATURAL_DIR[a.sort], page: a.page, scope: a.allTime ? "all" : "period" });
       const rows = r.rows.map((i) => incRow(i));
       const now = await asOf();
       return {
-        scope: s, asOf: now, data: { rows, total: r.total, complaints: r.complaints, page: a.page, pageSize: 12 },
-        facts: [fact("list.total", "Incidents matching", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
+        scope: s, asOf: now, // `total` is the number of rows to page through (one per group of the same problem in the same area); `incidents` is what the tiles
+        // count, and what "Incidents matching" says (PB-065)
+        data: { rows, total: r.total, incidents: r.incidents, complaints: r.complaints, page: a.page, pageSize: 12 },
+        facts: [fact("list.total", "Incidents matching", r.incidents), fact("list.groups", "Groups of the same problem in the same area, the list's rows", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
         sources: [fn("intel.list"), tbl("incidents")], incidentIds: rows.map((x) => x.id),
         testData: true, caveats: a.allTime ? ["Covers all 180 days in the store, not only the period."] : [], untrusted: ["title", "loc"]
       };

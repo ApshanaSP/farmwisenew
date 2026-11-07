@@ -32,7 +32,7 @@ export const STAGE_INDEX: Record<Stage, number> = { new: 0, approved: 1, action:
 export const NEXT_STEP: Partial<Record<Stage, "approve" | "send">> = { new: "approve", approved: "send", action: "send" };
 
 export function isStage(v: unknown): v is Stage {
-  return typeof v === "string" && v in STAGE_LABEL;
+  return typeof v === "string" && Object.prototype.hasOwnProperty.call(STAGE_LABEL, v);
 }
 export function parseTab(v: unknown): Tab {
   return typeof v === "string" && (TABS as string[]).includes(v) ? (v as Tab) : "new";

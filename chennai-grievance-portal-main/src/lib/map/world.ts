@@ -12,7 +12,7 @@ import { asOf, exportMeta } from "@/lib/collector/intel";
 import { mapGeo } from "@/lib/collector/geo";
 import { categories, enRe, gazetteerEntries, taRe } from "@/lib/collector/nlp";
 import { isPinnable } from "@/lib/collector/mapplace";
-import { effectiveStatus } from "@/lib/collector/effective";
+import { EFFECT_KEYS, effectiveStatus } from "@/lib/collector/effective";
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
 import type { Entry, ResolverData } from "./resolve";
@@ -375,20 +375,21 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
   try { base = await global.__askMapBase!.base; } catch (e) { global.__askMapBase = undefined; throw e; }
   const [now, decided, routedRows] = await Promise.all([
     asOf(),
-    q(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision <> 'note' ORDER BY decision_id`).catch(() => [] as Row[]),
+    // the decisions with an effect only (effective.ts): an escalate or a note after a resolve must not hide the resolve (RC-26, RC-27)
+    q(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision IN (${EFFECT_KEYS}) ORDER BY decision_id`).catch(() => [] as Row[]),
     q(`SELECT DISTINCT incident_id FROM ${ops("dept_assignments")}`).catch(() => [] as Row[])
   ]);
   const latest = new Map<string, string>();
   for (const d of decided) latest.set(String(d.incident_id), String(d.decision));
   const routed = new Set(routedRows.map((r) => String(r.incident_id)));
-  const incidents = latest.size || routed.size
-    ? base.incidents.map((i) => {
-      const d = latest.get(i.id);
-      const r = routed.has(i.id);
-      if (!d && !r) return i;
-      const e = d ? effectiveStatus(i.open ? 1 : 0, i.status, d) : { open: i.open ? 1 : 0, status: i.status };
-      return { ...i, open: e.open === 1, status: e.status, routed: r };
-    })
-    : base.incidents;
+  // past its deadline is one rule (metrics.ts pastDueSql): the store's flag, or the due time gone by the console's now (RC-34)
+  const incidents = base.incidents.map((i) => {
+    const late = i.breached || (!!i.slaDue && i.slaDue < now);
+    const d = latest.get(i.id);
+    const r = routed.has(i.id);
+    if (!d && !r) return late === i.breached ? i : { ...i, breached: late };
+    const e = d ? effectiveStatus(i.open ? 1 : 0, i.status, d) : { open: i.open ? 1 : 0, status: i.status };
+    return { ...i, open: e.open === 1, status: e.status, routed: r, breached: late };
+  });
   return { world: { ...base.world, now, incidents }, resolver: base.resolver };
 }

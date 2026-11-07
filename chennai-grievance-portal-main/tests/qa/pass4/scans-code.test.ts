@@ -64,10 +64,10 @@ describe("scans-code-3: a period from the address bar", () => {
     expect(parsePeriod("nonsense")).toBe("daily");
   });
   for (const raw of ["constructor", "__proto__", "toString", "valueOf"]) {
-    it.fails(`scans-code-3 ?period=${raw} falls back to daily`, () => {
+    it(`scans-code-3 ?period=${raw} falls back to daily`, () => {
       expect(parsePeriod(raw)).toBe("daily");
     });
-    it.fails(`scans-code-3 ?period=${raw} does not throw in the routes' date code`, () => {
+    it(`scans-code-3 ?period=${raw} does not throw in the routes' date code`, () => {
       periodSince(parsePeriod(raw), "2026-11-06 12:00:00");
     });
   }

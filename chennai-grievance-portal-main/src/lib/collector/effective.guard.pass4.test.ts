@@ -58,3 +58,22 @@ describe("RC-34 class guard: no raw sla_breached in a figure", () => {
     });
   }
 });
+
+// RC-29 class guard: a figure is never the length of a list that was cut. The rows that decide "need your attention" and the written
+// "in the news" line are read whole; a LIMIT on those reads made the PDF, the CSV and the Briefing disagree (400 rows, 60 rows).
+describe("RC-29 class guard: counted lists are not cut", () => {
+  const src = (f: string) => fs.readFileSync(path.join(ROOT, f), "utf8");
+  it("intel.ts reads every open incident behind the attention count", () => {
+    const body = src("lib/collector/intel.ts").split("export async function attentionRows")[1]?.split("\n}\n")[0] ?? "";
+    expect(body).toContain("explain(r)");
+    expect(body).not.toMatch(/LIMIT/);
+  });
+  it("the Briefing's in-the-news list has no LIMIT, and its count is the length of the list it shows", () => {
+    const s = src("lib/collector/insights.ts");
+    expect(s).not.toMatch(/media_only = 1 AND i\.status_std <> 'Lapsed'\s*\n\s*ORDER BY i\.priority_score DESC LIMIT/);
+    expect(s).toContain("newsOnly: gaps.length");
+  });
+  it("a list sorted by severity runs most severe first unless a direction is given (the rank runs Severe = 1)", () => {
+    expect(src("lib/assistant/tools.ts")).toMatch(/NATURAL_DIR = \{ t: -1, sev: 1,/);
+  });
+});

@@ -4,7 +4,8 @@
 //   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/audit-narrate_and_figures.test.ts
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import intelPool, { ops } from "@/lib/collector/db";
-import { asOf, exportRows, list, overview } from "@/lib/collector/intel";
+import { asOf, exportRows, list, overview, report } from "@/lib/collector/intel";
+import { countResolved } from "@/lib/assistant/incidents";
 import { insights, trendKeys } from "@/lib/collector/insights";
 import { threads } from "@/lib/collector/threads";
 import { ask } from "@/lib/assistant/pipeline";
@@ -139,18 +140,18 @@ describe("BUG-019: the original Tamil join", () => {
 // -------------------------------------------------------------- reopened --
 
 describe("BUG-007 reopened", () => {
-  it.fails.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
+  it.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
     const c = await list({ period, zone: null, dept: null, sev: null, status: "overdue", q: null, sort: "t", dir: -1, page: 0, scope: "period" } as never);
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", period, fresh: true, zones: [] });
     expect(r.stage!.say.en).not.toMatch(/^There are no cases/);
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
+  it("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
     const r = await said("show overdue cases", fakePlan({ kind: "do", lang: "en", reply: null, options: [], screen: screenOf({ status: "overdue", period: "weekly" }) }));
     expect(blockOf(r.result, "CaseList")?.total).toBeGreaterThan(0);
   });
-  it.fails.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
+  it.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
     const r = (await said(text)).result!;
     expect(blockOf(r, "CaseList")?.total).toBeGreaterThan(0);
   });
@@ -202,14 +203,14 @@ describe("BUG-021 partly", () => {
 });
 
 describe("new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool)", () => {
-  it.fails.each(["explain the flooding complaint in Adyar", "Adyar flooding enna aachu", "அடையாறு வெள்ளம் விளக்கு"])("AUD-NF-4 %s picks the most severe open case", async (text) => {
+  it.each(["explain the flooding complaint in Adyar", "Adyar flooding enna aachu", "அடையாறு வெள்ளம் விளக்கு"])("AUD-NF-4 %s picks the most severe open case", async (text) => {
     const r = (await said(text)).result!;
     const id = blockOf(r, "CaseDetail")?.incident?.id;
     const [mine] = await q(`SELECT severity_level AS sev FROM incidents WHERE incident_id = ?`, [id]);
     const [top] = await q(`SELECT i.severity_level AS sev FROM incidents i WHERE i.zone_no = 13 AND i.category_code = 'FLOOD_WATERLOGGING' AND i.is_open = 1 AND i.first_reported_at > ? ORDER BY FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low') LIMIT 1`, ["2026-10-07 18:08:00"]);
     expect(mine.sev).toBe(top.sev);
   });
-  it.fails("AUD-NF-4 a list's first row is its most severe", async () => {
+  it("AUD-NF-4 a list's first row is its most severe", async () => {
     const r = await direct("cases", { q: "water", period: "weekly", fresh: true, zones: [13] });
     const sevs = blockOf(r, "CaseList")!.rows!.map((x) => x.sev);
     expect(sevs[0]).toBe(["Severe", "High", "Medium", "Low"].find((s) => sevs.includes(s)));
@@ -249,11 +250,11 @@ describe("BUG-027 partly: a department that has no report behind a pattern still
     const d = await insights("daily", null, "GCC-SWM");
     expect(d.briefing.emerging).toEqual([]);
   });
-  it.fails.each(["GCC-EDU", "GCC-HLT", "GCC-LND", "GCC-BRG"])("AUD-NF-8 %s has no report behind any emerging pattern", async (dept) => {
+  it.each(["GCC-EDU", "GCC-HLT", "GCC-LND", "GCC-BRG"])("AUD-NF-8 %s has no report behind any emerging pattern", async (dept) => {
     const d = await insights("daily", null, dept);
     expect(d.briefing.emerging as Row[]).toEqual([]);
   });
-  it.fails("AUD-NF-8 the police's count is the police's", async () => {
+  it("AUD-NF-8 the police's count is the police's", async () => {
     const d = await insights("daily", null, "POL-GCP");
     const flood = (d.briefing.emerging as Row[]).find((e) => e.cat === "FLOOD_WATERLOGGING");
     const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.category_code = 'FLOOD_WATERLOGGING' AND i.zone_no = 4 AND i.first_reported_at >= '2026-11-04 00:00:00' AND i.first_reported_at < '2026-11-05 00:00:00' AND i.lead_dept = 'POL-GCP'`);
@@ -404,7 +405,7 @@ describe("new, found on the way", () => {
     const r = (await said("இந்த வாரம் கெடு தாண்டிய கடுமையான சம்பவங்கள் காட்டு")).result!;
     expect(r.stage!.say.ta).not.toMatch(/standing water at|[a-z]+ [a-z]+ at [A-Z]/);
   });
-  it.fails("AUD-NF-18 Trends' oldest week is a whole week, as the others are", async () => {
+  it("AUD-NF-18 Trends' oldest week is a whole week, as the others are", async () => {
     const d = await insights("monthly", null, null, {}, "trends");
     const oldest = d.trends.weekly.keys[0];
     const total = d.trends.weekly.lines.reduce((a: number, l: { values: number[] }) => a + l.values[0], 0);
@@ -442,5 +443,49 @@ describe("new, found on the way", () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.status_std = 'Resolved' AND i.sla_breached = 1 AND i.incident_id NOT IN (SELECT incident_id FROM ${ops("collector_decisions")}) ORDER BY i.first_reported_at DESC LIMIT 1 OFFSET 1`);
     const a = await askChat(`what is the status of ${t.id}`);
     expect(String((a as { card: { answerMarkdown: string } }).card.answerMarkdown)).not.toMatch(/past its deadline/);
+  });
+});
+
+// RC-29 (lane d fix): a count comes from the whole set with the tile's predicate, never from a capped list, a group count or a partial bucket.
+describe("RC-29: the figures that came from capped or grouped reads", () => {
+  it("the Briefing's 'routine' is the PDF's routine, and 'need your attention' is the CSV's whole list (no cap of 400)", async () => {
+    for (const period of ["weekly", "monthly"] as const) {
+      const ins = await insights(period, null, null, {}, "briefing");
+      const rep = await report(period, null, null);
+      const csv = (await exportRows(period, null, null)).filter((r: Row) => r.list === "Needs your attention");
+      expect(ins.briefing.stats.handledByDepts).toBe(rep.report.routine);
+      expect(rep.report.attentionTotal).toBeGreaterThanOrEqual(csv.length); // the CSV also drops what is listed as "closed work to check"
+      expect(rep.report.attentionTotal + rep.report.routine).toBe(rep.kpi.cur.ongoing);
+    }
+  });
+  it("only in the news: the written line, the list on the page and the figure are one number", async () => {
+    for (const period of ["weekly", "monthly"] as const) {
+      const d = await insights(period, null, null, {}, "briefing");
+      const [t] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.media_only = 1 AND i.status_std <> 'Lapsed' AND i.first_reported_at > ? - INTERVAL ? HOUR AND i.first_reported_at <= ?`,
+        [await asOf(), period === "weekly" ? 168 : 720, await asOf()]);
+      // the page hides a headline about another district on purpose (newsrel.elsewhere), so it is at most the store's count; the three agree
+      expect((d.gaps as Row[]).length).toBeLessThanOrEqual(Number(t.n));
+      expect(d.briefing.stats.newsOnly).toBe((d.gaps as Row[]).length);
+      const md = String(d.briefing.md).replace(/,(?=\d)/g, "").match(/In the news, not in department records\n- (\d+) incidents?/);
+      if ((d.gaps as Row[]).length > 0) expect(Number(md?.[1])).toBe((d.gaps as Row[]).length);
+    }
+  });
+  it("the Resolved tile is what was closed in the window, as Ask District IQ counts it", async () => {
+    const now = await asOf();
+    const ov = await overview("weekly", null, null);
+    const r = await countResolved({ period: "weekly" } as never, now);
+    expect(ov.kpi.cur.resolved).toBe(r.n);
+    expect(ov.kpi.prev.resolved).toBe(r.prev);
+  });
+  it("Trends: the 12 weeks hold whole weeks, the oldest as full as its neighbours, and the months hold all their days", async () => {
+    const d = await insights("weekly", null, null, {}, "trends");
+    const first = d.trends.weekly.keys[0];
+    const total = d.trends.weekly.lines.reduce((a: number, l: { values: number[] }) => a + l.values[0], 0);
+    const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.first_reported_at >= ? AND i.first_reported_at < ?`, [`${first} 00:00:00`, `${new Date(Date.parse(`${first}T00:00:00Z`) + 7 * 864e5).toISOString().slice(0, 10)} 00:00:00`]);
+    expect(total).toBe(Number(r.n));
+    const m0 = d.trends.monthly.keys[0];
+    const mt = d.trends.monthly.lines.reduce((a: number, l: { values: number[] }) => a + l.values[0], 0);
+    const [mm] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE DATE_FORMAT(i.first_reported_at, '%Y-%m') = ? AND i.first_reported_at <= ?`, [m0, await asOf()]);
+    expect(mt).toBe(Number(mm.n));
   });
 });

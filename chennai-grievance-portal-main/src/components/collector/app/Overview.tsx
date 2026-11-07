@@ -66,9 +66,9 @@ function useKpis(d: OverviewData, c: Console) {
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
       tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
     resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={period1(c) ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
-      p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `${Math.round((100 * K.resolved) / K.reported)}% of ${fmtN(K.reported)} reported` : undefined}
+      p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `closed in the period; ${fmtN(K.reported)} reported` : undefined}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
-      tip="Incidents reported in the period that the department has already resolved." />
+      tip="Incidents closed as resolved in the period (by the day they were closed), including the ones you resolved." />
   };
   return c.layout.kpis.filter((k) => KPIS[k]).map((k) => KPIS[k]);
 }
