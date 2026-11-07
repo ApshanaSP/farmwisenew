@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import type { Thread, ThreadStep } from "@/lib/collector/threads";
 import { I } from "./icons";
-import { Empty, SEV_HEX, fmtDate, fmtDay, fmtTime } from "./lib";
+import { Empty, SEV_HEX, fmtDate, fmtDay, fmtTime, reportsOutlets } from "./lib";
 import { itemWhen, safeUrl } from "./Added";
 import type { Console } from "./CollectorApp";
 
@@ -47,7 +47,7 @@ export function StoriesCard({ d, c }: { d: OverviewData; c: Console }) {
           <button key={t.id} className="thr" onClick={() => c.openStories(t.id)} title="See what happened, in order">
             <span className="thr-h">
               <b title={t.title}>{t.title}</b>
-              <span className="thr-n">{t.reports} reports · {t.outlets.length} outlet{t.outlets.length === 1 ? "" : "s"}</span>
+              <span className="thr-n">{reportsOutlets(t.reports, t.outlets.length)}</span>
             </span>
             <span className="thr-m">
               <StageStrip t={t} max={3} />
@@ -97,7 +97,7 @@ export function StoriesBody({ c, focus }: { c: Console; focus: string | null }) 
           <span><I n="pin" />{where(t, c)}</span>
           {t.catLabel && <span><I n="doc" />{t.catLabel}</span>}
           <span><I n="clock" />{fmtDate(t.first)} → {fmtDate(t.last)} ({span(t.hours)})</span>
-          <span><I n="news" />{t.reports} reports · {t.outlets.length} outlet{t.outlets.length === 1 ? "" : "s"}</span>
+          <span><I n="news" />{reportsOutlets(t.reports, t.outlets.length)}</span>
         </div>
         {t.ai ? (
           <>

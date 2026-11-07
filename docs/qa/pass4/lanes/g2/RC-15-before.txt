@@ -1,0 +1,33 @@
+RC-15 before: state at HEAD f89dc8a (the tree before this fixer's work), read with git show.
+
+-- PB-281, PB-282, PB-283, JARVIS1-11, JARVIS1-12: tests/qa/pass4/hunt-jarvis1.test.ts at HEAD holds JARVIS1-6, -7, -8, -11, -12 as it.fails (they failed their assertions):
+2:// Real path with no model (client-sim.ts). Each bug is it.fails so the suite stays green; the fixer changes it to it.
+53:  it.fails("JARVIS1-6 the reminder card shows a time a person can read, not a raw UTC string", async () => {
+58:  it.fails("JARVIS1-7 saying 'yes' to forget in Tamil gives a whole sentence, not the fragment 'மற'", async () => {
+63:  it.fails("JARVIS1-8 'close all severe complaints' says it cannot close, instead of quietly filtering and saying 'Severe'", async () => {
+84:  it.fails("JARVIS1-11 'top zones by open complaints' (no model) does not open a single incident", async () => {
+88:  it.fails("JARVIS1-12 'save this screen as morning check' saves it as 'morning check' (the rules name it 'screen as morning check'; plain 'save this screen' is named 'screen')", async () => {
+
+-- PB-302/PB-317 (severity glued after a level) at HEAD:
+chennai-grievance-portal-main/src/components/collector/app/Detail.tsx:151:          <span className="tg solid" style={{ color: SEV_COL[i.sev as string] }}><I n="alert" />{i.sev} severity</span>
+chennai-grievance-portal-main/src/components/collector/app/Overview.tsx:442:    <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
+chennai-grievance-portal-main/src/lib/assistant/incidents.ts:129:  if (!out.length) add(`${r.sev} severity`);
+120:        {!toCollector && <span className="hint" style={{ marginRight: "auto" }}>Not severe: your department verifies and closes it.</span>}
+
+-- PB-303 (raw ISO day) at HEAD:
+56:                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{s.t.length > 10 ? fmtWhen(s.t, now) : s.t}</small>}
+130:                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{s.t.length > 10 ? fmtWhen(s.t, now) : s.t}</small>}
+
+-- PB-299 (status Open read through the button dictionary) at HEAD: no data-i18n-ctx anywhere:
+0
+
+-- PB-300 (fixed Briefing labels, not in the dictionary at HEAD):
+Critical now: 0
+Warnings: 0
+Oldest open complaint: 0
+First report: 0
+Arrest: 0
+Watchful: 0
+
+-- PB-207 (brief points have no Tamil line at HEAD):
+58:  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), incidentId: str(80).nullable() })).max(10) }),

@@ -518,7 +518,7 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
               <span className="dot" style={{ background: SEV_HEX[x.sev] ?? "#8BA0B5" }} />
               <div style={{ minWidth: 0 }}>
                 <div className="t">{x.title}</div>
-                <div className="s">
+                <div className="s" data-i18n-ctx="status">
                   {x.sev} · {x.status}{x.overdue ? ` · ${w.overdue}` : ""} · {x.ward ? `${lang === "ta" ? "வார்டு" : "Ward"} ${x.ward}` : ""}{x.zoneName ? `, ${x.zoneName}` : ""}
                   {!x.pinnable && ` · ${w.noPlace}`}
                 </div>

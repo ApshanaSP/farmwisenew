@@ -19,6 +19,7 @@ import { readMemory } from "@/lib/thunai/store";
 import type { Lang, ScreenState, Step, Understood, World } from "@/lib/thunai/types";
 import { describe as describeStep, understand } from "@/lib/thunai/understand";
 import { serverWorld } from "@/lib/thunai/world";
+import { confirmLine } from "@/lib/thunai/say";
 
 const USER = { email: "qa.grader@example.test", id: 900_001 };
 const figureFree = (t?: string | null) => (t && !/[\d௦-௯]/.test(t) ? t : undefined);
@@ -263,8 +264,7 @@ export class ClientSim {
   private gateB(steps: Step[], said: string, lang: Lang) {
     const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind");
     if (!s) return this.run(steps, lang, said);
-    const q = s.a === "workspace" ? line("saveAsk", lang, { name: (s as { name?: string }).name }) : s.a === "remember" ? line("rememberAsk", lang, { text: (s as { text?: string }).text })
-      : s.a === "forget" ? line("forgetAsk", lang, { what: lang === "ta" ? "கடைசி குறிப்பை" : "the last note" }) : line("remindAsk", lang, { when: String((s as { at?: unknown }).at ?? ""), text: (s as { text?: string }).text });
+    const q = confirmLine(s as Parameters<typeof confirmLine>[0], lang) ?? ""; // the browser's own builder (say.ts), so this copy cannot drift from it
     this.pendingB = { steps, heard: said, lang };
     this.cur.kind = "clarify";
     this.say(q, lang);

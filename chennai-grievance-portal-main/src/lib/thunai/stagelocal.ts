@@ -5,8 +5,9 @@
  */
 import type { BlockT, CaseRowT, StageDocT } from "./stage";
 import type { Lang } from "./types";
-import { ZONES } from "./lexicon";
+import { DEPT_TA, ZONES, ZONE_TA_NAME } from "./lexicon";
 import { asciiDigits } from "./digits";
+import { catTaOfLabel } from "./narrate";
 import { LAST, OPEN_VERBS, SOFT_VERBS, readPositions, tokensOf } from "./ordinal";
 
 /** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
@@ -300,24 +301,28 @@ const ageWords = (h: number | null, lang: Lang) => (h == null ? null : lang === 
   : h < 1 ? "under an hour" : h < 48 ? `${Math.round(h)} hours` : `${Math.round(h / 24)} days`);
 
 /** What the problem is, in a few words: the incident's own short summary, else its kind and place (never an id or a citizen's words). */
-export function problemOf(r: CaseRowT): string {
+export function problemOf(r: CaseRowT, lang: Lang = "en"): string {
   if (r.why && r.why.length <= 110 && !/[.!?].+[.!?]/.test(r.why)) return r.why.replace(/\.$/, "");
   const t = r.title.replace(/\bINC-[A-Z0-9-]+\b/g, "").replace(/\s+/g, " ").trim();
   if (t.length <= 90) return t;
-  return r.cat ? `${r.cat}${r.place ? ` at ${r.place}` : ""}` : t.slice(0, 90);
+  // a long title is not read: the kind of problem and the place (the kind in Tamil in a Tamil line)
+  return r.cat ? (lang === "ta" ? `${catTaOfLabel(r.cat) ?? r.cat}${r.place ? `, ${r.place}` : ""}` : `${r.cat}${r.place ? ` at ${r.place}` : ""}`) : t.slice(0, 90);
 }
 
 /**
  * One case as an aide would brief it: where, what, how long and why it matters, who has it. No ids, no complaint text.
  * "First, in Royapuram: wall collapse at Chetpet. Open 22 hours and past its deadline. PWD Water Resources has it."
  */
+/** a ranking's unit in Tamil (the units the ranking screens use) */
+export const UNIT_TA: Record<string, string> = { incidents: "சம்பவங்கள்", days: "நாட்கள்", hours: "மணி நேரம்", "₹/kg": "ரூபாய்/கிலோ", mm: "மி.மீ", "% full": "% நிரம்பியது" };
 export function caseBrief(r: CaseRowT, i: number, asOf: string | null, lang: Lang): string {
-  const what = problemOf(r);
+  const what = problemOf(r, lang);
   const where = r.zoneName && !what.toLowerCase().includes(r.zoneName.toLowerCase()) ? r.zoneName : null;
   const age = ageWords(hoursBetween(r.t, asOf), lang);
   if (lang === "ta") {
-    return [`${ord(i, lang)}${where ? `, ${where}` : ""}: ${what}.`, age ? `${age} திறந்துள்ளது${r.overdue ? ", காலக்கெடு தாண்டிவிட்டது" : ""}.` : r.overdue ? "காலக்கெடு தாண்டிவிட்டது." : "",
-      r.complaints > 0 ? `${r.complaints} புகார்கள் வந்துள்ளன.` : "", r.deptName ? `${r.deptName} பொறுப்பு.` : ""].filter(Boolean).join(" ");
+    const whereTa = r.zone != null && ZONE_TA_NAME[r.zone] ? ZONE_TA_NAME[r.zone] : where; // the zone's and the department's Tamil names, by number and code (lexicon.ts); a name it does not know stays as it is
+    return [`${ord(i, lang)}${whereTa && !what.includes(whereTa) ? `, ${whereTa}` : ""}: ${what}.`, age ? `${age} திறந்துள்ளது${r.overdue ? ", காலக்கெடு தாண்டிவிட்டது" : ""}.` : r.overdue ? "காலக்கெடு தாண்டிவிட்டது." : "",
+      r.complaints > 0 ? `${r.complaints} புகார்கள் வந்துள்ளன.` : "", r.deptName ? `${(r.dept && DEPT_TA[r.dept]) || r.deptName} பொறுப்பு.` : ""].filter(Boolean).join(" ");
   }
   const state = age ? `Open ${age}${r.overdue ? " and past its deadline" : ""}.` : r.overdue ? "Past its deadline." : "";
   return [`${ord(i, lang)}${where ? `, in ${where}` : ""}: ${what}.`, state, r.complaints > 0 ? `${r.complaints} ${r.complaints === 1 ? "citizen has" : "citizens have"} complained.` : "",
@@ -334,12 +339,18 @@ export function narrationOf(d: StageDocT, lang: Lang): { key: string; text: stri
       const lead = lang === "ta" ? `${ord(i, lang)}${x.source ? `, ${x.source}` : ""}: ` : `${i === 0 ? "First" : i === b.items.length - 1 ? "And finally" : "Next"}${x.source ? `, from ${x.source}` : ""}: `;
       return { key: x.id, lead, text: `${lead}${x.title}.` };
     });
-    if (b.kind === "Brief") return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: p.text }));
+    // a Tamil reading of a brief reads each point in Tamil where it has one (the sentences the code builds), the record's own title as it is (RC-15, PB-207)
+    if (b.kind === "Brief") return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: lang === "ta" ? p.ta ?? p.text : p.text })).filter((x, i) => !(lang === "ta" && b.points[i].ta === "")); // ta "": the pipeline AI wrote it in English only, so a Tamil reading leaves it out
   }
   const list = d.blocks.find((b) => b.kind === "CaseList");
   if (list && list.kind === "CaseList") return list.rows.slice(0, 10).map((r, i) => ({ key: r.id, lead: "", text: caseBrief(r, i, d.asOf, lang) }));
   const rank = d.blocks.find((b) => b.kind === "Ranking");
-  if (rank && rank.kind === "Ranking") return rank.items.slice(0, 8).map((x) => ({ key: x.key, lead: "", text: `${x.rank === 1 ? (lang === "ta" ? "முதலிடம்" : "Top") : `${lang === "ta" ? "இடம்" : "Number"} ${x.rank}`}: ${x.label}, ${x.value}${rank.unit && rank.unit !== "points" ? ` ${rank.unit}` : ""}.` }));
+  if (rank && rank.kind === "Ranking") return rank.items.slice(0, 8).map((x) => {
+      // in Tamil the zone and the department are said by their Tamil names (a zone by its number, a department by its code), the unit in Tamil
+      const label = lang !== "ta" ? x.label : x.action === "zone" && x.zone != null && ZONE_TA_NAME[x.zone] ? ZONE_TA_NAME[x.zone] : x.action === "dept" && DEPT_TA[x.key] ? DEPT_TA[x.key] : x.label;
+      const unit = rank.unit && rank.unit !== "points" ? (lang === "ta" ? UNIT_TA[rank.unit] ?? rank.unit : rank.unit) : "";
+      return { key: x.key, lead: "", text: `${x.rank === 1 ? (lang === "ta" ? "முதலிடம்" : "Top") : `${lang === "ta" ? "இடம்" : "Number"} ${x.rank}`}: ${label}, ${x.value}${unit ? ` ${unit}` : ""}.` };
+    });
   return [];
 }
 

@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import { zoomOf } from "./Shell";
 import type { AlertLane } from "@/lib/collector/alerts";
 import { I } from "./icons";
-import { fmtWhen } from "./lib";
+import { fmtWhen, whenOrDay } from "./lib";
 import "./alerts.css";
 
 interface Payload { lane: AlertLane; admin: { title: string; line: string } | null }
@@ -53,7 +53,7 @@ export function AlertBar({ now, compact }: { now: string; compact?: boolean }) {
               <ul className="alb-src">
                 {d.lane.sources.map((s) => (
                   <li key={s.key} className={`lv-${LEVEL[s.level]}`}>
-                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{s.t.length > 10 ? fmtWhen(s.t, now) : s.t}</small>}
+                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{whenOrDay(s.t, now)}</small>}
                   </li>
                 ))}
               </ul>
@@ -127,7 +127,7 @@ function AlertChip({ d, b, admin, now, open, setOpen, onHide }: { d: Payload; b:
               <ul className="alb-src">
                 {d.lane.sources.map((s) => (
                   <li key={s.key} className={`lv-${LEVEL[s.level]}`}>
-                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{s.t.length > 10 ? fmtWhen(s.t, now) : s.t}</small>}
+                    <b>{s.label}</b><span>{s.says}</span>{s.t && <small>{whenOrDay(s.t, now)}</small>}
                   </li>
                 ))}
               </ul>

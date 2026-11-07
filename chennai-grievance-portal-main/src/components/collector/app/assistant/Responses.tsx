@@ -53,7 +53,7 @@ export function IncidentCard({ x, rank, onOpen, onAsk }: { x: IncidentItem; rank
         <b className="aq-rank">{rank}</b>
         <SevBadge s={x.severity} />
         {x.dead > 0 && <span className="aq-tag sev">{x.dead} dead</span>}
-        <span className="aq-tag">{x.status}</span>
+        <span className="aq-tag" data-i18n-ctx="status">{x.status}</span>
       </header>
       <button className="aq-inc-t" onClick={() => onAsk(`Tell me more about the ${ORD[rank - 1] ?? `number ${rank}`} one`)}>{x.title}</button>
       <p className="aq-inc-s">{x.summary}</p>
@@ -82,7 +82,7 @@ export function IncidentDetailResponse({ x, onOpen }: { x: IncidentDetail; onOpe
     <div className={`aq-det ${SEV_CLASS[x.severity] ?? ""}`}>
       <header className="aq-det-h">
         <SevBadge s={x.severity} />
-        <span className="aq-tag">{x.status}{x.deadlineMissed ? " · past deadline" : ""}</span>
+        <span className="aq-tag" data-i18n-ctx="status">{x.status}{x.deadlineMissed ? " · past deadline" : ""}</span>
         <span className="aq-tag">{x.category}</span>
         <code>{x.incidentId}</code>
       </header>
@@ -91,7 +91,7 @@ export function IncidentDetailResponse({ x, onOpen }: { x: IncidentDetail; onOpe
       <div className="aq-det-grid">
         <section className={x.focus === "where" ? "hl" : ""}><h5><I n="pin" />Where</h5><p>{where || "Not recorded"}</p></section>
         <section className={x.focus === "when" ? "hl" : ""}><h5><I n="clock" />When</h5><p>{when(x.occurredAt) || "Not recorded"}{x.closedAt ? ` · closed ${when(x.closedAt)}` : ""}</p></section>
-        <section className={x.focus === "status" ? "hl" : ""}><h5><I n="timer" />Status</h5><p>{x.status}{x.deadline ? ` · deadline ${when(x.deadline)}${x.deadlineMissed ? " (missed)" : ""}` : ""}</p></section>
+        <section className={x.focus === "status" ? "hl" : ""}><h5><I n="timer" />Status</h5><p data-i18n-ctx="status">{x.status}{x.deadline ? ` · deadline ${when(x.deadline)}${x.deadlineMissed ? " (missed)" : ""}` : ""}</p></section>
         <section className={x.focus === "who" ? "hl" : ""}><h5><I n="gov" />Responsible</h5><p>{x.department ?? "Not assigned"}
           {x.officials.length > 0 && <small>{x.officials.map((o) => `${o.name}${o.designation ? `, ${o.designation}` : ""}`).join(" · ")}</small>}</p></section>
       </div>

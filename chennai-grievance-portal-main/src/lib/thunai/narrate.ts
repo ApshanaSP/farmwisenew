@@ -85,6 +85,30 @@ const KINDS: [string, string, string | null, string | null][] = [
   ["FIRE_EXPLOSION", "Fire & explosion", "a fire", "தீ விபத்து"],
   ["SUICIDE_SELF_HARM", "Suicide & self-harm", "a self-harm report", "தற்கொலை தொடர்பான புகார்"]
 ];
+/**
+ * The Tamil of every category LABEL (the noun phrase a screen's title or scope shows, not the sentence about one issue above). Complete reference data: the codes
+ * and English labels are the store's category table (KINDS above); a test fails if a category has no line here (QA pass 4, RC-15).
+ */
+export const CAT_LABEL_TA: Record<string, string> = {
+  SOLID_WASTE: "குப்பை மற்றும் திடக்கழிவு", CRIME_PROPERTY: "திருட்டு, பறிப்பு மற்றும் மோசடி", STREETLIGHT_ELECTRICAL: "தெருவிளக்கு மற்றும் மின் ஆபத்துகள்", ROAD_ACCIDENT: "சாலை விபத்து",
+  FLOOD_WATERLOGGING: "வெள்ளம் மற்றும் நீர்த்தேக்கம்", DRAINAGE_SEWAGE: "வடிகால் மற்றும் கழிவுநீர்", ROAD_DAMAGE: "சாலைகள், நடைபாதைகள் மற்றும் பாலங்கள்",
+  PUBLIC_ORDER: "போராட்டங்கள் மற்றும் பொதுத் தொல்லை", TRAFFIC_OBSTRUCTION: "போக்குவரத்துத் தடை மற்றும் வாகன நிறுத்தம்", CRIME_VIOLENT: "வன்முறைக் குற்றம்",
+  SANITATION_TOILETS: "பொதுக் கழிப்பறைகள் மற்றும் திறந்தவெளி மலம் கழித்தல்", ADMIN_SERVICES: "வரி, சான்றிதழ் மற்றும் தேர்தல் சேவைகள்", ENCROACHMENT: "ஆக்கிரமிப்பு மற்றும் அனுமதியற்ற கட்டுமானம்",
+  DRAIN_WORKS_SAFETY: "வடிகால் பணியிடப் பாதுகாப்பு", OTHER: "பிற / வகைப்படுத்தப்படாதவை", TREES_PARKS: "மரங்கள், பூங்காக்கள் மற்றும் விளையாட்டு மைதானங்கள்", MISSING_PERSON: "காணாமல் போனவர்",
+  VECTOR_DISEASE: "கொசு மற்றும் நீர்வழி நோய்கள்", CRIMES_AGAINST_WOMEN: "பெண்கள் மற்றும் குழந்தைகளுக்கு எதிரான குற்றங்கள்", BUILDING_SAFETY: "பாதுகாப்பற்ற கட்டடங்கள் மற்றும் சுவர்கள்",
+  STRAY_ANIMALS: "தெரு விலங்குகள்", DARK_SPOT_SAFETY: "இருண்ட இடங்கள் மற்றும் பொதுப் பாதுகாப்பு", DRUGS_LIQUOR: "போதைப்பொருள் மற்றும் கள்ளச்சாராயம்",
+  HEALTH_SERVICES: "சுகாதாரச் சேவைகள் மற்றும் மருத்துவமனைத் திறன்", PUBLIC_WORKS: "பொதுப்பணித் தரம் மற்றும் பணியிடங்கள்", FOOD_SAFETY: "உணவுப் பாதுகாப்பு மற்றும் இறைச்சி சுகாதாரம்",
+  WATERBODY_INFRA: "ஏரிகள், கரைகள் மற்றும் மதகுகள்", FLOOD_RELIEF: "வெள்ள நிவாரணத் தேவைகள்", AIR_POLLUTION: "காற்று மாசு", FLOOD_RISK_SIGNAL: "வானிலை மற்றும் வெள்ள எச்சரிக்கைகள்",
+  POLICE_OTHER: "பிற காவல்துறை விவகாரங்கள்", CIVIC_FACILITIES: "பொதுக் கட்டடங்கள் மற்றும் வசதிகள்", WATER_SUPPLY: "குடிநீர் விநியோகம்", FIRE_EXPLOSION: "தீ மற்றும் வெடிப்பு",
+  SUICIDE_SELF_HARM: "தற்கொலை மற்றும் தன்னைத்தானே காயப்படுத்துதல்"
+};
+
+/** the Tamil of a category given its English label (a case row carries the label, not the code); null when it is not one of the store's */
+export const catTaOfLabel = (label: string | null | undefined): string | null => {
+  const k = KINDS.find(([, l]) => l.toLowerCase() === String(label ?? "").toLowerCase());
+  return k ? CAT_LABEL_TA[k[0]] ?? null : null;
+};
+
 /** the store's category codes and labels, for the lanes that have no World to ask (catlabels.ts) */
 export const CATEGORY_LABELS: { code: string; label: string }[] = KINDS.map(([code, label]) => ({ code, label }));
 const BY_KIND = new Map<string, { en: string; ta: string } | null>(KINDS.flatMap(([code, label, en, ta]) => {

@@ -178,7 +178,7 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
                       <SevChip s={a.sev} />
                     </div>
                     <div className="bf2-where">
-                      <span><I n="pin" />{a.zone ?? "Chennai"}</span><span><I n="gov" />{a.dept}</span><span>{a.status}</span>
+                      <span><I n="pin" />{a.zone ?? "Chennai"}</span><span><I n="gov" />{a.dept}</span><span data-i18n-ctx="status">{a.status}</span>
                       {a.overdue && <span className="bf2-late">Past deadline</span>}
                     </div>
                     <div className="bf2-what"><b>What happened</b>{a.why.summary}{a.why.facts.length ? ` ${a.why.facts.join(" · ")}.` : ""}</div>
@@ -637,7 +637,7 @@ export function PatternBody({ p, c }: { p: Pattern; c: Console }) {
             <button key={i.id} className="pt-i" onClick={() => c.openInc(i.id)} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
               <span className="pt-i-h"><b>{i.title || i.type}</b><SevChip s={i.sev} /></span>
               <span className="pt-i-s">{i.plain?.summary}{i.plain?.facts?.length ? ` ${i.plain.facts.slice(0, 2).join(" · ")}.` : ""}</span>
-              <span className="pt-i-m">{fmtShort(i.t)} · {i.status}{Number(i.open) ? "" : " (closed)"} · {i.dept_name ?? i.dept}</span>
+              <span className="pt-i-m" data-i18n-ctx="status">{fmtShort(i.t)} · {i.status}{Number(i.open) ? "" : " (closed)"} · {i.dept_name ?? i.dept}</span>
             </button>
           ))}
         </div>

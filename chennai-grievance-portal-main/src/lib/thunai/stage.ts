@@ -55,7 +55,7 @@ export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Chart"), id: str(40), title: str(160), chart: z.enum(["bar", "hbar", "line", "donut"]), unit: str(30).nullable(),
     labels: z.array(str(80)).max(40), values: z.array(num).max(40) }),
   z.object({ kind: z.literal("Heat"), id: str(40), title: str(160), rows: z.array(str(80)).max(12), cols: z.array(str(80)).max(10), cells: z.array(z.array(num)).max(12) }),
-  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), incidentId: str(80).nullable() })).max(10) }),
+  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), ta: str(400).optional(), incidentId: str(80).nullable() })).max(10) }),
   z.object({ kind: z.literal("Answer"), id: str(40), title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
   z.object({ kind: z.literal("Drafts"), id: str(40), title: str(120) }),
   /** what stands out: each finding with its method, how many values it rests on, and a caveat (stats.ts) */

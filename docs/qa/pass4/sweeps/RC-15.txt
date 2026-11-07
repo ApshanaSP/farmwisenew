@@ -1,0 +1,54 @@
+RC-15 sweep (QA4 G2). The class: a Tamil line, or a spoken line, built from an English piece or a wrong-wording piece.
+
+1. Runtime sweep: 12 Tamil sentences through the real path (grader/client-sim.ts, no model key), each answer and each Tamil reading (narrationOf ta) searched for Latin words of 3+ letters. Before the fixes (first run):
+  Q: இந்த வாரம் கடுமையான புகார்கள் பட்டியல்
+     LATIN: Pulianthope (Buckingham Canal - Basin Bridge stretch),  | Ice House, 
+  Q: இந்த வாரம் கடுமையான புகார்கள் பட்டியல்
+     LATIN: NARR(ta) | Canal overflow at Pulianthope (Buckingham Canal - Basin Bridge stretch), Anna Nagar.  | PWD Water Resources  | Canal overflow at Ice House, Teynampet.  | PWD Water Resources 
+  Q: மழைநீர் வடிகால் துறை சுருக்கம்
+     LATIN: NARR(ta)
+  Q: இந்த மாதம் போக்கு என்ன
+     LATIN: Incidents:  | Oct 
+  Q: இந்த மாதம் போக்கு என்ன
+     LATIN: NARR(ta) | Royapuram,  | incidents. | Anna Nagar,  | incidents.
+  Q: அடையாறு இந்த வாரம் சுருக்கம்
+     LATIN: NARR(ta) | Call recd: canal water flowing into Srinivasa Nagar  | Saidapet from Adyar River,  | Little Mount  | Kottivakkam: uprooted tree blocks road, 
+  Q: சாலை புகார்கள் எத்தனை
+     LATIN: Manali (Manali Kosasthalaiyar Causeway), 
+  Q: சாலை புகார்கள் எத்தனை
+     LATIN: NARR(ta) | Thiruvottiyur: Cracks seen on deck of Manali Kosasthalaiyar Causeway opp.  | PWD Water Resources  | Teynampet: Adyar Thiru. VI. Ka. Bridge, Adyar  | PWD Water Resources 
+  Q: கோடம்பாக்கம் பற்றி விளக்கு
+     LATIN: NARR(ta)
+
+   Found and fixed (each a place that built a Tamil line from English pieces):
+   - the brief points: attention reasons and conditions (templates in collector/intel.ts, insights.ts) -> thunai/reasons.ts, one rule per template, a test reads intel.ts and fails if a template has no rule
+   - a ranking said in Tamil: the zone and the department by English name, the unit word 'incidents' -> by zone number and department code (lexicon ZONE_TA_NAME, DEPT_TA, now complete), UNIT_TA
+   - 9 Corporation departments had no Tamil name (GCC-BRG, BLD, CNL, EDU, FWD, FMU, GAD, LND, MEC): added; a real-world test checks every department and category
+   - a category label in a Tamil title or scope ('Roads, footpaths & bridges'): CAT_LABEL_TA, complete over the 31 categories
+   - a trend said 'Incidents: 5574' and '21 Oct' in a Tamil line: no English subject word when no kind is named, month and am/pm in Tamil (labelTa)
+   - a case read in Tamil named its zone and department in English: by zone number and department code
+   - a long case title read as 'category at place': the category in Tamil
+
+2. After the fixes (same sentences): the only Latin left in a Tamil answer is a record's own title, a place name from the record, and the acronyms PWD/GCC/AQI. A record's own title is left as the record has it (OPEN-12, the owner's decision).
+  Q: இந்த வாரம் கடுமையான புகார்கள் பட்டியல்
+     LATIN: Pulianthope (Buckingham Canal - Basin Bridge stretch),  | Ice House, 
+  Q: இந்த வாரம் கடுமையான புகார்கள் பட்டியல்
+     LATIN: NARR(ta) | Canal overflow at Pulianthope (Buckingham Canal - Basin Bridge stretch), Anna Nagar.  | Canal overflow at Ice House, Teynampet.  | Canal overflow at Kilpauk, Anna Nagar. 
+  Q: இந்த மாதம் போக்கு என்ன
+     LATIN: NARR(ta)
+  Q: சாலை புகார்கள் எத்தனை
+     LATIN: Manali (Manali Kosasthalaiyar Causeway), 
+  Q: சாலை புகார்கள் எத்தனை
+     LATIN: NARR(ta) | Cracks seen on deck of Manali Kosasthalaiyar Causeway opp.  | Adyar Thiru. VI. Ka. Bridge, Adyar  | Roads, footpaths 
+  Q: அதிக புகார்கள் உள்ள மண்டலங்கள் வரிசை
+     LATIN: NARR(ta)
+  Q: குப்பை புகார்கள் டாஷ்போர்டு
+     LATIN: NARR(ta) | Burning of Garbage at Dumping Ground.  | Huge garbage dump near Murugan Temple bus stop, not cleared for two weeks now.  | Cleanliness in footpath problem irukku, konjam indha road-a paarunga. 
+
+3. Source greps (class: severity, status, day, time):
+   grep for a level glued before the word severity (\{x.sev\} severity, `${r.sev} severity`): 3 hits at HEAD (collector Detail.tsx:151, Overview.tsx:442, assistant/incidents.ts:129), 0 now; guard in thunai/rc15.pass4.test.ts
+   grep for a complaint status shown as a bare text node in collector and officer screens: 8 places had no context mark (Detail x3, Insights, AlertBar list, StChip, Overlays select, AskMapPanel), all marked data-i18n-ctx=status now; guard in rc15.pass4.test.ts
+   grep for a feed time printed raw (s.t): AlertBar x2 (whenOrDay now)
+   grep for fixed one-text labels of the Briefing, Stories, Attention, AlertBar components with no dictionary line: 24 found, added; guard reads the components
+
+4. Not done, with the reason: PB-327 (Tamil mode largely English on citizen and officer pages) is partly the design: the page words are translated by the AI translator when a key exists (components/i18n/Translator.tsx), and the QA servers have no key. The dictionary was extended for the Briefing page only (PB-300). Other pages' labels are not in the hand-checked dictionary and are not guessed here.

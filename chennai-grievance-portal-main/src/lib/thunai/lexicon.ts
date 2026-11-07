@@ -61,7 +61,10 @@ export const DEPT_TA: Record<string, string> = {
   "POL-GCP": "பெருநகர சென்னை காவல்துறை", "GCC-SWD": "மழைநீர் வடிகால் துறை", "GCC-SWM": "திடக்கழிவு மேலாண்மைத் துறை", "GCC-ENG": "சாலைகள் மற்றும் கட்டட அனுமதித் துறை",
   "GCC-ELE": "தெருவிளக்கு மற்றும் மின் துறை", "GCC-HLT": "மாநகராட்சி சுகாதாரத் துறை", "GCC-PRK": "பூங்காக்கள் துறை", "GCC-REV": "வருவாய்த் துறை", "PWD-WRD": "பொதுப்பணித்துறை நீர்வளம்",
   "PWD-BLD": "பொதுப்பணித்துறை கட்டடங்கள்", "HLT-DMS": "அரசு மருத்துவமனைகள்", "CMWSSB": "சென்னை குடிநீர் வாரியம்", "TANGEDCO": "மின் பகிர்மானக் கழகம்", "TNPCB": "மாசு கட்டுப்பாடு வாரியம்",
-  "DIST-DM": "மாவட்டப் பேரிடர் மேலாண்மை", "DIST-REV": "மாவட்ட வருவாய்த் துறை"
+  "DIST-DM": "மாவட்டப் பேரிடர் மேலாண்மை", "DIST-REV": "மாவட்ட வருவாய்த் துறை",
+  // the rest of the Corporation's departments (the table in officer/departments.ts): complete, so no Tamil line has to say an English department name (QA pass 4, RC-15)
+  "GCC-BRG": "பாலங்கள் துறை", "GCC-BLD": "கட்டடங்கள் துறை", "GCC-CNL": "மன்றத் துறை", "GCC-EDU": "கல்வித் துறை", "GCC-FWD": "குடும்ப நலத் துறை",
+  "GCC-FMU": "நிதி மேலாண்மைப் பிரிவு", "GCC-GAD": "பொது நிர்வாகத் துறை", "GCC-LND": "நிலம் மற்றும் சொத்துத் துறை", "GCC-MEC": "இயந்திரப் பொறியியல் துறை"
 };
 
 /** category code -> spoken names */

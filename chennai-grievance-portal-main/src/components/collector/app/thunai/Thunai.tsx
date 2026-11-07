@@ -49,6 +49,7 @@ import "./thunai.css";
 import type { StudioContext } from "../studio/Dataset";
 import type { StudioReply } from "./StudioAnswer";
 import { istDateTime } from "@/lib/ist-dates";
+import { confirmLine } from "@/lib/thunai/say";
 
 const speak = (text: string, lang: string, onEnd?: () => void, rate = 1, voice?: string | null, allowed?: Set<string>) => {
   // a Tamil line with no Tamil voice on this device is shown, not read out by an English voice
@@ -796,9 +797,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const s = steps.find((x) => x.a === "workspace" || x.a === "remember" || x.a === "forget" || x.a === "remind");
     // a plan with something outward in it (level C) and nothing to keep: run() only drafts to the tray, never sends
     if (!s) { void run(steps, lang, said, "ai"); return; }
-    const q = s.a === "workspace" ? line("saveAsk", lang, { name: s.name }) : s.a === "remember" ? line("rememberAsk", lang, { text: s.text })
-      : s.a === "forget" ? line("forgetAsk", lang, { what: s.all ? (lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (lang === "ta" ? "கடைசி குறிப்பை" : "the last note") })
-        : line("remindAsk", lang, { when: whenOf((s as Extract<Step, { a: "remind" }>).at), text: (s as Extract<Step, { a: "remind" }>).text });
+    const q = confirmLine(s as Parameters<typeof confirmLine>[0], lang) ?? ""; // one builder with the test copy of this code (say.ts), the reminder's time in Chennai time
     setPendingB({ text: q, steps, heard: said, lang });
     earcon("need");
     out(q, lang, "asking");

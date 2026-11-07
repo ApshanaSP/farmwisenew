@@ -72,7 +72,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
         <select className="sel" value={f.sev} onChange={(e) => set("sev", e.target.value)} aria-label="Severity">
           <option value="">All severities</option>{SEVS.map((s) => <option key={s}>{s}</option>)}
         </select>
-        <select className="sel" value={f.status} onChange={(e) => set("status", e.target.value)} aria-label="Status">
+        <select className="sel" value={f.status} onChange={(e) => set("status", e.target.value)} aria-label="Status" data-i18n-ctx="status">
           <option value="">All statuses</option>{STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <select className="sel" value={f.scope} onChange={(e) => set("scope", e.target.value)} aria-label="Time range">

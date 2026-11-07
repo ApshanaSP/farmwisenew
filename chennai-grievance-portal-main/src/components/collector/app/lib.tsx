@@ -73,6 +73,12 @@ export const fmtShort = (s: string | number) => `${fmtDate(s)}, ${fmtTime(s)}`;
 /** "today, 10:17 PM" when `s` falls on the same day as `now`, else "3 Oct, 10:17 PM" (the data chip's collection time). */
 export const fmtWhen = (s: string, now: string) => `${fmtDate(s) === fmtDate(now) ? "today" : fmtDate(s)}, ${fmtTime(s)}`;
 
+/** A time from a feed that may be a whole day ("2026-11-07", IMD's day) or a moment: "7 Nov" or "today, 10:17 PM", never the raw ISO day (RC-15, PB-303). */
+/** "11 reports · 9 outlets" as ONE text, so the Tamil translator sees one template ("# reports · # outlets") and not a fragment and a stray "s" (RC-15, PB-300). */
+export const reportsOutlets = (reports: number, outlets: number) => `${reports} ${reports === 1 ? "report" : "reports"} · ${outlets} ${outlets === 1 ? "outlet" : "outlets"}`;
+
+export const whenOrDay = (s: string, now: string) => (s.length > 10 ? fmtWhen(s, now) : /^\d{4}-\d{2}-\d{2}$/.test(s) ? fmtDate(s) : s);
+
 /** Relative to the data's "now" (the pipeline as-of time), so it matches the windows. */
 export function rel(s: string, now: string): string {
   const m = (ms(now) - ms(s)) / 6e4;
@@ -119,7 +125,7 @@ const ST_CLS: Record<string, string> = {
   Lapsed: "st-resolved"
 };
 export function StChip({ s }: { s: string }) {
-  return <span className={`st ${ST_CLS[s] ?? "st-open"}`}>{s}</span>;
+  return <span className={`st ${ST_CLS[s] ?? "st-open"}`} data-i18n-ctx="status">{s}</span>;
 }
 
 /** Department icon by the family of incidents it handles. */

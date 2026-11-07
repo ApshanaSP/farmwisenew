@@ -25,6 +25,7 @@ import type { RainLayer } from "./rehearsal/rainLayer";
 // Rain & flooding loads only when it is opened (the top bar's Rain button, the rain band, Ask the Map)
 const RainView = dynamic(() => import("./rehearsal/RainView"), { ssr: false });
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
+import { sevIncident } from "@/lib/sev-label";
 
 // =================================================================== page 1 ==
 
@@ -439,7 +440,7 @@ export function StoryLink({ i }: { i: Story }) {
   const more = i.headlines > 1 ? ` · ${plural(i.headlines - 1, "similar report")}` : "";
   if (i.grievances > 0) return <span className="routed"><I n="user" />Also a grievance · {plural(i.grievances, "citizen complaint")}</span>;
   if (i.incident) return <span className="routed" title="Linked to an incident in our records; no citizen has complained about it yet">
-    <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
+    <I n="alert" />{i.sev ? sevIncident(i.sev as string) : "Incident on record"} · no citizen complaint yet</span>;
   return more ? <span className="routed dim"><I n="news" />{more.replace(/^ · /, "")}</span> : null;
 }
 

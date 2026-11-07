@@ -12,6 +12,7 @@ import { asOf, explain, incident as incidentFull, periodSinceWindow, periodWindo
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
+import { sevLabel } from "@/lib/sev-label";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -126,7 +127,7 @@ export function reasonsOf(r: Row): string[] {
     else if ((m = p.match(/^(\d+) similar incidents here in (\d+) days/))) add(`${m[1]} similar incidents at this place in ${m[2]} days`);
   }
   if (/several departments/i.test(String(r.attention_reason ?? ""))) add("Needs several departments to act together");
-  if (!out.length) add(`${r.sev} severity`);
+  if (!out.length) add(sevLabel(r.sev));
   return out.slice(0, 5);
 }
 

@@ -97,3 +97,21 @@ export function say(key: LineKey, lang: Lang, fields: Fields = {}): string {
   if (!numberGuard(line, fields, tpl)) throw new Error(`number guard: ${key}`);
   return line;
 }
+
+/** A time the Collector can read in Chennai ("6 Nov, 5:00 pm"; in Tamil "6 நவ., 5:00 பிற்பகல்"), never the ISO string the step carries (RC-15, PB-281). */
+export function whenText(at: unknown, lang: Lang): string {
+  const d = typeof at === "string" || typeof at === "number" ? new Date(at) : at instanceof Date ? at : null;
+  if (!d || Number.isNaN(d.getTime())) return lang === "ta" ? "குறித்த நேரத்தில்" : "at the time you said";
+  const t = d.toLocaleString(lang === "ta" ? "ta-IN" : "en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
+  // the runtime's Tamil clock may still say AM and PM: the Tamil words for them, so no Latin letters stay in a Tamil line
+  return lang === "ta" ? t.replace(/\s*AM\b/i, " முற்பகல்").replace(/\s*PM\b/i, " பிற்பகல்") : t;
+}
+
+/** The question asked before a step that changes something saved is done (a view saved, a note kept or forgotten, a reminder set). One builder for the browser and the test copy of it. */
+export function confirmLine(s: { a: string; name?: string; text?: string; all?: boolean; at?: unknown }, lang: Lang): string | null {
+  if (s.a === "workspace") return say("saveAsk", lang, { name: s.name });
+  if (s.a === "remember") return say("rememberAsk", lang, { text: s.text });
+  if (s.a === "forget") return say("forgetAsk", lang, { what: s.all ? (lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (lang === "ta" ? "கடைசி குறிப்பை" : "the last note") });
+  if (s.a === "remind") return say("remindAsk", lang, { when: whenText(s.at, lang), text: s.text });
+  return null;
+}

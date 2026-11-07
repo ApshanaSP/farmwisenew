@@ -491,7 +491,7 @@ function BlockBody(p: BP) {
             return (
               <li key={i} className={on ? "reading" : ""} aria-current={on ? "true" : undefined}>
                 <span className="n">{i + 1}</span>
-                <p>{on ? <Karaoke text={x.text} char={p.reading?.char ?? null} /> : x.text}</p>
+                <p>{on ? <Karaoke text={lang === "ta" ? x.ta || x.text : x.text} char={p.reading?.char ?? null} /> : lang === "ta" ? x.ta || x.text : x.text}</p>
                 {x.incidentId && <button className="st-link" onClick={() => a.openCase(x.incidentId!)}>{T(lang, "Open", "திற")}<I n="chevr" /></button>}
               </li>
             );
@@ -588,7 +588,7 @@ function CaseCard({ r, n, asOf, on, lang, a }: { r: CaseRowT; n: number; asOf: s
             {ag && <span><I n="clock" />{ag}</span>}
             {r.complaints > 0 && <span><I n="chat" />{r.complaints} {T(lang, r.complaints === 1 ? "complaint" : "complaints", "புகார்")}</span>}
             {r.deptName && <span><I n="gov" />{r.deptName}</span>}
-            {r.status && <span className="st">{r.status}</span>}
+            {r.status && <span className="st" data-i18n-ctx="status">{r.status}</span>}
             {r.overdue && <span className="od"><I n="timer" />{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</span>}
           </span>
         </span>
@@ -607,7 +607,7 @@ function CaseDetail({ b, lang, a, doc }: BP & { b: Extract<BlockT, { kind: "Case
   return (
     <article className={`st-detail s-${SEV_CLASS[r.sev ?? ""] ?? "none"}`}>
       <div className="st-dhead">
-        <span className="chips">{r.sev && <em className="sv">{r.sev}</em>}{r.status && <em>{r.status}</em>}{r.overdue && <em className="od">{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</em>}</span>
+        <span className="chips">{r.sev && <em className="sv">{r.sev}</em>}{r.status && <em data-i18n-ctx="status">{r.status}</em>}{r.overdue && <em className="od">{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</em>}</span>
         <h3>{r.title}</h3>
         <p className="id">{r.id}</p>
       </div>
