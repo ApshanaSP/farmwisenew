@@ -332,12 +332,12 @@ describe("BUG-013: opening a workspace by voice", () => {
   const opens = (t: string) => { const r = understand(t, screenOf(STATE as never), world as never, { speechConf: 0.95 }) as { kind: string; steps?: { a: string; op?: string; name?: string }[] }; return r.kind === "do" && (r.steps ?? []).some((x) => x.a === "workspace" && x.op === "open"); };
   it.each(["open workspace Monday review", "open my Monday review workspace", "open saved view Monday review", "OPEN WORKSPACE MONDAY REVIEW"])("English opens the named workspace: %s", (t) => expect(opens(t)).toBe(true));
   // these are done by the rules at once (isNavCommand), so a model is never asked: a live model would not change this
-  it.fails.each(["Monday review workspace open pannu", "Monday review workspace-a thira", "Monday review ஒர்க்ஸ்பேஸ் திற", "Monday review பணியிடத்தை திற", "திங்கள் ஆய்வு ஒர்க்ஸ்பேஸ் திற"])("audit-privacy_injection-13: Tamil and Tanglish open the named workspace: %s", (t) => expect(opens(t)).toBe(true));
-  it.fails("audit-privacy_injection-13: a word in the name does not open another panel", () => {
+  it.each(["Monday review workspace open pannu", "Monday review workspace-a thira", "Monday review ஒர்க்ஸ்பேஸ் திற", "Monday review பணியிடத்தை திற", "திங்கள் ஆய்வு ஒர்க்ஸ்பேஸ் திற"])("audit-privacy_injection-13: Tamil and Tanglish open the named workspace: %s", (t) => expect(opens(t)).toBe(true));
+  it("audit-privacy_injection-13: a word in the name does not open another panel", () => {
     const r = understand("Monday review ஒர்க்ஸ்பேஸ் திற", screenOf(STATE as never), world as never, { speechConf: 0.95 }) as { steps?: { a: string; panel?: string }[] };
     expect((r.steps ?? []).filter((x) => x.a === "panel" && x.panel === "review")).toEqual([]);
   });
-  it.fails("audit-privacy_injection-13: a word in the name does not change the period", () => {
+  it("audit-privacy_injection-13: a word in the name does not change the period", () => {
     const r = understand("QA Daily workspace open pannu", screenOf(STATE as never), world as never, { speechConf: 0.95 }) as { steps?: { a: string }[] };
     expect((r.steps ?? []).filter((x) => x.a === "period")).toEqual([]);
   });
@@ -345,10 +345,10 @@ describe("BUG-013: opening a workspace by voice", () => {
 
 // ----------------------------------------------------------------------------------------------------- found on the way
 describe("found on the way: a short Tamil word matched inside a longer one", () => {
-  it.fails.each(["அடையாறில் தீவிர புகார்கள்", "அடையாறில் தீர்க்கப்படாத புகார்கள்", "தீபாவளி அன்று புகார்கள்"])("audit-privacy_injection-10: %s is not read as a fire", (text) => {
+  it.each(["அடையாறில் தீவிர புகார்கள்", "அடையாறில் தீர்க்கப்படாத புகார்கள்", "தீபாவளி அன்று புகார்கள்"])("audit-privacy_injection-10: %s is not read as a fire", (text) => {
     expect(catIn(` ${text} `)).not.toBe("FIRE_EXPLOSION");
   });
-  it.fails("audit-privacy_injection-10: severe complaints in Adyar, in Tamil, keeps no fire filter", () => {
+  it("audit-privacy_injection-10: severe complaints in Adyar, in Tamil, keeps no fire filter", () => {
     expect(quickScreen("அடையாறில் தீவிர புகார்கள்", world)?.slots.cat ?? null).toBeNull();
   });
   it("a real fire still reads as a fire", () => {

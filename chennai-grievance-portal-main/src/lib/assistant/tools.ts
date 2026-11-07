@@ -389,7 +389,7 @@ const tool = <A extends z.ZodTypeAny>(t: ToolDef<A>) => t;
 const scopeOnly = z.object({ scope: ScopeSchema.default({}) });
 
 const SEVS = ["Severe", "High", "Medium", "Low"] as const;
-const LIST_STATUSES = ["open", "awaiting", "unverified", "verified", "critical", "Open", "Under review", "Assigned", "In progress",
+const LIST_STATUSES = ["open", "overdue", "awaiting", "unverified", "verified", "critical", "Open", "Under review", "Assigned", "In progress",
   "Awaiting verification", "Resolved", "Rejected", "Lapsed"] as const;
 
 export const TOOLS = [
@@ -605,7 +605,7 @@ export const TOOLS = [
 
   tool({
     name: "incidents",
-    description: "Incidents matching filters, 12 per page, as the console's incident list: severity, status ('open', 'awaiting' your verification, 'unverified', 'verified', 'critical' = severe and not verified, or a status name), keyword, sort (t time, sev severity, c complaints, r zone, d department), page; within the period (default) or all 180 days.",
+    description: "Incidents matching filters, 12 per page, as the console's incident list: severity, status ('open', 'overdue' = open past its deadline, 'awaiting' your verification, 'unverified', 'verified', 'critical' = severe and not verified, or a status name), keyword, sort (t time, sev severity, c complaints, r zone, d department), page; within the period (default) or all 180 days.",
     args: z.object({
       scope: ScopeSchema.default({}),
       sev: z.enum(SEVS).nullable().default(null),

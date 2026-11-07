@@ -321,15 +321,22 @@ export function isPlainMove(steps: Step[]): boolean {
  * the agent, which builds a screen for it.
  */
 const NAV_STEPS = new Set<Step["a"]>([...MOVES, "view", "period", "panel", "map", "zoom"]);
-const NAV_VERB = /\b(go|goto|open|switch|change|set|filter|navigate|take me|bring|move|select|pick|turn (on|off)|apply|put|jump|zoom|clear|reset|remove the filter|close|hide|only|just)\b|(போ|போங்க|மாற்று|மாத்து|மாறு|திற|தொற|வடிகட்டு|மட்டும்|மூடு|maathu|maattu|maaru|thora|thira|podu|poo\b|pannu)/i;
+const NAV_VERB = /\b(go|goto|open|switch|change|set|filter|navigate|take me|bring|move|select|pick|turn (on|off)|apply|put|jump|zoom|clear|reset|remove the filter|close|hide|only|just)\b|\b(?:maathu|maattu|maaru|thora|thira|podu|poo|pannu)(?:nga|ga)?\b/i;
+/** the Tamil command verbs, matched as whole words with an ending (no Tamil letter before, none after): போ is a verb, போராட்டம் and போனவங்க are not (RC-03, RC-04) */
+const NAV_VERB_TA = /(?<![஀-௿])(?:போ|போங்க|மாற்று|மாத்து|மாறு|திற|தொற|வடிகட்டு|மட்டும்|மூடு)(?:ங்க|ங்கள்|ுங்க|டா)?(?![஀-௿])/;
+/** asking for the data itself (a list, a number, a total, to be given or taken out): a console move never answers it, so it goes to the agent (RC-04) */
+const DATA_ASK = /\b(list|lists|listing|total|totals|give me|get me|number|count|how many)\b|பட்டியல்|லிஸ்ட்|எடுத்து|(?<![஀-௿])எடு(?![஀-௿])|(?<![஀-௿])(?:குடு|கொடு|கொடுங்க)(?![஀-௿])/i;
 const SHOW_VERB = /\b(show|display|see|view)\b|காட்டு|காமி|kaattu|kaami/i;
 const ASKS = /\b(why|how|what|which|who|when|where|compare|versus|vs|trend|rising|falling|most|least|top|worst|best|count|number of|summar|explain|analy|tell me|is there|are there|any)\b|\?|ஏன்|எப்படி|என்ன|எந்த|எத்தனை|எவ்வளவு|ஒப்பி|கம்பே|யார்|எப்போ|enna|evlo|yen\b|eppadi|endha/i;
+/** the things the data holds (cases, complaints, incidents, severity): "show ... in ward 5" with one of these is a picture of the data, not a move */
+const DATA_NOUN = /\b(cases?|complaints?|incidents?|issues?|problems?|grievances?|severe|overdue|pending|unresolved)\b|புகார்|சம்பவ|வழக்கு/i;
 export function isNavCommand(text: string, steps: Step[]): boolean {
   if (!steps.length || !steps.every((s) => NAV_STEPS.has(s.a))) return false;
   if (ASKS.test(text)) return false;
-  if (NAV_VERB.test(text)) return true;
+  if (steps.some((x) => x.a === "view") && DATA_ASK.test(text)) return false;
+  if (NAV_VERB.test(text) || NAV_VERB_TA.test(text)) return true;
   // "show ..." moves the dashboard when it names a part of it (a page, a panel, the map), not when it asks for a picture of the data
-  return SHOW_VERB.test(text) && steps.some((s) => s.a === "page" || s.a === "panel" || s.a === "map" || s.a === "layer" || s.a === "mapMode");
+  return SHOW_VERB.test(text) && !DATA_NOUN.test(text) && steps.some((s) => s.a === "page" || s.a === "panel" || s.a === "map" || s.a === "layer" || s.a === "mapMode");
 }
 
 /** Instant controls the Collector must never wait on the network for (and sending, which only their own voice may do). */

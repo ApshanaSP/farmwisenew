@@ -116,7 +116,7 @@ describe("BUG-020 holds for the original words", () => {
 
   // audit-understanding-7: the same request in other everyday words
   for (const s of ["describe the flooding complaint in Adyar", "summarize the flooding complaint in Adyar", "what's the flooding complaint in Adyar", "அடையாறு வெள்ள புகார் பத்தி சொல்லு", "அடையாறு வெள்ளம் பத்தி சொல்லுங்க", "அடையாறுல வெள்ளம் புகார் என்ன ஆச்சு", "Adyar flooding complaint pathi sollu", "Adyar flooding complaint enna aachu"])
-    it.fails(`audit-understanding-7 police brief open, ${s}: not the police brief re-scoped`, async () => expect(isPoliceBrief(await round(s, { stage, turns }))).toBe(false));
+    it(`audit-understanding-7 police brief open, ${s}: not the police brief re-scoped`, async () => expect(isPoliceBrief(await round(s, { stage, turns }))).toBe(false));
 });
 
 describe("audit-understanding-7, other screens open", () => {
@@ -126,7 +126,7 @@ describe("audit-understanding-7, other screens open", () => {
     expect(stageOf(await round("explain the flooding complaint in Adyar", { stage, turns: [{ heard: "give me the corporation update", did: "brief" }] }))?.recipe).toBe("case");
   });
   for (const [open, s] of [["give me the corporation update", "describe the flooding complaint in Adyar"], ["give me the corporation update", "அடையாறு வெள்ள புகார் பத்தி சொல்லு"], ["Metrowater report", "Adyar flooding complaint pathi sollu"], ["சென்னை காவல்துறை அறிக்கை", "describe the flooding complaint in Adyar"]] as const)
-    it.fails(`audit-understanding-7 ${open} open, ${s}: not that body's brief re-scoped`, async () => {
+    it(`audit-understanding-7 ${open} open, ${s}: not that body's brief re-scoped`, async () => {
       const d = stageOf(await round(open))!;
       const stage = { recipe: d.recipe, title: d.title, focus: null, slots: d.slots, blocks: d.blocks.map((b) => ({ kind: b.kind, ids: idsOf(b).slice(0, 30) })) } as StageContext;
       expect(stageOf(await round(s, { stage, turns: [{ heard: open, did: "brief" }] }))?.recipe).not.toBe("brief");
@@ -195,7 +195,7 @@ describe("BUG-033 holds: every category keeps its own name, on real records", ()
 
 describe("audit-understanding-1 P0: overdue cases are said not to exist", () => {
   for (const s of ["overdue cases this week", "overdue cases today", "overdue cases in Adyar", "cases past the deadline this week", "overdue complaints this month", "overdue garbage complaints this week", "overdue cases in Adyar kaattu", "இந்த வாரம் கெடு தாண்டிய புகார்கள் காட்டு", "அடையாறு கெடு தாண்டிய புகார்கள் காட்டு", "high priority cases past the deadline this week"])
-    it.fails(`audit-understanding-1 ${s}: the list is not empty`, async () => expect(listOf(await round(s))?.rows.length ?? 0).toBeGreaterThan(0));
+    it(`audit-understanding-1 ${s}: the list is not empty`, async () => expect(listOf(await round(s))?.rows.length ?? 0).toBeGreaterThan(0));
   it("the severe list of the same week has overdue cases, so the empty answers are false", async () => {
     expect(listOf(await round("severe cases past deadline this week"))!.total).toBeGreaterThan(0);
     expect(listOf(await round("overdue high priority cases in Adyar"))!.total).toBeGreaterThan(0);
@@ -221,22 +221,22 @@ describe("audit-understanding-2 P0: past-deadline figures are counted from one p
 
 describe("audit-understanding-3 P0: another town's police puts our police filter on (BUG-002)", () => {
   for (const s of ["filter Kumbakonam police", "கும்பகோணம் போலீஸ் பில்டர் போடு", "Nagercoil police filter pannu", "filter Pollachi police", "filter Karaikudi police"])
-    it.fails(`audit-understanding-3 ${s}: no filter`, () => expect(policeFilterOn(s)).toBe(false));
+    it(`audit-understanding-3 ${s}: no filter`, () => expect(policeFilterOn(s)).toBe(false));
 });
 
 describe("audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030)", () => {
   for (const s of ["Kumbakonam police report", "கும்பகோணம் போலீஸ் அறிக்கை", "Nagercoil police report", "நாகர்கோவில் காவல்துறை அறிக்கை", "பொள்ளாச்சி போலீஸ் ரிப்போர்ட்", "காரைக்குடி மாநகராட்சி அறிக்கை", "Thirupathi police report", "airport police report", "central police report", "Sivakasi police report", "Rameswaram police report", "Kodaikanal police report", "கொடைக்கானல் போலீஸ் அறிக்கை", "Tiruchendur police report", "London police report", "Dubai police report", "Singapore police report", "துபாய் போலீஸ் அறிக்கை", "Pondy police report", "TN police report", "state police report", "Kumbakonam corporation report"])
-    it.fails(`audit-understanding-4 ${s}: no Chennai brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+    it(`audit-understanding-4 ${s}: no Chennai brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
 });
 
 describe("audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005)", () => {
   for (const [s, zone] of [["இந்த வாரம் நிலவரம்", 3], ["இந்த வாரம் சுருக்கம் சொல்லு", 3], ["இந்த வாரம் அறிக்கை", 3], ["காலாண்டு சுருக்கம்", 12], ["காலாண்டு அறிக்கை", 12], ["ஆட்சியர் சுருக்கம்", 13], ["ஆட்சியர் நிலவரம்", 13], ["மாநில நிலவரம்", 2], ["மாநில காவல்துறை அறிக்கை", 2], ["maanila report", 2], ["Manila report", 2], ["ஆட்சியர் அறிக்கை", 13], ["மாவட்ட ஆட்சியர் சுருக்கம்", 13]] as const)
-    it.fails(`audit-understanding-5 ${s}: not zone ${zone}`, async () => expect(zonesOf(await round(s))).not.toContain(zone));
+    it(`audit-understanding-5 ${s}: not zone ${zone}`, async () => expect(zonesOf(await round(s))).not.toContain(zone));
 });
 
 describe("audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005)", () => {
   for (const s of ["Anna Salai police report", "அண்ணா சாலை போலீஸ் அறிக்கை", "Anna Salai la police report", "Anna Salai status", "Anna University status", "Anna University police report", "Anna Arivalayam status", "Anna flyover report"])
-    it.fails(`audit-understanding-6 ${s}: not Anna Nagar's figures`, async () => expect(zonesOf(await round(s))).not.toContain(8));
+    it(`audit-understanding-6 ${s}: not Anna Nagar's figures`, async () => expect(zonesOf(await round(s))).not.toContain(8));
 });
 
 describe("audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032)", () => {
@@ -244,19 +244,19 @@ describe("audit-understanding-8 P0: a place with no zone is dropped from 'explai
     it.fails(`audit-understanding-8 ${s}: the case told is in that place`, async () => expect(String(caseOf(await round(s))?.incident.place ?? "(no case)")).toMatch(place));
   it.fails("audit-understanding-8 explain the accident on OMR: the case told is on OMR", async () => expect(String(caseOf(await round("explain the accident on OMR"))?.incident.place ?? "(no case)")).toMatch(/\bOMR\b|Rajiv Gandhi|Old Mahabalipuram/i));
   for (const s of ["explain the flooding complaint in Madurai", "explain the flooding complaint in Anna Salai"])
-    it.fails(`audit-understanding-8 ${s}: no case from somewhere else`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`audit-understanding-8 ${s}: no case from somewhere else`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
 });
 
 describe("audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022)", () => {
   for (const s of ["போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு", "போலீஸ் அறிக்கையை பார்க்க நினைவில் வை", "போலீஸ் அறிக்கையை ஞாபகம் வச்சுக்கோ", "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து", "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு", "போலீஸ் ரிப்போர்ட் டைப் பண்ணு", "police report ah nyabagam vechukko", "nalaikku police report paakanum nu nyabagapaduthu", "don't let me forget the police report", "keep the police report for later"])
-    it.fails(`audit-understanding-9 ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
-  it.fails("audit-understanding-9 the rules read the Tamil reminder, and the brief still takes it", async () => {
+    it(`audit-understanding-9 ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+  it("audit-understanding-9 the rules read the Tamil reminder, and the brief still takes it", async () => {
     expect(rules("போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு").steps?.[0]?.a).toBe("remind");
     expect(stageOf(await round("போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு"))?.recipe).not.toBe("brief");
   });
   it("sending a report in Tamil is refused in code, not briefed", async () => expect((await round("போலீஸ் அறிக்கையை மெயில் அனுப்பு")).result?.kind).toBe("refuse"));
   for (const s of ["போலீஸ் அறிக்கை டவுன்லோட் பண்ணு", "போலீஸ் அறிக்கை ஒப்பிடு", "போலீஸ் ஸ்டேஷன் அறிக்கை"])
-    it.fails(`audit-understanding-9 other lanes in Tamil, ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+    it(`audit-understanding-9 other lanes in Tamil, ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
 });
 
 describe("audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005)", () => {
@@ -266,29 +266,29 @@ describe("audit-understanding-10 P1: a locality the reference does not spell is 
 
 describe("audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003)", () => {
   for (const [s, want] of [["quarterly brief", "the last 90 days"], ["police report last quarter", "the last 90 days"], ["police report for the last 90 days", "the last 90 days"], ["police report quarterly", "the last 90 days"], ["இந்த வார நிலவரம்", "this week"], ["இந்த மாத சுருக்கம்", "the last 30 days"], ["வாராந்திர சுருக்கம்", "this week"], ["இந்த வார போலீஸ் அறிக்கை", "this week"], ["இந்த மாத காவல்துறை அறிக்கை", "the last 30 days"], ["last week's brief", "this week"], ["police report for the last 7 days", "this week"], ["இந்த வாரத்தின் சுருக்கம்", "this week"], ["இந்த மாதத்தின் சுருக்கம்", "the last 30 days"], ["மாதாந்திர சுருக்கம்", "the last 30 days"], ["மாதாந்திர போலீஸ் அறிக்கை", "the last 30 days"]] as const)
-    it.fails(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
+    it(`audit-understanding-11 ${s}: ${want}`, async () => expect(stageOf(await round(s))?.title).toContain(want));
   for (const s of ["yesterday's brief", "நேற்றைய சுருக்கம்", "netru brief sollu", "police report yesterday", "நேற்று நிலவரம்"])
-    it.fails(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));
+    it(`audit-understanding-11 ${s}: does not hand over today's as if it were asked for`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/\btoday\b/));
 });
 
 describe("audit-understanding-11, another week asked for: this week is given as if it were the one", () => {
   for (const s of ["கடந்த வாரம் நிலவரம்", "அடுத்த வாரம் நிலவரம்", "pona vaaram brief sollu"])
-    it.fails(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/this week/));
+    it(`audit-understanding-11 ${s}: not this week's brief with no word about it`, async () => expect(stageOf(await round(s))?.title ?? "").not.toMatch(/this week/));
 });
 
 describe("audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023)", () => {
   for (const s of ["explain the flood relief need in Adyar", "explain the flood relief complaint in Adyar", "அடையாறு வெள்ள நிவாரணம் விளக்குங்க", "Adyar flood relief pathi simple ah sollu", "அடையாறு வெள்ள எச்சரிக்கை விளக்குங்க", "explain the flood relief need in Ambattur", "explain the flood alert in Ambattur"])
-    it.fails(`audit-understanding-12 ${s}: not standing water`, async () => expect(stageOf(await round(s))?.say.en ?? "").not.toMatch(/standing water/));
+    it(`audit-understanding-12 ${s}: not standing water`, async () => expect(stageOf(await round(s))?.say.en ?? "").not.toMatch(/standing water/));
 });
 
 describe("audit-understanding-13 P1: other deadline words list every severe case (BUG-024)", () => {
   for (const s of ["severe cases beyond the deadline", "severe cases after the deadline", "delayed severe cases", "தாமதமான கடுமையான புகார்கள்", "severe cases deadline thaandi pochu", "deadline mudinja severe cases kaattu", "severe cases not resolved in time", "severe cases deadline mudinjiduchu"])
-    it.fails(`audit-understanding-13 ${s}: only the overdue ones`, async () => expect(listOf(await round(s))!.rows.every((x) => x.overdue)).toBe(true));
+    it(`audit-understanding-13 ${s}: only the overdue ones`, async () => expect(listOf(await round(s))!.rows.every((x) => x.overdue)).toBe(true));
 });
 
 describe("audit-understanding-14 P1: other words for a rise still give one case (BUG-032)", () => {
   for (const s of ["explain the surge in dengue", "explain the growth in dengue", "explain how dengue went up in Adyar", "டெங்கு உயர்வு விளக்குங்க", "dengue athigam aana reason vilakkam sollu"])
-    it.fails(`audit-understanding-14 ${s}: not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`audit-understanding-14 ${s}: not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
 });
 
 describe("audit-understanding-15 P1: a body's brief for one zone does not say which zone", () => {
@@ -394,21 +394,23 @@ describe("what the browser does before any round (Thunai.tsx: the rules act alon
 });
 
 describe("audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain)", () => {
-  for (const t of ["High Court report", "high court cases", "high school complaints", "high tide in Royapuram", "high tide warning", "high rise building complaints", "high mast light complaints in Adyar", "low lying areas in Adyar", "low lying area flooding", "low lying areas la flooding complaints kaattu", "low voltage complaints in Ambattur", "low pressure area report", "கடுமையான வெயில்"])
-    it.fails(`audit-understanding-21 ${t}: no severity list`, async () => expect(slotsOf(await round(t)).sev ?? null).toBeNull());
+  for (const t of ["High Court report", "high court cases", "high school complaints", "high tide in Royapuram", "high tide warning", "high rise building complaints", "high mast light complaints in Adyar", "low lying areas in Adyar", "low lying area flooding", "low lying areas la flooding complaints kaattu", "low voltage complaints in Ambattur", "low pressure area report"])
+    it(`audit-understanding-21 ${t}: no severity list`, async () => expect(slotsOf(await round(t)).sev ?? null).toBeNull());
+  // kept open on purpose: the Tamil word for severe is also the everyday word for harsh ("harsh sun"); no word edge can tell them apart, so the question is for the planner
+  it.fails("audit-understanding-21 கடுமையான வெயில்: no severity list", async () => expect(slotsOf(await round("கடுமையான வெயில்")).sev ?? null).toBeNull());
   for (const t of ["high priority cases in Adyar this week", "low priority cases today", "low severity cases in Adyar"])
     it(`a real severity still reads as one: ${t}`, async () => expect(slotsOf(await round(t)).sev).toBeTruthy());
 });
 
 describe("audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022)", () => {
   for (const t of ["remind me to check the severe cases", "remind me at 5 pm to check the severe cases", "remind me to check the garbage complaints in Adyar", "note: check the severe cases tomorrow", "remind me to read the news", "remind me to check Poondi reservoir level", "remind me to see the air quality report", "remind me to read today's brief", "remind me at 5 pm about the brief", "remind me to check the corporation update", "make a note to check the corporation update", "கடுமையான புகார்கள் பார்க்க நினைவூட்டு", "நாளை கடுமையான புகார்கள் பார்க்க ஞாபகப்படுத்து", "அடையாறு வெள்ள புகார்கள் பார்க்க நினைவூட்டு"])
-    it.fails(`audit-understanding-22 ${t}: the round leaves it to the rules' reminder`, async () => expect(stageOf(await round(t))).toBeFalsy());
+    it(`audit-understanding-22 ${t}: the round leaves it to the rules' reminder`, async () => expect(stageOf(await round(t))).toBeFalsy());
   it("the rules did read it as a reminder", () => expect(rules("remind me at 5 pm to check the severe cases").steps?.[0]?.a).toBe("remind"));
 });
 
 describe("audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030)", () => {
   for (const t of ["சென்னை போலீஸ் ரிப்போர்ட்", "சென்னை போலீஸ் ரிப்போர்ட் கொடு", "போலீஸ் அறிக்கை", "போலீஸ் நிலவரம் சொல்லு", "போலீஸ் அறிக்கை இந்த மாதம்", "மயிலாப்பூர் போலீஸ் ரிப்போர்ட்", "போலீஸ் செய்தி", "போலீஸுக்கு கடிதம் எழுது", "போலீஸ் அறிக்கையை மெயில் அனுப்பு", "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு", "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து", "கும்பகோணம் போலீஸ் அறிக்கை", "துபாய் போலீஸ் அறிக்கை", "police report save pannu", "police report ah type pannu", "police report ah note pannu", "police report paakanum nu remind pannu", "severe cases paaka remind pannu", "Adyar flooding complaints paaka remind pannu"])
-    it.fails(`audit-understanding-23 ${t}: the rules do not take it alone`, () => expect(actsAlone(t)).toBe(false));
+    it(`audit-understanding-23 ${t}: the rules do not take it alone`, () => expect(actsAlone(t)).toBe(false));
   for (const t of ["சென்னை காவல்துறை அறிக்கை", "chennai police report kudu", "police nilavaram sollu", "திருச்சி போலீஸ் ரிப்போர்ட்", "ரயில்வே போலீஸ் அறிக்கை"])
     it(`the same request by another word does reach the round: ${t}`, () => expect(actsAlone(t)).toBe(false));
   for (const t of ["go to trends", "அடையாறுக்கு மாற்று", "filter Adyar"])
@@ -417,12 +419,12 @@ describe("audit-understanding-23 P0: in the browser, a sentence with போல�
 
 describe("audit-understanding-24 P1: the rules hear words starting with கொ as கொசு, mosquito", () => {
   for (const t of ["சென்னை போலீஸ் ரிப்போர்ட் கொடு", "கொடைக்கானல் போலீஸ் அறிக்கை"])
-    it.fails(`audit-understanding-24 ${t}: no Vector disease filter`, () => expect(JSON.stringify(rules(t).steps ?? [])).not.toContain("VECTOR_DISEASE"));
+    it(`audit-understanding-24 ${t}: no Vector disease filter`, () => expect(JSON.stringify(rules(t).steps ?? [])).not.toContain("VECTOR_DISEASE"));
 });
 
 describe("audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control)", () => {
   for (const t of ["only Adyar", "அடையாறு மட்டும்", "Adyar mattum"])
-    it.fails(`audit-understanding-25 police brief open, ${t}: not "None of these mention"`, async () => {
+    it(`audit-understanding-25 police brief open, ${t}: not "None of these mention"`, async () => {
       const m = pushScreen(stageEmpty, stageOf(await round("chennai city police report"))!);
       const cmd = localStageCommand(t) as LocalCmd;
       expect(JSON.stringify(cmd ? stageReducer(m, cmd).fx : [])).not.toMatch(/None of these mention/);

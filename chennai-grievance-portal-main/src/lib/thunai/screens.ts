@@ -31,7 +31,7 @@ export interface Slots {
   cat: string | null;
   taluk: string | null;
   sev: Sev | null;
-  status: "open" | "overdue" | null;
+  status: "open" | "overdue" | "resolved" | null;
   /** words to search for (news, cases), or the map question for "nearby" */
   q: string | null;
   metric: Metric | null;
@@ -411,7 +411,7 @@ async function cases(c: Ctx): Promise<Part> {
     total = Number(r.counts[sev] ?? rows.length);
     source = "console-severity";
   } else {
-    const r = await call(c, "incidents", { scope: scopeArg(s), sev, status: slots.status === "overdue" ? "open" : slots.status, q: slots.q, sort: slots.sort === "complaints" ? "c" : slots.sort === "time" ? "t" : "sev" });
+    const r = await call(c, "incidents", { scope: scopeArg(s), sev, status: slots.status === "resolved" ? "Resolved" : slots.status, q: slots.q, sort: slots.sort === "complaints" ? "c" : slots.sort === "time" ? "t" : "sev" });
     const data = r.data as { rows: Row[]; total: number };
     rows = data.rows.map((x) => caseRow(x, w));
     if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
@@ -420,23 +420,25 @@ async function cases(c: Ctx): Promise<Part> {
       // the list is one page of 12: the overdue total is counted for the whole scope, never from that page (BUG-007). With no
       // severity or words to narrow it, the departments' follow-ups count it; with them, the filtered list is read page by page
       // (the follow-ups know nothing of severity or words, so their count would be the wrong one)
+      // The rows shown are read the same way in both cases: a zone's overdue cases are not on the first page of 12, so the list is read page by page
+      // (until a screenful is found when only the follow-ups count the total), each case once (SK-1, SK-2: "overdue cases in Tondiarpet" said none while three were past their deadline)
+      let seen = data.rows.length, page = 0;
+      const have = new Set(rows.map((x) => x.id));
+      const more: CaseRowT[] = [];
+      while (seen < data.total && page < 8 && (!!sev || !!slots.q || rows.length + more.length < n)) {
+        page++;
+        const p = await call(c, "incidents", { scope: scopeArg(s), sev, status: "overdue", q: slots.q, sort: "sev", page }).catch(() => null);
+        const pr = ((p?.data as { rows?: Row[] } | undefined)?.rows ?? []);
+        if (!pr.length) break;
+        seen += pr.length;
+        for (const x of pr.map((y) => caseRow(y, w)).filter((y) => y.overdue)) if (!have.has(x.id)) { have.add(x.id); more.push(x); }
+      }
       if (!sev && !slots.q) {
         const fu = await call(c, "dept_followups", { scope: scopeArg(s) }).catch(() => null);
         const fr = ((fu?.data as { rows?: Row[] } | undefined)?.rows ?? []).filter((x) => !s.dept || x.code === s.dept);
-        total = fr.length ? Math.max(rows.length, fr.reduce((a, x) => a + (num(x.overdue) ?? 0), 0)) : rows.length;
-      } else {
-        let seen = data.rows.length, page = 0;
-        const more: CaseRowT[] = [];
-        while (seen < data.total && page < 8) {
-          page++;
-          const p = await call(c, "incidents", { scope: scopeArg(s), sev, status: "open", q: slots.q, sort: "sev", page }).catch(() => null);
-          const pr = ((p?.data as { rows?: Row[] } | undefined)?.rows ?? []);
-          if (!pr.length) break;
-          seen += pr.length;
-          more.push(...pr.map((x) => caseRow(x, w)).filter((x) => x.overdue));
-        }
-        total = rows.length + more.length;
-      }
+        total = fr.length ? Math.max(rows.length + more.length, fr.reduce((a, x) => a + (num(x.overdue) ?? 0), 0)) : rows.length + more.length;
+      } else total = rows.length + more.length;
+      rows = [...rows, ...more];
     }
     source = "list";
   }

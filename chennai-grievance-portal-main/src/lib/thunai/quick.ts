@@ -6,15 +6,37 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, DEPT_ALIASES, EXPLAIN_TA, SEV_WORDS, ZONES } from "./lexicon";
-import { fuzzyNames } from "./xlit";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
+import { foreignIn } from "./entities";
+import { fuzzyNames, romanise } from "./xlit";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
-const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && t.includes(w)));
+/** the endings a short Tamil word takes (தீ: தீயில், தீக்கு), so that a short word is a word and not the start of another (தீவிர, "severe", is not தீ, "fire") (RC-03) */
+/** a Tamil word of this many code points or fewer (தீ, "fire") is strict at its right edge; a longer one may be the start of a compound (மழைநீர், தெருவிளக்கு) */
+export const TA_SHORT = 2;
+const TA_ENDING = /^(ல்|ில்|யில்|ல|க்கு|ுக்கு|யை|ை|யால்|ால்|ின்|யின்|ும்|ம்|கள்|களை|களில்|ங்கள்|யும்|உம்|ே)/;
+/** a Tamil word inside the text, at a word edge: nothing Tamil before it; and after it either more of a long word (its case endings and compounds) or, for a short word, only an ending */
+export function tamilAt(t: string, w: string): number {
+  const ww = w.trim();
+  if (!ww) return -1;
+  const long = [...ww].length > TA_SHORT;
+  let i = t.indexOf(ww);
+  while (i >= 0) {
+    const before = t[i - 1], after = t.slice(i + ww.length);
+    const leftOk = !before || !/[஀-௿]/.test(before) || (w.startsWith(" "));
+    // an alias written with a space after it (" வெள்ள ") is the whole word and nothing longer
+    const whole = w.endsWith(" ");
+    const rightOk = after === "" || !/^[஀-௿]/.test(after) || (!whole && (long || TA_ENDING.test(after)));
+    if (leftOk && rightOk) return i;
+    i = t.indexOf(ww, i + 1);
+  }
+  return -1;
+}
+const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && tamilAt(t, w) >= 0));
 
 const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|கம்பே|கம்பா)/.test(t);
 
@@ -77,23 +99,56 @@ export function catIn(t: string): string | null {
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
       const w = raw.toLowerCase();
-      const at = /[\u0B80-\u0BFF]/.test(w) ? t.indexOf(w) : t.indexOf(` ${w} `);
-      if (at < 0) continue;
+      const raw0 = /[\u0B80-\u0BFF]/.test(w) ? tamilAt(t, w) : t.indexOf(` ${w} `);
+      if (raw0 < 0) continue;
+      // the position of the word itself (not of the space before it), so a Tamil word and an English one compare fairly
+      const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? 0 : 1);
+      // a broad word loses to a specific one in the same sentence: "lakes la water level" is the lakes, not the water supply (RC-05)
+      if (w === "water" && / (lake|lakes|reservoir|reservoirs|dam|storage|rain) |ஏரி|நீர்த்தேக்க/.test(t)) continue;
       if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length };
     }
   }
   return best?.code ?? null;
 }
+/**
+ * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds a list (RC-05). overdue wins over open.
+ */
+const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|breach|exceeded|exceeding|violated)( the| their| its| a)? (deadline|due date|sla|time limit)\b|\bdeadline (passed|crossed|missed|miss|over|exceeded|breached|mudinj[a-z]*|thaand[a-z]*|thand[a-z]*)\b|\bnot (resolved|closed|done|attended|fixed) (in|on|within) time\b|\blate (cases|complaints|ones|severe)\b|\b(thaamadham|thamadham|thaamathamaana)\b|தாமத|கெடு (தாண்ட|முடிந்த|மீறி|கடந்த)|காலக்கெடு|கெடுவை/;
+const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
+/** finished cases: "resolved", "closed", "solved" (English), the Tamil and Tanglish words; a lane that dropped this word answered with every case (SK-3) */
+const RESOLVED_RE = /\b(resolved|closed|solved|completed|settled|rectified|mudinjadhu|mudinja|theerthu vecha|theerthaachu|close (aachu|aayiduchu|aagi|pannitanga|pannita))\b|தீர்க்கப்பட்ட|தீர்க்கப்பட்டவை|முடிக்கப்பட்ட|முடிந்த|தீர்வான|மூடப்பட்ட/;
+export function statusIn(t: string): "overdue" | "open" | "resolved" | null {
+  return OVERDUE_RE.test(t) ? "overdue" : OPEN_RE.test(t) ? "open" : RESOLVED_RE.test(t) ? "resolved" : null;
+}
+/** the department a sentence names, by its own words in any language: a filter the lane cannot apply must not be dropped (RC-05) */
+export function deptWordIn(t: string): string | null {
+  for (const [code, words] of Object.entries(DEPT_ALIASES)) for (const raw of words) {
+    const x = raw.toLowerCase();
+    if (x.length < 4 || x === "water") continue;
+    if (/[஀-௿]/.test(x) ? t.includes(x) : t.includes(` ${x} `)) return code;
+  }
+  return null;
+}
 export function sevIn(t: string): Sev | null {
-  for (const [word, sev] of SEV_WORDS) if (has(t, [word.toLowerCase()])) return sev;
+  for (const [word, sev] of SEV_WORDS) if (!WEAK_SEV.has(word) && has(t, [word.toLowerCase()])) return sev;
+  // high, low, medium are severities only beside a word that says so (RC-03)
+  const tk = t.trim().split(" ");
+  for (let i = 0; i < tk.length; i++) if (WEAK_SEV.has(tk[i]) && (SEV_NOUN.has(tk[i + 1] ?? "") || SEV_NOUN.has(tk[i - 1] ?? ""))) return SEV_WORDS.find(([x]) => x === tk[i])?.[1] ?? null;
   if (has(t, ["serious", "critical", "urgent", "danger", "dangerous", "கடுமையான", "கடுமை", "அவசர", "severe"])) return "Severe";
   return null;
 }
+/**
+ * A window the console does not hold: yesterday, the day before, next week or month (and the Tamil and Tanglish words for them, with last week and last month, which the Tamil lanes
+ * have never mapped to a window). The windows it holds are the last 24 hours, 7, 30 and 90 days; a lane that answered these with the current window would say the wrong period with a straight face, so it hands them on (RC-06). English "last week/month/quarter" stay the matching window, named in the screen's title (BUG-003, an accepted decision).
+ */
+const CALENDAR_EN = /\b(yesterdays?|day before( yesterday)?|next (week|month|quarter)s?)\b|\b(nethu|neththu|netru|netraiya|pona (vaaram|maasam|maatham)|kadantha (vaaram|maasam|maatham)|last (vaaram|maasam)|adutha (vaaram|maasam))\b/;
+const CALENDAR_TA = ["நேற்று", "நேத்து", "நேற்றைய", "கடந்த வாரம்", "கடந்த வார", "போன வாரம்", "போன வார", "கடந்த மாதம்", "கடந்த மாத", "கடந்த மாசம்", "போன மாதம்", "போன மாசம்", "போன மாச", "கடந்த காலாண்டு", "போன காலாண்டு", "முந்தைய வாரம்", "முந்தைய மாதம்", "அடுத்த வாரம்", "அடுத்த மாதம்"];
+export const calendarWindowIn = (t: string): boolean => CALENDAR_EN.test(t) || CALENDAR_TA.some((w) => tamilAt(t, w) >= 0);
 export function periodIn(t: string): PeriodKey | null {
   if (has(t, ["today", "now", "24 hours", "இன்று", "இன்னைக்கு", "innaiku", "inniki", "ippo"])) return "daily";
-  if (has(t, ["this week", "week", "weekly", "7 days", "இந்த வாரம்", "வாரம்", "vaaram"])) return "weekly";
-  if (has(t, ["this month", "month", "monthly", "30 days", "இந்த மாதம்", "மாதம்", "maasam"])) return "monthly";
-  if (has(t, ["quarter", "3 months", "90 days", "காலாண்டு"])) return "quarterly";
+  if (has(t, ["this week", "this weeks", "last weeks", "week", "weekly", "7 days", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாரம்", "vaaram", "வாரந்தோறும்"])) return "weekly";
+  if (has(t, ["this month", "this months", "last months", "month", "monthly", "30 days", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "maasam"])) return "monthly";
+  if (has(t, ["quarter", "quarterly", "3 months", "three months", "90 days", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"])) return "quarterly";
   return null;
 }
 
@@ -106,7 +161,7 @@ const MARKET = / (market|vegetable|vegetables|koyambedu) |காய்கறி|
 const VEG = / (tomato|tomatoes|onion|onions|potato|potatoes|brinjal|carrot|beans|cabbage|chilli|chili|ginger|garlic|banana|lemon|drumstick|okra|ladies finger|cauliflower|beetroot|coconut|rice|thakkali|vengayam) |(தக்காளி|வெங்காயம்|உருளை|கத்தரி|கேரட்|பீன்ஸ்|மிளகாய்|இஞ்சி|பூண்டு|வாழை|எலுமிச்சை|முருங்கை|வெண்டை|தேங்காய்)/;
 const AIR = ["air quality", "aqi", "air pollution", "pollution", "காற்று", "காற்றின் தரம்", "மாசு", "kaatru"];
 const RAIN = ["rain", "rainfall", "raining", "மழை", "mazhai", "malai"];
-const LAKE = ["reservoir", "reservoirs", "lake", "lakes", "dam", "water storage", "storage", "ஏரி", "ஏரிகள்", "நீர்த்தேக்க", "தண்ணீர் இருப்பு", "eri", "டேம்", "லேக்"];
+const LAKE = ["reservoir", "reservoirs", "lake", "lakes", "dam", "water storage", "storage", "ஏரி", "ஏரிகள்", "நீர்த்தேக்க", "தண்ணீர் இருப்பு", "நீர் மட்டம்", "நீர்மட்டம்", "eri", "டேம்", "லேக்"];
 /** the district's reservoirs by name, with the spelling that goes in the readings slot */
 const RESERVOIRS: [string, RegExp][] = [["Chembarambakkam", / chembarambakkam |செம்பரம்பாக்க/], ["Puzhal", / puzhal |புழல்/], ["Poondi", / poondi |பூண்டி/], ["Cholavaram", / cholavaram |சோழவரம்/], ["Veeranam", / veeranam |வீராண/]];
 export const reservoirIn = (t: string): string | null => RESERVOIRS.find(([, re]) => re.test(t))?.[0] ?? null;
@@ -117,7 +172,7 @@ const COMPARE = ["compare", "comparison", "versus", "vs", "side by side", "stack
   // English as it is said in Tamil, in either script
   "கம்பேர்", "கம்பேரிசன்", "கம்பேரு", "கம்பார்", "compare pannu", "compare panni", "vithiyasam", "வித்தியாசம் சொல்லு"];
 const INSIGHT = ["stand out", "stands out", "standing out", "outlier", "outliers", "anomaly", "anomalies", "unusual", "abnormal", "spike", "spikes", "odd one", "out of line", "red flag", "red flags", "தனித்து", "அசாதாரண", "வித்தியாசம்", "வித்தியாசமா", "unusual a", "weird"];
-const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
+const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill what", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved location", "unresolved locations", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத இடம்", "தீர்க்கப்படாத இடங்கள்", "இடம் தெரியாத"];
 const PERFORMANCE = ["performance", "department wise", "department-wise", "departmentwise", "zone wise", "zone-wise", "zonewise", "slowest department", "fastest department", "slowest", "turnaround", "செயல்பாடு", "துறைவாரி", "மண்டலவாரி", "performance eppadi"];
 const RANK = ["top", "worst", "highest", "lowest", "most", "least", "best", "rank", "ranking", "அதிகம்", "அதிக", "குறைவு", "மோசமான", "romba"];
 const TREND = ["trend", "trends", "over time", "how has", "moved", "movement", "graph", "போக்கு", "ட்ரெண்ட்", "trend enna"];
@@ -135,9 +190,6 @@ const DISTRICT = ["chennai", "madras", "district", "zone", "zones", "ward", "war
   "severe", "deadline", "overdue", "brief", "briefing", "trend", "trends", "map", "report", "alert", "gcc", "cmwssb", "tneb", "imd", "pwd", "mandi", "jarvis",
   "சென்னை", "மாவட்ட", "மண்டல", "வார்டு", "புகார்", "சம்பவ", "செய்தி", "மழை", "வெள்ள", "விலை", "சந்தை", "காற்று", "ஏரி", "தண்ணீர்", "மின்", "குப்பை", "சாலை",
   "காவல்", "விபத்து", "மருத்துவ", "பள்ளி", "துறை", "அதிகாரி", "ஆட்சியர்", "வானிலை", "புயல்"];
-/** the shape of a general-knowledge question ("what is deep learning", "who is the president", "write a poem") */
-const GENERAL = /^\s*(what is|what are|whats|what does|who is|who was|who are|define|explain|meaning of|tell me a|tell me about|how does|how do i|how to|write|translate|calculate|solve|teach me|give me a|sing|recommend)\b|joke|poem|story|recipe|என்றால் என்ன|யார்|விளக்கு|கதை சொல்|பாடல்|கவிதை/;
-const SUBJECTS = /deep learning|machine learning|artificial intelligence|\bai\b|neural network|programming|python|javascript|java\b|coding|cricket|football|ipl|movie|film|actor|actress|song|music|president|prime minister|capital of|bitcoin|crypto|stock market|share price|history of|physics|chemistry|biology|mathematics|chatgpt|google|facebook|instagram|youtube/;
 
 /**
  * A question that is not about the district (general knowledge, chat, other subjects): Jarvis says what it can help with
@@ -176,6 +228,18 @@ const PLAIN = new Set(("a an the this that these those is are was were be been a
   + "என்ன என்னென்ன எங்க எங்கே எப்படி ஏன் எத்தனை எவ்வளவு இருக்கு இருக்கா இருக்கிறது உள்ள காட்டு காட்டுங்க காட்டுங்கள் சொல்லு சொல்லுங்க பாரு பாருங்க போடு எல்லாம் ஒரு இந்த அந்த கொஞ்சம் இப்போ இப்போது").split(" "));
 const words = (list: string[]) => list.flatMap((x) => norm(x).trim().split(" ")).filter(Boolean);
 const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
+/**
+ * Is this (roman) word one the fast lane knows, in any of the three languages: a word of its lists, the sentence's grammar, a topic, a place or a body of ours, in Tamil letters
+ * or romanised, with a case ending? A word nothing here knows, in front of an agency word, is another place's or body's name (RC-01).
+ */
+let romanListed: string[] | null = null;
+export function listedWord(word: string): boolean {
+  if (LISTED.has(word)) return true;
+  romanListed ??= [...new Set([...LISTED].filter((x) => /[஀-௿]/.test(x)).map((x) => romanise(x).replace(/\s+/g, "")))];
+  return romanListed.some((r) => r === word || (r.length >= 4 && word.startsWith(r) && /^(a|u|i|e|ai|ku|kku|ukku|ukkum|la|le|il|in|um|ul|al|ala|oda|ode|irundhu|gal|kal|ngal)$/.test(word.slice(r.length))));
+}
+/** is this exact (Latin) word on one of the fast lane's own lists? (not romanised Tamil: "polis" is the Corporation's police, spelt as heard) */
+export const isListedExact = (word: string): boolean => LISTED.has(word);
 const WORLD_WORDS = new WeakMap<World, Set<string>>();
 function worldWords(w: World): Set<string> {
   let s = WORLD_WORDS.get(w);
@@ -231,7 +295,7 @@ const EXPLAIN = / (explain|explain to me|whats going on with|what is going on wi
 /** not one issue: a list, a count, a rise, a trend or the reason behind one (BUG-032) */
 /** the words of asking: with a place and nothing but these, the Collector named no topic ("explain the complaint in Adyar") */
 const ASKING = new Set(("explain to me tell more about the a an of in at on with whats what is going wrong happened complaint issue case incident problem this that please here there today week month " +
-  "simple simpleah ah sollu sollunga enna aachu ennanu la le nu adhu vilakku vilakkam vilakkama vilakkunga puriyala puriyalai " +
+  "pathi pathiya patri simple simpleah ah sollu sollunga enna aachu ennanu la le nu adhu vilakku vilakkam vilakkama vilakkunga puriyala puriyalai " +
   "புகார் பிரச்சனை பிரச்சினை சம்பவம் பற்றி பத்தி சொல்லு சொல்லுங்க சொல்லுங்கள் விளக்கு விளக்குங்க விளக்குங்கள் விளக்கவும் விளக்கி விளக்கம் விளக்கமா விளக்கமாக என்னன்னு என்ன ஆச்சு புரியல உள்ள இருக்கும் வந்த இந்த அந்த கொஞ்சம் பகுதி பகுதியில் மண்டலம் மண்டலத்தில் எளிமையா").split(" "));
 const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|list|rise|rising|increase|increasing|spike|spiking|jump|drop|fall|falling|trend|trends|why|pattern|patterns|high|low|many|count|stats|statistics) |புகார்கள்|சம்பவங்கள்|பிரச்சனைகள்|பிரச்சினைகள்|ஏன்|அதிகரி|போக்கு|பட்டியல்/;
 
@@ -239,26 +303,38 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
+  // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
+  if (foreignIn(text, w)) return null;
+  // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
+  if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
+  // yesterday, last week, last month: windows the console does not hold are never answered with the current one (RC-06)
+  if (!o.noBail && calendarWindowIn(t)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
+  // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
+  if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
     const zoneWords = zones.flatMap((n) => [...(ZONES[n]?.en ?? []), ...(ZONES[n]?.ta ?? []), w.zones.find((z) => z.n === n)?.name ?? ""]).flatMap((x) => norm(x).trim().split(" "));
     const isZoneWord = (x: string) => zoneWords.some((z) => z && (x === z || x === `${z}la` || (/[஀-௿]/.test(z) && z.length >= 4 && x.startsWith(z.replace(/[்ுூ]$/, "")))));
-    const namedOther = !cat && t.trim().split(" ").some((x) => !ASKING.has(x) && !isZoneWord(x));
+    // a word that is no asking word, no zone word and no word of the topic that was read is another topic ("the flood relief need in Adyar"): the lane does not answer it as the flood (RC-05)
+    const catWords = (cat ? CAT_ALIASES[cat] ?? [] : []).flatMap((a) => norm(a).trim().split(" ")).filter(Boolean);
+    const isSevWord = (x: string) => SEV_WORDS.some(([s]) => x === s.toLowerCase() || (/[஀-௿]/.test(s) && x.startsWith(s)));
+    const isCatWord = (x: string) => isSevWord(x) || catWords.some((c) => x === c || (/[஀-௿]/.test(c) && c.length >= 3 && x.startsWith(c.replace(/[்ுூ]$/, ""))));
+    const namedOther = t.trim().split(" ").some((x) => !ASKING.has(x) && !LISTED.has(x) && !isZoneWord(x) && !isCatWord(x));
     if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
     if (!o.noBail) return null;
   }
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
   // "what should I do about flooding in Adyar": what needs the Collector first, reasoned in code from the data
   if (ADVICE.test(t)) return { recipe: "advise", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
-  if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved", "தீர்க்கப்படாத", "no location", "unlocated"]) } };
+  if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved location", "unresolved locations", "no location", "unlocated"]) } };
   // "why did complaints spike": asked why, so the reasons, not the outliers
   if (has(t, WHY) && (cat || zones.length)) return { recipe: "why", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
-  if (has(t, INSIGHT) || INSIGHT.some((w) => /[஀-௿]/.test(w) && t.includes(w))) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (has(t, INSIGHT) || false) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
   if (NEARBY.test(t) && FACILITY.test(t)) return { recipe: "nearby", slots: { q: text.trim().slice(0, 240) } };
   if (has(t, DASHBOARD)) return { recipe: "dashboard", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
   if (has(t, ON_MAP) && !cat && !sev && !has(t, ["hotspot", "hotspots", "severe"])) return null;
@@ -280,14 +356,19 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (isComparing(t)) return null;
   if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
-  if (!/^ (go to|open|switch to|take me to|navigate to) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-௿]/.test(w) && t.includes(w)))) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
-  if (has(t, RANK) && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
+  // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
+  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
+  if (has(t, RANK) && cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return null;
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
   if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {
     // "past the deadline", "overdue": only those (BUG-024)
-    const status = /\b(overdue|past (the |their )?deadline|deadline (passed|crossed|missed))\b|கெடு தாண்ட|காலக்கெடு/.test(t) ? "overdue" : null;
+    const status = statusIn(t);
+    // a department named with no topic would be dropped here: the lane says nothing it cannot apply, the agent asks (RC-05)
+    if (!cat && deptWordIn(t)) return null;
     return { recipe: "cases", slots: { sev, cat, status, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,
       // a new question starts clean: a filter an earlier answer put on the console (Fire, say) must not narrow it
       fresh: true } };

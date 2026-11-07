@@ -12,11 +12,15 @@
  * outside the district in the taluk table) in front of an agency word makes the sentence about some other body: it is
  * reported as unknown, never forced onto ours.
  */
-import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, ZONES } from "./lexicon";
-import { editDistance } from "./normalise";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, SUBJECTS, ZONES } from "./lexicon";
+import { editDistance, skeleton } from "./normalise";
 import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
-import { outsideIn, taOutside } from "./outside";
+import { outsideIn, soundsOutside, taOutside } from "./outside";
+import { AREA_WORDS } from "./areas";
+import { LOCALITY_WORDS } from "./areas.localities";
+import { isEnglishWord } from "./english";
+import { calendarWindowIn, isListedExact, listedWord, periodIn } from "./quick";
 
 export type EntityKind = "dept" | "org" | "zone";
 export interface Entity { id: string; kind: EntityKind; name: string; ta: string | null; aliases: string[][]; noRecords?: boolean }
@@ -33,6 +37,18 @@ const QUAL = new Set(["greater", "chennai", "city", "madras", "metro", "metropol
 /** words that name a kind of body: a qualifier nobody knows in front of one of these is another body */
 const HEADS = new Set(["police", "corporation", "board", "department", "dept", "agency", "commission", "authority", "office", "ministry", "municipality", "council",
   "service", "services", "brigade", "commissionerate", "corp", "metrowater", "pwd"]);
+/**
+ * kinds of organisation that always belong to someone else's name ("Loyola College", "an industrial association", "Bar Council"): with one in the sentence
+ * the body is not one of ours, whatever place it is named after
+ */
+const INST = new Set(["college", "colleges", "university", "universities", "institute", "institutes", "association", "associations", "society", "company", "club", "trust", "committee", "bureau", "court", "courts", "academy", "council"]);
+/** words that sit in front of an agency word and name no place: a verb, a pronoun, a place word of the console (in Tamil and Tanglish too) */
+const NAME_STOP_WORDS = ("salai veedhi theru sandhu kuruku kovil bazaar bazar junction flyover bridge signal subway avenue colony layout extension main cross lane park beach ward wards zone zones zonal taluk division divisional regional area areas street road station stations control room helpline emergency helpdesk public civic municipal " +
+  "indha intha idha andha antha adha namma nam enga unga ungal engal avanga ivanga ellam ellaam anaithu ella romba rombha migavum konjam sema mudhal muthal adutha irukura irukkura irukkira irukkum irukku iruku irukka irukkaa ullathu ulla ullatha " +
+  "vaara maatha vaaram maasam varam matham atsiyar aatsiyar atchiyar aatchiyar maanila maanilam anga anka inga ange ingae thaan dhaan kitta kitte pakkam pakkathula pakkathil kudu kodu koduthu sollu solluga podunga paaru paarunga pathi patri pathina paththi yaaru yaar ethu edhu enna aachu aanadhu nadandhathu nadanthathu nadakkuthu nadakkudhu " +
+  "வார மாத காலாண்டு வாராந்திர மாதாந்திர ஆட்சியர் அங்க இங்க அங்கே இங்கே மாநில மாநிலம் கடந்த இன்றைய நேற்றைய இந்த அந்த நம்ம நம் எங்க உங்க எல்லா மொத்த முழு போன நேத்து இன்னைக்கு இப்போ இருக்கிற இருக்கும் உள்ள").split(" ");
+let nameStop: Set<string> | null = null;
+const stopWord = (w: string) => (nameStop ??= new Set(NAME_STOP_WORDS.flatMap((x) => [x, ...(/[஀-௿]/.test(x) ? toRoman(x) : [])]))).has(w);
 /** posts that sit on a body ("police commissioner", "corporation commissioner"): about the body */
 const POSTS = new Set(["commissioner", "commissioners", "officer", "officers", "chief", "head", "inspector", "engineer", "superintendent", "sp", "dcp", "ac", "dc"]);
 /** asking for a brief: a report, a status, an update, what is going on */
@@ -50,7 +66,7 @@ const FILLER = new Set(("a an the this that these those is are was were be am do
   // greetings, the name, and the words that only say what kind of report
   "jarvis hey hello hi hai full detailed complete quick short annual tonight tonights tonight's general many nearest near some few one").split(" "));
 /** Tamil terms in Tamil letters, by stem: matched as the start of a word, so case endings still find them */
-const TA_TERMS: [string, string][] = [["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
+const TA_TERMS: [string, string][] = [["மின்சார", "electricity"], ["காலேஜ்", "college"], ["யூனிவர்சிட்டி", "university"], ["யூனிவர்சிடி", "university"], ["யுனிவர்சிடி", "university"], ["கல்லூரி", "college"], ["யுனிவர்சிட்டி", "university"], ["பல்கலைக்கழகம்", "university"], ["அசோசியேஷன்", "association"], ["சங்கம்", "association"], ["கவுன்சில்", "council"], ["இன்ஸ்டிடியூட்", "institute"], ["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
   ["நிலவரம்", "status"], ["சுருக்கம்", "brief"], ["அப்டேட்", "update"], ["கிரேட்டர்", "greater"], ["கிரேட்டர", "greater"], ["சென்னை", "chennai"], ["மெட்ராஸ்", "madras"], ["மாநகராட்சி", "corporation"], ["கார்ப்பரேஷன்", "corporation"],
   ["மாநகர", "city"], ["நகர", "city"], ["சிட்டி", "city"], ["குடிநீர் வாரியம்", "metrowater"], ["மெட்ரோ வாட்டர்", "metrowater"], ["பொதுப்பணித்துறை", "pwd"], ["பொதுப்பணி", "pwd"], ["மின்வாரியம்", "tangedco"], ["மின் வாரியம்", "tangedco"],
   ["துறை", "department"], ["வாரியம்", "board"], ["ஆணையர்", "commissioner"], ["கமிஷனர்", "commissioner"], ["என்ன", "enna"], ["சொல்லு", "sollu"], ["கோயம்புத்தூர்", "coimbatore"], ["கோவை", "coimbatore"], ["தாம்பரம்", "tambaram"], ["ஆவடி", "avadi"], ["மும்பை", "mumbai"]];
@@ -82,6 +98,8 @@ export function registry(w: World): Registry {
       if (!c.length || seen.has(key)) continue;
       seen.add(key); aliases.push(c);
     }
+    // a one-word alias that is only the first word of the same entity's longer name ("anna" of "anna nagar") is ambiguous: Anna Salai, Anna University (RC-02)
+    if (kind === "zone") for (let i = aliases.length - 1; i >= 0; i--) { const a = aliases[i]; if (a.length === 1 && a[0].length <= 5 && aliases.some((o) => o.length >= 2 && o[0] === a[0])) aliases.splice(i, 1); }
     entities.push({ id, kind, name, ta, aliases });
   };
   const orgs = new Set<string>();
@@ -119,12 +137,16 @@ export function registry(w: World): Registry {
 /** Tamil words to the roman words the registry speaks: known terms by stem, others by sound. */
 function toRoman(text: string): string[] {
   const out: string[] = [];
+  let prevName = false; // the word before was a name, not one of the terms
   for (const tok of text.normalize("NFC").split(/\s+/).filter(Boolean)) {
-    if (!/[஀-௿]/.test(tok)) { out.push(...words(tok)); continue; }
+    if (!/[஀-௿]/.test(tok)) { out.push(...words(tok)); prevName = false; continue; }
     const far = taOutside(tok);
-    if (far) { out.push(far); continue; }
+    if (far) { out.push(far); prevName = false; continue; }
+    // "நகர்" after a name is the "-nagar" of the name (அண்ணா நகர்), not the word for the city (RC-02)
+    if (tok === "நகர்" && prevName) { out.push("nagar"); prevName = false; continue; }
     const term = TA_TERMS.find(([ta]) => !ta.includes(" ") && (tok === ta || tok.startsWith(ta.replace(/்$/, ""))));
     out.push(term ? term[1] : romanise(tok).replace(/\s+/g, ""));
+    prevName = !term;
   }
   return out;
 }
@@ -145,8 +167,11 @@ export function sentenceWords(text: string): string[] {
 
 /** How close a heard word is to a registry word: 1 the same, 0.86 one edit (two on long words), 0.8 the same sound, 0 no. */
 const scored = new Map<string, { s: number; via: "exact" | "edit" | "sound" } | null>();
+/** an ordinary word of any of the three languages (grammar, the lanes' own words, verbs, adverbs): it is a name only when it is spelt exactly as one (RC-02) */
+const plainWord = (w: string): boolean => stopWord(w) || BRIEF_WORDS.has(w) || FILLER.has(w) || ORDINARY.has(w) || isListedExact(w);
 function wordScore(heard: string, want: string): { s: number; via: "exact" | "edit" | "sound" } | null {
   if (heard === want) return { s: 1, via: "exact" };
+  if (plainWord(heard)) return null;
   // the same pair comes up for every alias of every body in every sentence: worked out once
   const key = `${heard}|${want}`;
   if (scored.has(key)) return scored.get(key)!;
@@ -156,9 +181,10 @@ function wordScore(heard: string, want: string): { s: number; via: "exact" | "ed
   return r;
 }
 function wordScoreRaw(heard: string, want: string): { s: number; via: "exact" | "edit" | "sound" } | null {
+  // a heard word is one of ours only when it starts the same way: "inta" is not "madavaram" and "anka" ("there") is not "anna" (RC-02)
   if (heard.length >= 4 && want.length >= 4) {
     const d = editDistance(heard, want, 2);
-    if (d <= 1 || (d === 2 && Math.min(heard.length, want.length) >= 7)) return { s: 0.86, via: "edit" };
+    if (heard[0] === want[0] && (d <= 1 || (d === 2 && Math.min(heard.length, want.length) >= 7))) return { s: 0.86, via: "edit" };
     const a = phonetic(heard).replace(/ /g, ""), b = phonetic(want).replace(/ /g, "");
     const skel = (k: string) => k[0] + k.slice(1).replace(/[aeiou]/g, "");
     if (a.length >= 4 && (a === b || (skel(a) === skel(b) && skel(a).length >= 3))) return { s: 0.8, via: "sound" };
@@ -249,19 +275,27 @@ export function resolveEntity(text: string, w: World): Resolution {
   for (const h of hits) for (let i = h.start; i <= h.end; i++) covered.add(i);
   // another place's body: a city, district, state or commissionerate outside Greater Chennai, anywhere in the sentence and not
   // inside a body's own name ("Tamil Nadu Pollution Control Board" is ours; "Tamil Nadu police" is the state's)
-  const heads = content.map((x, i) => ({ x, i })).filter(({ x }) => HEADS.has(x) || HEADS.has(x.replace(/s$/, "")));
+  const heads = content.map((x, i) => ({ x, i })).filter(({ x }) => HEADS.has(x) || HEADS.has(x.replace(/s$/, "")) || INST.has(x));
   // our own words (the qualifiers, the bodies' words, our places) are never someone else's place: "chennai" is one letter from "chengai"
-  const outside = outsideIn(content.filter((_, i) => !covered.has(i)), true) ?? outsideIn(content.filter((x, i) => !covered.has(i) && !QUAL.has(x) && !reg.vocab.has(x) && !reg.places.has(x)));
-  if (outside && (heads.length || hits.some((h) => h.e.kind !== "zone"))) {
-    const near = hits.filter((x) => x.e.kind !== "zone").sort((a, b) => b.s - a.s)[0]?.e ?? null;
+  // a word heard only by sound or one edit as one of ours ("pollachi" for "police") still counts as a place when the list holds it: only exact hits cover a word
+  const coveredExact = new Set<number>();
+  for (const h of hits) if (h.via === "exact" || h.via === "initials") for (let i = h.start; i <= h.end; i++) coveredExact.add(i);
+  const outside = outsideIn(content.filter((_, i) => !coveredExact.has(i)), true) ?? outsideIn(content.filter((x, i) => !coveredExact.has(i) && !QUAL.has(x) && !reg.vocab.has(x) && !reg.places.has(x)));
+  // another place named anywhere in the sentence is the sentence's subject, with a body beside it or not: every lane asks this one question (RC-01)
+  const nearOf1 = () => hits.filter((x) => x.e.kind !== "zone").sort((a, b) => b.s - a.s)[0]?.e ?? null;
+  if (outside) {
+    const near = nearOf1();
     const head = heads[0]?.x ?? (near ? near.aliases[0]?.[near.aliases[0].length - 1] ?? "" : "");
     return { kind: "unknown", heard: `${outside} ${head}`.trim(), brief, near, outside: true };
   }
+  // a name in front of an agency word that is not ours (a town the lists do not hold, a college, a private association): another body, not ours
+  const named = nameBeside(content, heads, reg);
+  if (named) return { kind: "unknown", heard: named, brief, near: nearOf1(), outside: true };
   const agencyHits = hits.filter((h) => h.e.kind !== "zone");
   if (!agencyHits.length && heads.length && brief) {
     // "Zorblax agency report": an agency word with a name in front of it that is no body, place or topic of ours
     const i = heads[0].i, before = content[i - 1];
-    if (before && !FILLER.has(before) && !POSTS.has(before) && (reg.topics.has(before) || (!reg.places.has(before) && !vocabWord(before, reg))))
+    if (before && !FILLER.has(before) && !POSTS.has(before) && (reg.topics.has(before) || nameLike(before, reg)))
       // a topic in front ("fire service") is a body we hold no records from, though its incidents may be on the console
       return { kind: "unknown", heard: `${before} ${heads[0].x}`, brief, near: null, outside: false };
     return { kind: "none", brief };
@@ -288,6 +322,44 @@ export function resolveEntity(text: string, w: World): Resolution {
   return { kind: "entity", entity: top.e, conf: Math.round(top.s * 100) / 100, via: top.via, heard: content.slice(top.start, top.end + 1).join(" "), brief, second };
 }
 
+/** the spelling-folded form of every place word we hold (the console's own and the Corporation's area names): "Mylapur" is Mylapore */
+const skels = new WeakMap<Registry, Set<string>>();
+const placeSkeletons = (reg: Registry): Set<string> => {
+  let s = skels.get(reg);
+  if (!s) { s = new Set([...reg.places, ...AREA_WORDS].filter((x) => x.length >= 5 && skeleton(x).length >= 4).map((x) => `${skeleton(x)}:${x.length}`)); skels.set(reg, s); }
+  return s;
+};
+/** Is this word one that names no place and no body of ours? (a name-like word) */
+/** ordinary English words that can stand in front of an agency word and name nothing: adverbs ("kindly"), commands ("export police report") and the shapes of verbs */
+const ORDINARY = new Set(("export download print share compare show open list give get fetch find look check tell say display bring pull view read need want like also just only still even already quickly kindly please " +
+  // numbers and ranks ("top five departments"), and the electricity of the Tamil minsāra
+  "one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty fifty hundred first second third last bottom top few several many most least both electricity electric electrical power " +
+  "actually basically simply really maybe perhaps latest current recent total overall whole entire every each other another same new old big small top best worst main full short long detailed").split(" "));
+const nameLike = (w: string, reg: Registry): boolean => {
+  if (w.length < 3 || /\d/.test(w)) return false;
+  if (ORDINARY.has(w) || /^[a-z]{4,}ly$/.test(w)) return false;
+  if (QUAL.has(w) || FILLER.has(w) || POSTS.has(w) || HEADS.has(w) || stopWord(w) || BRIEF_WORDS.has(w) || listedWord(w)) return false;
+  const known = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || (LOCALITY_WORDS.has(x) && !soundsOutside(x)) || reg.topics.has(x) || vocabWord(x, reg) != null || (x.length >= 5 && skeleton(x).length >= 4 && [-1, 0, 1].some((d) => placeSkeletons(reg).has(`${skeleton(x)}:${x.length + d}`)));
+  if (known(w)) return false;
+  // a plain English word names no other town: "today's", "senior citizen", "damaged road", "cyber crime" in front of an agency word (RC-01, review point 1)
+  if (isEnglishWord(w) || isEnglishWord(w.replace(/s$/, ""))) return false;
+  // a Tanglish case ending joined on ("Adyarla", "policeku")
+  const bare = w.replace(/(la|le|ku|kku|oda|ode|ila|il|in|ai)$/, "");
+  return !(bare !== w && bare.length >= 3 && (known(bare) || stopWord(bare) || listedWord(bare)));
+};
+/** words that say which jurisdiction a body is of: in front of an agency word they name a body that is not ours */
+const JURISDICTION = new Set(["central", "state", "national", "federal", "union", "district", "rural", "armed", "border", "coastal", "highway", "airport", "port"]);
+/** The unknown name beside an agency word ("Kumbakonam police", "Loyola college health department"), or null. A named kind of organisation is always someone else's. */
+function nameBeside(content: string[], heads: { x: string; i: number }[], reg: Registry): string | null {
+  for (const { x, i } of heads) {
+    if (INST.has(x)) return [content[i - 1], x].filter(Boolean).join(" ");
+    // a word of jurisdiction is another body's: the state's police, the central or the district's, the airport's (ours is the Greater Chennai Police)
+    if (i > 0 && JURISDICTION.has(content[i - 1])) return `${content[i - 1]} ${x}`;
+    for (let j = i - 1; j >= Math.max(0, i - 2); j--) if (nameLike(content[j], reg)) return `${content[j]} ${x}`;
+  }
+  return null;
+}
+
 const overlapsOrg = (a: Entity, b: Entity) => (a.kind === "org" && b.id.startsWith(`${a.id}-`)) || (b.kind === "org" && a.id.startsWith(`${b.id}-`));
 
 /** The departments an org covers, in this World. */
@@ -308,18 +380,42 @@ const cap = (s: string) => s.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
  * words to mean), say plainly that there is no data on that body (offering the nearest one), or ask one short question. null: not a
  * request for a brief on a body; the lanes after this one decide.
  */
+/** words that tie a sentence to the district's own business, so that "who is the king of Delhi" is general knowledge and "Delhi police report" is not */
+const DISTRICT_NOUNS = new Set(["complaint", "complaints", "case", "cases", "incident", "incidents", "grievance", "news", "weather", "price", "prices", "rain", "rainfall", "aqi", "air", "lake", "lakes", "reservoir",
+  "report", "status", "update", "brief", "police", "zone", "ward", "department", "officer", "collector", "corporation", "severe", "overdue", "pending"]);
+/** Is the sentence about a place or body outside Greater Chennai? Its name, or null. The one question every lane asks before it answers (fast lane, frame, rules, brief). */
+export function foreignIn(text: string, w: World): string | null {
+  if (KEEPING.test(` ${text.toLowerCase()} `)) return null;
+  const r = resolveEntity(text, w);
+  if (r.kind !== "unknown" || !r.outside) return null;
+  // general knowledge about a far place ("what is the capital of Delhi") is the general lane's, unless something of the district is asked
+  const raw = text.toLowerCase(), reg = registry(w);
+  if ((GENERAL.test(raw) || SUBJECTS.test(raw)) && !sentenceWords(text).some((x) => reg.topics.has(x) || DISTRICT_NOUNS.has(x) || HEADS.has(x))) return null;
+  return cap(r.heard);
+}
+/** the plain answer for a place or body this console holds nothing on */
+export function noData(heard: string, near: Entity | null = null): { en: string; ta: string } {
+  return {
+    en: `I have no data on ${heard}. This console holds Chennai district's own records${near ? `; the nearest I have is ${near.name}, and I can brief you on that` : `; I can brief you on the corporation, the police, Metrowater, PWD or any zone`}.`,
+    ta: `${heard} பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன${near ? `; அருகில் உள்ளது ${near.ta ?? near.name}, அதைப் பற்றிச் சொல்லலாம்` : `; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்`}.` };
+}
+
 export function briefTurn(text: string, w: World): BriefTurn | null {
+  // another place's body, or a place the console does not cover, named anywhere (even with no word for a brief): said, never answered with ours (RC-01)
+  if (!KEEPING.test(` ${text.toLowerCase()} `)) {
+    const far = foreignIn(text, w);
+    if (far) { const r = resolveEntity(text, w); return { kind: "reply", conf: 0, via: "unknown", text: noData(far, r.kind === "unknown" ? r.near : null) }; }
+  }
   // not a request for a brief on a body, whatever words it shares with one: drafting or sending, an incident by number, a comparison,
   // the news, a reading, a place to find, the map, or "report a pothole" (reporting something, not asking for a report)
-  if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `)) return null;
+  if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `) || KEEPING.test(text) || CHANGE_RECORD.test(text)) return null;
+  // the one period table (quick.ts) reads every lane's window; a window the console does not hold (yesterday, last week, last month) is not answered with the current one (RC-06)
+  const tn = ` ${text.toLowerCase().replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim()} `;
+  if (calendarWindowIn(tn)) return null;
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
-    const heard = cap(r.heard);
-    const near = r.near;
-    return { kind: "reply", conf: 0, via: "unknown", text: {
-      en: `I have no data on ${heard}. This console holds Chennai district's own records${near ? `; the nearest I have is ${near.name}, and I can brief you on that` : `; I can brief you on the corporation, the police, Metrowater, PWD or any zone`}.`,
-      ta: `${heard} பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன${near ? `; அருகில் உள்ளது ${near.ta ?? near.name}, அதைப் பற்றிச் சொல்லலாம்` : `; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்`}.` } };
+    return { kind: "reply", conf: 0, via: "unknown", text: noData(cap(r.heard), r.near) };
   }
   if (r.kind === "ambiguous") {
     const [a, b] = r.options;
@@ -340,13 +436,27 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   const slots: Record<string, unknown> = e.kind === "dept" ? { dept: e.id, zones: zone ? [zone] : [] } : e.kind === "org" ? { org: e.id, zones: zone ? [zone] : [] } : { zones: [Number(e.id.slice(5))] };
   // a locality the data cannot place in a zone is said, not dropped: the brief says it covers the district
   if (loc && loc.zone == null) slots.name = loc.name;
-  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: /\b(week|weekly|this week)\b|வாரம்|vaaram/i.test(text) ? "weekly" : /\bmonth|monthly\b|மாதம்|maasam/i.test(text) ? "monthly" : "daily", fresh: true } };
+  return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? "daily", fresh: true } };
 }
 
 /** Words that make a sentence something other than a request for a brief on a body. */
 // keeping something or typing it (remember, remind, save, pin, type into the search box) is not a brief either (BUG-022)
-const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட/i;
+const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட|டவுன்லோட்|பதிவிறக்க|ஒப்பிடு|ஒப்பீடு|ஸ்டேஷன்|காவல் நிலைய|எக்ஸ்போர்ட்|பிரிண்ட்|ஷேர்|பகிர்/i;
 
+/** the one-word place names of this World with their spelling-folded form, worked out once */
+const SINGLES = new WeakMap<World, { k: string; s: string; name: string; zone: number | null }[]>();
+function singlePlaces(w: World) {
+  let r = SINGLES.get(w);
+  if (!r) {
+    r = [];
+    for (const p of w.places) for (const n of [p.name, ...p.aliases]) {
+      const ks = /[஀-௿]/.test(n) ? toRoman(n) : words(n);
+      if (ks.length === 1 && ks[0].length >= 5) r.push({ k: ks[0], s: skeleton(ks[0]), name: p.name, zone: p.zone });
+    }
+    SINGLES.set(w, r);
+  }
+  return r;
+}
 /** A locality in the sentence and its zone, if the data gives it one ("Velachery police report"), by name or alias. */
 function locality(text: string, w: World): { name: string; zone: number | null } | null {
   const ws = sentenceWords(text);
@@ -356,6 +466,14 @@ function locality(text: string, w: World): { name: string; zone: number | null }
       const k = (/[஀-௿]/.test(n) ? toRoman(n) : words(n)).join(" ");
       if (k.length >= 4 && flat.includes(` ${k} `)) return { name: p.name, zone: p.zone };
     }
+  }
+  // a locality spelt another way ("Mylapur" for Mylapore): the same letters and sound, the same first letter, about the same length (RC-02)
+  const sk = singlePlaces(w);
+  for (const x of ws.slice(0, 80)) {
+    if (x.length < 5 || plainWord(x)) continue;
+    const s = skeleton(x);
+    if (s.length < 4) continue;
+    for (const q of sk) if (q.k[0] === x[0] && Math.abs(q.k.length - x.length) <= 1 && q.s === s) return { name: q.name, zone: q.zone };
   }
   return null;
 }

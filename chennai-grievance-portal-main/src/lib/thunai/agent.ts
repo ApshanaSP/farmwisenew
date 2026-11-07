@@ -49,7 +49,7 @@ export const Screen = z.object({
   zones: z.array(z.number().int()).max(4).describe("zone numbers; 2-4 to compare"),
   dept: z.string().nullable(), depts: z.array(z.string()).max(4).describe("department codes to compare"),
   cat: z.string().nullable(), taluk: z.string().nullable(), sev: z.enum(SEVS).nullable(),
-  status: z.enum(["open", "overdue"]).nullable(),
+  status: z.enum(["open", "overdue", "resolved"]).nullable(),
   q: z.string().nullable().describe("news topic words, case search words, or the full map question for nearby"),
   metric: z.enum(METRICS).nullable(), measure: z.enum(MEASURES).nullable(), by: z.enum(["dept", "zone"]).nullable(),
   order: z.enum(["top", "bottom"]).nullable(), n: z.number().int().nullable(),
@@ -188,7 +188,7 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
   if (typeof s.cat === "string" && w.cats.some((c) => c.code === s.cat)) out.cat = s.cat;
   if (typeof s.taluk === "string" && w.taluks.some((t) => t.code === s.taluk)) out.taluk = s.taluk;
   if ((SEVS as readonly string[]).includes(s.sev as string)) out.sev = s.sev as Sev;
-  if (s.status === "open" || s.status === "overdue") out.status = s.status;
+  if (s.status === "open" || s.status === "overdue" || s.status === "resolved") out.status = s.status;
   out.q = clip(s.q, recipe === "cases" ? 80 : 240) || null;
   if ((METRICS as readonly string[]).includes(s.metric as string)) out.metric = s.metric as Slots["metric"];
   if ((MEASURES as readonly string[]).includes(s.measure as string)) out.measure = s.measure as Slots["measure"];

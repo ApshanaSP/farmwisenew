@@ -5,6 +5,7 @@
  * correction refines the request that was cut off. Pure.
  */
 import { EXPLAIN_TA } from "./lexicon";
+import { foreignIn } from "./entities";
 import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { StageContext } from "./stage";
@@ -52,7 +53,7 @@ function lastFrame(i: FrameInput): { recipe: Recipe; slots: Record<string, unkno
 
 /** a follow-up's shape: short, or led by the words people use to go on from the last thing */
 const ELLIPSIS_EN = /^ (and|what about|how about|same|same for|same in|also|now|then|no|not|actually|instead|only|just|in|for|at|but|ok|okay) /;
-const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
+const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி\?|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
 const ELLIPSIS_TG = /^ (appo|apram|adhe|athe|illa|venam|vendaam|sari) | (la|le|ku|mattum|pathi)\??\s*$/;
 // a sentence that carries its own request (explain this issue, a report or status on something) is a new request, never "and in X?" (BUG-020)
 const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank|explain|brief|report|status|update|whats going on|what s going on|what is going on|whats wrong|vilakku|vilakkam)\b|அறிக்கை|நிலவரம்/;
@@ -68,6 +69,7 @@ const VIEW = /(as a|as|into a|in a|to a|la|-a|ஆக)?\s*(table|chart|graph|map|
 /** The follow-up, resolved; or none: the sentence stands on its own. */
 export function resolveFrame(i: FrameInput): Frame {
   const raw = i.text.trim();
+  if (foreignIn(raw, i.world)) return { kind: "none" }; // a follow-up about another place is a new question, which the brief turn answers (RC-01)
   const t = norm(raw);
   const last = lastFrame(i);
   const words = t.trim().split(" ").filter(Boolean);
@@ -82,7 +84,10 @@ export function resolveFrame(i: FrameInput): Frame {
 
   const hasNewPlace = zonesIn(t, i.world);
   const short = words.length <= 6;
-  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !isNewRequest(t));
+  // a follow-up has a positive sign: a word that points back ("and", "same", "only", "what about", "no,"), or it is only a word or two ("Adyar?", "weekly"). Six words with no listed verb is not one:
+  // "describe the flooding complaint in Adyar" is a new request, and re-scoping the open brief with it would answer a different question (RC-07)
+  const POINTS_BACK = /^ (and|in|for|at|on|what about|how about|also|now|then|only|just|same|no|not|instead|ok|okay) /;
+  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && POINTS_BACK.test(t) && !isNewRequest(t)) || (words.length <= 3 && !isNewRequest(t));
   const slots = { ...last.slots };
 
   // "why?", "why so many?", "ஏன் இந்த தாமதம்?": the reason for what is on screen (a why naming a new place is a new question)

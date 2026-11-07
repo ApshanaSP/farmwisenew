@@ -1,0 +1,12 @@
+RC-03: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+Also failing before (it.fails, now plain it): audit-understanding-21 (High Court, high tide, low lying read as a severity), -23 (sentences with the Tamil verb stem inside police, or pannu, never reached the round), audit-privacy_injection-10, meta-words-10 and -11, scans-code-1 (the word constructor crashed normalise: tok in LOAN), open-baseline-21 and -22. Kept open on purpose: the Tamil word for severe in the phrase for harsh sun (audit-understanding-21, one sentence); open-baseline-23.
+
+en-noisy-09 | grade=wrong CONFIDENT-WRONG | lane=no-model | theru vilakku complaints open open in Kodambakam, give me the number.
+   said: Explain
+   reasons: ["a console step read something out instead of answering: explain","7_action failed"]
+ta-list-19 | grade=wrong CONFIDENT-WRONG | lane=no-model | தண்டையார்பேட்டைல Electrical டிபார்ட்மெண்ட் இன்னும் சரி பண்ணாத தெருவிளக்கு மட்டும்.
+   said: விளக்கம்
+   reasons: ["a console step read something out instead of answering: explain","7_action failed"]
+tanglish-brief-14 | grade=wrong CONFIDENT-WRONG | lane=no-model | theru vilakku dept.. Corporation electrical.. adha pathi chinna note sollu
+   said: விளக்கம்
+   reasons: ["a console step read something out instead of answering: explain","7_action failed"]

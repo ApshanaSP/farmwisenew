@@ -1,0 +1,31 @@
+# RC-04 sweep: every place that decides keep / change-record / console-move / speed from words, after the fix
+## grep -n 'KEEPING\|CHANGE_RECORD\|NOT_A_BRIEF\|NAV_VERB\|DATA_ASK\|SPEED_Q\|a: "speed"' src/lib/thunai (non-test)
+src/lib/thunai/entities.ts:15:import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, SUBJECTS, ZONES } from "./lexicon";
+src/lib/thunai/entities.ts:372:  if (KEEPING.test(` ${text.toLowerCase()} `)) return null;
+src/lib/thunai/entities.ts:389:  if (!KEEPING.test(` ${text.toLowerCase()} `)) {
+src/lib/thunai/entities.ts:395:  if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `) || KEEPING.test(text) || CHANGE_RECORD.test(text)) return null;
+src/lib/thunai/entities.ts:425:const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|exp
+src/lib/thunai/lexicon.ts:177:export const KEEPING = /\b(remember|remind|reminder|reminders|note|notes|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|c
+src/lib/thunai/lexicon.ts:178:export const CHANGE_RECORD = /\b(change|edit|modify|update the (status|record)|reassign|assign|close it|mark\b[^.]{0,40}\b(as )?(closed|resolved|done)|set (the 
+src/lib/thunai/plan.ts:324:const NAV_VERB = /\b(go|goto|open|switch|change|set|filter|navigate|take me|bring|move|select|pick|turn (on|off)|apply|put|jump|zoom|clear|reset|remove the filter|
+src/lib/thunai/plan.ts:326:const NAV_VERB_TA = /(?<![஀-௿])(?:போ|போங்க|மாற்று|மாத்து|மாறு|திற|தொற|வடிகட்டு|மட
+src/lib/thunai/plan.ts:328:const DATA_ASK = /\b(list|lists|listing|total|totals|give me|get me|number|count|how many)\b|பட்டியல்|லிஸ்ட்|எடுத்து|(?<!
+src/lib/thunai/plan.ts:336:  if (steps.some((x) => x.a === "view") && DATA_ASK.test(text)) return false;
+src/lib/thunai/plan.ts:337:  if (NAV_VERB.test(text) || NAV_VERB_TA.test(text)) return true;
+src/lib/thunai/quick.ts:9:import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_WORDS, SUBJECTS, ZONES } from "./lexicon";
+src/lib/thunai/quick.ts:253:  if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
+src/lib/thunai/types.ts:42:  | { a: "speed"; faster: boolean }
+src/lib/thunai/understand.ts:18:import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
+src/lib/thunai/understand.ts:269:  const SPEED_Q = /\?|எந்த|என்ன|எப்படி|ஏன்|எத்தனை|யார்|\b(which|what|why|how|who|when|where)\b|enna\b|e
+src/lib/thunai/understand.ts:271:  const speedOrder = !SPEED_Q.test(heard) && (tk.length <= 3 || SPEED_VOICE.test(heard));
+src/lib/thunai/understand.ts:272:  if (speedOrder && /\b(slower|slow down|speak slowly)\b|மெதுவா|methuva/.test(s)) return done([{ a: "speed", faster: false }]);
+src/lib/thunai/understand.ts:273:  if (speedOrder && /\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
+src/lib/thunai/understand.ts:294:  if (CHANGE_RECORD.test(heard) && /\b(fir|records?|complaints?|cases?|incidents?|inc-\d+)\b|பதிவு|புகார்/i.test(heard) && /\b(status|c
+
+## other English-only guard lists found by 'grep -n "\b(" src/lib/thunai/{plan,entities,quick}.ts | wc -l'
+src/lib/thunai/plan.ts:122
+src/lib/thunai/entities.ts:161
+src/lib/thunai/quick.ts:132
+## result
+keep and change classes now live in lexicon.ts (KEEPING, CHANGE_RECORD) in English, Tanglish and Tamil, and are read by briefTurn, quickScreen and understand (late guard), so one sentence gets one class in every lane
+Tamil verbs in isNavCommand are whole words (no Tamil letter before or after); the speed order needs a short sentence or a voice word and no question word; a data ask (list, number, total, Tamil list and give words) with a filter is never a console move

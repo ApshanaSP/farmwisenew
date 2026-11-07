@@ -1,0 +1,27 @@
+RC-06: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+Also failing before (it.fails, now plain it): audit-understanding-11 (quarter, Tamil week and month forms, yesterday), AUD-NF-12 (yesterday gave today's list), same-number-14 (quarter in a brief gave today's); open-baseline-15. Still open: open-baseline-8 to -14 (English last week and last month: an accepted earlier decision, BUG-003, names the matching window in the title, which the oracle does not treat as the calendar one).
+
+en-brief-09 | grade=wrong CONFIDENT-WRONG | lane=resolve | Tondiarpet report. Last month.
+   said: 10 points in the brief for the last 30 days. 417 incidents were reported in Tondiarpet (last 30 days), 6% more than the previous period.
+   reasons: ["3_period_words failed","3_figures failed","3_screen_figures failed"]
+en-list-13 | grade=wrong CONFIDENT-WRONG | lane=quick | Let me see the fire incidents from yesterday
+   said: 5 cases this week. 3 are past their deadline and need you first: Fire & explosion at Ennore in Thiruvottiyur, and a fire at Periyar Nagar in Anna Nagar. District Disaster Management holds 3 of them. Say "read them", or "open" and a number.
+   reasons: ["3_period_words failed","2_list failed","2_total failed"]
+ta-brief-14 | grade=wrong CONFIDENT-WRONG | lane=rules-instant | திரு.வி.க நகருக்கு போன மாசத்தோட summary போடு.
+   said: கடந்த 30 நாட்கள்
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+ta-followup-06 | grade=wrong CONFIDENT-WRONG | lane=frame | போன வாரம்?
+   said: இந்த வாரம் 160 சம்பவங்கள். மிக அவசரமானது: standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai in Perungudi. Storm Water Drain வசம் 12. "படி" அல்லது "திற" என்று எண்ணுடன் சொல்லுங்கள்.
+   reasons: ["5_language failed","7_action failed","3_period_words failed","6_scope failed","2_list failed","2_total failed"]
+ta-list-20 | grade=wrong CONFIDENT-WRONG | lane=rules-instant | Family Welfare பக்கம் போன வாரம் முடிச்ச கேஸ்.
+   said: Family Welfare · கடந்த 7 நாட்கள்
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+ta-numbers-13 | grade=wrong CONFIDENT-WRONG | lane=no-model | டெங்கு கேஸ் ஏறுமுகமா இறங்குமுகமா? மூணு மாசமா பாரு.
+   said: Vector- & water-borne disease · கடந்த 30 நாட்கள்
+   reasons: ["moved the console onto the wrong thing","6_scope failed"]
+en-numbers-06 | grade=wrong CONFIDENT-WRONG | lane=quick | Garbage complaints, up or down from last month?
+   said: 551 cases the last 30 days; here are the 12 that matter most. The most urgent: uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet in Tondiarpet. Solid Waste Management holds 11 of them. Say "read them", or "open" and
+   reasons: ["7_action failed"]
+tanglish-numbers-03 | grade=wrong CONFIDENT-WRONG | lane=quick | kuppai complaints edha zone-la romba adhigam
+   said: Highest: Royapuram, 78. Then Anna Nagar 46, Tondiarpet 37.
+   reasons: ["5_language failed","6_scope failed","2_compare failed"]

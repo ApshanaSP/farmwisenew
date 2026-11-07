@@ -34,10 +34,10 @@ describe("scans-code-1: Jarvis's rules on the English word \"constructor\"", () 
     expect(normalise("the contractor of the Adyar bridge").tokens).toContain("contractor");
     expect(() => understand("the contractor of the Adyar bridge has not finished", START, WORLD, { speechConf: 0.95 })).not.toThrow();
   });
-  it.fails("scans-code-1 normalise keeps the word as it was said", () => {
+  it("scans-code-1 normalise keeps the word as it was said", () => {
     expect(normalise("show the constructor").tokens).toEqual(["show", "the", "constructor"]);
   });
-  it.fails("scans-code-1 understand does not throw", () => {
+  it("scans-code-1 understand does not throw", () => {
     for (const s of SENTENCES) understand(s, START, WORLD, { speechConf: 0.95 });
   });
 });

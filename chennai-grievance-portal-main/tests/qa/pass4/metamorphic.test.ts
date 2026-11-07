@@ -124,35 +124,35 @@ describe("QA pass 4: words that must narrow the answer", () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date(FROZEN) });
     world = world ?? (await browserWorld());
   }, 300_000);
-  it.fails("meta-words-4: 'breached their deadline in Adyar' is narrower than 'complaints in Adyar' (the deadline word is dropped, the zone total is given)", async () => {
+  it("meta-words-4: 'breached their deadline in Adyar' is narrower than 'complaints in Adyar' (the deadline word is dropped, the zone total is given)", async () => {
     const all = await ask("complaints in Adyar");
     const late = await ask("how many complaints breached their deadline in Adyar");
     expect(figs(late.f)).not.toEqual(figs(all.f));
   });
-  it.fails("meta-words-5: 'severe complaints in ward 172' is narrower than 'severe complaints' (the ward is dropped, the district list is given)", async () => {
+  it("meta-words-5: 'severe complaints in ward 172' is narrower than 'severe complaints' (the ward is dropped, the district list is given)", async () => {
     const all = await ask("severe complaints");
     const ward = await ask("severe complaints in ward 172");
     expect(ward.o.said).not.toEqual(all.o.said);
   });
-  it.fails("meta-words-6: 'drain complaints in Ambattur' is narrower than 'complaints in Ambattur' (the drain word is dropped)", async () => {
+  it("meta-words-6: 'drain complaints in Ambattur' is narrower than 'complaints in Ambattur' (the drain word is dropped)", async () => {
     const all = await ask("complaints in Ambattur");
     const drain = await ask("drain complaints in Ambattur");
     expect(figs(drain.f)).not.toEqual(figs(all.f));
   });
-  it.fails("meta-words-7: 'stray animal complaints in Valasaravakkam' is about stray animals in zone 11, not 66 drainage cases", async () => {
+  it("meta-words-7: 'stray animal complaints in Valasaravakkam' is about stray animals in zone 11, not 66 drainage cases", async () => {
     const a = await ask("stray animal complaints in Valasaravakkam");
     expect(a.o.said).toMatch(/stray/i);
     expect(a.o.said).not.toMatch(/drainage/i);
   });
-  it.fails("meta-words-8: 'lakes la water level enna' reads the lakes (the broad word water beats lakes and gives water supply cases)", async () => {
+  it("meta-words-8: 'lakes la water level enna' reads the lakes (the broad word water beats lakes and gives water supply cases)", async () => {
     const a = await ask("lakes la water level enna");
     expect(a.f.recipe).toBe("readings");
   });
-  it.fails("meta-words-9: an English request is answered in English (road complaints in Thiru-Vi-Ka-Nagar comes back in Tamil)", async () => {
+  it("meta-words-9: an English request is answered in English (road complaints in Thiru-Vi-Ka-Nagar comes back in Tamil)", async () => {
     const a = await ask("road complaints in Thiru-Vi-Ka-Nagar");
     expect(a.o.said).not.toMatch(/[஀-௿]/);
   });
-  it.fails("meta-words-10: 'விளக்கு புகார்கள்' (lamp complaints) is not read as the word for 'explanation'", async () => {
+  it("meta-words-10: 'விளக்கு புகார்கள்' (lamp complaints) is not read as the word for 'explanation'", async () => {
     const a = await ask("மின்விளக்கு எரியவில்லை");
     expect(a.o.said).not.toBe("விளக்கம்");
   });

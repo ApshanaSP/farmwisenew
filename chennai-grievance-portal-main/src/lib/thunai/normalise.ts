@@ -70,7 +70,7 @@ export function enNumber(tok: string): number | null {
   if (/^\d{1,4}$/.test(tok)) return Number(tok);
   const m = /^(\d{1,3})(st|nd|rd|th|aavadhu|vadhu|ku|kku|la|a)$/.exec(tok);
   if (m) return Number(m[1]);
-  if (tok in EN_NUM) return EN_NUM[tok];
+  if (Object.hasOwn(EN_NUM, tok)) return EN_NUM[tok]; // a word like constructor or __proto__ is a property of every object, not a number (RC-14)
   return null;
 }
 
@@ -94,7 +94,7 @@ export function normalise(input: string): Normalised {
     // polite verb endings: "kaatunga", "காட்டுங்க" -> the verb (plural nouns such as மாவட்டங்கள் keep theirs)
     const tok = raw.replace(/ுங்க$/, "ு").replace(/^(.{3,}u)(nga|ngo)$/, "$1");
     if (POLITE.has(tok)) continue;
-    if (tok in LOAN) { out.push(LOAN[tok]); continue; }
+    if (Object.hasOwn(LOAN, tok)) { out.push(LOAN[tok]); continue; }
     const ta = /[஀-௿]/.test(tok) ? taNumber(tok) : null;
     if (ta != null) { out.push(String(ta)); continue; }
     // "one" is a number after a counting word ("zone one", "confirm one"); otherwise it is a pronoun ("the next one")
@@ -107,10 +107,22 @@ export function normalise(input: string): Normalised {
 }
 
 /** Reply in Tamil when the Collector spoke Tamil or Tanglish. */
-const TANGLISH = /\b(kaatu|kattu|kaattu|maathu|mathu|maatru|pannu|pannunga|mattum|illa|vendaam|venam|sollu|po|poi|edhu|enna|evlo|evvalavu|epdi|enga|naalaikku|innaiku|indha|andha|idha|adha|anuppu|nirutthu|niruthu|podhum|paaru|paru|thirai|varudhu|irukku|aagudhu|kelu|kitta|thiru|thara|vaa|pakkathu|ellaam|ellam)\b/;
+// Tanglish is told by its grammar, not by one word: particles and endings, the question words, the common verbs. A place name such as "Thiru Vi Ka Nagar" is not a mark of it.
+const TANGLISH_WORDS = new Set(("kaatu kattu kaattu maathu mathu maatru pannu pannunga mattum illa vendaam venam sollu po poi edhu enna ennanga evlo evvalavu epdi eppadi eppo ippo enga anga inga naalaikku innaiku indha andha idha adha anuppu nirutthu niruthu " +
+  "podhum paaru paru thirai varudhu irukku iruku iruke irukkum aagudhu aachu aanadhu kelu kitta kitte thara vaa pakkam pakkathu pakkathula ellaam ellam romba mosama nalla theriyuma theriyum theriyudhu nadandhucha nadandhadhu oru ooru oda ode vechu " +
+  "solluga sollunga paarunga kudunga kudu kodu yenna yenga nelamai nilamai konjam iruka irukka edu eduthu maasam vaaram naal nadandhuchu maathidu maathi maathunga vandhadhu vandhuchu pochu panra pannunga pannitu sollunga").split(" "));
+const TANGLISH_END = /^[a-z]{3,}(nga|ngo|unga|ukku|kku|adhu|athu|ucha|aachu|udhu|idhu)$/;
+const EN_FUNCTION = new Set("the a an of in on for to from is are was were what which how why who when where me with about by at this that these those not it have has can could would should my our your their".split(" "));
+const tanglishMark = (w: string) => TANGLISH_WORDS.has(w) || TANGLISH_END.test(w);
 export function detectLang(input: string): "en" | "ta" {
   if (/[஀-௿]/.test(input)) return "ta";
-  return TANGLISH.test(input.toLowerCase()) ? "ta" : "en";
+  const low = input.toLowerCase();
+  const ws = low.replace(/-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g, " ").split(/[^a-z]+/).filter(Boolean);
+  // a case ending glued on with a hyphen ("Adyar-la", "status-a") is Tanglish grammar: one mark each
+  const marks = ws.filter(tanglishMark).length + (low.match(/[a-z]-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g)?.length ?? 0);
+  const english = ws.filter((x) => EN_FUNCTION.has(x)).length;
+  // more than twice as many Tanglish marks as English function words: Tanglish. An English sentence with a stray "indha" is English.
+  return marks > 0 && marks > 2 * english ? "ta" : "en";
 }
 
 /**
@@ -160,6 +172,8 @@ export function taMatch(tok: string, name: string): boolean {
   let restOk = (_: string) => true;
   // a word that carries the whole name and more is a compound, not a case ending: போக்குவரத்து (traffic) is not போக்கு (trend)
   if ((last === "ு" || last === "ூ") && tok.startsWith(name)) return /^(க்கு|க்குள்|ல|ல்|ம்|வும்|டன்|க்கும்)$/.test(tok.slice(name.length));
+  // a short name ending in -u (கொசு) has too little left once the -u and its consonant go: கொ would match கொடு ("give") and கொடைக்கானல் (RC-02)
+  if ((last === "ு" || last === "ூ") && n <= 4) return false;
   if (last === "ு" || last === "ூ") stem = ch.slice(0, -2).join("");
   else if (last === "்" && prev === "ம") { stem = ch.slice(0, -2).join(""); restOk = (r) => /^[தஙம]/.test(r); }
   else if (last === "்") stem = ch.slice(0, -1).join("");

@@ -139,18 +139,18 @@ describe("BUG-019: the original Tamil join", () => {
 // -------------------------------------------------------------- reopened --
 
 describe("BUG-007 reopened", () => {
-  it.fails.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
+  it.each(["weekly", "monthly", "quarterly", "daily"])("AUD-NF-1 %s: overdue cases with no severity are listed, not 'no cases'", async (period) => {
     const c = await list({ period, zone: null, dept: null, sev: null, status: "overdue", q: null, sort: "t", dir: -1, page: 0, scope: "period" } as never);
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", period, fresh: true, zones: [] });
     expect(r.stage!.say.en).not.toMatch(/^There are no cases/);
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
+  it("AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would", async () => {
     const r = await said("show overdue cases", fakePlan({ kind: "do", lang: "en", reply: null, options: [], screen: screenOf({ status: "overdue", period: "weekly" }) }));
     expect(blockOf(r.result, "CaseList")?.total).toBeGreaterThan(0);
   });
-  it.fails.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
+  it.each(["overdue cases this week", "indha week overdue cases kaattu", "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்"])("AUD-NF-1 %s", async (text) => {
     const r = (await said(text)).result!;
     expect(blockOf(r, "CaseList")?.total).toBeGreaterThan(0);
   });
@@ -188,12 +188,12 @@ describe("BUG-021 partly", () => {
     const r = await direct("cases", { status: "overdue", sev: "Severe", period, fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.incidents);
   });
-  it.fails("AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages", async () => {
+  it("AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages", async () => {
     const c = await consoleCount("quarterly", "Severe");
     const r = await direct("cases", { status: "overdue", sev: "Severe", period: "quarterly", fresh: true, zones: [] });
     expect(blockOf(r, "CaseList")?.total).toBe(c.total);
   });
-  it.fails.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
+  it.each(["daily", "weekly", "monthly"])("AUD-NF-3 %s: overdue High cases are not 'no high cases'", async (period) => {
     const c = await consoleCount(period, "High");
     expect(c.incidents).toBeGreaterThan(0);
     const r = await direct("cases", { status: "overdue", sev: "High", period, fresh: true, zones: [] });
@@ -217,12 +217,12 @@ describe("new: the issue or list that 'matters most' is the least severe (the li
 });
 
 describe("new: a place named in 'explain' is dropped when a topic was heard", () => {
-  it.fails.each([["explain the flooding complaint in Velachery", /velachery/i], ["explain the garbage complaint in Mylapore", /mylapore/i], ["Velachery flooding enna aachu", /velachery/i], ["வேளச்சேரி வெள்ள புகார் விளக்கு", /velachery/i], ["மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க", /mylapore/i]])("AUD-NF-5 %s is about that place", async (text, place) => {
+  it.each([["explain the flooding complaint in Velachery", /velachery/i], ["explain the garbage complaint in Mylapore", /mylapore/i], ["Velachery flooding enna aachu", /velachery/i], ["வேளச்சேரி வெள்ள புகார் விளக்கு", /velachery/i], ["மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க", /mylapore/i]])("AUD-NF-5 %s is about that place", async (text, place) => {
     const r = (await said(text)).result;
     const inc = blockOf(r, "CaseDetail")?.incident;
     if (inc) expect(`${inc.place ?? ""} ${inc.title ?? ""}`).toMatch(place as RegExp);
   });
-  it.fails.each(["explain the garbage complaint in Madurai", "explain the flooding complaint in Mumbai", "மதுரை குப்பை புகார் விளக்கு"])("AUD-NF-5 %s is not answered with a Chennai case", async (text) => {
+  it.each(["explain the garbage complaint in Madurai", "explain the flooding complaint in Mumbai", "மதுரை குப்பை புகார் விளக்கு"])("AUD-NF-5 %s is not answered with a Chennai case", async (text) => {
     expect(blockOf((await said(text)).result, "CaseDetail")).toBeUndefined();
   });
 });
@@ -371,9 +371,12 @@ describe("new, found on the way", () => {
     const row = { id: "x", title: "t", sev: "High", status: "Open", zone: 13, zoneName: "Adyar", place: "Guindy", ward: 1, dept: "GCC-SWD", deptName: "SWD", complaints: 2, t: null, overdue: false, lat: null, lon: null, why: null, cat: "Flooding & waterlogging" } as CaseRowT;
     expect(explainIssue(factSheet(row, { openFor: "4 days" }), "x").en).not.toMatch(/a lot of residents/);
   });
-  it.fails.each(["severe cases yesterday", "நேற்று கடுமையான சம்பவங்கள்", "nethu severe cases"])("AUD-NF-12 Jarvis, %s: not today's list", async (text) => {
+  // the console holds no window for a single past day, so Jarvis now says so and shows no screen; a screen titled today would still fail here
+  it.each(["severe cases yesterday", "நேற்று கடுமையான சம்பவங்கள்", "nethu severe cases"])("AUD-NF-12 Jarvis, %s: not today's list", async (text) => {
     const r = (await said(text)).result!;
-    expect(r.stage!.title).not.toMatch(/today|இன்று/);
+    expect(r.stage?.title ?? "").not.toMatch(/today|இன்று/);
+    // handed on to the planner (kind none, no screen, no steps): the words that say the window is missing are the planner's, which no model answers here (review point 4)
+    expect([r.kind, r.stage, r.steps.length]).toEqual(["none", null, 0]);
   });
   it.fails("AUD-NF-13 a sewage case held by the drains team: the step names who holds it", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.category_code = 'DRAINAGE_SEWAGE' AND i.lead_dept = 'GCC-SWD' ORDER BY i.first_reported_at DESC LIMIT 1`);
