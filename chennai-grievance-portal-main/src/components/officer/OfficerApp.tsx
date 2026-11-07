@@ -66,7 +66,7 @@ const PERIOD_HINT: Record<Period, string> = {
   daily: "Daily: the last 24 hours, up to now", weekly: "Weekly: the last 7 days", monthly: "Monthly: the last 30 days", quarterly: "Quarterly: the last 90 days"
 };
 
-export interface ListData { rows: Row[]; total: number; page: number; per: number }
+export interface ListData { rows: Row[]; total: number; page: number; per: number; awaiting?: number; awaitingNote?: { en: string; ta: string } | null }
 interface Toast { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
 export type ListFlag = "open" | "serious" | "overdue" | "due";
 type ModalState = { kind: "send"; row: Row }

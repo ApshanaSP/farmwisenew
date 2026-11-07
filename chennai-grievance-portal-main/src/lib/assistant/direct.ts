@@ -39,7 +39,7 @@ const WHY_CHANGE = /\b(why|what (caused|is behind|explains|drove|is driving)|rea
  */
 const COUNTED = /\b(how many|number of|count|incidents?|complaints?|cases?|grievances?|severe|open|pending|reported)\b|எத்தனை|evlo|ethana/i;
 const BY = (unit: string) => new RegExp(`\\b(by|per|each|across|every|in each|for each)\\s+(the\\s+)?${unit}s?\\b|\\b${unit}[- ]?wise\\b|\\b${unit}s? breakdown\\b`, "i");
-const BY_DEPT = new RegExp(`${BY("(department|dept)").source}|துறை ?வாரியாக|துறைவாரி|thurai ?(vaariya|wise)`, "i"), BY_ZONE = BY("zone"), BY_TALUK = BY("taluk");
+const BY_DEPT = new RegExp(`${BY("(department|dept)").source}|துறை(கள்)? ?வாரியா|துறைவாரி|thurai ?(vaariya|wise)`, "i"), BY_ZONE = BY("zone"), BY_TALUK = BY("taluk");
 
 const VERIFY = /\b(need|needs|needing|awaiting|waiting( for)?|pending|due)\b.{0,30}\b(my |your |collector'?s? )?(verification|verify|verifying|approval|sign[- ]?off|check(ing)?)\b|\bmy tasks?\b|\b(to|for me to) (verify|approve)\b|\bverification (queue|list|pending)\b|சரிபார்க்க|சரிபார்ப்பு/i;
 const DEPT = /\b(department|departments|dept|depts)\b|துறை/i;
@@ -60,7 +60,7 @@ const WHICH_MOST = (unit: string) => new RegExp(`\\b(which|what|top|highest|wors
 const MOST_DEPT = WHICH_MOST("(department|dept)"), MOST_ZONE = WHICH_MOST("zone"), MOST_TALUK = WHICH_MOST("taluk"), MOST_WARD = WHICH_MOST("(ward|area|locality|road|street|spot|place|location|junction)");
 /** "average resolution time", "how quickly does Metrowater resolve complaints", "which department resolves fastest": time to close */
 const RESOLUTION = /\b(average|avg|mean|median|typical)\s+(time\s+(to|for)\s+(resolve|resolution|close|closing|fix)\w*|(resolution|closing|closure|turnaround|response)\s+time)\b|\b(resolution|closure|turnaround)\s+times?\b|\bhow (fast|quickly|long)\b.{0,40}\b(resolve|resolved|resolving|close|closed|closing|fix|fixed|fixing|clear|cleared|clearing)\b|\bresolves? (the )?(fastest|quickest|slowest)\b|\b(fastest|quickest|slowest) (to )?resolv\w*|\bresolv\w*\b.{0,30}\b(fastest|quickest|slowest|fast|quickly|slowly)\b|\b(fastest|quickest|slowest)\b.{0,15}\b(clos|resolv|fix|clear|dispos)\w*|\b(clos|dispos)\w*\b.{0,30}\b(fastest|quickest|slowest)\b/i;
-const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|missed (the |their )?deadline|sla)\b|கெடு தாண்டிய|காலக்கெடு|தாமத|\bdeadline (thaandi|thandi|mudinja|mudinjiduchu)|\bthaamadham/i;
+const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|missed (the |their )?deadline|sla)\b|கெடு தாண்டிய|காலக்கெடு|தாமத|\b(deadline|kedu) (thaandi(ya)?|thandi(ya)?|mudinja|mudinjiduchu)|\bthaamadham/i;
 /**
  * "what happened this week?", "indha week enna nadandhuchu", "இன்று என்ன நடந்தது?": the whole message asks what happened in a
  * period, and names nothing else ("what happened at Velachery lake" is one incident's story, not this)

@@ -19,6 +19,10 @@ describe("RC-11: a question about the data goes to the feeds, not to the subject
   });
   it.each(["Is the hospital data real?", "hospital data fake-a?", "காவல் துறை தரவு உண்மையானதா அல்லது சோதனை தரவா?"])("%s: not bed occupancy, not the top incidents", async (q) => {
     const a = await askChat(q);
+    // review point 3: the old checks only said what the answer was not, and let "Hospital reports: 1,620 (rows after cleaning)" through.
+    // A positive check: the feeds card, or the help text on the data sources; never an upload's row count.
+    expect(feeds(a) === "feeds" || /^Data sources|^தரவு/.test(String(a.card.headline)), String(a.card.headline)).toBe(true);
+    expect(String(a.card.headline)).not.toMatch(/rows after cleaning/);
     expect(String(a.card.answerMarkdown)).not.toMatch(/bed occupancy|சம்பவங்கள் \(மொத்தம்/);
     expect(a.card.headline).not.toMatch(/severe events|முக்கியமான/);
   });

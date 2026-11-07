@@ -67,7 +67,7 @@ export function helpFor(text: string): string[] {
  * (offlineRoute, directTool) BEFORE any subject route, so the subject word in the sentence ("hospital", "police", "department")
  * cannot send it to that subject's figures (RC-11, PB-014, PB-171).
  */
-const DATA_WORD = /\b(data|feeds?|sources?|datasets?|records)\b|தரவு|ஊட்ட|மூலம்|மூலங்கள்|விவரங்கள்/i;
+const DATA_WORD = /\b(data|feeds?|datasets?|records? (feed|data))\b|\b(data|news|feed) sources?\b|தரவு|ஊட்ட|மூலம்|மூலங்கள்|விவரங்கள்/i;
 const REALNESS_WORD = /\b(live|real|fake|genuine|authentic|generated|mock|synthetic|dummy|test|healthy|fresh|stale|up to date|up-to-date|working)\b|\b(real|fake|nijam|nijama|asal)-?a\b|உண்மை|சோதனை|நேரலை|நேரடி|போலி|புதிய தரவு|புதுப்பிக்கப்/i;
 export function aboutTheData(text: string): boolean {
   return DATA_WORD.test(text) && REALNESS_WORD.test(text);

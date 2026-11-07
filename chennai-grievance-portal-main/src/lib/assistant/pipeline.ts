@@ -36,7 +36,7 @@ import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
 import { loadCatalog, renderCatalog } from "@/lib/assistant/catalog";
 import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, type QueryResult } from "@/lib/assistant/compile";
-import { helpFor, isHelpQuestion } from "@/lib/assistant/help";
+import { aboutTheData, helpFor, isHelpQuestion } from "@/lib/assistant/help";
 import { insightByKey } from "@/lib/assistant/insightcards";
 import { editFromText, isBareEdit, topNFromText } from "@/lib/assistant/edits";
 import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, resetCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
@@ -1061,7 +1061,7 @@ const ROUTE_FIXES: RouteFix[] = [
     // side by side, instead of the data being narrowed to the one subject a single category filter can hold
     name: "several-subjects",
     run: (route, { message }) => {
-      const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent) && !route.forcedQuery
+      const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent) && !route.forcedQuery && !aboutTheData(message)
         && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts", "change_drivers"].includes(t.name)) ? multiPart(message) : null;
       return parts ? { ...route, intent: "tool_question", scope: { ...route.scope, cat: null }, tools: [{ name: "category_summary", args: { scope: { ...route.scope, cat: null }, parts } }],
         assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `Answered part by part: ${parts.map((x) => x.label).join("; ")}.`] } : null;
@@ -1271,7 +1271,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     // answered "3 of 1,620" rows of an upload); a breakdown by zone or over time is the uploaded dataset's
     const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest|overload\w*|over-?crowd\w*|crowded|full|capacity|shortage|available)\b/i.test(message)
       && !/\b(by|per|each)\s+(zone|taluk|ward|month|week|day)|\b(trend|over time)\b/i.test(message);
-    const ds = live ? null : datasetNamed(message);
+    const ds = live || aboutTheData(message) ? null : datasetNamed(message); // "is the hospital data real?" asks about the data, not for the rows of an upload named like it (RC-11, PB-014)
     if (ds) {
       i.stage("fetching");
       const r = await studioAsk(ds.id, message, i.user).catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });

@@ -195,7 +195,7 @@ export default function FileComplaintPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [result, setResult] = useState<{ complaintCode: string; department: string; complaintType: string } | null>(null);
+  const [result, setResult] = useState<{ complaintCode: string; department: string; complaintType: string; queueNote?: { en: string; ta: string } | null } | null>(null);
 
   const selectedWard = wards.find((w) => String(w.wardNumber) === wardNumber) || null;
 
@@ -1113,6 +1113,10 @@ export default function FileComplaintPage() {
                 </div>
               </dl>
             </div>
+
+            {result.queueNote && (
+              <p role="status" data-testid="queue-note" className="mx-auto mt-5 max-w-sm text-sm text-ink-muted">{result.queueNote.en}</p>
+            )}
 
             <div className="mx-auto mt-7 max-w-sm text-left">
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">What happens next</h3>

@@ -72,4 +72,8 @@ describe("RC-47 class guard: the two ends of the hand-over keep carrying the not
     expect(read("../app/api/complaints/route.ts")).toMatch(/queueNote:/);
     expect(read("./officer/data.ts")).toMatch(/awaiting: waiting, awaitingNote:/);
   });
+  it("RC-47 (review point 1) a screen shows each note: the citizen's step 5 page and the officer's New tab (a source guard; the real-run check is in docs/qa/pass4/lanes/e.md)", () => {
+    expect(read("../app/citizen/file-complaint/page.tsx")).toMatch(/result\.queueNote[\s\S]{0,200}result\.queueNote\.en/);
+    expect(read("../components/officer/Cards.tsx")).toMatch(/c\.tab === "new" && L\?\.awaitingNote[\s\S]{0,200}L\.awaitingNote\.en/);
+  });
 });

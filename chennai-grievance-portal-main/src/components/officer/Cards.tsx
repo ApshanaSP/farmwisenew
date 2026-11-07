@@ -134,6 +134,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
           </button>
         ))}
       </div>
+      {c.tab === "new" && L?.awaitingNote && <p className="dim" role="status" data-testid="queue-awaiting" style={{ margin: 0, padding: "4px 12px", fontSize: 12 }}>{L.awaitingNote.en}</p>}
       <div className="cb">
         <div className="tbl-wrap" ref={wrap}>
           <table>

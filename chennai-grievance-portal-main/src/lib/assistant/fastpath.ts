@@ -7,6 +7,7 @@
  */
 import { baseCard } from "@/lib/assistant/cards";
 import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
+import { aboutTheData } from "@/lib/assistant/help";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, PICK_FROM_LIST, detectIntent, topicByKey, topicWords, type Detected, type Topic } from "@/lib/assistant/intent";
@@ -123,6 +124,8 @@ function tamilKind(kind: string): string {
 }
 
 export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOutput | null> {
+  // a question about the data itself ("is the hospital data real?") is not a count of that subject: the feeds answer it (RC-11, PB-014; the one lane the first fix missed)
+  if (aboutTheData(i.message)) return null;
   const d = decided ?? detectIntent(i.message, i.ctx);
   // pictures of an earlier incident list: the same incidents on a map or in a table
   if ((d.intent === "MAP" || d.intent === "TABLE") && i.ctx?.resultIds?.length && ["incident_list", "map", "table"].includes(String(i.ctx.lastResponseType)))
@@ -700,6 +703,10 @@ const HOLIDAYS: [RegExp, string, string[]][] = [
   [/\brepublic day\b/i, "Republic Day", ["2026-01-26"]],
   [/\bindependence day\b/i, "Independence Day", ["2026-08-15"]]
 ];
+/** "last week" / "last month" in English, Tanglish and Tamil. Not "the last week of October" (a week inside a month), not "last week 3". */
+const LAST_WEEK_MONTH = /\b(?:last|previous|pona|poona|kadandha|kadantha) (week|month|vaaram|varam|maasam|masam)\b(?!\s*(?:\d|of\b))|(?:கடந்த|போன|சென்ற|முந்தைய) ?(வாரம்|மாதம்)(?![஀-௿])/i;
+/** "the last week of October": the final 7 days of a finished month. */
+const LAST_WEEK_OF = /\b(?:the )?(?:last|final) week of (january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(20\d{2}))?/i;
 /** The store keeps about 180 days: a window reaching further back is cut there (and the answer says so). */
 const MAX_HOURS = 180 * 24;
 
@@ -727,11 +734,27 @@ export function customWindow(text: string, now?: string): { hours: number; label
   if (Number.isFinite(nowMs)) {
     // "last week" is the calendar week (Monday to Sunday) before this one, "last month" the calendar month before this one: not the
     // same rolling 7 or 30 days as "this week" and "this month" (RC-10, PB-221). "since last week" and "in the last week" are rolling.
-    const lw = /\b(last|previous|pona|kadandha) (week|month)\b(?!\s*\d)/i.exec(text);
-    if (lw && !/\b(since|from|in the|during the|over the|within the|for the) (last|previous|pona|kadandha) (week|month)\b/i.test(text)) {
+    // The same window in every language (SK-E-1..3): English "last week", Tanglish "pona vaaram", Tamil "கடந்த வாரம்" / "போன மாதம்".
+    const lwo = LAST_WEEK_OF.exec(text);
+    if (lwo) {
+      // SK-E-4: "the last week of October" is the final 7 days of that finished month, not last week and not all of October
+      const mi = MONTHS.indexOf(lwo[1].slice(0, 3).toLowerCase());
+      const cur = new Date(nowMs + 330 * 60_000);
+      let y = lwo[2] ? Number(lwo[2]) : cur.getUTCFullYear();
+      if (!lwo[2] && (y > cur.getUTCFullYear() || mi > cur.getUTCMonth())) y -= 1;
+      const endUtc = Date.UTC(mi === 11 ? y + 1 : y, mi === 11 ? 0 : mi + 1, 1);
+      if (endUtc - 330 * 60_000 <= nowMs) {
+        const startUtc = endUtc - 7 * 864e5, iso = (t: number) => new Date(t).toISOString().slice(0, 19).replace("T", " ");
+        const d = (t: number) => new Date(t).getUTCDate();
+        if (nowMs - (startUtc - 330 * 60_000) <= MAX_HOURS * 3600_000 + 31 * 864e5)
+          return { hours: 168, label: `last week of ${MONTH_NAMES[mi]} ${y} (${d(startUtc)} to ${d(endUtc - 864e5)} ${MONTH_NAMES[mi]})`, period: "weekly", range: { from: iso(startUtc), to: iso(endUtc) } };
+      }
+    }
+    const lw = LAST_WEEK_MONTH.exec(text);
+    if (lw &&!/\b(since|from|in the|during the|over the|within the|for the) (last|previous|pona|kadandha) (week|month)\b/i.test(text)) {
       const nowIst = new Date(nowMs + 330 * 60_000);
       const todayMid = Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth(), nowIst.getUTCDate());
-      const isWeek = lw[2].toLowerCase() === "week";
+      const isWeek = /^(week|vaaram|varam|வாரம்)$/i.test(lw[1] ?? lw[2] ?? "");
       let a: number, b: number, label: string;
       if (isWeek) {
         b = todayMid - ((nowIst.getUTCDay() + 6) % 7) * 864e5; // this Monday 00:00 (IST wall clock as UTC)
