@@ -17,6 +17,7 @@
 import { foreignIn, noData } from "./entities";
 import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
   ZONES } from "./lexicon";
+import { betterCategory, saidStems } from "./catlabels";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 
@@ -29,6 +30,8 @@ interface Hit { start: number; end: number; score: number }
 /** One phrase word against one token: 1 exact, 0.95 a Tamil stem (case endings), 0.8 a close Latin spelling. */
 function wordScore(tok: string, w: string): number {
   if (tok === w) return 1;
+  // a name with a Tanglish case ending joined on ("Adyarla", "Manalile", "Mylaporeku"): the name and its ending, as "Adyar-la" already reads (QA4 G1)
+  if (w.length >= 5 && tok.length > w.length && tok.startsWith(w) && !TA.test(w) && /^(la|le|il|ku|kku|ukku|oda|ode|ai|ula)$/.test(tok.slice(w.length))) return 0.9;
   if (TA.test(w)) return taMatch(tok, w) ? 0.95 : 0;
   // near spellings only for longer words: "water" must not become "weather", nor "incident" "accident"
   if (/\d/.test(w) || w.length < 6 || tok.length < 6 || TA.test(tok) || tok[0] !== w[0]) return 0;
@@ -81,6 +84,11 @@ function lastStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null 
 
 // ------------------------------------------------------------------ dictionaries --
 
+/** Does the sentence name a zone, a taluk, a department or a kind of complaint? Then a verb like "explain" is about that, not about the screen. */
+function namesSomething(tk: string[], world: World): boolean {
+  const none = () => new Array(tk.length).fill(false);
+  return mentions(tk, zoneDict(world), none()).length > 0 || mentions(tk, talukDict(world), none()).length > 0 || mentions(tk, deptDict(world), none()).length > 0 || mentions(tk, catDict(world), none()).length > 0;
+}
 function zoneDict(world: World): [string, number][] {
   const out: [string, number][] = [];
   for (const z of world.zones) {
@@ -100,6 +108,11 @@ function deptDict(world: World): [string, string][] {
     for (const a of DEPT_ALIASES[d.code] ?? []) out.push([a, d.code]);
   }
   return out;
+}
+/** a one-word category name that another category's label says more of in this sentence is that other category (catlabels.ts) */
+function refineByLabel(ms: Mention<string>[], tk: string[], world: World): Mention<string>[] {
+  const said = saidStems(tk);
+  return ms.map((m) => (m.end - m.start === 1 ? { ...m, value: betterCategory(m.value, tk[m.start], said, world.cats) } : m));
 }
 function catDict(world: World): [string, string][] {
   const out: [string, string][] = [];
@@ -201,7 +214,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/what am i (looking at|seeing)|where am i|what is on (the )?screen|whats on (the )?screen|என்ன பார்க்கிறேன்|enna paakuren|இந்தத் திரை என்ன/.test(s)) return done([{ a: "whereAmI" }]);
   if (/^(repeat|again|say (that |it )?again|once more|repeat that|marupadi|மறுபடி|மீண்டும் சொல்|thirumba sollu)$/.test(s)) return done([{ a: "repeat" }]);
   // the Tamil and Tanglish verb "explain" is a whole word, and not the word for a lamp (தெரு விளக்கு, street light; theru vilakku): the edge is in the pattern (RC-03)
-  if (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)/.test(s) || EXPLAIN_TA.test(` ${s} `) || /(^| )(?<!(theru|therukku|street|min|current|kambam|lamp) )(vilakku|vilakkam|vilakkunga|vilakkama)( |$)/.test(s)) return done([{ a: "explain" }]);
+  // "explain" with a place, a body or a topic in the sentence is a question about that thing, not the order to explain the screen: it goes on to the slots (QA4 G1, ta-explain-16)
+  if (!namesSomething(tk, world) && (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)/.test(s) || EXPLAIN_TA.test(` ${s} `) || /(^| )(?<!(theru|therukku|street|min|current|kambam|lamp) )(vilakku|vilakkam|vilakkunga|vilakkama)( |$)/.test(s))) return done([{ a: "explain" }]);
 
   // undo / go back (but "go back to the briefing" is navigation)
   const undo = /^(undo|go back|back|revert|previous view|pazhaya padi|பழையபடி மாத்து|பழையபடி|திரும்பிப் போ|go back pannu|undo pannu)(?=\s|$)/.exec(s);
@@ -339,8 +353,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
   if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|\b(save|type|note|pin|write|draft|bookmark)( ah| a)? (pannu|panni|pannunga|pannidu|seiyu)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
-  // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has; say so, change nothing (RC-06)
-  if (/\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard)) return { kind: "refuse", lang, heard, why: b("I only hold the last 24 hours, 7, 30 and 90 days, and yesterday on its own is not one of them. Nothing was changed.", "நான் கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே வைத்திருக்கிறேன்; நேற்று மட்டும் அதில் இல்லை. எதுவும் மாற்றப்படவில்லை.") };
+  // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has. It is never answered with the current one (RC-06),
+  // and it is not a refusal either: the rest of the sentence (the place, the topic) is read, and the Collector is asked which window to show it in (QA4 G1, ta-explain-14, ta-noisy-07)
+  const oneDayBack = /\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard);
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];
@@ -398,7 +413,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const overlaps = (a: Mention<string>, c: Mention<string>) => a.start < c.end && c.start < a.end;
   const len = (m: Mention<string>) => m.end - m.start;
   const deptMs = deptAll.filter((d) => !catAll.some((c) => overlaps(d, c) && len(c) > len(d)));
-  const catMs = catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c)));
+  const catMs = refineByLabel(catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c))), tk, world);
   const clash = deptMs.find((d) => catMs.some((c) => c.start === d.start && c.end === d.end));
   if (clash) {
     const c = catMs.find((x) => x.start === clash.start)!;
@@ -520,6 +535,16 @@ export function understand(input: string, state: ScreenState, world: World, opts
     steps.push({ a: "draft" });
   }
 
+  if (oneDayBack) {
+    const base = steps.filter((x) => x.a === "view" || x.a === "page");
+    return { kind: "ask", lang, heard,
+      question: b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?"),
+      choices: [
+        { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
+        { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },
+        { label: b("Never mind", "வேண்டாம்"), steps: [] }
+      ] };
+  }
   // a question nothing above could place goes to Ask District IQ, whose tools answer it
   if (QUESTION.test(s) && (!steps.length || (steps.length === 1 && steps[0].a === "view"))) {
     return done([{ a: "ask", q: heard }], 1, 1, 1);

@@ -1,0 +1,3 @@
+# G1 failing output before the fix: a one-word category name beat the category the sentence says more of (grader row)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+ROW tanglish-explain-20: wrong (confident) | moved the console onto the wrong thing; 6_scope failed | said: மண்டலம் 2 · மணலி · Drainage & sewage

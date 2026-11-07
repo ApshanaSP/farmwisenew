@@ -335,11 +335,29 @@ const ORDINARY = new Set(("export download print share compare show open list gi
   // numbers and ranks ("top five departments"), and the electricity of the Tamil minsāra
   "one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty fifty hundred first second third last bottom top few several many most least both electricity electric electrical power " +
   "actually basically simply really maybe perhaps latest current recent total overall whole entire every each other another same new old big small top best worst main full short long detailed").split(" "));
+/**
+ * Words of the Tanglish grammar, by shape and not by list: the question words (edhu, edha, ethai, evlo, yaaru, enga, eppadi) and the verb endings of the person ("solraanga" they say,
+ * "pannuraanga", "irukkeenga"). Such a word in front of an agency word is a question or a verb of the sentence, never the name of another body (QA4 G1: "edha department", "solraanga Corporation").
+ */
+const TG_QUESTION = /^(?:ed(?:h|th?)[uaie]\w*|ethu\w*|e(?:vl|vv)alavu|evlo|yaar\w*|yaaru|eng(?:a|ae|e)|epp(?:o|odhu)|eppadi|epdi|yen|yaen)$/;
+const TG_VERB = /(?:k?kiraanga|k?kiraan|k?kiraar|k?kireenga|k?kiren|k?kirom|raanga|ranga|reenga|ringa|raathu|rathu|radhu|vaanga|paanga|aanga)$/;
+const TG_PLACE_END = /^(?:t{1,2}h?[uia]|nn?[aeiu])?(?:ula|ila|la|le|il|in|ai|ukku|kku|ku|oda|ode|ulla|ilirundhu)?$/;
+/** A place said with a Tamil case ending as people speak it: valasaravakkattula is Valasaravakkam + -ththu + -la, manalila is Manali + -la. The place word loses a final m, u or i before the ending. */
+function inflectedPlace(w: string, reg: Registry): boolean {
+  if (w.length < 7) return false;
+  const place = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || LOCALITY_WORDS.has(x);
+  for (let k = w.length - 2; k >= Math.max(5, w.length - 8); k--) {
+    const stem = w.slice(0, k), rest = w.slice(k);
+    if (rest && TG_PLACE_END.test(rest) && (place(stem) || place(stem + "m") || place(stem + "u") || place(stem + "i"))) return true;
+  }
+  return false;
+}
 const nameLike = (w: string, reg: Registry): boolean => {
   if (w.length < 3 || /\d/.test(w)) return false;
   if (ORDINARY.has(w) || /^[a-z]{4,}ly$/.test(w)) return false;
+  if (TG_QUESTION.test(w) || (w.length >= 7 && TG_VERB.test(w))) return false;
   if (QUAL.has(w) || FILLER.has(w) || POSTS.has(w) || HEADS.has(w) || stopWord(w) || BRIEF_WORDS.has(w) || listedWord(w)) return false;
-  const known = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || (LOCALITY_WORDS.has(x) && !soundsOutside(x)) || reg.topics.has(x) || vocabWord(x, reg) != null || (x.length >= 5 && skeleton(x).length >= 4 && [-1, 0, 1].some((d) => placeSkeletons(reg).has(`${skeleton(x)}:${x.length + d}`)));
+  const known = (x: string) => reg.places.has(x) || inflectedPlace(x, reg) || AREA_WORDS.has(x) || (LOCALITY_WORDS.has(x) && !soundsOutside(x)) || reg.topics.has(x) || vocabWord(x, reg) != null || (x.length >= 5 && skeleton(x).length >= 4 && [-1, 0, 1].some((d) => placeSkeletons(reg).has(`${skeleton(x)}:${x.length + d}`)));
   if (known(w)) return false;
   // a plain English word names no other town: "today's", "senior citizen", "damaged road", "cyber crime" in front of an agency word (RC-01, review point 1)
   if (isEnglishWord(w) || isEnglishWord(w.replace(/s$/, ""))) return false;
@@ -355,7 +373,8 @@ function nameBeside(content: string[], heads: { x: string; i: number }[], reg: R
     if (INST.has(x)) return [content[i - 1], x].filter(Boolean).join(" ");
     // a word of jurisdiction is another body's: the state's police, the central or the district's, the airport's (ours is the Greater Chennai Police)
     if (i > 0 && JURISDICTION.has(content[i - 1])) return `${content[i - 1]} ${x}`;
-    for (let j = i - 1; j >= Math.max(0, i - 2); j--) if (nameLike(content[j], reg)) return `${content[j]} ${x}`;
+    // a word of the sentence's own grammar between a name and the agency word ("solraanga, andha Corporation") cuts the two apart
+    for (let j = i - 1; j >= Math.max(0, i - 2); j--) { if (nameLike(content[j], reg)) return `${content[j]} ${x}`; if (stopWord(content[j]) || TG_QUESTION.test(content[j]) || (content[j].length >= 7 && TG_VERB.test(content[j]))) break; }
   }
   return null;
 }
@@ -383,6 +402,27 @@ const cap = (s: string) => s.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
 /** words that tie a sentence to the district's own business, so that "who is the king of Delhi" is general knowledge and "Delhi police report" is not */
 const DISTRICT_NOUNS = new Set(["complaint", "complaints", "case", "cases", "incident", "incidents", "grievance", "news", "weather", "price", "prices", "rain", "rainfall", "aqi", "air", "lake", "lakes", "reservoir",
   "report", "status", "update", "brief", "police", "zone", "ward", "department", "officer", "collector", "corporation", "severe", "overdue", "pending"]);
+/**
+ * The name a reply says back, in the user's own words where the roman spelling is only a sound. The resolver works on romanised words. A Tamil word it knows (a place
+ * outside the district, a term like "police" or "department") has its proper English name, and that is said. Any other Tamil word is romanised by sound, which is a spelling
+ * nobody wrote ("தீயணைப்பு" came back as "Tiyanaippu"): that word is said as the user said it. A sentence in Latin letters already holds the user's own words
+ * (QA4 G1, audit-understanding-17; BUG-030 keeps the known names).
+ */
+export function nameAsSaid(text: string, heard: string): string {
+  if (!/[஀-௿]/.test(text)) return heard;
+  const byTheirSound = new Map<string, string>(), terms = new Map<string, string>();
+  for (const raw of text.normalize("NFC").split(/\s+/).filter(Boolean)) {
+    const t = raw.replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, "");
+    if (!/[஀-௿]/.test(t) || taOutside(t)) continue;
+    const term = TA_TERMS.find(([ta]) => !ta.includes(" ") && (t === ta || t.startsWith(ta.replace(/்$/, ""))));
+    if (term) terms.set(term[1], t);
+    else byTheirSound.set(romanise(t).replace(/\s+/g, "").toLowerCase(), t);
+  }
+  const ws = heard.split(" ");
+  if (!ws.some((w) => byTheirSound.has(w.toLowerCase()))) return heard;
+  // a name with a word spelt by sound is said all in the user's words, its terms too ("தீயணைப்பு துறை", not "தீயணைப்பு Department")
+  return ws.map((w) => byTheirSound.get(w.toLowerCase()) ?? terms.get(w.toLowerCase()) ?? w).join(" ");
+}
 /** Is the sentence about a place or body outside Greater Chennai? Its name, or null. The one question every lane asks before it answers (fast lane, frame, rules, brief). */
 export function foreignIn(text: string, w: World): string | null {
   if (KEEPING.test(` ${text.toLowerCase()} `)) return null;
@@ -391,7 +431,7 @@ export function foreignIn(text: string, w: World): string | null {
   // general knowledge about a far place ("what is the capital of Delhi") is the general lane's, unless something of the district is asked
   const raw = text.toLowerCase(), reg = registry(w);
   if ((GENERAL.test(raw) || SUBJECTS.test(raw)) && !sentenceWords(text).some((x) => reg.topics.has(x) || DISTRICT_NOUNS.has(x) || HEADS.has(x))) return null;
-  return cap(r.heard);
+  return nameAsSaid(text, cap(r.heard));
 }
 /** the plain answer for a place or body this console holds nothing on */
 export function noData(heard: string, near: Entity | null = null): { en: string; ta: string } {
@@ -415,7 +455,7 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
-    return { kind: "reply", conf: 0, via: "unknown", text: noData(cap(r.heard), r.near) };
+    return { kind: "reply", conf: 0, via: "unknown", text: noData(nameAsSaid(text, cap(r.heard)), r.near) };
   }
   if (r.kind === "ambiguous") {
     const [a, b] = r.options;

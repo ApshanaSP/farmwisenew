@@ -8,6 +8,8 @@
  */
 import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
 import { foreignIn } from "./entities";
+import { betterCategory, saidStems } from "./catlabels";
+import { CATEGORY_LABELS } from "./narrate";
 import { fuzzyNames, romanise } from "./xlit";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
@@ -95,7 +97,7 @@ export function placesIn(t: string, w: World): string[] {
 
 /** the topic named first in the sentence ("fire accident" is a fire, not a road accident); a longer name wins a tie */
 export function catIn(t: string): string | null {
-  let best: { code: string; at: number; len: number } | null = null;
+  let best: { code: string; at: number; len: number; word: string } | null = null;
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
       const w = raw.toLowerCase();
@@ -105,10 +107,11 @@ export function catIn(t: string): string | null {
       const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? 0 : 1);
       // a broad word loses to a specific one in the same sentence: "lakes la water level" is the lakes, not the water supply (RC-05)
       if (w === "water" && / (lake|lakes|reservoir|reservoirs|dam|storage|rain) |ஏரி|நீர்த்தேக்க/.test(t)) continue;
-      if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length };
+      if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length, word: w };
     }
   }
-  return best?.code ?? null;
+  // a one-word name that another category's label says more of in this sentence is that other category (catlabels.ts)
+  return best ? (best.word.includes(" ") ? best.code : betterCategory(best.code, best.word, saidStems(t.split(/\s+/).filter(Boolean)), CATEGORY_LABELS)) : null;
 }
 /**
  * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds a list (RC-05). overdue wins over open.

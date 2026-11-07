@@ -1,0 +1,3 @@
+# G1 failing output before the fix: explain with a place and a topic taken as the order to explain the screen (grader row)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+ROW ta-explain-16: wrong (confident) | a console step read something out instead of answering: explain; 7_action failed | said: விளக்கம்
