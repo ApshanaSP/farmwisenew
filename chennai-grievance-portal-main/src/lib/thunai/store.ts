@@ -38,10 +38,10 @@ export class MemoryDamagedError extends Error {
 }
 
 /** A missing file is an empty memory. A file that is there but unreadable is damaged, and must never be treated as empty. */
-function load(user: number): { m: Memory; damaged: boolean } {
+function load(user: number): { m: Memory; damaged: boolean; unreadable?: boolean } {
   let text: string;
   try { text = fs.readFileSync(file(user), "utf8"); }
-  catch (e) { return { m: blank(), damaged: (e as NodeJS.ErrnoException)?.code !== "ENOENT" }; }
+  catch (e) { const gone = (e as NodeJS.ErrnoException)?.code === "ENOENT"; return { m: blank(), damaged: !gone, unreadable: !gone }; } // not readable (a lock, no permission): says nothing about the notes
   try {
     const m = JSON.parse(text);
     if (!m || typeof m !== "object" || Array.isArray(m)) return { m: blank(), damaged: true };
@@ -61,7 +61,9 @@ export function readMemoryStrict(user: number): Memory {
 
 /** Copies a damaged file beside itself before anything is written over it. Returns the copy's name, or null when the file is fine. */
 function keepDamagedAside(user: number): string | null {
-  if (!load(user).damaged) return null;
+  const r = load(user);
+  if (r.unreadable) throw new MemoryDamagedError(user); // a transient lock must never end with the notes replaced (review point 6)
+  if (!r.damaged) return null;
   const kept = `${file(user)}.damaged-${Date.now()}`;
   try { fs.copyFileSync(file(user), kept); } catch { return null; }
   console.error("[thunai] memory file for user " + Number(user) + " was damaged; kept as " + path.basename(kept));

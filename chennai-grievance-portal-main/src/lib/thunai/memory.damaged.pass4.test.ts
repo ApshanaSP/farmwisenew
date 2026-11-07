@@ -70,3 +70,21 @@ describe("RC-51 sweep: the Studio board file is kept aside too", () => {
     expect(getBoard()).toEqual([]);
   });
 });
+
+// Review point 6 (lane e): a read that fails for a reason other than "no such file" (a lock, no permission) says nothing about the notes.
+// It must not be read as damaged-then-replaced: the write is refused and the file is left as it was.
+describe("RC-51 an unreadable file is not an empty one", () => {
+  it("a read error other than ENOENT makes the change refuse to write, and the file stays as it was", async () => {
+    const real = JSON.stringify({ notes: [{ id: "a", text: "the real note", at: "2026-11-01T00:00:00Z" }] });
+    fs.writeFileSync(f(), real);
+    const { changeMemory, MemoryDamagedError } = await import("./store");
+    const orig = fs.readFileSync;
+    vi.spyOn(fs, "readFileSync").mockImplementation(((p: fs.PathOrFileDescriptor, ...r: unknown[]) => {
+      if (String(p) === f()) throw Object.assign(new Error("busy"), { code: "EBUSY" });
+      return (orig as (...a: unknown[]) => unknown)(p, ...r);
+    }) as typeof fs.readFileSync);
+    expect(() => changeMemory(7, { op: "note", text: "a new note" } as never)).toThrow(MemoryDamagedError);
+    vi.restoreAllMocks();
+    expect(fs.readFileSync(f(), "utf8")).toBe(real);
+  });
+});

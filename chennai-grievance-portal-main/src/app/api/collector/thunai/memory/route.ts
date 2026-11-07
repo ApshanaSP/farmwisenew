@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     return NextResponse.json(changeMemory(s.userId, parsed.data as MemoryOp));
   } catch (err) {
+    if (err instanceof MemoryDamagedError) return NextResponse.json({ error: "Thunai's saved notes file could not be read just now, so nothing was changed. Try again in a moment.", damaged: true }, { status: 503 });
     return failed(err, "Thunai's memory");
   }
 }
