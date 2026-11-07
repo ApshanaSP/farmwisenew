@@ -19,19 +19,29 @@ async function direct(recipe: string, slots: Record<string, unknown>) {
 describe("skeptic b: RC-08 mixes groups and incidents", () => {
   // log: "14 severe cases the last 30 days; ... 15 are past their deadline" (q tree, Severe, monthly); also flood 33/35, water 36/38.
   // The headline counts the list's rows (groups of one problem), the past-deadline figure counts incidents, so the part is larger than the whole.
-  it.fails("an open list never says more cases are past their deadline than it has cases", async () => {
+  it("an open list never says more cases are past their deadline than it has cases", async () => {
     const st = await direct("cases", { status: "open", sev: "Severe", q: "tree", period: "monthly" });
     const total = st.blocks.find((b: any) => b.kind === "CaseList").total as number;
     const late = st.blocks.find((b: any) => b.kind === "Kpis").items.find((i: any) => i.key === "late").value as number;
     expect(late, st.say.en).toBeLessThanOrEqual(total);
   });
   // log: cases overdue weekly says "325 are past their deadline"; advise, same scope, says "283 open cases are past their deadline" (283 is the group count, 325 the incidents)
-  it.fails("advise and the overdue list give the same past-deadline figure for the same scope", async () => {
+  it("advise and the overdue list give the same past-deadline figure for the same scope", async () => {
     const cases = await direct("cases", { status: "overdue", period: "weekly" });
     const advise = await direct("advise", { period: "weekly" });
     const listed = cases.blocks.find((b: any) => b.kind === "CaseList").total as number;
     const m = /(\d+) open cases are past their deadline/.exec(JSON.stringify(advise.say.en));
     expect(m, advise.say.en).toBeTruthy();
     expect(Number(m![1])).toBe(listed);
+  });
+});
+
+describe("skeptic b: the dashboard list and its open tile count the same unit", () => {
+  it("the open cases list total equals the open figure of the Kpis", async () => {
+    const st = await direct("dashboard", { period: "weekly" });
+    const total = st.blocks.find((b: any) => b.kind === "CaseList")?.total as number;
+    const open = st.blocks.find((b: any) => b.kind === "Kpis")?.items.find((i: any) => i.key === "ongoing")?.value as number;
+    expect(open, st.say.en).toBeTypeOf("number");
+    expect(total).toBe(open);
   });
 });

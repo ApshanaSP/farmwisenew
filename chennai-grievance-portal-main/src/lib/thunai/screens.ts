@@ -281,7 +281,7 @@ async function advise(c: Ctx): Promise<Part> {
   // 2. a department sitting on several overdue cases
   // 2. a department sitting on several overdue cases: the count is the whole scope's, the department is read from the most serious of them
   const overdue = late ? lateRows : rows.filter((r) => r.overdue);
-  const overdueAll = late ? late.total : overdue.length;
+  const overdueAll = late ? late.incidents : overdue.length;
   if (overdueAll > 1) {
     const by = new Map<string, number>();
     for (const r of overdue) { const h = holder(r); if (h) by.set(h, (by.get(h) ?? 0) + 1); }
@@ -462,7 +462,9 @@ async function cases(c: Ctx): Promise<Part> {
     const r = await incidentList(c, { sev, status: slots.status === "overdue" ? "open" : slots.status, q: slots.q, sort: sortKey });
     rows = r.rows.map((x) => caseRow(x, w));
     if (slots.status === "overdue") rows = rows.filter((x) => x.overdue);
-    total = r.total;
+    // the headline counts incidents, as the past-deadline figure does; a list row is a group of them, so the part is never larger than the whole
+    total = r.incidents;
+    if (c.h.list) groupsTotal = r.total;
     if (slots.status === "overdue") {
       // hands without the console list (a test's): the list is one page of 12, so the overdue total is counted for the whole scope from
       // the departments' follow-ups, or the filtered list is read page by page
@@ -1158,7 +1160,7 @@ async function dashboard(c: Ctx): Promise<Part> {
       { kind: "Ranking", id: "zones", title: "Zones with the most", unit: "incidents", method: `${subject} reported by zone, ${PERIOD_EN[s.period]}.`, order: "top",
         items: zr5.map((x) => ({ key: String(x.item.zone), label: clip(x.item.name, 80), value: x.value, rank: x.rank, sub: `${spoken(Number(x.item.open))} open`, zone: Number(x.item.zone), lat: null, lon: null, action: "zone" as const })) },
       t.block,
-      { kind: "CaseList", id: "cases", title: "Open cases, most serious first", source: "list", sev: null, total: Number(list.total ?? rows.length), rows }
+      { kind: "CaseList", id: "cases", title: "Open cases, most serious first", source: "list", sev: null, total: Number(list.incidents ?? list.total ?? rows.length), rows }
     ] };
 }
 
