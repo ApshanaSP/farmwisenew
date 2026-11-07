@@ -49,3 +49,15 @@ Fix (mechanism). A heard word is one of ours only if it starts like the name; an
 Class guard. lane-a.pass4.test.ts RC-02: 25 everyday sentences in three languages that hold no place must resolve to no body and no zone; Anna Salai and Anna University are not Anna Nagar; the taMatch short-name cases; first letter and count.
 
 Result. audit-understanding-5, -6, -24 are plain tests; open-baseline 5, 6, 39, 41, 42 fixed; confident wrong 26 to 21. Open in this cluster: audit-understanding-10 (Chetpet and T Nagar are not narrowed: the Corporation's list holds them but the data's places do not), open-baseline-37, -38, -40 (a body or topic in the planner's reach, and "second one" in a follow-up), PB-020 in Tamil with the Collector word.
+
+## RC-03: short words matched inside longer words with no word edge (plus RC-14, PB-146 in normalise.ts)
+
+Root cause. Latin patterns had `\b`, Tamil ones did not: `has()` and `catIn()` used a plain substring test for Tamil, so the two-letter word for fire matched inside the word for severe, a Tamil verb stem matched inside the word for police and for protest, and the verb "explain" matched the word for a lamp (street light). "high" and "low" were severities anywhere ("High Court", "high tide", "low lying"). normalise() looked words up with `tok in LOAN` and `tok in EN_NUM`, so "constructor" came out as the Object function and the rules threw.
+
+Why earlier tests missed it. Tests were English, where the boundary is in the regex. The static word audit (word-pattern-audit.mjs) existed but was never a test.
+
+Fix (mechanism). One word-edge function, `tamilAt`, for every Tamil word of every list in the fast lane (nothing Tamil before it; after it, a short word takes only its case endings); one rule for the weak severity words (WEAK_SEV and SEV_NOUN, read by the fast lane and the rules); the explain verb pattern is whole-word and excludes lamp words; Object.hasOwn for the two lookups (RC-14). plan.ts verbs are whole words (RC-04).
+
+Class guard. lane-a.pass4.test.ts RC-03: every short Tamil alias is run against every Tamil word of the lexicon (zone names, departments, categories, severities) and may match only as a word with an ending; the fire and severe, lamp and explain, high and low cases; every name on Object.prototype is fed to normalise and the rules and must not throw or enter the tokens as code.
+
+Result. audit-understanding-21 (all but one sentence), -23, audit-privacy_injection-10, meta-words-10 and -11, scans-code-1, open-baseline-21 and -22 are plain tests. Kept open: the Tamil phrase for harsh sun (the word for severe is also the everyday word for harsh, so only a planner can tell) and open-baseline-23. gloss.ts holds no word that needed an edge.

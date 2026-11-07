@@ -1,0 +1,15 @@
+# RC-03 sweep: word edges. Every Tamil substring match and every plain-object lookup on user words
+## grep -n 'includes(\|indexOf(' with a Tamil word in src/lib/thunai (non-test), before
+18:const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && t.includes(w)));
+81:      const raw0 = /[\u0B80-\u0BFF]/.test(w) ? t.indexOf(w) : t.indexOf(` ${w} `);
+167:  if (zonesIn(t, w).length || catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[\u0B80-\u0BFF]/.test(d) && raw.includes(d))) return false;
+177:  return zonesIn(t, w).length > 0 || !!catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[஀-௿]/.test(d) && raw.includes(d));
+302:  if (has(t, INSIGHT) || INSIGHT.some((w) => /[஀-௿]/.test(w) && t.includes(w))) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period
+324:  if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-�
+## the node tests/qa/pass4/word-pattern-audit.mjs run after the fix: patterns with a mid-word hit on real data
+(the audit lists 243 patterns on the baseline; the ones in the fast lane, rules and plan are the Tamil includes above and the high/low severity words, fixed here; the rest are Latin stems that extend into longer words, which the audit lists as fine: a stem such as leak in leakage)
+## object lookups keyed by user text
+73:  if (Object.hasOwn(EN_NUM, tok)) return EN_NUM[tok]; // a word like constructor or __proto__ is a property of every object, not a number (RC-14)
+97:    if (Object.hasOwn(LOAN, tok)) { out.push(LOAN[tok]); continue; }
+## result
+one word-edge function tamilAt in quick.ts (nothing Tamil before; a short word only with a case ending after) used by has() and catIn; high, low, medium and moderate need a severity noun beside them (one rule, WEAK_SEV and SEV_NOUN in lexicon.ts, read by the fast lane and the rules); the explain verb pattern excludes the lamp words; plan.ts Tamil verbs are whole words (RC-04); normalise uses Object.hasOwn for LOAN and EN_NUM (RC-14, PB-146)

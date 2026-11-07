@@ -363,7 +363,8 @@
     "row_id": "en-noisy-09",
     "mechanism": "M11",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-22",
@@ -380,7 +381,8 @@
     "row_id": "ta-list-19",
     "mechanism": "M11",
     "model_needed": true,
-    "lane": "no-model"
+    "lane": "no-model",
+    "fixed": true
   },
   {
     "id": "open-baseline-23",

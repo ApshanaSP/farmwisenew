@@ -206,3 +206,10 @@ const CATEGORY_TOPICS: Record<string, string[]> = {
     }
   }
 })();
+
+/**
+ * High, low, medium and moderate are ordinary words ("High Court", "high tide", "low lying", "medium sized"): they name a severity only beside a word that says
+ * so (high priority, low severity, medium level, high cases). One rule for the fast lane and the rules (RC-03).
+ */
+export const WEAK_SEV = new Set(["high", "medium", "moderate", "low"]);
+export const SEV_NOUN = new Set(["priority", "severity", "risk", "level", "urgency", "cases", "complaints", "incidents", "issues", "problems", "ones", "case", "complaint", "incident", "issue"]);

@@ -6,7 +6,7 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_WORDS, SUBJECTS, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_NOUN, SEV_WORDS, SUBJECTS, WEAK_SEV, ZONES } from "./lexicon";
 import { foreignIn } from "./entities";
 import { fuzzyNames, romanise } from "./xlit";
 import type { Recipe } from "./stage";
@@ -15,7 +15,26 @@ import type { PeriodKey, Sev, World } from "./types";
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
-const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && t.includes(w)));
+/** the endings a short Tamil word takes (தீ: தீயில், தீக்கு), so that a short word is a word and not the start of another (தீவிர, "severe", is not தீ, "fire") (RC-03) */
+const TA_ENDING = /^(ல்|ில்|யில்|ல|க்கு|ுக்கு|யை|ை|யால்|ால்|ின்|யின்|ும்|ம்|கள்|களை|களில்|ங்கள்|யும்|உம்|ே)/;
+/** a Tamil word inside the text, at a word edge: nothing Tamil before it; and after it either more of a long word (its case endings and compounds) or, for a short word, only an ending */
+export function tamilAt(t: string, w: string): number {
+  const ww = w.trim();
+  if (!ww) return -1;
+  const long = [...ww].length >= 4;
+  let i = t.indexOf(ww);
+  while (i >= 0) {
+    const before = t[i - 1], after = t.slice(i + ww.length);
+    const leftOk = !before || !/[஀-௿]/.test(before) || (w.startsWith(" "));
+    // an alias written with a space after it (" வெள்ள ") is the whole word and nothing longer
+    const whole = w.endsWith(" ");
+    const rightOk = after === "" || !/^[஀-௿]/.test(after) || (!whole && (long || TA_ENDING.test(after)));
+    if (leftOk && rightOk) return i;
+    i = t.indexOf(ww, i + 1);
+  }
+  return -1;
+}
+const has = (t: string, words: string[]) => words.some((w) => t.includes(` ${w} `) || (/[஀-௿]/.test(w) && tamilAt(t, w) >= 0));
 
 const isComparing = (t: string) => has(t, COMPARE) || /(ஒப்பி|oppid|கம்பே|கம்பா)/.test(t);
 
@@ -78,10 +97,10 @@ export function catIn(t: string): string | null {
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
       const w = raw.toLowerCase();
-      const raw0 = /[\u0B80-\u0BFF]/.test(w) ? t.indexOf(w) : t.indexOf(` ${w} `);
+      const raw0 = /[\u0B80-\u0BFF]/.test(w) ? tamilAt(t, w) : t.indexOf(` ${w} `);
       if (raw0 < 0) continue;
       // the position of the word itself (not of the space before it), so a Tamil word and an English one compare fairly
-      const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? w.length - w.trimStart().length : 1);
+      const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? 0 : 1);
       // a broad word loses to a specific one in the same sentence: "lakes la water level" is the lakes, not the water supply (RC-05)
       if (w === "water" && / (lake|lakes|reservoir|reservoirs|dam|storage|rain) |ஏரி|நீர்த்தேக்க/.test(t)) continue;
       if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length };
@@ -107,7 +126,10 @@ export function deptWordIn(t: string): string | null {
   return null;
 }
 export function sevIn(t: string): Sev | null {
-  for (const [word, sev] of SEV_WORDS) if (has(t, [word.toLowerCase()])) return sev;
+  for (const [word, sev] of SEV_WORDS) if (!WEAK_SEV.has(word) && has(t, [word.toLowerCase()])) return sev;
+  // high, low, medium are severities only beside a word that says so (RC-03)
+  const tk = t.trim().split(" ");
+  for (let i = 0; i < tk.length; i++) if (WEAK_SEV.has(tk[i]) && (SEV_NOUN.has(tk[i + 1] ?? "") || SEV_NOUN.has(tk[i - 1] ?? ""))) return SEV_WORDS.find(([x]) => x === tk[i])?.[1] ?? null;
   if (has(t, ["serious", "critical", "urgent", "danger", "dangerous", "கடுமையான", "கடுமை", "அவசர", "severe"])) return "Severe";
   return null;
 }
@@ -299,7 +321,7 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved location", "unresolved locations", "no location", "unlocated"]) } };
   // "why did complaints spike": asked why, so the reasons, not the outliers
   if (has(t, WHY) && (cat || zones.length)) return { recipe: "why", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
-  if (has(t, INSIGHT) || INSIGHT.some((w) => /[஀-௿]/.test(w) && t.includes(w))) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
+  if (has(t, INSIGHT) || false) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
   if (NEARBY.test(t) && FACILITY.test(t)) return { recipe: "nearby", slots: { q: text.trim().slice(0, 240) } };
   if (has(t, DASHBOARD)) return { recipe: "dashboard", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
   if (has(t, ON_MAP) && !cat && !sev && !has(t, ["hotspot", "hotspots", "severe"])) return null;
@@ -321,7 +343,7 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (isComparing(t)) return null;
   if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
-  if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-௿]/.test(w) && t.includes(w)))) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
+  if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   if (has(t, RANK) && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };

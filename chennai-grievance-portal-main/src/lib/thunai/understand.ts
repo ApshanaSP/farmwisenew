@@ -15,7 +15,7 @@
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
 import { foreignIn, noData } from "./entities";
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
   ZONES } from "./lexicon";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
@@ -200,7 +200,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/what did you (just )?do|என்ன செஞ்ச|enna senja|what happened just now|what was that/.test(s)) return done([{ a: "whatDid" }]);
   if (/what am i (looking at|seeing)|where am i|what is on (the )?screen|whats on (the )?screen|என்ன பார்க்கிறேன்|enna paakuren|இந்தத் திரை என்ன/.test(s)) return done([{ a: "whereAmI" }]);
   if (/^(repeat|again|say (that |it )?again|once more|repeat that|marupadi|மறுபடி|மீண்டும் சொல்|thirumba sollu)$/.test(s)) return done([{ a: "repeat" }]);
-  if (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)|விளக்கு|vilakku|vilakkam/.test(s)) return done([{ a: "explain" }]);
+  // the Tamil and Tanglish verb "explain" is a whole word, and not the word for a lamp (தெரு விளக்கு, street light; theru vilakku): the edge is in the pattern (RC-03)
+  if (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)/.test(s) || EXPLAIN_TA.test(` ${s} `) || /(^| )(?<!(theru|therukku|street|min|current|kambam|lamp) )(vilakku|vilakkam|vilakkunga|vilakkama)( |$)/.test(s)) return done([{ a: "explain" }]);
 
   // undo / go back (but "go back to the briefing" is navigation)
   const undo = /^(undo|go back|back|revert|previous view|pazhaya padi|பழையபடி மாத்து|பழையபடி|திரும்பிப் போ|go back pannu|undo pannu)(?=\s|$)/.exec(s);
@@ -337,7 +338,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/^(how many|how much|which|why|who|when|is there|are there|did|does|do we|has|have)\b|^(எத்தனை|ஏன்|யார்|எப்போது)/.test(s)) return done([{ a: "ask", q: heard }]);
 
   // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
-  if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|\b(save|type|note|pin|write|draft|bookmark)( ah| a)? (pannu|panni|pannunga|pannidu|seiyu)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];
@@ -412,7 +413,15 @@ export function understand(input: string, state: ScreenState, world: World, opts
   }
   for (const m of [...deptMs, ...catMs]) for (let k = m.start; k < m.end; k++) taken[k] = true;
   // severity
-  const sevM = lastStanding(mentions(tk, SEV_WORDS, taken), tk);
+  // high, low, medium count only beside a word that says severity ("High Court", "low lying" do not) (RC-03)
+  const sevAll = mentions(tk, SEV_WORDS, taken).filter((m) => {
+    const w = tk.slice(m.start, m.end).join(" ");
+    if (!WEAK_SEV.has(w)) return true;
+    if (SEV_NOUN.has(tk[m.end] ?? "") || SEV_NOUN.has(tk[m.start - 1] ?? "")) return true;
+    for (let k = m.start; k < m.end; k++) taken[k] = false;
+    return false;
+  });
+  const sevM = lastStanding(sevAll, tk);
 
   const zoneM = lastStanding(zoneMs, tk);
   const talukM = lastStanding(talukMs, tk);

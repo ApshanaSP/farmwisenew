@@ -345,10 +345,10 @@ describe("BUG-013: opening a workspace by voice", () => {
 
 // ----------------------------------------------------------------------------------------------------- found on the way
 describe("found on the way: a short Tamil word matched inside a longer one", () => {
-  it.fails.each(["அடையாறில் தீவிர புகார்கள்", "அடையாறில் தீர்க்கப்படாத புகார்கள்", "தீபாவளி அன்று புகார்கள்"])("audit-privacy_injection-10: %s is not read as a fire", (text) => {
+  it.each(["அடையாறில் தீவிர புகார்கள்", "அடையாறில் தீர்க்கப்படாத புகார்கள்", "தீபாவளி அன்று புகார்கள்"])("audit-privacy_injection-10: %s is not read as a fire", (text) => {
     expect(catIn(` ${text} `)).not.toBe("FIRE_EXPLOSION");
   });
-  it.fails("audit-privacy_injection-10: severe complaints in Adyar, in Tamil, keeps no fire filter", () => {
+  it("audit-privacy_injection-10: severe complaints in Adyar, in Tamil, keeps no fire filter", () => {
     expect(quickScreen("அடையாறில் தீவிர புகார்கள்", world)?.slots.cat ?? null).toBeNull();
   });
   it("a real fire still reads as a fire", () => {

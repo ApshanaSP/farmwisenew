@@ -70,7 +70,7 @@ export function enNumber(tok: string): number | null {
   if (/^\d{1,4}$/.test(tok)) return Number(tok);
   const m = /^(\d{1,3})(st|nd|rd|th|aavadhu|vadhu|ku|kku|la|a)$/.exec(tok);
   if (m) return Number(m[1]);
-  if (tok in EN_NUM) return EN_NUM[tok];
+  if (Object.hasOwn(EN_NUM, tok)) return EN_NUM[tok]; // a word like constructor or __proto__ is a property of every object, not a number (RC-14)
   return null;
 }
 
@@ -94,7 +94,7 @@ export function normalise(input: string): Normalised {
     // polite verb endings: "kaatunga", "காட்டுங்க" -> the verb (plural nouns such as மாவட்டங்கள் keep theirs)
     const tok = raw.replace(/ுங்க$/, "ு").replace(/^(.{3,}u)(nga|ngo)$/, "$1");
     if (POLITE.has(tok)) continue;
-    if (tok in LOAN) { out.push(LOAN[tok]); continue; }
+    if (Object.hasOwn(LOAN, tok)) { out.push(LOAN[tok]); continue; }
     const ta = /[஀-௿]/.test(tok) ? taNumber(tok) : null;
     if (ta != null) { out.push(String(ta)); continue; }
     // "one" is a number after a counting word ("zone one", "confirm one"); otherwise it is a pronoun ("the next one")

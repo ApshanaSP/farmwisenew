@@ -152,7 +152,7 @@ describe("QA pass 4: words that must narrow the answer", () => {
     const a = await ask("road complaints in Thiru-Vi-Ka-Nagar");
     expect(a.o.said).not.toMatch(/[஀-௿]/);
   });
-  it.fails("meta-words-10: 'விளக்கு புகார்கள்' (lamp complaints) is not read as the word for 'explanation'", async () => {
+  it("meta-words-10: 'விளக்கு புகார்கள்' (lamp complaints) is not read as the word for 'explanation'", async () => {
     const a = await ask("மின்விளக்கு எரியவில்லை");
     expect(a.o.said).not.toBe("விளக்கம்");
   });

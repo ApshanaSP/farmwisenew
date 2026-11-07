@@ -197,3 +197,46 @@ describe("RC-02: no entity from an everyday sentence", () => {
     expect(rules("top five zones by open cases").steps?.some((x) => x.a === "view" && (x.view as { zone?: number | null } | undefined)?.zone === 5)).toBeFalsy();
   });
 });
+
+// RC-03 (and RC-14, normalise.ts): a short word is a word, not the start or the middle of another; a user's word is never a property of Object.
+import { tamilAt } from "./quick";
+import { normalise } from "./normalise";
+import { DEPT_TA, SEV_WORDS, ZONES } from "./lexicon";
+describe("RC-03: word edges, in every script", () => {
+  const ta = (s: string) => /[஀-௿]/.test(s);
+  const shortAliases = [...new Set([...Object.values(CAT_ALIASES).flat(), ...SEV_WORDS.map(([w]) => w)].map((x) => x.trim()).filter((x) => ta(x) && [...x].length <= 3))];
+  const tamilWords = [...new Set([...Object.values(ZONES).flatMap((z) => z.ta), ...Object.values(DEPT_TA), ...Object.values(CAT_ALIASES).flat(), ...SEV_WORDS.map(([w]) => w)].flatMap((x) => x.trim().split(" ")).filter(ta))];
+  it("a short Tamil word is found only as a word (with a case ending), never inside a longer word of the lexicon or the data", () => {
+    const bad: string[] = [];
+    for (const a of shortAliases) for (const w of tamilWords) {
+      if (w === a || !w.includes(a)) continue;
+      const i = tamilAt(` ${w} `, a);
+      // allowed: the word with a case ending; refused: anything else inside it
+      const rest = w.slice(w.indexOf(a) + a.length);
+      const ending = /^(ல்|ில்|யில்|ல|க்கு|ுக்கு|யை|ை|யால்|ால்|ின்|யின்|ும்|ம்|கள்|களை|களில்|ங்கள்|யும்|உம்|ே)/.test(rest);
+      if (i >= 0 && !(w.startsWith(a) && ending)) bad.push(`${a} in ${w}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it("the Tamil word for severe is not the word for fire; a street lamp is not a request to explain", () => {
+    expect(catIn(" தீவிர புகார்கள் ")).toBeNull();
+    expect(catIn(" தீ விபத்து ")).toBe("FIRE_EXPLOSION");
+    expect(catIn(" தீயில் ")).toBe("FIRE_EXPLOSION");
+    for (const s of ["அடையாறு தெரு விளக்கு புகார்கள்", "Adyar la theru vilakku complaints kaattu"]) expect(rules(s).steps?.[0]?.a ?? "", s).not.toBe("explain");
+    expect(rules("இதை விளக்குங்க").steps?.[0]?.a).toBe("explain");
+  });
+  it("high, low and medium are a severity only beside a word that says so", () => {
+    for (const s of ["High Court report", "high court cases", "high school complaints", "high tide warning", "high rise building complaints", "low lying areas in Adyar", "medium sized zones"]) expect(quickScreen(s, world as never)?.slots?.sev ?? null, s).toBeNull();
+    for (const s of ["high priority cases in Adyar this week", "low priority cases today", "low severity cases in Adyar", "medium level complaints"]) expect((quickScreen(s, world as never)?.slots as { sev?: string } | undefined)?.sev, s).toBeTruthy();
+  });
+  it("a word that is a property of every object is just a word (constructor, __proto__, toString, hasOwnProperty)", () => {
+    for (const p of Object.getOwnPropertyNames(Object.prototype)) {
+      const n = normalise(`show the ${p}`);
+      expect(n.tokens.every((t) => typeof t === "string" && !t.includes("[native code]")), p).toBe(true);
+      expect(() => rules(`show the ${p} cases`), p).not.toThrow();
+    }
+  });
+  it("a Tamil verb inside a longer word is not a command (plan.ts), and the explain verb is whole (understand.ts)", () => {
+    expect(isNavCommand("காணாம போனவங்க கேஸ்", [{ a: "view", view: { zone: 2 } }] as never)).toBe(false);
+  });
+});

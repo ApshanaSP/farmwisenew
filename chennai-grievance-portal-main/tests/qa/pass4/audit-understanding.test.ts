@@ -394,8 +394,10 @@ describe("what the browser does before any round (Thunai.tsx: the rules act alon
 });
 
 describe("audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain)", () => {
-  for (const t of ["High Court report", "high court cases", "high school complaints", "high tide in Royapuram", "high tide warning", "high rise building complaints", "high mast light complaints in Adyar", "low lying areas in Adyar", "low lying area flooding", "low lying areas la flooding complaints kaattu", "low voltage complaints in Ambattur", "low pressure area report", "கடுமையான வெயில்"])
-    it.fails(`audit-understanding-21 ${t}: no severity list`, async () => expect(slotsOf(await round(t)).sev ?? null).toBeNull());
+  for (const t of ["High Court report", "high court cases", "high school complaints", "high tide in Royapuram", "high tide warning", "high rise building complaints", "high mast light complaints in Adyar", "low lying areas in Adyar", "low lying area flooding", "low lying areas la flooding complaints kaattu", "low voltage complaints in Ambattur", "low pressure area report"])
+    it(`audit-understanding-21 ${t}: no severity list`, async () => expect(slotsOf(await round(t)).sev ?? null).toBeNull());
+  // kept open on purpose: the Tamil word for severe is also the everyday word for harsh ("harsh sun"); no word edge can tell them apart, so the question is for the planner
+  it.fails("audit-understanding-21 கடுமையான வெயில்: no severity list", async () => expect(slotsOf(await round("கடுமையான வெயில்")).sev ?? null).toBeNull());
   for (const t of ["high priority cases in Adyar this week", "low priority cases today", "low severity cases in Adyar"])
     it(`a real severity still reads as one: ${t}`, async () => expect(slotsOf(await round(t)).sev).toBeTruthy());
 });
@@ -408,7 +410,7 @@ describe("audit-understanding-22 P1: a reminder or note about anything but a nam
 
 describe("audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030)", () => {
   for (const t of ["சென்னை போலீஸ் ரிப்போர்ட்", "சென்னை போலீஸ் ரிப்போர்ட் கொடு", "போலீஸ் அறிக்கை", "போலீஸ் நிலவரம் சொல்லு", "போலீஸ் அறிக்கை இந்த மாதம்", "மயிலாப்பூர் போலீஸ் ரிப்போர்ட்", "போலீஸ் செய்தி", "போலீஸுக்கு கடிதம் எழுது", "போலீஸ் அறிக்கையை மெயில் அனுப்பு", "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு", "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து", "கும்பகோணம் போலீஸ் அறிக்கை", "துபாய் போலீஸ் அறிக்கை", "police report save pannu", "police report ah type pannu", "police report ah note pannu", "police report paakanum nu remind pannu", "severe cases paaka remind pannu", "Adyar flooding complaints paaka remind pannu"])
-    it.fails(`audit-understanding-23 ${t}: the rules do not take it alone`, () => expect(actsAlone(t)).toBe(false));
+    it(`audit-understanding-23 ${t}: the rules do not take it alone`, () => expect(actsAlone(t)).toBe(false));
   for (const t of ["சென்னை காவல்துறை அறிக்கை", "chennai police report kudu", "police nilavaram sollu", "திருச்சி போலீஸ் ரிப்போர்ட்", "ரயில்வே போலீஸ் அறிக்கை"])
     it(`the same request by another word does reach the round: ${t}`, () => expect(actsAlone(t)).toBe(false));
   for (const t of ["go to trends", "அடையாறுக்கு மாற்று", "filter Adyar"])
