@@ -72,7 +72,7 @@ export function MapCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const pins = useMemo(() => d.map.pins.map((p) => ({ ...p, status: STAGE_LABEL[p.stage as Stage] ?? p.stage })), [d.map.pins]);
   return (
     <article className="card o-map" style={style}>
-      <div className="ch"><I n="map" /><h3>{c.dept.short} Grievance Map</h3></div>
+      <div className="ch"><I n="map" /><h2>{c.dept.short} Grievance Map</h2></div>
       <div className="map-cb">
         <div className="map-wrap">
           <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={pins} zone={c.zone} layers={layers} stations={[]} added={NONE}
@@ -120,7 +120,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
   const recent = c.tab === "new" || c.tab === "action";
   return (
     <article className="card o-q" id="o-queue" style={style}>
-      <div className="ch"><I n="tasks" /><h3>Grievances <span>· Approve → Complete → you close it (severe: the Collector verifies)</span></h3>
+      <div className="ch"><I n="tasks" /><h2>Grievances <span>· Approve → Complete → you close it (severe: the Collector verifies)</span></h2>
         <span className="pgr">
           <span>{from}–{to} of {L?.total.toLocaleString("en-IN") ?? "…"}</span>
           <button onClick={() => c.setPage((L?.page ?? 0) - 1)} disabled={!L || L.page <= 0} aria-label="Previous page"><I n="chevl" /></button>
@@ -174,7 +174,7 @@ export function NewsCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const items = c.ov.news;
   return (
     <article className="card o-news" style={style}>
-      <div className="ch"><I n="news" /><h3>{c.dept.short} in the News <span>· {c.ov.periodInfo.label}</span></h3><span className="cnt-b">{items.length}</span></div>
+      <div className="ch"><I n="news" /><h2>{c.dept.short} in the News <span>· {c.ov.periodInfo.label}</span></h2><span className="cnt-b">{items.length}</span></div>
       <div className="o-list">
         {items.length ? items.map((i) => (
           <button key={i.id} className="brief" onClick={() => c.openGrievance(i.id, "news")}>
@@ -207,7 +207,7 @@ export function TrendCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const total = vals.reduce((s, v) => s + v, 0);
   return (
     <article className="card o-tr" style={style}>
-      <div className="ch"><I n="chart" /><h3>Trend <span>· {P.label}</span></h3></div>
+      <div className="ch"><I n="chart" /><h2>Trend <span>· {P.label}</span></h2></div>
       <div className="cb">
         <select className="sel" value={pickSeries ? cat : "all"} onChange={(e) => setCat(e.target.value)} aria-label="Grievance type">
           <option value="all">All {c.dept.short} grievances</option>
@@ -226,7 +226,7 @@ export function TypeCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const rows = c.ov.byType;
   return (
     <article className="card o-cat" style={style}>
-      <div className="ch"><I n="chart" /><h3>Complaints by Type <span>· {c.ov.periodInfo.label}</span></h3></div>
+      <div className="ch"><I n="chart" /><h2>Complaints by Type <span>· {c.ov.periodInfo.label}</span></h2></div>
       <div className="cb">
         {rows.length ? <HBars rows={rows.map((r) => ({ l: r.l, v: r.v, onClick: () => c.openList(r.code, r.l) }))} /> : <Empty>No complaints in this period.</Empty>}
       </div>
@@ -242,7 +242,7 @@ export function AreaCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const click = (key: string) => (level === "zone" ? () => c.setZone(Number(key)) : level === "taluk" ? () => c.setTaluk(key) : undefined);
   return (
     <article className="card o-area" style={style}>
-      <div className="ch"><I n="pin" /><h3>{title}{scope ? <span> · {scope}</span> : null}</h3></div>
+      <div className="ch"><I n="pin" /><h2>{title}{scope ? <span> · {scope}</span> : null}</h2></div>
       <div className="cb">
         {rows.length ? <HBars rows={rows.map((r) => ({ l: r.l, v: r.v, onClick: click(r.key) }))} /> : <Empty>No open grievances</Empty>}
       </div>
@@ -254,7 +254,7 @@ export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const items = c.ov.feedback;
   return (
     <article className="card o-fb" style={style}>
-      <div className="ch"><I n="shield" /><h3>Collector Feedback</h3></div>
+      <div className="ch"><I n="shield" /><h2>Collector Feedback</h2></div>
       <div className="o-list">
         {items.length ? items.map((f) => (
           <button key={f.did} className="brief" onClick={() => c.openGrievance(f.id)}>
@@ -321,7 +321,7 @@ export function PrioritiesCard({ c, modules, openModule, style }: {
   }
   return (
     <article className="card o-pri" style={style}>
-      <div className="ch"><I n="target" /><h3>What needs you now <span>· {c.ov.periodInfo.label}{c.areaName ? ` · ${c.areaName}` : ""}</span></h3>
+      <div className="ch"><I n="target" /><h2>What needs you now <span>· {c.ov.periodInfo.label}{c.areaName ? ` · ${c.areaName}` : ""}</span></h2>
         {items.length > 0 && <span className="cnt-b">{items.length}</span>}</div>
       <div className="o-list">
         {items.length ? items.map((p) => (

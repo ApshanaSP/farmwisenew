@@ -578,7 +578,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         </header>
 
         <div className="shell">
-          <div className="body">
+          <main className="body">
             {/* the ocean band: the day, the page and the filters; the department is fixed (the signed-in officer's) */}
             <section className="band">
               <div className="band-row">
@@ -619,7 +619,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
                 </>
               )}
             </PageSwap>
-          </div>
+          </main>
         </div>
 
         {(drawer || modal) && <div className="scrim" onClick={closeAll} />}

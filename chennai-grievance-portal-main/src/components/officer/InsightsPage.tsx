@@ -52,7 +52,7 @@ export function WorkPage({ c, modules, openModule }: { c: Ctx; modules: InsightM
         <PrioritiesCard c={c} modules={modules} openModule={openModule} style={{ "--i": 6 } as React.CSSProperties} />
 
         <article className="card oi-types" style={{ "--i": 7 } as React.CSSProperties}>
-          <div className="ch"><I n="chart" /><h3>Complaint types <span>· against the {P.prev}</span></h3>
+          <div className="ch"><I n="chart" /><h2>Complaint types <span>· against the {P.prev}</span></h2>
             {patterns && <button className="more" onClick={() => openModule("patterns")}>Details<I n="right" /></button>}</div>
           <div className="fitlist">
             {types.length ? types.map((r) => {
@@ -72,7 +72,7 @@ export function WorkPage({ c, modules, openModule }: { c: Ctx; modules: InsightM
 
         {sources.length ? (
           <article className="card oi-src" style={{ "--i": 8 } as React.CSSProperties}>
-            <div className="ch"><I n="layers" /><h3>{c.dept.short} data in the district</h3></div>
+            <div className="ch"><I n="layers" /><h2>{c.dept.short} data in the district</h2></div>
             <div className="fitlist">
               {sources.map((m) => (
                 <button key={m.key} className="oi-s" onClick={() => openModule(m.key)} title={`${m.source}. Click for every chart and table.`}>

@@ -118,7 +118,7 @@
 .dic .otabs{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:2px;margin-left:auto;flex:none}
 .dic .otabs button{white-space:nowrap;padding:4px 10px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--text-2)}
 .dic .otabs button.on{background:var(--raise);color:var(--accent);box-shadow:0 1px 4px rgba(11,40,100,.12)}
-.dic .o-q .ch h3 span{font-size:12.5px}
+.dic .o-q .ch :is(h2,h3) span{font-size:12.5px}
 .dic .o-q .pgr{flex:none}
 .dic .o-q .cb{display:flex;flex-direction:column;padding:0 12px 10px}
 .dic .o-q .tbl-wrap{flex:1;min-height:0}
@@ -350,7 +350,7 @@
 .dic .o-skel-k{min-height:64px;background:linear-gradient(90deg,var(--surface),var(--surface-2),var(--surface));background-size:200% 100%;animation:o-shimmer 1.2s linear infinite}
 /* the grievance board: tabs on their own row, a two-line grievance cell */
 .dic .oq-tabs{margin:-2px 14px 6px}
-.dic .o-q .ch h3 span{font-size:12.5px}
+.dic .o-q .ch :is(h2,h3) span{font-size:12.5px}
 .dic .o-q td.oq-g{white-space:normal;line-height:1.25}
 .dic .oq-g b{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dic .oq-g b .chip{font-size:10.5px;padding:1px 6px;flex:none}

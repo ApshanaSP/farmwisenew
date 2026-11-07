@@ -136,7 +136,7 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
   return (
     <section className="p3 bpage">
       <article className="card bf" style={{ gridColumn: "span 6", gridRow: "span 2" }}>
-        <div className="ch"><I n="doc" /><h3>Collector&apos;s Briefing <span>· {ins.scope} · {c.periodLabel.toLowerCase()}</span></h3>
+        <div className="ch"><I n="doc" /><h2>Collector&apos;s Briefing <span>· {ins.scope} · {c.periodLabel.toLowerCase()}</span></h2>
           <button className="more" onClick={() => c.showText("Collector's Briefing", b.md)} title="Read the whole briefing"><I n="doc" />Full text</button>
           <button className="more" onClick={() => download(`district-iq-briefing-${c.period}.md`, b.md)} title="Download as text"><I n="download" />Download</button>
           <button className="more" onClick={() => c.openWorkspace()} title="Save this view with a frozen copy of the briefing"><I n="layers" />Save</button>
@@ -265,7 +265,7 @@ function DeptFollowUps({ ins, c }: { ins: Insights; c: Console }) {
   const [open, setOpen] = useState<string | null>(ins.deptActions[0]?.code ?? null);
   return (
     <>
-      <div className="ch"><I n="tasks" /><h3>Department follow-ups <span>· what each department should do next</span></h3><span className="cnt-b">{ins.deptActions.length}</span></div>
+      <div className="ch"><I n="tasks" /><h2>Department follow-ups <span>· what each department should do next</span></h2><span className="cnt-b">{ins.deptActions.length}</span></div>
       <div className="cb dfu">
         {ins.deptActions.length ? ins.deptActions.map((d) => (
           <div key={d.code} className={`dfu-d${open === d.code ? " on" : ""}`}>
@@ -300,7 +300,7 @@ function NewsOnlyCard({ ins, c }: { ins: Insights; c: Console }) {
   const rows = ins.gaps;
   return (
     <>
-      <div className="ch"><I n="news" /><h3 title="Reported in the news, but no department has a record of it yet">News, no dept record</h3><span className="cnt-b">{rows.length}</span>
+      <div className="ch"><I n="news" /><h2 title="Reported in the news, but no department has a record of it yet">News, no dept record</h2><span className="cnt-b">{rows.length}</span>
         {rows.length > 0 && <button className="more" onClick={c.openGaps}>See all<I n="right" /></button>}
       </div>
       <div className="cb gap-list">
@@ -362,12 +362,12 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
   return (
     <section className="p3 trends">
       <article className="card" style={{ gridColumn: "span 8" }}>
-        <div className="ch"><I n="chart" /><h3>Which problems are rising? <span>· last 4 weeks compared with the 4 weeks before</span></h3></div>
+        <div className="ch"><I n="chart" /><h2>Which problems are rising? <span>· last 4 weeks compared with the 4 weeks before</span></h2></div>
         <Rising t={ins.trends.weekly} where={ins.trends.where} c={c} />
       </article>
 
       <article className="card" style={{ gridColumn: "span 4" }}>
-        <div className="ch"><I n="pin" /><h3>Unresolved by taluk <span>· last 30 days</span></h3></div>
+        <div className="ch"><I n="pin" /><h2>Unresolved by taluk <span>· last 30 days</span></h2></div>
         <div className="tk-head"><span>Taluk</span><span>Open incidents</span><span title="Reports in the last 30 days against the 30 days before">Change</span></div>
         <div className="fitlist">
           {ins.taluks.filter((x) => x.open > 0).map((x) => {
@@ -397,7 +397,7 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
       </article>
 
       <article className="card" style={{ gridColumn: "span 4" }}>
-        <div className="ch"><I n="bolt" /><h3>Unusual rises <span>· a day or a fortnight far above normal</span></h3><span className="cnt-b">{ins.patterns.emerging.length}</span></div>
+        <div className="ch"><I n="bolt" /><h2>Unusual rises <span>· a day or a fortnight far above normal</span></h2><span className="cnt-b">{ins.patterns.emerging.length}</span></div>
         <div className="fitlist">
           {ins.patterns.emerging.length ? ins.patterns.emerging.map((e, k) => (
             <button key={k} className="pat" onClick={() => c.openPattern({ kind: "spike", cat: e.cat, zone: e.zone != null ? Number(e.zone) : null, date: e.date })}
@@ -416,7 +416,7 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
         </div>
       </article>
       <article className="card" style={{ gridColumn: "span 4" }}>
-        <div className="ch"><I n="refresh" /><h3>Recurring hotspots <span>· keeps coming back</span></h3><span className="cnt-b">{ins.patterns.hotspots.length}</span></div>
+        <div className="ch"><I n="refresh" /><h2>Recurring hotspots <span>· keeps coming back</span></h2><span className="cnt-b">{ins.patterns.hotspots.length}</span></div>
         <div className="fitlist">
           {ins.patterns.hotspots.length ? ins.patterns.hotspots.map((h) => (
             <button key={h.id} className="pat" onClick={() => c.openPattern({ kind: "hotspot", id: h.id })} title="See every incident at this spot">
@@ -451,7 +451,7 @@ function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
   const placed = (r.placed ?? []) as Row[];
   return (
     <>
-      <div className="ch"><I n="pin" /><h3 title="Specific incidents reported only as 'in Chennai': the map cannot show them">Locations needing review</h3>
+      <div className="ch"><I n="pin" /><h2 title="Specific incidents reported only as 'in Chennai': the map cannot show them">Locations needing review</h2>
         {(r.unplacedTotal > 0 || placed.length > 0) && <button className="more" onClick={c.openReview}>Review all<I n="right" /></button>}
       </div>
       <div className="lr2">
@@ -703,7 +703,7 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
   // prices older than a few days are the latest there are, never "today" (R-05)
   const age = ins ? dataAge(ins.markets.byMarket.latest, ins.now) : null;
   const head = (
-    <div className="ch"><I n="chart" /><h3>Vegetable and fruit prices</h3>
+    <div className="ch"><I n="chart" /><h2>Vegetable and fruit prices</h2>
       <div className="seg sm" style={{ marginLeft: "auto" }}>
         <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">{age?.stale ? "Latest prices" : "Prices today"}</button>
         <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Chennai market side by side (Uzhavar Sandhai farmer markets)">Compare markets</button>

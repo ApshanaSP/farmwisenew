@@ -847,7 +847,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         </header>
 
 
-        <div className="body">
+        <main className="body">
           {/* heavy rain near: no band of its own any more (the map's Rain button carries it); this keeps the warning level
               and opens Rain & flooding when Ask the Map asks for it */}
           <RainBand onOpen={openRain} hidden onState={setRainAlert} />
@@ -910,7 +910,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                   : page === "studio" ? <Studio c={c} />
                     : <EnvPage d={ov} ins={ins} c={c} />}
           </PageSwap>
-        </div>
+        </main>
 
         {(inc || modal) && <div className="scrim" onClick={closeAll} />}
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}

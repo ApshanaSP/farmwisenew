@@ -99,6 +99,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
                 <button type="button" onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen}
                   className="flex items-center gap-2 rounded-[10px] py-1 pl-1 pr-2 text-[13px] font-semibold text-ink transition hover:bg-canvas-sunken focus-visible:ring-4 focus-visible:ring-navy-600/20">
                   <Avatar name={userName || "U"} />
+                  <span className="sr-only">Account menu</span>
                   <span className="hidden max-w-[160px] truncate 2xl:inline">{userName || "My Account"}</span>
                   <ChevronDown aria-hidden="true" className={`h-4 w-4 text-ink-subtle transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>

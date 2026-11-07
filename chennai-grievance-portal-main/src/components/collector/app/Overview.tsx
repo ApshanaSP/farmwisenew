@@ -371,7 +371,7 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
   const differ = c.conflicts?.stories.filter((s) => s.items.some((x) => x.kind === "conflict")).length ?? 0;
   return (
     <>
-      <div className="ch"><I n="news" /><h3>Latest news</h3>
+      <div className="ch"><I n="news" /><h2>Latest news</h2>
         {tab !== "differ" && <button className="more" onClick={() => (tab === "news" ? c.openNewsAll() : tab === "door" ? c.openNextDoor() : c.openAdded())}>See more<I n="right" /></button>}
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
@@ -600,7 +600,7 @@ function lakeLevel(p: number): [string, string, string] {
 }
 
 function EnvHead({ icon, title, c, kind, all }: { icon: IconName; title: string; c: Console; kind: Kind; all: Station[] }) {
-  return <div className="ch"><I n={icon} /><h3>{title}</h3><StationPicker c={c} kind={kind} all={all} /></div>;
+  return <div className="ch"><I n={icon} /><h2>{title}</h2><StationPicker c={c} kind={kind} all={all} /></div>;
 }
 
 function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; style: React.CSSProperties }) {

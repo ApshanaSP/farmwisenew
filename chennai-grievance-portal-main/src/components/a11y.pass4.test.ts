@@ -1,78 +1,68 @@
-// RC-49 / RC-48 class guards (PB-320, PB-321, PB-322, PB-323, PB-325): the accessibility mistakes that axe found, checked in the source
-// so that a new page or component cannot bring them back. The browser run (tests/qa/pass4/axe.mjs) checks the rendered result.
-import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
 
-const SRC = process.env.A11Y_SRC_ROOT ?? path.resolve(__dirname, ".."); // the env var lets a run point at an older copy of src
-function walk(dir: string, out: string[] = []): string[] {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, out);
-    else if (/\.tsx$/.test(e.name) && !/\.test\./.test(e.name)) out.push(p);
+/**
+ * RC-49 class guard (PB-324, PB-326). The real run is tests/qa/pass4/axe.mjs (zero violations of any impact on every page, both languages and
+ * themes) and tests/qa/pass4/keys.mjs (a Tab walk: every stop shows a ring). These source rules run in every unit pass:
+ *  1. a heading never jumps a level: the page's one h1 is followed by h2 for a card or section title (the shared card headers are h2),
+ *  2. the consoles put their page in a main landmark (axe "region"),
+ *  3. no global rule takes the keyboard ring away from a control that has no ring of its own.
+ */
+const SRC = path.resolve(__dirname, "..");
+const read = (p: string) => fs.readFileSync(path.join(SRC, p), "utf8");
+const walk = (d: string, ext: RegExp, out: string[] = []) => {
+  for (const e of fs.readdirSync(path.join(SRC, d), { withFileTypes: true })) {
+    const rel = path.posix.join(d, e.name);
+    if (e.isDirectory()) walk(rel, ext, out);
+    else if (ext.test(e.name) && !/\.test\./.test(e.name)) out.push(rel);
   }
   return out;
-}
-const FILES = walk(SRC);
-const read = (p: string) => fs.readFileSync(p, "utf8");
+};
 
-/** The text of the element that starts at `from` (a `<div` or `<nav` opening tag), up to its matching close. */
-function elementText(s: string, from: number): string {
-  const name = /^<(\w+)/.exec(s.slice(from))![1];
-  const re = new RegExp(`<${name}(?=[\s>])|</${name}>`, "g");
-  re.lastIndex = from + 1;
-  let depth = 1, m: RegExpExecArray | null;
-  while ((m = re.exec(s))) {
-    depth += m[0].startsWith("</") ? -1 : 1;
-    if (depth === 0) return s.slice(from, m.index + m[0].length);
-  }
-  return s.slice(from);
-}
-
-describe("RC-49 a11y class guards", () => {
-  it("PB-320: every button directly inside a role=tablist is a role=tab (axe aria-required-children)", () => {
+describe("RC-49: heading order", () => {
+  it("a card header is an h2, in the shared kit and in the console's own `.ch` headers", () => {
+    expect(read("components/ui/index.tsx")).toMatch(/<div className="ui-ch-t"><h2>/);
     const bad: string[] = [];
-    for (const f of FILES) {
-      const s = read(f);
-      for (const m of s.matchAll(/<(div|nav)\b[^>]*role="tablist"/g)) {
-        const el = elementText(s, m.index!);
-        for (const b of el.matchAll(/<button\b[^>]*>/g)) if (!/role=/.test(b[0])) bad.push(`${path.relative(SRC, f)}: ${b[0].slice(0, 90)}`);
-      }
+    for (const f of walk("components", /\.tsx$/)) {
+      const src = read(f);
+      for (const m of src.matchAll(/className="ch"[^\n]*?<h3/g)) bad.push(`${f}:${src.slice(0, m.index).split("\n").length}`);
     }
     expect(bad).toEqual([]);
   });
-
-  it("PB-323: a language switch names itself with the words it shows (axe label-content-name-mismatch)", () => {
-    for (const f of ["components/LangToggle.tsx", "components/collector/app/TopMenu.tsx"]) {
-      const s = read(path.join(SRC, f));
-      const label = /aria-label=\{lang === "ta" \? "([^"]+)" : "([^"]+)"\}/.exec(s);
-      expect(label, f).not.toBeNull();
-      expect(label![1].startsWith("English"), f).toBe(true);
-      expect(label![2].startsWith("தமிழ்"), f).toBe(true);
-    }
+  it("the citizen home's card title is an h2 straight after its h1", () => {
+    const s = read("components/citizen/CitizenHome.tsx");
+    expect(s).toMatch(/<h1 /);
+    expect(s).not.toMatch(/<h3[ >]/);
   });
-
-  it("PB-322: muted and subtle text colours reach 4.5:1 on every canvas colour, light and dark", () => {
-    const css = read(path.join(SRC, "app/theme.css"));
-    const block = (sel: RegExp) => css.split(sel)[1].split("}")[0];
-    const tok = (b: string, n: string) => { const m = new RegExp(`--c-${n}:([0-9]+) ([0-9]+) ([0-9]+)`).exec(b); if (!m) throw new Error("token not found: " + n); return m.slice(1, 4).map(Number); };
-    const lum = ([r, g, b]: number[]) => { const c = [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
-    const ratio = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-    const bad: string[] = [];
-    for (const [theme, b] of [["light", block(/:root,:root\[data-theme="light"\]\{/)], ["dark", block(/:root\[data-theme="dark"\]\{/)]] as const)
-      for (const fg of ["ink", "ink-muted", "ink-subtle"]) for (const bg of ["canvas", "canvas-raised", "canvas-sunken"]) {
-        const r = ratio(tok(b, fg), tok(b, bg));
-        if (r < 4.5) bad.push(`${theme} ${fg} on ${bg} = ${r.toFixed(2)}`);
-      }
-    expect(bad).toEqual([]);
+  it("the styles that named h3 for these headers name h2 too", () => {
+    expect(read("components/ui/ui.css")).toMatch(/\.ui-ch-t :is\(h2,h3\)/);
+    const css = walk("components", /\.css$/).map(read).join("\n");
+    expect(css).not.toMatch(/\.ch h3/);
   });
+});
 
-  it("PB-321: no page loads a stylesheet or font from another host (the Content-Security-Policy blocks the fetch and the console logs an error)", () => {
-    const bad: string[] = [];
-    for (const f of FILES.filter((p) => path.relative(SRC, p).split(path.sep)[0] === "app")) {
-      const s = read(f);
-      if (/<link\b[^>]*rel="(stylesheet|preload|preconnect)"[^>]*href=\{?["']?https?:/.test(s) || /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(s)) bad.push(path.relative(SRC, f));
-    }
-    expect(bad).toEqual([]);
+describe("RC-49: landmarks", () => {
+  it("the Collector's and the Officer's console put their page in a main", () => {
+    expect(read("components/collector/app/CollectorApp.tsx")).toMatch(/<main className="body">[\s\S]*<\/main>/);
+    expect(read("components/officer/OfficerApp.tsx")).toMatch(/<main className="body">[\s\S]*<\/main>/);
+  });
+});
+
+describe("RC-49: the keyboard ring", () => {
+  it("the base style does not remove the outline of every focused control", () => {
+    const css = read("app/globals.css");
+    const base = css.match(/(?:^|\n)\s*:focus-visible\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(base).toMatch(/outline:\s*2px solid/);
+    expect(base).not.toMatch(/outline:\s*none/);
+  });
+  it("only a control with its own ring switches the base ring off", () => {
+    const css = read("app/globals.css");
+    const off = css.match(/\n\s*\.dic :focus-visible,([\s\S]*?)\{\s*outline:\s*none;/)?.[1] ?? "";
+    // every selector in the list is the console's own scope or one that draws a ring of its own
+    for (const sel of off.split(",").map((x) => x.trim()).filter(Boolean)) expect(sel, sel).toMatch(/btn|form-input|auth-input|focus-visible:ring|focus:ring|focus-visible:outline-none/);
+  });
+  it("the console's zone, taluk and department selects draw their own ring", () => {
+    expect(read("components/collector/app/marina.css")).toMatch(/\.dic \.fsel select:focus-visible\{outline:2px solid/);
   });
 });

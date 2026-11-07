@@ -1,5 +1,5 @@
 {
- "note": "counts are rule hits (violating rules per run), both themes summed; before: frozen-less server on the pinned snapshot, after: ticking server, build .next-qa-a11y, 7 Nov. Staff pages need a ticking clock (a frozen clock rejects staff sessions).",
+ "note": "counts are rule hits (violating rules per run), both themes summed. before: the 7 Nov first run (pinned snapshot). after: 8 Nov, ticking server, build .next-qa-ui, all pages in English and Tamil, light and dark, 84 runs (tests/qa/pass4/axe.mjs 3212; raw result chennai-grievance-portal-main/docs/qa/pass4/evidence/axe.json). Staff pages need a ticking clock (a frozen clock rejects staff sessions).",
  "before_total": {
   "critical": 52,
   "serious": 102,
@@ -8,62 +8,13 @@
  "after_total": {
   "critical": 0,
   "serious": 0,
+  "moderate": 0,
+  "minor": 0,
   "console_errors": 0
  },
- "left_over": "moderate only: heading-order (h3 after h1) and region (content outside landmarks), not fixed",
+ "runs": 84,
+ "left_over": "nothing: no violation of any impact. The 7 Nov leftovers heading-order and region (moderate) are fixed: the card header is an h2 (was an h3 straight after the h1), and the consoles wrap their page in a main landmark.",
  "per_page_language": [
-  {
-   "page_lang": "citizen-file|en",
-   "before": {
-    "critical": 0,
-    "serious": 4,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "citizen-file|ta",
-   "before": {
-    "critical": 0,
-    "serious": 4,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "citizen-track|en",
-   "before": {
-    "critical": 0,
-    "serious": 3,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "citizen-track|ta",
-   "before": {
-    "critical": 0,
-    "serious": 3,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
   {
    "page_lang": "citizen|en",
    "before": {
@@ -74,6 +25,7 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
@@ -87,369 +39,40 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "collector:1|en",
+   "page_lang": "citizen-file|en",
    "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {}
-  },
-  {
-   "page_lang": "collector:1|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {}
-  },
-  {
-   "page_lang": "collector:By severity|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
+    "critical": 0,
+    "serious": 4,
+    "console_errors": 0
    },
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "collector:My tasks|en",
+   "page_lang": "citizen-file|ta",
    "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {}
-  },
-  {
-   "page_lang": "collector:Taluks|en",
-   "before": {},
-   "after": {
     "critical": 0,
-    "serious": 0,
+    "serious": 4,
     "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:Zones|en",
-   "before": {},
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:briefing|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
    },
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "collector:briefing|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:daily|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:daily|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:environment|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:environment|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:monthly|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:monthly|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:overview|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:overview|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:quarterly|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:quarterly|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:studio|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:studio|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:trends|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:trends|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:weekly|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:weekly|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:தீவிரம்|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:பணிகள்|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {}
-  },
-  {
-   "page_lang": "collector:மண்டலங்கள்|ta",
-   "before": {},
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector:வட்டங்கள்|ta",
-   "before": {},
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector|en",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "collector|ta",
-   "before": {
-    "critical": 2,
-    "serious": 2,
-    "console_errors": 2
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "forgot|en",
+   "page_lang": "citizen-track|en",
    "before": {
     "critical": 0,
     "serious": 3,
@@ -458,11 +81,12 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "forgot|ta",
+   "page_lang": "citizen-track|ta",
    "before": {
     "critical": 0,
     "serious": 3,
@@ -471,32 +95,7 @@
    "after": {
     "critical": 0,
     "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "login|en",
-   "before": {
-    "critical": 0,
-    "serious": 3,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
-    "console_errors": 0
-   }
-  },
-  {
-   "page_lang": "login|ta",
-   "before": {
-    "critical": 0,
-    "serious": 3,
-    "console_errors": 0
-   },
-   "after": {
-    "critical": 0,
-    "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
@@ -510,6 +109,7 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
@@ -523,11 +123,362 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "profile|en",
+   "page_lang": "collector|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:overview|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:briefing|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:trends|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:environment|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:studio|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:daily|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:weekly|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:monthly|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:quarterly|en",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:Zones|en",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:Taluks|en",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:By severity 21|en",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:overview|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:briefing|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:trends|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:environment|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:studio|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:daily|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:weekly|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:monthly|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:quarterly|ta",
+   "before": {
+    "critical": 2,
+    "serious": 2,
+    "console_errors": 2
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:மண்டலங்கள்|ta",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:வட்டங்கள்|ta",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:தீவிரம் 21|ta",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "collector:தீவிரம் 20|ta",
+   "before": {},
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "login|en",
    "before": {
     "critical": 0,
     "serious": 3,
@@ -536,11 +487,12 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
   {
-   "page_lang": "profile|ta",
+   "page_lang": "login|ta",
    "before": {
     "critical": 0,
     "serious": 3,
@@ -549,6 +501,7 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
@@ -562,6 +515,7 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   },
@@ -575,6 +529,63 @@
    "after": {
     "critical": 0,
     "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "forgot|en",
+   "before": {
+    "critical": 0,
+    "serious": 3,
+    "console_errors": 0
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "forgot|ta",
+   "before": {
+    "critical": 0,
+    "serious": 3,
+    "console_errors": 0
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "profile|en",
+   "before": {
+    "critical": 0,
+    "serious": 3,
+    "console_errors": 0
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "console_errors": 0
+   }
+  },
+  {
+   "page_lang": "profile|ta",
+   "before": {
+    "critical": 0,
+    "serious": 3,
+    "console_errors": 0
+   },
+   "after": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
     "console_errors": 0
    }
   }

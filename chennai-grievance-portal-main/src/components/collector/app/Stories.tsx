@@ -38,7 +38,7 @@ export function StoriesCard({ d, c }: { d: OverviewData; c: Console }) {
   const { threads, days, total } = d.stories;
   return (
     <>
-      <div className="ch"><I n="clock" /><h3 title={`The same event reported again as it developed, last ${days} days`}>Developing stories <span>· same event over time</span></h3>
+      <div className="ch"><I n="clock" /><h2 title={`The same event reported again as it developed, last ${days} days`}>Developing stories <span>· same event over time</span></h2>
         <span className="cnt-b">{total}</span>
         <button className="more" onClick={() => c.openStories(null)}>See all<I n="right" /></button>
       </div>

@@ -53,7 +53,7 @@ export function ModuleTile({ m, c, onOpen, style }: { m: InsightModule; c: Ctx; 
   return (
     <article className="card otile" style={style}>
       <div className="ch">
-        <I n={MODULE_ICON[m.key] ?? "doc"} /><h3 title={m.source}>{m.title}</h3>
+        <I n={MODULE_ICON[m.key] ?? "doc"} /><h2 title={m.source}>{m.title}</h2>
         <Badges m={m} c={c} />
       </div>
       <div className="otile-b">

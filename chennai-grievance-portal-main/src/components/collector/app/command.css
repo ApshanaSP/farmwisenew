@@ -25,7 +25,7 @@
 .dic.cc{letter-spacing:-.006em}
 .dic.cc h1,.dic.cc h2,.dic.cc h3{letter-spacing:-.02em}
 .dic.cc .tbrand b{font-weight:700;letter-spacing:-.025em}
-.dic.cc .ch h3,.dic.cc .bb-h h3{font-weight:650;font-size:14px}
+.dic.cc .ch :is(h2,h3),.dic.cc .bb-h h3{font-weight:650;font-size:14px}
 .dic.cc .kpi-l,.dic.cc .okpi-l,.dic.cc .stat-l{text-transform:none;letter-spacing:0}
 
 /* ---------------- the page header: on the page, not a dark band ---------------- */
