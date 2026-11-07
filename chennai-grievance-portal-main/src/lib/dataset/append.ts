@@ -13,6 +13,7 @@ import {
 } from "@/lib/dataset/intel";
 import * as csv from "../../../scripts/lib/csv";
 import * as files from "../../../scripts/lib/dataset-files";
+import { datasetWriteAllowed } from "@/lib/dataset/target";
 
 /**
  * Live append to the grievance dataset (DATASET_DIR, default data/datasets).
@@ -141,6 +142,7 @@ async function appendComplaint(code: string) {
  * history. Safe to call more than once for the same code.
  */
 export function appendComplaintToDataset(complaintCode: string): Promise<void> {
+  if (!datasetWriteAllowed()) return Promise.resolve();
   return enqueue(() => appendComplaint(complaintCode));
 }
 
@@ -150,6 +152,7 @@ export function appendComplaintToDataset(complaintCode: string): Promise<void> {
  * grievances.csv yet, it is appended with its full history instead.
  */
 export function appendStatusChangeToDataset(complaintCode: string): Promise<void> {
+  if (!datasetWriteAllowed()) return Promise.resolve();
   return enqueue(async () => {
     const paths = files.datasetPaths(process.cwd());
     if (!keysOf(paths.grievances, (r) => r[0]).has(complaintCode)) {

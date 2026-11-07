@@ -1,0 +1,56 @@
+# RC-45 sweep: runtime writes under src/ into files in the repo
+$ grep -rnE "(appendFile|writeFile|createWriteStream|renameSync|copyFile)(Sync)?\(" src --include=*.ts --include=*.tsx
+src/app/api/i18n/route.ts:38:      await fs.writeFile(FILE(to), JSON.stringify(sorted, null, 1), "utf8");
+src/app/api/profile/photo/route.ts:47:  await writeFile(filePath, buffer);
+src/lib/assistant/embed.ts:151:  await fs.promises.writeFile(`${FILE}.bin.tmp`, Buffer.from(ix.vecs.buffer, ix.vecs.byteOffset, ix.ids.length * ix.dim * 4));
+src/lib/assistant/embed.ts:152:  await fs.promises.writeFile(`${FILE}.json.tmp`, JSON.stringify({ model: MODEL, dim: ix.dim, ids: ix.ids, hash: ix.hash, saved: new Date().toISOString() }));
+src/lib/assistant/__tests__/golden/compare.live.ts:67:  fs.writeFileSync(path.join(STORE, `compare-${OUT}.json`), JSON.stringify({ summary, rows }, null, 1));
+src/lib/assistant/__tests__/golden/compare.live.ts:77:  fs.writeFileSync(text, "");
+src/lib/assistant/__tests__/golden/compare.live.ts:105:    fs.appendFileSync(text, `=== ${c.id} [${row.strict ? "PASS" : row.content ? "CONTENT-PASS" : "FAIL"}] ${row.q.slice(0, 200)} (${row.ms} ms, ${tokens} tokens, ${calls} model calls)
+src/lib/assistant/__tests__/golden/explore.golden.ts:62:  fs.writeFileSync(process.env.GOLDEN_OUT ?? "golden-explore.txt", out.join(String.fromCharCode(10)));
+src/lib/assistant/__tests__/golden/fixture.golden.ts:36:  fs.writeFileSync(path.join(process.cwd(), "src", "app", "dev", "assistant", "fixtures.json"), JSON.stringify({ messages }));
+src/lib/assistant/__tests__/golden/golden.golden.ts:42:  fs.writeFileSync(path.join(STORE, "golden-report.json"), JSON.stringify({ at: new Date().toISOString(), now: getNow(), passed, total: results.length,
+src/lib/assistant/__tests__/golden/harness.ts:35:  fs.copyFileSync(path.join(STORE, "durable.sqlite"), durable);
+src/lib/assistant/__tests__/golden/live.live.ts:39:  fs.writeFileSync(outFile, "");
+src/lib/assistant/__tests__/golden/live.live.ts:68:      fs.appendFileSync(outFile, text + "\n");
+src/lib/aws/store.ts:130:  fs.writeFileSync(file, gz);
+src/lib/collector/aibrief.ts:57:  try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
+src/lib/collector/alerts.ts:172:        try { fs.writeFileSync(SACHET_FILE, JSON.stringify({ at: g.at, items: mine })); } catch { /* read-only disk: memory only */ }
+src/lib/collector/analysis.ts:85:  try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
+src/lib/collector/fulltext.ts:40:  try { fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(CACHE, JSON.stringify(g.cache)); } catch { /* read-only disk */ }
+src/lib/collector/lakes.ts:89:    fs.writeFileSync(FILE + ".tmp", JSON.stringify(s));
+src/lib/collector/lakes.ts:90:    fs.renameSync(FILE + ".tmp", FILE);
+src/lib/collector/nearby.ts:208:  try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(next)); } catch { /* read-only disk */ }
+src/lib/collector/sources.ts:548:  fs.writeFileSync(LOCK, new Date().toISOString());
+src/lib/complaint-media.ts:42:  await writeFile(path.join(root, name), buf, { flag: "wx" });
+src/lib/complaint-media.ts:43:  await writeFile(path.join(root, `${name}.owner.json`), JSON.stringify({ userId: ownerUserId, at: new Date().toISOString() }), { flag: "wx" });
+src/lib/dataset/append.ts:80:  fs.appendFileSync(file, text, "utf8");
+src/lib/map/ask.ts:519:    fs.appendFile(path.join(process.cwd(), "data", "aws-cache", "map-questions.jsonl"), line + "\n", () => undefined);
+src/lib/officer/photos.ts:43:    await writeFile(path.join(full, name), f.buf, { flag: "wx" });
+src/lib/studio/connect/vault.ts:31:  fs.writeFileSync(tmp, encryptSecret(JSON.stringify(v)), { mode: 0o600 });
+src/lib/studio/connect/vault.ts:32:  fs.renameSync(tmp, file(id));
+src/lib/studio/connectors.ts:101:  fs.writeFileSync(tmp, data);
+src/lib/studio/connectors.ts:102:  fs.renameSync(tmp, p);
+src/lib/studio/store.ts:38:  fs.writeFileSync(tmp, data);
+src/lib/studio/store.ts:39:  fs.renameSync(tmp, file);
+src/lib/thunai/agent.live.ts:129:  fs.writeFileSync(path.join(dir, `thunai-agent-live-${which}.json`), JSON.stringify(rows, null, 1));
+src/lib/thunai/brain.live.ts:89:  fs.writeFileSync("docs-thunai-live/brain-live.txt", rows.join("\n") + summary);
+src/lib/thunai/holdout.live.ts:48:const write = (name: string, data: unknown) => { fs.mkdirSync(path.join(DIR, "results"), { recursive: true }); fs.writeFileSync(path.join(DIR, "results", `${TAG}-${name}.json`), JSON.stringify(data, null, 1)); };
+src/lib/thunai/holdout.live.ts:126:  fs.writeFileSync(path.join(DIR, "recorded", `${TAG}-${which}.jsonl`), replies.map((x) => JSON.stringify(x)).join("\n") + "\n");
+src/lib/thunai/qa.live.ts:38:const write = (name: string, data: unknown) => { fs.mkdirSync(path.join(DIR, "results"), { recursive: true }); fs.writeFileSync(path.join(DIR, "results", `qa-${TAG}-${name}.json`), JSON.stringify(data, null, 1)); };
+src/lib/thunai/qa.live.ts:82:  fs.writeFileSync(f, JSON.stringify(j, null, 1));
+src/lib/thunai/store.ts:43:  fs.writeFileSync(`${f}.tmp`, JSON.stringify(m, null, 1));
+src/lib/thunai/store.ts:44:  fs.renameSync(`${f}.tmp`, f);
+src/lib/thunai/store.ts:111:  fs.appendFileSync(auditFile(), `${JSON.stringify(line)}\n`);
+src/lib/thunai/stt.live.ts:46:  fs.writeFileSync(path.join(process.cwd(), "eval", "holdout", "results", "asr-final-race.json"), JSON.stringify({ at: new Date().toISOString(), site: "en", summary, rows }, null, 0));
+src/lib/thunai/telemetry.ts:18:    fs.appendFileSync(path.join(dir, "telemetry.ndjson"), `${JSON.stringify(row)}\n`);
+$ grep -rn "datasetPaths\|datasetDir" src
+src/lib/dataset/append.ts:93:async function appendHistory(paths: ReturnType<typeof files.datasetPaths>, code: string, newestOnly: boolean) {
+src/lib/dataset/append.ts:109:  const paths = files.datasetPaths(process.cwd());
+src/lib/dataset/append.ts:154:    const paths = files.datasetPaths(process.cwd());
+
+# Reading of the sweep
+- Tracked in git and written at run time: data/datasets (fixed here: gate in src/lib/dataset/target.ts, DATASET_DIR for every test server in tests/qa/pass4/lib/env.mjs).
+- data/i18n written by src/app/api/i18n/route.ts: owner's decision (sign-in on /api/i18n), reported only.
+- data/embeddings written by src/lib/assistant/embed.ts when the incident index hash changes: a derived cache rebuilt from the intel database; not fixed here, reported (a test server rebuilding it would dirty the repo).
+- Every other writer goes to data/aws-cache, data/thunai, data/studio or a temp folder, which are git-ignored.
