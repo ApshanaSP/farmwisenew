@@ -20,6 +20,7 @@ import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, LAYE
 import { betterCategory, saidStems } from "./catlabels";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
+import { asksForbidden, NEVER_REPLY } from "./privacy";
 
 const TA = /[஀-௿]/;
 
@@ -250,8 +251,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
     const text = rest(heard, /^\s*(remember|note|make a note)(\s+that)?\s*/i);
     return text ? done([{ a: "remember", text }]) : { kind: "unknown", lang, heard, suggestions: SUGGEST };
   }
-  const nyabagam = /^(.+?)\s*(nu |என்று |என )?(நினைவில் வை|நினைவில் வச்சுக்க|ஞாபகம் வச்சுக்க|nyabagam vechuko|nyabagam vachuko)$/.exec(heard.trim());
-  if (nyabagam) return done([{ a: "remember", text: nyabagam[1].trim() }]);
+  // "<note> ஞாபகம் வச்சுக்கோ / நினைவில் வை / nyabagam vechuko": any ending of the verb (வச்சுக்கோ, வச்சுக்கோங்க, வெச்சுக்க, வைத்துக்கொள்), the note without its quoting ending (னு, ன்னு, nu)
+  const nyabagam = /^(.+?)\s*(?:nu |என்று |என )?(?:ஞாபகம்|நினைவில்?|nyabagam|nyabagapaduthi)\s*(?:வை|வச்சுக்|வெச்சுக்|வைத்துக்கொள்|vechuko|vechukko|vachuko|vachukko)[஀-௿a-z]*$/.exec(heard.trim());
+  if (nyabagam) return done([{ a: "remember", text: nyabagam[1].trim().replace(/\s*(?:ன்னு|னு|nu)$/, "").trim() }]);
   if (/^remind me\b|நினைவூட்டு|nyabagapaduthu/.test(s)) {
     const m = /^remind me (?:(.+?) )?to (.+?)(?: (on .+|at .+|tomorrow.*|today.*|in \d+ .+))?$/i.exec(heard.trim());
     const what = (m?.[2] ?? rest(heard, /^\s*remind me\s*/i)).trim();
@@ -289,9 +291,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (speedOrder && /\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
 
   // workspaces
-  const saveAs = /^save (this |the view |this view |the screen |it )?(as )?(.+)$/.exec(s);
-  if (saveAs && saveAs[3] && !/^(it|this)$/.test(saveAs[3])) {
-    return done([{ a: "workspace", op: "save", name: cleanName(rest(heard, /^\s*save\s+(this\s+view\s+|the\s+view\s+|this\s+|the\s+screen\s+|it\s+)?(as\s+)?/i)) }]);
+  // the thing saved ("this screen", "the view", "my layout") is not part of its name: "save this screen as morning check" is named "morning check" (QA4 G2, JARVIS1-12)
+  const SAVED_THING = String.raw`(?:(?:this|the|my|current|it)\s+)?(?:(?:view|screen|layout|workspace|page|dashboard)\s+)?`;
+  const saveAs = new RegExp(String.raw`^save ${SAVED_THING}(?:as )?(.+)$`).exec(s);
+  if (saveAs && saveAs[1] && !/^(it|this|screen|view|layout|workspace|page|dashboard|the screen|this screen|this view|the view)$/.test(saveAs[1])) {
+    return done([{ a: "workspace", op: "save", name: cleanName(rest(heard, new RegExp(String.raw`^\s*save\s+${SAVED_THING}(?:as\s+)?`, "i"))) }]);
   }
   const saveTa = /^(?:idha |இதை )?['‘]?(.+?)['’]?\s*(?:nu save pannu|என்று சேமி|ன்னு சேமி)$/i.exec(heard.trim());
   if (saveTa) return done([{ a: "workspace", op: "save", name: cleanName(saveTa[1]) }]);
@@ -310,6 +314,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (CHANGE_RECORD.test(heard) && /\b(fir|records?|complaints?|cases?|incidents?|inc-\d+)\b|பதிவு|புகார்/i.test(heard) && /\b(status|closed?|resolved?)\b|நிலை|முடிந்த/i.test(heard)) {
     return { kind: "refuse", lang, heard, why: b("I can't change a record or its status. Nothing was changed.", "ஒரு பதிவையோ அதன் நிலையையோ என்னால் மாற்ற முடியாது. எதுவும் மாற்றப்படவில்லை.") };
   }
+  // an order Jarvis never carries out (close, send, approve, delete ... records): the refusal says so, in the console too: it was a filter for "Severe" and the word "close" went unanswered (RC-04, PB-283)
+  // (closing a panel, or all of them, is the console's own tidy-up: those exact commands are handled below)
+  if (asksForbidden(heard) && !/^close (all|everything|it|this|that|the panel)$|^close all (panels|windows)$|^(close pannu|மூடு|இதை மூடு)$|எல்லாவற்றையும் மூடு|ellaam close/.test(s)) return { kind: "refuse", lang, heard, why: b(NEVER_REPLY.en, NEVER_REPLY.ta) };
   // Ask District IQ, by name
   const askDiq = /^(ask|ask district iq|ask the assistant|ask the chatbot)( to| about| whether| if)?\s+(.+)$/.exec(s);
   if (askDiq && !/^(ask )?the map\b/.test(askDiq[3])) {
@@ -508,7 +515,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   let itemStep: Step | null = null;
   if (/\b(next|adutha|aduthadhu)\b|அடுத்தது|அடுத்த/.test(s) && /\b(one|1|incident|item|thing)\b|அடுத்தது|adutha/.test(s)) itemStep = { a: "item", which: "next" };
   else if (/\b(previous|prev)\b|முந்தைய/.test(s) && /\b(one|1|incident|item)\b|முந்தைய/.test(s)) itemStep = { a: "item", which: "prev" };
-  else if (/\b(the )?(worst|top|first)( one| incident| item| case| complaint)?\b|மோசமான|முதல் (நிகழ்வு|நிகழ்வைத்)|முதல்$/.test(s) && !/worst zone|மண்டல/.test(s)
+  else if (/\b(the )?(worst|top|first)( one| incident| item| case| complaint)?\b|மோசமான|முதல் (நிகழ்வு|நிகழ்வைத்)|முதல்$/.test(s) && !/worst zone|மண்டல/.test(s) && !/\b(top|worst|first|best)\s+(\d+\s+|few\s+)?(zones|departments|depts|wards|taluks|places|areas|categories|kinds|types)\b/.test(s)
     && (/\bopen\b|திற|kaatu|show|the worst|^worst|top incident|first incident|முதல்|மோசமான/.test(s))) itemStep = { a: "item", which: 1 };
   const ordinal = /\b(\d{1,2}) (one|incident|item|row)\b|number (\d{1,2})\b/.exec(s);
   if (!itemStep && ordinal) itemStep = { a: "item", which: Number(ordinal[1] ?? ordinal[3]) };
@@ -605,7 +612,7 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "clearText": return ta ? "அழி" : "Clear text";
     case "remember": return ta ? "நினைவில் வைத்தேன்" : "Remember";
     case "recall": return ta ? "நினைவுகள்" : "Memory";
-    case "forget": return step.all ? (ta ? "எல்லாம் மற" : "Forget all") : (ta ? "மற" : "Forget");
+    case "forget": return step.all ? (ta ? "எல்லாவற்றையும் மறந்துவிட்டேன்" : "Forget all") : (ta ? "மறந்துவிட்டேன்" : "Forget");
     case "remind": return ta ? "நினைவூட்டல்" : "Reminder";
     case "send": return ta ? "அனுப்பு" : "Send";
     case "confirm": return `${ta ? "உறுதி" : "Confirm"} ${step.n ?? ""}`.trim();

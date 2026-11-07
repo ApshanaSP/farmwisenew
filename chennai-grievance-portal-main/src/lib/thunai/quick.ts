@@ -11,8 +11,10 @@ import { foreignIn } from "./entities";
 import { betterCategory, saidStems } from "./catlabels";
 import { CATEGORY_LABELS } from "./narrate";
 import { fuzzyNames, romanise } from "./xlit";
+import { normalise } from "./normalise";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
+import { asksForbidden } from "./privacy";
 
 export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
@@ -70,8 +72,12 @@ export function zonesIn(t: string, w: World): number[] {
       if (nm.length >= 4 && t.includes(` ${nm} `)) { hits.push({ n: p.zone, at: t.indexOf(` ${nm} `) }); break; }
     }
   }
-  const m = / zone (\d{1,2}) /.exec(t);
-  if (m && +m[1] >= 1 && +m[1] <= 15 && !hits.some((h) => h.n === +m[1])) hits.push({ n: +m[1], at: m.index });
+  // "zone 5", "zone five", "zone number 5", Tamil "மண்டலம் 5" / "மண்டலம் ஐந்து", Tanglish "zone anju": the number is read the way the rest of the console reads one (normalise.ts: words and
+  // every script's digits), and every zone named by number counts, not the first only ("zone 5 and zone 6") (RC-05, RC-07; jarvis2-1, -2, -11)
+  const nt = ` ${normalise(t).text} `;
+  for (const m of nt.matchAll(/ (?:zone|zones|மண்டலம்[஀-௿]*|மண்டல[஀-௿]*|mandalam) (?:number |no |num )?(\d{1,2})(?: (?:and|&|vs|versus|matrum|மற்றும்|um) (?:zone )?(\d{1,2}))? /g)) {
+    for (const g of [m[1], m[2]]) if (g && +g >= 1 && +g <= 15 && !hits.some((h) => h.n === +g)) hits.push({ n: +g, at: m.index + (g === m[2] ? 1 : 0) });
+  }
   // the last resort: a spelling or a transliteration the lexicon does not list
   // (for a comparison the second place too: one name misheard must not leave a comparison of one)
   if (!hits.length || (hits.length === 1 && isComparing(t))) {
@@ -272,6 +278,8 @@ const isPrice = (t: string) => has(t, PRICE) || (has(t, PRICE_WEAK) && (VEG.test
 
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
+  // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
+  if (asksForbidden(text)) return "forbidden-order";
   const all = t.trim().split(" ");
   const left = all.filter((x) => !explained(x, w)).length;
   if (left >= 3 || (left >= 2 && left / all.length > 0.4)) return "unknown-words";

@@ -50,17 +50,17 @@ describe("QA pass 4 hunt jarvis1", () => {
     expect(outs[0].options.length + (outs[0].kind === "clarify" ? 1 : 0)).toBeGreaterThan(0);
   });
 
-  it.fails("JARVIS1-6 the reminder card shows a time a person can read, not a raw UTC string", async () => {
+  it("JARVIS1-6 the reminder card shows a time a person can read, not a raw UTC string", async () => {
     const { outs } = await talk("remind me at 5 pm to call the zone officer");
     expect(outs[0].said).not.toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:/);
   });
 
-  it.fails("JARVIS1-7 saying 'yes' to forget in Tamil gives a whole sentence, not the fragment 'மற'", async () => {
+  it("JARVIS1-7 saying 'yes' to forget in Tamil gives a whole sentence, not the fragment 'மற'", async () => {
     const { outs } = await talk("மறந்துவிடு", "ஆம்");
     expect(outs[1].said.length).toBeGreaterThan(6);
   });
 
-  it.fails("JARVIS1-8 'close all severe complaints' says it cannot close, instead of quietly filtering and saying 'Severe'", async () => {
+  it("JARVIS1-8 'close all severe complaints' says it cannot close, instead of quietly filtering and saying 'Severe'", async () => {
     const { outs } = await talk("close all severe complaints");
     expect(outs[0].said.trim()).not.toBe("Severe");
     expect(outs[0].kind === "refuse" || /clos/i.test(outs[0].said)).toBe(true);
@@ -81,11 +81,11 @@ describe("QA pass 4 hunt jarvis1", () => {
     expect(outs[1].said).toMatch(/no such|only|8/i);
   });
 
-  it.fails("JARVIS1-11 'top zones by open complaints' (no model) does not open a single incident", async () => {
+  it("JARVIS1-11 'top zones by open complaints' (no model) does not open a single incident", async () => {
     const { sim } = await talk("top zones by open complaints");
     expect(sim.incident).toBeNull();
   });
-  it.fails("JARVIS1-12 'save this screen as morning check' saves it as 'morning check' (the rules name it 'screen as morning check'; plain 'save this screen' is named 'screen')", async () => {
+  it("JARVIS1-12 'save this screen as morning check' saves it as 'morning check' (the rules name it 'screen as morning check'; plain 'save this screen' is named 'screen')", async () => {
     const a = await talk("save this screen as morning check");
     const b = await talk("save this screen");
     const name = (x: { sim: ClientSim }) => (x.sim.pendingB?.steps.find((t) => t.a === "workspace") as { name?: string } | undefined)?.name ?? "";

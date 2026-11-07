@@ -72,3 +72,61 @@ describe("RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil 
     }
   });
 });
+
+// RC-05, RC-07 (lane a's leftovers; hunt-jarvis2-1, -2, -11): a zone said by NUMBER is a zone, in any wording
+describe("a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298)", () => {
+  const NAMES = ["", "Thiruvottiyur", "Manali", "Madhavaram", "Tondiarpet", "Royapuram", "Thiru-Vi-Ka", "Ambattur", "Anna Nagar", "Teynampet", "Kodambakkam", "Valasaravakkam", "Alandur", "Adyar", "Perungudi", "Sholinganallur"];
+  const WORDS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"];
+  it("the class: every zone, said as a number word, as digits and in Tamil letters, is the same zone", async () => {
+    const { zonesIn } = await import("@/lib/thunai/quick");
+    const TA_WORD = ["", "ஒன்று", "இரண்டு", "மூன்று", "நான்கு", "ஐந்து", "ஆறு", "ஏழு", "எட்டு", "ஒன்பது", "பத்து", "பதினொன்று", "பன்னிரண்டு", "பதிமூன்று", "பதினான்கு", "பதினைந்து"];
+    const bad: string[] = [];
+    for (let n = 1; n <= 15; n++) {
+      for (const text of [`severe complaints in zone ${WORDS[n]}`, `severe complaints in zone ${n}`, `zone number ${n} severe complaints`, `மண்டலம் ${n} கடுமையான புகார்கள்`, `மண்டலம் ${TA_WORD[n]} கடுமையான புகார்கள்`, `zone ${WORDS[n]} severe cases kaattu`]) {
+        const t = ` ${text.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
+        const got = zonesIn(t, world);
+        if (got.length !== 1 || got[0] !== n) bad.push(`${text} -> ${JSON.stringify(got)}`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+  it.each([
+    ["English number word", "show severe complaints in zone seven", 7],
+    ["Tamil letters, digits", "மண்டலம் 8 கடுமையான புகார்கள் காட்டு", 8],
+    ["Tamil letters, number word", "மண்டலம் ஒன்பது கடுமையான புகார்கள் காட்டு", 9],
+    ["Tanglish", "zone aaru severe complaints kaattu", 6]
+  ])("%s: the severe-cases screen is that zone's", async (_n, text, zone) => {
+    const r = await say(text);
+    const z = r.zone ?? (r.slots.zones ?? [])[0] ?? null;
+    expect(z, r.said).toBe(zone);
+    expect(r.said).not.toMatch(/^8 severe cases today/);
+  });
+  it("two zones said by number are both kept, and compared", async () => {
+    const r = await say("zone three and zone nine compare");
+    expect(r.slots.zones, r.said).toEqual([3, 9]);
+  });
+});
+
+// RC-04 (hunt-jarvis1-8, -9, jarvis2-7): a note to keep, or an order Jarvis never carries out, is not a filter
+describe("an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294)", () => {
+  it.each([
+    "close all severe complaints",
+    "delete every overdue case in Adyar",
+    "மண்டலம் 5 புகார்களை எல்லாம் மூடு",
+    "send all the drafts now",
+    "Adyar la ella complaints-um close pannu"
+  ])("%s is refused or asked about, and the console is left alone", async (text) => {
+    const r = await say(text);
+    expect(r.steps.some((s) => s.a === "view" || s.a === "page"), r.said).toBe(false);
+    expect(r.said.trim()).not.toBe("Severe");
+  });
+  it.each([
+    ["Tamil letters", "மண்டலம் 5 முக்கியம்னு ஞாபகம் வச்சுக்கோ"],
+    ["Tamil letters, polite ending", "அடையாறு கவனிக்கணும்னு நினைவில் வச்சுக்கோங்க"],
+    ["Tanglish", "zone 5 mukkiyam nu nyabagam vechukonga"]
+  ])("a note to keep, %s: asks to remember, opens nothing", async (_n, text) => {
+    const r = await say(text);
+    expect(r.steps.some((s) => s.a === "view"), r.said).toBe(false);
+    expect(r.kind, r.said).toBe("clarify");
+  });
+});

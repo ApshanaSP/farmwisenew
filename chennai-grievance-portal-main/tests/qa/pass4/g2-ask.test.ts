@@ -144,3 +144,16 @@ describe("RC-44: what chat does not do is said, with where to do it, and carries
     expect(c.headline).not.toMatch(/^Low leads/);
   });
 });
+
+// RC-05, RC-07 (PB-288, PB-289, PB-298): a zone said by number is that zone in Ask District IQ's lanes too, not only in Jarvis
+describe("a zone said by a number word or in Tamil letters is the zone, in chat", () => {
+  it.each([
+    ["en word", "how many open complaints in zone five", /Royapuram/],
+    ["en digits", "how many open complaints in zone 5", /Royapuram/],
+    ["ta word", "மண்டலம் ஐந்து பத்தி சொல்லு, எத்தனை புகார்", /ராயபுரம்|Royapuram/],
+    ["tanglish word", "zone anju la evlo complaints", /Royapuram|ராயபுரம்/]
+  ])("%s", async (_n, q, re) => {
+    const c = await askChat(q);
+    expect(`${c.headline}\n${c.answerMarkdown}\n${JSON.stringify(c.scope ?? "")}`, c.headline).toMatch(re);
+  });
+});

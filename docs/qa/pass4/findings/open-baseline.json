@@ -807,7 +807,8 @@
       "ta-privacy_safety-16",
       "tanglish-privacy_safety-11"
     ],
-    "mechanism": "M22"
+    "mechanism": "M22",
+    "fixed": true
   },
   {
     "id": "open-baseline-46",

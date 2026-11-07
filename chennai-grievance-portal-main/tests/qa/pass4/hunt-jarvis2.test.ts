@@ -18,11 +18,11 @@ const run = async (...turns: string[]) => {
 };
 
 describe("jarvis2 hunt", () => {
-  it.fails("jarvis2-1 Tamil 'மண்டலம் 5' keeps the zone in the severe-cases screen", async () => {
+  it("jarvis2-1 Tamil 'மண்டலம் 5' keeps the zone in the severe-cases screen", async () => {
     const { last } = await run("மண்டலம் 5 கடுமையான புகார்கள் காட்டு");
     expect(last.stage?.title ?? "").toContain("ராயபுரம்");
   });
-  it.fails("jarvis2-2 'zone five' (a number word) keeps the zone", async () => {
+  it("jarvis2-2 'zone five' (a number word) keeps the zone", async () => {
     const { last } = await run("show severe complaints in zone five");
     expect(last.stage?.title ?? "").toContain("Royapuram");
   });
@@ -43,7 +43,7 @@ describe("jarvis2 hunt", () => {
     const { outs } = await run("show severe complaints", "ஒன்றாவது திற");
     expect(outs[1].path).toContain("stage-local");
   });
-  it.fails("jarvis2-7 Tamil 'ஞாபகம் வச்சுக்கோ' (keep in mind) asks to remember, not to open zone 5", async () => {
+  it("jarvis2-7 Tamil 'ஞாபகம் வச்சுக்கோ' (keep in mind) asks to remember, not to open zone 5", async () => {
     const { last } = await run("மண்டலம் 5 முக்கியம்னு ஞாபகம் வச்சுக்கோ");
     expect(last.steps.some((s) => s.a === "view")).toBe(false);
     expect(last.kind).toBe("clarify");
@@ -62,9 +62,11 @@ describe("jarvis2 hunt", () => {
     expect(sim.zone).toBe(5);
     expect(sim.incident).toBeNull();
   });
-  it.fails("jarvis2-11 'zone 5 and zone 6 compare' does not silently drop zone 5", async () => {
+  it("jarvis2-11 'zone 5 and zone 6 compare' does not silently drop zone 5", async () => {
     const { last } = await run("zone 5 and zone 6 compare");
     const shown = last.steps.map((s) => JSON.stringify(s)).join(" ") + (last.stage?.title ?? "");
-    expect(shown.includes("5") && shown.includes("6")).toBe(true);
+    // both zones are in what is shown: by number in a step, or by name in the title or the line said (a comparison is titled with the two names, not their numbers)
+    const both = (shown + " " + last.said).includes("Royapuram") && (shown + " " + last.said).includes("Thiru-Vi-Ka");
+    expect((shown.includes("5") && shown.includes("6")) || both).toBe(true);
   });
 });

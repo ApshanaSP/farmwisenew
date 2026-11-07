@@ -31,6 +31,7 @@ SAY.deptComplaints = L("The department list counts incidents, not citizens' comp
   "Department list incidents-a thaan ennudhu, citizens complaints-a illa; adhanaala complaints-a department-wise pirichu tharamudiyaadhu. Department-wise incidents-a, illa oru department-oda complaints-a kelunga.");
 
 const DEPT_SPLIT = /\b(by|per|each|across)\s+(the\s+)?(department|dept)s?\b|\b(department|dept)[- ]?wise\b|துறை(?:கள்)? ?வாரியா|thurai ?(vaariya|wise)/i;
+const PAST_DEADLINE = /\b(overdue|past (the |their )?(deadline|due)|missed (the |their )?deadline|beyond (the )?deadline|late)\b|கெடு|காலக்கெடு|தாண்டிய|\bdeadline\b/i;
 const SAVE =/\b(save|store|reopen|re-open|restore|bookmark)\b|சேமி|மீண்டும் திற|\bsave\s*(pannu|pannunga|pannu)\b/i;
 const WORKSPACE = /\b(workspaces?|layouts?|saved views?|this view|this screen|this briefing|daily briefing|my briefing)\b|பணியிட/i;
 const ALL_SOURCES = /\b(show|list|give|display|reveal|print)\b.{0,25}\b(every|all|each|full|complete)\b.{0,25}\b(sources?|records?|references?|rows?)\b.{0,70}\b(used|behind|for|to (create|build|make|write|produce)|in)\b/i;
@@ -48,7 +49,8 @@ export function notDone(message: string, rulesOnly: boolean): { kind: NotDone; s
   if (SAVE.test(t) && WORKSPACE.test(t)) return { kind: "workspace", say: SAY.workspace };
   if ((ALL_SOURCES.test(t) || SOURCES_TA.test(t) || SOURCES_TG.test(t)) && /\b(briefing|brief|report|answer|summary)\b|சுருக்க|அறிக்கை/i.test(t)) return { kind: "sources", say: SAY.sources };
   // a measure the department list does not hold: complaints split by department (the rules ranked open incidents under a question about complaints, same-number-20)
-  if (rulesOnly && /\bcomplaints?\b|புகார்/i.test(t) && !/\bincidents?\b|சம்பவ/i.test(t) && DEPT_SPLIT.test(t)) return { kind: "deptComplaints", say: SAY.deptComplaints! };
+  // (the past-deadline count IS held per department, so "past deadline by department" is answered by the department list: RC-11, e-routes)
+  if (rulesOnly && /\bcomplaints?\b|புகார்/i.test(t) && !/\bincidents?\b|சம்பவ/i.test(t) && !PAST_DEADLINE.test(t) && DEPT_SPLIT.test(t)) return { kind: "deptComplaints", say: SAY.deptComplaints! };
   if (rulesOnly && WRITE.test(t)) return { kind: "letter", say: SAY.letter };
   if (rulesOnly && FUTURE.test(t) && THINGS.test(t) && !WEATHER.test(t)) return { kind: "forecast", say: SAY.forecast };
   return null;

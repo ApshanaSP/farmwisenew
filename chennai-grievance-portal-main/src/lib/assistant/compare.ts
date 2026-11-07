@@ -6,6 +6,7 @@
  */
 import { resolvePlace } from "@/lib/collector/nlp";
 import { orNull } from "@/lib/fallback";
+import { zoneNoIn } from "@/lib/zone-no";
 
 export interface Side { asked: string; place: string | null; zone: number | null; locality: string | null; outside: boolean }
 
@@ -36,8 +37,8 @@ export function sidesOf(message: string): string[] | null {
 /** Each side on the gazetteer: a zone, a locality inside a zone, or outside the district. */
 export async function resolveSides(sides: string[]): Promise<Side[]> {
   return Promise.all(sides.map(async (asked) => {
-    const zoneNo = asked.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1];
-    if (zoneNo && Number(zoneNo) >= 1 && Number(zoneNo) <= 15) return { asked, place: `Zone ${zoneNo}`, zone: Number(zoneNo), locality: null, outside: false };
+    const zoneNo = zoneNoIn(asked);
+    if (zoneNo && zoneNo >= 1 && zoneNo <= 15) return { asked, place: `Zone ${zoneNo}`, zone: zoneNo, locality: null, outside: false };
     const p = await resolvePlace(asked).catch(orNull("compare:31"));
     if (!p || p.zone == null) return { asked, place: p?.place ?? null, zone: null, locality: null, outside: true };
     // a locality narrower than its zone ("Velachery" in Adyar zone) is matched on the incident's place

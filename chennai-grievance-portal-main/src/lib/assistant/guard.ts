@@ -13,6 +13,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { looksBulk } from "@/lib/assistant/limits";
 import type { RefNames } from "@/lib/assistant/scope";
+import { zoneNoIn } from "@/lib/zone-no";
 
 export type GuardVerdict = { kind: "unsafe"; reason: string } | { kind: "off_topic"; topic: string } | { kind: "bulk" } | null;
 
@@ -135,9 +136,9 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   if (/\bfilter\b|வடிகட்டு/.test(t)) {
     const taluk = [...names.taluks.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));
     const zone = [...names.zones.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));
-    const zn = t.match(/zone\s*(\d{1,2})/);
+    const zn = zoneNoIn(t);
     if (taluk || zone || zn) return { intent: "console_action", tools: [], period, actions: [taluk ? { action: "filter_taluk", taluk: taluk[0] }
-      : { action: "filter_zone", zone: zone ? zone[0] : Number(zn![1]) }] };
+      : { action: "filter_zone", zone: zone ? zone[0] : zn! }] };
   }
   if (looksBulk(t)) return { intent: "bulk_request", tools: [], period, actions: [] };
   if (/brief|summar/.test(t)) return { intent: "briefing", tools: [{ name: "briefing", args: {} }], period, actions: [] };

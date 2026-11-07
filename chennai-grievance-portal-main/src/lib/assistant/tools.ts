@@ -36,6 +36,7 @@ import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
 import { MIN_PCT_BASE, isPastDeadline } from "@/lib/reference/metrics";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { zoneNoIn } from "@/lib/zone-no";
 
 type Row = Record<string, any>;
 
@@ -51,7 +52,7 @@ export async function numberedPlace(text: string, names: Awaited<ReturnType<type
     const w = rows[0];
     if (w) return { place: `Ward ${ward}`, ward, ward_asked: true, zone: Number(w.zone_no), taluk: w.taluk_code ?? null, lat: Number(w.lat), lon: Number(w.lon), conf: 1 };
   }
-  const zone = Number(text.match(/\bzone\s*(?:no\.?|number|#)?\s*-?\s*(\d{1,2})\b/i)?.[1] ?? text.match(/மண்டலம்\s*(\d{1,2})/)?.[1]);
+  const zone = zoneNoIn(text) ?? NaN;
   if (zone && names.zones.has(zone)) return { place: names.zones.get(zone)!.name, ward: null, zone, taluk: null, lat: null, lon: null, conf: 1 };
   return null;
 }

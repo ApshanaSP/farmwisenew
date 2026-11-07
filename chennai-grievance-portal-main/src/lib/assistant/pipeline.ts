@@ -62,6 +62,7 @@ import { orEmpty, orNull } from "@/lib/fallback";
 import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
 import { mapCard } from "@/lib/map/assistant";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { zoneNoIn } from "@/lib/zone-no";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -655,7 +656,7 @@ function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false,
   const scope: Scope = o.period ? { ...base, period: o.period } : { ...base };
   // "yesterday": the previous day's window, for these tools as for the lists
   if (YESTERDAY.test(message) && !SINCE_YESTERDAY.test(message)) (scope.period = "daily", scope.offset = 1);
-  const zn = Number(message.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1]);
+  const zn = zoneNoIn(message) ?? NaN;
   if (zn && n.zones.has(zn)) scope.zone = zn;
   // a category named in the question ("road accident trend"), by the console's own keyword classifier
   const cat = classify(message);
