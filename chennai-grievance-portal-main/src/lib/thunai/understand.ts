@@ -15,7 +15,7 @@
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
 import { foreignIn, noData } from "./entities";
-import { CAT_ALIASES, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
   ZONES } from "./lexicon";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
@@ -215,7 +215,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const click = /^(click|press|tap|select|hit|அழுத்து|கிளிக்)( on)? (.+)$/.exec(s);
   if (click) {
     const target = click[3].trim();
-    return /^\d{1,3}$/.test(target) ? done([{ a: "click", n: Number(target), name: null }]) : done([{ a: "click", n: null, name: rest(heard, /^\s*(click|press|tap|select|hit|அழுத்து|கிளிக்)(\s+on)?\s*/i) }]);
+    return /^\d{1,3}$/.test(target) ? done([{ a: "click", n: Number(target), name: null }]) : done([{ a: "click", n: null, name: rest(heard, /^\s*(?:(?:hey|ok|okay|hi|hello|jarvis|javis|jervis|please|kindly)[ ,:–-]+)*(click|press|tap|select|hit|அழுத்து|கிளிக்)(\s+on)?\s*/i) }]);
   }
   if (state.numbers && /^\d{1,3}$/.test(s)) return done([{ a: "click", n: Number(s), name: null }]);
   const scroll = /^(scroll|go|move|page)? ?(down|up)$|^scroll (down|up)( a bit| more)?$|^(scroll to (the )?)?(top|bottom)$|^(கீழே|மேலே)( போ| நகர்த்து)?$/.exec(s);
@@ -265,8 +265,12 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/^(mute|silent|silence|visual only|text only|no voice|don'?t speak|dont speak|சத்தம் வேண்டாம்|பேச வேண்டாம்)$/.test(s)) return done([{ a: "mode", mode: "visual" }]);
   if (/^(unmute|voice on|speak|talk to me|voice mode|பேசு)$/.test(s)) return done([{ a: "mode", mode: "voice" }]);
   if (/quiet mode|do not disturb|^dnd$|disturb pannadhe/.test(s)) return done([{ a: "mode", mode: "quiet" }]);
-  if (/\b(slower|slow down|speak slowly)\b|மெதுவா|methuva/.test(s)) return done([{ a: "speed", faster: false }]);
-  if (/\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
+  // how fast Jarvis talks: a short order or one about the voice, never a question about the data ("which department is slow") (RC-04)
+  const SPEED_Q = /\?|எந்த|என்ன|எப்படி|ஏன்|எத்தனை|யார்|\b(which|what|why|how|who|when|where)\b|enna\b|evlo|yen\b|eppadi|endha/i;
+  const SPEED_VOICE = /(speak|talk|voice|say|reply|answer|read|pesu|பேசு|குரல்|சொல்லு|பேச)/i;
+  const speedOrder = !SPEED_Q.test(heard) && (tk.length <= 3 || SPEED_VOICE.test(heard));
+  if (speedOrder && /\b(slower|slow down|speak slowly)\b|மெதுவா|methuva/.test(s)) return done([{ a: "speed", faster: false }]);
+  if (speedOrder && /\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
 
   // workspaces
   const saveAs = /^save (this |the view |this view |the screen |it )?(as )?(.+)$/.exec(s);
@@ -277,12 +281,19 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (saveTa) return done([{ a: "workspace", op: "save", name: cleanName(saveTa[1]) }]);
   const openWs = /^open (my )?(workspace|saved view|view) (.+)$|^open (my )?(.+) (workspace|view)$/.exec(s);
   if (openWs) return done([{ a: "workspace", op: "open", name: cleanName(openWs[3] ?? openWs[5] ?? "") }]);
+  // the same, said in Tamil or Tanglish: "<name> ஒர்க்ஸ்பேஸ் திற", "<name> workspace open pannu", "<name> workspace-a thira" (RC-04)
+  const openWsTa = /^(.+?)\s+(?:ஒர்க்ஸ்பேஸ்|வொர்க்ஸ்பேஸ்|பணியிடத்தை|பணியிடம்|workspace|saved view)(?:-?a|ஐ)?\s+(?:திற\S*|தொற\S*|open(?:\s+pannu)?|thira\S*|thora\S*)$/i.exec(heard.trim());
+  if (openWsTa) return done([{ a: "workspace", op: "open", name: cleanName(openWsTa[1]) }]);
 
   // refusals: there is no such action, and nothing changes
   if (DESTRUCTIVE.test(s) && !/^clear/.test(s)) {
     return { kind: "refuse", lang, heard, why: b("I can't delete anything. Nothing was changed.", "என்னால் எதையும் நீக்க முடியாது. எதுவும் மாற்றப்படவில்லை.") };
   }
 
+  // an order to change a record ("mark it closed", "status closed-a maathidu", "set the status to resolved"): the console does not do it, in any language (RC-04)
+  if (CHANGE_RECORD.test(heard) && /\b(fir|records?|complaints?|cases?|incidents?|inc-\d+)\b|பதிவு|புகார்/i.test(heard) && /\b(status|closed?|resolved?)\b|நிலை|முடிந்த/i.test(heard)) {
+    return { kind: "refuse", lang, heard, why: b("I can't change a record or its status. Nothing was changed.", "ஒரு பதிவையோ அதன் நிலையையோ என்னால் மாற்ற முடியாது. எதுவும் மாற்றப்படவில்லை.") };
+  }
   // Ask District IQ, by name
   const askDiq = /^(ask|ask district iq|ask the assistant|ask the chatbot)( to| about| whether| if)?\s+(.+)$/.exec(s);
   if (askDiq && !/^(ask )?the map\b/.test(askDiq[3])) {
@@ -324,6 +335,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // mentions a period or a place: answering is the assistant's job, not a filter change
   if (/^(how many|how much|which|why|who|when|is there|are there|did|does|do we|has|have)\b|^(எத்தனை|ஏன்|யார்|எப்போது)/.test(s)) return done([{ a: "ask", q: heard }]);
 
+  // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
+  if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];

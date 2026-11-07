@@ -76,3 +76,49 @@ describe("RC-01: the reply language follows the Collector's words, not one marke
     expect(detectLang("மழை எப்படி")).toBe("ta");
   });
 });
+
+// RC-04: one intent gate in front of every lane. The same sentence goes to every lane and must get the same class.
+import { isNavCommand } from "./plan";
+import { CHANGE_RECORD, KEEPING } from "./lexicon";
+describe("RC-04: a keeping note, an order to change a record and a data question are never a brief, a screen or a console move", () => {
+  const BODIES = ["police", "corporation", "Metrowater", "PWD"];
+  const keep = (b: string) => [`remind me to check the ${b} report`, `don't let me forget the ${b} report`, `keep the ${b} report for later`, `make a note of the ${b} status`, `${b} report ah nyabagam vechukko`,
+    `${b} அறிக்கை பார்க்க நினைவூட்டு`, `${b} அறிக்கையை ஞாபகம் வச்சுக்கோ`, `${b} ரிப்போர்ட் சேவ் பண்ணு`, `${b} ரிப்போர்ட் டைப் பண்ணு`];
+  const change = (b: string) => [`change the ${b} case status to closed`, `${b} records-la andha FIR status-a closed nu maathidu`, `${b} பதிவு நிலையை மாற்று`, `mark the ${b} complaint as resolved`];
+  it("keeping and changing: no brief, no fast-lane screen, no filter from the rules", () => {
+    const bad: string[] = [];
+    for (const b of BODIES) for (const s of [...keep(b), ...change(b)]) {
+      if (!(KEEPING.test(s) || CHANGE_RECORD.test(s))) bad.push(`class: ${s}`);
+      if (briefTurn(s, world as never)?.kind === "screen") bad.push(`brief: ${s}`);
+      if (quickScreen(s, world as never)) bad.push(`quick: ${s}`);
+      const u = rules(s);
+      if (u.kind === "do" && (u.steps ?? []).some((x) => x.a === "view" || x.a === "page")) bad.push(`rules: ${s}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it("a data question never moves the console, in English, Tamil and Tanglish", () => {
+    const steps = [{ a: "view", view: { zone: 13 } }] as never;
+    for (const s of ["Severe flood cases still open Adyar, just list them", "Adyar flooding open, give me just the number", "Zone 5, total open", "இந்த வாரம் severe மட்டும் எடுத்து போடு", "அடையாறு வெள்ள பட்டியல் குடு", "indha vaaram severe-a ellam list podu", "எந்த டிபார்ட்மெண்ட் ரொம்ப மெதுவா வேலை பாக்குது?"]) expect(isNavCommand(s, steps), s).toBe(false);
+    for (const s of ["only Adyar", "show only Adyar", "அடையாறுக்கு மாற்று", "Adyar-ku maathu", "filter pannu Adyar"]) expect(isNavCommand(s, steps), s).toBe(true);
+  });
+  it("a Tamil verb inside a longer word is not the verb (போ in போராட்டம், போனவங்க)", () => {
+    const steps = [{ a: "view", view: { zone: 2 } }] as never;
+    for (const s of ["மணலில போராட்டம் கேஸ்", "காணாம போனவங்க கேஸ்"]) expect(isNavCommand(s, steps), s).toBe(false);
+  });
+  it("how fast Jarvis talks is a short order or about the voice, never a question about the data", () => {
+    expect(rules("எந்த டிபார்ட்மெண்ட் ரொம்ப மெதுவா வேலை பாக்குது?").steps?.[0]?.a ?? "").not.toBe("speed");
+    expect(rules("which department is slowest to close cases").steps?.[0]?.a ?? "").not.toBe("speed");
+    for (const s of ["slower", "slow down", "speak slowly", "மெதுவா பேசு", "faster please"]) expect(rules(s).steps?.[0]?.a, s).toBe("speed");
+  });
+  it("a workspace is opened by name in Tamil and Tanglish as in English", () => {
+    for (const s of ["open workspace morning round", "morning round ஒர்க்ஸ்பேஸ் திற", "morning round workspace open pannu", "morning round workspace-a thira"]) {
+      const st = rules(s).steps?.[0] as { a: string; op?: string; name?: string } | undefined;
+      expect([st?.a, st?.op, (st?.name ?? "").toLowerCase()], s).toEqual(["workspace", "open", "morning round"]);
+    }
+  });
+  it("click and press name a control, not a request for a screen", () => {
+    expect(quickScreen("click trends", world as never)).toBeNull();
+    expect(quickScreen("Jarvis, press trends", world as never)).toBeNull();
+    expect((rules("Jarvis, click Trends").steps?.[0] as { name?: string } | undefined)?.name).toBe("Trends");
+  });
+});

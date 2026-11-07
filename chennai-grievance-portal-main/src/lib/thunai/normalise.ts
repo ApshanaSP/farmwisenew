@@ -110,15 +110,19 @@ export function normalise(input: string): Normalised {
 // Tanglish is told by its grammar, not by one word: particles and endings, the question words, the common verbs. A place name such as "Thiru Vi Ka Nagar" is not a mark of it.
 const TANGLISH_WORDS = new Set(("kaatu kattu kaattu maathu mathu maatru pannu pannunga mattum illa vendaam venam sollu po poi edhu enna ennanga evlo evvalavu epdi eppadi eppo ippo enga anga inga naalaikku innaiku indha andha idha adha anuppu nirutthu niruthu " +
   "podhum paaru paru thirai varudhu irukku iruku iruke irukkum aagudhu aachu aanadhu kelu kitta kitte thara vaa pakkam pakkathu pakkathula ellaam ellam romba mosama nalla theriyuma theriyum theriyudhu nadandhucha nadandhadhu oru ooru oda ode vechu " +
-  "solluga sollunga paarunga kudunga kudu kodu").split(" "));
+  "solluga sollunga paarunga kudunga kudu kodu yenna yenga nelamai nilamai konjam iruka irukka edu eduthu maasam vaaram naal nadandhuchu maathidu maathi maathunga vandhadhu vandhuchu pochu panra pannunga pannitu sollunga").split(" "));
 const TANGLISH_END = /^[a-z]{3,}(nga|ngo|unga|ukku|kku|adhu|athu|ucha|aachu|udhu|idhu)$/;
+const EN_FUNCTION = new Set("the a an of in on for to from is are was were what which how why who when where me with about by at this that these those not it have has can could would should my our your their".split(" "));
 const tanglishMark = (w: string) => TANGLISH_WORDS.has(w) || TANGLISH_END.test(w);
 export function detectLang(input: string): "en" | "ta" {
   if (/[஀-௿]/.test(input)) return "ta";
-  const ws = input.toLowerCase().replace(/-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g, " $1 ").split(/[^a-z]+/).filter(Boolean);
-  const marks = ws.filter(tanglishMark).length;
-  // two marks, or one in a short sentence: Tanglish. A long English sentence with a single stray "indha" is English.
-  return marks >= 2 || (marks === 1 && ws.length <= 6) ? "ta" : "en";
+  const low = input.toLowerCase();
+  const ws = low.replace(/-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g, " ").split(/[^a-z]+/).filter(Boolean);
+  // a case ending glued on with a hyphen ("Adyar-la", "status-a") is Tanglish grammar: one mark each
+  const marks = ws.filter(tanglishMark).length + (low.match(/[a-z]-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g)?.length ?? 0);
+  const english = ws.filter((x) => EN_FUNCTION.has(x)).length;
+  // more than twice as many Tanglish marks as English function words: Tanglish. An English sentence with a stray "indha" is English.
+  return marks > 0 && marks > 2 * english ? "ta" : "en";
 }
 
 /**

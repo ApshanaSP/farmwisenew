@@ -167,3 +167,12 @@ export const REPAIR = new Set(["no", "not", "illa", "illai", "இல்ல", "�
 
 /** destructive verbs: there is no such action, so the request is refused with no state change */
 export const DESTRUCTIVE = /\b(delete|remove|erase|wipe|drop|destroy|purge)\b|அழி|நீக்கிடு/;
+
+/**
+ * The sentence's intent classes, one table by language, read by every lane before it builds anything (RC-04). A Tamil word has no \b, so the Tamil half starts at a
+ * word edge (no Tamil letter before it) and takes any ending.
+ *  keep    the Collector's own note or a reminder: nothing about the data is asked
+ *  change  an order to change, close, assign or delete a record: the console does not do it
+ */
+export const KEEPING = /\b(remember|remind|reminder|reminders|note|notes|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|forget|make a note|for later|keep (it|them|this|that|the [a-z ]{3,40}) (aside|for later|handy)|nyabagam|nyabagapaduthu|nyabagapaduthunga|ninaivoottu|ninaivil vai|vechukko|vechuko)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|நினைவு படுத்து|ஞாபக|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு|குறிப்பு எடு|குறித்து வை|மறந்துடாத|மறக்காம)/i;
+export const CHANGE_RECORD = /\b(change|edit|modify|update the (status|record)|reassign|assign|close it|mark\b[^.]{0,40}\b(as )?(closed|resolved|done)|set (the )?status|maathu\w*|maathid\w*|maatru\w*|maattu\w*|maathi\w*|mathidu)\b|(?<![஀-௿])(மாற்று|மாத்து|மாற்றி|திருத்து|ஒதுக்கு|முடிச்சிடு|மூடிடு)/i;

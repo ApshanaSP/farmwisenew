@@ -12,7 +12,7 @@
  * outside the district in the taluk table) in front of an agency word makes the sentence about some other body: it is
  * reported as unknown, never forced onto ours.
  */
-import { CAT_ALIASES, DEPT_ALIASES, DEPT_TA, GENERAL, SUBJECTS, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, GENERAL, KEEPING, SUBJECTS, ZONES } from "./lexicon";
 import { editDistance, skeleton } from "./normalise";
 import { phonetic, romanise } from "./xlit";
 import type { World } from "./types";
@@ -364,8 +364,6 @@ const cap = (s: string) => s.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
  * words to mean), say plainly that there is no data on that body (offering the nearest one), or ask one short question. null: not a
  * request for a brief on a body; the lanes after this one decide.
  */
-/** keeping something or sending it: the words are the Collector's own note, never a question about a place (RC-01, RC-04) */
-const KEEPING = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward)\b|நினைவூட்டு|நினைவில்|ஞாபக|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு|nyabagam|nyabagapaduthu|ninaivoottu/i;
 /** words that tie a sentence to the district's own business, so that "who is the king of Delhi" is general knowledge and "Delhi police report" is not */
 const DISTRICT_NOUNS = new Set(["complaint", "complaints", "case", "cases", "incident", "incidents", "grievance", "news", "weather", "price", "prices", "rain", "rainfall", "aqi", "air", "lake", "lakes", "reservoir",
   "report", "status", "update", "brief", "police", "zone", "ward", "department", "officer", "collector", "corporation", "severe", "overdue", "pending"]);
@@ -394,7 +392,7 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   }
   // not a request for a brief on a body, whatever words it shares with one: drafting or sending, an incident by number, a comparison,
   // the news, a reading, a place to find, the map, or "report a pothole" (reporting something, not asking for a report)
-  if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `)) return null;
+  if (NOT_A_BRIEF.test(` ${text.toLowerCase()} `) || KEEPING.test(text) || CHANGE_RECORD.test(text)) return null;
   const r = resolveEntity(text, w);
   if (!r.brief || r.kind === "none") return null;
   if (r.kind === "unknown") {
@@ -424,7 +422,7 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
 
 /** Words that make a sentence something other than a request for a brief on a body. */
 // keeping something or typing it (remember, remind, save, pin, type into the search box) is not a brief either (BUG-022)
-const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட/i;
+const NOT_A_BRIEF = /\b(remember|remind|reminder|note|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|export|download|print|share|compare|versus|vs|against|news|headlines?|seithi|map|police station|police stations|reservoirs?|lakes?|rainfall|aqi|air quality|inc-\d+|complaint (no|number|#)?\s*\d+|case (no|number|#)?\s*\d+)\b| report (a|an) | update [^ ]+ (complaint|case) | as (resolved|closed|done) | rain (report|status|update)|செய்தி|வரைபட|டவுன்லோட்|பதிவிறக்க|ஒப்பிடு|ஒப்பீடு|ஸ்டேஷன்|காவல் நிலைய|எக்ஸ்போர்ட்|பிரிண்ட்|ஷேர்|பகிர்/i;
 
 /** A locality in the sentence and its zone, if the data gives it one ("Velachery police report"), by name or alias. */
 function locality(text: string, w: World): { name: string; zone: number | null } | null {

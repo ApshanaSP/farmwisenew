@@ -120,7 +120,8 @@
     "row_id": "tanglish-privacy_safety-14",
     "mechanism": "M03",
     "model_needed": false,
-    "lane": "resolve"
+    "lane": "resolve",
+    "fixed": true
   },
   {
     "id": "open-baseline-8",
@@ -770,7 +771,8 @@
     "row_ids": [
       "ta-numbers-10"
     ],
-    "mechanism": "M21"
+    "mechanism": "M21",
+    "fixed": true
   },
   {
     "id": "open-baseline-45",

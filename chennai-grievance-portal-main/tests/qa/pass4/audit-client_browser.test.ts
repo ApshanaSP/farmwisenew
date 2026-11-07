@@ -93,7 +93,7 @@ describe("the rest of the audit's findings, as far as they can be read without a
     expect(body).toContain("gateFor");
     expect(body).toContain("selfHeard");
   });
-  it.fails("audit-client_browser-12: a sentence that starts with click is not read as a request for a screen", () => {
+  it("audit-client_browser-12: a sentence that starts with click is not read as a request for a screen", () => {
     expect(quickScreen("click trends", WORLD)).toBeNull();
   });
   it.fails("audit-client_browser-15: each Confirm it's you box starts empty: it has a key of its own", () => {

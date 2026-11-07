@@ -6,7 +6,7 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, DEPT_ALIASES, EXPLAIN_TA, GENERAL, SEV_WORDS, SUBJECTS, ZONES } from "./lexicon";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, EXPLAIN_TA, GENERAL, KEEPING, SEV_WORDS, SUBJECTS, ZONES } from "./lexicon";
 import { foreignIn } from "./entities";
 import { fuzzyNames, romanise } from "./xlit";
 import type { Recipe } from "./stage";
@@ -249,6 +249,8 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (t.trim().length < 3) return null;
   // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
   if (foreignIn(text, w)) return null;
+  // a note to keep, a reminder, or an order to change a record is never a question about the data, in any language (RC-04)
+  if (!o.noBail && (KEEPING.test(text) || CHANGE_RECORD.test(text))) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
@@ -290,7 +292,7 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (isComparing(t)) return null;
   if (has(t, RAIN) && !has(t, CASES) && !cat) return { recipe: "readings", slots: { metric: "rain", zones: zones.slice(0, 1) } };
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
-  if (!/^ (go to|open|switch to|take me to|navigate to) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-௿]/.test(w) && t.includes(w)))) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
+  if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && (has(t, TREND) || TREND.some((w) => /[஀-௿]/.test(w) && t.includes(w)))) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   if (has(t, RANK) && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };

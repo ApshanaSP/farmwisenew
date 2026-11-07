@@ -249,14 +249,14 @@ describe("audit-understanding-8 P0: a place with no zone is dropped from 'explai
 
 describe("audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022)", () => {
   for (const s of ["போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு", "போலீஸ் அறிக்கையை பார்க்க நினைவில் வை", "போலீஸ் அறிக்கையை ஞாபகம் வச்சுக்கோ", "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து", "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு", "போலீஸ் ரிப்போர்ட் டைப் பண்ணு", "police report ah nyabagam vechukko", "nalaikku police report paakanum nu nyabagapaduthu", "don't let me forget the police report", "keep the police report for later"])
-    it.fails(`audit-understanding-9 ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
-  it.fails("audit-understanding-9 the rules read the Tamil reminder, and the brief still takes it", async () => {
+    it(`audit-understanding-9 ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+  it("audit-understanding-9 the rules read the Tamil reminder, and the brief still takes it", async () => {
     expect(rules("போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு").steps?.[0]?.a).toBe("remind");
     expect(stageOf(await round("போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு"))?.recipe).not.toBe("brief");
   });
   it("sending a report in Tamil is refused in code, not briefed", async () => expect((await round("போலீஸ் அறிக்கையை மெயில் அனுப்பு")).result?.kind).toBe("refuse"));
   for (const s of ["போலீஸ் அறிக்கை டவுன்லோட் பண்ணு", "போலீஸ் அறிக்கை ஒப்பிடு", "போலீஸ் ஸ்டேஷன் அறிக்கை"])
-    it.fails(`audit-understanding-9 other lanes in Tamil, ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+    it(`audit-understanding-9 other lanes in Tamil, ${s}: not a brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
 });
 
 describe("audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005)", () => {
@@ -402,7 +402,7 @@ describe("audit-understanding-21 P0: an ordinary phrase with high or low is read
 
 describe("audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022)", () => {
   for (const t of ["remind me to check the severe cases", "remind me at 5 pm to check the severe cases", "remind me to check the garbage complaints in Adyar", "note: check the severe cases tomorrow", "remind me to read the news", "remind me to check Poondi reservoir level", "remind me to see the air quality report", "remind me to read today's brief", "remind me at 5 pm about the brief", "remind me to check the corporation update", "make a note to check the corporation update", "கடுமையான புகார்கள் பார்க்க நினைவூட்டு", "நாளை கடுமையான புகார்கள் பார்க்க ஞாபகப்படுத்து", "அடையாறு வெள்ள புகார்கள் பார்க்க நினைவூட்டு"])
-    it.fails(`audit-understanding-22 ${t}: the round leaves it to the rules' reminder`, async () => expect(stageOf(await round(t))).toBeFalsy());
+    it(`audit-understanding-22 ${t}: the round leaves it to the rules' reminder`, async () => expect(stageOf(await round(t))).toBeFalsy());
   it("the rules did read it as a reminder", () => expect(rules("remind me at 5 pm to check the severe cases").steps?.[0]?.a).toBe("remind"));
 });
 

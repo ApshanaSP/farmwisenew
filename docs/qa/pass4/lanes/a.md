@@ -13,3 +13,15 @@ Fix (mechanism). One question, `foreignIn()` in entities.ts, asked first by ever
 Class guard. src/lib/thunai/lane-a.pass4.test.ts: towns the code was never told about crossed with every agency head and every language, run through every lane; a static check that each lane calls foreignIn before it builds anything; our own bodies and places never taken for foreign.
 
 Result on the open set: wrong 66 to 50, confident wrong 42 to 27, no right-to-wrong row.
+
+## RC-04: a command reflex or an English-only guard list takes a question, a keeping note or a forbidden order
+
+Root cause. The same sentence goes through four lanes (the console's own reflex test in plan.ts, the brief turn, the fast lane and the rules), and each had its own English-only list of what is not a question: NOT_A_BRIEF (brief turn only), NAV_VERB (any "just", "only", a Tamil verb stem anywhere inside a longer word such as the word for protest), a speed rule on a Tamil word that also means "slow" in "which department works slowly", and a workspace opener in English only. So "remind me ...", "keep ... for later", a Tamil "type this" or "change the status to closed" were briefs or filters, and a list or number question was acted on as a move with no model.
+
+Why earlier tests missed it. BUG-001 and BUG-022 were fixed in one lane each, with English sentences. No test sent one sentence to every lane and asked for the same class.
+
+Fix (mechanism). One intent table by language in lexicon.ts (KEEPING and CHANGE_RECORD: English, Tanglish and Tamil with Tamil word edges), read by briefTurn, quickScreen and the rules (late guard: a keeping note no rule read is never a filter; an order to change a record is refused like a delete). isNavCommand: Tamil verbs are whole words, a data ask (list, number, total, give, take out; Tamil and Tanglish forms) with a filter is never a console move, "show ... in ward N" with case or complaint words is a picture of the data. Speed is an order only when short or about the voice and never a question. Workspace open by name works in Tamil and Tanglish. "Jarvis, click X" names the control X. detectLang counts Tanglish marks against English function words, so the reply language is not decided by one word.
+
+Class guard. lane-a.pass4.test.ts RC-04: keep and change sentences about every body in three languages through the brief turn, the fast lane and the rules; data asks and Tamil verbs inside longer words through isNavCommand; speed, workspace and click checks.
+
+Result. open-baseline findings 7 and 44 fixed; 43 is partly fixed (7 of its 8 rows are safe; the eighth drops a category filter: RC-05). audit-understanding-9 and -22, audit-privacy_injection-13, audit-client_browser-12 and meta-words-3 are plain tests now.
