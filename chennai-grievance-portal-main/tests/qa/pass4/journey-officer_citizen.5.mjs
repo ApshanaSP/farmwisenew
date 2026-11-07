@@ -1,0 +1,13 @@
+import { openWithCookie, shot, text, base } from "./journey-officer_citizen.lib.mjs";
+const { br, ctx, page, errs } = await openWithCookie("citizenA", { width: 360, height: 740 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await page.goto(base + "/citizen/file-complaint", { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+await page.click('button:has-text("Male")');
+await page.locator("input").first().fill("12 Test Street, Adyar, Chennai 600020");
+await page.click('button:has-text("Next: Location")');
+await page.waitForTimeout(2500);
+await shot(page, "citizen-03-location-360");
+console.log(await text(page, 2500));
+console.log((await page.locator("button, input, textarea, select").evaluateAll(els=>els.map(e=>e.tagName+":"+(e.getAttribute("aria-label")||e.name||e.placeholder||e.innerText||"").trim().slice(0,40).replace(/\n/g," ")))).join(" | "));
+console.log("ERRS", JSON.stringify(errs));
+await br.close();

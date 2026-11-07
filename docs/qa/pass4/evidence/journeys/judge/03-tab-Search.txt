@@ -1,0 +1,295 @@
+Chennai · Collector
+Overview
+Briefing
+Trends
+Environment
+Data Studio
+Search
+/
+அ
+தமிழ்
+Menu
+6
+CO
+Cyclone Murasu
+Collected 6 Nov, 06:10 PM
+Data Studio
+Your files · not filtered
+Add data
+RULES ONLY
+Drop a file or browse
+Excel · CSV · PDF · a photo of a table · up to 15 MB
+Connect with sign-in or schedule
+SAMPLES
+Storm-water drain desilting register
+Excel
+Fever & dengue surveillance
+CSV
+Ration shop stock (Tamil headers)
+CSV
+Hospital beds and OPD, daily
+CSV
+Your data
+8
+On the dashboard
+Add charts from any dataset
+Live Connectors
+Sites that publish daily
+Hospital beds and OPD, daily (sample)
+1,620 rows · health 97 · Government Hospitals
+R
+3 rows · health 100
+D
+2 rows · health 100
+புகார்
+2 rows · health 100
+Semi
+2 rows · health 100
+Future
+3 rows · health 92
+Tamil16
+3 rows · health 92
+Tamil Bom
+3 rows · health 92
+Hospital beds and OPD, daily (sample)
+Hospital_Beds_Daily_2026.csv
+1,620 rows
+Government Hospitals
+Rules-read
+Sample · synthetic
+த
+Insights
+Alerts
+Data Detective
+97
+1 issues
+AI reading
+Rows
+Data card
+Chennai data
+BRIEF (RULES)
+Written from the computed insights · 5 of 8 insights
+Re-analyse
+3 hospitals over 90% full
+Obstetrics and Gynecology Hospital Egmore is the fullest at 95.4% (760 of 797 beds); 3 of 9 hospitals are over 90%; across all 9 it is 86.7% (8,725 of 10,058).
+Total Beds: Government Peripheral Hospital Anna Nagar is lowest at 199 and Rajiv Gandhi Government General Hospital highest at 2,976; the average across 9 hospitals is 1,118.
+Among the larger hospital names, Government Royapettah Hospital grew fastest from 3 Oct 2026 to 4 Oct 2026: up 0.1% (844 to 845); Kilpauk Medical College and Hospital moved least: down 0.3%.
+1 to act on now
+1 to watch
+3 to note
+Ask the department
+Which hospital reports need the Collector's direct intervention this week?
+Total beds
+10,058
+across 9 hospital reports
+Hospital Names
+9
+different values in 1,620 rows
+Last 28 days
+2,81,890
+0%
+7 days
+across 252 hospital reports
+What matters
+5 insights · click any card for the records behind it
+CAPACITY
+NEEDS ACTION
+95.4%
+occupied beds of total beds, Obstetrics and Gynecology Hospital Egmore
+3 hospitals over 90% full
+Obstetrics and Gynecology Hospital Egmore
+95.4%
+Rajiv Gandhi Government General Hospital
+92.5%
+Institute of Child Health and Hospital
+92%
+Government Royapettah Hospital
+89.5%
+Stanley Medical College and Hospital
+84.2%
+
+Obstetrics and Gynecology Hospital Egmore is the fullest at 95.4% (760 of 797 beds); 3 of 9 hospitals are over 90%; across all 9 it is 86.7% (8,725 of 10,058).
+
+WHY IT MATTERS
+
+How full the system is against what it can hold sets the margin for supply and for safety.
+
+Ask Government Hospitals for the outlook: how long the present level lasts, and the plan if it falls further.
+
+n = 1,620 · Counted over the cleaned rows · 8 Apr – 4 Oct 2026
+
+Government Hospitals
+See the records
+RANKING
+NOTE
+199
+total beds, Government Peripheral Hospital Anna Nagar
+Government Peripheral Hospital Anna Nagar lowest on total beds
+Government Peripheral Hospital Anna Nagar
+199
+Tamil Nadu Govt Multi-Super Specialty Hospital
+500
+Govt Hospital for Thoracic Medicine
+747
+Obstetrics and Gynecology Hospital Egmore
+797
+Government Royapettah Hospital
+845
+
+Total Beds: Government Peripheral Hospital Anna Nagar is lowest at 199 and Rajiv Gandhi Government General Hospital highest at 2,976; the average across 9 hospitals is 1,118.
+
+WHY IT MATTERS
+
+The extremes show where the district is most exposed and where it is best placed.
+
+Ask Government Hospitals for the plan for the item at the bottom of this list.
+
+n = 1,620 · Counted over the cleaned rows · 8 Apr – 4 Oct 2026
+
+Government Hospitals
+See the records
+GROWTH
+NOTE
++0.1%
+Government Royapettah Hospital, 3 Oct 2026 → 4 Oct 2026
+Government Royapettah Hospital grew fastest
+Government Royapettah Hospital
++0.1%
+Institute of Child Health and Hospital
++0.1%
+Rajiv Gandhi Government General Hospital
++0.1%
+Stanley Medical College and Hospital
+-0.1%
+Kilpauk Medical College and Hospital
+-0.3%
+
+Among the larger hospital names, Government Royapettah Hospital grew fastest from 3 Oct 2026 to 4 Oct 2026: up 0.1% (844 to 845); Kilpauk Medical College and Hospital moved least: down 0.3%.
+
+WHY IT MATTERS
+
+The latest period sets the baseline for planning and budgets.
+
+Use the latest period, not the long-run average, for planning.
+
+n = 1,620 · Counted over the cleaned rows · 8 Apr – 4 Oct 2026
+
+Government Hospitals
+See the records
+GROWTH
+NOTE
++0%
+3 Oct 2026 → 4 Oct 2026
+Total beds up 0% in 4 Oct 2026
+
+Total beds: 10,058 in 4 Oct 2026, up 0% from 10,056 in 3 Oct 2026; up 0% since 8 Apr 2026.
+
+WHY IT MATTERS
+
+The latest period sets the baseline for planning and budgets.
+
+Use the latest period, not the long-run average, for planning.
+
+n = 1,620 · Counted over the cleaned rows · 8 Apr – 4 Oct 2026
+
+Government Hospitals
+See the records
+FRESHNESS
+WORTH KNOWING
+34 days
+since 4 Oct 2026
+The newest data is 34 days old
+
+The latest hospital report is dated 4 Oct 2026, 34 days ago. Decisions on this data should ask the department for the newer figures first.
+
+WHY IT MATTERS
+
+Old or missing reports look like quiet weeks; decisions need the current picture.
+
+Ask Government Hospitals for the missing or newer reports.
+
+n = 1,620 · Newest date against today (7 Nov 2026) · 8 Apr – 4 Oct 2026
+
+Government Hospitals
+The evidence
+live charts · click a bar, slice or zone to open it
+Where the total beds are (4 Oct 2026)
+total total beds · latest period · click an area to open it
+Add to dashboard
+747
+845
+1,196
+1,796
+1,799
+2,976
+Imagery © Esri
++
+−
+Bubble size
+0
+2,976
+
+Places: a map, so where it is shows at a glance.
+
+Total beds over time
+total total beds · click a point to open it
+Add to dashboard
+
+25 periods in order: a line, read left to right.
+
+The first, partial week is not drawn.
+Top hospital names by total beds (4 Oct 2026)
+total total beds · latest period · click a bar to open it
+Add to dashboard
+
+A comparison of categories: sorted bars from zero, the longest first.
+
+Total beds by disease type (4 Oct 2026)
+total total beds · latest period · click a bar to open it
+Add to dashboard
+
+A comparison of categories: sorted bars from zero, the longest first.
+
+Esc
+GO TO
+Go to Overview
+Page 1
+Go to Briefing
+Page 2
+Go to Trends
+Page 3
+Go to Environment & markets
+Page 4
+Go to Data Studio
+Page 5
+ACTIONS
+Ask District IQ
+The chatbot: type a question, in English or Tamil
+Ctrl K
+Jarvis
+Talk to it, in English or Tamil. Or say "Hi Jarvis"
+Rain & flooding (மழை வெள்ளம்)
+Where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one
+Ask the map
+A question about places and distances, answered on the Overview's map
+Export report
+PDF report or CSV action list
+Open data sources
+Feeds, OCR upload, audit log
+Workspaces
+Save or reopen a view
+Customize the dashboard
+Switch to dark theme
+Reload data
+Fetch the latest from the store
+↑
+↓
+move
+Enter
+open
+/
+search anywhere
+Jarvis
+Ask District IQ
+Ctrl K
+5

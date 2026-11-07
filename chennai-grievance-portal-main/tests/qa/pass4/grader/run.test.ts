@@ -94,9 +94,16 @@ describe.runIf(SET)("QA pass 4: the sentence runner", () => {
       const base = { id: r.id, lang: r.lang, family: r.family, text: r.text, earlier: r.earlier, expect: r.expect, must: r.must, must_not: r.must_not, must_not_contain: r.must_not_contain };
       let row: Record<string, unknown>;
       try {
-        const sim = new ClientSim(world, {}, list);
-        const c = await runConversation(sim, earlier, r.text);
-        const a = answerOf(c.last, sim);
+        let sim = new ClientSim(world, {}, list);
+        let c = await runConversation(sim, earlier, r.text);
+        let a = answerOf(c.last, sim);
+        // QA_P4_PACE=1: a row refused for the per-minute token limit is retried after a pause (up to 4 times), so capacity does not hide the verdict. Off by default.
+        for (let k = 0; live && process.env.QA_P4_PACE && a.model_needed && k < 4; k++) {
+          await new Promise((res) => setTimeout(res, 20_000));
+          sim = new ClientSim(world, {}, list);
+          c = await runConversation(sim, earlier, r.text);
+          a = answerOf(c.last, sim);
+        }
         const invalid = live && a.model && !GROQ_MODELS.some((m) => String(a.model).replace(/#\d+$/, "").startsWith(m)) ? String(a.model) : null;
         const earlierDone = c.earlier.map((e) => ({ lane: e.lane, kind: e.kind, recipe: e.stage?.recipe ?? null, title: e.stage?.title ?? null, said: e.said.slice(0, 240), steps: e.steps, error: e.error }));
         // a row that a live server could not answer for lack of capacity is not a verdict on the understanding

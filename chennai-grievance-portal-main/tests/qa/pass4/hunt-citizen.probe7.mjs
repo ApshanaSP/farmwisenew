@@ -1,0 +1,13 @@
+import { login, req } from "./lib/access-lib.mjs";
+const base = `http://127.0.0.1:${process.argv[2] || 3175}`;
+const C = await login(base, "collector");
+const up = async (name, buf) => { const f = new FormData(); f.append("file", new Blob([buf]), name); const r = await req(base, "POST", "/api/collector/studio", { cookie: C.cookie, body: f, timeout: 90000 }); return r.status + " " + r.text.split("\n").filter(Boolean).slice(-2).join(" || ").slice(0, 400); };
+console.log("fake-xlsx", await up("a.xlsx", Buffer.from("this is not a zip")));
+console.log("fake-pdf", await up("a.pdf", Buffer.from("%PDF-1.4 garbage")));
+console.log("binary-csv", await up("b.csv", Buffer.from([0, 1, 2, 3, 255, 254, 0, 0])));
+console.log("json-bad", await up("j.json", Buffer.from('{"a":[1,2')));
+console.log("tamil-name", await up("புகார்.csv", Buffer.from("ward,count\n1,2\n2,3\n")));
+console.log("dup-cols", await up("d.csv", Buffer.from("ward,ward,count\n1,1,2\n2,2,3\n")));
+console.log("ragged", await up("r.csv", Buffer.from("ward,count,date\n1,2\n2,3,2026-11-01,extra\n3,x,notadate\n")));
+const link = async (url) => { const r = await req(base, "POST", "/api/collector/studio", { cookie: C.cookie, headers: { "content-type": "application/json" }, body: JSON.stringify({ url }), timeout: 60000 }); return r.status + " " + r.text.split("\n").filter(Boolean).slice(-1)[0].slice(0, 300); };
+for (const u of ["http://[::1]/", "http://0x7f.1/", "http://localhost./", "http://169.254.169.254/latest/meta-data/", "ftp://example.com/a.csv", "http://user:pw@example.com@127.0.0.1/", "https://"]) console.log("link", u, await link(u));

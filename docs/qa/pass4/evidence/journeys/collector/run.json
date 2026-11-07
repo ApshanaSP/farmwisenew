@@ -1,0 +1,95 @@
+[
+ {
+  "lang": "en",
+  "labels": [
+   "Overview",
+   "Briefing",
+   "Trends",
+   "Environment",
+   "Data Studio",
+   "Daily",
+   "Weekly",
+   "Monthly",
+   "Quarterly",
+   "By severity\n87",
+   "My tasks\n0",
+   "1\nSevere",
+   "18\nHigh",
+   "34\nMedium"
+  ],
+  "errsHome": []
+ },
+ {
+  "lang": "en",
+  "click": "Weekly",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "en",
+  "click": "Monthly",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "en",
+  "click": "Quarterly",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "en",
+  "click": "By severity\n87",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "en",
+  "errsAll": []
+ },
+ {
+  "lang": "ta",
+  "labels": [
+   "மேலோட்டம்",
+   "சுருக்கம்",
+   "போக்குகள்",
+   "சுற்றுச்சூழல்",
+   "தரவு அரங்கம்",
+   "தினசரி",
+   "வாராந்திர",
+   "மாதாந்திர",
+   "காலாண்டு",
+   "தீவிரம்\n87",
+   "பணிகள்\n0",
+   "1\nகடுமை",
+   "18\nஅதிகம்",
+   "34\nநடுத்தரம்"
+  ],
+  "errsHome": []
+ },
+ {
+  "lang": "ta",
+  "click": "தினசரி",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "ta",
+  "click": "வாராந்திர",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "ta",
+  "click": "மாதாந்திர",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "ta",
+  "click": "காலாண்டு",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "ta",
+  "click": "தீவிரம்\n87",
+  "fail": "locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('nav button, nav a, [r"
+ },
+ {
+  "lang": "ta",
+  "errsAll": []
+ }
+]

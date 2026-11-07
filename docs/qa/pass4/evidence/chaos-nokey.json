@@ -1,0 +1,195 @@
+{
+ "agent": [
+  {
+   "q": "draft a polite letter to the Commissioner about repeated flooding in Adyar",
+   "status": 200,
+   "ms": 317,
+   "kind": "none",
+   "reply": null,
+   "note": "model",
+   "model": null
+  },
+  {
+   "q": "predict how many complaints Adyar will get next week",
+   "status": 200,
+   "ms": 1153,
+   "kind": "do",
+   "reply": "98 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read them\", or \"open\" and a number.",
+   "note": "quick",
+   "model": null
+  },
+  {
+   "q": "why are complaints rising in Adyar and what should I do",
+   "status": 200,
+   "ms": 216,
+   "kind": "do",
+   "reply": "3 things need you in Adyar. First: அனுமதியின்றி கூடுதல் மாடி கட்டப்படுகிறது. நடவடிக்கை எடுக்கவும் at Vallalar Extn Extension, low, with Roads & Building Permissions. Flooding & waterlogging rose by 16 this week (21 against 5). Suggested: ask Storm Water Drains for pumps and a desilting check on the worst streets. The busiest spot is Guindy Industrial Estate: 5 flooding & waterlogging.",
+   "note": "quick",
+   "model": null
+  },
+  {
+   "q": "summarise the whole city situation in two lines",
+   "status": 200,
+   "ms": 235,
+   "kind": "none",
+   "reply": null,
+   "note": "model",
+   "model": null
+  },
+  {
+   "q": "tell me a joke about potholes",
+   "status": 200,
+   "ms": 28,
+   "kind": "none",
+   "reply": null,
+   "note": "model",
+   "model": null
+  },
+  {
+   "q": "which officer is the laziest",
+   "status": 200,
+   "ms": 100,
+   "kind": "none",
+   "reply": null,
+   "note": "model",
+   "model": null
+  },
+  {
+   "q": "how many complaints will be resolved by Friday",
+   "status": 200,
+   "ms": 126,
+   "kind": "none",
+   "reply": null,
+   "note": "model",
+   "model": null
+  }
+ ],
+ "chat": [
+  {
+   "q": "draft a polite letter to the Commissioner about repeated flooding in Adyar",
+   "status": 200,
+   "ms": 132,
+   "kind": "answer",
+   "headline": "Flooding incidents · last 90 days",
+   "md": "150 flooding incidents in the last 90 days in Adyar zone; the eight newest are listed.",
+   "caveats": []
+  },
+  {
+   "q": "predict how many complaints Adyar will get next week",
+   "status": 200,
+   "ms": 165,
+   "kind": "answer",
+   "headline": "685 citizen complaints · last 90 days",
+   "md": "**685** citizen complaints in the last 90 days in Adyar zone.\n\n- They are about 609 incidents, 70 of them still open",
+   "caveats": []
+  },
+  {
+   "q": "why are complaints rising in Adyar and what should I do",
+   "status": 200,
+   "ms": 148,
+   "kind": "answer",
+   "headline": "Incidents rose to 1,286, led by flooding & waterlogging",
+   "md": "Reported incidents rose to **1,286** from 1,076 against the period before.\n\n- **Mostly from:** Flooding & waterlogging (61 → 124), Drainage & sewage (56 → 74), Street lights & electrical hazards (75 → 90)\n- **Where:** Guindy Industrial Estate (flooding & waterlogging, 9 → 14); Adayar (flooding & wat",
+   "caveats": [
+    "A rain link means the incident was reported during or after a rain event; it does not by itself establish the cause.",
+    "Grievance portal last collected 16 hours ago; this answer may be incomplete."
+   ]
+  },
+  {
+   "q": "summarise the whole city situation in two lines",
+   "status": 200,
+   "ms": 249,
+   "kind": "answer",
+   "headline": "15,020 reported · 2,412 still open · 887 past deadline",
+   "md": "In the last 90 days: **15,020** reported, **2,412** still open, **887** past deadline, **588** severe.",
+   "caveats": [
+    "Grievance portal last collected 16 hours ago; this answer may be incomplete."
+   ]
+  },
+  {
+   "q": "tell me a joke about potholes",
+   "status": 200,
+   "ms": 72,
+   "kind": "refusal",
+   "headline": "I don't write poems, stories or jokes; I answer from the district's data.",
+   "md": "I answer from the Chennai district data on this console: incidents and complaints by zone, ward, taluk and department; lakes, rain, air quality and IMD warnings; hospital beds; market prices; and the day's briefing.",
+   "caveats": []
+  },
+  {
+   "q": "which officer is the laziest",
+   "status": 200,
+   "ms": 93,
+   "kind": "clarify",
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "md": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "caveats": []
+  },
+  {
+   "q": "how many complaints will be resolved by Friday",
+   "status": 200,
+   "ms": 133,
+   "kind": "answer",
+   "headline": "13,478 incidents resolved · last 90 days",
+   "md": "13,478 incidents were closed as resolved in the last 90 days (10,549 in the period before), 517 of them severe; 6948 were closed after the deadline.",
+   "caveats": [
+    "Counted by when each incident was closed as resolved, in the department records."
+   ]
+  }
+ ],
+ "malformed": [
+  {
+   "n": "agent: not json",
+   "status": 400,
+   "ms": 132,
+   "body": "{\"result\":{\"kind\":\"none\"},\"why\":\"bad request\"}"
+  },
+  {
+   "n": "agent: empty body",
+   "status": 400,
+   "ms": 166,
+   "body": "{\"result\":{\"kind\":\"none\"},\"why\":\"bad request\"}"
+  },
+  {
+   "n": "agent: 5 MB text",
+   "status": 400,
+   "ms": 277,
+   "body": "{\"result\":{\"kind\":\"none\"},\"why\":\"bad request\"}"
+  },
+  {
+   "n": "chat: not json",
+   "status": 400,
+   "ms": 7,
+   "body": "{\"error\":\"Type a question first.\"}"
+  },
+  {
+   "n": "chat: 100k message",
+   "status": 400,
+   "ms": 6,
+   "body": "{\"error\":\"That question is too long: keep it under 1,500 characters.\"}"
+  },
+  {
+   "n": "chat: number message",
+   "status": 400,
+   "ms": 6,
+   "body": "{\"error\":\"Type a question first.\"}"
+  },
+  {
+   "n": "map: not json",
+   "status": 400,
+   "ms": 5,
+   "body": "{\"error\":\"That question could not be read. Please try again.\"}"
+  },
+  {
+   "n": "memory: null byte",
+   "status": 200,
+   "ms": 13,
+   "body": "{\"notes\":[{\"id\":\"bc276e6175c5\",\"text\":\"a\\u0000b\",\"at\":\"2026-11-07T04:57:22.447Z\"}],\"habits\":{},\"pending\":{},\"prefs\":{},\""
+  },
+  {
+   "n": "login: array body",
+   "status": 400,
+   "ms": 4,
+   "body": "{\"error\":\"Invalid email or password.\"}"
+  }
+ ]
+}

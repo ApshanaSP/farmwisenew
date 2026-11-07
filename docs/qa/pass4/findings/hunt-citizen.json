@@ -1,0 +1,41 @@
+[
+ {
+  "id": "hunt-citizen-1",
+  "area": "Citizen portal: home page",
+  "severity": "P2",
+  "title": "Citizen home prints the server's date, so the browser shows a hydration error and can show the wrong day",
+  "what_happens": "CitizenHome builds today's date with new Date().toLocaleDateString without a time zone. The server (UTC) and the citizen's browser (IST) disagree between 00:00 and 05:30 IST. In a real browser run, /citizen logged React error 425 several times and the server HTML said 'Friday, 6 November' while the page showed 'Saturday, 7 November'.",
+  "what_should_happen": "Use the Chennai time zone (Asia/Kolkata) for the date on both sides, so there is no console error and no wrong day.",
+  "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/hunt-citizen.test.ts  (hunt-citizen-1, it.fails). Browser: node tests/qa/pass4/with-lock.mjs browser 3 -- node tests/qa/pass4/hunt-citizen.browser.mjs 3175",
+  "evidence": "docs/qa/pass4/evidence/hunt-citizen.browser.json (errs for /citizen); tests/qa/pass4/hunt-citizen.test.ts. Note: in this run the server clock was frozen at 6 Nov, which made the gap show at any hour; the test shows the real UTC versus IST case.",
+  "root_cause_guess": "src/components/citizen/CitizenHome.tsx:18",
+  "class": "time zone / hydration mismatch",
+  "lang": "all"
+ },
+ {
+  "id": "hunt-citizen-2",
+  "area": "Data Studio: uploads",
+  "severity": "P3",
+  "title": "A corrupt or non-Excel file named .xlsx or .csv is called 'empty', not 'unreadable'",
+  "what_happens": "Uploading the text 'this is not a zip' as a.xlsx, or random bytes as b.csv, gives 'has no rows of data' and the advice 'Ask the department for the full file'. A bad PDF and bad JSON do get a correct 'could not be read' message.",
+  "what_should_happen": "Say the file could not be opened as an Excel or CSV file, and ask for a fresh copy.",
+  "repro": "node tests/qa/pass4/hunt-citizen.probe7.mjs 3175 (first three lines)",
+  "evidence": "docs/qa/pass4/evidence/hunt-citizen.corrupt-files.log (real run; no failing it.fails test written, reached out of time)",
+  "root_cause_guess": "src/lib/studio (reader returns 0 rows instead of an error for a bad xlsx or binary csv)",
+  "class": "misleading message",
+  "lang": "en"
+ },
+ {
+  "id": "hunt-citizen-3",
+  "area": "Citizen portal: file a complaint",
+  "severity": "P1",
+  "title": "Filing a complaint on a test server writes a row into the tracked dataset files in the repo",
+  "what_happens": "Each complaint filed through POST /api/complaints on the QA server (dry-run, own data folder) also appended a row to data/datasets/grievances.csv and grievance_status_history.csv, which are tracked in git. 6 complaints gave 6 new rows in each file. I restored both files with git checkout.",
+  "what_should_happen": "A dry-run or test server must write only to its own data folder. Test complaints must never reach the dataset that Data Studio and the analytics read.",
+  "repro": "node tests/qa/pass4/server.mjs start --port 3175 --instance x; sign in as citizenA; POST a valid complaint to /api/complaints; git status shows both CSV files modified",
+  "evidence": "git diff of data/datasets/grievances.csv after node tests/qa/pass4/hunt-citizen.probe6.mjs 3175 (seen in this run, 6 added lines; no it.fails test written)",
+  "root_cause_guess": "src/lib/dataset/append.ts (appendComplaintToDataset, called from src/app/api/complaints/route.ts)",
+  "class": "test data leaking into real data",
+  "lang": "all"
+ }
+]

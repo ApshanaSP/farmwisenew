@@ -1,0 +1,504 @@
+Chennai · Collector
+Overview
+Briefing
+Trends
+Environment
+Data Studio
+Search
+/
+அ
+தமிழ்
+Menu
+6
+CO
+Cyclone Murasu
+Collected 6 Nov, 06:10 PM
+4 feeds behind
+Environment & markets
+District-wide · not filtered
+Rainfall
+All stations
+Chennai-Nungambakkam
+Chennai-Meenambakkam
+Chennai-Madhavaram
+Chennai-Ennore
+5.1mm / 24 h
+LOW
+−2.0 mm
+vs. previous day
+Light rain in the last 24 hours (IMD, 6 Nov). 6 rain days in the last 7 days (2 in the 7 days before).
+0
+25
+49
+28 Oct
+6 Nov
+Air quality
+All stations
+Arumbakkam, Chennai - TNPCB
+Kodungaiyur, Chennai - TNPCB
+Manali, Chennai - CPCB
+Manali Village, Chennai - TNPCB
+Perungudi, Chennai - TNPCB
+Royapuram, Chennai - TNPCB
+Velachery Res. Area, Chennai - CPCB
+100AQI
+MODERATE
+Steady
+vs. previous hour
+Air is moderate (CPCB scale). Worst now: Arumbakkam at 136.
+44
+84
+125
+Satisfactory limit
+11:00 AM
+05:00 PM
+Reservoir storage
+All stations
+Poondi (Sathyamurthy Sagar)
+Cholavaram
+Puzhal (Red Hills)
+Kannankottai Thervoy Kandigai
+Chembarambakkam
+Veeranam
+43.8% full
+BELOW HALF
+−0.4 pts
+vs. previous day
+Below half full. 5,788 mcft of 13,222 mcft; a year ago 11,030 mcft (83%). Down 1.0 points since 28 Oct. CMWSSB, 6 Nov
+42
+52
+62
+28 Oct
+6 Nov
+Vegetable and fruit prices
+Latest prices
+Compare markets
+Around Chennai
+Tamil Nadu
+Full screen
+A–Z
+Rising first (10)
+Falling first (9)
+₹ per kg · 6 Oct · 32 days old · 8 farmer markets · AGMARKNET
+VEGETABLE OR FRUIT	AVERAGE	CHANGE	CHEAPEST AT	DEAREST AT	2 WEEKS
+Amaranthus · 8 markets	₹24	no change	
+₹18
+Anna Nagar	
+₹30
+Kundrathur	
+
+Amla(Nelli Kai) · 5 markets	₹109	▼ 3%	
+₹85
+Anna Nagar	
+₹125
+Guduvancheri	
+
+Apple · 4 markets	₹166	▼ 3%	
+₹140
+Nanganallur	
+₹185
+Anna Nagar	
+
+Ashgourd · 7 markets	₹24	▲ 10%	
+₹17
+Anna Nagar	
+₹38
+Nanganallur	
+
+Banana · 6 markets	₹68	▼ 10%	
+₹50
+Medavakkam	
+₹90
+Anna Nagar	
+
+Banana - Green · 8 markets	₹34	no change	
+₹23
+Anna Nagar	
+₹40
+Ambattur	
+
+Beans · 5 markets	₹95	▲ 6%	
+₹63
+Kundrathur	
+₹110
+K.K. Nagar	
+
+Beetroot · 5 markets	₹47	▼ 1%	
+₹38
+Kundrathur	
+₹58
+Nanganallur	
+
+Bhindi(Ladies Finger) · 7 markets	₹39	▲ 4%	
+₹30
+Kundrathur	
+₹46
+K.K. Nagar	
+
+Bitter gourd · 6 markets	₹57	▲ 5%	
+₹40
+Kundrathur	
+₹66
+K.K. Nagar	
+
+Bottle gourd · 6 markets	₹32	▲ 3%	
+₹19
+Anna Nagar	
+₹48
+Nanganallur	
+
+Brinjal · 8 markets	₹42	▲ 5%	
+₹33
+Anna Nagar	
+₹50
+Medavakkam	
+
+Cabbage · 5 markets	₹30	no change	
+₹24
+Pallavaram	
+₹38
+Nanganallur	
+
+Capsicum · 6 markets	₹59	no change	
+₹45
+Kundrathur	
+₹65
+Guduvancheri	
+
+Carrot · 5 markets	₹53	▼ 11%	
+₹40
+Kundrathur	
+₹65
+Pallavaram	
+
+Cauliflower · 6 markets	₹40	▲ 1%	
+₹28
+Pallavaram	
+₹50
+Medavakkam	
+
+Chikoos(Sapota) · 2 markets	₹54	▼ 2%	
+₹50
+Anna Nagar	
+₹58
+Nanganallur	
+
+Chili Red · 2 markets	₹240	no change	
+₹200
+Anna Nagar	
+₹280
+K.K. Nagar	
+
+Chow Chow · 4 markets	₹41	▲ 14%	
+₹28
+Pallavaram	
+₹58
+Nanganallur	
+
+Cluster beans · 5 markets	₹51	▲ 2%	
+₹40
+Anna Nagar	
+₹58
+Nanganallur	
+
+Coconut · 8 markets	₹63	no change	
+₹50
+Medavakkam	
+₹78
+Nanganallur	
+
+Colacasia · 5 markets	₹51	no change	
+₹30
+Kundrathur	
+₹60
+K.K. Nagar	
+
+Coriander(Leaves) · 6 markets	₹56	▲ 4%	
+₹28
+Nanganallur	
+₹73
+Pallavaram	
+
+Cowpea(Veg) · 4 markets	₹49	▲ 2%	
+₹36
+Anna Nagar	
+₹65
+Pallavaram	
+
+Cucumbar(Kheera) · 6 markets	₹55	▲ 5%	
+₹30
+Kundrathur	
+₹68
+Nanganallur	
+
+Drumstick · 6 markets	₹56	▲ 1%	
+₹40
+Kundrathur	
+₹65
+Guduvancheri	
+
+Elephant Yam(Suran)/Amorphophallus · 4 markets	₹53	▲ 9%	
+₹39
+Anna Nagar	
+₹78
+Nanganallur	
+
+Garlic · 5 markets	₹208	▼ 2%	
+₹150
+Anna Nagar	
+₹260
+K.K. Nagar	
+
+Ginger(Green) · 6 markets	₹155	no change	
+₹95
+Nanganallur	
+₹180
+K.K. Nagar	
+
+Grapes · 4 markets	₹106	▲ 2%	
+₹95
+Anna Nagar	
+₹115
+Guduvancheri	
+
+Green Avare(W) · 6 markets	₹86	▲ 5%	
+₹40
+Kundrathur	
+₹126
+Anna Nagar	
+
+Green Chilli · 8 markets	₹61	▲ 6%	
+₹50
+Ambattur	
+₹78
+Nanganallur	
+
+Green Peas · 3 markets	₹195	no change	
+₹145
+Pallavaram	
+₹220
+K.K. Nagar	
+
+Groundnut · 4 markets	₹86	no change	
+₹75
+Anna Nagar	
+₹95
+Guduvancheri	
+
+Guava · 4 markets	₹90	▲ 19%	
+₹55
+Guduvancheri	
+₹120
+K.K. Nagar	
+
+Indian Beans(Seam) · 3 markets	₹84	no change	
+₹76
+Anna Nagar	
+₹95
+Pallavaram	
+
+Jasmine · 2 markets	₹323	▼ 7%	
+₹300
+Anna Nagar	
+₹345
+Nanganallur	
+
+Karbuja(Musk Melon) · 2 markets	₹49	no change	
+₹48
+Nanganallur	
+₹50
+Anna Nagar	
+
+Knool Khol · 5 markets	₹46	no change	
+₹36
+Anna Nagar	
+₹55
+Guduvancheri	
+
+Lemon · 6 markets	₹171	▼ 6%	
+₹115
+Nanganallur	
+₹225
+Anna Nagar	
+
+Lime · 2 markets	₹49	no change	
+₹47
+Anna Nagar	
+₹50
+K.K. Nagar	
+
+Mango(Raw-Ripe) · 4 markets	₹121	▼ 6%	
+₹98
+Nanganallur	
+₹150
+K.K. Nagar	
+
+Marigold(Calcutta) · 4 markets	₹134	▼ 29%	
+₹70
+Anna Nagar	
+₹245
+Nanganallur	
+
+Mint(Pudina) · 6 markets	₹47	▲ 5%	
+₹30
+Medavakkam	
+₹58
+Nanganallur	
+
+Mousambi(Sweet Lime) · 4 markets	₹52	▲ 8%	
+₹33
+Nanganallur	
+₹75
+Guduvancheri	
+
+Mushroom · 3 markets	₹235	no change	
+₹220
+Anna Nagar	
+₹245
+Pallavaram	
+
+Onion · 8 markets	₹58	▼ 1%	
+₹48
+Nanganallur	
+₹70
+K.K. Nagar	
+
+Onion Green · 6 markets	₹92	▼ 1%	
+₹75
+Kundrathur	
+₹105
+Guduvancheri	
+
+Orange · 4 markets	₹78	▼ 17%	
+₹58
+Nanganallur	
+₹110
+Guduvancheri	
+
+Papaya · 5 markets	₹48	▼ 4%	
+₹40
+Medavakkam	
+₹58
+Nanganallur	
+
+Pineapple · 3 markets	₹78	▼ 4%	
+₹75
+Anna Nagar	
+₹80
+K.K. Nagar	
+
+Pomegranate · 4 markets	₹170	▼ 4%	
+₹150
+Anna Nagar	
+₹220
+K.K. Nagar	
+
+Potato · 8 markets	₹36	▼ 10%	
+₹28
+Pallavaram	
+₹62
+Anna Nagar	
+
+Pumpkin · 6 markets	₹25	▲ 1%	
+₹18
+K.K. Nagar	
+₹38
+Nanganallur	
+
+Raddish · 6 markets	₹43	▲ 3%	
+₹35
+Kundrathur	
+₹58
+Nanganallur	
+
+Ridgeguard(Tori) · 5 markets	₹60	▲ 13%	
+₹43
+Anna Nagar	
+₹78
+Nanganallur	
+
+Rose(Local) · 4 markets	₹135	▼ 9%	
+₹60
+Anna Nagar	
+₹235
+Nanganallur	
+
+Snakeguard · 6 markets	₹43	▲ 5%	
+₹30
+Kundrathur	
+₹50
+K.K. Nagar	
+
+Sweet Corn · 5 markets	₹40	▼ 1%	
+₹30
+Anna Nagar	
+₹48
+Nanganallur	
+
+Sweet Potato · 5 markets	₹65	▼ 2%	
+₹58
+Anna Nagar	
+₹70
+K.K. Nagar	
+
+Tamarind Fruit · 2 markets	₹160	no change	
+₹140
+Anna Nagar	
+₹180
+K.K. Nagar	
+
+Tapioca · 4 markets	₹45	no change	
+₹38
+Anna Nagar	
+₹48
+K.K. Nagar	
+
+Tender Coconut · 6 markets	₹41	no change	
+₹28
+Pallavaram	
+₹55
+Nanganallur	
+
+Thondekai · 5 markets	₹50	▲ 4%	
+₹40
+K.K. Nagar	
+₹58
+Nanganallur	
+
+Tomato · 8 markets	₹42	▲ 3%	
+₹30
+Kundrathur	
+₹48
+Nanganallur	
+
+Tube Rose(Loose) · 2 markets	₹85	▼ 3%	
+₹60
+Anna Nagar	
+₹110
+Guduvancheri	
+
+Water Melon · 2 markets	₹23	▲ 12%	
+₹19
+Anna Nagar	
+₹28
+Nanganallur	
+
+Yam(Ratalu) · 4 markets	₹61	▲ 2%	
+₹40
+Kundrathur	
+₹70
+Pallavaram	
+
+Red ▲ = price went up since the market's last report (hurts households), green ▼ = went down. “Compare markets” shows every market side by side. Koyambedu does not report to AGMARKNET.
+
+Your data
+Charts you add from the Data Studio
+3 hospitals over 90% full
+Hospital beds and OPD, daily (sample) · Government Hospitals
+Nothing added yet
+Open a dataset in the Data Studio and press Add to dashboard on any chart: it appears here, kept up to date.
+Open the Data Studio
+Jarvis
+Ask District IQ
+Ctrl K
+5

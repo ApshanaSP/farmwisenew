@@ -1,0 +1,4807 @@
+{
+ "label": "skeptic-groq",
+ "set": "open",
+ "set_hash": "49392798ea8701ffc0f980ae74392eeab7be182688fe92947c62e13c5e663305",
+ "mode": "live",
+ "frozen_clock": "2026-11-06T06:30:00.000Z",
+ "as_of": "2026-11-07 10:35:47",
+ "build_id": "2026-11-06 18:21:19|76734f481810",
+ "sample": 12,
+ "seed": "20261106",
+ "ms": 36911,
+ "summary": {
+  "n": 12,
+  "right": 1,
+  "safe": 1,
+  "wrong": 10,
+  "confident_wrong": 9,
+  "wrong_language_only": 0,
+  "code_lane": 2,
+  "code_lane_right": 0,
+  "model_needed": 0
+ },
+ "rows": [
+  {
+   "id": "en-brief-02",
+   "lang": "en",
+   "family": "brief",
+   "text": "Give me a rundown on TANGEDCO for this week",
+   "earlier": null,
+   "expect": {
+    "action": "brief",
+    "body": "TANGEDCO",
+    "zone": null,
+    "place_outside": null,
+    "body_outside": null,
+    "topic": null,
+    "status": null,
+    "severity": null,
+    "period": "this week"
+   },
+   "must": [
+    "Reports on TANGEDCO for the current week",
+    "Figures match TANGEDCO's records for this week in the live data"
+   ],
+   "must_not": [
+    "Report the Corporation's Street Lighting & Electrical department instead",
+    "Use a wider period without saying so"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "qwen/qwen3.8-27b",
+   "model_needed": false,
+   "tokens": 1269,
+   "calls": 1,
+   "hops": [
+    "groq/qwen/qwen3.8-27b"
+   ],
+   "latency_ms": 3215,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 3171,
+     "trace": [
+      "Thinking",
+      "Building the screen",
+      "Ranked 8"
+     ]
+    }
+   ],
+   "said": "Slowest: Greater Chennai Police, open incidents 37 days old on average. Then PWD Buildings at 35 and PWD Water Resources at 29.",
+   "said_lang": "en",
+   "voice": "Slowest: Greater Chennai Police, open incidents 37 days old on average. Then PWD Buildings at 35 and PWD Water Resources at 29.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "Slowest: Greater Chennai Police, open incidents 37 days old on average. Then PWD Buildings at 35 and PWD Water Resources at 29.",
+    "ta": "மிக மெதுவானது: Greater Chennai Police, திறந்த சம்பவங்கள் சராசரியாக 37 நாட்கள். அடுத்து PWD Buildings 35, PWD Water Resources 29."
+   },
+   "stage": {
+    "recipe": "performance",
+    "title": "Department performance · this week",
+    "takeaway": {
+     "en": "Greater Chennai Police's open incidents are 4.6× older than the median department's.",
+     "ta": "Greater Chennai Police-இன் திறந்த சம்பவங்கள் இடைநிலைத் துறையை விட 4.6 மடங்கு பழையவை."
+    },
+    "say": {
+     "en": "Slowest: Greater Chennai Police, open incidents 37 days old on average. Then PWD Buildings at 35 and PWD Water Resources at 29.",
+     "ta": "மிக மெதுவானது: Greater Chennai Police, திறந்த சம்பவங்கள் சராசரியாக 37 நாட்கள். அடுத்து PWD Buildings 35, PWD Water Resources 29."
+    },
+    "scope": {
+     "period": "weekly",
+     "zone": null,
+     "dept": "GCC-ELE",
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": "GCC-ELE",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": "dept",
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "dept_backlog",
+     "resolution_times",
+     "departments",
+     "dept_followups",
+     "incident_series"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Open Greater Chennai Police's backlog",
+       "ta": "Greater Chennai Police நிலுவை"
+      },
+      "kind": "direct",
+      "recipe": "cases",
+      "slots": {
+       "dept": "POL-GCP",
+       "status": "open",
+       "sort": "priority",
+       "n": 15
+      },
+      "ids": [],
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Zone-wise",
+       "ta": "மண்டல வாரியாக"
+      },
+      "kind": "direct",
+      "recipe": "performance",
+      "slots": {
+       "period": "weekly",
+       "zones": [],
+       "dept": "GCC-ELE",
+       "depts": [],
+       "cat": null,
+       "taluk": null,
+       "sev": null,
+       "status": null,
+       "q": null,
+       "metric": null,
+       "measure": null,
+       "by": "zone",
+       "order": "top",
+       "n": null,
+       "id": null,
+       "name": null,
+       "what": null,
+       "sort": null
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "open",
+        "label": "Open, this week",
+        "value": 1167,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       },
+       {
+        "key": "overdue",
+        "label": "Past deadline",
+        "value": 38,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "close",
+        "label": "Median days to close",
+        "value": 7.3,
+        "unit": "days",
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       },
+       {
+        "key": "ontime",
+        "label": "Median closed on time",
+        "value": 1,
+        "unit": "%",
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "Ranking",
+      "id": "rank",
+      "title": "Slowest departments first",
+      "unit": "days",
+      "method": "Average age of open incidents, departments with 5 or more open (the console's backlog card).",
+      "order": "top",
+      "items": [
+       {
+        "key": "POL-GCP",
+        "label": "Greater Chennai Police",
+        "value": 37,
+        "rank": 1,
+        "sub": "405 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "PWD-BLD",
+        "label": "PWD Buildings",
+        "value": 35,
+        "rank": 2,
+        "sub": "14 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "PWD-WRD",
+        "label": "PWD Water Resources",
+        "value": 29,
+        "rank": 3,
+        "sub": "105 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "GCC-ENG",
+        "label": "Roads & Building Permissions",
+        "value": 13,
+        "rank": 4,
+        "sub": "100 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "GCC-SWD",
+        "label": "Storm Water Drain",
+        "value": 8,
+        "rank": 5,
+        "sub": "174 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "GCC-PRK",
+        "label": "Parks & Play Fields",
+        "value": 8,
+        "rank": 6,
+        "sub": "27 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "GCC-LND",
+        "label": "Land & Estate",
+        "value": 8,
+        "rank": 7,
+        "sub": "4 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       },
+       {
+        "key": "GCC-BRG",
+        "label": "Bridges",
+        "value": 8,
+        "rank": 8,
+        "sub": "2 open · 0 past deadline",
+        "zone": null,
+        "lat": null,
+        "lon": null,
+        "action": "dept"
+       }
+      ]
+     },
+     {
+      "kind": "Trend",
+      "id": "trend",
+      "title": "Still open today, by when they were reported",
+      "unit": "incidents",
+      "labels": [
+       "30 Oct",
+       "31 Oct",
+       "1 Nov",
+       "2 Nov",
+       "3 Nov",
+       "4 Nov",
+       "5 Nov"
+      ],
+      "values": [
+       4,
+       9,
+       5,
+       10,
+       15,
+       18,
+       23
+      ],
+      "marks": [],
+      "normal": null
+     },
+     {
+      "kind": "Heat",
+      "id": "heat",
+      "title": "Department × measure (darker = worse within the column)",
+      "rows": [
+       "Greater Chennai Police",
+       "PWD Buildings",
+       "PWD Water Resources",
+       "Roads & Building Permissions",
+       "Storm Water Drain",
+       "Parks & Play Fields",
+       "Land & Estate",
+       "Bridges"
+      ],
+      "cols": [
+       "Open",
+       "Past deadline",
+       "Severe or high",
+       "Awaiting you",
+       "Avg age (days)",
+       "Days to close"
+      ],
+      "cells": [
+       [
+        405,
+        0,
+        0,
+        0,
+        37,
+        0
+       ],
+       [
+        14,
+        0,
+        0,
+        0,
+        35,
+        0
+       ],
+       [
+        105,
+        0,
+        0,
+        0,
+        29,
+        0
+       ],
+       [
+        100,
+        0,
+        0,
+        0,
+        13,
+        0
+       ],
+       [
+        174,
+        0,
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        27,
+        0,
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        4,
+        0,
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        2,
+        0,
+        0,
+        0,
+        8,
+        0
+       ]
+      ]
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "performance"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "Open, this week",
+     "value": 1167
+    },
+    {
+     "where": "tile",
+     "label": "Past deadline",
+     "value": 38
+    },
+    {
+     "where": "tile",
+     "label": "Median days to close",
+     "value": 7.3
+    },
+    {
+     "where": "tile",
+     "label": "Median closed on time",
+     "value": 1
+    },
+    {
+     "where": "ranking",
+     "label": "Greater Chennai Police",
+     "value": 37
+    },
+    {
+     "where": "ranking",
+     "label": "PWD Buildings",
+     "value": 35
+    },
+    {
+     "where": "ranking",
+     "label": "PWD Water Resources",
+     "value": 29
+    },
+    {
+     "where": "ranking",
+     "label": "Roads & Building Permissions",
+     "value": 13
+    },
+    {
+     "where": "ranking",
+     "label": "Storm Water Drain",
+     "value": 8
+    },
+    {
+     "where": "ranking",
+     "label": "Parks & Play Fields",
+     "value": 8
+    },
+    {
+     "where": "ranking",
+     "label": "Land & Estate",
+     "value": 8
+    },
+    {
+     "where": "ranking",
+     "label": "Bridges",
+     "value": 8
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "compare",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "English rows get English",
+      "tamil_letters": 0,
+      "said": "Slowest: Greater Chennai Police, open incidents 37 days old on average. Then PWD Buildings at 35 and PWD Water Resources at 29."
+     }
+    },
+    "7_action": {
+     "pass": false,
+     "evidence": {
+      "asked": "brief",
+      "did": "compare",
+      "recipe": "performance",
+      "table": [
+       "brief",
+       "report"
+      ]
+     }
+    },
+    "3_period_words": {
+     "pass": true,
+     "evidence": {
+      "asked": "this week",
+      "says": "weekly"
+     }
+    },
+    "6_scope": {
+     "pass": false,
+     "evidence": {
+      "mismatch": [
+       {
+        "field": "body",
+        "want": "TANGEDCO",
+        "got": "GCC-ELE"
+       }
+      ],
+      "screen_scope": {
+       "period": "weekly",
+       "zone": null,
+       "dept": "GCC-ELE",
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "3_figures": {
+     "pass": false,
+     "evidence": {
+      "window": "168 hours back from now",
+      "window_key": "168h",
+      "seen": [
+       {
+        "said": "37",
+        "as": "duration",
+        "want": []
+       }
+      ],
+      "bad": [
+       {
+        "said": "35",
+        "as": "nothing in the data for this scope explains it",
+        "around": "en PWD Buildings at [35] and PWD Water Resou"
+       },
+       {
+        "said": "29",
+        "as": "nothing in the data for this scope explains it",
+        "around": " Water Resources at [29]."
+       }
+      ]
+     }
+    },
+    "3_screen_figures": {
+     "pass": false,
+     "evidence": {
+      "window": "168 hours back from now",
+      "ok": 0,
+      "bad": [
+       {
+        "tile": "open",
+        "shown": 1167,
+        "want": [
+         "open=0",
+         "ongoing=0"
+        ]
+       },
+       {
+        "tile": "overdue",
+        "shown": 38,
+        "want": [
+         "overdue=0",
+         "overdue_flag=0"
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "reasons": [
+    "7_action failed",
+    "6_scope failed",
+    "3_figures failed",
+    "3_screen_figures failed"
+   ],
+   "unchecked_must": [
+    "Reports on TANGEDCO for the current week",
+    "must not: Report the Corporation's Street Lighting & Electrical department instead",
+    "must not: Use a wider period without saying so"
+   ]
+  },
+  {
+   "id": "en-explain-18",
+   "lang": "en",
+   "family": "explain",
+   "text": "What's the fuss about that protest in Teynampet?",
+   "earlier": null,
+   "expect": {
+    "action": "explain",
+    "body": null,
+    "zone": "Teynampet",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": "PUBLIC_ORDER",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Explains the protest or public nuisance case in Teynampet from the data",
+    "Says so if no protest is on record"
+   ],
+   "must_not": [
+    "Invent the protesters' demands",
+    "Name individual protesters"
+   ],
+   "must_not_contain": [
+    "PUBLIC_ORDER"
+   ],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "qwen/qwen3.8-27b",
+   "model_needed": false,
+   "tokens": 1296,
+   "calls": 1,
+   "hops": [
+    "groq/qwen/qwen3.8-27b"
+   ],
+   "latency_ms": 674,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 658,
+     "trace": [
+      "Thinking",
+      "Building the screen"
+     ]
+    }
+   ],
+   "said": "There are no cases today for this view.",
+   "said_lang": "en",
+   "voice": "There are no cases today for this view.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "There are no cases today for this view.",
+    "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை."
+   },
+   "stage": {
+    "recipe": "cases",
+    "title": "Cases: protest in Teynampet · Teynampet · Protests & public nuisance · today",
+    "takeaway": null,
+    "say": {
+     "en": "There are no cases today for this view.",
+     "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": 9,
+     "dept": null,
+     "cat": "PUBLIC_ORDER",
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [
+      9
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "PUBLIC_ORDER",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": "protest in Teynampet",
+     "metric": null,
+     "measure": null,
+     "by": "zone",
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [],
+    "blocks": [
+     {
+      "kind": "Note",
+      "id": "none",
+      "text": "No incidents match this view."
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "cases"
+   },
+   "figures": [],
+   "earlier_outcomes": [],
+   "grade": "safe",
+   "confident_wrong": false,
+   "did": "none_screen",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": [
+       "PUBLIC_ORDER"
+      ]
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "English rows get English",
+      "tamil_letters": 0,
+      "said": "There are no cases today for this view."
+     }
+    },
+    "6_scope": {
+     "pass": true,
+     "evidence": {
+      "screen_scope": {
+       "period": "daily",
+       "zone": 9,
+       "dept": null,
+       "cat": "PUBLIC_ORDER",
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "1_honest_none": {
+     "pass": true,
+     "evidence": {
+      "said": "There are no cases today for this view.",
+      "asked": {
+       "zone": 9,
+       "dept": null,
+       "cat": "PUBLIC_ORDER",
+       "sev": null,
+       "status": null
+      },
+      "period": null,
+      "oracle": [
+       {
+        "window": "the whole record",
+        "n": 77
+       }
+      ],
+      "window_said": "daily",
+      "in_that_window": 0,
+      "verdict": "true for the window it says; the row asked no window"
+     }
+    }
+   },
+   "reasons": [
+    "said it has none of what it looked for"
+   ],
+   "unchecked_must": [
+    "Explains the protest or public nuisance case in Teynampet from the data",
+    "must not: Invent the protesters' demands",
+    "must not: Name individual protesters"
+   ]
+  },
+  {
+   "id": "en-list-18",
+   "lang": "en",
+   "family": "list",
+   "text": "Tax and licence side, unresolved ones",
+   "earlier": null,
+   "expect": {
+    "action": "list",
+    "body": "GCC-REV",
+    "zone": null,
+    "place_outside": null,
+    "body_outside": null,
+    "topic": null,
+    "status": "open",
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Every case listed is open and with the Corporation's Revenue (Tax & Licence)"
+   ],
+   "must_not": [
+    "List District Revenue cases",
+    "Give a taxpayer's personal details"
+   ],
+   "must_not_contain": [],
+   "lane": "quick",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": "quick",
+   "model": null,
+   "model_needed": false,
+   "tokens": 0,
+   "calls": 0,
+   "hops": [],
+   "latency_ms": 307,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "quick",
+     "note": "quick",
+     "kind": "do",
+     "ms": 288,
+     "trace": [
+      "Reading the data"
+     ]
+    }
+   ],
+   "said": "Nothing here to complete.",
+   "said_lang": "en",
+   "voice": "Nothing here to complete.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "Nothing here to complete.",
+    "ta": "நிரப்ப வேண்டியது எதுவும் இல்லை."
+   },
+   "stage": {
+    "recipe": "complete",
+    "title": "Unresolved incidents: completed (first 12 of 1085)",
+    "takeaway": null,
+    "say": {
+     "en": "Nothing here to complete.",
+     "ta": "நிரப்ப வேண்டியது எதுவும் இல்லை."
+    },
+    "scope": {
+     "period": "weekly",
+     "zone": null,
+     "dept": null,
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null,
+     "fresh": true
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [],
+    "blocks": [
+     {
+      "kind": "Note",
+      "id": "empty",
+      "text": "Nothing in the data matches this, for this scope."
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "complete"
+   },
+   "figures": [],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "none_screen",
+   "code_lane": true,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "English rows get English",
+      "tamil_letters": 0,
+      "said": "Nothing here to complete."
+     }
+    },
+    "6_scope": {
+     "pass": false,
+     "evidence": {
+      "mismatch": [
+       {
+        "field": "body",
+        "want": "GCC-REV",
+        "got": null
+       }
+      ],
+      "screen_scope": {
+       "period": "weekly",
+       "zone": null,
+       "dept": null,
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "1_honest_none": {
+     "pass": false,
+     "evidence": {
+      "said": "Nothing here to complete.",
+      "asked": {
+       "zone": null,
+       "dept": "GCC-REV",
+       "cat": null,
+       "sev": null,
+       "status": "open"
+      },
+      "period": null,
+      "oracle": [
+       {
+        "window": "the whole record",
+        "n": 33
+       }
+      ],
+      "verdict": "a false none: the data has cases for this"
+     }
+    }
+   },
+   "reasons": [
+    "a false none",
+    "6_scope failed",
+    "1_honest_none failed"
+   ],
+   "unchecked_must": [
+    "must not: List District Revenue cases",
+    "must not: Give a taxpayer's personal details"
+   ]
+  },
+  {
+   "id": "en-other_body-26",
+   "lang": "en",
+   "family": "other_body",
+   "text": "Chengalpattu district revenue office, pending work?",
+   "earlier": null,
+   "expect": {
+    "action": "no_data",
+    "body": null,
+    "zone": null,
+    "place_outside": "Chengalpattu",
+    "body_outside": "Chengalpattu district revenue office",
+    "topic": null,
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Says it has no data on Chengalpattu or that it is outside the district"
+   ],
+   "must_not": [
+    "Brief our District Revenue as if it were Chengalpattu's"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "qwen/qwen3.8-27b#2",
+   "model_needed": false,
+   "tokens": 1274,
+   "calls": 1,
+   "hops": [
+    "groq/qwen/qwen3.8-27b"
+   ],
+   "latency_ms": 1049,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 994,
+     "trace": [
+      "Thinking",
+      "Building the screen",
+      "Filled 0 cells"
+     ]
+    }
+   ],
+   "said": "Nothing is missing in these rows.",
+   "said_lang": "en",
+   "voice": "Nothing is missing in these rows.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "Nothing is missing in these rows.",
+    "ta": "இந்த வரிசைகளில் எதுவும் விடுபடவில்லை."
+   },
+   "stage": {
+    "recipe": "complete",
+    "title": "Unresolved incidents: completed",
+    "takeaway": {
+     "en": "0 filled, 0 left.",
+     "ta": "0 நிரப்பியது, 0 மீதம்."
+    },
+    "say": {
+     "en": "Nothing is missing in these rows.",
+     "ta": "இந்த வரிசைகளில் எதுவும் விடுபடவில்லை."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": null,
+     "dept": "GCC-REV",
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": "GCC-REV",
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": "Chengalpattu district revenue office pending work",
+     "metric": null,
+     "measure": null,
+     "by": "dept",
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [
+     "A filled cell shows where the value came from. Blank cells are left blank on purpose.",
+     "Open, hours is worked out from the report time and is not counted as filled."
+    ],
+    "next": [],
+    "blocks": [
+     {
+      "kind": "Filled",
+      "id": "filled",
+      "title": "Unresolved incidents: completed",
+      "cols": [
+       {
+        "key": "ward",
+        "label": "Ward"
+       },
+       {
+        "key": "zone",
+        "label": "Zone"
+       },
+       {
+        "key": "place",
+        "label": "Place"
+       },
+       {
+        "key": "dept",
+        "label": "Department"
+       },
+       {
+        "key": "age",
+        "label": "Open, hours"
+       }
+      ],
+      "rows": [
+       {
+        "id": "INC-20261106-AAA052",
+        "title": "General Revision Objection: my request is pending for the last 7 days without any reply",
+        "cells": [
+         {
+          "v": 107,
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Anna Nagar",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Rajambal Street-South, Jaganathapuram, Chetpet",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Revenue (Tax & Licence)",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": 6,
+          "src": "worked out from the row",
+          "filled": false
+         }
+        ]
+       },
+       {
+        "id": "INC-20261106-B232D3",
+        "title": "Complaints related to Trade Licence: my request is pending for the last 2 days without any reply",
+        "cells": [
+         {
+          "v": 36,
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Tondiarpet",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Harbour Colony 2Nd Cross St, Harbour Colony, Kodungaiyur",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Revenue (Tax & Licence)",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": 9,
+          "src": "worked out from the row",
+          "filled": false
+         }
+        ]
+       },
+       {
+        "id": "INC-20261105-ED44D3",
+        "title": "Complaints related to Trade Licence தொடர்பான பிரச்சினை",
+        "cells": [
+         {
+          "v": 110,
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Teynampet",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Kakkan Colony I Street, Kakkan Colony, Nungambakkam",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": "Revenue (Tax & Licence)",
+          "src": null,
+          "filled": false
+         },
+         {
+          "v": 22,
+          "src": "worked out from the row",
+          "filled": false
+         }
+        ]
+       }
+      ],
+      "filled": 0,
+      "left": 0,
+      "cannot": []
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "complete"
+   },
+   "figures": [],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "complete",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "English rows get English",
+      "tamil_letters": 0,
+      "said": "Nothing is missing in these rows."
+     }
+    },
+    "6_outside": {
+     "pass": false,
+     "evidence": {
+      "did": "complete",
+      "screen": "complete",
+      "scope": {
+       "period": "daily",
+       "zone": null,
+       "dept": "GCC-REV",
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      },
+      "steps": [],
+      "outside": {
+       "place": "Chengalpattu",
+       "body": "Chengalpattu district revenue office"
+      },
+      "rule": "never a filter, brief or figure on a body of ours"
+     }
+    }
+   },
+   "reasons": [
+    "put a filter, brief or figure on a body of ours",
+    "6_outside failed"
+   ],
+   "unchecked_must": [
+    "Says it has no data on Chengalpattu or that it is outside the district",
+    "must not: Brief our District Revenue as if it were Chengalpattu's"
+   ]
+  },
+  {
+   "id": "ta-brief-03",
+   "lang": "ta",
+   "family": "brief",
+   "text": "ராயபுரத்துல மொத்தமா என்ன நடக்குது?",
+   "earlier": null,
+   "expect": {
+    "action": "brief",
+    "body": null,
+    "zone": "Royapuram",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": null,
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Give an overall report on Royapuram zone across its categories",
+    "Where the data holds cases, name the main incidents, why each matters and a proposed follow-up, with source evidence in the reply or on screen"
+   ],
+   "must_not": [
+    "Narrow the answer to one case and call that the zone report",
+    "Report on another zone"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "openai/gpt-oss-20b",
+   "model_needed": false,
+   "tokens": 1953,
+   "calls": 1,
+   "hops": [
+    "hedge:groq/openai/gpt-oss-20b",
+    "groq/qwen/qwen3.8-27b"
+   ],
+   "latency_ms": 4687,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 4667,
+     "trace": [
+      "யோசிக்கிறேன்",
+      "திரையை உருவாக்குகிறேன்",
+      "22 சம்பவங்களைப் படித்தேன்"
+     ]
+    }
+   ],
+   "said": "இன்று 22 சம்பவங்கள். மிக அவசரமானது: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram. Street Lighting & Electrical வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+   "said_lang": "ta",
+   "voice": "இன்று 22 சம்பவங்கள். மிக அவசரமானது: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "22 cases today; here are the 12 that matter most. The most urgent: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram. Street Lighting & Electrical holds 4 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 22 சம்பவங்கள். மிக அவசரமானது: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram. Street Lighting & Electrical வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+   },
+   "stage": {
+    "recipe": "cases",
+    "title": "சம்பவங்கள் · ராயபுரம் · இன்று",
+    "takeaway": null,
+    "say": {
+     "en": "22 cases today; here are the 12 that matter most. The most urgent: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram. Street Lighting & Electrical holds 4 of them. Say \"read them\", or \"open\" and a number.",
+     "ta": "இன்று 22 சம்பவங்கள். மிக அவசரமானது: a safety problem at a drain worksite at Wood Warf Lane, Elephant Gate, Elephant Gate in Royapuram. Street Lighting & Electrical வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": 5,
+     "dept": null,
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [
+      5
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Show them on a map",
+       "ta": "வரைபடத்தில் காட்டு"
+      },
+      "kind": "direct",
+      "recipe": "map",
+      "slots": {
+       "period": "daily",
+       "zones": [
+        5
+       ],
+       "dept": null,
+       "depts": [],
+       "cat": null,
+       "taluk": null,
+       "sev": null,
+       "status": null,
+       "q": null,
+       "metric": null,
+       "measure": null,
+       "by": null,
+       "order": "top",
+       "n": null,
+       "id": null,
+       "name": null,
+       "what": "severe",
+       "sort": null
+      },
+      "ids": [],
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Which department is slowest?",
+       "ta": "எந்தத் துறை மெதுவாக உள்ளது?"
+      },
+      "kind": "direct",
+      "recipe": "performance",
+      "slots": {
+       "by": "dept",
+       "period": "daily"
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "total",
+        "label": "எல்லா சம்பவங்கள், இன்று",
+        "value": 22,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       },
+       {
+        "key": "late",
+        "label": "காலக்கெடு தாண்டியவை",
+        "value": 0,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "good",
+        "spark": []
+       },
+       {
+        "key": "dept",
+        "label": "Street Lighting & Electrical வசம்",
+        "value": 4,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "CaseList",
+      "id": "cases",
+      "title": "சம்பவங்கள் · ராயபுரம் · இன்று",
+      "source": "list",
+      "sev": null,
+      "total": 22,
+      "rows": [
+       {
+        "id": "INC-20261106-5F9057",
+        "title": "The storm water drain work in our area has no barricading; a two-wheeler fell into the pit",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Wood Warf Lane, Elephant Gate, Elephant Gate",
+        "ward": 57,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 15:18:00",
+        "overdue": false,
+        "lat": 13.0941254,
+        "lon": 80.2852837,
+        "why": null,
+        "cat": "Drain works site safety"
+       },
+       {
+        "id": "INC-20261106-BE1DEC",
+        "title": "Complaint regarding new drain construction in our street",
+        "sev": "Low",
+        "status": "Assigned",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Sait Colony I Street, Egmore, Egmore",
+        "ward": 61,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 10:04:00",
+        "overdue": false,
+        "lat": 13.0716767,
+        "lon": 80.2609762,
+        "why": null,
+        "cat": "Drainage & sewage"
+       },
+       {
+        "id": "INC-20261106-2E1851",
+        "title": "Cleaning of Water Table: the problem in our area has continued for the last 8 days",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Goyya Thoppu (T N S C B Quarters H Block), Pudupet, Pudupet",
+        "ward": 63,
+        "dept": "GCC-SWM",
+        "deptName": "Solid Waste Management",
+        "complaints": 1,
+        "t": "2026-11-06 08:25:00",
+        "overdue": false,
+        "lat": 13.0706452,
+        "lon": 80.2655741,
+        "why": null,
+        "cat": "Garbage & solid waste"
+       },
+       {
+        "id": "INC-20261106-427D30",
+        "title": "New Street lights near Police booth. Please send the electrical team",
+        "sev": "Low",
+        "status": "Assigned",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Meenambal Nagar 3Rd Street, Meenambal Nagar, Korukkupet",
+        "ward": 51,
+        "dept": "GCC-ELE",
+        "deptName": "Street Lighting & Electrical",
+        "complaints": 1,
+        "t": "2026-11-06 01:42:00",
+        "overdue": false,
+        "lat": 13.113054380359278,
+        "lon": 80.2854894019803,
+        "why": null,
+        "cat": "Street lights & electrical hazards"
+       },
+       {
+        "id": "INC-20261105-4745E0",
+        "title": "எங்கள் பகுதியில் Absenteeism of Sweepers பிரச்சினை உள்ளது",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Reserve Bank Service Road, Parrys, Parrys",
+        "ward": 60,
+        "dept": "GCC-SWM",
+        "deptName": "Solid Waste Management",
+        "complaints": 1,
+        "t": "2026-11-05 22:39:00",
+        "overdue": false,
+        "lat": 13.0904658,
+        "lon": 80.2880523,
+        "why": null,
+        "cat": "Garbage & solid waste"
+       },
+       {
+        "id": "INC-20261106-A67D6A",
+        "title": "Three street lights in a row are not burning on masjid extn Salai",
+        "sev": "Medium",
+        "status": "Open",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Masjid Extn Salai",
+        "ward": 51,
+        "dept": "GCC-ELE",
+        "deptName": "Street Lighting & Electrical",
+        "complaints": 1,
+        "t": "2026-11-06 17:45:00",
+        "overdue": false,
+        "lat": 13.1104012,
+        "lon": 80.2831674,
+        "why": null,
+        "cat": "Street lights & electrical hazards"
+       },
+       {
+        "id": "INC-20261106-F27E38",
+        "title": "Street light problem: Burning of street light in daytime",
+        "sev": "Medium",
+        "status": "Under review",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Kashima Nagar 2Nd Street, Kashima Nagar, Royapuram",
+        "ward": 52,
+        "dept": "GCC-ELE",
+        "deptName": "Street Lighting & Electrical",
+        "complaints": 1,
+        "t": "2026-11-06 13:42:00",
+        "overdue": false,
+        "lat": 13.1069945,
+        "lon": 80.2872293,
+        "why": null,
+        "cat": "Street lights & electrical hazards"
+       },
+       {
+        "id": "INC-20261106-16E828",
+        "title": "Chennai | Fire Accident | Terrifying fire accident in Chennai apartment building",
+        "sev": "Medium",
+        "status": "Open",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Egmore",
+        "ward": 61,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-06 09:07:25",
+        "overdue": false,
+        "lat": 13.0732,
+        "lon": 80.2609,
+        "why": null,
+        "cat": "Road accident"
+       },
+       {
+        "id": "INC-20261106-EC69F1",
+        "title": "Kosapet people sarbaaga indha complaint. Daily evening kuppai erikiranga, pugai romba jaasthi, moochu vida mudiyala",
+        "sev": "Medium",
+        "status": "Under review",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Sachidanandam 1St Street, Kosapet, Kosapet",
+        "ward": 58,
+        "dept": "GCC-SWM",
+        "deptName": "Solid Waste Management",
+        "complaints": 1,
+        "t": "2026-11-06 08:45:00",
+        "overdue": false,
+        "lat": 13.0860179,
+        "lon": 80.2649479,
+        "why": null,
+        "cat": "Garbage & solid waste"
+       },
+       {
+        "id": "INC-20261106-A90262",
+        "title": "தெருவிளக்கு பிரச்சினை: Inadequate light in a particular location or spot/ dark spots",
+        "sev": "Medium",
+        "status": "In progress",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Church 4Th Cross Street",
+        "ward": 61,
+        "dept": "GCC-ELE",
+        "deptName": "Street Lighting & Electrical",
+        "complaints": 1,
+        "t": "2026-11-06 08:11:00",
+        "overdue": false,
+        "lat": 13.0697643,
+        "lon": 80.253992,
+        "why": null,
+        "cat": "Street lights & electrical hazards"
+       },
+       {
+        "id": "INC-20261106-6C6C34",
+        "title": "Drain work nadakkura idathula barricade illa, oru bike pallathula vizhundhuduchu",
+        "sev": "Medium",
+        "status": "Assigned",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Portguese Church 5Th Lane, Stanly Hospital, Seven Wells",
+        "ward": 52,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 01:26:00",
+        "overdue": false,
+        "lat": 13.1081874,
+        "lon": 80.2900416,
+        "why": null,
+        "cat": "Drain works site safety"
+       },
+       {
+        "id": "INC-20261105-1F083C",
+        "title": "Burglary near Chintadripet MRTS Station",
+        "sev": "Medium",
+        "status": "In progress",
+        "zone": 5,
+        "zoneName": "Royapuram",
+        "place": "Chintadripet",
+        "ward": 62,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-05 23:23:57",
+        "overdue": false,
+        "lat": 13.073127,
+        "lon": 80.273133,
+        "why": null,
+        "cat": "Theft, snatching & fraud"
+       }
+      ]
+     },
+     {
+      "kind": "MapView",
+      "id": "map",
+      "title": "எங்கே உள்ளன",
+      "points": 12,
+      "rule": "பட்டியலில் உள்ளபடி எண்கள்; சரியான இடம் இல்லாத சம்பவங்கள் வரையப்படவில்லை."
+     }
+    ]
+   },
+   "steps": [
+    {
+     "a": "page",
+     "page": "overview"
+    }
+   ],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "cases"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "எல்லா சம்பவங்கள், இன்று",
+     "value": 22
+    },
+    {
+     "where": "tile",
+     "label": "காலக்கெடு தாண்டியவை",
+     "value": 0
+    },
+    {
+     "where": "tile",
+     "label": "Street Lighting & Electrical வசம்",
+     "value": 4
+    },
+    {
+     "where": "list total",
+     "label": "சம்பவங்கள் · ராயபுரம் · இன்று",
+     "value": 22
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "list",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": false,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 67,
+      "longest_english_run": 9,
+      "sample": "a safety problem at a drain worksite at in"
+     }
+    },
+    "7_action": {
+     "pass": false,
+     "evidence": {
+      "asked": "brief",
+      "did": "list",
+      "recipe": "cases",
+      "table": [
+       "brief",
+       "report"
+      ]
+     }
+    },
+    "3_period_words": {
+     "pass": true,
+     "evidence": {
+      "asked": "no period",
+      "window_used": "daily",
+      "says": "daily",
+      "rule": "a window the row did not ask for must be said"
+     }
+    },
+    "4_open_closed": {
+     "pass": true,
+     "evidence": {
+      "rows": 12
+     }
+    },
+    "6_scope": {
+     "pass": true,
+     "evidence": {
+      "screen_scope": {
+       "period": "daily",
+       "zone": 5,
+       "dept": null,
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "3_figures": {
+     "pass": true,
+     "evidence": {
+      "window": "24 hours back from now",
+      "window_key": "24h",
+      "seen": [
+       {
+        "said": "22",
+        "as": "total",
+        "want": [
+         22
+        ]
+       },
+       {
+        "said": "4",
+        "as": "held_by",
+        "want": [
+         3,
+         3,
+         4,
+         2
+        ]
+       }
+      ],
+      "bad": []
+     }
+    },
+    "2_list": {
+     "pass": true,
+     "evidence": {
+      "window": "24 hours back from now",
+      "window_key": "24h",
+      "rows_checked": 12,
+      "faults": [],
+      "total_said": 22,
+      "total_oracle": 22,
+      "total_ok": true
+     }
+    },
+    "2_total": {
+     "pass": true,
+     "evidence": {
+      "said": 22,
+      "oracle": 22,
+      "window": "24 hours back from now"
+     }
+    }
+   },
+   "reasons": [
+    "5_language failed",
+    "7_action failed"
+   ],
+   "unchecked_must": [
+    "Give an overall report on Royapuram zone across its categories",
+    "Where the data holds cases, name the main incidents, why each matters and a proposed follow-up, with source evidence in the reply or on screen",
+    "must not: Narrow the answer to one case and call that the zone report",
+    "must not: Report on another zone"
+   ]
+  },
+  {
+   "id": "ta-explain-04",
+   "lang": "ta",
+   "family": "explain",
+   "text": "கோடம்பாக்கத்துல ட்ராஃபிக் ஜாம் ஏன் குறையவே மாட்டேங்குது?",
+   "earlier": null,
+   "expect": {
+    "action": "explain",
+    "body": null,
+    "zone": "Kodambakkam",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": "TRAFFIC_OBSTRUCTION",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Explain traffic obstruction in Kodambakkam from its cases",
+    "If the data truly holds none, say so plainly"
+   ],
+   "must_not": [
+    "Answer with road accident or road damage cases as if they were the jam"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "openai/gpt-oss-120b",
+   "model_needed": false,
+   "tokens": 1960,
+   "calls": 1,
+   "hops": [
+    "groq/openai/gpt-oss-120b"
+   ],
+   "latency_ms": 1340,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 1307,
+     "trace": [
+      "யோசிக்கிறேன்",
+      "திரையை உருவாக்குகிறேன்"
+     ]
+    }
+   ],
+   "said": "இன்று 0 சம்பவங்கள், முந்தைய காலத்தில் 3.",
+   "said_lang": "ta",
+   "voice": "இன்று 0 சம்பவங்கள், முந்தைய காலத்தில் 3.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "0 incidents today against 3 the period before (down 100%).",
+    "ta": "இன்று 0 சம்பவங்கள், முந்தைய காலத்தில் 3."
+   },
+   "stage": {
+    "recipe": "why",
+    "title": "Why · Kodambakkam · Traffic obstruction & parking · today",
+    "takeaway": null,
+    "say": {
+     "en": "0 incidents today against 3 the period before (down 100%).",
+     "ta": "இன்று 0 சம்பவங்கள், முந்தைய காலத்தில் 3."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": 10,
+     "dept": null,
+     "cat": "TRAFFIC_OBSTRUCTION",
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [
+      10
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "TRAFFIC_OBSTRUCTION",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "change_drivers"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Same, this week",
+       "ta": "வேறு காலம்"
+      },
+      "kind": "direct",
+      "recipe": "why",
+      "slots": {
+       "period": "weekly",
+       "zones": [
+        10
+       ],
+       "dept": null,
+       "depts": [],
+       "cat": "TRAFFIC_OBSTRUCTION",
+       "taluk": null,
+       "sev": null,
+       "status": null,
+       "q": null,
+       "metric": null,
+       "measure": null,
+       "by": null,
+       "order": "top",
+       "n": null,
+       "id": null,
+       "name": null,
+       "what": null,
+       "sort": null
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "n",
+        "label": "Reported, today",
+        "value": 0,
+        "unit": null,
+        "prev": 3,
+        "delta": -3,
+        "pct": -100,
+        "tone": "good",
+        "spark": []
+       },
+       {
+        "key": "severe",
+        "label": "Severe",
+        "value": 0,
+        "unit": null,
+        "prev": 0,
+        "delta": 0,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "overdue",
+        "label": "Past deadline (open)",
+        "value": 0,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "rain",
+        "label": "Rain-linked",
+        "value": 0,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "Answer",
+      "id": "answer",
+      "title": "What drives it",
+      "text": "0 incidents today against 3 the period before (down 100%). ",
+      "facts": []
+     },
+     {
+      "kind": "Chart",
+      "id": "chart",
+      "title": "Change by kind of incident (now minus before)",
+      "chart": "hbar",
+      "unit": "incidents",
+      "labels": [
+       "Traffic obstruction & parking"
+      ],
+      "values": [
+       -3
+      ]
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "why"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "Reported, today",
+     "value": 0
+    },
+    {
+     "where": "tile",
+     "label": "Severe",
+     "value": 0
+    },
+    {
+     "where": "tile",
+     "label": "Past deadline (open)",
+     "value": 0
+    },
+    {
+     "where": "tile",
+     "label": "Rain-linked",
+     "value": 0
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "right",
+   "confident_wrong": false,
+   "did": "why",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 31,
+      "longest_english_run": 0,
+      "sample": ""
+     }
+    },
+    "7_action": {
+     "pass": true,
+     "evidence": {
+      "asked": "explain",
+      "did": "why",
+      "recipe": "why",
+      "table": [
+       "case",
+       "why",
+       "answer"
+      ]
+     }
+    },
+    "6_scope": {
+     "pass": true,
+     "evidence": {
+      "screen_scope": {
+       "period": "daily",
+       "zone": 10,
+       "dept": null,
+       "cat": "TRAFFIC_OBSTRUCTION",
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "3_figures": {
+     "pass": true,
+     "evidence": {
+      "window": "24 hours back from now",
+      "window_key": "24h",
+      "seen": [
+       {
+        "said": "0",
+        "as": "figure reported"
+       },
+       {
+        "said": "3",
+        "as": "figure reported, the period before"
+       }
+      ],
+      "bad": []
+     }
+    }
+   },
+   "reasons": [],
+   "unchecked_must": [
+    "Explain traffic obstruction in Kodambakkam from its cases",
+    "must not: Answer with road accident or road damage cases as if they were the jam"
+   ]
+  },
+  {
+   "id": "ta-list-10",
+   "lang": "ta",
+   "family": "list",
+   "text": "மணலில போராட்டம், மறியல் கேஸ் பட்டியல் குடு.",
+   "earlier": null,
+   "expect": {
+    "action": "list",
+    "body": null,
+    "zone": "Manali",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": "PUBLIC_ORDER",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "List protest and public order cases in Manali zone",
+    "If the data truly holds none, say so plainly"
+   ],
+   "must_not": [
+    "List other police matters as protests"
+   ],
+   "must_not_contain": [],
+   "lane": "rules-instant",
+   "path": [
+    "rules-nav"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": null,
+   "model_needed": false,
+   "tokens": 0,
+   "calls": 0,
+   "hops": [],
+   "latency_ms": 28,
+   "rounds": [],
+   "said": "மண்டலம் 2 · மணலி · Protests & public nuisance",
+   "said_lang": "ta",
+   "voice": null,
+   "items": [],
+   "options": [],
+   "spoken": {
+    "ta": "மண்டலம் 2 · மணலி · Protests & public nuisance"
+   },
+   "stage": null,
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "zone": 2,
+      "cat": "PUBLIC_ORDER"
+     }
+    }
+   ],
+   "stage_op": null,
+   "drafted": [],
+   "rules": "do",
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": 2,
+    "dept": null,
+    "cat": "PUBLIC_ORDER",
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": null
+   },
+   "figures": [],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": false,
+   "did": "move",
+   "code_lane": true,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 11,
+      "longest_english_run": 0,
+      "sample": ""
+     }
+    },
+    "7_action": {
+     "pass": false,
+     "evidence": {
+      "asked": "list",
+      "did": "move",
+      "steps": [
+       {
+        "a": "view",
+        "view": {
+         "zone": 2,
+         "cat": "PUBLIC_ORDER"
+        }
+       }
+      ],
+      "lane": "rules-instant"
+     }
+    }
+   },
+   "reasons": [
+    "a code lane moved the console and answered nothing",
+    "7_action failed"
+   ],
+   "unchecked_must": [
+    "List protest and public order cases in Manali zone",
+    "must not: List other police matters as protests"
+   ]
+  },
+  {
+   "id": "ta-other_body-17",
+   "lang": "ta",
+   "family": "other_body",
+   "text": "Indian Bank development wing-ல என்ன நடக்குது, பாத்து சொல்லு.",
+   "earlier": null,
+   "expect": {
+    "action": "no_data",
+    "body": null,
+    "zone": null,
+    "place_outside": null,
+    "body_outside": "Indian Bank",
+    "topic": null,
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Say a bank's development unit is not a body it holds data on"
+   ],
+   "must_not": [
+    "Report on any district or corporation body in its place"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": "rules-after-clarify",
+   "model": "openai/gpt-oss-120b",
+   "model_needed": false,
+   "tokens": 3590,
+   "calls": 1,
+   "hops": [
+    "hedge:groq/openai/gpt-oss-120b",
+    "groq/openai/gpt-oss-20b"
+   ],
+   "latency_ms": 5419,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": "rules-after-clarify",
+     "kind": "do",
+     "ms": 5394,
+     "trace": [
+      "யோசிக்கிறேன்",
+      "தரவைப் படிக்கிறேன்"
+     ]
+    }
+   ],
+   "said": "இன்று சுருக்கத்தில் 10 குறிப்புகள். 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+   "said_lang": "ta",
+   "voice": "இன்று சுருக்கத்தில் 10 குறிப்புகள். 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+   "items": [
+    "239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+    "236 incidents are still open, 11 of them past the deadline; 9 severe events.",
+    "3 incidents came from more than one source, and 13 incidents appear only in the news.",
+    "Canal overflow at Ice House, Teynampet., Teynampet: Still open at more than twice its 6-hour deadline",
+    "Waterlogging at Pallikaranai (Pallikaranai Marsh Outlet Drain), Sholinganallur., Sholinganallur: Still open at more than twice its 6-hour deadline",
+    "Canal overflow at Chetpet (Cooum River - Chetpet stretch), Royapuram., Royapuram: Still open at more than twice its 6-hour deadline",
+    "Canal overflow at Saidapet (Adyar River - Saidapet stretch)., Adyar: Still open at more than twice its 6-hour deadline",
+    "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+    "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+    "Conditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 44.1% full"
+   ],
+   "options": [],
+   "spoken": {
+    "en": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+    "ta": "இன்று சுருக்கத்தில் 10 குறிப்புகள். 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period."
+   },
+   "stage": {
+    "recipe": "brief",
+    "title": "Briefing · today",
+    "takeaway": {
+     "en": "239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+     "ta": "239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period."
+    },
+    "say": {
+     "en": "10 points in the brief for today. 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+     "ta": "இன்று சுருக்கத்தில் 10 குறிப்புகள். 239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": null,
+     "dept": null,
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "briefing"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Show the severe cases",
+       "ta": "கடுமையான சம்பவங்கள்"
+      },
+      "kind": "direct",
+      "recipe": "cases",
+      "slots": {
+       "sev": "Severe"
+      },
+      "ids": [],
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Department-wise performance",
+       "ta": "துறை வாரியான செயல்திறன்"
+      },
+      "kind": "direct",
+      "recipe": "performance",
+      "slots": {
+       "by": "dept"
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "reported",
+        "label": "Reported",
+        "value": 239,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "pct": 3,
+        "tone": "neutral",
+        "spark": []
+       },
+       {
+        "key": "severe",
+        "label": "Severe",
+        "value": 9,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "overdue",
+        "label": "Past deadline",
+        "value": 11,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "newsOnly",
+        "label": "In the news only",
+        "value": 13,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "Brief",
+      "id": "brief",
+      "title": "The brief",
+      "points": [
+       {
+        "text": "239 incidents were reported in Chennai district (last 24 hours), 3% more than the previous period.",
+        "incidentId": null
+       },
+       {
+        "text": "236 incidents are still open, 11 of them past the deadline; 9 severe events.",
+        "incidentId": null
+       },
+       {
+        "text": "3 incidents came from more than one source, and 13 incidents appear only in the news.",
+        "incidentId": null
+       },
+       {
+        "text": "Canal overflow at Ice House, Teynampet., Teynampet: Still open at more than twice its 6-hour deadline",
+        "incidentId": "INC-20260515-B939EB"
+       },
+       {
+        "text": "Waterlogging at Pallikaranai (Pallikaranai Marsh Outlet Drain), Sholinganallur., Sholinganallur: Still open at more than twice its 6-hour deadline",
+        "incidentId": "INC-20261105-6D03C9"
+       },
+       {
+        "text": "Canal overflow at Chetpet (Cooum River - Chetpet stretch), Royapuram., Royapuram: Still open at more than twice its 6-hour deadline",
+        "incidentId": "INC-20261105-6B3555"
+       },
+       {
+        "text": "Canal overflow at Saidapet (Adyar River - Saidapet stretch)., Adyar: Still open at more than twice its 6-hour deadline",
+        "incidentId": "INC-20261105-5C94BB"
+       },
+       {
+        "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+        "incidentId": null
+       },
+       {
+        "text": "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+        "incidentId": null
+       },
+       {
+        "text": "Conditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 44.1% full",
+        "incidentId": null
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "brief"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "Reported",
+     "value": 239
+    },
+    {
+     "where": "tile",
+     "label": "Severe",
+     "value": 9
+    },
+    {
+     "where": "tile",
+     "label": "Past deadline",
+     "value": 11
+    },
+    {
+     "where": "tile",
+     "label": "In the news only",
+     "value": 13
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "brief",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": false,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 29,
+      "longest_english_run": 56,
+      "sample": "incidents were reported in Chennai district (last hours), more than the previous period. incidents were reported in Chen"
+     }
+    },
+    "6_outside": {
+     "pass": false,
+     "evidence": {
+      "did": "brief",
+      "screen": "brief",
+      "scope": {
+       "period": "daily",
+       "zone": null,
+       "dept": null,
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      },
+      "steps": [],
+      "outside": {
+       "place": null,
+       "body": "Indian Bank"
+      },
+      "rule": "never a filter, brief or figure on a body of ours"
+     }
+    }
+   },
+   "reasons": [
+    "put a filter, brief or figure on a body of ours",
+    "5_language failed",
+    "6_outside failed"
+   ],
+   "unchecked_must": [
+    "Say a bank's development unit is not a body it holds data on",
+    "must not: Report on any district or corporation body in its place"
+   ]
+  },
+  {
+   "id": "tanglish-brief-11",
+   "lang": "tanglish",
+   "family": "brief",
+   "text": "Collectorate disaster management unit-oda latest ennanga",
+   "earlier": null,
+   "expect": {
+    "action": "brief",
+    "body": "DIST-DM",
+    "zone": null,
+    "place_outside": null,
+    "body_outside": null,
+    "topic": null,
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Briefs District Disaster Management from the data"
+   ],
+   "must_not": [
+    "Must not answer about the state or national disaster agencies"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "openai/gpt-oss-120b",
+   "model_needed": false,
+   "tokens": 1318,
+   "calls": 1,
+   "hops": [
+    "hedge:gemini/gemini-3.5-flash-lite",
+    "groq/openai/gpt-oss-120b"
+   ],
+   "latency_ms": 7485,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 7476,
+     "trace": [
+      "Thinking",
+      "Building the screen",
+      "Ranked 5"
+     ]
+    }
+   ],
+   "said": "239 incidents reports today, up 3% on the period before. 9 severe. Most in Tondiarpet.",
+   "said_lang": "en",
+   "voice": "239 incidents reports today, up 3% on the period before. 9 severe.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "239 incidents reports today, up 3% on the period before. 9 severe. Most in Tondiarpet.",
+    "ta": "இன்று Incidents: 239 புகார்கள், 9 கடுமையானவை. அதிகம் தண்டையார்பேட்டை."
+   },
+   "stage": {
+    "recipe": "dashboard",
+    "title": "Incidents dashboard · today",
+    "takeaway": {
+     "en": "Tondiarpet has the most: 33 of 232.",
+     "ta": "தண்டையார்பேட்டை அதிகம்: 33."
+    },
+    "say": {
+     "en": "239 incidents reports today, up 3% on the period before. 9 severe. Most in Tondiarpet.",
+     "ta": "இன்று Incidents: 239 புகார்கள், 9 கடுமையானவை. அதிகம் தண்டையார்பேட்டை."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": null,
+     "dept": null,
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "hotspots",
+     "zones",
+     "incidents",
+     "overview_kpis",
+     "incident_series"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Draft for the top 3",
+       "ta": "முதல் 3-க்கு வரைவு"
+      },
+      "kind": "draft",
+      "ids": [
+       "INC-20261106-896A64",
+       "INC-20261106-6EAFF2",
+       "INC-20261106-54AD93"
+      ],
+      "recipe": null,
+      "slots": null,
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Why is Tondiarpet highest?",
+       "ta": "Tondiarpet ஏன் அதிகம்?"
+      },
+      "kind": "direct",
+      "recipe": "why",
+      "slots": {
+       "zones": [
+        4
+       ],
+       "cat": null,
+       "period": "daily"
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "reported",
+        "label": "Reported",
+        "value": 239,
+        "unit": null,
+        "prev": 232,
+        "delta": 7,
+        "pct": 3,
+        "tone": "neutral",
+        "spark": [
+         32,
+         42,
+         21,
+         6,
+         6,
+         3,
+         16,
+         29,
+         22,
+         17,
+         21,
+         24
+        ]
+       },
+       {
+        "key": "severe",
+        "label": "Severe",
+        "value": 9,
+        "unit": null,
+        "prev": 22,
+        "delta": -13,
+        "pct": -59,
+        "tone": "bad",
+        "spark": [
+         0,
+         4,
+         2,
+         0,
+         0,
+         2,
+         0,
+         0,
+         1,
+         0,
+         0,
+         0
+        ]
+       },
+       {
+        "key": "ongoing",
+        "label": "Still open",
+        "value": 236,
+        "unit": null,
+        "prev": 223,
+        "delta": 13,
+        "pct": 6,
+        "tone": "neutral",
+        "spark": [
+         32,
+         40,
+         20,
+         6,
+         6,
+         3,
+         16,
+         29,
+         22,
+         17,
+         21,
+         24
+        ]
+       },
+       {
+        "key": "complaints",
+        "label": "Open complaints",
+        "value": 147,
+        "unit": null,
+        "prev": 148,
+        "delta": -1,
+        "pct": -1,
+        "tone": "neutral",
+        "spark": [
+         16,
+         25,
+         9,
+         3,
+         1,
+         3,
+         10,
+         25,
+         14,
+         9,
+         13,
+         19
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "MapView",
+      "id": "map",
+      "title": "Where",
+      "points": 16,
+      "rule": "Numbered pins are the cases below; rings are hotspots (3+ incidents within 250 m in 30 days)."
+     },
+     {
+      "kind": "Ranking",
+      "id": "zones",
+      "title": "Zones with the most",
+      "unit": "incidents",
+      "method": "Incidents reported by zone, today.",
+      "order": "top",
+      "items": [
+       {
+        "key": "4",
+        "label": "Tondiarpet",
+        "value": 33,
+        "rank": 1,
+        "sub": "33 open",
+        "zone": 4,
+        "lat": null,
+        "lon": null,
+        "action": "zone"
+       },
+       {
+        "key": "9",
+        "label": "Teynampet",
+        "value": 28,
+        "rank": 2,
+        "sub": "28 open",
+        "zone": 9,
+        "lat": null,
+        "lon": null,
+        "action": "zone"
+       },
+       {
+        "key": "13",
+        "label": "Adyar",
+        "value": 24,
+        "rank": 3,
+        "sub": "23 open",
+        "zone": 13,
+        "lat": null,
+        "lon": null,
+        "action": "zone"
+       },
+       {
+        "key": "5",
+        "label": "Royapuram",
+        "value": 22,
+        "rank": 4,
+        "sub": "22 open",
+        "zone": 5,
+        "lat": null,
+        "lon": null,
+        "action": "zone"
+       },
+       {
+        "key": "10",
+        "label": "Kodambakkam",
+        "value": 21,
+        "rank": 5,
+        "sub": "21 open",
+        "zone": 10,
+        "lat": null,
+        "lon": null,
+        "action": "zone"
+       }
+      ]
+     },
+     {
+      "kind": "Trend",
+      "id": "trend",
+      "title": "Incidents over time",
+      "unit": "incidents",
+      "labels": [
+       "6:08 PM",
+       "8:08 PM",
+       "10:08 PM",
+       "12:08 AM",
+       "2:08 AM",
+       "4:08 AM",
+       "6:08 AM",
+       "8:08 AM",
+       "10:08 AM",
+       "12:08 PM",
+       "2:08 PM",
+       "4:08 PM"
+      ],
+      "values": [
+       32,
+       42,
+       21,
+       6,
+       6,
+       3,
+       16,
+       29,
+       22,
+       17,
+       21,
+       24
+      ],
+      "marks": [
+       {
+        "i": 1,
+        "why": "More than 2 standard deviations above the mean"
+       }
+      ],
+      "normal": null
+     },
+     {
+      "kind": "CaseList",
+      "id": "cases",
+      "title": "Open cases, most serious first",
+      "source": "list",
+      "sev": null,
+      "total": 226,
+      "rows": [
+       {
+        "id": "INC-20261106-896A64",
+        "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+        "sev": "Low",
+        "status": "Open",
+        "zone": 4,
+        "zoneName": "Tondiarpet",
+        "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+        "ward": 48,
+        "dept": "GCC-SWM",
+        "deptName": "Solid Waste Management",
+        "complaints": 1,
+        "t": "2026-11-06 18:08:00",
+        "overdue": false,
+        "lat": 13.1145099,
+        "lon": 80.2837677,
+        "why": null,
+        "cat": "Garbage & solid waste"
+       },
+       {
+        "id": "INC-20261106-6EAFF2",
+        "title": "Play Equipment in the park near our street. Please look into it",
+        "sev": "Low",
+        "status": "Open",
+        "zone": 4,
+        "zoneName": "Tondiarpet",
+        "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+        "ward": 44,
+        "dept": "GCC-PRK",
+        "deptName": "Parks & Play Fields",
+        "complaints": 1,
+        "t": "2026-11-06 18:05:00",
+        "overdue": false,
+        "lat": 13.1154857,
+        "lon": 80.2454152,
+        "why": null,
+        "cat": "Trees, parks & playgrounds"
+       },
+       {
+        "id": "INC-20261106-54AD93",
+        "title": "Building plan approval oru maasama pending la irukku",
+        "sev": "Low",
+        "status": "Open",
+        "zone": 3,
+        "zoneName": "Madhavaram",
+        "place": "Annai Sathya 3Rd Street",
+        "ward": 28,
+        "dept": "GCC-ENG",
+        "deptName": "Roads & Building Permissions",
+        "complaints": 1,
+        "t": "2026-11-06 18:00:00",
+        "overdue": false,
+        "lat": 13.154035965080077,
+        "lon": 80.25055201943273,
+        "why": null,
+        "cat": "Tax, certificates & electoral services"
+       },
+       {
+        "id": "INC-20261106-5C22B2",
+        "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+        "sev": "Low",
+        "status": "Open",
+        "zone": 14,
+        "zoneName": "Perungudi",
+        "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+        "ward": 190,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 17:59:00",
+        "overdue": false,
+        "lat": 12.9176562,
+        "lon": 80.2242553,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261106-8656E7",
+        "title": "நான் 4 Main Road Sri Ayyappa Nagar, கதவு எண் 64-ல் வசிக்கிறேன்",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 10,
+        "zoneName": "Kodambakkam",
+        "place": "4 Main Road Sri Ayyappa Nagar, Sri Ayyappa Nagar, Koyambedu",
+        "ward": 127,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 17:06:00",
+        "overdue": false,
+        "lat": 13.0736146,
+        "lon": 80.1919029,
+        "why": null,
+        "cat": "Drainage & sewage"
+       },
+       {
+        "id": "INC-20261106-2AB4CB",
+        "title": "Issue regarding removal of garbage in our street",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 1,
+        "zoneName": "Thiruvottiyur",
+        "place": "Market Lane, Market Lane, Ernavoor",
+        "ward": 4,
+        "dept": "GCC-SWM",
+        "deptName": "Solid Waste Management",
+        "complaints": 1,
+        "t": "2026-11-06 17:02:00",
+        "overdue": false,
+        "lat": 13.188725250000001,
+        "lon": 80.3043275,
+        "why": null,
+        "cat": "Garbage & solid waste"
+       },
+       {
+        "id": "INC-20261106-6C670B",
+        "title": "ED arrests two men in Chennai for online fraud, crypto currency laundering",
+        "sev": "Low",
+        "status": "Open",
+        "zone": 8,
+        "zoneName": "Anna Nagar",
+        "place": "Villivakkam",
+        "ward": 94,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-06 16:43:38",
+        "overdue": false,
+        "lat": 13.108,
+        "lon": 80.205,
+        "why": null,
+        "cat": "Theft, snatching & fraud"
+       },
+       {
+        "id": "INC-20261106-85A908",
+        "title": "Complaints regarding non availability of medicines: residents in our area are facing a health hazard for almost a month",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 9,
+        "zoneName": "Teynampet",
+        "place": "Palani Amman Koil South 1St Street, Mattan Kuppam, Triplicane",
+        "ward": 114,
+        "dept": "GCC-HLT",
+        "deptName": "Public Health (GCC)",
+        "complaints": 1,
+        "t": "2026-11-06 16:38:00",
+        "overdue": false,
+        "lat": 13.0602917,
+        "lon": 80.2842238,
+        "why": null,
+        "cat": "Health services & hospital capacity"
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "dashboard"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "Reported",
+     "value": 239
+    },
+    {
+     "where": "tile",
+     "label": "Severe",
+     "value": 9
+    },
+    {
+     "where": "tile",
+     "label": "Still open",
+     "value": 236
+    },
+    {
+     "where": "tile",
+     "label": "Open complaints",
+     "value": 147
+    },
+    {
+     "where": "ranking",
+     "label": "Tondiarpet",
+     "value": 33
+    },
+    {
+     "where": "ranking",
+     "label": "Teynampet",
+     "value": 28
+    },
+    {
+     "where": "ranking",
+     "label": "Adyar",
+     "value": 24
+    },
+    {
+     "where": "ranking",
+     "label": "Royapuram",
+     "value": 22
+    },
+    {
+     "where": "ranking",
+     "label": "Kodambakkam",
+     "value": 21
+    },
+    {
+     "where": "list total",
+     "label": "Open cases, most serious first",
+     "value": 226
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "report",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": false,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 0,
+      "longest_english_run": 11,
+      "sample": "incidents reports today, up on the period before. severe. Most in"
+     }
+    },
+    "7_action": {
+     "pass": true,
+     "evidence": {
+      "asked": "brief",
+      "did": "report",
+      "recipe": "dashboard",
+      "table": [
+       "brief",
+       "report"
+      ]
+     }
+    },
+    "3_period_words": {
+     "pass": true,
+     "evidence": {
+      "asked": "no period",
+      "window_used": "daily",
+      "says": "daily",
+      "rule": "a window the row did not ask for must be said"
+     }
+    },
+    "4_open_closed": {
+     "pass": true,
+     "evidence": {
+      "rows": 8
+     }
+    },
+    "6_scope": {
+     "pass": false,
+     "evidence": {
+      "mismatch": [
+       {
+        "field": "body",
+        "want": "DIST-DM",
+        "got": null
+       }
+      ],
+      "screen_scope": {
+       "period": "daily",
+       "zone": null,
+       "dept": null,
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "3_figures": {
+     "pass": false,
+     "evidence": {
+      "window": "24 hours back from now",
+      "window_key": "24h",
+      "seen": [],
+      "bad": [
+       {
+        "said": "239",
+        "as": "nothing in the data for this scope explains it",
+        "around": "[239] incidents reports t"
+       },
+       {
+        "said": "3",
+        "as": "change_pct",
+        "want": [
+         14
+        ],
+        "detail": {
+         "now": 6,
+         "before": 7
+        }
+       },
+       {
+        "said": "9",
+        "as": "nothing in the data for this scope explains it",
+        "around": " the period before. [9] severe. Most in Ton"
+       }
+      ]
+     }
+    },
+    "3_screen_figures": {
+     "pass": false,
+     "evidence": {
+      "window": "24 hours back from now",
+      "ok": 0,
+      "bad": [
+       {
+        "tile": "reported",
+        "shown": 239,
+        "want": [
+         "reported=6"
+        ]
+       },
+       {
+        "tile": "severe",
+        "shown": 9,
+        "want": [
+         "severe=0",
+         "severe_open=0"
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "reasons": [
+    "5_language failed",
+    "6_scope failed",
+    "3_figures failed",
+    "3_screen_figures failed"
+   ],
+   "unchecked_must": [
+    "Briefs District Disaster Management from the data",
+    "must not: Must not answer about the state or national disaster agencies"
+   ]
+  },
+  {
+   "id": "tanglish-explain-01",
+   "lang": "tanglish",
+   "family": "explain",
+   "text": "Ambattur la thanni yen varala, enna problem",
+   "earlier": null,
+   "expect": {
+    "action": "explain",
+    "body": null,
+    "zone": "Ambattur",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": "WATER_SUPPLY",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Explains drinking water supply in Ambattur from the data",
+    "Says plainly if there is no such case in Ambattur"
+   ],
+   "must_not": [
+    "Must not answer with Ambattur's top case about some other topic"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": "rules-after-clarify",
+   "model": "openai/gpt-oss-20b",
+   "model_needed": false,
+   "tokens": 1982,
+   "calls": 1,
+   "hops": [
+    "hedge:gemini/gemini-3.5-flash-lite",
+    "groq/openai/gpt-oss-20b"
+   ],
+   "latency_ms": 6943,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": "rules-after-clarify",
+     "kind": "do",
+     "ms": 6930,
+     "trace": [
+      "யோசிக்கிறேன்",
+      "தரவைப் படிக்கிறேன்",
+      "3 சம்பவங்களைப் படித்தேன்"
+     ]
+    }
+   ],
+   "said": "இந்த வாரம் 84 சம்பவங்கள், முந்தைய காலத்தில் 79. Road accident 11 கூடியது, Tax, certificates & electoral services 4 கூடியது, Flooding & waterlogging 2 கூடியது; 6 மழை நாட்களில் 23 மழை தொடர்பானவை.",
+   "said_lang": "ta",
+   "voice": "இந்த வாரம் 84 சம்பவங்கள், முந்தைய காலத்தில் 79. Road accident 11 கூடியது, Tax, certificates & electoral services 4 கூடியது, Flooding & waterlogging 2 கூடியது; 6 மழை நாட்களில் 23 மழை தொடர்பானவை.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "84 incidents this week against 79 the period before (up 6%). Mainly: road accident rose by 11, tax, certificates & electoral services rose by 4, flooding & waterlogging rose by 2; 23 incidents were rain-linked over 6 rain days.",
+    "ta": "இந்த வாரம் 84 சம்பவங்கள், முந்தைய காலத்தில் 79. Road accident 11 கூடியது, Tax, certificates & electoral services 4 கூடியது, Flooding & waterlogging 2 கூடியது; 6 மழை நாட்களில் 23 மழை தொடர்பானவை."
+   },
+   "stage": {
+    "recipe": "why",
+    "title": "Why · Ambattur · this week",
+    "takeaway": {
+     "en": "Road accident rose the most: 13 against 2.",
+     "ta": "Road accident அதிகம் உயர்ந்தது: 13, முன்பு 2."
+    },
+    "say": {
+     "en": "84 incidents this week against 79 the period before (up 6%). Mainly: road accident rose by 11, tax, certificates & electoral services rose by 4, flooding & waterlogging rose by 2; 23 incidents were rain-linked over 6 rain days.",
+     "ta": "இந்த வாரம் 84 சம்பவங்கள், முந்தைய காலத்தில் 79. Road accident 11 கூடியது, Tax, certificates & electoral services 4 கூடியது, Flooding & waterlogging 2 கூடியது; 6 மழை நாட்களில் 23 மழை தொடர்பானவை."
+    },
+    "scope": {
+     "period": "weekly",
+     "zone": 7,
+     "dept": null,
+     "cat": null,
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "weekly",
+     "zones": [
+      7
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "change_drivers"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Draft for these incidents",
+       "ta": "இவற்றுக்கு வரைவு"
+      },
+      "kind": "draft",
+      "ids": [
+       "INC-20261103-53934E-1",
+       "INC-20261105-BB4429",
+       "INC-20261101-EC06C4"
+      ],
+      "recipe": null,
+      "slots": null,
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Same, 30 days",
+       "ta": "வேறு காலம்"
+      },
+      "kind": "direct",
+      "recipe": "why",
+      "slots": {
+       "period": "monthly",
+       "zones": [
+        7
+       ],
+       "dept": null,
+       "depts": [],
+       "cat": null,
+       "taluk": null,
+       "sev": null,
+       "status": null,
+       "q": null,
+       "metric": null,
+       "measure": null,
+       "by": null,
+       "order": "top",
+       "n": null,
+       "id": null,
+       "name": null,
+       "what": null,
+       "sort": null
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "n",
+        "label": "Reported, this week",
+        "value": 84,
+        "unit": null,
+        "prev": 79,
+        "delta": 5,
+        "pct": 6,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "severe",
+        "label": "Severe",
+        "value": 5,
+        "unit": null,
+        "prev": 3,
+        "delta": 2,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "overdue",
+        "label": "Past deadline (open)",
+        "value": 20,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "rain",
+        "label": "Rain-linked",
+        "value": 23,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "Answer",
+      "id": "answer",
+      "title": "What drives it",
+      "text": "84 incidents this week against 79 the period before (up 6%). Main reasons: road accident rose by 11, tax, certificates & electoral services rose by 4, flooding & waterlogging rose by 2; 23 incidents were rain-linked over 6 rain days; 20 open incidents are past their deadline; the busiest spot is Mogappair (4 road accident).",
+      "facts": [
+       {
+        "label": "Road accident: now vs before",
+        "value": 13,
+        "unit": "(was 2)"
+       },
+       {
+        "label": "Tax, certificates & electoral services: now vs before",
+        "value": 4,
+        "unit": "(was 0)"
+       },
+       {
+        "label": "Flooding & waterlogging: now vs before",
+        "value": 5,
+        "unit": "(was 3)"
+       },
+       {
+        "label": "Greater Chennai Police: open past deadline",
+        "value": 6,
+        "unit": null
+       },
+       {
+        "label": "PWD Water Resources: open past deadline",
+        "value": 4,
+        "unit": null
+       }
+      ]
+     },
+     {
+      "kind": "Chart",
+      "id": "chart",
+      "title": "Change by kind of incident (now minus before)",
+      "chart": "hbar",
+      "unit": "incidents",
+      "labels": [
+       "Road accident",
+       "Tax, certificates & electoral services",
+       "Flooding & waterlogging",
+       "Garbage & solid waste",
+       "Lakes, bunds & sluices",
+       "Theft, snatching & fraud",
+       "Protests & public nuisance",
+       "Roads, footpaths & bridges"
+      ],
+      "values": [
+       11,
+       4,
+       2,
+       -2,
+       -2,
+       -4,
+       -4,
+       -5
+      ]
+     },
+     {
+      "kind": "CaseList",
+      "id": "top",
+      "title": "The incidents behind it",
+      "source": "list",
+      "sev": null,
+      "total": 3,
+      "rows": [
+       {
+        "id": "INC-20261103-53934E-1",
+        "title": "Canal overflowing near Gangai Nagar; water entering nearby streets including Poongodiammal Street",
+        "sev": "Severe",
+        "status": "In progress",
+        "zone": null,
+        "zoneName": null,
+        "place": "Gangai Nagar",
+        "ward": null,
+        "dept": null,
+        "deptName": null,
+        "complaints": 0,
+        "t": null,
+        "overdue": true,
+        "lat": null,
+        "lon": null,
+        "why": "Severe flooding & waterlogging (80); reported by 2 sources; 4 citizen complaints; resolution over twice the 6 h target; affects children, elderly, worship; linked to a rain event; 16 similar incidents here in 90 days",
+        "cat": null
+       },
+       {
+        "id": "INC-20261105-BB4429",
+        "title": "Mogappair: Karpagam Ave fully flooded near OHT water tank, knee-deep",
+        "sev": "Severe",
+        "status": "In progress",
+        "zone": null,
+        "zoneName": null,
+        "place": "Ambattur OT",
+        "ward": null,
+        "dept": null,
+        "deptName": null,
+        "complaints": 0,
+        "t": null,
+        "overdue": true,
+        "lat": null,
+        "lon": null,
+        "why": "Severe flooding & waterlogging (83); resolution over twice the 6 h target; 4 new reports in 24 h; affects worship; linked to a rain event; 20 similar incidents here in 90 days",
+        "cat": null
+       },
+       {
+        "id": "INC-20261101-EC06C4",
+        "title": "Woman with disability dies in midnight fire at Korattur apartment",
+        "sev": "High",
+        "status": "Open",
+        "zone": null,
+        "zoneName": null,
+        "place": "Korattur",
+        "ward": null,
+        "dept": null,
+        "deptName": null,
+        "complaints": 0,
+        "t": null,
+        "overdue": true,
+        "lat": null,
+        "lon": null,
+        "why": "High road accident (69); response over twice the 6 h target; not yet verified by an officer; affects hospital, school; covered by 5 news outlets; in the news but not in any department's records; 4 similar incidents here in 90 days",
+        "cat": null
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "why"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "Reported, this week",
+     "value": 84
+    },
+    {
+     "where": "tile",
+     "label": "Severe",
+     "value": 5
+    },
+    {
+     "where": "tile",
+     "label": "Past deadline (open)",
+     "value": 20
+    },
+    {
+     "where": "tile",
+     "label": "Rain-linked",
+     "value": 23
+    },
+    {
+     "where": "fact",
+     "label": "Road accident: now vs before",
+     "value": 13
+    },
+    {
+     "where": "fact",
+     "label": "Tax, certificates & electoral services: now vs before",
+     "value": 4
+    },
+    {
+     "where": "fact",
+     "label": "Flooding & waterlogging: now vs before",
+     "value": 5
+    },
+    {
+     "where": "fact",
+     "label": "Greater Chennai Police: open past deadline",
+     "value": 6
+    },
+    {
+     "where": "fact",
+     "label": "PWD Water Resources: open past deadline",
+     "value": 4
+    },
+    {
+     "where": "list total",
+     "label": "The incidents behind it",
+     "value": 3
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "why",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": true,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 81,
+      "longest_english_run": 0,
+      "sample": ""
+     }
+    },
+    "7_action": {
+     "pass": true,
+     "evidence": {
+      "asked": "explain",
+      "did": "why",
+      "recipe": "why",
+      "table": [
+       "case",
+       "why",
+       "answer"
+      ]
+     }
+    },
+    "4_open_closed": {
+     "pass": true,
+     "evidence": {
+      "rows": 3
+     }
+    },
+    "6_scope": {
+     "pass": false,
+     "evidence": {
+      "mismatch": [
+       {
+        "field": "topic",
+        "want": "WATER_SUPPLY",
+        "got": null
+       }
+      ],
+      "screen_scope": {
+       "period": "weekly",
+       "zone": 7,
+       "dept": null,
+       "cat": null,
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "3_figures": {
+     "pass": false,
+     "evidence": {
+      "window": "168 hours back from now",
+      "window_key": "168h",
+      "seen": [
+       {
+        "said": "11",
+        "as": "in the case's own record"
+       },
+       {
+        "said": "4",
+        "as": "in the case's own record"
+       },
+       {
+        "said": "2",
+        "as": "in the case's own record"
+       },
+       {
+        "said": "6",
+        "as": "in the case's own record"
+       }
+      ],
+      "bad": [
+       {
+        "said": "84",
+        "as": "total",
+        "want": [
+         3
+        ]
+       },
+       {
+        "said": "79",
+        "as": "nothing in the data for this scope explains it",
+        "around": ", முந்தைய காலத்தில் [79]. Road accident 11 க"
+       },
+       {
+        "said": "23",
+        "as": "nothing in the data for this scope explains it",
+        "around": "து; 6 மழை நாட்களில் [23] மழை தொடர்பானவை."
+       }
+      ]
+     }
+    }
+   },
+   "reasons": [
+    "6_scope failed",
+    "3_figures failed"
+   ],
+   "unchecked_must": [
+    "Explains drinking water supply in Ambattur from the data",
+    "must not: Must not answer with Ambattur's top case about some other topic"
+   ]
+  },
+  {
+   "id": "tanglish-list-11",
+   "lang": "tanglish",
+   "family": "list",
+   "text": "General Admin section-ku Solinganallur community hall pathi vandha complaints paakanum",
+   "earlier": null,
+   "expect": {
+    "action": "list",
+    "body": "GCC-GAD",
+    "zone": "Sholinganallur",
+    "place_outside": null,
+    "body_outside": null,
+    "topic": "CIVIC_FACILITIES",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Lists civic building complaints in Sholinganallur under General Administration",
+    "Says plainly if there are none"
+   ],
+   "must_not": [
+    "Must not brief the whole zone instead of filtering"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": null,
+   "model": "openai/gpt-oss-20b",
+   "model_needed": false,
+   "tokens": 2075,
+   "calls": 1,
+   "hops": [
+    "groq/openai/gpt-oss-20b"
+   ],
+   "latency_ms": 724,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": null,
+     "kind": "do",
+     "ms": 710,
+     "trace": [
+      "Thinking",
+      "Building the screen"
+     ]
+    }
+   ],
+   "said": "There are no cases today for this view.",
+   "said_lang": "en",
+   "voice": "There are no cases today for this view.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "There are no cases today for this view.",
+    "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை."
+   },
+   "stage": {
+    "recipe": "cases",
+    "title": "Cases · Sholinganallur · Tax, certificates & electoral services · today",
+    "takeaway": null,
+    "say": {
+     "en": "There are no cases today for this view.",
+     "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை."
+    },
+    "scope": {
+     "period": "daily",
+     "zone": 15,
+     "dept": null,
+     "cat": "ADMIN_SERVICES",
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "daily",
+     "zones": [
+      15
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "ADMIN_SERVICES",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": "zone",
+     "order": "top",
+     "n": null,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": null
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [],
+    "blocks": [
+     {
+      "kind": "Note",
+      "id": "none",
+      "text": "No incidents match this view."
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "cases"
+   },
+   "figures": [],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "none_screen",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": false,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 0,
+      "longest_english_run": 8,
+      "sample": "There are no cases today for this view."
+     }
+    },
+    "6_scope": {
+     "pass": false,
+     "evidence": {
+      "mismatch": [
+       {
+        "field": "body",
+        "want": "GCC-GAD",
+        "got": null
+       },
+       {
+        "field": "topic",
+        "want": "CIVIC_FACILITIES",
+        "got": "ADMIN_SERVICES"
+       }
+      ],
+      "screen_scope": {
+       "period": "daily",
+       "zone": 15,
+       "dept": null,
+       "cat": "ADMIN_SERVICES",
+       "taluk": null,
+       "sev": null
+      }
+     }
+    },
+    "1_honest_none": {
+     "pass": true,
+     "evidence": {
+      "said": "There are no cases today for this view.",
+      "asked": {
+       "zone": 15,
+       "dept": "GCC-GAD",
+       "cat": "CIVIC_FACILITIES",
+       "sev": null,
+       "status": null
+      },
+      "period": null,
+      "oracle": [
+       {
+        "window": "the whole record",
+        "n": 1
+       }
+      ],
+      "window_said": "daily",
+      "in_that_window": 0,
+      "verdict": "true for the window it says; the row asked no window"
+     }
+    }
+   },
+   "reasons": [
+    "said none about the wrong thing",
+    "5_language failed",
+    "6_scope failed"
+   ],
+   "unchecked_must": [
+    "Lists civic building complaints in Sholinganallur under General Administration",
+    "must not: Must not brief the whole zone instead of filtering"
+   ]
+  },
+  {
+   "id": "tanglish-other_body-03",
+   "lang": "tanglish",
+   "family": "other_body",
+   "text": "Mangalore pakkam Adyar nu oru ooru iruke, anga vellam eppadi",
+   "earlier": null,
+   "expect": {
+    "action": "no_data",
+    "body": null,
+    "zone": null,
+    "place_outside": "Adyar, Mangaluru",
+    "body_outside": null,
+    "topic": "FLOOD_WATERLOGGING",
+    "status": null,
+    "severity": null,
+    "period": null
+   },
+   "must": [
+    "Understands the speaker means an Adyar near Mangaluru, not Chennai",
+    "Says it has no data there"
+   ],
+   "must_not": [
+    "Must not give flood cases from the Chennai Adyar zone"
+   ],
+   "must_not_contain": [],
+   "lane": "planner",
+   "path": [
+    "agent"
+   ],
+   "kind": "do",
+   "note": "rules-after-clarify",
+   "model": "openai/gpt-oss-20b",
+   "model_needed": false,
+   "tokens": 2073,
+   "calls": 1,
+   "hops": [
+    "hedge:gemini/gemini-3.5-flash-lite",
+    "groq/openai/gpt-oss-20b"
+   ],
+   "latency_ms": 3686,
+   "rounds": [
+    {
+     "round": 0,
+     "status": 200,
+     "lane": "planner",
+     "note": "rules-after-clarify",
+     "kind": "do",
+     "ms": 3676,
+     "trace": [
+      "Thinking",
+      "Reading the data",
+      "Read 18 cases"
+     ]
+    }
+   ],
+   "said": "18 cases this week; here are the 12 that matter most. 5 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar. PWD Water Resources holds 5 of them. Say \"read them\", or \"open\" and a number.",
+   "said_lang": "en",
+   "voice": "18 cases this week; here are the 12 that matter most. 5 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar.",
+   "items": [],
+   "options": [],
+   "spoken": {
+    "en": "18 cases this week; here are the 12 that matter most. 5 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar. PWD Water Resources holds 5 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இந்த வாரம் 18 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Flooding & waterlogging at Adayar in Adyar, standing water at Guindy Industrial Estate in Adyar. PWD Water Resources வசம் 5. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+   },
+   "stage": {
+    "recipe": "cases",
+    "title": "Cases · Adyar · Flooding & waterlogging · this week",
+    "takeaway": {
+     "en": "5 of the 12 shown are past their deadline.",
+     "ta": "காட்டப்பட்ட 12-இல் 5 காலக்கெடுவைத் தாண்டியவை."
+    },
+    "say": {
+     "en": "18 cases this week; here are the 12 that matter most. 5 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar. PWD Water Resources holds 5 of them. Say \"read them\", or \"open\" and a number.",
+     "ta": "இந்த வாரம் 18 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Flooding & waterlogging at Adayar in Adyar, standing water at Guindy Industrial Estate in Adyar. PWD Water Resources வசம் 5. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."
+    },
+    "scope": {
+     "period": "weekly",
+     "zone": 13,
+     "dept": null,
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null
+    },
+    "slots": {
+     "period": "weekly",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": "FLOOD_WATERLOGGING",
+     "taluk": null,
+     "sev": null,
+     "status": null,
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "sources": [
+     "incidents"
+    ],
+    "asOf": "2026-11-06 18:08:00",
+    "notes": [],
+    "next": [
+     {
+      "label": {
+       "en": "Draft for the 5 past deadline",
+       "ta": "காலக்கெடு தாண்டிய 5-க்கு வரைவு"
+      },
+      "kind": "draft",
+      "ids": [
+       "INC-20260708-E4914B",
+       "INC-20261104-39E85E",
+       "INC-20261104-1D6F0C",
+       "INC-20261104-A0AEDD",
+       "INC-20261104-88A6DF"
+      ],
+      "recipe": null,
+      "slots": null,
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Show them on a map",
+       "ta": "வரைபடத்தில் காட்டு"
+      },
+      "kind": "direct",
+      "recipe": "map",
+      "slots": {
+       "period": "weekly",
+       "zones": [
+        13
+       ],
+       "dept": null,
+       "depts": [],
+       "cat": "FLOOD_WATERLOGGING",
+       "taluk": null,
+       "sev": null,
+       "status": null,
+       "q": null,
+       "metric": null,
+       "measure": null,
+       "by": null,
+       "order": "top",
+       "n": 20,
+       "id": null,
+       "name": null,
+       "what": "severe",
+       "sort": "priority",
+       "fresh": true
+      },
+      "ids": [],
+      "text": null
+     },
+     {
+      "label": {
+       "en": "Which department is slowest?",
+       "ta": "எந்தத் துறை மெதுவாக உள்ளது?"
+      },
+      "kind": "direct",
+      "recipe": "performance",
+      "slots": {
+       "by": "dept",
+       "period": "weekly"
+      },
+      "ids": [],
+      "text": null
+     }
+    ],
+    "blocks": [
+     {
+      "kind": "Kpis",
+      "id": "kpis",
+      "title": "Key numbers",
+      "items": [
+       {
+        "key": "total",
+        "label": "All cases, this week",
+        "value": 18,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       },
+       {
+        "key": "late",
+        "label": "Past their deadline",
+        "value": 5,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "bad",
+        "spark": []
+       },
+       {
+        "key": "dept",
+        "label": "Held by PWD Water Resources",
+        "value": 5,
+        "unit": null,
+        "prev": null,
+        "delta": null,
+        "tone": "neutral",
+        "spark": []
+       }
+      ]
+     },
+     {
+      "kind": "CaseList",
+      "id": "cases",
+      "title": "Cases · Adyar · Flooding & waterlogging · this week",
+      "source": "list",
+      "sev": null,
+      "total": 18,
+      "rows": [
+       {
+        "id": "INC-20261106-8D91A1",
+        "title": "Knee-deep water stagnation in our area; vehicles cannot pass",
+        "sev": "Low",
+        "status": "Under review",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+        "ward": 174,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-06 13:33:00",
+        "overdue": false,
+        "lat": 13.0002073,
+        "lon": 80.2172367,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261105-75A900",
+        "title": "தினமும் Sathya Street வழியாகச் செல்கிறேன். Stagnation of Water தொடர்பாக புகார்",
+        "sev": "Low",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+        "ward": 180,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-05 15:17:00",
+        "overdue": false,
+        "lat": 12.9923533,
+        "lon": 80.2437516,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261106-D39D78",
+        "title": "Canal overflowing near Adambakkam; water entering nearby streets including Jeevan Nagar 4th Street, Guru Brindavan",
+        "sev": "Medium",
+        "status": "Open",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Adambakkam",
+        "ward": 174,
+        "dept": "PWD-WRD",
+        "deptName": "PWD Water Resources",
+        "complaints": 0,
+        "t": "2026-11-06 13:13:14",
+        "overdue": false,
+        "lat": 12.99689967275567,
+        "lon": 80.20843154376522,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261105-7BC208",
+        "title": "முழங்கால் அளவு தண்ணீர் தேங்கியுள்ளது. வாகனங்கள் செல்ல முடியவில்லை",
+        "sev": "Medium",
+        "status": "Under review",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Bharathi Avenue I Street, Bharathi Avenue, Kottur",
+        "ward": 172,
+        "dept": "GCC-SWD",
+        "deptName": "Storm Water Drain",
+        "complaints": 1,
+        "t": "2026-11-05 17:38:00",
+        "overdue": false,
+        "lat": 13.0046136,
+        "lon": 80.244575,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261105-5814DE",
+        "title": "Bazaar St, Guindy பகுதியில் இடுப்பளவு மழைநீர் தேங்கியுள்ளது",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Guindy",
+        "ward": 174,
+        "dept": "PWD-WRD",
+        "deptName": "PWD Water Resources",
+        "complaints": 0,
+        "t": "2026-11-05 23:59:31",
+        "overdue": false,
+        "lat": 13.006499,
+        "lon": 80.216759,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261105-5A5202",
+        "title": "Viaya Nagar Bazaar St road full ah thanni, 2 adi",
+        "sev": "High",
+        "status": "Resolved",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Vijaya Nagar",
+        "ward": 179,
+        "dept": "PWD-WRD",
+        "deptName": "PWD Water Resources",
+        "complaints": 0,
+        "t": "2026-11-05 15:10:42",
+        "overdue": false,
+        "lat": 12.97665,
+        "lon": 80.226544,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20260708-E4914B",
+        "title": "Families stranded by flooding at Adayar",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Adayar",
+        "ward": 171,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 1,
+        "t": "2026-11-05 09:17:00",
+        "overdue": true,
+        "lat": 13.0095899,
+        "lon": 80.2345246,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261105-BE0B74",
+        "title": "Baby Nagar: Sannathi St fully flooded near church, about 1.5 ft",
+        "sev": "High",
+        "status": "Resolved",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Baby Nagar",
+        "ward": 179,
+        "dept": "PWD-WRD",
+        "deptName": "PWD Water Resources",
+        "complaints": 0,
+        "t": "2026-11-05 05:27:57",
+        "overdue": false,
+        "lat": 12.980688,
+        "lon": 80.224547,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261104-39E85E",
+        "title": "rain water stagnant knee-deep on balaji nagar main rd, guindy industrial estate near subway",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Guindy Industrial Estate",
+        "ward": 170,
+        "dept": "PWD-WRD",
+        "deptName": "PWD Water Resources",
+        "complaints": 0,
+        "t": "2026-11-04 23:51:27",
+        "overdue": true,
+        "lat": 13.010222,
+        "lon": 80.211094,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261104-1D6F0C",
+        "title": "Families stranded by flooding at Velachery",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Velachery",
+        "ward": 177,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-04 20:55:32",
+        "overdue": true,
+        "lat": 12.983325,
+        "lon": 80.216688,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261104-A0AEDD",
+        "title": "Tree falls across road at Taramani",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Taramani",
+        "ward": 180,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-04 12:32:35",
+        "overdue": true,
+        "lat": 12.983729,
+        "lon": 80.242002,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       },
+       {
+        "id": "INC-20261104-88A6DF",
+        "title": "Structure collapse reported in Kotturpuram",
+        "sev": "High",
+        "status": "In progress",
+        "zone": 13,
+        "zoneName": "Adyar",
+        "place": "Kotturpuram",
+        "ward": 171,
+        "dept": "POL-GCP",
+        "deptName": "Greater Chennai Police",
+        "complaints": 0,
+        "t": "2026-11-04 11:13:54",
+        "overdue": true,
+        "lat": 13.015288,
+        "lon": 80.240515,
+        "why": null,
+        "cat": "Flooding & waterlogging"
+       }
+      ]
+     },
+     {
+      "kind": "MapView",
+      "id": "map",
+      "title": "Where they are",
+      "points": 12,
+      "rule": "Numbered as in the list; cases without an exact place are not drawn."
+     }
+    ]
+   },
+   "steps": [],
+   "stage_op": null,
+   "drafted": [],
+   "rules": null,
+   "error": null,
+   "console": {
+    "page": "overview",
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null,
+    "panel": null,
+    "incident": null,
+    "stage_open": "cases"
+   },
+   "figures": [
+    {
+     "where": "tile",
+     "label": "All cases, this week",
+     "value": 18
+    },
+    {
+     "where": "tile",
+     "label": "Past their deadline",
+     "value": 5
+    },
+    {
+     "where": "tile",
+     "label": "Held by PWD Water Resources",
+     "value": 5
+    },
+    {
+     "where": "list total",
+     "label": "Cases · Adyar · Flooding & waterlogging · this week",
+     "value": 18
+    }
+   ],
+   "earlier_outcomes": [],
+   "grade": "wrong",
+   "confident_wrong": true,
+   "did": "list",
+   "code_lane": false,
+   "checks": {
+    "6_must_not_contain": {
+     "pass": true,
+     "evidence": {
+      "looked_for": []
+     }
+    },
+    "6_leak": {
+     "pass": true,
+     "evidence": "no phone, Aadhaar or e-mail in anything shown"
+    },
+    "5_language": {
+     "pass": false,
+     "evidence": {
+      "rule": "Tamil script for Tamil or Tanglish (normalise.ts:109, round.ts:105); proper names may stay in Latin letters",
+      "tamil_letters": 0,
+      "longest_english_run": 35,
+      "sample": "cases this week; here are the that matter most. are past their deadline and need you first: at in and standing water at "
+     }
+    },
+    "6_outside": {
+     "pass": false,
+     "evidence": {
+      "did": "list",
+      "screen": "cases",
+      "scope": {
+       "period": "weekly",
+       "zone": 13,
+       "dept": null,
+       "cat": "FLOOD_WATERLOGGING",
+       "taluk": null,
+       "sev": null
+      },
+      "steps": [],
+      "outside": {
+       "place": "Adyar, Mangaluru",
+       "body": null
+      },
+      "rule": "never a filter, brief or figure on a body of ours"
+     }
+    }
+   },
+   "reasons": [
+    "put a filter, brief or figure on a body of ours",
+    "5_language failed",
+    "6_outside failed"
+   ],
+   "unchecked_must": [
+    "Understands the speaker means an Adyar near Mangaluru, not Chennai",
+    "Says it has no data there",
+    "must not: Must not give flood cases from the Chennai Adyar zone"
+   ]
+  }
+ ]
+}

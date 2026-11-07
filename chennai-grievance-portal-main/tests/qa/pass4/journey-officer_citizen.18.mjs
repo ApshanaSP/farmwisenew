@@ -1,0 +1,20 @@
+// officer: click Approve on the top case and record exactly what the browser sends and gets back
+import { openWithState, shot, base } from "./journey-officer_citizen.lib.mjs";
+const { br, ctx, page, errs } = await openWithState("../.qa-officer-state.json", { width: 1366, height: 800 });
+await page.goto(base + "/officer", { waitUntil: "networkidle" });
+await page.waitForTimeout(2500);
+const log = [];
+page.on("response", async (r) => { if (r.request().method() !== "GET") log.push(r.request().method() + " " + r.url().replace(base, "") + " " + r.status() + " " + (await r.text().catch(() => "")).slice(0, 200)); });
+const title = await page.locator('button:has-text("Approve")').first().evaluate((b) => b.closest("div[class*=flex]")?.parentElement?.innerText?.slice(0, 80));
+console.log("approving:", JSON.stringify(title));
+await page.locator('button:has-text("Approve")').first().click();
+await page.waitForTimeout(4000);
+console.log("NETWORK", JSON.stringify(log));
+console.log("toast-like:", await page.locator('[role=status],[role=alert],[class*=toast]').allInnerTexts());
+const top = await page.locator('button:has-text("Approve")').first().evaluate((b) => b.closest("div[class*=flex]")?.parentElement?.innerText?.slice(0, 80));
+console.log("top now:", JSON.stringify(top));
+await page.reload({ waitUntil: "networkidle" }); await page.waitForTimeout(2500);
+const t = await page.locator("body").innerText();
+console.log("after reload: waiting", t.match(/WAITING FOR YOUR APPROVAL\s+(\d+)/)?.[1], "To approve", t.match(/(\d+)\s+To approve/)?.[1], "In action", t.match(/(\d+)\s+In action/)?.[1]);
+console.log("ERRS", JSON.stringify(errs));
+await br.close();

@@ -1,0 +1,24 @@
+import { openWithCookie, shot, text, base } from "./journey-officer_citizen.lib.mjs";
+const { br, ctx, page, errs } = await openWithCookie("citizenA", { width: 360, height: 740 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await page.goto(base + "/citizen/file-complaint", { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+await shot(page, "citizen-02b-step1-again-360");
+console.log("step1 again:", (await text(page, 1500)).split("Your details")[1]?.slice(0, 500));
+if (await page.locator('button:has-text("Male")').count()) { await page.click('button:has-text("Male")'); await page.locator("input").first().fill("12 Test Street, Adyar, Chennai 600020"); }
+await page.click('button:has-text("Next: Location")');
+await page.waitForTimeout(2000);
+const map = page.locator(".leaflet-container").first();
+await map.scrollIntoViewIfNeeded();
+const bb = await map.boundingBox();
+await page.mouse.click(bb.x + bb.width * 0.5, bb.y + bb.height * 0.5);
+await page.waitForTimeout(3000);
+await shot(page, "citizen-04-pin-360");
+console.log(await page.locator('body').innerText().then(t=>t.split("Pin:")[1]?.slice(0,700)));
+console.log("inputs", await page.locator("input").evaluateAll(es=>es.map(e=>(e.placeholder||e.name)+"="+e.value)));
+await page.fill('input[placeholder*="Gandhi"]', "Gandhi Nagar 2nd Cross");
+await page.click('button:has-text("Next: Type")');
+await page.waitForTimeout(2500);
+await shot(page, "citizen-05-type-360");
+console.log("T:", (await text(page, 2200)).split("Complaint")[1]?.slice(0,1500));
+console.log("ERRS", JSON.stringify(errs));
+await br.close();

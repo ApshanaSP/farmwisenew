@@ -1,0 +1,28 @@
+// journey-judge walk 5: menu, workspaces, sources, audit, report controls. node tests/qa/pass4/journey-judge.walk5.mjs
+import { chromium } from "playwright";
+import fs from "node:fs";
+const base = "http://localhost:3180", D = "../docs/qa/pass4/evidence/journeys/judge/";
+const { accounts } = await import("../seed-local-users.mjs");
+const acc = accounts().find((x) => x.key === "collector");
+const br = await chromium.launch({ args: ["--mute-audio"] });
+const page = await (await br.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+const errs = [];
+page.on("console", (m) => { if (m.type() === "error") errs.push(m.text().slice(0, 200)); });
+page.on("pageerror", (e) => errs.push("PAGEERROR " + String(e).slice(0, 200)));
+page.on("response", (r) => { if (r.status() >= 400) errs.push(`HTTP ${r.status()} ${r.url().slice(0, 120)}`); });
+await page.goto(base + "/login", { waitUntil: "networkidle" });
+await page.locator("input[type=email]").first().fill(acc.email);
+await page.locator("input[type=password]").first().fill(acc.password);
+await page.getByRole("button", { name: /^Sign in$/ }).click();
+await page.waitForURL(/\/collector/, { timeout: 60000 });
+await page.waitForTimeout(8000);
+const snap = async (name, wait = 2500) => { await page.waitForTimeout(wait); await page.screenshot({ path: D + name + ".png" }); const t = await page.locator("body").innerText(); fs.writeFileSync(D + name + ".txt", t.slice(0, 7000)); console.log("==", name, errs.length, "\n", t.replace(/\n+/g, " | ").slice(0, 900)); };
+const step = async (name, fn) => { try { await fn(); await snap(name); } catch (e) { console.log("FAIL", name, e.message.split("\n")[0].slice(0, 120)); await page.screenshot({ path: D + name + "-FAIL.png" }); } };
+const menu = async (item) => { await page.locator("button", { hasText: "Menu" }).first().click({ timeout: 8000 }); await page.waitForTimeout(600); await page.getByText(item, { exact: true }).first().click({ timeout: 8000 }); };
+await step("17-workspaces", () => menu("Workspaces"));
+await page.keyboard.press("Escape");
+await step("18-data-sources", () => menu("Data sources"));
+await page.keyboard.press("Escape");
+await step("19-export-report", () => menu("Export report"));
+fs.writeFileSync(D + "errs5.json", JSON.stringify(errs, null, 1));
+await br.close();

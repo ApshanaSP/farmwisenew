@@ -1,0 +1,2147 @@
+[
+ {
+  "q": "List the taluks with the highest number of unresolved incidents during the last month",
+  "status": 200,
+  "err": null,
+  "headline": "2,067 incidents still open · last 30 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "ed1c79bf-bf37-48dc-b009-6d2852a2d24e",
+   "kind": "answer",
+   "language": "en",
+   "display": "kpi",
+   "headline": "2,067 incidents still open · last 30 days",
+   "answerMarkdown": "**2,067** incidents reported in the last 30 days are still open, 101 of them severe; 54 deaths recorded in them.",
+   "voiceSummary": "2,067 incidents reported in the last 30 days are still open, 101 of them severe; 54 deaths recorded in them.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [],
+   "kpis": [
+    {
+     "label": "Reported",
+     "value": 2067,
+     "prev": 247,
+     "tone": "info"
+    },
+    {
+     "label": "Severe",
+     "value": 101,
+     "tone": "sev"
+    },
+    {
+     "label": "Still open",
+     "value": 2067
+    },
+    {
+     "label": "Deaths",
+     "value": 54,
+     "tone": "sev"
+    }
+   ],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "monthly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 30 days · District-wide · all departments · as of 7 Nov, 10:36 AM",
+   "asOf": "2026-11-07 10:36:56",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "count_incidents",
+      "args": {
+       "period": "monthly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": true,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident count: asks how many."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_COUNT",
+   "responseType": "kpi",
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "INCIDENT_COUNT",
+    "activeFilters": {
+     "period": "monthly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": true,
+     "overdue": false
+    },
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "kpi"
+   },
+   "sessionId": "7446b531-e572-4d6d-9309-ed3293ffcc66"
+  }
+ },
+ {
+  "q": "Show every source and application record used to create this briefing",
+  "status": 200,
+  "err": null,
+  "headline": "587 severe events · 1,238 open citizen complaints · 2,412 ongoing incidents",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "visualAsked",
+   "offline",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "79a544b6-f87c-423e-ba8e-97600c49e303",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "587 severe events · 1,238 open citizen complaints · 2,412 ongoing incidents",
+   "answerMarkdown": "In the last 90 days: **587** severe events, **1,238** open citizen complaints, **2,412** ongoing incidents, **11,687** resolved this quarter.\n\nMost open incidents: Royapuram (268), Anna Nagar (229), Teynampet (226).",
+   "voiceSummary": "In the last 90 days: 587 severe events, 1,238 open citizen complaints, 2,412 ongoing incidents, 11,687 resolved this quarter.",
+   "voiceLang": "en-IN",
+   "chart": {
+    "type": "horizontal_bar",
+    "dataset": "zones",
+    "title": "Zones by open incidents",
+    "subtitle": "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only; last 90 da",
+    "x": "name",
+    "y": [
+     "open"
+    ],
+    "series": null,
+    "compare": false,
+    "normalBand": false,
+    "threshold": null,
+    "highlight": "max",
+    "callout": true,
+    "sort": "desc",
+    "topN": 10,
+    "labels": []
+   },
+   "datasets": [
+    {
+     "id": "kpi_series",
+     "title": "Headline figures over the period",
+     "fields": [
+      {
+       "key": "bucket",
+       "label": "Bucket",
+       "kind": "time"
+      },
+      {
+       "key": "severe",
+       "label": "Severe events",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "complaints",
+       "label": "Open citizen complaints",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "ongoing",
+       "label": "Ongoing incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "resolved",
+       "label": "Resolved this quarter",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "bucket": 1,
+       "severe": 43,
+       "complaints": 1,
+       "ongoing": 25,
+       "resolved": 1057
+      },
+      {
+       "bucket": 2,
+       "severe": 28,
+       "complaints": 0,
+       "ongoing": 15,
+       "resolved": 918
+      },
+      {
+       "bucket": 3,
+       "severe": 46,
+       "complaints": 0,
+       "ongoing": 25,
+       "resolved": 1099
+      },
+      {
+       "bucket": 4,
+       "severe": 28,
+       "complaints": 0,
+       "ongoing": 24,
+       "resolved": 962
+      },
+      {
+       "bucket": 5,
+       "severe": 45,
+       "complaints": 1,
+       "ongoing": 25,
+       "resolved": 1061
+      },
+      {
+       "bucket": 6,
+       "severe": 37,
+       "complaints": 2,
+       "ongoing": 27,
+       "resolved": 1000
+      },
+      {
+       "bucket": 7,
+       "severe": 33,
+       "complaints": 8,
+       "ongoing": 52,
+       "resolved": 1051
+      },
+      {
+       "bucket": 8,
+       "severe": 50,
+       "complaints": 24,
+       "ongoing": 80,
+       "resolved": 929
+      },
+      {
+       "bucket": 9,
+       "severe": 44,
+       "complaints": 50,
+       "ongoing": 109,
+       "resolved": 946
+      },
+      {
+       "bucket": 10,
+       "severe": 51,
+       "complaints": 54,
+       "ongoing": 151,
+       "resolved": 867
+      },
+      {
+       "bucket": 11,
+       "severe": 87,
+       "complaints": 188,
+       "ongoing": 309,
+       "resolved": 1034
+      },
+      {
+       "bucket": 12,
+       "severe": 36,
+       "complaints": 253,
+       "ongoing": 472,
+       "resolved": 622
+      },
+      {
+       "bucket": 13,
+       "severe": 59,
+       "complaints": 657,
+       "ongoing": 1098,
+       "resolved": 141
+      }
+     ]
+    },
+    {
+     "id": "zones",
+     "title": "Zones",
+     "drill": {
+      "field": "zone",
+      "action": "filter_zone"
+     },
+     "fields": [
+      {
+       "key": "name",
+       "label": "Zone",
+       "kind": "category"
+      },
+      {
+       "key": "zone",
+       "label": "Zone number",
+       "kind": "id"
+      },
+      {
+       "key": "severe",
+       "label": "Severe incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "high",
+       "label": "High incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "n",
+       "label": "Incidents reported",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "open",
+       "label": "Open incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "complaints",
+       "label": "Open complaints",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "n_prev",
+       "label": "Incidents reported, the period before",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "name": "Royapuram",
+       "zone": 5,
+       "severe": 100,
+       "high": 273,
+       "n": 1541,
+       "open": 268,
+       "complaints": 156,
+       "n_prev": 1264
+      },
+      {
+       "name": "Anna Nagar",
+       "zone": 8,
+       "severe": 58,
+       "high": 260,
+       "n": 1318,
+       "open": 229,
+       "complaints": 96,
+       "n_prev": 1252
+      },
+      {
+       "name": "Adyar",
+       "zone": 13,
+       "severe": 47,
+       "high": 242,
+       "n": 1286,
+       "open": 191,
+       "complaints": 100,
+       "n_prev": 1075
+      },
+      {
+       "name": "Thiru-Vi-Ka-Nagar",
+       "zone": 6,
+       "severe": 42,
+       "high": 176,
+       "n": 1188,
+       "open": 210,
+       "complaints": 91,
+       "n_prev": 1057
+      },
+      {
+       "name": "Tondiarpet",
+       "zone": 4,
+       "severe": 37,
+       "high": 191,
+       "n": 1166,
+       "open": 186,
+       "complaints": 134,
+       "n_prev": 945
+      },
+      {
+       "name": "Kodambakkam",
+       "zone": 10,
+       "severe": 33,
+       "high": 200,
+       "n": 1338,
+       "open": 212,
+       "complaints": 109,
+       "n_prev": 1154
+      },
+      {
+       "name": "Ambattur",
+       "zone": 7,
+       "severe": 44,
+       "high": 165,
+       "n": 944,
+       "open": 148,
+       "complaints": 76,
+       "n_prev": 901
+      },
+      {
+       "name": "Teynampet",
+       "zone": 9,
+       "severe": 39,
+       "high": 164,
+       "n": 1346,
+       "open": 226,
+       "complaints": 149,
+       "n_prev": 1167
+      },
+      {
+       "name": "Valasaravakkam",
+       "zone": 11,
+       "severe": 43,
+       "high": 136,
+       "n": 854,
+       "open": 128,
+       "complaints": 64,
+       "n_prev": 728
+      },
+      {
+       "name": "Thiruvottiyur",
+       "zone": 1,
+       "severe": 34,
+       "high": 118,
+       "n": 786,
+       "open": 103,
+       "complaints": 58,
+       "n_prev": 758
+      },
+      {
+       "name": "Alandur",
+       "zone": 12,
+       "severe": 33,
+       "high": 119,
+       "n": 685,
+       "open": 114,
+       "complaints": 40,
+       "n_prev": 619
+      },
+      {
+       "name": "Sholinganallur",
+       "zone": 15,
+       "severe": 27,
+       "high": 129,
+       "n": 686,
+       "open": 124,
+       "complaints": 38,
+       "n_prev": 618
+      },
+      {
+       "name": "Madhavaram",
+       "zone": 3,
+       "severe": 32,
+       "high": 95,
+       "n": 631,
+       "open": 93,
+       "complaints": 49,
+       "n_prev": 586
+      },
+      {
+       "name": "Perungudi",
+       "zone": 14,
+       "severe": 9,
+       "high": 84,
+       "n": 563,
+       "open": 87,
+       "complaints": 61,
+       "n_prev": 459
+      },
+      {
+       "name": "Manali",
+       "zone": 2,
+       "severe": 6,
+       "high": 48,
+       "n": 286,
+       "open": 36,
+       "complaints": 17,
+       "n_prev": 222
+      }
+     ]
+    },
+    {
+     "id": "departments",
+     "title": "Departments",
+     "drill": {
+      "field": "code",
+      "action": "filter_dept"
+     },
+     "fields": [
+      {
+       "key": "name",
+       "label": "Department",
+       "kind": "category"
+      },
+      {
+       "key": "code",
+       "label": "Code",
+       "kind": "id"
+      },
+      {
+       "key": "open",
+       "label": "Open incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "n",
+       "label": "Incidents reported",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "severe",
+       "label": "Severe incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "unverified",
+       "label": "Awaiting verification",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "name": "Greater Chennai Police",
+       "code": "POL-GCP",
+       "open": 1055,
+       "n": 5265,
+       "severe": 259,
+       "unverified": 0
+      },
+      {
+       "name": "Storm Water Drain",
+       "code": "GCC-SWD",
+       "open": 291,
+       "n": 1638,
+       "severe": 1,
+       "unverified": 19
+      },
+      {
+       "name": "Roads & Building Permissions",
+       "code": "GCC-ENG",
+       "open": 257,
+       "n": 1258,
+       "severe": 0,
+       "unverified": 15
+      },
+      {
+       "name": "PWD Water Resources",
+       "code": "PWD-WRD",
+       "open": 242,
+       "n": 1185,
+       "severe": 255,
+       "unverified": 9
+      },
+      {
+       "name": "Public Health (GCC)",
+       "code": "GCC-HLT",
+       "open": 113,
+       "n": 1292,
+       "severe": 0,
+       "unverified": 22
+      },
+      {
+       "name": "Street Lighting & Electrical",
+       "code": "GCC-ELE",
+       "open": 102,
+       "n": 1116,
+       "severe": 5,
+       "unverified": 12
+      },
+      {
+       "name": "Solid Waste Management",
+       "code": "GCC-SWM",
+       "open": 96,
+       "n": 1705,
+       "severe": 0,
+       "unverified": 18
+      },
+      {
+       "name": "PWD Buildings",
+       "code": "PWD-BLD",
+       "open": 53,
+       "n": 154,
+       "severe": 10,
+       "unverified": 0
+      },
+      {
+       "name": "General Administration",
+       "code": "GCC-GAD",
+       "open": 50,
+       "n": 292,
+       "severe": 0,
+       "unverified": 3
+      },
+      {
+       "name": "District Disaster Management",
+       "code": "DIST-DM",
+       "open": 43,
+       "n": 162,
+       "severe": 1,
+       "unverified": 0
+      },
+      {
+       "name": "Parks & Play Fields",
+       "code": "GCC-PRK",
+       "open": 39,
+       "n": 352,
+       "severe": 0,
+       "unverified": 4
+      },
+      {
+       "name": "Revenue (Tax & Licence)",
+       "code": "GCC-REV",
+       "open": 33,
+       "n": 237,
+       "severe": 0,
+       "unverified": 3
+      },
+      {
+       "name": "Land & Estate",
+       "code": "GCC-LND",
+       "open": 9,
+       "n": 36,
+       "severe": 0,
+       "unverified": 1
+      },
+      {
+       "name": "Bridges",
+       "code": "GCC-BRG",
+       "open": 5,
+       "n": 21,
+       "severe": 0,
+       "unverified": 0
+      },
+      {
+       "name": "Buildings (GCC)",
+       "code": "GCC-BLD",
+       "open": 4,
+       "n": 27,
+       "severe": 0,
+       "unverified": 1
+      },
+      {
+       "name": "Pollution Control Board",
+       "code": "TNPCB",
+       "open": 4,
+       "n": 17,
+       "severe": 0,
+       "unverified": 0
+      },
+      {
+       "name": "Government Hospitals",
+       "code": "HLT-DMS",
+       "open": 3,
+       "n": 98,
+       "severe": 56,
+       "unverified": 0
+      },
+      {
+       "name": "Education",
+       "code": "GCC-EDU",
+       "open": 3,
+       "n": 54,
+       "severe": 0,
+       "unverified": 1
+      },
+      {
+       "name": "Mechanical Engineering",
+       "code": "GCC-MEC",
+       "open": 3,
+       "n": 19,
+       "severe": 0,
+       "unverified": 1
+      },
+      {
+       "name": "Chennai Metrowater",
+       "code": "CMWSSB",
+       "open": 2,
+       "n": 37,
+       "severe": 0,
+       "unverified": 0
+      },
+      {
+       "name": "Family Welfare",
+       "code": "GCC-FWD",
+       "open": 2,
+       "n": 30,
+       "severe": 0,
+       "unverified": 1
+      },
+      {
+       "name": "Financial Management Unit",
+       "code": "GCC-FMU",
+       "open": 2,
+       "n": 12,
+       "severe": 0,
+       "unverified": 0
+      },
+      {
+       "name": "Council",
+       "code": "GCC-CNL",
+       "open": 1,
+       "n": 11,
+       "severe": 0,
+       "unverified": 0
+      }
+     ]
+    }
+   ],
+   "kpis": [
+    {
+     "label": "Severe events",
+     "value": 587,
+     "prev": 361,
+     "tone": "sev"
+    },
+    {
+     "label": "Open citizen complaints",
+     "value": 1238,
+     "prev": 0,
+     "tone": "high"
+    },
+    {
+     "label": "Ongoing incidents",
+     "value": 2412,
+     "prev": 229,
+     "tone": "info"
+    },
+    {
+     "label": "Resolved this quarter",
+     "value": 11687,
+     "prev": 12289,
+     "tone": "low"
+    }
+   ],
+   "table": null,
+   "followUps": [],
+   "chips": [
+    "Last 24 hours only",
+    "Royapuram only",
+    "Greater Chennai Police only",
+    "Severe incidents only"
+   ],
+   "consoleActions": [
+    {
+     "action": "filter_zone",
+     "label": "Filter the console to Royapuram",
+     "zone": 5,
+     "dept": null,
+     "taluk": null,
+     "cat": null,
+     "period": null,
+     "id": null
+    }
+   ],
+   "autoActions": [],
+   "caveats": [
+    "News last collected 16 hours ago; this answer may be incomplete."
+   ],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 7 Nov, 10:36 AM",
+   "asOf": "2026-11-07 10:36:56",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "overview_kpis",
+      "args": {
+       "scope": {
+        "period": "quarterly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       }
+      },
+      "ms": 1433
+     },
+     {
+      "name": "zones",
+      "args": {
+       "scope": {
+        "period": "quarterly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       }
+      },
+      "ms": 392
+     },
+     {
+      "name": "departments",
+      "args": {
+       "scope": {
+        "period": "quarterly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       }
+      },
+      "ms": 19
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "function",
+      "name": "intel.overview",
+      "detail": "KPI tiles"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "function",
+      "name": "intel.scopeWhere"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "table",
+      "name": "ref_wards"
+     },
+     {
+      "kind": "function",
+      "name": "intel.overview",
+      "detail": "department list"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 51,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [],
+    "limits": [
+     "The AI service is not available right now, so this was answered from the data by rules, without the language model.",
+     "Large requests are summarised rather than listed: at most 20 records are shown in an answer and 1,000 rows exported."
+    ]
+   },
+   "download": null,
+   "visualAsked": false,
+   "offline": true,
+   "context": {
+    "lastIntent": "bulk_request",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null
+    },
+    "lastResponseType": "text",
+    "selectedIncidentId": null,
+    "selectedTitle": null,
+    "selectedNewsStoryId": null,
+    "lastVisualization": "horizontal_bar"
+   },
+   "sessionId": "f02660e3-d3e5-4b1d-8b44-b4743301ba14"
+  }
+ },
+ {
+  "q": "Save this workspace as Collector's Daily Briefing and reopen last week's version",
+  "status": 200,
+  "err": null,
+  "headline": "1,260 reported · 1,109 still open · 325 past deadline",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "visualAsked",
+   "offline",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "6dfdbdf6-ce62-4955-b7bb-deb820fe5304",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "1,260 reported · 1,109 still open · 325 past deadline",
+   "answerMarkdown": "In the last 7 days: **1,260** reported, **1,109** still open, **325** past deadline, **59** severe.",
+   "voiceSummary": "In the last 7 days: 1,260 reported, 1,109 still open, 325 past deadline, 59 severe.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "attention",
+     "title": "Needs your attention",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "category"
+      },
+      {
+       "key": "zone",
+       "label": "Zone",
+       "kind": "text"
+      },
+      {
+       "key": "dept",
+       "label": "Department",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261105-0476D7",
+       "title": "Families stranded by flooding at Kellys",
+       "sev": "Severe",
+       "zone": "Anna Nagar",
+       "dept": "PWD Water Resources",
+       "status": "In progress"
+      },
+      {
+       "id": "INC-20260515-B939EB",
+       "title": "Ice House: uprooted tree blocks road",
+       "sev": "Severe",
+       "zone": "Teynampet",
+       "dept": "PWD Water Resources",
+       "status": "In progress"
+      },
+      {
+       "id": "INC-20260516-4D00AC",
+       "title": "Floodwater traps residents near Temple St",
+       "sev": "Severe",
+       "zone": "Anna Nagar",
+       "dept": "PWD Water Resources",
+       "status": "In progress"
+      },
+      {
+       "id": "INC-20261103-53934E-1",
+       "title": "Canal overflowing near Gangai Nagar; water entering nearby streets including Poongodiammal Street",
+       "sev": "Severe",
+       "zone": "Ambattur",
+       "dept": "PWD Water Resources",
+       "status": "In progress"
+      },
+      {
+       "id": "INC-20261105-BB4429",
+       "title": "Mogappair: Karpagam Ave fully flooded near OHT water tank, knee-deep",
+       "sev": "Severe",
+       "zone": "Ambattur",
+       "dept": "PWD Water Resources",
+       "status": "In progress"
+      },
+      {
+       "id": "INC-20261105-D0CC25",
+       "title": "Wall along Govt Kilpauk Medical College Hospital gave way near Main Rd, Kilpauk",
+       "sev": "Severe",
+       "zone": "Thiru-Vi-Ka-Nagar",
+       "dept": "PWD Buildings",
+       "status": "In progress"
+      }
+     ]
+    }
+   ],
+   "kpis": [
+    {
+     "label": "Reported",
+     "value": 1260,
+     "prev": null
+    },
+    {
+     "label": "Still open",
+     "value": 1109,
+     "tone": "info"
+    },
+    {
+     "label": "Past deadline",
+     "value": 325,
+     "tone": "sev"
+    },
+    {
+     "label": "Severe",
+     "value": 59,
+     "tone": "sev"
+    }
+   ],
+   "table": "attention",
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [
+    {
+     "action": "open_incident",
+     "label": "Open INC-20261105-0476D7",
+     "zone": null,
+     "dept": null,
+     "taluk": null,
+     "cat": null,
+     "period": null,
+     "id": "INC-20261105-0476D7"
+    }
+   ],
+   "autoActions": [],
+   "caveats": [
+    "News last collected 16 hours ago; this answer may be incomplete."
+   ],
+   "scope": {
+    "period": "weekly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 7 days · District-wide · all departments · as of 7 Nov, 10:36 AM",
+   "asOf": "2026-11-07 10:36:56",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "briefing",
+      "args": {
+       "scope": {
+        "period": "weekly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       }
+      },
+      "ms": 687
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "function",
+      "name": "insights.insights",
+      "detail": "briefing"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "table",
+      "name": "actions"
+     },
+     {
+      "kind": "table",
+      "name": "anomalies"
+     },
+     {
+      "kind": "table",
+      "name": "observations"
+     }
+    ],
+    "rows": 6,
+    "incidentIds": [
+     "INC-20261105-0476D7",
+     "INC-20260515-B939EB",
+     "INC-20260516-4D00AC",
+     "INC-20261103-53934E-1",
+     "INC-20261105-BB4429",
+     "INC-20261105-D0CC25"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [],
+    "limits": [
+     "The AI service is not available right now, so this was answered from the data by rules, without the language model."
+    ]
+   },
+   "download": null,
+   "visualAsked": false,
+   "offline": true,
+   "context": {
+    "lastIntent": "briefing",
+    "activeFilters": {
+     "period": "weekly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null
+    },
+    "lastResponseType": "text",
+    "resultIds": [
+     "INC-20261105-0476D7",
+     "INC-20260515-B939EB",
+     "INC-20260516-4D00AC",
+     "INC-20261103-53934E-1",
+     "INC-20261105-BB4429",
+     "INC-20261105-D0CC25"
+    ],
+    "resultTitles": [
+     "Families stranded by flooding at Kellys",
+     "Ice House: uprooted tree blocks road",
+     "Floodwater traps residents near Temple St",
+     "Canal overflowing near Gangai Nagar; water entering nearby streets including Poongodiammal Street",
+     "Mogappair: Karpagam Ave fully flooded near OHT water tank, knee-deep",
+     "Wall along Govt Kilpauk Medical College Hospital gave way near Main Rd, Kilpauk"
+    ],
+    "selectedIncidentId": null,
+    "selectedTitle": null,
+    "selectedNewsStoryId": null,
+    "lastVisualization": null
+   },
+   "sessionId": "aca87b69-200c-4779-8736-f001a1af22c9"
+  }
+ },
+ {
+  "q": "Show incidents reported in more than one newspaper with no citizen complaint",
+  "status": 200,
+  "err": null,
+  "headline": "Top district news · last 7 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "stories",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "97218eec-c7d0-481a-858c-d245eb7768d3",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Top district news · last 7 days",
+   "answerMarkdown": "The biggest story: **காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்** (8 outlets). Also: **Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh** (2 outlets); **Two killed in separate accidents in Poonamallee and Kelambakkam** (2 outlets). Six stories of 842 shown, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped.",
+   "voiceSummary": "The biggest story: காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம் (8 outlets). Also: Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh (2 outlets); Two killed in separate accidents in Poonamallee and Kelambakkam (2 outlets). Six stories of 842 shown, ranked ",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [
+    "News rests mostly on headlines and short summaries; open a source for the full report."
+   ],
+   "scope": {
+    "period": "weekly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 7 days · Chennai news",
+   "asOf": "2026-11-07 10:36:56",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "top_news",
+      "args": {
+       "hours": 168,
+       "topic": null,
+       "zone": null
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "table",
+      "name": "documents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261105-DDD4E8",
+     "INC-20261105-AB1018",
+     "INC-20261024-0CF13A",
+     "INC-20260905-319067",
+     "INC-20261105-5CE479",
+     "INC-20261102-C9C4BD"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as news top: top news."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "NEWS_TOP",
+   "responseType": "news_list",
+   "stories": [
+    {
+     "storyId": "STY-31072146ed",
+     "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+     "summary": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்",
+     "aiSummary": false,
+     "publishedAt": "2026-11-04 06:04:49",
+     "location": "Kasimedu",
+     "category": "Missing person",
+     "department": "Greater Chennai Police",
+     "sourceCount": 8,
+     "sources": [
+      {
+       "publisher": "Dinamalar",
+       "title": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+       "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOWmVLV3pMSW8zVUFuWmVtUlk3emlFSXFCVHM1cnVoc2NHTlZnQzJJSWRlUXdZUU1DMEprQWFnT18yQmY1Q3ZNSzV1WUFLZXRCT0pSRExBY2xrb0RQakVGWFRVOGN2YV9JTVR6cEJLMWtUbi1SNkotTFpjMVBFd3NIbjg5LVZXVW1qaG9LcXM4MjR6dnZzMlk1SFE4MDFlTldXVW9KVXRSZGEwaDVhZjFFR2Q5WndCeEstS0ttY09BZ1FkQQ",
+       "t": "2026-11-04 06:04:49"
+      },
+      {
+       "publisher": "ETV Bharat",
+       "title": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்",
+       "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxNQlg5TExtOTZKUjllUlY2bml6NVMxVkpvSEhGLVZpblZ0VnNBeWJTYnpvNlF4WmFPRExFMXhZdjV1cDhsU1J0NXF5UUVlSGcwTko1MW11eWU2cVFHeDR0aWRGY1dWbnYwUG1VU29BZi15M0tROHNUTmF4QkRObDFyN3BrMXBId1JWVjlRWXB5N2V4NTZTTzBpd1dCTlRGTFczeGd5LWpKNERXbnFtdmpZMERZandGb2NHdWxaZnhjTF8tZ9IBxwFBVV95cUxQbURFbWotSGladndkQ3prS3VPb05uSDl1M2FZd0VmZ1p0OGJucV92LXlwR1YzWUtuY18wRXkxdi1jaDRaSnRPckJPeU8wbHgzOVdIV256c3lOYjBCZ1IyLWgwd2ZRRElBMHhRNWFVcm5WQXhubmJSbWQ3ZFlGeTlPMUoxMFZrQ0tPX2N2dEVCc056N2xORjB6R282eXM3bHQyVkJOM0ZZNjJyb0VNdzJ5YmQ3MnFybFljSWJRaUVSQ1E3REZwcGk0",
+       "t": "2026-11-05 15:46:21"
+      },
+      {
+       "publisher": "Oneindia Tamil",
+       "title": "முரசு புயலில் மாயமான 9 காசிமேடு மீனவர்கள்! ஆந்திராவில் சடலங்களாக மீட்பு! குடும்பத்தினர் கண்ணீர்",
+       "url": "https://tamil.oneindia.com/news/chennai/fishermen-from-chennai-kasimedu-missing-following-cyclone-murasu-4-bodies-ashore-in-andhra-pradesh-843281.html",
+       "t": "2026-11-05 16:31:49"
+      },
+      {
+       "publisher": "Rockfort Times",
+       "title": "ஆந்திராவில் கரை ஒதுங்கிய 8 சடலங்கள்; முரசு புயலில் சிக்கி காணாமல் போன சென்னை, காசிமேடு மீனவர்களா?",
+       "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxQTnM5WjdLdXpucGc5ZnJtS29aNzRrQmJMWl9hb0k2MmlUUzZZVGt6d2ZVSUliaWxObWFOSU5veVZhc0NiTGNvVVFPcWpIcnlkZC1uSVNRdHNIWl9TUGI2RUpZUURuRGRtTk9NbUJXd2szSll0ZC0yVFZNbHY1akppNlpzUzZsaVhWVEkxbnNBNkhKT3ZHWDBsMENKNk9HNVM1R2JacnZyR3JiaFJybGx6bWtyYnYxNE9tNmtWcnBoWGZSYzdaQWhkSG9HMWc4ZjhGMXJLZGdUa19FRGx1ekpVa3VoekpqNnlIUldPeA",
+       "t": "2026-11-05 17:05:58"
+      },
+      {
+       "publisher": "Polimer News",
+       "title": "முரசு புயலுடன் போராடிய காசிமேடு மீனவர்கள் 9 பேர் - என்ன நடந்தது?",
+       "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNNEVJaGhBanNCT2RPNWl2UEhLZHowbzVSLUxkbE1jbnpoZGJNVV9OV1JwZzFIMFZRWDlhS3c1enlWWWRoazhWcXpfaWdLdDFSRGpTdVdTek04SnFDRUV0YldjalJrOC1yLXE1RGZNTFItYi03NDlfZDNpZUFlbzM5TnNiVzN4dFkxQS1Wd0JHZDA5S1Vkd1JjcmYwVEhXUnc",
+       "t": "2026-11-05 17:07:52"
+      },
+      {
+       "publisher": "BBC",
+       "title": "'ஆந்திராவில் கரை ஒதுங்கிய 8 உடல்கள்' சென்னை காசிமேடு மீனவர்களின் உடல்களா? கண்டறிவதில் சிரமம் ஏன்?",
+       "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFBRRDNEYXlvNVYtV0ZuM3JEbGNEOUYtMTdYb3k0XzZsbUxrYjZjSWtUTVJ4TEtkVlp4WmZYWHRfQnVkMFh4cEhOS2VaZ2ljQ1AtY0cyRi14M3BVeElR0gFiQVVfeXFMTU1ITHczc2V4cVVuWGhMeXVmZURJcHRQVC1ueUE4NDFob3hGd2Z5TmN3dWxQOVBGY25yWTR2dXJoM0JQVXVUWURFZ09nYUpXbkk4MDJqT015WUxIMjFGdkU4Q1E",
+       "t": "2026-11-05 17:47:56"
+      },
+      {
+       "publisher": "Dinamalar",
+       "title": "'முரசு' புயலில் சிக்கி காசிமேடு மீனவர்கள் 4 பேர் பலி: 5 பேரை தேடும் பணி தீவிரம்; விரைந்தது தமிழக குழு",
+       "url": "https://www.dinamalar.com/news/tamil-nadu-news/cyclone-murasu-kills-4-fishermen-in-andhra-pradesh-s-kasimedu-search-for-5-underway-tamil-nadu-team-rushes-in/4369009",
+       "t": "2026-11-05 21:29:21"
+      },
+      {
+       "publisher": "Dinakaran",
+       "title": "காசிமேடு மீனவர்களின் படகு புயலில் சிக்கி மாயம்; ஆந்திராவில் 7 பேர் சடலம் கரை ஒதுங்கியது: மீனவ கிராமம் சோகத்தில் மூழ்கியது",
+       "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPTC04MjNmQVRIMEM3c2tkMFhuN3RCZmRIS1hFQnZHc0RBNmFiUU5WZ0VKS3VOdlJjZG5pbmVMalJEeUxmX19ENlpDWXJtSE1OcnNRUEVSbC1TRXpCcXJlczhlcm1HM3FLamlaSURJTmIyWXd1SWQ4MlJMTWFvUmkxdFJOdkUtNGlZNHNYem5BZVpmaXPSAZcBQVVfeXFMUE9UNWhGdVB3OHRJazA3dHVVeTdTdzdGZWN4ZHh5QU1aNjJlZzUzTmZJckFzUF9XTHZqX19BTl9mb3FyUDhxeDduUlh0SXpGaDlNdnFTWkktVnNhbHpnNnY2bUIwLUw4X3ljWUMwZ0k3eDFXM2IwUWNtbmNoOFowaHRBVHBhbXhldmI1WWVxODA1dlRpN3pEbw",
+       "t": "2026-11-06 03:00:13"
+      }
+     ],
+     "matchedIncidentId": "INC-20261105-DDD4E8",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "4 deaths reported",
+      "Carried by 8 independent outlets",
+      "Still open"
+     ]
+    },
+    {
+     "storyId": "STY-8121c745de",
+     "headline": "Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh",
+     "summary": "Kasimedu Fishing Tragedy: Two More Bodies Wash Ashore In Andhra Pradesh; Two Fishers Still Missing",
+     "aiSummary": false,
+     "publishedAt": "2026-11-05 22:26:22",
+     "location": "Kasimedu",
+     "category": "Missing person",
+     "department": "Greater Chennai Police",
+     "sourceCount": 2,
+     "sources": [
+      {
+       "publisher": "The Times of India",
+       "title": "Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh",
+       "url": "https://timesofindia.indiatimes.com/city/chennai/nine-tn-fishermen-go-missing-in-cyclone-five-bodies-wash-ashore-in-andhra-pradesh/articleshow/135581148.cms",
+       "t": "2026-11-05 22:26:22"
+      },
+      {
+       "publisher": "ETV Bharat",
+       "title": "Kasimedu Fishing Tragedy: Two More Bodies Wash Ashore In Andhra Pradesh; Two Fishers Still Missing",
+       "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxOOVhCVUdyRHp4cWRlQ1BsMGVWMTJpNkd2UEItc2FFaUtFNTR4TDM1cWtGWUQ5ZkJuZnU2akdoQ0FaY1NxZFlqdEIyUWpNTzZtSkROblQ0LWdjLXdsV3UxLWdQdGhCY2lCdlpHc21WTnZVV3JyV0RJbzZycUV3ak85ZHVSeEpsb3ZCUEVxMzlmZW5pOC10UWF3TloxVEdxR25TRDVNcTdRM0J4NVk1Sl9Na2lBMTFvZDRuZ1hnY0VjQWxBZ09fQlllWURKQ2JYYm1hX0s4ektxb1ZpYjNOZ3IzTklvZXrSAeQBQVVfeXFMTjlYQlVHckR6eHFkZUNQbDBlVjEyaTZHdlBCLXNhRWlLRTU0eEwzNXFrRllEOWZCbmZ1NmpHaENBWmNTcWRZanRCMlFqTU82bUpETm5UNC1nYy13bFd1MS1nUHRoQmNpQnZaR3NtVk52VVdycldESW82cnFFd2pPOWR1UnhKbG92QlBFcTM5ZmVuaTgtdFFhd05aMVRHcUduU0Q1TXE3UTNCeDVZNUpfTWtpQTExb2Q0bmdYZ2NFY0FsQWdPX0JZZVlESkNiWGJtYV9LOHpLcW9WaWIzTmdyM05Jb2V6",
+       "t": "2026-11-06 14:51:09"
+      }
+     ],
+     "matchedIncidentId": "INC-20261105-AB1018",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "5 deaths reported",
+      "Carried by 2 independent outlets",
+      "Still open"
+     ]
+    },
+    {
+     "storyId": "STY-d45bd1413f",
+     "headline": "Two killed in separate accidents in Poonamallee and Kelambakkam",
+     "summary": "2 outlets reported this in Vadapalani.",
+     "aiSummary": false,
+     "publishedAt": "2026-11-05 12:14:24",
+     "location": "Vadapalani",
+     "category": "Road accident",
+     "department": "Greater Chennai Police",
+     "sourceCount": 2,
+     "sources": [
+      {
+       "publisher": "The Times of India",
+       "title": "Two killed in separate accidents in Poonamallee and Kelambakkam",
+       "url": "https://timesofindia.indiatimes.com/city/chennai/two-killed-in-separate-accidents-in-poonamallee-and-kelambakkam/articleshow/135562678.cms",
+       "t": "2026-11-05 12:14:24"
+      },
+      {
+       "publisher": "The New Indian Express",
+       "title": "Four killed in separate road accidents in Chennai",
+       "url": "https://www.newindianexpress.com/cities/chennai/2026/Nov/06/four-killed-in-separate-road-accidents-in-chennai",
+       "t": "2026-11-06 07:41:07"
+      }
+     ],
+     "matchedIncidentId": "INC-20261024-0CF13A",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "4 deaths reported",
+      "Carried by 2 independent outlets",
+      "Still open"
+     ]
+    },
+    {
+     "storyId": "STY-28008c4c8a",
+     "headline": "Death of Chennai fishermen: CM Vijay announces compensation",
+     "summary": "Tamil Nadu Chief Minister C.",
+     "aiSummary": false,
+     "publishedAt": "2026-11-05 21:00:33",
+     "location": "Kasimedu",
+     "category": "Missing person",
+     "department": "Greater Chennai Police",
+     "sourceCount": 3,
+     "sources": [
+      {
+       "publisher": "The Hindu",
+       "title": "Death of Chennai fishermen: CM Vijay announces compensation",
+       "url": "https://www.thehindu.com/news/national/tamil-nadu/death-of-chennai-fishermen-cm-vijay-announces-compensation/article71670922.ece",
+       "t": "2026-11-05 21:00:33"
+      },
+      {
+       "publisher": "Thanthi TV",
+       "title": "Chennai Fishermen Death | CM-ன் உத்தரவு; ஆந்திராவிலேயே இருக்கும் அமைச்சர் மரியவில்சன்",
+       "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNTU0tRjkxQlU3eTFVSzZiblMzajl0WnFFRENCMnZxVk5HTUo1YXRsem9JeGJlY1QtcVp6NWpETi1TbVlzSllnU2xrTHIxZDlscUtZRVZKdkI5UGYwdElpTEtFazJCQkF6LWJWX29rM29CeWhuaThidDdZR3h5S1QtSUtXM0FyLUdSZ3h2V2FEcmIxUVMxRGN1OGl2TdIBqAFBVV95cUxQc2llemFTWS0xYWZhQzM5U19hc3Y3VG5XNG1KS2YxOTI3LUhseTFyYnhWN3BLYkR5SklTZzlSVmZkWjRCb3FXZ09jMDVPaC1kZW1lbEs1WEloelUwdk0zekwyUUxvREJsWEJYVnR4aW5zVk85bGo0WFNiNXlpN1VuWk5FQm8tYjVvRGhGc3RteFZ3XzhzUW5KZHpJVUdSLW56NUpQRmhPb08",
+       "t": "2026-11-06 08:36:28"
+      },
+      {
+       "publisher": "NDTV",
+       "title": "Video | Vijay News | 3 Chennai Fishermen Found Dead, 50,000 Chickens Die & Village That Says No To Crackers",
+       "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOd2hIOThJa0Q2QTQ4YTN4cDFyTV9PZTI3M0NSWl9uUTFoamk1YTR3cGFkX0pQNUxuVUtRdlQxMWlrdXNMSTFLNXR3dXpISlNOdTVqSEFMUExzckFGS2VOQnJuY2d2Q3RydUhtRFo2VGNsYTlSX2hrSTlMY3M0Ri1sYmZBOFhwaFhUajYtZmxhODBaZlVDX1daLTNVMTlkUjlpVWRvbVo2WHdWbkFuOTRaOUpjc1NuV2VISGx1dF8yU0xHaGZBWV9oaw",
+       "t": "2026-11-06 10:16:17"
+      }
+     ],
+     "matchedIncidentId": "INC-20260905-319067",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "3 deaths reported",
+      "Carried by 3 independent outlets",
+      "Still open"
+     ]
+    },
+    {
+     "storyId": "STY-6660314a4f",
+     "headline": "Newborn girl found abandoned in Neelankarai",
+     "summary": "Police rescued a baby girl abandoned near CM Vijay’s Neelankarai house.",
+     "aiSummary": true,
+     "publishedAt": "2026-11-05 11:20:05",
+     "location": "Neelankarai",
+     "category": "Flood relief needs",
+     "department": "District Disaster Management",
+     "sourceCount": 6,
+     "sources": [
+      {
+       "publisher": "Thanthi TV",
+       "title": "Birth Baby | Chennai | CCTV | தொப்புள் கொடியுடன் குழந்தையை சாலையில் வீசிய தாய்",
+       "url": "https://www.thanthitv.com/news/tamilnadu/mother-abandons-baby-on-the-road-with-umbilical-cord-still-attached",
+       "t": "2026-11-05 11:20:05"
+      },
+      {
+       "publisher": "The Times of India",
+       "title": "Newborn girl found abandoned in Neelankarai",
+       "url": "https://timesofindia.indiatimes.com/city/chennai/newborn-girl-found-abandoned-in-neelankarai/articleshow/135562514.cms",
+       "t": "2026-11-05 12:07:44"
+      },
+      {
+       "publisher": "Asianet Newsable",
+       "title": "Newborn Girl Found Abandoned On Chennai Road With Umbilical Cord Attached, Former Air Hostess Traced",
+       "url": "https://newsable.asianetnews.com/india/newborn-girl-found-abandoned-on-chennai-road-with-umbilical-cord-attached-former-air-hostess-traced-articleshow-nn6sqga",
+       "t": "2026-11-05 16:44:13"
+      },
+      {
+       "publisher": "Inshorts",
+       "title": "Newborn girl found abandoned on Chennai roadside, rescued by cops | Tap to know more | Inshorts",
+       "url": "https://inshorts.com/en/news/newborn-girl-found-abandoned-on-chennai-roadside--rescued-by-cops-1793877470932",
+       "t": "2026-11-05 18:42:45"
+      },
+      {
+       "publisher": "ABP Nadu",
+       "title": "சென்னையில் பச்சிளம் குழந்தை சாலை ஓரத்தில் வீச்சு! காட்டிக்கொடுத்த சிசிடிவி!",
+       "url": "https://tamil.abplive.com/news/chennai/newborn-baby-abandoned-in-chennai-two-arrested-including-mother-279012",
+       "t": "2026-11-05 19:55:45"
+      },
+      {
+       "publisher": "The Hindu",
+       "title": "Police rescue baby girl abandoned near Tamil Nadu CM Vijay’s Neelankarai house",
+       "url": "https://www.thehindu.com/news/cities/chennai/police-rescue-baby-girl-abandoned-near-tamil-nadu-cm-vijay-neelankarai-house/article71670940.ece",
+       "t": "2026-11-06 16:21:43"
+      },
+      {
+       "publisher": "The Hindu",
+       "title": "Police rescue baby girl abandoned near Tamil Nadu CM Vijay’s Neelankarai house",
+       "url": "https://www.thehindu.com/news/cities/chennai/police-rescue-baby-girl-abandoned-near-tamil-nadu-cm-vijay-neelankarai-house/article71670940.ece",
+       "t": "2026-11-06 16:21:43"
+      },
+      {
+       "publisher": "The Hindu",
+       "title": "Police rescue baby girl abandoned near CM Vijay’s Neelankarai house",
+       "url": "https://www.thehindu.com/news/cities/chennai/police-rescue-baby-girl-abandoned-near-tamil-nadu-cm-vijay-neelankarai-house/article71670940.ece",
+       "t": "2026-11-06 17:43:25"
+      }
+     ],
+     "matchedIncidentId": "INC-20261105-5CE479",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "1 death reported",
+      "Carried by 6 independent outlets",
+      "Still open"
+     ]
+    },
+    {
+     "storyId": "STY-653c254ab9",
+     "headline": "Chennai police tighten security on busy streets for Diwali",
+     "summary": "Severe traffic congestion reported on GST Road in Tambaram due to Diwali festival travel.",
+     "aiSummary": true,
+     "publishedAt": "2026-11-02 23:14:00",
+     "location": "T. Nagar",
+     "category": "Crimes against women & children",
+     "department": "Greater Chennai Police",
+     "sourceCount": 8,
+     "sources": [
+      {
+       "publisher": "Dinamani",
+       "title": "தியாகராய நகரில் தீபாவளி விற்பனை: ட்ரோன் மூலம் கூட்ட நெரிசல் கண்காணிப்பு",
+       "url": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/02/diwali-sales-in-t-nagar-crowd-congestion-monitored-via-drone",
+       "t": "2026-11-02 23:14:00"
+      },
+      {
+       "publisher": "Dinamani",
+       "title": "தியாகராய நகரில் தீபாவளி விற்பனை: ட்ரோன் மூலம் கூட்ட நெரிசல் கண்காணிப்பு",
+       "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxNaTNwVnpUeTVsWDJERWFPQVQtamF6aDVPNG5xWDBxdVZiRGpMTm82Um1oa2w3Z2lFclBLYUYwQ1Zqb1dZaHlTRW1kVld5Rl9lYTBzV0FQRlhmN0Z4QlktY2lXV1NETHFtd1ZEaWtnb1NuYTJWVjItRk9wNXhsaUdzNGJBenpmMFV6WHdhRk9TVFc5b19NQ09PbEtsQ0ZMcTloZ0xlYlp6NElicEZ5LWxLdWtidm51clFUaUhkZkRFVmFyNVEwYkFLaUtPdlNpaG_SAdwBQVVfeXFMUHNYS2NLM2RwakgyMFJZc19CUTJLSE5UT0FydUxyVmhmeTc0dmV3N3lBWnpDdEY0X01mX3QycUFDRnhQT1V4S25wMmJBQVRta3pGRkIwSlBEM3pPeHI4aDhTOG5hZEJhMHVET3ROX011R1NROXFseU94QnBMb243M3paNzZkMWJOZWcxZDJ6RGp2V3BxeGZkVHpib2ZJZVlSZzU2ZTduNi1TUENWa0RmVlBxZU5rNmJzT0trNVdCY3Vna09mSlVma2h4SE5ZMUgtT25OdDNYRWo4bTBCdA",
+       "t": "2026-11-04 00:35:00"
+      },
+      {
+       "publisher": "The Times of India",
+       "title": "Chennai police tighten security on busy streets for Diwali",
+       "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOeF8xeFFMZUJ6UzIyRGVVNTl4MDhxaC01MXF4UEIzNDVRcEtmaG9oSXYxNG0xaVlDemc4RF9IbVlCVmJ0QWJZb1RHZmhSUjdmVE9GeVgxQ3o2akZjdHU5RnE0bWhNWk5WekZYM3dMSV9BcG9ReXdNVjM5RklQQUVyWTdnNGNEM3RKSHhyRmxESVNUNHBjVnZENUtGc2RMYkZXOGlkbjEyQmJhaTgyMnlhb1FrQzl3Qzg0TzBfRnFuT1lKZ2VWVER6NElIcVRyZ9IB0wFBVV95cUxPUEt0dTdpdHVEUlJsV200MzYwaFRnYUVhQnRvbmlRRG5TTzU1TThOUTlELXNIOC1OTWtZMFQwZEpjWmdCQWlJV21KT01hYkU4RTNwM2lWUm9yVERiV0ZXZEpEa09leFZ0WXNQLWJjd2RDanlaWDhVOVBTdXhIamVQMTFoS0VzM2M3VWhoWDBCMkk0cXR4MTFMbDEwbl9lTU93N3gyUHZEemdZcnZ1TmZzcExoMy1CZG5KUU1NZGxaVDVMajk4T0pkdEVBajZaYThJTlM0",
+       "t": "2026-11-05 02:34:00"
+      },
+      {
+       "publisher": "Dinamani",
+       "title": "தியாகராய நகரில் தீபாவளி விற்பனை: ‘ட்ரோன்’ மூலம் கூட்ட நெரிசல் கண்காணிப்பு",
+       "url": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/04/chennai-police-deploy-drones-to-monitor-massive-deepavali-shopping-crowds-in-t-nagar",
+       "t": "2026-11-05 04:29:00"
+      },
+      {
+       "publisher": "Dinamani",
+       "title": "தியாகராய நகரில் தீபாவளி விற்பனை: ‘ட்ரோன்’ மூலம் கூட்ட நெரிசல் கண்காணிப்பு",
+       "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQcnVsRUN3Tm42ejNVZFlwZmNfMmRyUnlfYWJySlNJb0FqUm4weUxyc0t0Mlk5aEZlV3dZSmh6Unp4dVVDWnppWkJBRFZiQk41OEJ1RnFKZGlMSTlFOUtURzJQY3RwUHlXcWMybFNnemhja3JIeVRmdlFmLWp2NEczb2d2Tnk4eEZ3UEQtM3FCUm9tRFk3TEkzYlcyZnFWVjlqa0NtY2EwSnNVNk15dUV3VjNCaEtfdEJxUjdQc1NfdGJLTUNTS21MS280N2UyNEgxbUt3MmZCb09OckFFUWtOdUhkenpXcG1hREpZLWVVONIB_AFBVV95cUxNZDN1MERiM01QV2xmdVdGSjVkMWpHSnpaWHJ6ellOa05BVG9WNE05bXZPSktnWjZyakNLUk5Na2d3MG05cWV3Nmp6Z0UwRlRBeFRkY1BQM09RRkt6MnAwaUk2QWZMSFNsYTBVSlE5REp4MWtDLUZEc0N6WUFCZnhPeHlkVDhrSlJubWFjeFVUU3JReW0walY4cXZzN1pPdDlsY2phSi02eTlxWWtpVDlnU0kzWTZIOEpweDBaeEVTNmdyRWQ4SDJ5enZyUThqdmR1LV9DSGNNZ0pFcG02dU5OWkdyTzc2VFNoQzFTaDBBMllncXVQMG1oMk9UWjY",
+       "t": "2026-11-05 04:29:00"
+      },
+      {
+       "publisher": "Social News XYZ",
+       "title": "Chennai Police step up security ahead of Diwali; drones, watchtowers at shopping hubs",
+       "url": "https://news.google.com/rss/articles/CBMi6AJBVV95cUxPS2JSLUpLYmN4YzFreHNiR0lnVmt6WHBrYnR2di1tdGhqQmFLMmozQ2JJM2lIdXhtNTRJalBNb19KTDlPbW1WalVQRS1MY2pkVEMtV3VDTUlrOTg0WWNNZnc2U0xlVU1pQ0V5MzVxMmpKRk03czJHck1sc2JSV3hGdmV6OGJSR1EwdzljNGUtUEI3YlotTEhpTVZrU1pSVFZIVmk2YVBvYzU3a2hOVG5ESUwtTTlZd2d1YmFzanBRQV92UXA3UGh2bnV1ZTd3dk1KT1F2dWJINWMzREVsNmthcEpjWGN5MEMyTnFvanhnQXluUmNmTXM1OFpBVjF3YlVwT2V4MlMzaEZxTEExMmQ4Z25sZ29sZTBUWnN6VUFNYS16Tk9MdVZkQ0I0MTNPc01PN0Iwa01sWGFQcDQzU0FXeTc0bGdmREVFUnBjN2paX0x4LXV4cGRVZzdDYVNoS0k1em9vWDloVTXSAegCQVVfeXFMT0tiUi1KS2JjeGMxa3hzYkdJZ1Zrelhwa2J0dnYtbXRoakJhSzJqM0NiSTNpSHV4bTU0SWpQTW9fSkw5T21tVmpVUEUtTGNqZFRDLVd1Q01Jazk4NFljTWZ3NlNMZVVNaUNFeTM1cTJqSkZNN3MyR3JNbHNiUld4RnZlejhiUkdRMHc5YzRlLVBCN2JaLUxIaU1Wa1NaUlRWSFZpNmFQb2M1N2toTlRuRElMLU05WXdndWJhc2pwUUFfdlFwN1Bodm51dWU3d3ZNSk9RdnViSDVjM0RFbDZrYXBKY1hjeTBDMk5xb2p4Z0F5blJjZk1zNThaQVYxd2JVcE9leDJTM2hGcUxBMTJkOGdubGdvbGUwVFpzelVBTWEtek5PTHVWZENCNDEzT3NNTzdCMGtNbFhhUHA0M1NBV3k3NGxnZkRFRVJwYzdqWl9MeC11eHBkVWc3Q2FTaEtJNXpvb1g5aFU1",
+       "t": "2026-11-05 09:50:37"
+      },
+      {
+       "publisher": "Punjab Kesari English",
+       "title": "Chennai Police step up security ahead of Diwali; drones, watchtowers at shopping hubs",
+       "url": "https://english.punjabkesari.com/india/chennai-police-step-up-security-ahead-of-deepavali-drones-watch-towers-deployed-at-shopping-hubs/",
+       "t": "2026-11-05 09:51:32"
+      },
+      {
+       "publisher": "The Hawk",
+       "title": "Chennai Police step up security ahead of Diwali; drones, watchtowers at shopping hubs",
+       "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPZDVLQjVYM2ZXT0tNU1k2RnhpMC0zVjc2b3k1MWttTFhYbW9mOVVjTU5Kd25NY0xwa19IbG1RejVJZXd0bjVkVDhGMWNDYkU0bjVMNUNWM2FSWjVNcFpGYlVzel9ieDl0VjBteEhCajBaWXZqUHczMjV2SkY0dDh5YnM3QlB0VkdKaDFMYnRRb05CSWJKTHhxX24xM2xzcmpOMVU2RlltYnNlY2ZsSmRFR3NmODFGUVJk",
+       "t": "2026-11-05 09:51:36"
+      }
+     ],
+     "matchedIncidentId": "INC-20261102-C9C4BD",
+     "departmentRecordFound": false,
+     "whyRelevant": [
+      "Linked to a high-severity incident",
+      "Carried by 8 independent outlets",
+      "Still open",
+      "No department has a record of it yet"
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "NEWS_TOP",
+    "activeFilters": {
+     "period": "weekly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "storyIds": [
+     "STY-31072146ed",
+     "STY-8121c745de",
+     "STY-d45bd1413f",
+     "STY-28008c4c8a",
+     "STY-6660314a4f",
+     "STY-653c254ab9"
+    ],
+    "storyTitles": [
+     "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+     "Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh",
+     "Two killed in separate accidents in Poonamallee and Kelambakkam",
+     "Death of Chennai fishermen: CM Vijay announces compensation",
+     "Newborn girl found abandoned in Neelankarai",
+     "Chennai police tighten security on busy streets for Diwali"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "news_list"
+   },
+   "sessionId": "28b49484-6ed6-4c32-b84e-bce2dd5e07ae"
+  }
+ },
+ {
+  "q": "incidents reported by more than one newspaper but missing from the departmental application",
+  "status": 200,
+  "err": null,
+  "headline": "31 in the news, no department record (90 days)",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "7ec6e22f-f75b-4f59-ba3c-e40855167662",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "31 in the news, no department record (90 days)",
+   "answerMarkdown": "In the last 90 days: **31** in the news, no department record (90 days).",
+   "voiceSummary": "In the last 90 days: 31 in the news, no department record (90 days).",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "gaps",
+     "title": "In the news, no department record",
+     "idField": "id",
+     "total": 31,
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Headline",
+       "kind": "text"
+      },
+      {
+       "key": "zone_name",
+       "label": "Zone",
+       "kind": "text"
+      },
+      {
+       "key": "dept_name",
+       "label": "Department",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "category"
+      },
+      {
+       "key": "outlets",
+       "label": "Outlets",
+       "kind": "value",
+       "unit": null,
+       "format": "integer",
+       "additive": false
+      },
+      {
+       "key": "t",
+       "label": "First reported",
+       "kind": "text"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261031-648BD2",
+       "title": "Prisoner under police custody escapes in Kolathur, Chennai!",
+       "zone_name": "Madhavaram",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-10-31 15:44:02"
+      },
+      {
+       "id": "INC-20261101-EC06C4",
+       "title": "Woman with disability dies in midnight fire at Korattur apartment",
+       "zone_name": "Ambattur",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 5,
+       "t": "2026-11-01 06:52:00"
+      },
+      {
+       "id": "INC-20261105-5CE479",
+       "title": "Newborn girl found abandoned in Neelankarai",
+       "zone_name": "Sholinganallur",
+       "dept_name": "District Disaster Management",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-05 12:07:44"
+      },
+      {
+       "id": "INC-20261105-E00D42",
+       "title": "Wife dies in front of husband's eyes as lorry hits near Porur toll plaza",
+       "zone_name": "Valasaravakkam",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-05 14:33:25"
+      },
+      {
+       "id": "INC-20261101-3200FD",
+       "title": "Chennai: Construction worker killed by electric shock",
+       "zone_name": "Perungudi",
+       "dept_name": "Street Lighting & Electrical",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-01 04:10:35"
+      },
+      {
+       "id": "INC-20261101-EC06C4-1",
+       "title": "Fridge explosion at home kills woman, injures two in Chennai",
+       "zone_name": "Ambattur",
+       "dept_name": "District Disaster Management",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-01 06:44:27"
+      },
+      {
+       "id": "INC-20261103-5492AE",
+       "title": "Chennai man killed in chopper crash was based in Canada, had visited India before ill-fated Nepal trip",
+       "zone_name": "Royapuram",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 3,
+       "t": "2026-11-03 19:41:25"
+      },
+      {
+       "id": "INC-20261024-0CF13A",
+       "title": "Two killed in separate accidents in Poonamallee and Kelambakkam",
+       "zone_name": "Kodambakkam",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-05 12:14:24"
+      },
+      {
+       "id": "INC-20261105-EE9D37",
+       "title": "Elderly man hit by share auto dies in Vadapalani; drunk driver arrested",
+       "zone_name": "Kodambakkam",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-05 18:17:21"
+      },
+      {
+       "id": "INC-20261102-C9C4BD",
+       "title": "Diwali sales in T. Nagar: Crowd monitoring through drones",
+       "zone_name": "Kodambakkam",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-02 23:14:00"
+      },
+      {
+       "id": "INC-20261103-B255B5",
+       "title": "Nepal helicopter crash! Person from Chennai killed!",
+       "zone_name": "Royapuram",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 13,
+       "t": "2026-11-03 11:34:00"
+      },
+      {
+       "id": "INC-20261106-A40AD7",
+       "title": "'Stabbed 10 times': Chennai man kills wife with kitchen knife, surrenders",
+       "zone_name": "Sholinganallur",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-06 09:47:24"
+      },
+      {
+       "id": "INC-20261031-4953B0",
+       "title": "Chennai: Two road cave-ins in two days",
+       "zone_name": "Kodambakkam",
+       "dept_name": "Storm Water Drain",
+       "sev": "High",
+       "outlets": 6,
+       "t": "2026-10-31 14:51:59"
+      },
+      {
+       "id": "INC-20261103-B0FAA6",
+       "title": "BREAKING NEWS | Helicopters collide! - Vasanthakumar from Chennai passes away",
+       "zone_name": "Royapuram",
+       "dept_name": "Greater Chennai Police",
+       "sev": "High",
+       "outlets": 4,
+       "t": "2026-11-03 11:41:55"
+      },
+      {
+       "id": "INC-20261104-FB052D",
+       "title": "Fine up to Rs 5 lakh for sewage connection in rainwater drain: Chennai Corporation Commissioner G.S. Sameeran",
+       "zone_name": null,
+       "dept_name": "District Disaster Management",
+       "sev": "High",
+       "outlets": 6,
+       "t": "2026-11-04 00:01:22"
+      },
+      {
+       "id": "INC-20261105-4F682A",
+       "title": "Ennore fire accident – fire in a tsunami‑type residential building near Ennore",
+       "zone_name": "Thiruvottiyur",
+       "dept_name": "District Disaster Management",
+       "sev": "High",
+       "outlets": 2,
+       "t": "2026-11-05 11:27:11"
+      },
+      {
+       "id": "INC-20261102-836A35",
+       "title": "Peepal tree gets uprooted at TNEB HQ, crushes 10 vehicles",
+       "zone_name": null,
+       "dept_name": "District Disaster Management",
+       "sev": "Medium",
+       "outlets": 6,
+       "t": "2026-11-02 16:13:02"
+      },
+      {
+       "id": "INC-20261102-79A05F",
+       "title": "Chennai youth killed after lorry hits him",
+       "zone_name": null,
+       "dept_name": "Greater Chennai Police",
+       "sev": "Medium",
+       "outlets": 2,
+       "t": "2026-11-02 11:27:42"
+      },
+      {
+       "id": "INC-20261030-F93E77",
+       "title": "Where are floods likely to occur in Chennai? Aadhav Arjuna explanation",
+       "zone_name": null,
+       "dept_name": "Storm Water Drain",
+       "sev": "Medium",
+       "outlets": 2,
+       "t": "2026-10-30 16:30:00"
+      },
+      {
+       "id": "INC-20261102-2AEFC5",
+       "title": "Chennai rain: Three trees fall damaging house roofs, car and two-wheelers",
+       "zone_name": "Thiru-Vi-Ka-Nagar",
+       "dept_name": "Storm Water Drain",
+       "sev": "Medium",
+       "outlets": 3,
+       "t": "2026-11-02 18:07:30"
+      }
+     ]
+    }
+   ],
+   "kpis": [
+    {
+     "label": "In the news, no department record (90 days)",
+     "value": 31,
+     "tone": "high"
+    }
+   ],
+   "table": "gaps",
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [
+    {
+     "action": "open_incident",
+     "label": "Open INC-20261031-648BD2",
+     "zone": null,
+     "dept": null,
+     "taluk": null,
+     "cat": null,
+     "period": null,
+     "id": "INC-20261031-648BD2"
+    }
+   ],
+   "autoActions": [],
+   "caveats": [
+    "News answers rest on headlines: about 98% of news rows are headline snippets, and the news incident filter scores F1 0.63.",
+    "The Briefing page lists the 26 highest-priority of 31.",
+    "News last collected 16 hours ago; this answer may be incomplete."
+   ],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 7 Nov, 10:36 AM",
+   "asOf": "2026-11-07 10:36:56",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "news_gaps",
+      "args": {
+       "scope": {
+        "period": "quarterly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       },
+       "minOutlets": 2
+      },
+      "ms": 1315
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "function",
+      "name": "insights.insights",
+      "detail": "news gaps"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "table",
+      "name": "gaps"
+     },
+     {
+      "kind": "table",
+      "name": "documents"
+     }
+    ],
+    "rows": 20,
+    "incidentIds": [
+     "INC-20261031-648BD2",
+     "INC-20261101-EC06C4",
+     "INC-20261105-5CE479",
+     "INC-20261105-E00D42",
+     "INC-20261101-3200FD",
+     "INC-20261101-EC06C4-1",
+     "INC-20261103-5492AE",
+     "INC-20261024-0CF13A",
+     "INC-20261105-EE9D37",
+     "INC-20261102-C9C4BD",
+     "INC-20261103-B255B5",
+     "INC-20261106-A40AD7",
+     "INC-20261031-4953B0",
+     "INC-20261103-B0FAA6",
+     "INC-20261104-FB052D",
+     "INC-20261105-4F682A",
+     "INC-20261102-836A35",
+     "INC-20261102-79A05F",
+     "INC-20261030-F93E77",
+     "INC-20261102-2AEFC5"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as: news reported by more than one outlet with no department record."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "visualAsked": false,
+   "context": {
+    "lastIntent": "tool_question",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null
+    },
+    "lastResponseType": "text",
+    "resultIds": [
+     "INC-20261031-648BD2",
+     "INC-20261101-EC06C4",
+     "INC-20261105-5CE479",
+     "INC-20261105-E00D42",
+     "INC-20261101-3200FD",
+     "INC-20261101-EC06C4-1",
+     "INC-20261103-5492AE",
+     "INC-20261024-0CF13A",
+     "INC-20261105-EE9D37",
+     "INC-20261102-C9C4BD"
+    ],
+    "resultTitles": [
+     "Prisoner under police custody escapes in Kolathur, Chennai!",
+     "Woman with disability dies in midnight fire at Korattur apartment",
+     "Newborn girl found abandoned in Neelankarai",
+     "Wife dies in front of husband's eyes as lorry hits near Porur toll plaza",
+     "Chennai: Construction worker killed by electric shock",
+     "Fridge explosion at home kills woman, injures two in Chennai",
+     "Chennai man killed in chopper crash was based in Canada, had visited India before ill-fated Nepal trip",
+     "Two killed in separate accidents in Poonamallee and Kelambakkam",
+     "Elderly man hit by share auto dies in Vadapalani; drunk driver arrested",
+     "Diwali sales in T. Nagar: Crowd monitoring through drones"
+    ],
+    "selectedIncidentId": null,
+    "selectedTitle": null,
+    "selectedNewsStoryId": null,
+    "lastVisualization": null
+   },
+   "sessionId": "a687b498-bf5e-4226-9cb6-4921872b9f54"
+  }
+ }
+]

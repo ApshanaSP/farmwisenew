@@ -1,0 +1,24 @@
+// citizen files a garbage complaint with a photo at 360 px
+import { openWithCookie, shot, text, base } from "./journey-officer_citizen.lib.mjs";
+import fs from "node:fs";
+const { br, ctx, page, errs } = await openWithCookie("citizenA", { width: 360, height: 740 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await page.goto(base + "/citizen/file-complaint", { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+await page.click('button:has-text("Next: Location")');
+await page.waitForTimeout(2000);
+const map = page.locator(".leaflet-container").first();
+await map.scrollIntoViewIfNeeded();
+const bb = await map.boundingBox();
+await page.mouse.click(bb.x + bb.width * 0.5, bb.y + bb.height * 0.5);
+await page.waitForTimeout(2500);
+await page.fill('input[placeholder*="Gandhi"]', "Gandhi Nagar 2nd Cross");
+await page.click('button:has-text("Next: Type")');
+await page.waitForTimeout(1500);
+await page.click('button:has-text("Garbage")');
+await page.waitForTimeout(1500);
+await shot(page, "citizen-06-subtype-360");
+console.log("SUB:", (await text(page, 2500)).split("Garbage")[1]?.slice(0, 800));
+const btns = await page.locator("button").allInnerTexts();
+console.log(btns.map(s => s.trim().replace(/\n/g, " ")).join(" | "));
+console.log("ERRS", JSON.stringify(errs));
+await br.close();

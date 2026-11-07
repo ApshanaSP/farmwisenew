@@ -1,0 +1,56 @@
+{
+ "note": "tokens as the rows report them (last round); the ledger shows the true spend",
+ "runs": [
+  {
+   "label": "open-baseline-groq",
+   "n": 60,
+   "tokens": 86408,
+   "calls": 44,
+   "models": {
+    "qwen/qwen3.8-27b": 28,
+    "none": 17,
+    "openai/gpt-oss-120b": 11,
+    "openai/gpt-oss-20b": 4
+   }
+  },
+  {
+   "label": "steady-groq-1",
+   "n": 20,
+   "tokens": 29738,
+   "calls": 14,
+   "models": {
+    "qwen/qwen3.8-27b": 6,
+    "openai/gpt-oss-20b": 3,
+    "openai/gpt-oss-120b": 5,
+    "none": 6
+   }
+  },
+  {
+   "label": "steady-groq-2",
+   "n": 20,
+   "tokens": 25614,
+   "calls": 14,
+   "models": {
+    "openai/gpt-oss-20b": 6,
+    "openai/gpt-oss-120b": 8,
+    "none": 6
+   }
+  },
+  {
+   "label": "steady-groq-3",
+   "n": 20,
+   "tokens": 24700,
+   "calls": 14,
+   "models": {
+    "qwen/qwen3.8-27b": 8,
+    "openai/gpt-oss-20b": 3,
+    "none": 6,
+    "openai/gpt-oss-120b": 3
+   }
+  }
+ ],
+ "ledger_left_before": {
+  "tpd_total": 558536
+ },
+ "invalid_provider_rows": 0
+}

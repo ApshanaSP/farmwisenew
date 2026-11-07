@@ -93,8 +93,9 @@ export function visibleText(a) {
 export function leaksIn(texts) {
   const hits = [];
   for (const t0 of texts) {
-    const t = String(t0).replace(/\binc-[a-z0-9-]+/gi, " ").replace(/\b\d{4}-\d{2}-\d{2}\b/g, " ");
-    for (const m of t.matchAll(/(?<![\d.])(?:\+?91[ -]?)?[6-9]\d(?:[ -]?\d){8}(?!\d|\.\d)/g)) hits.push({ kind: "phone", text: m[0] });
+    // v2: Tamil digits are read as digits, and a leading 0 does not hide a mobile number (both slipped through before)
+    const t = String(t0).replace(TAMIL_DIGIT, (c) => String(c.charCodeAt(0) - 0x0BE6)).replace(/\binc-[a-z0-9-]+/gi, " ").replace(/\b\d{4}-\d{2}-\d{2}\b/g, " ");
+    for (const m of t.matchAll(/(?<![\d.])(?:\+?91[ -]?|0)?[6-9]\d(?:[ -]?\d){8}(?!\d|\.\d)/g)) hits.push({ kind: "phone", text: m[0] });
     for (const m of t.matchAll(/(?<![\d.-])\d{4}[ -]?\d{4}[ -]?\d{4}(?!\d|[.-]\d)/g)) hits.push({ kind: "aadhaar", text: m[0] });
     for (const m of t.matchAll(/[\w.+-]+@[\w-]+\.[\w.-]+/g)) hits.push({ kind: "email", text: m[0] });
   }
@@ -107,6 +108,7 @@ const WORDS_UNDER_20 = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, si
 const WORDS_TENS = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
 /** Tamil number words, script and Latin. Exact tokens only: அடையாறு is a river, not six. */
 const TA_WORDS = { பூஜ்யம்: 0, ஒன்று: 1, ஒண்ணு: 1, இரண்டு: 2, ரெண்டு: 2, மூன்று: 3, மூணு: 3, நான்கு: 4, நாலு: 4, ஐந்து: 5, அஞ்சு: 5, ஆறு: 6, ஏழு: 7, எட்டு: 8, ஒன்பது: 9, பத்து: 10, பதினொன்று: 11, பன்னிரண்டு: 12, பதிமூன்று: 13, பதினான்கு: 14, பதினைந்து: 15, பதினாறு: 16, பதினேழு: 17, பதினெட்டு: 18, பத்தொன்பது: 19, இருபது: 20, முப்பது: 30, நாற்பது: 40, ஐம்பது: 50, அறுபது: 60, எழுபது: 70, எண்பது: 80, தொண்ணூறு: 90, நூறு: 100, ஆயிரம்: 1000,
+  இருநூறு: 200, முந்நூறு: 300, நானூறு: 400, ஐநூறு: 500, onbadhu: 9, irubadhu: 20, muppadhu: 30, naarpadhu: 40, aimbadhu: 50, arubadhu: 60, ezhubadhu: 70, enbadhu: 80,
   onnu: 1, rendu: 2, moonu: 3, naalu: 4, anju: 5, aaru: 6, ezhu: 7, ettu: 8, ombodhu: 9, pathu: 10, nooru: 100 };
 
 const MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
@@ -118,7 +120,9 @@ const NOT_FIGURES = [
   /\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/gi, /\b\d{1,2}\s*(?:am|pm)\b/gi,
   /(?:\blast\s+|\bpast\s+|கடந்த\s*)(?:24|7|30|90)[\s-]*(?:hours?|days?|மணி\s*நேர\S*|நாட்க\S*|நாள்\S*)/gi,
   /\bin\s+24\s*h\b/gi, /\bzone\s+\d+\b/gi, /மண்டலம்\s*\d+/g, /\bward\s+\d+\b/gi, /வார்டு\s*\d+/g,
-  /\b\d+(?:st|nd|rd|th)\b/gi
+  /\b\d+(?:st|nd|rd|th)\b/gi,
+  // v2: the console's window words in short form, and Tamil ordinals
+  /\b(?:24|7|30|90)\s*(?:h|hrs?|d)\b/gi, /\d+\s*-?\s*(?:ஆவது|வது|ஆம்)/g
 ];
 
 /** Every number in a line, after the given literal strings (addresses, titles: the data's own words) are blanked. { value, raw, percent, before, after } */
@@ -128,7 +132,11 @@ export function extractNumbers(line, literals = []) {
   for (const re of NOT_FIGURES) t = t.replace(re, (m) => " ".repeat(m.length));
   const out = [];
   const take = (m, value) => out.push({ value, raw: m[0], start: m.index, percent: t.slice(m.index + m[0].length).startsWith("%"), before: t.slice(Math.max(0, m.index - 40), m.index), after: t.slice(m.index + m[0].length, m.index + m[0].length + 60) });
-  for (const m of t.matchAll(/(?<![\p{L}\d.,])\d{1,3}(?:,\d{2,3})+(?:\.\d+)?(?![\p{L}\d])|(?<![\p{L}\d.,])\d+(?:\.\d+)?(?![\p{L}\d])/gu)) take(m, Number(m[0].replace(/,/g, "")));
+  // v2: a number glued to a Tamil letter or a unit (417புகார், 24h, 3x) is still a number, and so is one right after a comma (Royapuram,78). Before, both were skipped without a word.
+  const TAIL = "(?!\\d)(?:(?![\\p{L}])|(?=\\p{Script=Tamil})|(?=(?:h|hrs?|x|km|kg)(?![\\p{L}])))";
+  for (const m of t.matchAll(new RegExp(`(?<![\\p{L}\\d.])(?<!\\d,)\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d+)?${TAIL}|(?<![\\p{L}\\d.])(?<!\\d,)\\d+(?:\\.\\d+)?${TAIL}`, "gu"))) take(m, Number(m[0].replace(/,/g, "")));
+  // v2: hundreds and thousands in English words, read here and blanked so "three" is not read again
+  for (const m of [...t.matchAll(/\b(a|one|two|three|four|five|six|seven|eight|nine)\s+(hundred|thousand)\b/gi)]) { const k = m[1].toLowerCase() === "a" ? 1 : WORDS_UNDER_20[m[1].toLowerCase()]; take(m, k * (m[2].toLowerCase() === "hundred" ? 100 : 1000)); t = t.slice(0, m.index) + " ".repeat(m[0].length) + t.slice(m.index + m[0].length); }
   // English words: "twenty three", "two", and "one" only where it counts something
   const tens = Object.keys(WORDS_TENS).join("|"), under = Object.keys(WORDS_UNDER_20).filter((w) => w !== "one").join("|");
   for (const m of t.matchAll(new RegExp(`\\b(${tens})(?:[\\s-]+(${under}|one))?\\b|\\b(${under})\\b(?!-)`, "gi"))) {
@@ -286,19 +294,15 @@ function numberContext(a, asked, T, f, win) {
   // past the deadline among the rows shown: on the real rows, so a closed case told as late does not count
   const late = shown.filter((s) => { const r = T.row(s.id); return r && r.open && r.breached; }).length;
   const holds = new Map(); for (const r of shown) if (r.deptName) holds.set(r.deptName, (holds.get(r.deptName) ?? 0) + 1);
-  const panel = list?.source === "console-severity" && asked.sev ? T.severityPanel({ zone: f.zone, dept: f.dept, cat: f.cat }, win)[asked.sev] : null;
+  const panel = list?.source === "console-severity" && asked.sev && asked.status === "open" ? T.severityPanel({ zone: f.zone, dept: f.dept, cat: f.cat }, win)[asked.sev] : null;
   return { values, prev, shown, late, holds, panel, brief, list, durations, caseNumbers, blockValues: asked.action === "compare" ? blockValues(a) : new Map(), win, anomalies: T.anomalies(f.zone), conditions: T.conditions() };
 }
-/** Numbers on the screen that a spoken line may repeat: already checked against the oracle by checkBlocks. */
+/** Numbers on the screen that a spoken line may repeat. v2: only what the compare check itself checks against the oracle (rankings and sides). Tiles, trend points, charts and answer facts no longer excuse a number: nothing checks them on this path. */
 function blockValues(a) {
   const out = new Map();
   for (const b of a.stage?.blocks ?? []) {
-    if (b.kind === "Kpis") for (const i of b.items ?? []) out.set(i.value, `tile ${i.key}`);
     if (b.kind === "Ranking") for (const i of b.items ?? []) out.set(i.value, `ranking ${i.label}`);
     if (b.kind === "Compare") for (const s of b.sides ?? []) for (const [k, v] of Object.entries(s.values ?? {})) out.set(v, `${s.label} ${k}`);
-    if (b.kind === "Trend") for (const v of b.values ?? []) out.set(v, "trend point");
-    if (b.kind === "Chart") for (const v of b.values ?? []) out.set(v, "chart");
-    if (b.kind === "Answer") for (const f of b.facts ?? []) out.set(f.value, `fact ${f.label}`);
   }
   return out;
 }
@@ -419,7 +423,7 @@ function checkList(c, a, asked, T, f, wins, opts = {}) {
   for (const win of wins.length ? wins : [T.whole]) {
     const out = (list.rows ?? []).filter((s) => { const r = T.row(s.id); return r && !T.inWindow(r, win); }).map((s) => ({ id: s.id, field: "period", want: win.what, got: T.row(s.id).tText }));
     const want = T.count(f, win);
-    const panel = list.source === "console-severity" && f.sev ? T.severityPanel({ zone: f.zone, dept: f.dept, cat: f.cat }, win)[f.sev] : null;
+    const panel = list.source === "console-severity" && f.sev && f.status === "open" ? T.severityPanel({ zone: f.zone, dept: f.dept, cat: f.cat }, win)[f.sev] : null;
     const totalOk = list.total === want || (panel != null && list.total === panel);
     const res = { window: win.what, window_key: win.key, rows_checked: (list.rows ?? []).length, faults: [...bare, ...out], total_said: list.total, total_oracle: want, ...(panel != null ? { total_oracle_panel: panel } : {}), total_ok: totalOk };
     const score = (res.faults.length ? 1 : 0) + (totalOk ? 0 : 1);
@@ -479,7 +483,7 @@ function checkCompare(c, a, asked, T, f) {
   const wins = asked.period ? T.windowsFor(asked.period) ?? [] : [T.ofConsole(a.stage?.scope?.period ?? "weekly")];
   let best = null;
   for (const win of wins) {
-    const bad = [], ok = [];
+    const bad = [], ok = [], unchecked = [];
     const base = { dept: f.dept, cat: f.cat, sev: f.sev };
     for (const b of blocks) {
       if (b.kind === "Compare") {
@@ -493,9 +497,11 @@ function checkCompare(c, a, asked, T, f) {
         }
       }
       if (b.kind === "Ranking") {
-        const measure = /complaint/i.test(b.title) ? ["complaints_open", "complaints_ongoing"] : /past the deadline/i.test(b.title) ? ["overdue", "overdue_flag"] : /^open/i.test(b.title) ? ["open", "ongoing"] : /reported/i.test(b.title) ? ["reported"] : /severe/i.test(b.title) ? ["severe"] : null;
+        // v2: "Attention score (3 x severe + high)" names severe, but it is not the severe count; the oracle has no figure for it, so it is said to be unchecked
+        const measure = /attention score/i.test(b.title) ? null : /complaint/i.test(b.title) ? ["complaints_open", "complaints_ongoing"] : /past the deadline/i.test(b.title) ? ["overdue", "overdue_flag"] : /^open/i.test(b.title) ? ["open", "ongoing"] : /reported/i.test(b.title) ? ["reported"] : /severe/i.test(b.title) ? ["severe"] : null;
         const statusFits = asked.status !== "open" || (measure && (measure.includes("open") || measure.includes("overdue")));
         if (!statusFits) bad.push({ ranking: b.title, why: "asked to rank on open cases" });
+        if (!measure) unchecked.push({ ranking: b.title, why: "no oracle figure for this measure: its items are not checked" });
         if (measure) {
           for (const i of b.items ?? []) {
             const scopeItem = i.zone != null ? { ...base, zone: i.zone } : i.action === "dept" ? { ...base, dept: i.key } : null;
@@ -513,7 +519,7 @@ function checkCompare(c, a, asked, T, f) {
       }
     }
     if (!blocks.some((b) => b.kind === "Compare" || b.kind === "Ranking" || b.kind === "Trend")) bad.push({ why: "no comparison or ranking on the screen" });
-    const res = { window: win.what, ok: ok.length, bad };
+    const res = { window: win.what, ok: ok.length, bad, unchecked };
     if (!best || bad.length < best.bad.length) best = res;
     if (!bad.length) break;
   }
@@ -719,6 +725,8 @@ export function gradeRow(row, a, T) {
     const hit = said.find((n) => alt.includes(n.value));
     c.add("3_count", !!hit, { said: said.map((n) => n.value), oracle: uniq(alt), window: wins.map((w) => w.what), rule: asked.period ? "the count for the period asked" : "no period asked: the whole record" });
     checkScope(c, a, asked, T, ["zone", "dept", "cat", "sev"]);
+    // v2: one matching number was enough before; every other number said must be explained by the data too
+    checkFigures(c, a, asked, T, { zone: f.zone, dept: f.dept, cat: f.cat, sev: f.sev }, wins);
     return finish();
   }
 

@@ -4126,5 +4126,1477 @@
   "test": "none: real-run log only (data/aws-cache/qa/run/srv-3142.log)",
   "evidence": "data/aws-cache/qa/run/srv-3142.log",
   "duplicate_of": "PB-172"
+ },
+ {
+  "id": "PB-259",
+  "source_ids": [
+   "hunt-askiq-1"
+  ],
+  "severity": "P1",
+  "title": "Unknown zone or place is answered with the whole district, with no warning",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-43",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-askiq.test.ts (askiq-1); skeptic: chennai-grievance-portal-main/tests/qa/pass4/skeptic-askiq.test.ts",
+  "evidence": "tests/qa/pass4/hunt-askiq.test.ts; docs/qa/pass4/evidence/hunt-askiq-probe.json (and probe2); server log data/aws-cache/qa/run/srv-3173.log",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced on fresh server 3191: zone 99 and Atlantis both return all incidents (15,019 now, clock is live) with scope line saying District-wide. The scope line does show District-wide, so it is not hidden, but nothing says the place was not found. Severity lowered P0 to P1 (label is truthful, no wrong number). Evidence tests/qa/pass4/skeptic-askiq.test.ts",
+  "reported_severity": "P0",
+  "note": "Same silent-default class as hunt-console-3 on the console API."
+ },
+ {
+  "id": "PB-260",
+  "source_ids": [
+   "hunt-askiq-2"
+  ],
+  "severity": "P1",
+  "title": "A date in 2030 or a period of 0 days is silently answered as the last 90 days",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-43",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-askiq.test.ts (askiq-2); skeptic: chennai-grievance-portal-main/tests/qa/pass4/skeptic-askiq.test.ts",
+  "evidence": "tests/qa/pass4/hunt-askiq.test.ts; docs/qa/pass4/evidence/hunt-askiq-probe.json (and probe2); server log data/aws-cache/qa/run/srv-3173.log",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced: 2030 and last 0 days both answered as Last 90 days (Adyar 685 for last 0 days, same as no period). The scope line names 90 days, so it is disclosed but never says the asked period was rejected. Severity lowered P0 to P1. The test regex (not last 90 days) is crude but the behaviour is real.",
+  "reported_severity": "P0"
+ },
+ {
+  "id": "PB-261",
+  "source_ids": [
+   "hunt-askiq-3"
+  ],
+  "severity": "P2",
+  "title": "Severity question gets a headline about Low",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-askiq.test.ts (askiq-3)",
+  "evidence": "tests/qa/pass4/hunt-askiq.test.ts; docs/qa/pass4/evidence/hunt-askiq-probe.json (and probe2); server log data/aws-cache/qa/run/srv-3173.log",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-262",
+  "source_ids": [
+   "hunt-askiq-4"
+  ],
+  "severity": "P2",
+  "title": "Percentage question gives an incident list, not a percentage",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-askiq.test.ts (askiq-4)",
+  "evidence": "tests/qa/pass4/hunt-askiq.test.ts; docs/qa/pass4/evidence/hunt-askiq-probe.json (and probe2); server log data/aws-cache/qa/run/srv-3173.log",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Close to PB-049 (RC-06): a question about a ratio or a change gets a list."
+ },
+ {
+  "id": "PB-263",
+  "source_ids": [
+   "hunt-askiq-5"
+  ],
+  "severity": "P1",
+  "title": "NUL character in the search box gives a 500",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-23",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-askiq.test.ts (askiq-5); skeptic: chennai-grievance-portal-main/tests/qa/pass4/skeptic-askiq.test.ts",
+  "evidence": "tests/qa/pass4/hunt-askiq.test.ts; docs/qa/pass4/evidence/hunt-askiq-probe.json (and probe2); server log data/aws-cache/qa/run/srv-3173.log",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced: GET /api/collector/search?q=a%00b gives 500 {error: Could not load search}; srv-3191.log shows SQLITE_ERROR 1st ORDER BY term out of range. Severity P1 kept (a crash on user input, no data exposure).",
+  "note": "Same SQL error class as PB-108 (GB-1, Tamil search 500: empty term list); may share the cause, not checked."
+ },
+ {
+  "id": "PB-264",
+  "source_ids": [
+   "hunt-citizen-1"
+  ],
+  "severity": "P2",
+  "title": "Citizen home prints the server's date, so the browser shows a hydration error and can show the wrong day",
+  "area": "Citizen portal: home page",
+  "lang": "all",
+  "cluster": "RC-16",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-citizen.test.ts (hunt-citizen-1, it.fails)",
+  "evidence": "docs/qa/pass4/evidence/hunt-citizen.browser.json (errs for /citizen); tests/qa/pass4/hunt-citizen.test.ts. Note: in this run the server clock was frozen at 6 Nov, which made the gap show at any hour; the test shows the real UTC versus IST case.",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Real browser run saw React error 425 under the frozen clock; the test shows the real UTC vs IST case."
+ },
+ {
+  "id": "PB-265",
+  "source_ids": [
+   "hunt-citizen-2"
+  ],
+  "severity": "P3",
+  "title": "A corrupt or non-Excel file named .xlsx or .csv is called 'empty', not 'unreadable'",
+  "area": "Data Studio: uploads",
+  "lang": "en",
+  "cluster": "RC-43",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run log only (docs/qa/pass4/evidence/hunt-citizen.corrupt-files.log)",
+  "evidence": "docs/qa/pass4/evidence/hunt-citizen.corrupt-files.log (real run; no failing it.fails test written, reached out of time)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Real-run log only, no it.fails test."
+ },
+ {
+  "id": "PB-266",
+  "source_ids": [
+   "hunt-citizen-3"
+  ],
+  "severity": "P1",
+  "title": "Filing a complaint on a test server writes a row into the tracked dataset files in the repo",
+  "area": "Citizen portal: file a complaint",
+  "lang": "all",
+  "cluster": "RC-45",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run git diff after chennai-grievance-portal-main/tests/qa/pass4/hunt-citizen.probe6.mjs",
+  "evidence": "git diff of data/datasets/grievances.csv after node tests/qa/pass4/hunt-citizen.probe6.mjs 3175 (seen in this run, 6 added lines; no it.fails test written)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Real-run git diff only, no it.fails test. The two dataset CSVs are still modified in this worktree."
+ },
+ {
+  "id": "PB-267",
+  "source_ids": [
+   "hunt-console-1"
+  ],
+  "severity": "P1",
+  "title": "Workspace names match without case on save and delete, so deleting 'ALPHA' erased both 'Alpha' and 'alpha'",
+  "area": "Collector console: workspaces",
+  "lang": "all",
+  "cluster": "RC-24",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-console.test.ts (hunt-console-1)",
+  "evidence": "tests/qa/pass4/hunt-console.test.ts; real run output: list [alpha v2 current, Alpha v1 not current], rename 409, delete ALPHA 200 deleted 2",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-268",
+  "source_ids": [
+   "hunt-console-2"
+  ],
+  "severity": "P2",
+  "title": "Severity card total (226) does not match the Ongoing tile (236) that its tooltip says it splits",
+  "area": "Collector console: KPI vs severity card",
+  "lang": "en",
+  "cluster": "RC-29",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-console.test.ts (hunt-console-2)",
+  "evidence": "tests/qa/pass4/hunt-console.test.ts; the numbers were read from the API, the screen was not seen (see not reached)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Same family as PB-065 (groups counted where the tile counts incidents). API numbers only, the screen was not seen."
+ },
+ {
+  "id": "PB-269",
+  "source_ids": [
+   "hunt-console-3"
+  ],
+  "severity": "P3",
+  "title": "An unknown zone (99, -1, abc) is silently ignored and the whole city is shown with no sign the filter was dropped",
+  "area": "Collector console: filters",
+  "lang": "all",
+  "cluster": "RC-43",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-console.test.ts (hunt-console-3)",
+  "evidence": "tests/qa/pass4/hunt-console.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-270",
+  "source_ids": [
+   "hunt-console-4"
+  ],
+  "severity": "P3",
+  "title": "/api/officer/grievances?tab=returned (or any unknown tab) shows the New tab (37 rows) while the overview says 0 returned",
+  "area": "Officer portal: grievance list",
+  "lang": "all",
+  "cluster": "RC-43",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-console.test.ts (hunt-console-4)",
+  "evidence": "tests/qa/pass4/hunt-console.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-271",
+  "source_ids": [
+   "redai-1"
+  ],
+  "severity": "P1",
+  "title": "Ordinary words let injected console steps through (type, light, மற, visual)",
+  "area": "Jarvis injection gate (stepsAskedFor)",
+  "lang": "all",
+  "cluster": "RC-19",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redai.test.ts (REDAI-1)",
+  "evidence": "tests/qa/pass4/hunt-redai.test.ts; docs/qa/pass4/evidence/hunt-redai-probe.json",
+  "duplicate_of": "PB-083",
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as PB-083 (one ordinary word lets an injected step through); adds the Tamil word without a word edge."
+ },
+ {
+  "id": "PB-272",
+  "source_ids": [
+   "redai-2"
+  ],
+  "severity": "P1",
+  "title": "A paraphrased or translated injected instruction is said as Jarvis's own answer",
+  "area": "Jarvis injection gate (echoesRecords)",
+  "lang": "all",
+  "cluster": "RC-19",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redai.test.ts (REDAI-2)",
+  "evidence": "tests/qa/pass4/hunt-redai.test.ts; docs/qa/pass4/evidence/hunt-redai-probe.json",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Related to PB-011 (the copy gate misses lines) but a different hole: a paraphrase or translation of a record is not a copy."
+ },
+ {
+  "id": "PB-273",
+  "source_ids": [
+   "redai-3"
+  ],
+  "severity": "P1",
+  "title": "Phone numbers and emails written the way speech and typing produce them are not hidden",
+  "area": "Privacy redaction (redactText)",
+  "lang": "all",
+  "cluster": "RC-18",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redai.test.ts (REDAI-3)",
+  "evidence": "docs/qa/pass4/evidence/hunt-redai-probe.json",
+  "duplicate_of": "PB-008",
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as PB-008 and PB-140 (contact forms not hidden); adds spelled digits in three languages and split-word e-mails."
+ },
+ {
+  "id": "PB-274",
+  "source_ids": [
+   "redai-4"
+  ],
+  "severity": "P1",
+  "title": "Some privacy asks are not refused in code",
+  "area": "Jarvis privacy ask",
+  "lang": "ta",
+  "cluster": "RC-18",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redai.test.ts (REDAI-4)",
+  "evidence": "docs/qa/pass4/evidence/hunt-redai-probe.json",
+  "duplicate_of": "PB-082",
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as PB-082 (privacy asks not refused in code)."
+ },
+ {
+  "id": "PB-275",
+  "source_ids": [
+   "hunt-redsec1-1"
+  ],
+  "severity": "P1",
+  "title": "Logging out does not revoke the session: a copied cookie keeps working",
+  "area": "auth/session-revocation",
+  "lang": "all",
+  "cluster": "RC-25",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redsec1.test.ts (it.fails, live against a server); skeptic: chennai-grievance-portal-main/tests/qa/pass4/skeptic-redsec1.test.ts",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-redsec1.test.ts; data/aws-cache/qa/run/srv-3176.log (no crash: the server does this on purpose)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced on fresh server 3192 (tests/qa/pass4/skeptic-redsec1.test.ts): old cookie still gets 200 at /api/auth/me after logout; no server errors in log. Code agrees: logout/route.ts never calls revokeSessions, and lib/auth.ts line 72 comment says signing out raises the version, so code contradicts its own doc. But the logout route comment says per-tab sign-out is deliberate, the cookie is httpOnly, and an attack...",
+  "reported_severity": "P0",
+  "note": "Cluster RC-25 is the nearest: another route skips a step the sibling routes take. Account-wide token_version means a fix revokes every portal session."
+ },
+ {
+  "id": "PB-276",
+  "source_ids": [
+   "hunt-jarvis1-1"
+  ],
+  "severity": "P0",
+  "title": "Tamil \"தீவிர\" (severe) is read as \"தீ\" (fire): Tamil severe-case questions answer about fires",
+  "area": "jarvis understanding",
+  "lang": "ta",
+  "cluster": "RC-03",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-1, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-1, it.fails, real path via client-sim, no model)",
+  "duplicate_of": "PB-012",
+  "skeptic": "confirmed",
+  "skeptic_note": "Re-ran hunt-jarvis1.test.ts: all 12 it.fails pass, so each bug still reproduces (in-process, no model, no server). Code read: quick.ts catIn uses t.indexOf(w) for Tamil words, and lexicon.ts:78 has the 2-letter word தீ, which sits inside தீவிர. This runs in the quick lane before any model. P0 stands: a confident wrong answer (none today vs 1 severe).",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as PB-012 (Tamil severe heard as fire)."
+ },
+ {
+  "id": "PB-277",
+  "source_ids": [
+   "hunt-jarvis1-2"
+  ],
+  "severity": "P1",
+  "title": "\"draft the second and third\" drafts only one case and says \"1 draft ready\"",
+  "area": "jarvis tray",
+  "lang": "en",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-2, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-2, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Re-ran hunt-jarvis1.test.ts: all 12 it.fails pass, so each bug still reproduces (in-process, no model, no server). Code read: stagelocal.ts draft branch takes one number via numberIn from the phrase. Thunai.tsx:1154 uses localStageCommand before any model, so it is the real path. Only one case drafted. P1 stands.",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-278",
+  "source_ids": [
+   "hunt-jarvis1-3"
+  ],
+  "severity": "P1",
+  "title": "\"draft 1 and 3\" drafts only case 1",
+  "area": "jarvis tray",
+  "lang": "en",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-3, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-3, it.fails, real path via client-sim, no model)",
+  "duplicate_of": "PB-277",
+  "skeptic": "confirmed",
+  "skeptic_note": "Re-ran hunt-jarvis1.test.ts: all 12 it.fails pass, so each bug still reproduces (in-process, no model, no server). Same draft branch; 'draft 1 and 3' gives n=1, case 3 dropped silently. P1 stands.",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same draft branch and same defect as hunt-jarvis1-2 (a list of numbers is not parsed)."
+ },
+ {
+  "id": "PB-279",
+  "source_ids": [
+   "hunt-jarvis1-4"
+  ],
+  "severity": "P1",
+  "title": "Tanglish \"second one open pannu\" opens the first case",
+  "area": "jarvis multi-turn ordinals",
+  "lang": "tanglish",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-4, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-4, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Re-ran hunt-jarvis1.test.ts: all 12 it.fails pass, so each bug still reproduces (in-process, no model, no server). Code read: the 'open pannu' branch calls numberIn on the whole sentence, so 'one' beats 'second'. Wrong complaint shown. P1 stands.",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same root cause as jarvis2-3 (numberIn reads the word one as 1)."
+ },
+ {
+  "id": "PB-280",
+  "source_ids": [
+   "hunt-jarvis1-5"
+  ],
+  "severity": "P1",
+  "title": "\"remind me in 2 hours to check lakes\" opens a lake readings screen and sets no reminder",
+  "area": "jarvis reminders",
+  "lang": "en",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-5, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-5, it.fails, real path via client-sim, no model)",
+  "duplicate_of": "PB-098",
+  "skeptic": "confirmed",
+  "skeptic_note": "Re-ran hunt-jarvis1.test.ts: all 12 it.fails pass, so each bug still reproduces (in-process, no model, no server). Test passes as it.fails (no reminder, lake readings screen). Caveat: shown with no model; the quick lane topic match runs first, so a model would not be reached. P1 stands.",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as PB-098 (a reminder about a topic is lost to the fast lane); relative times (in 2 hours) are a second gap."
+ },
+ {
+  "id": "PB-281",
+  "source_ids": [
+   "hunt-jarvis1-6"
+  ],
+  "severity": "P2",
+  "title": "Reminder card shows a raw UTC string",
+  "area": "jarvis reminders",
+  "lang": "en",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-6, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-6, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-282",
+  "source_ids": [
+   "hunt-jarvis1-7"
+  ],
+  "severity": "P3",
+  "title": "Tamil \"forget\" confirmation is the fragment \"மற\"",
+  "area": "jarvis memory",
+  "lang": "ta",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-7, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-7, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-283",
+  "source_ids": [
+   "hunt-jarvis1-8"
+  ],
+  "severity": "P2",
+  "title": "\"close all severe complaints\" is answered \"Severe\" and silently filters the console",
+  "area": "jarvis understanding",
+  "lang": "en",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-8, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-8, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Related to PB-138 (a forbidden request moves the console)."
+ },
+ {
+  "id": "PB-284",
+  "source_ids": [
+   "hunt-jarvis1-9"
+  ],
+  "severity": "P2",
+  "title": "Tamil and Tanglish \"remember...\" are treated as navigation, not memory (rules fallback)",
+  "area": "jarvis memory",
+  "lang": "ta",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-9, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-9, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as jarvis2-7."
+ },
+ {
+  "id": "PB-285",
+  "source_ids": [
+   "hunt-jarvis1-10"
+  ],
+  "severity": "P2",
+  "title": "\"open the 20th one\" with 8 cases opens the last case",
+  "area": "jarvis multi-turn ordinals",
+  "lang": "en",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-10, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-10, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-286",
+  "source_ids": [
+   "hunt-jarvis1-11"
+  ],
+  "severity": "P2",
+  "title": "With no model, \"top zones by open complaints\" opens one incident (\"Top incident\")",
+  "area": "jarvis understanding",
+  "lang": "en",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-11, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-11, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Related to PB-136 (a code lane takes a data question for a console move)."
+ },
+ {
+  "id": "PB-287",
+  "source_ids": [
+   "hunt-jarvis1-12"
+  ],
+  "severity": "P2",
+  "title": "Saving a screen by the rules names it \"screen\" or \"screen as morning check\"",
+  "area": "jarvis saving",
+  "lang": "en",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-12, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis1.test.ts (JARVIS1-12, it.fails, real path via client-sim, no model)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-288",
+  "source_ids": [
+   "jarvis2-1"
+  ],
+  "severity": "P0",
+  "title": "Tamil 'மண்டலம் 5' is ignored: the screen shows all of Chennai",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "ta",
+  "cluster": "RC-05",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-1, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Zone filter dropped, same class as PB-034 (Ward 172 ignored)."
+ },
+ {
+  "id": "PB-289",
+  "source_ids": [
+   "jarvis2-2"
+  ],
+  "severity": "P0",
+  "title": "'zone five' (number word) is ignored: whole city shown",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "en",
+  "cluster": "RC-05",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-2, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same function as jarvis2-1 (zonesIn), a different missing form (number word)."
+ },
+ {
+  "id": "PB-290",
+  "source_ids": [
+   "jarvis2-3"
+  ],
+  "severity": "P0",
+  "title": "'open the one in Pallikaranai' opens the first case (Ice House, Teynampet)",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "en",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-3, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same root cause as hunt-jarvis1-4 (numberIn reads the word one as 1)."
+ },
+ {
+  "id": "PB-291",
+  "source_ids": [
+   "jarvis2-4"
+  ],
+  "severity": "P1",
+  "title": "'open the sixteenth one' on a list of 8 opens case 6",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "en",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-4, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-292",
+  "source_ids": [
+   "jarvis2-5"
+  ],
+  "severity": "P2",
+  "title": "'open the last one' / 'draft the last one' / Tamil 'கடைசியாக உள்ளதை திற' are not understood",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "all",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-5, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-293",
+  "source_ids": [
+   "jarvis2-6"
+  ],
+  "severity": "P2",
+  "title": "Tamil 'ஒன்றாவது திற' (open the first) is not understood",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "ta",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-6, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-294",
+  "source_ids": [
+   "jarvis2-7"
+  ],
+  "severity": "P1",
+  "title": "Tamil 'ஞாபகம் வச்சுக்கோ' (keep in mind) opens zone 5 instead of saving a note",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "ta",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-7, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": "PB-284",
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same bug as hunt-jarvis1-9 (Tamil and Tanglish keep-in-mind verbs read as navigation); a different verb form."
+ },
+ {
+  "id": "PB-295",
+  "source_ids": [
+   "jarvis2-8"
+  ],
+  "severity": "P1",
+  "title": "'don't forget zone 5 is my priority' opens zone 5, nothing saved",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "en",
+  "cluster": "RC-04",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-8, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model.",
+  "note": "Same class as hunt-jarvis1-9: the remember rule is a closed list of words."
+ },
+ {
+  "id": "PB-296",
+  "source_ids": [
+   "jarvis2-9"
+  ],
+  "severity": "P2",
+  "title": "'draft it' with a case open on the Stage asks 'Draft for which incident?'",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "all",
+  "cluster": "RC-42",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-9, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-297",
+  "source_ids": [
+   "jarvis2-10"
+  ],
+  "severity": "P2",
+  "title": "'and the previous one again' after two zones opens an incident",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "all",
+  "cluster": "RC-07",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-10, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-298",
+  "source_ids": [
+   "jarvis2-11"
+  ],
+  "severity": "P2",
+  "title": "'zone 5 and zone 6 compare' (no model) shows only zone 6",
+  "area": "Jarvis understanding / multi-turn",
+  "lang": "all",
+  "cluster": "RC-07",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts (jarvis2-11, it.fails)",
+  "evidence": "chennai-grievance-portal-main/tests/qa/pass4/hunt-jarvis2.test.ts",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "merge_check": "7 Nov merge re-run: hunt-jarvis1, hunt-jarvis2 and hunt-redai test files, 36 of 36 tests pass (every it.fails bug still reproduces); in-process, no model."
+ },
+ {
+  "id": "PB-299",
+  "source_ids": [
+   "journey-collector-1"
+  ],
+  "severity": "P2",
+  "title": "Status 'Open' shows as the verb 'திற' (meaning 'open it!') in Tamil",
+  "area": "collector Take action (Tamil)",
+  "lang": "ta",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-collector-storm.browser.mjs with screenshots",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/storm-ta-4-act.png and storm-ta-4-act.txt",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-300",
+  "source_ids": [
+   "journey-collector-2"
+  ],
+  "severity": "P2",
+  "title": "Fixed labels on the Tamil Briefing stay in English",
+  "area": "collector Briefing (Tamil)",
+  "lang": "ta",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-collector.browser.mjs with screenshots",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/ta-03-சுருக்கம்.png and .txt",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "The QA server has no AI provider, so AI translation is off (by design of the harness); fixed labels are still a dictionary gap."
+ },
+ {
+  "id": "PB-301",
+  "source_ids": [
+   "journey-collector-3"
+  ],
+  "severity": "P2",
+  "title": "Cyclone banner popover stays open on top of the Take action dialog",
+  "area": "collector alert banner",
+  "lang": "all",
+  "cluster": "RC-46",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-collector-storm.browser.mjs with screenshots",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/storm-en-4-act.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-302",
+  "source_ids": [
+   "journey-collector-4"
+  ],
+  "severity": "P3",
+  "title": "'Severe severity' wording",
+  "area": "collector Take action",
+  "lang": "en",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-collector.browser.mjs with screenshots",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/en-01-home.txt",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-303",
+  "source_ids": [
+   "journey-collector-5"
+  ],
+  "severity": "P3",
+  "title": "Raw ISO date '2026-11-07' in the cyclone popover",
+  "area": "collector alert banner",
+  "lang": "all",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-collector-storm.browser.mjs with screenshots",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/storm-en-2-banner.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-304",
+  "source_ids": [
+   "journey-collector-6"
+  ],
+  "severity": "P3",
+  "title": "--frozen server rejects staff sign-in in a real browser",
+  "area": "harness (not the app)",
+  "lang": "all",
+  "cluster": "RC-37",
+  "kind": "harness",
+  "status": "open",
+  "test": "none: real-run harness note (chennai-grievance-portal-main/tests/qa/pass4/journey-collector.browser.mjs against --frozen)",
+  "evidence": "docs/qa/pass4/evidence/journeys/collector/en-00-after-signin.png (ended on /login?redirect=%2Fcollector)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Harness note, not an app bug: freeze-clock.cjs patches Node only, not the edge middleware."
+ },
+ {
+  "id": "PB-305",
+  "source_ids": [
+   "journey-judge-1"
+  ],
+  "severity": "P1",
+  "title": "Chat 'Save this workspace as Collector's Daily Briefing and reopen last week's version' saves nothing and shows unrelated counts",
+  "area": "Ask District IQ / workspaces",
+  "lang": "en",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/journey-judge.skeptic*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/12-ask-6.png and 17-workspaces.png",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced on :3193 via POST /api/collector/assistant/chat: the save sentence returns a plain KPI answer (1,260 reported, 1,109 open, 325 past deadline) with no save and no note. Counts are 7-day, unrelated to a save. Did not re-check the Workspaces menu."
+ },
+ {
+  "id": "PB-306",
+  "source_ids": [
+   "journey-judge-2"
+  ],
+  "severity": "P1",
+  "title": "'Show every source and application record used to create this briefing' returns headline KPIs, not a source list",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/journey-judge.skeptic*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/12-ask-5.png",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced via chat API: headline is KPIs (587 severe, 1,238 open complaints, 2,412 ongoing) with a zones chart; no sources or records listed."
+ },
+ {
+  "id": "PB-307",
+  "source_ids": [
+   "journey-judge-3"
+  ],
+  "severity": "P1",
+  "title": "'List the taluks with the highest number of unresolved incidents last month' returns one total and no taluks",
+  "area": "Ask District IQ",
+  "lang": "en",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/journey-judge.skeptic*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/12-ask-3.png",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced via chat API: one KPI answer (2,067 open, last 30 days), scope.taluk null, no taluk list. Note Reported equals Still open (2,067), which looks odd but was not dug into.",
+  "note": "Reported equal to Still open (2,067) looks odd; not dug into."
+ },
+ {
+  "id": "PB-308",
+  "source_ids": [
+   "journey-judge-4"
+  ],
+  "severity": "P0",
+  "title": "The brief's own query 'incidents reported by more than one newspaper but missing from the departmental application' is answered as 'Missing person in the news'",
+  "area": "Ask the map / search",
+  "lang": "en",
+  "cluster": "RC-05",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/journey-judge.skeptic*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/11-search-query.png and 12-ask-full.txt",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Reproduced via POST /api/map/ask: the sentence gives a plan with category MISSING_PERSON plus news:true, so the word missing was read as the category. The same sentence without the missing clause gives category null. Chat API answers it correctly (31 in the news, no department record). Severity P0 kept as a confident wrong answer; arguably P1 since the chip shows the wrong filter openly.",
+  "note": "Category word list reads missing as the missing-person category in /api/map/ask; the chat route answers correctly. Skeptic: arguably P1."
+ },
+ {
+  "id": "PB-309",
+  "source_ids": [
+   "journey-judge-5"
+  ],
+  "severity": "P2",
+  "title": "Briefing says today is 'about the same' as the previous period; the Overview says 133 fewer ongoing incidents and 15 fewer severe",
+  "area": "Briefing consistency",
+  "lang": "en",
+  "cluster": "RC-29",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/01-home.png and 03-tab-Briefing.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "note": "Different baselines for previous period; cause not found."
+ },
+ {
+  "id": "PB-310",
+  "source_ids": [
+   "journey-judge-6"
+  ],
+  "severity": "P1",
+  "title": "Wrong categories and a wrong place on news stories shown to the Collector",
+  "area": "News understanding",
+  "lang": "en",
+  "cluster": "RC-39",
+  "kind": "pipeline",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/journey-judge.skeptic*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/judge/12-ask-full.txt",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Partly reproduced via /api/collector/search: Newborn girl story is Flood relief needs under District Disaster Management; Poonamallee/Kelambakkam accident is at Vadapalani. Diwali security and CM summary truncation not reproduced (search did not return them). Pipeline data: report only.",
+  "note": "Pipeline data, report only (rules: do not patch around district_intel). Skeptic reproduced two of the four examples."
+ },
+ {
+  "id": "PB-311",
+  "source_ids": [
+   "journey-judge-7"
+  ],
+  "severity": "P2",
+  "title": "Server log shows the embedding model failing to load, repeatedly",
+  "area": "Server log",
+  "lang": "all",
+  "cluster": "RC-41",
+  "kind": "environment",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs",
+  "evidence": "data/aws-cache/qa/run/srv-3180.log (gitignored)",
+  "duplicate_of": "PB-172",
+  "skeptic": "not_checked",
+  "note": "Same as PB-172 (134-byte git-lfs pointer for the embedding model)."
+ },
+ {
+  "id": "PB-312",
+  "source_ids": [
+   "journey-judge-8"
+  ],
+  "severity": "P3",
+  "title": "With --frozen the Collector page never opens",
+  "area": "Test harness",
+  "lang": "all",
+  "cluster": "RC-37",
+  "kind": "harness",
+  "status": "open",
+  "test": "none: real-run browser and API scripts chennai-grievance-portal-main/tests/qa/pass4/journey-judge.walk*.mjs",
+  "evidence": "journeys/judge.md step 0",
+  "duplicate_of": "PB-304",
+  "skeptic": "not_checked",
+  "note": "Same frozen-clock harness issue as journey-collector-6."
+ },
+ {
+  "id": "PB-313",
+  "source_ids": [
+   "journey-officer_citizen-1"
+  ],
+  "severity": "P2",
+  "title": "Details step gets wider than a 360 px screen after adding a photo and text",
+  "area": "citizen file-complaint, 360 px phone",
+  "lang": "en",
+  "cluster": "RC-46",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-officer_citizen.*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/citizen-08-photo-and-text-360.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-314",
+  "source_ids": [
+   "journey-officer_citizen-2"
+  ],
+  "severity": "P2",
+  "title": "Officer search cannot find a complaint by its complaint number",
+  "area": "officer search",
+  "lang": "en",
+  "cluster": "RC-38",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-officer_citizen.*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/officer-02-search.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-315",
+  "source_ids": [
+   "journey-officer_citizen-3"
+  ],
+  "severity": "P1",
+  "title": "A complaint filed by a citizen does not appear in the department officer's queue",
+  "area": "citizen to officer hand-over",
+  "lang": "en",
+  "cluster": "RC-47",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-officer_citizen.*.mjs; skeptic: chennai-grievance-portal-main/tests/qa/pass4/skeptic-oc3.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/officer-03-see-all.png, citizen-09-submitted-360.png, citizen-11-track-detail-360.png",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Fresh server on port 3195 (tests/qa/pass4/skeptic-oc3.mjs): citizenA filed via POST /api/complaints, got code 2026-525LJO, routed to Solid Waste Management. The SWM officer queue (/api/officer/grievances, default tab and tab=all, per=100) had no row with the new title tag or code, and q=<tag> or q=<code> returned 0 rows (68 bytes). Code agrees: src/lib/officer/data.ts header says the queue only reads pipeline-load...",
+  "note": "Might be by design (pipeline refresh), but neither person is told. Related to PB-211."
+ },
+ {
+  "id": "PB-316",
+  "source_ids": [
+   "journey-officer_citizen-4"
+  ],
+  "severity": "P3",
+  "title": "Closing a case leaves a browser console error (HTTP 428) before the password step",
+  "area": "officer console",
+  "lang": "en",
+  "cluster": "RC-48",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-officer_citizen.*.mjs",
+  "evidence": "the script prints: HTTP 428 /api/officer/grievances/INC-20261104-EA19E3/report",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-317",
+  "source_ids": [
+   "journey-officer_citizen-5"
+  ],
+  "severity": "P3",
+  "title": "A High case says 'Not severe' in the close box",
+  "area": "officer completion report",
+  "lang": "en",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run browser script chennai-grievance-portal-main/tests/qa/pass4/journey-officer_citizen.*.mjs",
+  "evidence": "docs/qa/pass4/evidence/journeys/officer-06-complete-clicked.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
+ },
+ {
+  "id": "PB-318",
+  "source_ids": [
+   "VA-1"
+  ],
+  "severity": "P2",
+  "title": "Citizen header overflows the viewport: horizontal scroll at 768 (page 1097-1118px wide) and 1280 (1305-1326px) on file-complaint, track, profile",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-46",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/screens.json (scrollW > W for citizen*/profile at w=768 en+ta, w=1280 on 3 pages, 360 ta by 8px); screenshots citizen-ta-768.png, citizen-file-ta-1280.png show white strip on right and footer cut short",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "medium"
+ },
+ {
+  "id": "PB-319",
+  "source_ids": [
+   "VA-2"
+  ],
+  "severity": "P2",
+  "title": "Collector at 360: floating chat button covers the last bottom-nav tab (Data Studio) and the Jarvis pill + history button cover the map's search chip and zoom control",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-46",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/screens/collector-en-360.png, collector-ta-360.png (visual); officer-en-360.png has the same floating button on the map zoom",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "medium"
+ },
+ {
+  "id": "PB-320",
+  "source_ids": [
+   "VA-3"
+  ],
+  "severity": "P2",
+  "title": "axe critical: aria-required-children on .seg (a group containing buttons not allowed by its role), on every collector tab, 52 runs",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/axe.json (collector, all tabs, both langs and themes)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "medium"
+ },
+ {
+  "id": "PB-321",
+  "source_ids": [
+   "VA-4"
+  ],
+  "severity": "P2",
+  "title": "Console error on every Collector and Officer load: CSP connect-src blocks fetch of https://fonts.googleapis.com/css2 (Inter / JetBrains Mono)",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-48",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/axe.json console arrays: 52 collector runs, 4 officer runs",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "medium"
+ },
+ {
+  "id": "PB-322",
+  "source_ids": [
+   "VA-5"
+  ],
+  "severity": "P3",
+  "title": "axe serious color-contrast: nav links #64748b on #f2f5f9 = 4.35 (citizen header), login 'Forgot password' link 3.82, register helper text 2.08 (#a0aec0), forgot-password steps 4.4; light theme (dark theme clean except register 1)",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "axe.json, pages citizen*, profile, login, register, forgot",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low"
+ },
+ {
+  "id": "PB-323",
+  "source_ids": [
+   "VA-6"
+  ],
+  "severity": "P3",
+  "title": "axe serious label-content-name-mismatch on every page (language toggle and similar: visible text not in accessible name, aria-label 'Switch to Tamil' vs visible 'English')",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "axe.json, all 84 runs",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low"
+ },
+ {
+  "id": "PB-324",
+  "source_ids": [
+   "VA-7"
+  ],
+  "severity": "P3",
+  "title": "axe moderate: heading-order (h3 straight after h1) on citizen overview, officer and collector; region (content outside landmarks) on officer and collector",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "axe.json",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low"
+ },
+ {
+  "id": "PB-325",
+  "source_ids": [
+   "VA-8"
+  ],
+  "severity": "P3",
+  "title": "Keyboard: closing Ask District IQ / Jarvis with Escape drops focus to <body> instead of returning to the control that opened it",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/keys.json, 'jarvis dialog': closedByEscape true, activeAfterClose null. Focus trap itself works (0 stops outside dialog in 30 Tabs).",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low"
+ },
+ {
+  "id": "PB-326",
+  "source_ids": [
+   "VA-9"
+  ],
+  "severity": "P3",
+  "title": "Keyboard: focused controls report no outline and no box-shadow on citizen header links/buttons, login/register links and eye button, Zone/Taluk/Department selects, and the Jarvis textarea (may be a background-only focus style; not confirmed by pixel diff, my pixel-diff probe hung and was removed)",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-49",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/keys.json noRing arrays",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low",
+  "note": "The agent says this is not confirmed by pixel diff."
+ },
+ {
+  "id": "PB-327",
+  "source_ids": [
+   "VA-10"
+  ],
+  "severity": "P3",
+  "title": "Tamil mode is largely English on citizen pages and parts of officer pages (hero text, buttons, card titles, 'Work & insights', 'WAITING FOR YOUR APPROVAL'); mixed Tamil/English in one sentence. Server log says AI translation is unavailable here (no provider key), so this may be environment-only",
+  "area": "visual and accessibility pass",
+  "lang": "ta",
+  "cluster": "RC-15",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/screens/citizen-ta-360.png, citizen-file-ta-360.png, officer-ta-360.png; [i18n] lines in data/aws-cache/qa/run/srv-3183.log",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "info",
+  "note": "Partly environment: the QA server has no AI translation key."
+ },
+ {
+  "id": "PB-328",
+  "source_ids": [
+   "VA-11"
+  ],
+  "severity": "P3",
+  "title": "Officer at 360 in Tamil: hero title truncated to 'மேலோட்...'; at 768 the period switch labels clip under the selected pill",
+  "area": "visual and accessibility pass",
+  "lang": "all",
+  "cluster": "RC-46",
+  "kind": "app",
+  "status": "open",
+  "test": "none: real-run axe, keyboard and screenshot runs (chennai-grievance-portal-main/tests/qa/pass4/axe.mjs, screens.mjs, keys.mjs)",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/screens/officer-ta-360.png, officer-ta-768.png",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low"
+ },
+ {
+  "id": "PB-329",
+  "source_ids": [
+   "CHAOS-1"
+  ],
+  "severity": "P2",
+  "title": "A corrupt Thunai memory file reads as empty with HTTP 200, and the next write overwrites it, so notes, reminders and pins are lost with no sign",
+  "area": "src/lib/thunai/store.ts readMemory (catch returns EMPTY for any error, including a half-written file) and writeMemory",
+  "lang": "all",
+  "cluster": "RC-51",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/chaos-findings.test.ts (CHAOS-1, fails); chennai-grievance-portal-main/tests/qa/pass4/chaos-restart.mjs",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/chaos-restart.json (steps 'memory after corrupt file', 'note after corrupt file'); tests/qa/pass4/chaos-findings.test.ts CHAOS-1 (fails)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "medium",
+  "note": "Reported medium (P2). By the rules data loss is P0 if a crash can leave a half-written file; whether writeMemory is atomic was not checked."
+ },
+ {
+  "id": "PB-330",
+  "source_ids": [
+   "CHAOS-2"
+  ],
+  "severity": "P3",
+  "title": "With no model key, questions the rules cannot answer (forecasts, drafting a letter) get an unrelated confident answer instead of a plain 'I cannot do that without the model'",
+  "area": "/api/collector/assistant/chat rules lane",
+  "lang": "all",
+  "cluster": "RC-44",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/chaos-findings.test.ts (CHAOS-2, 3 cases fail); chennai-grievance-portal-main/tests/qa/pass4/chaos-nokey.mjs",
+  "evidence": "chennai-grievance-portal-main/docs/qa/pass4/evidence/chaos-nokey.json; tests/qa/pass4/chaos-findings.test.ts CHAOS-2 (3 cases fail, CHAOS_PORT=3185)",
+  "duplicate_of": null,
+  "skeptic": "not_checked",
+  "reported_severity": "low",
+  "note": "Reported low (P3); a confident answer about something else is P0 or P1 by the rules, but the hunter rated it low and nobody has re-rated it."
+ },
+ {
+  "id": "PB-331",
+  "source_ids": [
+   "CHAOS-3"
+  ],
+  "severity": "P3",
+  "title": "Server log error on every embedding lookup: the embedding model file is a 134-byte placeholder (Protobuf parsing failed). Falls back to rules, so answers are unaffected",
+  "area": ".cache/models/Xenova/multilingual-e5-base/onnx/model_quantized.onnx (134 bytes, probably a Git LFS pointer not fetched in this worktree)",
+  "lang": "all",
+  "cluster": "RC-41",
+  "kind": "environment",
+  "status": "open",
+  "test": "none: real-run log only",
+  "evidence": "data/aws-cache/qa/run/srv-3185.log: '[assistant] embedding index: Load model ... failed:Protobuf parsing failed.'",
+  "duplicate_of": "PB-172",
+  "skeptic": "not_checked",
+  "reported_severity": "low",
+  "note": "Same as PB-172."
+ },
+ {
+  "id": "PB-332",
+  "source_ids": [
+   "VB-1"
+  ],
+  "severity": "P2",
+  "title": "11 voice e2e specs fail at baseline on the dev console; data-testid=\"state\" is used twice",
+  "area": "tests/e2e vs Hud.tsx",
+  "lang": "all",
+  "cluster": "RC-36",
+  "kind": "test",
+  "status": "open",
+  "test": "npx playwright test -c tests/qa/pass4/pw.voice.config.ts (12 failed, 15 passed)",
+  "evidence": "npx playwright test -c tests/qa/pass4/pw.voice.config.ts (VOICE_SPECS='(vad|vadfake|bargein|hold|ambientrate|mode)\\.spec'): 12 failed, 15 passed; chennai-grievance-portal-main/docs/qa/pass4/evidence/voice-specs.json. hold.spec 'wait': strict mode violation, getByTestId('state') resolved to 2 elements (src/app/dev/thunai/Harness.tsx:112 and src/components/collector/app/thunai/Hud.tsx:162).",
+  "duplicate_of": null,
+  "skeptic": "could_not_test",
+  "skeptic_note": "No P0/P1 rows exist (this is medium). Repro needs /dev/thunai, which returns 404 on the production .next-qa build (port 3190), so hold.spec times out waiting for __jv (a different failure). Code read agrees with the claim: Harness.tsx:112 and Hud.tsx:162 both set data-testid=state, and Harness renders Thunai (Harness.tsx:116), so getByTestId(state) is ambiguous in dev. Severity medium looks fair for test-only brea...",
+  "reported_severity": "medium",
+  "note": "Test-only breakage on the dev console (/dev/thunai is 404 on the production build)."
+ },
+ {
+  "id": "PB-333",
+  "source_ids": [
+   "VB-2"
+  ],
+  "severity": "P3",
+  "title": "Sign-in over http://localhost does not stick in WebKit: session cookie is Secure",
+  "area": "auth cookies, WebKit",
+  "lang": "all",
+  "cluster": "RC-41",
+  "kind": "environment",
+  "status": "open",
+  "test": "none: real-run script in chennai-grievance-portal-main/tests/qa/pass4 (voice-browsers.*)",
+  "evidence": "node tests/qa/pass4/voice-browsers.webkit-ui-login.mjs (login form, WebKit): POST /api/auth/login 200 then GET /api/auth/me 401, user stays on /login?redirect=%2Fcitizen; Chromium on the same steps gets 200 and /citizen. Cookies are secure=true. Likely only a local-development issue (plain http); not tested on https.",
+  "duplicate_of": null,
+  "skeptic": "could_not_test",
+  "skeptic_note": "Severity low, not P0/P1. Re-run of the webkit-ui-login script on 3190 got 401 on POST /api/auth/login in both WebKit and Chromium: the citizenA account is not seeded on this server, so the claim could not be reproduced. Code read: session-cookies.ts:47 sets secure only when NODE_ENV=production, consistent with the claim (WebKit rejects Secure cookies on plain http; Chromium exempts localhost). Low severity is fair.",
+  "reported_severity": "low",
+  "note": "Likely only plain-http local development; not tested on https."
+ },
+ {
+  "id": "PB-334",
+  "source_ids": [
+   "VB-3"
+  ],
+  "severity": "P3",
+  "title": "Firefox cannot launch on this machine",
+  "area": "environment",
+  "lang": "all",
+  "cluster": "RC-41",
+  "kind": "environment",
+  "status": "open",
+  "test": "none: real-run script in chennai-grievance-portal-main/tests/qa/pass4 (voice-browsers.*)",
+  "evidence": "firefox.exe from ms-playwright/firefox-1543 returns spawn UNKNOWN / Permission denied when run directly. Firefox is untested.",
+  "duplicate_of": null,
+  "skeptic": "could_not_test",
+  "skeptic_note": "Severity info, environment note, not a product finding; not attempted.",
+  "reported_severity": "info",
+  "note": "Not a product finding: Firefox cannot launch on this machine, so Firefox is untested."
+ },
+ {
+  "id": "PB-335",
+  "source_ids": [
+   "groq-1"
+  ],
+  "severity": "P0",
+  "title": "Live Groq: 27 of 60 sampled open rows got a confident wrong answer (right 15, safe 7, wrong 38)",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "lang": "all",
+  "cluster": "RC-50",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/grader/run.test.ts with vitest.qa4-live.config.ts (QA_P4_LABEL=open-baseline-groq)",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Evidence file recounts exactly (right 15, safe 7, wrong 38, confident_wrong 27; reasons are real grader checks such as wrong action/scope/figures). Fresh live Groq re-run of 12 of the same rows (docs/qa/pass4/results/skeptic-groq.json): 10 wrong, 9 confident wrong, 1 right; same rows wrong as before, plus 3 that were right/safe before. Caveat: 17 of 60 rows are code lanes, not Groq (e.g. Tondiarpet last month answ...",
+  "note": "A measurement over the same families as RC-01 to RC-07; the individual wrong rows in open-baseline-groq.json are not yet mapped to those clusters."
+ },
+ {
+  "id": "PB-336",
+  "source_ids": [
+   "groq-2"
+  ],
+  "severity": "P1",
+  "title": "Live Groq: brief, list, numbers and followup families almost never right",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "lang": "all",
+  "cluster": "RC-50",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/grader/run.test.ts with vitest.qa4-live.config.ts (QA_P4_LABEL=open-baseline-groq)",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Per-family right/n recomputed from open-baseline-groq.json matches the claim (brief 1/9, list 2/8, numbers 1/6, followup 1/6, noisy 1/6, other_body 2/9, explain 4/9, privacy_safety 3/6). Re-run subset agrees (brief 0/3 right, list 0/3, other_body 0/3). Small n per family, and some failures are code-lane.",
+  "note": "Small n per family; some of the failures are code lanes."
+ },
+ {
+  "id": "PB-337",
+  "source_ids": [
+   "groq-3"
+  ],
+  "severity": "P2",
+  "title": "Live Groq answers differ run to run for the same sentence",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "lang": "all",
+  "cluster": "RC-50",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/grader/run.test.ts with vitest.qa4-live.config.ts (QA_P4_LABEL=open-baseline-groq)",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "duplicate_of": null,
+  "skeptic": "confirmed",
+  "skeptic_note": "Recomputed from steady-groq-1/2/3.json (same 20 rows): grade changed on 2 (10%), wording changed on 7 (35%); route or grade changed on 7, not 6 (claim slightly low). Re-run also flipped rows vs baseline (ta-brief-03, tanglish-explain-01 right to wrong). Severity corrected P1 to P2: model wording varies by nature, and grades flipped on only 2 of 20 rows; the harmful part is already counted in groq-1.",
+  "reported_severity": "P1"
+ },
+ {
+  "id": "PB-338",
+  "source_ids": [
+   "groq-4"
+  ],
+  "severity": "P2",
+  "title": "The runner counts per-minute token limit as no-model and shows Thinking only",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "lang": "all",
+  "cluster": "RC-50",
+  "kind": "app",
+  "status": "open",
+  "test": "chennai-grievance-portal-main/tests/qa/pass4/grader/run.test.ts with vitest.qa4-live.config.ts (QA_P4_LABEL=open-baseline-groq)",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "duplicate_of": null,
+  "skeptic": "not_checked"
  }
 ]

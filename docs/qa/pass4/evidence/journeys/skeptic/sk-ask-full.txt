@@ -1,0 +1,137 @@
+Answering for
+Last 90 days
+All zones
+All departments
+Prepare today's Collector briefing: group duplicate reports, identify the important incidents, explain why they need attention and create a department-wise action list
+Show on screen with Jarvis
+Give me the weekly summary of road accidents, flooding and public-infrastructure complaints in the district
+Show on screen with Jarvis
+List the taluks with the highest number of unresolved incidents during the last month
+Show on screen with Jarvis
+Create a quarterly trend of incident categories and prepare a department-wise follow-up report
+Show on screen with Jarvis
+Show every source and application record used to create this briefing
+Show on screen with Jarvis
+Save this workspace as Collector's Daily Briefing and reopen last week's version
+Show on screen with Jarvis
+Show incidents reported in more than one newspaper with no citizen complaint
+Top district news · last 7 days
+From the data
+
+The biggest story: காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம் (8 outlets). Also: Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh (2 outlets); Two killed in separate accidents in Poonamallee and Kelambakkam (2 outlets). Six stories of 842 shown, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped.
+
+Last 7 days · Chennai news
+
+1
+News only · no department record
+8 independent outlets
+காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்
+
+கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்
+
+Kasimedu
+4 Nov, 6:04 am
+Missing person
+Greater Chennai Police
+Why it matters
+Linked to a high-severity incident
+4 deaths reported
+Carried by 8 independent outlets
+Still open
+Sources · 8
+Incident INC-20261105-DDD4E8
+2
+News only · no department record
+2 independent outlets
+Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh
+
+Kasimedu Fishing Tragedy: Two More Bodies Wash Ashore In Andhra Pradesh; Two Fishers Still Missing
+
+Kasimedu
+5 Nov, 10:26 pm
+Missing person
+Greater Chennai Police
+Why it matters
+Linked to a high-severity incident
+5 deaths reported
+Carried by 2 independent outlets
+Still open
+Sources · 2
+Incident INC-20261105-AB1018
+3
+News only · no department record
+2 independent outlets
+Two killed in separate accidents in Poonamallee and Kelambakkam
+
+2 outlets reported this in Vadapalani.
+
+Vadapalani
+5 Nov, 12:14 pm
+Road accident
+Greater Chennai Police
+Why it matters
+Linked to a high-severity incident
+4 deaths reported
+Carried by 2 independent outlets
+Still open
+Sources · 2
+Incident INC-20261024-0CF13A
+4
+News only · no department record
+3 independent outlets
+Death of Chennai fishermen: CM Vijay announces compensation
+
+Tamil Nadu Chief Minister C.
+
+Kasimedu
+5 Nov, 9:00 pm
+Missing person
+Greater Chennai Police
+Why it matters
+Linked to a high-severity incident
+3 deaths reported
+Carried by 3 independent outlets
+Still open
+Sources · 3
+Incident INC-20260905-319067
+5
+News only · no department record
+6 independent outlets
+Newborn girl found abandoned in Neelankarai
+
+Police rescued a baby girl abandoned near CM Vijay’s Neelankarai house.
+
+Neelankarai
+5 Nov, 11:20 am
+Flood relief needs
+District Disaster Management
+Why it matters
+Linked to a high-severity incident
+1 death reported
+Carried by 6 independent outlets
+Still open
+Sources · 8
+Incident INC-20261105-5CE479
+6
+News only · no department record
+8 independent outlets
+Chennai police tighten security on busy streets for Diwali
+
+Severe traffic congestion reported on GST Road in Tambaram due to Diwali festival travel.
+
+T. Nagar
+2 Nov, 11:14 pm
+Crimes against women & children
+Greater Chennai Police
+Why it matters
+Linked to a high-severity incident
+Carried by 8 independent outlets
+Still open
+No department has a record of it yet
+Sources · 8
+Incident INC-20261102-C9C4BD
+News rests mostly on headlines and short summaries; open a source for the full report.
+Sources and how this was calculated
+Helpful?
+Show on screen with Jarvis
+Answers come from the console's live data · Enter to send · ↑ edits the last question

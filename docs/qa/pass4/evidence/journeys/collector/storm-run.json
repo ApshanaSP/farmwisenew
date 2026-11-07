@@ -1,0 +1,70 @@
+[
+ {
+  "lang": "en",
+  "name": "1-home",
+  "ms": 2751,
+  "note": "ok"
+ },
+ {
+  "lang": "en",
+  "name": "2-banner",
+  "ms": 2827,
+  "note": "ok"
+ },
+ {
+  "lang": "en",
+  "name": "3-rain",
+  "ms": 5223,
+  "note": "FAIL locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: /^\\s*(Rain|மழை"
+ },
+ {
+  "lang": "en",
+  "name": "4-act",
+  "ms": 2980,
+  "note": "ok"
+ },
+ {
+  "lang": "en",
+  "name": "5-briefing",
+  "ms": 2846,
+  "note": "ok"
+ },
+ {
+  "lang": "en",
+  "errs": []
+ },
+ {
+  "lang": "ta",
+  "name": "1-home",
+  "ms": 2729,
+  "note": "ok"
+ },
+ {
+  "lang": "ta",
+  "name": "2-banner",
+  "ms": 2788,
+  "note": "ok"
+ },
+ {
+  "lang": "ta",
+  "name": "3-rain",
+  "ms": 5229,
+  "note": "FAIL locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: /^\\s*(Rain|மழை"
+ },
+ {
+  "lang": "ta",
+  "name": "4-act",
+  "ms": 2770,
+  "note": "ok"
+ },
+ {
+  "lang": "ta",
+  "name": "5-briefing",
+  "ms": 2875,
+  "note": "ok"
+ },
+ {
+  "lang": "ta",
+  "errs": []
+ }
+]

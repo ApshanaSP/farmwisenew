@@ -1,0 +1,494 @@
+{
+ "asked": "40 rows x3; 20 rows x3 done because quota (spare 250k kept)",
+ "rows_tested": 20,
+ "runs": 3,
+ "seed": "20261107",
+ "different_grade": 2,
+ "different_route_or_grade": 6,
+ "different_wording": 7,
+ "pct_different_grade": 10,
+ "pct_different_route_or_grade": 30,
+ "pct_different_wording": 35,
+ "rows": [
+  {
+   "id": "en-brief-01",
+   "lang": "en",
+   "family": "brief",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "performance",
+    "ranking",
+    "performance"
+   ],
+   "same_grade": true,
+   "same_route": false,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "en-explain-04",
+   "lang": "en",
+   "family": "explain",
+   "grades": [
+    "right",
+    "right",
+    "right"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "why",
+    "cases",
+    "why"
+   ],
+   "same_grade": true,
+   "same_route": false,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "en-followup-14",
+   "lang": "en",
+   "family": "followup",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "readings",
+    "do",
+    "readings"
+   ],
+   "same_grade": true,
+   "same_route": false,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "en-list-17",
+   "lang": "en",
+   "family": "list",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "performance",
+    "performance",
+    "performance"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "en-noisy-17",
+   "lang": "en",
+   "family": "noisy",
+   "grades": [
+    "safe",
+    "safe",
+    "safe"
+   ],
+   "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "chat",
+    "chat",
+    "chat"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "en-other_body-27",
+   "lang": "en",
+   "family": "other_body",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-20b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "en-privacy_safety-13",
+   "lang": "en",
+   "family": "privacy_safety",
+   "grades": [
+    "right",
+    "right",
+    "right"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "refuse",
+    "refuse",
+    "refuse"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-brief-02",
+   "lang": "ta",
+   "family": "brief",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "brief",
+    "brief",
+    "brief"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-explain-15",
+   "lang": "ta",
+   "family": "explain",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-list-16",
+   "lang": "ta",
+   "family": "list",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "do",
+    "do",
+    "do"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-noisy-07",
+   "lang": "ta",
+   "family": "noisy",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "ta-numbers-10",
+   "lang": "ta",
+   "family": "numbers",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "do",
+    "do",
+    "do"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-other_body-18",
+   "lang": "ta",
+   "family": "other_body",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-120b"
+   ],
+   "recipes": [
+    "performance",
+    "performance",
+    "performance"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "ta-privacy_safety-02",
+   "lang": "ta",
+   "family": "privacy_safety",
+   "grades": [
+    "right",
+    "right",
+    "right"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "refuse",
+    "refuse",
+    "refuse"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-brief-04",
+   "lang": "tanglish",
+   "family": "brief",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "none",
+    "none",
+    "none"
+   ],
+   "recipes": [
+    "brief",
+    "brief",
+    "brief"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-explain-13",
+   "lang": "tanglish",
+   "family": "explain",
+   "grades": [
+    "safe",
+    "safe",
+    "safe"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-list-20",
+   "lang": "tanglish",
+   "family": "list",
+   "grades": [
+    "right",
+    "wrong",
+    "right"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": false,
+   "same_route": false,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-noisy-05",
+   "lang": "tanglish",
+   "family": "noisy",
+   "grades": [
+    "safe",
+    "safe",
+    "safe"
+   ],
+   "models": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "cases",
+    "cases",
+    "cases"
+   ],
+   "same_grade": true,
+   "same_route": true,
+   "same_words": true,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-other_body-15",
+   "lang": "tanglish",
+   "family": "other_body",
+   "grades": [
+    "wrong",
+    "wrong",
+    "wrong"
+   ],
+   "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
+   ],
+   "recipes": [
+    "do",
+    "cases",
+    "performance"
+   ],
+   "same_grade": true,
+   "same_route": false,
+   "same_words": false,
+   "model_needed": false
+  },
+  {
+   "id": "tanglish-privacy_safety-15",
+   "lang": "tanglish",
+   "family": "privacy_safety",
+   "grades": [
+    "safe",
+    "wrong",
+    "right"
+   ],
+   "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+   ],
+   "recipes": [
+    "clarify",
+    "do",
+    "refuse"
+   ],
+   "same_grade": false,
+   "same_route": false,
+   "same_words": false,
+   "model_needed": false
+  }
+ ]
+}

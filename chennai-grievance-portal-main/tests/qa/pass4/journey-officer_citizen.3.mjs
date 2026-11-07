@@ -1,0 +1,12 @@
+import { openWithCookie, shot, text, base } from "./journey-officer_citizen.lib.mjs";
+const { br, ctx, page, errs } = await openWithCookie("officerA", { width: 1366, height: 800 });
+const t0 = Date.now();
+await page.goto(base + "/officer", { waitUntil: "networkidle", timeout: 90000 });
+console.log("ms", Date.now() - t0, page.url());
+await page.waitForTimeout(2500);
+await shot(page, "officer-01-home");
+console.log(await text(page, 3500));
+console.log("ERRS", JSON.stringify(errs));
+console.log((await page.locator("button, a, [role=tab]").allInnerTexts()).map(s=>s.trim().replace(/\n/g," ")).filter(Boolean).slice(0,70).join(" | "));
+await ctx.storageState({ path: "../.qa-officer-state.json" });
+await br.close();

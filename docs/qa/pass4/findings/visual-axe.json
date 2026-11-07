@@ -1,0 +1,81 @@
+{
+ "agent": "visual-axe",
+ "date": "2026-11-07",
+ "method_notes": "Servers: 3183 (frozen, as instructed) and 3184 (same build, NOT frozen). Under --frozen, officer and collector sessions are rejected by middleware (redirect to /login) because the staff token is issued with frozen-clock iat+12h but checked against the real clock; so staff pages were run on 3184. This is a harness artifact, not logged as an app bug. React error #425 seen on /citizen in the frozen run only (axe-core-frozen3183 file); not reproduced on 3184.",
+ "findings": [
+  {
+   "id": "VA-1",
+   "severity": "medium",
+   "title": "Citizen header overflows the viewport: horizontal scroll at 768 (page 1097-1118px wide) and 1280 (1305-1326px) on file-complaint, track, profile",
+   "evidence": "docs/qa/pass4/evidence/screens.json (scrollW > W for citizen*/profile at w=768 en+ta, w=1280 on 3 pages, 360 ta by 8px); screenshots citizen-ta-768.png, citizen-file-ta-1280.png show white strip on right and footer cut short"
+  },
+  {
+   "id": "VA-2",
+   "severity": "medium",
+   "title": "Collector at 360: floating chat button covers the last bottom-nav tab (Data Studio) and the Jarvis pill + history button cover the map's search chip and zoom control",
+   "evidence": "screens/collector-en-360.png, collector-ta-360.png (visual); officer-en-360.png has the same floating button on the map zoom"
+  },
+  {
+   "id": "VA-3",
+   "severity": "medium",
+   "title": "axe critical: aria-required-children on .seg (a group containing buttons not allowed by its role), on every collector tab, 52 runs",
+   "evidence": "docs/qa/pass4/evidence/axe.json (collector, all tabs, both langs and themes)"
+  },
+  {
+   "id": "VA-4",
+   "severity": "medium",
+   "title": "Console error on every Collector and Officer load: CSP connect-src blocks fetch of https://fonts.googleapis.com/css2 (Inter / JetBrains Mono)",
+   "evidence": "docs/qa/pass4/evidence/axe.json console arrays: 52 collector runs, 4 officer runs"
+  },
+  {
+   "id": "VA-5",
+   "severity": "low",
+   "title": "axe serious color-contrast: nav links #64748b on #f2f5f9 = 4.35 (citizen header), login 'Forgot password' link 3.82, register helper text 2.08 (#a0aec0), forgot-password steps 4.4; light theme (dark theme clean except register 1)",
+   "evidence": "axe.json, pages citizen*, profile, login, register, forgot"
+  },
+  {
+   "id": "VA-6",
+   "severity": "low",
+   "title": "axe serious label-content-name-mismatch on every page (language toggle and similar: visible text not in accessible name, aria-label 'Switch to Tamil' vs visible 'English')",
+   "evidence": "axe.json, all 84 runs"
+  },
+  {
+   "id": "VA-7",
+   "severity": "low",
+   "title": "axe moderate: heading-order (h3 straight after h1) on citizen overview, officer and collector; region (content outside landmarks) on officer and collector",
+   "evidence": "axe.json"
+  },
+  {
+   "id": "VA-8",
+   "severity": "low",
+   "title": "Keyboard: closing Ask District IQ / Jarvis with Escape drops focus to <body> instead of returning to the control that opened it",
+   "evidence": "docs/qa/pass4/evidence/keys.json, 'jarvis dialog': closedByEscape true, activeAfterClose null. Focus trap itself works (0 stops outside dialog in 30 Tabs)."
+  },
+  {
+   "id": "VA-9",
+   "severity": "low",
+   "title": "Keyboard: focused controls report no outline and no box-shadow on citizen header links/buttons, login/register links and eye button, Zone/Taluk/Department selects, and the Jarvis textarea (may be a background-only focus style; not confirmed by pixel diff, my pixel-diff probe hung and was removed)",
+   "evidence": "docs/qa/pass4/evidence/keys.json noRing arrays"
+  },
+  {
+   "id": "VA-10",
+   "severity": "info",
+   "title": "Tamil mode is largely English on citizen pages and parts of officer pages (hero text, buttons, card titles, 'Work & insights', 'WAITING FOR YOUR APPROVAL'); mixed Tamil/English in one sentence. Server log says AI translation is unavailable here (no provider key), so this may be environment-only",
+   "evidence": "screens/citizen-ta-360.png, citizen-file-ta-360.png, officer-ta-360.png; [i18n] lines in data/aws-cache/qa/run/srv-3183.log"
+  },
+  {
+   "id": "VA-11",
+   "severity": "low",
+   "title": "Officer at 360 in Tamil: hero title truncated to 'மேலோட்...'; at 768 the period switch labels clip under the selected pill",
+   "evidence": "screens/officer-ta-360.png, officer-ta-768.png"
+  }
+ ],
+ "not_looked_at": [
+  "Dark-theme screenshots (axe covers dark; screens.mjs is light only)",
+  "Most English screenshots and all 1920 shots beyond overflow numbers; collector sub-tabs in screenshots (only the default tab); modals, dialogs and error states",
+  "Officer/Collector map tiles blank at 768 (likely offline); not judged",
+  "Keyboard: collector tab bar arrow keys, PageUp/PageDown, command palette, Jarvis voice controls, file-complaint steps 2-4, Tamil keyboard walk",
+  "Real screen reader behaviour"
+ ],
+ "skeptic_note": "2026-11-07: no row is P0 or P1 (severities are medium, low, info; medium maps to about P2). Nothing was refuted or confirmed; no server was started. Rows also lack the rules-file fields (repro, class, lang)."
+}

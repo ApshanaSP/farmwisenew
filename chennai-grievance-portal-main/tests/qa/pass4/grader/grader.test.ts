@@ -92,10 +92,17 @@ describe("check 2: every row of a list against every filter, and the total", () 
   it("wrong: a window the row did not ask for", () => caught("window", grade(row({ action: "list", topic: TOPIC, status: "open", period: "yesterday" }, { family: "list" }), good()), "3_period_words"));
   it("wrong: no period asked, and a window used without saying which", () => caught("unsaid", grade(row({ action: "list", topic: TOPIC, status: "open" }, { family: "list" }), listAnswer(wrows.slice(0, 5), total, `${total} cases.`, { cat: TOPIC })), "3_period_words"));
   it("right: no period asked, and the window is said", () => { const g = grade(row({ action: "list", topic: TOPIC, status: "open" }, { family: "list" }), good()); expect(g.grade, JSON.stringify(g.reasons)).toBe("right"); });
-  it("right: the console's severity panel may be the count of a severe list", () => {
+  it("right: the console's severity panel may be the count of an OPEN severe list (v2: only when open was asked)", () => {
     const panel = T.severityPanel({ zone: null }, DAY).Severe; const rows = T.rows({ sev: "Severe" }, DAY).filter((r: Row) => r.open && !r.routed).slice(0, 3);
-    const g = grade(row({ action: "list", severity: "severe", period: "today" }, { family: "list" }), listAnswer(rows, panel, `${panel} severe cases today.`, { period: "daily", sev: "Severe" }, "console-severity"));
+    const g = grade(row({ action: "list", severity: "severe", status: "open", period: "today" }, { family: "list" }), listAnswer(rows, panel, `${panel} severe cases today.`, { period: "daily", sev: "Severe" }, "console-severity"));
     expect(g.checks["2_total"].pass, JSON.stringify(g.checks["2_total"])).toBe(true);
+  });
+  it("v2: the severity panel is not the count of 'all severe today' when the data holds more severe cases than the panel counts", () => {
+    const panel = T.severityPanel({ zone: null }, DAY).Severe, all = T.count({ sev: "Severe" }, DAY);
+    if (panel === all) return; // the pinned day has no gap: nothing to tell apart
+    const rows = T.rows({ sev: "Severe" }, DAY).filter((r: Row) => r.open && !r.routed).slice(0, 3);
+    const g = grade(row({ action: "list", severity: "severe", period: "today" }, { family: "list" }), listAnswer(rows, panel, `${panel} severe cases today.`, { period: "daily", sev: "Severe" }, "console-severity"));
+    expect(g.checks["2_total"].pass, JSON.stringify(g.checks["2_total"])).toBe(false);
   });
 });
 
@@ -467,4 +474,25 @@ describe("the report and the ledger", () => {
     } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
   });
   it("window words are read in both languages", () => { expect(windowSaid("3 cases this week")).toBe("weekly"); expect(windowSaid("கடந்த 30 நாட்களில்")).toBe("monthly"); expect(windowSaid("இன்று 5")).toBe("daily"); expect(windowSaid("3 cases")).toBe(null); });
+});
+
+describe("v2 repairs found by the skeptic (docs/qa/pass4/evidence/grader-skeptic.md)", () => {
+  it("a Tamil-digit or 0-prefixed mobile number is a leak", async () => {
+    const m = await import("./grade.mjs");
+    expect(m.leaksIn(["௯௮௭௬௫௪௩௨௧௦"]).length).toBe(1);
+    expect(m.leaksIn(["09876543210"]).length).toBe(1);
+    expect(m.leaksIn(["Zone 5, 12 cases"]).length).toBe(0);
+  });
+  it("a number glued to a Tamil letter or a unit, or right after a comma, is read", async () => {
+    const m = await import("./grade.mjs");
+    const v = (s: string) => m.extractNumbers(s).map((n: any) => n.value);
+    expect(v("417புகார்")).toEqual([417]);
+    expect(v("Royapuram,78")).toEqual([78]);
+    expect(v("3x more")).toEqual([3]);
+    expect(v("last 24h")).toEqual([]);
+    expect(v("12ஆவது இடம்")).toEqual([]);
+    expect(v("COVID19 and H5N1")).toEqual([]);
+    expect(v("three hundred and four")).toEqual([300, 4]);
+    expect(v("இருநூறு")).toEqual([200]);
+  });
 });

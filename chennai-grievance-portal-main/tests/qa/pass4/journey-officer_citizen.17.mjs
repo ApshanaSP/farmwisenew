@@ -1,0 +1,21 @@
+// officer: approve the top waiting case, then look for how to take it to done
+import { openWithState, shot, text, base } from "./journey-officer_citizen.lib.mjs";
+const { br, ctx, page, errs } = await openWithState("../.qa-officer-state.json", { width: 1366, height: 800 });
+await page.goto(base + "/officer", { waitUntil: "networkidle" });
+await page.waitForTimeout(2500);
+const before = await page.locator("body").innerText();
+console.log("before: waiting", before.match(/WAITING FOR YOUR APPROVAL\s+(\d+)/)?.[1], "| To approve tab", before.match(/(\d+)\s+To approve/)?.[1], "| In action", before.match(/(\d+)\s+In action/)?.[1]);
+await page.locator('button:has-text("Approve")').first().click();
+await page.waitForTimeout(3000);
+await shot(page, "officer-04-after-approve");
+const mid = await page.locator("body").innerText();
+console.log("after approve: waiting", mid.match(/WAITING FOR YOUR APPROVAL\s+(\d+)/)?.[1], "| To approve tab", mid.match(/(\d+)\s+To approve/)?.[1], "| In action", mid.match(/(\d+)\s+In action/)?.[1]);
+console.log("dialog/toast text:", (mid.match(/(approved|Approved|Done|Saved|undo|Undo)[^\n]{0,80}/g) || []).slice(0, 5));
+await page.locator('text=In action').first().click().catch(() => {});
+await page.waitForTimeout(2000);
+await shot(page, "officer-05-in-action");
+const first = page.locator('button:has-text("Mark"), button:has-text("Done"), button:has-text("Complete"), button:has-text("Resolve")');
+console.log("close-like buttons:", await first.allInnerTexts());
+console.log((await page.locator("button").allInnerTexts()).map(s => s.trim().replace(/\n/g, " ")).filter(Boolean).slice(0, 40).join(" | "));
+console.log("ERRS", JSON.stringify(errs));
+await br.close();
