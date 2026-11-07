@@ -7,6 +7,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import "@/lib/collector/derive";
 import { awsPool } from "@/lib/aws/store";
+import { redactText } from "@/lib/thunai/privacy";
 import { asOf, incident, newsArticles, newsStories, overview, search } from "@/lib/collector/intel";
 
 const FROZEN = "2026-11-06T06:30:00.000Z";
@@ -58,5 +59,13 @@ describe("RC-38: no console path prints a private phone number or email from a n
     let n = 0;
     for (const w of words.filter(Boolean)) { const r = await search(w); n += r.news.filter((x: any) => leaks(x.title)).length; }
     expect(n).toBe(0);
+  });
+
+  it("the same rule hides a number written in Tamil digits or spoken in Tanglish, and keeps an ordinary headline", () => {
+    expect(redactText("வீடு எண் 12, தொடர்புக்கு ௯௮௪௦௧ ௧௨௩௪௫")).not.toMatch(/௯௮௪௦௧|98401/);
+    expect(redactText("Contact 98401 12345 for the flat")).not.toMatch(/98401/);
+    expect(redactText("Veetu number 12, phone nine eight four zero one one two three four five")).not.toMatch(/nine eight four zero one/i);
+    const plain = "Cyclone Murasu: 5 outlets report waterlogging in 3 zones";
+    expect(redactText(plain)).toBe(plain);
   });
 });
