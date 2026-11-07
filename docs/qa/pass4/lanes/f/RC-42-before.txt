@@ -1,0 +1,394 @@
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+[22m[39m[aws-store] durable.sqlite is in use by another copy of the website; using durable-p25452.sqlite
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] news-media-only@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] news-media-only@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22m[2mQA pass 4 hunt jarvis1
+[22m[39m[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[90mstdout[2m | tests/qa/pass4/hunt-jarvis2.test.ts
+[22m[39m[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+ [31m❯[39m tests/qa/pass4/hunt-jarvis1.test.ts [2m([22m[2m12 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 8706[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-1 Tamil 'தீவிர' (severe) is not read as 'தீ' (fire): Adyar severe cases in Tamil match the English answer[32m 198[2mms[22m[39m
+[31m   [31m×[31m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-2 'draft the second and third' drafts two cases, not one[39m[32m 43[2mms[22m[39m
+[31m     → expected [ 'INC-20261105-6D03C9' ] to have a length of 2 but got 1[39m
+[31m   [31m×[31m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-3 'draft 1 and 3' drafts cases 1 and 3 (it drafts only case 1 and says '1 draft ready')[39m[32m 22[2mms[22m[39m
+[31m     → expected [ 'INC-20260515-B939EB' ] to have a length of 2 but got 1[39m
+[31m   [31m×[31m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-4 Tanglish 'second one open pannu' opens the second case, not the first[39m[32m 2[2mms[22m[39m
+[31m     → expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: 2 }[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-5 'remind me in 2 hours to check lakes' sets a reminder, not a lake readings screen[32m 26[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-6 the reminder card shows a time a person can read, not a raw UTC string[32m 7[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-7 saying 'yes' to forget in Tamil gives a whole sentence, not the fragment 'மற'[32m 11[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-8 'close all severe complaints' says it cannot close, instead of quietly filtering and saying 'Severe'[32m 4[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-9 'remember I watch Adyar' in Tamil and Tanglish asks to remember, it does not switch the console to Adyar[32m 9[2mms[22m[39m
+[31m   [31m×[31m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-10 'open the 20th one' with 8 cases says there is no such case, instead of opening the last[39m[32m 37[2mms[22m[39m
+[31m     → expected 'INC-20261106-C854D7' to be null[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-11 'top zones by open complaints' (no model) does not open a single incident[32m 9[2mms[22m[39m
+   [32m✓[39m QA pass 4 hunt jarvis1[2m > [22mJARVIS1-12 'save this screen as morning check' saves it as 'morning check' (the rules name it 'screen as morning check'; plain 'save this screen' is named 'screen')[32m 14[2mms[22m[39m
+ [31m❯[39m tests/qa/pass4/hunt-jarvis2.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 9468[2mms[22m[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-1 Tamil 'மண்டலம் 5' keeps the zone in the severe-cases screen[32m 93[2mms[22m[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-2 'zone five' (a number word) keeps the zone[32m 29[2mms[22m[39m
+[31m   [31m×[31m jarvis2 hunt[2m > [22mjarvis2-3 'open the one in Pallikaranai' does not open the first case[39m[32m 129[2mms[22m[39m
+[31m     → expected 'Ice House: uprooted tree blocks road …' to match /Pallikaranai/[39m
+[31m   [31m×[31m jarvis2 hunt[2m > [22mjarvis2-4 'open the sixteenth one' on a list of 8 says there is no such case[39m[32m 120[2mms[22m[39m
+[31m     → expected 'case' not to be 'case' // Object.is equality[39m
+[31m   [31m×[31m jarvis2 hunt[2m > [22mjarvis2-5 'open the last one' opens the last case on the screen without a model[39m[32m 39[2mms[22m[39m
+[31m     → expected [ 'agent', 'rules-fallback' ] to include 'stage-local'[39m
+[31m   [31m×[31m jarvis2 hunt[2m > [22mjarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a model[39m[32m 59[2mms[22m[39m
+[31m     → expected [ 'agent', 'rules-fallback' ] to include 'stage-local'[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-7 Tamil 'ஞாபகம் வச்சுக்கோ' (keep in mind) asks to remember, not to open zone 5[32m 6[2mms[22m[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-8 'don't forget zone 5 is my priority' asks to remember, not to open zone 5[32m 4[2mms[22m[39m
+[31m   [31m×[31m jarvis2 hunt[2m > [22mjarvis2-9 'draft it' with a case open on the Stage drafts that case[39m[32m 127[2mms[22m[39m
+[31m     → expected 'clarify' not to be 'clarify' // Object.is equality[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-10 'and the previous one again' after two zones goes back to the earlier zone[32m 29[2mms[22m[39m
+   [32m✓[39m jarvis2 hunt[2m > [22mjarvis2-11 'zone 5 and zone 6 compare' does not silently drop zone 5[32m 11[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 9 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22mQA pass 4 hunt jarvis1[2m > [22mJARVIS1-2 'draft the second and third' drafts two cases, not one
+[31m[1mAssertionError[22m: expected [ 'INC-20261105-6D03C9' ] to have a length of 2 but got 1[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- 2[39m
+[31m+ 1[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis1.test.ts:[2m33:29[22m[39m
+    [90m 31| [39m  it("JARVIS1-2 'draft the second and third' drafts two cases, not one…
+    [90m 32| [39m    const { outs } = await talk("show severe complaints", "draft the s…
+    [90m 33| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39mdrafted)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m 34| [39m    expect(localStageCommand("draft the second and third")).toEqual({ …
+    [90m 35| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22mQA pass 4 hunt jarvis1[2m > [22mJARVIS1-3 'draft 1 and 3' drafts cases 1 and 3 (it drafts only case 1 and says '1 draft ready')
+[31m[1mAssertionError[22m: expected [ 'INC-20260515-B939EB' ] to have a length of 2 but got 1[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- 2[39m
+[31m+ 1[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis1.test.ts:[2m39:29[22m[39m
+    [90m 37| [39m  it("JARVIS1-3 'draft 1 and 3' drafts cases 1 and 3 (it drafts only c…
+    [90m 38| [39m    const { outs } = await talk("show severe complaints", "draft 1 and…
+    [90m 39| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39mdrafted)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m 40| [39m  })[33m;[39m
+    [90m 41| [39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22mQA pass 4 hunt jarvis1[2m > [22mJARVIS1-4 Tanglish 'second one open pannu' opens the second case, not the first
+[31m[1mAssertionError[22m: expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: 2 }[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "n": 2,[39m
+[31m+   "n": 1,[39m
+[2m    "op": "open",[22m
+[2m  }[22m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis1.test.ts:[2m43:56[22m[39m
+    [90m 41| [39m
+    [90m 42| [39m  it("JARVIS1-4 Tanglish 'second one open pannu' opens the second case…
+    [90m 43| [39m    expect(localStageCommand("second one open pannu")).toEqual({ op: "…
+    [90m   | [39m                                                       [31m^[39m
+    [90m 44| [39m    expect(localStageCommand("first one open pannu")).toEqual({ op: "o…
+    [90m 45| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis1.test.ts[2m > [22mQA pass 4 hunt jarvis1[2m > [22mJARVIS1-10 'open the 20th one' with 8 cases says there is no such case, instead of opening the last
+[31m[1mAssertionError[22m: expected 'INC-20261106-C854D7' to be null[39m
+[32m- Expected:[39m 
+null
+[31m+ Received:[39m 
+"INC-20261106-C854D7"
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis1.test.ts:[2m80:26[22m[39m
+    [90m 78| [39m    const { sim, outs } = await talk("show severe complaints", "open t…
+    [90m 79| [39m    [34mexpect[39m(sim[33m.[39mlist[33m.[39mlength)[33m.[39m[34mtoBeLessThan[39m([34m20[39m)[33m;[39m
+    [90m 80| [39m    [34mexpect[39m(sim[33m.[39mincident)[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                         [31m^[39m
+    [90m 81| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39msaid)[33m.[39m[34mtoMatch[39m([36m/no such|only|8/i[39m)[33m;[39m
+    [90m 82| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis2.test.ts[2m > [22mjarvis2 hunt[2m > [22mjarvis2-3 'open the one in Pallikaranai' does not open the first case
+[31m[1mAssertionError[22m: expected 'Ice House: uprooted tree blocks road …' to match /Pallikaranai/[39m
+[32m- Expected:[39m 
+/Pallikaranai/
+[31m+ Received:[39m 
+"Ice House: uprooted tree blocks road There's standing water at Ice House. It's been open for several hours, and it's past its deadline. 4 people have complained about it, so it's hitting a lot of residents, and it's one of the serious ones. I'd ask the PWD to send a pump and check the drain there today."
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis2.test.ts:[2m32:15[22m[39m
+    [90m 30| [39m    const { outs } = await run("show severe complaints", "open the one…
+    [90m 31| [39m    [35mconst[39m t [33m=[39m (outs[[34m1[39m][33m.[39mstage[33m?.[39mtitle [33m??[39m [32m""[39m) [33m+[39m [32m" "[39m [33m+[39m outs[[34m1[39m][33m.[39msaid[33m;[39m
+    [90m 32| [39m    [34mexpect[39m(t)[33m.[39m[34mtoMatch[39m([36m/Pallikaranai/[39m)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 33| [39m  })[33m;[39m
+    [90m 34| [39m  it("jarvis2-4 'open the sixteenth one' on a list of 8 says there is …
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis2.test.ts[2m > [22mjarvis2 hunt[2m > [22mjarvis2-4 'open the sixteenth one' on a list of 8 says there is no such case
+[31m[1mAssertionError[22m: expected 'case' not to be 'case' // Object.is equality[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis2.test.ts:[2m36:39[22m[39m
+    [90m 34| [39m  it("jarvis2-4 'open the sixteenth one' on a list of 8 says there is …
+    [90m 35| [39m    const { outs } = await run("show severe complaints", "open the six…
+    [90m 36| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39mstage[33m?.[39mrecipe)[33m.[39mnot[33m.[39m[34mtoBe[39m([32m"case"[39m)[33m;[39m
+    [90m   | [39m                                      [31m^[39m
+    [90m 37| [39m  })[33m;[39m
+    [90m 38| [39m  it("jarvis2-5 'open the last one' opens the last case on the screen …
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis2.test.ts[2m > [22mjarvis2 hunt[2m > [22mjarvis2-5 'open the last one' opens the last case on the screen without a model
+[31m[1mAssertionError[22m: expected [ 'agent', 'rules-fallback' ] to include 'stage-local'[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis2.test.ts:[2m40:26[22m[39m
+    [90m 38| [39m  it("jarvis2-5 'open the last one' opens the last case on the screen …
+    [90m 39| [39m    const { outs } = await run("show severe complaints", "open the las…
+    [90m 40| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39mpath)[33m.[39m[34mtoContain[39m([32m"stage-local"[39m)[33m;[39m
+    [90m   | [39m                         [31m^[39m
+    [90m 41| [39m  })[33m;[39m
+    [90m 42| [39m  it("jarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a …
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis2.test.ts[2m > [22mjarvis2 hunt[2m > [22mjarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a model
+[31m[1mAssertionError[22m: expected [ 'agent', 'rules-fallback' ] to include 'stage-local'[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis2.test.ts:[2m44:26[22m[39m
+    [90m 42| [39m  it("jarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a …
+    [90m 43| [39m    const { outs } = await run("show severe complaints", "ஒன்றாவது திற…
+    [90m 44| [39m    [34mexpect[39m(outs[[34m1[39m][33m.[39mpath)[33m.[39m[34mtoContain[39m([32m"stage-local"[39m)[33m;[39m
+    [90m   | [39m                         [31m^[39m
+    [90m 45| [39m  })[33m;[39m
+    [90m 46| [39m  it.fails("jarvis2-7 Tamil 'ஞாபகம் வச்சுக்கோ' (keep in mind) asks to …
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯[22m[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/hunt-jarvis2.test.ts[2m > [22mjarvis2 hunt[2m > [22mjarvis2-9 'draft it' with a case open on the Stage drafts that case
+[31m[1mAssertionError[22m: expected 'clarify' not to be 'clarify' // Object.is equality[39m
+[36m [2m❯[22m tests/qa/pass4/hunt-jarvis2.test.ts:[2m57:27[22m[39m
+    [90m 55| [39m  it("jarvis2-9 'draft it' with a case open on the Stage drafts that c…
+    [90m 56| [39m    const { last } = await run("show severe complaints", "open the thi…
+    [90m 57| [39m    [34mexpect[39m(last[33m.[39mkind)[33m.[39mnot[33m.[39m[34mtoBe[39m([32m"clarify"[39m)[33m;[39m
+    [90m   | [39m                          [31m^[39m
+    [90m 58| [39m    [34mexpect[39m(last[33m.[39mdrafted[33m.[39mlength)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m 59| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯[22m[39m
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m14 passed[39m[22m[90m (23)[39m
+[2m   Start at [22m 14:07:58
+[2m   Duration [22m 12.35s[2m (transform 1.30s, setup 0ms, collect 3.84s, tests 18.17s, environment 0ms, prepare 234ms)[22m
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+ [31m❯[39m src/lib/thunai/ordinal.pass4.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[32m 43[2mms[22m[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22mevery ordinal and number word, in every language, alone, opens that case[39m[32m 27[2mms[22m[39m
+[31m     → second one open pannu: expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: 2 }[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22mdigits of any script, and 3rd, 3-வது, number 3 forms[39m[32m 3[2mms[22m[39m
+[31m     → 1: expected { op: 'draft', n: 1, first: false } to match object { op: 'draft', ns: [ 1, 3 ] }
+(2 matching properties omitted from actual)[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22mcompound words past ten: sixteenth, twenty-first, twenty one[39m[32m 1[2mms[22m[39m
+[31m     → expected { op: 'open', n: 6 } to deeply equal { op: 'open', n: 16 }[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22ma list and a range read every position, in any language[39m[32m 5[2mms[22m[39m
+[31m     → expected { op: 'draft', n: 1, first: false } to match object { op: 'draft', ns: [ 1, 3 ] }
+(2 matching properties omitted from actual)[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22mlast, in three languages[39m[32m 1[2mms[22m[39m
+[31m     → open the last one: expected null to deeply equal { op: 'open', n: -1 }[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22ma phrase it cannot read fully is not read from one word in it (the sentence goes on to the agent)[39m[32m 0[2mms[22m[39m
+[31m     → open the first one in Adyar: expected 'open the first one in Adyar' to be null[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22ma place beside 'one' names the row by its place, and asks when it is not one row[39m[32m 1[2mms[22m[39m
+[31m     → expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: +0, …(1) }[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22ma position past the end is said plainly, and last is the last[39m[32m 2[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'op')[39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22ma list of positions drafts every one of them, once[39m[32m 1[2mms[22m[39m
+[31m     → expected [ { fx: 'draft', ids: [ 'INC-1' ] } ] to deeply equal [ { fx: 'draft', …(1) } ][39m
+[31m   [31m×[31m RC-42: one reader of positions[2m > [22mdraft it drafts the open case, and asks which on a list[39m[32m 1[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'op')[39m
+   [32m✓[39m RC-42: one reader of positions[2m > [22mthe reader has no hole for the words of Object.prototype[32m 1[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 10 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22mevery ordinal and number word, in every language, alone, opens that case
+[31m[1mAssertionError[22m: second one open pannu: expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: 2 }[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "n": 2,[39m
+[31m+   "n": 1,[39m
+[2m    "op": "open",[22m
+[2m  }[22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m30:53[22m[39m
+    [90m 28| [39m      for (const w of [EN[n - 1], EN_CARD[n - 1], TG[n - 1], TG_CARD[n…
+    [90m 29| [39m        for (const phrase of [`open the ${w} one`, `${w} one open pann…
+    [90m 30| [39m          expect(localStageCommand(phrase), phrase).toEqual({ op: "ope…
+    [90m   | [39m                                                    [31m^[39m
+    [90m 31| [39m        }
+    [90m 32| [39m      }
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22mdigits of any script, and 3rd, 3-வது, number 3 forms
+[31m[1mAssertionError[22m: 1: expected { op: 'draft', n: 1, first: false } to match object { op: 'draft', ns: [ 1, 3 ] }
+(2 matching properties omitted from actual)[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "ns": [[39m
+[32m-     1,[39m
+[32m-     3,[39m
+[32m-   ],[39m
+[2m    "op": "draft",[22m
+[2m  }[22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m38:68[22m[39m
+    [90m 36| [39m    [35mfor[39m ([35mconst[39m f [35mof[39m [[33mString[39m[33m,[39m [33mFULLWIDTH[39m[33m,[39m [33mARABIC[39m[33m,[39m [33mDEVANAGARI[39m[33m,[39m [33mTAMILD[39m]) {
+    [90m 37| [39m      expect(localStageCommand(`open ${f(3)}`), f(3)).toEqual({ op: "o…
+    [90m 38| [39m      expect(localStageCommand(`draft ${f(1)} and ${f(3)}`), f(1)).toM…
+    [90m   | [39m                                                                   [31m^[39m
+    [90m 39| [39m    }
+    [90m 40| [39m    for (const p of ["open the 3rd one", "3-வதைத் திற", "open number 3…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22mcompound words past ten: sixteenth, twenty-first, twenty one
+[31m[1mAssertionError[22m: expected { op: 'open', n: 6 } to deeply equal { op: 'open', n: 16 }[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "n": 16,[39m
+[31m+   "n": 6,[39m
+[2m    "op": "open",[22m
+[2m  }[22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m44:57[22m[39m
+    [90m 42| [39m  })[33m;[39m
+    [90m 43| [39m  it("compound words past ten: sixteenth, twenty-first, twenty one", (…
+    [90m 44| [39m    expect(localStageCommand("open the sixteenth one")).toEqual({ op: …
+    [90m   | [39m                                                        [31m^[39m
+    [90m 45| [39m    expect(localStageCommand("open the twenty-first one")).toEqual({ o…
+    [90m 46| [39m    expect(localStageCommand("open twenty one")).toEqual({ op: "open",…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22ma list and a range read every position, in any language
+[31m[1mAssertionError[22m: expected { op: 'draft', n: 1, first: false } to match object { op: 'draft', ns: [ 1, 3 ] }
+(2 matching properties omitted from actual)[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "ns": [[39m
+[32m-     1,[39m
+[32m-     3,[39m
+[32m-   ],[39m
+[2m    "op": "draft",[22m
+[2m  }[22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m57:48[22m[39m
+    [90m 55| [39m    expect(readPositions(tokensOf("இரண்டாவது மற்றும் மூன்றாவது"))).toE…
+    [90m 56| [39m    expect(readPositions(tokensOf("rendavathu um moonavathu"))).toEqua…
+    [90m 57| [39m    expect(localStageCommand("draft 1 and 3")).toMatchObject({ op: "dr…
+    [90m   | [39m                                               [31m^[39m
+    [90m 58| [39m    expect(localStageCommand("draft the second and third")).toMatchObj…
+    [90m 59| [39m    expect(localStageCommand("draft the first three")).toEqual({ op: "…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22mlast, in three languages
+[31m[1mAssertionError[22m: open the last one: expected null to deeply equal { op: 'open', n: -1 }[39m
+[32m- Expected:[39m 
+{
+  "n": -1,
+  "op": "open",
+}
+[31m+ Received:[39m 
+null
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m63:139[22m[39m
+    [90m 61| [39m  })[33m;[39m
+    [90m 62| [39m  [34mit[39m([32m"last, in three languages"[39m[33m,[39m () [33m=>[39m {
+    [90m 63| [39m    for (const p of ["open the last one", "கடைசியாக உள்ளதை திற", "last…
+    [90m   | [39m                                                                                                                                          [31m^[39m
+    [90m 64| [39m    expect(localStageCommand("draft the last one")).toEqual({ op: "dra…
+    [90m 65| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22ma phrase it cannot read fully is not read from one word in it (the sentence goes on to the agent)
+[31m[1mAssertionError[22m: open the first one in Adyar: expected 'open the first one in Adyar' to be null[39m
+[32m- Expected:[39m 
+null
+[31m+ Received:[39m 
+"open the first one in Adyar"
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m70:64[22m[39m
+    [90m 68| [39m      for (const p of [`open the ${w} one in Adyar`, `open the ${w} da…
+    [90m 69| [39m        [35mconst[39m c [33m=[39m [34mlocalStageCommand[39m(p)[33m;[39m
+    [90m 70| [39m        expect(c && c.op === "open" && !c.where ? p : null, p).toBeNul…
+    [90m   | [39m                                                               [31m^[39m
+    [90m 71| [39m      }
+    [90m 72| [39m    }
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22ma place beside 'one' names the row by its place, and asks when it is not one row
+[31m[1mAssertionError[22m: expected { op: 'open', n: 1 } to deeply equal { op: 'open', n: +0, …(1) }[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  {[22m
+[32m-   "n": 0,[39m
+[31m+   "n": 1,[39m
+[2m    "op": "open",[22m
+[32m-   "where": "pallikaranai",[39m
+[2m  }[22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m78:63[22m[39m
+    [90m 76| [39m  })[33m;[39m
+    [90m 77| [39m  it("a place beside 'one' names the row by its place, and asks when i…
+    [90m 78| [39m    expect(localStageCommand("open the one in Pallikaranai")).toEqual(…
+    [90m   | [39m                                                              [31m^[39m
+    [90m 79| [39m    const fx = run(list(), localStageCommand("open the one in Pallikar…
+    [90m 80| [39m    expect(fx).toEqual([expect.objectContaining({ fx: "rebuild", recip…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22ma position past the end is said plainly, and last is the last
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'op')[39m
+[36m [2m❯[22m stageReducer src/lib/thunai/stagelocal.ts:[2m121:15[22m[39m
+    [90m119| [39m  [35mconst[39m doc [33m=[39m m[33m.[39mdoc[33m;[39m
+    [90m120| [39m  [35mif[39m ([33m![39mdoc) [35mreturn[39m { m[33m,[39m fx[33m:[39m [] }[33m;[39m
+    [90m121| [39m  [35mswitch[39m (cmd[33m.[39mop) {
+    [90m   | [39m              [31m^[39m
+    [90m122| [39m    [35mcase[39m [32m"stop"[39m[33m:[39m [35mreturn[39m { m[33m,[39m fx[33m:[39m [{ fx[33m:[39m [32m"stopVoice"[39m }] }[33m;[39m
+    [90m123| [39m    [35mcase[39m [32m"next"[39m[33m:[39m [35mreturn[39m { m[33m,[39m fx[33m:[39m [{ fx[33m:[39m [32m"readFrom"[39m[33m,[39m i[33m:[39m m[33m.[39mnarr [33m+[39m [34m1[39m }] }[33m;[39m
+[90m [2m❯[22m run src/lib/thunai/ordinal.pass4.test.ts:[2m22:55[22m[39m
+[90m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m86:121[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22ma list of positions drafts every one of them, once
+[31m[1mAssertionError[22m: expected [ { fx: 'draft', ids: [ 'INC-1' ] } ] to deeply equal [ { fx: 'draft', …(1) } ][39m
+[32m- Expected[39m
+[31m+ Received[39m
+[2m  [[22m
+[2m    {[22m
+[2m      "fx": "draft",[22m
+[2m      "ids": [[22m
+[2m        "INC-1",[22m
+[32m-       "INC-3",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m  ][22m
+[36m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m93:61[22m[39m
+    [90m 91| [39m  })[33m;[39m
+    [90m 92| [39m  [34mit[39m([32m"a list of positions drafts every one of them, once"[39m[33m,[39m () [33m=>[39m {
+    [90m 93| [39m    expect(run(list(), localStageCommand("draft 1 and 3"))).toEqual([{…
+    [90m   | [39m                                                            [31m^[39m
+    [90m 94| [39m    expect(run(list(), localStageCommand("draft the second and third")…
+    [90m 95| [39m    expect(run(list(), localStageCommand("draft 2, 2 and 2"))).toEqual…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/ordinal.pass4.test.ts[2m > [22mRC-42: one reader of positions[2m > [22mdraft it drafts the open case, and asks which on a list
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'op')[39m
+[36m [2m❯[22m stageReducer src/lib/thunai/stagelocal.ts:[2m121:15[22m[39m
+    [90m119| [39m  [35mconst[39m doc [33m=[39m m[33m.[39mdoc[33m;[39m
+    [90m120| [39m  [35mif[39m ([33m![39mdoc) [35mreturn[39m { m[33m,[39m fx[33m:[39m [] }[33m;[39m
+    [90m121| [39m  [35mswitch[39m (cmd[33m.[39mop) {
+    [90m   | [39m              [31m^[39m
+    [90m122| [39m    [35mcase[39m [32m"stop"[39m[33m:[39m [35mreturn[39m { m[33m,[39m fx[33m:[39m [{ fx[33m:[39m [32m"stopVoice"[39m }] }[33m;[39m
+    [90m123| [39m    [35mcase[39m [32m"next"[39m[33m:[39m [35mreturn[39m { m[33m,[39m fx[33m:[39m [{ fx[33m:[39m [32m"readFrom"[39m[33m,[39m i[33m:[39m m[33m.[39mnarr [33m+[39m [34m1[39m }] }[33m;[39m
+[90m [2m❯[22m run src/lib/thunai/ordinal.pass4.test.ts:[2m22:55[22m[39m
+[90m [2m❯[22m src/lib/thunai/ordinal.pass4.test.ts:[2m100:12[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯[22m[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 14:08:12
+[2m   Duration [22m 1.07s[2m (transform 95ms, setup 0ms, collect 85ms, tests 43ms, environment 0ms, prepare 118ms)[22m

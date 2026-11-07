@@ -154,7 +154,9 @@ export class ClientSim {
       case "close": this.panel = null; return null;
       case "item": {
         if (!this.list.length) return line("noItem", lang);
-        this.incident = this.list[Math.max(0, Math.min(this.list.length - 1, typeof step.which === "number" ? step.which - 1 : 0))];
+        const at = typeof step.which === "number" ? step.which - 1 : 0;
+        if (at >= this.list.length) return lang === "ta" ? `பட்டியலில் ${this.list.length} மட்டுமே உள்ளன.` : `There ${this.list.length === 1 ? "is only 1 item" : `are only ${this.list.length} items`} in the list.`;
+        this.incident = this.list[Math.max(0, at)];
         return null;
       }
       case "draft": return this.incident ? line("draft", lang) : line("noIncident", lang);

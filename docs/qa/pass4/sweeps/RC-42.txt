@@ -1,0 +1,16 @@
+RC-42 sweep: places that read an ordinal or a case number from a phrase
+search: grep -rnE "first: *1|second: *2|ordinal|mudhal|முதலாவது|\(\d\{1,2\}\)" src --include=*.ts --include=*.tsx (7 Nov)
+
+FIXED
+ src/lib/thunai/stagelocal.ts numberIn/ORD (open, draft): replaced by ordinal.ts readPositions over the whole phrase
+ src/lib/thunai/frame.ts ORD (open the Nth from the frame): now singlePosition() over the whole sentence; 'the second one in Adyar' is no longer open 2
+ src/components/collector/app/thunai/Thunai.tsx 'item' step and tests/qa/pass4/grader/client-sim.ts: an index past the list was clamped to the last item; now said plainly
+
+CHECKED, NOT CHANGED
+ src/lib/thunai/understand.ts:498 '\b(\d{1,2}) (one|incident|item|row)\b|number (\d{1,2})\b': has an end boundary and a noun; the clamp it fed is fixed above
+ src/components/collector/app/thunai/Thunai.tsx:1135 answer to a choice card: whole-string match (^...$), no loose read
+ src/lib/assistant/intent.ts:209 ORDINALS and pipeline.ts:313-372 POSITION (Ask District IQ, follow-up to a list): whole-token match, only after a list reply; they know first to fifth only and 'number N'. Not the Stage lane; listed for the Ask lane owner
+ src/lib/thunai/router.ts:24 STAGE regex: a routing hint only, no index read
+
+STILL OPEN (limits of the new reader)
+ Tamil and Tanglish number words past ten are not read (the sentence goes to the agent); digits and English words to 99 are.

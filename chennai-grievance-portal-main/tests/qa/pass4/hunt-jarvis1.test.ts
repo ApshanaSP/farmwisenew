@@ -28,18 +28,18 @@ describe("QA pass 4 hunt jarvis1", () => {
     expect(en.said).toMatch(/^1 severe case/);
   });
 
-  it.fails("JARVIS1-2 'draft the second and third' drafts two cases, not one", async () => {
+  it("JARVIS1-2 'draft the second and third' drafts two cases, not one", async () => {
     const { outs } = await talk("show severe complaints", "draft the second and third");
     expect(outs[1].drafted).toHaveLength(2);
-    expect(localStageCommand("draft the second and third")).not.toMatchObject({ op: "draft", n: 2, first: false });
+    expect(localStageCommand("draft the second and third")).toEqual({ op: "draft", n: 2, first: false, ns: [2, 3] });
   });
 
-  it.fails("JARVIS1-3 'draft 1 and 3' drafts cases 1 and 3 (it drafts only case 1 and says '1 draft ready')", async () => {
+  it("JARVIS1-3 'draft 1 and 3' drafts cases 1 and 3 (it drafts only case 1 and says '1 draft ready')", async () => {
     const { outs } = await talk("show severe complaints", "draft 1 and 3");
     expect(outs[1].drafted).toHaveLength(2);
   });
 
-  it.fails("JARVIS1-4 Tanglish 'second one open pannu' opens the second case, not the first", () => {
+  it("JARVIS1-4 Tanglish 'second one open pannu' opens the second case, not the first", () => {
     expect(localStageCommand("second one open pannu")).toEqual({ op: "open", n: 2 });
     expect(localStageCommand("first one open pannu")).toEqual({ op: "open", n: 1 });
   });
@@ -74,7 +74,7 @@ describe("QA pass 4 hunt jarvis1", () => {
     }
   });
 
-  it.fails("JARVIS1-10 'open the 20th one' with 8 cases says there is no such case, instead of opening the last", async () => {
+  it("JARVIS1-10 'open the 20th one' with 8 cases says there is no such case, instead of opening the last", async () => {
     const { sim, outs } = await talk("show severe complaints", "open the 20th one");
     expect(sim.list.length).toBeLessThan(20);
     expect(sim.incident).toBeNull();

@@ -598,7 +598,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         const st = buildState();
         if (!st.list.length) return line("noItem", lang);
         let idx = typeof step.which === "number" ? step.which - 1 : st.list.indexOf(st.incident ?? "") + (step.which === "next" ? 1 : -1);
-        idx = Math.max(0, Math.min(st.list.length - 1, idx));
+        // a number past the end of the list is said plainly, never clamped to the last one (RC-42)
+        if (idx >= st.list.length) return lang === "ta" ? `பட்டியலில் ${st.list.length} மட்டுமே உள்ளன.` : `There ${st.list.length === 1 ? "is only 1 item" : `are only ${st.list.length} items`} in the list.`;
+        idx = Math.max(0, idx);
         c.openInc(st.list[idx]);
         justOpened.current = st.list[idx];
         return null;

@@ -26,20 +26,20 @@ describe("jarvis2 hunt", () => {
     const { last } = await run("show severe complaints in zone five");
     expect(last.stage?.title ?? "").toContain("Royapuram");
   });
-  it.fails("jarvis2-3 'open the one in Pallikaranai' does not open the first case", async () => {
+  it("jarvis2-3 'open the one in Pallikaranai' does not open the first case", async () => {
     const { outs } = await run("show severe complaints", "open the one in Pallikaranai");
     const t = (outs[1].stage?.title ?? "") + " " + outs[1].said;
     expect(t).toMatch(/Pallikaranai/);
   });
-  it.fails("jarvis2-4 'open the sixteenth one' on a list of 8 says there is no such case", async () => {
+  it("jarvis2-4 'open the sixteenth one' on a list of 8 says there is no such case", async () => {
     const { outs } = await run("show severe complaints", "open the sixteenth one");
     expect(outs[1].stage?.recipe).not.toBe("case");
   });
-  it.fails("jarvis2-5 'open the last one' opens the last case on the screen without a model", async () => {
+  it("jarvis2-5 'open the last one' opens the last case on the screen without a model", async () => {
     const { outs } = await run("show severe complaints", "open the last one");
     expect(outs[1].path).toContain("stage-local");
   });
-  it.fails("jarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a model", async () => {
+  it("jarvis2-6 Tamil 'ஒன்றாவது திற' (open the first) works without a model", async () => {
     const { outs } = await run("show severe complaints", "ஒன்றாவது திற");
     expect(outs[1].path).toContain("stage-local");
   });
@@ -52,7 +52,7 @@ describe("jarvis2 hunt", () => {
     const { last } = await run("don't forget zone 5 is my priority");
     expect(last.steps.some((s) => s.a === "view")).toBe(false);
   });
-  it.fails("jarvis2-9 'draft it' with a case open on the Stage drafts that case", async () => {
+  it("jarvis2-9 'draft it' with a case open on the Stage drafts that case", async () => {
     const { last } = await run("show severe complaints", "open the third one", "draft it");
     expect(last.kind).not.toBe("clarify");
     expect(last.drafted.length).toBe(1);

@@ -6,6 +6,7 @@
  */
 import { EXPLAIN_TA } from "./lexicon";
 import { foreignIn } from "./entities";
+import { singlePosition } from "./ordinal";
 import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { StageContext } from "./stage";
@@ -29,10 +30,6 @@ export type Frame =
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 
-const ORD: [RegExp, number][] = [
-  [/ (first|1st|top|mudhal|muthal|modhal|onnu|முதல்|முதலாவது|முதலாம்) /, 1], [/ (second|2nd|rendavathu|rendaavathu|irandaavathu|rendu|இரண்டாவது|ரெண்டாவது|இரண்டாம்) /, 2],
-  [/ (third|3rd|moonavathu|munavathu|moonu|மூன்றாவது|மூணாவது|மூன்றாம்) /, 3], [/ (fourth|4th|naalavathu|naalu|நான்காவது|நாலாவது) /, 4], [/ (fifth|5th|anjavathu|anju|ஐந்தாவது|அஞ்சாவது) /, 5]
-];
 const PICK_NOUN = / (one|case|item|row|incident|complaint|that|thing|ஒன்று|ஒண்ணு|சம்பவம்|புகார்|கேஸ்|onnu|case-a) /;
 
 /** A sentence that leans on what came before: it stays out of the fast lane when a Stage or a recent turn could explain it. */
@@ -77,8 +74,9 @@ export function resolveFrame(i: FrameInput): Frame {
 
   // "the second one": an item on the open Stage
   if (i.stage && (PICK_NOUN.test(t) || words.length <= 3 || /^ (open|thira) |திற/.test(t))) {
-    const hit = ORD.find(([re]) => re.test(t));
-    if (hit && i.stage.blocks.some((b) => b.ids.length >= hit[1])) return { kind: "stageOp", op: "open", n: hit[1], text: null, why: "ordinal" };
+    // one position read from the whole sentence: a place or any other word beside the number means this is not "open the Nth" (RC-42)
+    const n = singlePosition(raw);
+    if (n && i.stage.blocks.some((b) => b.ids.length >= n)) return { kind: "stageOp", op: "open", n, text: null, why: "ordinal" };
   }
   if (!last) return { kind: "none" };
 
