@@ -206,3 +206,20 @@ export function withProgress<T extends { status: string; created_at: unknown }>(
   const have = new Set(history.map(key));
   return [...history, ...p.journey.filter((j) => !have.has(key(j)))].sort((a, b) => str(a.created_at).localeCompare(str(b.created_at)));
 }
+
+/**
+ * RC-47 (PB-315): complaints filed with this department that are not in its queue yet. The officer queue is built from the
+ * pipeline's incidents, so a new complaint shows there only after the next refresh. This counts the ones still waiting (filed in the
+ * last `days` days, not yet worked, with no grievance event), so the officer can be told they are on the way.
+ */
+export async function awaitingQueue(portalName: string | undefined, days = 7, now: Date = new Date()): Promise<number> {
+  if (!portalName) return 0;
+  const since = new Date(now.getTime() - days * 86400000).toISOString().slice(0, 19).replace("T", " ");
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT c.complaint_code AS code FROM complaints c JOIN departments d ON d.id = c.department_id
+      WHERE d.name = ? AND c.status IN ('Complaint Filed', 'Pending Approval') AND c.created_at >= ? LIMIT 500`, [portalName, since]);
+  const codes = rows.map((r) => String(r.code));
+  if (!codes.length) return 0;
+  const seen = await incidentsOf(codes);
+  return codes.filter((c) => !seen.has(c)).length;
+}

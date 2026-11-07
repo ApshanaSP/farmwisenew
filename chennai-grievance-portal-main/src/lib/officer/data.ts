@@ -24,7 +24,8 @@ import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
 import { NEXT_STEP, STAGE_LABEL, TAB_STAGES, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
-import { syncComplaints } from "@/lib/complaint-progress";
+import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
+import { queueNoteFor } from "./queue-note";
 import { orEmpty } from "@/lib/fallback";
 import { pastDueSql } from "@/lib/reference/metrics";
 
@@ -416,7 +417,9 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
     q(`${b.sql} SELECT ${ROW} FROM w WHERE ${W} ORDER BY ${order} LIMIT ${per} OFFSET ${Math.max(0, f.page) * per}`, params),
     q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${W}`, params)
   ]);
-  return { now, rows: rows.map(tidy), total: Number(tot?.n ?? 0), page: f.page, per };
+  // RC-47: complaints filed with this department that the next update will add to the queue
+  const waiting = f.page === 0 && !f.q ? await awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : 0;
+  return { now, rows: rows.map(tidy), total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting) };
 }
 
 /** Search every grievance of the last 90 days, whatever the filters. */

@@ -7,6 +7,7 @@ import { resolveWard } from "@/lib/wards";
 import { classifyComplaint } from "@/lib/ai-classifier";
 import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { appendComplaintToDataset } from "@/lib/dataset/append";
+import { QUEUE_DELAY_NOTE } from "@/lib/officer/queue-note";
 import { progressFor, remarksFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
@@ -288,6 +289,7 @@ export async function POST(req: NextRequest) {
       complaintId,
       department: deptNameRows[0]?.name ?? null,
       departmentPending: needsManualReview,
+      queueNote: needsManualReview ? null : QUEUE_DELAY_NOTE,
       complaintType: subtype.label as string,
       complaintCategory: subtype.category_name as string,
       wardNumber: data.wardNumber,

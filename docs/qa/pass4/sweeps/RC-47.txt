@@ -1,0 +1,8 @@
+# RC-47 sweep: surfaces that read the pipeline's incidents but are fed by a citizen's live complaint
+$ grep -rln "events WHERE source = .grievance\|source_record_id" chennai-grievance-portal-main/src
+chennai-grievance-portal-main/src/lib/assistant/catalog.ts
+chennai-grievance-portal-main/src/lib/collector/derive.ts
+chennai-grievance-portal-main/src/lib/collector/intel.ts
+chennai-grievance-portal-main/src/lib/complaint-progress.ts
+
+Reading: officer/data.ts reads incidents directly (it does not match this grep). complaint-progress.ts is the citizen tracker. catalog.ts, derive.ts and intel.ts feed the Collector console and Ask District IQ: they show district-wide figures and make no promise to one citizen, so they get no note; not checked line by line. Fixed: the officer list returns awaiting + awaitingNote; filing returns queueNote. NOT done: showing both notes in the screens (OfficerApp.tsx, citizen file-complaint and track pages are being edited by the accessibility lane right now).
