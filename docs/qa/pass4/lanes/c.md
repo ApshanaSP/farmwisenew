@@ -74,3 +74,24 @@
 - Build: NEXT_DIST_DIR=.next-qa through the lock, no warnings; tsconfig.json and next-env.d.ts restored. Server on port 3153, real requests (docs/qa/pass4/lanes/c/RC-22-probe.mjs): sign-in 200, Tamil search 200, unknown rain 404, workspace save and open 200 on id 1000000001, photo and mobile code bad bodies 400, both CSV exports 428, a 600 KB body to /api/i18n 413, server alive afterwards. golden-baseline GB-1, GB-2 and GB-3 pass on it (15 of 15).
 - Not verified: a click-through of every page in a browser under React 19 (the golden run and the build only), and whether the upgrade stops the WebSocket upgrade through a public tunnel (not tested; no tunnel was opened).
 - Evidence: docs/qa/pass4/lanes/c/RC-22-install.log, docs/qa/pass4/evidence/scans/npm-audit-prod-after-rc22.json.
+
+## Review round (7 Nov): what was accepted and rejected
+The reviewer's file `docs/qa/pass4/reviews/c-review.md` does not exist in this worktree or any other, so only the skeptic's `c-skeptic.md` was judged. Each point was judged on its test and real-run evidence. Commit 28e12df.
+
+Accepted and fixed (all ten, the 53 `it.fails` are now `it`, plus 11 control lines that must not be refused):
+- CSK-1 (P0): "Filed by ...", "Door No 5" at the start of a sentence passed because the rules had no case-insensitive part. Fixed with a case-insensitive verb only (the name stays capital-only, so "filed by the roads department" is not a name).
+- CSK-2 (P0): partly. Added Tamil "X என்பவர" (the one called X, a person only), and "dhaan <word> complaint" / "complaint <Name> kudutha" shapes. A name in another position or another verb still gets through: the rule is a list of shapes.
+- CSK-3 (P0): a number said as digits and words (ten digits or more, at least one digit word) and an underscore-joined number are hidden.
+- CSK-4, CSK-5 (P1): more spoken forms (anup/azhi/neek stems, "sanction pannunga", "send seiyunga", Tamil transliterations, mark resolved in Tamil/Tanglish; clear, discard, drop, trash, dismiss, get rid of, sign off).
+- CSK-6 (P0): the person behind, identify the complainant, who submitted or phoned in, புகாரளித்த, "peru"/"pugar solravanga", "மூல உரை" with a complaint number.
+- CSK-7 (P3): Forwarded with a non-local host, or with no client, is not this PC.
+- CSK-8 (P0): the thing named after "how many" or "number of" is counted when it is a row's own thing (a hospital, a week); the measure then only filters. "how many fever cases" is still a sum.
+- CSK-9 (P2): the placeholder rule now reads the words (change, secret, jwt, production ...) and repeated words, not the shape. The guard's five weak examples are still weak and the real key is not flagged; a plain-word passphrase is accepted.
+- CSK-10 (P1): the order check runs one sentence at a time; "don't worry" and "can't wait" are not negations of what follows. Refusals still pass.
+
+Rejected: none. Not done (left open, all P3 or owner-level):
+- The three "seen but not made into a test" items: a place in "how many fever cases in Velachery" is not read as a filter (answers the all-area total; may be older than RC-20); Tamil "how many rows" says it cannot read it; signed routes have no own body cap (Next's 10 MB bounds it).
+- "who is behind the delay in Velachery" is refused (an older rule, `who is behind`, found while writing controls). Over-refusal, P3.
+- tsc reports 21 errors, all in other agents' files under tests/qa/pass4 (same-number, scans-code, golden-baseline, model-lifecycle, audit-privacy_injection); none in src.
+
+Golden run after these fixes (label lane-c2, build .next-fix, 3272 requests, 0 five-hundreds, 0 problems): compared with lane-c, 0 changed (only the build id). The existing explanation of the 30 changes against the baseline still holds. Files: docs/qa/pass4/golden/lane-c2.manifest.json, diffs/lane-c__lane-c2.md. The full test run (2543 passed, 13 skipped) and the lane-c guards and skeptic tests (93) pass.
