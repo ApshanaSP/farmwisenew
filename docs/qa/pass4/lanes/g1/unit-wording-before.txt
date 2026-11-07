@@ -1,0 +1,80 @@
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > What is the status of the data sources? 7ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > status of the feeds 1ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > how are the feeds doing 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > what is the condition of the news sources 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > தரவு மூலங்களின் நிலை என்ன? 1ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > தரவு ஊட்டங்களின் நிலைமை என்ன 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > செய்தி மூலங்களின் நிலை என்ன? 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > tharavu moolangalin nilai enna? 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > data moolangal nilai enna 0ms
+   × audit-ui_honesty-8: a question about the state of the feeds is understood in every language > feeds status enna 0ms
+   × metamorphic m30: a case that was closed is not an order to close one > indha vaaram Manali la evlo complaints close aachu is a question 2ms
+   × metamorphic m30: a case that was closed is not an order to close one > ennaiku evlo cases close aayiduchu is a question 1ms
+   × metamorphic m30: a case that was closed is not an order to close one > இந்த வாரம் மணலியில் எத்தனை புகார் க்ளோஸ் ஆச்சு is a question 1ms
+   × metamorphic m30: a case that was closed is not an order to close one > complaints reopen aachu evlo is a question 0ms
+   × metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > evlo complaints approve aayiduchu is not an order 1ms
+   × metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > how many cases delete aachu is not an order 0ms
+   × metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > mail anuppi aachu complaints is not an order 0ms
+   × metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > send aachu report is not an order 0ms
+   × AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > DIST-DM 1ms
+   × AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > TNPCB 0ms
+   × AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > X1 0ms
+   × AUD-NF-11: how many are affected is said by how many complained > two complaints are not 'a lot of residents', in either language 2ms
+   × AUD-NF-11: how many are affected is said by how many complained > three to nine say several, ten and more say a lot 1ms
+   × AUD-NF-11: how many are affected is said by how many complained > a plural kind takes 'There are' 0ms
+   × AUD-NF-16, audit-understanding-20: a period after a noun carries its preposition > casesSay monthly 0ms
+   × AUD-NF-16, audit-understanding-20: a period after a noun carries its preposition > casesSay quarterly 0ms
+   × AUD-NF-16, audit-understanding-20: a period after a noun carries its preposition > screens.ts puts no bare PERIOD_EN right after a plural noun or 'for <name>' 4ms
+   × AUD-NF-17: a Tamil spoken list holds no English sentence of the record's > casesSay.ta names a case by its Tamil kind, place and zone 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > What is the status of the data sources?
+AssertionError: What is the status of the data sources?: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > status of the feeds
+AssertionError: status of the feeds: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > how are the feeds doing
+AssertionError: how are the feeds doing: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > what is the condition of the news sources
+AssertionError: what is the condition of the news sources: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > தரவு மூலங்களின் நிலை என்ன?
+AssertionError: தரவு மூலங்களின் நிலை என்ன?: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > தரவு ஊட்டங்களின் நிலைமை என்ன
+AssertionError: தரவு ஊட்டங்களின் நிலைமை என்ன: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > செய்தி மூலங்களின் நிலை என்ன?
+AssertionError: செய்தி மூலங்களின் நிலை என்ன?: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > tharavu moolangalin nilai enna?
+AssertionError: tharavu moolangalin nilai enna?: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > data moolangal nilai enna
+AssertionError: data moolangal nilai enna: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > audit-ui_honesty-8: a question about the state of the feeds is understood in every language > feeds status enna
+AssertionError: feeds status enna: expected false to be true // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30: a case that was closed is not an order to close one > indha vaaram Manali la evlo complaints close aachu is a question
+AssertionError: indha vaaram Manali la evlo complaints close aachu: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30: a case that was closed is not an order to close one > ennaiku evlo cases close aayiduchu is a question
+AssertionError: ennaiku evlo cases close aayiduchu: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30: a case that was closed is not an order to close one > இந்த வாரம் மணலியில் எத்தனை புகார் க்ளோஸ் ஆ�
+AssertionError: இந்த வாரம் மணலியில் எத்தனை புகார் க்ளோஸ் ஆச்சு: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30: a case that was closed is not an order to close one > complaints reopen aachu evlo is a question
+AssertionError: complaints reopen aachu evlo: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > evlo complaints approve aayiduchu is not an order
+AssertionError: evlo complaints approve aayiduchu: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > how many cases delete aachu is not an order
+AssertionError: how many cases delete aachu: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > mail anuppi aachu complaints is not an order
+AssertionError: mail anuppi aachu complaints: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > metamorphic m30, the class: any forbidden verb with a done marker after it is a past, not an order > send aachu report is not an order
+AssertionError: send aachu report: expected true to be false // Object.is equality
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > DIST-DM
+AssertionError: expected 'District Disaster Managementஇடம்' not to match /[A-Za-z0-9)][஀-௿]/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > TNPCB
+AssertionError: expected 'Pollution Control Boardஇடம்' not to match /[A-Za-z0-9)][஀-௿]/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-7: a Tamil ending is never glued to a name written in Latin letters > X1
+AssertionError: expected 'Unit 7இடம்' not to match /[A-Za-z0-9)][஀-௿]/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-11: how many are affected is said by how many complained > two complaints are not 'a lot of residents', in either language
+AssertionError: expected 'There\'s standing water at Guindy. It…' not to match /a lot of residents/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-11: how many are affected is said by how many complained > three to nine say several, ten and more say a lot
+AssertionError: expected 'There\'s standing water at Guindy. It…' to match /several households/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-11: how many are affected is said by how many complained > a plural kind takes 'There are'
+AssertionError: expected 'There\'s people who need flood relief…' to match /^There are people who need flood reli…/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-16, audit-understanding-20: a period after a noun carries its preposition > casesSay monthly
+AssertionError: expected '40 severe cases the last 30 days; her…' not to match /\b(cases|case|incidents|reports) (the…/
+ FAIL  src/lib/assistant/g1.pass4.test.ts > AUD-NF-16, audit-understanding-20: a period after a noun carries its preposition > casesSay quarterly

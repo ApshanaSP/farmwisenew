@@ -1,0 +1,5 @@
+# G1 sweep: Tamil case endings glued right after a ${...} that may hold Latin script (src, non-test); each line was read
+src/lib/thunai/narrate.ts:176: export function idam(word: string): string {
+src/lib/thunai/narrate.ts:179: if (/[ைிீ]$/.test(word)) return `${word}யிடம்`;
+src/lib/thunai/narrate.ts:180: if (/ம்$/.test(word)) return `${word.slice(0, -2)}த்திடம்`;
+src/lib/thunai/narrate.ts:183: return `${word}இடம்`;

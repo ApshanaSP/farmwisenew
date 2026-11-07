@@ -74,6 +74,8 @@ export interface Built { doc: StageDocT; runs: string[] }
 // ------------------------------------------------------------------ words --
 
 const PERIOD_EN: Record<PeriodKey, string> = { daily: "today", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
+/** the period as an adverb after a noun: "cases today", "cases this week", "cases in the last 30 days" (never "cases the last 30 days", QA4 G1: AUD-NF-16, audit-understanding-20) */
+const inPeriod = (p: PeriodKey): string => (p === "monthly" || p === "quarterly" ? `in ${PERIOD_EN[p]}` : PERIOD_EN[p]);
 const PERIOD_TA: Record<PeriodKey, string> = { daily: "இன்று", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
 const SEV_TA: Record<string, string> = { Severe: "கடுமையான", High: "அதிக முக்கியத்துவ", Medium: "நடுத்தர", Low: "குறைந்த" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -92,6 +94,7 @@ const zoneName = (w: World, n: number | null | undefined) => (n ? w.zones.find((
 const zoneTa = (w: World, n: number | null | undefined) => (n ? w.zones.find((z) => z.n === n)?.ta ?? zoneName(w, n) : null);
 const catLabel = (w: World, c: string | null) => (c ? w.cats.find((x) => x.code === c)?.label ?? c : null);
 const deptName = (w: World, d: string | null) => (d ? w.depts.find((x) => x.code === d)?.name ?? d : null);
+const reportsOf = (subject: string, generic: boolean, n = 2): string => (generic ? (n === 1 ? "incident" : "incidents") : `${subject.toLowerCase()} ${n === 1 ? "report" : "reports"}`);
 const plural = (n: number, one: string, many: string) => `${spoken(n)} ${n === 1 ? one : many}`;
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 /** Text fit to show and say: no phone numbers or e-mail addresses, no letter openings ("Respected sir, ..."). */
@@ -306,7 +309,7 @@ async function advise(c: Ctx): Promise<Part> {
   const rise = [...(d.categories ?? [])].filter((x) => Number(x.delta) > 0).sort((a, b) => Number(b.delta) - Number(a.delta))[0];
   if (rise) {
     const act = actionFor(String(rise.label ?? rise.code ?? ""));
-    points.push({ en: `${clip(rise.label, 60)} rose by ${spoken(Number(rise.delta))} ${PERIOD_EN[s.period]} (${spoken(Number(rise.n))} against ${spoken(Number(rise.prev))}). Suggested: ${act.en}.`,
+    points.push({ en: `${clip(rise.label, 60)} rose by ${spoken(Number(rise.delta))} ${inPeriod(s.period)} (${spoken(Number(rise.n))} against ${spoken(Number(rise.prev))}). Suggested: ${act.en}.`,
       ta: `${clip(rise.label, 60)} ${PERIOD_TA[s.period]} ${spoken(Number(rise.delta))} கூடியது (${spoken(Number(rise.n))}, முன்பு ${spoken(Number(rise.prev))}). பரிந்துரை: ${act.ta}.`, id: null });
   }
   // 4. the busiest spot
@@ -516,8 +519,8 @@ async function cases(c: Ctx): Promise<Part> {
     const filters = scopeWords(w, { ...s, sev: null, period: s.period });
     return { title, takeaway: null,
       say: inherited
-        ? bi(`No ${sevWord} cases ${PERIOD_EN[s.period]} with the console's filters (${filters.en}). Say "all of Chennai" to look across the district.`, `கன்சோல் வடிகட்டிகளுடன் (${filters.ta}) ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை. முழு மாவட்டத்தையும் பார்க்க "முழு சென்னை" என்று சொல்லுங்கள்.`)
-        : bi(`There are no ${sevWord ? `${sevWord} ` : ""}cases ${PERIOD_EN[s.period]} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
+        ? bi(`No ${sevWord} cases ${inPeriod(s.period)} with the console's filters (${filters.en}). Say "all of Chennai" to look across the district.`, `கன்சோல் வடிகட்டிகளுடன் (${filters.ta}) ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை. முழு மாவட்டத்தையும் பார்க்க "முழு சென்னை" என்று சொல்லுங்கள்.`)
+        : bi(`There are no ${sevWord ? `${sevWord} ` : ""}cases ${inPeriod(s.period)} for this view.`, `இந்தப் பார்வையில் ${PERIOD_TA[s.period]} ${sev ? SEV_TA[sev] : ""} சம்பவங்கள் இல்லை.`),
       blocks: [{ kind: "Note", id: "none", text: inherited ? `No incidents match this view. The console still has these filters on: ${filters.en}.` : "No incidents match this view." }],
       next: inherited ? [{ label: { en: "All of Chennai", ta: "முழு சென்னை" }, kind: "direct", recipe: "cases", slots: { ...slots, zones: [], dept: null, cat: null, taluk: null, fresh: true }, ids: [], text: null }] : [] };
   }
@@ -560,6 +563,8 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
     if (l.split(/\s+/).length >= 6) { const k = plainWhat(r.cat, r.title); l = `${k ? k.en : "an issue"}${r.place ? ` at ${r.place}` : ""}`; }
     return r.zoneName && !l.includes(r.zoneName) ? `${l} in ${r.zoneName}` : l;
   };
+  // the Tamil line names a case by its kind in Tamil, its place and its zone: the English summary is a sentence of the record's own, and a Tamil answer holds no English sentence (QA4 G1, AUD-NF-17)
+  const whereTa = (r: CaseRowT) => [plainWhat(r.cat, r.title)?.ta ?? "ஒரு பிரச்சினை", r.place && r.place !== r.zoneName ? r.place : null, r.zoneName ? (r.zone ? ZONE_TA[r.zone] : null) ?? r.zoneName : null].filter(Boolean).join(", ");
   const late = rows.filter((r) => r.overdue);
   // the past-deadline figure is the whole list's when the caller counted it; the rows shown only name the cases
   const lateN = opts.late ?? late.length;
@@ -568,14 +573,14 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   for (const r of rows) if (r.deptName) byDept.set(r.deptName, (byDept.get(r.deptName) ?? 0) + 1);
   // who holds most is a count over the rows given: said only for a list given whole
   const [lead] = (opts.complete ?? rows.length >= total) ? [...byDept.entries()].sort((a, b) => b[1] - a[1]) : [];
-  const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${PERIOD_EN[period]}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
+  const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${inPeriod(period)}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
   const need = late.length
     ? `${lateN === 1 ? "One is past its deadline and needs" : `${spoken(lateN)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
     : `${lateN ? `${lateN === 1 ? "One is" : `${spoken(lateN)} are`} past the deadline, not among these. ` : ""}The most urgent: ${where(first[0])}.`;
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்.`,
-    late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(where).join(", ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${where(first[0])}.`,
+    late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
     lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
@@ -662,8 +667,8 @@ async function news(c: Ctx): Promise<Part> {
   }
   if (zone && !items.length) {
     return { title: `News · ${zoneName} · ${PERIOD_EN[s.period]}`, takeaway: null,
-      say: bi(`No news report named ${zoneName} ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} ${ZONE_TA[zone] ?? zoneName} பற்றி செய்தி இல்லை.`),
-      blocks: [{ kind: "Note", id: "none", text: `No news report ${PERIOD_EN[s.period]} names ${zoneName} or a place in it.` }],
+      say: bi(`No news report named ${zoneName} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} ${ZONE_TA[zone] ?? zoneName} பற்றி செய்தி இல்லை.`),
+      blocks: [{ kind: "Note", id: "none", text: `No news report ${inPeriod(s.period)} names ${zoneName} or a place in it.` }],
       next: [{ label: { en: "All of Chennai's news", ta: "சென்னை முழுவதும்" }, kind: "direct", recipe: "news", slots: { ...slots, zones: [], fresh: true }, ids: [], text: null }] };
   }
   let topic = words.length && slots.q ? ` about ${slots.q}` : zoneName ? ` from ${zoneName}` : "";
@@ -679,7 +684,7 @@ async function news(c: Ctx): Promise<Part> {
   items = items.slice(0, Math.min(slots.n ?? 12, 20));
   const title = `News${topic} · ${PERIOD_EN[s.period]}`;
   const taTopic = zone ? `${ZONE_TA[zone] ?? zoneName} ` : "";
-  if (!items.length) return { title, takeaway: null, say: bi(`No news${topic} ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
+  if (!items.length) return { title, takeaway: null, say: bi(`No news${topic} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} இது பற்றி செய்தி இல்லை.`), blocks: [] };
   const linked = items.filter((x) => x.incidentId).length;
   return {
     title, takeaway: linked ? bi(`${linked} of these ${items.length} headlines are linked to an incident.`, `இந்த ${items.length} தலைப்புகளில் ${linked} ஒரு சம்பவத்துடன் இணைந்தவை.`) : null,
@@ -833,7 +838,7 @@ async function ranking(c: Ctx): Promise<Part> {
     label = { days: "Average age of open incidents", closeDays: "Average days to close", overdue: "Open past the deadline", open: "Open incidents" }[key] ?? key;
     unit = key === "days" || key === "closeDays" ? "days" : "incidents";
     method = { days: "Departments with 5 or more open incidents, by the average age of their open incidents (the console's backlog card).",
-      closeDays: `Average days from first report to closing, incidents closed ${PERIOD_EN[s.period]}.`, overdue: `Open incidents past their deadline, ${PERIOD_EN[s.period]}.`,
+      closeDays: `Average days from first report to closing, incidents closed ${inPeriod(s.period)}.`, overdue: `Open incidents past their deadline, ${PERIOD_EN[s.period]}.`,
       open: `Open incidents, ${PERIOD_EN[s.period]}.` }[key] ?? "";
     const rows = d.filter((x) => x[key] != null);
     all = rows.map((x) => Number(x[key]));
@@ -930,7 +935,7 @@ async function compare(c: Ctx): Promise<Part> {
     `${out.map((x) => `${x.label}: ${spoken(x.values.severe)} severe and ${spoken(x.values.open)} open.`).join(" ")}${g ? ` The biggest gap is ${lab(g.metric).toLowerCase()}: ${g.hi} ${spoken(g.hiValue)} against ${g.lo} ${spoken(g.loValue)}.` : ""}`,
     `${out.map((x) => `${zoneTa(w, x.zone)}: ${spoken(x.values.severe)} கடுமையான, ${spoken(x.values.open)} திறந்தவை.`).join(" ")}${g ? ` பெரிய வேறுபாடு ${lab(g.metric)}: ${g.hi} ${spoken(g.hiValue)}, ${g.lo} ${spoken(g.loValue)}.` : ""}`
   );
-  const takeaway = g ? bi(`${g.hi} had ${g.ratio ? `${spoken(g.ratio)}×` : `${spoken(g.gap)} more`} the ${lab(g.metric).toLowerCase()} of ${g.lo} ${PERIOD_EN[s.period]}.`,
+  const takeaway = g ? bi(`${g.hi} had ${g.ratio ? `${spoken(g.ratio)}×` : `${spoken(g.gap)} more`} the ${lab(g.metric).toLowerCase()} of ${g.lo} ${inPeriod(s.period)}.`,
     `${PERIOD_TA[s.period]} ${g.hi}, ${g.lo}-ஐ விட ${g.ratio ? `${spoken(g.ratio)} மடங்கு` : `${spoken(g.gap)} கூடுதல்`} ${lab(g.metric)}.`) : null;
   c.notes.push("Median resolution time is not kept per zone in the data; the board compares counts.");
   return { title, takeaway, say, blocks: [
@@ -973,6 +978,8 @@ async function trend(c: Ctx): Promise<Part> {
   const { w, s } = c;
   const scope = scopeWords(w, { ...s, cat: null });
   const subject = catLabel(w, s.cat) ?? "Incidents";
+  // no kind named: "incidents", never "incidents of incidents" or "incidents reports" (same-number-21)
+  const generic = !catLabel(w, s.cat);
   const t = await seriesBlock(c, s, `${subject} over time`);
   const zr = await call(c, "zones", { scope: scopeArg({ ...s, zone: null }) });
   const zrows = (zr.data as { rows: Row[] }).rows;
@@ -984,7 +991,7 @@ async function trend(c: Ctx): Promise<Part> {
   const first = t.values.slice(0, half).reduce((a, b) => a + b, 0), second = t.values.slice(half).reduce((a, b) => a + b, 0);
   const ch = change(second, first);
   const say = bi(
-    `${plural(t.total, "incident", "incidents")} of ${subject.toLowerCase()} ${PERIOD_EN[s.period]}. The peak was ${spoken(p.value)} around ${t.labels[p.i]}.${ch.pct != null ? ` The second half had ${spoken(Math.abs(ch.pct))}% ${ch.pct >= 0 ? "more" : "fewer"} than the first.` : ""}`,
+    `${plural(t.total, "incident", "incidents")}${generic ? "" : ` of ${subject.toLowerCase()}`} ${inPeriod(s.period)}. The peak was ${spoken(p.value)} around ${t.labels[p.i]}.${ch.pct != null ? ` The second half had ${spoken(Math.abs(ch.pct))}% ${ch.pct >= 0 ? "more" : "fewer"} than the first.` : ""}`,
     `${PERIOD_TA[s.period]} ${subject}: ${spoken(t.total)} சம்பவங்கள். உச்சம் ${t.labels[p.i]} அளவில் ${spoken(p.value)}.${ch.pct != null ? ` பின்பாதியில் ${spoken(Math.abs(ch.pct))}% ${ch.pct >= 0 ? "அதிகம்" : "குறைவு"}.` : ""}`
   );
   const takeaway = t.block.marks.length
@@ -1025,8 +1032,8 @@ async function why(c: Ctx): Promise<Part> {
   const place = d.places?.[0];
   if (place) { reasons.push(`the busiest spot is ${clip(place.place, 60)} (${spoken(Number(place.n))} ${clip(place.category, 50).toLowerCase()})`); reasonsTa.push(`அதிக இடம் ${clip(place.place, 60)} (${spoken(Number(place.n))})`); }
   const head = ch.delta != null
-    ? `${plural(Number(t.n), "incident", "incidents")} ${PERIOD_EN[s.period]} against ${spoken(Number(t.prev))} the period before${ch.pct ? ` (${ch.pct > 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}%)` : ""}.`
-    : `${plural(Number(t.n ?? 0), "incident", "incidents")} ${PERIOD_EN[s.period]}.`;
+    ? `${plural(Number(t.n), "incident", "incidents")} ${inPeriod(s.period)} against ${spoken(Number(t.prev))} the period before${ch.pct ? ` (${ch.pct > 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}%)` : ""}.`
+    : `${plural(Number(t.n ?? 0), "incident", "incidents")} ${inPeriod(s.period)}.`;
   const headTa = `${PERIOD_TA[s.period]} ${spoken(Number(t.n ?? 0))} சம்பவங்கள்${num(t.prev) != null ? `, முந்தைய காலத்தில் ${spoken(Number(t.prev))}` : ""}.`;
   const text = `${head} ${reasons.length ? `Main reasons: ${reasons.join("; ")}.` : ""}`;
   const blocks: BlockT[] = [
@@ -1141,6 +1148,7 @@ async function dashboard(c: Ctx): Promise<Part> {
   const { w, s } = c;
   const scope = scopeWords(w, { ...s, cat: null });
   const subject = catLabel(w, s.cat) ?? "Incidents";
+  const generic = !catLabel(w, s.cat);
   const [k, zr, hs, list] = await Promise.all([
     call(c, "overview_kpis", { scope: scopeArg(s) }),
     call(c, "zones", { scope: scopeArg({ ...s, zone: null }) }),
@@ -1164,13 +1172,13 @@ async function dashboard(c: Ctx): Promise<Part> {
   const topZone = !s.zone && zr5[0] && zr5[0].value > 0 ? zr5[0] : undefined;
   // nothing reported: say so plainly instead of ranking zeros
   if (!rep && !zrows.some((x) => Number(x.n) > 0)) {
-    return { title, takeaway: bi(`No ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
-      say: bi(`No ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}${prev ? `, against ${spoken(prev)} the period before` : ""}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
+    return { title, takeaway: bi(`No ${reportsOf(subject, generic)} ${inPeriod(s.period)}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
+      say: bi(`No ${reportsOf(subject, generic)} ${inPeriod(s.period)}${prev ? `, against ${spoken(prev)} the period before` : ""}.`, `${PERIOD_TA[s.period]} ${subject} புகார்கள் இல்லை.`),
       blocks: [{ kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad")] }, t.block] };
   }
   return { title,
     takeaway: topZone ? bi(`${topZone.item.name} has the most: ${spoken(topZone.value)} of ${spoken(zrows.reduce((a, x) => a + Number(x.n), 0))}.`, `${zoneTa(w, Number(topZone.item.zone))} அதிகம்: ${spoken(topZone.value)}.`) : null,
-    say: bi(`${spoken(rep)} ${subject.toLowerCase()} reports ${PERIOD_EN[s.period]}${ch.pct != null ? `, ${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}% on the period before` : ""}. ${spoken(Number(kd.cur?.severe ?? 0))} severe.${topZone ? ` Most in ${topZone.item.name}.` : ""}`,
+    say: bi(`${spoken(rep)} ${reportsOf(subject, generic, rep)} ${inPeriod(s.period)}${ch.pct != null ? `, ${ch.pct >= 0 ? "up" : "down"} ${spoken(Math.abs(ch.pct))}% on the period before` : ""}. ${spoken(Number(kd.cur?.severe ?? 0))} severe.${topZone ? ` Most in ${topZone.item.name}.` : ""}`,
       `${PERIOD_TA[s.period]} ${subject}: ${spoken(rep)} புகார்கள், ${spoken(Number(kd.cur?.severe ?? 0))} கடுமையானவை.${topZone ? ` அதிகம் ${zoneTa(w, Number(topZone.item.zone))}.` : ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [tile("reported", "Reported", "neutral"), tile("severe", "Severe", "bad"), tile("ongoing", "Still open", "neutral"), tile("complaints", "Open complaints", "neutral")] },
@@ -1320,7 +1328,7 @@ async function bodyBrief(c: Ctx): Promise<Part> {
   const age = freshness(c.asOf);
   if (!rows.length && reported == null) {
     return { title: `${name} · brief`, takeaway: null,
-      say: bi(`${pre.en}I have no records for ${name} ${when}. ${src.en} ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${src.ta} ${age.ta}`),
+      say: bi(`${pre.en}I have no records for ${name} ${inPeriod(c.s.period)}. ${src.en} ${age.en}`, `${pre.ta}${ta ?? name}: ${whenTa} பதிவுகள் இல்லை. ${src.ta} ${age.ta}`),
       blocks: [{ kind: "Note", id: "empty", text: `No records for ${name} in this period. ${src.en}` }] };
   }
   // the one thing to say first: what needs attention, as a judgement made from the figures
@@ -1377,10 +1385,15 @@ async function brief(c: Ctx): Promise<Part> {
     ...(d.conditions ? [{ text: clip(`Conditions: ${d.conditions}`, 400), incidentId: null }] : [])
   ].slice(0, 10);
   const st = d.stats ?? {};
+  // the first point is the briefing tool's English sentence; the Tamil line is built from the same figures, so a Tamil answer holds no English sentence (QA4 G1, audit-understanding-17, AUD-NF-17)
+  const chg = num(st.change);
+  const nRep = Number(st.reported ?? 0);
+  const scopeTa = [zoneTa(c.w, c.s.zone), c.s.taluk ? c.w.taluks.find((t) => t.code === c.s.taluk)?.ta ?? c.s.taluk : null, deptName(c.w, c.s.dept), catLabel(c.w, c.s.cat)].filter(Boolean).join(", ");
+  const leadTa = `${PERIOD_TA[c.s.period]} ${scopeTa ? `${scopeTa} பகுதியில்` : "சென்னை மாவட்டத்தில்"} ${spoken(nRep)} ${nRep === 1 ? "சம்பவம் பதிவானது" : "சம்பவங்கள் பதிவாகின"}${chg == null ? "" : chg === 0 ? "; முந்தைய காலத்தின் அதே அளவு" : `; முந்தைய காலத்தை விட ${spoken(Math.abs(chg))}% ${chg > 0 ? "அதிகம்" : "குறைவு"}`}. ${spoken(Number(st.open ?? 0))} இன்னும் நிலுவையில்${Number(st.overdue) ? `, ${spoken(Number(st.overdue))} கெடு தாண்டியவை` : ""}; ${spoken(Number(st.severe ?? 0))} கடுமையானவை.`;
   return {
     title: `Briefing · ${PERIOD_EN[c.s.period]}`,
-    takeaway: points[0] ? bi(points[0].text, points[0].text) : null,
-    say: bi(`${points.length} points in the brief for ${PERIOD_EN[c.s.period]}. ${points[0]?.text ?? ""}`, `${PERIOD_TA[c.s.period]} சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0]?.text ?? ""}`),
+    takeaway: points[0] ? bi(points[0].text, leadTa) : null,
+    say: bi(`${points.length} points in the brief for ${PERIOD_EN[c.s.period]}. ${points[0]?.text ?? ""}`, `${PERIOD_TA[c.s.period]} சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0] ? leadTa : ""}`),
     blocks: [
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
         { key: "reported", label: "Reported", value: Number(st.reported ?? 0), unit: null, prev: null, delta: null, pct: num(st.change), tone: "neutral", spark: [] },

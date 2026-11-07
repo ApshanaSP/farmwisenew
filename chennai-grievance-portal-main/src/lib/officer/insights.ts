@@ -247,7 +247,7 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
       rows: repeats.map((r) => [r.place ?? "—", r.type ?? "—", n(Number(r.n)), n(Number(r.open ?? 0)), n(Number(r.total ?? 0))])
     }],
     notes: [
-      `${plural(total, "grievance")} ${change == null ? "were reported" : `were reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on the ${PERIODS[s.period].prev}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
+      `${plural(total, "grievance")} ${change == null ? `${total === 1 ? "was" : "were"} reported` : `${total === 1 ? "was" : "were"} reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on the ${PERIODS[s.period].prev}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
       closed ? `${pct((onTime / closed) * 100)} of the closed ones met their deadline.` : null,
       Number(k.overdue) ? `${plural(Number(k.overdue), "open grievance")} ${Number(k.overdue) === 1 ? "is" : "are"} past the deadline${byZone[0] ? `, most in ${byZone[0].l} (${n(Number(byZone[0].v))})` : ""}.` : "No open grievance is past its deadline.",
       slow ? `${slow.l} takes the longest to close (${n1(Number(slow.days))} days on average).` : null,

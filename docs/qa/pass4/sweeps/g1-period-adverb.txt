@@ -1,0 +1,57 @@
+# G1 sweep: a period phrase placed right after a noun with no preposition ('cases the last 30 days')
+## literal 'the last N days' after a word in non-test source
+src/app/api/map/layers/[id]/route.ts:16: * News reports of the last 30 days about incidents in the district: a pin only where the article names a locality;
+src/components/collector/app/assistant/text.ts:50:    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the 
+src/components/collector/app/BriefingBook.tsx:187:              <span className="bb-lbl" title="Open severe incidents of the last 7 days, deaths first">Critical now</span>
+src/components/collector/app/CollectorApp.tsx:69:  daily: "Daily: the last 24 hours, up to now", weekly: "Weekly: incidents reported in the last 7 days",
+src/components/collector/app/CollectorApp.tsx:70:  monthly: "Monthly: incidents reported in the last 30 days", quarterly: "Quarterly: incidents reported in the last 90 days"
+src/components/collector/app/Detail.tsx:169:            <button className="iv-loc" onClick={() => c.askOnMap!({ incidentId: i.id })} title="Every incident within 500 m of this one in the last 30 days,
+src/components/collector/app/Insights.tsx:371:        <div className="tk-head"><span>Taluk</span><span>Open incidents</span><span title="Reports in the last 30 days against the 30 days before">Change<
+src/components/collector/app/Insights.tsx:376:              <button key={x.code} className="tk" onClick={() => c.openList({ status: "open", taluk: x.code, cat: "", dept: "", anyZone: true, scope: "30d
+src/components/collector/app/Insights.tsx:382:                  title={`${x.reported} incidents reported in the last 30 days, ${x.prev} in the 30 days before`}>{d == null || d === 0 ? "–" : `${d > 0
+src/components/collector/app/Insights.tsx:388:            <button className="tk" onClick={() => c.openList({ status: "open", place: "notaluk", cat: "", dept: "", anyZone: true, scope: "30d", sort: "se
+src/components/collector/app/Insights.tsx:430:              <span className="pat-x" title="Incidents in the last 30 days">{h.incidents_30d}<small>in 30 d</small></span>
+src/components/collector/app/Insights.tsx:444: * Open incidents of the last 30 days whose place nobody knows: a specific event reported only "in Chennai". Weather
+src/components/collector/app/Insights.tsx:501:          ? <>Open incidents of the last 30 days reported only as &ldquo;in Chennai&rdquo;: the map cannot show them. Open one to see its reports and set 
+src/components/collector/app/Nearby.tsx:18: * "Next door": news from Tiruvallur, Kancheepuram and Chengalpattu of the last 7 days that could reach Chennai, in two
+src/components/officer/OfficerApp.tsx:487:  /** the department's grievances of the last 90 days; picking one opens it */
+src/lib/ai/prompts/composer.ts:96:PERIOD: when a sentence names the period, use SCOPE's words exactly ("in the last 90 days", "on the previous day"); never "this week" or
+src/lib/assistant/catalog.ts:175:      incidents_30d: ["measure", "incidents in the last 30 days"], open: ["measure", "still open"], lat: ["geo", "latitude"], lon: ["geo", "longitude"],
+src/lib/assistant/datasets.ts:249:        subtitle: "Hotspots with 3 or more incidents in the last 30 days" }), kpis: [], table: null, display: "map" };
+src/lib/assistant/fastpath.ts:206:  // "in the last 7 days", "in September 2026", "since 1 Oct 2026"
+src/lib/assistant/insightcards.ts:73:      question: `${e.label} trend in ${e.zone_name} over the last 30 days`, priority: 20 + Math.min(25, Number(e.ratio) * 2) - days * 3
+src/lib/assistant/pipeline.ts:198: * Whether a question the router called out of scope names a story in the last 7 days of district news: two of its own words
+src/lib/assistant/pipeline.ts:297:/** "Which zone needs attention now?": now / currently / right now, with no other period, is the last 7 days, not 90. */
+src/lib/assistant/pipeline.ts:865:    // "needs attention now": with no period of its own, "now" is the last 7 days, not the default 90 (the router keeps the default)
+src/lib/assistant/pipeline.ts:872:        assumptions: [...route.assumptions, "“Now” read as the last 7 days."] };
+src/lib/assistant/pipeline.ts:1180:      // a note about a period the answer did not end up covering ("covers the last 90 days" on a 24-hour answer) only confuses
+src/lib/assistant/pipeline.ts:1182:        || (/^“Now” read as the last 7 days/.test(a) && card.scope.period !== "weekly")))
+src/lib/assistant/pipeline.ts:1585:    // ("week by week" or "per month" is a grouping, not the period: it once limited "since 1 September" to the last 7 days)
+src/lib/assistant/tools.ts:828:    description: "Incidents seen in the news with no department record yet (at least the last 7 days), as the Briefing page's 'In the news, not in department records', w
+src/lib/assistant/tools.ts:870:    description: "The 17 revenue taluks in the district: unresolved (open), severe and past-deadline incidents over the last 30 days, and incidents reported against the 
+src/lib/assistant/tools.ts:887:    description: "Hotspots: clusters of incidents close together (DBSCAN, 250 m) with at least 3 in the last 30 days, as the Trends page, with their category, size, open
+src/lib/assistant/tools.ts:896:      // hotspots count the last 30 days, whatever the console's period
+src/lib/assistant/tools.ts:1210:    description: "Incidents reported in the scope over time, in the console's buckets (2-hour buckets for the last 24 hours, daily for a week or 30 days, weekly for 90 
+src/lib/assistant/__tests__/golden/exact.golden.ts:34:  // the store's own count (the console's monthly period is the last 30 days), so the test holds on every freeze
+src/lib/collector/insights.ts:126:  // locations needing review: open incidents of the last 30 days (or the period, if longer) with no zone
+src/lib/collector/insights.ts:163:    // unresolved incidents by taluk over the last 30 days, against the 30 days before
+src/lib/collector/insights.ts:582:    `${label} keeps coming back around ${h.top_place}: ${h.incidents} incidents since ${dayWord(h.first_seen)}, ${h.incidents_30d} of them in the last 30 days.`,
+src/lib/collector/insights.ts:590:      { l: "Incidents in all", v: String(h.incidents) }, { l: "In the last 30 days", v: String(h.incidents_30d) },
+src/lib/collector/intel.ts:913:    // Items from sources the Collector added: at least the last 7 days, so a quiet day still shows them.
+src/lib/collector/intel.ts:1365:  /** period = the dashboard's period; 30d = reported in the last 30 days; all = any date */
+src/lib/collector/nearby.ts:9: * for disease news, all for the last 7 days. Read at most once an hour and kept in data/aws-cache/nearby-news.json;
+src/lib/collector/nearby.ts:393:/** "Next door": each district's news of the last 7 days that matters for Chennai, and what to prepare for or watch. */
+src/lib/map/brief.ts:59:  // reported in the last 30 days against the 30 before (any status)
+src/lib/map/brief.ts:105:      en: pct != null ? `${nowIds.length} reported in the last 30 days, ${pct >= 0 ? "up" : "down"} ${Math.abs(Math.round(pct))} % on the 30 days before (${beforeIds.length})`
+src/lib/map/route.ts:363:  // hotspots look at all reports of the last 90 days by default, as the pipeline's clusters do
+src/lib/map/types.ts:108:  /** the pipeline's Gi* z-score over all incidents of the last 30 days */
+src/lib/officer/data.ts:425:/** Search every grievance of the last 90 days, whatever the filters. */
+src/lib/reference/metrics.ts:42:/** "reported in the last 24 hours", "updated in the last 7 days", "any date". */
+src/lib/rehearsal/impacts.ts:489:        ...(cuts ? [`Also in planned power cuts on ${plural(cuts, "day")} in the last 90 days${planned.length ? `: ${planned.slice(0, 4).map((p) => p.name).join(", ")}
+src/lib/thunai/screens.ts:77:/** the period as an adverb after a noun: "cases today", "cases this week", "cases in the last 30 days" (never "cases the last 30 days", QA4 G1: AUD-NF-16, audit-understan
+src/lib/thunai/screens.ts:820:    label = "Unresolved incidents, last 30 days"; unit = "incidents"; method = "Open incidents by revenue taluk over the last 30 days (the Trends page's taluk ranking).";
+src/lib/thunai/screens.ts:827:    label = "Incidents in 30 days, per hotspot"; unit = "incidents"; method = "Clusters of incidents within 250 m of each other (DBSCAN), 3 or more in the last 30 days.";
+## PERIOD_EN uses by file
+src/lib/thunai/next.ts:3
+src/lib/thunai/screens.ts:38
+src/lib/thunai/understand.ts:2

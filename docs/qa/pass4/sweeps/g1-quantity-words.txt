@@ -1,0 +1,5 @@
+# G1 sweep: words that claim a size ('a lot of', 'many', 'everyone') in text built from a count (grep over src/lib/thunai and src/lib/assistant, non-test)
+src/lib/thunai/narrate.ts:202:  // how many are affected is said by how many complained: two complaints are not "a lot of residents" (AUD-NF-11)
+src/lib/thunai/narrate.ts:203:  const reach = f.complaints >= 10 ? { en: "a lot of residents", ta: "நிறைய பேரைப் பாதிக்கிறது" } : f.complaints >= 3 ? { en: "several households"
+src/lib/thunai/privacy.ts:107:const RECORDS = /\b(complaints?|cases?|incidents?|records?|data|reports?|drafts?|entries|entry|files?|tickets?|grievances?|everything|everyone)\b|all\s+of\s+them|\b(?:them|these|those)\s*$|�
+src/lib/assistant/spell.ts:51:another other others anyone someone everyone nobody everything something whole part parts piece pieces kind type types sort sorts

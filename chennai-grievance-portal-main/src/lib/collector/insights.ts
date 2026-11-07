@@ -246,7 +246,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const scope = [zone ? zn.get(zone) : null, dept ? deptRows.find((d) => d.code === dept)?.name ?? dept : null, s.cat ? catLabel.get(s.cat) : null,
     s.taluk ? taluks.find((t) => t.code === s.taluk)?.name + " taluk" : null].filter(Boolean).join(", ") || "Chennai district";
   const headline = [
-    `${plural(n, "incident")} were reported in ${scope} (${PERIODS[period].label.toLowerCase()})` +
+    `${plural(n, "incident")} ${n === 1 ? "was" : "were"} reported in ${scope} (${PERIODS[period].label.toLowerCase()})` +
       (ch == null ? "." : `, ${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} the previous period.`),
     `${plural(open, "incident")} ${open === 1 ? "is" : "are"} still open${overdue ? `, ${overdue} of them past the deadline` : ""}; ${plural(sev, "severe event")}.`,
     Number(K.multi) ? `${plural(Number(K.multi), "incident")} came from more than one source, and ${plural(gaps.length, "incident")} ${gaps.length === 1 ? "appears" : "appear"} only in the news.` : null
