@@ -21,7 +21,7 @@ import { betterCategory, saidStems } from "./catlabels";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
-import { statusIn, unheldWindowIn } from "./quick";
+import { statusIn, unheldWindowIn, unknownTopicIn } from "./quick";
 
 const TA = /[஀-௿]/;
 
@@ -84,6 +84,16 @@ function lastStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null 
   return keep.length ? keep[keep.length - 1] : null;
 }
 
+/** Two different kinds of complaint named in as many words each, neither taken back ("fire accident"): neither is the topic. */
+function tiedTopics<T>(ms: Mention<T>[], tokens: string[]): boolean {
+  const kept = ms.filter((m, i) => {
+    const until = i + 1 < ms.length ? ms[i + 1].start : tokens.length;
+    for (let k = m.end; k < until; k++) if (REPAIR.has(tokens[k])) return false;
+    return true;
+  });
+  const top = Math.max(0, ...kept.map((m) => m.end - m.start));
+  return new Set(kept.filter((m) => m.end - m.start === top).map((m) => m.value)).size > 1;
+}
 /**
  * The kind of complaint, when a sentence names two without taking the first back: the one said in more words is the topic ("வடிகால் வேலை ... பள்ளம்", a pit at a drain-works site, is the
  * drain-works category, not the road's pothole). Between equals the last said stands, as in lastStanding (RC-02, open-baseline-38).
@@ -475,6 +485,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const deptM = lastStanding(deptMs, tk);
   // a body this console holds no records of: no department filter is put on for it, and the sentence is handed on to the lane that says so
   if (deptM && !world.depts.some((d) => d.code === deptM.value)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // two kinds of complaint of the same weight and none taken back ("fire accident"): the sentence is handed on, not filtered by the last one said
+  if (tiedTopics(catMs, tk)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   const catM = longestStanding(catMs, tk);
   if (zoneM) { view.zone = zoneM.value; match = Math.min(match, zoneM.score); }
   if (talukM) { view.taluk = talukM.value; match = Math.min(match, talukM.score); }
@@ -554,6 +566,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // a status ("open cases", "pending", "unresolved", "past the deadline") is a filter the console's view cannot hold: a view step with only the place would drop it without a word, so the rules hand the
   // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
   if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // a kind of complaint nothing here reads ("GH bed doctor prachanai complaints"): a window or a place alone would answer about something else (RC-05)
+  if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && unknownTopicIn(` ${s} `, world)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });
   if (hasView) steps.push({ a: "view", view });
   if (perM) steps.push({ a: "period", period: perM.value as PeriodKey });

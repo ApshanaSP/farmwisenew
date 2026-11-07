@@ -232,3 +232,30 @@ describe("a place or topic that cannot be applied is named, and the longest name
     expect(r.stage?.recipe === "cases" && !(r.stage?.slots as { cat?: string | null } | undefined)?.cat && !(r.stage?.slots as { q?: string | null } | undefined)?.q, r.said).toBe(false);
   });
 });
+
+// RC-05 (found on the ledger of this lane's own change): once the rules lane reads a window in every language, it must not act on the window alone when the rest of the sentence names a
+// kind of complaint it cannot read, or two kinds of equal weight. English had the same fault; the three languages are now the same.
+describe("the rules lane does not act on what it read and drop what it could not (the same in three languages)", () => {
+  it.each([
+    ["English", "show GH bed doctor problem complaints this week"],
+    ["Tanglish", "indha vaaram GH-la bed, doctor prachanai complaints eduthu kaattu"],
+    ["Tanglish, last week", "pona vaaram GH-la bed doctor prachanai complaints eduthu kaattu"]
+  ])("an unread kind of complaint is not answered with a bare window: %s", async (_n, text) => {
+    const r = await say(text);
+    expect(r.steps.some((s) => s.a === "period" || s.a === "view"), r.said).toBe(false);
+  });
+  it.each([
+    ["English", "Manali zone this week fire accident how many"],
+    ["Tanglish", "Manali zone la indha vaaram fire accident ethana"]
+  ])("two kinds of complaint of equal weight are not filtered by the last one said: %s", async (_n, text) => {
+    const r = await say(text);
+    expect(r.cat ?? (r.slots as { cat?: string | null }).cat ?? null, r.said).not.toBe("ROAD_ACCIDENT");
+    expect(r.steps.some((s) => s.a === "view" && (s as { view?: { cat?: string } }).view?.cat), r.said).toBe(false);
+  });
+  it("the guard: one kind of complaint, or a kind that is explained, is still answered", async () => {
+    for (const text of ["garbage complaints this week", "Adyar la kuppai complaints kaattu", "நாய் புகார்கள் இந்த வாரம்"]) {
+      const r = await say(text);
+      expect(r.kind, `${text}: ${r.said}`).not.toBe("none");
+    }
+  });
+});

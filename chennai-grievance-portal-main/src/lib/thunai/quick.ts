@@ -290,6 +290,13 @@ const isPrice = (t: string) => has(t, PRICE) || (has(t, PRICE_WEAK) && (VEG.test
 /** a word some other reader of this lane takes as a filter (a status, a severity, a window): it is not an unread topic */
 const readAsSlot = (x: string): boolean => statusIn(` ${x} `) != null || sevIn(` ${x} `) != null || periodIn(` ${x} `) != null;
 
+/** The word in front of "complaint(s)" that nothing reads (not a topic, place, body, status, severity or window), or null: the kind of complaint asked about is unread (RC-05). */
+export function unknownTopicIn(t: string, w: World): string | null {
+  const all = t.trim().split(" ");
+  for (let i = 1; i < all.length; i++) if (/^(complaints?|issues?|problems?|grievances?)$/.test(all[i]) && /^[a-z]{3,}$/.test(all[i - 1]) && !explained(all[i - 1], w) && !readAsSlot(all[i - 1]) && statusIn(` ${all[i - 1]} ${all[i]} `) == null) return all[i - 1];
+  return null;
+}
+
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)
@@ -299,7 +306,7 @@ export function unsureWhy(text: string, t: string, w: World, zones: number[], ca
   if (left >= 3 || (left >= 2 && left / all.length > 0.4)) return "unknown-words";
   // a kind of complaint no category names ("the power cut complaint", "noise complaints"): listing every case of the place would answer about something else. The word in front of
   // "complaint" that nothing here reads is the topic; the planner, which can search the records, takes it (RC-05, audit-understanding-16)
-  if (!cat) for (let i = 1; i < all.length; i++) if (/^(complaints?|issues?|problems?|grievances?)$/.test(all[i]) && /^[a-z]{3,}$/.test(all[i - 1]) && !explained(all[i - 1], w) && !readAsSlot(all[i - 1])) return "unknown-topic";
+  if (!cat && unknownTopicIn(t, w)) return "unknown-topic";
   if (SUBJECTS.test(text.toLowerCase())) return "other-subject";
   if (SAVE_ASK.test(t)) return "save";
   if (MAPISH.test(t) && !has(t, ON_MAP)) return "map-word";
