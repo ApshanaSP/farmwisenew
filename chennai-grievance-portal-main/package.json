@@ -10,6 +10,7 @@
     "start:lan": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:tz": "node tests/qa/pass4/with-tz.mjs",
     "catalog:snapshot": "node scripts/generate-assistant-catalog.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js --status",
