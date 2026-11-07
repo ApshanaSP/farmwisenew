@@ -16,12 +16,14 @@ export interface Quick { recipe: Recipe; slots: Record<string, unknown> }
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 /** the endings a short Tamil word takes (தீ: தீயில், தீக்கு), so that a short word is a word and not the start of another (தீவிர, "severe", is not தீ, "fire") (RC-03) */
+/** a Tamil word of this many code points or fewer (தீ, "fire") is strict at its right edge; a longer one may be the start of a compound (மழைநீர், தெருவிளக்கு) */
+export const TA_SHORT = 2;
 const TA_ENDING = /^(ல்|ில்|யில்|ல|க்கு|ுக்கு|யை|ை|யால்|ால்|ின்|யின்|ும்|ம்|கள்|களை|களில்|ங்கள்|யும்|உம்|ே)/;
 /** a Tamil word inside the text, at a word edge: nothing Tamil before it; and after it either more of a long word (its case endings and compounds) or, for a short word, only an ending */
 export function tamilAt(t: string, w: string): number {
   const ww = w.trim();
   if (!ww) return -1;
-  const long = [...ww].length >= 4;
+  const long = [...ww].length > TA_SHORT;
   let i = t.indexOf(ww);
   while (i >= 0) {
     const before = t[i - 1], after = t.slice(i + ww.length);

@@ -64,7 +64,7 @@ const FILLER = new Set(("a an the this that these those is are was were be am do
   // greetings, the name, and the words that only say what kind of report
   "jarvis hey hello hi hai full detailed complete quick short annual tonight tonights tonight's general many nearest near some few one").split(" "));
 /** Tamil terms in Tamil letters, by stem: matched as the start of a word, so case endings still find them */
-const TA_TERMS: [string, string][] = [["காலேஜ்", "college"], ["யூனிவர்சிட்டி", "university"], ["யூனிவர்சிடி", "university"], ["யுனிவர்சிடி", "university"], ["கல்லூரி", "college"], ["யுனிவர்சிட்டி", "university"], ["பல்கலைக்கழகம்", "university"], ["அசோசியேஷன்", "association"], ["சங்கம்", "association"], ["கவுன்சில்", "council"], ["இன்ஸ்டிடியூட்", "institute"], ["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
+const TA_TERMS: [string, string][] = [["மின்சார", "electricity"], ["காலேஜ்", "college"], ["யூனிவர்சிட்டி", "university"], ["யூனிவர்சிடி", "university"], ["யுனிவர்சிடி", "university"], ["கல்லூரி", "college"], ["யுனிவர்சிட்டி", "university"], ["பல்கலைக்கழகம்", "university"], ["அசோசியேஷன்", "association"], ["சங்கம்", "association"], ["கவுன்சில்", "council"], ["இன்ஸ்டிடியூட்", "institute"], ["போலீஸ்", "police"], ["போலிஸ்", "police"], ["காவல்துறை", "police"], ["காவல்", "police"], ["ரிப்போர்ட்", "report"], ["ரிப்போர்ட", "report"], ["அறிக்கை", "report"],
   ["நிலவரம்", "status"], ["சுருக்கம்", "brief"], ["அப்டேட்", "update"], ["கிரேட்டர்", "greater"], ["கிரேட்டர", "greater"], ["சென்னை", "chennai"], ["மெட்ராஸ்", "madras"], ["மாநகராட்சி", "corporation"], ["கார்ப்பரேஷன்", "corporation"],
   ["மாநகர", "city"], ["நகர", "city"], ["சிட்டி", "city"], ["குடிநீர் வாரியம்", "metrowater"], ["மெட்ரோ வாட்டர்", "metrowater"], ["பொதுப்பணித்துறை", "pwd"], ["பொதுப்பணி", "pwd"], ["மின்வாரியம்", "tangedco"], ["மின் வாரியம்", "tangedco"],
   ["துறை", "department"], ["வாரியம்", "board"], ["ஆணையர்", "commissioner"], ["கமிஷனர்", "commissioner"], ["என்ன", "enna"], ["சொல்லு", "sollu"], ["கோயம்புத்தூர்", "coimbatore"], ["கோவை", "coimbatore"], ["தாம்பரம்", "tambaram"], ["ஆவடி", "avadi"], ["மும்பை", "mumbai"]];
@@ -330,6 +330,8 @@ const placeSkeletons = (reg: Registry): Set<string> => {
 /** Is this word one that names no place and no body of ours? (a name-like word) */
 /** ordinary English words that can stand in front of an agency word and name nothing: adverbs ("kindly"), commands ("export police report") and the shapes of verbs */
 const ORDINARY = new Set(("export download print share compare show open list give get fetch find look check tell say display bring pull view read need want like also just only still even already quickly kindly please " +
+  // numbers and ranks ("top five departments"), and the electricity of the Tamil minsāra
+  "one two three four five six seven eight nine ten eleven twelve fifteen twenty thirty fifty hundred first second third last bottom top few several many most least both electricity electric electrical power " +
   "actually basically simply really maybe perhaps latest current recent total overall whole entire every each other another same new old big small top best worst main full short long detailed").split(" "));
 const nameLike = (w: string, reg: Registry): boolean => {
   if (w.length < 3 || /\d/.test(w)) return false;

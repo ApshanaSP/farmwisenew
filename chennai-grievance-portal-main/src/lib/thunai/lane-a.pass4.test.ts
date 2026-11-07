@@ -199,12 +199,12 @@ describe("RC-02: no entity from an everyday sentence", () => {
 });
 
 // RC-03 (and RC-14, normalise.ts): a short word is a word, not the start or the middle of another; a user's word is never a property of Object.
-import { tamilAt } from "./quick";
+import { TA_SHORT, tamilAt } from "./quick";
 import { normalise } from "./normalise";
 import { DEPT_TA, SEV_WORDS, ZONES } from "./lexicon";
 describe("RC-03: word edges, in every script", () => {
   const ta = (s: string) => /[஀-௿]/.test(s);
-  const shortAliases = [...new Set([...Object.values(CAT_ALIASES).flat(), ...SEV_WORDS.map(([w]) => w)].map((x) => x.trim()).filter((x) => ta(x) && [...x].length <= 3))];
+  const shortAliases = [...new Set([...Object.values(CAT_ALIASES).flat(), ...SEV_WORDS.map(([w]) => w)].map((x) => x.trim()).filter((x) => ta(x) && [...x].length <= TA_SHORT))];
   const tamilWords = [...new Set([...Object.values(ZONES).flatMap((z) => z.ta), ...Object.values(DEPT_TA), ...Object.values(CAT_ALIASES).flat(), ...SEV_WORDS.map(([w]) => w)].flatMap((x) => x.trim().split(" ")).filter(ta))];
   it("a short Tamil word is found only as a word (with a case ending), never inside a longer word of the lexicon or the data", () => {
     const bad: string[] = [];
@@ -290,5 +290,19 @@ describe("RC-07: follow-ups and the Stage's filter", () => {
       const fx = JSON.stringify(cmd ? stageReducer(m, cmd).fx : []);
       expect(fx, t).not.toMatch(/None of these mention/);
     }
+  });
+});
+
+// found by the golden diff: numbers and ranks are not names, and a short Tamil word that starts a compound (மழைநீர், rain water) still counts as that word.
+describe("golden-diff regressions (lane a)", () => {
+  it("top five departments, first three zones: a number word in front of an agency word names no body", () => {
+    for (const s of ["List the top five departments by pending cases", "show the first three zones", "the last ten police reports"]) expect(foreignIn(s, world as never), s).toBeNull();
+  });
+  it("a Tamil word of three letters or more at the start of a compound is the word (மழை in மழைநீர்)", () => {
+    expect(tamilAt(" மழைநீர் வடிகால் ", "மழை")).toBeGreaterThanOrEqual(0);
+    expect(tamilAt(" தீவிர ", "தீ")).toBe(-1);
+  });
+  it("the Tamil word for electricity before the word for department is not a place", () => {
+    expect(foreignIn("மின்சாரத் துறையின் நிலுவை வழக்குகள் எத்தனை?", world as never)).toBeNull();
   });
 });
