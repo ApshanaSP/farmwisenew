@@ -48,7 +48,7 @@ describe("jarvis2 hunt", () => {
     expect(last.steps.some((s) => s.a === "view")).toBe(false);
     expect(last.kind).toBe("clarify");
   });
-  it.fails("jarvis2-8 'don't forget zone 5 is my priority' asks to remember, not to open zone 5", async () => {
+  it("jarvis2-8 'don't forget zone 5 is my priority' asks to remember, not to open zone 5", async () => {
     const { last } = await run("don't forget zone 5 is my priority");
     expect(last.steps.some((s) => s.a === "view")).toBe(false);
   });

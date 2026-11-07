@@ -156,7 +156,7 @@ describe("same number everywhere", () => {
     const r = get(DISTRICT_W, "assistant/chat:list", /Incidents matching/);
     expect(r?.value).toBe(r?.oracle);
   });
-  it.fails("same-number-9 Jarvis's 'All cases, this week' is the tile's still-open figure", () => {
+  it("same-number-9 Jarvis's 'All cases, this week' is the tile's still-open figure", () => {
     expect(get(DISTRICT_W, "thunai/round:cases(open)", "kpi.total(groups)")?.value).toBe(get(DISTRICT_W, "collector/overview", "kpi.cur.ongoing")?.value);
   });
   it("same-number-10 the first of the '12 complete weeks' holds that whole week", () => {

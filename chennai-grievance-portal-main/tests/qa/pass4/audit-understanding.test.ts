@@ -261,7 +261,7 @@ describe("audit-understanding-9 P1: keeping or typing a report in Tamil or other
 
 describe("audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005)", () => {
   for (const s of ["Mylapur police report", "Chetpet police report", "தி நகர் போலீஸ் அறிக்கை", "Mylapur la police report kudu"])
-    it.fails(`audit-understanding-10 ${s}: says the figures are the whole district's`, async () => expect(stageOf(await round(s))?.say.en).toMatch(/can't narrow|whole district/));
+    (["Mylapur police report", "Mylapur la police report kudu"].includes(s) ? it : it.fails)(`audit-understanding-10 ${s}: says the figures are the whole district's`, async () => expect(stageOf(await round(s))?.say.en).toMatch(/can't narrow|whole district/));
 });
 
 describe("audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003)", () => {
@@ -304,7 +304,7 @@ describe("audit-understanding-16 P2: a topic the rules cannot read is dropped fr
     expect(stageOf(r)?.recipe === "cases" && !slotsOf(r).cat).toBe(false);
   });
   for (const s of ["அடையாறு மின் விளக்கு புகார்கள்", "Adyar la therukku vilakku complaints kaattu", "theru vilakku complaints Adyar la kaattu", "மின்விளக்கு புகார் அடையாறு"])
-    it.fails(`audit-understanding-16 ${s}: the street-light cases, not all of them`, async () => expect(slotsOf(await round(s)).cat).toBe("STREETLIGHT_ELECTRICAL"));
+    (["Adyar la therukku vilakku complaints kaattu", "theru vilakku complaints Adyar la kaattu"].includes(s) ? it : it.fails)(`audit-understanding-16 ${s}: the street-light cases, not all of them`, async () => expect(slotsOf(await round(s)).cat).toBe("STREETLIGHT_ELECTRICAL"));
 });
 
 describe("audit-understanding-17 P2: a Tamil answer carries an English sentence", () => {

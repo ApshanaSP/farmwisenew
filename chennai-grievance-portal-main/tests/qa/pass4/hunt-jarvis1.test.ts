@@ -20,7 +20,7 @@ async function talk(...said: string[]): Promise<{ sim: ClientSim; outs: Outcome[
 describe("QA pass 4 hunt jarvis1", () => {
   beforeAll(async () => { vi.useFakeTimers({ toFake: ["Date"], now: new Date(FROZEN) }); w = await browserWorld(); }, 300_000);
 
-  it.fails("JARVIS1-1 Tamil 'தீவிர' (severe) is not read as 'தீ' (fire): Adyar severe cases in Tamil match the English answer", async () => {
+  it("JARVIS1-1 Tamil 'தீவிர' (severe) is not read as 'தீ' (fire): Adyar severe cases in Tamil match the English answer", async () => {
     const en = (await talk("show severe complaints in Adyar")).outs[0];
     const ta = await talk("அடையாறு தீவிர புகார்கள் காட்டு");
     expect(ta.outs[0].stage?.slots).toMatchObject({ cat: null, sev: "Severe", zones: [13] });
@@ -44,7 +44,7 @@ describe("QA pass 4 hunt jarvis1", () => {
     expect(localStageCommand("first one open pannu")).toEqual({ op: "open", n: 1 });
   });
 
-  it.fails("JARVIS1-5 'remind me in 2 hours to check lakes' sets a reminder, not a lake readings screen", async () => {
+  it("JARVIS1-5 'remind me in 2 hours to check lakes' sets a reminder, not a lake readings screen", async () => {
     const { outs } = await talk("remind me in 2 hours to check lakes");
     expect(outs[0].stage?.recipe).not.toBe("readings");
     expect(outs[0].options.length + (outs[0].kind === "clarify" ? 1 : 0)).toBeGreaterThan(0);
@@ -66,7 +66,7 @@ describe("QA pass 4 hunt jarvis1", () => {
     expect(outs[0].kind === "refuse" || /clos/i.test(outs[0].said)).toBe(true);
   });
 
-  it.fails("JARVIS1-9 'remember I watch Adyar' in Tamil and Tanglish asks to remember, it does not switch the console to Adyar", async () => {
+  it("JARVIS1-9 'remember I watch Adyar' in Tamil and Tanglish asks to remember, it does not switch the console to Adyar", async () => {
     for (const s of ["நினைவில் வை நான் அடையாறு பார்ப்பேன்", "ennai nyabagam vechuko adyar thaan en zone"]) {
       const { sim, outs } = await talk(s);
       expect(sim.zone, s).toBeNull();
