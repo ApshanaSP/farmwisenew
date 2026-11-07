@@ -1,6 +1,6 @@
 /**
  * QA pass 4, audit of a fixed bug. BUG-006: "Generated police, PWD and hospital feeds were shown as Live and Healthy."
- * The walk runs the production build in a real Chromium, on port 3134 (started here if it is not up, stopped again if it was).
+ * The walk runs the production build in a real Chromium, on port 3134 (QA_UI_HONESTY_PORT), a server this file starts itself on the frozen clock with a test key of its own, and stops again.
  * Everything is read in beforeAll, so a broken server fails the run instead of quietly satisfying an it.fails.
  *
  * Models: none is called. The server has no key, so Ask District IQ answers on its rules lane and these tests say nothing about what
@@ -16,11 +16,13 @@
  *   AUDIT_SHOTS=1 ... also rewrites the screenshots in docs/qa/pass4/evidence/bug-audit
  */
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { chromium, type Browser, type Page } from "playwright-core";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { SignJWT } from "jose";
 import { accounts } from "../seed-local-users.mjs";
 import { APP_ROOT, PIN_DIR } from "./lib/env.mjs";
 
@@ -34,6 +36,8 @@ vi.mock("@/lib/ai/gateway", async (orig) => {
 });
 
 const PORT = Number(process.env.QA_UI_HONESTY_PORT || 3134);
+/** made up for this run: the key of the test server this file starts, so that it can sign a browser session that outlives the frozen clock */
+const TEST_JWT_SECRET = crypto.randomBytes(32).toString("hex");
 const BASE = `http://127.0.0.1:${PORT}`;
 const SHOTS = path.resolve(APP_ROOT, "..", "docs", "qa", "pass4", "evidence", "bug-audit");
 // .officer is the department contact's card (a name and a phone number): covered, so no such number reaches the committed pictures
@@ -82,11 +86,26 @@ async function pageFor(key: string | null, lang?: string): Promise<Page> {
   if (lang) await ctx.addInitScript((l) => localStorage.setItem("diq-lang", l), lang);
   const page = await ctx.newPage();
   if (key && !logins.has(key)) {
-    // from the page, so the browser keeps the secure session cookie as it would for a person
-    await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+    // The server runs on a frozen clock (2026-11-06) and dates the sign-in token from it (12 h). The middleware checks that token with the REAL clock, so
+    // from the evening of 6 Nov on every page redirected to /login and this file could not walk (the same walk passed on 6 Nov). The clock cannot be left
+    // to the machine, and it must stay frozen (the chip times and the store's as-of are read from it). So: sign in over HTTP, then give the browser the same
+    // session with a long life, signed with the key this file gave its own test server (TEST_JWT_SECRET, made up here, never a real one).
     const a = accounts().find((x: { key: string }) => x.key === key)!;
-    const st = await page.evaluate(async (b) => (await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) })).status, { email: a.email, password: a.password });
-    if (st !== 200) throw new Error(`sign-in failed for ${key}: ${st}`);
+    const r = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: a.email, password: a.password }) });
+    if (r.status !== 200) throw new Error(`sign-in failed for ${key}: ${r.status}`);
+    const host = new URL(BASE).hostname;
+    const cookies = [];
+    for (const c of r.headers.getSetCookie()) {
+      const [nv] = c.split(";"), i = nv.indexOf("="), name = nv.slice(0, i);
+      let value = nv.slice(i + 1);
+      if (/^dcd_session_/.test(name)) {
+        const { exp: _e, iat: _i, ...claims } = JSON.parse(Buffer.from(value.split(".")[1], "base64url").toString("utf8"));
+        value = await new SignJWT(claims).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("30d").sign(new TextEncoder().encode(TEST_JWT_SECRET));
+      }
+      cookies.push({ name, value, domain: host, path: "/", secure: /;s*secure/i.test(c), httpOnly: /;s*httponly/i.test(c), sameSite: "Lax" as const, expires: Math.floor(Date.now() / 1000) + 30 * 86400 });
+    }
+    await ctx.addCookies(cookies);
+    await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
     logins.set(key, await ctx.storageState());
   }
   return page;
@@ -329,18 +348,19 @@ async function walk() {
 }
 
 beforeAll(async () => {
-  const up = await fetch(`${BASE}/login`).then((r) => r.status < 500).catch(() => false);
-  if (!up) {
-    execFileSync(process.execPath, ["tests/qa/pass4/server.mjs", "start", "--port", String(PORT), "--frozen", "--ticking"], { cwd: APP_ROOT, stdio: "ignore", timeout: 240_000 });
-    startedHere = true;
-  }
-  browser = await chromium.launch();
+  // this file owns its port: a server already there does not know the test key, so it is replaced
+  const run = (...a: string[]) => execFileSync(process.execPath, ["tests/qa/pass4/server.mjs", ...a], { cwd: APP_ROOT, stdio: "ignore", timeout: 240_000 });
+  run("stop", "--port", String(PORT));
+  run("start", "--port", String(PORT), "--frozen", "--ticking", "--instance", `uih-${process.pid}`, "--env", `JWT_SECRET=${TEST_JWT_SECRET}`);
+  startedHere = true;
+  browser = await chromium.launch({ args: ["--mute-audio"] });
   await walk();
 }, 420_000);
 
 afterAll(async () => {
   await browser?.close();
   if (startedHere) execFileSync(process.execPath, ["tests/qa/pass4/server.mjs", "stop", "--port", String(PORT)], { cwd: APP_ROOT, stdio: "ignore" });
+  try { fs.rmSync(path.join(APP_ROOT, "data", "aws-cache", "qa", "srv", `uih-${process.pid}`), { recursive: true, force: true }); } catch { /* still held for a moment: it is in the gitignored QA folder */ }
 });
 
 const generatedRows = () => seen.dataSources.rows.filter((r) => /generator|hospital_data/i.test(r.url));
@@ -382,7 +402,12 @@ describe("BUG-006: what the fix did hold", () => {
   });
   it("Data Studio shows no generated feed as Live or Healthy: it has no connector, only the feature's name and its tagline", () => {
     expect(seen.studio.connectors).toBe(0);
-    expect(seen.studio.lines.sort()).toEqual(["Get the story, the map and a live dashboard.", "Live Connectors"]);
+    // The page opens the newest dataset when the store holds one, and the welcome when it holds none: the store decides which of the two taglines is on screen,
+    // so both are allowed. What may never be there is a feed called Live or Healthy.
+    const taglines = ["Get the story, the map and a live dashboard.", "live charts · click a bar, slice or zone to open it"];
+    expect(seen.studio.lines).toContain("Live Connectors");
+    expect(seen.studio.lines.filter((l) => l !== "Live Connectors" && !taglines.includes(l))).toEqual([]);
+    expect(seen.studio.lines.join(" ")).not.toMatch(/healthy/i);
   });
   it("asked plainly in English or Tanglish, Ask District IQ says the departmental feeds are mock data", () => {
     expect(seen.answers.realOrTest.answerMarkdown).toMatch(/mock departmental data/);
@@ -441,44 +466,44 @@ const pinnedCount = (table: string, cols: string[], word: string) => {
   return t.rows.filter((r) => at.map((i) => String(r[i] ?? "")).join(" ").toLowerCase().includes(word)).length;
 };
 
-describe("BUG-006: reopened, and what was found on the way (open: it.fails until fixed)", () => {
+describe("BUG-006: reopened, and what was found on the way (fixed ones are it(...); a bug still open or an owner's decision stays it.fails)", () => {
   // ---- Data sources, the only feed screen the console has: FeedsBody, where the fix put "Test data", is rendered by nothing
-  it.fails("audit-ui_honesty-1: the Data sources list does not call a generated feed Healthy", () => {
+  it("audit-ui_honesty-1: the Data sources list does not call a generated feed Healthy", () => {
     for (const r of generatedRows()) expect(r.status).not.toBe("Healthy");
   });
-  it.fails("audit-ui_honesty-1: the Data sources list marks a generated feed as test data", () => {
+  it("audit-ui_honesty-1: the Data sources list marks a generated feed as test data", () => {
     expect(seen.dataSources.body).toMatch(/test data/i);
   });
-  it.fails("audit-ui_honesty-1: the Data sources line does not count generated feeds healthy or say they are collected every hour", () => {
+  it("audit-ui_honesty-1: the Data sources line does not count generated feeds healthy or say they are collected every hour", () => {
     expect(seen.dataSources.sub).not.toMatch(/8 of 12 sources healthy/);
     expect(seen.dataSources.sub).not.toMatch(/pipeline feeds are collected every hour/);
   });
 
   // ---- Officer: the same filter as the Collector's, on rows that have no `kind`
-  it.fails("audit-ui_honesty-2: the Officer's chip gives the same live count as the Collector's", () => {
+  it("audit-ui_honesty-2: the Officer's chip gives the same live count as the Collector's", () => {
     expect(seen.officerChip.en.text).toContain(liveCount());
   });
-  it.fails("audit-ui_honesty-2: the Officer's feed list gives the same live count as the Collector's", () => {
+  it("audit-ui_honesty-2: the Officer's feed list gives the same live count as the Collector's", () => {
     expect(seen.officerChip.en.pop).toContain(`Data feeds · ${liveCount()}`);
   });
-  it.fails("audit-ui_honesty-2: the Officer's chip in Tamil gives the same live count", () => {
+  it("audit-ui_honesty-2: the Officer's chip in Tamil gives the same live count", () => {
     expect(seen.officerChip.ta.text).toContain(`${seen.truth.live}/${seen.truth.total} நேரலை`);
   });
-  it.fails("audit-ui_honesty-2: every department's Officer gets the Collector's live count", () => {
+  it("audit-ui_honesty-2: every department's Officer gets the Collector's live count", () => {
     expect(Object.keys(seen.officerOthers)).toEqual(["officerB", "officerC"]);
     for (const text of Object.values(seen.officerOthers)) expect(text).toContain(liveCount());
   });
-  it.fails("audit-ui_honesty-2: the Officer's overview is given each feed's kind", () => {
+  it("audit-ui_honesty-2: the Officer's overview is given each feed's kind", () => {
     const police = seen.officerFeeds.find((f) => f.source === "police");
     expect(police).toBeTruthy();
     expect(String(police?.kind)).toMatch(/synthetic/);
   });
-  it.fails("audit-ui_honesty-2: the Officer's tooltip does not say every source is collected hourly", () => {
+  it("audit-ui_honesty-2: the Officer's tooltip does not say every source is collected hourly", () => {
     expect(seen.officerChip.en.title).not.toMatch(/every source is collected hourly/i);
   });
 
   // ---- Rain
-  it.fails("audit-ui_honesty-3: Rain's Traffic does not tag the generated police and complaint reports REAL", () => {
+  it("audit-ui_honesty-3: Rain's Traffic does not tag the generated police and complaint reports REAL", () => {
     const line = seen.rain.traffic.tags.find((t) => /Police traffic reports/.test(t.line));
     expect(line).toBeTruthy();
     expect(line?.tag.toLowerCase()).not.toBe("real");
@@ -563,11 +588,11 @@ describe("BUG-006: reopened, and what was found on the way (open: it.fails until
   });
 
   // ---- small things
-  it.fails("audit-ui_honesty-9: the sign-in chip no longer carries the pulsing live dot", () => {
+  it("audit-ui_honesty-9: the sign-in chip no longer carries the pulsing live dot", () => {
     expect(seen.signIn["en/login"].text).toMatch(/Across Chennai's 15 zones/);
     expect(seen.signIn["en/login"].dotInChip).toBe(false);
   });
-  it.fails("audit-ui_honesty-10: in Tamil, the chip does not call an evening time மதியம்", () => {
+  it("audit-ui_honesty-10: in Tamil, the chip does not call an evening time மதியம்", () => {
     expect(seen.collectorChip.en.text).toMatch(/0[4-9]:\d\d PM/);
     expect(seen.collectorChip.ta.text).not.toMatch(/மதியம்/);
   });
@@ -598,7 +623,7 @@ describe("BUG-006: reopened, and what was found on the way (open: it.fails until
   it("audit-ui_honesty-14: with no index, the fallback looks in the news before saying no news report matches", async () => {
     expect((await keywordSearch("Any sinkhole?")).news).toBeGreaterThan(0);
   });
-  it.fails("audit-ui_honesty-14: on the real route, 'Any reports about a sinkhole?' does not say that no reports match", () => {
+  it("audit-ui_honesty-14: on the real route, 'Any reports about a sinkhole?' does not say that no reports match", () => {
     expect(seen.answers.sinkholeReports.headline).not.toMatch(/No incidents or news reports match/);
   });
 

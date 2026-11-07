@@ -112,6 +112,8 @@ export class Book {
     }
     const v = value == null ? null : Number(value);
     const entry = { scope: scopeLabel(scope), surface, figure, def, label: opt.label ?? DEFS[def]?.label ?? def, value: v, oracle: exp, oracle_raw: raw, diff: v == null ? null : v - exp, role: opt.role ?? "collector",
+      // a reading of a part of the scope (one severity, one zone, one department, a group of rows) is not the scope's own figure: the "pairs" tests compare only whole figures
+      ...(opt.filter || opt.over ? { partial: true } : {}),
       ...(opt.over ? { over: opt.over } : {}), ...(opt.note ? { note: opt.note } : {}), ...(opt.xfail ? { known: opt.xfail } : {}) };
     if (v == null) entry.missing = true;
     this.readings.push(entry);
@@ -150,6 +152,7 @@ export const KNOWN = [
   [/^collector\/insights\?part=trends$/, /against its own bars/, "definition", null, "A line's total is the rolling window (84 or 180 days) and its bars are calendar weeks or months. The total is not drawn on the Trends page; only Ask District IQ's facts carry it. Reconciled in same-number.md."],
   [/^thunai\/round:performance\(zone\)$/, /^kpi\./, "bug", "same-number-11", "Zone performance adds up the 15 zones under the labels 'Reported' and 'Open', so the rows with no zone drop out, beside a trend on the same screen that has them."],
   [/^assistant\/chat:card label$/, /tile 'Reported'/, "bug", "same-number-13", "The card's tile says 'Reported' but holds the count asked about (open, or past deadline)."],
+  [/^thunai\/round:(dashboard|cases\(open\))$/, /^(CaseList|kpi)\.total\(groups\)$/, "decision", "same-number-2", "Jarvis's open-case list now counts incidents (the console's own list, RC-08); the oracle row here counts the groups of the same problem that the list's rows are made of. Which unit the spoken total uses is the owner's decision (lanes/merge.md); the console's list shows both numbers."],
   [/^assistant\/chat:list$/, /Incidents matching/, "bug", "same-number-9", "The list's total counts one row per group of the same problem; the card calls it incidents, and the console's own list has a separate incidents figure for this."]
 ];
 export const classify = (r) => {
@@ -868,7 +871,10 @@ async function readExports(h, b, s, use) {
     b.add(s, "collector/report", "kpi.ongoing", rp.json.kpi?.cur?.ongoing, "ongoing", LABEL("still open"));
   }
   if (use.assistantExport) {
-    const ae = await h.get("collector", `/api/collector/assistant/export?${qs({ period: s.period, zone: s.zone, dept: s.dept })}`);
+    const aeUrl = `/api/collector/assistant/export?${qs({ period: s.period, zone: s.zone, dept: s.dept })}`;
+    let ae = await h.get("collector", aeUrl);
+    // RC-25: the assistant's export asks for the same confirmation as the console's export (428 with the scope to confirm): the account's own password gives the grant
+    if (ae.status === 428) ae = await h.get("collector", aeUrl, { "x-diq-grant": await h.grant("collector", ae.json.confirm.scope) });
     if (ae.status === 200) b.add(s, "collector/assistant/export", "csv.rows", parseCsv(ae.text).length, "custom", { custom: () => ({ value: count ?? parseCsv(ae.text).length }), label: "needs your attention", note: "the same list as the console's export" });
     else b.unavailable.push({ scope: scopeLabel(s), surface: "collector/assistant/export", status: ae.status });
   }

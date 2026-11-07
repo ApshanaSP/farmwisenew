@@ -1,9 +1,13 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ensureServer } from "./lib/own-server";
 import { accounts } from "../seed-local-users.mjs";
 /** Skeptic re-run of hunt-askiq findings 1, 2, 5 on port 3191. Prints what the server really says. */
-const BASE = "http://127.0.0.1:3191";
+const BASE = process.env.ASKIQ_BASE || "http://127.0.0.1:3191";
 let cookie = "";
+let stopServer = () => {};
+afterAll(() => stopServer());
 beforeAll(async () => {
+  stopServer = await ensureServer(Number(new URL(BASE).port), "skaskiq");
   const a = (accounts() as { key: string; email: string; password: string }[]).find((x) => x.key === "collector")!;
   const r = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: a.email, password: a.password }) });
   cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");

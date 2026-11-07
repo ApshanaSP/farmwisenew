@@ -1,14 +1,18 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ensureServer } from "./lib/own-server";
 import { accounts } from "../seed-local-users.mjs";
 
 /**
- * QA pass 4, hunter askiq: Ask District IQ. Needs a server: node tests/qa/pass4/server.mjs start --port 3173 --frozen --ticking --instance askiq
+ * QA pass 4, hunter askiq: Ask District IQ. Uses the server on ASKIQ_BASE (port 3173), or starts its own there and stops it (node tests/qa/pass4/server.mjs start --port 3173 --frozen --ticking --instance askiq)
  *   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/hunt-askiq.test.ts
  * Chat is rate limited per minute, so the chat questions are asked one at a time with a wait if a 429 comes back.
  */
 const BASE = process.env.ASKIQ_BASE || "http://127.0.0.1:3173";
 let cookie = "";
+let stopServer = () => {};
+afterAll(() => stopServer());
 beforeAll(async () => {
+  stopServer = await ensureServer(Number(new URL(BASE).port), "askiq"); // no server on the port: this file starts its own
   const a = (accounts() as { key: string; email: string; password: string }[]).find((x) => x.key === "collector")!;
   const r = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: a.email, password: a.password }) });
   cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
@@ -50,7 +54,7 @@ describe("hunt-askiq", () => {
     const a = await chat("percentage of resolved complaints");
     expect(a.md).toMatch(/%/);
   }, TIMEOUT);
-  it.fails("askiq-5 a NUL character in the search box does not give a server error", async () => {
+  it("askiq-5 a NUL character in the search box does not give a server error", async () => {
     const r = await fetch(`${BASE}/api/collector/search?q=a%00b`, { headers: { cookie } });
     expect(r.status).toBe(200);
   });

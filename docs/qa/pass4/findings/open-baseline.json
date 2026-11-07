@@ -157,7 +157,8 @@
     "row_id": "en-list-13",
     "mechanism": "M04",
     "model_needed": false,
-    "lane": "quick"
+    "lane": "quick",
+    "fixed": true
   },
   {
     "id": "open-baseline-10",
@@ -295,7 +296,8 @@
     "row_id": "tanglish-list-01",
     "mechanism": "M07",
     "model_needed": false,
-    "lane": "quick"
+    "lane": "quick",
+    "fixed": true
   },
   {
     "id": "open-baseline-18",
@@ -348,7 +350,8 @@
     "row_id": "tanglish-explain-02",
     "mechanism": "M10",
     "model_needed": false,
-    "lane": "quick"
+    "lane": "quick",
+    "fixed": true
   },
   {
     "id": "open-baseline-21",

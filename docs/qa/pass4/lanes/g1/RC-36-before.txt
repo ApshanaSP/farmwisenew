@@ -1,0 +1,6 @@
+# G1 failing output before the fix: scan-findings production-build check, hunt-askiq askiq-5 (it.fails that passes)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+FAIL hunt-askiq askiq-5 a NUL character in the search box does not give a server error
+     Error: Expect test to fail
+FAIL checked and sound: keep it that way the production build compiled the code helper away and carries no trace of the flag
+     AssertionError: expected undefined to be truthy

@@ -18,7 +18,7 @@ const ROOT = path.resolve(__dirname, "..", "..", "..");
 const childEnv = () => { const e: NodeJS.ProcessEnv = { ...process.env }; for (const k of Object.keys(e)) if (k === "NODE_ENV" || k.startsWith("VITEST") || k === "AWS_DURABLE_FILE" || k === "THUNAI_DIR" || k === "NODE_OPTIONS") delete e[k]; return e; };
 const server = (...a: string[]) => execFileSync(process.execPath, ["tests/qa/pass4/server.mjs", ...a], { cwd: ROOT, env: childEnv(), encoding: "utf8", timeout: 240_000 });
 
-type Reading = { scope: string; surface: string; figure: string; def: string; label: string; value: number | null; oracle: number; diff: number | null; missing?: boolean; role: string };
+type Reading = { partial?: boolean; scope: string; surface: string; figure: string; def: string; label: string; value: number | null; oracle: number; diff: number | null; missing?: boolean; role: string };
 type Scope = { period: string; zone: number | null; dept: string | null };
 let readings: Reading[] = [];
 let lines: { scope: string; surface: string; asked: string; say: string | null; headline?: string | null }[] = [];
@@ -79,7 +79,8 @@ describe("same number everywhere", () => {
   for (const [label, defs] of LABELS) {
     it(`pairs: "${label}" is one number across every surface, in each scope`, () => {
       for (const s of CORE_SCOPES) {
-        const vals = in_(s).filter((r) => r.label === label && defs.includes(r.def) && !r.missing && !isKnown(r) && !/zone|taluk|by|dept/i.test(r.figure.split(".")[0]));
+        // whole figures only: a part of the scope (one severity, one zone, one department, a taluk) carries the same label and is not the scope's own count
+        const vals = in_(s).filter((r) => r.label === label && defs.includes(r.def) && !r.missing && !r.partial && !isKnown(r) && !/zone|taluk|by|dept/i.test(r.figure.split(".")[0]));
         expect(vals.length).toBeGreaterThan(1);
         const distinct = [...new Set(vals.map((r) => r.value))];
         expect({ scope: scopeLabel(s), label, distinct, surfaces: distinct.length > 1 ? vals.map((r) => `${r.surface} ${r.figure}=${r.value}`) : [] }).toEqual({ scope: scopeLabel(s), label, distinct: [vals[0].value], surfaces: [] });
@@ -187,7 +188,8 @@ describe("same number everywhere", () => {
   it("same-number-18 a workspace saved on a copy that does not save to AWS can be opened", () => {
     expect(notes.filter((n) => n.kind === "workspace-not-openable")).toEqual([]);
   });
-  it.fails("same-number-19 no news-only incident with a recorded death is left out as 'not news media' (owner's decision)", () => {
+  // passes since the oracle follows the build hooks as RC-29 left them (lane d, cf6ed83): no news-only incident with a recorded death is removed by the news-media hook any more; the owner's decision stays recorded in the finding
+  it("same-number-19 no news-only incident with a recorded death is left out as 'not news media' (owner's decision)", () => {
     const out = oracle.hooks.removed.filter((r: any) => r.hook === "news-media-only@1" && oracle.rawRow(String(r.id))?.dead > 0).map((r: any) => r.id);
     expect(out).toEqual([]);
   });
@@ -195,7 +197,9 @@ describe("same number everywhere", () => {
     const c = await askDistrictIq("past deadline by department this week");
     expect(String(c?.headline)).not.toMatch(/^No incidents/);
   });
-  it("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
+  // open (RC-29 flipped it with the others but never fixed it): the departments tool holds no complaints measure, so the rules lane ranks open incidents under a question about complaints.
+  // The fix needs a measure the tool does not have, or the plain 'I cannot break that down'; neither exists yet.
+  it.fails("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
     const c = await askDistrictIq("complaints by department this week");
     expect(String(c?.headline)).not.toMatch(/open incidents/);
   });
@@ -205,7 +209,9 @@ describe("same number everywhere", () => {
   it("same-number-22 'Resolved this week' on the tile is the count resolved this week", () => {
     expect(get(DISTRICT_W, "collector/overview", "kpi.cur.resolved")?.value).toBe(get(DISTRICT_W, "assistant/chat:resolved", "Resolved")?.value);
   });
-  it("same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it", () => {
+  // open, the owner's unit decision (lanes/merge.md): the severe list's total counts the groups of the console's severity panel (52); the tile says 65 reported and 54 open.
+  // lane b flipped it with its other tests but its own notes keep the groups-or-incidents question open.
+  it.fails("same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it", () => {
     const r = get(DISTRICT_W, "thunai/round:cases(severe)", "kpi.total")?.value;
     expect([get(DISTRICT_W, "collector/overview", "kpi.cur.severe")?.value, get(DISTRICT_W, "collector/overview", "kpi.cur.severe_open")?.value]).toContain(r);
   });

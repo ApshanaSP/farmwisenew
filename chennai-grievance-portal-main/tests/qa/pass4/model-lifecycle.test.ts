@@ -1,13 +1,17 @@
 // QA pass 4: MODEL-BASED test of the case lifecycle over HTTP (server on port 3142: node tests/qa/pass4/server.mjs start --port 3142 --frozen --ticking --instance conc).
 // fast-check commands: random sequences of officer approve, Collector resolve / reopen, and reads, against a small model. After every step the
 // invariants are checked; a failing sequence is shrunk. No model (AI) is called.
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ensureServer } from "./lib/own-server";
 import fc from "fast-check";
 // @ts-expect-error plain .mjs helper
 import { Http } from "./same-number.mjs";
 
 const PORT = Number(process.env.QA_MODEL_PORT || 3142);
 const h = new Http(PORT);
+let stopServer = () => {};
+beforeAll(async () => { stopServer = await ensureServer(PORT, "conc"); }, 300_000); // no server on the port: this file starts its own, and stops it
+afterAll(() => stopServer());
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** a 429 is the route's own rate limit: wait and try again, it is not a result */
 async function call(who: string, method: "get" | "post", url: string, body?: unknown, headers?: Record<string, string>) {
