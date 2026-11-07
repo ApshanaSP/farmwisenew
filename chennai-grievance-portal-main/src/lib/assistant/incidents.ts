@@ -7,8 +7,8 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { closedLateSql, closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
-import { explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
+import { closedLateSql, closedOnTimeSql, isPastDeadline, pastDueSql } from "@/lib/reference/metrics";
+import { asOf, explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
@@ -301,12 +301,14 @@ export async function categoryRanking(f: IncidentFilters, now: string, n: number
 
 /** One incident in full: what happened, where, when, status, why, who, how it unfolded, and the evidence. */
 export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all"): Promise<IncidentDetail | null> {
-  const [[r], full, steps] = await Promise.all([
+  const [[r], full, steps, now] = await Promise.all([
     q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
     incidentFull(id),
-    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210"))
+    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210")),
+    asOf()
   ]);
   if (!r || !full) return null;
+  const missed = isPastDeadline(r, now);
   const why = explain(r);
   const reports = full.reports as Row[];
   const evidence: EvidenceItem[] = reports.slice(0, 12).map((x) => ({ kind: x.source, label: SOURCE_LABEL[x.source] ?? x.what ?? x.source,
@@ -326,11 +328,11 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
     else if (lead?.title && r.title && String(r.title) !== String(r.type) && !String(r.title).startsWith(String(r.type)))
       sentences.push(`Reported as: “${String(r.title).slice(0, 200)}”.`);
     const by = [...new Set(reports.map((x) => SOURCE_LABEL[x.source] ?? x.source))].slice(0, 3).join(", ").toLowerCase();
-    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${num(r.breached) ? " and past its deadline" : ""}.`);
+    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${missed ? " and past its deadline" : ""}.`);
   }
   return {
     ...base, whatHappened: sentences.join(" "), facts: why.facts, attention: why.needsYou ? why.attention : [], timeline,
-    deadline: r.due ?? null, deadlineMissed: num(r.breached) === 1, closedAt: r.closed_at ?? null,
+    deadline: r.due ?? null, deadlineMissed: missed, closedAt: r.closed_at ?? null,
     officials: (full.contacts as Row[]).slice(0, 3).map((c) => ({ name: String(c.name), designation: c.designation ?? null, office: c.office ?? null })), focus
   };
 }

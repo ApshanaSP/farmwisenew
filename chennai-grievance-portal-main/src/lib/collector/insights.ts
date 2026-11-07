@@ -13,7 +13,7 @@ import { briefingBook } from "@/lib/collector/briefbook";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { orEmpty } from "@/lib/fallback";
-import { pastDueSql, unusualEnough } from "@/lib/reference/metrics";
+import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -258,7 +258,7 @@ export async function insights(period: Period, zone: number | null, dept: string
     why, evidence: `${plural(Number(i.member_count), "report")} from ${String(i.sources).split("|").map((x) => SOURCE_NAME[x] ?? x).join(", ")}`,
     // the AI's next step (from this incident's facts) when there is one, else the department's list or the standard procedure
     next: why.next ? { text: why.next, owner: null, due: null, from: "AI, from this incident's records" } : proposed(i),
-    overdue: Number(i.breached) === 1, confidence: i.confidence == null ? null : Number(i.confidence)
+    overdue: isPastDeadline(i, now), confidence: i.confidence == null ? null : Number(i.confidence)
   }));
   // routine = the open incidents that do not meet the attention rules, counted over all of them (the PDF and the CSV read the same
   // function), not the open incidents minus the few shown
@@ -330,7 +330,7 @@ export async function insights(period: Period, zone: number | null, dept: string
   const deptActions = deptRows.map((d) => ({
     code: d.code, name: d.name ?? d.code, head: d.head, open: Number(d.open), overdue: Number(d.overdue ?? 0), serious: Number(d.serious ?? 0),
     awaiting: Number(d.awaiting ?? 0), complaints: Number(d.complaints ?? 0),
-    followUps: (perDept.get(d.code) ?? []).map((i) => ({ id: i.id, title: i.title || i.type, sev: i.sev, overdue: Number(i.breached) === 1, next: proposed(i) }))
+    followUps: (perDept.get(d.code) ?? []).map((i) => ({ id: i.id, title: i.title || i.type, sev: i.sev, overdue: isPastDeadline(i, now), next: proposed(i) }))
   }));
 
   // -------------------------------------------------------------- trends --

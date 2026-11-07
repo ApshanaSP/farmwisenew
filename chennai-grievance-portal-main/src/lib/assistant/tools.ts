@@ -9,7 +9,7 @@
  * Rows never carry citizens' details: no complaint text, reporter, phone or email.
  */
 import { z } from "zod";
-import { PERIODS, areaSnapshot, asOf, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
+import { PERIODS, areaSnapshot, asOf, asOfNow, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
 import { insights, type Insights } from "@/lib/collector/insights";
 import { threads } from "@/lib/collector/threads";
 import { mapGeo } from "@/lib/collector/geo";
@@ -34,7 +34,7 @@ import { orEmpty, orNull } from "@/lib/fallback";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
-import { MIN_PCT_BASE } from "@/lib/reference/metrics";
+import { MIN_PCT_BASE, isPastDeadline } from "@/lib/reference/metrics";
 
 type Row = Record<string, any>;
 
@@ -223,7 +223,7 @@ export function incRow(i: Row, withWhy = false) {
     zone_name: i.zone_name ?? null, loc: i.loc ?? null, ward: i.ward ?? null, dept: i.dept ?? null, dept_name: i.dept_name ?? null, sev: i.sev ?? null,
     status: i.status ?? null, open: Number(i.open) === 1, complaints: Number(i.complaints ?? 0), t: i.t ?? null,
     lat: i.lat == null ? null : Number(i.lat), lon: i.lon == null ? null : Number(i.lon), sources: i.sources ?? null,
-    priority: i.priority == null ? null : round(Number(i.priority)), overdue: Number(i.breached) === 1,
+    priority: i.priority == null ? null : round(Number(i.priority)), overdue: i.overdue === true || isPastDeadline(i, asOfNow()),
     ...(withWhy ? { why: i.why ?? explain(i) } : {})
   };
 }

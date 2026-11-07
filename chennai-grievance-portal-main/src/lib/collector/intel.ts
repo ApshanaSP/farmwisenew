@@ -18,7 +18,7 @@ import { cmwssbLakes } from "@/lib/collector/lakes";
 import { PINNABLE, PLACE_FILTERS, type PlaceFilter } from "@/lib/collector/mapplace";
 import { decisionEffect, decisionVerifies, effectiveSql } from "@/lib/collector/effective";
 import { orEmpty, orNull } from "@/lib/fallback";
-import { deadlineState, falseDeadlineClaims, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
+import { deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, withoutFalseDeadline } from "@/lib/reference/metrics";
 import { searchGroups } from "@/lib/collector/searchwords";
 
 /** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
@@ -73,6 +73,12 @@ let asOfCache: { at: number; value: string } | null = null;
  * opened, so every period window ends at the current moment (Daily at 5:30 PM covers yesterday
  * 5:30 PM to now), not at the pipeline's last refresh. A later pipeline as-of wins (clock skew).
  */
+/** The console's time for code that cannot wait (a text built from rows already read): the last asOf() answer, never behind the clock. */
+export function asOfNow(): string {
+  const clock = istWall();
+  return asOfCache && asOfCache.value > clock ? asOfCache.value : clock;
+}
+
 export async function asOf(): Promise<string> {
   if (asOfCache && Date.now() - asOfCache.at < 30_000) return asOfCache.value;
   const [r] = await q(`SELECT JSON_UNQUOTE(value) AS v FROM metrics WHERE metric = 'as_of'`);
@@ -1427,7 +1433,7 @@ export async function list(f: ListFilter) {
   ]);
   const acted = await actedOn(rows.map((r) => String(r.id)));
   // total: rows (one per group, for paging); incidents: what the KPI tiles count, so a tile and its list agree
-  return { rows: (await withDecisions(rows).then(withSources)).map((r) => ({ ...r, acted: acted[r.id] ?? null })), total: Number(tot[0].n),
+  return { rows: (await withDecisions(rows).then(withSources)).map((r) => ({ ...r, overdue: isPastDeadline(r, now), acted: acted[r.id] ?? null })), total: Number(tot[0].n),
     incidents: Number(tot[0].inc), complaints: Number(tot[0].c) };
 }
 

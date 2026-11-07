@@ -13,7 +13,7 @@ function say(word: string) {
 describe("DSK-1 a stop word the gate knows is not a stop in the voice machine", () => {
   for (const w of ["stop it", "enough", "நிறுத்துங்க", "நிறுத்துங்கள்", "nirutha"]) {
     it(`isStopWord says "${w}" is a stop (control)`, () => expect(isStopWord(w)).toBe(true));
-    it.fails(`DSK-1 "${w}" spoken while Jarvis talks cancels the turn and is not handled as a sentence`, () => {
+    it(`DSK-1 "${w}" spoken while Jarvis talks cancels the turn and is not handled as a sentence`, () => {
       const r = say(w);
       expect(r.act.some((x) => x.a === "cancelTurn")).toBe(true);
       expect(r.act.some((x) => x.a === "handle")).toBe(false);
@@ -22,11 +22,11 @@ describe("DSK-1 a stop word the gate knows is not a stop in the voice machine", 
 });
 describe("DSK-2 other common stops are not stops", () => {
   for (const w of ["நிறுத்தவும்", "stop pannunga", "nirutthunga", "stop jarvis please", "போதும் நிறுத்து"]) {
-    it.fails(`DSK-2 "${w}" is a stop`, () => expect(isStopWord(w)).toBe(true));
+    it(`DSK-2 "${w}" is a stop`, () => expect(isStopWord(w)).toBe(true));
   }
 });
 describe("DSK-3 keep-button guard misses a bare yes with a mark on it", () => {
-  for (const w of ["Yes ✓", "Yes.", "Yes!", "ஆம்!", "ஆமாம் ✓"]) it.fails(`DSK-3 "${w}" keeps something`, () => expect(keepsSomething(w, w)).toBe(true));
+  for (const w of ["Yes ✓", "Yes.", "Yes!", "ஆம்!", "ஆமாம் ✓"]) it(`DSK-3 "${w}" keeps something`, () => expect(keepsSomething(w, w)).toBe(true));
 });
 
 // ---- DSK-4: RC-34 says past deadline is one rule (the flag or the due time gone). Surfaces that read the raw flag still disagree. ----
@@ -52,14 +52,14 @@ describe("DSK-4 one rule for past deadline", () => {
   afterAll(() => { vi.useRealTimers(); });
 
   it("control: the list has open incidents past their due time whose raw flag is 0", () => expect(late.length).toBeGreaterThan(0));
-  it.fails("DSK-4a the briefing's follow-ups and attention items say past deadline for every incident the list calls overdue", async () => {
+  it("DSK-4a the briefing's follow-ups and attention items say past deadline for every incident the list calls overdue", async () => {
     const ins: any = await insights("daily", null, null, {}, null);
     const items: any[] = [...(ins.attention ?? []), ...(ins.deptActions ?? []).flatMap((d: any) => d.followUps ?? [])];
     const ids = new Set(late.map((x) => x.id));
     const wrong = items.filter((i) => ids.has(i.id) && !i.overdue);
     expect(wrong.map((i) => i.id)).toEqual([]);
   });
-  it.fails("DSK-4b Ask District IQ's incident detail says the deadline was missed for an incident the list calls overdue", async () => {
+  it("DSK-4b Ask District IQ's incident detail says the deadline was missed for an incident the list calls overdue", async () => {
     const missed: string[] = [];
     for (const x of late.slice(0, 5)) {
       const d: any = await incidentDetail(x.id);
@@ -74,7 +74,7 @@ import * as taDict from "@/lib/i18n/ta";
 describe("DSK-5 Tamil AM", () => {
   const dict = (Object.values(taDict).find((v) => v && typeof v === "object" && "Collected today, #:# AM" in (v as object)) ?? {}) as Record<string, string>;
   it("control: the dictionary is found", () => expect(dict["Collected today, #:# AM"]).toBeTruthy());
-  it.fails("DSK-5 an AM time is not called morning alone", () => {
+  it("DSK-5 an AM time is not called morning alone", () => {
     for (const [en, tamil] of Object.entries(dict)) if (/#:# AM\b/.test(en)) expect(tamil).not.toMatch(/காலை/);
   });
 });
@@ -91,6 +91,6 @@ describe("DSK-6 yes to a one-tap card", () => {
     for (const w of ["yes", "Yes please.", "ஆமாம்", "aamam sir"]) expect(yes.test(w)).toBe(true);
   });
   for (const w of ["Yes, please.", "ஆமாங்க", "சரிங்க", "seringa", "yes do it", "ஆமாம் சார்", "ஆம் தயவுசெய்து"]) {
-    it.fails(`DSK-6 "${w}" is a yes`, () => expect(yes.test(w)).toBe(true));
+    it(`DSK-6 "${w}" is a yes`, () => expect(yes.test(w)).toBe(true));
   }
 });

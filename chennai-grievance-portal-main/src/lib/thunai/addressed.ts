@@ -26,7 +26,8 @@ export interface GateInput {
 export const ENGAGED_MS = 20_000;
 
 /** a bare stop: it only ever stops Jarvis, so it needs no name and no recent turn (a typed question, or a long answer, is stopped by it) */
-const STOP_WORD = /^ (stop|stop it|stop that|stop jarvis|enough|nirutthu|niruthu|nirutha|நிறுத்து|நிறுத்துங்க|நிறுத்துங்கள்) $/;
+const STOP_CORE = "stop|stop it|stop that|stop this|enough|nirutthu|niruthu|nirutha|nirutthunga|niruthunga|nirutthungal|stop pannu|stop pannunga|stop pannungal|நிறுத்து|நிறுத்துங்க|நிறுத்துங்கள்|நிறுத்துங்கோ|நிறுத்தவும்|போதும் நிறுத்து";
+const STOP_WORD = new RegExp("^ (?:jarvis )?(?:" + STOP_CORE + ")(?: (?:jarvis|please|pls|plz|ji))* $");
 export const isStopWord = (text: string): boolean => STOP_WORD.test(norm(text));
 
 const norm = (s: string) => ` ${s.toLowerCase().normalize("NFC").replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;

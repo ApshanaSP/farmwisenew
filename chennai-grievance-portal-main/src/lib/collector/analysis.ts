@@ -10,7 +10,8 @@ import path from "path";
 import { z } from "zod";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool from "@/lib/collector/db";
-import { incident, newsArticles, newsDoc, type Plain } from "@/lib/collector/intel";
+import { asOfNow, incident, newsArticles, newsDoc, type Plain } from "@/lib/collector/intel";
+import { isPastDeadline } from "@/lib/reference/metrics";
 import { fullText } from "@/lib/collector/fulltext";
 import { orEmpty } from "@/lib/fallback";
 
@@ -165,7 +166,7 @@ export async function analyseIncident(id: string, user: string): Promise<Analysi
     `Category: ${i.type}. Severity: ${i.sev} (${String(i.severity_reasons ?? "").replace(/\|/g, "; ")}). Status: ${i.status}.`,
     `Place: ${[i.loc, i.zone_name ? `${i.zone_name} zone` : null, i.ward ? `ward ${i.ward}` : null, i.taluk_name ? `${i.taluk_name} taluk` : null].filter(Boolean).join(", ") || "Chennai"}.`,
     `Lead department: ${i.dept_name ?? i.dept}${others.length ? `; also involved: ${others.join(", ")}` : ""}. Field officer: ${i.officer ?? "not named"}.`,
-    `First reported ${when(i.t)}; open for ${Math.round(Number(i.hours_open) || 0)} hours. Deadline ${i.sla_due ? when(i.sla_due) : "none"}${Number(i.breached) ? " (missed)" : ""}.`,
+    `First reported ${when(i.t)}; open for ${Math.round(Number(i.hours_open) || 0)} hours. Deadline ${i.sla_due ? when(i.sla_due) : "none"}${isPastDeadline(i, asOfNow()) ? " (missed)" : ""}.`,
     [i.dead ? `${i.dead} dead` : "", i.injured ? `${i.injured} injured` : "", i.persons_affected ? `about ${i.persons_affected} people affected` : "",
       i.vulnerable ? `vulnerable: ${String(i.vulnerable).replace(/\|/g, ", ")}` : ""].filter(Boolean).join("; "),
     `Signals: ${[i.priority_reasons, i.attention_reason].filter(Boolean).join("; ").replace(/\|/g, "; ")}`,

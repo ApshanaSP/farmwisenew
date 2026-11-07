@@ -1139,7 +1139,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
       // a yes from Whisper, typed text or a tap; browser captions can catch Jarvis's own voice, so theirs never counts
-      const yes = /^(yes|ok|okay|save|do it|ஆமாம்|ஆமா|ஆம்|சரி|aama|aamam|sari|seri)( (please|pls|sir|sure|thanks))?[.!]?$/i.test(said);
+      const yes = /^(yes|ok|okay|save|do it|yes do it|ஆமாம்|ஆமா|ஆம்|ஆமாங்க|சரி|சரிங்க|aama|aamam|aamanga|sari|seri|seringa)(?:[,\s]+(?:please|pls|sir|sure|thanks|சார்|தயவுசெய்து))*[.!]?$/i.test(said);
       if (yes && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); if (p.act) p.act(); else await run(p.steps, p.lang, p.heard, "rules"); return; }
       // the captions may have heard Jarvis's own voice: the card stays and waits for a yes it can trust (BUG-016)
       if (yes) { out(line("yesNotTrusted", pendingB.lang), pendingB.lang, "waiting"); return; }

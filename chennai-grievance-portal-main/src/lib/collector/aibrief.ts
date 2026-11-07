@@ -16,8 +16,8 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, asOf, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
-import { pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
+import { PERIODS, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { isPastDeadline, pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
@@ -128,13 +128,13 @@ const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 const SRC: Record<string, string> = { grievance: "citizen complaints", police: "police", pwd: "PWD", news: "news", hospital: "hospital", imd: "IMD" };
 const INC = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name, dp.name AS dept_name,
   i.severity_level AS sev, ${EFF.status} AS status, ${OPEN} AS open, COALESCE(i.dead, 0) AS dead, COALESCE(i.injured, 0) AS injured,
-  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
+  i.citizen_complaints AS complaints, i.sources, i.outlet_count, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept`;
 
 /** One incident as a line of facts. */
 const incLine = (i: Row) => `- [${i.id}] ${when(i.t)} · ${one(i.title, 140)} · ${i.type} · ${[i.loc, i.zone_name].filter(Boolean).join(", ") || "Chennai"} · ` +
   `${i.sev}${n(i.dead) ? ` · ${n(i.dead)} dead` : ""}${n(i.injured) ? ` · ${n(i.injured)} injured` : ""}${n(i.complaints) ? ` · ${n(i.complaints)} citizen complaints` : ""}` +
-  ` · ${i.status}${n(i.breached) && n(i.open) ? " (past deadline)" : ""} · ${i.dept_name ?? "department not set"} · from ${String(i.sources ?? "").split("|").map((x) => SRC[x] ?? x).join(", ")}`;
+  ` · ${i.status}${n(i.open) && isPastDeadline(i, asOfNow()) ? " (past deadline)" : ""} · ${i.dept_name ?? "department not set"} · from ${String(i.sources ?? "").split("|").map((x) => SRC[x] ?? x).join(", ")}`;
 
 // --------------------------------------------------------------- key points --
 

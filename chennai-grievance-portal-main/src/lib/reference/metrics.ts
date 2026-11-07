@@ -154,6 +154,20 @@ export function pastDueSql(now: string, a = "i"): string {
     : `(COALESCE(${a}.sla_breached, 0) = 1)`;
 }
 
+const WALL = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+
+/**
+ * JS twin of pastDueSql for one row already read (RC-34, DSK-4): an open incident is past its deadline when the pipeline flagged it
+ * or its due time has gone by `now`; a closed one keeps the flag. A row with no `open` is read as open. `due` and `now` are IST
+ * "YYYY-MM-DD HH:MM:SS".
+ */
+export function isPastDeadline(r: { open?: unknown; breached?: unknown; due?: unknown; sla_due?: unknown }, now: string): boolean {
+  if (Number(r.breached) === 1) return true;
+  if (r.open != null && Number(r.open) !== 1) return false;
+  const due = String(r.due ?? r.sla_due ?? "");
+  return WALL.test(due) && WALL.test(String(now)) && due < now;
+}
+
 /**
  * SQL: "closed within its deadline" is closing by the due time, never the pipeline's flag (which is set from the due time at the
  * moment of a refresh, so an incident closed months late could still count as on time). `closedAt` is the effective closed time.

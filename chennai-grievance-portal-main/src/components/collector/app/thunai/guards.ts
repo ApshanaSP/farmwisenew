@@ -5,7 +5,7 @@
  * The guard is tested on what the click guard really builds: the button's accessible name and its text joined, so a bare "Yes" button
  * reads "Yes Yes" (RC-33): the yes list accepts the word repeated. Adding a chart to the dashboard keeps it too.
  */
-export const KEEP_BUTTON = /\b(save|pin|unpin|bookmark|keep)\b|\badd\b[^.]{0,60}\bdashboard\b|^\s*(yes|ok|okay|ஆம்|ஆமாம்|சரி)(\s+(yes|ok|okay|ஆம்|ஆமாம்|சரி))*\s*$|சேமி|பின் /i;
+export const KEEP_BUTTON = /\b(save|pin|unpin|bookmark|keep)\b|\badd\b[^.]{0,60}\bdashboard\b|^\s*(yes|ok|okay|ஆம்|ஆமாம்|சரி)(\s+(yes|ok|okay|ஆம்|ஆமாம்|சரி))*[\s.!✓✔]*$|சேமி|பின் /i;
 
 /** Does a button keep something? Its name and its text are each tested alone as well as together, so neither can hide the other. */
 export const keepsSomething = (name: string | null | undefined, text: string | null | undefined): boolean => {
