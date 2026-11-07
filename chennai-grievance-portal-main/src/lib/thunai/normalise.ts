@@ -107,10 +107,18 @@ export function normalise(input: string): Normalised {
 }
 
 /** Reply in Tamil when the Collector spoke Tamil or Tanglish. */
-const TANGLISH = /\b(kaatu|kattu|kaattu|maathu|mathu|maatru|pannu|pannunga|mattum|illa|vendaam|venam|sollu|po|poi|edhu|enna|evlo|evvalavu|epdi|enga|naalaikku|innaiku|indha|andha|idha|adha|anuppu|nirutthu|niruthu|podhum|paaru|paru|thirai|varudhu|irukku|aagudhu|kelu|kitta|thiru|thara|vaa|pakkathu|ellaam|ellam)\b/;
+// Tanglish is told by its grammar, not by one word: particles and endings, the question words, the common verbs. A place name such as "Thiru Vi Ka Nagar" is not a mark of it.
+const TANGLISH_WORDS = new Set(("kaatu kattu kaattu maathu mathu maatru pannu pannunga mattum illa vendaam venam sollu po poi edhu enna ennanga evlo evvalavu epdi eppadi eppo ippo enga anga inga naalaikku innaiku indha andha idha adha anuppu nirutthu niruthu " +
+  "podhum paaru paru thirai varudhu irukku iruku iruke irukkum aagudhu aachu aanadhu kelu kitta kitte thara vaa pakkam pakkathu pakkathula ellaam ellam romba mosama nalla theriyuma theriyum theriyudhu nadandhucha nadandhadhu oru ooru oda ode vechu " +
+  "solluga sollunga paarunga kudunga kudu kodu").split(" "));
+const TANGLISH_END = /^[a-z]{3,}(nga|ngo|unga|ukku|kku|adhu|athu|ucha|aachu|udhu|idhu)$/;
+const tanglishMark = (w: string) => TANGLISH_WORDS.has(w) || TANGLISH_END.test(w);
 export function detectLang(input: string): "en" | "ta" {
   if (/[஀-௿]/.test(input)) return "ta";
-  return TANGLISH.test(input.toLowerCase()) ? "ta" : "en";
+  const ws = input.toLowerCase().replace(/-(la|le|ku|kku|a|ah|oda|ode|nu|ai)\b/g, " $1 ").split(/[^a-z]+/).filter(Boolean);
+  const marks = ws.filter(tanglishMark).length;
+  // two marks, or one in a short sentence: Tanglish. A long English sentence with a single stray "indha" is English.
+  return marks >= 2 || (marks === 1 && ws.length <= 6) ? "ta" : "en";
 }
 
 /**

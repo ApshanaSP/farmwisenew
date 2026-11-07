@@ -14,7 +14,7 @@
  * Every slot one sentence sets is one transaction (one render, one undo). Confidence follows the brief:
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
-import { resolveEntity } from "./entities";
+import { foreignIn, noData } from "./entities";
 import { CAT_ALIASES, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
   ZONES } from "./lexicon";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
@@ -294,6 +294,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
     if (q) return done([{ a: "ask", q }]);
   }
 
+  // another place's or body's name anywhere: nothing of ours is put on for it, and nothing is changed (RC-01)
+  const alien = foreignIn(input, world);
+  if (alien) { const why = noData(alien); return { kind: "refuse", lang, heard, why: b(why.en, why.ta) }; }
+
   // ---------------------------------------------------- questions and readings --
   const resv = mentions(tk, reservoirDict(world), new Array(tk.length).fill(false));
   if (resv.length) return done([{ a: "read", what: "reservoir", name: resv[0].value }], resv[0].score);
@@ -369,8 +373,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   for (const m of [...zoneMs, ...talukMs]) for (let k = m.start; k < m.end; k++) taken[k] = true;
   // departments and categories (one word may be both: ask once)
   // a body of some other place ("Mumbai police", "Tambaram police") is not ours: no department filter is put on for it
-  const foreign = resolveEntity(input, world).kind === "unknown";
-  const deptAll = foreign ? [] : mentions(tk, deptDict(world), [...taken]);
+  const deptAll = mentions(tk, deptDict(world), [...taken]);
   const catAll = mentions(tk, catDict(world), [...taken]);
   // "Metro Water" (a department) holds the word "water" (a category): the longer phrase wins the overlap
   const overlaps = (a: Mention<string>, c: Mention<string>) => a.start < c.end && c.start < a.end;

@@ -43,7 +43,7 @@ export const DEPT_ALIASES: Record<string, string[]> = {
   "GCC-PRK": ["parks department", "parks"],
   "CMWSSB": ["metro water", "metrowater", "cmwssb", "water board", "metro water board", "குடிநீர் வாரியம்", "மெட்ரோ வாட்டர்", "water"],
   "GCC-GAD": ["general administration"],
-  "GCC-REV": ["revenue", "tax department"]
+  "GCC-REV": ["revenue", "tax department", "property tax department", "property tax"]
 };
 
 /**
@@ -51,6 +51,10 @@ export const DEPT_ALIASES: Record<string, string[]> = {
  * sentence's last word, with no street or power word before it (BUG-032).
  */
 export const EXPLAIN_TA = / (?:விளக்குங்க|விளக்குங்கள்|விளக்கவும்|விளக்கி|விளக்கம்|விளக்கமா|விளக்கமாக) |(?<! தெரு| மின்) விளக்கு $/;
+
+/** the shape of a general-knowledge question ("what is deep learning", "who is the president", "write a poem"), and subjects that are not the district's */
+export const GENERAL = /^\s*(what is|what are|whats|what does|who is|who was|who are|define|explain|meaning of|tell me a|tell me about|how does|how do i|how to|write|translate|calculate|solve|teach me|give me a|sing|recommend)\b|joke|poem|story|recipe|என்றால் என்ன|யார்|விளக்கு|கதை சொல்|பாடல்|கவிதை/;
+export const SUBJECTS = /deep learning|machine learning|artificial intelligence|\bai\b|neural network|programming|python|javascript|java\b|coding|cricket|football|ipl|movie|film|actor|actress|song|music|president|prime minister|capital of|bitcoin|crypto|stock market|share price|history of|physics|chemistry|biology|mathematics|chatgpt|google|facebook|instagram|youtube/;
 
 /** department code -> its name in Tamil, as said aloud (the Tamil voice says this, never the English name) */
 export const DEPT_TA: Record<string, string> = {

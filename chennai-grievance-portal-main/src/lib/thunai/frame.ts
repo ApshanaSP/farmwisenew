@@ -5,6 +5,7 @@
  * correction refines the request that was cut off. Pure.
  */
 import { EXPLAIN_TA } from "./lexicon";
+import { foreignIn } from "./entities";
 import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { StageContext } from "./stage";
@@ -68,6 +69,7 @@ const VIEW = /(as a|as|into a|in a|to a|la|-a|ஆக)?\s*(table|chart|graph|map|
 /** The follow-up, resolved; or none: the sentence stands on its own. */
 export function resolveFrame(i: FrameInput): Frame {
   const raw = i.text.trim();
+  if (foreignIn(raw, i.world)) return { kind: "none" }; // a follow-up about another place is a new question, which the brief turn answers (RC-01)
   const t = norm(raw);
   const last = lastFrame(i);
   const words = t.trim().split(" ").filter(Boolean);

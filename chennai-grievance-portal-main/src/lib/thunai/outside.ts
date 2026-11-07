@@ -8,14 +8,31 @@ const ONE = ["tambaram", "avadi", "pallavaram", "chromepet", "selaiyur", "medava
   "ariyalur", "coimbatore", "kovai", "cuddalore", "dharmapuri", "dindigul", "erode", "kallakurichi", "kanyakumari", "karur", "krishnagiri", "madurai", "mayiladuthurai", "nagapattinam",
   "namakkal", "nilgiris", "ooty", "perambalur", "pudukkottai", "ramanathapuram", "ranipet", "salem", "sivaganga", "tenkasi", "thanjavur", "theni", "thoothukudi", "tuticorin",
   "tiruchirappalli", "trichy", "tirunelveli", "tirupathur", "tiruppur", "tirupur", "tiruvannamalai", "tiruvarur", "vellore", "viluppuram", "villupuram", "virudhunagar", "hosur",
-  "kerala", "karnataka", "andhra", "telangana", "maharashtra", "gujarat", "delhi", "punjab", "haryana", "bengal", "odisha", "orissa", "bihar", "rajasthan", "goa", "assam", "puducherry", "pondicherry",
+  "kerala", "karnataka", "andhra", "telangana", "maharashtra", "gujarat", "delhi", "punjab", "haryana", "bengal", "odisha", "orissa", "bihar", "rajasthan", "goa", "assam", "puducherry", "pondicherry", "pondy",
   "mumbai", "bombay", "bangalore", "bengaluru", "hyderabad", "kolkata", "calcutta", "pune", "ahmedabad", "jaipur", "lucknow", "kochi", "cochin", "thiruvananthapuram", "trivandrum",
   "mysore", "mysuru", "visakhapatnam", "vizag", "nagpur", "patna", "bhopal", "indore", "thane", "surat", "noida", "gurgaon", "gurugram", "chandigarh", "kanpur", "varanasi", "agra",
   "tirupati", "nellore", "vijayawada", "mangalore", "mangaluru",
   "tiruchi", "thiruchi", "nellai", "thanjai",
+  // the rest of India's States and Union Territories (Constitution of India, First Schedule), and its other large cities (Census 2011, cities of a million or more)
+  "uttarakhand", "uttaranchal", "jharkhand", "chhattisgarh", "himachal", "kashmir", "ladakh", "sikkim", "meghalaya", "mizoram", "manipur", "nagaland", "tripura", "arunachal", "jammu", "lakshadweep",
+  "andaman", "nicobar", "daman", "diu", "dadra", "tn",
+  "jabalpur", "ludhiana", "amritsar", "allahabad", "prayagraj", "ranchi", "howrah", "vadodara", "baroda", "rajkot", "kalyan", "vasai", "jodhpur", "raipur", "guwahati", "gwalior", "meerut", "nashik",
+  "faridabad", "ghaziabad", "dhanbad", "aurangabad", "asansol", "solapur", "srinagar", "jamshedpur", "bhubaneswar", "dehradun", "kozhikode", "calicut", "thrissur", "kollam", "mathura", "aligarh",
+  "bareilly", "moradabad", "gorakhpur", "guntur", "warangal", "hubli", "belgaum", "belagavi", "tumkur", "shimla", "udaipur", "ajmer", "bikaner", "kota", "siliguri", "durgapur", "imphal", "shillong",
+  "aizawl", "kohima", "leh", "kullu", "spiti", "gangtok", "panaji", "silvassa", "kavaratti",
+  // towns of Tamil Nadu that Collectors name in speech, outside every list above
+  "kumbakonam", "nagercoil", "pollachi", "karaikudi", "sivakasi", "rameswaram", "kodaikanal", "tiruchendur", "chidambaram", "sirkazhi", "arakkonam", "ambur", "vaniyambadi", "mettur", "bhavani", "palani",
+  "kovilpatti", "rajapalayam", "paramakudi", "devakottai", "udumalpet", "gudiyatham", "walajapet", "sholinghur", "tiruttani", "thiruttani", "uthiramerur",
+  // other countries and their well-known cities (ISO 3166 names; names that are also ordinary words or Chennai localities are left out)
+  "srilanka", "colombo", "kandy", "jaffna", "pakistan", "karachi", "lahore", "islamabad", "bangladesh", "dhaka", "nepal", "kathmandu", "bhutan", "maldives", "myanmar", "yangon", "beijing", "shanghai",
+  "japan", "tokyo", "korea", "seoul", "thailand", "bangkok", "malaysia", "vietnam", "indonesia", "jakarta", "philippines", "manila", "dubai", "uae", "qatar", "doha", "saudi", "riyadh", "kuwait", "bahrain",
+  "iran", "tehran", "iraq", "baghdad", "israel", "jerusalem", "istanbul", "egypt", "cairo", "kenya", "nairobi", "nigeria", "africa", "europe", "asia", "america", "usa", "england", "london", "france",
+  "germany", "berlin", "italy", "madrid", "russia", "moscow", "canada", "toronto", "australia", "sydney", "melbourne", "brazil", "mexico", "singapore", "hongkong", "taiwan", "ukraine", "poland", "sweden",
+  "norway", "ireland", "dublin", "scotland", "switzerland", "zurich", "geneva", "austria", "vienna", "amsterdam", "brussels", "athens", "lisbon", "washington", "california", "texas", "chicago", "newyork",
   // other kinds of body, whatever the city: a word of theirs in front of "police" or "department" makes it theirs (BUG-030)
   "railway", "railways", "rpf", "grp", "cbi", "customs", "cisf", "crpf", "bsf", "nia", "army", "navy", "income"];
-const TWO = ["tamil nadu", "andhra pradesh", "uttar pradesh", "madhya pradesh", "west bengal", "new delhi", "himachal pradesh"];
+const TWO = ["tamil nadu", "andhra pradesh", "uttar pradesh", "madhya pradesh", "west bengal", "new delhi", "himachal pradesh", "arunachal pradesh", "jammu kashmir", "andaman nicobar", "navi mumbai", "port blair",
+  "sri lanka", "hong kong", "new york", "kuala lumpur", "abu dhabi", "new zealand", "south africa", "saudi arabia", "united states", "united kingdom", "south korea", "north korea", "los angeles", "san francisco"];
 /** how a word is said back when the word alone does not name the body */
 const SAID: Record<string, string> = { income: "income tax" };
 
@@ -34,7 +51,10 @@ const TA: [string, string][] = [
   ["கேரளா", "kerala"], ["கர்நாடகா", "karnataka"], ["ஆந்திரா", "andhra"], ["தெலங்கானா", "telangana"], ["தெலுங்கானா", "telangana"], ["மகாராஷ்டிரா", "maharashtra"], ["குஜராத்", "gujarat"], ["டெல்லி", "delhi"], ["தில்லி", "delhi"],
   ["புதுச்சேரி", "puducherry"], ["பாண்டிச்சேரி", "pondicherry"], ["பம்பாய்", "bombay"], ["பெங்களூரு", "bengaluru"], ["பெங்களூர்", "bangalore"], ["ஹைதராபாத்", "hyderabad"], ["கொல்கத்தா", "kolkata"], ["புனே", "pune"],
   ["கொச்சி", "kochi"], ["திருவனந்தபுரம்", "thiruvananthapuram"], ["மைசூர்", "mysore"], ["தமிழ்நாடு", "tamil nadu"], ["தமிழ்நாட்டு", "tamil nadu"], ["தமிழக", "tamil nadu"],
-  ["ரயில்வே", "railway"], ["இரயில்வே", "railway"], ["வருமான", "income"]
+  ["ரயில்வே", "railway"], ["இரயில்வே", "railway"], ["வருமான", "income"],
+  ["கும்பகோணம்", "kumbakonam"], ["நாகர்கோவில்", "nagercoil"], ["பொள்ளாச்சி", "pollachi"], ["காரைக்குடி", "karaikudi"], ["சிவகாசி", "sivakasi"], ["ராமேஸ்வரம்", "rameswaram"], ["கொடைக்கானல்", "kodaikanal"],
+  ["திருச்செந்தூர்", "tiruchendur"], ["சிதம்பரம்", "chidambaram"], ["கொழும்பு", "colombo"], ["இலங்கை", "srilanka"], ["துபாய்", "dubai"], ["லண்டன்", "london"], ["சிங்கப்பூர்", "singapore"], ["அமெரிக்கா", "america"],
+  ["பாகிஸ்தான்", "pakistan"], ["மணிலா", "manila"], ["நேபாளம்", "nepal"], ["இமாச்சல", "himachal"], ["காஷ்மீர்", "kashmir"], ["ஜப்பான்", "japan"], ["மலேசியா", "malaysia"]
 ];
 const TA_ENDS = /^(?:|ல|ல்|லே|லு|ில்|ில|ிலே|யில்|யில|யிலே|க்கு|கு|ுக்கு|யின்|ின்|யோட|ோட|ுடைய|யுடைய|யிலிருந்து|ிலிருந்து|லிருந்து|்|்ல|்ல்|ு|ம்|ம்ல|த்தில்|த்துல|த்து|த்தின்|த்துக்கு|த்தோட|த்திலிருந்து)$/;
 

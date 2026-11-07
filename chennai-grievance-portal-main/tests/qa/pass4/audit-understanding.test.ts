@@ -221,12 +221,12 @@ describe("audit-understanding-2 P0: past-deadline figures are counted from one p
 
 describe("audit-understanding-3 P0: another town's police puts our police filter on (BUG-002)", () => {
   for (const s of ["filter Kumbakonam police", "கும்பகோணம் போலீஸ் பில்டர் போடு", "Nagercoil police filter pannu", "filter Pollachi police", "filter Karaikudi police"])
-    it.fails(`audit-understanding-3 ${s}: no filter`, () => expect(policeFilterOn(s)).toBe(false));
+    it(`audit-understanding-3 ${s}: no filter`, () => expect(policeFilterOn(s)).toBe(false));
 });
 
 describe("audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030)", () => {
   for (const s of ["Kumbakonam police report", "கும்பகோணம் போலீஸ் அறிக்கை", "Nagercoil police report", "நாகர்கோவில் காவல்துறை அறிக்கை", "பொள்ளாச்சி போலீஸ் ரிப்போர்ட்", "காரைக்குடி மாநகராட்சி அறிக்கை", "Thirupathi police report", "airport police report", "central police report", "Sivakasi police report", "Rameswaram police report", "Kodaikanal police report", "கொடைக்கானல் போலீஸ் அறிக்கை", "Tiruchendur police report", "London police report", "Dubai police report", "Singapore police report", "துபாய் போலீஸ் அறிக்கை", "Pondy police report", "TN police report", "state police report", "Kumbakonam corporation report"])
-    it.fails(`audit-understanding-4 ${s}: no Chennai brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
+    it(`audit-understanding-4 ${s}: no Chennai brief`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("brief"));
 });
 
 describe("audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005)", () => {
@@ -317,7 +317,7 @@ describe("with a fake model at the boundary (no live model in this phase)", () =
   const generate = (object: unknown) => async <U,>(c: JsonCall<U>): Promise<JsonResult<U>> => ({ object: object as U, info: { step: c.name, provider: "groq", model: "fake", ms: 1, inputTokens: 1, outputTokens: 1 } } as never);
   const withModel = (text: string, object: unknown) => planRound(RoundBody.parse({ turnId: `au-${n++}`, round: 0, text, state: START, turns: [], lastText: null, stage: null, stageDigest: null, direct: null }), world, hands, "audit", { notes: [], habits: {} }, undefined, { llm: { generate: generate(object) as never, ledger: new Ledger(new MemoryStore()), bedrockOk: () => false } });
   for (const s of ["filter Coimbatore police", "Mumbai police", "மும்பை போலீஸ்"])
-    it.fails(`audit-understanding-18 ${s}: code does not let a model put our police filter on for another city's police`, async () => {
+    it(`audit-understanding-18 ${s}: code does not let a model put our police filter on for another city's police`, async () => {
       const r = await withModel(s, { kind: "do", lang: "en", reply: null, steps: [{ a: "view", zone: null, dept: "POL-GCP", cat: null, taluk: null, sev: null }], options: [], screen: null, stage: null, lane: "district" });
       expect(JSON.stringify(r.result?.steps ?? [])).not.toContain("POL-GCP");
     });

@@ -6,8 +6,9 @@
  *   rain, the reservoirs, why something is rising, where something happened, a comparison of two zones, what needs
  *   attention today.
  */
-import { CAT_ALIASES, DEPT_ALIASES, EXPLAIN_TA, SEV_WORDS, ZONES } from "./lexicon";
-import { fuzzyNames } from "./xlit";
+import { CAT_ALIASES, DEPT_ALIASES, EXPLAIN_TA, GENERAL, SEV_WORDS, SUBJECTS, ZONES } from "./lexicon";
+import { foreignIn } from "./entities";
+import { fuzzyNames, romanise } from "./xlit";
 import type { Recipe } from "./stage";
 import type { PeriodKey, Sev, World } from "./types";
 
@@ -135,9 +136,6 @@ const DISTRICT = ["chennai", "madras", "district", "zone", "zones", "ward", "war
   "severe", "deadline", "overdue", "brief", "briefing", "trend", "trends", "map", "report", "alert", "gcc", "cmwssb", "tneb", "imd", "pwd", "mandi", "jarvis",
   "சென்னை", "மாவட்ட", "மண்டல", "வார்டு", "புகார்", "சம்பவ", "செய்தி", "மழை", "வெள்ள", "விலை", "சந்தை", "காற்று", "ஏரி", "தண்ணீர்", "மின்", "குப்பை", "சாலை",
   "காவல்", "விபத்து", "மருத்துவ", "பள்ளி", "துறை", "அதிகாரி", "ஆட்சியர்", "வானிலை", "புயல்"];
-/** the shape of a general-knowledge question ("what is deep learning", "who is the president", "write a poem") */
-const GENERAL = /^\s*(what is|what are|whats|what does|who is|who was|who are|define|explain|meaning of|tell me a|tell me about|how does|how do i|how to|write|translate|calculate|solve|teach me|give me a|sing|recommend)\b|joke|poem|story|recipe|என்றால் என்ன|யார்|விளக்கு|கதை சொல்|பாடல்|கவிதை/;
-const SUBJECTS = /deep learning|machine learning|artificial intelligence|\bai\b|neural network|programming|python|javascript|java\b|coding|cricket|football|ipl|movie|film|actor|actress|song|music|president|prime minister|capital of|bitcoin|crypto|stock market|share price|history of|physics|chemistry|biology|mathematics|chatgpt|google|facebook|instagram|youtube/;
 
 /**
  * A question that is not about the district (general knowledge, chat, other subjects): Jarvis says what it can help with
@@ -176,6 +174,16 @@ const PLAIN = new Set(("a an the this that these those is are was were be been a
   + "என்ன என்னென்ன எங்க எங்கே எப்படி ஏன் எத்தனை எவ்வளவு இருக்கு இருக்கா இருக்கிறது உள்ள காட்டு காட்டுங்க காட்டுங்கள் சொல்லு சொல்லுங்க பாரு பாருங்க போடு எல்லாம் ஒரு இந்த அந்த கொஞ்சம் இப்போ இப்போது").split(" "));
 const words = (list: string[]) => list.flatMap((x) => norm(x).trim().split(" ")).filter(Boolean);
 const LISTED = new Set([...PLAIN, "tamil", "english", "தமிழில்", "தமிழ்", ...words([...NEWS, ...PRICE, ...PRICE_WEAK, ...AIR, ...RAIN, ...LAKE, ...WHY, ...WHERE, ...CASES, ...COMPARE, ...INSIGHT, ...COMPLETE, ...PERFORMANCE, ...RANK, ...TREND, ...DASHBOARD, ...ON_MAP, ...ATTENTION, ...DISTRICT, ...Object.values(CAT_ALIASES).flat(), ...Object.values(DEPT_ALIASES).flat(), ...Object.values(ZONES).flatMap((z) => [...z.en, ...z.ta]), ...SEV_WORDS.map(([x]) => x), "within", "near", "nearby", "close", "km", "kilometre", "kilometer", "metres", "school", "hospital", "shelter", "station", "severe", "serious", "critical", "urgent", "today", "week", "month", "quarter", "weekly", "monthly", "daily", "இன்று", "இன்னைக்கு", "வாரம்", "மாதம்", "innaiku", "inniki", "ippo", "vaaram", "maasam", "vegetables", "vegetable", "tomato", "onion", "potato", "thakkali", "vengayam", "தக்காளி", "வெங்காயம்", "chembarambakkam", "puzhal", "poondi", "cholavaram", "veeranam", "செம்பரம்பாக்கம்", "புழல்", "பூண்டி", "சோழவரம்", "வீராணம்"])]);
+/**
+ * Is this (roman) word one the fast lane knows, in any of the three languages: a word of its lists, the sentence's grammar, a topic, a place or a body of ours, in Tamil letters
+ * or romanised, with a case ending? A word nothing here knows, in front of an agency word, is another place's or body's name (RC-01).
+ */
+let romanListed: string[] | null = null;
+export function listedWord(word: string): boolean {
+  if (LISTED.has(word)) return true;
+  romanListed ??= [...new Set([...LISTED].filter((x) => /[஀-௿]/.test(x)).map((x) => romanise(x).replace(/\s+/g, "")))];
+  return romanListed.some((r) => r === word || (r.length >= 4 && word.startsWith(r) && /^(a|u|i|e|ai|ku|kku|ukku|ukkum|la|le|il|in|um|ul|al|ala|oda|ode|irundhu|gal|kal|ngal)$/.test(word.slice(r.length))));
+}
 const WORLD_WORDS = new WeakMap<World, Set<string>>();
 function worldWords(w: World): Set<string> {
   let s = WORLD_WORDS.get(w);
@@ -239,6 +247,8 @@ const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const t = norm(text);
   if (t.trim().length < 3) return null;
+  // another place's or body's question is never answered with ours: the brief turn says so (RC-01)
+  if (foreignIn(text, w)) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
