@@ -7,7 +7,7 @@ import { resolveWard } from "@/lib/wards";
 import { classifyComplaint } from "@/lib/ai-classifier";
 import { DEFAULT_FALLBACK_DEPARTMENT } from "@/lib/constants";
 import { appendComplaintToDataset } from "@/lib/dataset/append";
-import { progressFor } from "@/lib/complaint-progress";
+import { progressFor, remarksFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 import { oneAtATime } from "@/lib/serial";
@@ -352,7 +352,7 @@ export async function GET(req: NextRequest) {
   });
   for (const r of rows) {
     const p = prog.get(String(r.complaint_code));
-    if (p) Object.assign(r, { status: p.status, rejected_stage: p.rejectedStage, ...(p.remarks ? { remarks: p.remarks } : {}) });
+    if (p) Object.assign(r, { status: p.status, rejected_stage: p.rejectedStage, remarks: remarksFor(r.remarks, p) });
   }
 
   return NextResponse.json({ complaints: status ? rows.filter((r) => r.status === status) : rows });

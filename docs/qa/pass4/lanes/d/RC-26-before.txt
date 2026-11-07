@@ -1,0 +1,25 @@
+   × effective status (KPI-001) > resolve, verify and reject close an open incident 13ms
+   × effective status (KPI-001) > builds the SQL from the same table of effects 7ms
+   × KPI tiles and lists use the same effective status (KPI-001) > reject closes; reopening a pipeline-resolved incident opens it; verify closes it, and an escalate after a resolve does not reopen it 14ms
+   × effectiveStatus and its SQL agree (property) > for any status and decision history the SQL's open and status equal effectiveStatus on the latest non-note decision 21ms
+ FAIL  src/lib/misc.props.pass4.test.ts > effectiveStatus and its SQL agree (property) > for any status and decision history the SQL's open and status equal effectiveStatus on the latest non-note decision
+ FAIL  src/lib/collector/effective.sqlite.test.ts > KPI tiles and lists use the same effective status (KPI-001) > reject closes; reopening a pipeline-resolved incident opens it; verify closes it, and an escalate after a resolve do
+ FAIL  src/lib/collector/effective.test.ts > effective status (KPI-001) > resolve, verify and reject close an open incident
+ FAIL  src/lib/collector/effective.test.ts > effective status (KPI-001) > builds the SQL from the same table of effects
+   × the actions move what they are designed to move > verify closes the incident on the console (effective.ts, RC-26) and tells the officer and the citizen it is checked 10ms
+   × gaps still open > DECISIONS-1: resolve, reopen, resolve within two minutes ends resolved (the third answers 201 and is dropped) 1ms
+   × gaps still open > DECISIONS-1: reopen, resolve, reopen within two minutes ends open 1ms
+   × gaps still open > DECISIONS-1: a second Send back on a new report is recorded (the screens' own buttons, within two minutes) 1ms
+   × gaps still open > DECISIONS-2: "Verify and close" closes the incident on the console too, as it does for the officer and the citizen 0ms
+   × gaps still open > DECISIONS-2: the officer's page does not show two open figures once a case is verified 0ms
+   × gaps still open > DECISIONS-3: an escalate after a resolve does not reopen the incident on the console while the officer and the citizen see it closed 0ms
+   × gaps still open > DECISIONS-18: after a reject and a reopen, the citizen no longer reads the reason it was rejected 0ms
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > the actions move what they are designed to move > verify closes the incident on the console (effective.ts, RC-26) and tells the officer and the citizen it is checked
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-1: resolve, reopen, resolve within two minutes ends resolved (the third answers 201 and is dropped)
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-1: reopen, resolve, reopen within two minutes ends open
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-1: a second Send back on a new report is recorded (the screens' own buttons, within two minutes)
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-2: "Verify and close" closes the incident on the console too, as it does for the officer and the citizen
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-2: the officer's page does not show two open figures once a case is verified
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-3: an escalate after a resolve does not reopen the incident on the console while the officer and the citizen see it closed
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-18: after a reject and a reopen, the citizen no longer reads the reason it was rejected
+TIMECONC-1 (server test, it.fails at HEAD): reopen, resolve, reopen within two minutes answered 201 and the incident stayed Resolved; passes now against the built server on 3154.

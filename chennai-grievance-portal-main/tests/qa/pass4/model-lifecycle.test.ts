@@ -110,7 +110,7 @@ describe("case lifecycle against a model (server on port 3142)", () => {
 describe("TIMECONC-1 reopen after resolve inside two minutes", () => {
   // Reopen, resolve, reopen on one incident: the second reopen answers 201 but the incident stays Resolved (the double-click dedupe in
   // src/app/api/collector/decisions/route.ts ignores the resolve that came in between).
-  it.fails("TIMECONC-1: a reopen after a resolve takes effect", async () => {
+  it("TIMECONC-1: a reopen after a resolve takes effect", async () => {
     const l = await call("collector", "get", "/api/collector/list?period=weekly&sev=Low&status=open");
     const id: string = (l.json?.rows ?? []).filter((x: { open: number }) => x.open)[8]?.id;
     for (const d of ["reopen", "resolve", "reopen"]) await decide(id, d);
