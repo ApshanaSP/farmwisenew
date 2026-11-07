@@ -9,7 +9,7 @@
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
  * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
-import { KEEP_BUTTON, workspaceIds } from "./guards";
+import { keepsSomething, workspaceIds } from "./guards";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Overview } from "@/lib/collector/intel";
@@ -542,14 +542,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     let sent = 0, opened = 0;
     const kept: typeof tray = [];
     for (const d of tray) {
-      if (!d.sandbox) { hostRef.current.c.openAction(d.incidentId); opened++; continue; }
+      if (!d.sandbox) {
+        // a live draft is sent from the incident panel, which holds one incident at a time: the first is opened and the rest wait in the tray,
+        // never dropped (audit-client_browser-7: Approve on two drafts emptied the tray and sent nothing)
+        if (opened === 0) { hostRef.current.c.openAction(d.incidentId); opened++; } else kept.push(d);
+        continue;
+      }
       // a draft whose send fails (or whose "Confirm it's you" was cancelled) stays in the tray, and is said to have stayed (BUG-012)
       try { await post(`/api/collector/incidents/${encodeURIComponent(d.incidentId)}/action`, { subject: d.subject, body: d.body }); sent++; } catch { kept.push(d); }
     }
     audit(null, [{ a: "confirm", n }], `sent ${sent} of ${tray.length} (sandbox only); ${kept.length} kept; ${opened} opened in the incident panel`, { how, count: n ?? undefined });
     setTray(kept); setTrayShownAt(kept.length ? Date.now() : null);
     earcon(kept.length ? "blocked" : "done");
-    out(kept.length ? line("sendKept", lang, { n: kept.length, sent }) : sent === tray.length ? line("sent", lang, { n: sent }) : line("approvedOnly", lang), lang, kept.length ? "waiting" : "ready");
+    out(kept.length ? (opened ? line("openedOne", lang, { n: kept.length }) : line("sendKept", lang, { n: kept.length, sent })) : sent === tray.length ? line("sent", lang, { n: sent }) : line("approvedOnly", lang), lang, kept.length ? "waiting" : "ready");
   };
 
   // --------------------------------------------------------------- one step --
@@ -665,7 +670,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         // (a button's name can hide what it does, and no pattern can catch a bare "Yes": those carry data-jarvis-never)
         if (t.el.closest("[data-jarvis-never]") || DANGER_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`)) return lang === "ta" ? "அனுப்புவதும் ஒப்புதலும் நீக்குவதும் உங்கள் கையால் மட்டுமே." : "Sending, approving and deleting are yours to tap. I won't press those.";
         // saving, pinning or a bare "Yes" keeps something (level B): a spoken click never presses it, the Collector's tap does (BUG-014)
-        if (KEEP_BUTTON.test(`${t.name ?? ""} ${t.el.textContent ?? ""}`.trim())) return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
+        if (keepsSomething(t.name, t.el.textContent)) return lang === "ta" ? "சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்." : "Saving and pinning need your tap. Say \"save this\" and I'll ask first.";
         press(t.el);
         return null;
       }
@@ -1134,7 +1139,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // a "yes" to a one-tap (level B) card
     if (pendingB) {
       // a yes from Whisper, typed text or a tap; browser captions can catch Jarvis's own voice, so theirs never counts
-      const yes = /^(yes|ok|okay|save|do it|ஆமா|ஆம்|சரி|aama|sari|seri)[.!]?$/i.test(said);
+      const yes = /^(yes|ok|okay|save|do it|ஆமாம்|ஆமா|ஆம்|சரி|aama|aamam|sari|seri)( (please|pls|sir|sure|thanks))?[.!]?$/i.test(said);
       if (yes && sourceRef.current !== "captions") { const p = pendingB; setPendingB(null); if (p.act) p.act(); else await run(p.steps, p.lang, p.heard, "rules"); return; }
       // the captions may have heard Jarvis's own voice: the card stays and waits for a yes it can trust (BUG-016)
       if (yes) { out(line("yesNotTrusted", pendingB.lang), pendingB.lang, "waiting"); return; }
@@ -1427,6 +1432,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const captionRibbon = useRef(false);
   /** Abort the question in flight: nothing it comes back with may speak or change the screen. The frame stays. */
   const cancelTurn = () => {
+    setReply(""); // the "Counting it" line the turn put up goes with it (audit-client_browser-8)
     turnGen.current++;
     turnCtl.current?.abort();
     turnCtl.current = null;
@@ -1822,7 +1828,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         <div className="th-tray" role="region" aria-label="Approval tray">
           <header><b>{ta ? "ஒப்புதலுக்காக" : "Waiting for approval"}</b><span>{tray.length}</span></header>
           <ol>{tray.map((d) => <li key={d.incidentId}><b>{d.title}</b><small>{d.to ?? (ta ? "பெறுநர் இல்லை" : "no recipient")}{d.sandbox ? (ta ? " · சோதனை வழி" : " · sandbox") : (ta ? " · பலகையிலிருந்து அனுப்பவும்" : " · send from the panel")}</small></li>)}</ol>
-          <p className="hint">{ta ? `"உறுதி ${tray.length}" என்று சொல்லுங்கள்` : `Say "confirm ${tray.length}"`}</p>
+          <p className="hint">{ta ? "அனுப்ப கீழே தட்டுங்கள். குரலால் அனுப்ப முடியாது." : "Tap Approve to send. Jarvis cannot send by voice."}</p>
           <div className="row">
             <button className="primary" onClick={() => void sendTray(tray.length, listenLang, "tap")}>{ta ? `${tray.length} அனுப்பு` : `Approve and send ${tray.length}`}</button>
             <button onClick={() => { setTray([]); setTrayShownAt(null); setPhase("ready"); }}>{ta ? "நீக்கு" : "Discard"}</button>

@@ -131,7 +131,10 @@ describe("holding", () => {
     it(`"${w}" goes silent, changes nothing, listens up to 4 s longer and does not answer the word`, () => {
       const h = hold(w);
       expect(h.m.state).toBe("holding");
-      expect(h.act).toEqual([{ a: "cancelVoice" }, { a: "hold", ms: 4000 }]);
+      // a stop word also ends the turn in flight (audit-client_browser-9, also when the question was typed and the machine never saw it);
+      // a wait does not: it only gives more time
+      const stops = /^(stop)\b/i.test(w);
+      expect(h.act).toEqual(stops ? [{ a: "cancelVoice" }, { a: "cancelTurn" }, { a: "hold", ms: 4000 }] : [{ a: "cancelVoice" }, { a: "hold", ms: 4000 }]);
       expect(h.act.some((x) => x.a === "handle")).toBe(false);
     });
   }

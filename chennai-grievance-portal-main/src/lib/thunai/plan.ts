@@ -336,5 +336,5 @@ export function isNavCommand(text: string, steps: Step[]): boolean {
 const REFLEX = new Set<Step["a"]>(["stop", "off", "undo", "confirm", "repeat", "handsfree", "speed"]);
 export function isReflex(steps: Step[], state: ScreenState): boolean {
   if (!steps.length) return false;
-  return steps.every((s) => REFLEX.has(s.a) || (s.a === "click" && s.n != null && !!state.numbers) || (s.a === "numbers" && !s.show));
+  return steps.every((s) => REFLEX.has(s.a) || (s.a === "click" && s.n != null && !!state.numbers) || s.a === "numbers"); // showing the numbers is as instant as hiding them (audit-client_browser-10)
 }

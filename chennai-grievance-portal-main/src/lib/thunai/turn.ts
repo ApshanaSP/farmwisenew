@@ -12,6 +12,7 @@
  * refines the last request.
  */
 import { TUNING } from "./vad";
+import { isStopWord } from "./addressed";
 
 export type TurnState = "off" | "listening" | "hearing" | "thinking" | "speaking" | "paused" | "interrupted" | "holding";
 
@@ -152,7 +153,7 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
       if (!t) return m.state === "paused" ? goOn() : to(m.state === "speaking" ? "speaking" : m.handling ? "thinking" : "listening", [], done);
       if (isGoodbye(t)) return to("off", [{ a: "cancelVoice" }, { a: "endSession" }], { ...done, canContinue: false, handling: false, voice: false });
       // "wait": silent, nothing on screen changes, and a little longer to think; the hold word itself gets no answer
-      if (isHoldOnly(t)) return to("holding", [{ a: "cancelVoice" }, { a: "hold", ms: TUNING.holdExtendMs }], { ...done, voice: false });
+      if (isHoldOnly(t)) return to("holding", [{ a: "cancelVoice" }, ...(isStopWord(t) ? [{ a: "cancelTurn" } as TurnAction] : []), { a: "hold", ms: TUNING.holdExtendMs }], { ...done, voice: false });
       if (isContinue(t)) return m.canContinue ? to("speaking", [{ a: "resumeAnswer" }], { ...done, canContinue: false }) : m.state === "paused" ? goOn() : to("listening", [], done);
       const rest = afterHold(t);
       return to("thinking", [{ a: "handle", text: rest ?? t, gen: m.gen }], { ...done, canContinue: false, handling: true });

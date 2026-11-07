@@ -240,7 +240,7 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   const t = norm(text);
   if (t.trim().length < 3) return null;
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
-  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
+  if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "click", "கிளிக்", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
