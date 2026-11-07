@@ -238,7 +238,13 @@ function listAll(): { cards: DatasetCard[]; hidden: { id: string; name: string }
 export function getBoard(): Pin[] {
   try { return JSON.parse(fs.readFileSync(path.join(DIR, "board.json"), "utf8")); } catch { return []; }
 }
-export function saveBoard(pins: Pin[]) { write(path.join(DIR, "board.json"), JSON.stringify(pins.slice(0, 24))); }
+export function saveBoard(pins: Pin[]) {
+  const f = path.join(DIR, "board.json");
+  // RC-51: a board file that is there but cannot be read (cut short by a crash) is copied aside before the new board replaces it
+  try { if (fs.existsSync(f) && !Array.isArray(JSON.parse(fs.readFileSync(f, "utf8")))) throw new Error("not a list"); }
+  catch { try { fs.copyFileSync(f, `${f}.damaged-${Date.now()}`); } catch { /* nothing to keep */ } }
+  write(f, JSON.stringify(pins.slice(0, 24)));
+}
 
 /** A dataset's most pressing findings, for the Briefing ("From your datasets"): read from its saved brief, no model. */
 export interface WatchItem {
