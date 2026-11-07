@@ -16,6 +16,10 @@ You are one fresh agent in a large QA run of District IQ. Read this before doing
 - Do not change the owner's decisions; report them with evidence and a ready patch: how test data is described (Ask District IQ's prompt versus Jarvis's briefs), sign-in on `/api/i18n`, complaint wording used as titles (OPEN-12), sending overheard speech to an AI, anything needing a new account, key or payment.
 - Do not patch around `district_intel` pipeline data problems (OPEN-7, OPEN-8, OPEN-11). Report them.
 
+## Refused means stop
+Write only inside this worktree (`E:\farm\.claude\worktrees\qa-pass4-ecfcb9`), the session scratchpad, and the owner's Desktop file when your brief names it. Reading other worktrees is fine; writing to them is not.
+If a hook or permission check refuses a write or any other action, that is a decision, not a technical fault. Never get the same result another way, such as `node`, `sed`, a redirect, or a script. Stop that item, and report the exact refusal in your result. On 7 Nov, fixers in lanes a, c and d went round the refusal this way, and the final report says so.
+
 ## Models: Groq only
 No test or server may use any other provider. Only run a model when your brief names a Groq run. A server not testing a model has no Groq key (the default below), because background jobs spend quota. Live Groq runs use `vitest.qa-live.config.ts`, or `server.mjs start --groq`. The live Claude path is not verified in this pass. Test it with mocks only.
 
