@@ -176,3 +176,33 @@ export const DESTRUCTIVE = /\b(delete|remove|erase|wipe|drop|destroy|purge)\b|�
  */
 export const KEEPING = /\b(remember|remind|reminder|reminders|note|notes|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|forget|make a note|for later|keep (it|them|this|that|the [a-z ]{3,40}) (aside|for later|handy)|nyabagam|nyabagapaduthu|nyabagapaduthunga|ninaivoottu|ninaivil vai|vechukko|vechuko)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|நினைவு படுத்து|ஞாபக|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு|குறிப்பு எடு|குறித்து வை|மறந்துடாத|மறக்காம)/i;
 export const CHANGE_RECORD = /\b(change|edit|modify|update the (status|record)|reassign|assign|close it|mark\b[^.]{0,40}\b(as )?(closed|resolved|done)|set (the )?status|maathu\w*|maathid\w*|maatru\w*|maattu\w*|maathi\w*|mathidu)\b|(?<![஀-௿])(மாற்று|மாத்து|மாற்றி|திருத்து|ஒதுக்கு|முடிச்சிடு|மூடிடு)/i;
+
+/**
+ * More spoken names for the categories (RC-05). Two parts, both derived, not typed per sentence:
+ *  1. the stem of a word the table already holds ("drainage" is also "drain", "encroachment" is also "encroach"), kept only when it names one category and no other;
+ *  2. the topics Collectors say that the data files under a category (power cuts, flood alerts), with the source of each in the comment.
+ * Tamil, Tanglish and English all read the same table, so the same question has the same topic whatever language it is in.
+ */
+const CATEGORY_TOPICS: Record<string, string[]> = {
+  // "theru vilakku" is the Tanglish of the street light. Power cuts are not here: the data holds no power-cut category, so they stay unread and the lane asks
+  STREETLIGHT_ELECTRICAL: ["theru vilakku", "therukku vilakku", "street lamp"],
+  // IMD alerts are the flood-risk signal category
+  FLOOD_RISK_SIGNAL: ["flood alert", "flood alerts", "red alert", "orange alert", "வெள்ள எச்சரிக்கை"],
+  STRAY_ANIMALS: ["stray animal", "stray animals", "animal", "animals", "stray", "street dog", "street dogs"],
+  DRAINAGE_SEWAGE: ["drain", "drains", "drainage problem", "manhole", "sewerage", "வடிகால்"]
+};
+(function deriveCategoryAliases() {
+  for (const [code, words] of Object.entries(CATEGORY_TOPICS)) { const have = CAT_ALIASES[code]; if (have) for (const w of words) if (!have.includes(w)) have.push(w); }
+  const owner = new Map<string, Set<string>>();
+  const note = (w: string, code: string) => { const s = owner.get(w) ?? new Set<string>(); s.add(code); owner.set(w, s); };
+  for (const [code, words] of Object.entries(CAT_ALIASES)) {
+    for (const a of words) note(a.trim().toLowerCase(), code);
+  }
+  const add = (code: string, w: string) => { if (w.length >= 5 && (owner.get(w)?.size ?? 0) <= 1 && ![...(owner.get(w) ?? [])].some((c) => !c.startsWith(code)) && !CAT_ALIASES[code].includes(w)) CAT_ALIASES[code].push(w); };
+  for (const code of Object.keys(CAT_ALIASES)) {
+    for (const a of [...CAT_ALIASES[code]]) {
+      const m = /^([a-z]{5,})(age|ment)$/.exec(a.trim());
+      if (m && m[1].length >= 5) add(code, m[1]);
+    }
+  }
+})();

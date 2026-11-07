@@ -122,3 +122,48 @@ describe("RC-04: a keeping note, an order to change a record and a data question
     expect((rules("Jarvis, click Trends").steps?.[0] as { name?: string } | undefined)?.name).toBe("Trends");
   });
 });
+
+// RC-05: the same question has the same topic, filter and deadline in every language, and a lane never drops a filter it read.
+import { CAT_ALIASES } from "./lexicon";
+import { catIn, deptWordIn, statusIn } from "./quick";
+describe("RC-05: topic, status and filters are read the same in every language and lane", () => {
+  it("no spoken name belongs to two categories (a name that does would make one question two topics)", () => {
+    const seen = new Map<string, string>(), clash: string[] = [];
+    for (const [code, words] of Object.entries(CAT_ALIASES)) for (const w of words) { const k = w.trim().toLowerCase(); const o = seen.get(k); if (o && o !== code) clash.push(`${k}: ${o} and ${code}`); seen.set(k, code); }
+    expect(clash).toEqual([]);
+  });
+  const triples: [string, string, string][] = [
+    ["drain complaints in Ambattur", "Ambattur la drain complaints", "அம்பத்தூரில் வடிகால் புகார்கள்"],
+    ["stray animal complaints in Valasaravakkam", "Valasaravakkam la stray dog complaints", "வளசரவாக்கத்தில் தெருநாய் புகார்கள்"],
+    ["garbage complaints in Anna Nagar", "Anna Nagar la kuppai complaints", "அண்ணா நகரில் குப்பை புகார்கள்"],
+    ["fire complaints in Madhavaram", "Madhavaram la fire complaints", "மாதவரத்தில் தீ புகார்கள்"],
+  ];
+  it("the topic and the place of one question are the same in English, Tanglish and Tamil", () => {
+    for (const [en, tg, ta] of triples) {
+      const a = quickScreen(en, world as never), b = quickScreen(tg, world as never), c = quickScreen(ta, world as never);
+      const topic = (q: ReturnType<typeof quickScreen>) => (q?.slots as { cat?: string } | undefined)?.cat ?? null;
+      const where = (q: ReturnType<typeof quickScreen>) => JSON.stringify((q?.slots as { zones?: number[] } | undefined)?.zones ?? null);
+      expect([topic(b), topic(c)], en).toEqual([topic(a), topic(a)]);
+      expect(topic(a), en).not.toBeNull();
+      expect(where(b), en).toBe(where(a)); // the zone of the Tamil spelling is the data's (ta names come from the live world), checked on the real path
+    }
+  });
+  it("past the deadline, said any way in three languages, is overdue; still open is open", () => {
+    for (const s of ["past the deadline", "beyond the deadline", "after the deadline", "breached their deadline", "deadline missed", "delayed severe cases", "not resolved in time", "deadline thaandi pochu", "deadline mudinjiduchu", "deadline miss aachu", "தாமதமான புகார்கள்", "கெடு தாண்டிய புகார்கள்"]) expect(statusIn(` ${s} `), s).toBe("overdue");
+    for (const s of ["still open", "unresolved ones", "pending cases", "not yet resolved", "innum mudiyaadha cases", "தீர்க்கப்படாத புகார்கள்"]) expect(statusIn(` ${s} `), s).toBe("open");
+    expect(statusIn(" garbage complaints ")).toBeNull();
+  });
+  it("a broad word (water) never beats the specific one (lakes), in any language", () => {
+    for (const s of ["lakes la water level enna", "what is the water level of the lakes", "ஏரிகளின் நீர் மட்டம் என்ன"]) expect(quickScreen(s, world as never)?.recipe, s).toBe("readings");
+    expect(catIn(" water supply complaints ")).toBe("WATER_SUPPLY");
+  });
+  it("a filter the lane has no slot for is never dropped: a ward, or a department with no topic, goes to the agent", () => {
+    for (const s of ["severe complaints in ward 172", "top five wards by severe complaints", "வார்டு 172 புகார்கள்"]) expect(quickScreen(s, world as never), s).toBeNull();
+    expect(deptWordIn(" tax department unresolved ones ")).not.toBeNull();
+    expect(quickScreen("Tax department, unresolved ones", world as never)).toBeNull();
+  });
+  it("a second topic word is not answered as the first (flood relief is not standing water)", () => {
+    for (const s of ["explain the flood relief need in Adyar", "அடையாறு வெள்ள நிவாரணம் விளக்குங்க"]) expect(quickScreen(s, world as never), s).toBeNull();
+    expect(quickScreen("explain the flooding complaint in Adyar", world as never)?.recipe).toBe("case");
+  });
+});

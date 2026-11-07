@@ -278,17 +278,17 @@ describe("audit-understanding-11, another week asked for: this week is given as 
 
 describe("audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023)", () => {
   for (const s of ["explain the flood relief need in Adyar", "explain the flood relief complaint in Adyar", "அடையாறு வெள்ள நிவாரணம் விளக்குங்க", "Adyar flood relief pathi simple ah sollu", "அடையாறு வெள்ள எச்சரிக்கை விளக்குங்க", "explain the flood relief need in Ambattur", "explain the flood alert in Ambattur"])
-    it.fails(`audit-understanding-12 ${s}: not standing water`, async () => expect(stageOf(await round(s))?.say.en ?? "").not.toMatch(/standing water/));
+    it(`audit-understanding-12 ${s}: not standing water`, async () => expect(stageOf(await round(s))?.say.en ?? "").not.toMatch(/standing water/));
 });
 
 describe("audit-understanding-13 P1: other deadline words list every severe case (BUG-024)", () => {
   for (const s of ["severe cases beyond the deadline", "severe cases after the deadline", "delayed severe cases", "தாமதமான கடுமையான புகார்கள்", "severe cases deadline thaandi pochu", "deadline mudinja severe cases kaattu", "severe cases not resolved in time", "severe cases deadline mudinjiduchu"])
-    it.fails(`audit-understanding-13 ${s}: only the overdue ones`, async () => expect(listOf(await round(s))!.rows.every((x) => x.overdue)).toBe(true));
+    it(`audit-understanding-13 ${s}: only the overdue ones`, async () => expect(listOf(await round(s))!.rows.every((x) => x.overdue)).toBe(true));
 });
 
 describe("audit-understanding-14 P1: other words for a rise still give one case (BUG-032)", () => {
   for (const s of ["explain the surge in dengue", "explain the growth in dengue", "explain how dengue went up in Adyar", "டெங்கு உயர்வு விளக்குங்க", "dengue athigam aana reason vilakkam sollu"])
-    it.fails(`audit-understanding-14 ${s}: not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
+    it(`audit-understanding-14 ${s}: not one case`, async () => expect(stageOf(await round(s))?.recipe).not.toBe("case"));
 });
 
 describe("audit-understanding-15 P1: a body's brief for one zone does not say which zone", () => {

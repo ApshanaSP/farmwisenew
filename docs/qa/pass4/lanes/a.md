@@ -25,3 +25,15 @@ Fix (mechanism). One intent table by language in lexicon.ts (KEEPING and CHANGE_
 Class guard. lane-a.pass4.test.ts RC-04: keep and change sentences about every body in three languages through the brief turn, the fast lane and the rules; data asks and Tamil verbs inside longer words through isNavCommand; speed, workspace and click checks.
 
 Result. open-baseline findings 7 and 44 fixed; 43 is partly fixed (7 of its 8 rows are safe; the eighth drops a category filter: RC-05). audit-understanding-9 and -22, audit-privacy_injection-13, audit-client_browser-12 and meta-words-3 are plain tests now.
+
+## RC-05: category, filter and deadline word lists closed, mis-ordered or dropping a filter
+
+Root cause. The fast lane and the rules each read topic, status and filters from their own lists. CAT_ALIASES had no stem ("drain"), no stray animals, and the bare word "water" beat "lakes". Status knew one phrase for past the deadline, and "unresolved" was in the fill-in-the-blanks list. A ward or a department word was read by no slot and then silently dropped, so the answer was the zone's total. Position ties compared a Tamil word with a leading space against an English word, so the same question had a different topic in another language.
+
+Why earlier tests missed it. The metamorphic suite (same question, other words) was not part of earlier passes; each fix tested one phrasing.
+
+Fix (mechanism). `statusIn()` is the one reader of "past the deadline" and "still open" (three languages, overdue wins). Category stems ("drainage" is also "drain") are derived from the table and kept only if they name one category; topics the data files under a category are listed once with their reason; Tamil flood warning is a longer name than the flood word and wins by position. A broad word yields to a specific one. A lane that has no slot for a ward or a department with no topic returns nothing, so the agent asks (a filter that is read is applied or the lane says nothing). An extra topic word in an explain ("flood relief need") is no longer answered as the first topic.
+
+Class guard. lane-a.pass4.test.ts RC-05: no spoken name belongs to two categories; the same four questions in English, Tanglish and Tamil have the same topic; every deadline and open phrase gives one status; water never beats lakes; ward and department words bail; metamorphic.test.ts is the gate (known file shrinks: keys m18:tanglish, m21:tanglish, m28:ta, m29:ta, m07:ta, m28:polite removed).
+
+Result. meta-words-4 to -9, audit-understanding-12, -13, -14 and open-baseline-18 are plain tests. Not fixed in this cluster: audit-understanding-16 (power cut has no category in the data, so it is left to the agent, but the fast lane still answers it with the zone list) and the remaining Tamil rewrites in meta-words-1 and -2.

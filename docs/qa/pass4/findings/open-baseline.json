@@ -308,7 +308,8 @@
     "row_id": "en-list-18",
     "mechanism": "M08",
     "model_needed": false,
-    "lane": "quick"
+    "lane": "quick",
+    "fixed": true
   },
   {
     "id": "open-baseline-19",

@@ -1,0 +1,12 @@
+RC-05: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+Also failing before (it.fails or known in metamorphic.known.json, now plain it or removed): meta-words-4 (breached their deadline gave the zone total), -5 (ward 172 ignored), -6 (drain dropped), -7 (stray animal answered as drainage, three numbers in three languages), -8 (water beats lakes), -9 (English zone named Thiru answered in Tamil), keys m18:tanglish m21:tanglish m28:ta m29:ta; audit-understanding-12, -13, -14. Still open: audit-understanding-16 (power cut and Tamil lamp words), meta-words-1 and -2 keys that remain in the known file.
+
+tanglish-list-01 | grade=wrong CONFIDENT-WRONG | lane=quick | Adayar-la innum mudiyaadha vellam cases ellam kaattu
+   said: இந்த வாரம் 18 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Flooding & waterlogging at Adayar in Adyar, standing water at Guindy Industrial Estate in Adyar. PWD Water Resources வசம் 5. "படி" அல்லது "திற" என்று எண்ணுடன் சொல்லுங்கள்.
+   reasons: ["5_language failed","2_list failed","2_total failed"]
+en-list-18 | grade=wrong CONFIDENT-WRONG | lane=quick | Tax and licence side, unresolved ones
+   said: Nothing here to complete.
+   reasons: ["a false none","6_scope failed","1_honest_none failed"]
+ta-list-16 | grade=wrong | lane=rules-instant | திருவொற்றியூர் வேலை நடக்குற இடம், தரம் சரியில்லன்னு வந்த complaints, medium level மட்டும் filter பண்ணு.
+   said: பக்கம்: தரவு ஸ்டுடியோ · மண்டலம் 1 · திருவொற்றியூர் · நடுத்தரம்
+   reasons: ["a code lane moved the console and answered nothing","7_action failed"]

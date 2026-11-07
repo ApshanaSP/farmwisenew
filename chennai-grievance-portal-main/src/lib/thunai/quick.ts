@@ -78,12 +78,33 @@ export function catIn(t: string): string | null {
   for (const [code, words] of Object.entries(CAT_ALIASES)) {
     for (const raw of words) {
       const w = raw.toLowerCase();
-      const at = /[\u0B80-\u0BFF]/.test(w) ? t.indexOf(w) : t.indexOf(` ${w} `);
-      if (at < 0) continue;
+      const raw0 = /[\u0B80-\u0BFF]/.test(w) ? t.indexOf(w) : t.indexOf(` ${w} `);
+      if (raw0 < 0) continue;
+      // the position of the word itself (not of the space before it), so a Tamil word and an English one compare fairly
+      const at = raw0 + (/[\u0B80-\u0BFF]/.test(w) ? w.length - w.trimStart().length : 1);
+      // a broad word loses to a specific one in the same sentence: "lakes la water level" is the lakes, not the water supply (RC-05)
+      if (w === "water" && / (lake|lakes|reservoir|reservoirs|dam|storage|rain) |ஏரி|நீர்த்தேக்க/.test(t)) continue;
       if (!best || at < best.at || (at === best.at && w.length > best.len)) best = { code, at, len: w.length };
     }
   }
   return best?.code ?? null;
+}
+/**
+ * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds a list (RC-05). overdue wins over open.
+ */
+const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|breach|exceeded|exceeding|violated)( the| their| its| a)? (deadline|due date|sla|time limit)\b|\bdeadline (passed|crossed|missed|miss|over|exceeded|breached|mudinj[a-z]*|thaand[a-z]*|thand[a-z]*)\b|\bnot (resolved|closed|done|attended|fixed) (in|on|within) time\b|\blate (cases|complaints|ones|severe)\b|\b(thaamadham|thamadham|thaamathamaana)\b|தாமத|கெடு (தாண்ட|முடிந்த|மீறி|கடந்த)|காலக்கெடு|கெடுவை/;
+const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
+export function statusIn(t: string): "overdue" | "open" | null {
+  return OVERDUE_RE.test(t) ? "overdue" : OPEN_RE.test(t) ? "open" : null;
+}
+/** the department a sentence names, by its own words in any language: a filter the lane cannot apply must not be dropped (RC-05) */
+export function deptWordIn(t: string): string | null {
+  for (const [code, words] of Object.entries(DEPT_ALIASES)) for (const raw of words) {
+    const x = raw.toLowerCase();
+    if (x.length < 4 || x === "water") continue;
+    if (/[஀-௿]/.test(x) ? t.includes(x) : t.includes(` ${x} `)) return code;
+  }
+  return null;
 }
 export function sevIn(t: string): Sev | null {
   for (const [word, sev] of SEV_WORDS) if (has(t, [word.toLowerCase()])) return sev;
@@ -107,7 +128,7 @@ const MARKET = / (market|vegetable|vegetables|koyambedu) |காய்கறி|
 const VEG = / (tomato|tomatoes|onion|onions|potato|potatoes|brinjal|carrot|beans|cabbage|chilli|chili|ginger|garlic|banana|lemon|drumstick|okra|ladies finger|cauliflower|beetroot|coconut|rice|thakkali|vengayam) |(தக்காளி|வெங்காயம்|உருளை|கத்தரி|கேரட்|பீன்ஸ்|மிளகாய்|இஞ்சி|பூண்டு|வாழை|எலுமிச்சை|முருங்கை|வெண்டை|தேங்காய்)/;
 const AIR = ["air quality", "aqi", "air pollution", "pollution", "காற்று", "காற்றின் தரம்", "மாசு", "kaatru"];
 const RAIN = ["rain", "rainfall", "raining", "மழை", "mazhai", "malai"];
-const LAKE = ["reservoir", "reservoirs", "lake", "lakes", "dam", "water storage", "storage", "ஏரி", "ஏரிகள்", "நீர்த்தேக்க", "தண்ணீர் இருப்பு", "eri", "டேம்", "லேக்"];
+const LAKE = ["reservoir", "reservoirs", "lake", "lakes", "dam", "water storage", "storage", "ஏரி", "ஏரிகள்", "நீர்த்தேக்க", "தண்ணீர் இருப்பு", "நீர் மட்டம்", "நீர்மட்டம்", "eri", "டேம்", "லேக்"];
 /** the district's reservoirs by name, with the spelling that goes in the readings slot */
 const RESERVOIRS: [string, RegExp][] = [["Chembarambakkam", / chembarambakkam |செம்பரம்பாக்க/], ["Puzhal", / puzhal |புழல்/], ["Poondi", / poondi |பூண்டி/], ["Cholavaram", / cholavaram |சோழவரம்/], ["Veeranam", / veeranam |வீராண/]];
 export const reservoirIn = (t: string): string | null => RESERVOIRS.find(([, re]) => re.test(t))?.[0] ?? null;
@@ -118,7 +139,7 @@ const COMPARE = ["compare", "comparison", "versus", "vs", "side by side", "stack
   // English as it is said in Tamil, in either script
   "கம்பேர்", "கம்பேரிசன்", "கம்பேரு", "கம்பார்", "compare pannu", "compare panni", "vithiyasam", "வித்தியாசம் சொல்லு"];
 const INSIGHT = ["stand out", "stands out", "standing out", "outlier", "outliers", "anomaly", "anomalies", "unusual", "abnormal", "spike", "spikes", "odd one", "out of line", "red flag", "red flags", "தனித்து", "அசாதாரண", "வித்தியாசம்", "வித்தியாசமா", "unusual a", "weird"];
-const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
+const COMPLETE = ["complete this", "complete the data", "complete the table", "complete data", "fill in", "fill the", "fill what", "fill missing", "missing data", "missing fields", "missing values", "missing details", "blanks", "unresolved location", "unresolved locations", "no location", "unlocated", "complete pannu", "fill pannu", "missing data fill", "விடுபட்ட", "நிரப்பு", "முழுமையாக்கு", "முழுமை செய்", "தீர்க்கப்படாத"];
 const PERFORMANCE = ["performance", "department wise", "department-wise", "departmentwise", "zone wise", "zone-wise", "zonewise", "slowest department", "fastest department", "slowest", "turnaround", "செயல்பாடு", "துறைவாரி", "மண்டலவாரி", "performance eppadi"];
 const RANK = ["top", "worst", "highest", "lowest", "most", "least", "best", "rank", "ranking", "அதிகம்", "அதிக", "குறைவு", "மோசமான", "romba"];
 const TREND = ["trend", "trends", "over time", "how has", "moved", "movement", "graph", "போக்கு", "ட்ரெண்ட்", "trend enna"];
@@ -239,7 +260,7 @@ const EXPLAIN = / (explain|explain to me|whats going on with|what is going on wi
 /** not one issue: a list, a count, a rise, a trend or the reason behind one (BUG-032) */
 /** the words of asking: with a place and nothing but these, the Collector named no topic ("explain the complaint in Adyar") */
 const ASKING = new Set(("explain to me tell more about the a an of in at on with whats what is going wrong happened complaint issue case incident problem this that please here there today week month " +
-  "simple simpleah ah sollu sollunga enna aachu ennanu la le nu adhu vilakku vilakkam vilakkama vilakkunga puriyala puriyalai " +
+  "pathi pathiya patri simple simpleah ah sollu sollunga enna aachu ennanu la le nu adhu vilakku vilakkam vilakkama vilakkunga puriyala puriyalai " +
   "புகார் பிரச்சனை பிரச்சினை சம்பவம் பற்றி பத்தி சொல்லு சொல்லுங்க சொல்லுங்கள் விளக்கு விளக்குங்க விளக்குங்கள் விளக்கவும் விளக்கி விளக்கம் விளக்கமா விளக்கமாக என்னன்னு என்ன ஆச்சு புரியல உள்ள இருக்கும் வந்த இந்த அந்த கொஞ்சம் பகுதி பகுதியில் மண்டலம் மண்டலத்தில் எளிமையா").split(" "));
 const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|list|rise|rising|increase|increasing|spike|spiking|jump|drop|fall|falling|trend|trends|why|pattern|patterns|high|low|many|count|stats|statistics) |புகார்கள்|சம்பவங்கள்|பிரச்சனைகள்|பிரச்சினைகள்|ஏன்|அதிகரி|போக்கு|பட்டியல்/;
 
@@ -254,20 +275,26 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   // follow-ups and edits of an open screen ("only the Adyar ones", "same for", "open 3") are the agent's
   if (!o.noBail && has(t, ["same", "also", "only", "instead", "open", "draft", "send", "that", "those", "அதே", "அதையே", "மட்டும்"])) return null;
   if (!o.noBail && (MULTI.test(t) || MISSION.test(t))) return null;
+  // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
+  if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
   const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
     const zoneWords = zones.flatMap((n) => [...(ZONES[n]?.en ?? []), ...(ZONES[n]?.ta ?? []), w.zones.find((z) => z.n === n)?.name ?? ""]).flatMap((x) => norm(x).trim().split(" "));
     const isZoneWord = (x: string) => zoneWords.some((z) => z && (x === z || x === `${z}la` || (/[஀-௿]/.test(z) && z.length >= 4 && x.startsWith(z.replace(/[்ுூ]$/, "")))));
-    const namedOther = !cat && t.trim().split(" ").some((x) => !ASKING.has(x) && !isZoneWord(x));
+    // a word that is no asking word, no zone word and no word of the topic that was read is another topic ("the flood relief need in Adyar"): the lane does not answer it as the flood (RC-05)
+    const catWords = (cat ? CAT_ALIASES[cat] ?? [] : []).flatMap((a) => norm(a).trim().split(" ")).filter(Boolean);
+    const isSevWord = (x: string) => SEV_WORDS.some(([s]) => x === s.toLowerCase() || (/[஀-௿]/.test(s) && x.startsWith(s)));
+    const isCatWord = (x: string) => isSevWord(x) || catWords.some((c) => x === c || (/[஀-௿]/.test(c) && c.length >= 3 && x.startsWith(c.replace(/[்ுூ]$/, ""))));
+    const namedOther = t.trim().split(" ").some((x) => !ASKING.has(x) && !LISTED.has(x) && !isZoneWord(x) && !isCatWord(x));
     if (!namedOther) return { recipe: "case", slots: { zones: zones.slice(0, 1), cat, sev, period: period ?? "monthly", fresh: true } };
     if (!o.noBail) return null;
   }
   if (!o.noBail && unsureWhy(text, t, w, zones, cat)) return null;
   // "what should I do about flooding in Adyar": what needs the Collector first, reasoned in code from the data
   if (ADVICE.test(t)) return { recipe: "advise", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
-  if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved", "தீர்க்கப்படாத", "no location", "unlocated"]) } };
+  if (has(t, COMPLETE)) return { recipe: "complete", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly", fresh: has(t, ["unresolved location", "unresolved locations", "no location", "unlocated"]) } };
   // "why did complaints spike": asked why, so the reasons, not the outliers
   if (has(t, WHY) && (cat || zones.length)) return { recipe: "why", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
   if (has(t, INSIGHT) || INSIGHT.some((w) => /[஀-௿]/.test(w) && t.includes(w))) return { recipe: "insight", slots: { zones: zones.slice(0, 1), cat, period: period ?? "weekly" } };
@@ -299,7 +326,9 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
   if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {
     // "past the deadline", "overdue": only those (BUG-024)
-    const status = /\b(overdue|past (the |their )?deadline|deadline (passed|crossed|missed))\b|கெடு தாண்ட|காலக்கெடு/.test(t) ? "overdue" : null;
+    const status = statusIn(t);
+    // a department named with no topic would be dropped here: the lane says nothing it cannot apply, the agent asks (RC-05)
+    if (!cat && deptWordIn(t)) return null;
     return { recipe: "cases", slots: { sev, cat, status, zones: zones.slice(0, 1), period: period ?? (sev ? "daily" : "weekly"), sort: "priority", n: 20,
       // a new question starts clean: a filter an earlier answer put on the console (Fire, say) must not narrow it
       fresh: true } };
