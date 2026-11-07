@@ -25,7 +25,7 @@ export const TA: Record<string, string> = {
   "All 15 zones": "அனைத்து 15 மண்டலங்கள்", "All # zones": "அனைத்து # மண்டலங்கள்", "All taluks": "அனைத்து வட்டங்கள்", "All departments": "அனைத்து துறைகள்",
   "Clear": "அழி", "Zone": "மண்டலம்", "Taluk": "வட்டம்", "Department": "துறை", "Period": "காலம்", "Filters": "வடிப்பான்கள்",
   "District-wide · not filtered": "மாவட்டம் முழுவதும் · வடிகட்டப்படவில்லை", "Your files · not filtered": "உங்கள் கோப்புகள் · வடிகட்டப்படவில்லை",
-  "Collected today, #:# AM": "இன்று சேகரிக்கப்பட்டது, காலை #:#", "Collected today, #:# PM": "இன்று சேகரிக்கப்பட்டது, மதியம் #:#",
+  "Collected today, #:# AM": "இன்று சேகரிக்கப்பட்டது, காலை #:#", "Collected today, #:# PM": "இன்று சேகரிக்கப்பட்டது, பிற்பகல் #:#",
   "# of # feeds current · #/# live": "# / # ஊட்டங்கள் நடப்பில் · #/# நேரலை",
 
   // ---- KPI tiles and snapshot

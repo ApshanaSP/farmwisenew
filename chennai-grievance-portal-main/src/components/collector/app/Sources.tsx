@@ -8,7 +8,7 @@ import type { Console } from "./CollectorApp";
 type Tab = "sources" | "add" | "ocr" | "audit";
 const KIND: Record<string, string> = { pipeline: "Pipeline feed", agmarknet: "Public API", rss: "RSS / Atom feed", html: "Web page", json: "JSON API", ocr: "Upload + OCR" };
 const STATUS: Record<string, [string, string]> = {
-  ok: ["Healthy", "st-resolved"], partial: ["Partial", "st-review"], stale: ["Stale", "st-progress"], failing: ["Failing", "st-progress"], login_failed: ["Login failed", "st-progress"], new: ["Not run yet", "st-review"]
+  ok: ["Healthy", "st-resolved"], test: ["Test data", "st-review"], partial: ["Partial", "st-review"], stale: ["Stale", "st-progress"], failing: ["Failing", "st-progress"], login_failed: ["Login failed", "st-progress"], new: ["Not run yet", "st-review"]
 };
 
 // Adding a source is being built separately (a teammate is integrating it), so the console has no "Add a source" tab.
@@ -65,10 +65,13 @@ function SourceList({ c }: { c: Console }) {
       <ItemTable rows={items.rows} />
     </>
   );
+  // generated feeds are test data: not counted healthy, and not said to be collected
+  const generated = rows.filter((r) => r.status === "test").length;
+  const real = rows.length - generated;
   const ok = rows.filter((r) => r.status === "ok").length;
   return (
     <>
-      <p className="sub">{ok} of {rows.length} sources healthy. Added sources refresh on their own interval (daily by default); the pipeline feeds are collected every hour.
+      <p className="sub">{ok} of {real} live sources healthy{generated ? `; ${generated} generated ${generated === 1 ? "feed is" : "feeds are"} test data and not counted` : ""}. Added sources refresh on their own interval (daily by default); real feeds from the district intelligence pipeline are refreshed hourly; generated ones are not collected at all.
         Every run is logged, and failures show the reason.</p>
       <div className="tbl-wrap">
         <table>

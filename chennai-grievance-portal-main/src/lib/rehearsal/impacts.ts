@@ -383,7 +383,7 @@ function traffic(inp: Inputs, docs: Doc[]): ImpactData {
       upsHit.length ? `${plural(upsHit.length, "underpass", "underpasses")} fill with water or jam in rain: ${and(upsHit.slice(0, 3).map((x) => x.label))}.` : null
     ].filter((x): x is string => !!x),
     sources: [
-      { label: "Police traffic reports, road accidents and road-damage complaints in rains", n: trafficReps.length, kind: "real", note: "District store, placed on the road to 300 m" },
+      { label: "Police traffic reports, road accidents and road-damage complaints in rains", n: trafficReps.length, kind: "generated", note: "Generated police and complaint records in the district store (test data), placed on the road to 300 m" },
       { label: "Main roads where water stood (the flood record)", n: floodMain.length, kind: "real", note: "The same record as Flooding" },
       { label: "Traffic news of rain days", n: news.length, kind: "real", note: `${[...newsBy.values()].reduce((a, x) => a + x.length, 0)} name a road on this list` },
       { label: "Road underpasses", n: ups.filter((f) => f.properties.in_district).length, kind: "open", note: "OpenStreetMap" }

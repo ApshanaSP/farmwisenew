@@ -1,0 +1,23 @@
+# RC-32 sweep: every live dot, and every place a feed's status says healthy or live
+src/app/dev/ui/KitGallery.tsx:11:  IconButton, Kbd, KpiTile, LiveDot, OtpInput, ProgressRing, RollingText, SegmentedControl, SeverityBadge, Skeleton, Sparkline, StatusPil
+src/app/dev/ui/KitGallery.tsx:69:              <LiveDot /><LiveDot state="warn" /><Avatar name="Collector Office" />
+src/components/collector/app/CollectorApp.tsx:46:import { SegmentedControl, FilterChip, LiveDot } from "@/components/ui";
+src/components/collector/app/CollectorApp.tsx:1003:      <LiveDot state={(s && !all) || late.length ? "warn" : "ok"} /><span>{head}{late.length ? <em className="late">{la
+src/components/officer/OfficerApp.tsx:50:import { LiveDot, SegmentedControl } from "@/components/ui";
+src/components/officer/OfficerApp.tsx:667:      <LiveDot state={s && !all ? "warn" : "ok"} /><span>{head}<small>{sub}</small></span>
+src/components/ui/index.tsx:204:export function LiveDot({ state = "ok", label }: { state?: "ok" | "warn" | "off"; label?: string }) {
+src/components/ui/index.tsx:205:  return <span className={cx("ui-live", state !== "ok" && state)} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ?
+src/components/ui/ui.css:99:.ui-live{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--live);flex:none}
+src/components/ui/ui.css:100:.ui-live:after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--live);animation:ui-live 2.2s var(--ease-out) infinite}
+src/components/ui/ui.css:101:.ui-live.warn{background:var(--high)}.ui-live.warn:after{background:var(--high)}
+src/components/ui/ui.css:102:.ui-live.off{background:var(--neutral)}.ui-live.off:after{display:none}
+src/components/ui/ui.css:103:@keyframes ui-live{0%{transform:scale(1);opacity:.7}80%,100%{transform:scale(2.8);opacity:0}}
+src/components/ui/ui.css:279:  .ui-live:after,.ui-beam:before,.ui-think,.ui-skel:after,.ui-spin{animation:none}
+---
+src/components/collector/app/Overlays.tsx:183:              <td><span className={`st ${f.status === "ok" ? "st-resolved" : "st-progress"}`}>{f.status === "ok" ? "Healthy"
+src/components/collector/app/Sources.tsx:11:  ok: ["Healthy", "st-resolved"], test: ["Test data", "st-review"], partial: ["Partial", "st-review"], stale: ["Stale", "st-pr
+src/components/collector/app/studio/Connectors.tsx:4: * The Connectors tab: every dataset kept up to date by a Live Connector, its health (Healthy, Late, Failing, Paused,
+src/components/collector/app/studio/Connectors.tsx:30:    h: { healthy: "Healthy", late: "Late", failing: "Failing", paused: "Paused", review: "Needs review" } as Record<
+src/components/collector/app/studio/Source.tsx:27:const LIVE_WORD: Record<string, string> = { healthy: "Healthy", late: "Late", failing: "Failing", paused: "Paused", revi
+src/lib/collector/sources.ts:102:      // a feed made by a generator (source_health.kind "synthetic": police, PWD, hospital) is test data: never "Healthy"
+src/lib/studio/connectors.ts:12: * Health: Healthy · Late (the expected data did not come within the tolerance) · Failing (errors, retried after
