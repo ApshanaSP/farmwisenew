@@ -20,7 +20,9 @@ export function decryptAadhaar(payload: string): string {
   const iv = buf.subarray(0, 12);
   const authTag = buf.subarray(12, 28);
   const encrypted = buf.subarray(28);
-  const decipher = crypto.createDecipheriv("aes-256-gcm", KEY(), iv);
+  // the tag length is stated, not taken from whatever the payload carries: a short tag is a weak check (RC-25)
+  if (authTag.length !== 16) throw new Error("Invalid encrypted payload.");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", KEY(), iv, { authTagLength: 16 });
   decipher.setAuthTag(authTag);
   const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
   return decrypted.toString("utf8");

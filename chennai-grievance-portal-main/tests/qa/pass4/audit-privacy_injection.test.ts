@@ -315,7 +315,7 @@ describe("OPEN-2: the dev routes' guard", () => {
   it.each([["a tunnel's host", { host: "abc.trycloudflare.com" }], ["localhost.run's host", { host: "abc.lhr.life" }], ["forwarded for", { host: "127.0.0.1:3000", "x-forwarded-for": "1.2.3.4" }], ["cloudflare", { host: "localhost:3000", "cf-connecting-ip": "1.2.3.4" }], ["a LAN address", { host: "192.168.1.5:3000" }], ["no host", {}]])("refused: %s", (_n, o) => expect(localOnly(h(o as never))).toBe(false));
   it.each([["localhost", { host: "localhost:3000" }], ["127.0.0.1", { host: "127.0.0.1:3000" }]])("allowed: %s", (_n, o) => expect(localOnly(h(o as never))).toBe(true));
   // node_modules/next/dist/server/base-server.js adds x-forwarded-for and x-forwarded-host to every request before a route sees it
-  it.fails("audit-privacy_injection-8: a plain local request, with the headers Next itself adds, is allowed", () => {
+  it("audit-privacy_injection-8: a plain local request, with the headers Next itself adds, is allowed", () => {
     expect(localOnly(h({ host: "127.0.0.1:3000", "x-forwarded-host": "127.0.0.1:3000", "x-forwarded-port": "3000", "x-forwarded-proto": "http", "x-forwarded-for": "127.0.0.1" }))).toBe(true);
   });
 });

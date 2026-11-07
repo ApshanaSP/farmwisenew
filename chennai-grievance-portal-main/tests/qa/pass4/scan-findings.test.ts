@@ -37,7 +37,7 @@ describe("open findings", () => {
   });
 
   // Semgrep's gcm-no-tag-length on src/lib/crypto.ts:23. A 4-byte tag on an empty message is accepted, because the expected length is not given to createDecipheriv.
-  it.fails("SCAN-5 decryption refuses an authentication tag shorter than the 16 bytes encryption writes", async () => {
+  it("SCAN-5 decryption refuses an authentication tag shorter than the 16 bytes encryption writes", async () => {
     const { encryptSecret, decryptSecret } = await import("@/lib/crypto");
     const whole = Buffer.from(encryptSecret(""), "base64");
     const short = Buffer.concat([whole.subarray(0, 12), whole.subarray(12, 16)]).toString("base64");
@@ -45,7 +45,7 @@ describe("open findings", () => {
   });
 
   // src/lib/secrets.ts only looks at the length. The placeholder in the public repo's .env.example is long enough, so a server started from a plain copy signs tokens with a known key.
-  it.fails("SCAN-8 production refuses the JWT_SECRET placeholder that .env.example carries", async () => {
+  it("SCAN-8 production refuses the JWT_SECRET placeholder that .env.example carries", async () => {
     const line = fs.readFileSync(path.resolve(__dirname, "..", "..", "..", ".env.example"), "utf8").match(/^JWT_SECRET=(.*)$/m)?.[1] ?? "";
     const placeholder = line.trim().replace(/^["']|["']$/g, "");
     expect(placeholder.length).toBeGreaterThanOrEqual(32);
@@ -57,15 +57,31 @@ describe("open findings", () => {
 });
 
 describe("checked and sound: keep it that way", () => {
+  const local = { get: (n: string) => ({ host: "127.0.0.1:3000" } as Record<string, string>)[n.toLowerCase()] ?? null };
   it("a sign-in code is echoed only when both the flag is on and the server is not production", async () => {
     const { devOtpForResponse } = await import("@/lib/otp");
     vi.stubEnv("NEXT_PUBLIC_DEV_SHOW_OTP", "true");
     vi.stubEnv("NODE_ENV", "production");
-    expect(devOtpForResponse("123456")).toBeUndefined();
-    vi.stubEnv("NODE_ENV", "development"); // this branch is why SCAN-4 exists: a dev server with the .env flag gives the code to whoever asks
-    expect(devOtpForResponse("123456")).toBe("123456");
+    expect(devOtpForResponse("123456", local)).toBeUndefined();
+    vi.stubEnv("NODE_ENV", "development"); // this branch is why SCAN-4 exists: a dev server with the .env flag gave the code to whoever asked
+    expect(devOtpForResponse("123456", local)).toBe("123456");
     vi.stubEnv("NEXT_PUBLIC_DEV_SHOW_OTP", "false");
-    expect(devOtpForResponse("123456")).toBeUndefined();
+    expect(devOtpForResponse("123456", local)).toBeUndefined();
+  });
+
+  // SCAN-4 (PB-220): even on a dev server with the flag on, a request that did not come from this PC never gets the code
+  it.each([
+    ["a tunnel's host", { host: "abc.trycloudflare.com" }],
+    ["forwarded for a stranger", { host: "127.0.0.1:3000", "x-forwarded-for": "203.0.113.9" }],
+    ["a stranger behind a proxy that appends this PC", { host: "localhost:3000", "x-forwarded-for": "203.0.113.9, 127.0.0.1" }],
+    ["cloudflare's header", { host: "localhost:3000", "cf-connecting-ip": "203.0.113.9" }],
+    ["a forwarded host that is not local", { host: "localhost:3000", "x-forwarded-host": "abc.trycloudflare.com" }],
+    ["the Forwarded header", { host: "localhost:3000", forwarded: "for=203.0.113.9;proto=https" }]
+  ])("SCAN-4 no code on a dev server for %s", async (_n, h) => {
+    const { devOtpForResponse } = await import("@/lib/otp");
+    vi.stubEnv("NEXT_PUBLIC_DEV_SHOW_OTP", "true");
+    vi.stubEnv("NODE_ENV", "development");
+    expect(devOtpForResponse("123456", { get: (n: string) => (h as Record<string, string>)[n.toLowerCase()] ?? null })).toBeUndefined();
   });
 
   it("the production build compiled the code helper away and carries no trace of the flag", () => {

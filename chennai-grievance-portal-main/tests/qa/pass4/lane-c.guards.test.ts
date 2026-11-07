@@ -125,3 +125,40 @@ describe("RC-24 class guard: a row id is read by one rule that agrees with how t
     expect(bad).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------------------------------------------- RC-25
+describe("RC-25 class guard: routes that hand out the console's data go through the step-up, and no code is echoed without asking where from", () => {
+  it("every route that serves a CSV of incidents calls requireConfirm", () => {
+    const csv = routes.filter((f) => /csvCell/.test(fs.readFileSync(f, "utf8")) && /text\/csv|csv/.test(fs.readFileSync(f, "utf8")));
+    expect(csv.length).toBeGreaterThanOrEqual(2);
+    const bad = csv.filter((f) => !/requireConfirm/.test(fs.readFileSync(f, "utf8"))).map((f) => path.relative(ROOT, f));
+    expect(bad).toEqual([]);
+  });
+  it("every route that echoes a dev code passes the request's headers to devOtpForResponse", () => {
+    const bad = routes.filter((f) => /devOtpForResponse\(/.test(fs.readFileSync(f, "utf8")) && !/devOtpForResponse\([^)]*headers/.test(fs.readFileSync(f, "utf8"))).map((f) => path.relative(ROOT, f));
+    expect(bad).toEqual([]);
+  });
+  it("the assistant's CSV link is fetched, so the console's confirm box can answer a 428 (a plain link cannot send the grant)", () => {
+    const card = fs.readFileSync(path.join(ROOT, "src/components/collector/app/assistant/AnswerCard.tsx"), "utf8");
+    expect(card).not.toMatch(/<a className="aq-dl" href=\{card\.download\.href\} download>/);
+  });
+  it("a secret that is a phrase of words, or says change/replace/your, is not a secret in production", async () => {
+    vi.resetModules();
+    vi.stubEnv("NODE_ENV", "production");
+    const { strongSecret } = await import("@/lib/secrets");
+    for (const weak of ["replace_this_with_a_long_random_secret_string", "change-me-to-a-long-random-text", "your secret goes here please", "dev_only_insecure_secret_change_me", "this-is-my-jwt-secret-for-the-server"]) expect(() => strongSecret("X", weak, "d"), weak).toThrow();
+    for (const good of ["3f9a1c7e0b5d48a2916e7c3d5b8f0a42e1d6c9b7a4f3e2d1c0b9a8f7e6d5c4b3", "q8Zk2VxJp0LmN4rTbW7yHcUe5SgAo1DfIu3Xv6Rj9Kw=", "xK9-pQ2_vL7mZt4-Yb8nWc3_Rd6-aH5jE1"]) expect(strongSecret("X", good, "d")).toBe(good);
+    vi.unstubAllEnvs();
+  });
+  it("the real .env's secret, if there is one, is not mistaken for a placeholder", async () => {
+    const env = path.join(ROOT, ".env");
+    if (!fs.existsSync(env)) return;
+    const v = fs.readFileSync(env, "utf8").match(/^JWT_SECRET=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "");
+    if (!v) return;
+    vi.resetModules();
+    vi.stubEnv("NODE_ENV", "production");
+    const { strongSecret } = await import("@/lib/secrets");
+    expect(() => strongSecret("JWT_SECRET", v, "d")).not.toThrow();
+    vi.unstubAllEnvs();
+  });
+});

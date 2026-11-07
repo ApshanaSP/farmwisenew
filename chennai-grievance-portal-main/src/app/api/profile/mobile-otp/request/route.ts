@@ -34,6 +34,6 @@ export async function POST(req: NextRequest) {
 
   await sendMail(session.email, "Verify your mobile number", otpEmailHtml(result.otp, "mobile number verification"));
 
-  const devOtp = devOtpForResponse(result.otp);
+  const devOtp = devOtpForResponse(result.otp, req.headers);
   return NextResponse.json({ message: "OTP sent.", devOtp });
 }

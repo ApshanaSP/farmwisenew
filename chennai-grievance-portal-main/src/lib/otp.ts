@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
+import { localOnly } from "@/lib/thunai/devguard";
 import {
   OTP_LENGTH,
   OTP_EXPIRY_MINUTES,
@@ -238,8 +239,10 @@ export async function consumeOtp(identifier: string, purpose: OtpPurpose): Promi
  *
  * Every route that might echo a code back must go through this helper.
  */
-export function devOtpForResponse(otp: string): string | undefined {
+export function devOtpForResponse(otp: string, headers: { get(name: string): string | null }): string | undefined {
   if (process.env.NODE_ENV === "production") return undefined;
   if (process.env.NEXT_PUBLIC_DEV_SHOW_OTP !== "true") return undefined;
+  // and only to a request made on this PC: a dev server that a tunnel forwards to must not give a reset code to the internet (SCAN-4)
+  if (!localOnly(headers)) return undefined;
   return otp || undefined;
 }

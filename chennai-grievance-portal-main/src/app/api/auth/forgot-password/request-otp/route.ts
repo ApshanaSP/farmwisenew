@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
       await sendMail(email, "Your password reset OTP", otpEmailHtml(result.otp, "password reset"));
 
-      const devOtp = devOtpForResponse(result.otp);
+      const devOtp = devOtpForResponse(result.otp, req.headers);
       return NextResponse.json({ message: GENERIC_MESSAGE, devOtp });
     }
 

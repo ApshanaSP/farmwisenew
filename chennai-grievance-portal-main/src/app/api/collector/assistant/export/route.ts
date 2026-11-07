@@ -5,6 +5,7 @@ import { assistantSession } from "@/lib/assistant/access";
 import { audit } from "@/lib/collector/sources";
 import { EXPORT_COLS, exportRows, parseDept, parsePeriod, parseZone } from "@/lib/collector/intel";
 import { LIMITS, admitExport } from "@/lib/assistant/limits";
+import { requireConfirm } from "@/lib/security/stepup";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const s = await assistantSession();
   if (s instanceof NextResponse) return s;
+  const q = req.nextUrl.searchParams;
+  // the console's own export of the same rows asks for the confirm step first; so does this one (the card fetches it, so the confirm box can answer the 428)
+  const c = await requireConfirm(req, s, "export", "Download the assistant's incident list as a spreadsheet", Object.fromEntries([...q.entries()].sort()));
+  if (!c.ok) return c.res;
   if (!admitExport(String(s.userId))) return NextResponse.json({ error: `Only ${LIMITS.exportsPerDay} exports a day from the assistant.` }, { status: 429 });
   const p = req.nextUrl.searchParams;
   const period = parsePeriod(p.get("period")), zone = parseZone(p.get("zone")), dept = s.lockDept ?? parseDept(p.get("dept"));

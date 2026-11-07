@@ -15,10 +15,19 @@ export class WeakSecretError extends Error {
 
 const isProduction = () => process.env.NODE_ENV === "production";
 
-/** `value` when it is long enough; else the dev fallback outside production, or WeakSecretError in production. */
+/**
+ * A value somebody typed as a stand-in, not a secret: words joined by - _ or spaces ("replace_this_with_a_long_random_secret_string"), or one
+ * that says what it is ("change", "replace", "your", "placeholder", "example"). A random key (hex, base64, a generated string) has
+ * digits or capitals inside it and no run of three plain words; the public .env.example's own text is the kind of value this catches (RC-25).
+ */
+export function looksLikePlaceholder(v: string): boolean {
+  return /^[a-z]+(?:[-_ .]+[a-z]+){2,}$/i.test(v) || /(?:^|[-_ .])(?:change|replace|placeholder|example|your|todo|fixme|insecure|dev[-_]only)(?:[-_ .]|$)/i.test(v);
+}
+
+/** `value` when it is long enough and not a placeholder; else the dev fallback outside production, or WeakSecretError in production. */
 export function strongSecret(name: string, value: string | undefined, devFallback: string): string {
   const v = (value ?? "").trim();
-  if (new TextEncoder().encode(v).length >= MIN_SECRET_BYTES) return v;
+  if (new TextEncoder().encode(v).length >= MIN_SECRET_BYTES && !(isProduction() && looksLikePlaceholder(v))) return v;
   if (isProduction()) throw new WeakSecretError(name);
   return v || devFallback;
 }
