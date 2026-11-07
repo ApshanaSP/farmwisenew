@@ -14,22 +14,32 @@ import { asksForbidden, redactText } from "./privacy";
 const NEGATED = /\b(?:never|cannot|can't|can not|won't|will not|don't|do not|not allowed|unable)\b|முடியாது|மாட்டேன்|கூடாது|வேண்டாம்|\b(?:mudiyaadhu|mudiyathu|maatten|kudaadhu|venaam)\b/i;
 
 /** capitalised words that start an organisation or a place, not a person */
-const NOT_A_PERSON = String.raw`(?!(?:The|This|That|Chennai|Greater|Metro|Tamil|Police|Corporation|Collector|Commissioner|Officer|Engineer|Department|Dept|Ward|Zone|Public|Municipal|District|State|Central|National|Health|Water|Fire|Traffic|Rescue|GCC|GCP|CMWSSB|TNEB|PWD|Citizen|Citizens|Resident|Residents|Caller|Complainant|Team|Staff|Control|Helpline|Office|Board|Authority)\b)`;
+const NOT_A_PERSON = String.raw`(?!(?:The|This|That|Metrowater|Municipality|Ministry|Government|Govt|Revenue|Electricity|Sanitation|Sewerage|Highways|Transport|Panchayat|Council|Committee|Association|Society|Hospital|School|College|Chennai|Greater|Metro|Tamil|Police|Corporation|Collector|Commissioner|Officer|Engineer|Department|Dept|Ward|Zone|Public|Municipal|District|State|Central|National|Health|Water|Fire|Traffic|Rescue|GCC|GCP|CMWSSB|TNEB|PWD|Citizen|Citizens|Resident|Residents|Caller|Complainant|Team|Staff|Control|Helpline|Office|Board|Authority)\b)`;
 const CAP = String.raw`[A-Z][\p{L}.'-]+`;
 const TITLE = String.raw`(?:(?:Mr|Mrs|Ms|Miss|Smt|Shri|Thiru|Tmt|Dr)\.?\s+)?`;
-const FILED_BY = new RegExp(String.raw`\b(?:filed|reported|raised|lodged|submitted|written|complained|made|sent|called|registered|given|posted)\s+by\s+${TITLE}${NOT_A_PERSON}${CAP}(?:\s+${CAP})?`, "u");
-const NAME_OF_ADDRESS = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}\s+${CAP}\s+(?:of|from|at|living\s+(?:at|in)|residing\s+(?:at|in))\s+(?:(?:No|Door|D)\.?\s*\d+[A-Za-z]?,?\s+)?${CAP}\s+(?:Street|St|Road|Rd|Nagar|Colony|Lane|Avenue|Main|Cross|Salai|Veedhi)\b`, "u");
-const ADDRESS_LINE = /\b(?:door|d\.?|house|flat|plot)\s*no\.?\s*\d+|\b\d+[A-Za-z]?,?\s+[A-Z][a-z]+\s+(?:Street|St\.?|Road|Rd\.?|Lane|Avenue|Cross)\b/;
+const FILED_BY = new RegExp(String.raw`\b(?i:filed|reported|raised|lodged|submitted|written|complained|made|sent|called|registered|given|posted)\s+(?i:by)\s+${TITLE}${NOT_A_PERSON}${CAP}(?:\s+${CAP})?`, "u");
+const NAME_OF_ADDRESS = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}\s+${CAP}\s+(?i:of|from|at|living\s+(?:at|in)|residing\s+(?:at|in))\s+(?:(?i:No|Door|D)\.?\s*\d+[A-Za-z]?,?\s+)?${CAP}\s+(?:Street|St|Road|Rd|Nagar|Colony|Lane|Avenue|Main|Cross|Salai|Veedhi)\b`, "u");
+const ADDRESS_LINE = new RegExp(String.raw`\b(?i:door|d\.?|house|flat|plot)\s*(?i:no)\.?\s*\d+|\b(?i:flat|plot)\s+\d+[A-Za-z]?\b|\b\d+[A-Za-z]?,?\s+[A-Z][a-z]+\s+(?:Street|St\.?|Road|Rd\.?|Lane|Avenue|Cross)\b`);
 const NAMED = new RegExp(String.raw`\b(?:named|name\s+is|name's|called)\s+${TITLE}${NOT_A_PERSON}${CAP}\s+${CAP}`, "u");
 /** Tanglish: "Ramesh Kumar dhaan complaint kuduthaar", "pugar kuduthavar Ramesh" */
 const TANGLISH_FILER = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}(?:\s+${CAP})?\s+(?:dhaan|thaan|dhan|than)\s+(?:complaint|pugar|call|phone|mail)`, "u");
+const TANGLISH_FILER3 = new RegExp(String.raw`\b${NOT_A_PERSON}${CAP}(?:\s+${CAP})?\s+(?:dhaan|thaan|dhan|than)\s+(?:\w+\s+){1,2}(?:complaint|pugar|call|phone|mail)|\b(?:indha|intha|andha|antha|the|this)?\s*(?:complaint|pugar)\s+${NOT_A_PERSON}${CAP}(?:\s+${CAP})?\s+(?:kudutha|koduth|pannin|panna)\w*`, "u");
 const TANGLISH_FILER2 = new RegExp(String.raw`\b(?:complaint|pugar)\s+(?:kudutha|koduth|pannina|panna)\w*\s*[:,-]?\s*${NOT_A_PERSON}${CAP}`, "u");
 /** Tamil: a name straight after "the one who filed" */
+/** Tamil "X என்பவர்" is "the one called X": it names a person */
+const TAMIL_NAMED = /[\p{L}\p{M}]{3,}\s*என்பவர/u;
 const TAMIL_FILER = /(?:புகார்\s*(?:கொடுத்தவர்|தந்தவர்|செய்தவர்|அளித்தவர்)|புகார்தாரர்|மனுதாரர்)\s*[:\-–]?\s*(?!(?:ஒருவர்|யாரும்|பலர்|எவரும்|பற்றி|கள்|\d))[\p{L}\p{M}]{3,}/u;
+
+/** idioms whose negation word does not negate what follows: "Don't worry, I will send it" is still an order to send */
+const IDIOM = /\b(?:don't|do\s+not|no|not\s+to)\s+(?:worry|worries|hesitate)\b|\bcan't\s+wait\b|கவலை(?:ப்பட)?\s*வேண்டாம்|\bkavalai(?:ppadaadhinga|\s*venaam)\b/gi;
+/** the order check runs one sentence at a time: a negation word only turns off the sentence it is in */
+function orders(s: string): boolean {
+  return s.replace(IDIOM, " ").split(/[.;:!?\n]+|\s+(?:but|however|aana|aanaal|ஆனால்)\s+/i).some((c) => c.trim() && !NEGATED.test(c) && asksForbidden(c));
+}
 
 /** a line that names a citizen: who filed, a private address */
 export function namesCitizen(line: string): boolean {
-  return FILED_BY.test(line) || NAME_OF_ADDRESS.test(line) || ADDRESS_LINE.test(line) || NAMED.test(line) || TANGLISH_FILER.test(line) || TANGLISH_FILER2.test(line) || TAMIL_FILER.test(line);
+  return FILED_BY.test(line) || NAME_OF_ADDRESS.test(line) || ADDRESS_LINE.test(line) || NAMED.test(line) || TANGLISH_FILER.test(line) || TANGLISH_FILER2.test(line) || TANGLISH_FILER3.test(line) || TAMIL_NAMED.test(line) || TAMIL_FILER.test(line);
 }
 
 export interface LineContext {
@@ -46,7 +56,7 @@ export function lineProblem(line: string | null | undefined, ctx: LineContext): 
   if (redactText(s) !== s) return "contact";
   if (namesCitizen(s)) return "citizen";
   if (echoesRecords(s, ctx.records)) return "copy";
-  if (!ctx.refusal && !NEGATED.test(s) && asksForbidden(s)) return "order";
+  if (!ctx.refusal && orders(s)) return "order";
   return null;
 }
 

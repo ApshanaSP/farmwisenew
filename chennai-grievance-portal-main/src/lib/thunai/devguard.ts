@@ -26,6 +26,8 @@ export function localOnly(headers: { get(name: string): string | null }): boolea
   for (const h of CLIENT_ADDRESS) {
     const v = headers.get(h);
     if (v && !addresses(h, v).every((a) => LOOPBACK.test(a))) return false;
+    // a Forwarded header that names no client, or a host that is not local, is a proxy talking: not a request made to this PC (CSK-7)
+    if (v && h === "forwarded" && (!addresses(h, v).length || [...v.matchAll(/host=("?)([^;,"]+)\1/gi)].some((m) => !LOCAL.test(m[2].trim())))) return false;
   }
   return true;
 }

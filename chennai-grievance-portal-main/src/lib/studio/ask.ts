@@ -54,10 +54,16 @@ export function rulesAsk(question: string, spec: Spec, profile: ColumnProfile[],
   const hasWord = (w: string) => new RegExp(String.raw`(?<![a-z0-9])${w.replace(/[^a-z0-9஀-௿]/g, "")}(?![a-z0-9])`, "i").test(q);
   const alone = (c: (typeof measures)[number]) => wordsOf(c.label).some((w) => hasWord(w) && !measures.some((o) => o !== c && wordsOf(o.label).includes(w)));
   const named = measures.find((c) => mentions(c.label) || q.includes(c.header.toLowerCase())) ?? (measures.filter(alone).length === 1 ? measures.find(alone) : undefined);
+  // "how many hospitals reported fever cases": what is counted is the thing named right after "how many" / "number of" when it is a row's own
+  // thing (a hospital, a week, the entity) and not the measure; the measure is then only the filter on it (CSK-8)
+  const stem = (w: string) => w.replace(/ies$/, "y").replace(/(?:es|s)$/, "");
+  const rowThings = new Set([...cols.filter((c) => c.role !== "measure").flatMap((c) => c.label.toLowerCase().split(/[^a-z0-9]+/)), ...String(spec.entityPlural ?? "").toLowerCase().split(/[^a-z0-9]+/)].filter((w) => w.length >= 3 && !GENERIC.has(w)).map(stem));
+  const head = q.match(/\b(?:how\s+many|number\s+of|count\s+of)\s+(?:the\s+)?([a-z]{3,})/)?.[1];
+  const countsThings = !!head && !GENERIC.has(head) && rowThings.has(stem(head)) && !measures.some((m) => wordsOf(m.label).map(stem).includes(stem(head)));
   const measure = named ?? (/\b(cost|amount|money|spend|spent|budget|value|rs|rupees|total)\b/.test(q) ? cols.find((c) => c.key === spec.primary) : undefined);
   if (/\b(average|avg|mean)\b/.test(q) && measure) { out.agg = "avg"; out.col = measure.key; }
   else if (/\b(highest|maximum|max|largest|biggest)\b/.test(q) && measure && out.by === "none") { out.agg = "max"; out.col = measure.key; }
-  else if (measure && (named || /\b(total|sum|how much|cost|amount|spend|spent)\b/.test(q))) { out.agg = "sum"; out.col = measure.key; }
+  else if (measure && !countsThings && (named || /\b(total|sum|how much|cost|amount|spend|spent)\b/.test(q))) { out.agg = "sum"; out.col = measure.key; }
 
   // filters
   if (spec.openValues.length && /\b(open|pending|not (yet )?(done|completed|closed)|unresolved|outstanding|incomplete|still)\b/.test(q)) out.filters.push({ col: "_o", op: "open", values: [] });

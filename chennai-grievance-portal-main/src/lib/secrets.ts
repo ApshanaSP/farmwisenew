@@ -16,12 +16,15 @@ export class WeakSecretError extends Error {
 const isProduction = () => process.env.NODE_ENV === "production";
 
 /**
- * A value somebody typed as a stand-in, not a secret: words joined by - _ or spaces ("replace_this_with_a_long_random_secret_string"), or one
- * that says what it is ("change", "replace", "your", "placeholder", "example"). A random key (hex, base64, a generated string) has
- * digits or capitals inside it and no run of three plain words; the public .env.example's own text is the kind of value this catches (RC-25).
+ * A value somebody typed as a stand-in, not a secret: one that says what it is, as a whole word between - _ . or spaces ("change", "replace",
+ * "secret", "jwt", "your", "example", "production"...), or that repeats a word ("secret_secret_secret"). It is judged by what the words say,
+ * not by their shape: a long passphrase of plain words that say nothing about being a stand-in is a real secret (CSK-9). A random key (hex,
+ * base64) has none of these as a whole word; the public .env.example's own text is the kind of value this catches (RC-25).
  */
 export function looksLikePlaceholder(v: string): boolean {
-  return /^[a-z]+(?:[-_ .]+[a-z]+){2,}$/i.test(v) || /(?:^|[-_ .])(?:change|replace|placeholder|example|your|todo|fixme|insecure|dev[-_]only)(?:[-_ .]|$)/i.test(v);
+  const parts = v.toLowerCase().split(/[-_ .]+/).filter((p) => p.length >= 4);
+  const repeated = parts.length !== new Set(parts).size;
+  return repeated || /(?:^|[-_ .])(?:change(?:me)?|replace|placeholder|example|your|todo|fixme|insecure|dev|only|secret|password|passwd|jwt|token|default|sample|demo|test|production|server|key|this|here)(?:[-_ .]|$)/i.test(v);
 }
 
 /** `value` when it is long enough and not a placeholder; else the dev fallback outside production, or WeakSecretError in production. */
