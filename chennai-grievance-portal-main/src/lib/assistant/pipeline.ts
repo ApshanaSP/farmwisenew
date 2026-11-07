@@ -43,6 +43,7 @@ import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, 
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
 import { customWindow, fastPath } from "@/lib/assistant/fastpath";
+import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
 import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
@@ -267,7 +268,7 @@ const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoo
 /** the whole message is a greeting, thanks or goodbye (not "hi, how many accidents today?"); "ok" stays with the router */
 export const ONLY_SMALLTALK = /^\s*(hi+|hello|hey|thanks|thank you( so much| very much)?|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|bye|goodbye|வணக்கம்|நன்றி)(\s+(sir|madam|mam|there|all|team))?\s*[.!?]*\s*$/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
-const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
+const PERIOD_WORDS = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/.source}`, "i");
 /** The period the question's own words name, or null. */
 export function periodFromWords(m: string): Scope["period"] | null {
   // "open for more than 7 days", "pending over 30 days": how long something has been open, not the period asked about
@@ -649,7 +650,7 @@ function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false,
   }
   const scope: Scope = o.period ? { ...base, period: o.period } : { ...base };
   // "yesterday": the previous day's window, for these tools as for the lists
-  if (/\b(yesterday|nethu|neththu)\b|நேற்று/i.test(message) && !/\b(since|from) yesterday\b/i.test(message)) (scope.period = "daily", scope.offset = 1);
+  if (YESTERDAY.test(message) && !SINCE_YESTERDAY.test(message)) (scope.period = "daily", scope.offset = 1);
   const zn = Number(message.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1]);
   if (zn && n.zones.has(zn)) scope.zone = zn;
   // a category named in the question ("road accident trend"), by the console's own keyword classifier

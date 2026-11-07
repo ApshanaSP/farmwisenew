@@ -320,7 +320,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   if (incidenty && any(toks, RANKING)) return mk("CATEGORY_RANKING", "asks which kinds, not which incidents");
   // "this month vs last month complaints": the period against the one before (a count that states both), not two places
   if ((incidenty || deaths) && VS_PREVIOUS.test(message)) return mk("INCIDENT_COUNT", "compares the period with the one before", { vsPrevious: true });
-  if (incidenty && any(toks, COUNT)) return mk("INCIDENT_COUNT", "asks how many");
+  // a count word is enough when what is counted is closed work or deaths ("how many were resolved yesterday", "how many deaths yesterday")
+  if ((incidenty || resolved || deaths) && any(toks, COUNT)) return mk("INCIDENT_COUNT", resolved && !incidenty ? "asks how many were resolved" : "asks how many");
   // "road deaths today", "gas poisoning deaths this week": how many people died (a list word still lists the incidents)
   // ("any dengue deaths?" asks whether anyone died: a count, though "any" is a list word)
   if (deaths && (topic || incidenty || any(toks, ["people", "persons", "workers", "road"])) && !any(toks, LIST.filter((w) => w !== "any")))

@@ -64,7 +64,8 @@ const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_
 
 function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at", openEnd = false) {
   const h = hours ?? f.hours ?? null;
-  const k = off + (f.offset ?? 0);
+  // a calendar range already IS the window ("yesterday" is its own day): the offset is for rolling windows only, or it would be moved back twice (BUG-018, PB-003)
+  const k = off + (f.range ? 0 : f.offset ?? 0);
   // a calendar window (a month, "since 1 October"): its exact bounds; the window before it has the same length
   const w = f.range ? rangeWindow(f.range, k, col)
     : openEnd && k === 0 ? periodSinceWindow(f.period, now, col, h ?? undefined) // closed time: a decision made since the refresh counts

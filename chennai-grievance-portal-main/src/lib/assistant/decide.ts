@@ -6,10 +6,11 @@
 import type { AnswerKind } from "@/lib/ai/prompts/router";
 import type { Scope } from "@/lib/assistant/answer";
 import type { ConversationContext } from "@/lib/assistant/context";
+import { YESTERDAY } from "@/lib/assistant/when";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 
 /** Words that name a period ("recent" is not one: the fast path reads it as the last day, whatever period the router copied). */
-const NAMES_PERIOD = /\b(today'?s?|tonight|yesterday|nethu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|vaaram|maasam/i;
+const NAMES_PERIOD = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|tonight|yesterday|nethu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|நேற்று|வார|மாத|காலாண்டு|innaiki|vaaram|maasam/.source}`, "i");
 
 /** The parts of a route the decision reads. */
 export interface RouteLike {

@@ -6,6 +6,7 @@
  * the structured context the previous answer saved; anything else returns null and goes to the existing router.
  */
 import { baseCard } from "@/lib/assistant/cards";
+import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
 import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, PICK_FROM_LIST, detectIntent, topicByKey, topicWords, type Detected, type Topic } from "@/lib/assistant/intent";
@@ -46,11 +47,13 @@ const OLDEST = /\b(oldest|earliest|longest (pending|open|unresolved)|pending (th
 /** "is it resolved?", "has it been closed?": a question answered yes or no ("what is the status?" is not) */
 const YES_NO = /^\s*(is|are|has|have|was|were|did|does|do)\b|\b(yet|or not)\s*\??\s*$/i;
 
+export { YESTERDAY, SINCE_YESTERDAY };
+
 /** The period a question names, else null. */
 export function periodNamed(text: string): Period | null {
   // "open for more than 7 days": how long something has been open, not the period asked about
   const t = text.toLowerCase().replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/g, " ");
-  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|yesterday|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|இன்றைய|நேற்று|நேற்றைய/.test(t)) return "daily";
+  if (/\b(today'?s?|tonight|(last|past|previous) 24 ?(h|hrs?|hours?)|24 ?(hrs?|hours)|past day|this morning|recent(ly)?|latest|right now|currently|just now|innaiki|innaikku)\b|இன்று|இன்றைய/.test(t) || YESTERDAY.test(t)) return "daily";
   if (/\b(this|last|past|indha|intha|pona) week\b|\b7 days\b|\bweekly\b|vaaram|வாரம்/.test(t)) return "weekly";
   if (/\b(this|last|past) month\b|\b30 days\b|\bmonthly\b|maasam|மாதம்/.test(t)) return "monthly";
   if (/\b(this|last|past) quarter\b|\b90 days\b|\bquarterly\b/.test(t)) return "quarterly";
@@ -58,26 +61,37 @@ export function periodNamed(text: string): Period | null {
 }
 
 /** `decided`: the intent the router understood; without it (no model) the rules read the message. */
+/** What the first tile of a count card is named: the filter the count used, so "Reported" never sits over a past-deadline or open count (RC-10, PB-143). */
+export function countLabel(f: { overdue?: boolean; openOnly?: boolean; minOpenDays?: number | null }): string {
+  return f.overdue ? "Past deadline" : f.minOpenDays ? `Open over ${f.minOpenDays} days` : f.openOnly ? "Open" : "Reported";
+}
+
 /** A count said in Tamil or Tanglish; null for English. `where` is the English place phrase (" in Velachery (Adyar zone)"). */
 export function countInLanguage(lang: string, c: { n: number; prev: number; severe: number; open: number; dead: number; kind: string; period: string; where: string;
-  measure?: "deaths" | "complaints" | "injured" | null; complaints?: number; openOnly?: boolean; zoneTa?: string | null }):
+  measure?: "deaths" | "complaints" | "injured" | null; complaints?: number; openOnly?: boolean; overdue?: boolean; minOpenDays?: number | null; zoneTa?: string | null }):
   { headline: string; text: string } | null {
   if (lang !== "ta" && lang !== "tanglish") return null;
   const place = c.where.replace(/^\s*in\s+/i, "").trim();
   const days = c.period.match(/(\d+)\s*days?/)?.[1], hours = /24 hours/.test(c.period), yday = /previous day|yesterday/.test(c.period);
+  const lastWeek = /^last week\b/.test(c.period), lastMonth = /^last month\b/.test(c.period);
   const f = (v: number) => v.toLocaleString("en-IN");
   if (lang === "tanglish") {
-    const when = yday ? "netru" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
+    const when = yday ? "netru" : lastWeek ? "pona vaaram" : lastMonth ? "pona maasam" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
     const at = place ? `${place}-la ` : "";
     if (c.measure === "deaths")
       return { headline: `${f(c.dead)} per uyirizhappu · ${when}`, text: `${at}${when} ${c.kind}-la ${f(c.dead)} per uyirizhandhaanga (${f(c.n)} ${c.kind}, ${f(c.severe)} severe).` };
     if (c.measure === "complaints")
       return { headline: `${f(c.complaints ?? 0)} ${c.openOnly ? "open " : ""}complaints · ${when}`,
         text: `${at}${when} ${f(c.complaints ?? 0)} ${c.openOnly ? "open " : ""}citizen complaints irukku (${f(c.n)} ${c.kind}; ${f(c.open)} innum open).` };
+    if (c.overdue || c.openOnly || c.minOpenDays) {
+      const state = c.overdue ? "deadline thaandi irukku" : c.minOpenDays ? `${c.minOpenDays} naal-ku mela innum open-la irukku` : "innum open-la irukku";
+      return { headline: `${f(c.n)} ${c.kind} ${c.overdue ? "deadline thaandiyadhu" : "open"} · ${when}`,
+        text: `${at}${when} ${f(c.n)} ${c.kind} ${state}${c.severe ? ` (${f(c.severe)} severe)` : ""}${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.` };
+    }
     const text = `${at}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
     return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
   }
-  const when = yday ? "நேற்று" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
+  const when = yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
   const kind = tamilKind(c.kind);
   // "Adyar zone" in a Tamil sentence: the zone's Tamil name ("அடையாறு மண்டல"), when the place is just the zone
   const zoneTa = c.zoneTa && /^[A-Za-z .-]+ zone$/.test(place) ? `${c.zoneTa} மண்டல` : null;
@@ -87,6 +101,11 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
   if (c.measure === "complaints")
     return { headline: `${f(c.complaints ?? 0)} ${c.openOnly ? "நிலுவையிலுள்ள " : ""}புகார்கள் · ${when}`,
       text: `${when}${at} ${f(c.complaints ?? 0)} ${c.openOnly ? "நிலுவையிலுள்ள " : ""}குடிமக்கள் புகார்கள் உள்ளன (${f(c.n)} ${kind}; ${f(c.open)} இன்னும் நிலுவையில்).` };
+  if (c.overdue || c.openOnly || c.minOpenDays) {
+    const state = c.overdue ? "காலக்கெடுவைத் தாண்டியுள்ளன" : c.minOpenDays ? `${c.minOpenDays} நாட்களுக்கு மேலாக நிலுவையில் உள்ளன` : "இன்னும் நிலுவையில் உள்ளன";
+    return { headline: `${f(c.n)} ${kind} ${c.overdue ? "காலக்கெடு தாண்டியவை" : "நிலுவையில்"} · ${when}`,
+      text: `${when}${at} ${f(c.n)} ${kind} ${state}${c.severe ? ` (${f(c.severe)} கடுமையானவை)` : ""}${c.dead ? `, ${f(c.dead)} உயிரிழப்பு` : ""}.` };
+  }
   const text = `${when}${at} ${f(c.n)} ${kind} பதிவாகியுள்ளன${c.prev ? ` (முந்தைய காலத்தில் ${f(c.prev)})` : ""}: ${f(c.severe)} கடுமையானவை, ${f(c.open)} இன்னும் நிலுவையில்${c.dead ? `, ${f(c.dead)} உயிரிழப்பு` : ""}.`;
   return { headline: `${f(c.n)} ${kind} · ${when}`, text };
 }
@@ -351,7 +370,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       const cm = d.measure === "complaints"; // a complaints answer counts the incidents the complaints are about
       const local = countInLanguage(i.lang, { n: cm ? c.complaintIncidents : c.n, prev: c.prev, severe: c.severe, open: cm ? c.complaintOpen : c.open, dead: c.dead, kind, period: P, where: sw,
         zoneTa: f.zone != null ? i.names.zones.get(f.zone)?.nameTa ?? null : null,
-        measure: d.measure ?? null, complaints: d.openOnly ? c.openComplaints : c.complaints, openOnly: d.openOnly });
+        measure: d.measure ?? null, complaints: d.openOnly ? c.openComplaints : c.complaints, openOnly: d.openOnly,
+        overdue: !!inc.overdue, minOpenDays: inc.minOpenDays ?? null });
       if (local) { card.headline = local.headline; card.answerMarkdown = local.text; card.voiceSummary = local.text; }
       card.kpis = d.measure === "deaths"
         ? [{ label: "Deaths", value: c.dead, prev: c.prevDead, tone: c.dead ? "sev" : undefined }, { label: "Incidents", value: c.n, prev: c.prev, tone: "info" },
@@ -365,7 +385,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
             // open complaints are about open incidents by definition: "Of them open" there read as a finding ("all 85 remain open,
             // no closure recorded", R-13), so it is shown only when every complaint was counted
             ...(d.openOnly ? [] : [{ label: "Of them open", value: c.complaintOpen }])]
-          : [{ label: "Reported", value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
+          : [{ label: countLabel(inc), value: c.n, prev: c.prev, tone: "info" }, { label: "Severe", value: c.severe, tone: c.severe ? "sev" : undefined },
             { label: "Still open", value: c.open }, ...(c.dead ? [{ label: "Deaths", value: c.dead, tone: "sev" as const }] : [])];
       card.context = { ...ctxBase, lastResponseType: "kpi" };
       card.sources.tools.push({ name: "count_incidents", args: { ...inc }, ms: 0 });
@@ -691,7 +711,7 @@ const MAX_HOURS = 180 * 24;
 export function customWindow(text: string, now?: string): { hours: number; label: string; period: Period; offset?: number; range?: { from: string; to: string }; note?: string } | null {
   // yesterday: the day before the last 24 hours (the previous day's window, compared with the day before it)
   const nowMs = now ? Date.parse(`${now.replace(" ", "T")}+05:30`) : NaN;
-  if (/\b(yesterday|nethu|neththu|nethaiki)\b|நேற்று/i.test(text) && !/\b(since|from) yesterday\b/i.test(text)) {
+  if (YESTERDAY.test(text) && !SINCE_YESTERDAY.test(text)) {
     // the calendar day before today in India (midnight to midnight IST), not the 24 hours before the last 24 (BUG-018)
     if (Number.isFinite(nowMs)) {
       const today = now!.slice(0, 10);
@@ -705,6 +725,28 @@ export function customWindow(text: string, now?: string): { hours: number; label
   const ist = (ms: number) => new Date(ms + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
   const day = (ms: number) => new Date(ms + 330 * 60_000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   if (Number.isFinite(nowMs)) {
+    // "last week" is the calendar week (Monday to Sunday) before this one, "last month" the calendar month before this one: not the
+    // same rolling 7 or 30 days as "this week" and "this month" (RC-10, PB-221). "since last week" and "in the last week" are rolling.
+    const lw = /\b(last|previous|pona|kadandha) (week|month)\b(?!\s*\d)/i.exec(text);
+    if (lw && !/\b(since|from|in the|during the|over the|within the|for the) (last|previous|pona|kadandha) (week|month)\b/i.test(text)) {
+      const nowIst = new Date(nowMs + 330 * 60_000);
+      const todayMid = Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth(), nowIst.getUTCDate());
+      const isWeek = lw[2].toLowerCase() === "week";
+      let a: number, b: number, label: string;
+      if (isWeek) {
+        b = todayMid - ((nowIst.getUTCDay() + 6) % 7) * 864e5; // this Monday 00:00 (IST wall clock as UTC)
+        a = b - 7 * 864e5;
+        label = `last week (${day(a - 330 * 60_000).replace(/ \d{4}$/, "")} to ${day(b - 864e5 - 330 * 60_000).replace(/ \d{4}$/, "")})`;
+      } else {
+        b = Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth(), 1);
+        a = Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth() - 1, 1);
+        label = `last month (${MONTH_NAMES[new Date(a).getUTCMonth()]} ${new Date(a).getUTCFullYear()})`;
+      }
+      const iso = (t: number) => new Date(t).toISOString().slice(0, 19).replace("T", " ");
+      const hours = Math.round((b - a) / 3600_000);
+      if (nowMs - (a - 330 * 60_000) <= MAX_HOURS * 3600_000 + 31 * 864e5)
+        return { hours, label, period: periodOf(hours), range: { from: iso(a), to: iso(b) } };
+    }
     // "since 1 October", "since Oct 1", "since Diwali": from that day to now
     const since = text.match(/\b(?:since|from)\s+(?:(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})|([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?)\b/i);
     const holiday = /\b(since|from|after)\b/i.test(text) ? HOLIDAYS.find(([re]) => re.test(text)) : undefined;
