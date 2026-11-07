@@ -390,7 +390,8 @@ export function checkPlan(o: AskOut, spec: Spec, id: string): Plan {
   const limit = Math.max(by === "none" ? 1 : 8, Math.min(chart === "map" ? 300 : 25, Math.round(o.limit || 10)));
   // a table of one row per place per day (hospital beds every day) is read in its latest period, as the dashboard, the
   // drill-down and the insights read it: summing a daily stock across every day gave "Royapuram 11,84,029 beds"
-  if (spec.panelBy && by !== "time" && !filters.some((f) => f.col === "_d")) filters.push({ col: "_d", op: "latest", values: [] });
+  // (a plain count of rows, with nothing else asked, is the file's rows: the window is for figures that would add a stock up across periods)
+  if (spec.panelBy && by !== "time" && !filters.some((f) => f.col === "_d") && !(agg === "count" && by === "none" && !filters.length)) filters.push({ col: "_d", op: "latest", values: [] });
   return {
     id, title: clip(o.title, 80) || "Answer", chart, agg, col: agg === "count" ? null : agg === "distinct" ? (measure?.key ?? o.col) : measure?.key ?? null,
     by, byCol: by === "col" ? byCol : null, unit: by === "time" ? o.unit ?? "week" : null, filters,

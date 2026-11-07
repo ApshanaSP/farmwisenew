@@ -275,6 +275,11 @@ export function describeFilter(spec: Spec, f: Filter, names: Names): string {
 
 /** One plain sentence that answers a plan from its result: the numbers come from the result, never from a model. */
 export function answerText(p: PanelData, spec: Spec): string {
+  const t = answerCore(p, spec);
+  // a window the engine put on by itself ("latest" for a table of one row per place per period) is part of the answer (RC-20)
+  return p.plan.filters.some((x) => x.op === "latest") && p.rows ? `${t} Latest period only.` : t;
+}
+function answerCore(p: PanelData, spec: Spec): string {
   const f = (v: number) => fmtNum(v, p.format, p.unit);
   if (!p.rows) return `No ${spec.entityPlural} match${p.subtitle ? ` (${p.subtitle})` : ""}.`;
   if (p.kpi) return `${p.kpi.label}: ${f(p.kpi.value)}${p.kpi.sub ? ` (${p.kpi.sub})` : ""}.`;

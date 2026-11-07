@@ -840,17 +840,14 @@ test.describe("New on the way: what the Data Studio's rules answer on this path 
   };
   test("audit-client_browser-13: how many rows are there says the file's 400 rows", async ({ browser }) => {
     const out = await askAll(browser);
-    test.fail();
     expect(out["how many rows are there"]).toMatch(/\b400\b/);
   });
   test("audit-client_browser-13: which zone has the most fever cases counts fever cases, not report rows", async ({ browser }) => {
     const out = await askAll(browser);
-    test.fail();
     expect(out["which zone has the most fever cases"]).not.toMatch(/leads with \d\b/);
   });
   test("audit-client_browser-13: the same question in Tamil script is answered with a zone", async ({ browser }) => {
     const out = await askAll(browser);
-    test.fail();
     expect(out["எந்த மண்டலத்தில் அதிக காய்ச்சல்"]).not.toMatch(/^Case reports: 16/);
   });
 });

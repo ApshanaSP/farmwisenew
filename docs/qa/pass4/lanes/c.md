@@ -25,3 +25,15 @@
 - Three languages and real path: yes. Open set before and after with the grader: 7 rose, 0 right-to-wrong (docs/qa/pass4/results/ledger-open-baseline-codelanes--lane-c-rc19.md).
 - Not fixed here: audit-privacy_injection-4 and -11 (a place field or a title read out on a line that screens.ts and stagelocal.ts build with no model). Those files belong to another lane; the tests stay it.fails. The exit gate cannot reach them because they never pass through finish().
 - Test change: it.fails changed to it for audit-privacy_injection-3, -5, -6, -7, -12, the realgate chain test (-1) and audit-understanding-18; props.pass4.test.ts only got a readonly type fix.
+
+## RC-20 + RC-21 (PB-001, PB-147): fixed in code and unit tests; the three e2e rows are changed to run but not run in a browser yet
+- RC-20 root cause: with no model, rulesAsk turned a named measure into a sum only when the words "total", "sum", "how much", "cost"... were in the sentence, so "most fever cases" stayed a count of report rows. A table of one row per hospital per week silently got a "latest period" filter, so "how many rows" said 16 of 400 and no answer said it covered one week. A Tamil question had no words the rules read, so it fell through to a row count, with the same confident sentence.
+- RC-20 why missed: tests asked the questions that had words from the rule list, on files without a panel column, and only checked that something was answered.
+- RC-20 fix: a measure column that the question names (all its words, or the one word no other measure has) is summed; a plain row count is the whole file; an engine-added latest window is said in the answer (English and Tamil); a Tamil question with nothing the rules read is answered "I cannot read this", never a row count.
+- RC-21 root cause: a link that goes through the picker saves its list and its sign-in under a token. Nothing removed them: deleting the dataset removed files by the dataset's own id, and dropVault had no caller.
+- RC-21 why missed: the delete was tested for the dataset's own files, not for what the flow saved under another id.
+- RC-21 fix: a dataset made from a picker records its token (.pickof), and deleting the dataset removes the token's list and sign-in; deleteConnector drops the vault; and anything saved for an id that never became a dataset is swept after a day (also on every new pick).
+- Sweep: docs/qa/pass4/sweeps/RC-20-21.txt. Other encrypted secrets (collector/sources.ts, onboard.ts) live in database rows that go with their row.
+- Class guards: src/lib/studio/ask.pass4.test.ts (every sample file: a named measure is summed, not counted) and src/lib/studio/secrets-kept.pass4.test.ts (every file kind in the store header is removed by delete or the sweep; dropVault has a caller).
+- Three languages: English, Tamil script and Tanglish are tested at the rules level on the real fever sample. The real server path (browser tests audit-client_browser-13, test.fail removed) is run after the final build.
+- Tests: scans-code-4 (two) it.fails to it; the three audit-client_browser-13 browser tests lost test.fail().

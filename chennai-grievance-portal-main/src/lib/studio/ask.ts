@@ -46,12 +46,18 @@ export function rulesAsk(question: string, spec: Spec, profile: ColumnProfile[],
     }
   }
 
-  // measure
-  const measure = cols.filter((c) => c.role === "measure").find((c) => mentions(c.label) || q.includes(c.header.toLowerCase()))
-    ?? (/\b(cost|amount|money|spend|spent|budget|value|rs|rupees|total)\b/.test(q) ? cols.find((c) => c.key === spec.primary) : undefined);
+  // measure: a measure column the question names (all its words, or the one word of it that no other measure column has) is the thing asked
+  // about, so it is added up; the rows are counted only when no measure is named (RC-20: "most fever cases" was a count of report rows)
+  const measures = cols.filter((c) => c.role === "measure");
+  const GENERIC = new Set(["case", "cases", "count", "counts", "total", "number", "numbers", "value", "values", "amount", "report", "reports", "rows", "the", "and", "for"]);
+  const wordsOf = (label: string) => label.toLowerCase().split(/[^a-z0-9஀-௿]+/).filter((w) => w.length >= 3 && !GENERIC.has(w));
+  const hasWord = (w: string) => new RegExp(String.raw`(?<![a-z0-9])${w.replace(/[^a-z0-9஀-௿]/g, "")}(?![a-z0-9])`, "i").test(q);
+  const alone = (c: (typeof measures)[number]) => wordsOf(c.label).some((w) => hasWord(w) && !measures.some((o) => o !== c && wordsOf(o.label).includes(w)));
+  const named = measures.find((c) => mentions(c.label) || q.includes(c.header.toLowerCase())) ?? (measures.filter(alone).length === 1 ? measures.find(alone) : undefined);
+  const measure = named ?? (/\b(cost|amount|money|spend|spent|budget|value|rs|rupees|total)\b/.test(q) ? cols.find((c) => c.key === spec.primary) : undefined);
   if (/\b(average|avg|mean)\b/.test(q) && measure) { out.agg = "avg"; out.col = measure.key; }
   else if (/\b(highest|maximum|max|largest|biggest)\b/.test(q) && measure && out.by === "none") { out.agg = "max"; out.col = measure.key; }
-  else if (/\b(total|sum|how much|cost|amount|spend|spent)\b/.test(q) && measure) { out.agg = "sum"; out.col = measure.key; }
+  else if (measure && (named || /\b(total|sum|how much|cost|amount|spend|spent)\b/.test(q))) { out.agg = "sum"; out.col = measure.key; }
 
   // filters
   if (spec.openValues.length && /\b(open|pending|not (yet )?(done|completed|closed)|unresolved|outstanding|incomplete|still)\b/.test(q)) out.filters.push({ col: "_o", op: "open", values: [] });
@@ -81,6 +87,12 @@ export function rulesAsk(question: string, spec: Spec, profile: ColumnProfile[],
   if (top) out.limit = Number(top[1]);
 
   out.title = titleFor(out, spec);
+  // nothing in the question was read (no grouping, measure, filter, count word, list word): the rules do not know what was asked, so they say
+  // that and never answer with a row count (RC-20: a Tamil question got "Case reports: 16")
+  const read = out.kind === "watch" || out.by !== "none" || out.agg !== "count" || out.filters.length > 0 || /\b(how many|count|number of|total|rows|records|entries|list|show me the|table|which (are|were) the)\b/.test(q);
+  if (out.kind === "query" && !read && /[஀-௿]/.test(question)) {
+    return { ...out, kind: "unsupported", note: "இந்தக் கேள்வியை AI மாதிரி இல்லாமல் என்னால் படிக்க முடியவில்லை. ஆங்கிலத்தில் கேளுங்கள், அல்லது \"zone\" வாரியாக, \"over time\" என்று சொல்லுங்கள். I cannot read this question without the AI model: ask in English, or say \"by zone\" or \"over time\"." };
+  }
   if (out.kind === "query" && out.by === "none" && !out.filters.length && out.agg === "count" && !/\b(how many|count|number of|total)\b/.test(q)) {
     out.note = "Read with simple rules (no AI model answered): try naming a zone, a type, a status, or say \"by zone\" or \"over time\".";
   }

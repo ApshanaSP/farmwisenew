@@ -1,0 +1,19 @@
+   × RC-21: nothing the Studio saves about a sign-in outlives its use > dropVault has a caller 33ms
+   × RC-21: nothing the Studio saves about a sign-in outlives its use > the sweep removes a token's list and sign-in that nobody used, and keeps a real dataset's files 23ms
+   × RC-21: nothing the Studio saves about a sign-in outlives its use > deleting a dataset made from a picker removes the picker's list and sign-in 5ms
+   × RC-20: the rules' answer is the answer to the question > 'how many rows' is the file's rows, not the latest week's 59ms
+   × RC-20: the rules' answer is the answer to the question > a named measure is added up: 'most fever cases' is a sum of the Fever Cases column 12ms
+   × RC-20: the rules' answer is the answer to the question > a window put on silently is said in the answer 11ms
+   × RC-20: the rules' answer is the answer to the question > a question in Tamil script that the rules cannot read says so, and does not answer with a row count 10ms
+   × RC-20: the rules' answer is the answer to the question > Tanglish with English column words is read by those words: the measure is added up, not the rows counted 11ms
+   × RC-20: the rules' answer is the answer to the question > a question with nothing the rules can read is not answered with a row count, in any script 10ms
+   × RC-20 guard: naming a measure column asks for its sum, on every sample file > Fever_Surveillance_Weekly_2026.csv: each named measure is summed, never counted 5ms
+   × RC-20 guard: naming a measure column asks for its sum, on every sample file > GCC_SWD_Desilting_Register_Sep2026.xlsx: each named measure is summed, never counted 133ms
+   × RC-20 guard: naming a measure column asks for its sum, on every sample file > Hospital_Beds_Daily_2026.csv: each named measure is summed, never counted 54ms
+   × RC-20 guard: naming a measure column asks for its sum, on every sample file > PDS_Ration_Shop_Stock_Oct2026.csv: each named measure is summed, never counted 10ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 3 passed (16)
+   × scans-code-4: a link with a saved sign-in that went through the picker > scans-code-4 no saved sign-in is left after the dataset is deleted 15ms
+   × scans-code-4: a link with a saved sign-in that went through the picker > scans-code-4 nothing the picker saved is left after the dataset is deleted 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)
