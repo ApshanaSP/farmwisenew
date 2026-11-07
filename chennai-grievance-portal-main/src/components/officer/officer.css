@@ -369,3 +369,10 @@
 .dic .ohero:before{opacity:.5}
 .dic .ohero-ic{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-2)}
 .dic .btn.act{background:#C9711E;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 0 1px rgba(247,137,59,.45)}
+
+/* the officer's band on a phone: the page title has its own line (the row gave a Tamil title 46% of the width: "மேலோட்..."), and the period
+   switch shrinks to the band instead of running past it (RC-46, PB-328) */
+.dic.ofc:not(.fit) .band:not(.hero) .band-t{flex:1 1 100%;flex-direction:column;align-items:flex-start;gap:3px}
+.dic.ofc:not(.fit) .band:not(.hero) h1.roll{max-width:100%;width:100%}
+.dic.ofc:not(.fit) .band .seg.sm{min-width:0;max-width:100%}
+.dic.ofc:not(.fit) .band .seg.sm button{padding:4px 3px;min-width:0;white-space:nowrap}

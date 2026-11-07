@@ -102,6 +102,16 @@ function AlertChip({ d, b, admin, now, open, setOpen, onHide }: { d: Payload; b:
     const z = zoomOf(el), r = el.getBoundingClientRect(), h = host.getBoundingClientRect();
     setAt({ host, left: Math.max(8, (r.left - h.left) / z), top: (r.bottom - h.top) / z + 6 });
   }, [open]);
+  // the details close on a click anywhere else and on Escape, so they never stay open over the next thing the person opens, such as the
+  // Take action dialog (RC-46, PB-301); the focus goes back to the chip
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: Event) => { if (!(e.target as Element | null)?.closest?.(".alc-w, .alc-pop")) setOpen(() => false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(() => false); btn.current?.focus(); } };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key); };
+  }, [open, setOpen]);
   return (
     <span className="alc-w" data-pop>
       <button ref={btn} className={`alc t-${tone}${open ? " open" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} title={b ? `${b.title}: ${b.line}` : admin?.line}>

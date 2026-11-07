@@ -52,7 +52,7 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
           </div>
         </motion.section>
 
-        <motion.section variants={stagger(0.05)} className="mb-6 grid gap-3 sm:grid-cols-3">
+        <motion.section variants={stagger(0.05)} className="mb-6 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
           {tiles.map(({ label, value, icon: Icon, kc, note, ring }) => (
             <motion.div key={label} variants={enter} className="diq-kpi" style={{ ["--kc" as string]: kc }}>
               <span className="diq-ic"><Icon className="h-[19px] w-[19px]" aria-hidden="true" /></span>
@@ -70,11 +70,11 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
           ))}
         </motion.section>
 
-        <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <motion.section variants={enter} className="diq-panel min-w-0 lg:self-start">
             <header className="ui-ch">
               <span className="ui-ch-ic" data-tone="accent" aria-hidden="true"><ClipboardList /></span>
-              <div className="ui-ch-t"><h3>Recent complaints</h3><small>Your latest three, with where each one is</small></div>
+              <div className="ui-ch-t"><h2>Recent complaints</h2><small>Your latest three, with where each one is</small></div>
               {recent.length > 0 && (
                 <div className="ui-ch-r"><Link href="/citizen/track-complaints" className="ui-more">See all<ArrowRight aria-hidden="true" /></Link></div>
               )}

@@ -286,7 +286,7 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen flex-col diq-bg">
         <Header userName={user?.email} />
-        <main className="mx-auto grid w-full max-w-[1100px] flex-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[300px_1fr]">
+        <main className="mx-auto grid grid-cols-[minmax(0,1fr)] w-full max-w-[1100px] flex-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <div className="card flex flex-col items-center gap-3"><Skeleton w={96} h={96} r={48} /><Skeleton h={16} w={140} /><Skeleton h={12} w={100} /></div>
           <div className="card space-y-4"><Skeleton h={30} w="70%" /><Skeleton h={14} /><Skeleton h={14} w="80%" /><Skeleton h={14} w="60%" /></div>
         </main>
@@ -318,7 +318,7 @@ export default function ProfilePage() {
       <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="mb-6 text-[28px] font-semibold tracking-[-0.03em] text-ink">My profile</h1>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* ---- profile card ---- */}
           <motion.aside initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_OUT }}
             className="card flex flex-col items-center p-6 text-center lg:sticky lg:top-[84px]">

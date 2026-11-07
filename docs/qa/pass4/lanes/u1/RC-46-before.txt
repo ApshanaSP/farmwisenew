@@ -1,0 +1,35 @@
+citizen en 360 scrollW 361/360  
+citizen en 768 scrollW 1097/768 a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. | b.font-mono text-ink 
+citizen ta 360 scrollW 368/360 div.relative | button.flex items-center gap-2 rounde 
+citizen ta 768 scrollW 1118/768 nav.relative ml-4 hidden items-cen | a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. 
+citizen-file en 360 scrollW 361/360  
+citizen-file en 768 scrollW 1097/768 a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. | b.font-mono text-ink 
+citizen-file en 1280 scrollW 1305/1280 div.relative | button.flex items-center gap-2 rounde | svg.lucide lucide-chevron-down h-4 | path. 
+citizen-file ta 360 scrollW 368/360 div.relative | button.flex items-center gap-2 rounde 
+citizen-file ta 768 scrollW 1118/768 nav.relative ml-4 hidden items-cen | a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. 
+citizen-file ta 1280 scrollW 1326/1280 div.relative | button.flex items-center gap-2 rounde | span.hidden max-w-[160px] truncate  | svg.lucide lucide-chevron-down h-4 
+citizen-track en 360 scrollW 361/360  
+citizen-track en 768 scrollW 1097/768 a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. | b.font-mono text-ink 
+citizen-track en 1280 scrollW 1305/1280 div.relative | button.flex items-center gap-2 rounde | svg.lucide lucide-chevron-down h-4 | path. 
+citizen-track ta 360 scrollW 368/360 div.relative | button.flex items-center gap-2 rounde 
+citizen-track ta 768 scrollW 1118/768 nav.relative ml-4 hidden items-cen | a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. 
+citizen-track ta 1280 scrollW 1326/1280 div.relative | button.flex items-center gap-2 rounde | span.hidden max-w-[160px] truncate  | svg.lucide lucide-chevron-down h-4 
+collector en 360 scrollW 360/360  ask-fab ask-fab-v2 over Data Studio
+collector ta 360 scrollW 360/360  ask-fab ask-fab-v2 over சுற்றுச்சூழல்
+profile en 360 scrollW 361/360 button.ui-tab | button.ui-tab 
+profile en 768 scrollW 1097/768 a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. | b.font-mono text-ink 
+profile en 1280 scrollW 1305/1280 div.relative | button.flex items-center gap-2 rounde | svg.lucide lucide-chevron-down h-4 | path. 
+profile ta 360 scrollW 368/360 div.relative | button.flex items-center gap-2 rounde | button.ui-tab | button.ui-tab 
+profile ta 768 scrollW 1118/768 nav.relative ml-4 hidden items-cen | a.diq-tbtn hidden md:inline-flex | svg.lucide lucide-phone h-4 w-4 te | path. 
+profile ta 1280 scrollW 1326/1280 div.relative | button.flex items-center gap-2 rounde | span.hidden max-w-[160px] truncate  | svg.lucide lucide-chevron-down h-4 
+24 of 90 runs have a layout problem
+
+---- unit guard src/components/layout.pass4.test.ts, run before the AuthShell grid fix (the other grids were fixed earlier in the same change) ----
+   × RC-46: a one-column-first grid never grows with its content > every `grid` with a breakpoint grid-cols has a base column that may shrink 14ms
+     → expected [ Array(1) ] to deeply equal []
+   ✓ RC-46: a one-column-first grid never grows with its content > the guard reads the files it is about 4ms
+   ✓ RC-46: the citizen top bar, the bottom bar and the footer change at one width > the pages show in the top bar from the same width the bottom bar goes and the footer stops clearing it 0ms
+   ✓ RC-46: a popover does not stay open over the next thing > the alert details close on an outside press and on Escape 1ms
+   ✓ RC-46: the segmented control's pill follows its labels > re-measures when a label's text or width changes, not only when the control resizes 1ms
+   ✓ RC-46: the console's floating buttons clear the bottom bar > every rule that places Ask District IQ's button with the bottom bar up keeps it 76 px or more above the bottom 64ms
++   "components/AuthShell.tsx:32  grid min-h-0 flex-1 lg:grid-cols-[55fr_45fr]",

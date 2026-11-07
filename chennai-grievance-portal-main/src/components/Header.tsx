@@ -27,7 +27,7 @@ const TAB_ICON: Record<string, typeof Home> = { "/citizen": Home, "/citizen/file
 
 /**
  * The citizen portal's glass top bar (64px): brand, the pages with a sliding pill on the active one, the 1913 helpline,
- * the theme toggle and the account menu. On phones the pages move to a bottom tab bar with a raised "+ File" button.
+ * the theme toggle and the account menu. Under 1024 px the pages move to a bottom tab bar with a raised "+ File" button.
  */
 export default function Header({ userName, homeHref = "/", nav = [] }: HeaderProps) {
   const router = useRouter();
@@ -64,13 +64,13 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
   return (
     <>
       <header className="diq-top">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-3 px-4 sm:gap-4 sm:px-6">
           <Link href={homeHref} className="group flex-none rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-600/25">
-            <BrandWordmark sub={nav.length > 0 ? "Citizen portal · Chennai" : "Chennai"} />
+            <BrandWordmark sub={nav.length > 0 ? "Citizen portal · Chennai" : "Chennai"} className="max-xl:[&>span:last-child]:hidden" />
           </Link>
 
           {nav.length > 0 && (
-            <nav ref={navRef} aria-label="Primary" className="relative ml-4 hidden items-center gap-1 rounded-[10px] border border-canvas-border bg-canvas-sunken/70 p-1 sm:flex">
+            <nav ref={navRef} aria-label="Primary" className="relative ml-4 hidden items-center gap-1 rounded-[10px] border border-canvas-border bg-canvas-sunken/70 p-1 lg:flex">
               {box && (
                 <motion.span aria-hidden="true" className="absolute left-0 top-1 h-[calc(100%-8px)] rounded-[7px] bg-brand shadow-brand"
                   initial={false} animate={{ x: box.x, width: box.w }} transition={animateNow ? spring.snappy : { duration: 0 }} />
@@ -87,8 +87,8 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
             </nav>
           )}
 
-          <div className="ml-auto flex min-w-0 items-center gap-2">
-            <a href="tel:1913" className="diq-tbtn hidden md:inline-flex" title="GCC helpline, 24x7 (tap to call)">
+          <div className="ml-auto flex min-w-0 items-center gap-2 [&>*]:shrink-0">
+            <a href="tel:1913" className="diq-tbtn hidden xl:inline-flex" title="GCC helpline, 24x7 (tap to call)">
               <Phone className="h-4 w-4 text-navy-500" aria-hidden="true" />
               Helpline <b className="font-mono text-ink">1913</b>
             </a>
@@ -99,7 +99,7 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
                 <button type="button" onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen}
                   className="flex items-center gap-2 rounded-[10px] py-1 pl-1 pr-2 text-[13px] font-semibold text-ink transition hover:bg-canvas-sunken focus-visible:ring-4 focus-visible:ring-navy-600/20">
                   <Avatar name={userName || "U"} />
-                  <span className="hidden max-w-[160px] truncate xl:inline">{userName || "My Account"}</span>
+                  <span className="hidden max-w-[160px] truncate 2xl:inline">{userName || "My Account"}</span>
                   <ChevronDown aria-hidden="true" className={`h-4 w-4 text-ink-subtle transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>
 
@@ -132,9 +132,9 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
         </div>
       </header>
 
-      {/* phones: bottom tab bar with the raised "+ File" in the middle */}
+      {/* phones and tablets (under 1024 px, where the top bar has no room for the pages): bottom tab bar with the raised "+ File" in the middle */}
       {nav.length > 0 && (
-        <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-canvas-border bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl sm:hidden">
+        <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-canvas-border bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
           <div className="grid h-16 grid-cols-3 items-center">
             {nav.map(({ href, label }) => {
               const active = href === activeHref;

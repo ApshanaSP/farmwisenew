@@ -766,7 +766,7 @@ export default function FileComplaintPage() {
           <div className="card">
             <StepHead icon={MapPin} title="Complaint location" sub="Drop a pin where the problem is; the ward and zone fill in by themselves." />
 
-            <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                   <span className="form-label mb-0">Point to the problem on the map</span>
@@ -969,7 +969,7 @@ export default function FileComplaintPage() {
 
         {/* STEP 4: COMPLAINT DETAILS, with the review summary beside it */}
         {step === 4 && (
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <form className="card" onSubmit={handleSubmit} noValidate>
               <StepHead icon={FileText} title="Complaint details" sub="Describe the issue and attach evidence." />
 

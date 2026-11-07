@@ -145,7 +145,7 @@ export default function TrackComplaintsPage() {
             <p className="mt-1 text-[15px] text-ink-muted">Every complaint you&apos;ve filed, with its current stage.</p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[400px_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[400px_minmax(0,1fr)]">
             {/* ------------------------------------------------------------------ list */}
             <section className={`min-w-0 ${sel ? "hidden lg:block" : ""}`}>
               <form onSubmit={handleSearchSubmit} className="flex gap-2">
@@ -258,7 +258,7 @@ export default function TrackComplaintsPage() {
                       )}
                     </header>
 
-                    <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_260px]">
                       <div>
                         <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">Journey</h3>
                         {detailLoading ? (
