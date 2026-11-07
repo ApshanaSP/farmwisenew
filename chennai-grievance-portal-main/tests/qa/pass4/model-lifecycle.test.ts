@@ -4,7 +4,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ensureServer } from "./lib/own-server";
 import fc from "fast-check";
-// @ts-expect-error plain .mjs helper
 import { Http } from "./same-number.mjs";
 
 const PORT = Number(process.env.QA_MODEL_PORT || 3142);

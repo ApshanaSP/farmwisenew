@@ -7,7 +7,7 @@ import { ask } from "@/lib/assistant/pipeline";
 import { clearCaches } from "@/lib/thunai/round";
 
 const USER = "qa.e.routes@example.test";
-const askChat = (message: string) => ask({ user: USER, sessionId: null, message, inputMode: "text", language: "auto", scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null }, replyTo: null, pinId: null, insightKey: null, lockDept: null, signal: new AbortController().signal, stage: () => undefined } as never) as Promise<{ kind: string; card: { headline: string; answerMarkdown: string; datasets?: { id: string }[]; intent?: string } }>;
+const askChat = (message: string) => ask({ user: USER, sessionId: null, message, inputMode: "text", language: "auto", scope: { period: "weekly", zone: null, dept: null, cat: null, taluk: null }, replyTo: null, pinId: null, insightKey: null, lockDept: null, signal: new AbortController().signal, stage: () => undefined } as never) as unknown as Promise<{ kind: string; card: { headline: string; answerMarkdown: string; datasets?: { id: string }[]; intent?: string } }>;
 beforeAll(async () => { vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-06T06:30:00.000Z") }); clearCaches(); await asOf(); });
 afterAll(() => { vi.useRealTimers(); });
 

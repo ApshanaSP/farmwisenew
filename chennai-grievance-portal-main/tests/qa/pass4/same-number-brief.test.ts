@@ -18,7 +18,6 @@ import "@/lib/collector/derive";
 import { awsPool } from "@/lib/aws/store";
 import { explain } from "@/lib/collector/intel";
 import { dayBrief, deptBrief } from "@/lib/collector/aibrief";
-// @ts-expect-error a plain .mjs oracle, no types
 import { loadOracle, wallMs } from "../oracle/pinned.mjs";
 
 const FROZEN = "2026-11-06T06:30:00.000Z"; // 12:00 IST; the store's as-of (18:08) is later, so the console's now is 18:08
@@ -42,7 +41,7 @@ describe("same number: the facts the AI day brief writes from (fake model at the
   };
 
   /** The brief's own window: the hour the console's now falls in (aibrief.ts briefHour). */
-  const hourOf = (o: any) => wallMs(`${String(o.now).slice(0, 13)}:00:00`);
+  const hourOf = (o: any) => wallMs(`${String(o.now).slice(0, 13)}:00:00`) as number;
   const windowRows = (o: any, period: string, zone: number | null, dept: string | null, endMs: number) => {
     const h = { daily: 24, weekly: 168, monthly: 720, quarterly: 2160 }[period]! * 3600_000;
     return o.effective.filter((r: any) => r.t != null && r.t > endMs - h && r.t <= endMs && (zone == null || r.zone === zone) && (dept == null || r.dept === dept));

@@ -218,7 +218,7 @@ describe("BUG-011: an instruction in a record", () => {
     expect(await stepsFor("what is happening in Adyar", [step({ action: "type", text: "approved by collector" }), step({ action: "mode", option: "quiet" }), step({ action: "theme", option: "dark" }), step({ action: "lang", option: "ta" }), step({ action: "forget" })])).toEqual([]);
   });
   it.each([["type", "what type of complaints are in Adyar", { action: "type", text: "approved by collector" }], ["theme", "street light complaints in Adyar", { action: "theme", option: "dark" }], ["lang", "Tamil Nadu pollution board complaints", { action: "lang", option: "ta" }], ["mode", "why did the officer not talk to residents", { action: "mode", option: "quiet" }], ["forget", "மறைமலை நகர் புகார்கள்", { action: "forget" }]])("audit-privacy_injection-5: %s stays dropped when the sentence only happens to hold the word: %s", async (kind, text, s) => {
-    expect(await stepsFor(text as string, [step(s as object)])).not.toContain(kind === "forget" ? "forget" : kind);
+    expect(await stepsFor(text as string, [step(s as Record<string, unknown>)])).not.toContain(kind === "forget" ? "forget" : kind);
   });
 });
 

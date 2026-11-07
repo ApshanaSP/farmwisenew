@@ -104,7 +104,7 @@ describe("scans-code-4: a link with a saved sign-in that went through the picker
     // the fixture server may already be running for another test file: the same fixtures, so it is used as it is
     stop = await mod.start().catch((e: NodeJS.ErrnoException) => { if (e.code === "EADDRINUSE") return null; throw e; });
     const url = (mod.FIXTURES as { id: string; url: string }[]).find((f) => f.id === "c-portal")!.url;
-    let pick: { token: string; cards: { id: string; group: string }[] } | null = null;
+    let pick = null as { token: string; cards: { id: string; group: string }[] } | null;
     try {
       await ingestLink({ url, auth: { mode: "apikey", key: "qa-made-up-key", keyName: "api-key", keyPlace: "header" }, every: null, name: null, user: "qa" }, () => undefined);
     } catch (e) {

@@ -29,7 +29,7 @@ describe("golden-master baseline findings, on a real server", () => {
   beforeAll(async () => {
     launcher("stop");
     launcher("start", "--frozen");
-    const collector = accounts().find((a: { key: string }) => a.key === "collector");
+    const collector = accounts().find((a: { key: string }) => a.key === "collector")!;
     const r = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: collector.email, password: collector.password }) });
     expect(r.status).toBe(200);
     cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");

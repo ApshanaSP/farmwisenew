@@ -10,7 +10,6 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-// @ts-expect-error a plain .mjs harness, no types
 import { classify, collect, CORE_SCOPES, Http, scopeLabel } from "./same-number.mjs";
 
 const PORT = Number(process.env.QA_SAME_NUMBER_PORT ?? 3120);
@@ -57,7 +56,7 @@ const askDistrictIq = async (message: string) => {
 describe("same number everywhere", () => {
   beforeAll(async () => {
     startFresh(INSTANCE);
-    const r = await collect({ port: PORT, instance: INSTANCE, scopes: CORE_SCOPES });
+    const r = await collect({ port: PORT, instance: INSTANCE, scopes: CORE_SCOPES } as never);
     readings = r.b.readings; lines = r.b.lines; idChecks = r.b.idChecks; notes = r.b.notes; unavailable = r.b.unavailable; oracle = r.o; http = r.h ?? new Http(PORT);
   }, 1_500_000);
   afterAll(() => stopAndClear(INSTANCE));
@@ -233,8 +232,8 @@ describe("same number everywhere, with decisions and routings on top", () => {
   let done: any;
   beforeAll(async () => {
     startFresh(INSTANCE_OVERLAY);
-    const r = await collect({ port: PORT, instance: INSTANCE_OVERLAY, scopes: SCOPES, overlay: true, only: "overlay" });
-    rs = r.b.readings; o = r.o; done = r.b.overlayDone;
+    const r = await collect({ port: PORT, instance: INSTANCE_OVERLAY, scopes: SCOPES, overlay: true, only: "overlay" } as never);
+    rs = r.b.readings; o = r.o; done = (r.b as { overlayDone?: typeof done }).overlayDone as typeof done;
   }, 900_000);
   afterAll(() => stopAndClear(INSTANCE_OVERLAY));
 

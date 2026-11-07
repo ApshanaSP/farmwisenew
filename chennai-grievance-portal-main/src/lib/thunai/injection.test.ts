@@ -62,3 +62,14 @@ describe("a model's own line never spells a citizen's contact (OPEN-1, red team 
     expect((await finish(plan, input, { world, hands: fakeHands(), llm: async () => { throw new Error("x"); } }, { ...run, results: [] })).reply).toBe("You're welcome.");
   });
 });
+
+describe("a spoken whitespace in the type and undo rules (QA4 RC-37: a template literal had turned a backslash-s into the letter s)", () => {
+  const type = [{ a: "type", text: "x" }] as unknown as Step[];
+  const undo = [{ a: "undo" }] as unknown as Step[];
+  it("'fill in' and the Tamil 'type' and 'go back' with a space between the words are asked for", () => {
+    expect(stepsAskedFor(type, "please fill in the name").length).toBe(1);
+    expect(stepsAskedFor(type, "டைப் செய்").length).toBe(1);
+    expect(stepsAskedFor(undo, "திரும்ப போ").length).toBe(1);
+    expect(stepsAskedFor(type, "what's happening in Adyar").length).toBe(0);
+  });
+});
