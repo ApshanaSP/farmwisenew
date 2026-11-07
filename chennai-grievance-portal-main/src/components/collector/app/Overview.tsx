@@ -185,8 +185,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                 </button>
               )}
               <div className="seg sm map-seg" role="tablist" aria-label="Map areas">
-                <button className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
-                <button className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
+                <button role="tab" aria-selected={c.mapMode === "zones"} className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
+                <button role="tab" aria-selected={c.mapMode === "taluks"} className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
               </div>
             </div>
           </article>

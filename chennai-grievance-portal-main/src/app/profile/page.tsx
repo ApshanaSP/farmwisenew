@@ -487,7 +487,7 @@ export default function ProfilePage() {
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Mobile number</p>
                             <p className="mt-1 flex items-center gap-2 font-mono text-[17px] text-ink">
-                              {profile?.mobileNumber || <span className="font-sans text-ink-faint">Not set</span>}
+                              {profile?.mobileNumber || <span className="font-sans text-ink-subtle">Not set</span>}
                               {profile?.mobileNumber && <Chip tone={profile.mobileVerified ? "ok" : "medium"} pill>{profile.mobileVerified ? "Verified" : "Not verified"}</Chip>}
                             </p>
                           </div>
@@ -557,7 +557,7 @@ function Field({ label, value, mono }: { label: string; value: string | null | u
   return (
     <div>
       <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">{label}</dt>
-      <dd className={`mt-0.5 text-[14.5px] font-medium text-ink ${mono ? "font-mono" : ""}`}>{value || <span className="font-normal text-ink-faint">Not provided</span>}</dd>
+      <dd className={`mt-0.5 text-[14.5px] font-medium text-ink ${mono ? "font-mono" : ""}`}>{value || <span className="font-normal text-ink-subtle">Not provided</span>}</dd>
     </div>
   );
 }
@@ -569,7 +569,7 @@ function Aadhaar({ masked }: { masked: string | null }) {
     <div>
       <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Aadhaar number</dt>
       <dd className="mt-0.5 flex items-center gap-2 text-[14.5px] font-medium text-ink">
-        {last4 ? <span className="font-mono tracking-wide">XXXX XXXX {last4}</span> : <span className="font-normal text-ink-faint">Not provided</span>}
+        {last4 ? <span className="font-mono tracking-wide">XXXX XXXX {last4}</span> : <span className="font-normal text-ink-subtle">Not provided</span>}
         <Tip text="Encrypted. Only the last four digits are ever shown."><span tabIndex={0} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"><Lock className="h-3 w-3" aria-hidden="true" />Encrypted</span></Tip>
       </dd>
     </div>

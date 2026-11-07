@@ -1,0 +1,3 @@
+# RC-48 sweep
+External hosts in pages and CSP connect-src (searched src/app and next.config.js):
+No other page loads a stylesheet or font from another host. 428 step-up: see Confirm.tsx; every guarded route answers 428 first by design, so the browser logs it for each guarded action (not swept further).

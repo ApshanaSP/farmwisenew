@@ -10,10 +10,6 @@ import OfficerApp from "@/components/officer/OfficerApp";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Officer Console · District IQ" };
 
-// Same fonts as the Collector console, loaded by the browser (see app/collector/page.tsx).
-const FONTS =
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap";
-
 function Unavailable({ title, text, back = "/login" }: { title: string; text: string; back?: string }) {
   return (
     <main style={{ maxWidth: 640, margin: "80px auto", padding: 24, fontFamily: "system-ui" }}>
@@ -43,8 +39,6 @@ export default async function OfficerPage() {
     const initial = await officerOverview(dept, { period: OFFICER.defaultPeriod as Period, zone: null, taluk: null });
     return (
       <>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href={FONTS} />
         <OfficerApp initial={initial} user={session.email} />
       </>
     );

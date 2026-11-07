@@ -553,9 +553,9 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
             )}
           </div>
           <div className="rel">
-            <button className="me ome" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label={`Account: signed in as ${user}`}
+            <button className="me ome" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))}
               title={`Signed in as ${user}`}>
-              <span className="avatar">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
+              <span className="avatar" aria-hidden="true">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
               <span className="who"><small>Logged in as</small><b>{me}</b></span><I n="chevd" />
             </button>
             {pop === "profile" && (

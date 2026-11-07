@@ -824,8 +824,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
             items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />
           <div className="rel">
-            <button className="me" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label="Account" aria-expanded={pop === "profile"}>
-              <span className="avatar">CO</span><I n="chevd" />
+            <button className="me" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))} aria-label="CO, account menu" aria-expanded={pop === "profile"}>
+              <span className="avatar" aria-hidden="true">CO</span><I n="chevd" />
             </button>
             {pop === "profile" && (
               <div className="pop" style={{ width: 300 }}>
@@ -944,10 +944,10 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         {/* the chatbot at the bottom right, and Jarvis's own button just above it */}
         {!ask && <JarvisFab />}
         {!ask && (
-          <button className="ask-fab ask-fab-v2" onClick={() => { setAskTab("chat"); setAsk(true); }} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ: type a question (Ctrl+K)">
+          <button className="ask-fab ask-fab-v2" onClick={() => { setAskTab("chat"); setAsk(true); }} aria-keyshortcuts="Control+K" title="Ask District IQ: type a question (Ctrl+K)">
             <i className="ask-ico"><AskIcon size={22} /></i>
-            <span className="ask-label">Ask District IQ<kbd>Ctrl K</kbd></span>
-            {insightCount > 0 && <em className="ask-badge" aria-label={`${insightCount} insights for today`}>{insightCount}</em>}
+            <span className="ask-label">Ask District IQ<kbd aria-hidden="true" data-t="Ctrl K" /></span>
+            {insightCount > 0 && <em className="ask-badge" aria-hidden="true" data-t={insightCount} />}
           </button>
         )}
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} tab={askTab} onTab={setAskTab} />}

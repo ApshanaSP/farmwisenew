@@ -26,3 +26,7 @@ const agg = {}; for (const r of out.runs) for (const v of r.violations || []) { 
 console.log(out.byImpact, out.runs.length, "runs");
 for (const [k, v] of Object.entries(agg)) console.log(k, v.n, [...v.pages].slice(0, 4).join(", "), v.pages.size);
 console.log("errors:", out.runs.filter((r) => r.error || r.console?.length).map((r) => `${r.page}/${r.lang}/${r.theme} ${r.error || r.console[0]}`));
+// the gate: zero critical and zero serious (PB-320..323)
+const bad = out.runs.reduce((n, r) => n + (r.violations || []).filter((v) => v.impact === "critical" || v.impact === "serious").length, 0);
+console.log("critical+serious rule hits:", bad);
+if (bad) process.exitCode = 1;

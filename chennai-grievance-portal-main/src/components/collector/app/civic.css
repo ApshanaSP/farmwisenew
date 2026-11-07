@@ -397,6 +397,7 @@
 .dic .ask-fab span{display:inline-flex;align-items:center;gap:8px}
 .dic .ask-fab span kbd{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff}
 .dic .ask-fab .ask-badge{background:#fff;color:var(--ai);box-shadow:0 0 0 2px var(--bg);font-family:var(--font-num)}
+.dic .ask-fab kbd::before,.dic .ask-fab .ask-badge::before{content:attr(data-t)} /* drawn, not text: the button's name can then be the words it shows (PB-323) */
 
 /* ---------------- motion: the shell assembles once after sign-in ---------------- */
 .dic.boot .top{animation:civic-top .5s var(--ease-out) both}

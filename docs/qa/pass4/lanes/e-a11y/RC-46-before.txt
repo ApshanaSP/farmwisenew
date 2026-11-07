@@ -1,0 +1,1 @@
+RC-46 not reached before the 14:05 cutoff. Measured before-state (docs/qa/pass4/evidence/screens.json): page wider than screen: citizen pages ta 360 (368px), 768 (1097-1118px), 1280 (1305-1326px); written guard: chennai-grievance-portal-main/tests/qa/pass4/layout.mjs (not yet run)

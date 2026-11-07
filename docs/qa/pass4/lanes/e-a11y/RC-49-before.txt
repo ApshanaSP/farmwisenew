@@ -1,0 +1,10 @@
+   × RC-49 a11y class guards > PB-320: every button directly inside a role=tablist is a role=tab (axe aria-required-children) 78ms
+     → expected [ …(4) ] to deeply equal []
+   × RC-49 a11y class guards > PB-323: a language switch names itself with the words it shows (axe label-content-name-mismatch) 2ms
+     → components/LangToggle.tsx: expected false to be true // Object.is equality
+   × RC-49 a11y class guards > PB-322: muted and subtle text colours reach 4.5:1 on every canvas colour, light and dark 2ms
+     → expected [ …(2) ] to deeply equal []
+   × RC-49 a11y class guards > PB-321: no page loads a stylesheet or font from another host (the Content-Security-Policy blocks the fetch and the console logs an error) 14ms
+     → expected [ 'app\collector\page.tsx', …(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

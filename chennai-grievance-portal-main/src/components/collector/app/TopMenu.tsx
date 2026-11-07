@@ -52,8 +52,8 @@ export function LangSwitch({ compact }: { compact?: boolean }) {
   const [lang, setLang] = useLang();
   return (
     <button className={`tbtn lang-sw${compact ? " compact" : ""}`} translate="no" onClick={() => setLang(lang === "ta" ? "en" : "ta")}
-      title={lang === "ta" ? "Switch the site to English" : "தளத்தைத் தமிழில் காட்டு (Tamil)"} aria-label={lang === "ta" ? "Switch to English" : "Switch to Tamil"}>
-      <span className="lang-a">{lang === "ta" ? "A" : "அ"}</span><span>{lang === "ta" ? "English" : "தமிழ்"}</span>
+      title={lang === "ta" ? "Switch the site to English" : "தளத்தைத் தமிழில் காட்டு (Tamil)"} aria-label={lang === "ta" ? "English: switch the site to English" : "தமிழ்: switch the site to Tamil"}>
+      <span className="lang-a" aria-hidden="true" data-g={lang === "ta" ? "A" : "அ"} /><span>{lang === "ta" ? "English" : "தமிழ்"}</span>
     </button>
   );
 }

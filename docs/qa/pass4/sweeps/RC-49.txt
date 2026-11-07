@@ -1,0 +1,13 @@
+# RC-49 sweep: same-class search (7 Nov)
+## role=tablist containers: the class guard in src/components/a11y.pass4.test.ts scans all of src; before fix it found:
+Overview.tsx map-seg (2 buttons), Shell.tsx Pager (2 prev/next buttons inside the tablist)
+## aria-label that hides visible text (label-content-name-mismatch): searched
+9
+fixed: LangToggle, TopMenu LangSwitch, collector me/ask-fab/alerts, officer me, AuthShell brand link
+## text-ink-faint used as text colour (2.1 to 2.3:1):
+chennai-grievance-portal-main/src/app/globals.css:3
+(now only placeholders and icons keep it)
+## external stylesheets in pages:
+HEAD:chennai-grievance-portal-main/src/app/collector/page.tsx:13:  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&fami
+HEAD:chennai-grievance-portal-main/src/app/officer/page.tsx:15:  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family
+(removed: Inter and JetBrains Mono were never used by any CSS)

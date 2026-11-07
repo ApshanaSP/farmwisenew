@@ -94,7 +94,12 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
       try { saved = localStorage.getItem(SESSION_KEY); } catch { /* storage blocked */ }
       if (saved && /^[0-9a-f-]{36}$/.test(saved)) loadSession(saved, false);
     }
-    return () => { (opener.current as HTMLElement | null)?.focus?.(); };
+    return () => {
+      // opened with Ctrl+K from the page body: there is no control to go back to, so go to the Ask button
+      const o = opener.current as HTMLElement | null;
+      const back = o && o !== document.body && o.isConnected ? o : document.querySelector<HTMLElement>(".ask-fab");
+      back?.focus?.();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, loadPins]);
 

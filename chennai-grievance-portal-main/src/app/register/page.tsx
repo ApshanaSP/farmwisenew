@@ -80,7 +80,7 @@ export default function RegisterPage() {
                 value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="lastName" className="auth-label">Last name <span className="font-normal text-ink-faint">(optional)</span></label>
+              <label htmlFor="lastName" className="auth-label">Last name <span className="font-normal text-ink-subtle">(optional)</span></label>
               <input id="lastName" type="text" autoComplete="family-name" className="auth-input" placeholder="Kumar"
                 value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
                 <input id="password" type={showPassword ? "text" : "password"} required autoComplete="new-password"
                   className="auth-input pr-11" value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-faint transition hover:text-navy-700">
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-subtle transition hover:text-navy-700">
                   {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                 </button>
               </div>
@@ -138,12 +138,12 @@ export default function RegisterPage() {
 
         <p className="mt-4 text-center text-[15px] text-ink-muted">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-navy-500 transition hover:underline">Sign in</Link>
+          <Link href="/login" className="font-semibold text-navy-700 transition hover:underline">Sign in</Link>
         </p>
 
         <p className="mt-4 flex items-start gap-2 rounded-[10px] border border-canvas-border bg-canvas-sunken/60 px-3.5 py-2.5 text-[13px] text-ink-muted">
           <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-emerald-600" aria-hidden="true" />
-          <span>Department officers and the Collector&apos;s office don&apos;t register here. Their accounts are issued by the Collector&apos;s office; just <Link href="/login" className="font-semibold text-navy-500 hover:underline">sign in</Link>.</span>
+          <span>Department officers and the Collector&apos;s office don&apos;t register here. Their accounts are issued by the Collector&apos;s office; just <Link href="/login" className="font-semibold text-navy-700 hover:underline">sign in</Link>.</span>
         </p>
       </div>
     </AuthShell>
