@@ -1,0 +1,26 @@
+RC-44, the state on the tree before the fix: the findings own words (each was a run on a real server or the real path with no model key; the percentage and severe rows are also in RC-43-before.txt, run in-process on the same tree)
+
+journey-judge-1: Chat 'Save this workspace as Collector's Daily Briefing and reopen last week's version' saves nothing and shows unrelated counts
+  what happens: The answer is '1,262 reported, 1,109 still open, 325 past deadline'. Nothing is saved: Menu > Workspaces still says 'No saved workspaces yet'. No sentence says it was not saved.
+  repro: node tests/qa/pass4/journey-judge.walk4.mjs (query 6), then node tests/qa/pass4/journey-judge.walk6.mjs
+
+journey-judge-2: 'Show every source and application record used to create this briefing' returns headline KPIs, not a source list
+  what happens: Answer is '588 severe events, 1,238 open citizen complaints, 2,412 ongoing incidents'. No source or record is listed.
+  repro: node tests/qa/pass4/journey-judge.walk4.mjs (query 5)
+
+journey-judge-3: 'List the taluks with the highest number of unresolved incidents last month' returns one total and no taluks
+  what happens: Answer is '2,067 incidents still open, last 30 days', with Reported 2,067 and Still open 2,067 (every reported one still open) and '+737% vs previous'. No taluk is named.
+  repro: node tests/qa/pass4/journey-judge.walk4.mjs (query 3)
+
+CHAOS-2: With no model key, questions the rules cannot answer (forecasts, drafting a letter) get an unrelated confident answer instead of a plain 'I cannot do that without the model'
+  what happens: undefined
+  repro: 'how many complaints will be resolved by Friday' -> '13,478 incidents resolved, last 90 days' (a past count, no caveat). 'predict how many complaints Adyar will get next week' -> '685 citizen complain
+
+hunt-askiq-3: Severity question gets a headline about Low
+  what happens: how many severe: headline says Low leads with 890 open incidents; severe (135) is only in the table.
+  repro: npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/hunt-askiq.test.ts -t askiq-3; or POST /api/collector/assistant/chat
+
+hunt-askiq-4: Percentage question gives an incident list, not a percentage
+  what happens: percentage of resolved complaints: returns Incidents last 90 days list.
+  repro: npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/hunt-askiq.test.ts -t askiq-4; or POST /api/collector/assistant/chat
+

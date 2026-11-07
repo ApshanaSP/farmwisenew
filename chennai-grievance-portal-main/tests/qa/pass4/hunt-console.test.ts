@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { login } from "./lib/access-lib.mjs";
 
-const base = "http://127.0.0.1:3174";
+const base = process.env.CONSOLE_BASE || "http://127.0.0.1:3174";
 const up = await fetch(`${base}/login`).then((r) => r.status < 500).catch(() => false);
 const jfetch = async (cookie: string, method: string, p: string, body?: unknown) => {
   const r = await fetch(base + p, { method, headers: { cookie, origin: base, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -34,13 +34,13 @@ describe.skipIf(!up)("collector console and officer portal", () => {
     expect(card).toBe(d.kpi.cur.ongoing); // card 226, tile 236 in the pinned build
   });
 
-  it.fails("hunt-console-3: a zone that does not exist is refused, not shown as the whole city", async () => {
+  it("hunt-console-3: a zone that does not exist is refused, not shown as the whole city", async () => {
     const { cookie } = await login(base, "collector");
     const r = await jfetch(cookie, "GET", "/api/collector/overview?zone=99");
     expect(r.status).toBe(400);
   });
 
-  it.fails("hunt-console-4: an officer grievance tab that does not exist is refused, not shown as the New tab", async () => {
+  it("hunt-console-4: an officer grievance tab that does not exist is refused, not shown as the New tab", async () => {
     const { cookie } = await login(base, "officerA");
     const r = await jfetch(cookie, "GET", "/api/officer/grievances?tab=returned");
     expect(r.status).toBe(400);

@@ -453,7 +453,7 @@ describe("gaps still open", () => {
     expect(seen.verifyNoFlag.rowVerified).toBe(1);
     expect(seen.verifyNoFlag.verifiedFilter).toBe(1);
   });
-  it.fails("DECISIONS-12: Ask District IQ's figures move at once when a decision is made", async () => {
+  it("DECISIONS-12: Ask District IQ's figures move at once when a decision is made", async () => {
     advance(61_000);
     const before = Number((await tool("overview_kpis", { scope: { period: W } })).cur.ongoing);
     await decide("INC-20261106-EC69F1", "resolve");

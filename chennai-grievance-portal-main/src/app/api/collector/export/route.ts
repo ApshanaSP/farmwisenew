@@ -3,6 +3,7 @@ import { requireConfirm } from "@/lib/security/stepup";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { csvCell } from "@/lib/csv";
 import { EXPORT_COLS, exportRows, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
+import { refuseBadFilter } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
+  const bad = refuseBadFilter(p);
+  if (bad) return bad;
   const c = await requireConfirm(req, s, "export", "Download the action list as a spreadsheet", Object.fromEntries([...p.entries()].sort()));
   if (!c.ok) return c.res;
   try {

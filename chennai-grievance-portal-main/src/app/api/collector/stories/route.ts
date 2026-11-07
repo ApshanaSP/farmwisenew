@@ -3,6 +3,7 @@ import { collectorSession, failed } from "@/lib/collector/guard";
 import { jsonWithEtag } from "@/lib/etag";
 import { PERIODS, asOf, parseCat, parseDept, parsePeriod, parseTaluk, parseZone, periodSince } from "@/lib/collector/intel";
 import { stories } from "@/lib/collector/storyai";
+import { refuseBadFilter } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,8 @@ export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
+  const bad = refuseBadFilter(p);
+  if (bad) return bad;
   try {
     const period = parsePeriod(p.get("period"));
     const now = await asOf();

@@ -28,6 +28,7 @@ import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
 import { queueNoteFor } from "./queue-note";
 import { orEmpty } from "@/lib/fallback";
 import { pastDueSql } from "@/lib/reference/metrics";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, any>;
 
@@ -587,6 +588,7 @@ export async function recordStep(
         JSON.stringify({ step_id: res.insertId, step, report_id: reportId, photos: report?.photos.length ?? 0 })]
     );
     await conn.commit();
+    bumpDataEpoch(); // a closing step is a decision too: the caches that hold the store's status are emptied (RC-35)
     // the residents whose complaints are in this grievance see the step on their tracker
     await syncComplaints([id], actor.userId);
     return { stage: step === "approve" ? "approved" : step === "close" ? "verified" : "sent", reportId };

@@ -25,6 +25,7 @@ import { followUps } from "./followups";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
 import { LAYER_WORD, type Lang } from "./words";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 export interface AskInput {
   text: string | null;
@@ -282,6 +283,7 @@ export async function askMap(input: AskInput): Promise<AskResponse> {
 
   // the same plan on the same data within a minute (a chip toggled back, a question asked again): the answer as it was
   const cacheKey = `${edited === "depts" ? "depts|" : ""}${lock ?? ""}|${w.dataAsOf}|${w.incidents.length}|${w.now.slice(0, 16)}|${input.reword && !aiUsed ? "r" : ""}|${unread.join(",")}|${JSON.stringify(plan)}`;
+  syncEpoch(answerCache()); // a decision empties it (RC-35)
   const cached = answerCache().get(cacheKey);
   if (cached && Date.now() - cached.at < 60_000) {
     const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used };

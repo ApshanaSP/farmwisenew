@@ -30,27 +30,27 @@ async function chat(message: string): Promise<{ headline: string; md: string; sc
 }
 const TIMEOUT = 180000;
 describe("hunt-askiq", () => {
-  it.fails("askiq-1 a zone that does not exist is not answered with the whole district", async () => {
+  it("askiq-1 a zone that does not exist is not answered with the whole district", async () => {
     const a = await chat("zone 99 complaints");
     expect(a.md + a.scopeLine).not.toMatch(/15,115 incidents/);
   }, TIMEOUT);
-  it.fails("askiq-1b a place that does not exist is not answered with the whole district", async () => {
+  it("askiq-1b a place that does not exist is not answered with the whole district", async () => {
     const a = await chat("complaints in Atlantis");
     expect(a.md + a.scopeLine).not.toMatch(/15,115 incidents/);
   }, TIMEOUT);
-  it.fails("askiq-2 a date in 2030 is not silently answered as the last 90 days", async () => {
+  it("askiq-2 a date in 2030 is not silently answered as the last 90 days", async () => {
     const a = await chat("complaints from 2030");
     expect(a.md + a.headline).not.toMatch(/last 90 days/);
   }, TIMEOUT);
-  it.fails("askiq-2b 'last 0 days' is not silently answered as 90 days", async () => {
+  it("askiq-2b 'last 0 days' is not silently answered as 90 days", async () => {
     const a = await chat("how many complaints in Adyar in the last 0 days");
     expect(a.headline).not.toMatch(/last 90 days/);
   }, TIMEOUT);
-  it.fails("askiq-3 'how many severe' headline is about severe, not 'Low leads'", async () => {
+  it("askiq-3 'how many severe' headline is about severe, not 'Low leads'", async () => {
     const a = await chat("how many severe");
     expect(a.headline).not.toMatch(/^Low leads/);
   }, TIMEOUT);
-  it.fails("askiq-4 'percentage of resolved complaints' gives a percentage", async () => {
+  it("askiq-4 'percentage of resolved complaints' gives a percentage", async () => {
     const a = await chat("percentage of resolved complaints");
     expect(a.md).toMatch(/%/);
   }, TIMEOUT);

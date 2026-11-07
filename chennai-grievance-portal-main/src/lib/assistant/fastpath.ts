@@ -13,7 +13,7 @@ import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, PICK_FROM_LIST, detectIntent, topicByKey, topicWords, type Detected, type Topic } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, incidentDetail, incidentsByIds, incidentsWithWords, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, shareOfIncidents, incidentDetail, incidentsByIds, incidentsWithWords, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
@@ -252,7 +252,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       const aged = d.minOpenDays ? ` open for more than ${d.minOpenDays} days` : "";
       // (the filters in force, not only the follow-up's own words: "only in Adyar" after "severe incidents today" kept severe but its headline dropped it)
-      const kindOf = (n: number) => `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${f.sev === "Severe" ? "severe " : ""}${countNoun(what, n)}${aged}`;
+      const kindOf = (n: number) => `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${sevWord(f.sev)}${countNoun(what, n)}${aged}`;
       const kind = kindOf(r.items.length);
       card.responseType = "incident_list";
       card.incidents = r.items;
@@ -305,7 +305,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     }
     case "INCIDENT_COUNT": {
       // "how many were resolved yesterday": counted by when they were closed, not when they were reported
-      if (d.resolved) {
+      if (d.resolved && !d.share) {
         const r = await countResolved(inc, i.now);
         const kind = countNoun(what, r.n);
         card.responseType = "kpi";
@@ -322,9 +322,44 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.sources.tools.push({ name: "count_resolved", args: { ...inc }, ms: 0 });
         break;
       }
+      // "what percentage of complaints are resolved": a share of the incidents reported in the window, with the counts it comes from (RC-44)
+      if (d.share) {
+        const r = await shareOfIncidents(inc, i.now);
+        const have = { resolved: r.resolved, open: r.open, severe: r.severe, overdue: r.overdue }[d.share];
+        const pct = r.n ? Math.round((have / r.n) * 1000) / 10 : 0;
+        const word = { resolved: { en: "resolved", ta: "தீர்க்கப்பட்டவை", tanglish: "resolve aanavai" }, open: { en: "still open", ta: "இன்னும் திறந்திருப்பவை", tanglish: "innum open-la irukkiravai" },
+          severe: { en: "severe", ta: "கடுமையானவை", tanglish: "severe-aanavai" }, overdue: { en: "open and past their deadline", ta: "கெடு தாண்டியும் திறந்திருப்பவை", tanglish: "deadline thaandiyum open-la irukkiravai" } }[d.share];
+        const kindS = countNoun(what, r.n);
+        const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
+        const whenTa = custom ? null : { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
+          monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[inc.period as Period];
+        card.responseType = "kpi";
+        card.display = "kpi";
+        card.visualAsked = true;
+        if (!r.n) {
+          card.headline = `No ${kindS} ${inP(inc.period)}${sw}, so there is no share to give`;
+          card.answerMarkdown = `No ${kindS} were reported ${inP(inc.period)}${sw}, so a percentage cannot be worked out.`;
+        } else if (i.lang === "en" || !whenTa) {
+          card.headline = `${num1(pct)}% of ${kindS} are ${word.en} · ${pl(inc.period)}`;
+          card.answerMarkdown = `**${num1(pct)}%** of the ${kindS} reported ${inP(inc.period)}${sw} ${r.n === 1 ? "is" : "are"} ${word.en}: ${num1(have)} of ${num1(r.n)}.`
+            + `\n\n- ${num1(r.resolved)} resolved, ${num1(r.open)} still open, ${num1(r.severe)} severe, ${num1(r.overdue)} open past their deadline`;
+        } else if (i.lang === "ta") {
+          card.headline = `${whenTa.ta} பதிவான ${num1(r.n)} சம்பவங்களில் ${num1(pct)}% ${word.ta}`;
+          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.ta}.\n\n- தீர்க்கப்பட்டவை ${num1(r.resolved)}, இன்னும் திறந்திருப்பவை ${num1(r.open)}, கடுமையானவை ${num1(r.severe)}`;
+        } else {
+          card.headline = `${whenTa.tanglish} report aana ${num1(r.n)} incidents-la ${num1(pct)}% ${word.tanglish}`;
+          card.answerMarkdown = `**${num1(pct)}%** (${num1(have)} / ${num1(r.n)}) ${word.tanglish}.\n\n- resolve aanavai ${num1(r.resolved)}, innum open ${num1(r.open)}, severe ${num1(r.severe)}`;
+        }
+        card.voiceSummary = card.answerMarkdown.replace(/\*\*/g, "").replace(/\n+/g, " ");
+        if (r.n) card.kpis = [{ label: `Share ${word.en}`, value: pct, tone: "info" }, { label: countLabel(inc), value: r.n, tone: "info" }, { label: "Resolved", value: r.resolved }, { label: "Still open", value: r.open }];
+        card.caveats.push("Share of the incidents reported in the window, by their status now, with the Collector's decisions applied. Rejected and lapsed incidents are in the total and are not counted as resolved.");
+        card.context = { ...ctxBase, lastResponseType: "kpi" };
+        card.sources.tools.push({ name: "share_of_incidents", args: { ...inc, share: d.share }, ms: 0 });
+        break;
+      }
       const c = await countIncidents(inc, i.now);
-      const kind = countNoun(what, c.n);
-      const fmt = (v: number) => v.toLocaleString("en-IN");
+      const kind = `${sevWord(f.sev)}${countNoun(what, c.n)}`;
+      const fmt =(v: number) => v.toLocaleString("en-IN");
       const P = pl(inc.period);
       card.responseType = "kpi";
       card.display = "kpi";
@@ -858,4 +893,9 @@ const ROADS: { label: string; re: RegExp; like: string[] }[] = [
 ];
 export function roadNamed(text: string): { label: string; like: string[] } | null {
   return ROADS.find((r) => r.re.test(text)) ?? null;
+}
+
+/** The level an answer's nouns carry when the question named one ("severe incidents", "medium-severity incidents"); the level is never dropped from the headline (RC-43, RC-44). */
+export function sevWord(sev: string | null | undefined): string {
+  return sev === "Severe" ? "severe " : sev === "High" ? "high-severity " : sev === "Medium" ? "medium-severity " : sev === "Low" ? "low-severity " : "";
 }

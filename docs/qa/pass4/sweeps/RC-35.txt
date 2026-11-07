@@ -1,0 +1,13 @@
+# RC-35 sweep (G2): every timed cache in src, and what it does after a decision
+(the list is the class guard's: tests/qa/pass4/g2-cache.test.ts)
+  follows the epoch: src/lib/assistant/insightcards.ts
+  follows the epoch: src/lib/assistant/pipeline.ts
+  follows the epoch: src/lib/assistant/tools.ts
+  follows the epoch: src/lib/collector/epoch.ts
+  follows the epoch: src/lib/collector/storyai.ts
+  follows the epoch: src/lib/collector/threads.ts
+  follows the epoch: src/lib/map/analyst.ts
+  follows the epoch: src/lib/map/ask.ts
+  follows the epoch: src/lib/thunai/data.ts
+  follows the epoch: src/lib/thunai/round.ts
+  writers that bump it: src/lib/aws/store.ts run() (any write naming collector_decisions or officer_steps), api/collector/decisions/route.ts, lib/officer/data.ts

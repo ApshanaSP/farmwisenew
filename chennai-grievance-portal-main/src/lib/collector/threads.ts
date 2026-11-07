@@ -28,6 +28,7 @@ import { effectiveSql } from "@/lib/collector/effective";
 import { categories } from "@/lib/collector/nlp";
 import { orEmpty } from "@/lib/fallback";
 import { roughKm } from "@/lib/map/geom";
+import { syncEpochKeys } from "@/lib/collector/epoch";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const OPEN = effectiveSql(ops("collector_decisions")).open;
@@ -348,12 +349,14 @@ async function buildStamp(): Promise<string> {
   return String(r?.v ?? "");
 }
 
+const threadCacheToken = {};
 /** Developing stories in the scope, most recently updated first. */
 export async function threads(s: ThreadScope, now: string) {
   const days = Math.min(30, Math.max(14, Math.round(s.hours / 24)));
   // Keyed on the build, not on "now" (which moves every 30 s): threading a month of news takes seconds, so it runs
   // once per build and period length, and at most every 10 minutes for items from added sources.
   const key = `${RULES}|${await buildStamp()}|${days}`;
+  syncEpochKeys(global.__threadCache, threadCacheToken); // a decision empties it: a story whose cases are closed says so at once (RC-35)
   let all = global.__threadCache?.[key] && Date.now() - global.__threadCache[key].at < 10 * 60_000 ? global.__threadCache[key].threads : null;
   if (!all) {
     const catLabel = new Map(categories().map((c) => [c.code, c.label]));

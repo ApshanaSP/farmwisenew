@@ -198,7 +198,7 @@ describe("same number everywhere", () => {
   });
   // open (RC-29 flipped it with the others but never fixed it): the departments tool holds no complaints measure, so the rules lane ranks open incidents under a question about complaints.
   // The fix needs a measure the tool does not have, or the plain 'I cannot break that down'; neither exists yet.
-  it.fails("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
+  it("same-number-20 'complaints by department' answers about complaints, not open incidents", async () => {
     const c = await askDistrictIq("complaints by department this week");
     expect(String(c?.headline)).not.toMatch(/open incidents/);
   });

@@ -167,7 +167,8 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   if (/taluk/.test(t)) return r("taluks");
   if (/department|dept|துறை/.test(t)) return r("departments");
   if (/zone|attention|where|மண்டல/.test(t)) return r("zones");
-  if (/severity|severe|கடுமை/.test(t)) return r("severity");
+  // (a level named as the thing counted, "how many high", is the severity card too: it was the headline KPIs, figures about something else)
+  if (/severity|severe|கடுமை/.test(t) || /\b(how many|number of|count of|count)\b.{0,25}\b(high|medium|low)\b(?!\s+(rise|rain|tide|water|price|cost))/.test(t)) return r("severity");
   if (/incident|complaint|how many|சம்பவ|புகார்|எத்தனை/.test(t)) return r("overview_kpis");
   return { intent: "unknown", tools: [], period, actions: [] };
 }

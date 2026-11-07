@@ -1,0 +1,92 @@
+# RC-43 sweep (G2): every place a value that is read but cannot be applied is dropped
+## 1. parse helpers that turn an unknown value into no filter (intel.ts parseZone, parsePeriod, parseDept, parseCat, parseTaluk; officer/stages.ts parseTab). Callers before the fix: each is now behind refuseBadFilter / refuseBadTab
+  src/app/api/collector/assistant/export/route.ts:28:  const period = parsePeriod(p.get("period")), zone = parseZone(p.get("zone")), dept = s.lockDept ?? parseDept(p.get(
+  src/app/api/collector/brief/route.ts:35:  const scope = { period: parsePeriod(p.get("period")), zone: parseZone(p.get("zone")), dept: parseDept(p.get("dept")), taluk: p
+  src/app/api/collector/brief/route.ts:40:        const code = parseDept(p.get("code"));
+  src/app/api/collector/brief/route.ts:46:        const cat = parseCat(p.get("cat")), date = p.get("date") ?? "", id = p.get("id") ?? "", what = p.get("what");
+  src/app/api/collector/brief/route.ts:47:        const d = what === "spike" && cat && /^\d{4}-\d{2}-\d{2}$/.test(date) ? await pattern({ kind: "spike", cat, zone: parseZ
+  src/app/api/collector/conflicts/route.ts:24:    return NextResponse.json(await periodConflicts(parsePeriod(p.get("period")), await asOf(), s.email));
+  src/app/api/collector/export/route.ts:22:    const rows = await exportRows(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
+  src/app/api/collector/export/route.ts:23:      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) });
+  src/app/api/collector/insights/route.ts:18:    return jsonWithEtag(req, await insights(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
+  src/app/api/collector/insights/route.ts:19:      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }, parsePart(p.get("part"))), { "Cache-Control": "priv
+  src/app/api/collector/list/route.ts:24:        period: parsePeriod(p.get("period")),
+  src/app/api/collector/list/route.ts:25:        zone: parseZone(p.get("zone")),
+  src/app/api/collector/list/route.ts:26:        dept: parseDept(p.get("dept")),
+  src/app/api/collector/list/route.ts:28:        cat: parseCat(p.get("cat")),
+  src/app/api/collector/list/route.ts:29:        taluk: parseTaluk(p.get("taluk")),
+  src/app/api/collector/overview/route.ts:22:    return jsonWithEtag(req, await overview(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
+  src/app/api/collector/overview/route.ts:23:      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }), { "Cache-Control": "private, no-cache" });
+  src/app/api/collector/pattern/route.ts:19:    const cat = parseCat(p.get("cat"));
+  src/app/api/collector/pattern/route.ts:22:      ? await pattern({ kind: "spike", cat, zone: parseZone(p.get("zone")), date })
+  src/app/api/collector/report/route.ts:16:    return NextResponse.json(await report(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
+  src/app/api/collector/report/route.ts:17:      { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }));
+  src/app/api/collector/stories/route.ts:18:    const period = parsePeriod(p.get("period"));
+  src/app/api/collector/stories/route.ts:20:    return jsonWithEtag(req, await stories({ hours: PERIODS[period].hours, zone: parseZone(p.get("zone")), dept: parseDept(p.g
+  src/app/api/collector/stories/route.ts:21:      cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")), since: periodSince(period, now) }, now, s.email), { "Cac
+  src/app/api/officer/grievances/route.ts:28:      ...parseScope(p),
+  src/app/api/officer/grievances/route.ts:29:      tab: p.get("tab") === "all" ? "all" : parseTab(p.get("tab")),
+  src/app/api/officer/grievances/route.ts:32:      cat: parseCat(p.get("cat")),
+  src/app/api/officer/insights/route.ts:16:    return fresh({ modules: await deptInsights(ctx.dept.code, parseScope(p)) });
+  src/app/api/officer/overview/route.ts:18:    return fresh(await officerOverview(ctx.dept, parseScope(p)));
+
+## 2. routes that call a parse helper and the guard
+  (none listed above = every route with parseZone, parseTaluk or parseScope calls refuseBadFilter; class guard: tests/qa/pass4/g2-routes.test.ts)
+
+## 3. Ask District IQ: where a place, zone or period named in the question is read and then ignored
+  src/lib/assistant/fastpath.ts:150:  if (i.place?.zone != null && !i.place?.asked_for_taluk) (f.zone = Number(i.place.zone), f.taluk = null);
+  src/lib/assistant/fastpath.ts:162:  const custom = customWindow(i.message, i.now);
+  src/lib/assistant/fastpath.ts:214:    : i.place?.zone == null ? [...i.names.taluks.values()].find((t) => t.inDistrict === false && new RegExp(`\\b${t.
+  src/lib/assistant/fastpath.ts:753:export function customWindow(text: string, now?: string): { hours: number; label: string; period: Period; offset?: n
+  src/lib/assistant/pipeline.ts:533:  const cw = customWindow(message);
+  src/lib/assistant/pipeline.ts:934:      const p = planFromDecision(route, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null, local
+  src/lib/assistant/pipeline.ts:958:      const rules = rulesRoute(message, route.scope, names, placeData?.zone != null);
+  src/lib/assistant/pipeline.ts:973:      if (placeData?.zone != null && raw.zone == null) raw.zone = placeData.zone;
+  src/lib/assistant/pipeline.ts:1058:      const zone = placeData?.zone != null ? Number(placeData.zone) : route.scope.zone ?? null;
+  src/lib/assistant/pipeline.ts:1373:    const cw = customWindow(message);
+  src/lib/assistant/pipeline.ts:1494:          const p = planFromDecision(like, message, ctx, placeData?.zone != null ? Number(placeData.zone) : null, l
+  src/lib/assistant/pipeline.ts:1525:      || (exact.intent === "INCIDENT_COUNT" && !!exact.topic && placeData?.zone != null && message.length <= 110
+  src/lib/assistant/pipeline.ts:1610:    route = { intent: "adhoc_question", language: null, normalized: message, scope: { ...consoleScope, period: cust
+  src/lib/assistant/pipeline.ts:1636:    if (direct.name === "change_drivers" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zo
+  src/lib/assistant/pipeline.ts:1638:    if (direct.name === "briefing" && s.zone == null && placeData?.zone != null) s.zone = Number(placeData.zone);
+  src/lib/assistant/pipeline.ts:1659:    route ??= rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
+  src/lib/assistant/pipeline.ts:1680:        route ??= rulesRoute(message, consoleScope, names, placeData?.zone != null, placeData);
+  src/lib/assistant/pipeline.ts:1686:      route = (!i.pinId && !i.insightKey ? storyRoute(message, consoleScope, names) : null) ?? rulesRoute(message, 
+  src/lib/assistant/pipeline.ts:1694:    onlyPlace: placeData?.zone != null && !/INC-[A-Z0-9]/i.test(message) && !STORY_THING.test(message.replace(/\b(c
+  src/lib/assistant/pipeline.ts:1768:  const rulesPick = usePlanner ? rulesRoute(message, route.scope, names, placeData?.zone != null) : null;
+  src/lib/assistant/pipeline.ts:1881:  if (loc && scope && placeData?.zone != null && scope.zone === placeData.zone && zoneName && zoneName.toLowerCase(
+
+## 4. Data Studio readers that give 0 rows instead of an error
+  57:    if (e instanceof FormatError) throw new ParseError(e.message);
+  66:  if (!buf.length) throw new ParseError("The file is empty.");
+  71:    if (kind === "docx") return grids(docxTables(buf), "docx", "Word table", "This Word file has no tables in it.");
+  76:    if (depth > 0) throw new ParseError("A ZIP inside a ZIP is not opened.");
+  86:    if (!out.length) throw new ParseError(`The ZIP holds no table the Studio can read${skipped.length ? ` (${skipped.slice(0, 4).join(", ")})` : ""
+  90:  if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes ar
+  94:  // bytes with NUL characters that are not UTF-16 text are not a table: say so, not that the file holds no rows
+  95:  if (dec.encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw new ParseError(`"${name}" could not be read as text: it holds binary da
+  109:    if (!g) throw new ParseError("This XML is not a news feed or a list of records the Studio can read. Save it as CSV or Excel and drop it here."
+  112:  if (!t.trim()) throw new ParseError("The file is empty.");
+  122:  if (!out.length) throw new ParseError(none);
+  129:  if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" 
+  130:  return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers agai
+  156:  if (!items.length) throw new ParseError("The feed has no articles in it.");
+  216:  if (/data\.gov\.in$/.test(host2)) throw new ParseError("data.gov.in builds its pages with JavaScript, so the data is not in the page. On the dat
+  218:  if (textLen < 2000 && html.length > 50_000) throw new ParseError("That page builds its content with JavaScript, so there is nothing to read in i
+  219:  throw new ParseError("That web page has no table, no data file and no list of headlines to read. Open it, look for a \"Download\" (CSV / Excel) 
+  277:    throw new ParseError(`This Excel file could not be read (${(e as Error).message.slice(0, 80)}). Save it again as .xlsx or .csv and retry.`);
+  280:  if (!sheets.length) throw new ParseError("The workbook has no data.");
+  287:  if (!out.length) throw new ParseError("The workbook has no data.");
+  343:  if (!lines.length) throw new ParseError("The file is empty.");
+  396:  try { data = JSON.parse(text); } catch { throw new ParseError("The JSON could not be read: it is not valid JSON."); }
+  422:  if (!recs?.length) throw new ParseError("No list of records was found in the JSON.");
+  457:  if (!grid.length) throw new ParseError("The file has no rows.");
+  517:  if (!headers.length) throw new ParseError("No columns were found.");
+  532:    if (!pages.images.length) throw new ParseError(`This PDF is a scan whose pictures the Studio cannot open (${pages.skipped} in a format OCR doe
+  548:    if (grid.length < 2) throw new ParseError(`OCR read ${words.toLocaleString("en-IN")} words in this ${e.kind === "image" ? "picture" : "scan"} 
+
+## 5. Other entry points not changed, found by the same search (reported, not fixed here)
+  - Jarvis (lib/thunai): a zone number the district does not have is answered by the entity resolver as unknown (lane a, RC-02); not touched
+  - Ask the Map (lib/map/resolve.ts): an unknown place gives its own 'did not find' card (existing); not touched
+  - A Tamil-script place the gazetteer does not hold ('அட்லாண்டிஸ் புகார்கள்') is not detected as an unknown place: the place check needs a capitalised Latin name or the Tanglish -la ending
+  - a lower-case unknown place ('complaints in atlantis') is not detected either, for the same reason; a model-read question is not checked for an unknown place (it looks the words up in the records' places)

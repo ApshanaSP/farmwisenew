@@ -35,6 +35,7 @@ import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
 import { MIN_PCT_BASE, isPastDeadline } from "@/lib/reference/metrics";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, any>;
 
@@ -144,6 +145,7 @@ export class ToolError extends Error {}
 const memo = new Map<string, { at: number; p: Promise<unknown> }>();
 /** One shared result per key for a minute: a question often needs several tools over the same overview. */
 function once<T>(key: string, run: () => Promise<T>, ttl = 60_000): Promise<T> {
+  syncEpoch(memo); // a decision empties it (RC-35)
   const now = Date.now();
   for (const [k, v] of memo) if (now - v.at > ttl) memo.delete(k);
   const hit = memo.get(key);

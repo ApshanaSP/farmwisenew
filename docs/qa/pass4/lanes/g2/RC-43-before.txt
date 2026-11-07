@@ -1,0 +1,31 @@
+RC-43 ask lane, run on the tree before the fix (in-process ask(), pinned snapshot, frozen clock 2026-11-06 12:00 IST, no model key); the first six questions are the hunt-askiq ones
+Q: zone 99 complaints
+  intent=INCIDENT_LIST head=Incidents · last 90 days
+  scope=Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM
+  md=15,115 incidents in the last 90 days; the eight newest are listed.
+  notes=""
+Q: complaints in Atlantis
+  intent=INCIDENT_LIST head=Incidents · last 90 days
+  scope=Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM
+  md=15,115 incidents in the last 90 days; the eight newest are listed.
+  notes=""
+Q: complaints from 2030
+  intent=INCIDENT_LIST head=Incidents · last 90 days
+  scope=Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM
+  md=15,115 incidents in the last 90 days; the eight newest are listed.
+  notes=""
+Q: how many complaints in Adyar in the last 0 days
+  intent=INCIDENT_COUNT head=690 citizen complaints · last 90 days
+  scope=Last 90 days · Adyar (Zone 13) · all departments · as of 6 Nov, 6:08 PM
+  md=**690** citizen complaints in the last 90 days in Adyar zone. /  / - They are about 614 incidents, 70 of them still open
+  notes=""
+Q: how many severe
+  intent=undefined head=Low leads with 890 open incidents
+  scope=Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM
+  md=Highest open incidents: Low (890), Medium (773), High (510), Severe (135).
+  notes=""
+Q: percentage of resolved complaints
+  intent=INCIDENT_LIST head=Incidents · last 90 days
+  scope=Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM
+  md=15,115 incidents in the last 90 days; the eight newest are listed.
+  notes=""

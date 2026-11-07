@@ -28,6 +28,7 @@ import { telemetry } from "./telemetry";
 import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn } from "./entities";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 export const RoundBody = AgentBody.extend({
   turnId: z.string().min(2).max(40),
@@ -71,6 +72,7 @@ export function safeHands(h: Hands, signal?: AbortSignal): Hands {
     ...h,
     tool: (name, args) => {
       if (signal?.aborted) return Promise.reject(new DOMException("aborted", "AbortError"));
+      syncEpoch(toolCache); // a decision empties it (RC-35)
       const key = `${name}|${JSON.stringify(args)}`;
       const now = Date.now();
       for (const [k, v] of toolCache) if (now - v.at > 30_000) toolCache.delete(k);

@@ -33,7 +33,7 @@ export interface IncidentFilters {
   dept?: string | null;
   /** categories (a topic may cover several) */
   cats?: string[] | null;
-  sev?: "Severe" | "High" | null;
+  sev?: "Severe" | "High" | "Medium" | "Low" | null;
   openOnly?: boolean;
   /** a window the question names in its own words ("last 10 days" = 240), instead of the period's */
   hours?: number | null;
@@ -79,6 +79,8 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   if (f.cats?.length) (parts.push("i.category_code IN (?)"), params.push(f.cats));
   if (f.sev === "Severe") parts.push("i.severity_level = 'Severe'");
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
+  if (f.sev === "Medium") parts.push("i.severity_level = 'Medium'");
+  if (f.sev === "Low") parts.push("i.severity_level = 'Low'");
   if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
   if (f.overdue) parts.push(pastDueSql(now));
   if (f.roads?.length) {
@@ -225,6 +227,19 @@ export async function countIncidents(f: IncidentFilters, now: string) {
     openComplaints: num(a?.open_complaints), prev: num(b?.n), prevDead: num(b?.dead), prevComplaints: num(b?.complaints),
     // the incidents the complaints are about (metrics.ts complaint_incidents): a complaints answer counts these, not every incident
     complaintIncidents: num(a?.complaint_incidents), complaintOpen: num(a?.complaint_open), prevComplaintIncidents: num(b?.complaint_incidents) };
+}
+
+/**
+ * Of the incidents reported in the window, how many are now resolved, still open, severe, and open past their deadline (for "what percentage of
+ * complaints are resolved"): the same filters and the same decision-aware status as every count, so the share and the counts beside it agree.
+ * Rejected and lapsed incidents are in the total and are not resolved.
+ */
+export async function shareOfIncidents(f: IncidentFilters, now: string) {
+  const g = { ...f, openOnly: false, overdue: false };
+  const w = where(g, now);
+  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(i.severity_level = 'Severe') AS severe,
+    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue FROM incidents i WHERE ${w.sql}`, w.params);
+  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue) };
 }
 
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */

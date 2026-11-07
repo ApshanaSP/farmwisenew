@@ -296,7 +296,7 @@ describe("after a decision (BUG-028, BUG-035)", () => {
     const book = (await insights("daily", null, null)).book as { good: { serious: Row[] } };
     expect(book.good.serious.map((x) => x.id)).not.toContain(id);
   });
-  it.fails("AUD-NF-10 BUG-035 Jarvis's case screen says closed at once", async () => {
+  it("AUD-NF-10 BUG-035 Jarvis's case screen says closed at once", async () => {
     const [t] = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.is_open = 1 AND i.severity_level = 'High' ORDER BY i.first_reported_at DESC LIMIT 1 OFFSET 3`);
     const r0 = await direct("case", { id: t.id, fresh: true });
     expect(r0.stage!.say.en).toMatch(/^There's /);
@@ -304,7 +304,7 @@ describe("after a decision (BUG-028, BUG-035)", () => {
     const r1 = await direct("case", { id: t.id, fresh: true });
     expect(r1.stage!.say.en).toMatch(/^There was /);
   });
-  it.fails("AUD-NF-10 BUG-035 a developing story says closed at once", async () => {
+  it("AUD-NF-10 BUG-035 a developing story says closed at once", async () => {
     const now = await asOf();
     const s = { hours: 24, zone: null, dept: null, cat: null, taluk: null, since: "2026-11-05 18:08:00" };
     const open = (await threads(s, now)).threads.find((t) => t.open && t.incidents.length === 1);

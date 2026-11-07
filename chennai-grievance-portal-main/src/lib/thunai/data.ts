@@ -16,12 +16,14 @@ import { referenceLeads } from "./world";
 import { studioRow, type Lookups, type InRow } from "./complete";
 import type { World } from "./types";
 import type { ScopeT } from "./stage";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, unknown>;
 export interface MapUser { email: string; role: "collector" | "department_officer"; lockDept: string | null }
 
 const memo = new Map<string, { at: number; p: Promise<unknown> }>();
 function once<T>(key: string, run: () => Promise<T>, ttl = 45_000): Promise<T> {
+  syncEpoch(memo); // a decision empties it (RC-35)
   const now = Date.now();
   for (const [k, v] of memo) if (now - v.at > ttl) memo.delete(k);
   const hit = memo.get(key);

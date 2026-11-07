@@ -5,6 +5,7 @@ import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { collectorSession } from "@/lib/collector/guard";
 import { syncComplaints } from "@/lib/complaint-progress";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
       saved.push({ incident_id: inc.incident_id, decision_id: res.insertId, escalated_to_level: level });
     }
     await conn.commit();
+    bumpDataEpoch(); // every cache that holds a read of the store is emptied: the next answer, screen or story shows this decision (RC-35)
     // verify / resolve / return / reject reach the residents' trackers (complaint-progress.ts); notes and escalations do not
     if (["verify", "resolve", "reopen", "reject"].includes(d.decision)) await syncComplaints(saved.map((x) => x.incident_id), session.userId);
     return NextResponse.json({ saved }, { status: 201 });

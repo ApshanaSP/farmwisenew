@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { parseCat, parseDept, parsePeriod, parseTaluk, parseZone, report } from "@/lib/collector/intel";
+import { refuseBadFilter } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,8 @@ export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
+  const bad = refuseBadFilter(p);
+  if (bad) return bad;
   try {
     return NextResponse.json(await report(parsePeriod(p.get("period")), parseZone(p.get("zone")), parseDept(p.get("dept")),
       { cat: parseCat(p.get("cat")), taluk: parseTaluk(p.get("taluk")) }));

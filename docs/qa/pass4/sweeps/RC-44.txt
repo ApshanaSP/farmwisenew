@@ -1,0 +1,21 @@
+# RC-44 sweep (G2): lanes that end in the default answer for something they cannot do
+## 1. defaults at the end of the rules (guard.ts offlineRoute): the last lines that return the headline KPIs or the incident list
+  134:  if (/what('s| is) (happening|going on)|situation|overview|status of/.test(t)) return r("overview_kpis");
+  172:  if (/incident|complaint|how many|சம்பவ|புகார்|எத்தனை/.test(t)) return r("overview_kpis");
+  173:  return { intent: "unknown", tools: [], period, actions: [] };
+## 2. kinds of ask sent in the class guard (tests/qa/pass4/g2-ask.test.ts and src/lib/assistant/g2.pass4.test.ts): workspace, sources, forecast, letter, percentage, taluk ranking, severity level
+## 3. levels the rules read as a filter: severe, high; now medium and low (intent.ts, incidents.ts where())
+  29:  sev: "Severe" | "High" | "Medium" | "Low" | null;
+  55:  share?: "resolved" | "open" | "severe" | "overdue" | null;
+  58:  /** only incidents still open after this many days ("severe incidents open for more than 7 days") */
+  180:const PRIORITY = ["top", "priority", "most important", "important", "most serious", "serious", "severe", "critical", "worst", "biggest", "urgent", "major",
+  217:const WORD_N: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, moonu: 3, rendu: 2, anju: 5 };
+  223:  const m = t.match(/\b(?:top|first|best|worst|latest|last|most)\s*-?\s*(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|moonu|rendu|anju)\b(?!\s*(?:days?|ho
+## 4. nouns that carry the filter into the headline
+  255:      const kindOf = (n: number) => `${f.overdue ? "overdue " : f.openOnly && !aged ? "open " : ""}${sevWord(f.sev)}${countNoun(what, n)
+  361:      const kind = `${sevWord(f.sev)}${countNoun(what, c.n)}`;
+  899:export function sevWord(sev: string | null | undefined): string {
+## 5. not fixed, found by the same search
+  - 'number of high severity open' (no 'how many') still ends in 'No incidents or news reports match that': the word order is not read as a severity count
+  - the taluks tool holds a fixed last-30-days window: 'last month' (a calendar month) is answered with it and the scope line says Last 30 days
+  - same-number-20 'complaints by department' (no complaints figure in the departments tool): G1 left it not_fixed; unchanged
