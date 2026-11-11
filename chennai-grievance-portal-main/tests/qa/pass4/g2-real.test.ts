@@ -298,3 +298,21 @@ describe("a view move does not drop an unread clause about the complaints", () =
     expect((r.steps ?? []).some((x: { a: string }) => x.a === "view"), `${text}: ${JSON.stringify(r.steps)} ${r.said}`).toBe(false);
   });
 });
+
+// RC-05: "cases open in Kodambakkam" says the status as "open cases" does: a view move cannot hold it, so the sentence is handed on, not answered with the place alone
+describe("a status said after the noun is a status", () => {
+  it.each(["Drainage cases open in Kodambakkam", "Show Adyar road complaints open now", "complaints that are open in Adyar"])("%s", async (text) => {
+    const r = await say(text);
+    expect((r.steps ?? []).some((x: { a: string }) => x.a === "view"), `${text}: ${JSON.stringify(r.steps)} ${r.said}`).toBe(false);
+  });
+});
+
+// RC-15: a console move said in Tanglish or Tamil names the body and the kind of complaint in Tamil letters
+describe("a move's confirmation holds no English body or category name in Tamil or Tanglish", () => {
+  it.each([["Tanglish", "theru vilakku dept.. Corporation electrical.. adha pathi chinna note sollu"], ["Tamil letters", "மின் விளக்கு துறை காட்டு"]])("%s", async (_n, text) => {
+    const r = await say(text);
+    if (!(r.steps ?? []).some((x: { a: string }) => x.a === "view")) return; // handed on: the planner answers in Tamil
+    expect(r.said, text).toMatch(/[஀-௿]/);
+    expect(r.said, text).not.toMatch(/Street Lighting|Electrical|Roads, footpaths|Drainage & sewage/);
+  });
+});

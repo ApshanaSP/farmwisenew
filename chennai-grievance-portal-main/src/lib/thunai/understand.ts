@@ -15,9 +15,10 @@
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
 import { foreignIn, noData } from "./entities";
-import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DESTRUCTIVE, EXPLAIN_TA, HARSH_BESIDE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, DESTRUCTIVE, EXPLAIN_TA, HARSH_BESIDE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
   ZONES } from "./lexicon";
 import { betterCategory, saidStems } from "./catlabels";
+import { CAT_LABEL_TA } from "./narrate";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
@@ -627,8 +628,8 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
       const parts: string[] = [];
       if (v.zone !== undefined && !(fresh && v.zone === null)) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
       if (v.taluk !== undefined && !(fresh && v.taluk === null)) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
-      if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
-      if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
+      if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : (ta ? DEPT_TA[v.dept] : null) ?? world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
+      if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : (ta ? CAT_LABEL_TA[v.cat] : null) ?? world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
       if (v.sev !== undefined && !(fresh && v.sev === null)) parts.push(v.sev == null ? (ta ? "எல்லா தீவிரங்கள்" : "All severities") : ta ? SEV_TA[v.sev] : v.sev);
       return parts.join(" · ");
     }
