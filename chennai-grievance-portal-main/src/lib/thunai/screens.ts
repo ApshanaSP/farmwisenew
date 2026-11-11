@@ -1411,7 +1411,8 @@ async function brief(c: Ctx): Promise<Part> {
   const attTa = att.map((a) => {
     const r = a.why?.attention?.[0] ? reasonTa(String(a.why.attention[0])) : null;
     const zt = a.zone ? c.w.zones.find((x) => x.name === a.zone)?.ta ?? a.zone : null;
-    return safeText(`${a.title}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
+    // a record's own title is a headline in the data's language (English), with no Tamil of it: the Tamil line names the body and the place in Tamil and gives the reason, and the point still opens the record (RC-15, tanglish-brief-04, -07, -10, ta-followup-01)
+    return safeText(`${deptTa(c.w, a.dept ?? null) ?? "சம்பவம்"}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
   });
   const condTa = d.conditions && !(c.s.zone || c.s.taluk || c.s.dept || c.s.cat) ? conditionsTa(String(d.conditions)) : null;
   const pointsTa = points.map((p, i): { text: string; ta?: string; incidentId: string | null } => {

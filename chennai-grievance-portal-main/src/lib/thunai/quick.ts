@@ -297,6 +297,13 @@ export function unknownTopicIn(t: string, w: World): string | null {
   return null;
 }
 
+/** A complaint noun with three or more words around it that nothing here reads ("work-site quality complaints"): the kind of complaint asked about is a clause the rules cannot read, in any language (RC-05, ta-list-16). */
+export function unreadClauseIn(t: string, w: World): boolean {
+  const all = t.trim().split(" ");
+  if (!all.some((x) => /^(complaints?|issues?|problems?|grievances?|cases?)$/.test(x) || /^(புகார்|கேஸ்|சம்பவ)/.test(x))) return false;
+  return all.filter((x) => !explained(x, w)).length >= 3;
+}
+
 /** Why the fast lane should not answer this sentence, or null when it is sure. */
 export function unsureWhy(text: string, t: string, w: World, zones: number[], cat: string | null): string | null {
   // an order Jarvis never carries out (close, send, delete ...) is not a screen with a filter: the refusal answers it, not "Severe" (RC-04, PB-283)

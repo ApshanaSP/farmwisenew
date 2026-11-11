@@ -274,3 +274,27 @@ describe("the district's conditions line is in the district brief only", () => {
     expect(c?.ta, JSON.stringify(c)).toMatch(/நிலைமைகள்/);
   });
 });
+
+// RC-15: a Tamil brief's point for a record names its body and place in Tamil; the record's own English headline is not read out as part of a Tamil line
+describe("a Tamil brief point holds no English headline", () => {
+  it.each([["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Tiruvottiyur la situation epdi iruku"], ["Tamil letters, a follow-up zone", "அம்பத்தூர் சுருக்கம்"]])("%s", async (_n, text) => {
+    const r = await say(text);
+    const b = r.stage?.blocks.find((x) => x.kind === "Brief");
+    expect(b, text).toBeTruthy();
+    if (b?.kind !== "Brief") return;
+    for (const p of b.points.filter((x) => x.incidentId)) {
+      const run = (p.ta ?? "").split(/\s+/).reduce((m: { cur: number; max: number }, w) => (/^[A-Za-z][A-Za-z'.,-]*$/.test(w) ? { cur: m.cur + 1, max: Math.max(m.max, m.cur + 1) } : { cur: 0, max: m.max }), { cur: 0, max: 0 }).max;
+      expect(run, `${text}: ${p.ta}`).toBeLessThan(4);
+      expect(p.ta, text).toMatch(/[஀-௿]/);
+    }
+  });
+});
+
+// RC-05: a clause about the kind of complaint that the rules cannot read is not dropped while a place and a level are applied (ta-list-16 class)
+describe("a view move does not drop an unread clause about the complaints", () => {
+  it.each([["Tamil with English", "திருவொற்றியூர் வேலை நடக்குற இடம், தரம் சரியில்லன்னு வந்த complaints, medium level மட்டும் filter பண்ணு."], ["Tanglish", "Tiruvottiyur la veelai nadakkura idathula tharam sariyilla nu vandha complaints medium mattum filter pannu"], ["English", "Adyar complaints about rude staff at the counters, medium only, filter"]])("%s", async (_n, text) => {
+    const r = await say(text);
+    // the rules lane hands the sentence on: no silent console move that keeps the place and the level and drops the clause
+    expect((r.steps ?? []).some((x: { a: string }) => x.a === "view"), `${text}: ${JSON.stringify(r.steps)} ${r.said}`).toBe(false);
+  });
+});

@@ -21,7 +21,7 @@ import { betterCategory, saidStems } from "./catlabels";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
 import { asksForbidden, NEVER_REPLY } from "./privacy";
-import { statusIn, unheldWindowIn, unknownTopicIn } from "./quick";
+import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
 
 const TA = /[஀-௿]/;
 
@@ -567,7 +567,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
   if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // a kind of complaint nothing here reads ("GH bed doctor prachanai complaints"): a window or a place alone would answer about something else (RC-05)
-  if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && unknownTopicIn(` ${s} `, world)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && (unknownTopicIn(` ${s} `, world) || unreadClauseIn(` ${s} `, world))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });
   if (hasView) steps.push({ a: "view", view });
   if (perM) steps.push({ a: "period", period: perM.value as PeriodKey });
