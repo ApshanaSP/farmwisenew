@@ -259,3 +259,18 @@ describe("the rules lane does not act on what it read and drop what it could not
     }
   });
 });
+
+// RC-15: the conditions line (rain, air, reservoirs) is the district's: a brief on a zone does not carry it as if it were the zone's, in any language
+describe("the district's conditions line is in the district brief only", () => {
+  const points = async (text: string) => { const r = await say(text); const b = r.stage?.blocks.find((x) => x.kind === "Brief"); return b && b.kind === "Brief" ? b.points : null; };
+  it.each([["English", "Kodambakkam zone situation summary"], ["Tamil letters", "கோடம்பாக்கம் சுருக்கம்"], ["Tanglish", "Kodambakkam nelamai konjam summary sollu"]])("a zone's brief has no conditions point: %s", async (_n, text) => {
+    const p = await points(text);
+    expect(p, text).toBeTruthy();
+    expect(p!.some((x) => /^Conditions: |நிலைமைகள்/.test(x.text) || /நிலைமைகள்/.test(x.ta ?? "")), text).toBe(false);
+  });
+  it("the district brief has it, with its Tamil line", async () => {
+    const p = await points("district brief today");
+    const c = p?.find((x) => x.text.startsWith("Conditions: "));
+    expect(c?.ta, JSON.stringify(c)).toMatch(/நிலைமைகள்/);
+  });
+});

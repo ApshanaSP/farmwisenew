@@ -1393,7 +1393,8 @@ async function brief(c: Ctx): Promise<Part> {
     ...(d.headline ?? []).map((t) => ({ text: safeText(t, 400), incidentId: null })),
     ...(d.attention ?? []).slice(0, 4).map((a) => ({ text: safeText(`${a.why?.summary && String(a.why.summary).length <= 110 ? a.why.summary : a.title}${a.zone ? `, ${a.zone}` : ""}${a.why?.attention?.[0] ? `: ${a.why.attention[0]}` : ""}`, 400), incidentId: String(a.id) })),
     ...(d.emerging ?? []).slice(0, 2).map((e) => ({ text: clip(e.text, 400), incidentId: null })),
-    ...(d.conditions ? [{ text: clip(`Conditions: ${d.conditions}`, 400), incidentId: null }] : [])
+    // the conditions (rain, air, reservoirs) are the district's, one set of stations: a brief on a zone, a body, a kind or a taluk does not carry them as if they were its own (RC-15, the grader's figure check)
+    ...(d.conditions && !(c.s.zone || c.s.taluk || c.s.dept || c.s.cat) ? [{ text: clip(`Conditions: ${d.conditions}`, 400), incidentId: null }] : [])
   ].slice(0, 10);
   const st = d.stats ?? {};
   // the first point is the briefing tool's English sentence; the Tamil line is built from the same figures, so a Tamil answer holds no English sentence (QA4 G1, audit-understanding-17, AUD-NF-17)
@@ -1412,11 +1413,11 @@ async function brief(c: Ctx): Promise<Part> {
     const zt = a.zone ? c.w.zones.find((x) => x.name === a.zone)?.ta ?? a.zone : null;
     return safeText(`${a.title}${zt ? `, ${zt}` : ""}${r ? `: ${r}` : ""}`, 400);
   });
-  const condTa = d.conditions ? conditionsTa(String(d.conditions)) : null;
+  const condTa = d.conditions && !(c.s.zone || c.s.taluk || c.s.dept || c.s.cat) ? conditionsTa(String(d.conditions)) : null;
   const pointsTa = points.map((p, i): { text: string; ta?: string; incidentId: string | null } => {
     if (i < nHead) return i === 0 ? { ...p, ta: leadHeadTa } : i === 1 && st.open != null ? { ...p, ta: standLineTa } : i === 2 && Number(st.multi) ? { ...p, ta: sourcesTa } : { ...p, ta: "" };
     if (i < nHead + nAtt) return { ...p, ta: attTa[i - nHead] };
-    return d.conditions && i === points.length - 1 && condTa ? { ...p, ta: condTa } : { ...p, ta: "" };
+    return condTa && p.text.startsWith("Conditions: ") ? { ...p, ta: condTa } : { ...p, ta: "" };
   });
   return {
     title: `Briefing · ${PERIOD_EN[c.s.period]}`,
