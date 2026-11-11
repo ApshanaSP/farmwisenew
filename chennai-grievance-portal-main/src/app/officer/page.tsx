@@ -6,6 +6,8 @@ import { deptProfile, officerOverview } from "@/lib/officer/data";
 import { OFFICER } from "@/lib/officer/departments";
 import type { Period } from "@/lib/collector/intel";
 import OfficerApp from "@/components/officer/OfficerApp";
+import ManuCounter from "@/components/manu/ManuCounter";
+import { PETITION_DEPT } from "@/lib/manu/constants";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Officer Console · District IQ" };
@@ -35,6 +37,16 @@ export default async function OfficerPage() {
 
   try {
     const code = await officerDeptCode(session.userId);
+    // the petition counter's login opens the Manu Desk and nothing else
+    if (code === PETITION_DEPT) {
+      return (
+        <>
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link rel="stylesheet" href={FONTS} />
+          <ManuCounter user={session.email} />
+        </>
+      );
+    }
     const dept = code ? await deptProfile(code) : null;
     if (!dept) {
       return <Unavailable title="Your department is not set"

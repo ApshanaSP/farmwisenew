@@ -13,9 +13,9 @@ export const TA: Record<string, string> = {
   "Dark mode": "இருண்ட பயன்முறை", "Light mode": "ஒளி பயன்முறை", "Language": "மொழி", "English": "ஆங்கிலம்", "Tamil": "தமிழ்",
   "Data sources": "தரவு மூலங்கள்", "Audit log": "தணிக்கைப் பதிவு", "Reload data": "தரவை மீண்டும் ஏற்று", "Clear all filters": "எல்லா வடிப்பான்களையும் அழி",
   "Sign out": "வெளியேறு", "Collector's Office": "ஆட்சியர் அலுவலகம்", "District Collector, Chennai": "மாவட்ட ஆட்சியர், சென்னை",
-  "Chennai · Collector": "சென்னை · ஆட்சியர்", "Feeds, OCR upload, audit log": "தரவு ஊட்டங்கள், OCR பதிவேற்றம், தணிக்கைப் பதிவு",
+  "Chennai · Collector": "சென்னை · ஆட்சியர்", "Feeds and audit log": "தரவு ஊட்டங்கள், தணிக்கைப் பதிவு",
   "Every decision and change": "ஒவ்வொரு முடிவும் மாற்றமும்", "Fetch the latest from the store": "சமீபத்திய தரவைப் பெறு",
-  "Whole district, every department": "முழு மாவட்டம், எல்லா துறைகளும்", "Feeds, added sources, OCR upload": "ஊட்டங்கள், சேர்த்த மூலங்கள், OCR பதிவேற்றம்",
+  "Whole district, every department": "முழு மாவட்டம், எல்லா துறைகளும்", "Feeds and added sources": "ஊட்டங்கள், சேர்த்த மூலங்கள்",
   "Notifications": "அறிவிப்புகள்", "Mark all read": "அனைத்தையும் படித்ததாகக் குறி", "Alerts": "எச்சரிக்கைகள்",
 
   // ---- greetings and the band

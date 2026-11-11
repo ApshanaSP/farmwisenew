@@ -1,18 +1,18 @@
 # Grievance dataset: generation report
 
-Generated 2026-10-04 16:41 IST with seed `42`, 180 days ending 2026-10-04, mean 90/day.
+Generated 2026-10-04 11:33 IST with seed `42`, 180 days ending 2026-10-04, mean 90/day.
 Mode: CSV only (nothing written to MySQL).
 
 ## Totals
 
 |  | Rows |
 |---|---|
-| Synthetic complaints | 16113 |
-| Real complaints (is_synthetic = 0) | 0 |
-| Status-history rows | 91617 |
-| of which base volume | 15007 |
-| of which hotspot bursts | 143 |
-| of which planted near-duplicates | 963 |
+| Synthetic complaints | 16283 |
+| Real complaints (is_synthetic = 0) | 2 |
+| Status-history rows | 92501 |
+| of which base volume | 15138 |
+| of which hotspot bursts | 168 |
+| of which planted near-duplicates | 977 |
 | Details rewritten to keep ward/day text unique | 0 |
 
 
@@ -22,14 +22,14 @@ Thunderstorm days (the day and the two after it are boosted): **2026-05-19, 2026
 
 | Rain day | Water multiplier | Complaints that day | Water Stagnation + SWD + Flood that day |
 |---|---|---|---|
-| 2026-05-19 | 3.46 | 103 | 33 |
-| 2026-07-18 | 3.18 | 143 | 47 |
-| 2026-08-09 | 3.56 | 81 | 31 |
-| 2026-08-10 | 3.56 | 135 | 45 |
-| 2026-08-28 | 3.04 | 138 | 38 |
-| 2026-09-06 | 3.88 | 87 | 34 |
-| 2026-09-19 | 3.08 | 118 | 36 |
-| 2026-09-20 | 3.08 | 81 | 31 |
+| 2026-05-19 | 3.60 | 134 | 48 |
+| 2026-07-18 | 3.45 | 127 | 36 |
+| 2026-08-09 | 3.85 | 83 | 35 |
+| 2026-08-10 | 3.85 | 125 | 41 |
+| 2026-08-28 | 3.17 | 126 | 46 |
+| 2026-09-06 | 3.53 | 128 | 36 |
+| 2026-09-19 | 3.27 | 126 | 31 |
+| 2026-09-20 | 3.62 | 98 | 36 |
 
 
 ## Complaints per day
@@ -38,166 +38,168 @@ One row per week (Monday first). `*` = rain-event day.
 
 | Week of | Mon | Tue | Wed | Thu | Fri | Sat | Sun |
 |---|---|---|---|---|---|---|---|
-| 2026-04-08 |  |  | 73 | 96 | 74 | 75 | 86 |
-| 2026-04-13 | 102 | 92 | 76 | 84 | 78 | 89 | 85 |
-| 2026-04-20 | 121 | 82 | 87 | 100 | 89 | 97 | 64 |
-| 2026-04-27 | 84 | 90 | 83 | 84 | 84 | 107 | 69 |
-| 2026-05-04 | 106 | 88 | 73 | 87 | 101 | 88 | 66 |
-| 2026-05-11 | 114 | 87 | 96 | 95 | 95 | 91 | 72 |
-| 2026-05-18 | 101 | 103* | 125 | 115 | 80 | 84 | 61 |
-| 2026-05-25 | 96 | 90 | 95 | 89 | 97 | 84 | 66 |
-| 2026-06-01 | 105 | 99 | 85 | 74 | 82 | 98 | 55 |
-| 2026-06-08 | 114 | 94 | 87 | 76 | 88 | 82 | 60 |
-| 2026-06-15 | 97 | 81 | 74 | 95 | 88 | 77 | 65 |
-| 2026-06-22 | 84 | 80 | 92 | 98 | 106 | 75 | 66 |
-| 2026-06-29 | 115 | 81 | 93 | 77 | 96 | 68 | 82 |
-| 2026-07-06 | 87 | 86 | 88 | 90 | 90 | 90 | 64 |
-| 2026-07-13 | 85 | 89 | 85 | 97 | 72 | 143* | 104 |
-| 2026-07-20 | 165 | 77 | 73 | 69 | 94 | 80 | 79 |
-| 2026-07-27 | 99 | 77 | 102 | 82 | 102 | 62 | 78 |
-| 2026-08-03 | 97 | 85 | 71 | 78 | 68 | 71 | 81* |
-| 2026-08-10 | 135* | 134 | 107 | 75 | 93 | 97 | 48 |
-| 2026-08-17 | 105 | 90 | 89 | 71 | 74 | 79 | 63 |
-| 2026-08-24 | 109 | 86 | 107 | 90 | 138* | 129 | 98 |
-| 2026-08-31 | 107 | 82 | 96 | 77 | 93 | 85 | 87* |
-| 2026-09-07 | 164 | 118 | 101 | 76 | 92 | 91 | 73 |
-| 2026-09-14 | 107 | 85 | 86 | 95 | 88 | 118* | 81* |
-| 2026-09-21 | 149 | 133 | 89 | 75 | 96 | 83 | 65 |
-| 2026-09-28 | 105 | 78 | 94 | 78 | 84 | 79 | 41 |
+| 2026-04-08 |  |  | 79 | 99 | 72 | 88 | 71 |
+| 2026-04-13 | 76 | 94 | 96 | 83 | 95 | 83 | 59 |
+| 2026-04-20 | 101 | 73 | 78 | 92 | 104 | 110 | 73 |
+| 2026-04-27 | 83 | 85 | 84 | 67 | 78 | 77 | 76 |
+| 2026-05-04 | 83 | 96 | 82 | 87 | 83 | 80 | 61 |
+| 2026-05-11 | 101 | 95 | 87 | 87 | 76 | 99 | 62 |
+| 2026-05-18 | 99 | 134* | 138 | 148 | 72 | 93 | 65 |
+| 2026-05-25 | 109 | 87 | 85 | 84 | 87 | 89 | 62 |
+| 2026-06-01 | 106 | 90 | 72 | 84 | 72 | 84 | 64 |
+| 2026-06-08 | 88 | 80 | 97 | 84 | 84 | 91 | 53 |
+| 2026-06-15 | 103 | 105 | 68 | 73 | 83 | 78 | 64 |
+| 2026-06-22 | 102 | 95 | 77 | 84 | 89 | 96 | 78 |
+| 2026-06-29 | 95 | 88 | 91 | 57 | 84 | 94 | 76 |
+| 2026-07-06 | 95 | 72 | 114 | 105 | 73 | 89 | 49 |
+| 2026-07-13 | 103 | 100 | 95 | 104 | 88 | 127* | 83 |
+| 2026-07-20 | 146 | 85 | 99 | 89 | 99 | 86 | 78 |
+| 2026-07-27 | 101 | 97 | 87 | 113 | 89 | 75 | 53 |
+| 2026-08-03 | 90 | 78 | 88 | 77 | 91 | 86 | 83* |
+| 2026-08-10 | 125* | 132 | 149 | 111 | 93 | 82 | 65 |
+| 2026-08-17 | 90 | 103 | 77 | 84 | 101 | 83 | 69 |
+| 2026-08-24 | 103 | 80 | 82 | 87 | 126* | 133 | 105 |
+| 2026-08-31 | 101 | 94 | 87 | 83 | 86 | 91 | 128* |
+| 2026-09-07 | 163 | 156 | 83 | 84 | 97 | 90 | 69 |
+| 2026-09-14 | 95 | 76 | 81 | 95 | 97 | 126* | 98* |
+| 2026-09-21 | 161 | 147 | 114 | 96 | 86 | 97 | 50 |
+| 2026-09-28 | 78 | 87 | 92 | 101 | 87 | 87 | 17 |
 
 
 ## By category
 
 | Category | Complaints | Share |
 |---|---|---|
-| Garbage | 3574 | 22.2% |
-| Road and Footpath | 2186 | 13.6% |
-| Street Light | 2101 | 13.0% |
-| Public Health | 1853 | 11.5% |
-| Water Stagnation | 1818 | 11.3% |
-| Storm Water Drains | 745 | 4.6% |
-| Park and Playground | 652 | 4.0% |
-| Public Toilet | 566 | 3.5% |
-| Other | 563 | 3.5% |
-| Tax and Licence | 467 | 2.9% |
-| General | 456 | 2.8% |
-| Building Plan Permission | 352 | 2.2% |
-| Flood | 178 | 1.1% |
-| MEGA STREETS - CONSTRUCTION PHASE | 175 | 1.1% |
-| Voter ID | 163 | 1.0% |
-| Air Quality | 153 | 0.9% |
-| MEGA STREETS - PLANNING PHASE | 59 | 0.4% |
+| Garbage | 3450 | 21.2% |
+| Road and Footpath | 2262 | 13.9% |
+| Street Light | 2107 | 12.9% |
+| Public Health | 1932 | 11.9% |
+| Water Stagnation | 1814 | 11.1% |
+| Storm Water Drains | 838 | 5.1% |
+| Park and Playground | 669 | 4.1% |
+| Public Toilet | 615 | 3.8% |
+| Other | 606 | 3.7% |
+| General | 469 | 2.9% |
+| Tax and Licence | 424 | 2.6% |
+| Building Plan Permission | 322 | 2.0% |
+| Flood | 207 | 1.3% |
+| MEGA STREETS - CONSTRUCTION PHASE | 183 | 1.1% |
+| Voter ID | 153 | 0.9% |
+| Air Quality | 140 | 0.9% |
 | MEGA STREETS - OPERATION PHASE | 52 | 0.3% |
+| MEGA STREETS - PLANNING PHASE | 40 | 0.2% |
 
 
 ## By department
 
 | Department | Complaints | Share |
 |---|---|---|
-| Solid Waste Management Department | 3574 | 22.2% |
-| Engineering Department (Town Planning & Building Permissions) | 2824 | 17.5% |
-| Storm Water Drain Department | 2741 | 17.0% |
-| Health Department | 2596 | 16.1% |
-| Electrical Department | 2128 | 13.2% |
-| Parks & Play Fields Department | 721 | 4.5% |
-| General Administration | 651 | 4.0% |
-| Revenue Department | 490 | 3.0% |
-| Education Department | 96 | 0.6% |
-| Family Welfare Department | 69 | 0.4% |
-| Land & Estate Department | 62 | 0.4% |
-| Bridges Department | 41 | 0.3% |
-| Buildings Department | 35 | 0.2% |
-| Council Department | 30 | 0.2% |
-| Mechanical Engineering Department | 30 | 0.2% |
-| Financial Management Unit | 25 | 0.2% |
+| Solid Waste Management Department | 3450 | 21.2% |
+| Engineering Department (Town Planning & Building Permissions) | 2859 | 17.6% |
+| Storm Water Drain Department | 2859 | 17.6% |
+| Health Department | 2714 | 16.7% |
+| Electrical Department | 2129 | 13.1% |
+| Parks & Play Fields Department | 754 | 4.6% |
+| General Administration | 649 | 4.0% |
+| Revenue Department | 457 | 2.8% |
+| Education Department | 106 | 0.7% |
+| Land & Estate Department | 81 | 0.5% |
+| Family Welfare Department | 65 | 0.4% |
+| Buildings Department | 43 | 0.3% |
+| Bridges Department | 38 | 0.2% |
+| Council Department | 32 | 0.2% |
+| Mechanical Engineering Department | 28 | 0.2% |
+| Financial Management Unit | 19 | 0.1% |
 
 
 ## By zone
 
 | Zone | Complaints | Share |
 |---|---|---|
-| 9 Teynampet | 1858 | 11.5% |
-| 5 Royapuram | 1468 | 9.1% |
-| 10 Kodambakkam | 1451 | 9.0% |
-| 4 Tondiarpet | 1396 | 8.7% |
-| 6 Thiru-Vi-Ka-Nagar | 1331 | 8.3% |
-| 8 Anna Nagar | 1299 | 8.1% |
-| 7 Ambattur | 1131 | 7.0% |
-| 13 Adyar | 1116 | 6.9% |
-| 11 Valasaravakkam | 963 | 6.0% |
-| 1 Thiruvottiyur | 928 | 5.8% |
-| 12 Alandur | 770 | 4.8% |
-| 3 Madhavaram | 755 | 4.7% |
-| 14 Perungudi | 749 | 4.6% |
-| 15 Sholinganallur | 556 | 3.5% |
-| 2 Manali | 342 | 2.1% |
+| 9 Teynampet | 1750 | 10.7% |
+| 4 Tondiarpet | 1489 | 9.1% |
+| 10 Kodambakkam | 1483 | 9.1% |
+| 5 Royapuram | 1469 | 9.0% |
+| 6 Thiru-Vi-Ka-Nagar | 1369 | 8.4% |
+| 8 Anna Nagar | 1312 | 8.1% |
+| 7 Ambattur | 1076 | 6.6% |
+| 13 Adyar | 1062 | 6.5% |
+| 1 Thiruvottiyur | 994 | 6.1% |
+| 11 Valasaravakkam | 955 | 5.9% |
+| 14 Perungudi | 836 | 5.1% |
+| 3 Madhavaram | 820 | 5.0% |
+| 12 Alandur | 811 | 5.0% |
+| 15 Sholinganallur | 568 | 3.5% |
+| 2 Manali | 289 | 1.8% |
 
 
 ## By status
 
 | Status | Complaints | Share |
 |---|---|---|
-| Verified by Collector | 13958 | 86.6% |
-| Rejected | 1250 | 7.8% |
-| In Progress | 467 | 2.9% |
-| Pending Approval | 248 | 1.5% |
-| Approved by Department Officer | 97 | 0.6% |
-| Completed - Pending Collector Verification | 93 | 0.6% |
+| Verified by Collector | 14098 | 86.6% |
+| Rejected | 1238 | 7.6% |
+| In Progress | 504 | 3.1% |
+| Pending Approval | 250 | 1.5% |
+| Approved by Department Officer | 102 | 0.6% |
+| Completed - Pending Collector Verification | 90 | 0.6% |
+| Complaint Filed | 1 | 0.0% |
 
 
-Rejected at: Department Officer 917, Collector 333.
+Rejected at: Department Officer 930, Collector 308.
 
 
-Last 3 days (241 complaints): Pending Approval 113, In Progress 85, Approved by Department Officer 20, Completed - Pending Collector Verification 10, Rejected 8, Verified by Collector 5.
+Last 3 days (257 complaints): Pending Approval 125, In Progress 77, Approved by Department Officer 35, Verified by Collector 7, Completed - Pending Collector Verification 6, Rejected 6, Complaint Filed 1.
 
 
-Stalled (a gap of 10+ days before the next step): 1906 (11.8%), Engineering Department (Town Planning & Building Permissions) 716, Storm Water Drain Department 572, Solid Waste Management Department 205, Health Department 140.
+Stalled (a gap of 10+ days before the next step): 1924 (11.8%), Engineering Department (Town Planning & Building Permissions) 709, Storm Water Drain Department 558, Solid Waste Management Department 218, Health Department 181.
 
 
 ## By priority
 
-Snapshot as of 2026-10-04 16:41 (days open is part of the score).
+Snapshot as of 2026-10-04 11:33 (days open is part of the score).
 
 | Priority | Complaints | Share |
 |---|---|---|
-| Low | 8813 | 54.7% |
-| Medium | 6193 | 38.4% |
-| High | 1051 | 6.5% |
-| Critical | 56 | 0.3% |
+| Low | 8825 | 54.2% |
+| Medium | 6236 | 38.3% |
+| High | 1127 | 6.9% |
+| Critical | 95 | 0.6% |
 
 
 ## By language
 
 | Detected language | Complaints | Share |
 |---|---|---|
-| en | 9720 | 60.3% |
-| ta | 4025 | 25.0% |
-| tanglish | 2368 | 14.7% |
+| en | 9903 | 60.8% |
+| ta | 3919 | 24.1% |
+| tanglish | 2461 | 15.1% |
 
 
-The `languageOf()` detector agrees with the language each non-junk text was written in for 15804 of 15878 (99.5%).
+The `languageOf()` detector agrees with the language each non-junk text was written in for 15989 of 16050 (99.6%).
 
 
 ## Duplicates and hotspots
 
-- Planted near-duplicates: **963** re-reports in **787** groups (same sub type, 5-140 m, within 72 h, different complainant, reworded).
-- The rule-based `Duplicate Group` column puts **963 of 963** (100.0%) planted re-reports in the same group as their original, and flags 1088 complaints in total as belonging to an earlier complaint's group.
+- Planted near-duplicates: **977** re-reports in **938** groups (same sub type, 5-140 m, within 72 h, different complainant, reworded).
+- The rule-based `Duplicate Group` column puts **977 of 977** (100.0%) planted re-reports in the same group as their original, and flags 1130 complaints in total as belonging to an earlier complaint's group.
 - Ground truth is kept out of the main file, in `_truth/duplicate_truth.csv`.
 
 | Hotspot | Sub type | Ward | Zone | Starts | Complaints | Rain-driven |
 |---|---|---|---|---|---|---|
-| HOT-W2936 | Street Dogs | 107 | Anna Nagar | 2026-04-11 18:07 | 15 | no |
-| HOT-W2938 | Removal of Garbage | 95 | Anna Nagar | 2026-04-25 17:59 | 7 | no |
-| HOT-W2941 | Removal of Fallen Trees | 62 | Royapuram | 2026-05-19 15:00 | 11 | yes |
-| HOT-W2948 | Burning of Garbage at Dumping Ground | 123 | Teynampet | 2026-07-03 17:17 | 7 | no |
-| HOT-W2950 | Stagnation of Water | 132 | Kodambakkam | 2026-07-18 20:00 | 16 | yes |
-| HOT-W2951 | Overflowing of Garbage Bin | 88 | Ambattur | 2026-07-26 00:01 | 15 | no |
-| HOT-W2953 | Obstruction of Water Flow | 182 | Adyar | 2026-08-10 20:00 | 6 | yes |
-| HOT-W2956 | Stagnation of Water | 47 | Tondiarpet | 2026-08-28 15:00 | 12 | yes |
-| HOT-W2957 | Obstruction of Water Flow | 145 | Valasaravakkam | 2026-09-06 20:00 | 12 | yes |
-| HOT-W2958 | Burning of Garbage at Dumping Ground | 191 | Perungudi | 2026-09-12 18:10 | 19 | no |
-| HOT-W2959 | Water entering Home/Shop | 164 | Alandur | 2026-09-19 08:00 | 15 | yes |
-| HOT-W2960 | Non burning of Street lights | 146 | Valasaravakkam | 2026-09-27 05:59 | 8 | no |
+| HOT-01 | Removal of Garbage | 40 | Tondiarpet | 2026-07-16 08:08 | 20 | no |
+| HOT-02 | Removal of Garbage | 139 | Kodambakkam | 2026-08-12 21:07 | 10 | no |
+| HOT-03 | Water entering Home/Shop | 43 | Tondiarpet | 2026-08-28 20:00 | 7 | yes |
+| HOT-04 | Mosquito Menace | 23 | Madhavaram | 2026-08-12 15:01 | 15 | no |
+| HOT-05 | Street Dogs | 157 | Alandur | 2026-09-05 21:19 | 17 | no |
+| HOT-06 | Removal of Fallen Trees | 143 | Valasaravakkam | 2026-09-06 14:00 | 14 | yes |
+| HOT-07 | Stagnation of Water | 63 | Royapuram | 2026-05-19 08:00 | 6 | yes |
+| HOT-08 | Street Dogs | 72 | Thiru-Vi-Ka-Nagar | 2026-09-22 22:17 | 18 | no |
+| HOT-09 | Pot hole fill up / Repairs to the damaged surface | 159 | Alandur | 2026-07-25 16:16 | 18 | no |
+| HOT-10 | Pot hole fill up / Repairs to the damaged surface | 91 | Ambattur | 2026-04-24 23:01 | 12 | no |
+| HOT-11 | Pot hole fill up / Repairs to the damaged surface | 197 | Sholinganallur | 2026-08-05 14:03 | 16 | no |
+| HOT-12 | Mosquito Menace | 69 | Thiru-Vi-Ka-Nagar | 2026-09-22 20:35 | 5 | no |
+| HOT-13 | Mosquito Menace | 27 | Madhavaram | 2026-06-30 11:05 | 10 | no |
 
 
 ## Validation
@@ -205,54 +207,60 @@ The `languageOf()` detector agrees with the language each non-junk text was writ
 | # | Check | Result | Detail |
 |---|---|---|---|
 | 1 | Headers exact, in order, with BOM | PASS | 38 + 6 columns |
-| 2 | Type / sub type / department / routing basis match the DB | PASS | 16113 rows |
+| 2 | Type / sub type / department / routing basis match the DB | PASS | 16285 rows |
 | 3 | Needs officer review <=> assumed/unmapped | PASS | consistent |
-| 4 | Lat/lng inside the Ward polygon; Ward in its Zone | PASS | 13822 pinned rows inside their ward |
-| 5 | GCC-list street belongs to an area mapped to the ward | PASS | 14059 synthetic rows |
+| 4 | Lat/lng inside the Ward polygon; Ward in its Zone | PASS | 14075 pinned rows inside their ward |
+| 5 | GCC-list street belongs to an area mapped to the ward | PASS | 14176 synthetic rows |
 | 6 | Typed by citizen <=> Area and Locality blank | PASS | consistent |
-| 7 | Anonymous = Yes <=> complainant columns blank | PASS | 1293 anonymous rows |
-| 8 | Complaint No format, uniqueness, year = Filed On year | PASS | 16113 unique codes |
-| 9 | History replays to Status; timestamps increase; Last Updated; Rejected At | PASS | 91617 history rows for 16113 complaints |
-| 10 | Title/Details/Landmark lengths; Tamil round-trips | PASS | 0 rows with Tamil text identical to MySQL after re-reading the file |
-| 11 | Every day has complaints; all 7 statuses and 16 departments appear | **FAIL** | 1 problem(s); first: status never appears: Complaint Filed |
-| 12 | Real rows byte-identical (cols 1-31) to npm run export:data | PASS | 0 real row(s) identical |
-| 13 | duplicate_truth.csv refers only to synthetic complaints | PASS | 1893 rows |
+| 7 | Anonymous = Yes <=> complainant columns blank | PASS | 1355 anonymous rows |
+| 8 | Complaint No format, uniqueness, year = Filed On year | PASS | 16285 unique codes |
+| 9 | History replays to Status; timestamps increase; Last Updated; Rejected At | PASS | 92501 history rows for 16285 complaints |
+| 10 | Title/Details/Landmark lengths; Tamil round-trips | PASS | 1 rows with Tamil text identical to MySQL after re-reading the file |
+| 11 | Every day has complaints; all 7 statuses and 16 departments appear | PASS | 180 days with complaints, 7 statuses, 16 departments |
+| 12 | Real rows byte-identical (cols 1-31) to npm run export:data | PASS | 2 real row(s) identical |
+| 13 | duplicate_truth.csv refers only to synthetic complaints | PASS | 2083 rows |
 
 
 ## One sample row per status
 
+### Complaint Filed
+
+```
+2026-574CEJ,2026-10-04 11:28,Complaint Filed,,Public Health,Mosquito Menace,Health Department,Auto-routed,mapped,8,Anna Nagar,97,map_boundary,ANNA NAGAR EAST,N BLOCK,N- BLOCK 19TH  STREET,From GCC list,Near Murugan Temple bus stop,600101,13.0958664,80.2293835,Kosu thollai,"Kosu thollai romba jaasthi, dengue vara chance irukku. Fogging pannunga. Indha maasam fogging vandi varala. Night la innum mosam. Already rendu thadava complaint pannom, no action.",No,Selvi,Female,9000051514,selvi406@example.com,"No. 165/2, Thirumangalam 3rd Lane",No,2026-10-04 11:28,1,tanglish,61,High,"High-risk issue: Mosquito Menace (+35); Affects a bus stop, a place of worship (+16); Citizen reports complaining before (+10)",2026-574CEJ,1
+```
+
 ### Pending Approval
 
 ```
-2026-447XGQ,2026-09-02 08:10,Pending Approval,,Road and Footpath,Electrical wires/obstruction on footpath,Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,14,Perungudi,169,map_boundary,,,gandhi nagar cross rd,Typed by citizen,Near Mosque,,12.9726758,80.1931443,Problem on our road,"I live at door no. 59, gandhi nagar cross rd. Complaint about electrical wires/obstruction on footpath near Mosque. Loose gravel on the surface makes bikes skid. 37 families in our lane face this daily. Please do the needful.",No,J. T. Manikandan Balasubramanian,Male,9000036811,,"No. 72, Gangadharan 2nd Street",Yes,2026-09-02 08:23,1,en,53,High,"Public-safety or sanitation issue: Electrical wires/obstruction on footpath (+25); Affects a place of worship (+8); Open 32 days, over twice the 9-day target (+20)",2026-447XGQ,1
+2026-912XLH,2026-08-31 12:26,Pending Approval,,Garbage,Cleaning of Water Table,Solid Waste Management Department,Auto-routed,mapped,14,Perungudi,191,map_boundary,PALLIKARANAI,BETHEL NAGAR,KARPAGA VINAYAGAR FIRST CROSS STREET,From GCC list,,,12.9107718,80.1999887,Kuppai problem,"Cleaning of Water Table problem rendu vaaram ah irukku, yaarum kandukala. Engal sandhula 30 family daily kashtapadranga. Konjam urgent ah paarunga sir.",No,Tamilselvi,Female,9000023602,,"No. 220, Kamaraj Nagar 4th Street",No,2026-08-31 12:43,1,tanglish,35,Medium,"Civic issue: Cleaning of Water Table (+15); Open 33 days, over twice the 3-day target (+20)",2026-912XLH,1
 ```
 
 ### Approved by Department Officer
 
 ```
-2026-640UAL,2026-08-30 11:50,Approved by Department Officer,,Road and Footpath,Illegal Parking on foot path,Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,13,Adyar,179,map_boundary,PERUNGUDI,OOMAITHURAI 2ND CROSS STREET,OOMAITHURAI 2ND CROSS STREET,From GCC list,,,12.9743226,80.2271524,Road problem,"Illegal Parking on foot path problem irukku, konjam indha road-a paarunga. Engal sandhula 45 family daily kashtapadranga. Udane vandhu paarunga please.",No,M. S. Kavitha,Female,9000093285,,"No. 241, Dwaraga Nagar Colony 3rd Street",No,2026-10-03 10:15,1,tanglish,40,Medium,"Civic issue: Illegal Parking on foot path (+15); 1 other 'Illegal Parking on foot path' complaint in Ward 179 in the last 72 h (+5); Open 35 days, over twice the 9-day target (+20)",2026-732XON,2
+2026-559LRF,2026-08-30 18:28,Approved by Department Officer,,Road and Footpath,Pot hole fill up / Repairs to the damaged surface,Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,6,Thiru-Vi-Ka-Nagar,73,map_boundary,PULIANTHOPE,J.J.NAGAR,J.J.NAGAR 7TH STREET,From GCC list,,,13.1030274,80.2541873,Pot hole fill up / Repairs to the damaged surface,Road surface is badly damaged in our area with deep potholes for the last 10 days. Metal plates left after the cable work are sticking out. There is a hospital nearby and ambulances find it hard to pass. Request you to look into this urgently.,No,C. P. Pavithra Arumugam,Female,9000088418,,"No. 69, Ganesh Nagar 8th St",Yes,2026-09-01 20:41,1,en,53,High,"Public-safety or sanitation issue: Pot hole fill up / Repairs to the damaged surface (+25); Affects a hospital or health centre (+8); Open 34 days, over twice the 9-day target (+20)",2026-559LRF,1
 ```
 
 ### In Progress
 
 ```
-2026-727FOB,2026-08-14 10:18,In Progress,,MEGA STREETS - PLANNING PHASE,Project information not provided (Washermenpet Metro),Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,12,Alandur,167,user_selected,ULLAGARAM,BHARATHIYAR STREET,BHARATHIYAR STREET,From GCC list,,,,,Project information not provided (Washermenpet Metro),Mega street project work la problem: Project information not provided (Washermenpet Metro). Konjam paarunga. Paadhi velai la road one lane aayiduchu. Konjam urgent ah paarunga sir.,No,Rajesh,Male,9000041962,,"No. 16, Vinayagapuram(I.D. Hospital Backside)",Yes,2026-08-18 11:08,1,tanglish,25,Low,"Administrative issue: Project information not provided (Washermenpet Metro) (+5); Open 51 days, over twice the 16-day target (+20)",2026-727FOB,1
+2026-019QDM,2026-08-11 20:19,In Progress,,MEGA STREETS - OPERATION PHASE,Encroaching Public Space (MC Road),Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,5,Royapuram,62,map_boundary,CHINDATRIPET,NAVALAR NEDUNCHEZHIYAN NAGAR,NAVALAR NEDUNCHEZHIYAN NAGAR LANES SLUM,From GCC list,,600013,13.0735913,80.2687917,Encroaching Public Space (MC Road),Regarding the mega streets project: encroaching public space (mc road). This has continued since last Monday. The half-finished work has narrowed the road to one lane. About 19 houses on the street are affected.,Yes,,,,,,No,2026-08-13 01:41,1,en,35,Medium,"Civic issue: Encroaching Public Space (MC Road) (+15); Open 53 days, over twice the 16-day target (+20)",2026-019QDM,1
 ```
 
 ### Completed - Pending Collector Verification
 
 ```
-2026-176BVP,2026-08-12 16:09,Completed - Pending Collector Verification,,MEGA STREETS - CONSTRUCTION PHASE,Labourer not using the safety equipment (Arunachaleshwar Road),Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,2,Manali,16,map_boundary,KADAPAKKAM,KAMARAJAPURAM,KAMARAJAPURAM KADAPAKKAM LINK ROAD,From GCC list,,600051,13.1841519,80.2902383,Labourer not using the safety equipment (Arunachaleshwar Road),Regarding the mega streets project: labourer not using the safety equipment (arunachaleshwar road). This has continued for the past 9 days. The half-finished work has narrowed the road to one lane. The problem is worse at night. About 50 houses on the street are affected. Kindly send someone to inspect.,No,Balaji Babu,Male,9000020184,,"No. 214, Kambar Lane",Yes,2026-10-04 11:27,1,en,45,Medium,"Public-safety or sanitation issue: Labourer not using the safety equipment (Arunachaleshwar Road) (+25); Open 53 days, over twice the 16-day target (+20)",2026-176BVP,1
+2026-856RWF,2026-08-15 18:35,Completed - Pending Collector Verification,,Road and Footpath,Relaying of Road,Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,11,Valasaravakkam,154,map_boundary,,,kalaignar 4th Colony,Typed by citizen,அங்கன்வாடி மையம் அருகில்,,13.0266515,80.1748048,Relaying of Road,Complaint about relaying of road in our street. It gets worse every time it rains. Accidents are happening frequently. Kindly send someone to inspect.,No,Valli,Female,9000070763,,"No. 122, Varadappan Street",No,2026-10-01 13:36,1,en,43,Medium,"Civic issue: Relaying of Road (+15); Affects a school or anganwadi (+8); Open 49 days, over twice the 9-day target (+20)",2026-856RWF,1
 ```
 
 ### Verified by Collector
 
 ```
-2026-280CDJ,2026-04-08 00:59,Verified by Collector,,General,Complaints regarding any other CoC building,General Administration,Needs officer review,assumed,10,Kodambakkam,140,user_selected,SAIDAPET WEST,SAIDAPET WEST,KAMBAR STREET,From GCC list,Behind Ration shop,,,,Complaints regarding any other CoC building,Complaint regarding complaints regarding any other coc building; the issue has continued for the past 10 days.,No,V. Manikandan Subramanian,Male,9000005729,,"No. 206/2, Portguese Church 8th Lane",No,2026-04-21 02:28,1,en,15,Low,Civic issue: Complaints regarding any other CoC building (+15),2026-280CDJ,1
+2026-099ABA,2026-04-08 00:24,Verified by Collector,,Garbage,Burning of Garbage at Dumping Ground,Solid Waste Management Department,Auto-routed,mapped,4,Tondiarpet,45,map_boundary,VYASARPADI,ANNA NAGAR,ANNA NAGAR - V STREET,From GCC list,மாநகராட்சி பள்ளி அருகில்,600021,13.1145784,80.2573437,Burning of Garbage at Dumping Ground,My elderly parents live on Anna Nagar - V Street. Garbage at the dumping ground is burning for two weeks now. Thick smoke is covering the whole area. Hotel waste is dumped here late at night. Kindly send someone to inspect.,No,Murugan Babu,Male,9000069982,,"No. 92, Thamarai Quarters (Thiruvalleeswarar Nagar)",Yes,2026-04-11 16:02,1,en,41,Medium,"Public-safety or sanitation issue: Burning of Garbage at Dumping Ground (+25); Affects a school or anganwadi, elderly people (+16)",2026-099ABA,1
 ```
 
 ### Rejected
 
 ```
-2026-151IWD,2026-04-09 06:02,Rejected,Department Officer,Public Health,Public toilet cleaning,Health Department,Auto-routed,mapped,5,Royapuram,50,map_boundary,ROYAPURAM,CORPORATION COLONY,CORPORATION COLONY 4TH STREET,From GCC list,,600013,13.1103228,80.2956893,Public toilet cleaning,Complaint regarding public toilet cleaning on Corporation Colony 4th Street. The fogging vehicle has not come to our street this month. It is worst in the morning around 7 am. 21 families in our lane face this daily. Request you to look into this urgently.,No,J. Pandian,Male,9000080009,,"No. 124, Varadappan Street",No,2026-04-11 02:03,1,en,20,Low,Civic issue: Public toilet cleaning (+15); 1 other 'Public toilet cleaning' complaint in Ward 50 in the last 72 h (+5),2026-873MTG,2
+2026-401AJB,2026-04-08 07:33,Rejected,Department Officer,Road and Footpath,Formation of New Road,Engineering Department (Town Planning & Building Permissions),Needs officer review,assumed,7,Ambattur,93,map_boundary,MOGAPPAIR,PADI,T.S.KRISHNA NAGAR,From GCC list,Near Post Office,,13.0765728,80.1894232,Formation of New Road,test,No,G. E. Sangeetha,Female,9000036251,sangeethag205@example.in,"No. 209, G.K.M. Colony 26th Cross Street",Yes,2026-04-08 22:39,1,en,15,Low,Civic issue: Formation of New Road (+15),2026-401AJB,1
 ```

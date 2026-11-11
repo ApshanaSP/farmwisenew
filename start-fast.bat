@@ -2,6 +2,8 @@
 rem District IQ, fast: the production build (pages open in about a second; the dev server compiles each page on first
 rem use, 45-65 s on this PC, which is what made signing in slow). Builds once, then starts at http://127.0.0.1:3000.
 rem After changing the code, run this with "rebuild":  start-fast.bat rebuild
+rem PaddleOCR, step one of reading a Manu, in its own small window. The desk still works without it.
+if exist "%~dp0manu_paddle_ocr\.venv\Scripts\python.exe" start "PaddleOCR" /min "%~dp0manu_paddle_ocr\start.bat"
 cd /d %~dp0chennai-grievance-portal-main
 set NEXT_DIST_DIR=.next-prod
 if /I "%1"=="rebuild" rmdir /s /q .next-prod 2>nul

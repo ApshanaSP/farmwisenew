@@ -7,7 +7,7 @@
  */
 import { useState } from "react";
 import { I } from "@/components/collector/app/icons";
-import { Empty, SEVS, SEV_HEX, deptIcon, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { Empty, SEVS, SEV_HEX, deptIcon, fromManu, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
 import type { Ctx } from "./OfficerApp";
 import "@/components/collector/app/attention.css";
 
@@ -86,7 +86,7 @@ export function OfficerAttention({ c, goGrievances }: { c: Ctx; goGrievances: (t
                     <b>{fullTitle(r)}</b>
                     <small>
                       {r.returned ? <em title={r.returnNote ?? undefined}><I n="refresh" />Returned</em> : <em className="sev" style={{ color: SEV_HEX[r.sev], background: `color-mix(in srgb, ${SEV_HEX[r.sev]} 14%, transparent)` }}>{r.sev}</em>}
-                      {[r.zone_name, rel(r.t, c.now), r.complaints ? `${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ")}
+                      {[r.zone_name, rel(r.t, c.now), r.complaints ? `${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : null, fromManu(r) ? "Manu" : null].filter(Boolean).join(" · ")}
                     </small>
                   </span>
                 </button>

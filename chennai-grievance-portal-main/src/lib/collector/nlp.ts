@@ -1,6 +1,6 @@
 /**
- * Light NLP for items from sources the Collector adds and from OCR'd newspaper
- * pages: category from the pipeline's own English/Tamil keyword lists, and place
+ * Light NLP for items from sources the Collector adds:
+ * category from the pipeline's own English/Tamil keyword lists, and place
  * from the news monitor's gazetteer (localities with coordinates, English and Tamil names)
  * and the GCC area list (area -> primary ward -> zone -> taluk), then zone and taluk names.
  * Each result carries the terms that matched, so the finding stays explainable.

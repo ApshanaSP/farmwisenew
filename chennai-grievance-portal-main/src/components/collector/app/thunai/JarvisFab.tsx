@@ -5,6 +5,7 @@
  * questions asked: a click lists them, with what Jarvis answered (JarvisQuestions.tsx).
  */
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { useLang } from "@/lib/i18n/lang";
 import { I } from "../icons";
 import { hud } from "./hudstore";
@@ -27,7 +28,8 @@ export default function JarvisFab() {
   }, []);
   return (
     <div className={`jvf-wrap${on ? " live" : ""}`} data-no-i18n>
-      {list && <JarvisQuestions lang={ta ? "ta" : "en"} place={on ? "bar" : "fab"} onClose={close} />}
+      {/* on the page itself, not in the console's layer: Jarvis's screens sit above that layer and would hide the list */}
+      {list && createPortal(<JarvisQuestions lang={ta ? "ta" : "en"} place={on ? "bar" : "fab"} onClose={close} />, document.body)}
       {s.denied && !on && <span className="jvf-note" role="alert">{ta ? "மைக் தடுக்கப்பட்டுள்ளது: முகவரிப் பட்டியில் அனுமதியுங்கள்" : "Microphone blocked: allow it in the address bar"}</span>}
       <div className="jvf-pair">
         <button className={`jvf-q${list ? " on" : ""}`} data-jq-toggle onClick={() => setList((v) => !v)} aria-expanded={list}

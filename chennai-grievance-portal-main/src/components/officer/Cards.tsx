@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import SatMap from "@/components/collector/app/SatMap";
 import { I } from "@/components/collector/app/icons";
-import { Chart, Empty, HBars, SEV_HEX, SevChip, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
+import { Chart, Empty, HBars, SEV_HEX, SevChip, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
 import { STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type Stage, type Tab } from "@/lib/officer/stages";
 import { bucketLabels } from "./format";
 import type { InsightModule } from "@/lib/officer/insights";
@@ -149,7 +149,7 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
                   <tr key={r.id} className={r.id === c.fresh ? "flash" : ""} onClick={() => c.openGrievance(r.id)} title={`${r.id} · ${fullTitle(r)}`}>
                     <td className="oq-g">
                       <b>{r.type}{r.returned && <span className="chip sev-high" title={r.returnNote ?? "Returned by the Collector"}><I n="refresh" />Returned</span>}</b>
-                      <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}</small>
+                      <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}{fromManu(r) ? " · Manu (paper petition)" : ""}</small>
                     </td>
                     <td><SevChip s={r.sev} /></td>
                     <td className="dim">{rel(recent ? r.t : r.updated, c.now)}</td>

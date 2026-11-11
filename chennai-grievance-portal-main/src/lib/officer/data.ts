@@ -106,7 +106,7 @@ function withStage(dept: string, now: string) {
           WHERE d.decision IN ('verify', 'reopen', 'resolve', 'reject')) x WHERE rn = 1),
       w AS (
         SELECT i.incident_id, ${TITLE} AS title, i.category_label, i.category_code, i.zone_no, i.zone_name, i.ward_no, i.taluk_code, i.place_text,
-               i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.source_count, i.officer,
+               i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.channels, i.source_count, i.officer,
                i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
                ${STAGE_SQL} AS stage,
                (cd.decision = 'reopen' AND (ls.at IS NULL OR ls.at < cd.decided_at)) AS returned,
@@ -141,7 +141,7 @@ export type ListFlagKey = keyof typeof FLAG_SQL | "due";
 
 const ROW = `w.incident_id AS id, w.title, w.category_label AS type, w.category_code AS cat, w.zone_no AS zone, w.zone_name,
   w.ward_no AS ward, w.taluk_code AS taluk, w.place_text AS loc, w.lat, w.lon, w.severity_level AS sev, w.status_std AS status, w.stage,
-  w.returned, w.c_note AS returnNote, w.citizen_complaints AS complaints, w.outlet_count AS outlets, w.sources, w.source_count, w.officer,
+  w.returned, w.c_note AS returnNote, w.citizen_complaints AS complaints, w.outlet_count AS outlets, w.sources, w.channels, w.source_count, w.officer,
   ${fmt("w.first_reported_at")} AS t, ${fmt("w.upd")} AS updated, ${fmt("w.sla_due_at")} AS due_at`;
 const SEV_ORDER = `FIELD(w.severity_level, 'Severe', 'High', 'Medium', 'Low')`;
 const OPEN_STAGES = `('new', 'approved', 'action', 'sent')`;
@@ -426,7 +426,7 @@ const SOURCE_LABEL: Record<string, string> = {
   grievance: "Citizen complaint", police: "Police report", pwd: "PWD field record", hospital: "Hospital report", news: "News report", imd: "IMD warning"
 };
 const CHANNEL_LABEL: Record<string, string> = {
-  citizen_app: "Citizen app", citizen_grievance: "Grievance portal", control_room_112: "Control room 112", fir_walk_in: "Police station",
+  citizen_app: "Citizen app", citizen_grievance: "Grievance portal", manu: "Manu (paper petition)", control_room_112: "Control room 112", fir_walk_in: "Police station",
   patrol: "Police patrol", field_staff: "Field staff", collector_office: "Collector's office", hospital_mis: "Hospital MIS",
   control_room: "Control room", media: "News"
 };

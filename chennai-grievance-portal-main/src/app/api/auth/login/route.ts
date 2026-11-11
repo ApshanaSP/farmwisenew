@@ -8,6 +8,7 @@ import { RowDataPacket } from "mysql2";
 import { UserRow } from "@/types";
 import { startSession } from "@/lib/security/session";
 import { securityLog } from "@/lib/security/audit";
+import { ensurePetitionLogin } from "@/lib/manu/login";
 
 const GENERIC_ERROR = "Invalid email or password.";
 
@@ -34,6 +35,8 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
+
+    await ensurePetitionLogin(email);
 
     const [rows] = await pool.query<RowDataPacket[]>(
       "SELECT * FROM users WHERE email = ? LIMIT 1",

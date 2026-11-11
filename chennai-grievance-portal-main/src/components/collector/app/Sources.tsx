@@ -5,8 +5,8 @@ import { I } from "./icons";
 import { Empty, fmtShort, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 
-type Tab = "sources" | "add" | "ocr" | "audit";
-const KIND: Record<string, string> = { pipeline: "Pipeline feed", agmarknet: "Public API", rss: "RSS / Atom feed", html: "Web page", json: "JSON API", ocr: "Upload + OCR" };
+type Tab = "sources" | "add" | "audit";
+const KIND: Record<string, string> = { pipeline: "Pipeline feed", agmarknet: "Public API", rss: "RSS / Atom feed", html: "Web page", json: "JSON API" };
 const STATUS: Record<string, [string, string]> = {
   ok: ["Healthy", "st-resolved"], partial: ["Partial", "st-review"], stale: ["Stale", "st-progress"], failing: ["Failing", "st-progress"], login_failed: ["Login failed", "st-progress"], new: ["Not run yet", "st-review"]
 };
@@ -17,11 +17,11 @@ export function SourcesBody({ c, initial = "sources" }: { c: Console; initial?: 
   return (
     <>
       <div className="tabs2">
-        {([["sources", "Connected sources"], ["ocr", "Newspaper page (OCR)"], ["audit", "Audit log"]] as const).map(([k, l]) => (
+        {([["sources", "Connected sources"], ["audit", "Audit log"]] as const).map(([k, l]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
-      {tab === "sources" ? <SourceList c={c} /> : tab === "ocr" ? <OcrUpload c={c} /> : <AuditLog />}
+      {tab === "sources" ? <SourceList c={c} /> : <AuditLog />}
     </>
   );
 }
@@ -92,9 +92,9 @@ function SourceList({ c }: { c: Console }) {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <span style={{ display: "inline-flex", gap: 6 }}>
-                      {s.kind !== "ocr" && <button className="btn sm plain" disabled={busy === s.id || !s.enabled} onClick={() => run(s)}>
-                        <I n="refresh" className={busy === s.id ? "spin" : ""} />{s.kind === "pipeline" ? "Refresh" : "Run now"}</button>}
-                      {["rss", "html", "json", "ocr"].includes(s.kind) && <button className="btn sm plain" onClick={() => show(s)}>Items</button>}
+                      <button className="btn sm plain" disabled={busy === s.id || !s.enabled} onClick={() => run(s)}>
+                        <I n="refresh" className={busy === s.id ? "spin" : ""} />{s.kind === "pipeline" ? "Refresh" : "Run now"}</button>
+                      {["rss", "html", "json"].includes(s.kind) && <button className="btn sm plain" onClick={() => show(s)}>Items</button>}
                       {s.kind !== "pipeline" && <button className="btn sm plain" onClick={() => toggle(s)} title={s.enabled ? "Pause" : "Resume"}>{s.enabled ? "Pause" : "Resume"}</button>}
                       {["rss", "html", "json"].includes(s.kind) && <button className="btn sm plain" onClick={() => remove(s)} title="Remove"><I n="x" /></button>}
                     </span>
@@ -174,68 +174,13 @@ function AddSource({ c, done }: { c: Console; done: () => void }) {
   );
 }
 
-function OcrUpload({ c }: { c: Console }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [publisher, setPublisher] = useState("");
-  const [date, setDate] = useState("");
-  const [lang, setLang] = useState("eng+tam");
-  const [stage, setStage] = useState<string | null>(null);
-  const [result, setResult] = useState<{ added: number; read: number; items: Row[] } | null>(null);
-  const go = async () => {
-    if (!file) return;
-    setResult(null);
-    try {
-      setStage("Loading the OCR engine…");
-      const Tesseract = (await import("tesseract.js")).default;
-      const worker = await Tesseract.createWorker(lang.split("+"), 1, {
-        logger: (m: { status: string; progress: number }) => m.status === "recognizing text" && setStage(`Reading the page… ${Math.round(m.progress * 100)}%`)
-      });
-      await worker.setParameters({ tessedit_pageseg_mode: "1" as any }); // automatic layout: keeps newspaper columns apart
-      const { data } = await worker.recognize(file, {}, { blocks: true, text: true });
-      await worker.terminate();
-      // Paragraphs in reading order (column by column); a short one is a headline, joined to the paragraph below it.
-      const paras: string[] = ((data as any).blocks ?? []).flatMap((b: any) => (b.paragraphs ?? []).map((p: any) => String(p.text).replace(/\s*\n\s*/g, " ").trim()))
-        .filter((t: string) => t.length > 3);
-      const blocks: string[] = [];
-      for (let k = 0; k < paras.length; k++) {
-        if (paras[k].length < 110 && paras[k + 1] && paras[k + 1].length >= 110) { blocks.push(`${paras[k]}\n${paras[k + 1]}`); k++; }
-        else blocks.push(paras[k]);
-      }
-      if (!blocks.length) blocks.push(...String(data.text).split(/\n\s*\n/));
-      for (let k = blocks.length - 1; k >= 0; k--) if (blocks[k].trim().length <= 40) blocks.splice(k, 1);
-      if (!blocks.length) throw new Error("No readable text found on the page.");
-      setStage(`Classifying ${blocks.length} articles…`);
-      const r = await call("/api/collector/sources/ocr", "POST", { file: file.name, publisher: publisher || null, date: date || null, blocks: blocks.slice(0, 80) });
-      setResult(r);
-      c.toast(`${r.read} articles read from the page, ${r.added} new.`);
-    } catch (e: any) {
-      c.toast(e.message || "OCR failed.", "alert");
-    } finally {
-      setStage(null);
-    }
-  };
-  return (
-    <div className="addf">
-      <p className="sub">Upload a photo or scan of a newspaper page (JPG or PNG). The page is read in your browser with OCR (English and Tamil), split into articles, and each article is classified and placed like any other news report.</p>
-      <div className="row3">
-        <label>Page image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
-        <label>Newspaper (optional)<input value={publisher} onChange={(e) => setPublisher(e.target.value)} placeholder="e.g. Dina Thanthi" /></label>
-        <label>Edition date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
-      </div>
-      <label style={{ maxWidth: 260 }}>Language<select value={lang} onChange={(e) => setLang(e.target.value)}><option value="eng+tam">English and Tamil</option><option value="eng">English</option><option value="tam">Tamil</option></select></label>
-      <button className="btn" disabled={!file || !!stage} onClick={go}>{stage ? <><I n="refresh" className="spin" />{stage}</> : <><I n="doc" />Read the page</>}</button>
-      {result && <div style={{ marginTop: 10 }}><ItemTable rows={result.items} /></div>}
-    </div>
-  );
-}
-
 function AuditLog() {
   const [rows, setRows] = useState<Row[] | null>(null);
   useEffect(() => { call("/api/collector/audit").then((j) => setRows(j.log)).catch(() => setRows([])); }, []);
   if (!rows) return <div className="empty">Loading…</div>;
   return (
     <>
-      <p className="sub">Every decision, source change, OCR upload and saved workspace, newest first.</p>
+      <p className="sub">Every decision, source change and saved workspace, newest first.</p>
       <div className="tbl-wrap">
         <table>
           <thead><tr><th>When</th><th>Who</th><th>What</th><th>Record</th><th>Details</th></tr></thead>

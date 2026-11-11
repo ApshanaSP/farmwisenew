@@ -5,13 +5,14 @@ import type { IncidentDetail, Plain } from "@/lib/collector/intel";
 import type { Analysis } from "@/lib/collector/analysis";
 import { I } from "./icons";
 import { OfficerCard } from "./Overview";
-import { MEDIA_KIND, SOURCE_KIND, deptIcon, fmtDay, fmtShort, fmtTime, fullTitle, ms, plural, rel, sourceItems, type Row } from "./lib";
+import { MEDIA_KIND, SOURCE_KIND, deptIcon, fmtDay, fmtShort, fmtTime, fromManu, fullTitle, ms, plural, rel, sourceItems, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { SentNote, TakeAction } from "./TakeAction";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
+import PetitionOriginal from "@/components/manu/PetitionOriginal";
 
 const CHANNEL: Record<string, string> = {
-  citizen_app: "Citizen app", citizen_grievance: "Grievance portal", control_room_112: "Control room 112", fir_walk_in: "Police station",
+  citizen_app: "Citizen app", citizen_grievance: "Grievance portal", manu: "Manu (paper petition)", control_room_112: "Control room 112", fir_walk_in: "Police station",
   patrol: "Police patrol", field_staff: "Field staff", collector_office: "Collector's office", hospital_mis: "Hospital MIS",
   control_room: "Control room"
 };
@@ -204,6 +205,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
         </section>
 
         <section className="iv-col">
+          <PetitionOriginal incidentId={id} />
           <div className="iv-t"><I n="clock" />How it unfolded<span>{plural(reports.length, "report")} from {plural(srcs.length, "source")}{group.length ? `, ${group.length + 1} incidents merged` : ""}, in time order</span></div>
           <ul className="tl">
             {days.map((g) => (
@@ -245,8 +247,8 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
                 const kind = SOURCE_KIND[s.k];
                 return (
                   <div key={s.k}>
-                    <span className={`si ${kind.tone}`} style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center" }}><I n={kind.ic} /></span>
-                    <span style={{ minWidth: 0 }}>{kind.k === "News report" ? "News outlets" : kind.k + "s"}
+                    <span className={`si ${kind.tone}`} style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center" }}><I n={s.ic} /></span>
+                    <span style={{ minWidth: 0 }}>{s.label === "Manu" ? "Manu (paper petition)" : s.k === "grievance" && fromManu(i) ? "Citizen complaints, including a Manu" : kind.k === "News report" ? "News outlets" : kind.k + "s"}
                       {s.k === "news" && i.src?.outlets?.length ? <small>{i.src.outlets.join(", ")}</small> : null}
                     </span>
                     <b>{s.n}</b>

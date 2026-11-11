@@ -1,0 +1,44 @@
+/* The site-wide notice: what is being done, at the top of every screen. Its colours are its own, so it reads the same on every console and theme. */
+#diq-notice {
+  position: fixed; top: 10px; left: 50%; z-index: 2147483000; transform: translate(-50%, -6px);
+  display: flex; align-items: center; gap: 10px; box-sizing: border-box;
+  width: max-content; max-width: min(620px, calc(100vw - 24px)); min-height: 42px; padding: 9px 18px 9px 14px;
+  border-radius: 8px; border: 1px solid rgba(255, 255, 255, .22); background: #14532D; color: #fff;
+  font: 600 14px/1.35 var(--font-plus-jakarta, "Plus Jakarta Sans Variable", "Noto Sans Tamil Variable", system-ui, sans-serif);
+  box-shadow: 0 8px 24px rgba(8, 28, 18, .32);
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s ease, transform .12s ease, background-color .15s ease;
+}
+#diq-notice[data-state="busy"], #diq-notice[data-state="ok"], #diq-notice[data-state="err"] { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+#diq-notice[data-state="err"] { background: #991B1B; }
+#diq-notice .diq-w { display: grid; gap: 1px; min-width: 0; }
+#diq-notice .diq-s { font-weight: 500; font-size: 12.5px; color: rgba(255, 255, 255, .86); }
+
+.diq-ic { flex: none; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; border: 2.5px solid rgba(255, 255, 255, .32); border-top-color: #fff; animation: diq-spin .7s linear infinite; }
+#diq-notice[data-state="ok"] .diq-ic, #diq-notice[data-state="err"] .diq-ic { animation: none; border: 0; background: #fff center / 12px 12px no-repeat; }
+#diq-notice[data-state="ok"] .diq-ic { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.3l2.7 2.7L10 3.4' fill='none' stroke='%2314532D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+#diq-notice[data-state="err"] .diq-ic { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 2.2v4.6M6 9.4v.2' fill='none' stroke='%23991B1B' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); }
+
+/* the running line along the top edge */
+#diq-line { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2147483001; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity .12s; }
+#diq-line[data-on] { opacity: 1; }
+#diq-line::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: #22C55E; animation: diq-run 1.05s ease-in-out infinite; }
+
+/* signing out: the page is covered, so nothing else can be started */
+#diq-veil { position: fixed; inset: 0; z-index: 2147482999; display: none; place-items: center; background: rgba(8, 28, 18, .62); }
+#diq-veil[data-on] { display: grid; }
+#diq-notice:has(~ #diq-veil[data-on]) { visibility: hidden; }
+.diq-vb { display: flex; align-items: center; gap: 12px; padding: 18px 26px; border-radius: 10px; background: #14532D; color: #fff; font: 600 16px/1.35 var(--font-plus-jakarta, "Plus Jakarta Sans Variable", "Noto Sans Tamil Variable", system-ui, sans-serif); box-shadow: 0 14px 40px rgba(0, 0, 0, .35); }
+
+/* the control itself answers at once */
+[data-diq-press] { filter: brightness(.9); }
+[data-diq-busy] { opacity: .68; pointer-events: none; }
+html[data-diq-working], html[data-diq-working] * { cursor: progress !important; }
+
+@keyframes diq-spin { to { transform: rotate(360deg); } }
+@keyframes diq-run { 0% { left: -40%; } 100% { left: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .diq-ic { animation-duration: 2s; }
+  #diq-line::before { animation: none; left: 0; width: 100%; opacity: .75; }
+  #diq-notice { transition: none; }
+}

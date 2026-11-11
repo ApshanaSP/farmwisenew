@@ -161,7 +161,7 @@ async function load(now: string, days: number): Promise<Doc[]> {
     q(`SELECT i.item_id, s.name AS publisher, i.title, i.url, i.lang, i.category_code AS cat, i.dept_code AS ddept, i.place, i.lat, i.lon,
               i.zone_no AS izone, i.taluk_code AS italuk, DATE_FORMAT(COALESCE(i.published_at, i.fetched_at), '%Y-%m-%d %H:%i:%s') AS t
        FROM ${ops("source_items")} i JOIN ${ops("sources")} s ON s.source_id = i.source_id
-       WHERE s.kind IN ('rss', 'html', 'json', 'ocr') AND (i.published_at IS NOT NULL OR i.origin = 'ocr')
+       WHERE s.kind IN ('rss', 'html', 'json') AND i.published_at IS NOT NULL
          AND COALESCE(i.published_at, i.fetched_at) > (? - INTERVAL ? DAY)
          AND COALESCE(i.published_at, i.fetched_at) <= ? + INTERVAL 1 DAY`, [now, days, now]).catch(orEmpty("threads:159")),
     wards()

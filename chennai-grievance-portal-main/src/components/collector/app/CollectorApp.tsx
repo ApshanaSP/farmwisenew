@@ -81,7 +81,7 @@ export interface DeptNav { code: string; name: string; head?: string | null; ope
 type ModalState =
   | { kind: "list"; title: string; preset: ListPreset }
   | { kind: "zones" | "depts" | "export" | "news" | "workspace" | "customize"; title: string }
-  | { kind: "sources"; title: string; tab?: "sources" | "add" | "ocr" | "audit" }
+  | { kind: "sources"; title: string; tab?: "sources" | "add" | "audit" }
   | { kind: "contact"; title: string; dept: Row; contacts: Row[] }
   | { kind: "text"; title: string; md: string }
   | { kind: "item"; title: string; item: Row }
@@ -149,7 +149,7 @@ export interface Console {
   /** an item from a source the Collector added: its text, category, place and source link */
   openItem: (item: Row) => void;
   openAdded: () => void;
-  openSources: (tab?: "sources" | "add" | "ocr" | "audit") => void;
+  openSources: (tab?: "sources" | "add" | "audit") => void;
   /** developing stories: reports about the same event, followed over time */
   openStories: (focus?: string | null) => void;
   openMarkets: () => void;
@@ -762,7 +762,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
       run: () => { setPage("overview"); mapAsk.setGrown(true); } },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
-    { g: "Actions", ic: "sensor", l: "Open data sources", s: "Feeds, OCR upload, audit log", run: c.openFeeds },
+    { g: "Actions", ic: "sensor", l: "Open data sources", s: "Feeds and audit log", run: c.openFeeds },
     { g: "Actions", ic: "layers", l: "Workspaces", s: "Save or reopen a view", run: c.openWorkspace },
     { g: "Actions", ic: "sliders", l: "Customize the dashboard", run: openCustomize },
     { g: "Actions", ic: theme === "dark" ? "sun" : "moon", l: `Switch to ${theme === "dark" ? "light" : "dark"} theme`, run: toggleTheme },
@@ -817,7 +817,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             { key: "ws", icon: "layers", label: "Workspaces", sub: workspaceName ? `Open: ${workspaceName}` : "Save or reopen a view", on: !!workspaceName, run: c.openWorkspace },
             { key: "custom", icon: "sliders", label: "Customize the dashboard", sub: "Choose what the dashboard shows", run: openCustomize },
             { key: "theme", icon: theme === "dark" ? "sun" : "moon", label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
-            { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds, OCR upload, audit log", run: c.openFeeds },
+            { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds and audit log", run: c.openFeeds },
             { key: "sec", icon: "shield", label: "Security", sub: "Sign-ins, sessions, check an email", run: () => setSecOpen(true) }
           ]} />
           <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)}
@@ -834,7 +834,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                   Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b>. Figures come from the district intelligence store, as of {fmtTime(ov.now)}.
                 </div>
                 <button className="pop-i" onClick={() => { setPop(null); setSecOpen(true); }}><I n="shield" /><span><b>Security</b><small>Recent sign-ins, check an email</small></span></button>
-                <button className="pop-i" onClick={() => { setPop(null); c.openFeeds(); }}><I n="sensor" /><span><b>Data sources</b><small>Feeds, added sources, OCR upload</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); c.openFeeds(); }}><I n="sensor" /><span><b>Data sources</b><small>Feeds and added sources</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "sources", title: "Data sources", tab: "audit" }); }}><I n="doc" /><span><b>Audit log</b><small>Every decision and change</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); clearFilters(); }}><I n="home" /><span><b>Clear all filters</b><small>Whole district, every department</small></span></button>
@@ -997,7 +997,7 @@ function Collected({ ov, onClick, live, partial, page }: { ov: OverviewData; onC
     (s?.lastRun ? ` Last collection: ${fmtTime(s.lastRun)}, ${fmtDate(s.lastRun)}.` : "") +
     (s ? (s.missing.length ? ` Behind: ${s.missing.join(", ")}.` : " All feeds current.") : "") +
     ` ${live} of ${ov.feeds.length} feeds live.` + (partial.length ? ` Partly available (some endpoints blocked): ${partial.join(", ")}.` : "") +
-    " Click for the data sources: status, refresh, OCR, audit log.";
+    " Click for the data sources: status, refresh, audit log.";
   return (
     <button key={ov.exportedAt} className={`daily${(s && !all) || late.length ? " pend" : ""}`} title={tip + lateTip} onClick={onClick}>
       <LiveDot state={(s && !all) || late.length ? "warn" : "ok"} /><span>{head}{late.length ? <em className="late">{late.length} {late.length === 1 ? "feed" : "feeds"} behind</em> : null}<small>{sub}</small></span>

@@ -33,6 +33,7 @@ import { cleanTitle } from "@/lib/collector/threads";
 import { NON_INCIDENT_KINDS, reportKind, type ReportKind } from "@/lib/collector/reporttype";
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
 import { MASS_DEATHS, animalDeathsOnly, casualties, casualtyMerges, isArchival, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
+import { websiteCases } from "@/lib/manu/cases";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -553,4 +554,5 @@ onBuild("places-from-reports@2", places);
 onBuild("news-media-only@1", newsMedia);
 onBuild("report-kinds@4", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news
 onBuild("news-sanity@6", newsSanity);
+onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group too
 onBuild("incident-clusters@4", clusters);

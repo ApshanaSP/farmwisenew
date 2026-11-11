@@ -84,7 +84,7 @@ export async function listSources() {
               ${mapped ? "mapping IS NOT NULL" : "0"} AS mapped,
               DATE_FORMAT(last_run_at, '%Y-%m-%d %H:%i:%s') AS last_run_at, DATE_FORMAT(last_ok_at, '%Y-%m-%d %H:%i:%s') AS last_ok_at,
               last_error, items_total, created_by, DATE_FORMAT(session_expires_at, '%Y-%m-%d %H:%i:%s') AS session_expires_at
-       FROM ${ops("sources")} ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'ocr', 'rss', 'html', 'json'), source_id`),
+       FROM ${ops("sources")} WHERE kind <> 'ocr' ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'rss', 'html', 'json'), source_id`),
     q(`SELECT source, status, minutes_since_success, \`rows\` AS row_count, DATE_FORMAT(newest_record_at, '%Y-%m-%d %H:%i:%s') AS newest,
               detail, endpoints_ok AS ep_ok, endpoints_total AS ep_total FROM source_health`),
     q(`SELECT source_id, ok, error, items_new, login, DATE_FORMAT(started_at, '%Y-%m-%d %H:%i:%s') AS t FROM (
@@ -162,7 +162,7 @@ export async function updateSource(id: number, patch: { enabled?: boolean; refre
 export async function removeSource(id: number, actor: string) {
   const [s] = await q(`SELECT name, kind, created_by FROM ${ops("sources")} WHERE source_id = ?`, [id]);
   if (!s) throw new Error("Source not found.");
-  if (["pipeline", "agmarknet", "ocr"].includes(s.kind)) throw new Error("Built-in sources can be paused but not removed.");
+  if (["pipeline", "agmarknet"].includes(s.kind)) throw new Error("Built-in sources can be paused but not removed.");
   await inTransaction(async (conn) => {
     await conn.query(`DELETE FROM ${ops("sources")} WHERE source_id = ?`, [id]);
     await auditIn(conn, actor, "source:remove", "sources", id, s, null);
@@ -198,7 +198,6 @@ export async function runSource(id: number, actor: string) {
   try {
     if (s.kind === "pipeline") Object.assign(run, await (process.env.DATA_BACKEND === "aws" ? triggerDataload() : triggerPipeline()));
     else if (s.kind === "agmarknet") Object.assign(run, await collectMandi());
-    else if (s.kind === "ocr") Object.assign(run, { ok: true, error: null });
     else Object.assign(run, await fetchAndIngest(s));
   } catch (e: any) {
     run.error = String(e?.message ?? e).slice(0, 480);
@@ -320,7 +319,7 @@ async function fetchAndIngest(s: Row) {
     ? extractRecords(s.kind as FetchKind, res.text, s.url, stored.recordPath).records
       .map((r) => applyMapping(r, stored.map)).filter((x): x is NonNullable<typeof x> => !!x)
     : s.kind === "rss" ? parseRss(res.text) : s.kind === "json" ? parseJson(res.text) : parseHtml(res.text, s.url);
-  const n = await ingest(s.source_id, items, "fetch");
+  const n = await ingest(s.source_id, items);
   return { ok: true, http: res.r.status, seen: items.length, items_new: n, login: sess.login, attempts, error: items.length ? null : "No items found on the page." };
 }
 
@@ -393,7 +392,7 @@ function toDate(s: string | null | undefined): Date | null {
 const PLACE_V = 2;
 
 /** Classify, place and store items; duplicates (same source, link and headline) are skipped. */
-export async function ingest(sourceId: number, items: Item[], origin: "fetch" | "ocr"): Promise<number> {
+export async function ingest(sourceId: number, items: Item[]): Promise<number> {
   let added = 0;
   for (const it of items) {
     const title = it.title.slice(0, 480);
@@ -412,7 +411,7 @@ export async function ingest(sourceId: number, items: Item[], origin: "fetch" | 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [sourceId, hash, it.url?.slice(0, 690) ?? null, title, it.body?.slice(0, 6000) ?? null, toDate(it.published), tamil ? "ta" : "en",
         c?.code ?? null, c?.label ?? null, c?.dept ?? null, c?.conf ?? null, c?.terms.slice(0, 6).join(", ").slice(0, 250) ?? null,
-        p?.zone ?? null, p?.ward ?? null, p?.taluk ?? null, p?.place ?? it.place?.slice(0, 250) ?? null, p?.conf ?? null, lat, lon, PLACE_V, c ? 1 : 0, origin]
+        p?.zone ?? null, p?.ward ?? null, p?.taluk ?? null, p?.place ?? it.place?.slice(0, 250) ?? null, p?.conf ?? null, lat, lon, PLACE_V, c ? 1 : 0, "fetch"]
     );
     added += r.affectedRows;
   }
@@ -458,14 +457,14 @@ export async function sourceItems(opts: { sourceId?: number; zone?: number | nul
 export interface ItemScope { now: string; days: number; /** period start; overrides days */ since?: string; zone?: number | null; dept?: string | null; cat?: string | null; taluk?: string | null }
 
 /**
- * Items from sources the Collector added (RSS, web pages, JSON, OCR'd pages) in the
+ * Items from sources the Collector added (RSS, web pages, JSON) in the
  * scope: dated items newest first, then undated page links; plus every item that names a
  * place, for the map. Pipeline feeds are not "added" and never appear here.
  */
 export async function addedItems(s: ItemScope, limit = 40) {
   void replaceStale();
   // `since` (the period start, e.g. 24 hours ago) wins over `days`
-  const where = [`s.kind IN ('rss', 'html', 'json', 'ocr')`,
+  const where = [`s.kind IN ('rss', 'html', 'json')`,
     s.since ? `COALESCE(i.published_at, i.fetched_at) >= ?` : `COALESCE(i.published_at, i.fetched_at) > (? - INTERVAL ? DAY)`,
     `COALESCE(i.published_at, i.fetched_at) <= ? + INTERVAL 1 DAY`];
   const params: unknown[] = s.since ? [s.since, s.now] : [s.now, s.days, s.now];

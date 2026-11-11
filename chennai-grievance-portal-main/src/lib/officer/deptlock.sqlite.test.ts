@@ -39,7 +39,7 @@ function fresh() {
   const db = new DatabaseSync(":memory:");
   registerFunctions(db);
   db.exec(`
-    CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, title TEXT, lead_dept TEXT, category_label TEXT, category_code TEXT, zone_no INTEGER,
+    CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, title TEXT, channels TEXT, lead_dept TEXT, category_label TEXT, category_code TEXT, zone_no INTEGER,
       zone_name TEXT, ward_no INTEGER, taluk_code TEXT, place_text TEXT, lat REAL, lon REAL, severity_level TEXT, status_std TEXT,
       citizen_complaints INTEGER, outlet_count INTEGER, sources TEXT, source_count INTEGER, officer TEXT, summary TEXT, media_only INTEGER,
       first_reported_at TEXT, sla_due_at TEXT, closed_at TEXT, sla_breached INTEGER, is_open INTEGER, last_update_at TEXT);

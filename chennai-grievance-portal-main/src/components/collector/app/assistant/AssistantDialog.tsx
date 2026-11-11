@@ -51,6 +51,10 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
   const [micOk, setMicOk] = useState(false);
   const [past, setPast] = useState<Past[] | null>(null);
   const [showPast, setShowPast] = useState(false);
+  /** the past conversation being opened, and the one that could not be */
+  const [opening, setOpening] = useState<string | null>(null);
+  const [openFail, setOpenFail] = useState<string | null>(null);
+  const openSeq = useRef(0);
   const [find, setFind] = useState("");
   // the console's command palette hands over a question to fill the input (the Collector still presses send)
   useEffect(() => {
@@ -100,11 +104,18 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
 
   /** Open a saved conversation: its questions and answers, and its context for follow-ups (kept on the server). */
   const loadSession = useCallback((id: string, replace = true) => {
+    // a click says at once that the answers are coming (they can take a moment), and says so if they could not be read
+    const my = replace ? ++openSeq.current : 0;
+    const stale = () => replace && my !== openSeq.current;
+    const fail = () => { if (replace && !stale()) { setOpening(null); setOpenFail(id); } };
+    if (replace) { setOpening(id); setOpenFail(null); }
     fetch(`/api/collector/assistant/sessions/${id}`).then((r) => (r.ok ? r.json() : null)).then((j) => {
+      if (stale()) return;
+      if (!j?.messages?.length) return fail();
       // the last conversation, brought back after a refresh, gives way to a question asked while it loaded: it once arrived
       // after the first question had been sent, cancelled it, and the first question was never answered
-      if (!j?.messages?.length || (!replace && (session.current || asked.current))) return;
-      if (replace) ctl.current?.abort();
+      if (!replace && (session.current || asked.current)) return;
+      if (replace) { ctl.current?.abort(); setOpening(null); }
       session.current = id;
       try { localStorage.setItem(SESSION_KEY, id); } catch { /* storage blocked */ }
       const back: Item[] = (j.messages as { id: string; role: string; text: string; card: Card | null }[]).slice(-40).map((m) =>
@@ -113,7 +124,7 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
       lastAnswer.current = lastData?.id ?? null;
       setItems((cur) => (replace || !cur.length ? back : cur));
       setShowPast(false);
-    }).catch(() => {});
+    }).catch(fail);
   }, []);
   const loadPast = useCallback(() => {
     fetch("/api/collector/assistant/sessions").then((r) => (r.ok ? r.json() : null)).then((j) => j && setPast(j.sessions)).catch(() => {});
@@ -177,6 +188,7 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
     const message = q.trim();
     if (!message) return;
     asked.current = true;
+    openSeq.current++; setOpening(null); // a past conversation still opening must not replace this question
     ctl.current?.abort();
     const ac = new AbortController();
     ctl.current = ac;
@@ -279,6 +291,7 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
   const onExpand = useCallback(() => setWide((w) => !w), []);
   const stop = () => { ctl.current?.abort(); ctl.current = null; setBusy(false); setItems((x) => x.filter((i) => i.role !== "pending")); };
   const reset = () => {
+    openSeq.current++; setOpening(null);
     stop(); setItems([]); session.current = null; lastAnswer.current = null; input.current?.focus();
     try { localStorage.removeItem(SESSION_KEY); } catch { /* storage blocked */ }
   };
@@ -295,7 +308,7 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
   return (
     <div className="aq-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside ref={box} className={`aq v2${wide ? " wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby="aq-title" onKeyDown={trap}>
-        {wide && <Sidebar t={t} past={past} find={find} setFind={setFind} current={session.current} onNew={reset} onOpen={(id) => loadSession(id)} />}
+        {wide && <Sidebar t={t} past={past} find={find} setFind={setFind} current={session.current} opening={opening} failed={openFail} onNew={reset} onOpen={(id) => loadSession(id)} />}
         <div className="aq-main">
         <header className="aq-h">
           <BrandMark size={34} />
@@ -329,9 +342,9 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
               <ul>
                 {past.map((sx) => (
                   <li key={sx.id}>
-                    <button className={sx.id === session.current ? "on" : ""} onClick={() => loadSession(sx.id)}>
+                    <button className={sx.id === session.current || sx.id === opening ? "on" : ""} aria-busy={sx.id === opening} onClick={() => loadSession(sx.id)}>
                       <b>{sx.title || t.newChat}</b>
-                      <small>{sx.updated_at.slice(0, 16).replace("T", " ")} · {sx.questions} {sx.questions === 1 ? t.question1 : t.questionN}</small>
+                      <small>{sx.id === opening ? t.opening : sx.id === openFail ? t.openFailed : `${sx.updated_at.slice(0, 16).replace("T", " ")} · ${sx.questions} ${sx.questions === 1 ? t.question1 : t.questionN}`}</small>
                     </button>
                   </li>
                 ))}
@@ -456,8 +469,8 @@ function Progress({ stage, lang }: { stage: Stage; lang: Lang }) {
 }
 
 /** The chat workspace's sidebar: a new conversation, a search, and past conversations by day (reopened with their context). */
-function Sidebar({ t, past, find, setFind, current, onNew, onOpen }: { t: (typeof T)["en"]; past: Past[] | null; find: string; setFind: (s: string) => void;
-  current: string | null; onNew: () => void; onOpen: (id: string) => void }) {
+function Sidebar({ t, past, find, setFind, current, opening, failed, onNew, onOpen }: { t: (typeof T)["en"]; past: Past[] | null; find: string; setFind: (s: string) => void;
+  current: string | null; opening: string | null; failed: string | null; onNew: () => void; onOpen: (id: string) => void }) {
   const today = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
   const f = find.trim().toLowerCase();
   const list = (past ?? []).filter((p) => !f || (p.title ?? "").toLowerCase().includes(f));
@@ -472,8 +485,8 @@ function Sidebar({ t, past, find, setFind, current, onNew, onOpen }: { t: (typeo
             <section key={label}>
               <small>{label}</small>
               {g.map((p) => (
-                <button key={p.id} className={p.id === current ? "on" : ""} onClick={() => onOpen(p.id)} title={p.title}>
-                  <I n="chat" /><span>{p.title || t.newChat}</span>
+                <button key={p.id} className={p.id === current || p.id === opening ? "on" : ""} aria-busy={p.id === opening} onClick={() => onOpen(p.id)} title={p.title}>
+                  <I n="chat" /><span>{p.id === opening ? t.opening : p.id === failed ? t.openFailed : p.title || t.newChat}</span>
                 </button>
               ))}
             </section>

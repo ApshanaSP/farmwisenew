@@ -3,7 +3,7 @@
  * The questions asked of Jarvis, one click from its own button (and from its bar): newest first, each with what Jarvis answered.
  * A question that opened a screen opens it again; any question can be asked again. "See all" opens the chatbot's Jarvis tab.
  */
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { I } from "../icons";
 import { jarvisLog, type JLog } from "./jarvislog";
 
@@ -30,12 +30,25 @@ export function useQuestionCount(): number {
   return useMemo(() => list.filter((m) => m.who === "you").length, [list]);
 }
 
+/** the list is drawn on the page itself, so it takes the console's theme, colours and position with it */
+function consoleLook() {
+  const d = document.querySelector(".dic");
+  const css = d ? getComputedStyle(d) : null;
+  const style: Record<string, string> = {};
+  for (const k of ["--elev", "--text", "--text-2", "--line", "--font-ui"]) { const v = css?.getPropertyValue(k).trim(); if (v) style[k] = v; }
+  return { theme: d?.getAttribute("data-theme") ?? "light", tall: !!d && !d.classList.contains("fit"), style: style as CSSProperties };
+}
+
 export default function JarvisQuestions({ lang, place, onClose }: { lang: "en" | "ta"; place: "fab" | "bar"; onClose: () => void }) {
   const list = useSyncExternalStore(jarvisLog.subscribe, jarvisLog.get, jarvisLog.empty);
   const pairs = useMemo(() => pairsOf(list).slice(0, 15), [list]);
   const [open, setOpen] = useState<string | null>(pairs[0]?.q.id ?? null);
   const box = useRef<HTMLElement>(null);
+  const opened = useRef<HTMLLIElement>(null);
+  const [look] = useState(consoleLook);
   const ta = lang === "ta";
+  // an answer opened low in a long list comes into view, it does not open out of sight below the fold
+  useEffect(() => { opened.current?.scrollIntoView({ block: "nearest" }); }, [open]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     // a click anywhere else closes it (the button that opened it toggles it itself)
@@ -47,7 +60,7 @@ export default function JarvisQuestions({ lang, place, onClose }: { lang: "en" |
   const again = (q: string) => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q })); };
   const screen = (s: NonNullable<JLog["screen"]>) => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:open-pin", { detail: s })); };
   return (
-    <section ref={box} className={`jq jq-${place}`} role="dialog" aria-label={ta ? "முந்தைய கேள்விகள்" : "Earlier questions"} lang={lang} data-no-i18n data-testid="jarvis-questions">
+    <section ref={box} className={`jq jq-${place}${look.tall ? " jq-tall" : ""}`} style={look.style} data-theme={look.theme} role="dialog" aria-label={ta ? "முந்தைய கேள்விகள்" : "Earlier questions"} lang={lang} data-no-i18n data-thunai-ui data-testid="jarvis-questions">
       <header>
         <b><I n="clock" />{ta ? "முந்தைய கேள்விகள்" : "Earlier questions"}</b>
         <span>
@@ -62,7 +75,7 @@ export default function JarvisQuestions({ lang, place, onClose }: { lang: "en" |
           const shot = a.find((x) => x.screen)?.screen;
           const words = a.map((x) => x.text).filter(Boolean).join(" ");
           return (
-            <li key={q.id} className={isOpen ? "open" : ""}>
+            <li key={q.id} className={isOpen ? "open" : ""} ref={isOpen ? opened : undefined}>
               <button className="jq-q" onClick={() => setOpen(isOpen ? null : q.id)} aria-expanded={isOpen} lang={q.lang}>
                 <span>{q.text}</span><small>{when(q.at)}</small>
               </button>

@@ -21,6 +21,8 @@ export function startJobs(): void {
       runDueRefreshes();
       // Data Studio's Live Connectors: each at its own time (IST), missed runs caught up once
       runDueConnectors();
+      // an SMS to a petitioner that failed gets another try
+      void (await import("@/lib/manu/sms")).retryFailedSms();
     } catch (e) {
       console.warn(`[jobs] sweep skipped: ${(e as Error).message}`);
     }

@@ -392,7 +392,7 @@ export async function addedSources(): Promise<Row[]> {
   return q(
     `SELECT source_id AS id, name, kind, pipeline_key, enabled, status, refresh_minutes, items_total,
             DATE_FORMAT(last_ok_at, '%Y-%m-%d %H:%i:%s') AS last_ok_at, DATE_FORMAT(last_run_at, '%Y-%m-%d %H:%i:%s') AS last_run_at
-     FROM ${ops("sources")} ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'ocr', 'rss', 'html', 'json'), source_id`
+     FROM ${ops("sources")} WHERE kind <> 'ocr' ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'rss', 'html', 'json'), source_id`
   ).catch(orEmpty("queries:372"));
 }
 

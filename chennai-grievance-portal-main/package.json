@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/start-paddle.cjs",
     "dev": "next dev -H 127.0.0.1",
     "dev:lan": "next dev",
     "build": "next build",

@@ -1,0 +1,22 @@
+=== how many open grievances in Adyar  (317 ms)
+kind=answer intent=INCIDENT_COUNT display=kpi lang=en rt=kpi
+scope: Last 90 days · Adyar (Zone 13) · all departments · as of 17 Oct, 8:27 PM
+H: 68 open citizen complaints · last 90 days
+**68** open citizen complaints in the last 90 days in Adyar zone.
+
+- They are about 61 incidents, 61 of them still open
+tools=count_incidents chips=[]
+caveats=[]
+assumptions=["Read as incident count: asks how many."]
+
+=== road deaths today  (39 ms)
+kind=answer intent=INCIDENT_COUNT display=kpi lang=en rt=kpi
+scope: Last 24 hours · District-wide · all departments · Road accident · as of 17 Oct, 8:27 PM
+H: 2 deaths in road accidents · last 24 hours
+**2** people died in road accidents reported in the last 24 hours (up from 1 in the period before).
+
+- 13 road accidents in all, 19 injured
+- 1 severe, 13 still open
+tools=count_incidents chips=[]
+caveats=["Deaths are counted once per incident, as the department records and confirmed news reports give them; a toll that only one outlet reports is held until confirmed."]
+assumptions=["Read as incident count: asks how many people died."]

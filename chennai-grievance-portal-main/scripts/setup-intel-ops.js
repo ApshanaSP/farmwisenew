@@ -218,8 +218,7 @@ const BUILTIN = [
   ["IMD weather", "https://mausam.imd.gov.in/chennai/", "pipeline", "imd", 1440, "Warnings, rainfall observations and forecasts"],
   ["CPCB air quality", "https://airquality.cpcb.gov.in/ccr/", "pipeline", "cpcb", 1440, "Continuous air-quality stations"],
   ["Chennai Flood Monitoring (CFM-DSS)", "https://chennaifloodmonitor.tn.gov.in", "pipeline", "cfm", 1440, "Lake levels, river gauges and bulletins"],
-  ["AGMARKNET mandi prices", "https://agmarknet.gov.in", "agmarknet", null, 1440, "Daily prices at each Chennai market (Uzhavar Sandhai farmer markets), plus Tamil Nadu and the districts around Chennai"],
-  ["Newspaper pages (OCR)", "upload://newspaper-pages", "ocr", null, 0, "Scanned or photographed newspaper pages, read with OCR in the browser"]
+  ["AGMARKNET mandi prices", "https://agmarknet.gov.in", "agmarknet", null, 1440, "Daily prices at each Chennai market (Uzhavar Sandhai farmer markets), plus Tamil Nadu and the districts around Chennai"]
 ];
 
 async function main() {

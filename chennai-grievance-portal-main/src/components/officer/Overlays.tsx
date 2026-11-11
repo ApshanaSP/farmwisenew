@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { I } from "@/components/collector/app/icons";
-import { Empty, SevChip, fmtShort, type Row } from "@/components/collector/app/lib";
+import { Empty, SevChip, fmtShort, fromManu, type Row } from "@/components/collector/app/lib";
 import { StageChip } from "./Cards";
 import type { Ctx, ListFlag } from "./OfficerApp";
 
@@ -61,7 +61,7 @@ export function ListBody({ c, cat, flag, sev, tab = "all" }: { c: Ctx; cat: stri
             <tbody>
               {data?.rows.length ? data.rows.map((r) => (
                 <tr key={r.id} onClick={() => c.openGrievance(r.id)}>
-                  <td className="dim num">{r.id}</td><td className="ev">{r.type}</td><td><StageChip r={r} /></td><td><SevChip s={r.sev} /></td>
+                  <td className="dim num">{r.id}</td><td className="ev">{r.type}{fromManu(r) && <span className="dim"> · Manu</span>}</td><td><StageChip r={r} /></td><td><SevChip s={r.sev} /></td>
                   <td>{r.loc ?? "—"} <span className="dim">· {r.zone_name ?? "Chennai"}</span></td><td className="num">{r.complaints}</td><td className="dim num">{fmtShort(r.t)}</td>
                 </tr>
               )) : data ? <tr><td colSpan={7}><Empty>No grievances match.</Empty></td></tr> : null}

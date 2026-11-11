@@ -128,7 +128,7 @@ export async function sessionMessages(owner: string, sessionId: string): Promise
     if (!s) return null;
     const [rows] = await intelPool.query<RowDataPacket[]>(
       `SELECT message_id AS id, role, content_text AS text, language, input_mode, payload_json, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS t
-       FROM ${ops("assistant_messages")} WHERE session_id = ? ORDER BY created_at LIMIT 200`,
+       FROM ${ops("assistant_messages")} WHERE session_id = ? ORDER BY created_at, role = 'assistant' LIMIT 200`, // an answer saved in the same second as its question stays after it
       [sessionId]
     );
     return rows.map((r) => ({ id: r.id, role: r.role, text: r.text, language: r.language, inputMode: r.input_mode, t: r.t, card: parse(r.payload_json) }));

@@ -9,7 +9,7 @@ import type { Console } from "./CollectorApp";
 /** Items come from sites the Collector added, so only plain web links are ever rendered as links. */
 export const safeUrl = (u: unknown) => (typeof u === "string" && /^https?:\/\//i.test(u) ? u : null);
 
-const KIND: Record<string, string> = { rss: "RSS feed", html: "Web page", json: "JSON feed", ocr: "Newspaper page (OCR)" };
+const KIND: Record<string, string> = { rss: "RSS feed", html: "Web page", json: "JSON feed" };
 
 /** Added sources can be newer than the store's as-of time: then show the time itself. */
 export const itemWhen = (t: string, now: string) => (ms(t) > ms(now) ? fmtShort(t) : rel(t, now));
@@ -20,7 +20,7 @@ export const itemWhere = (i: Row) => (i.place ?? i.zone_name ?? null) as string 
 export function AddedRow({ i, now, c }: { i: Row; now: string; c: Console }) {
   return (
     <button className="brief" onClick={() => c.openItem(i)}>
-      <span className={`bic ${i.is_incident ? "t-violet" : "t-info"}`}><I n={i.kind === "ocr" ? "photo" : "ext"} /></span>
+      <span className={`bic ${i.is_incident ? "t-violet" : "t-info"}`}><I n="ext" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
         <b>{i.title}</b>
         <span className="loc">{[i.source, itemWhere(i) ?? "Place not found", itemWhen(i.t, now)].join(" · ")}</span>

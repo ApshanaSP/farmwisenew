@@ -155,6 +155,9 @@ export const fullTitle = (i: Row) => i.title || `${i.type} – ${i.loc ?? i.zone
 
 const SRC_ORDER = ["grievance", "police", "pwd", "hospital", "news", "imd"] as const;
 
+/** Came in as a Manu: a paper petition scanned and approved at the Collector's office. */
+export const fromManu = (r: Row): boolean => String(r.channels ?? "").split("|").includes("manu");
+
 /** Reports merged into an incident, by source; the same counts wherever the incident appears. */
 export function sourceItems(i: Row): { k: string; ic: IconName; n: number; label: string; title: string }[] {
   const s = i.src as Row | undefined;
@@ -164,7 +167,10 @@ export function sourceItems(i: Row): { k: string; ic: IconName; n: number; label
     const n = s ? Number(s[k] ?? 0) : has(k) ? 1 : 0;
     if (!n) continue;
     const ic = SOURCE_KIND[k].ic;
-    if (k === "grievance") out.push({ k, ic, n, label: n === 1 ? "Complaint" : "Complaints", title: plural(n, "citizen complaint") });
+    if (k === "grievance") {
+      const manu = fromManu(i);
+      out.push({ k, ic: manu ? "doc" : ic, n, label: manu && n === 1 ? "Manu" : n === 1 ? "Complaint" : "Complaints", title: manu ? (n === 1 ? "Manu: a paper petition" : `${plural(n, "citizen complaint")}, including a Manu (paper petition)`) : plural(n, "citizen complaint") });
+    }
     else if (k === "news") {
       const outs: string[] = s?.outlets ?? [];
       const o = outs.length || 1;

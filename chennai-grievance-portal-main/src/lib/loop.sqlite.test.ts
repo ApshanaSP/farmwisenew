@@ -57,7 +57,7 @@ function fresh() {
     CREATE TABLE localities (id INTEGER PRIMARY KEY, name TEXT);
     CREATE TABLE streets (id INTEGER PRIMARY KEY, name TEXT);
     CREATE TABLE events (event_id TEXT PRIMARY KEY, source TEXT, source_record_id TEXT, incident_id TEXT, text TEXT);
-    CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, title TEXT, lead_dept TEXT, category_label TEXT, category_code TEXT, zone_no INTEGER,
+    CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, channels TEXT, title TEXT, lead_dept TEXT, category_label TEXT, category_code TEXT, zone_no INTEGER,
       zone_name TEXT, ward_no INTEGER, taluk_code TEXT, place_text TEXT, lat REAL, lon REAL, severity_level TEXT, status_std TEXT,
       citizen_complaints INTEGER, outlet_count INTEGER, sources TEXT, source_count INTEGER, officer TEXT, summary TEXT, media_only INTEGER,
       first_reported_at TEXT, sla_due_at TEXT, closed_at TEXT, sla_breached INTEGER, is_open INTEGER, last_update_at TEXT, verified INTEGER);

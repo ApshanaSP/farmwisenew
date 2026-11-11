@@ -1,0 +1,36 @@
+{
+ "claude-haiku-5-5": {
+  "fields": {
+   "name": 30,
+   "mobile": 23,
+   "door_no": 30,
+   "street": 29,
+   "area": 29,
+   "pincode": 30,
+   "ward": 29,
+   "date": 27,
+   "aadhaar": 30,
+   "department": 30,
+   "urgent": 25
+  },
+  "n": 30,
+  "text": 0.9891631342903553
+ },
+ "claude-opus-5-5": {
+  "fields": {
+   "name": 30,
+   "mobile": 26,
+   "door_no": 30,
+   "street": 29,
+   "area": 30,
+   "pincode": 30,
+   "ward": 30,
+   "date": 26,
+   "aadhaar": 30,
+   "department": 30,
+   "urgent": 25
+  },
+  "n": 30,
+  "text": 0.9985744446507987
+ }
+}

@@ -7,6 +7,7 @@ import type { GrievanceDetail } from "@/lib/officer/data";
 import { STAGE_INDEX, STEP_LABELS, type Stage } from "@/lib/officer/stages";
 import { StageChip } from "./Cards";
 import type { Ctx } from "./OfficerApp";
+import PetitionOriginal from "@/components/manu/PetitionOriginal";
 
 type Report = GrievanceDetail["reports"][number];
 
@@ -157,6 +158,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         {d.reports.map((r, k) => (
           <ReportBlock key={r.id} r={r} title={k === 0 ? `Completion report from ${c.dept.name}` : `Earlier report · ${fmtShort(r.t)}`} />
         ))}
+        <PetitionOriginal incidentId={id} />
         <div>
           <div className="sec-t">Timeline</div>
           <ul className="vtl">

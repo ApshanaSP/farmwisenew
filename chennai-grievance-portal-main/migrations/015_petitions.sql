@@ -1,0 +1,46 @@
+-- Manu Desk: paper petitions, from the photo through the staff check to the complaint and case they became.
+-- On the AWS store the same table is created by the website itself (WEBSITE_TABLES in src/lib/aws/store.ts).
+CREATE TABLE IF NOT EXISTS petitions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  source VARCHAR(16) NOT NULL DEFAULT 'counter',
+  status VARCHAR(16) NOT NULL DEFAULT 'reading',
+  pages TEXT NOT NULL,
+  uploaded_by INT NULL,
+  uploaded_email VARCHAR(190) NULL,
+  citizen_user_id INT NULL,
+  reading MEDIUMTEXT NULL,
+  read_model VARCHAR(60) NULL,
+  read_ms INT NULL,
+  read_error VARCHAR(300) NULL,
+  name VARCHAR(190) NULL,
+  mobile VARCHAR(15) NULL,
+  address VARCHAR(400) NULL,
+  area VARCHAR(190) NULL,
+  ward_number INT NULL,
+  dept_code VARCHAR(20) NULL,
+  category_code VARCHAR(40) NULL,
+  urgent TINYINT NOT NULL DEFAULT 0,
+  subject VARCHAR(400) NULL,
+  problem VARCHAR(500) NULL,
+  request VARCHAR(600) NULL,
+  full_text MEDIUMTEXT NULL,
+  petition_date VARCHAR(20) NULL,
+  language VARCHAR(10) NULL,
+  complaint_code VARCHAR(20) NULL,
+  complaint_id INT NULL,
+  incident_id VARCHAR(64) NULL,
+  attached TINYINT NOT NULL DEFAULT 0,
+  filed_by VARCHAR(190) NULL,
+  filed_at DATETIME NULL,
+  due_at DATETIME NULL,
+  reject_reason VARCHAR(300) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX petitions__status (status, created_at),
+  INDEX petitions__mobile (mobile),
+  INDEX petitions__incident (incident_id),
+  INDEX petitions__code (complaint_code)
+);
+
+-- A paper petition rarely says the writer's gender.
+ALTER TABLE complaints MODIFY gender ENUM('Male','Female','Transgender','Not stated') NOT NULL;

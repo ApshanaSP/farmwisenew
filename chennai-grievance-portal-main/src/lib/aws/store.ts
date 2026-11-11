@@ -49,7 +49,7 @@ export interface Snapshot { table: string; columns: [string, Kind][]; rows: unkn
 
 interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number; durableFile: string;
   /** build hooks already applied to this build, and the run in progress */ hooksDone?: Set<string>; hooking?: Promise<void> | null }
-interface Durable { conn: DB; keys: Record<string, string[]>; file: string; loadedAt: number }
+interface Durable { conn: DB; keys: Record<string, string[]>; file: string; loadedAt: number; /** WEBSITE_TABLES checked on this file */ siteTables?: boolean }
 
 /** One holder at a time; acquire() resolves to the release function. */
 class Lock {
@@ -327,6 +327,76 @@ const keyJson = (row: "NEW" | "OLD", key: string[]) => `json_array(${key.map((k)
 // users.token_version: raised on sign-out / password change, so old tokens are refused (lib/auth.ts, migration 013).
 const DURABLE_ADDED: Record<string, string[]> = { sources: ["mapping"], users: ["token_version"] };
 
+/**
+ * Durable tables the website added after the migration (the matching MySQL migration is in migrations/). Created on load when
+ * AWS has none yet, then saved like every other table; their definition goes to DynamoDB's schema items once per run.
+ */
+const WEBSITE_TABLES: Doc["schema"] = {
+  // Manu Desk (lib/manu): paper petitions, from the photo through the check to the case they became
+  petitions: {
+    key: ["id"],
+    ddl: [`CREATE TABLE "petitions" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "source" TEXT NOT NULL DEFAULT 'counter', "status" TEXT NOT NULL DEFAULT 'reading',
+      "pages" TEXT NOT NULL, "uploaded_by" INTEGER, "uploaded_email" TEXT, "citizen_user_id" INTEGER, "reading" TEXT, "read_model" TEXT, "read_ms" INTEGER, "read_error" TEXT,
+      "name" TEXT COLLATE NOCASE, "mobile" TEXT, "address" TEXT, "area" TEXT, "ward_number" INTEGER, "dept_code" TEXT, "category_code" TEXT, "urgent" INTEGER NOT NULL DEFAULT 0,
+      "subject" TEXT, "problem" TEXT, "request" TEXT, "full_text" TEXT, "petition_date" TEXT, "language" TEXT, "complaint_code" TEXT, "complaint_id" INTEGER, "incident_id" TEXT,
+      "attached" INTEGER NOT NULL DEFAULT 0, "filed_by" TEXT, "filed_at" TEXT, "due_at" TEXT, "reject_reason" TEXT,
+      "created_at" TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')), "updated_at" TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')))`,
+      `CREATE INDEX "petitions__status" ON "petitions" ("status", "created_at")`,
+      `CREATE INDEX "petitions__mobile" ON "petitions" ("mobile")`,
+      `CREATE INDEX "petitions__incident" ON "petitions" ("incident_id")`,
+      `CREATE INDEX "petitions__code" ON "petitions" ("complaint_code")`]
+  },
+  // the SMS sent to the person who wrote a petition, one row a message (lib/manu/sms.ts)
+  petition_sms: {
+    key: ["id"],
+    ddl: [`CREATE TABLE "petition_sms" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "complaint_code" TEXT NOT NULL, "kind" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'waiting', "result" TEXT, "detail" TEXT,
+      "attempts" INTEGER NOT NULL DEFAULT 0, "tried_at" TEXT, "sent_at" TEXT, "created_at" TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')))`,
+      `CREATE UNIQUE INDEX "petition_sms__one" ON "petition_sms" ("complaint_code", "kind")`]
+  }
+};
+
+/** The triggers that note every change of a table in _changes. */
+function trackChanges(db: DB, t: string, key: string[]): void {
+  const name = (op: string) => q(`_changes_${t}_${op}`);
+  db.exec(`CREATE TRIGGER ${name("ins")} AFTER INSERT ON ${q(t)} BEGIN
+             INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("NEW", key)}); END;
+           CREATE TRIGGER ${name("upd")} AFTER UPDATE ON ${q(t)} BEGIN
+             INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", key)}), (${lit(t)}, ${keyJson("NEW", key)}); END;
+           CREATE TRIGGER ${name("del")} AFTER DELETE ON ${q(t)} BEGIN
+             INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", key)}); END;`);
+}
+
+/** Adds WEBSITE_TABLES to a durable file loaded before they existed (a running server after an update), and tells AWS their shape. */
+function ensureSiteTables(d: Durable): void {
+  if (d.siteTables) return;
+  d.siteTables = true;
+  try {
+    let made = false;
+    for (const [t, s] of Object.entries(WEBSITE_TABLES)) {
+      if (d.conn.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t)) continue;
+      d.conn.exec("BEGIN");
+      try {
+        for (const ddl of s.ddl) d.conn.exec(ddl);
+        trackChanges(d.conn, t, s.key);
+        d.conn.prepare("INSERT OR REPLACE INTO _keys VALUES (?, ?)").run(t, JSON.stringify(s.key));
+        d.conn.exec("COMMIT");
+      } catch (e) {
+        d.conn.exec("ROLLBACK");
+        throw e;
+      }
+      d.keys[t] = s.key;
+      made = true;
+    }
+    if (made && g.state) catalog(g.state.db);
+    if (!DRY_RUN)
+      void api("/store/write", { gz: zlib.gzipSync(JSON.stringify({ put: [], del: [], schema: WEBSITE_TABLES })).toString("base64") })
+        .catch((e) => console.warn(`[aws-store] could not save the shape of the website's tables: ${e.message}`));
+  } catch (e) {
+    d.siteTables = false; // tried again on the next request
+    console.warn(`[aws-store] could not add the website's tables: ${(e as Error).message}`);
+  }
+}
+
 /** Creates the tables of `doc` with their rows; `track` adds the triggers that note every change in _changes. */
 async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
   const inserts = new Map<string, ReturnType<DB["prepare"]>>();
@@ -348,14 +418,7 @@ async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
       inserts.get(sig)!.run(...(cols.map((c) => toSql(row[c])) as any[]));
       await breathe();
     }
-    if (!track) continue;
-    const name = (op: string) => q(`_changes_${t}_${op}`);
-    db.exec(`CREATE TRIGGER ${name("ins")} AFTER INSERT ON ${q(t)} BEGIN
-               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("NEW", s.key)}); END;
-             CREATE TRIGGER ${name("upd")} AFTER UPDATE ON ${q(t)} BEGIN
-               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", s.key)}), (${lit(t)}, ${keyJson("NEW", s.key)}); END;
-             CREATE TRIGGER ${name("del")} AFTER DELETE ON ${q(t)} BEGIN
-               INSERT INTO _changes (t, k) VALUES (${lit(t)}, ${keyJson("OLD", s.key)}); END;`);
+    if (track) trackChanges(db, t, s.key);
   }
 }
 
@@ -416,6 +479,7 @@ type Loaded = Durable & { tables: number; rows: number; refTables: number };
 async function fetchDurable(file: string): Promise<Loaded> {
   const m = await api("/store/load", {});
   const [rows, ref] = await Promise.all([gzJson<Doc>(m.rows), m.reference ? reference(m.reference) : null]);
+  for (const [t, s] of Object.entries(WEBSITE_TABLES)) rows.schema[t] ??= s;
   for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(file + f, { force: true });
   const conn = new (sqlite().DatabaseSync)(file);
   conn.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000");
@@ -551,6 +615,7 @@ async function durable(): Promise<Durable> {
 
 /** The current database: loads the first build (once), and checks for a newer one in the background. */
 async function current(): Promise<State> {
+  if (g.durable) ensureSiteTables(g.durable);
   if (!g.state) {
     // the build is served as soon as it is set; its first request waits for the build hooks
     g.loading ??= manifest().then(build).then(async (s) => {

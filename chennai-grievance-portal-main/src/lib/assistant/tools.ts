@@ -1133,7 +1133,7 @@ export const TOOLS = [
 
   tool({
     name: "source_health",
-    description: "Freshness of every data source: the pipeline's feeds (complaints, police, PWD, hospitals, news, IMD, CPCB, CFM) with status and minutes since the last success, the time the store was last exported, and the sources the Collector added (AGMARKNET, OCR, RSS...).",
+    description: "Freshness of every data source: the pipeline's feeds (complaints, police, PWD, hospitals, news, IMD, CPCB, CFM) with status and minutes since the last success, the time the store was last exported, and the sources the Collector added (AGMARKNET, RSS...).",
     args: z.object({}),
     async run() {
       const [f, sources, now] = await Promise.all([feeds(), addedSources(), asOf()]);

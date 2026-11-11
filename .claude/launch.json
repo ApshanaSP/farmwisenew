@@ -234,6 +234,26 @@
       }
     },
     {
+      "name": "public-3000",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3000"
+      ],
+      "port": 3000,
+      "autoPort": false,
+      "env": {
+        "NEXT_DIST_DIR": ".next-prod",
+        "DATA_BACKEND": "aws",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem"
+      }
+    },
+    {
       "name": "jarvis-prod-3010",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -256,6 +276,33 @@
         "AWS_STORE_RELOAD_MINUTES": "100000",
         "SMTP_HOST": "127.0.0.1",
         "SMTP_PORT": "1"
+      }
+    },
+    {
+      "name": "r32-3011",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3011"
+      ],
+      "port": 3011,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-r32",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-r32/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AI_PROVIDER": "none",
+        "AI_FALLBACK_PROVIDER": "none"
       }
     }
   ]

@@ -340,7 +340,7 @@ export const POLICY: Record<string, TableSpec> = {
       status: ["dim", "Assigned, Acknowledged or Closed"], assigned_at: ["time", "routed"] }
   },
   sources: {
-    db: "ops", d: "Data sources registered on the console: the pipeline's feeds, AGMARKNET, OCR and sources the Collector added.", grain: "one row per source",
+    db: "ops", d: "Data sources registered on the console: the pipeline's feeds, AGMARKNET and sources the Collector added.", grain: "one row per source",
     test: "0", cap: null,
     cols: { source_id: ["id", "source ID"], name: ["label", "name"], kind: ["dim", "kind"], description: ["label", "description"],
       pipeline_key: ["dim", "pipeline feed"], refresh_minutes: ["measure", "refresh interval", { unit: "minutes" }], enabled: ["flag", "enabled"],

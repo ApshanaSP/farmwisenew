@@ -258,7 +258,7 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
 // ----------------------------------------------------------------- police --
 
 const CHANNEL: Record<string, string> = {
-  control_room_112: "Control room 112", fir_walk_in: "Walk-in FIR", patrol: "Patrol", media: "News", citizen_grievance: "Grievance portal"
+  control_room_112: "Control room 112", fir_walk_in: "Walk-in FIR", patrol: "Patrol", media: "News", citizen_grievance: "Grievance portal", manu: "Manu (paper petition)"
 };
 
 async function police(_dept: string, s: InsightScope): Promise<Built> {

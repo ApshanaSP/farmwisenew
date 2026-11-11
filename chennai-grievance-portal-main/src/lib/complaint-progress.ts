@@ -15,6 +15,8 @@ import { RowDataPacket } from "mysql2";
 import pool from "@/lib/db";
 import intelPool, { ops } from "@/lib/collector/db";
 import { photoUrl } from "@/lib/officer/photos";
+import { RESOLVED_STATUSES } from "@/lib/constants";
+import { sendPetitionSms } from "@/lib/manu/sms";
 import type { ComplaintStatus } from "@/types";
 
 export interface WorkStep { step: string; at: string; note: string | null; reportId: number | null }
@@ -167,6 +169,9 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
         await pool.query(`UPDATE complaints SET status = ?, rejected_stage = ?, remarks = COALESCE(?, remarks) WHERE id = ?`,
           [p.status, p.rejectedStage, p.remarks, r.id]);
         changed++;
+        // a Manu's writer is told when the work on it ends; for any other complaint this does nothing
+        if (p.status === "Rejected") await sendPetitionSms(String(r.complaint_code), "closed", "rejected");
+        else if ((RESOLVED_STATUSES as readonly string[]).includes(p.status)) await sendPetitionSms(String(r.complaint_code), "closed", "done");
       }
     }
     return changed;

@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import { TAB_SESSION_SCRIPT } from "@/lib/tab-session";
 import { LANG_SCRIPT } from "@/lib/i18n/script";
 import Translator from "@/components/i18n/Translator";
+import ActivityLayer from "@/components/activity/ActivityLayer";
 
 const THEME_SCRIPT =
   "try{if(localStorage.getItem('diq-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}";
@@ -43,6 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         {/* the whole site in Tamil when chosen: the words are swapped in place, numbers untouched */}
         <Translator />
+        {/* every click answered at once: what is being done, and what was done */}
+        <ActivityLayer />
       </body>
     </html>
   );

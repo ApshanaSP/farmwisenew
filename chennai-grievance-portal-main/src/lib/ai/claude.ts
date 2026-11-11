@@ -161,6 +161,10 @@ export interface ClaudeJsonArgs<T> {
   lenient?: z.ZodType<T, z.ZodTypeDef, unknown>;
   system: string;
   prompt: string;
+  /** photos sent before the prompt (Manu Desk: a petition's pages), base64 */
+  images?: { mediaType: "image/jpeg" | "image/png"; data: string }[];
+  /** this call's own model, instead of the role's */
+  model?: string;
   /** what the caller wants for its answer; thinking also counts against max_tokens, so the request asks for more */
   maxOutputTokens?: number;
   timeoutMs?: number;
@@ -185,7 +189,7 @@ function retryAfter(e: InstanceType<typeof Anthropic.APIError>, dflt: number): n
 
 /** One structured answer from Claude. Throws ClaudeBusyError (rate limit, overload, too slow) or a plain Error, and the caller moves on. */
 export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonResult<T>> {
-  const model = claudeModel(a.role), t0 = Date.now();
+  const model = a.model || claudeModel(a.role), t0 = Date.now();
   const effort = a.role === "reasoning" ? ((env("AI_CLAUDE_EFFORT") || "medium") as "low" | "medium" | "high") : "low";
   const timeout = a.timeoutMs ?? (a.role ? Number(env("AI_CLAUDE_TIMEOUT_MS")) || 25_000 : 6000);
   const attempts = a.role ? 2 : 1;
@@ -203,7 +207,9 @@ export async function claudeJson<T>(a: ClaudeJsonArgs<T>): Promise<ClaudeJsonRes
         // thinking shares this budget with the answer; a console write-up gets more room than a spoken turn
         max_tokens: a.role ? Math.max(4000, (a.maxOutputTokens ?? 1500) * 3) : Math.max(2000, a.maxOutputTokens ?? 0),
         system: [{ type: "text", text: a.system + how, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: a.images?.length
+          ? [...a.images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.mediaType, data: i.data } })), { type: "text" as const, text: prompt }]
+          : prompt }],
         output_config: { effort, ...(useFormat ? { format: { type: "json_schema" as const, schema: sch.strict! } } : {}) },
         // a spoken turn on Haiku 5.5 answers without thinking first (allowed at low effort; the schema still holds the reply's
         // shape): the answer comes about a second sooner. JARVIS_CLAUDE_THINK=1 keeps the thinking

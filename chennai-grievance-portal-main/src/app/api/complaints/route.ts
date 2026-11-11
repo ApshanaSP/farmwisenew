@@ -11,6 +11,8 @@ import { progressFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 import { oneAtATime } from "@/lib/serial";
+import { addCaseLive, onlineCase } from "@/lib/manu/cases";
+import { istNow } from "@/lib/manu/clean";
 
 /** The same citizen's identical complaint (title, details, ward) filed in the last two minutes, if any. */
 async function sameComplaintJustFiled(userId: number, title: string, description: string, ward: number) {
@@ -279,6 +281,12 @@ export async function POST(req: NextRequest) {
       "SELECT name FROM departments WHERE id = ?",
       [departmentId]
     );
+
+    // the officer and Collector consoles read cases: put this complaint in front of them now (a failure is logged, and the next build adds it)
+    await addCaseLive(onlineCase({
+      complaint_code: complaintCode, created_at: istNow(), title: data.title, description: data.description, ward_number: data.wardNumber,
+      specific_location: data.specificLocation, street_address: data.streetAddress, mobile_number: data.mobileNumber, user_id: session.userId
+    }, deptNameRows[0]?.name ?? null));
 
     return NextResponse.json({
       message:
