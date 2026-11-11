@@ -36,6 +36,17 @@ An unwanted upload can be deleted with the × in the list, **Delete petition**, 
 
 Install once: run `manu_paddle_ocr\setup.bat`, about 1 GB. After that `start-fast.bat`, `host-server.bat` and `npm run dev` open PaddleOCR in its own small window. Test copies of the site (`AWS_STORE_DRY_RUN=1`) do not. It uses about 1.4 GB of memory while open, listens only on this computer, and keeps nothing it reads. To read with the AI OCR alone, set `MANU_PADDLE_URL=off`.
 
+### On another PC (a fresh clone)
+
+1. `git pull`. Nothing new to install for the website itself (no new npm packages); the `petitions` table and the petition login create themselves on first use.
+2. Install Python 3.11 if the PC has no Python 3.10 to 3.13 (python.org; tick "Add to PATH").
+3. Double-click `manu_paddle_ocr\setup.bat` once. It picks a supported Python, makes `.venv` in that folder and installs PaddleOCR, about 1 GB. The first petition it reads downloads its models, about 200 MB, once.
+4. Start the site as usual (`start-fast.bat rebuild` after a pull, or `npm run dev`). PaddleOCR opens in its own small window.
+5. The AI OCR needs `ANTHROPIC_API_KEY` (or the Bedrock keys) in `chennai-grievance-portal-main\.env`, the same as Jarvis. The new Manu and SMS lines in `.env.example` are all optional; SMS goes to the team test inbox until MSG91 keys are set.
+6. Try it with the photos in `docs/manu-desk/samples/petition_samples/` (their correct answers are in `answers.csv`).
+
+Skipping steps 2 and 3 is fine: the desk then reads with the AI OCR alone. Petition photos are kept on the PC that received them (`data/private-uploads/petitions`, not in git), so a petition added on one PC shows its photo only there.
+
 The AI OCR is always given the photo and never PaddleOCR's text, so PaddleOCR's mistakes cannot lead it astray. PaddleOCR is not used as the main reader because on the sample petitions it matched only 88% of handwritten Tamil text, against 99.8% for the AI OCR.
 
 ## SMS to the person who wrote the Manu
