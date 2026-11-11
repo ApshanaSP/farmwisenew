@@ -1,0 +1,7 @@
+Sweep, second pass (RC-15, RC-05), searched in chennai-grievance-portal-main/src/lib/thunai:
+1. Tamil lines built from a record's own English title: grep 'a.title' in screens.ts brief/bodyBrief -> the district brief attention line (fixed: body and place in Tamil + reason). bodyBrief's points use the Tamil table (no title).
+2. describe() in understand.ts put an English body or category name into a Tamil console-move line: dept and cat now read DEPT_TA / CAT_LABEL_TA (taluk names stay: proper names).
+3. statusIn OPEN_RE read only 'open <noun>': 'cases open in X', 'complaints that are open' are now read (every list lane uses statusIn).
+4. unknownTopicIn read only an English word before 'complaints': unreadClauseIn adds any three words nothing reads around a complaint noun (all languages).
+5. conditions line: the district's, not a zone's (done in 66f8ab4).
+Not fixed: see lanes/g2.jsonl second-pass rows.

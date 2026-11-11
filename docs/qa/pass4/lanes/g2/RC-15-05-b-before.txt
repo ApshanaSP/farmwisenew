@@ -1,0 +1,20 @@
+Grader rows before the second pass (label g2-now, before commits 66f8ab4..15e8bf3):
+
+ta-followup-01 [wrong] அம்பத்தூருக்கு?
+  said: இன்று சுருக்கத்தில் 4 குறிப்புகள். இன்று அம்பத்தூர் பகுதியில் 11 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 21% குறைவு. 11 இன்னும் நிலுவையில், 2 கெடு தாண்டியவை; 0 கடுமையானவை.
+  failed: ['5_language failed']
+ta-list-16 [wrong] திருவொற்றியூர் வேலை நடக்குற இடம், தரம் சரியில்லன்னு வந்த complaints, medium level மட்டும் filter பண்ணு.
+  said: மண்டலம் 1 · திருவொற்றியூர் · நடுத்தரம்
+  failed: ['a code lane moved the console and answered nothing', '7_action failed']
+tanglish-brief-04 [wrong] kodambakam zone yenna nelamai.. konjam summary pannu
+  said: இன்று சுருக்கத்தில் 3 குறிப்புகள். இன்று கோடம்பாக்கம் பகுதியில் 21 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 25% குறைவு. 21 இன்னும் நிலுவையில், 1 கெடு தாண்டியவை; 0 கடுமையானவை.
+  failed: ['5_language failed']
+tanglish-brief-07 [wrong] naalaikku Rayapuram review iruku, adhukku brief ready pannidu
+  said: இன்று சுருக்கத்தில் 6 குறிப்புகள். இன்று ராயபுரம் பகுதியில் 22 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 24% குறைவு. 22 இன்னும் நிலுவையில், 2 கெடு தாண்டியவை; 2 கடுமையானவை.
+  failed: ['5_language failed']
+tanglish-brief-10 [wrong] Tiruvottiyur la situation epdi iruku
+  said: இன்று சுருக்கத்தில் 3 குறிப்புகள். இன்று திருவொற்றியூர் பகுதியில் 6 சம்பவங்கள் பதிவாகின; முந்தைய காலத்தை விட 67% குறைவு. 6 இன்னும் நிலுவையில், 1 கெடு தாண்டியவை; 1 கடுமையானவை.
+  failed: ['5_language failed']
+tanglish-brief-14 [wrong] theru vilakku dept.. Corporation electrical.. adha pathi chinna note sollu
+  said: Street Lighting & Electrical · Street lights & electrical hazards
+  failed: ['moved the console onto the wrong thing', '5_language failed', '6_scope failed']
