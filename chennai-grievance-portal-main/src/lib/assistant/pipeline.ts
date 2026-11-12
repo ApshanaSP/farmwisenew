@@ -2356,7 +2356,7 @@ async function planAndRun(i: ChatInput, route: Route, message: string, now: stri
     const plan = r.object;
     if (!plan.queries.length) throw new CompileError(plan.unsupported ?? "The data cannot answer this question.");
     try {
-      const compiled = plan.queries.slice(0, LIMITS.queriesPerQuestion).map((q) => compileQuery(i.lockDept ? lockQuery(q) : q, cat, now, i.lockDept ? { ...route.scope, dept: i.lockDept } : route.scope));
+      const compiled = plan.queries.slice(0, LIMITS.queriesPerQuestion).map((q) => compileQuery(i.lockDept ? lockQuery(q) : q, cat, now, i.lockDept ? { ...route.scope, dept: i.lockDept } : route.scope, i.lockDept ?? null));
       const results: QueryResult[] = [];
       for (const c of compiled) results.push(await runCompiled(c, now));
       if (results.every((x) => !x.rows.length) && attempt < 2) {
