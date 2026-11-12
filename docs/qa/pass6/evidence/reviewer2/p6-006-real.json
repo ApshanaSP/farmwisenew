@@ -1,0 +1,375 @@
+{
+ "swm": "INC-20261106-896A64",
+ "ele": "INC-20261106-A67D6A",
+ "log": [
+  {
+   "name": "id",
+   "msg": "tell me about inc-20261106-896a64",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "INC-20261106-896A64 இந்த சம்பவம் எங்கே நடந்தது?",
+   "kind": "refusal",
+   "headline": "அந்த நிகழ்வு வேறு துறையின் பொறுப்பில் உள்ளது; அதனால் உங்கள் பக்கத்தில் காட்டப்படவில்லை. உங்கள் துறையின் வழக்குகள் உங்கள் பட்டியலில் உள்ளன.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "அந்த நிகழ்வு வேறு துறையின் பொறுப்பில் உள்ளது; அதனால் உங்கள் பக்கத்தில் காட்டப்படவில்லை. உங்கள் துறையின் வழக்குகள் உங்கள் பட்டியலில் உள்ளன."
+  },
+  {
+   "name": "id",
+   "msg": "who is responsible for INC-20261106-896A64",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "where is INC-20261106-896A64",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "show INC-20261106-896A64 on the map",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "compare INC-20261106-A67D6A and INC-20261106-896A64",
+   "kind": "answer",
+   "responseType": "incident_detail",
+   "headline": "Three street lights in a row are not burning on masjid extn Salai",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain. Reported as: “Electric shock due to street light, Azeez Nagar 3Rd Street, Ward 48”. It was first reported on 2026-11-06 17:45 through citizen complaint; it is open."
+  },
+  {
+   "name": "id",
+   "msg": "what to do about INC-20261106-A67D6A and INC-20261106-896A64",
+   "kind": "answer",
+   "responseType": "incident_detail",
+   "headline": "Three street lights in a row are not burning on masjid extn Salai",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain. Reported as: “Electric shock due to street light, Azeez Nagar 3Rd Street, Ward 48”. It was first reported on 2026-11-06 17:45 through citizen complaint; it is open."
+  },
+  {
+   "name": "id",
+   "msg": "INC-20261106-896A64 timeline kaattu",
+   "kind": "refusal",
+   "headline": "Andha incident vera department-oda poruppu; adhanaala unga console-la kaatta mudiyadhu. Unga department cases unga list-la irukku.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Andha incident vera department-oda poruppu; adhanaala unga console-la kaatta mudiyadhu. Unga department cases unga list-la irukku."
+  },
+  {
+   "name": "id",
+   "msg": "status of INC-20261106-896A64",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "officials for INC-20261106-896A64",
+   "kind": "refusal",
+   "headline": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists."
+  },
+  {
+   "name": "id",
+   "msg": "tell me about INC-20261106-A67D6A, INC-20261106-896A64",
+   "kind": "answer",
+   "responseType": "incident_detail",
+   "headline": "Three street lights in a row are not burning on masjid extn Salai",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain. Reported as: “Electric shock due to street light, Azeez Nagar 3Rd Street, Ward 48”. It was first reported on 2026-11-06 17:45 through citizen complaint; it is open."
+  },
+  {
+   "name": "id",
+   "msg": "INC-20261106-A67D6A and INC-20261106-896A64 details",
+   "kind": "answer",
+   "responseType": "incident_detail",
+   "headline": "Three street lights in a row are not burning on masjid extn Salai",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain. Reported as: “Electric shock due to street light, Azeez Nagar 3Rd Street, Ward 48”. It was first reported on 2026-11-06 17:45 through citizen complaint; it is open."
+  },
+  {
+   "name": "news",
+   "msg": "top news this week",
+   "kind": "answer",
+   "responseType": "news_list",
+   "headline": "Top district news · last 7 days",
+   "foreign": [
+    [
+     "INC-20260905-319067",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261024-0CF13A",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261102-C9C4BD",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-5CE479",
+     "DIST-DM"
+    ],
+    [
+     "INC-20261105-AB1018",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "The biggest story: **காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்** (8 outlets). Also: **Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh** (2 outlets); **Two killed in separate accidents in Poonamallee and Kelambakkam** (2 outlets). Six stories of 912 sh"
+  },
+  {
+   "name": "news-gaps",
+   "msg": "news with no department record",
+   "kind": "answer",
+   "responseType": "news_list",
+   "headline": "In the news, no department record · last 7 days",
+   "foreign": [
+    [
+     "INC-20260905-319067",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261024-0CF13A",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261102-C9C4BD",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-5CE479",
+     "DIST-DM"
+    ],
+    [
+     "INC-20261105-AB1018",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "The biggest story: **காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்** (8 outlets). Also: **Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh** (2 outlets); **Two killed in separate accidents in Poonamallee and Kelambakkam** (2 outlets). Six stories of 79 sho"
+  },
+  {
+   "name": "news-detail",
+   "msg": "top news this week",
+   "kind": "answer",
+   "responseType": "news_list",
+   "headline": "Top district news · last 7 days",
+   "foreign": [
+    [
+     "INC-20260905-319067",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261024-0CF13A",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261102-C9C4BD",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-5CE479",
+     "DIST-DM"
+    ],
+    [
+     "INC-20261105-AB1018",
+     "POL-GCP"
+    ],
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "The biggest story: **காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்** (8 outlets). Also: **Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh** (2 outlets); **Two killed in separate accidents in Poonamallee and Kelambakkam** (2 outlets). Six stories of 912 sh"
+  },
+  {
+   "name": "follow:tell me more about the first one",
+   "msg": "tell me more about the first one",
+   "kind": "answer",
+   "responseType": "news_detail",
+   "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்"
+  },
+  {
+   "name": "follow:where is it",
+   "msg": "where is it",
+   "kind": "answer",
+   "responseType": "news_detail",
+   "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்"
+  },
+  {
+   "name": "follow:who is responsible",
+   "msg": "who is responsible",
+   "kind": "clarify",
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:"
+  },
+  {
+   "name": "follow:what should be done about it",
+   "msg": "what should be done about it",
+   "kind": "answer",
+   "responseType": "news_detail",
+   "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்"
+  },
+  {
+   "name": "follow:incidents like it",
+   "msg": "incidents like it",
+   "kind": "answer",
+   "responseType": "news_detail",
+   "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்"
+  },
+  {
+   "name": "follow:show it on the map",
+   "msg": "show it on the map",
+   "kind": "answer",
+   "responseType": "news_detail",
+   "headline": "காசிமேடு மீனவர்கள் 9 பேர் ‘முரச ு’ புயலில் சிக்கி மாயம்",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "கடலில் மாயமான 9 காசிமேடு மீனவர்கள்: ஆந்திராவில் 4 பேரின் உடல்கள் கரை ஒதுங்கிய சோகம்"
+  },
+  {
+   "name": "follow:timeline",
+   "msg": "timeline",
+   "kind": "clarify",
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "foreign": [
+    [
+     "INC-20261105-DDD4E8",
+     "POL-GCP"
+    ]
+   ],
+   "titleLeak": false,
+   "answer": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:"
+  },
+  {
+   "name": "list",
+   "msg": "top open incidents this month",
+   "kind": "answer",
+   "responseType": "incident_list",
+   "headline": "Top 5 priority open incidents · last 30 days",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "These are the five highest-priority open incidents recorded in the last 30 days for Street Lighting & Electrical, ranked by the console's priority score.\n\n1. **Chennai: Construction worker killed by electric shock** (Pallikaranai, Perungudi): high, open; 1 death.\n2. **Person received an electric sho"
+  },
+  {
+   "name": "listfollow:which one is most serious?",
+   "msg": "which one is most serious?",
+   "kind": "answer",
+   "responseType": "incident_list",
+   "headline": "Most serious of the five listed: Chennai: Construction worker killed by electric shock",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Of the five incidents in the last answer, this one ranks highest by the console's priority score.\n\n1. **Chennai: Construction worker killed by electric shock** (Pallikaranai, Perungudi): high, open; 1 death."
+  },
+  {
+   "name": "listfollow:show them on a map",
+   "msg": "show them on a map",
+   "kind": "answer",
+   "responseType": "map",
+   "headline": "The same incidents on the map",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "One incident from the previous answer."
+  },
+  {
+   "name": "listfollow:tell me more about the second one",
+   "msg": "tell me more about the second one",
+   "kind": "answer",
+   "responseType": "incident_detail",
+   "headline": "Chennai: Construction worker killed by electric shock",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "Street lights & electrical hazards at Pallikaranai, Perungudi. Near a school · During rain. Reported by Daily Thanthi as: “சென்னை: மின்சாரம் தாக்கி கட்டிடத் தொழிலாளி பலி”. It was first reported on 2026-11-01 04:10 through news report; it is open and past its deadline."
+  },
+  {
+   "name": "listfollow:who is responsible for the first one",
+   "msg": "who is responsible for the first one",
+   "kind": "clarify",
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "foreign": [],
+   "titleLeak": false,
+   "answer": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:"
+  }
+ ]
+}

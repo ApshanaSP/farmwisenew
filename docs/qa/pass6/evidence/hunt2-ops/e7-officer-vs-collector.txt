@@ -1,0 +1,12 @@
+daily GCC-SWM | officer new+action+sent 3 overdue 0 serious 0 board.ongoing 3 | collector ongoing 3 reported 3 list open inc 3 list overdue inc 0 snapshot overdue 0 serious 0
+daily GCC-ELE | officer new+action+sent 1 overdue 0 serious 0 board.ongoing 1 | collector ongoing 1 reported 1 list open inc 1 list overdue inc 0 snapshot overdue 0 serious 0
+daily CMWSSB | officer new+action+sent 4 overdue 0 serious 0 board.ongoing 4 | collector ongoing 4 reported 4 list open inc 4 list overdue inc 0 snapshot overdue 0 serious 0
+weekly GCC-SWM | officer new+action+sent 22 overdue 19 serious 0 board.ongoing 22 | collector ongoing 22 reported 22 list open inc 22 list overdue inc 19 snapshot overdue 19 serious 0
+weekly GCC-ELE | officer new+action+sent 25 overdue 24 serious 2 board.ongoing 25 | collector ongoing 25 reported 25 list open inc 25 list overdue inc 24 snapshot overdue 24 serious 2
+weekly CMWSSB | officer new+action+sent 4 overdue 0 serious 0 board.ongoing 4 | collector ongoing 4 reported 4 list open inc 4 list overdue inc 0 snapshot overdue 0 serious 0
+monthly GCC-SWM | officer new+action+sent 89 overdue 86 serious 2 board.ongoing 89 | collector ongoing 89 reported 466 list open inc 89 list overdue inc 86 snapshot overdue 86 serious 2
+monthly GCC-ELE | officer new+action+sent 99 overdue 98 serious 16 board.ongoing 99 | collector ongoing 99 reported 330 list open inc 99 list overdue inc 98 snapshot overdue 98 serious 16
+monthly CMWSSB | officer new+action+sent 6 overdue 2 serious 0 board.ongoing 6 | collector ongoing 6 reported 15 list open inc 6 list overdue inc 2 snapshot overdue 2 serious 0
+quarterly GCC-SWM | officer new+action+sent 97 overdue 94 serious 2 board.ongoing 97 | collector ongoing 97 reported 1618 list open inc 97 list overdue inc 94 snapshot overdue 94 serious 2
+quarterly GCC-ELE | officer new+action+sent 103 overdue 102 serious 16 board.ongoing 103 | collector ongoing 103 reported 1041 list open inc 103 list overdue inc 102 snapshot overdue 102 serious 16
+quarterly CMWSSB | officer new+action+sent 7 overdue 2 serious 0 board.ongoing 7 | collector ongoing 7 reported 41 list open inc 7 list overdue inc 2 snapshot overdue 2 serious 0

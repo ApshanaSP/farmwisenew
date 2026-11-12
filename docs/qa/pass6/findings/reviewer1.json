@@ -1,0 +1,112 @@
+[
+  {
+    "id": "reviewer1-01",
+    "severity": "P2",
+    "area": "Manu SMS (d67ca78, P5-023)",
+    "title": "Closing still waits the 5 s inline limit once per petition: a decision or step over N petition cases waits up to N x 5 s",
+    "where": "chennai-grievance-portal-main/src/lib/complaint-progress.ts:173",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/sms.probe.test.ts -t \"closing waits once per petition\"",
+    "evidence": "Test mode, team inbox stops answering, inlineWaitMs=300: syncComplaints over 3 petition cases took 927 ms (3 x 300). With the real 5 s, a Collector bulk resolve of 20 petition cases (POST /api/collector/decisions:125) or an officer close of a case with many attached petitions waits 5 s per petition, after the decision is committed.",
+    "cause": "syncComplaints awaits sendPetitionSms inside `for (const r of rows)`; the 5 s cap is per call, not per closing. The fix's claim 'an approval or closing waits at most 5 s' holds only for one petition.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-02",
+    "severity": "P2",
+    "area": "Manu SMS (d67ca78, P5-022)",
+    "title": "A send cut off after the request went out (server restart) is left 'sending' and the sweep sends the SMS again after an hour",
+    "where": "chennai-grievance-portal-main/src/lib/manu/sms.ts:182",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/sms.probe.test.ts -t \"cut off after it went out\"",
+    "evidence": "Live mode, petition_sms row status 'sending', attempts 0, tried_at an hour+ old: retryFailedSms made 1 msg91 call and set the row 'sent'. Since the fix the approval answers after 5 s while the send goes on in the background, so a restart or deploy in that window leaves exactly this row.",
+    "cause": "The sweep treats an old 'sending' row as 'failed' (s.status = 'sending' AND s.tried_at <= now-1h). It cannot know whether the provider took it, which is the 'unsure' case the fix says is never resent; it should become 'unsure' (or be resent only for test mode).",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-03",
+    "severity": "P3",
+    "area": "Manu SMS (d67ca78)",
+    "title": "Test mode: a team-inbox mail that answers after the 20 s limit is marked 'failed' and mailed again",
+    "where": "chennai-grievance-portal-main/src/lib/manu/sms.ts:82",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/sms.probe.test.ts -t \"team inbox\"",
+    "evidence": "sendMs=200, first mail resolves at 600 ms: row 'failed', sweep mails again, 2 mails for one petition, attempts 2. Team inbox only, no phone.",
+    "cause": "withLimit rejects with a plain Error, so a timed-out SMTP send is 'failed', not 'unsure'; the mail keeps going behind the race.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-04",
+    "severity": "P1",
+    "area": "PDF pages (6d784d8, P5-028 class)",
+    "title": "A 1 MB crafted PDF blocks the server's event loop for ~9 s in pdfImages, growing with the square of the size (20 MB: about an hour)",
+    "where": "chennai-grievance-portal-main/src/lib/studio/ocr.ts:157",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/pdf.probe.test.ts -t \"square\"",
+    "evidence": "savePages (desk upload, bitmaps off) on '%PDF-1.4' + '<</Subtype/Image>>stream\n' repeated, no /Length, no endstream: 250 KB 582 ms, 500 KB 2370 ms, 1 MB 8928 ms (x15.3 for x4 size). All synchronous, so every portal stalls; the desk accepts 20 MB (two per 42 MB request).",
+    "cause": "For each image dictionary without a direct /Length, `src.indexOf(\"endstream\", start)` scans to the end of the file; with none found end = -1 and lastIndex does not move past it, so n dictionaries cost n x file size. The fix only gated bitmap inflation. Studio's parseAllAsync -> pdfImages(buf) (also reached from connect/index.ts:72 for a fetched URL's PDF when it reads as a scan) has the same loop.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-05",
+    "severity": "P2",
+    "area": "PDF pages (6d784d8, P5-028 class)",
+    "title": "One PDF is copied up to 20 times in memory: a 5 MB PDF makes pdfImages(b, { bitmaps: false }) return 100 MB before the desk refuses it",
+    "where": "chennai-grievance-portal-main/src/lib/studio/ocr.ts:161",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/pdf.probe.test.ts -t \"20 times\"",
+    "evidence": "20 '<</Subtype/Image/Filter/DCTDecode>>stream' + FF D8 FF E0 heads, no /Length, 5 MB padding: 20 images, 100,008,800 bytes copied (20.0x); savePages then refuses (more than 8 pages). A 20 MB PDF -> ~400 MB, two per request -> ~800 MB. DCT streams are outside the new 150 MB bitmap budget.",
+    "cause": "With no direct /Length and no endstream, data = buf.subarray(start, -1) (the rest of the file) and `Buffer.from(data)` copies it for every DCT dictionary; the 20-image cap and the page/size checks in savePages come after the copies.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-06",
+    "severity": "P2",
+    "area": "Manu SMS (d67ca78, P5-022)",
+    "title": "A live send that times out before it ever connected (provider or network down, dropped SYNs, slow DNS) is 'unsure' and never retried",
+    "where": "chennai-grievance-portal-main/src/lib/manu/sms.ts:100",
+    "repro": "Read sms.ts:96-101: `if (err.name === \"TimeoutError\" || err.name === \"AbortError\" || AFTER_SENDING.has(...)) throw new MaybeSent(...)`. The fix's own test 'a send that timed out after it went out is unsure' shows a TimeoutError -> 'unsure', sweep sends nothing.",
+    "evidence": "AbortSignal.timeout(8000) aborts fetch in any phase (DNS, TCP connect, TLS, or waiting for the answer) with the same TimeoutError, so the code cannot tell 'never connected' from 'sent, no answer'. During an outage where packets are dropped (not refused), every petition SMS becomes 'unsure' and is never sent; before the fix they were retried. ECONNRESET during the TLS handshake (before the request) is also 'unsure'. Contradicts the claim 'a never-connected send stays failed and is retried'.",
+    "cause": "Classification by error name only; no signal of whether the request body was written (e.g. undici connect timeout UND_ERR_CONNECT_TIMEOUT is only seen if the connect timeout is shorter than the abort).",
+    "confidence": "medium"
+  },
+  {
+    "id": "reviewer1-07",
+    "severity": "P3",
+    "area": "Manu cases rebuild (3708211, P5-031)",
+    "title": "A petition that joined another petition's case gets its own case on rebuild when it was uploaded first and both were approved in the same second",
+    "where": "chennai-grievance-portal-main/src/lib/manu/cases.ts:200",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/cases.probe.test.ts -t \"same second\"",
+    "evidence": "Upload B, upload A, approve A, approve B attached to A's case, both filed_at '2026-11-12 10:00:00': live B is in INC-W-<A>; after websiteCases B is in INC-W-<B> and the build has 2 incidents.",
+    "cause": "Petitions are rebuilt ORDER BY filed_at, id; filed_at has one-second resolution and id is the upload order, not the approval order, so the attached petition can come before the case it joined. The online-first change fixed only the online case.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-08",
+    "severity": "P3",
+    "area": "Manu cases rebuild (3708211, P5-031)",
+    "title": "petitions.recurrence is stored as text '1.0' on the AWS store (column added as TEXT, number bound as a double)",
+    "where": "chennai-grievance-portal-main/src/lib/aws/store.ts:380",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/cases.probe.test.ts -t \"recurrence\"",
+    "evidence": "stored [{recurrence:'0.0',typeof:text},{'1.0'},{'2.0'}]; petitionCase reads it back with Number(), so live and rebuilt cases matched exactly (recurrence_90d, priority 53, 'written about 1 time before'). Only a risk for anything that compares it as a number in SQL or loads it into MySQL INT.",
+    "cause": "ALTER TABLE ... ADD COLUMN recurrence TEXT (DURABLE_ADDED) while migration 017 says INT NOT NULL DEFAULT 0; NULL on old rows instead of 0.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-09",
+    "severity": "P2",
+    "area": "Manu SMS / desk (d67ca78 states)",
+    "title": "An approval that fails after the petition is committed never sends the 'registered' SMS, and the desk then says the SMS service is not set up",
+    "where": "chennai-grievance-portal-main/src/lib/manu/petitions.ts:204",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/sms.probe.test.ts -t \"fails after the petition is filed\"",
+    "evidence": "Live mode, audit() throws once after the transaction: approval rejects; pressing Approve again returns the filed petition with sms {state:'off'} ('No SMS was sent because the SMS service is not set up yet'); 0 msg91 calls, petition_sms empty, and the sweep has nothing to retry.",
+    "cause": "The SMS row is only created by sendPetitionSms at the end of filePetition; the 'already filed' early return (line 204) never sends it, and smsNote maps a missing row to 'off' even when smsMode() is live. A restart between the commit and line 250 has the same effect. Not introduced by the fix, but one of the desk states it now names.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer1-10",
+    "severity": "P1",
+    "area": "Studio OCR (6d784d8, regression)",
+    "title": "The new 150 MB bitmap budget silently drops pages of a real scan: a 6-page A4 colour scan at 300 dpi is OCR'd as 5 pages, with no note",
+    "where": "chennai-grievance-portal-main/src/lib/studio/ocr.ts:167",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer1/pdf.probe.test.ts -t \"budget\"",
+    "evidence": "153 KB PDF, 6 Flate RGB pages of 2480x3508: pdfImages(b) -> 5 images, 1 skipped (each page needs 26.1 MB; 5 fit in 150 MB). Before the fix all 6 were read (each under the 40 Mpx per-image limit). parse.ts:551 then labels the table 'read from 5 scanned pages' and its notes never mention the skipped page, so rows from page 6 on are missing from the Collector's table without a word (greyscale: page 18 on).",
+    "cause": "The budget is a hard total that skips later pages instead of processing pages one at a time (inflate, OCR, free); parseAllAsync ignores `skipped` when some images came back.",
+    "confidence": "high"
+  }
+]

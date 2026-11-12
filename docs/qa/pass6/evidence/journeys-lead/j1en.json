@@ -1,0 +1,229 @@
+{
+ "lang": "en",
+ "steps": [
+  {
+   "name": "load",
+   "status": 200,
+   "firstPaint": 1560,
+   "url": "http://127.0.0.1:3106/collector",
+   "shot": "01-j1en-console-first.png",
+   "band": "Thursday 12 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood afternoon, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n0\nNo change\nfrom yesterday\nOngoing incidents\n0\nNo change\nfrom yesterday\nResolved today\n0\nNo change\nfrom yesterday\nMost serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 19488
+  },
+  {
+   "name": "overview",
+   "p1": "Thursday 12 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood afternoon, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n0\nNo change\nfrom yesterday\nOngoing incidents\n0\nNo change\nfrom yesterday\nResolved today\n0\nNo change\nfrom yesterday\nMost serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20\nTHIRUVOTTIYUR\nMANALI\nMADHAVARAM\nTONDIARPET\nROYAPURAM\nTHIRU-VI-KA-NAGAR\nAMBATTUR\nTEYNAMPET\nVALASARAVAKKAM\nALANDUR\nADYAR\nPERUNGUDI\nSHOLINGANALLUR\nImagery © Esri, Maxar, Earthstar Geographics\n+\n−\nAsk the map…\nRain\nIncidents by zone\nFewer\nMore\nSevere\n0\nComplaints\n0\nOther\n0\nAdded\n9\nStations\n10\nZones\nTaluks\nBy severity\n0\nMy tasks\n0\nSee all\n0\nSevere\n0\nHigh\n0\nMedium\n0\nLow\nNo open severe incidents last 24 hours.\nLatest news\nSee more\nNews 0\nDiffer 0\nNext door 48\nAdded 34\nNo news in the last 24 hours.",
+   "shot": "02-j1en-overview-full.png",
+   "ms": 168
+  },
+  {
+   "name": "briefing",
+   "text": "Collected 6 Nov, 06:10 PM\n5 feeds behind\nBriefing\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nKey points\nlast 24 hours\nAI\nEN\nதமிழ்\nListen\n\nNORMAL\nIMD warning in force\n\n1\nToday saw about the same number of incidents as the previous period.\n2\nImmediate attention is required for severe flooding and waterlogging at Pulianthope in Anna Nagar and Ice House in Teynampet.\n3\nWe must also watch the rising categories of street lights and electrical hazards, garbage and solid waste, and road accidents, along with the IMD warning level 2 for 06 Nov.\nCRITICAL NOW\nFatal crash near Ennore Creek Bridge\nIce House: uprooted tree blocks road\nPls send pumpset to Bajanai Koil St, Pallikaranai\nCooum River full ah overflow aagudhu, Chetpet School St kulla thanni varudhu\nOldest open complaint\n94 days · Field: overflow from Anna Nagar Macro Drain behind govt school - Anna Nagar residents alarmed\nWritten by AI from the records · numbers checked against the data\nDepartments\nwhat each received · last 24 hours\n\nNo department received a report in this period.\n\nStories still developing\n0\n\nNo story developed further in this period.\n\nOnly in the news\n0\nno department record\n\nEvery incident in the news has a department record.",
+   "shot": "03-j1en-briefing.png",
+   "shotFull": "04-j1en-briefing-full.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 4367
+  },
+  {
+   "name": "map",
+   "shot": "05-j1en-map.png",
+   "shapes": 200,
+   "afterZone": "Thursday 12 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood afternoon, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nClear\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n0\nNo change\nfrom yesterday\nOngoing incidents\n0\nNo change\nfrom yesterday\nResolved today\n0\nNo change\nfrom yesterday\nS\nA.Sankar\n9445190001\nEmail\nPast deadline, still open · 24 h\n0\nBusiest department\n—",
+   "shotZone": "06-j1en-map-zone.png",
+   "mapText": "THIRUVOTTIYUR\nMANALI\nMADHAVARAM\nTONDIARPET\nROYAPURAM\nTHIRU-VI-KA-NAGAR\nAMBATTUR\nANNA NAGAR\nTEYNAMPET\nKODAMBAKKAM\nVALASARAVAKKAM\nALANDUR\nADYAR\nPERUNGUDI\nSHOLINGANALLUR\nThiruvottiyur\n0 open · 0 severe · 0 complaints\nClick to keep this zone\nWard 2\nImagery © Esri, Maxar, Earthstar Geographics\n+\n−\nAsk the map…\nRain\nIncidents by zone\nFewer\nMore\nSevere\n0\nComplaints\n0\nOther\n0\nAdded\n0\nStations\n10\nZones\nTaluks",
+   "ms": 6970
+  },
+  {
+   "name": "clear-zone",
+   "band": "Thursday 12 November\nCollected 6 Nov, 06:10 PM\n5 feeds behind\nGood afternoon, Collector\nDaily\nWeekly\nMonthly\nQuarterly\nAll 15 zones\nThiruvottiyur\nManali\nMadhavaram\nTondiarpet\nRoyapuram\nThiru-Vi-Ka-Nagar\nAmbattur\nAnna Nagar\nTeynampet\nKodambakkam\nValasaravakkam\nAlandur\nAdyar\nPerungudi\nSholinganallur\nAll taluks\nAlandur\nAmbattur\nAminjikarai\nAyanavaram\nEgmore\nGuindy\nKolathur\nMadhavaram\nMaduravoyal\nMambalam\nMylapore\nPerambur\nPurasawalkam\nSholinganallur\nThiruvottiyur\nTondiarpet\nVelachery\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nSevere events\n0\nNo change\nfrom yesterday\nOpen complaints\n0\nNo change\nfrom yesterday\nOngoing incidents\n0\nNo change\nfrom yesterday\nResolved today\n0\nNo change\nfrom yesterday\nMost serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20",
+   "ms": 3799
+  },
+  {
+   "name": "lists",
+   "tiles": 4,
+   "snapTiles": 2,
+   "snapText": "Most serious zones\nNone\nPast deadline, still open · 24 h\n0\nSevere, not yet checked\n20",
+   "out": [
+    {
+     "label": "Severe events 0 No change from yesterday",
+     "modal": "Severe events · District-wide\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nAll severities\nSevere\nHigh\nMedium\nLow\nAll statuses\nUnresolved\nAwaiting your verification\nSevere, not yet checked\nOpen and past deadline\nOpen\nUnder review\nAssigned\nIn progress\nResolved\nRejected\nLapsed\nLast 24 hours\nAll 180 days\n0 incidents · District-wide · citizen complaints linked: 0\nINCIDENT\tZONE\tDEPARTMENT\tSEVERITY\tSTATUS\tREPORTED BY\tREPORTED ↓\n\nNo incidents match these filters.\nPage 1 of 1",
+     "shot": "07-j1en-list-0.png"
+    },
+    {
+     "label": "Ongoing incidents 0 No change from yesterday",
+     "modal": "Open incidents · District-wide\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nAll severities\nSevere\nHigh\nMedium\nLow\nAll statuses\nUnresolved\nAwaiting your verification\nSevere, not yet checked\nOpen and past deadline\nOpen\nUnder review\nAssigned\nIn progress\nResolved\nRejected\nLapsed\nLast 24 hours\nAll 180 days\n0 incidents · District-wide · citizen complaints linked: 0\nINCIDENT\tZONE\tDEPARTMENT\tSEVERITY ↑\tSTATUS\tREPORTED BY\tREPORTED\n\nNo incidents match these filters.\nPage 1 of 1",
+     "shot": "08-j1en-list-1.png"
+    },
+    {
+     "label": "Severe, not yet checked 20",
+     "modal": "Severe, not yet checked · District-wide\nAll departments\nBridges\nBuildings (GCC)\nChennai Metrowater\nCouncil\nDistrict Disaster Management\nEducation\nFamily Welfare\nFinancial Management Unit\nGeneral Administration\nGovernment Hospitals\nGreater Chennai Police\nLand & Estate\nMechanical Engineering\nParks & Play Fields\nPollution Control Board\nPublic Health (GCC)\nPWD Buildings\nPWD Water Resources\nRevenue (Tax & Licence)\nRoads & Building Permissions\nSolid Waste Management\nStorm Water Drain\nStreet Lighting & Electrical\nAll severities\nSevere\nHigh\nMedium\nLow\nAll statuses\nUnresolved\nAwaiting your verification\nSevere, not yet checked\nOpen and past deadline\nOpen\nUnder review\nAssigned\nIn progress\nResolved\nRejected\nLapsed\nLast 24 hours\nAll 180 days\n20 incidents · District-wide · citizen complaints linked: 0\nINCIDENT\tZONE\tDEPARTMENT\tSEVERITY\tSTATUS\tREPORTED BY\tREPORTED ↓\nCall recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River\tAdyar\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 11:41 PM\nchetpt lake full capacity reach aayiduhu chetpet\tRoyapuram\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 10:43 PM\nPls send pumpset to Bajanai Koil St, Pallikaranai\tSholinganallur\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 09:13 PM\nCooum River - Chetpet stretch spilling over bank at Chetpet (MGR St)\tRoyapuram\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 08:48 PM\nLittle Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை\tAdyar\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 04:12 PM\nWall along Govt Kilpauk Medical College Hospital gave way near Main Rd, Kilpauk\tThiru-Vi-Ka-Nagar\tPWD Buildings\t\nSevere\tIn progress\t\n1\nPWD\n\t5 Nov, 02:57 PM\nBed Capacity Critical; Low Medicine Stock at Obstetrics and Gynecology Hospital Egmore\tRoyapuram\tGovernment Hospitals\t\nSevere\tOpen\t\n1\nHospital\n\t5 Nov, 12:00 AM\nDengue Surge; Bed Capacity Critical at Rajiv Gandhi Government General Hospital\tRoyapuram\tGovernment Hospitals\t\nSevere\tOpen\t\n1\nHospital\n\t5 Nov, 12:00 AM\nT. Nagar மார்க்கெட் அருகில் முழங்கால் அளவு தண்ணீர், பள்ளி குழந்தைகள் செல்ல சிரமம்\tKodambakkam\tPWD Water Resources\t\nSevere\tIn progress\t\n1\nPWD\n\t4 Nov, 08:39 PM\nControl room msg - culvert of Buckingham Canal near Old Colony 1st St fully choked, Ennore\tThiruvottiyur\tPWD Water Resources\t\nSevere\tIn progress\t\n3\nPWD\n\t4 Nov, 07:02 PM\nCR: mogappair Eri reached FTL, surplus course opp\tAmbattur\tPWD Water Resources\t\nSevere\tIn progress\t\n2\nPWD\n\t4 Nov, 06:52 PM\nMaraimala",
+     "shot": "09-j1en-list-2.png"
+    }
+   ],
+   "ms": 15278
+  },
+  {
+   "name": "case",
+   "had": 1,
+   "text": "Severe\nIn progress\n2 incidents merged\nCall recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River\nSaidapet (Adyar River - Saidapet stretch) · Adyar · Ward 170\nPWD Water Resources\nFirst reported 5 Nov, 11:41 PM (7 days ago)\nShow on map\nWhat else is near here?\nTake action\nWHAT HAPPENED\n\nCanal overflow at Saidapet (Adyar River - Saidapet stretch).\n\nService fully cut off\nAbout 500 people affected\nDuring rain\nWHY IT NEEDS YOU\nStill open at more than twice its 6-hour deadline\nNo officer has confirmed it on the ground yet\nKeeps happening: 15 similar incidents here in 90 days\nKEY FACTS\nOpen for\n7 days\nDeadline\n6 Nov, 05:41 AM · missed\nCitizen complaints\n0\nField officer\n—\nTaluk\nGuindy\nConfidence\n100%\nHOW IT UNFOLDED\n2 reports from 1 source, 2 incidents merged, in time order\nTHURSDAY 5 NOVEMBER\nPWD field record\nControl room\nmerged\n11:14 PM\n\nRain water stagnant waist-level on lake view rd, guindy industrial estate near oht water tank. for past 3 hrs. requesting inspection.\n\nPWD field record\nControl room\nFIRST\n11:41 PM\n\nCall recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River. Still continuing. No one has come so far.\n\nREPORTED BY\nPWD field records\n2\n2 INCIDENTS MERGED INTO THIS ONE\nThis incident\nSaidapet (Adyar River - Saidapet stretch) · 5 Nov, 11:41 PM · In progress\nRain water stagnant waist-level on lake view rd, guindy industrial estate near oht water tank\nGuindy Industrial Estate (Guindy Industrial Estate Storm Water Channel) · 5 Nov, 11:14 PM · Resolved\nWHO IS RESPONSIBLE\nPW\nSuperintending Engineer (WRD)\nPWD Water Resources · Public Works Department. Not listed on the GCC website.\nD\nZonal officer\nN.Dakshnamoorthy\nAssistant Commissioner, Senior Grade (Zone), Zone XIII (Adyar)\n9445190013\n9445190213\naczone13@chennaicorporation.gov.in\nContacts from the GCC Who's who page, retrieved 2026-09-28.",
+   "shot": "10-j1en-case.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 4679
+  },
+  {
+   "name": "jarvis-open",
+   "firstUse": 1,
+   "firstText": "While Jarvis is open, speech in this room goes to transcription services and is not stored. While it is closed, this browser's speech service listens only for \"Hi Jarvis\". It obeys anyone in the room: it cannot tell voices apart.\n\nUnderstood, open it",
+   "hud": "Muted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis",
+   "shot": "11-j1en-jarvis-open.png",
+   "ms": 6988
+  },
+  {
+   "name": "jarvis-q1",
+   "q": "How many cases are overdue?",
+   "firstChangeMs": 8201,
+   "totalMs": 14973,
+   "answer": "You asked\n\nHow many cases are overdue?\n\nAsked District IQ\n\nEarlier questions",
+   "stage": "",
+   "live": "Asked District IQ",
+   "card": "",
+   "hud": "You asked\n\nHow many cases are overdue?\n\nAsked District IQ\n\nEarlier questions\nMuted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\nAsked District IQ",
+   "core": "idle",
+   "shot": "12-j1en-jarvis-q1.png",
+   "ms": 30301
+  },
+  {
+   "name": "jarvis-q2",
+   "q": "How many new complaints came in today?",
+   "firstChangeMs": 7125,
+   "totalMs": 20568,
+   "answer": "",
+   "stage": "Back to dashboard\nJarvis\nCases · this week\n\n187 of the 269 are past their deadline.\n\nNext\nDraft for the 11 past deadline\nShow them on a map\nWhich department is slowest?\nRead aloud\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nAll cases, this week\n269\nPast their deadline\n187\nCases · this week\n\n12 of 269 shown\n\nDraft for the top 3\n1\nSchool van driver arrested for sexually assaulting five-year-old girl in Chennai\nSevere\nPuzhal, Madhavaram\n6 days\nGreater Chennai Police\nOpen\nPast deadline\n2\nIce House: uprooted tree blocks road\nSevere\nIce House, Teynampet\n6 days\n3 complaints\nPWD Water Resources\nIn progress\nPast deadline\n3\nFatal crash near Ennore Creek Bridge\nSevere\nEnnore, Thiruvottiyur\n6 days\nGreater Chennai Police\nIn progress\nPast deadline\n4\nCall recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River\nSevere\nSaidapet (Adyar River - Saidapet stretch), Adyar\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n5\nchetpt lake full capacity reach aayiduhu chetpet\nSevere\nChetpet (Chetpet Lake), Royapuram\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n6\nPls send pumpset to Bajanai Koil St, Pallikaranai\nSevere\nPallikaranai (Pallikaranai Marsh Outlet Drain), Sholinganallur\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n7\nOld wall collapsed after rain near church, Vyasarpadi\nSevere\nVyasarpadi (Captain Cotton Canal - Vyasarpadi stretch), Thiru-Vi-Ka-Nagar\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n8\nCooum River - Arumbakkam stretch overflowing near Thiruvalluvar St, Arumbakkam\nSevere\nArumbakkam (Cooum River - Arumbakkam stretch), Anna Nagar\n7 days\nPWD Water Resources\nResolved\n9\nCooum River - Chetpet stretch spilling over bank at Chetpet (MGR St)\nSevere\nChetpet (Cooum River - Chetpet stretch), Royapuram\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n10\nComplaint: Low lying area Sathya Nagar 2nd St, NSK Nagar inundated\nSevere\nNSK Nagar, Anna Nagar\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n11\nLittle Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை\nSevere\nLittle Mount, Adyar\n7 days\nPWD Water Resources\nIn progress\nPast deadline\n12\nMotorist assaulted near Nanganallur, one hurt\nHigh\nNanganallur, Alandur\n6 days\nGreater Chennai Police\nOpen\nPast deadline\nWhere they are\n\nNumbered as in the list; cases without an exact place are not drawn.\n\nEnlarge map\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\nImagery © Esri\n+\n−\n\nNone today. 269 cases this week; here are the 12 that matter most. 187 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number.\n\nData as of 12 Nov, 4:01 PM",
+   "live": "None today. 269 cases this week; here are the 12 that matter most. 187 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number.",
+   "card": "",
+   "hud": "Muted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\nNone today. 269 cases this week; here are the 12 that matter most. 187 are past their deadline and need you first: a crime report at Puzhal in Madhavaram, and standing water at Ice House in Teynampet. Say \"read them\", or \"open\" and a number.",
+   "core": "idle",
+   "shot": "13-j1en-jarvis-q2.png",
+   "ms": 33506
+  },
+  {
+   "name": "jarvis-q3",
+   "q": "How is Adyar zone doing?",
+   "firstChangeMs": 7067,
+   "totalMs": 13809,
+   "answer": "",
+   "stage": "Back to dashboard\nJarvis\nBriefing · today\n\n0 incidents were reported in Adyar (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nStop\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n0\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n0 incidents were reported in Adyar (last 24 hours).\n\n2\n\n0 incidents are still open; 0 severe events.\n\n2 points in the brief for today. 0 incidents were reported in Adyar (last 24 hours).\n\nData as of 12 Nov, 4:02 PM",
+   "live": "2 points in the brief for today. 0 incidents were reported in Adyar (last 24 hours).",
+   "card": "",
+   "hud": "Muted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\n2 points in the brief for today. 0 incidents were reported in Adyar (last 24 hours).",
+   "core": "idle",
+   "shot": "14-j1en-jarvis-q3.png",
+   "ms": 26593
+  },
+  {
+   "name": "jarvis-q4",
+   "q": "How many open complaints does Solid Waste Management have?",
+   "firstChangeMs": 7120,
+   "totalMs": 13857,
+   "answer": "You asked\n\nHow many open complaints does Solid Waste Management have?\n\nAsked District IQ\n\nEarlier questions",
+   "stage": "",
+   "live": "Asked District IQ",
+   "card": "",
+   "hud": "You asked\n\nHow many open complaints does Solid Waste Management have?\n\nAsked District IQ\n\nEarlier questions\nMuted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\nAsked District IQ",
+   "core": "idle",
+   "shot": "15-j1en-jarvis-q4.png",
+   "ms": 26598
+  },
+  {
+   "name": "jarvis-q5",
+   "q": "What needs my attention first this morning?",
+   "firstChangeMs": 7190,
+   "totalMs": 20701,
+   "answer": "",
+   "stage": "Back to dashboard\nJarvis\nBriefing · today\n\n3 incidents were reported in Chennai district (last 24 hours).\n\nNext\nShow the severe cases\nDepartment-wise performance\nStop\nToday\nWeek\n30 days\n90 days\nAll of Chennai\n1. Thiruvottiyur\n2. Manali\n3. Madhavaram\n4. Tondiarpet\n5. Royapuram\n6. Thiru-Vi-Ka Nagar\n7. Ambattur\n8. Anna Nagar\n9. Teynampet\n10. Kodambakkam\n11. Valasaravakkam\n12. Alandur\n13. Adyar\n14. Perungudi\n15. Sholinganallur\nReported\n3\nSevere\n0\nPast deadline\n0\nIn the news only\n0\nThe brief\n1\n\n3 incidents were reported in Chennai district (last 24 hours).\n\n2\n\n3 incidents are still open; 0 severe events.\n\n3\n\nFlooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.\n\n4\n\nAir pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.\n\n5\n\nConditions: rainfall 5.1 mm in 24 h, air quality 100 AQI, reservoirs 42.9% full\n\n5 points in the brief for today. 3 incidents were reported in Chennai district (last 24 hours).\n\nData as of 12 Nov, 4:03 PM",
+   "live": "5 points in the brief for today. 3 incidents were reported in Chennai district (last 24 hours).",
+   "card": "",
+   "hud": "Muted\nI can't hear you. Press Unmute to talk.\nThe microphone could not be opened. Type your question.\nUnmute\nType\nQuestions\nClose Jarvis\n5 points in the brief for today. 3 incidents were reported in Chennai district (last 24 hours).",
+   "core": "idle",
+   "shot": "16-j1en-jarvis-q5.png",
+   "ms": 33737
+  },
+  {
+   "name": "jarvis-close",
+   "hudLeft": 0,
+   "questions": "5",
+   "ms": 1574
+  },
+  {
+   "name": "ask-open",
+   "text": "Ask District IQ\nAI provider not configured: answering by rules\nAuto\nEnglish\nதமிழ்\nTanglish\nAsk District IQ\nAsked of Jarvis\nAnswering for\nLast 90 days\nAll zones\nAll departments\nGood afternoon, Collector\n\nAsk about incidents, places, departments, weather, lakes, hospitals or market prices. In English, தமிழ் or Tanglish.\n\nWhere to focus\nWhich zone needs attention now?\nSevere incidents\nSevere incidents this week by department\nLakes & reservoirs\nWhich lakes are more than 90% full?\nToday's briefing\nPrepare today's briefing\nAnswers come from the console's live data · Enter to send · ↑ edits the last question",
+   "shot": "17-j1en-ask-open.png",
+   "ms": 3193
+  },
+  {
+   "name": "ask-q1",
+   "q": "Which zone has the most open complaints this week?",
+   "ms": 7928,
+   "answer": "Teynampet leads with 25 open complaints\nFrom the data\n\nHighest open complaints: Teynampet (25), Tondiarpet (25), Kodambakkam (16), Adyar (15), Royapuram (14).\n\nLast 7 days · District-wide · all departments · as of 12 Nov, 4:03 PM\n\nZones by open complaints\nzones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only; last 7 day\nSuggested for this question: Bar chart\nDonut chart\nTable\nNews last collected 6 days ago; this answer may be incomplete.\nFilter the console to Teynampet\nSources and how this was calculated\nHelpful?\nShow on screen with Jarvis",
+   "errs": "",
+   "shot": "18-j1en-ask-q1.png"
+  },
+  {
+   "name": "ask-q2",
+   "q": "How many severe incidents are open right now?",
+   "ms": 6418,
+   "answer": "0 severe incidents · last 24 hours\nFrom the data\n\n0 severe incidents were reported in the last 24 hours: 0 severe, 0 still open.\n\nLast 24 hours · District-wide · all departments · as of 12 Nov, 4:03 PM\n\nReported\n0\n• 0\nvs previous\nSevere\n0\nStill open\n0\nSources and how this was calculated\nHelpful?\nShow on screen with Jarvis",
+   "errs": "",
+   "shot": "19-j1en-ask-q2.png"
+  },
+  {
+   "name": "ask-close",
+   "open": 0,
+   "ms": 970
+  }
+ ],
+ "problems": [],
+ "step": "ask-close",
+ "log": {
+  "all": 53,
+  "errors": [
+   "[jarvis llm] jarvis_data0: groq/qwen/qwen3.8-27b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: groq/openai/gpt-oss-20b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: groq/openai/gpt-oss-120b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: gemini/gemini-3.5-flash-lite failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: no model answered (groq/qwen/qwen3.8-27b:failed > groq/openai/gpt-oss-20b:failed > groq/openai/gpt-oss-120b:failed > gemini/gemini-3.5-flash-lite:failed)",
+   "[assistant] answered in 503 ms (models 0 ms, other 503 ms): answer/kpi template",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[jarvis llm] jarvis_data0: groq/qwen/qwen3.8-27b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: groq/openai/gpt-oss-20b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: groq/openai/gpt-oss-120b failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: gemini/gemini-3.5-flash-lite failed: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.",
+   "[jarvis llm] jarvis_data0: no model answered (groq/qwen/qwen3.8-27b:failed > groq/openai/gpt-oss-20b:failed > groq/openai/gpt-oss-120b:failed > gemini/gemini-3.5-flash-lite:failed)",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed."
+  ]
+ }
+}

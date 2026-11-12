@@ -1,0 +1,4 @@
+period=daily               legend {"severe":0,"complaint":17,"other":0} sum 17 | pins drawn 17 {"severe":0,"complaint":17,"other":0} | unlocated 0 total 17
+period=weekly              legend {"severe":10,"complaint":167,"other":91} sum 268 | pins drawn 150 {"severe":8,"complaint":85,"other":57} | unlocated 16 total 284
+period=monthly             legend {"severe":205,"complaint":2339,"other":1808} sum 4352 | pins drawn 150 {"severe":98,"complaint":52,"other":0} | unlocated 268 total 4620
+period=quarterly&zone=4    legend {"severe":34,"complaint":700,"other":345} sum 1079 | pins drawn 150 {"severe":8,"complaint":87,"other":55} | unlocated 3 total 1082

@@ -1,0 +1,26 @@
+{
+ "rc35": {
+  "ids": [
+   "INC-20261106-896A64",
+   "INC-20261106-6EAFF2",
+   "INC-20261106-54AD93"
+  ],
+  "status": 201,
+  "before": {
+   "tool": 1167,
+   "jarvis": 1167,
+   "console": 1167,
+   "card": "1,167 incidents still open · last 7 days"
+  },
+  "after": {
+   "tool": 1164,
+   "jarvis": 1164,
+   "console": 1164,
+   "card": "1,164 incidents still open · last 7 days"
+  }
+ },
+ "rc35_card": {
+  "b": 1167,
+  "a": 1164
+ }
+}

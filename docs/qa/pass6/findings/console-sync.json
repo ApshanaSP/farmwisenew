@@ -1,0 +1,156 @@
+[
+  {
+    "id": "console-sync-01",
+    "severity": "P2",
+    "area": "Collector console / KPI tiles / period labels",
+    "title": "\"Resolved today\" counts a rolling 24 hours, not today: at 14:40 IST it includes cases closed yesterday afternoon",
+    "where": "src/components/collector/app/Overview.tsx:69; src/lib/collector/intel.ts:118-121 (periodSinceWindow), :747-748",
+    "repro": "Read code (server check pending): the daily tile label is period1(c) ? \"Resolved today\" ...; its number is kpiBlock's rc query over scopeWhere(s, now, true) = periodSinceWindow -> `closedAt > (now - INTERVAL 24 HOUR)`.",
+    "evidence": "PERIODS.daily = { hours: 24, label: \"Last 24 hours\" } (intel.ts:37); the tile says \"Resolved today\" (Tamil: இன்று தீர்க்கப்பட்டவை). The same rolling window is called \"Last 24 hours\" in the period picker and \"Resolved this day\" in the PDF (reportPdf.ts:91).",
+    "cause": "The label was written for a calendar day; the window is a rolling 24 h from the console's now.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-02",
+    "severity": "P2",
+    "area": "Collector PDF report",
+    "title": "PDF report cover says \"District-wide\" when the numbers are filtered to a taluk or a category",
+    "where": "src/components/collector/app/Overlays.tsx:246; src/components/collector/app/reportPdf.ts:83",
+    "repro": "Set a taluk (map) or a category (chart) filter with no zone, Export report > PDF. The request carries &taluk=/&cat= (Overlays.tsx q()), the server filters every figure (report() -> overview(..., focus)), but buildReport is given scope: c.zoneName ?? \"District-wide\" and dept only.",
+    "evidence": "reportPdf.ts:83 prints `${P.label} · ${opt.scope}${opt.dept ? ...}`; buildReport's opt has no taluk or category; the file name stem (Overlays.tsx:237) also leaves them out.",
+    "cause": "The scope words passed to the PDF were not extended when the taluk and category cross-filters were added.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-03",
+    "severity": "P1",
+    "area": "CSV action list vs My Tasks",
+    "title": "CSV 'Closed work to check' ignores the period: it lists every undecided severe closure of any date, while My Tasks (tile, list, PDF, Briefing) counts only those updated in the period",
+    "where": "src/lib/collector/intel.ts:1533-1536 (exportRows checks) vs :771-783 (awaitingCheck) and :1377-1384 (list awaiting)",
+    "repro": "GET /api/collector/overview?period=daily -> tasks.count; GET /api/collector/export?period=daily (confirmed) -> count the CSV lines starting 'Closed work to check'",
+    "evidence": "Not run: the 3106 server was not reached before the time box ended; read from code only. Code path quoted in 'where' and 'cause'.",
+    "cause": "exportRows' checks query has no periodWindow(..., 'i.last_update_at') and is per incident (not per CLUSTER) with LIMIT 100, unlike awaitingCheck",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-04",
+    "severity": "P2",
+    "area": "Overview map legend",
+    "title": "Map legend counts every incident in scope per layer, but at most 150 pins are drawn and '<N> not on the map' counts only the unplaced ones",
+    "where": "src/lib/collector/intel.ts:812-830 (pins LIMIT 150, layerCounts); src/components/collector/app/Overview.tsx:131-186; SatMap.tsx:325",
+    "repro": "GET /api/collector/overview?period=weekly: compare map.pins.length with map.layerCounts sum",
+    "evidence": "Not run: the 3106 server was not reached before the time box ended; read from code only. Code path quoted in 'where' and 'cause'.",
+    "cause": "pins are capped at 150 server-side (and again client-side) while the legend and the 'not on the map' button are computed over the whole scope",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-05",
+    "severity": "P1",
+    "area": "District snapshot / list",
+    "title": "'Severe, not yet checked' tile ignores the taluk and category filters, but its click-through list applies them",
+    "where": "src/lib/collector/intel.ts:1166-1169 (districtSnapshot crit: no scope) vs :1412-1413 and :1386-1388 (list critical + cat/taluk); Overview.tsx:298-300; CollectorApp.tsx:624",
+    "repro": "Taluk filter, no zone/dept: compare snapshot.critical from GET /api/collector/overview?period=daily&taluk=TLK-XXX with incidents from GET /api/collector/list?period=daily&taluk=TLK-XXX&status=critical&scope=all. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "crit is COUNT(*) WHERE EFF.open = 1 AND severity_level = 'Severe' AND (verified = 0 OR awaiting_collector = 1) AND NOT DECIDED(...), with no params; the list adds i.taluk_code / i.category_code.",
+    "cause": "districtSnapshot is used whenever zone and dept are empty, but cat/taluk can still be set; its critical count was never scoped.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-06",
+    "severity": "P1",
+    "area": "Decisions / snapshot",
+    "title": "After resolve (or verify/reject) then reopen, a severe unverified incident never returns to 'Severe, not yet checked'",
+    "where": "src/lib/collector/intel.ts:1166-1169 and :1413-1414 (NOT DECIDED('verify','reject','resolve') over all time)",
+    "repro": "Open Severe incident in /api/collector/list?status=critical&scope=all; POST /api/collector/decisions resolve (confirmed), then reopen: it is open again (status Open) but absent from the critical list and count. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "DECIDED() is EXISTS over every decision, not the latest one with an effect (effective.ts), so a reopen does not undo it.",
+    "cause": "critical uses 'ever decided' instead of the effective latest decision.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-07",
+    "severity": "P1",
+    "area": "Departments table vs My Tasks",
+    "title": "Departments table column 'Awaiting your verification' uses a different rule from My Tasks (same words in the list's status filter)",
+    "where": "src/lib/collector/intel.ts:913-919 (deptNav unverified = EFF.open=1 AND awaiting_collector=1, first_reported_at window, any severity, per incident) vs :771-783 (awaitingCheck); Overlays.tsx:25, :154-158",
+    "repro": "Sum deptNav[].unverified from GET /api/collector/overview?period=daily and compare with tasks.count; per dept compare with overview?dept=X tasks.count. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "Same label, two SQL rules; reference/metrics.ts:33 says awaiting_check is the one definition.",
+    "cause": "deptNav kept the pipeline's awaiting_collector flag after My Tasks moved to metrics.ts awaiting_check.",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-08",
+    "severity": "P1",
+    "area": "My Tasks decisions",
+    "title": "'Send back' on a merged task reopens one incident only, so the task stays in My Tasks; 'Verify' acts on every member",
+    "where": "src/components/collector/app/CollectorApp.tsx:661 (sendBack: decide([row], 'reopen')); Attention.tsx:99-101 (verify uses i.members), :128",
+    "repro": "Task row with grouped > 1 in overview.tasks.rows; POST decisions reopen for its id; tasks.count (COUNT DISTINCT CLUSTER) unchanged, another member becomes the row. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "verify maps i.members; sendBack passes only the row.",
+    "cause": "Group handling added to Verify but not to Send back.",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-09",
+    "severity": "P2",
+    "area": "Overview tiles vs severity card / PDF",
+    "title": "'Ongoing incidents' counts incidents, 'Open, by severity' counts groups, yet the tile says the same incidents are split by severity below",
+    "where": "src/lib/collector/intel.ts:731-733 (ongoing per incident) vs :876-879 (severity counts per CLUSTER); Overview.tsx:68; Attention.tsx:24; reportPdf.ts:116",
+    "repro": "GET /api/collector/overview?period=weekly: compare kpi.cur.ongoing with the sum of severity.counts. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "Tile tip: 'The same incidents are split by severity in the card below.' PDF prints 'X incidents are open ... N severe and M high' with X per incident, N and M per group.",
+    "cause": "Severity counts were grouped (CLUSTER) after the tile wording was set.",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-10",
+    "severity": "P2",
+    "area": "Open counts / routed news complaints",
+    "title": "News complaints handed to a department count as open in some figures and not in others",
+    "where": "src/lib/collector/intel.ts:729-732 (complaints, severe_open lack NOT ROUTED; ongoing has it), :797-801 (zone table open); insights.ts:139-141 (briefing open, overdue); reference/metrics.ts:62-64 (open = NOT routed)",
+    "repro": "With dept_assignments rows in scope: compare kpi.cur.ongoing with zoneTable open sum + zoneUnassigned.open and with insights briefing.stats.open. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "The metrics.ts glossary defines open and severe_open with NOT routed; several queries omit it.",
+    "cause": "ROUTED filter applied per query instead of from the glossary.",
+    "confidence": "medium"
+  },
+  {
+    "id": "console-sync-11",
+    "severity": "P2",
+    "area": "Alerts bell",
+    "title": "The bell ignores zone, taluk and category filters, and files everything older than an hour under 'Earlier today' even in a 90-day view",
+    "where": "src/lib/collector/intel.ts:905-909 (period and dept only); src/components/collector/app/Shell.tsx:314-315; CollectorApp.tsx:825",
+    "repro": "Set zone 9 and open the bell: rows from other zones; switch to Quarterly: weeks-old items under 'Earlier today'. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "The zone toast says 'All panels filtered.'",
+    "cause": "Bell query and grouping predate the cross-filters and longer periods.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-12",
+    "severity": "P2",
+    "area": "PDF report",
+    "title": "A zone's PDF names the district's busiest zone and charts other zones",
+    "where": "src/components/collector/app/reportPdf.ts:111, :119, :163; src/lib/collector/intel.ts:790, :797-801 (zoneTable covers every zone)",
+    "repro": "Export report PDF with zone=5: 'Key points' says '<another zone> zone has the most open incidents (N)' and 'Open incidents by zone' bars list other zones. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "zoneTable is built from scopeWhere({zone: null, ...}).",
+    "cause": "Page-1 zone table (all zones, for the picker) reused for a single-zone report.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-13",
+    "severity": "P3",
+    "area": "Tamil",
+    "title": "Hand-checked Tamil entries whose English key contains a digit can never match",
+    "where": "src/components/i18n/Translator.tsx:21, :41-44 (keyOf turns digits into #); src/lib/i18n/ta.ts:25, :37, :55, :59, :62-64, :111-112",
+    "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/console-sync/tamil-keys.test.ts (written, not run)",
+    "evidence": "'Past deadline, still open · 24 h' (snapshot tile), 'last 24 hours', 'Last 4 weeks', 'last 30 days' are looked up as '... # h' etc., so they stay English (or go to the AI).",
+    "cause": "Dictionary keys not written in the '#' template form.",
+    "confidence": "high"
+  },
+  {
+    "id": "console-sync-14",
+    "severity": "P3",
+    "area": "PDF vs CSV",
+    "title": "PDF says 'N need your attention ... all are in the action list CSV' but the CSV's 'Needs your attention' section drops those also listed as closed work to check",
+    "where": "src/lib/collector/intel.ts:1540-1541 (need minus checking) vs :1588-1589 (attentionTotal = all need); reportPdf.ts:117",
+    "repro": "Compare report.attentionTotal with CSV lines starting 'Needs your attention' for the same filter. Not run: the 3106 server was not reached before the time box ended; read from code only.",
+    "evidence": "exportRows filters need by the checking ids; report() does not.",
+    "cause": "De-duplication done only in the CSV.",
+    "confidence": "medium"
+  }
+]

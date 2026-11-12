@@ -1,0 +1,130 @@
+{
+ "width": 1280,
+ "steps": [
+  {
+   "name": "setup-complaint",
+   "status": 200,
+   "subtype": "Absenteeism of Door to door garbage Collector",
+   "dept": "Solid Waste Management Department",
+   "zone": "Adyar",
+   "ward": 170,
+   "code": "issued",
+   "department": "Solid Waste Management Department",
+   "queueNote": {
+    "en": "Your complaint is registered. The department officer will see it in their queue at the next update, which runs every hour.",
+    "ta": "உங்கள் புகார் பதிவு செய்யப்பட்டது. துறை அலுவலர் அடுத்த புதுப்பிப்பில் தம் பட்டியலில் இதைப் பார்ப்பார். புதுப்பிப்பு ஒவ்வொரு மணிநேரமும் நடக்கும்."
+   },
+   "departmentPending": false,
+   "ms": 233
+  },
+  {
+   "name": "officer-load",
+   "error": "locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#o-queue') to be visible\u001b[22m\n",
+   "shot": "81-j2w1280-officer-load-error.png",
+   "ms": 64261
+  },
+  {
+   "name": "find-case",
+   "inFirstPage": 0,
+   "found": 0,
+   "awaitingNote": "",
+   "drawer": "",
+   "shot": "82-j2w1280-case-open.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": [
+     "button.brief right=1535",
+     "span.bic t-high right=1322",
+     "svg.[object SVGAnimatedString] right=1314",
+     "path.[object SVGAnimatedString] right=1307",
+     "path.[object SVGAnimatedString] right=1309",
+     "path.[object SVGAnimatedString] right=1312",
+     "rect.[object SVGAnimatedString] right=1309"
+    ]
+   },
+   "ms": 39275
+  },
+  {
+   "name": "search-case",
+   "text": "Esc\nGRIEVANCES\nGarbage not cleared for three days (QA journeys 1280)\nNew · 2 min ago\nASK\nAsk District IQ: “2026-676SFQ”\nOpens the chat with this question\n↑\n↓\nmove\nEnter\nopen\n/\nsearch anywhere",
+   "hits": 1,
+   "shot": "83-j2w1280-search.png",
+   "drawer": "",
+   "ms": 10059
+  },
+  {
+   "name": "approve",
+   "skipped": "footer says: ",
+   "ms": 30002
+  },
+  {
+   "name": "close-report",
+   "skipped": "footer says: ",
+   "ms": 30016
+  },
+  {
+   "name": "officer-after",
+   "tabs": [],
+   "queue": "",
+   "inVerified": 0,
+   "shot": "84-j2w1280-officer-after.png",
+   "ms": 3631
+  },
+  {
+   "name": "citizen-view",
+   "text": "Back to overview\nTrack complaint status\n\nEvery complaint you've filed, with its current stage.\n\nSearch\nAll\nFiled\nPending approval\nApproved\nIn progress\nAwaiting Collector\nVerified\nResolved\nRejected\n\n2026-467UPC\n\nGarbage not cleared, my Aadhaar 2345 6789 1234\n\nOther / not listed above · 12 Nov 2026\n\nComplaint Filed\n\n2026-676SFQ\n\nGarbage not cleared for three days (QA journeys 1280)\n\nAbsenteeism of Door to door garbage Collector · 12 Nov 2026\n\nComplaint Filed\n2026-676SFQ\nComplaint Filed\nGarbage not cleared for three days (QA journeys 1280)\nDEPARTMENT\nSolid Waste Management Department\nTYPE\nAbsenteeism of Door to door garbage Collector\nLOCATION\nQA Journey Street Street, Adyar\nFILED ON\n12 Nov 2026\nJOURNEY\nComplaint Filed\n12 Nov, 4:05 pm\n\nComplaint registered by citizen.\n\nPending Approval\nApproved by Department Officer\nIn Progress\nCompleted – pending Collector verification\nVerified by Collector\nSTREET\nQA Journey Street Street\nSPECIFIC LOCATION\nNear the QA bus stop\nWARD\n170\nANONYMOUS\nNo\nDESCRIPTION\nThe bin at the corner has overflowed for three days and stray dogs scatter the waste on the road.",
+   "shot": "85-j2w1280-citizen.png",
+   "shotFull": "86-j2w1280-citizen-full.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 4539
+  },
+  {
+   "name": "citizen-home",
+   "text": "Thursday, 12 November\n\nVanakkam, Qa · வணக்கம்\n\nReport a civic issue in your neighbourhood or follow one you have filed. Most complaints reach a department within minutes.\n\nTrack status\nFile a complaint\n\nTOTAL FILED\n\n2\n\nEvery complaint you have raised\n\nIN PROGRESS\n\n2\n\nWith a department right now\n\nRESOLVED\n\n0\n\nWork done and checked\n\n0%\nRecent complaints\nYour latest three, with where each one is\nSee all\n\n2026-467UPC\n\nGarbage not cleared, my Aadhaar 2345 6789 1234\n\nSolid Waste Management Department · 12 Nov 2026\n\nComplaint Filed\n\n2026-676SFQ\n\nGarbage not cleared for three days (QA journeys 1280)\n\nSolid Waste Management Department · 12 Nov 2026\n\nComplaint Filed\nFile a complaint\nReport a civic issue with a photo and location\nTrack status\nFollow each complaint to closure\nMy profile\nContact details and password\nCall 1913\nHelpline, 24×7, for urgent civic issues",
+   "shot": "87-j2w1280-citizen-home.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 3025
+  },
+  {
+   "name": "collector-find",
+   "palette": "Esc\nINCIDENTS\nGarbage not cleared for three days (QA journeys 1280)\nAdyar · 3 min ago\nCOMPLAINT NUMBER\n2026-676SFQ: Garbage not cleared for three days (QA journeys 1280)\nThe incident this complaint was filed into\nASK\nAsk the map: “2026-676SFQ”\nAnswers on the Overview's map\nAsk District IQ: “2026-676SFQ”\nOpens the chat with this question\n↑\n↓\nmove\nEnter\nopen\n/\nsearch anywhere",
+   "hits": 3,
+   "shotP": "88-j2w1280-collector-search.png",
+   "incident": "Medium severity\nOpen\n1 citizen complaint\nGarbage not cleared for three days (QA journeys 1280)\nNear the QA bus stop · Adyar · Ward 170\nSolid Waste Management\nFirst reported 12 Nov, 04:05 PM (3 min ago)\nShow on map\nWhat else is near here?\nWHAT HAPPENED\n\nGarbage & solid waste at Near the QA bus stop, Adyar.\n\nNo action needed from you. Solid Waste Management is handling it; nothing about it is unusual.\nKEY FACTS\nOpen for\n3 min\nDeadline\n17 Nov, 04:05 PM\nCitizen complaints\n1\nField officer\nZonal Officer, Adyar\nTaluk\nGuindy\nConfidence\n90%\nHOW IT UNFOLDED\n1 report from 1 source, in time order\nTHURSDAY 12 NOVEMBER\nCitizen complaint\nGrievance portal\n04:05 PM\n\nThe bin at the corner has overflowed for three days and stray dogs scatter the waste on the road.\n\nREPORTED BY\nCitizen complaints\n1\nWHO IS RESPONSIBLE\nB\nP. Banukumar\nSuperintending Engineer (SWM)\n9499956220\n25619228\nseswm@chennaicorporation.gov.in\nP\nM.Pugazhendi\nChief Engineer (SWM and Mechanical)\n9445036579\n25619260\nceswmgcc@gmail.com\nD\nZonal officer\nN.Dakshnamoorthy\nAssistant Commissioner, Senior Grade (Zone), Zone XIII (Adyar)\n9445190013\n9445190213\naczone13@chennaicorporation.gov.in\nContacts from the GCC Who's who page, retrieved 2026-09-28.",
+   "shot": "89-j2w1280-collector-case.png",
+   "ms": 60593
+  }
+ ],
+ "problems": [
+  {
+   "step": "citizen-view",
+   "kind": "requestfailed",
+   "text": "GET /citizen?_rsc=0fEkq66ureeeVxKI net::ERR_ABORTED"
+  }
+ ],
+ "step": "collector-find",
+ "officerProblems": 0,
+ "code": "issued",
+ "log": {
+  "all": 19,
+  "errors": [
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[assistant] embedding index: Load model from E:\\farm\\.claude\\worktrees\\qa-pass6-a84a72\\chennai-grievance-portal-main\\.cache\\models\\Xenova\\multilingual-e5-base\\onnx\\model_quantized.onnx failed:Protobuf parsing failed.",
+   "[manu] PaddleOCR step skipped: fetch failed",
+   "[manu] PaddleOCR step skipped: fetch failed"
+  ]
+ }
+}

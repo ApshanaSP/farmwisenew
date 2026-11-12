@@ -1,0 +1,15 @@
+{
+ "swm": "INC-20261106-896A64",
+ "ele": "INC-20261106-A67D6A",
+ "log": [
+  {
+   "name": "map-ctx",
+   "id": "INC-20261106-896A64",
+   "title": "Garbage & solid waste – Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+   "titleLeak": false,
+   "coordLeak": true,
+   "say": "null",
+   "camera": "{\"shape\":\"area\",\"areas\":[{\"id\":\"point:inc:INC-20261106-896A64:500\",\"box\":{\"s\":13.110013298181377,\"w\":80.27915067953582,\"n\":13.119006501818623,\"e\":80.28838472046418},\"label\":\"within 500 m of \\\"Thangavel Pillai Thottam people sarbaaga indha complaint\\\"\",\"label_ta\":\"\\\"Thangavel Pillai Thottam people sarbaaga indha complaint\\\" இலிருந்து 500 மீ க்குள்\"}],\"points\":[{\"lat\":13.1119454,\"lon\":80.2840889},{\""
+  }
+ ]
+}

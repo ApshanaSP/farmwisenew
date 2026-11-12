@@ -1,0 +1,2 @@
+period=weekly export rows 69 past_deadline Yes 68 No 1
+export says No but the Past-deadline list holds it: 0 []

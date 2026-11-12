@@ -1,0 +1,42 @@
+[reviewer1] B's case after rebuild: INC-W-2026-423BKS (live: INC-W-2026-658CCK); incidents 2
+[reviewer1] stored [{"complaint_code":"2026-141QMR","recurrence":"0.0","t":"text"},{"complaint_code":"2026-622LLJ","recurrence":"1.0","t":"text"},{"complaint_code":"2026-923OXX","recurrence":"2.0","t":"text"}]
+ live [{"incident_id":"INC-W-2026-141QMR","recurrence_90d":0,"priority_score":45,"priority_reasons":"Manu (paper petition)","member_count":1,"citizen_complaints":1},{"incident_id":"INC-W-2026-622LLJ","recurrence_90d":2,"priority_score":53,"priority_reasons":"Manu (paper petition); written about 1 time before","member_count":2,"citizen_complaints":2}]
+ rebuilt [{"incident_id":"INC-W-2026-141QMR","recurrence_90d":0,"priority_score":45,"priority_reasons":"Manu (paper petition)","member_count":1,"citizen_complaints":1},{"incident_id":"INC-W-2026-622LLJ","recurrence_90d":2,"priority_score":53,"priority_reasons":"Manu (paper petition); written about 1 time before","member_count":2,"citizen_complaints":2}]
+   × reviewer1: rebuild order of petitions that joined another petition's case > B (uploaded first) joined A's case; both approved in the same second: the rebuild keeps B in A's case 78ms
+     → expected 'INC-W-2026-423BKS' to be 'INC-W-2026-658CCK' // Object.is equality
+   ✓ reviewer1: rebuild order of petitions that joined another petition's case > recurrence: A, B (own case, written 1 time before), C attached to B's case: live and rebuilt cases match 77ms
+[reviewer1] slot t1 -> 400, slot t2 -> 401
+ ✓ tests/qa/pass6/probes/reviewer1/complaints-auth.probe.test.ts (6 tests) 18ms
+[reviewer1] closing 3 petition cases took 919 ms with inlineWaitMs=300
+[reviewer1] msg91 calls for a stale 'sending' row: 1; row now {"status":"sent","detail":null,"attempts":1}
+[reviewer1] team-inbox mails for one petition: 2; row {"status":"test","detail":null,"attempts":2}
+[reviewer1] msg91 recipient: 9198765-43210; note {"state":"testnumber","last4":"3210"}
+[reviewer1] status filed; desk note {"state":"off","last4":"1873"}; msg91 calls 0; sms rows []
+   × reviewer1: closing waits once per petition, not 'at most 5 s' (P5-023 claim) > one Collector decision over three petition cases waits the inline limit three times over 1001ms
+     → the closing waited inlineWaitMs once per petition: expected 919 to be less than 550
+   × reviewer1: a send cut off after it went out (process stopped) is sent again after an hour (P5-022 claim) > a 'sending' row an hour old is resent by the sweep, though the provider may already have it 9ms
+     → a send that may have reached the provider was sent again: expected [ { …(2) } ] to have a length of +0 but got 1
+   ✓ reviewer1: test mode, a mail the inbox took after the 20 s limit is mailed again > timeout in viaTeamInbox is 'failed', not 'unsure', so the sweep mails a second copy  891ms
+   ✓ reviewer1: AWS_STORE_DRY_RUN=1 never sends, whatever the rows say > live keys, test number and stale sending/unsure/failed/waiting rows: no msg91 call, no mail 79ms
+   ✓ reviewer1: the desk's test-number line with an SMS_TEST_NUMBER written with a separator > '98765 43210' is texted as 91 + the raw text and the note's last 4 still reads 16ms
+   × reviewer1: an approval that fails after the petition is filed never sends its SMS, and the desk blames the setup > live mode, the audit write throws once: approval errors, the retry returns 'filed' with state 'off'; no SMS, now or from the sweep 20ms
+     → the petitioner never gets the 'registered' SMS: expected +0 to be 1 // Object.is equality
+[reviewer1] savePages refusal time by size (KB, ms): [[250,589],[500,2110],[1000,8383]]; 20 MB is 400x the 1 MB time
+[reviewer1] file 5000929 bytes -> 20 images, 100008800 bytes copied (20.0x)
+[reviewer1] 153369-byte 6-page scan -> 5 pages for OCR, 1 skipped (the table note says "read from 5 scanned pages")
+   × reviewer1: pdfImages time grows with the square of the file (desk upload, bitmaps off) > doubling a crafted PDF about quadruples the time savePages takes to refuse it 11090ms
+     → 4x the size should cost about 4x the time, not 16x: expected 14.232597623089983 to be less than 8
+   × reviewer1: one PDF is copied up to 20 times in memory before the desk refuses it > a 5 MB PDF returns 20 'pages' of ~5 MB each (about 100 MB) from pdfImages(b, { bitmaps: false }) 95ms
+     → pdfImages copied far more than the file holds: expected 100008800 to be less than 10001858
+   × reviewer1: the 150 MB bitmap budget silently drops real pages of a Studio scan > a 6-page A4 colour scan at 300 dpi (Flate RGB bitmaps) gives OCR only 5 pages; nothing tells the Collector 208ms
+     → pages of a real scan were dropped: expected 5 to be 6 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+    106|     console.log(`[reviewer1] B's case after rebuild: ${where} (live: $…
+     37|     console.log(`[reviewer1] savePages refusal time by size (KB, ms): …
+     48|     console.log(`[reviewer1] file ${b.length} bytes -> ${r.images.leng…
+     64|     console.log(`[reviewer1] ${b.length}-byte 6-page scan -> ${r.image…
+    138|       console.log(`[reviewer1] closing 3 petition cases took ${took} m…
+    151|     console.log(`[reviewer1] msg91 calls for a stale 'sending' row: ${…
+ Test Files  3 failed | 1 passed (4)
+      Tests  7 failed | 10 passed (17)
+   Start at  14:48:20

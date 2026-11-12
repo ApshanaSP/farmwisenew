@@ -1,0 +1,12 @@
+/api/collector/list?period=weekly 200 total 262 incidents 280 
+/api/collector/list?period=weekly&sev=Severe 200 total 11 incidents 12 
+/api/collector/list?period=weekly&sev=severe 200 total 262 incidents 280 
+/api/collector/list?period=weekly&status=overdue 200 total 170 incidents 187 
+/api/collector/list?period=weekly&status=Overdue 200 total 262 incidents 280 
+/api/collector/list?period=weekly&scope=al 200 total 262 incidents 280 
+/api/collector/list?period=weekly&zone=4&place=bogus 200 total 34 incidents 35 
+/api/officer/grievances?tab=all&period=weekly 200 total 22 incidents undefined 
+/api/officer/grievances?tab=all&period=weekly&flag=overdue 200 total 19 incidents undefined 
+/api/officer/grievances?tab=all&period=weekly&flag=Overdue 200 total 22 incidents undefined 
+/api/officer/grievances?tab=all&period=weekly&sev=low 200 total 22 incidents undefined 
+/api/officer/grievances?tab=all&period=weekly&sev=Low 200 total 11 incidents undefined 

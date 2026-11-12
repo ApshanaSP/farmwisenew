@@ -1,0 +1,4 @@
+old resolved SWM cases: INC-20260512-CE8857(2026-05-12 Resolved) INC-20260512-439D96(2026-05-12 Resolved) INC-20260512-F9A907(2026-05-12 Resolved) INC-20260512-4D1AAE(2026-05-12 Resolved) INC-20260512-E8E7CB(2026-05-12 Resolved) INC-20260512-39983E(2026-05-12 Resolved) INC-20260513-306221(2026-05-13 Resolved) INC-20260513-B0BD41(2026-05-13 Resolved) INC-20260513-9ED213(2026-05-13 Resolved)
+before {"dailyResolvedTile":1,"dailyResolvedList":1,"dailyReported":3,"officerFeedback":3,"feedbackOk":0}
+bulk resolve of 9 already-resolved cases 428 200 201 {"saved":[{"incident_id":"INC-20260512-39983E","decision_id":1000000011,"escalated_to_level":null},{"incident_id":"INC-2
+after {"dailyResolvedTile":10,"dailyResolvedList":10,"dailyReported":3,"officerFeedback":8,"feedbackOk":8}

@@ -1,0 +1,25 @@
+
+ RUN  v3.2.7 E:/farm/.claude/worktrees/qa-pass6-a84a72/chennai-grievance-portal-main
+
+stdout | tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts > redsec2: Ask District IQ department lock > control: incidents gets the officer's department filter
+[incidents] has dept filter: true params: ["2026-11-12 12:00:00","GCC-ELE",50]
+
+stdout | tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts > redsec2: Ask District IQ department lock > v_collector_queue: no department filter is added for a locked officer
+[v_collector_queue] params=[50] notes=[] sql=SELECT /*+ MAX_EXECUTION_TIME(5000) */ b.`title` AS `d0`, b.`attention_reason` AS `d1` FROM `district_intel`.`v_collector_queue` b WHERE 1=1 ORDER BY 1 LIMIT ?
+
+stdout | tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts > redsec2: Ask District IQ department lock > alerts: no department filter is added for a locked officer
+[alerts] params=["2026-11-12 12:00:00",50] notes=[] sql=SELECT /*+ MAX_EXECUTION_TIME(5000) */ b.`title` AS `d0`, b.`incident_ids` AS `d1` FROM `district_intel`.`alerts` b WHERE (b.`date` IS NULL OR b.`date` <= DATE(?)) ORDER BY 1 LIMIT ?
+
+stdout | tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts > redsec2: Ask District IQ department lock > v_media_gaps: no department filter is added for a locked officer
+[v_media_gaps] params=["2026-11-12 12:00:00",50] notes=[] sql=SELECT /*+ MAX_EXECUTION_TIME(5000) */ b.`incident_id` AS `d0`, b.`title` AS `d1` FROM `district_intel`.`v_media_gaps` b WHERE b.`first_reported_at` <= ? ORDER BY 1 LIMIT ?
+
+stdout | tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts > redsec2: Ask District IQ department lock > hotspots: no department filter is added for a locked officer
+[hotspots] params=["2026-11-12 12:00:00",50] notes=[] sql=SELECT /*+ MAX_EXECUTION_TIME(5000) */ b.`hotspot_id` AS `d0`, b.`top_place` AS `d1` FROM `district_intel`.`hotspots` b WHERE b.`last_seen` <= ? ORDER BY 1 LIMIT ?
+
+ ✓ tests/qa/pass6/probes/redsec2/askiq-dept-lock.test.ts (5 tests) 6ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  14:25:36
+   Duration  1.73s (transform 409ms, setup 0ms, collect 720ms, tests 6ms, environment 0ms, prepare 187ms)
+

@@ -1,0 +1,266 @@
+{
+ "RC-43 PB-259 orig zone": {
+  "kind": "clarify",
+  "headline": "I did not find zone 99: the district has zones 1 to 15. Tell me which zone you mean, or ask for the whole district.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I did not find zone 99: the district has zones 1 to 15. Tell me which zone you mean, or ask for the whole district."
+ },
+ "RC-43 PB-259 orig place": {
+  "kind": "clarify",
+  "headline": "I did not find \"Atlantis\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I did not find \"Atlantis\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district."
+ },
+ "RC-43 PB-260 orig year": {
+  "kind": "clarify",
+  "headline": "2030 has not happened yet (the console's records run to 2026-11-06), so there is nothing to count for it. Ask for the last 7, 30 or 90 days.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "2030 has not happened yet (the console's records run to 2026-11-06), so there is nothing to count for it. Ask for the last 7, 30 or 90 days."
+ },
+ "RC-43 PB-260 orig last 0": {
+  "kind": "clarify",
+  "headline": "\"last 0 days\" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "\"last 0 days\" is not a period: it covers no time at all. Ask for the last 24 hours, 7 days, 30 days or 90 days, or a number of days from 1."
+ },
+ "RC-43 variant place lower case": {
+  "kind": "answer",
+  "headline": "9,113 citizen complaints · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 3,
+  "incidents": 0,
+  "md": "**9,113** citizen complaints in the last 90 days.\n\n- They are about 8,165 incidents, 1,040 of them still open"
+ },
+ "RC-43 variant place with City": {
+  "kind": "answer",
+  "headline": "Open incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "2,411 open incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-43 variant place one word": {
+  "kind": "clarify",
+  "headline": "I did not find \"Springfield\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I did not find \"Springfield\" among the places in Chennai district, so I have not counted anything for it. Check the spelling, name a zone or taluk, or ask for the whole district."
+ },
+ "RC-43 variant zone words": {
+  "kind": "answer",
+  "headline": "Incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "15,115 incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-43 variant ward": {
+  "kind": "clarify",
+  "headline": "I did not find ward 450: the district's wards are numbered 1 to 200. Tell me which ward you mean, or ask for a zone.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I did not find ward 450: the district's wards are numbered 1 to 200. Tell me which ward you mean, or ask for a zone."
+ },
+ "RC-43 variant future month": {
+  "kind": "answer",
+  "headline": "Incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "15,115 incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-43 variant zero words": {
+  "kind": "answer",
+  "headline": "Incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "15,115 incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-43 variant beyond held": {
+  "kind": "answer",
+  "headline": "16,949 citizen complaints · last 500 days",
+  "scopeLine": "Last 500 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 3,
+  "incidents": 0,
+  "md": "**16,949** citizen complaints in the last 500 days.\n\n- They are about 15,423 incidents, 1,040 of them still open"
+ },
+ "RC-43 variant future date": {
+  "kind": "answer",
+  "headline": "Incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "15,115 incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-44 PB-305 orig save": {
+  "kind": "refusal",
+  "headline": "Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Chat cannot save or reopen a workspace, so nothing was saved. On the console, open the top menu, choose Workspaces, and use Save or Open there."
+ },
+ "RC-44 PB-306 orig sources": {
+  "kind": "refusal",
+  "headline": "Chat does not list every record behind a briefing. Each answer card has a Sources section with the tables and checks behind its figures, and one incident opens with its own records.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Chat does not list every record behind a briefing. Each answer card has a Sources section with the tables and checks behind its figures, and one incident opens with its own records."
+ },
+ "RC-44 PB-330 orig forecast": {
+  "kind": "refusal",
+  "headline": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week."
+ },
+ "RC-44 PB-330 orig letter": {
+  "kind": "refusal",
+  "headline": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period."
+ },
+ "RC-44 variant save dashboard": {
+  "kind": "clarify",
+  "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:"
+ },
+ "RC-44 variant pin layout": {
+  "kind": "clarify",
+  "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:"
+ },
+ "RC-44 variant sources plain": {
+  "kind": "answer",
+  "headline": "No datasets in Data Studio yet",
+  "scopeLine": "Data Studio",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Add a file, a link or a sample on the Data Studio page, then ask about it here."
+ },
+ "RC-44 variant forecast backlog": {
+  "kind": "answer",
+  "headline": "Open incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "2,411 open incidents in the last 90 days; the eight newest are listed."
+ },
+ "RC-44 variant forecast trend": {
+  "kind": "refusal",
+  "headline": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I cannot say what will happen: without the AI this answers only from what has been recorded, and it makes no estimate of the future. Ask for the recent trend instead, such as how this week compares with last week."
+ },
+ "RC-44 variant reply": {
+  "kind": "answer",
+  "headline": "Garbage incidents · last 90 days",
+  "scopeLine": "Last 90 days · Adyar (Zone 13) · all departments · Garbage & solid waste · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 8,
+  "md": "139 garbage incidents in the last 90 days in Adyar zone; the eight newest are listed."
+ },
+ "RC-44 variant note": {
+  "kind": "answer",
+  "headline": "Flooding, by category",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "**Flooding**: 1,528 reported (734 the period before), 284 still open, 234 severe; most in Adyar zone.\n- Flooding & waterlogging: 1,309 (567 before), 247 open\n- Lakes, bunds & sluices: 127 (98 before), 21 open\n- Flood relief needs: 92 (69 before), 16 open"
+ },
+ "RC-44 variant send": {
+  "kind": "refusal",
+  "headline": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period.",
+  "scopeLine": "",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "I cannot draft letters or emails without the AI, so nothing was written. I can give the figures to put in one: ask for the incidents or counts for that place and period."
+ },
+ "RC-44 PB-307 orig taluks": {
+  "kind": "answer",
+  "headline": "Tondiarpet leads with 196 open incidents",
+  "scopeLine": "Last 30 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Highest open incidents: Tondiarpet (196), Mambalam (177), Mylapore (162), Sholinganallur (138), Thiruvottiyur (133)."
+ },
+ "RC-44 PB-307 variant taluk": {
+  "kind": "answer",
+  "headline": "Tondiarpet leads with 196 open incidents",
+  "scopeLine": "Last 30 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Highest open incidents: Tondiarpet (196), Mambalam (177), Mylapore (162), Sholinganallur (138), Thiruvottiyur (133)."
+ },
+ "RC-44 PB-261 orig": {
+  "kind": "answer",
+  "headline": "Severe: 135 open incidents (Low leads with 890)",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 0,
+  "incidents": 0,
+  "md": "Highest open incidents: Low (890), Medium (773), High (510), Severe (135)."
+ },
+ "RC-44 PB-261 variant critical": {
+  "kind": "answer",
+  "headline": "65 severe incidents · last 7 days",
+  "scopeLine": "Last 7 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 4,
+  "incidents": 0,
+  "md": "65 severe incidents were reported in the last 7 days (40 in the period before): 65 severe, 54 still open, 8 deaths."
+ },
+ "RC-44 PB-261 variant medium": {
+  "kind": "answer",
+  "headline": "5,352 medium-severity incidents · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 3,
+  "incidents": 0,
+  "md": "5,352 medium-severity incidents were reported in the last 90 days (4,602 in the period before): 0 severe, 829 still open."
+ },
+ "RC-44 PB-262 orig": {
+  "kind": "answer",
+  "headline": "78% of incidents are resolved · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 4,
+  "incidents": 0,
+  "md": "**78%** of the incidents reported in the last 90 days are resolved: 11,784 of 15,115.\n\n- 11,784 resolved, 2,411 still open, 596 severe, 1,632 open past their deadline"
+ },
+ "RC-44 PB-262 variant on time": {
+  "kind": "answer",
+  "headline": "78% of incidents are resolved · last 90 days",
+  "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 4,
+  "incidents": 0,
+  "md": "**78%** of the incidents reported in the last 90 days are resolved: 11,784 of 15,115.\n\n- 11,784 resolved, 2,411 still open, 596 severe, 1,632 open past their deadline"
+ },
+ "RC-44 PB-262 variant ratio": {
+  "kind": "answer",
+  "headline": "13.4% of incidents are resolved · last 7 days",
+  "scopeLine": "Last 7 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+  "kpis": 4,
+  "incidents": 0,
+  "md": "**13.4%** of the incidents reported in the last 7 days are resolved: 182 of 1,357.\n\n- 182 resolved, 1,167 still open, 65 severe, 505 open past their deadline"
+ }
+}

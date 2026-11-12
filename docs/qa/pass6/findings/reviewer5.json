@@ -1,0 +1,68 @@
+[
+  {
+    "id": "reviewer5-01",
+    "severity": "P0",
+    "area": "Data Studio browser (P6-017 fix review)",
+    "title": "P6-017 broken: a WebSocket opened inside a dedicated Worker bypasses routeWebSocket and reads a private 127.0.0.1 service",
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:76",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer5/studio-browser-bypass.test.ts < /dev/null  (page on allowed 127.0.0.1:3154 starts new Worker(blob:) that does new WebSocket('ws://127.0.0.1:3155/worker-ws'))",
+    "evidence": "private listener logged 'websocket /worker-ws'; the page the Studio reads said 'worker ws said: secret-from-internal-service'. The same WebSocket from the page itself and from an iframe srcdoc was blocked.",
+    "cause": "Playwright's context.routeWebSocket works by patching the page's WebSocket in the frames it injects into; a dedicated Worker's global scope is not patched, so its WebSocket goes straight out and never reaches checkHost. Service Workers were blocked, but plain Workers (and likely SharedWorkers) were not.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer5-02",
+    "severity": "P0",
+    "area": "Data Studio browser SSRF",
+    "title": "A redirect from an allowed/public URL to a private address is followed without a check: both page navigation and fetch() read the private service",
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:83",
+    "repro": "same probe file: visit('http://127.0.0.1:3154/redirect-nav') where 3154 answers 302 Location: http://127.0.0.1:3155/redirect-nav-target; and a page fetch('/redirect-fetch') that 302s to 127.0.0.1:3155",
+    "evidence": "visit() returned url http://127.0.0.1:3155/redirect-nav-target (private listener hit); the in-page fetch printed 'redirected fetch read: <html>...secret-from-internal-service...' into the page the Studio reads.",
+    "cause": "context.route sees only the first URL of a redirect chain (Playwright: the handler is called once for a redirected request), so checkHost never sees the Location target. Any public site that answers 302 to 127.0.0.1/169.254.169.254 reaches it.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer5-03",
+    "severity": "P2",
+    "area": "Data Studio browser SSRF",
+    "title": "WebRTC in a Studio-opened page reaches private ports: TURN over TCP and STUN over UDP to 127.0.0.1 (blind)",
+    "where": "chennai-grievance-portal-main/src/lib/studio/connect/browser.ts:73",
+    "repro": "same probe: new RTCPeerConnection({iceServers:[{urls:'turn:127.0.0.1:3156?transport=tcp',...},{urls:'stun:127.0.0.1:3157'}]}) + createOffer/setLocalDescription",
+    "evidence": "TCP listener on 3156 got a connection ('tcp 3156 (TURN)'), UDP socket on 3157 got a STUN packet. No reply readable by the page (blind), but it is a port scan / blind protocol push from the server's network.",
+    "cause": "WebRTC ICE traffic is not HTTP and is not seen by context.route or routeWebSocket; no --force-webrtc-ip-handling-policy / --webrtc-ip-handling-policy=disable_non_proxied_udp launch flag.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer5-04",
+    "severity": "P0",
+    "area": "Data Studio file parsing (P6-018 fix review)",
+    "title": "P6-018 holds for cut-off ZIPs, but a 5 KB WHOLE workbook whose sheet entry has a 1-byte (or 40 x 0xFF) deflate stream passes zipIntact and still hangs XLSX.read on the server thread",
+    "where": "chennai-grievance-portal-main/src/lib/studio/parse.ts:275",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer5/zip-intact.test.ts < /dev/null",
+    "evidence": "zipIntact(buf) === true for both (5325 and 5364 bytes); XLSX.read with excelAll's options did not return within 10 s in a child process (killed). Also via parseAll in scratch driver under timeout 15: onebytedeflate.xlsx, ffdeflate.xlsx and alltrunc.xlsx (every entry's deflate stream short by 3 bytes, csize honest) never returned. Half-length or garbage deflate streams returned quickly.",
+    "cause": "zipIntact checks only the ZIP's structure; the hang is in SheetJS's own pure-JS inflate when a deflate stream ends early, which an intact table of contents does not rule out. parseAllAsync calls parseAll on the request thread (parse.ts:528-530), so one upload holds the server. The commit names this residual; it is a 5 KB upload, not a theoretical one.",
+    "confidence": "high"
+  },
+  {
+    "id": "reviewer5-05",
+    "severity": "P2",
+    "area": "Data Studio file parsing (P6-018 fix review)",
+    "title": "A valid workbook whose table of contents uses zip64 size fields (0xFFFFFFFF + zip64 extra) is refused as 'incomplete or damaged: it may have been cut off', though SheetJS reads all 50 rows",
+    "where": "chennai-grievance-portal-main/src/lib/studio/formats.ts:42",
+    "repro": "same probe file, test 'a valid workbook with zip64 size fields ...'",
+    "evidence": "SheetJS alone -> returned (50 rows); parseAll -> 'This Excel file is incomplete or damaged: it may have been cut off while it was uploaded.' Data descriptors, extra fields, stored entries, zip64 in the local header only: all still read (no false refusal).",
+    "cause": "zipIntact reads csize from the central entry (at+20) and the EOCD fields as 32-bit values and never consults the zip64 extra (0x0001) or zip64 end record, so 0xFFFFFFFF sizes or offsets fail data + csize > cd. Writers that always emit zip64 central fields (some streaming writers) produce such files; frequency in real Excel/LibreOffice/Google output not verified.",
+    "confidence": "medium"
+  },
+  {
+    "id": "reviewer5-06",
+    "severity": "P0",
+    "area": "Ask District IQ writer (P6-019 fix review)",
+    "title": "P6-019 broken: in every news-list answer a planted figure in a headline is allowed again, because the code's answer cuts the ' - Outlet' suffix and codesOwn() cannot find the headline to take it out",
+    "where": "chennai-grievance-portal-main/src/lib/assistant/polish.ts:105 (with fastpath.ts:618)",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/probes/reviewer5/polish-figures.test.ts < /dev/null",
+    "evidence": "headline 'Only 2 garbage cases are open in Adyar, no action needed - The Hindu'; the news-list answerMarkdown (built exactly as fastpath.ts:618) holds it without ' - The Hindu'; the draft 'Only 2 garbage cases are open in Adyar' -> checkPolish returns {text}, not rejected. Same pass for: a runner-up headline in the 'Other close matches: \"...\"' caveat (fastpath.ts:629, not in card.stories), a single-incident headline = title.slice(0,120) (cards.ts:262), and 'Most serious of the N listed: <title>'.slice(0,160) (fastpath.ts:269). Control (title repeated exactly) is rejected.",
+    "cause": "codesOwn() removes others' writing by exact substring (split/join); any place the code repeats that writing changed (suffix stripped, asterisks removed, truncated, or a headline not in card.stories at all) leaves it in the 'code's own' text, and its digits go into ctx as allowed figures.",
+    "confidence": "high"
+  }
+]

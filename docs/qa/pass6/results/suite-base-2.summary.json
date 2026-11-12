@@ -1,0 +1,14 @@
+{
+  "tag": "base-2",
+  "tz": "Asia/Kolkata",
+  "seed": "6102",
+  "config": "vitest.config.ts",
+  "exit": 0,
+  "secs": 44,
+  "numTotalTests": 3315,
+  "numPassedTests": 3302,
+  "numFailedTests": 0,
+  "numPendingTests": 13,
+  "numFailedTestSuites": 0,
+  "failed": []
+}

@@ -1,0 +1,178 @@
+{
+ "steps": [
+  {
+   "name": "desk-load",
+   "status": 200,
+   "ms": 2251,
+   "text": "Manu Deskமனு · Collector's Office, Chennai\nqa.manu\nSign out\nTake a photo\nChoose files\nThese files are pages of one petition\nAWAITING VERIFICATION\n1\n×\nPetition 1000000003\nCould not be read\n12 Nov, 4:02 pm\nAPPROVED THIS WEEK\n10\nLag Probe\nDrinking water contaminated with sewage\n2026-419SUW\n12 Nov, 4:09 pm\nFresh Case\nSewage block in front of the ration shop\n2026-607FTO\n12 Nov, 4:08 pm\nLate Joiner\nSewage overflowing on Jawahar Street, smell\n2026-927VZF\n12 Nov, 4:07 pm\nராணி எஸ்\nGarbage near temple not cleared, dogs\n2026-138SZX\n12 Nov, 4:06 pm\nAadhaar Test\nDrinking water not coming, Aadhaar XXXX XXXX 1234\n2026-312MQS\n12 Nov, 4:04 pm\nZero Lead\nStreet light not burning for a month\n2026-365JEJ\n12 Nov, 4:04 pm\nKumar Garbage\nGarbage not collected for ten days near the school\n2026-555UYE\n12 Nov, 4:02 pm\nLakshmi\nWater supply is dirty and smells\n2026-001DPY\n12 Nov, 4:02 pm\nசெல்வி ராமசாமி\nகழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்\n2026-766XJA\n12 Nov, 4:02 pm\n​​​\nSewage overflowing on the street\n2026-085FEP\n12 Nov, 4:02 pm\nUpload a petition to begin\n\nTake a photograph or choose a file. PaddleOCR and AI OCR will read it, and you may then verify the details beside the photograph and approve it.\n\nTake a photo\nChoose files\n1 petition is awaiting verification.\nVerify the next petition",
+   "shot": "161-j3-desk-home.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   }
+  },
+  {
+   "name": "upload",
+   "during": {
+    "text": "−\n+\nRotate\nDelete image\nVerify and approve\nThe photo could not be read just now. Read it again, or type the details in.\nName *\nMobile\nAlways compare the digits with the paper.\nDate on the petition\nDoor no.\nStreet\nArea\nPincode\nWard *\nDepartment *\nChoose…\nCorporation Solid Waste\nCorporation Storm Water Drain\nMetrowater\nCorporation Electrical\nCorporation Engineering\nTANGEDCO\nDistrict Revenue\nGreater Chennai Police\nGovernment Hospitals\nCorporation Health\nCorporation Education\nCorporation Parks\nCorporation Revenue\nCorporation Bridges\nCorporation Buildings\nCorporation Land and Estate\nCorporation Family Welfare\nPWD Water Resources\nPollution Control Board\nDistrict Disaster Management\nCorporation Administration\nSubject (as written)\nThe problem, in one line (English) *\nWhat they ask for (English)\nUrgent danger to life or safety, a medical emergency, or a vulnerable person in distress now\nThe petition's full text\nApprove and send\nRead again\nBack to home\nDelete petition",
+    "shot": "162-j3-reading.png"
+   },
+   "state": "form",
+   "readMs": 1626,
+   "list": "AWAITING VERIFICATION\n2\n×\nPetition 1000000003\nCould not be read\n12 Nov, 4:02 pm\n×\nPetition 1000000012\nCould not be read\n12 Nov, 4:09 pm\nAPPROVED THIS WEEK\n10\nLag Probe\nDrinking water contaminated with sewage\n2026-419SUW\n12 Nov, 4:09 pm\nFresh Case\nSewage block in front of the ration shop\n2026-607FTO\n12 Nov, 4:08 pm\nLate Joiner\nSewage overflowing on Jawahar Street, smell\n2026-927VZF\n12 Nov, 4:07 pm\nராணி எஸ்\nGarbage near temple not cleared, dogs\n2026-138SZX\n12 Nov, 4:06 pm\nAadhaar Test\nDrinking water not coming, Aadhaar XXXX XXXX 1234\n2026-312MQS\n12 Nov, 4:04 pm\nZero Lead\nStreet light not burning for a month\n2026-365JEJ\n12 Nov, 4:04 pm\nKumar Garbage\nGarbage not collected for ten days near the school\n2026-555UYE\n12 Nov, 4:02 pm\nLakshmi\nWater supply is dirty and smells\n2026-001DPY\n12 Nov, 4:02 pm\nசெல்வி ராமசாமி\nகழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்\n2026-766XJA\n12 Nov, 4:02 pm\n​​​\nSewage overflowing on the street\n2026-085FEP\n12 Nov, 4:02 pm",
+   "err": "",
+   "head": "Verify and approve\nThe photo could not be read just now. Read it again, or type the details in.",
+   "shot": "163-j3-check-form.png",
+   "shotFull": "164-j3-check-form-full.png",
+   "ms": 4817
+  },
+  {
+   "name": "check",
+   "before": {
+    "Name": "",
+    "Mobile": "",
+    "Date on the petition": "",
+    "Door no.": "",
+    "Street": "",
+    "Area": "",
+    "Pincode": "",
+    "Ward": "",
+    "Department": "",
+    "Subject (as written)": "",
+    "The problem, in one line (English)": "",
+    "What they ask for (English)": "",
+    "The petition's full text": ""
+   },
+   "after": {
+    "Name": "R. Meena",
+    "Mobile": "90000XXXXX",
+    "Date on the petition": "12.11.2026",
+    "Door no.": "27",
+    "Street": "Jawahar Street",
+    "Area": "Perambur",
+    "Pincode": "600011",
+    "Ward": "70",
+    "Department": "CMWSSB",
+    "Subject (as written)": "Sewage overflowing on Jawahar Street",
+    "The problem, in one line (English)": "Sewage overflowing from the manhole on Jawahar Street for a week",
+    "What they ask for (English)": "Clear the block and repair the manhole",
+    "The petition's full text": "QA pass 6 journeys petition: sewage overflowing on Jawahar Street, Perambur, for a week."
+   },
+   "deptOptions": [
+    "Choose…",
+    "Corporation Solid Waste",
+    "Corporation Storm Water Drain",
+    "Metrowater",
+    "Corporation Electrical",
+    "Corporation Engineering",
+    "TANGEDCO",
+    "District Revenue",
+    "Greater Chennai Police",
+    "Government Hospitals",
+    "Corporation Health",
+    "Corporation Education",
+    "Corporation Parks",
+    "Corporation Revenue",
+    "Corporation Bridges",
+    "Corporation Buildings",
+    "Corporation Land and Estate",
+    "Corporation Family Welfare",
+    "PWD Water Resources",
+    "Pollution Control Board",
+    "District Disaster Management",
+    "Corporation Administration"
+   ],
+   "came": "CAME BEFORE\n\n2 other people have written about this in the same ward.\n\n2026-927VZF · 12 Nov, 4:07 pm · Complaint Filed\nSewage overflowing on Jawahar Street, smell\nAdd to this case\n2026-085FEP · 12 Nov, 4:02 pm · Complaint Filed\nSewage overflowing on the street\nAdd to this case",
+   "sms": "",
+   "shot": "165-j3-check-filled.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 1280,
+    "W": 1280,
+    "wide": []
+   },
+   "ms": 5089
+  },
+  {
+   "name": "approve",
+   "ms": 3881,
+   "ok": "Petition approved and forwarded\n\nComplaint number <code> is now with Metrowater and the Collector's Office.\n\nNo SMS was sent because the SMS service is not set up yet.",
+   "err": "",
+   "list": "AWAITING VERIFICATION\n1\n×\nPetition 1000000003\nCould not be read\n12 Nov, 4:02 pm\nAPPROVED THIS WEEK\n11\nR. Meena\nSewage overflowing from the manhole on Jawahar Street for a week\n<code>\n12 Nov, 4:10 pm\nLag Probe\nDrinking water contaminated with sewage\n2026-419SUW\n12 Nov, 4:09 pm\nFresh Case\nSewage block in front of the ration shop\n2026-607FTO\n12 Nov, 4:08 pm\nLate Joiner\nSewage overflowing on Jawahar Street, smell\n2026-927VZF\n12 Nov, 4:07 pm\nராணி எஸ்\nGarbage near temple not cleared, dogs\n2026-138SZX\n12 Nov, 4:06 pm\nAadhaar Test\nDrinking water not coming, Aadhaar XXXX XXXX 1234\n2026-312MQS\n12 Nov, 4:04 pm\nZero Lead\nStreet light not burning for a month\n2026-365JEJ\n12 Nov, 4:04 pm\nKumar Garbage\nGarbage not collected for ten days near the school\n2026-555UYE\n12 Nov, 4:02 pm\nLakshmi\nWater supply is dirty and smells\n2026-001DPY\n12 Nov, 4:02 pm\nசெல்வி ராமசாமி\nகழிவுநீர் தெருவில் ஓடுகிறது, துர்நாற்றம்\n2026-766XJA\n12 Nov, 4:02 pm\n​​​\nSewage overflowing on the street\n2026-085FEP\n12 Nov, 4:02 pm",
+   "shot": "166-j3-approved.png"
+  },
+  {
+   "name": "track-open",
+   "ms": 762,
+   "text": "உங்கள் மனுவின் நிலை\n\nTrack your petition or complaint\n\nNumber on your slip\nLast 4 digits of your mobile\nCheck status",
+   "shot": "167-j3-track-empty.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 360,
+    "W": 360,
+    "wide": []
+   }
+  },
+  {
+   "name": "track-wrong",
+   "text": "உங்கள் மனுவின் நிலை\n\nTrack your petition or complaint\n\nNumber on your slip\nLast 4 digits of your mobile\nCheck status\n\nWe could not find that. Check the number on your slip and the last 4 digits of your mobile number.",
+   "shot": "168-j3-track-wrong.png",
+   "ms": 2626
+  },
+  {
+   "name": "track-right",
+   "text": "உங்கள் மனுவின் நிலை\n\nTrack your petition or complaint\n\n<code>\nComplaint Filed\nWith: Metrowater\nReceived: 12 Nov 2026, 4:10 pm\nExpected by: 27 November 2026\nComplaint Filed\n12 Nov 2026, 4:10 pm\n\nReceived at the Collector's office and sent to the department.",
+   "personal": false,
+   "shot": "169-j3-track-result.png",
+   "layout": {
+    "hScroll": false,
+    "scrollWidth": 360,
+    "W": 360,
+    "wide": []
+   },
+   "ms": 3324
+  }
+ ],
+ "problems": [
+  {
+   "step": "upload",
+   "kind": "console.warning",
+   "text": "The resource http://127.0.0.1:3106/brand/districtiq-mark.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+   "step": "check",
+   "kind": "console.warning",
+   "text": "The resource http://127.0.0.1:3106/brand/districtiq-mark.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+   "step": "approve",
+   "kind": "console.warning",
+   "text": "The resource http://127.0.0.1:3106/brand/districtiq-mark.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+   "step": "track-wrong",
+   "kind": "http404",
+   "text": "POST /api/track"
+  },
+  {
+   "step": "track-wrong",
+   "kind": "console.error",
+   "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+   "step": "track-right",
+   "kind": "console.warning",
+   "text": "The resource http://127.0.0.1:3106/brand/districtiq-mark.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  }
+ ],
+ "step": "track-right",
+ "code": "issued",
+ "log": {
+  "all": 3,
+  "errors": [
+   "[manu] PaddleOCR step skipped: fetch failed"
+  ]
+ }
+}

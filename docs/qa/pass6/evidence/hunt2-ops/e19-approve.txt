@@ -1,0 +1,6 @@
+{"label":"pre","officer":{"st":200,"stage":"new","keys":"now,grievance,next,timeline,sources,reports,instructions,closedByDept,firstSource"},"officerTabs":{"new":1,"action":0,"sent":0,"verified":0,"all":1},"collectorList":{"total":1,"status":"Under review","open":1,"acted":null},"collectorDetail":{"st":200,"status":"Under review","open":1,"keys":"incident,group,reports,emails,contacts,assigned,decisions,deptReports"}}
+Collector status chips containing it before: {"Under review":1,"Assigned":0,"In progress":0}
+approve 201 {"stage":"approved","reportId":null}
+{"label":"after approve","officer":{"st":200,"stage":"approved","keys":"now,grievance,next,timeline,sources,reports,instructions,closedByDept,firstSource"},"officerTabs":{"new":0,"action":1,"sent":0,"verified":0,"all":1},"collectorList":{"total":1,"status":"Under review","open":1,"acted":null},"collectorDetail":{"st":200,"status":"Under review","open":1,"keys":"incident,group,reports,emails,contacts,assigned,decisions,deptReports"}}
+Collector status chips containing it after: {"Under review":1,"Assigned":0,"In progress":0}
+Collector detail decisions [] deptReports 0 status Under review assigned null

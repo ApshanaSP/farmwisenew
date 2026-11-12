@@ -1,0 +1,177 @@
+[
+ {
+  "id": "ta-brief-20",
+  "text": "வளசரவாக்கத்துல கார்ப்பரேஷன் health டிபார்ட்மெண்ட் என்ன பண்றாங்க?",
+  "lane": "no-model",
+  "kind": "do",
+  "said": "மண்டலம் 11 · வளசரவாக்கம்",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": 11,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "no model answered: the console moved towards it, and answered nothing"
+  ]
+ },
+ {
+  "id": "ta-explain-14",
+  "text": "நேத்து மணலில தீ விபத்து ஆச்சுல்ல, அது என்ன ஏதுன்னு சொல்லு.",
+  "lane": "no-model",
+  "kind": "clarify",
+  "said": "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "asked back"
+  ]
+ },
+ {
+  "id": "ta-explain-16",
+  "text": "அண்ணா நகர் பக்கம் செயின் பறிப்பு ஜாஸ்தியாம், விளக்கி சொல்லு.",
+  "lane": "no-model",
+  "kind": "do",
+  "said": "மண்டலம் 8 · அண்ணா நகர்",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": 8,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "no model answered: the console moved towards it, and answered nothing"
+  ]
+ },
+ {
+  "id": "ta-noisy-07",
+  "text": "வளசரவாக்கத்துல, ஒரு நிமிஷம், வந்து வளசரவாக்கத்துல நேத்து வந்த கம்ப்ளைன்ட் எல்லாத்தையும் ம்ம் எடுங்க",
+  "lane": "no-model",
+  "kind": "clarify",
+  "said": "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "asked back"
+  ]
+ },
+ {
+  "id": "tanglish-explain-08",
+  "text": "Thondiarpet work site-la quality mosam nu solraanga, andha Corporation work vishayam enna",
+  "lane": "no-model",
+  "kind": "do",
+  "said": "மண்டலம் 4 · தண்டையார்பேட்டை",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": 4,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "no model answered: the console moved towards it, and answered nothing"
+  ]
+ },
+ {
+  "id": "tanglish-explain-20",
+  "text": "Manali-la drain work pallam thorandhu kedakku, safety issue explain pannu",
+  "lane": "no-model",
+  "kind": "do",
+  "said": "மண்டலம் 2 · மணலி · வடிகால் பணியிடப் பாதுகாப்பு",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": 2,
+   "dept": null,
+   "cat": "DRAIN_WORKS_SAFETY",
+   "taluk": null,
+   "sev": null,
+   "panel": null,
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "no model answered: the console moved towards it, and answered nothing"
+  ]
+ },
+ {
+  "id": "tanglish-numbers-11",
+  "text": "edha department romba slow? pending vechu rank pannu",
+  "lane": "no-model",
+  "kind": "do",
+  "said": "துறைகள்",
+  "title": null,
+  "console": {
+   "page": "overview",
+   "period": "daily",
+   "zone": null,
+   "dept": null,
+   "cat": null,
+   "taluk": null,
+   "sev": null,
+   "panel": "depts",
+   "incident": null,
+   "stage_open": null
+  },
+  "grade": "safe",
+  "confident_wrong": false,
+  "reasons": [
+   "no model answered: the console moved towards it, and answered nothing"
+  ]
+ }
+]

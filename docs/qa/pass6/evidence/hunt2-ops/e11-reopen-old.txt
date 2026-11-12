@@ -1,0 +1,5 @@
+before {"officerCounts":{"new":39,"action":40,"sent":18,"verified":1443,"returned":0,"serious":2,"overdue":94,"newSerious":0,"due":0},"officerFeedbackHasIt":false,"collectorQuarterOngoing":97,"collectorAllTimeOpenList":97}
+reopen 201 {"saved":[{"incident_id":"INC-20260511-7798C7","decision_id":1000000006,"escalated_to_level":null}]}
+{"label":"after reopen of a May case","officer":{"st":200,"stage":"action","keys":"now,grievance,next,timeline,sources,reports,instructions,closedByDept,firstSource"},"officerTabs":{"new":0,"action":0,"sent":0,"verified":0,"all":0},"collectorList":{"total":1,"status":"Open","open":1,"decision":"reopen","acted":null},"collectorDetail":{"st":200,"status":"Open","open":1,"keys":"incident,group,reports,emails,contacts,assigned,decisions,deptReports"}}
+after {"officerCounts":{"new":39,"action":40,"sent":18,"verified":1443,"returned":0,"serious":2,"overdue":94,"newSerious":0,"due":0},"officerFeedbackHasIt":true,"collectorQuarterOngoing":97,"collectorAllTimeOpenList":98}
+officer search 200 {"rows":[]}

@@ -1,0 +1,5 @@
+period=monthly&cat=FLOOD_WATERLOGGING                rep 538 ong 224 res 410 od 224 sev 87 cmp 251 ok
+period=monthly&taluk=TLK-TDP                         rep 434 ong 190 res 343 od 166 sev 24 cmp 146 ok
+period=quarterly&zone=4&cat=SOLID_WASTE              rep 140 ong 9 res 134 od 9 sev 0 cmp 10 ok
+period=monthly&dept=GCC-ELE&taluk=TLK-MYL            rep 23 ong 5 res 21 od 5 sev 0 cmp 5 ok
+period=weekly&dept=POL-GCP                           rep 69 ong 69 res 74 od 62 sev 2 cmp 0 ok
