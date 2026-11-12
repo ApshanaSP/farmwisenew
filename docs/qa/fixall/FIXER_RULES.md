@@ -1,11 +1,11 @@
 # Fix-all run: rules for every fixer and reviewer agent
 
 The owner said "fix all" after QA pass 6. This run works through pass 6's open P1, P2 and P3 rows in `docs/qa/pass6/BUGS.json`. A
-separate session ("Fix pass 6's 14 open P0 bugs") fixes the P0 rows in its own worktree at the same time.
+separate session ("Fix pass 6's 14 open P0 bugs") and the six sessions it started fix the P0 and P1 rows in their own worktrees at the same time.
 
 - Worktree: `E:\farm\.claude\worktrees\qa-pass6-a84a72`. Branch: `claude/fixall-a84a72`, cut from GitHub main `d399015`. The app is
   in `chennai-grievance-portal-main/`.
-- Only one fixer works at a time, in this worktree. The machine has 15 GB of memory and the P0 session runs alongside.
+- Only one fixer works at a time, in this worktree. The machine has 15 GB of memory and seven other sessions run alongside, so keep test runs targeted.
 
 ## Every row ends in exactly one of these states
 
@@ -29,12 +29,21 @@ separate session ("Fix pass 6's 14 open P0 bugs") fixes the P0 rows in its own w
   Say what the decision is in one line.
 - **open**: you ran out of time, or it needs a running server or a live model. Say exactly what is left.
 
-## Files you must not change (the P0 session owns them)
+## Files and rows you must not change (other sessions own them)
 
-`src/lib/studio/**`, `src/lib/thunai/**`, `src/lib/assistant/polish.ts`, `src/lib/assistant/compile.ts`,
-`src/lib/assistant/fastpath.ts`, the assistant rules lane, `src/lib/collector/insights.ts` and
-`src/app/api/collector/decisions/route.ts`. If a row's fix needs one of them, leave the row `open` with the note
-"needs <file>, P0 session's file".
+The P0 session split into six parallel sessions (branches `p7-*`). They own every P0 row and all 28 open P1 rows. Their files:
+
+- `src/lib/studio/**` and `src/lib/thunai/**`;
+- in `src/lib/assistant/`: `polish.ts`, `compile.ts`, `fastpath.ts`, `intent.ts`, `decide.ts`, `unresolved.ts`, `cannot.ts`, and the rules lane;
+- `src/lib/collector/**` and `src/components/collector/app/**`;
+- `src/lib/officer/data.ts`;
+- `src/lib/manu/**`, `src/components/manu/**` and `src/app/api/manu/**`;
+- `src/app/api/profile/**`, `src/app/api/complaints/route.ts` and `src/app/api/collector/decisions/route.ts`.
+
+If a row's fix needs one of those files, leave the row `open` with the note "needs <file>, a p7 session's file". The lead does it after their
+branches are done. Never take a P1 row.
+
+Ports for this run: Next 3110–3113, pinned API 3190. The p7 sessions use 3104–3109 and pinned APIs 3191–3196.
 
 ## Commands
 

@@ -8,3 +8,7 @@
 - Ports: this run uses 3110–3113 and the pinned API on 3196; the P0 session uses 3106–3109 and 3197.
 - Studio fixture port 4599: a default-config vitest run first takes the lock folder `vitest-4599.lock` in the shared notes folder.
 - Rules for agents: `FIXER_RULES.md`.
+- 00:00: the P0 session split into six `p7-*` sessions that own all P0 and all 28 P1 rows, plus more files: `collector/**`, `manu/**`, `officer/data.ts`, `api/profile`, `api/complaints` and `assistant/{intent,decide,unresolved,cannot}`.
+  - The desk fixer was stopped. Its one commit (`d474842`, reviewer5-07/08 in `manu/repeat.ts`) was moved off this branch to `claude/fixall-repeat-reviewer5` for the p7 session that owns reviewer5-07.
+  - New ports: pinned API 3190, Next 3110–3113.
+  - Re-sorted: 32 P2/P3 rows are fixable outside their files (`mine-*.json`). 71 wait for their branches (`later.json`).
