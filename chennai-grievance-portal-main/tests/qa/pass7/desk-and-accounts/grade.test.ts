@@ -14,7 +14,7 @@ const PIPE = path.resolve(process.cwd(), "..", "district_intel");
 const read = (p: string) => fs.readFileSync(path.join(PIPE, p), "utf8");
 
 /** the r"..." pieces of NAME = re.compile(r"..." r"...", re.I) in a Python file, joined */
-function pyRegex(src: string, name: string): string {
+function pySource(src: string, name: string): string {
   const at = src.indexOf(`${name} = re.compile(`);
   if (at < 0) throw new Error(`${name} not found`);
   const body = src.slice(at, src.indexOf(", re.I)", at));
@@ -34,7 +34,7 @@ describe("officer-day-02: grade.ts is the pipeline's rules", () => {
 
   for (const name of ["HIGH_RISK_SUB", "ELEVATED_SUB", "LOW_SUB", "TEXT_HAZARD", "REPEAT"] as const) {
     it(`${name} is textproc.py's`, () => {
-      expect(G[name].source).toBe(pyRegex(textproc, name));
+      expect(G.PY[name]).toBe(pySource(textproc, name));
       expect(G[name].flags).toContain("i");
     });
   }
@@ -42,7 +42,7 @@ describe("officer-day-02: grade.ts is the pipeline's rules", () => {
   it("VULNERABLE is textproc.py's", () => {
     const block = textproc.slice(textproc.indexOf("VULNERABLE = ["), textproc.indexOf("]\n", textproc.indexOf("VULNERABLE = [")));
     const py = [...block.matchAll(/\("(\w+)", re\.compile\(r"((?:[^"\\]|\\.)*)", re\.I\)\)/g)].map((m) => [m[1], m[2]]);
-    expect(G.VULNERABLE.map(([n, rx]) => [n, rx.source])).toEqual(py);
+    expect(G.PY.VULNERABLE).toEqual(py);
   });
 
   it("the score and its levels are severity.py's grievance() and refdata.py's severity_level", () => {
@@ -61,5 +61,19 @@ describe("officer-day-02: grade.ts is the pipeline's rules", () => {
     expect(G.grievanceCategory("Garbage", "Removal of Garbage")).toBe("SOLID_WASTE");
     expect(G.grievanceCategory("Road and Footpath", "Big pothole on main road")).toBe("ROAD_DAMAGE");
     expect(G.grievanceCategory("Other", "Other / not listed above")).toBe("OTHER");
+  });
+});
+
+describe("officer-day-02, pass 7 reviewer 2: grade.ts reads text as the pipeline does", () => {
+  it("\b and \d mean what Python 3 makes them mean: 'UPHCக்கு' is not a UPHC, '௩ times' is a number of times", () => {
+    expect(G.gradeGrievance({ type: "Public Health", subtype: "Street Dogs", title: "Dogs", text: "Dogs biting people near UPHCக்கு அருகில்" }).score).toBe(25);
+    expect(G.gradeGrievance({ type: "Public Health", subtype: "Street Dogs", title: "Dogs", text: "Dogs biting people near the UPHC" }).score).toBe(33);
+    expect(G.gradeGrievance({ type: "Garbage", subtype: "Removal of Garbage", title: "Garbage", text: "complained ௩ times, nothing done" }).score).toBe(35);
+  });
+  it("a title that is only the sub-type is graded as the pipeline's loader rewrites it, with the street: 'Street Dogs' on Kovil Street is Medium", () => {
+    expect(G.pipelineTitle("Street Dogs", "Street Dogs", "kovil street", 70)).toBe("Street Dogs, Kovil Street, Ward 70");
+    expect(G.pipelineTitle("Dogs chasing kids", "Street Dogs", "Kovil Street", 70)).toBe("Dogs chasing kids");
+    const g = G.gradeGrievance({ type: "Public Health", subtype: "Street Dogs", title: G.pipelineTitle("Street Dogs", "Street Dogs", "Kovil Street", 70), text: "Dogs everywhere" });
+    expect([g.score, g.level]).toEqual([33, "Medium"]);
   });
 });

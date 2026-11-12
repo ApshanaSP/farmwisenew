@@ -127,20 +127,52 @@ export function grievanceCategory(type: string | null | undefined, subtype: stri
 }
 
 // ----------------------------------------------------------------------- textproc.py, severity cues --
-export const HIGH_RISK_SUB = /electric shock|eb wire|spark|manhole|sewage|fallen tree|dengue|malaria|mosquito|biomedical|trap at home|water entering|elderly medicine|pregnant women issues|damage to the electric pole/i;
-export const ELEVATED_SUB = /stagnation of water|pot ?hole|street dogs|non burning of street lights|overflowing|burning of garbage|dark spot|safety|barricading|obstruction of water flow|desilting|removal of garbage|open defecation|electrical wires|stray cattle/i;
-export const LOW_SUB = /certificate|registration|opening and closing hours|online payment|project information|consultation|information in advance|revision objection|name error/i;
-export const TEXT_HAZARD = /live wire|electric shock|current shock|shock adikkudhu|open manhole|sewage overflow|electrocut|collapsed|caved in|மின்சாரம் தாக்|மின் கம்பி|திறந்த நிலையில் உள்ள|இடிந்து/i;
-export const VULNERABLE: [string, RegExp][] = [
-  ["school", /school|பள்ளி|anganwadi|அங்கன்வாடி/i],
-  ["hospital", /hospital|மருத்துவமனை|health cent|\bphc\b|\buphc\b|சுகாதார நிலைய/i],
-  ["bus_stop", /bus stop|bus stand|பேருந்து நிறுத்த/i],
-  ["worship", /temple|kovil|koil|கோயில்|கோவில்|church|mosque|masjid|தேவாலய|பள்ளிவாசல்/i],
-  ["children", /children|kids|pasanga|kozhandhai|குழந்தை|students|மாணவ/i],
-  ["elderly", /elderly|old age|senior citizen|periyavanga|முதியோர்|முதியவர்|வயதான/i],
-  ["pregnant", /pregnant|கர்ப்பிணி/i]
-];
-export const REPEAT = /already complained|already complaint|complained (twice|thrice|again|many times|\d+ times)|no action (taken|so far|till now)|still not (done|cleared|fixed|repaired|attended)|reminder|repeated complaint|thadava complaint|evlo thadava|பலமுறை|ஏற்கனவே[^.]*புகார்|மீண்டும் புகார்|நடவடிக்கை இல்லை/i;
+// The patterns as the pipeline writes them, character for character (the drift test compares them with textproc.py), compiled with Python's
+// meaning: in Python 3 a str pattern's \b and \d are Unicode-aware ("UPHC" in "UPHCக்கு" is inside a word, and "௩" is a digit), while
+// JavaScript's are ASCII-only, so the same text scored differently here (pass 7 reviewer 2 on officer-day-02).
+export const PY = {
+  HIGH_RISK_SUB: String.raw`electric shock|eb wire|spark|manhole|sewage|fallen tree|dengue|malaria|mosquito|biomedical|trap at home|water entering|elderly medicine|pregnant women issues|damage to the electric pole`,
+  ELEVATED_SUB: String.raw`stagnation of water|pot ?hole|street dogs|non burning of street lights|overflowing|burning of garbage|dark spot|safety|barricading|obstruction of water flow|desilting|removal of garbage|open defecation|electrical wires|stray cattle`,
+  LOW_SUB: String.raw`certificate|registration|opening and closing hours|online payment|project information|consultation|information in advance|revision objection|name error`,
+  TEXT_HAZARD: String.raw`live wire|electric shock|current shock|shock adikkudhu|open manhole|sewage overflow|electrocut|collapsed|caved in|மின்சாரம் தாக்|மின் கம்பி|திறந்த நிலையில் உள்ள|இடிந்து`,
+  REPEAT: String.raw`already complained|already complaint|complained (twice|thrice|again|many times|\d+ times)|no action (taken|so far|till now)|still not (done|cleared|fixed|repaired|attended)|reminder|repeated complaint|thadava complaint|evlo thadava|பலமுறை|ஏற்கனவே[^.]*புகார்|மீண்டும் புகார்|நடவடிக்கை இல்லை`,
+  VULNERABLE: [
+    ["school", String.raw`school|பள்ளி|anganwadi|அங்கன்வாடி`],
+    ["hospital", String.raw`hospital|மருத்துவமனை|health cent|\bphc\b|\buphc\b|சுகாதார நிலைய`],
+    ["bus_stop", String.raw`bus stop|bus stand|பேருந்து நிறுத்த`],
+    ["worship", String.raw`temple|kovil|koil|கோயில்|கோவில்|church|mosque|masjid|தேவாலய|பள்ளிவாசல்`],
+    ["children", String.raw`children|kids|pasanga|kozhandhai|குழந்தை|students|மாணவ`],
+    ["elderly", String.raw`elderly|old age|senior citizen|periyavanga|முதியோர்|முதியவர்|வயதான`],
+    ["pregnant", String.raw`pregnant|கர்ப்பிணி`]
+  ] as [string, string][]
+};
+
+/** Python's word character for str patterns: letters, numbers and "_" (a combining mark is not one). */
+const W = String.raw`[\p{L}\p{N}_]`;
+/** A Python 3 str pattern as a JavaScript RegExp with the same meaning for \b and \d, case-insensitive (re.I). */
+export function pyRegex(src: string): RegExp {
+  const js = src.replace(/\\b/g, `(?:(?<=${W})(?!${W})|(?<!${W})(?=${W}))`).replace(/\\d/g, String.raw`\p{Nd}`);
+  return new RegExp(js, "iu");
+}
+
+export const HIGH_RISK_SUB = pyRegex(PY.HIGH_RISK_SUB);
+export const ELEVATED_SUB = pyRegex(PY.ELEVATED_SUB);
+export const LOW_SUB = pyRegex(PY.LOW_SUB);
+export const TEXT_HAZARD = pyRegex(PY.TEXT_HAZARD);
+export const VULNERABLE: [string, RegExp][] = PY.VULNERABLE.map(([name, src]) => [name, pyRegex(src)]);
+export const REPEAT = pyRegex(PY.REPEAT);
+
+/**
+ * The title the pipeline grades, as its grievance loader builds it: a title that is only the sub-type (the citizen form fills it in) becomes
+ * "sub-type, Street, Ward N", so the street's own name is read too ("Kovil Street" is near a place of worship). Without it a complaint
+ * graded lower here than in the pipeline (pass 7 reviewer 2).
+ */
+export function pipelineTitle(title: string | null | undefined, subtype: string | null | undefined, street: string | null | undefined, ward: number | string | null | undefined): string {
+  const t = String(title ?? ""), sub = String(subtype ?? "");
+  if (t.trim().toLowerCase() !== sub.trim().toLowerCase()) return t;
+  const titled = String(street ?? "").trim().toLowerCase().replace(/(^|[^\p{L}])(\p{L})/gu, (_m, a: string, b: string) => a + b.toUpperCase());
+  return `${sub}, ${titled}, Ward ${ward ?? ""}`;
+}
 
 // ------------------------------------------------------------------ severity.py, grievance() --
 export type Level = "Severe" | "High" | "Medium" | "Low";

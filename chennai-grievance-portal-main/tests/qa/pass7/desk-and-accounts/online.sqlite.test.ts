@@ -190,3 +190,43 @@ describe("officer-day-09: the citizen's photo reaches the department officer and
     expect(j.items).toEqual([expect.objectContaining({ code: "2026-111AAA", pages: ["/api/manu/photos/p-1.jpg"] })]);
   });
 });
+
+// ------------------------------------------------------------------------------------------------ pass 7 reviewer 2 (p7-desk-and-accounts-06..09) --
+
+describe("pass 7 reviewer 2: grading, routing words and one file per complaint", () => {
+  it("officer-day-02 rebuild: an older complaint typed by complaint_types ('Sewage Overflow', no sub-type) is graded by that name, as the dataset gives it", async () => {
+    const { websiteCases } = await import("@/lib/manu/cases");
+    h.db.exec(`INSERT INTO complaint_types VALUES (90, 'Sewage Overflow');
+      INSERT INTO complaints (complaint_code, user_id, first_name, gender, street_address, zone_id, ward_number, department_id, complaint_type_id, title, description, is_anonymous, needs_manual_review, status, created_at)
+      VALUES ('2025-901OLD', 5, 'Old', 'Male', '1 Old Street', 6, 70, 5, 90, 'Sewage', 'Sewage overflow on the road', 0, 0, 'Complaint Filed', '2026-11-01 10:00:00')`);
+    await websiteCases(h.db as never);
+    expect(one("SELECT severity_level FROM incidents WHERE incident_id = 'INC-W-2025-901OLD'").severity_level).toBe("High");
+  });
+
+  it("officer-day-07: an assumed department is described as assumed, not as read from the citizen's words; 'Other' as read from them", async () => {
+    const assumed = await file({ complaintSubtypeId: 11, title: "Spark from the EB wire" });
+    const other = await file({ complaintSubtypeId: 31, otherDescription: "Pole leaning", title: "Pole leaning", description: "The pole is leaning over the footpath." });
+    const remark = (code: string) => String(one("SELECT h.remarks r FROM complaint_status_history h JOIN complaints c ON c.id = h.complaint_id WHERE c.complaint_code = ?", code).r);
+    expect(remark(assumed)).not.toMatch(/from what you wrote|no fixed department/);
+    expect(remark(assumed)).toMatch(/taken to go to/);
+    expect(String(caseOf(assumed).review_reason)).not.toMatch(/from what the citizen wrote/);
+    expect(remark(other)).toMatch(/from what you wrote/);
+    expect(String(caseOf(other).review_reason)).toMatch(/from what the citizen wrote/);
+  });
+
+  it("officer-day-07: the complaint form promises no officer confirming the routing", () => {
+    const form = fs.readFileSync(path.join(process.cwd(), "src/components/ComplaintTypeSelector.tsx"), "utf8");
+    expect(form).not.toMatch(/officer (confirms|will confirm)|confirmed by an officer/i);
+  });
+
+  it("officer-day-09: one upload is attached to one complaint: a second complaint with the same file is refused", async () => {
+    const name = "c-20261112-00000000000000aa.png";
+    fs.writeFileSync(path.join(dir, name), Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40, 3)]));
+    fs.writeFileSync(path.join(dir, `${name}.owner.json`), JSON.stringify({ userId: CITIZEN.userId }));
+    await file({ mediaPath: `/api/complaints/media/${name}` });
+    h.session = CITIZEN;
+    const r = await fileComplaint(new NextRequest("http://127.0.0.1/api/complaints", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify(body({ complaintSubtypeId: 31, otherDescription: "Light", title: "Light out", description: "The light is out on the corner.", mediaPath: `/api/complaints/media/${name}` })) }));
+    expect(r.status).toBe(400);
+  });
+});

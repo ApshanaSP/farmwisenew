@@ -119,6 +119,15 @@ describe("hunt2-desk-04: a mobile number written with +91 or a 0 is stored as th
     for (const m of ["+91 98400 123", "+91-98400-1234", "0091 98400 123", "(+91) 98400 1234"]) expect(fileSchema.safeParse(raw({ mobile: m })).success, m).toBe(false);
   });
 
+  it("pass 7 reviewer 2: a full-width plus is a plus: '＋91 98400 123' is refused at the desk and marked by the reader", async () => {
+    const { typedMobile, cleanReading } = await import("@/lib/manu/clean");
+    expect(fileSchema.safeParse(raw({ mobile: typedMobile("＋91 98400 123") })).success).toBe(false);
+    expect(fields({ mobile: typedMobile("＋91 98400 12345") }).mobile).toBe("9840012345");
+    const r = cleanReading({ ...reading(), ward: "70", mobile: "＋91 98400 123", unsure_fields: [] } as never, "2026-11-13");
+    expect(r.mobile).not.toBe("9198400123");
+    expect(r.unsure_fields).toContain("mobile");
+  });
+
   it("pass 7 reviewer: a number in Aadhaar's 4-4-4 groups is refused, as the reader's check refuses it", () => {
     expect(fileSchema.safeParse(raw({ mobile: "9198 4001 2345" })).success).toBe(false);
   });

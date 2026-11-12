@@ -38,7 +38,8 @@ export const digits = (s: string | null | undefined): string => asciiDigits(Stri
  * person's number (pass 7 reviewer on hunt2-desk-04). Anything that is not ten digits is not a mobile to the callers.
  */
 export function tenDigits(s: string | null | undefined): string {
-  const written = asciiDigits(String(s ?? ""));
+  // compatibility forms first: a full-width "＋91" is "+91" (pass 7 reviewer 2: "＋91 98400 123" was read as 9198400123)
+  const written = asciiDigits(String(s ?? "").normalize("NFKC"));
   const d = digits(written);
   if (/^[^\d]*(?:\+[^\d]*|0[^\d]*0[^\d]*)9[^\d]*1/.test(written)) return d.replace(/^(?:00)?91/, "");
   if (d.length === 12 && d.startsWith("91")) return d.slice(2);
@@ -59,7 +60,7 @@ export const aadhaarShaped = (s: string | null | undefined): boolean => AADHAAR_
  * 98400 12345" to that number (the pass 7 reviewer). The server reads the value with tenDigits() and refuses one longer than this.
  */
 export const MOBILE_TYPED_MAX = 40;
-export const typedMobile = (s: string): string => s.replace(/[^\p{Nd}+\s()-]/gu, "");
+export const typedMobile = (s: string): string => s.normalize("NFKC").replace(/[^\p{Nd}+\s()-]/gu, "");
 
 const realDate = (d: number, mo: number, y: number): string | null => {
   const t = new Date(Date.UTC(y, mo - 1, d));

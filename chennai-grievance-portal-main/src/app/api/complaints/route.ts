@@ -12,7 +12,7 @@ import { progressFor, remarksFor } from "@/lib/complaint-progress";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { mediaOwner, privateMediaName } from "@/lib/complaint-media";
 import { oneAtATime } from "@/lib/serial";
-import { addCaseLive, onlineCase } from "@/lib/manu/cases";
+import { addCaseLive, onlineCase, type Routing } from "@/lib/manu/cases";
 import { istNow } from "@/lib/manu/clean";
 
 /** The same citizen's identical complaint (title, details, ward) filed in the last two minutes, if any. */
@@ -68,6 +68,12 @@ export async function POST(req: NextRequest) {
     if (mediaName && (await mediaOwner(mediaName)) !== session.userId) {
       return NextResponse.json({ error: "The attached file was not recognised. Please attach it again." }, { status: 400 });
     }
+    // one upload, one complaint: the media route decides who may open a file by the complaint that holds it, so a file on two complaints of
+    // two departments was listed on the second department's case screen and then refused to its officer (pass 7 reviewer 2, officer-day-09)
+    if (mediaName) {
+      const [held] = await pool.query<RowDataPacket[]>("SELECT 1 AS x FROM complaints WHERE media_path = ? LIMIT 1", [data.mediaPath]);
+      if (held.length) return NextResponse.json({ error: "This file is already attached to another complaint. Please attach it again." }, { status: 400 });
+    }
 
     // ---- Re-validate every location relationship server-side -------------
     // The client already enforces these, which is exactly why the server must
@@ -86,9 +92,11 @@ export async function POST(req: NextRequest) {
     // for them to disagree.
     let localityId: number | null = null;
     let areaId: number | null = null;
+    // the street as the dataset names it to the pipeline (GCC street, else the typed one): the case's grade reads it (officer-day-02)
+    let streetName: string | null = [data.manualStreetName, data.streetType].filter(Boolean).join(" ").trim() || null;
     if (data.gccStreetId) {
       const [streetRows] = await pool.query<RowDataPacket[]>(
-        `SELECT s.id, s.locality_id, l.area_id, a.zone_id
+        `SELECT s.id, s.locality_id, l.area_id, a.zone_id, s.name
            FROM gcc_streets s
            JOIN gcc_localities l ON l.id = s.locality_id
            JOIN gcc_areas a ON a.id = l.area_id
@@ -109,6 +117,7 @@ export async function POST(req: NextRequest) {
       }
       localityId = streetRows[0].locality_id as number;
       areaId = streetRows[0].area_id as number;
+      streetName = (streetRows[0].name as string | null) ?? streetName;
     }
 
     // Ward must be a real GCC ward; its zone comes from the ward, not the client.
@@ -179,6 +188,8 @@ export async function POST(req: NextRequest) {
 
     let departmentId = subtype.department_id as number | null;
     let needsManualReview = subtype.mapping_status === "assumed";
+    // how the department is chosen when the type does not fix it (officer-day-07): assumed by the mapping, or read from the text below
+    const routing: Routing | null = !departmentId ? "classifier" : needsManualReview ? "assumed" : null;
 
     if (!departmentId) {
       // No fixed department for this type ("Other"). Route it from what the
@@ -272,9 +283,13 @@ export async function POST(req: NextRequest) {
           newId,
           // what happened, not a review nobody does: "Department routing pending officer review" was promised, but no officer sees a
           // review flag or can send a complaint on (QA pass 6, officer-day-07). The case carries the flag to the Collector (cases.ts).
-          needsManualReview
-            ? `Complaint registered and sent to ${deptName ?? "a department"}, chosen by the portal because this complaint type has no fixed department.`
-            : "Complaint registered by citizen.",
+          // How the department was chosen, each in its own words (pass 7 reviewer 2): the classifier read the text, or GCC has not
+          // published the type's department
+          !needsManualReview
+            ? "Complaint registered by citizen."
+            : routing === "assumed"
+              ? `Complaint registered and sent to ${deptName ?? "a department"}, the department this complaint type is taken to go to (the Corporation has not published one).`
+              : `Complaint registered and sent to ${deptName ?? "a department"}, chosen by the portal from what you wrote, because this complaint type has no fixed department.`,
           session.userId
         ]
       );
@@ -293,7 +308,7 @@ export async function POST(req: NextRequest) {
       complaint_code: complaintCode, created_at: istNow(), title: data.title, description: data.description, ward_number: data.wardNumber,
       specific_location: data.specificLocation, street_address: data.streetAddress, mobile_number: data.mobileNumber, user_id: session.userId,
       needs_manual_review: needsManualReview ? 1 : 0
-    }, deptName, { type: subtype.category_name as string, subtype: subtype.label as string }));
+    }, deptName, { type: subtype.category_name as string, subtype: subtype.label as string, street: streetName, routing }));
 
     return NextResponse.json({
       message:

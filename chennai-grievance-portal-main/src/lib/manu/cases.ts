@@ -11,7 +11,7 @@ import { DEPT_CONFIG, codeForPortalDept } from "@/lib/officer/departments";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { effectiveSql } from "@/lib/collector/effective";
 import { addHours, maskAadhaar } from "./clean";
-import { SLA_COLUMN, gradeGrievance, grievanceCategory, type Grade } from "./grade";
+import { SLA_COLUMN, gradeGrievance, grievanceCategory, pipelineTitle, type Grade } from "./grade";
 
 type Row = Record<string, any>;
 export interface Db { all(sql: string, params?: unknown[]): Promise<Row[]>; run(sql: string, params?: unknown[]): Promise<void> }
@@ -202,20 +202,28 @@ const ONLINE_CATEGORY: Record<string, string> = {
 /** a build with no deadline table (ref_categories without sla_*_h) keeps this */
 const ONLINE_HOURS = 120;
 
-export const REVIEW_DEPT = "The complaint type has no fixed department, so the portal chose this one from what the citizen wrote: check that it is the right department.";
+/** Why the department needs checking, by how it was chosen: the classifier read the text ("Other"), or GCC has not published the type's routing. */
+export const REVIEW_DEPT = {
+  classifier: "The complaint type has no fixed department, so the portal chose this one from what the citizen wrote: check that it is the right department.",
+  assumed: "GCC has not published which department handles this complaint type, so the portal sent it to the department it is assumed to go to: check that it is the right department."
+} as const;
+export type Routing = keyof typeof REVIEW_DEPT;
 
 /**
- * An online complaint's case, from its row: its kind and severity by the pipeline's rules from its type (complaint category), sub-type
- * and words, as the pipeline grades the same complaint (grade.ts; QA pass 6, officer-day-02). `type` and `subtype` are the names of its
- * complaint_categories and complaint_subtypes rows.
+ * An online complaint's case, from its row: its kind and severity by the pipeline's rules from its type (complaint category), sub-type,
+ * title, words, landmark and street, as the pipeline grades the same complaint (grade.ts; QA pass 6, officer-day-02). `type` and `subtype`
+ * are the names the dataset gives the pipeline (complaint_categories, and complaint_subtypes or an older complaint_types); `street` the
+ * dataset's Street; `routing` how the department was chosen when it was not fixed by the type.
  */
-export function onlineCase(c: Row, deptName: string | null, kind: { type?: string | null; subtype?: string | null } = {}): CaseInput {
+export function onlineCase(c: Row, deptName: string | null, kind: { type?: string | null; subtype?: string | null; street?: string | null; routing?: Routing | null } = {}): CaseInput {
   const dept = codeForPortalDept(deptName) ?? "GCC-GAD";
   const at = String(c.created_at).replace("T", " ").slice(0, 19);
   const due = new Date(Date.parse(`${at.replace(" ", "T")}Z`) + ONLINE_HOURS * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
   const byType = grievanceCategory(kind.type, kind.subtype);
-  // the grade reads the citizen's own words; what goes on the consoles is masked (P6-027)
-  const grade = gradeGrievance({ type: kind.type, subtype: kind.subtype, title: String(c.title ?? ""), text: String(c.description ?? ""), landmark: c.specific_location ?? null });
+  // the grade reads the citizen's own words, with the title as the pipeline's loader builds it; what goes on the consoles is masked (P6-027)
+  const grade = gradeGrievance({ type: kind.type, subtype: kind.subtype, title: pipelineTitle(c.title, kind.subtype, kind.street, c.ward_number), text: String(c.description ?? ""),
+    landmark: c.specific_location ?? null });
+  const review = Number(c.needs_manual_review) === 1 ? REVIEW_DEPT[kind.routing ?? "classifier"] : null;
   return {
     // the citizen's own words go on the consoles masked, as the desk masks a petition's: a whole Aadhaar number written in a complaint
     // reached the Collector's case title, text and place (QA pass 6, P6-027)
@@ -223,8 +231,8 @@ export function onlineCase(c: Row, deptName: string | null, kind: { type?: strin
     title: maskAadhaar(String(c.title)), text: maskAadhaar(String(c.description ?? c.title)),
     lang: /[஀-௿]/.test(String(c.description ?? "")) ? "ta" : "en", ward: Number(c.ward_number), place: maskAadhaar(String(c.specific_location || c.street_address || `Ward ${c.ward_number}`)).slice(0, 200), urgent: false,
     reporter: reporterHash(c.mobile_number || c.user_id), channel: "citizen_grievance", recurrence: 0, grade,
-    // the citizen is told the department was chosen for them; the case says so to the Collector (officer-day-07)
-    review: Number(c.needs_manual_review) === 1 ? REVIEW_DEPT : null
+    // the citizen is told how the department was chosen; the case says so to the Collector (officer-day-07)
+    review
   };
 }
 
@@ -253,12 +261,23 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
   // complaint never joins another case, so it needs nothing from the petitions.
   if (await has("complaints")) {
     const petition = (await has("petitions")) ? "AND c.complaint_code NOT IN (SELECT complaint_code FROM petitions WHERE complaint_code IS NOT NULL)" : "";
-    // the complaint's type and sub-type names, for its kind and severity (officer-day-02), when the build holds the taxonomy
-    const kinds = (await has("complaint_subtypes")) && (await has("complaint_categories"));
-    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name${kinds ? ", cs.label AS subtype_name, cc.name AS type_name" : ""} FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
-        ${kinds ? "LEFT JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id LEFT JOIN complaint_categories cc ON cc.id = cs.category_id" : ""}
+    // the complaint's type, sub-type and street as the dataset gives them to the pipeline (scripts/lib/dataset-sql.js: an older complaint's
+    // complaint_types name is its sub-type; Street is the GCC street, else the typed one), for its kind and severity (officer-day-02), and how
+    // its department was chosen (officer-day-07), from what this build holds
+    const subs = (await has("complaint_subtypes")) && (await has("complaint_categories"));
+    const legacy = await has("complaint_types"), streets = await has("gcc_streets");
+    const cols = await columns(wrap, "complaints");
+    const typed = cols.has("manual_street_name") ? `NULLIF(TRIM(COALESCE(c.manual_street_name, '') || ' ' || COALESCE(c.street_type, '')), '')` : "NULL";
+    const sub = [subs ? "cs.label" : null, legacy && cols.has("complaint_type_id") ? "ct.name" : null].filter(Boolean);
+    for (const r of await wrap.all(`SELECT c.*, d.name AS dept_name, ${sub.length ? `COALESCE(${sub.join(", ")}, NULL)` : "NULL"} AS subtype_name, ${subs ? "cc.name" : "NULL"} AS type_name,
+        ${subs ? "cs.department_id" : "NULL"} AS subtype_dept, COALESCE(${streets && cols.has("gcc_street_id") ? "gs.name, " : ""}${typed}, NULL) AS street_name
+        FROM complaints c LEFT JOIN departments d ON d.id = c.department_id
+        ${subs ? "LEFT JOIN complaint_subtypes cs ON cs.id = c.complaint_subtype_id LEFT JOIN complaint_categories cc ON cc.id = cs.category_id" : ""}
+        ${legacy && cols.has("complaint_type_id") ? "LEFT JOIN complaint_types ct ON ct.id = c.complaint_type_id" : ""}
+        ${streets && cols.has("gcc_street_id") ? "LEFT JOIN gcc_streets gs ON gs.id = c.gcc_street_id" : ""}
         WHERE COALESCE(c.is_synthetic, 0) = 0 AND c.user_id IS NOT NULL ${petition} ORDER BY c.created_at`))
-      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null, { type: r.type_name ?? null, subtype: r.subtype_name ?? null }))) added++;
+      if (await addCase(wrap, onlineCase(r, r.dept_name ?? null, { type: r.type_name ?? null, subtype: r.subtype_name ?? null, street: r.street_name ?? null,
+        routing: r.subtype_dept != null ? "assumed" : "classifier" }))) added++;
   }
   if (await has("petitions")) {
     for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY filed_at, id`)) {
