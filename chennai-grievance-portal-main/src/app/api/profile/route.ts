@@ -170,6 +170,7 @@ export async function PUT(req: NextRequest) {
       `UPDATE user_profiles SET
         first_name = ?, last_name = ?, gender = ?, date_of_birth = ?, alternate_email = ?,
         door_no_and_street = ?, area = ?, locality = ?, pincode = ?, zone_id = ?, ward_number = ?,
+        mobile_verified = CASE WHEN ? IS NOT NULL AND (mobile_number IS NULL OR mobile_number <> ?) THEN FALSE ELSE mobile_verified END,
         mobile_number = COALESCE(?, mobile_number)
        WHERE user_id = ?`,
       [
@@ -184,6 +185,10 @@ export async function PUT(req: NextRequest) {
         fields.pincode,
         fields.zone_id,
         fields.ward_number,
+        // a new number was never verified: the mark goes (it is listed before mobile_number, so it compares with the old one), and the
+        // person verifies the new one by code (QA4 gate, redteam-final-14)
+        fields.mobile_number,
+        fields.mobile_number,
         fields.mobile_number,
         session.userId
       ]
