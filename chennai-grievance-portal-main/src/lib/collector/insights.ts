@@ -240,8 +240,10 @@ export async function insights(period: Period, zone: number | null, dept: string
   // beside it say (opening.ts); a summary of an older window ("more incidents" beside a live "78% fewer") is not shown
   const checked = brief?.ai_summary
     ? checkOpening({ asOf: brief.as_of ? String(brief.as_of) : null, en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null },
-      { now, hours: PERIODS[period].hours, change: ch,
-        figures: [n, Number(P.n ?? 0), sev, Number(P.severe ?? 0), open, overdue, Number(K.multi ?? 0), gaps.length, Number(K.complaints ?? 0)] })
+      { now, hours: PERIODS[period].hours,
+        facts: { reported: n, prev: Number(P.n ?? 0), severe: sev, prevSevere: Number(P.severe ?? 0), open, overdue, multi: Number(K.multi ?? 0),
+          newsOnly: gaps.length, complaints: Number(K.complaints ?? 0) },
+        extra: ch == null ? [] : [Math.abs(ch)] })
     : { opening: null, why: null };
   if (checked.why) console.info(`[insights] AI opening not shown (${period}): ${checked.why}`);
   const opening = checked.opening;

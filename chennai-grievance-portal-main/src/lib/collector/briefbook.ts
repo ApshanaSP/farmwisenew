@@ -11,6 +11,7 @@ import { PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type 
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
 import { pctChange } from "@/lib/reference/metrics";
+import { checkOpening } from "@/lib/collector/opening";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -60,7 +61,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows, lane] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(i.media_only) AS news_only FROM incidents i WHERE ${W}`, WP),
-    q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${P}`, PP),
+    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${P}`, PP),
     // the same rule as My Tasks (metrics.ts awaiting_check, LT-07): "128 waiting" beside "My Tasks 0" was two definitions
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT ${INC} ${FROM} WHERE ${cw.sql}${f.sql} AND ${OPEN} = 1 AND i.severity_level = 'Severe'
@@ -74,7 +75,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
        FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY severe DESC, n DESC LIMIT 6`, WP),
     q(`SELECT zone, label FROM (SELECT i.zone_no AS zone, i.category_label AS label, ROW_NUMBER() OVER (PARTITION BY i.zone_no ORDER BY COUNT(*) DESC) AS rn
        FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.category_label) x WHERE rn <= 2`, WP),
-    safe(q(`SELECT section, item_key, text_en, text_ta, extra, written_for FROM briefing_notes`)),
+    safe(q(`SELECT section, item_key, text_en, text_ta, extra, written_for, DATE_FORMAT(as_of, '%Y-%m-%d %H:%i:%s') AS as_of FROM briefing_notes`)),
     q(`SELECT value, detail FROM observation_signals WHERE metric = 'imd_warning_level' ORDER BY value DESC LIMIT 1`),
     q(`SELECT place_name AS name, value FROM observation_signals WHERE metric = 'bed_occupancy_pct' AND value >= 85 ORDER BY value DESC LIMIT 4`),
     q(`SELECT i.category_code AS cat, i.category_label AS label, COUNT(*) AS n FROM incidents i WHERE ${W} AND i.category_code IN (?) GROUP BY 1, 2`, [...WP, CRIME]),
@@ -101,7 +102,7 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const daily = s.period === "daily";
   const ai = (section: string, key = "") => {
     const x = notes.find((r) => r.section === section && String(r.item_key ?? "") === key);
-    return x ? { en: String(x.text_en), ta: x.text_ta ? String(x.text_ta) : null, writtenFor: x.written_for ? String(x.written_for) : null } : null;
+    return x ? { en: String(x.text_en), ta: x.text_ta ? String(x.text_ta) : null, writtenFor: x.written_for ? String(x.written_for) : null, asOf: x.as_of ? String(x.as_of) : null } : null;
   };
 
   // ---- the day in numbers (only four)
@@ -175,13 +176,15 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const falling = catNow.map((r) => ({ label: r.label as string, now: n(r.n), prev: prevCat.get(r.cat) ?? 0 }))
     .filter((r) => r.prev >= 5 && r.now < r.prev).sort((a, b) => (a.now - a.prev) / a.prev - (b.now - b.prev) / b.prev).slice(0, 3);
 
-  // the pipeline wrote its opening for the data of its own run ("110 matters await your verification"); once the live
-  // figures beside it have moved on (128), it is not shown: the rules' opening, always current, is used instead
+  // the pipeline wrote its opening for the data of its own run ("110 matters await your verification"): it is shown only when it is the note
+  // of this window and says what the live figures beside it say (opening.ts, the same check as the briefing's opening, hunt2-ops-12);
+  // otherwise the rules' opening, always current, is used instead
   const written = daily && whole ? ai("situation") : null;
-  const live = new Set([reported, Math.abs(change ?? 0), severe, deaths, n(T.injured), n(awaiting[0]?.n), n(T.news_only), critical.length, 24]);
-  const stale = written ? (String((written as { en?: string }).en ?? "").match(/\b\d[\d,]*\b/g) ?? []).map((x) => Number(x.replace(/,/g, ""))).filter((v) => !live.has(v)) : [];
-  if (stale.length) console.info(`[briefbook] AI opening not shown: its figures ${stale.join(", ")} no longer match the live briefing`);
-  const situation = stale.length ? null : written;
+  const checked = written ? checkOpening({ asOf: written.asOf, en: written.en, ta: written.ta }, { now, hours: PERIODS[s.period].hours,
+    facts: { reported, prev: before, severe, prevSevere: n(tilesPrev[0]?.severe), deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n),
+      newsOnly: n(T.news_only) }, extra: [Math.abs(change ?? 0), critical.length] }) : null;
+  if (checked?.why) console.info(`[briefbook] AI opening not shown: ${checked.why}`);
+  const situation = written && checked?.opening ? { ...written, en: checked.opening.en, ta: checked.opening.ta } : null;
   return {
     status: { level, reasons, warning },
     // what each source says about warnings for Chennai, and whether they agree (alerts.ts)
