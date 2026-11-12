@@ -36,6 +36,13 @@ A session hook refuses writes to any worktree other than `qa-pass4-ecfcb9`, with
 Lanes combined at `f3ae1a8`. After that come lanes e (RC-09 to RC-12, RC-45, RC-47, RC-51, review repairs), e-a11y (RC-49, most of RC-48) and f (RC-42, RC-13, RC-16). The last commit before the "finish all" stage is `7f7d537`.
 Still to do: RC-43, RC-44, RC-35, RC-15, RC-36, RC-46, RC-38, RC-37, PB-316, the citizen date bug on two pages, the 7 open rows that went from safe to wrong, about 70 failing qa4-config tests, a review and skeptic for lane f and the a11y work, `hunt-redsec2` (never ran), mapping the Groq wrong rows to causes, then the final gate.
 
+## The owner's order, 12 Nov about 23:10 IST: push to main when done
+The owner wrote: "aftert done push all to main". This replaces the prompt's "never push to `main`" for the end of the run only. Agents still never push; the main session does it once, after the final audit.
+- `origin/main` has 3 commits by Apshana from 11 Nov that this branch lacks (`1f27a63`, `a1e948f`, `d45cf96`: Manu Desk, PaddleOCR, click feedback, Jarvis lists, data). Her version is final, so it must be kept.
+- A trial merge shows 26 files changed on both sides, and 4 conflicts: `api/auth/logout/route.ts`, `collector/app/Detail.tsx`, `thunai/jarvisswitch.css`, `lib/collector/sources.ts`.
+- Steps: merge `origin/main` into this branch, resolve the conflicts by keeping her behaviour and layering the QA fixes on top, then run tsc, both test suites and a build, and start a server for a quick check. Then push the branch and push it to `main` as a fast-forward. No force push, no pull request.
+- Her new code was never run on Next 15 and React 19, so the merge check must cover it. The sealed score describes the commit before the merge, and the report must say so.
+
 ## Notes for resuming
 - A usage limit can cut agents off mid-job. The 5-hour window was reached after about 7 million subagent tokens. Agents are told to save to disk as they go and to continue from partial work.
 - Research says Groq's usage policy bars automated vulnerability discovery, so Groq must not write attacks. Attack sets must be fixed lists.
