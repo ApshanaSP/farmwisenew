@@ -1,0 +1,59 @@
+SKEPTIC 1 (language): real-run logs. Frozen clock 2026-11-06 12:00 IST, pinned snapshot, no model key.
+
+== A. server on port 3215 (.next-qa, POST /api/collector/assistant/chat, scope weekly, collector test account). The build is older than the G2 commits; the same sentences give the same answers in-process (tests/qa/pass4/skeptic-g1.test.ts)
+SRV 200 "how many complaints in the last 10 days" | answer | 1,063 citizen complaints · last 10 days | Last 10 days · District-wide · all departments · as of 6 Nov
+SRV 200 "கடந்த 10 நாட்களில் எத்தனை புகார்கள்" | answer | 9,113 புகார்கள் · கடந்த 90 நாட்களில் | கடந்த 90 நாட்கள் · மாவட்டம் முழுவதும் · அனைத்துத் துறைகளும் 
+SRV 200 "pona 2 vaaram evlo complaints" | answer | 787 complaints · kadandha 7 naal-la | Last 7 days · District muzhukka · ella departments · as of 6
+SRV 200 "pona 3 maasam evlo complaints" | answer | 3,255 complaints · kadandha 30 naal-la | Last 30 days · District muzhukka · ella departments · as of 
+SRV 200 "how many complaints on 15 Oct" | answer | 3,249 citizen complaints · October 2026 | October 2026 · District-wide · all departments · as of 6 Nov
+SRV 200 "by december how many complaints will there be" | answer | 9,113 citizen complaints · last 90 days | Last 90 days · District-wide · all departments · as of 6 Nov
+SRV 200 "புகார்கள் முன்கணிப்பு சொல்" | answer | 8 சம்பவங்கள் · கடந்த 90 நாட்களில் | கடந்த 90 நாட்கள் · மாவட்டம் முழுவதும் · அனைத்துத் துறைகளும் 
+SRV 200 "how many complaints in the last ten days" | answer | 9,113 citizen complaints · last 90 days | Last 90 days · District-wide · all departments · as of 6 Nov
+SRV 200 "innaiku evlo complaints" | answer | 9,113 complaints · kadandha 90 naal-la | Last 90 days · District muzhukka · ella departments · as of 
+
+== B. client-sim (the browser's path, real planRound), TZ=UTC for the reminder
+TZ=Asia/Kolkata  "remind me tomorrow at 5 pm to call the zonal officer" -> Remind you 7 Nov, 5:00 pm: call the zonal officer?
+TZ=UTC           "remind me tomorrow at 5 pm to call the zonal officer" -> Remind you 7 Nov, 10:30 pm: call the zonal officer?
+TZ=UTC           "நாளை 5 மணிக்கு நினைவூட்டு"                           -> நவ. 7, 10:30 பிற்பகல் நினைவூட்டவா
+(understand.ts parseWhen uses getDate/setHours in the server's zone; plan.ts runs it on the server)
+
+== C. client-sim, "show severe complaints" (8 cases) then one sentence; positions drafted (1-based)
+"draft the last two"             drafted=[8,2]
+"draft last 2"                   drafted=[8,2]
+"draft first and third"          drafted=[1,2,3]
+"draft the first and the third"  drafted=[1,2,3]
+"draft 2nd last"                 drafted=[2,8]
+"draft 3.5"                      drafted=[3,5]
+"கடைசி இரண்டு வரைவு செய்"         drafted=[8,2]
+"kadaisi rendu draft pannu"      drafted=[8,2]
+"முதல் மூன்று வரைவு செய்"          drafted=[1,3]
+"mudhal moonu draft pannu"       drafted=[1,3]
+"3 முதல் 5 வரைவு செய்"            drafted=[3,1,5]
+(English "draft the first two" -> [1,2] and "draft top 3" -> [1,2,3] are right)
+
+== D. client-sim, Jarvis
+"கடந்த 2 வாரங்களில் புகார்களைக் காட்டு"  steps={"a":"period","period":"weekly"}  (label: கடந்த 7 நாட்கள்)
+"pona 2 vaaram complaints kaattu"        quick, period weekly (இந்த வாரம் 1357 சம்பவங்கள்)
+"கடந்த 3 மாதங்களில் புகார்களைக் காட்டு"  steps={"a":"period","period":"monthly"} (கடந்த 30 நாட்கள்)
+"pona moonu maasam complaints kaattu"    quick, period monthly (கடந்த 30 நாட்களில் 5574 சம்பவங்கள்)
+"zone anju brief sollu"                  steps={"a":"mission","name":"brief"}  (the district morning brief, not zone 5)
+"zone ٥ brief" / "zone ５ brief"          10 points in the brief ... 239 incidents in Chennai district (district brief)
+"zone 99 brief" / "zone 0 brief"         the same district brief, no word that the zone is not there
+"zone five and six brief"                Zone 5 · Royapuram (zone 6 dropped, no word)
+"ராயபுரம் மண்டலத்தின் சுருக்கம் சொல்"     ... PWD Water Resources, ராயபுரம்: 6 மணி நேரக் காலக்கெடுவின் இரு மடங்குக்கும் ...
+"தண்டையார்பேட்டை பற்றிய சுருக்கம் கொடு"  ... Greater Chennai Police, தண்டையார்பேட்டை: களத்தில் எந்த அதிகாரியும் ...
+"மழை நிலை என்ன"                         4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 mm, 6 Nov, 8:30 AM நிலவரப்படி.
+
+== E. in-process ask(), scope weekly (same as the server)
+"how many complaints in the last 10 days" 1,063 (last 10 days);  Tamil/Tanglish "கடந்த 10 நாட்களில்", "pona 10 naal la" -> 9,113 (last 90 days)
+"கடந்த 24 மணி நேரத்தில்", "pona 24 manineram" -> 9,113; English "last 24 hours" -> 147
+"pona 2 vaaram" -> 787 (last 7 days); English "last 14 days" -> 1,552
+"pona 3 maasam", "pona moonu maasam" -> 3,255 (last 30 days); English "last 3 months" -> 9,113 (90 days)
+"last ten days", "last seven days", "last 7d", "last 30d", "last 1 day", "last -5 days", "last 3.5 days", "last 1000 days" -> 9,113 (last 90 days)
+"since monday", "this year", "last year", "from last monday", "this fortnight" -> 9,113 (last 90 days)
+"on 15 Oct", "between 1 Oct and 15 Oct", "15 october anru" -> 3,249 (the whole of October)
+"அக்டோபர் மாதம்" -> 3,255 (last 30 days); English "october" -> 3,249
+"innaiku" -> 9,113; "இன்று" -> 147
+"by december how many complaints will there be" -> 9,113 citizen complaints (a past count)
+"எதிர்காலத்தில் ... எப்படி இருக்கும்", "புகார்கள் முன்கணிப்பு சொல்", "புகார் முன்னறிவிப்பு", "அடுத்த காலாண்டு புகார்கள்" -> 8 சம்பவங்கள் (a past count)
+"close all overdue cases" -> answer "Overdue incidents"; "export all complaints to excel" -> answer "Incidents"
