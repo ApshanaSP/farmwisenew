@@ -1,0 +1,12 @@
+$ git grep -n -E "^let [a-zA-Z]+ = false;" -- "src/lib/**/*.ts" ":!*.test.ts"   (module flags that stop a second run in one process only)
+src/lib/manu/sms.ts:121:let retrying = false;
+
+$ git grep -l "sendMail(" -- src ":!*.test.ts"
+src/app/api/auth/forgot-password/request-otp/route.ts
+src/app/api/profile/mobile-otp/request/route.ts
+src/lib/collector/actionmail.ts
+src/lib/mailer.ts
+src/lib/manu/sms.ts
+src/lib/rehearsal/tasks.ts
+src/lib/security/factors.ts
+sms.ts is the only module-flag retry sweep; the other senders send once inside a request (OTP, action mail, rehearsal tasks, step-up codes), not from a sweep.

@@ -350,13 +350,14 @@ describe("the SMS to the person who wrote it", () => {
     const [url, init] = (f.mock.calls[k] as unknown as [string, RequestInit]);
     return { url, headers: init.headers as Record<string, string>, body: JSON.parse(String(init.body)) };
   };
-  const on = () => Object.assign(process.env, SET, { SMS_MODE: "live" });
-  const testMode = () => { h.smtp = true; process.env.EMAIL_SANDBOX_TO = "team@x.in"; };
+  // QA pass 5, P5-012: only the copy that saves to the AWS store (AWS_STORE_SAVE=1) may send at all, so these tests are that copy
+  const on = () => Object.assign(process.env, SET, { SMS_MODE: "live", AWS_STORE_SAVE: "1" });
+  const testMode = () => { h.smtp = true; process.env.EMAIL_SANDBOX_TO = "team@x.in"; process.env.AWS_STORE_SAVE = "1"; };
   // Each test starts from no SMS setting at all, whatever the process was started with (a QA run sets AWS_STORE_DRY_RUN=1) and in
   // whatever order the tests run (QA pass 5, P5-004: shuffled, the live-mode test ran first under the ambient dry run and failed).
-  const clear = () => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "SMS_MODE", "EMAIL_SANDBOX_TO"]) delete process.env[k]; };
+  const clear = () => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "AWS_STORE_SAVE", "SMS_MODE", "EMAIL_SANDBOX_TO"]) delete process.env[k]; };
   const saved: Record<string, string | undefined> = {};
-  beforeAll(() => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "SMS_MODE", "EMAIL_SANDBOX_TO"]) saved[k] = process.env[k]; });
+  beforeAll(() => { for (const k of [...Object.keys(SET), "SMS_TEST_NUMBER", "AWS_STORE_DRY_RUN", "AWS_STORE_SAVE", "SMS_MODE", "EMAIL_SANDBOX_TO"]) saved[k] = process.env[k]; });
   afterAll(() => { clear(); for (const [k, v] of Object.entries(saved)) if (v !== undefined) process.env[k] = v; });
   beforeEach(clear);
   afterEach(() => { clear(); vi.unstubAllGlobals(); });

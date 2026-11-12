@@ -9,6 +9,7 @@ import pool from "@/lib/db";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
 import { addHours, istNow } from "./clean";
 import { manuDeptLabel, type SmsNote } from "./constants";
+import { RESOLVED_STATUSES } from "@/lib/constants";
 
 type Row = RowDataPacket & Record<string, any>;
 export type SmsKind = "received" | "closed";
@@ -45,6 +46,10 @@ const msg91Ready = () => !!env("MSG91_AUTH_KEY") && !!env("MSG91_SENDER") && (["
 /** How a message goes out now: a real SMS, a copy to the team inbox, or not at all. */
 export function smsMode(): SmsMode {
   if (process.env.AWS_STORE_DRY_RUN === "1") return "off";
+  // "Test copies of the site never send" means every copy that does not save to the AWS store (lib/aws/store.ts: only AWS_STORE_SAVE=1
+  // saves), not only a dry run: a teammate's copy would text people about complaint numbers that are never saved (QA pass 5, P5-012)
+  if (process.env.DATA_BACKEND === "aws" && process.env.AWS_STORE_SAVE !== "1") return "off";
+  if (env("SMS_MODE") === "off") return "off";
   if (env("SMS_MODE") === "live") return msg91Ready() ? "live" : "off";
   return isSmtpConfigured() && env("EMAIL_SANDBOX_TO") ? "test" : "off";
 }
@@ -91,7 +96,7 @@ export async function smsNote(code: string): Promise<SmsNote> {
     const mobile = String(rows[0]?.mobile ?? "");
     if (!MOBILE.test(mobile)) return { state: "none", last4: null };
     const status = rows[0].status;
-    return { state: status === "sent" ? "sent" : status === "test" ? "test" : status === "failed" || status === "waiting" ? "failed" : "off", last4: mobile.slice(-4) };
+    return { state: status === "sent" ? "sent" : status === "test" ? "test" : status === "failed" || status === "waiting" || status === "sending" ? "failed" : "off", last4: mobile.slice(-4) };
   } catch {
     return { state: "off", last4: null };
   }
@@ -120,10 +125,29 @@ export async function retryFailedSms(): Promise<void> {
   if (retrying || smsMode() === "off") return;
   retrying = true;
   try {
+    const due = addHours(istNow(), -RETRY_AFTER_HOURS);
     const [rows] = await pool.query<Row[]>(
-      `SELECT s.complaint_code, s.kind, s.result, p.mobile, p.language, p.dept_code FROM petition_sms s JOIN petitions p ON p.complaint_code = s.complaint_code
-        WHERE s.status IN ('failed', 'waiting') AND s.attempts < ? AND s.tried_at <= ? ORDER BY s.id LIMIT 20`, [MAX_TRIES, addHours(istNow(), -RETRY_AFTER_HOURS)]);
-    for (const r of rows) await deliver(String(r.complaint_code), r.kind as SmsKind, r, (r.result ?? null) as SmsResult | null);
+      `SELECT s.complaint_code, s.kind, s.result, p.mobile, p.language, p.dept_code, c.status AS complaint_status FROM petition_sms s JOIN petitions p ON p.complaint_code = s.complaint_code
+        LEFT JOIN complaints c ON c.complaint_code = s.complaint_code
+        WHERE s.status IN ('failed', 'waiting') AND s.attempts < ? AND s.tried_at <= ? ORDER BY s.id LIMIT 20`, [MAX_TRIES, due]);
+    for (const r of rows) {
+      const kind = r.kind as SmsKind;
+      // a closing message says what the complaint is NOW: a failed "could not be taken up" retried after the case was reopened and done
+      // said the wrong thing; while it is open again, it waits (QA pass 5, P5-012)
+      let result = (r.result ?? null) as SmsResult | null;
+      if (kind === "closed") {
+        const st = String(r.complaint_status ?? "");
+        result = st === "Rejected" ? "rejected" : (RESOLVED_STATUSES as readonly string[]).includes(st) ? "done" : null;
+        if (!result) continue;
+      }
+      // claim the row first: two server processes (or two copies on one store) each ran this sweep and both sent the same message, since
+      // the in-memory flag only holds inside one process (QA pass 5, P5-012)
+      const [claim] = await pool.query<ResultSetHeader>(
+        `UPDATE petition_sms SET status = 'sending', result = ?, tried_at = ? WHERE complaint_code = ? AND kind = ? AND status IN ('failed', 'waiting') AND attempts < ? AND tried_at <= ?`,
+        [kind === "closed" ? result : r.result ?? null, istNow(), r.complaint_code, kind, MAX_TRIES, due]);
+      if (!claim.affectedRows) continue;
+      await deliver(String(r.complaint_code), kind, r, result);
+    }
   } catch (e) {
     console.warn(`[manu] SMS retry skipped: ${(e as Error).message}`);
   } finally {
