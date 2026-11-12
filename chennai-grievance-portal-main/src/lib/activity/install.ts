@@ -34,6 +34,8 @@ interface Item {
   worded: boolean;
   done: string | null;
   failed: boolean;
+  /** its words have been written into the live notice once: a new notice is always written, even in the last one's words */
+  said?: boolean;
 }
 interface Gesture { at: number; ttl: number; el: HTMLElement | null; early: number | null; group: number | null }
 
@@ -80,27 +82,36 @@ export function installActivity(): void {
   const root = document.documentElement;
   const open: Item[] = [];
   let seq = 0;
-  let flash: { text: string; kind: "ok" | "err"; until: number } | null = null;
+  let flash: { text: string; kind: "ok" | "err"; until: number; said?: boolean } | null = null;
   let flashT: ReturnType<typeof setTimeout> | null = null;
   let gesture: Gesture | null = null;
+
+  /**
+   * The notice is an aria-live region: some screen readers read any text written into it again, even the same words. So its text
+   * is written when a notice is new or its words change, never again on the once-a-second redraw (QA pass 5, P5-032).
+   */
+  const put = (el: HTMLElement, text: string, fresh = false) => { if (fresh || el.textContent !== text) el.textContent = text; };
+  const show = (el: HTMLElement, on: boolean) => { if (el.hidden === on) el.hidden = !on; };
 
   function draw(): void {
     const top = open[open.length - 1];
     const now = Date.now();
     if (top) {
       pill.dataset.state = "busy"; line.dataset.on = "1"; root.dataset.diqWorking = "1";
-      main.textContent = top.text;
+      put(main, top.text, !top.said);
+      top.said = true;
       const slow = now - top.at > SLOW_MS;
-      sub.textContent = slow ? plain(SLOW) : "";
-      sub.hidden = !slow;
-      if (top.full) { veilText.textContent = top.text; veil.dataset.on = "1"; } else delete veil.dataset.on;
+      put(sub, slow ? plain(SLOW) : "");
+      show(sub, slow);
+      if (top.full) { put(veilText, top.text); veil.dataset.on = "1"; } else delete veil.dataset.on;
       return;
     }
     delete line.dataset.on; delete root.dataset.diqWorking; delete veil.dataset.on;
     if (flash && flash.until > now) {
       pill.dataset.state = flash.kind;
-      main.textContent = flash.text;
-      sub.textContent = ""; sub.hidden = true;
+      put(main, flash.text, !flash.said);
+      flash.said = true;
+      put(sub, ""); show(sub, false);
       return;
     }
     pill.dataset.state = "off";
