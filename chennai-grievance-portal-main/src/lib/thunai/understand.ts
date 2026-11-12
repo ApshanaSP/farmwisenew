@@ -496,7 +496,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // a body this console holds no records of: no department filter is put on for it, and the sentence is handed on to the lane that says so
   if (deptM && !world.depts.some((d) => d.code === deptM.value)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // two kinds of complaint of the same weight and none taken back ("fire accident"): the sentence is handed on, not filtered by the last one said
-  if (tiedTopics(catMs, tk)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // (a time the console does not hold is asked about first, and the question says that the kind was not read, so the sentence is neither answered by the last kind nor silently narrowed)
+  const tied = tiedTopics(catMs, tk);
+  if (tied && !(oneDayBack || otherTime)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   const catM = longestStanding(catMs, tk);
   if (zoneM) { view.zone = zoneM.value; match = Math.min(match, zoneM.score); }
   if (talukM) { view.taluk = talukM.value; match = Math.min(match, talukM.score); }
@@ -598,9 +600,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   if (oneDayBack || otherTime) {
     const base = steps.filter((x) => x.a === "view" || x.a === "page");
+    const tiedNote = (q: Bilingual): Bilingual => (tied ? b(`${q.en} I could not tell which kind of complaint you meant, so nothing is filtered by it.`, `${q.ta} எந்த வகைப் புகார் என்று புரியவில்லை, அதனால் அதன்படி வடிகட்டவில்லை.`) : q);
     return { kind: "ask", lang, heard,
-      question: oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
-        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?"),
+      question: tiedNote(oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
+        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?")),
       choices: [
         { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
         { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },

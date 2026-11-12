@@ -49,6 +49,9 @@ describe("windowIn reads the same window in every language, ending and script", 
   it("names no count, so no count of time: last week, pona maasam, the last 5 complaints, last night", () => {
     for (const t of ["last week", "pona maasam", "கடந்த வாரம்", "the last 5 complaints", "show the last one", "last night", "pona oru vaaram", "last month resolved cases"]) expect(windowIn(t), t).toBeNull();
   });
+  it("a lead word with other words before a unit is not a window: past the deadline this week, the last time this month", () => {
+    for (const t of ["cases past the deadline this week", "severe cases past deadline this week", "high priority cases past the deadline this week", "the last complaint this month", "previous status this week"]) expect(windowIn(t), t).toBeNull();
+  });
   it("the console's own windows are the periods; any other count is not", () => {
     expect(heldPeriod(24)).toBe("daily"); expect(heldPeriod(168)).toBe("weekly"); expect(heldPeriod(720)).toBe("monthly"); expect(heldPeriod(2160)).toBe("quarterly");
     for (const h of [1, 72, 336, 1440]) expect(heldPeriod(h)).toBeNull();

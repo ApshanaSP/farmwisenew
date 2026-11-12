@@ -25,6 +25,8 @@ export const RECORD_HOURS = 180 * 24;
 /** "last", "past", "previous" and the Tamil and Tanglish words for them (not "next": that is a time to come) */
 const LEAD = /^(?:last|past|previous|prev|kadantha|kadandha|kadaisi|kadaisiya|pona|poona|கடந்த|கடைசி|கடைசியாக|சென்ற|போன)$/;
 const SKIP = new Set(["the", "oru", "an", "a"]);
+/** a quantity that is no number ("the last few days"): said as unread */
+const VAGUE = new Set(["few", "couple", "several", "many", "some", "numerous", "handful"]);
 
 /** The unit a token (and the one after it, for "மணி நேரம்" and "mani neram") names, and how many tokens it used. */
 function unitOf(tok: string, next: string | undefined): { unit: Unit; used: number } | null {
@@ -95,7 +97,10 @@ export function windowIn(text: string): WindowRead | null {
       const c = countOf(toks);
       if (c === "negative" || c === "fraction") return { kind: "bad", why: c, said };
       if (c === null) {
-        // a lone number-like word that no table holds ("pathinaidhu naal"): said as unread, never as the default window
+        // a number word that no table holds ("pathinaidhu naal", "கடந்த பதினைந்து நாட்களில்") is said as unread, never as the default window. After an English lead the number words are all
+        // known (to 99), so another word there is not a number ("past the deadline this week": deadline, this) and only a vague quantity is unread ("last few days")
+        const english = /^(?:last|past|previous|prev)$/.test(t[i]) && /^(?:hours?|hrs?|h|days?|d|weeks?|wks?|w|months?|mos?|years?|yrs?|y)$/.test(t[j + len]);
+        if (english && !toks.some((x) => VAGUE.has(x))) continue;
         return { kind: "bad", why: "unread", said };
       }
       return span(c, u.unit, said);

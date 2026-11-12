@@ -128,7 +128,7 @@ export function catIn(t: string): string | null {
  * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds a list (RC-05). overdue wins over open.
  */
 const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|breaching|breach|exceeded|exceeding|violated)( the| their| its| a)? (deadline|due date|sla|time limit)\b|\bdeadline (passed|crossed|missed|miss|over|exceeded|breached|mudinj[a-z]*|thaand[a-z]*|thand[a-z]*)\b|\bnot (resolved|closed|done|attended|fixed) (in|on|within) time\b|\blate (cases|complaints|ones|severe)\b|\b(thaamadham|thamadham|thaamathamaana)\b|தாமத|கெடு (தாண்ட|முடிந்த|மீறி|கடந்த)|காலக்கெடு|கெடுவை/;
-const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|(cases|complaints|incidents|issues|problems|ones|reports|grievances) (that are |which are |are |still |now |currently )?open (in|at|near|for|now|today|here|across|within)|(that|which) are (still |now |currently )?open|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
+const OPEN_RE = /\b(still open|unresolved|pending|not (yet )?(closed|resolved|done|fixed)|yet to be (closed|resolved|fixed)|open (cases|complaints|incidents|issues|ones|problems)|open (la |ah |aa )?(irukku|iruku|irukkum|irukkura|irukkunga|irukkaa|irukka)|(cases|complaints|incidents|issues|problems|ones|reports|grievances) (that are |which are |are |still |now |currently )?open (in|at|near|for|now|today|here|across|within)|(that|which) are (still |now |currently )?open|innum mudiyaadha|innum mudiyala|mudiyaadha|mudiyalai?|thirandha|nilluvai)\b|தீர்க்கப்படாத|முடியாத|நிலுவை|திறந்த|இன்னும் முடி/;
 /** finished cases: "resolved", "closed", "solved" (English), the Tamil and Tanglish words; a lane that dropped this word answered with every case (SK-3) */
 const RESOLVED_RE = /\b(resolved|closed|solved|completed|settled|rectified|mudinjadhu|mudinja|theerthu vecha|theerthaachu|close (aachu|aayiduchu|aagi|pannitanga|pannita))\b|தீர்க்கப்பட்ட|தீர்க்கப்பட்டவை|முடிக்கப்பட்ட|முடிந்த|தீர்வான|மூடப்பட்ட/;
 export function statusIn(t: string): "overdue" | "open" | "resolved" | null {
@@ -283,6 +283,8 @@ const TAMIL_STEMS = [...LISTED].filter((x) => /[஀-௿]/.test(x) && x.length >=
 function explained(word: string, w: World): boolean {
   const known = worldWords(w);
   if (LISTED.has(word) || known.has(word) || /^\d+$/.test(word)) return true;
+  // a word the lane reads as a status, a level or a window is accounted for, and a number said in words ("மூன்று", "moonu", "three") is a number (so the Tamil of "top three zones by open complaints" is answered as its English is)
+  if (readAsSlot(word) || /^\d+$/.test(normalise(word).text)) return true;
   // a Tamil word's case ending (அடையாறில், புகாருக்கு); a Tanglish place with its ending joined on (Adyarla); an English plural
   if (/[஀-௿]/.test(word)) return TAMIL_STEMS.some((x) => word.startsWith(x)) || [...known].some((x) => /[஀-௿]/.test(x) && x.length >= 3 && word.startsWith(x.replace(/[்ுூ]$/, "")));
   const bare = word.replace(/(la|le|ku|kku|s)$/, "");
@@ -354,6 +356,9 @@ const ASKING = new Set(("explain to me tell more about the a an of in at on with
   "புகார் பிரச்சனை பிரச்சினை சம்பவம் பற்றி பத்தி சொல்லு சொல்லுங்க சொல்லுங்கள் விளக்கு விளக்குங்க விளக்குங்கள் விளக்கவும் விளக்கி விளக்கம் விளக்கமா விளக்கமாக என்னன்னு என்ன ஆச்சு புரியல உள்ள இருக்கும் வந்த இந்த அந்த கொஞ்சம் பகுதி பகுதியில் மண்டலம் மண்டலத்தில் எளிமையா").split(" "));
 const NOT_ONE = / (cases|complaints|incidents|issues|problems|reports|all|every|list|rise|rising|increase|increasing|spike|spiking|jump|drop|fall|falling|trend|trends|why|pattern|patterns|high|low|many|count|stats|statistics) |புகார்கள்|சம்பவங்கள்|பிரச்சனைகள்|பிரச்சினைகள்|ஏன்|அதிகரி|போக்கு|பட்டியல்/;
 
+/** How many a ranking is asked for ("top 3 zones", "top three zones", "முதல் மூன்று", "mudhal moonu"): the number through the console's own number reader, 5 when none is said. */
+const topN = (t: string): number => Number(/ (\d{1,2}) /.exec(` ${normalise(t).text} `)?.[1]) || 5;
+
 /** The fast lane's reading of one sentence, or null to let the agent decide. */
 export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
   const t = norm(text);
@@ -419,10 +424,10 @@ export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}
   if (has(t, PERFORMANCE)) return { recipe: "performance", slots: { by: has(t, ["zone wise", "zone-wise", "zonewise", "மண்டலவாரி"]) ? "zone" : "dept", period: period ?? "weekly" } };
   if (!/^ (go to|open|switch to|take me to|navigate to|click|press|tap|select|hit|jarvis click|jarvis press) /.test(t) && has(t, TREND)) return { recipe: "trend", slots: { cat, zones: zones.slice(0, 1), period: period ?? "monthly" } };
   // a ranking has no topic slot: with a topic named it would rank every kind of case and say it ranked the topic (RC-06)
-  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : "zone_attention", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
+  if (has(t, RANK) && !cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return { recipe: "ranking", slots: { measure: has(t, ["severe", "கடுமையான"]) ? "zone_severe" : statusIn(t) === "open" ? "zone_open" : "zone_attention", n: topN(t), order: has(t, ["lowest", "least", "best", "குறைவு"]) ? "bottom" : "top", period: period ?? "weekly" } };
   // "which zone has the most garbage complaints": a ranking of zones on one topic; the ranking screen has no topic slot, so the planner answers it, not a list of cases (RC-06)
   if (has(t, RANK) && cat && has(t, ["zone", "zones", "area", "areas", "மண்டலம்", "மண்டலங்கள்", "பகுதி", "பகுதிகள்"])) return null;
-  if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: Number(/ (\d{1,2}) /.exec(t)?.[1]) || 5, period: period ?? "weekly" } };
+  if (has(t, RANK) && has(t, ["department", "departments", "dept", "துறை", "துறைகள்"])) return { recipe: "ranking", slots: { measure: "dept_open", n: topN(t), period: period ?? "weekly" } };
   if (has(t, WHERE) && (cat || sev)) return { recipe: "cases", slots: { cat, sev, zones: zones.slice(0, 1), period: period ?? "daily", sort: "priority", n: 20, fresh: true } };
   // a topic alone is not a request for its cases: it needs a word for cases, or to be asked for as a list
   if (sev || ((has(t, CASES) || (cat && (o.noBail || LIST_ASK.test(t)))) && (zones.length || period || cat))) {

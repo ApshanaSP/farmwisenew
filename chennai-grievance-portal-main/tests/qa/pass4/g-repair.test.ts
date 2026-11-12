@@ -62,6 +62,32 @@ describe("g-review 4: a status said in the sentence is applied by the lane that 
   });
 });
 
+describe("the fast lane answers a sentence in the three languages alike once 'open' is a status (metamorphic parity)", () => {
+  it("a ranking of open cases is by open cases, and a count said in words is the count: top three is 3 rows, top 3 is 3 rows", async () => {
+    const rows = async (p: string) => { const { outs } = await talk(p); return { measure: String((outs[0].stage?.slots as { measure?: string } | undefined)?.measure ?? ""), n: Number((outs[0].stage?.slots as { n?: number } | undefined)?.n ?? 0), blocks: outs[0].stage?.blocks.find((b) => b.kind === "Ranking") as { items: unknown[] } | undefined }; };
+    for (const p of ["top three zones by open complaints", "top 3 zones by open complaints", "திறந்த புகார்கள் அதிகம் உள்ள முதல் மூன்று மண்டலங்கள்"]) {
+      const r = await rows(p);
+      expect(r.measure, p).toBe("zone_open");
+      expect(r.n, p).toBe(3);
+      expect(r.blocks?.items.length, p).toBe(3);
+    }
+    expect((await rows("Top five zones by open cases")).n).toBe(5);
+  });
+  it("Tanglish 'complaints open irukku' is the status open, as 'open complaints' is", async () => {
+    for (const p of ["Ambattur la evlo complaints open irukku", "Adyar zone la evlo severe complaints open irukku", "inniki evlo complaints open irukku"]) {
+      const { outs } = await talk(p);
+      expect(String(outs[0].stage?.slots?.status ?? ""), `${p}: ${outs[0].said}`).toBe("open");
+    }
+  });
+  it("yesterday with two kinds of complaint of equal weight is asked about, and the question says the kind was not read", async () => {
+    const { outs } = await talk("nethu Adyar la fire accident enna aachu");
+    expect(outs[0].kind).toBe("clarify");
+    expect(outs[0].steps).toEqual([]);
+    expect(outs[0].said).toMatch(/yesterday|நேற்று/i);
+    expect(outs[0].said).toMatch(/kind of complaint|வகைப் புகார்/);
+  });
+});
+
 describe("g-review 3: a status or a window that is read is applied, or the sentence is handed on, never dropped", () => {
   // The rules lane has a view step and a period step and no status step, so a sentence with a status and a window is not answered by either alone.
   it("a status beside a window ('last month resolved cases', 'pona vaaram overdue cases', Tamil too) is not turned into the window alone", async () => {
