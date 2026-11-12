@@ -137,17 +137,19 @@ export async function verifyAndConsumeOtp(
     return { ok: false, reason: "too_many_attempts" };
   }
 
+  // Claim the try BEFORE the slow compare, in one conditional UPDATE, in the database so it survives a restart and is shared across instances. A burst of guesses all
+  // read the same count, so counting after the compare let every guess of the burst be checked (QA4 skeptic 2, SK2-5). Only the guesses that win a try reach the compare.
+  const [claim] = await pool.query<ResultSetHeader>(
+    `UPDATE password_resets SET attempts = attempts + 1
+     WHERE id = ? AND used = FALSE AND attempts < ?`,
+    [record.id, OTP_MAX_ATTEMPTS]
+  );
+  if (claim.affectedRows !== 1) return { ok: false, reason: "too_many_attempts" };
+  const usedAttempts = (record.attempts as number) + 1;
+
   const matches = await bcrypt.compare(submittedOtp, record.otp_hash as string);
 
   if (!matches) {
-    // Count the attempt in the database so it survives a process restart and
-    // is shared across server instances.
-    const [res] = await pool.query<ResultSetHeader>(
-      `UPDATE password_resets SET attempts = attempts + 1
-       WHERE id = ? AND used = FALSE AND attempts < ?`,
-      [record.id, OTP_MAX_ATTEMPTS]
-    );
-    const usedAttempts = (record.attempts as number) + (res.affectedRows === 1 ? 1 : 0);
     const attemptsRemaining = Math.max(0, OTP_MAX_ATTEMPTS - usedAttempts);
     if (attemptsRemaining === 0) return { ok: false, reason: "too_many_attempts" };
     return { ok: false, reason: "incorrect", attemptsRemaining };
@@ -210,14 +212,15 @@ export async function verifyOtp(
     return { ok: false, reason: "too_many_attempts" };
   }
 
+  // the try is claimed before the compare (see verifyAndConsumeOtp); a right code gives its try back, because this call does not consume the code
+  const [claim] = await pool.query<ResultSetHeader>(
+    `UPDATE password_resets SET attempts = attempts + 1 WHERE id = ? AND used = FALSE AND attempts < ?`,
+    [record.id, OTP_MAX_ATTEMPTS]
+  );
+  if (claim.affectedRows !== 1) return { ok: false, reason: "too_many_attempts" };
   const matches = await bcrypt.compare(submittedOtp, record.otp_hash as string);
-  if (!matches) {
-    await pool.query(
-      `UPDATE password_resets SET attempts = attempts + 1 WHERE id = ? AND used = FALSE`,
-      [record.id]
-    );
-    return { ok: false, reason: "incorrect" };
-  }
+  if (!matches) return { ok: false, reason: "incorrect" };
+  await pool.query(`UPDATE password_resets SET attempts = attempts - 1 WHERE id = ? AND used = FALSE AND attempts > 0`, [record.id]);
   return { ok: true };
 }
 

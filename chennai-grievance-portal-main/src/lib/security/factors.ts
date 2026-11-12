@@ -27,8 +27,11 @@ export async function verifyFactor(userId: number, kind: Factor, value: string):
   const key = `confirm-fail:${userId}`;
   const gate = failuresOver(key, 5);
   if (!gate.allowed) return { ok: false, status: 429, error: `Too many wrong tries. Wait ${Math.ceil((gate.retryAfterSeconds ?? 900) / 60)} minutes and try again.` };
+  // The try is counted BEFORE the slow check, with nothing awaited between the read above and this write. Counting after it (as this did) let a burst of parallel guesses
+  // all read the same count and all be checked: 20 guesses, 20 real password checks, no lock (QA4 hunt-redsec2-1). A right answer clears the count.
+  addFailure(key, 15 * 60);
   const res = await checkOne(userId, kind, value);
-  if (res.ok) clearFailures(key); else if (res.status === 401) addFailure(key, 15 * 60);
+  if (res.ok) clearFailures(key);
   return res;
 }
 

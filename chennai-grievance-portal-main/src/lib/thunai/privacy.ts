@@ -124,10 +124,13 @@ const REVEAL_RULES = /\b(?:print|show|reveal|repeat|tell|read|output|display|sha
 
 /** Tells Jarvis to do what it never does: send, approve or delete (or to ignore its rules). */
 export function asksForbidden(text: string): boolean {
-  const t = stripFormat(text).trim().replace(DONE_PHRASE, " ");
-  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(t)) return true;
+  // The rules (ignore them, show them, do what a record says, move money) are read on the whole sentence: a marker after them ("ignore all your rules aachu") does not make them
+  // a statement about the past. Only the order verbs below read the sentence with the done phrase taken out (QA4 g-repair 1, reviewer problem 1).
+  const whole = stripFormat(text).trim();
+  if (/(ignore|forget|disregard|override|bypass)\s+.{0,30}(rules|instructions|prompt|system|policy|restrictions)|you are now|pretend (you|to)|developer mode|jailbreak|முன்பு சொன்ன.*புறக்கணி|(?:விதி|அறிவுறுத்தல்|கட்டுப்பாடு)\S*\s*(?:புறக்கணி|மற)\S*/i.test(whole)) return true;
+  if (OBEY_RECORD.test(whole) || REVEAL_RULES.test(whole) || MONEY_VERB.test(whole)) return true;
+  const t = whole.replace(DONE_PHRASE, " ");
   if (WIPES.test(t) && RECORDS.test(t) && !CONSOLE_THING.test(t)) return true;
-  if (OBEY_RECORD.test(t) || REVEAL_RULES.test(t) || MONEY_VERB.test(t)) return true;
   if (!CONSOLE_THING.test(t) && (/\bresolved\b.{0,14}\bmark\b|\bmark\b.{0,20}\bresolved\b|resolved-?\s*nu\s+mark|resolved.{0,12}மார்க்|தீர்ந்த(?:தாக|து)?\s*(?:என)?\s*குறி/i.test(t))) return true;
   // the act said with a Tamil helper verb, with nothing else needed ("sanction pannunga", "send seiyunga", "அப்ரூவ் பண்ணுங்க")
   if (/\b(?:approve|delete|send|sanction|reject|authori[sz]e|forward|publish|erase|wipe)\s+(?:pann|seiy|sei\b|panni)\w*|(?:அப்ரூவ்|சாங்ஷன்|டெலிட்|சென்ட்|செண்ட்|ரிஜெக்ட்)\s*(?:பண்ண|செய்)/i.test(t)) return true;

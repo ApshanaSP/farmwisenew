@@ -15,7 +15,7 @@ const base = "http://127.0.0.1:3214";
 const up = await fetch(`${base}/login`).then((r) => r.status < 500).catch(() => false);
 
 describe.skipIf(!up)("hunt-redsec2: step-up confirmation brute-force lockout", () => {
-  it.fails(
+  it(
     "hunt-redsec2-1: sending wrong step-up passwords in parallel is not rate-limited to 5 attempts",
     async () => {
       const { cookie } = await login(base, "officerB");

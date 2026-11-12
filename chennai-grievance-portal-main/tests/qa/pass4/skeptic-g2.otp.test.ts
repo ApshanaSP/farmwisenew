@@ -18,7 +18,7 @@ vi.mock("@/lib/db", () => ({
 vi.mock("@/lib/thunai/devguard", () => ({ localOnly: () => true }));
 
 describe("SK2 emailed code attempts", () => {
-  it.fails("SK2-5 (the hunt-redsec2-1 race, second door): the right code sent as the 20th guess of a burst is refused, 5 tries being the limit", async () => {
+  it("SK2-5 (the hunt-redsec2-1 race, second door): the right code sent as the 20th guess of a burst is refused, 5 tries being the limit", async () => {
     h.row.otp_hash = await bcrypt.hash("246810", 4);
     h.row.attempts = 0; h.row.used = false;
     const { verifyAndConsumeOtp } = await import("@/lib/otp");
