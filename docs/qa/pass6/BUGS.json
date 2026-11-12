@@ -2173,15 +2173,17 @@
     "title": "Status changes still never reach the live dataset files: appendStatusChangeToDataset has no production caller",
     "found_by": "pass4-open",
     "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass6/known-failures/pass4-open/static.test.ts -t PB-218",
-    "failing_test": null,
-    "root_cause": "The status-change writer was never wired into the officer/Collector status paths; pass 4's fix row looked at the wrong dead name.",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
+    "failing_test": "src/lib/dataset/status.fixall.test.ts::syncComplaints hands each complaint whose history grew to the dataset append, and only those",
+    "root_cause": "appendStatusChangeToDataset had no production caller and appended only the newest row; syncComplaints (lib/complaint-progress.ts) now calls it for each complaint whose history grew, and it appends every row not yet in the file.",
+    "fix_commit": "6cf2c01",
+    "revert_check": "fails without (2 of 2) / passes with (2 of 2)",
+    "status": "fixed",
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/lib/dataset/append.ts:154",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "Not an owner row: the dataset is live-appended on filing by design (dataset:export only repairs drift). datasetWriteAllowed() still keeps a dry-run server from writing.",
+    "closed_in": "fixall"
   },
   {
     "id": "pass4-open-02",
