@@ -49,7 +49,8 @@ for (const r of list) {
       const bodyless = m === "GET" || m === "HEAD";
       // QA pass 6: a deny cell that gets a 400 on "{}" proves nothing about the guard, so each method is sent a valid body when one is known
       // (QA_ACCESS_BODIES: a module whose default export maps "METHOD /api/route" to a JSON body, or to { raw, type } for another content type)
-      const vb = BODIES[`${m} ${r.route}`];
+      const vbRaw = BODIES[`${m} ${r.route}`];
+      const vb = typeof vbRaw === "function" ? vbRaw(idName) : vbRaw; // a function gets the identity (e.g. its own password for a step-up)
       const bodyHeaders = vb && typeof vb === "object" && "raw" in vb ? { "content-type": vb.type } : { "content-type": "application/json" };
       const bodyText = vb === undefined ? "{}" : typeof vb === "object" && "raw" in vb ? vb.raw : JSON.stringify(vb);
       const res = await req(base, m, url, { cookie, headers: bodyless ? {} : bodyHeaders, body: bodyless ? undefined : bodyText, timeout: 60000 });

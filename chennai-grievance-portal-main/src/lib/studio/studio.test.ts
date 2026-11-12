@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { clean } from "@/lib/studio/clean";
 import { designDashboard, panelColumn, periodicWeight } from "@/lib/studio/dashboard";
 import { answerText, keyFilters, runPlan, type Names } from "@/lib/studio/engine";
@@ -94,6 +94,10 @@ describe("the SWD register sample (Excel)", () => {
     expect(prof.find((p) => p.header === "Estimated Cost (Rs.)")?.unit).toBe("Rs");
   });
   it.runIf(have)("cleans: total row, duplicates, variants, future dates, the outlier", () => {
+    // the sample's "future" dates are 08.09.2027 and 12.10.2027: they are future only before 13 Oct 2027, so the clock is held at the day the
+    // sample was made, or this test fails from then on (QA pass 6, P6-002; found by the +365-day clock run)
+    vi.useFakeTimers({ now: new Date("2026-11-12T06:30:00Z"), toFake: ["Date"] });
+    onTestFinished(() => { vi.useRealTimers(); });
     const t = parseFile(fs.readFileSync(file), "x.xlsx");
     const prof = profileTable(t);
     const spec = rulesSpec(prof, "GCC_SWD_Desilting_Register_Sep2026.xlsx", t.caption, refs);
