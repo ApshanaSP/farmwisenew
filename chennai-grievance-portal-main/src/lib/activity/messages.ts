@@ -50,7 +50,8 @@ const RULES: Rule[] = [
   ["POST", /^\/api\/auth\/login$/, { doing: "Verifying your sign-in details", quietFailure: true }],
   ["POST", /^\/api\/auth\/register$/, { ...said("Submitting your registration", "Your registration has been submitted."), quietFailure: true }],
   ["POST", /^\/api\/auth\/confirm$/, { doing: "Verifying your password", quietFailure: true }],
-  ["POST", /^\/api\/auth\/forgot-password\/request-otp$/, { ...said("Sending the one-time password", "The one-time password has been sent."), quietFailure: true }],
+  // the server answers the same words whether or not the email has an account, and sends nothing in its cooldown (QA pass 5, P5-017)
+  ["POST", /^\/api\/auth\/forgot-password\/request-otp$/, { ...said("Sending the one-time password", "If that email has an account, the one-time password is on its way."), quietFailure: true }],
   ["POST", /^\/api\/auth\/forgot-password\/verify-otp$/, { ...said("Verifying the one-time password", "The one-time password has been verified."), quietFailure: true }],
   ["POST", /^\/api\/auth\/forgot-password\/reset-password$/, { ...said("Updating your password", "Your password has been updated."), quietFailure: true }],
   ["GET", /^\/api\/auth\/security$/, said("Retrieving your sign-in records")],
@@ -194,6 +195,7 @@ export const NOTICE_TA: Record<string, string> = {
   "Verifying your password": "கடவுச்சொல் சரிபார்க்கப்படுகிறது",
   "Sending the one-time password": "ஒருமுறை கடவுச்சொல் அனுப்பப்படுகிறது",
   "The one-time password has been sent.": "ஒருமுறை கடவுச்சொல் அனுப்பப்பட்டது.",
+  "If that email has an account, the one-time password is on its way.": "அந்த மின்னஞ்சலுக்குக் கணக்கு இருந்தால், ஒருமுறை கடவுச்சொல் அனுப்பப்படுகிறது.",
   "Verifying the one-time password": "ஒருமுறை கடவுச்சொல் சரிபார்க்கப்படுகிறது",
   "The one-time password has been verified.": "ஒருமுறை கடவுச்சொல் சரிபார்க்கப்பட்டது.",
   "Updating your password": "கடவுச்சொல் புதுப்பிக்கப்படுகிறது",
