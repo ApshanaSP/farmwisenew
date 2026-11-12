@@ -1,5 +1,5 @@
 // QA pass 7, collector-ops: the P7 reviewer 2 breaks of b4ea9c1 (P1 rows), kept as regression tests; each failed before the fix in the commit that adds this file.
-//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/review2-breaks.real.test.ts
+//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/review2-breaks.real.spec.ts
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";

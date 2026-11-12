@@ -1,6 +1,6 @@
 // QA pass 7, collector-ops P1 rows on the pinned snapshot: the real overview(), list(), exportRows(), sendBatchAction() and decisions
 // route (session and password step stubbed in ./lib), each against the figure the Collector compares it with.
-//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/p1.real.test.ts
+//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/p1.real.spec.ts
 import { beforeAll, describe, expect, it } from "vitest";
 import { decide } from "./lib";
 import intelPool from "@/lib/collector/db";

@@ -1,7 +1,7 @@
 // QA pass 7, hunt2-ops-12 (P0) on the pinned snapshot: the briefing's opening, shown under "Written by AI from today's figures; every
 // number is checked", must be the summary of the console's own window and agree with the live figures beside it. The pinned build's
 // weekly summary (window to 6 Nov 18:08) says "more incidents than the previous period"; the console's live week says fewer.
-//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/briefing-opening.real.test.ts
+//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/briefing-opening.real.spec.ts
 import { beforeAll, describe, expect, it } from "vitest";
 import { asOf } from "@/lib/collector/intel";
 import { insights } from "@/lib/collector/insights";

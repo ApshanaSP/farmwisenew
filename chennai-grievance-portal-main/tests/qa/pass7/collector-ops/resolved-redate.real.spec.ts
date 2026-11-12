@@ -1,6 +1,6 @@
 // QA pass 7, hunt2-ops-07 (P0) on the pinned snapshot: "resolving" GCC-SWM cases that were resolved months ago must not count them
 // again as resolved today. The real decisions route (session and password step stubbed) and the real kpiBlock / list.
-//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/resolved-redate.real.test.ts
+//   QA_PIN_PORT=3192 npx vitest run --config tests/qa/pass7/collector-ops/vitest.real.config.ts tests/qa/pass7/collector-ops/resolved-redate.real.spec.ts
 import { beforeAll, describe, expect, it } from "vitest";
 import { decide } from "./lib";
 import intelPool from "@/lib/collector/db";
