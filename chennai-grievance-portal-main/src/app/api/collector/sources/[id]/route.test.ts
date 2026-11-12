@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// these tests are about validation, not the confirm step (confirm.gate.pass4.test.ts covers it): the step is off here, as in the other route tests
+process.env.STEP_UP = "off";
 const h = vi.hoisted(() => ({ calls: [] as unknown[][] }));
 vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email: "c@x", userId: 1, role: "collector" }), failed: () => new Response(null, { status: 500 }) }));
 vi.mock("@/lib/collector/sources", () => ({

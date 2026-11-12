@@ -18,6 +18,7 @@ import Drill from "./Drill";
 import { BriefCard, InsightGrid } from "./Insights";
 import SourceBar from "./Source";
 import DataCardTab from "./DataCard";
+import { viaConfirm } from "./download";
 import type { DataCard as DataCardT } from "@/lib/studio/datacard";
 
 const StudioChart = dynamic(() => import("./StudioChart"), { ssr: false, loading: () => <div className="ds-skel" /> });
@@ -254,10 +255,10 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed }
       </div>
       <div className="ds-acts">
         {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again"><I n="refresh" /></button>}
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
-        <a className="ds-icon" lang="ta" href={`/api/collector/studio/${m.id}?brief=pdf&lang=ta`} title="தரவுச் சுருக்கம் (PDF, தமிழ்)" aria-label="Dataset brief PDF in Tamil">த</a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=csv`)} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=xlsx`)} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
+        <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} onClick={viaConfirm(`/api/collector/studio/${m.id}?brief=pdf&lang=en`)} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
+        <a className="ds-icon" lang="ta" href={`/api/collector/studio/${m.id}?brief=pdf&lang=ta`} onClick={viaConfirm(`/api/collector/studio/${m.id}?brief=pdf&lang=ta`)} title="தரவுச் சுருக்கம் (PDF, தமிழ்)" aria-label="Dataset brief PDF in Tamil">த</a>
         {confirm ? (
           <span className="ds-confirm">Delete?<button onClick={del} data-jarvis-never>Yes</button><button onClick={() => setConfirm(false)}>No</button></span>
         ) : <button className="ds-icon" onClick={() => setConfirm(true)} title="Delete this dataset"><I n="trash" /></button>}
@@ -432,7 +433,7 @@ function DetectiveTab({ d, id, rows, cols, masked }: { d: Detective; id: string;
           <div><dt>Columns</dt><dd>{cols}</dd></div>
         </dl>
         {masked.length > 0 && <p className="ds-det-p"><I n="shield" />Kept private: {masked.join(", ")}</p>}
-        <a className="ds-btn wide" href={`/api/collector/studio/${id}?export=csv`}><I n="download" />Download cleaned data</a>
+        <a className="ds-btn wide" href={`/api/collector/studio/${id}?export=csv`} onClick={viaConfirm(`/api/collector/studio/${id}?export=csv`)}><I n="download" />Download cleaned data</a>
         <small className="ds-muted">{rows.toLocaleString("en-IN")} rows with the matched zone, ward and taluk added.</small>
       </div>
       <div className="ds-det-r">
