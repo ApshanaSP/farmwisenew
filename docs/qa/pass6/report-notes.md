@@ -33,3 +33,17 @@
 - Findings marked `verified: false` in BUGS.json are the agents' own: their probes or code reading, not re-run by the lead.
 
 **Other worktrees.** Nothing was written to pass 4's or pass 5's worktrees or to `E:\farm`. Pass 4's pinned API (3199) and a pass 4 Next server (3211) were found running from pass 4's worktree and left alone; this run used its own pinned API on 3197 and ports 3106 and 3107.
+
+**The skeptic's verdict, word for word** (`findings/skeptic.json`, on the files as of `b0e65fc`):
+
+> The report's numbers hold. All severity and status counts, the test runs, the access matrix, the drive and the gate logs match the files, and all 14 fixed rows I reverted (10 at random plus P6-028, P5-031, P5-038, P6-016) fail without their fix (P6-018 hangs) and pass with it. The owner summary overclaims: "every break was fixed again" is false, and four "what works" claims are contradicted by open rows that "Still broken" leaves out. Trust the fixes as tested, not the summary's wording.
+
+Corrected after the verdict (the skeptic did not re-check these edits): the summary now says which fixes reviewers broke and left open, and each
+"what works" line names what is still open next to it (the officer lock's news and joined-table gaps, the writer's cut headlines, the PDF memory
+limit of 600 MB, the desk's unmasked "came before" titles and unusual Aadhaar groupings, batch instructions past 25 cases); it says pass 4 and pass 5
+are already on origin (`claude/qa-pass5-05abfd` at `3a5a9a2`, pushed by the pass 5 session at the owner's request) and pass 6 is not; the report
+counts the agents' open rows apart from the lead's and pass 5's (the skeptic's 132 is right; the earlier 140 mixed them), and prints the golden
+manifests properly. The skeptic counted 46 open agent rows found by reading code with no probe; the summary's 35 counts rows whose repro has no
+runnable command, a narrower test. The three real-path tests missing from `gate.sh` when it ran were run on the same commit right after it (they
+are in `evidence/guards-gate.log`) and are now in the script. Processes from other worktrees (pass 4's servers on 3199 and 3211, and a pass 4
+test run the skeptic saw) were running during the gate; they were not this run's and were left alone.

@@ -1,0 +1,156 @@
+[
+  {
+    "id": "skeptic-01",
+    "severity": "P2",
+    "area": "report / git state",
+    "title": "Owner summary asks the owner whether to push 'pass 4 and pass 5 under it', but pass 4 and pass 5 are already on origin",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:65; docs/qa/pass6/FINAL_REPORT.md:6; docs/qa/pass6/STATE.md:5",
+    "repro": "git branch -vv (claude/qa-pass5-05abfd 3a5a9a2 [origin/claude/qa-pass5-05abfd]); git merge-base --is-ancestor 5c082b7 3a5a9a2 && git merge-base --is-ancestor 7279522 3a5a9a2; git ls-remote --heads origin",
+    "evidence": "origin/claude/qa-pass5-05abfd = 3a5a9a2 'qa(pass5): state: branch pushed at the owner's request' (14:17 IST today, during pass 6); it contains pass 6's base 5c082b7 and pass 4's 7279522. Only claude/qa-pass6-a84a72 is unpushed. The report also calls 5c082b7 the pass 5 branch point without saying the pass 5 branch moved on to 3a5a9a2 (not in pass 6's history).",
+    "cause": "Push decision text carried over from pass 5's state without checking the remote.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-02",
+    "severity": "P2",
+    "area": "report / counts",
+    "title": "'140 open rows reported by an agent' is wrong: 132 are agents' rows; 8 are the lead's or pass 5's own rows",
+    "where": "docs/qa/pass6/FINAL_REPORT.md:22; docs/qa/pass6/OWNER_SUMMARY.md:8",
+    "repro": "node: open rows of BUGS.json whose id is in findings/*.json = 132; the other open rows not re-run (verified undefined) are P5-025, P5-032, P5-033, P5-034, P5-035, P6-001, P6-004, P6-005",
+    "evidence": "145 open = 5 verified (P6-022..025, P6-031) + 132 agent rows + 8 lead/pass 5 rows with no 'verified' field. Owner summary: 'the rest are the testers' own reports with their probes'.",
+    "cause": "report.mjs counts every open row that is not verified:true as an agent's row.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-03",
+    "severity": "P3",
+    "area": "report / wording",
+    "title": "'each names its probe in tests/qa/pass6/known-failures/' is false for 46 of 132 open agent rows",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:78",
+    "repro": "node: open agent rows whose JSON has no 'known-failures' path: 46 (e.g. console-sync-01..14 'Read code', officer-day-08 'code read', reviewer4-01 'probe deleted after the run')",
+    "evidence": "console-sync reported from code reading only; several rows say 'code read' or that the probe was deleted. FINAL_REPORT line 22 words it correctly ('probe or code reading'); the owner summary does not.",
+    "cause": "Summary generalised from the rows that have probes.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-04",
+    "severity": "P3",
+    "area": "report generator",
+    "title": "FINAL_REPORT's Golden master section prints '[object Object],[object Object],...' for each manifest",
+    "where": "docs/qa/pass6/FINAL_REPORT.md (## Golden master, three manifest lines); tests/qa/pass6/report.mjs",
+    "repro": "grep -c 'object Object' docs/qa/pass6/FINAL_REPORT.md",
+    "evidence": "'docs/qa/pass4/golden/p6-base.manifest.json: [object Object],[object Object],...' instead of request counts",
+    "cause": "report.mjs joins an array of objects into a string.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-05",
+    "severity": "P3",
+    "area": "report / commit count",
+    "title": "Report says 31 commits in pass 6 at 'effe51b', but it describes the gate committed in b0e65fc (32 commits now)",
+    "where": "docs/qa/pass6/FINAL_REPORT.md:5-6",
+    "repro": "git log --oneline 5c082b7..HEAD | wc -l -> 32; 5c082b7..effe51b -> 31",
+    "evidence": "Report generated 15:57:25Z (21:27 IST) with HEAD effe51b, then committed as b0e65fc with the gate results; the branch tip is b0e65fc, not effe51b. Counts are right for effe51b.",
+    "cause": "Report generated before its own commit.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-06",
+    "severity": "P1",
+    "area": "owner summary / What works",
+    "title": "\"a crafted PDF no longer ... eats hundreds of MB\" is false: the bitmap budget is 600 MB, and open row reviewer2-13 shows a 762 KB PDF holding 600 MB",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:25; chennai-grievance-portal-main/src/lib/studio/ocr.ts:145",
+    "repro": "read ocr.ts:145 `export const PDF_BITMAP_BUDGET = 600_000_000;`; BUGS.json reviewer2-13 (open, P2)",
+    "evidence": "The fix (P6-007) raised the cap to 600 MB per request with no global cap; the summary claims the opposite and does not list reviewer2-13 under Still broken.",
+    "cause": "Summary written from the P5-028 fix, not from P6-007 which raised the budget back up.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-07",
+    "severity": "P1",
+    "area": "owner summary / What works (privacy)",
+    "title": "\"Aadhaar number is masked ... as the petition desk already did\": the desk still shows an online complaint's whole Aadhaar (redteam-gate-02, P1 open), and 5-7/6-6/2-4-6 groupings are not masked (redteam-gate-03); neither is in Still broken",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:27; chennai-grievance-portal-main/src/lib/manu/repeat.ts:157,167",
+    "repro": "repeat.ts:157 selects `c.title AS problem` raw and :167 returns `problem: String(r.problem ?? \"\")`; probe tests/qa/pass6/known-failures/redteam-gate/p6-027-repeat-aadhaar.test.ts",
+    "evidence": "Open P1 privacy row found by the gate red team, absent from the owner's Still broken list.",
+    "cause": "Summary not updated after the gate red team's findings were imported.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-08",
+    "severity": "P2",
+    "area": "owner summary / What works",
+    "title": "\"a headline ... no longer accepted as a figure\" contradicts the summary's own Still broken and open P0 reviewer5-06 (news-list answers let a headline's planted figure through); look-alike fence tags still survive (reviewer5-11)",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:23 vs :45",
+    "repro": "BUGS.json reviewer5-06 (open P0), reviewer5-11 (open P2)",
+    "evidence": "P6-009/P6-019 tests do fail without the fix and pass with it (revert-checked by skeptic), but they cover complaint titles; headlines are open.",
+    "cause": "Claim worded wider than the tests.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-09",
+    "severity": "P2",
+    "area": "owner summary / What works (officer lock)",
+    "title": "\"An officer can no longer see another department's incidents through Ask District IQ\" omits open reviewer2-02 (the news lane still carries other departments' incident ids, status, deaths, place)",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:20; chennai-grievance-portal-main/src/lib/assistant/fastpath.ts:610,624",
+    "repro": "BUGS.json reviewer2-02 (open P2); reviewer4-01 (open P0, joined tables) is admitted in Still broken",
+    "evidence": "reviewer2-02 is not mentioned in the owner summary. The parenthesis (by id, near, empty map) holds: P6-021 revert-checked by skeptic, P6-006 guard passes in guards-gate.log.",
+    "cause": "Headline claim broader than its parenthesis.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-10",
+    "severity": "P2",
+    "area": "owner summary / What works",
+    "title": "\"A batch instruction ... shows on every case it lists\": cases 26+ of a batch get no follow-up row, so the P6-015 lookup finds nothing for them (open P1 reviewer4-02, not in Still broken)",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:33; chennai-grievance-portal-main/src/lib/collector/actionmail.ts:354",
+    "repro": "actionmail.ts:354 `for (const c of cases.slice(0, BATCH_MAX))` inserts followups for 25 cases only; the email says the rest are listed in the District IQ officer console; officer/data.ts finds a batch email only through followups",
+    "evidence": "Code path is unambiguous; open row reviewer4-02 (P1).",
+    "cause": "P6-015 relies on follow-up rows that are capped at BATCH_MAX.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-11",
+    "severity": "P3",
+    "area": "gate provenance",
+    "title": "gate.sh committed in b0e65fc is not the script that ran the gate: three guard files (p6-critical-tile, p6-studio-browser-bypass, p6-studio-browser-more) were added afterwards and run separately at about 21:26",
+    "where": "chennai-grievance-portal-main/tests/qa/pass6/gate.sh:23; docs/qa/pass6/evidence/guards-gate.log:21-36",
+    "repro": "git show b0e65fc -- chennai-grievance-portal-main/tests/qa/pass6/gate.sh; grep -n '^==' docs/qa/pass6/evidence/guards-gate.log",
+    "evidence": "guards-gate.log has the 'src guards' block (which gate.sh writes last) before the three p6 files; log mtime 21:26 is after drive-gate (21:25). All passed; skeptic re-ran p6-critical-tile: 4/4 pass.",
+    "cause": "Guard list fixed after the run; the commit message says the gate ran on effe51b.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-12",
+    "severity": "P3",
+    "area": "report / other worktrees",
+    "title": "During the final gate another session started three Next servers and a full pass 4 vitest run from pass 4's worktree (21:13-21:16); the report mentions only 3199 and 3211 found running",
+    "where": "docs/qa/pass6/FINAL_REPORT.md:342; docs/qa/pass6/report-notes.md:35",
+    "repro": "Get-CimInstance Win32_Process node.exe: next start x3 (21:13:45, 21:14:18, 21:16:38) and with-lock.mjs vitest-full (21:14:55) from E:/farm/.claude/worktrees/qa-pass4-ecfcb9",
+    "evidence": "The gate's build (to 21:20), golden master (21:20-21:24), matrix, drive and the late guards ran alongside them; results are functional, but the machine was not quiet.",
+    "cause": "Not checked at gate time.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-13",
+    "severity": "P1",
+    "area": "owner summary / reviews",
+    "title": "\"The reviewers broke several fixes; every break was fixed again and has its own row and test\" is false: 9 of the 32 'fixed' rows carry a review that says broken, with the break still open",
+    "where": "docs/qa/pass6/OWNER_SUMMARY.md:16-17; docs/qa/pass6/FINAL_REPORT.md (Fixes and reviewers: 'They broke six fixes ... fixed and revert-checked')",
+    "repro": "node -e 'require(\"./docs/qa/pass6/BUGS.json\").filter(x=>x.status===\"fixed\").forEach(x=>console.log(x.id,x.reviewer))'",
+    "evidence": "reviewer field says broken for P6-013 (reviewer4-04 open), P6-014 (reviewer4-01 open P0), P6-015 (reviewer4-02 open), P6-018 (reviewer5-04 open P0), P6-019 (reviewer5-06 open P0), P6-020 (reviewer5-07 open), P6-027 (redteam-gate-02 open), P6-029 (redteam-gate-01/04 open P0), P6-030 (redteam-gate-05 open P0). Also P6-021, P6-026..P6-030 and P5-038 had no reviewer, only the gate red team 'mostly by reading', against 'a fresh reviewer read every batch'.",
+    "cause": "Sentence written after reviewers 1-3 and not revised after reviewers 4, 5 and the gate red team.",
+    "confidence": "high"
+  },
+  {
+    "id": "skeptic-14",
+    "severity": "P3",
+    "area": "report / state",
+    "title": "Committed STATE.md (b0e65fc) stops at '21:03 final gate started'; the gate result, gate red team and owner-summary lines exist only as uncommitted edits",
+    "where": "docs/qa/pass6/STATE.md:43-45 (working tree only)",
+    "repro": "git show b0e65fc:docs/qa/pass6/STATE.md | tail -3; git diff docs/qa/pass6/STATE.md",
+    "evidence": "OWNER_SUMMARY says 'STATE.md has the clock'; the committed copy does not have the gate's clock. The uncommitted 21:27 line says 'committed b0e65fc' about itself.",
+    "cause": "Edited after the commit.",
+    "confidence": "high"
+  }
+]

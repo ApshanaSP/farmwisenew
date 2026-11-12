@@ -37,7 +37,8 @@ export const VERIFIED = new Set([]);
 const fixedSet = new Map();
 for (const [f, p] of Object.entries(FIXED)) fixedSet.set(f, p);
 let added = 0, linked = 0;
-for (const file of fs.readdirSync(path.join(P6, "findings")).filter((f) => f.endsWith(".json")).sort()) {
+// skeptic.json is about the report, not the product: it is quoted in report-notes.md, not counted as bugs
+for (const file of fs.readdirSync(path.join(P6, "findings")).filter((f) => f.endsWith(".json") && f !== "skeptic.json").sort()) {
   const rows = JSON.parse(fs.readFileSync(path.join(P6, "findings", file), "utf8"));
   if (!Array.isArray(rows)) continue;
   for (const x of rows) {
