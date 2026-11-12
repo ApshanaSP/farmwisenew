@@ -13,6 +13,7 @@ npm-debug.log*
 *.tsbuildinfo
 .DS_Store
 public/uploads/profile/*
+uploads/profile/
 !public/uploads/profile/.gitkeep
 public/uploads/complaints/*
 !public/uploads/complaints/.gitkeep

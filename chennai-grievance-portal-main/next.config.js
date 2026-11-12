@@ -38,6 +38,11 @@ const nextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // profile photos are saved outside public/ (a production build serves only what public/ held at build time): the old address
+  // /uploads/profile/<name> is answered by the route that reads them (QA4 gate, redteam-final-11)
+  async rewrites() {
+    return { beforeFiles: [], afterFiles: [{ source: "/uploads/profile/:name", destination: "/api/profile/photo/:name" }], fallback: [] };
+  },
   reactStrictMode: true,
   // No page uses next/image (the logo is a plain <img>), so the Image Optimization API (/_next/image) is off: it is where
   // Next 14's critical advisories GHSA-2xp9-vwfh-vxw4 and GHSA-2464-fhr4-w9xw (remote code execution via AVIF/SVG) and

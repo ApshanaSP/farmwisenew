@@ -5,6 +5,7 @@ import pool from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { RowDataPacket } from "mysql2";
 import { sniff } from "@/lib/officer/photos";
+import { profileDir } from "@/lib/profile-photo";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -30,14 +31,15 @@ export async function POST(req: NextRequest) {
   }
 
   // the file's own bytes decide what it is (the browser's type is only what the file name says): a page or a script
-  // renamed .png is refused before anything is written under public/
+  // renamed .png is refused before anything is written
   const buffer = Buffer.from(await file.arrayBuffer());
   const kind = sniff(buffer);
   if (kind !== "jpg" && kind !== "png") {
     return NextResponse.json({ error: "Only JPG and PNG images are allowed." }, { status: 400 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "profile");
+  // outside public/: see lib/profile-photo.ts
+  const uploadDir = profileDir();
   await mkdir(uploadDir, { recursive: true });
 
   const ext = kind;
