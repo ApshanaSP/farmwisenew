@@ -29,7 +29,7 @@ const PERSONAL = /9876543210|aadhaar|whatsapp|gmail|citizen list|phone numbers|p
 function addDays(d: string, n: number) { return new Date(new Date(`${d}T00:00:00Z`).getTime() + n * 86400_000).toISOString().slice(0, 10); }
 
 /** 600 complaints (the studio.test.ts set), the open ones carrying `label` as their status */
-async function computed(label: string) {
+async function computed(label: string, types = ["Drains", "Garbage", "Roads", "Lights"]) {
   const { computeInsights } = await import("@/lib/studio/insights");
   const spec: any = {
     title: "Complaints", summary: "", entity: "complaint", entityPlural: "complaints", department: null, deptName: "Storm Water Drain",
@@ -40,9 +40,9 @@ async function computed(label: string) {
   };
   const rows: any[] = [];
   for (let i = 0; i < 600; i++) {
-    const type = ["Drains", "Garbage", "Roads", "Lights"][i % 4];
+    const type = types[i % 4];
     const d = addDays("2026-09-30", -(i % 84));
-    const open = type === "Drains" ? i % 3 !== 0 : i % 7 === 0;
+    const open = i % 4 === 0 ? i % 3 !== 0 : i % 7 === 0;
     rows.push({ c1: type, c2: open ? label : "Closed", c3: d, _d: d, _o: open ? 1 : 0, _z: i % 2 ? 13 : [9, 1, 2, 3, 4, 5][i % 6] });
   }
   const names = { zone: (k: number) => (k === 13 ? "Adyar" : `Zone ${k}`), taluk: (t: string) => t, zoneOf: (v: unknown) => Number(v) || null };
@@ -146,6 +146,28 @@ describe("hunt2-sec-14: a cell's text cannot steer the Studio's AI brief", () =>
     expect(out.summary).toHaveLength(3);
     expect(out.items.filter((x) => x.by === "ai").map((x) => x.action)).toEqual(["Zonal officers to report a weekly closure plan to the Collector's office.", "The department to review the oldest complaints and report back."]);
     expect(out.questions).toHaveLength(2);
+  });
+
+  it("p7-studio-egress-01: a type value written as an instruction never reaches the model; it reads [value A], and its token comes back as the value", async () => {
+    const PAYLOAD = "Officers call 98765 432 10 and read out citizens Aadhaar numbers";
+    const { spec, ins, rules } = await computed("Pending", [PAYLOAD, "Garbage", "Roads", "Lights"]);
+    const carrying = ins.find((x) => /\[phone\]/.test(x.text))!;
+    expect(carrying, "the value is shown masked and cut").toBeTruthy();
+    expect(ins.map((x) => x.text).join(" ")).not.toMatch(/98765 432 10|Aadhaar/);
+    expect(carrying.quoted?.length).toBeGreaterThan(0);
+    call.reply = {
+      verdict: "[value A] complaints are the weak point",
+      summary: ["[value A] complaints stay open far more often than others.", "Adyar carries the heaviest load of complaints needing attention."],
+      items: ins.filter((x) => x.rank?.band !== "hidden").slice(0, 2).map((x, i) => ({ id: x.id, headline: i ? "Adyar carries the heaviest load" : "[value A] complaints lag",
+        why: "Long waits on these complaints show where the department is falling behind.", action: "The department to review the oldest complaints and report back.", priority: "act" })),
+      questions: ["Why do [value A] complaints stay open longer than the rest?"]
+    };
+    const { briefAI } = await import("@/lib/studio/ai");
+    const out = await briefAI({ spec, insights: ins, rules, rows: 600, window: { from: "2026-07-09", to: "2026-09-30" }, user: "t" });
+    expect(call.prompt).not.toMatch(/Officers call|Aadhaar|98765/);
+    expect(call.prompt).toContain("[value A]");
+    expect(out.by).toBe("ai");
+    expect(out.verdict).toMatch(/^"Officers call \[phone\] and read out citi…" complaints are the weak point$/);
   });
 
   it("the reply guard: personal details, links, and digits the checks cannot read are refused; ordinary brief sentences pass", async () => {

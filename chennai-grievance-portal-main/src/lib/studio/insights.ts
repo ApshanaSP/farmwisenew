@@ -28,6 +28,7 @@ import { fmtNum, openPhrase, type Detective, type Filter, type Insight, type Ins
 import { addDays, daysBetween, fmtDay, median } from "@/lib/studio/values";
 import { computeInsights2 } from "@/lib/studio/insights2";
 import { rankInsights } from "@/lib/studio/rank";
+import { oneLine, said } from "@/lib/studio/untrusted";
 import { detectFamily, familyBoost, type FamilyKey } from "@/lib/studio/family";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-IN");
@@ -35,16 +36,9 @@ const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 const r1 = (x: number) => Math.round(x * 10) / 10;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-// Text a person typed into the file (a status, a place, a type) is written into these sentences, and the sentences go to the AI brief
-// (ai.ts briefAI). A cell's line breaks, control and zero-width characters become one space, so a value can never start a new line of a
-// prompt or a page (QA pass 6, hunt2-sec-14); a value quoted in a sentence also loses its double quotes and angle brackets (it cannot
-// close its own quotes or a fence) and is cut to 40 characters.
-const ONE_LINE = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]+/g;
-const oneLine = (s: string) => s.replace(ONE_LINE, " ").replace(/ {2,}/g, " ").trim();
-export function said(v: unknown, max = 40): string {
-  const s = oneLine(String(v ?? "").normalize("NFKC")).replace(/["<>`]/g, "'");
-  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
-}
+// Text a person typed into the file (a status, a type, a place, a column name) is written into these sentences, which are shown and go to
+// the AI brief (ai.ts). Every such value is shown through said() (untrusted.ts: one line, no quotes, personal details masked, 40 characters),
+// found by value, whichever engine wrote the sentence (fileValues below), and listed in `quoted` so ai.ts can keep the unusual ones from the model.
 
 /** A way to split the rows: by zone, or by one of the file's own type columns. */
 interface Dim { id: string; label: string; by: Plan["by"]; byCol: string | null; zone: boolean; of: (r: DRow) => string | number | null; name: (k: string | number) => string }
@@ -84,14 +78,42 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
   // STUDIO_TODAY: a fixed "today" for the tests' goldens (data age, days to a deadline)
   const today = process.env.STUDIO_TODAY || undefined;
   const more = rows.length < 3 ? [] : computeInsights2({ rows, spec, window, names, today });
+  const vals = fileValues(rows, spec);
   const span = window.from && window.to ? (window.from === window.to ? fmtDay(window.to) : `${fmtDay(window.from, false)} – ${fmtDay(window.to)}`) : null;
   const all = [...base.map((x) => ({ ...x, n: x.n ?? rows.length, method: x.method ?? "Counted over the cleaned rows" })), ...more.map((x, i) => ({ ...x, id: `i${base.length + i + 1}` }))]
-    .map((x) => ({ ...x, text: oneLine(x.text), title: oneLine(x.title), metric: { ...x.metric, caption: oneLine(x.metric.caption) },
-      confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
+    .map((x) => shownSafe(x, vals))
+    .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
   const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
   const seen = new Set((prev?.items ?? []).map((x) => `${x.label}|${x.title}`));
   const fam = family ?? detectFamily(spec).key;
   return rankInsights(all, { rows: rows.length, to: window.to, seen, things, today, boost: (l) => familyBoost(fam, l) });
+}
+
+/** The file's own text, longest first: every string cell (up to 5,000 distinct values a column) and every column name, as typed and lower-cased. */
+function fileValues(rows: DRow[], spec: Spec): string[] {
+  const out = new Set<string>();
+  for (const c of spec.columns) for (const v of [c.header, c.label]) if (v) { out.add(String(v)); out.add(String(v).toLowerCase()); }
+  for (const c of spec.columns) {
+    const seen = new Set<string>();
+    for (const r of rows) {
+      const v = r[c.key];
+      if (typeof v === "string" && v.length >= 2 && v.length <= 2000 && !seen.has(v)) { seen.add(v); if (seen.size >= 5000) break; }
+    }
+    for (const v of seen) out.add(v);
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+
+/** An insight as it may be shown: each file value in its sentences through said(), every sentence one line, the values it quotes listed. */
+function shownSafe<T extends Insight>(x: T, vals: string[]): T {
+  const fix = (s: string) => {
+    let t = String(s ?? "");
+    for (const v of vals) if (t.includes(v)) { const shown = said(v); if (shown !== v) t = t.split(v).join(shown); }
+    return oneLine(t);
+  };
+  const text = fix(x.text), title = fix(x.title), caption = fix(x.metric.caption);
+  const quoted = [...new Set(vals.map((v) => said(v)).filter((v) => v.length >= 2 && (text.includes(v) || title.includes(v) || caption.includes(v))))];
+  return { ...x, text, title, metric: { ...x.metric, caption }, bars: x.bars.map((b) => ({ ...b, label: fix(b.label) })), quoted };
 }
 
 function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkResult | null, window: { from: string | null; to: string | null }, names: Names): Insight[] {

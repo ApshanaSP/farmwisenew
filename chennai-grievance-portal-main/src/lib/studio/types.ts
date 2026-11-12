@@ -270,6 +270,8 @@ export interface Insight {
   rank?: { usefulness: number; impact: number; significance: number; actionability: number; novelty: number; freshness: number; band: "act" | "watch" | "hidden" };
   /** "n = 412 · last 4 weeks vs the 4 before · 1 Oct – 27 Oct 2026" */
   confidence?: string;
+  /** values from the file written into this insight's sentences (as shown, untrusted.ts said()); ai.ts hides the unusual ones from the model */
+  quoted?: string[];
 }
 
 export type Priority = "act" | "watch" | "note";
