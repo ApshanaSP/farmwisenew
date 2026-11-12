@@ -56,11 +56,22 @@ describe("RC-49: the keyboard ring", () => {
     expect(base).toMatch(/outline:\s*2px solid/);
     expect(base).not.toMatch(/outline:\s*none/);
   });
-  it("only a control with its own ring switches the base ring off", () => {
+  it("only a control with its own ring switches the base ring off, and no scope as wide as a whole console does", () => {
     const css = read("app/globals.css");
-    const off = css.match(/\n\s*\.dic :focus-visible,([\s\S]*?)\{\s*outline:\s*none;/)?.[1] ?? "";
-    // every selector in the list is the console's own scope or one that draws a ring of its own
-    for (const sel of off.split(",").map((x) => x.trim()).filter(Boolean)) expect(sel, sel).toMatch(/btn|form-input|auth-input|focus-visible:ring|focus:ring|focus-visible:outline-none/);
+    const off = css.match(/\}\s*([^{}]*\.btn:focus-visible,[^{}]*)\{\s*outline:\s*none;/)?.[1] ?? "";
+    expect(off, "the switch-off rule was not found").not.toBe("");
+    const sels = off.replace(/\{[\s\S]*$/, "").split(",").map((x) => x.trim()).filter(Boolean);
+    expect(sels.length).toBeGreaterThan(2);
+    for (const sel of sels) expect(sel, sel).toMatch(/btn|form-input|auth-input|focus-visible:ring|focus:ring|focus-visible:outline-none/);
+    // g-review 7: the wide rule used to be `.dic :focus-visible`, and the old guard started its list after it, so it never looked at it
+    expect(sels.some((s) => /^\.dic\b/.test(s)), "a rule on a whole console's scope").toBe(false);
+  });
+  it("every console stylesheet that styles `.dic :focus-visible` gives it a ring, never none", () => {
+    const dir = path.join(SRC, "components/collector/app");
+    let seen = 0;
+    for (const f of fs.readdirSync(dir).filter((n) => n.endsWith(".css")))
+      for (const m of fs.readFileSync(path.join(dir, f), "utf8").matchAll(/(?:^|\n)\.dic :focus-visible\s*\{([^}]*)\}/g)) { seen++; expect(m[1], f).toMatch(/outline:\s*2px solid/); }
+    expect(seen).toBeGreaterThan(0);
   });
   it("the console's zone, taluk and department selects draw their own ring", () => {
     expect(read("components/collector/app/marina.css")).toMatch(/\.dic \.fsel select:focus-visible\{outline:2px solid/);

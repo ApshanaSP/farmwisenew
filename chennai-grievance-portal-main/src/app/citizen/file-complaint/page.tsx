@@ -32,6 +32,7 @@ import ComplaintTypeSelector, {
   TaxonomySource
 } from "@/components/ComplaintTypeSelector";
 import type { LocationSelection } from "@/components/MapPicker";
+import { useLang } from "@/lib/i18n/lang";
 import { Confetti, Dropzone, RollingText, Skeleton, Stepper, SuccessCheck, Timeline } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 
@@ -102,6 +103,7 @@ const STEPS = [
 ];
 
 export default function FileComplaintPage() {
+  const [uiLang] = useLang();
   const [me, setMe] = useState<any>(null);
   const [checkedSession, setCheckedSession] = useState(false);
   /**
@@ -1115,7 +1117,7 @@ export default function FileComplaintPage() {
             </div>
 
             {result.queueNote && (
-              <p role="status" data-testid="queue-note" className="mx-auto mt-5 max-w-sm text-sm text-ink-muted">{result.queueNote.en}</p>
+              <p role="status" data-testid="queue-note" className="mx-auto mt-5 max-w-sm text-sm text-ink-muted">{uiLang === "ta" ? result.queueNote.ta : result.queueNote.en}</p>
             )}
 
             <div className="mx-auto mt-7 max-w-sm text-left">

@@ -92,7 +92,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
           <h2>{fullTitle(g)}</h2>
           <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
         </div>
-        <div className="odrawer-b">
+        <div className="odrawer-b" tabIndex={0}>
           {g.summary && <p style={{ margin: 0, color: "var(--text-2)" }}>{g.summary}</p>}
           <div className="dgrid">
             <div><small>Area</small><b>{g.zone_name ?? "Chennai"}</b></div>
@@ -128,7 +128,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         <h2>{fullTitle(g)}</h2>
         <div className="meta-row"><I n="pin" />{where} · {c.dept.name}</div>
       </div>
-      <div className="odrawer-b">
+      <div className="odrawer-b" tabIndex={0}>
         <Steps stage={g.stage as Stage} />
         {g.returned && lastReturn && (
           <div className="banner" style={{ background: "var(--high-soft)", color: "#8A4A06" }}><I n="refresh" />
