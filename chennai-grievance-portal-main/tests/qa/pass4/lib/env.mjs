@@ -36,6 +36,11 @@ export function qaEnv(o = {}) {
     SMTP_HOST: "127.0.0.1", SMTP_PORT: "1", EMAIL_MODE: "sandbox", NEXT_DIST_DIR: dist,
     AI_PROVIDER: "groq", AI_FALLBACK_PROVIDER: "groq", AI_CHAT_PROVIDER: "groq", QA_GROQ_ONLY: "1",
     NEXT_TELEMETRY_DISABLED: "1",
+    // QA pass 5: the Manu Desk. No real SMS (smsMode() is "off" under AWS_STORE_DRY_RUN=1; these make it off twice over), petition
+    // photos in the server's own folder, and the PaddleOCR reader on a dead port unless a run names one (--env MANU_PADDLE_URL=...).
+    SMS_MODE: "off", MSG91_AUTH_KEY: "", MSG91_SENDER: "", SMS_TEST_NUMBER: "", EMAIL_SANDBOX_TO: "", EMAIL_LIVE_ALLOWLIST: "",
+    PETITION_UPLOAD_DIR: path.join(abs, "petitions"), OFFICER_UPLOAD_DIR: path.join(abs, "officer-uploads"),
+    MANU_PADDLE_URL: process.env.QA_PADDLE_URL || "http://127.0.0.1:1",
   };
   for (const k of NOT_GROQ) env[k] = "";
   if (!groq) for (const k of GROQ_KEYS) env[k] = "";
