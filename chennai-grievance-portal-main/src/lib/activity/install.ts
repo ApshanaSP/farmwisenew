@@ -12,6 +12,9 @@
 import { getLang } from "@/lib/i18n/lang";
 import { FAILED, NOTICE_TA, PAGE_NAMES, PLEASE_WAIT, SIGNING_OUT, SLOW, isBackground, noticeFor, type Notice } from "./messages";
 
+/** lib/security/stepup.ts SOFT_ANSWER: the header a guarded route sets when it asks for confirmation instead of acting */
+const CONFIRM_ASKED = "x-diq-confirm";
+
 /** A request starting this soon after a click belongs to that click. */
 const GESTURE_MS = 1200;
 /** Choosing files is followed by shrinking the photos in the browser before anything is sent. */
@@ -210,6 +213,12 @@ export function installActivity(): void {
         if (!r.ok) {
           if (n.hold) { it.running--; remove(it.id); return r; } // the page is staying: do not leave it covered
           if (!n.quietFailure && r.status !== 401) it.failed = true;
+          settle();
+        } else if (r.headers.get(CONFIRM_ASKED) === "required") {
+          // a guarded action answered "confirm it's you first" (lib/security/stepup.ts: a 200 with this header, for the console's own
+          // fetch): nothing was done yet, so nothing is announced; the confirm box takes over, and its own request, if any, is announced
+          // when it succeeds (QA pass 5, P5-010)
+          if (n.hold) { it.running--; remove(it.id); return r; }
           settle();
         } else if (n.hold) { window.setTimeout(() => remove(it.id), NAV_GIVE_UP_MS); } // stays until the next page replaces this one
         else { if (n.done) it.done = n.done; settle(); }

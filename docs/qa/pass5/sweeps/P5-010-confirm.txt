@@ -1,0 +1,15 @@
+$ git grep -n "r.ok\b\|\.ok)" -- src/lib/activity src/components/activity
+src/lib/activity/install.ts:213:        if (!r.ok) {
+
+$ git grep -n "SOFT_ANSWER\|x-diq-confirm" -- src ":!*.test.ts"
+src/components/security/Confirm.tsx:20:const SOFT_HEADER = "x-diq-confirm", SOFT_ANSWER = "x-diq-confirm";
+src/components/security/Confirm.tsx:30:    // The console says it reads a confirm answer as a 200 with a header (x-diq-confirm), so the browser logs no failed request for what is
+src/components/security/Confirm.tsx:41:    const asCaller = async (r: Response) => (r.headers.get(SOFT_ANSWER) === "required"
+src/components/security/Confirm.tsx:47:      if (r.status !== 428 && r.headers.get(SOFT_ANSWER) !== "required") return r;
+src/lib/activity/install.ts:15:/** lib/security/stepup.ts SOFT_ANSWER: the header a guarded route sets when it asks for confirmation instead of acting */
+src/lib/activity/install.ts:16:const CONFIRM_ASKED = "x-diq-confirm";
+src/lib/security/stepup.ts:23:/** a request header: "the caller reads a confirm answer as a 200 with SOFT_ANSWER set" (PB-316); the grant check does not depend on it */
+src/lib/security/stepup.ts:24:export const SOFT_HEADER = "x-diq-confirm";
+src/lib/security/stepup.ts:25:export const SOFT_ANSWER = "x-diq-confirm";
+src/lib/security/stepup.ts:64:  // The console's own fetch says it reads the answer ("x-diq-confirm: json") and gets it as a 200 with a header: the browser logs every
+src/lib/security/stepup.ts:70:    res: NextResponse.json(body, soft ? { status: 200, headers: { [SOFT_ANSWER]: "required", "cache-control": "no-store" } } : { status: 428 })
