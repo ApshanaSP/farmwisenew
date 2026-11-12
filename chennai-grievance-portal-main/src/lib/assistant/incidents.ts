@@ -203,6 +203,13 @@ export async function anySynthetic(ids: string[]): Promise<boolean> {
 }
 
 /** Given incidents in the given order (a follow-up on an earlier list: "make that a map"). */
+/** The ids among these that belong to `dept` (the incident's lead department), for a department console's lock (QA pass 6, P6-006). */
+export async function idsOfDept(ids: string[], dept: string): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const rows = await q(`SELECT i.incident_id AS id FROM incidents i WHERE i.incident_id IN (?) AND i.lead_dept = ?`, [ids, dept]);
+  return new Set(rows.map((r) => String(r.id)));
+}
+
 export async function incidentsByIds(ids: string[]): Promise<IncidentItem[]> {
   if (!ids.length) return [];
   const rows = await q(`SELECT ${COLS} ${FROM} WHERE i.incident_id IN (?)`, [ids]);

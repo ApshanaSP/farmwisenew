@@ -5,7 +5,7 @@
  * writes nothing here, so nothing needs the number check and nothing depends on an API key. Follow-ups resolve against
  * the structured context the previous answer saved; anything else returns null and goes to the existing router.
  */
-import { baseCard } from "@/lib/assistant/cards";
+import { baseCard, notDoneCard } from "@/lib/assistant/cards";
 import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
 import { aboutTheData } from "@/lib/assistant/help";
 import { describeScope, type RefNames } from "@/lib/assistant/scope";
@@ -13,7 +13,7 @@ import { spec } from "@/lib/assistant/datasets";
 import { HANDLED, PICK_FROM_LIST, detectIntent, topicByKey, topicWords, type Detected, type Topic } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { filtersOf, type ActiveFilters, type ConversationContext } from "@/lib/assistant/context";
-import { actionsFor, anySynthetic, categoryRanking, countByZone, countIncidents, countResolved, shareOfIncidents, incidentDetail, incidentsByIds, incidentsWithWords, periodLabel, rankedIncidents, relatedIncidents,
+import { actionsFor, anySynthetic, idsOfDept, categoryRanking, countByZone, countIncidents, countResolved, shareOfIncidents, incidentDetail, incidentsByIds, incidentsWithWords, periodLabel, rankedIncidents, relatedIncidents,
   type IncidentFilters } from "@/lib/assistant/incidents";
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
@@ -237,7 +237,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       // "which one is most serious?": the highest priority among the incidents the last answer listed, not a new search (it once
       // added "severe", found none in the week and widened to a month, naming an incident that was not in the list)
       const picked = d.because === PICK_FROM_LIST && i.ctx?.resultIds?.length
-        ? [...await incidentsByIds(i.ctx.resultIds)].sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0)).slice(0, n) : null;
+        ? [...await incidentsByIds(i.lockDept ? [...await idsOfDept(i.ctx.resultIds, i.lockDept)] : i.ctx.resultIds)].sort((a, b) => (b.priorityScore ?? 0) - (a.priorityScore ?? 0)).slice(0, n) : null;
       const nar = picked ? { items: picked, total: picked.length, period: inc.period, widened: false }
         : topic?.narrow ? await narrowed(topic, inc, i.now, n, i.message).catch(orNull("fastpath:127")) : null;
       if (nar && !picked) {
@@ -529,6 +529,9 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     case "INCIDENT_TIMELINE": {
       const id = d.incidentId;
       if (!id) return null;
+      // a department console opens only its own department's incidents: the planner's path refuses another's in words, and so does
+      // the console (404); this path gave the whole card, place and officials included, to any officer who typed the id (QA pass 6, P6-006)
+      if (i.lockDept && !(await idsOfDept([id], i.lockDept)).has(id)) return otherDept(i, d.intent);
       const x = await incidentDetail(id, d.intent === "INCIDENT_TIMELINE" ? "all" : d.focus);
       if (!x) return null;
       card.responseType = "incident_detail";
@@ -549,8 +552,11 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     case "INCIDENT_RELATED": {
       const id = d.incidentId ?? i.ctx?.selectedIncidentId;
       if (!id) return null;
+      if (i.lockDept && !(await idsOfDept([id], i.lockDept)).has(id)) return otherDept(i, d.intent); // P6-006
       const r = await relatedIncidents(id, d.n ?? 5);
       if (!r) return null;
+      // incidents like it, for a department console: only that department's (P6-006)
+      if (i.lockDept) { const own = await idsOfDept(r.items.map((x) => x.incidentId), i.lockDept); r.items = r.items.filter((x) => own.has(x.incidentId)); }
       card.responseType = "incident_list";
       card.incidents = r.items;
       card.headline = `Incidents like ${r.anchor.title}`;
@@ -624,6 +630,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       break;
     }
     case "ACTION_REQUEST": {
+      if (d.incidentId && i.lockDept && !(await idsOfDept([d.incidentId], i.lockDept)).has(d.incidentId)) return otherDept(i, d.intent); // P6-006
       const ids = d.incidentId ? [d.incidentId] : (await rankedIncidents({ ...inc, openOnly: true }, i.now, 3, "priority")).items.map((x) => x.incidentId);
       const groups = (await Promise.all(ids.map(async (id) => ({ id, a: await actionsFor(id) })))).filter((g) => g.a).map((g) => ({ incidentId: g.id, title: g.a!.title, items: g.a!.items }));
       card.responseType = "actions";
@@ -686,8 +693,21 @@ async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: numb
 }
 
 /** "make that a map" / "as a table" after an incident list: the same incidents, drawn. */
+/** A department console asked about another department's incident by id: said plainly, with nothing of that incident in it (P6-006). */
+const OTHER_DEPT: Record<Lang, string> = {
+  en: "That incident is handled by another department, so it is not shown on your console. Your own department's cases are in your lists.",
+  ta: "அந்த நிகழ்வு வேறு துறையின் பொறுப்பில் உள்ளது; அதனால் உங்கள் பக்கத்தில் காட்டப்படவில்லை. உங்கள் துறையின் வழக்குகள் உங்கள் பட்டியலில் உள்ளன.",
+  tanglish: "Andha incident vera department-oda poruppu; adhanaala unga console-la kaatta mudiyadhu. Unga department cases unga list-la irukku."
+};
+function otherDept(i: FastInput, intent: string): FastOutput {
+  return { card: notDoneCard(baseCard(i.lang, null, "", i.now), OTHER_DEPT[i.lang] ?? OTHER_DEPT.en), plan: { intent, fastPath: true, refused: "other_department" } };
+}
+
 async function pictureOfList(i: FastInput, d: Detected): Promise<FastOutput> {
-  const items = await incidentsByIds(i.ctx!.resultIds!);
+  const ids = i.ctx!.resultIds!;
+  // the conversation's ids, for a department console: only that department's (P6-006)
+  const own = i.lockDept ? await idsOfDept(ids, i.lockDept) : null;
+  const items = await incidentsByIds(own ? ids.filter((x) => own.has(x)) : ids);
   const card = baseCard(i.lang, null, "", i.now);
   card.intent = d.intent;
   card.responseType = d.intent === "MAP" ? "map" : "table";
