@@ -124,11 +124,16 @@ function withStage(dept: string, now: string) {
   };
 }
 
-/** Grievances reported in the period (the Collector's windows), in the chosen zone / taluk; closed ones never. */
+/**
+ * Grievances reported in the period (the Collector's windows), in the chosen zone / taluk; closed ones never. The owner kept these
+ * reporting windows for the queue (officer-day-01), with one exception: work the Collector sent back that the department has not
+ * re-sent is in every window, whatever its date, because it is the department's to act on now. A case first reported more than 90 days
+ * ago and sent back was open again in no tab, count or search (hunt2-ops-05).
+ */
 function windowWhere(now: string, s: Scope) {
   const pw = periodWindow(s.period, now, "w.first_reported_at");
   return {
-    sql: `${pw.sql} AND w.stage <> 'closed'${s.zone ? " AND w.zone_no = ?" : ""}${s.taluk ? " AND w.taluk_code = ?" : ""}`,
+    sql: `(${pw.sql} OR w.returned = 1) AND w.stage <> 'closed'${s.zone ? " AND w.zone_no = ?" : ""}${s.taluk ? " AND w.taluk_code = ?" : ""}`,
     params: [...pw.params, ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])] as unknown[]
   };
 }

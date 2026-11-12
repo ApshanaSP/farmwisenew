@@ -6,6 +6,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { collectorSession } from "@/lib/collector/guard";
 import { syncComplaints } from "@/lib/complaint-progress";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { DECISION_WORDS } from "@/lib/collector/effective";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const d = parsed.data;
-  if (d.decision !== "note" && d.decision !== "reopen") {
-    const verb = { verify: "Verify and close", escalate: "Escalate", reject: "Return to the department", resolve: "Mark resolved" }[d.decision];
+  // every decision that changes a case is confirmed, a send-back too: it reopens the case, moves it back to the department's In action
+  // list and tells the citizen it was returned for more work (hunt2-ops-01: reopen alone skipped this step). A note changes nothing.
+  if (d.decision !== "note") {
+    const verb = DECISION_WORDS[d.decision]; // the words of what it does (effective.ts), never a reject worded as a return (hunt2-ops-02)
     const c = await requireConfirm(req, session, "decide", `${verb} ${d.incidentIds.length} ${d.incidentIds.length === 1 ? "case" : "cases"}`,
       { ids: [...d.incidentIds].sort(), decision: d.decision, escalateTo: d.escalateTo ?? null, note: d.note ?? null });
     if (!c.ok) return c.res;

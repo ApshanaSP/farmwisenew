@@ -17,6 +17,20 @@ export const DECISION_EFFECT = {
 } as const;
 type Effect = (typeof DECISION_EFFECT)[keyof typeof DECISION_EFFECT];
 
+/**
+ * What the Collector is asked to confirm, in words that say what the decision does (DECISION_EFFECT): a reject closes the case as
+ * Rejected for good (the officer's queue drops it, the citizen is told Rejected), so it is never worded as a return to the department
+ * (hunt2-ops-02: "Return to the department 1 case" closed it). Only a reopen sends work back.
+ */
+export const DECISION_WORDS = {
+  verify: "Verify and close",
+  resolve: "Mark resolved and close",
+  reject: "Reject and close (the department can no longer act on it)",
+  escalate: "Escalate",
+  reopen: "Send back to the department",
+  note: "Add a note"
+} as const;
+
 /** The decisions with an effect, as a quoted SQL list. */
 export const EFFECT_KEYS = Object.keys(DECISION_EFFECT).map((k) => `'${k}'`).join(", ");
 

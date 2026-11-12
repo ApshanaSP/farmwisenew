@@ -158,6 +158,8 @@ export function scopeWhere(s: Scope, now: string, closed = false): { sql: string
 }
 
 const SEV_RANK = `FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')`;
+/** Most incident pins the Collector's map draws (open first, then the most severe); the legend says when it cut a layer. */
+export const PIN_LIMIT = 150;
 /**
  * Closed-work checks the Collector does personally: severe incidents only. Every other closure is verified by the
  * department itself (the officer console's "Close as done", with remarks and photos), so My Tasks holds only the
@@ -178,6 +180,12 @@ const DECIDED = (decisions: string) =>
   `EXISTS (SELECT 1 FROM ${ops("collector_decisions")} d WHERE d.incident_id = i.incident_id AND d.decision IN (${decisions}))`;
 /** Effective open flag and status (the Collector's latest decision on top), the same rule as overlay() for row lists. */
 const EFF = effectiveSql(ops("collector_decisions"));
+/**
+ * "Severe, not yet checked" (the snapshot tile and the list it opens, one rule): open now and severe, with the effective verified flag
+ * still 0, or the department asking for the Collector's check. Read from the effective state (the latest decision with an effect), not
+ * from "ever decided": a case the Collector resolved, verified or rejected and then reopened is open and unchecked again (console-sync-06).
+ */
+const NOT_YET_CHECKED = `(${EFF.open} = 1 AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1))`;
 
 // ---- Shared with the Department Officer console (src/lib/officer): completion reports officers send.
 // A grievance waits for the Collector when the department's latest officer step is "send" and the
@@ -773,16 +781,31 @@ export async function kpiBlock(s: Scope, now: string) {
  * verify themselves (metrics.ts left_to_departments).
  */
 export async function awaitingCheck(s: Scope, now: string): Promise<{ n: number; leftToDepts: number }> {
-  const tw = periodWindow(s.period, now, "i.last_update_at");
-  const sent = await sentByOfficer();
+  const A = await awaitingRule(s.period, now);
   const scope = [s.zone ? "AND i.zone_no = ?" : "", s.dept ? "AND i.lead_dept = ?" : "", s.cat ? "AND i.category_code = ?" : "", s.taluk ? "AND i.taluk_code = ?" : ""].join(" ");
   const params = [...(s.zone ? [s.zone] : []), ...(s.dept ? [s.dept] : []), ...(s.cat ? [s.cat] : []), ...(s.taluk ? [s.taluk] : [])];
-  const core = `${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
-    AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}`;
-  const [r] = await q(`SELECT COUNT(DISTINCT CASE WHEN (${core} AND ${FOR_COLLECTOR}) OR ${sent} THEN ${CLUSTER} END) AS n,
-              COUNT(DISTINCT CASE WHEN ${core} AND NOT ${FOR_COLLECTOR} AND NOT ${sent} THEN ${CLUSTER} END) AS left_to_depts
-       FROM incidents i WHERE 1 = 1 ${scope}`, [...tw.params, ...tw.params, ...params]);
+  const [r] = await q(`SELECT COUNT(DISTINCT CASE WHEN ${A.mine} THEN ${CLUSTER} END) AS n,
+              COUNT(DISTINCT CASE WHEN ${A.others} THEN ${CLUSTER} END) AS left_to_depts
+       FROM incidents i WHERE 1 = 1 ${scope}`, [...A.params, ...A.params, ...params]);
   return { n: Number(r?.n ?? 0), leftToDepts: Number(r?.left_to_depts ?? 0) };
+}
+
+/**
+ * The "waiting for your check" rule (metrics.ts awaiting_check), the ONE definition behind My Tasks (its count, rows and group members),
+ * the list's "Awaiting your verification", the CSV's "Closed work to check" and the departments table's column of the same name. Each
+ * used to carry its own copy: the CSV had no period and counted incidents, not groups (console-sync-03); the departments table counted
+ * the pipeline's awaiting flag on any severity (console-sync-07).
+ *   mine:   closed work on severe incidents the department reported done (last_update_at in the period; `period` null = any date), still
+ *           open and with no Collector decision; or a completion report an officer sent from the console, whatever its date
+ *   others: the other such closures, which the departments verify themselves (metrics.ts left_to_departments)
+ * `params` are for ONE use of `mine` or of `others`. Count one per group (CLUSTER).
+ */
+async function awaitingRule(period: Period | null, now: string): Promise<{ mine: string; others: string; params: unknown[]; sent: string }> {
+  const tw = period ? periodWindow(period, now, "i.last_update_at") : null;
+  const sent = await sentByOfficer();
+  const core = `${tw ? `${tw.sql} AND ` : ""}i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
+    AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}`;
+  return { mine: `((${core} AND ${FOR_COLLECTOR}) OR ${sent})`, others: `(${core} AND NOT ${FOR_COLLECTOR} AND NOT ${sent})`, params: tw?.params ?? [], sent };
 }
 
 /** Everything on the console's first pages. Read-only: routing news complaints is a job (routeNewsComplaints). */
@@ -800,15 +823,17 @@ export async function overview(period: Period, zone: number | null, dept: string
   // and asked for verification, with no Collector decision yet, and that meet the
   // Collector's criteria (FOR_COLLECTOR); the others are counted as left to departments.
   // Completion reports sent from the officer console always come to My Tasks until the Collector decides.
-  const tw = periodWindow(period, now, "i.last_update_at");
-  const sent = await sentByOfficer();
+  const A = await awaitingRule(period, now);
+  const sent = A.sent;
   const inScope = `${zone ? "AND i.zone_no = ?" : ""} ${dept ? "AND i.lead_dept = ?" : ""} ${cat ? "AND i.category_code = ?" : ""}
     ${taluk ? "AND i.taluk_code = ?" : ""}`;
   const scopeParams = [...(zone ? [zone] : []), ...(dept ? [dept] : []), ...(cat ? [cat] : []), ...(taluk ? [taluk] : [])];
-  const awaitCore = `${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
-    AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}`;
-  const qWhere = `1 = 1 ${inScope} AND ((${awaitCore} AND ${FOR_COLLECTOR}) OR ${sent})`;
-  const qParams = [...scopeParams, ...tw.params];
+  const qWhere = `1 = 1 ${inScope} AND ${A.mine}`;
+  const qParams = [...scopeParams, ...A.params];
+  // the departments table's "Awaiting your verification": My Tasks per department, in the zone / category / taluk (not the department
+  // filter, as the rest of the table), one per group (console-sync-07)
+  const ndScope = `${zone ? "AND i.zone_no = ?" : ""} ${cat ? "AND i.category_code = ?" : ""} ${taluk ? "AND i.taluk_code = ?" : ""}`;
+  const ndParams = [...(zone ? [zone] : []), ...(cat ? [cat] : []), ...(taluk ? [taluk] : [])];
   // Severity-based incidents: open incidents in the period, minus news complaints sent to a department.
   const sevWhere = `${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED}`;
 
@@ -830,7 +855,7 @@ export async function overview(period: Period, zone: number | null, dept: string
       `SELECT i.incident_id AS id, i.lat, i.lon, i.severity_level AS sev, ${EFF.open} AS open, i.citizen_complaints AS complaints,
               ${TITLE} AS title, ${EFF.status} AS status, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM incidents i WHERE ${w.sql} AND ${PINNABLE}
-       ORDER BY ${EFF.open} DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT 150`,
+       ORDER BY ${EFF.open} DESC, ${SEV_RANK}, i.citizen_complaints DESC, i.first_reported_at DESC LIMIT ${PIN_LIMIT}`,
       w.params
     ),
     // the legend: pins per layer, plus the incidents with no exact place (not pinned); together they make the scope's total
@@ -897,13 +922,22 @@ export async function overview(period: Period, zone: number | null, dept: string
        AND ${periodWindow(period, now).sql}${dept ? " AND i.lead_dept = ?" : ""} ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
       [...periodWindow(period, now).params, ...(dept ? [dept] : [])]
     ),
-    q(
-      `SELECT i.lead_dept AS code, dp.name, dp.head, SUM(${EFF.open}) AS open, COUNT(*) AS n,
-              SUM(i.severity_level = 'Severe') AS severe,
-              SUM(${EFF.open} = 1 AND i.awaiting_collector = 1) AS unverified
-       ${FROM} WHERE ${nd.sql} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY open DESC, n DESC`,
-      nd.params
-    ),
+    Promise.all([
+      q(
+        `SELECT i.lead_dept AS code, dp.name, dp.head, SUM(${EFF.open}) AS open, COUNT(*) AS n,
+                SUM(i.severity_level = 'Severe') AS severe
+         ${FROM} WHERE ${nd.sql} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY open DESC, n DESC`,
+        nd.params
+      ),
+      q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(DISTINCT ${CLUSTER}) AS unverified ${FROM}
+         WHERE 1 = 1 ${ndScope} AND ${A.mine} GROUP BY i.lead_dept, dp.name, dp.head`, [...ndParams, ...A.params])
+    ]).then(([rows, waiting]) => {
+      // a department with work waiting for the check but nothing reported in the period is still listed, with its count
+      const by = new Map(waiting.map((w) => [String(w.code), Number(w.unverified)]));
+      const out: Row[] = rows.map((r) => ({ ...r, unverified: by.get(String(r.code)) ?? 0 }));
+      for (const w of waiting) if (!rows.some((r) => String(r.code) === String(w.code))) out.push({ ...w, open: 0, n: 0, severe: 0 });
+      return out;
+    }),
     dept ? deptSnapshot(dept, s, now) : zone ? areaSnapshot(zone, s, now) : districtSnapshot(s, now),
     q(
       `SELECT i.lead_dept AS code, dp.name, AVG(i.hours_open) AS h, COUNT(*) AS n ${FROM}
@@ -937,6 +971,7 @@ export async function overview(period: Period, zone: number | null, dept: string
     withDecisions(bell).then(withSources)
   ]);
   const grouped = taskRows.filter((r) => Number(r.grouped) > 1).map((r) => String(r.grp));
+  const pinRows = pins.map((r) => ({ ...r, cat: r.sev === "Severe" ? "severe" : Number(r.complaints) > 0 ? "complaint" : "other" }));
   const [actionsTaken, reportsSent, assigned, taskMembers] = await Promise.all([
     officerActions(taskRows.map((r) => r.id)),
     officerReports(taskRows.map((r) => r.id)),
@@ -970,10 +1005,16 @@ export async function overview(period: Period, zone: number | null, dept: string
     backlog: backlog[0] ? { code: backlog[0].code, name: backlog[0].name, hours: Number(backlog[0].h), n: Number(backlog[0].n) } : null,
     map: {
       zoneCounts: Object.fromEntries(zoneTable.map((z) => [z.zone, Number(z.n)])),
-      pins: pins.map((r) => ({
-        ...r,
-        cat: r.sev === "Severe" ? "severe" : Number(r.complaints) > 0 ? "complaint" : "other"
-      })),
+      pins: pinRows,
+      /**
+       * the pins drawn per layer; the legend shows these, with the layer's total beside them when the limit cut it (hunt2-ops-11: the
+       * legend said 205 severe and only the unlocated left off, while 98 were drawn)
+       */
+      drawn: { severe: pinRows.filter((r) => r.cat === "severe").length, complaint: pinRows.filter((r) => r.cat === "complaint").length,
+        other: pinRows.filter((r) => r.cat === "other").length },
+      /** at most this many pins are drawn: open first, then the most severe; the list has every one */
+      pinLimit: PIN_LIMIT,
+      /** every locatable incident in scope, per layer (drawn or not) */
       layerCounts: {
         severe: Number(layerCounts[0]?.severe ?? 0),
         complaint: Number(layerCounts[0]?.complaint ?? 0),
@@ -1169,8 +1210,7 @@ async function districtSnapshot(s: Scope, now: string) {
     // any date (as the list it opens, scope "all"), but the console's other filters as the list applies them: the tile counted the whole
     // district whatever the category or taluk (20 against a list of 6, or of 0: QA pass 6, P6-028)
     q(
-      `SELECT COUNT(*) AS n FROM incidents i WHERE ${EFF.open} = 1 AND i.severity_level = 'Severe'
-       AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}
+      `SELECT COUNT(*) AS n FROM incidents i WHERE ${NOT_YET_CHECKED}
        ${s.zone ? "AND i.zone_no = ?" : ""} ${s.dept ? "AND i.lead_dept = ?" : ""} ${s.cat ? "AND i.category_code = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`,
       [s.zone, s.dept, s.cat, s.taluk].filter((v) => v != null && v !== "")
     ),
@@ -1382,12 +1422,11 @@ export async function list(f: ListFilter) {
   if (st === "awaiting" && f.scope === "period") {
     // My Tasks counts closed work by its last update in the period (the officer's report can come long after the
     // complaint), and a report sent from the officer console whatever its date: the list follows the same rule
-    const tw = periodWindow(f.period, now, "i.last_update_at");
+    const A = await awaitingRule(f.period, now);
     if (f.zone) (where.push("i.zone_no = ?"), params.push(f.zone));
     if (f.dept) (where.push("i.lead_dept = ?"), params.push(f.dept));
-    where.push(`((${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
-      AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${await sentByOfficer()})`);
-    params.push(...tw.params);
+    where.push(A.mine);
+    params.push(...A.params);
   } else if (f.scope === "period") {
     const w = scopeWhere({ period: f.period, zone: f.zone, dept: f.dept }, now, st === "Resolved"); // Resolved: closed in the window, as the tile counts it (PB-214)
     where.push(w.sql);
@@ -1410,11 +1449,9 @@ export async function list(f: ListFilter) {
   // verified work still open, and what the Collector has just verified ("Verify and close" closes it: its row says verified)
   else if (st === "verified") where.push(`${EFF.verified} = 1 AND (${EFF.open} = 1 OR ${EFF.latest} = 'verify')`);
   else if (st === "overdue") where.push(`${EFF.open} = 1 AND ${pastDueSql(now)} AND NOT ${ROUTED}`);
-  else if (st === "awaiting")
-    where.push(`((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR} AND NOT ${DECIDED("'verify','reject','resolve','reopen'")})
-      OR ${await sentByOfficer()})`);
+  else if (st === "awaiting") where.push((await awaitingRule(null, now)).mine); // any date (scope all / 30d): the same rule without the period
   else if (st === "critical")
-    where.push(`${EFF.open} = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`);
+    where.push(NOT_YET_CHECKED);
   else if (st) (where.push(`${EFF.status} = ?`), params.push(st));
   if (f.q) {
     // every word in any order, as in the search box (the list once matched "velachery flooding" as one phrase: 0 rows)
@@ -1535,15 +1572,20 @@ export async function exportRows(period: Period, zone: number | null, dept: stri
   if (dept) { extra.push("i.lead_dept = ?"); xp.push(dept); }
   if (focus.cat) { extra.push("i.category_code = ?"); xp.push(focus.cat); }
   if (focus.taluk) { extra.push("i.taluk_code = ?"); xp.push(focus.taluk); }
-  const sent = await sentByOfficer();
-  const [attn, checks] = await Promise.all([
+  // "Closed work to check" is My Tasks: the same rule, the same period, one row per group (the member a task shows), every one of them
+  // (console-sync-03: the CSV listed every undecided severe closure of any date, per incident, cut at 100)
+  const A = await awaitingRule(period, now);
+  const [attn, members] = await Promise.all([
     attentionRows(w),
-    q(`SELECT ${ROW}, ${sent} AS officer_sent ${FROM} WHERE ((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
-         AND NOT ${DECIDED("'verify','reject','resolve','reopen'")}) OR ${sent}) ${extra.map((x) => `AND ${x}`).join(" ")}
-       ORDER BY ${SEV_RANK}, i.last_update_at ASC LIMIT 100`, xp)
+    q(`SELECT ${ROW}, ${A.sent} AS officer_sent, ${CLUSTER} AS grp ${FROM} WHERE ${A.mine} ${extra.map((x) => `AND ${x}`).join(" ")}
+       ORDER BY officer_sent DESC, i.last_update_at ASC`, [...A.params, ...xp])
   ]);
-  // one row per incident: closed work the department sent for checking is listed as such, not also as needing attention
-  const checking = new Set(checks.map((r) => String(r.id)));
+  const checks: Row[] = [];
+  const seen = new Set<string>();
+  for (const r of members) if (!seen.has(String(r.grp))) { seen.add(String(r.grp)); checks.push(r); }
+  // one row per incident: closed work the department sent for checking (any member of the group) is listed as such, not also as
+  // needing attention
+  const checking = new Set(members.map((r) => String(r.id)));
   const need = attn.need.filter((r) => !checking.has(String(r.id))).map((r) => ({ r, p: r.why }));
   const row = (list: string, r: Row, why: string) => ({
     list, id: r.id, what: r.title || r.type, where: [r.ward ? `Ward ${r.ward}` : null, r.zone_name].filter(Boolean).join(", ") || "Chennai",

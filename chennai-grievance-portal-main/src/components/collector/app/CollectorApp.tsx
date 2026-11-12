@@ -178,7 +178,8 @@ export interface Console {
   zoneNameOf: (z: number) => string | null;
   talukName: (code: string | null) => string | null;
   verify: (rows: Row[]) => Promise<boolean>;
-  sendBack: (row: Row) => Promise<boolean>;
+  /** every incident of the task (Attention.taskGroup), as verify */
+  sendBack: (rows: Row[]) => Promise<boolean>;
   toast: (msg: string, kind?: "ok" | "alert", act?: Toast["act"]) => void;
   closeAll: () => void;
   layout: Layout;
@@ -658,7 +659,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     talukName,
     zoneNameOf: (z) => ov.zoneTable.find((x) => x.zone === z)?.name ?? null,
     verify: (rows) => decide(rows, "verify"),
-    sendBack: (row) => decide([row], "reopen", "Sent back to the department: the Collector did not accept the reported action."),
+    sendBack: (rows) => decide(rows, "reopen","Sent back to the department: the Collector did not accept the reported action."),
     toast, closeAll,
     layout, setLayout, workspaceName,
     openWorkspace: () => setModal({ kind: "workspace", title: "Workspaces" }),

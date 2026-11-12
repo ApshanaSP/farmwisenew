@@ -12,7 +12,18 @@ import { Empty, SEVS, SEV_HEX, deptIcon, fullTitle, rel, sevTone, type Row } fro
 import type { Console } from "./CollectorApp";
 import "./attention.css";
 
-export const TASK_RULE = "You verify closed work on severe incidents only, from the department's remarks and site photos. " +
+/** The incidents one My Tasks row stands for: every member of its group (the server's `members`), the row itself first. */
+export function taskGroup(i: Row): Row[] {
+  const ids: string[] = Array.isArray(i.members) && i.members.length ? i.members.map(String) : [String(i.id)];
+  return [i, ...ids.filter((id) => id !== String(i.id)).map((id) => ({ ...i, id }))];
+}
+/** What a My Tasks row's two buttons do: both act on the whole group. */
+export const taskActions = (c: Pick<Console, "verify" | "sendBack">) => ({
+  verify: (i: Row) => c.verify(taskGroup(i)),
+  sendBack: (i: Row) => c.sendBack(taskGroup(i))
+});
+
+export const TASK_RULE ="You verify closed work on severe incidents only, from the department's remarks and site photos. " +
   "The department verifies and closes everything else itself. The same problem reported several times in one area is one task.";
 
 export function AttentionCard({ d, c, only }: { d: OverviewData; c: Console; only?: "sev" | "tasks" }) {
@@ -95,12 +106,13 @@ function SevList({ d, c }: { d: OverviewData; c: Console }) {
 
 function TaskList({ d, c }: { d: OverviewData; c: Console }) {
   // Verify: the button turns into a green check, then the row collapses (the reload removes it) and the count ticks down.
-  // A grouped task (the same problem reported several times in one area) verifies every incident of the group.
+  // A grouped task (the same problem reported several times in one area) is one task: Verify and Send back both act on every
+  // incident of the group (console-sync-08: Send back reopened one member, so the task stayed with another member as its row).
   const [done, setDone] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
+  const act = taskActions(c);
   const verify = async (i: Row) => {
-    const ids: string[] = i.members ?? [i.id];
-    if (await c.verify(ids.map((id) => (id === i.id ? i : { ...i, id })))) setDone((s) => new Set(s).add(i.id));
+    if (await act.verify(i)) setDone((s) => new Set(s).add(i.id));
   };
   return (
     <>
@@ -125,7 +137,7 @@ function TaskList({ d, c }: { d: OverviewData; c: Console }) {
                 <I n={isOpen ? "up" : "chevd"} className="att-chev" />
               </button>
               <span className="att-btns">
-                <button className="att-ib" onClick={() => c.sendBack(i)} disabled={c.busyIds.has(i.id)} title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
+                <button className="att-ib" onClick={() => act.sendBack(i)} disabled={c.busyIds.has(i.id)} title="Not satisfied: send it back to the department" aria-label="Send back to the department"><I n="refresh" /></button>
                 {proof ? (
                   <button className={`att-act ok${done.has(i.id) ? " done" : ""}`} onClick={() => verify(i)} disabled={c.busyIds.has(i.id) || done.has(i.id)} title="The work is done: close it" data-jarvis-never>
                     {c.busyIds.has(i.id) ? <I n="refresh" className="spin" /> : <I n="check" />}<span>{done.has(i.id) ? "Verified" : "Verify"}</span>
