@@ -4,28 +4,29 @@
  * for the check instead of being passed on quietly. A whole Aadhaar number never leaves this file.
  */
 import { MANU_DEPTS, READ_FIELDS, type ReadField, type Reading } from "./constants";
+import { asciiDigits } from "@/lib/thunai/digits";
 
 export type RawReading = Omit<Reading, "ward" | "unsure_fields"> & { ward: string | null; unsure_fields: string[] };
 
 // QA pass 5 (P5-007): a petition's numbers come from a reader of handwriting and print, in Tamil and English. JavaScript's \d is ASCII only,
-// so Tamil digits (௦-௯) and full-width digits (０-９) were dropped as "not a digit", and every number field joined all the digits it held.
+// so Tamil digits (௦ to ௯) and full-width digits (０ to ９) were dropped as "not a digit", and every number field joined all the digits it held.
 // Every number below is read through asciiDigits() first, and taken as one number with clear edges.
-const DIGIT = "0-9௦-௯０-９";
+// Digits of every script (Tamil, full-width, Devanagari ...: Unicode's Nd), read through pass 4's shared helper (lib/thunai/digits.ts, RC-13).
+const DIGIT = String.raw`\p{Nd}`;
 // Between the groups: anything that is not a letter, a mark or a digit (spaces, line breaks, dots, commas, slashes, underscores, every kind of
 // dash and minus, full-width punctuation, zero-width characters), up to 8 of them. The first version took only space, dot, slash and the ASCII
 // hyphen, so an en dash, a minus sign, a comma or a number split over two indented lines got through whole (P5-007, found by the reviewer).
-const SEP = String.raw`[^\p{L}\p{M}${DIGIT}]`;
-const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])([${DIGIT}]{4})${SEP}{0,8}([${DIGIT}]{4})${SEP}{0,8}([${DIGIT}]{4})(?![${DIGIT}])`, "gu");
+const SEP = String.raw`[^\p{L}\p{M}\p{Nd}]`;
+const AADHAAR = new RegExp(String.raw`(?<![${DIGIT}+])(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})${SEP}{0,8}(${DIGIT}{4})(?!${DIGIT})`, "gu");
 /** Written in Aadhaar's 4-4-4 groups (any separators between), as a reader returns one it was not asked for. */
-const AADHAAR_SHAPED = new RegExp(String.raw`^\s*[${DIGIT}]{4}${SEP}{1,8}[${DIGIT}]{4}${SEP}{1,8}[${DIGIT}]{4}\s*$`, "u");
+const AADHAAR_SHAPED = new RegExp(String.raw`^\s*${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}${SEP}{1,8}${DIGIT}{4}\s*$`, "u");
 
-/** Tamil and full-width digits as ASCII digits; nothing else changes. */
-export const asciiDigits = (s: string): string =>
-  s.replace(/[௦-௯]/g, (c) => String(c.charCodeAt(0) - 0x0be6)).replace(/[０-９]/g, (c) => String(c.charCodeAt(0) - 0xff10));
+/** Every script's digits as ASCII digits; nothing else changes (pass 4's helper). */
+export { asciiDigits };
 
 /**
- * Any 12-digit number in the text, written with its first 8 digits hidden: in any of the digit forms above, with up to eight separators of
- * any kind between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
+ * Any 12-digit number in the text, written with its first 8 digits hidden: in any script's digits, with up to eight separators of any kind
+ * between the groups. A number written straight after "+" is a phone number (+91...), not Aadhaar.
  */
 export const maskAadhaar = (s: string): string => s.replace(AADHAAR, (_m, _a, _b, c) => `XXXX XXXX ${asciiDigits(c)}`);
 
