@@ -159,6 +159,7 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
     const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at })));
     let changed = 0;
     const closing: Promise<void>[] = [];
+    const grew: string[] = [];
     for (const r of rows) {
       const p = prog.get(String(r.complaint_code));
       if (!p) continue;
@@ -168,10 +169,7 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
       for (const j of added)
         await pool.query(`INSERT INTO complaint_status_history (complaint_id, status, stage, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
           [r.id, j.status, j.stage, j.remarks, actorUserId, j.created_at]);
-      // the grievance dataset gets the new history rows too, as a filing gets its line (PB-218, pass4-open-01). Fire-and-forget, like the
-      // filing's: a dataset problem must never fail or slow down an officer's step or a Collector's decision.
-      if (added.length)
-        appendStatusChangeToDataset(String(r.complaint_code)).catch((err) => console.error(`[dataset] could not append ${r.complaint_code}:`, err));
+      if (added.length) grew.push(String(r.complaint_code));
       if (r.status !== p.status) {
         await pool.query(`UPDATE complaints SET status = ?, rejected_stage = ?, remarks = COALESCE(?, remarks) WHERE id = ?`,
           [p.status, p.rejectedStage, p.remarks, r.id]);
@@ -183,6 +181,11 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
       }
     }
     await Promise.all(closing);
+    // the grievance dataset gets the new history rows too, as a filing gets its line (PB-218, pass4-open-01). Fire-and-forget, like the
+    // filing's: a dataset problem must never fail or slow down an officer's step or a Collector's decision. Started once this is done,
+    // on the next turn of the event loop: the first read of the dataset file is parsed in one go and must not hold up the decision.
+    if (grew.length)
+      setImmediate(() => { for (const code of grew) appendStatusChangeToDataset(code).catch((err) => console.error(`[dataset] could not append ${code}:`, err)); });
     return changed;
   } catch (e) {
     console.warn(`[complaints] progress not written for ${incidentIds.join(", ")}: ${(e as Error).message}`);

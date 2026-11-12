@@ -27,6 +27,8 @@ vi.mock("@/lib/dataset/append", async (orig) => {
 });
 
 const { syncComplaints } = await import("@/lib/complaint-progress");
+/** the append starts on the next turn of the event loop, then runs on its queue */
+const settled = async () => { await new Promise((r) => setImmediate(r)); await (global as unknown as { __datasetQueue?: Promise<void> }).__datasetQueue; };
 
 function fresh() {
   setDatabaseNames(["district_collector_dashboard", "district_intel", "district_intel_ops"]);
@@ -53,8 +55,10 @@ describe("pass4-open-01: an officer's step or a Collector's decision reaches the
   it("syncComplaints hands each complaint whose history grew to the dataset append, and only those", async () => {
     H.db.exec(`INSERT INTO officer_steps (incident_id, dept_code, step, at) VALUES ('INC-1', 'GCC-SWD', 'approve', '2026-10-10 11:00:00')`);
     await syncComplaints(["INC-1", "INC-2"], 7);
+    await settled();
     expect(H.appended).toEqual(["2026-111AAA"]);
     await syncComplaints(["INC-1"], 7); // nothing new: no second append
+    await settled();
     expect(H.appended).toEqual(["2026-111AAA"]);
   });
 
@@ -69,8 +73,7 @@ describe("pass4-open-01: an officer's step or a Collector's decision reaches the
                                                                                      ('INC-1', 'GCC-SWD', 'close', '2026-10-11 16:00:00')`);
       H.real = true;
       await syncComplaints(["INC-1"], 7);
-      // the append is fire-and-forget: wait for its queue
-      await (global as unknown as { __datasetQueue?: Promise<void> }).__datasetQueue;
+      await settled(); // the append is fire-and-forget: wait for it
       const lines = fs.readFileSync(path.join(dir, "grievance_status_history.csv"), "utf8").trim().split(/\r?\n/).slice(1);
       const statuses = lines.map((l) => l.split(",")[1]);
       expect(statuses).toEqual(expect.arrayContaining(["Approved by Department Officer", "Resolved by Department"]));
