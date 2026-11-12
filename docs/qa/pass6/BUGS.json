@@ -1741,12 +1741,14 @@
     "title": "Six unit tests mix SQLite own clock (datetime(now) in the test schema) with the app JS clock, so they fail whenever the process clock is moved (future-clock runs): they cannot check those paths for date time bombs",
     "found_by": "lead, future-clock run (phase 0)",
     "repro": "QA_FROZEN_NOW=<+30d> QA_CLOCK_TICKING=1 NODE_OPTIONS=--require tests/qa/pass4/freeze-clock.cjs node tests/qa/pass6/suite.mjs --tag future-30",
-    "failing_test": "src/lib/manu/manu.sqlite.test.ts (4), src/lib/manu/sms.pass5.test.ts (1), src/app/api/collector/decisions/route.sqlite.test.ts (1) under a moved clock",
-    "root_cause": "test schemas use DEFAULT (datetime(now,+330 minutes)) and inserts with SQLite datetime(now): SQLite reads the wall clock while the store dialect NOW() reads JS Date; in production both are the wall clock, so this is a test-harness limit, not a product bug",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null
+    "failing_test": "src/lib/aws/frozen-clock.fixall.test.ts::a frozen clock 30 days ahead: datetime('now'), a DEFAULT, date(), strftime() and julianday() all read it",
+    "root_cause": "test-harness limit, not an app bug: freeze-clock.cjs moved JS Date but not SQLite's datetime('now'); it now gives every node:sqlite database the moved clock for datetime/date/time/julianday/unixepoch/strftime. No test or app file changed.",
+    "fix_commit": "b3e838b",
+    "revert_check": "fails without (2 of 3) / passes with (3 of 3); the six named tests under now+30d: 6 fail with the old harness, 66 of 66 pass with the new",
+    "status": "fixed",
+    "reviewer": null,
+    "note": "A harness fix. CURRENT_TIMESTAMP (a keyword) still reads the wall clock; deptlock.sqlite.test.ts uses it and passes today.",
+    "closed_in": "fixall"
   },
   {
     "id": "P6-002",
