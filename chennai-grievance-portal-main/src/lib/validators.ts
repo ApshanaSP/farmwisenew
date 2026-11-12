@@ -8,7 +8,11 @@ import { isComplaintMediaPath } from "@/lib/complaint-media-path";
 // hyphen, tags), the variation selectors, the combining grapheme joiner and the blank letters (Hangul fillers, Braille blank), so a
 // field of only "\u200B" passed min(1) and filed a blank complaint (hunt2-desk-17). The value is kept as typed: a joiner inside a
 // Tamil word is part of the word. Only the "is anything there" check ignores them.
-const INVISIBLE = /[\p{Cf}\u034F\u115F\u1160\u2800\u3164\uFE00-\uFE0F\uFFA0\u{E0100}-\u{E01EF}]|\s/gu;
+// Unicode's own lists, not a hand-kept one: control characters (Cc: U+0001, U+007F, U+0085, U+009F ... passed the first list, reviewerA-01),
+// format characters (Cf), every Default_Ignorable_Code_Point (which takes in the Hangul fillers, variation selectors, the Khmer
+// inherent vowels U+17B4/17B5 and the Mongolian selectors U+180B-180F), every separator (Z) and whitespace; plus the Braille blank,
+// which prints nothing but is a symbol to Unicode.
+const INVISIBLE = /[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}\p{Z}\u2800]|\s/gu;
 
 /** The text with every invisible character and every space removed: what a reader would actually see. */
 export function visibleText(value: string | null | undefined): string {
