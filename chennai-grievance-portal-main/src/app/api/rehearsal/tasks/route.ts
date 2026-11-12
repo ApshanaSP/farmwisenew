@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFormCapped } from "@/lib/body-cap";
 import { failed, fresh, officerSession } from "@/lib/officer/guard";
 import { newPhotoDir, removePhotoDir, savePhotos, sniff, type PhotoExt } from "@/lib/officer/photos";
 import { OFFICER } from "@/lib/officer/departments";
@@ -26,7 +27,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
-  const form = await req.formData().catch(() => null);
+  // one photo at its limit plus the text fields: a larger request is refused before it is read into memory (officer-day-25,
+  // reviewerA-02: req.formData() read the whole body before the photo's size was checked)
+  const { form, tooLarge } = await readFormCapped(req, OFFICER.maxPhotoBytes + 64 * 1024);
+  if (tooLarge) return NextResponse.json({ error: `The photo must be ${OFFICER.maxPhotoBytes / 1024 / 1024} MB or smaller.` }, { status: 413 });
   if (!form) return NextResponse.json({ error: "Send the task as a form." }, { status: 400 });
   const id = Number(form.get("id"));
   if (!Number.isInteger(id) || id <= 0) return NextResponse.json({ error: "No such task." }, { status: 400 });
