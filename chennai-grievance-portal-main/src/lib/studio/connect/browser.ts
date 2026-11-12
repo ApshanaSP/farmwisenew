@@ -8,12 +8,16 @@
  *   - sign-ins a program must not do (OTP, CAPTCHA, single sign-on): a visible window opens on this PC and the
  *     Collector signs in once; the session is kept
  *
- * It drives the Edge or Chrome already on the computer (no download needed), else Playwright's own Chromium. Every
- * request the page makes passes the same public-address check as a plain download; images, fonts and media are not
- * loaded. It never solves a CAPTCHA, never fills an OTP and never hides that it is automated.
+ * It drives the Edge or Chrome already on the computer (no download needed), else Playwright's own Chromium. The browser
+ * is started behind the Studio's egress proxy (connect/egress.ts) with no bypass, so every connection a page makes
+ * (navigations and the redirects Chromium follows itself, POSTs, fetches, WebSockets, workers, iframes) passes the same
+ * address policy as a plain download, at the moment it connects; a browser that turns out not to use the proxy is closed
+ * before it reads anything. Images, fonts and media are not loaded. It never solves a CAPTCHA, never fills an OTP and
+ * never hides that it is automated.
  */
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { checkHost, LinkError, MAX_BYTES } from "@/lib/studio/fetchurl";
+import { egress, REFUSED_HEADER } from "@/lib/studio/connect/egress";
 
 export interface Captured { url: string; text: string; status: number }
 export interface Visit { html: string; url: string; title: string; json: Captured[]; session: string | null; signedIn: "none" | "reused" | "fresh" | "manual" }
@@ -37,18 +41,60 @@ async function engine() {
   }
 }
 
-/** Edge, then Chrome, then Playwright's own Chromium: whichever this computer has. */
+/**
+ * What the browser is started with, besides the proxy. Each closes a way out that does not pass a proxy:
+ *   - WebRTC sends UDP (STUN) and TCP (TURN) to any address it is given: only through the proxy, or not at all
+ *   - QUIC (HTTP/3, WebTransport) is UDP and cannot be proxied: off
+ *   - no name is looked up by the browser itself (the proxy resolves every one): a DNS prefetch reaches nothing, and anything that
+ *     tried to connect round the proxy by name could not find it
+ */
+const FENCE_ARGS = [
+  "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+  "--disable-quic",
+  "--dns-prefetch-disable",
+  "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1"
+];
+
+/** Edge, then Chrome, then Playwright's own Chromium: whichever this computer has. Always behind the egress proxy. */
 async function launch(headless: boolean): Promise<Browser> {
   const chromium = await engine();
+  const proxy = await egress();
   const tries: { channel?: string; executablePath?: string }[] = [];
   if (process.env.STUDIO_BROWSER_PATH) tries.push({ executablePath: process.env.STUDIO_BROWSER_PATH });
   tries.push({ channel: "msedge" }, { channel: "chrome" }, {});
   let last: unknown;
   for (const t of tries) {
-    try { return await chromium.launch({ headless, ...t, args: ["--disable-dev-shm-usage"] }); } catch (e) { last = e; }
+    let browser: Browser;
+    // "<-loopback>": Chromium sends this machine's own addresses (localhost, 127.0.0.1, [::1], link-local) round a proxy unless told not to
+    try { browser = await chromium.launch({ headless, ...t, proxy: { server: proxy.server, bypass: "<-loopback>" }, args: ["--disable-dev-shm-usage", ...FENCE_ARGS] }); } catch (e) { last = e; continue; }
+    try { await fenced(browser); return browser; } catch (e) { last = e; }
   }
+  if (last instanceof LinkError) throw last;
   console.warn("[studio] no browser could be started:", (last as Error)?.message?.slice(0, 200));
   throw new LinkError("No browser could be started on this server. Install Microsoft Edge or Google Chrome, or run: npx playwright install chromium", "browser");
+}
+
+/**
+ * The browser proves it sends everything through the proxy, this machine's own address included, before it opens any page: a
+ * one-time address on the proxy's own port must arrive AS A PROXY REQUEST. A browser that went round the proxy (a machine policy that
+ * overrides the proxy setting, a browser that ignores it) is closed and nothing is read.
+ */
+async function fenced(browser: Browser): Promise<void> {
+  const proxy = await egress();
+  const probe = proxy.probe();
+  const ctx = await browser.newContext({ serviceWorkers: "block" }).catch(() => null);
+  try {
+    if (ctx) {
+      const page = await ctx.newPage();
+      await page.goto(probe.url, { timeout: 15_000 }).catch(() => null);
+    }
+  } finally {
+    await ctx?.close().catch(() => {});
+  }
+  if (probe.seen() === "proxied") return;
+  await browser.close().catch(() => {});
+  console.error(`[studio] the browser did not go through the egress proxy (${probe.seen() ?? "nothing arrived"}); it was closed`);
+  throw new LinkError("The Studio's browser could not be fenced to public sites on this server, so it was not used. Download the file and drop it here instead.", "browser");
 }
 
 /** One shared hidden browser, closed after five idle minutes. */
@@ -71,21 +117,23 @@ async function newContext(browser: Browser, session: string | null | undefined):
   try { storageState = session ? (JSON.parse(session) as State) : undefined; } catch { storageState = undefined; }
   // Service Workers off: their fetches pass by context.route (QA pass 6, P6-017)
   const ctx = await browser.newContext({ storageState, locale: "en-IN", timezoneId: "Asia/Kolkata", viewport: { width: 1366, height: 900 }, acceptDownloads: false, serviceWorkers: "block" });
-  // a WebSocket is not a request, so context.route never sees it: a page reached a private address over one and its reply landed in the
-  // page the Studio reads (P6-017). Each passes the same public-address check, or is closed.
+  // a WebSocket is not a request, so context.route never sees it (P6-017): an early, clear refusal here; its connection is a CONNECT
+  // through the proxy all the same, and a Worker's WebSocket (which this never sees) is checked there.
   await ctx.routeWebSocket(/.*/, async (ws) => {
     let u: URL;
     try { u = new URL(ws.url().replace(/^ws(s?):/i, "http$1:")); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
     try { await checkHost(u); } catch { return ws.close({ code: 1008, reason: "blocked" }); }
     ws.connectToServer();
   });
-  // Workers, SharedWorkers and WebRTC are taken away before a page's own scripts run: a Worker's WebSocket passes by routeWebSocket, and
-  // WebRTC's STUN/TURN reach any address (QA pass 6, P6-029, reviewer 5). Reading a data page needs none of them.
+  // Workers, SharedWorkers, WebRTC and WebTransport are taken away before a page's own scripts run. Not the defence (the proxy sees
+  // their connections too); reading a data page needs none of them, so there is less to go wrong.
   await ctx.addInitScript(() => {
-    for (const k of ["Worker", "SharedWorker", "RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel"])
+    for (const k of ["Worker", "SharedWorker", "RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "WebTransport"])
       try { Object.defineProperty(globalThis, k, { value: undefined, configurable: false, writable: false }); } catch { /* not there */ }
   });
-  // every request passes the public-address check; pictures, fonts and media are not needed to read data
+  // pictures, fonts and media are not needed to read data; a private address is refused here early, with a clear error. The defence
+  // is the proxy: a redirect Chromium follows by itself, a POST answered 307 and a second answer to the same GET never come back to
+  // this route (QA pass 6, redteam-gate-01 and -04), but every one of them connects through the proxy.
   await ctx.route("**/*", async (route) => {
     const req = route.request();
     const t = req.resourceType();
@@ -94,19 +142,6 @@ async function newContext(browser: Browser, session: string | null | undefined):
     try { u = new URL(req.url()); } catch { return route.abort(); }
     if (u.protocol === "data:" || u.protocol === "blob:") return route.continue();
     try { await checkHost(u); } catch { return route.abort("blockedbyclient"); }
-    // a redirect is followed inside the browser without coming back here, so a public page's 302 to 127.0.0.1 was fetched and read (P6-029):
-    // a GET is first asked here without following redirects; a redirect's target passes the same check and the 3xx goes to the browser, whose
-    // next request comes back through this route. Anything else the browser loads itself, as before (a page fulfilled from here lost its
-    // own WebSockets). Other methods are not asked twice.
-    if (req.method() === "GET") {
-      const head = await route.fetch({ maxRedirects: 0 }).catch(() => null);
-      if (!head) return route.abort("failed");
-      const loc = head.status() >= 300 && head.status() < 400 ? head.headers()["location"] : null;
-      if (loc) {
-        try { await checkHost(new URL(loc, u)); } catch { return route.abort("blockedbyclient"); }
-        return route.fulfill({ response: head });
-      }
-    }
     return route.continue();
   });
   return ctx;
@@ -152,14 +187,24 @@ async function settle(page: Page) {
 export async function visit(url: string, opts: VisitOpts = {}): Promise<Visit> {
   const log = opts.log ?? (() => {});
   const manual = !!opts.manual;
+  // the addresses this opens itself: a clear refusal before any browser starts (file:, chrome:, a private address)
+  for (const raw of [url, opts.login?.loginUrl, opts.manual?.loginUrl]) {
+    if (!raw) continue;
+    let u: URL;
+    try { u = new URL(raw); } catch { throw new LinkError("That is not a valid link.", "invalid"); }
+    await checkHost(u);
+  }
   const browser = manual ? await launch(false) : await shared();
   const ctx = await newContext(browser, opts.session);
   const json: Captured[] = [];
   let bytes = 0;
+  let refusedNav = false;
   try {
     const page = await ctx.newPage();
     page.setDefaultTimeout(30_000);
     page.on("response", async (res) => {
+      // the page itself was sent on (a redirect, a form) to an address the proxy refused: the latest main-frame document decides
+      try { if (res.request().isNavigationRequest() && res.frame() === page.mainFrame()) refusedNav = !!res.headers()[REFUSED_HEADER]; } catch { /* a closed frame */ }
       try {
         const t = res.request().resourceType();
         if ((t !== "xhr" && t !== "fetch") || json.length >= 40 || !/json/i.test(res.headers()["content-type"] ?? "")) return;
@@ -227,6 +272,7 @@ export async function visit(url: string, opts: VisitOpts = {}): Promise<Visit> {
         }
       }
     }
+    if (refusedNav) throw new LinkError("The page sent the Studio on to a private network address, which cannot be read.", "private");
     const html = await page.content();
     const title = await page.title().catch(() => "");
     const session = signedIn !== "none" ? JSON.stringify(await ctx.storageState()) : opts.session ?? null;

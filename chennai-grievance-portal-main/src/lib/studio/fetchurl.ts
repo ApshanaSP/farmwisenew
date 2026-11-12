@@ -7,8 +7,18 @@
  * demo department app on this machine). Redirects are followed by hand and every hop is checked the same way (the
  * shared lib/netsafe.ts); a sign-in (key, password) is sent only to the host it was given for. Size and time are capped.
  *
+ * One address policy (reachable() below) decides for a plain download here and for every connection of the Studio's
+ * browser (connect/egress.ts, the proxy it is started behind), and both connect to exactly an address the policy
+ * returned: a name that answers public to the check and private to the connection (DNS rebinding) reaches nothing.
+ *
  * The Studio announces itself honestly: a site that refuses it is reported as refusing, never retried in disguise.
  */
+import dns from "node:dns/promises";
+import http from "node:http";
+import https from "node:https";
+import net from "node:net";
+import zlib from "node:zlib";
+import { Readable } from "node:stream";
 import { UnsafeUrlError, assertPublicUrl, safeFetch } from "@/lib/netsafe";
 import { dataLinksIn, feedLinkIn, htmlTables } from "@/lib/studio/parse";
 
@@ -39,13 +49,19 @@ export function directUrl(raw: string): string {
   return u.toString();
 }
 
-/** The test fixture server (scripts/studio-fixtures/server.mjs): allowed only with STUDIO_FIXTURES=1, and only this host and port. */
+/**
+ * The test fixture server (scripts/studio-fixtures/server.mjs): allowed only with STUDIO_FIXTURES=1 outside production, and only this
+ * host and port over http. A production build (NODE_ENV is fixed to "production" when Next builds it) never allows it, not even when
+ * STUDIO_FIXTURES=1 or STUDIO_ALLOW_HOSTS names it.
+ */
 export const FIXTURE_HOST = "127.0.0.1:4599";
-const fixtures = () => process.env.STUDIO_FIXTURES === "1";
+const production = () => process.env.NODE_ENV === "production";
+const fixtures = () => process.env.STUDIO_FIXTURES === "1" && !production();
 
 /** Hosts (host or host:port) the administrator allows although they are private: a demo department app on this PC. */
 export function allowed(u: URL): boolean {
-  if (fixtures() && u.protocol === "http:" && u.host === FIXTURE_HOST) return true;
+  // the fixture port is decided here alone: an allow-list entry ("127.0.0.1" or "127.0.0.1:4599") never opens it
+  if (u.host === FIXTURE_HOST) return fixtures() && u.protocol === "http:";
   const list = (process.env.STUDIO_ALLOW_HOSTS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   return list.includes(u.host.toLowerCase()) || list.includes(u.hostname.toLowerCase());
 }
@@ -84,8 +100,35 @@ function linkErrorOf(e: unknown): unknown {
   return new LinkError(e.message.includes("user name") ? "Put the user name and password in the sign-in fields, not in the link." : "Only http and https links can be read.", "invalid");
 }
 
-/** Throws for anything but a public http(s) address (lib/netsafe.ts), or a host in STUDIO_ALLOW_HOSTS. Used for every
- *  hop, every discovered file and every browser request. */
+/** All the addresses of a name (tests replace it). */
+export type Lookup = (host: string) => Promise<string[]>;
+const sysLookup: Lookup = (host) => dns.lookup(host, { all: true, verbatim: true }).then((l) => l.map((a) => a.address));
+
+/**
+ * The Studio's one address policy: the addresses `u` may be connected to, or a LinkError. lib/netsafe decides (http(s) only, no
+ * user:password in the link, localhost-like names refused, and every address DNS gives must be public: private, loopback,
+ * link-local, carrier-grade NAT, multicast, unspecified, IPv6 unique-local / link-local and IPv4 written inside IPv6 are refused);
+ * a host in STUDIO_ALLOW_HOSTS (or the test fixtures, outside production) is let through. The name is looked up ONCE, here: a caller
+ * connects only to an address returned (pinnedFetch below, the browser's proxy in connect/egress.ts), never to the name again.
+ */
+export async function reachable(u: URL, lookup: Lookup = sysLookup): Promise<string[]> {
+  const host = u.hostname.replace(/^\[|\]$/g, "");
+  let seen: string[] | null = null;
+  try {
+    await assertPublicUrl(u, { allow: allowed, lookup: async (h) => (seen = await lookup(h)) });
+  } catch (e) { throw linkErrorOf(e); }
+  if (net.isIP(host)) return [host];
+  if (seen) return seen;
+  // an allowed host (the policy let it through without looking it up): wherever its name points
+  const addrs = await lookup(host).catch(() => [] as string[]);
+  if (!addrs.length) throw new LinkError(`The address ${host} could not be found.`, "network");
+  return addrs;
+}
+
+/**
+ * Throws for anything but a public http(s) address (reachable()), or a host in STUDIO_ALLOW_HOSTS. An early answer for every hop,
+ * every discovered file and every browser request; the connection itself is checked again where it is made.
+ */
 export async function checkHost(u: URL) {
   if (u.protocol !== "http:" && u.protocol !== "https:") throw new LinkError("Only http and https links can be read.", "invalid");
   if (u.username || u.password) throw new LinkError("Put the user name and password in the sign-in fields, not in the link.", "invalid");
@@ -94,12 +137,67 @@ export async function checkHost(u: URL) {
   const c = hostOk.get(host);
   if (c && Date.now() - c.at < 60_000) { if (!c.ok) throw new LinkError("That address is on a private network and cannot be read.", "private"); return; }
   try {
-    await assertPublicUrl(u);
+    await reachable(u);
     hostOk.set(host, { ok: true, at: Date.now() });
   } catch (e) {
-    if (e instanceof UnsafeUrlError && e.code === "private") hostOk.set(host, { ok: false, at: Date.now() });
-    throw linkErrorOf(e);
+    if (e instanceof LinkError && e.code === "private") hostOk.set(host, { ok: false, at: Date.now() });
+    throw e;
   }
+}
+
+/** A lookup that answers only with addresses the policy returned (Node calls it for the connection instead of DNS). */
+function pinnedTo(addrs: string[]): net.LookupFunction {
+  const list = addrs.map((address) => ({ address, family: net.isIP(address) }));
+  return ((_host: string, opts: { all?: boolean } | number | undefined, cb: (...a: unknown[]) => void) => {
+    const done = typeof opts === "function" ? (opts as (...a: unknown[]) => void) : cb;
+    if (typeof opts === "object" && opts?.all) done(null, list);
+    else done(null, list[0].address, list[0].family);
+  }) as unknown as net.LookupFunction;
+}
+
+const NO_BODY = new Set([101, 103, 204, 205, 304]);
+
+/**
+ * fetch() whose connection goes to an address reachable() returned for the host, so the name is looked up once and the answer
+ * checked is the one connected to. No redirects are followed (lib/netsafe's safeFetch follows them by hand, each hop through here);
+ * gzip, deflate and br bodies are decoded as fetch() would.
+ */
+export const pinnedFetch = (input: string | URL | Request, init: RequestInit = {}) => pinnedFetchWith(sysLookup, input, init);
+
+/** pinnedFetch with its DNS given (tests). */
+export async function pinnedFetchWith(lookup: Lookup, input: string | URL | Request, init: RequestInit = {}): Promise<Response> {
+  const u = new URL(input instanceof Request ? input.url : String(input));
+  const addrs = await reachable(u, lookup);
+  const method = (init.method ?? "GET").toUpperCase();
+  const headers: Record<string, string> = { "accept-encoding": "gzip, deflate, br" };
+  new Headers(init.headers).forEach((v, k) => { headers[k] = v; });
+  const body = init.body;
+  if (body != null && typeof body !== "string" && !(body instanceof Uint8Array) && !(body instanceof URLSearchParams)) throw new TypeError("pinnedFetch: unsupported body");
+  const mod = u.protocol === "https:" ? https : http;
+  return new Promise<Response>((resolve, reject) => {
+    const req = mod.request(u, { method, headers, agent: false, lookup: pinnedTo(addrs), signal: init.signal ?? undefined }, (res) => {
+      const status = res.statusCode ?? 502;
+      const out = new Headers();
+      for (let k = 0; k + 1 < res.rawHeaders.length; k += 2) { try { out.append(res.rawHeaders[k], res.rawHeaders[k + 1]); } catch { /* a header fetch() would not take */ } }
+      if (NO_BODY.has(status) || method === "HEAD") {
+        res.resume();
+        resolve(new Response(null, { status: status < 200 ? 502 : status, statusText: res.statusMessage, headers: out }));
+        return;
+      }
+      const enc = String(res.headers["content-encoding"] ?? "").trim().toLowerCase();
+      const decode = enc === "gzip" || enc === "x-gzip" || enc === "deflate" ? zlib.createUnzip() : enc === "br" ? zlib.createBrotliDecompress() : null;
+      let stream: Readable = res;
+      if (decode) {
+        res.on("error", (e) => decode.destroy(e));
+        stream = res.pipe(decode);
+        out.delete("content-encoding");
+        out.delete("content-length");
+      }
+      resolve(new Response(Readable.toWeb(stream) as ReadableStream<Uint8Array>, { status, statusText: res.statusMessage, headers: out }));
+    });
+    req.on("error", reject);
+    req.end(body == null ? undefined : body instanceof URLSearchParams ? body.toString() : body);
+  });
 }
 
 /** A sign-in sent with a request: headers and query parameters, only to the host they were given for. */
@@ -130,7 +228,8 @@ export async function fetchOnce(raw: string, cred?: Credentials | null, accept?:
   await politeTurn(url.host);
   try {
     got = await safeFetch(url, {
-      allow: allowed, maxHops: 8, timeout: Math.min(timeoutMs, limit), maxBytes: MAX_BYTES,
+      // every hop's connection goes to the address the policy checked (no second lookup: no DNS rebinding)
+      fetchImpl: pinnedFetch as typeof fetch, allow: allowed, maxHops: 8, timeout: Math.min(timeoutMs, limit), maxBytes: MAX_BYTES,
       onTooLarge: () => new LinkError("The file is larger than 15 MB.", "size"),
       headers: { "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9", Accept: accept ?? "text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*;q=0.5" },
       // the sign-in goes to the host it was given for, on whichever hop reaches it
