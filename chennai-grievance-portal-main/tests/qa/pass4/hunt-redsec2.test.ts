@@ -11,7 +11,7 @@
 import { describe, it, expect } from "vitest";
 import { login } from "./lib/access-lib.mjs";
 
-const base = "http://127.0.0.1:3214";
+const base = `http://127.0.0.1:${process.env.REDSEC2_PORT ?? 3214}`; // the hunter's own port by default; a fixer runs it on the port of its own server
 const up = await fetch(`${base}/login`).then((r) => r.status < 500).catch(() => false);
 
 describe.skipIf(!up)("hunt-redsec2: step-up confirmation brute-force lockout", () => {

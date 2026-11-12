@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { I } from "@/components/collector/app/icons";
-import { useLang } from "@/lib/i18n/lang";
+import { useLangNow } from "@/lib/i18n/lang";
 import "./confirm.css";
 
 interface Ask { action: string; title: string; summary: string; scope: string }
@@ -77,7 +77,7 @@ function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone
   const [error, setError] = useState<string | null>(why);
   const [note, setNote] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const [uiLang] = useLang();
+  const uiLang = useLangNow();
   const w = WORDS[uiLang];
 
   const post = async (body: Record<string, unknown>) => {

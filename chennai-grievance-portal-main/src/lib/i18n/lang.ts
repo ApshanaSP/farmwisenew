@@ -20,6 +20,20 @@ export function setLang(l: UiLang) {
   window.dispatchEvent(new CustomEvent("diq:lang", { detail: l }));
 }
 
+/**
+ * The language, read at the first render, for a component that is mounted after the page has hydrated (a box opened by a click, a note shown when data arrives): `useLang` starts as English and
+ * switches a frame later, so such a component showed its English words first (SK2-12). Not for a component the server renders at first paint: it would not match what the server sent.
+ */
+export function useLangNow(): UiLang {
+  const [l, setL] = useState<UiLang>(() => getLang());
+  useEffect(() => {
+    const on = (e: Event) => setL((e as CustomEvent<UiLang>).detail === "ta" ? "ta" : "en");
+    window.addEventListener("diq:lang", on);
+    return () => window.removeEventListener("diq:lang", on);
+  }, []);
+  return l;
+}
+
 /** The current language and a setter; follows changes made anywhere on the page. */
 export function useLang(): [UiLang, (l: UiLang) => void] {
   const [l, setL] = useState<UiLang>("en");

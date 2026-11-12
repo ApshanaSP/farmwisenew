@@ -32,7 +32,7 @@ import ComplaintTypeSelector, {
   TaxonomySource
 } from "@/components/ComplaintTypeSelector";
 import type { LocationSelection } from "@/components/MapPicker";
-import { useLang } from "@/lib/i18n/lang";
+import { useLangNow } from "@/lib/i18n/lang";
 import { Confetti, Dropzone, RollingText, Skeleton, Stepper, SuccessCheck, Timeline } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 
@@ -103,7 +103,7 @@ const STEPS = [
 ];
 
 export default function FileComplaintPage() {
-  const [uiLang] = useLang();
+  const uiLang = useLangNow();
   const [me, setMe] = useState<any>(null);
   const [checkedSession, setCheckedSession] = useState(false);
   /**

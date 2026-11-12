@@ -306,8 +306,8 @@
 .dic .oi-tn{font:700 13px var(--dic-mono),monospace;text-align:right;white-space:nowrap}
 .dic .oi-tn small{font:500 11.5px var(--dic-sans),sans-serif;color:var(--text-3)}
 .dic .oi-ch{font:700 11.5px var(--dic-sans),sans-serif;padding:1px 7px;border-radius:7px;background:var(--surface-2);color:var(--text-3);min-width:48px;text-align:center}
-.dic .oi-ch.up{background:var(--sev-soft);color:var(--sev)}
-.dic .oi-ch.down{background:var(--low-soft);color:var(--low)}
+.dic .oi-ch.up{background:var(--sev-soft);color:var(--critical-ink)}
+.dic .oi-ch.down{background:var(--low-soft);color:var(--ok-ink)}
 .dic .oi-bar{grid-column:1/-1;height:7px;border-radius:6px;background:var(--surface-2);overflow:hidden}
 .dic .oi-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent))}
 .dic .oi-s{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;padding:9px 10px;margin-bottom:8px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface-2)}
@@ -334,7 +334,7 @@
 .dic .oi-st{display:flex;flex-direction:column;min-width:0;line-height:1.2}
 .dic .oi-st b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dic .oi-st small{font-size:11px;color:var(--text-3)}
-.dic .oi-st small.old{color:var(--high);font-weight:600}
+.dic .oi-st small.old{color:var(--high-ink);font-weight:600}
 .dic .oi-src .oi-sk{display:flex;gap:5px;flex:none}
 .dic .oi-src .oi-sk>span{width:84px;padding:3px 7px}
 .dic .oi-src .oi-sk b{font-size:13.5px}

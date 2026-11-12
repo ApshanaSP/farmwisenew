@@ -149,7 +149,7 @@ describe("SK2 accessibility", () => {
   });
   // The fixer's axe walk is the first view of each console. The other views of the officer console (Work, Daily, Weekly ...; the rows must be drawn first) have text under 3:1 (orange on a pale orange, 2.84:1)
   // and white on green at 4.13:1, in both themes, for all three departments.
-  it.skipIf(!up).fails("SK2-14: axe finds no serious color-contrast violation on the officer console's Work view", async () => {
+  it.skipIf(!up)("SK2-14: axe finds no serious color-contrast violation on the officer console's Work view", async () => {
     const { default: AxeBuilder } = await import("@axe-core/playwright");
     const { launch, open } = await import("./visual-lib.mjs");
     const L = await launch(PORT);

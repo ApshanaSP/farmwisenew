@@ -81,6 +81,8 @@
   --medium:#B98B00;   --medium-soft:#FDF6DD;   --medium-line:#EEDC99;
   --ok:#0E9F6E;       --ok-soft:#E3F6EE;       --ok-line:#A7E0C8;
   --neutral:#64748B;  --neutral-soft:#EEF2F6;  --neutral-line:#CFD9E4;
+  /* the same colours as TEXT on their soft backgrounds and on white: each reaches 4.5:1 on its own soft colour and on the canvas (axe color-contrast, SK2-14). Use these for words, the plain ones for fills, dots and lines. */
+  --critical-ink:#B4182C; --high-ink:#A14D00; --medium-ink:#7A5A00; --ok-ink:#0B6B4A; --neutral-ink:#566680;
 
   /* aliases used across the consoles */
   --sev:var(--critical); --sev-soft:var(--critical-soft); --sev-line:var(--critical-line);
@@ -133,8 +135,9 @@
   --elev-glass:rgba(16,37,27,.95); --scrim:rgba(2,8,14,.66);
   --line:rgba(150,210,175,.12); --line-2:rgba(150,210,175,.07); --line-3:rgba(150,210,175,.2); --line-focus:rgba(61,214,140,.7);
   --text:#E8F1F8; --text-2:#AFC2D3; --text-3:#7F94A9; --text-4:#4F6478; --text-inv:#06120D;
-  --accent:#3DD68C; --accent-2:#7EE6AE; --accent-3:#1A8F4E; --accent-soft:rgba(61,214,140,.13); --accent-line:rgba(61,214,140,.4);
-  --accent-grad:linear-gradient(135deg,#1A8F4E 0%,#22A85C 100%);
+  --accent:#3DD68C; --accent-2:#7EE6AE; --accent-3:#157A42; --accent-soft:rgba(61,214,140,.13); --accent-line:rgba(61,214,140,.4);
+  /* white text on a button or a chip reaches 4.5:1 at both ends of the gradient (it was 4.13:1 and 3.08:1: axe color-contrast, SK2-14) */
+  --accent-grad:linear-gradient(135deg,#14783F 0%,#188244 100%);
   --grad-soft:linear-gradient(135deg,rgba(61,214,140,.14),rgba(61,214,140,.05));
   --band:radial-gradient(120% 150% at 88% -10%,rgba(47,174,102,.75) 0%,rgba(47,174,102,0) 55%),linear-gradient(115deg,#062414 0%,#0B3B22 46%,#0E5A33 100%);
   --band-glass:rgba(255,255,255,.08); --band-glass-2:rgba(255,255,255,.14); --band-line:rgba(255,255,255,.14);
@@ -146,6 +149,7 @@
   --medium:#F2C94C;   --medium-soft:rgba(242,201,76,.14);   --medium-line:rgba(242,201,76,.4);
   --ok:#34D399;       --ok-soft:rgba(52,211,153,.14);       --ok-line:rgba(52,211,153,.4);
   --neutral:#8BA0B5;  --neutral-soft:rgba(139,160,181,.14); --neutral-line:rgba(139,160,181,.4);
+  --critical-ink:var(--critical); --high-ink:var(--high); --medium-ink:var(--medium); --ok-ink:var(--ok); --neutral-ink:var(--neutral);
   --viz-1:#3DD68C; --viz-2:#7EE6AE; --viz-3:#FF8466; --viz-4:#F2C94C; --viz-5:#34D399; --viz-6:#FF5C6C;
   --viz-base:rgba(255,255,255,.13); --viz-grid:rgba(255,255,255,.05); --viz-axis:rgba(255,255,255,.1);
   --heat-1:rgba(61,214,140,.2); --heat-2:#3DD68C; --heat-3:#1F9A55; --heat-4:#FF8A5C; --heat-5:#FF5C6C;
