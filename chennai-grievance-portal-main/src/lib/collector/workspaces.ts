@@ -4,6 +4,7 @@
  */
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import pool from "@/lib/db";
 import { audit, auditIn, inTransaction } from "@/lib/collector/sources";
 
 type Row = Record<string, any>;
@@ -99,11 +100,17 @@ export async function deleteWorkspace(owner: string, name: string) {
   });
 }
 
+/**
+ * The audit tab's rows. Security rows (sign-ins, wrong codes, confirmed actions) are listed for staff accounts only: a citizen's
+ * sign-in carries their email, user id, IP and browser, and the Collector has no use for it (QA4 gate, redteam-final-1).
+ */
 export async function auditLog(limit = 200) {
+  const [staff] = await pool.query<RowDataPacket[]>("SELECT email FROM users WHERE role IN ('collector', 'department_officer')");
+  const emails = staff.map((r) => String(r.email));
   const [rows] = await intelPool.query<RowDataPacket[]>(
     `SELECT log_id AS id, DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS at, actor, action, table_name, record_id, LEFT(after_value, 400) AS after_value
-     FROM ${ops("audit_log")} ORDER BY log_id DESC LIMIT ?`,
-    [limit]
+     FROM ${ops("audit_log")} WHERE table_name <> 'security' OR actor IN (${emails.length ? emails.map(() => "?").join(", ") : "NULL"}) ORDER BY log_id DESC LIMIT ?`,
+    [...emails, limit]
   );
   return rows;
 }
