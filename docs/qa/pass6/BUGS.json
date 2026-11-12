@@ -940,11 +940,12 @@
     "root_cause": "The workflow has only approve and report steps. There is no step for a note.",
     "fix_commit": null,
     "revert_check": null,
-    "status": "open",
+    "status": "owner",
     "reviewer": null,
     "where": "chennai-grievance-portal-main/src/components/officer/Drawer.tsx:188; chennai-grievance-portal-main/src/app/api/officer/grievances/[id]/route.ts:23",
     "confidence": "medium",
-    "verified": false
+    "verified": false,
+    "note": "A missing feature, not a bug: nothing promises a note (the drawer offers Approve / Complete & close / Complete & send; the step route documents approve only; no screen, route or help text mentions a case note). Would build: a note step that does not move the stage (officer_steps step=note with text, written by recordStep in src/lib/officer/data.ts, a p7 file), a note box in the drawer, and the note in the case timeline (and whether the Collector or the citizen sees it). The owner decides whether officers get case notes and who reads them."
   },
   {
     "id": "journeys-02",
@@ -1187,7 +1188,8 @@
     "reviewer": null,
     "where": "src/components/officer/Board.tsx:56-59 (KPI resolved = d.kpi.cur.resolved, onClick openList('Verified by the Collector', tab verified))",
     "confidence": "high",
-    "verified": false
+    "verified": false,
+    "note": "needs src/lib/officer/data.ts, a p7 session's file. Both definitions live there: the tile is deptBoard() (data.ts:329) = the Collector overview's kpi.cur.resolved (lib/collector/intel overview, resolved incidents), the list is the officer's tab=verified (data.ts STAGE_SQL stage = 'verified', by report date, which also holds the department's own closes). Fix for the lead: give the tile the officer's own count (counts.verified, data.ts:226, same CTE and window as the list) with its previous period and series from the same query, then retitle the list in src/components/officer/Board.tsx:58 from 'Verified by the Collector' to TAB_LABEL.verified (or 'Verified or closed by your department'). Board.tsx alone cannot make the two agree without mixing definitions in the tile's delta and sparkline. Not changed here."
   },
   {
     "id": "officer-day-14",
@@ -1795,12 +1797,14 @@
     "title": "Pass 5 known-failure probes ML-14 and ML-16 fail on this tree for a harness reason: their copy of collector_decisions has no decision_id, which the open check before an attach now reads (pass 5 P5-016), so every live attach in that harness throws",
     "found_by": "lead",
     "repro": "npx vitest run --config vitest.p6probe.config.ts tests/qa/pass5/known-failures/manu-logic-store.probe.test.ts -t ML-16",
-    "failing_test": "tests/qa/pass5/known-failures/manu-logic-store.probe.test.ts",
-    "root_cause": "test harness drift after P5-016",
-    "fix_commit": null,
-    "revert_check": null,
-    "status": "open",
-    "reviewer": null
+    "failing_test": "tests/qa/pass5/known-failures/manu-logic-store.probe.test.ts::ML-16 the attached petition's own tracker follows the shared case",
+    "root_cause": "test harness drift, not an app bug: the probe's copy of collector_decisions had no decision_id (read since P5-016) and petitions had no recurrence (migration 017); both added, no app change. ML-13 had the same drift.",
+    "fix_commit": "2957058",
+    "revert_check": "fails without (3 of 9: ML-13, ML-14, ML-16) / passes with (9 of 9)",
+    "status": "fixed",
+    "reviewer": null,
+    "note": "A test fix. The other pass 5 probe files (manu-sec, sms) still fail 13 tests, but those assert the old buggy behaviour that later rows fixed; not harness drift of this kind and not in this row.",
+    "closed_in": "fixall"
   },
   {
     "id": "P6-006",
