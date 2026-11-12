@@ -1,0 +1,16 @@
+diff --git a/chennai-grievance-portal-main/src/lib/collector/derive.ts b/chennai-grievance-portal-main/src/lib/collector/derive.ts
+index 49150d0..bd88b86 100644
+--- a/chennai-grievance-portal-main/src/lib/collector/derive.ts
++++ b/chennai-grievance-portal-main/src/lib/collector/derive.ts
+@@ -304,7 +304,10 @@ function newsMedia(db: DB) {
+     seen.add(d.id);
+     if (isNewsMedia(d.publisher, d.dom, d.tier)) ok.add(d.id);
+   }
+-  const drop = (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[])
++  // OWNER'S DECISION (same-number-19, gate-oracle-4): an incident that records a death or an injury is kept even when none of its articles is from a
++  // news outlet; it is the Collector's to judge, not the build's to drop. Without this line three incidents with six deaths are left out.
++  const harm = has(db, "incidents", "dead") ? "AND COALESCE(dead, 0) = 0 AND COALESCE(injured, 0) = 0" : "";
++  const drop = (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1 ${harm}`).all() as Row[])
+     .map((r) => String(r.id)).filter((id) => seen.has(id) && !ok.has(id));
+   if (!drop.length) return;
+   // the same way out as every other drop: the incident's members, timeline, actions and gaps go with it and its articles and
