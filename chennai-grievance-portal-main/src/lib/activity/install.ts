@@ -274,10 +274,26 @@ export function installActivity(): void {
   let cancelT: ReturnType<typeof setTimeout> | null = null;
   const release = () => { pressed?.removeAttribute("data-diq-press"); pressed = null; };
 
+  /**
+   * A control that is busy keeps its clicks and drops them: the second click of a fast double click, or Enter pressed again, does
+   * nothing. The stylesheet used pointer-events: none, which let that click through to whatever was under the button (a row, a card,
+   * a modal's backdrop) and did not stop a key at all (QA pass 5, click-layer-03). Capture phase on the document: before React's
+   * own listeners on its root, and before a form submits.
+   */
+  const busyAt = (t: EventTarget | null): boolean => {
+    for (let n = t as Element | null; n; n = n.parentElement) if (n.hasAttribute?.("data-diq-busy")) return true;
+    return false;
+  };
+  document.addEventListener("click", (e) => {
+    if (!busyAt(e.target)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+
   document.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const el = (e.target as Element | null)?.closest?.(CONTROL) as HTMLElement | null;
-    if (!el || (el as HTMLButtonElement).disabled) return;
+    if (!el || (el as HTMLButtonElement).disabled || busyAt(el)) return;
     release();
     pressed = el; el.setAttribute("data-diq-press", "");
     pressedEarly = earlyNotice(el);

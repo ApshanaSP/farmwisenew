@@ -66,9 +66,11 @@ describe("P5-032: the live notice is not rewritten while nothing about it change
     expect(writes()).toEqual({ ...start, sub: start.sub + 1 });
     expect(main.textContent).toBe(words);
 
-    // a second click that starts a new notice in the same words is still written (announced) once, then left alone
-    for (const f of listeners.pointerdown ?? []) f({ button: 0, target: btn });
-    for (const f of listeners.click ?? []) f({ target: btn, detail: 1 });
+    // a click on another control that starts a new notice in the same words is still written (announced) once, then left alone
+    // (the first button is busy: its own clicks are dropped, click-layer-03)
+    const btn2 = new El("button"); btn2.setAttribute("aria-label", "Verify");
+    for (const f of listeners.pointerdown ?? []) f({ button: 0, target: btn2 });
+    for (const f of listeners.click ?? []) f({ target: btn2, detail: 1 });
     void (g.window as typeof globalThis).fetch("/api/collector/decisions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ incidentId: "INC-2", decision: "verify" }) });
     expect(main.textContent).toBe(words);
     const second = main.writes;
