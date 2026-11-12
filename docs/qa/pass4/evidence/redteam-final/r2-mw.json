@@ -1,0 +1,280 @@
+{
+ "base": "http://127.0.0.1:3230",
+ "at": "2026-11-12T15:40:49.160Z",
+ "rows": [
+  {
+   "p": "/collector",
+   "header": null,
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "pages/_middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "middleware:middleware:middleware:middleware:middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "src/middleware:src/middleware:src/middleware:src/middleware:src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "1",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/officer",
+   "header": null,
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "pages/_middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "middleware:middleware:middleware:middleware:middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "src/middleware:src/middleware:src/middleware:src/middleware:src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/officer",
+   "header": "1",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fofficer",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": null,
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "pages/_middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "middleware:middleware:middleware:middleware:middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "src/middleware:src/middleware:src/middleware:src/middleware:src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/citizen",
+   "header": "1",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcitizen",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": null,
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "pages/_middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "middleware:middleware:middleware:middleware:middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "src/middleware:src/middleware:src/middleware:src/middleware:src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/profile",
+   "header": "1",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fprofile",
+   "bytes": 47
+  },
+  {
+   "p": "/collector/sources",
+   "header": null,
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "pages/_middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "middleware:middleware:middleware:middleware:middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "src/middleware:src/middleware:src/middleware:src/middleware:src/middleware",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector/sources",
+   "header": "1",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector%2Fsources",
+   "bytes": 59
+  },
+  {
+   "p": "/collector",
+   "header": "{\"x-middleware-prefetch\":\"1\"}",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "{\"x-nextjs-data\":\"1\"}",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "{\"purpose\":\"prefetch\",\"next-router-prefetch\":\"1\"}",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  },
+  {
+   "p": "/collector",
+   "header": "{\"rsc\":\"1\"}",
+   "status": 307,
+   "location": "http://localhost:3230/login?redirect=%2Fcollector",
+   "bytes": 49
+  }
+ ],
+ "through": []
+}

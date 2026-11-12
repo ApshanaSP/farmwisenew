@@ -3,7 +3,7 @@
 // Accounts are read in code, never printed.
 //   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts
 // The full fixed attack lists and their logs: tests/qa/pass4/redteam-final.run.mjs and docs/qa/pass4/evidence/redteam-final/.
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { ensureServer } from "./lib/own-server";
 import { checkPlan } from "@/lib/thunai/plan";
 import { NOW, WORLD } from "@/lib/thunai/fixture";
@@ -54,6 +54,98 @@ describe("final red team: what held (kept as checks)", () => {
   it("the five-tries lock of Confirm it's you holds under a burst of 12 parallel wrong passwords", async () => {
     const rs = await Promise.all(Array.from({ length: 12 }, (_, i) => post("/api/auth/confirm", cookie.officerB, { step: "check", action: "officer_report", scope: "AAAAAAAAAAAAAAAAAAAA", method: "password", code: `Rtf-Wrong-${i}!` })));
     expect(rs.filter((r) => r.status === 401).length).toBeLessThanOrEqual(5);
+  });
+});
+
+// ---- round 2 (the "try again" run, 12 Nov 2026): classes round 1 did not cover. Runner: tests/qa/pass4/redteam-final.r2.mjs; logs:
+// docs/qa/pass4/evidence/redteam-final/r2-*.json. Placed before "open findings" because redteam-final-3 there uses up officer A's sign-ins.
+describe("final red team, round 2: open findings", () => {
+  const PHONE = /98400[\s-]?12345|9840012345/;
+  const PNG = Buffer.from("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082", "hex");
+  beforeAll(async () => {
+    cookie.officerA = await signIn("officerA");
+  }, 120_000);
+
+  it.fails("redteam-final-10: a citizen's phone, name and address written in an officer's report do not reach the Collector's incident page", async () => {
+    // officer A takes one of its own cases and closes (or sends) it with remarks that name the complainant, through the real "Confirm it's you"
+    const remarks = "Work done and site cleared. Called the complainant Ravi Kumar on 98400 12345, house 12 Gandhi Street, Tondiarpet.";
+    const form = (step: string) => { const fd = new FormData(); fd.append("remarks", remarks); fd.append("step", step); fd.append("photos", new Blob([PNG], { type: "image/png" }), "done.png"); return fd; };
+    const report = async (id: string, step: string) => {
+      const r1 = await fetch(`${BASE}/api/officer/grievances/${id}/report`, { method: "POST", headers: { cookie: cookie.officerA }, body: form(step) });
+      const j1 = (await r1.json().catch(() => ({}))) as { confirm?: { scope?: string }; error?: string };
+      if (r1.status !== 428 || !j1.confirm?.scope) return { status: r1.status, err: j1.error ?? "" };
+      const cr = await post("/api/auth/confirm", cookie.officerA, { step: "check", action: "officer_report", scope: j1.confirm.scope, summary: "rt", method: "password", code: ACC.officerA.password });
+      const grant = ((await cr.json()) as { grant?: string }).grant ?? "";
+      const r2 = await fetch(`${BASE}/api/officer/grievances/${id}/report`, { method: "POST", headers: { cookie: cookie.officerA, "x-diq-grant": grant }, body: form(step) });
+      return { status: r2.status, err: (((await r2.json().catch(() => ({}))) as { error?: string }).error ?? "") };
+    };
+    const rows = (((await (await fetch(`${BASE}/api/officer/grievances`, { headers: { cookie: cookie.officerA } })).json()) as { rows?: { id: string }[] }).rows ?? []);
+    let id: string | null = null;
+    for (const g of rows.slice(0, 10)) {
+      await post(`/api/officer/grievances/${g.id}`, cookie.officerA, { step: "approve" });
+      let s = await report(g.id, "send");
+      if (s.status !== 201 && /Only severe/.test(s.err)) s = await report(g.id, "close");
+      if (s.status === 201) { id = g.id; break; }
+    }
+    if (!id) throw new Error("precondition: officer A could not send or close any case with a report");
+    const page = await (await fetch(`${BASE}/api/collector/incidents/${id}`, { headers: { cookie: cookie.collector } })).text();
+    expect(page).toContain("site cleared"); // the report itself reaches the Collector, as it should
+    expect(PHONE.test(page) || page.includes("Ravi Kumar") || page.includes("12 Gandhi Street")).toBe(false);
+  }, 120_000);
+
+  it.fails("redteam-final-11: a profile photo uploaded on the production build can be opened at the address the upload returns", async () => {
+    const fd = new FormData();
+    fd.append("photo", new Blob([PNG], { type: "image/png" }), "rt.png");
+    const up = await fetch(`${BASE}/api/profile/photo`, { method: "POST", headers: { cookie: cookie.citizenA }, body: fd });
+    const p = ((await up.json()) as { profilePhoto?: string }).profilePhoto ?? "";
+    if (up.status !== 200 || !/^\/uploads\/profile\/user-\d+-\d+\.(png|jpg)$/.test(p)) throw new Error(`precondition: upload refused (${up.status})`);
+    const r = await fetch(BASE + p, { headers: { cookie: cookie.citizenA } });
+    const status = r.status;
+    await r.arrayBuffer();
+    // the test file this wrote under public/uploads/profile (gitignored) is removed again
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    try { fs.unlinkSync(path.join(process.cwd(), "public", p)); } catch { /* not there */ }
+    expect(status).toBe(200);
+  });
+
+  it.fails("redteam-final-12: pausing a data source (or changing its refresh) asks Confirm it's you, as approving one does", async () => {
+    const r = await fetch(`${BASE}/api/collector/sources/1`, { method: "PATCH", headers: { cookie: cookie.collector, "content-type": "application/json", "x-diq-confirm": "json" }, body: JSON.stringify({ enabled: false }) });
+    const status = r.status;
+    // put the source back on if the change went through
+    if (status === 200) await fetch(`${BASE}/api/collector/sources/1`, { method: "PATCH", headers: { cookie: cookie.collector, "content-type": "application/json" }, body: JSON.stringify({ enabled: true }) });
+    expect(status).toBe(428);
+  });
+
+  it.fails("redteam-final-13: after signing out, the signed-out session cookie no longer works", async () => {
+    const c = await signIn("officerC");
+    const lo = await post("/api/auth/logout", c, {});
+    expect(lo.status).toBe(200);
+    const me = await fetch(`${BASE}/api/auth/me`, { headers: { cookie: c } });
+    expect(me.status).toBe(401);
+  });
+
+  it.fails("redteam-final-14: changing the mobile number on the profile clears its Verified mark (the new number was never verified)", async () => {
+    // the route with its database and session faked: what SQL does a PUT with a new number run?
+    vi.resetModules();
+    const calls: { sql: string; args: unknown[] }[] = [];
+    vi.doMock("@/lib/db", () => ({ default: { query: async (sql: string, args: unknown[]) => { calls.push({ sql, args }); return /SELECT id FROM user_profiles/.test(sql) ? [[{ id: 1 }]] : [[]]; } } }));
+    vi.doMock("@/lib/auth", () => ({ getSessionFromCookies: async () => ({ userId: 7, email: "rt@example.invalid", role: "citizen" }) }));
+    try {
+      const { PUT } = await import("@/app/api/profile/route");
+      const r = await PUT(new Request("http://127.0.0.1/api/profile", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ firstName: "Rt", mobileNumber: "9000000002" }) }) as never);
+      expect(r.status).toBe(200);
+      expect(calls.some((c) => /UPDATE user_profiles/i.test(c.sql) && /mobile_verified\s*=/i.test(c.sql))).toBe(true);
+    } finally {
+      vi.doUnmock("@/lib/db");
+      vi.doUnmock("@/lib/auth");
+      vi.resetModules();
+    }
+  });
+
+  it.fails("redteam-final-15: the cross-site wall refuses another site's Origin even when the request also names that site in X-Forwarded-Host", async () => {
+    const r = await fetch(`${BASE}/api/collector/assistant/pins`, { method: "POST", headers: { cookie: cookie.collector, "content-type": "application/json", origin: "http://evil.example", "x-forwarded-host": "evil.example" }, body: JSON.stringify({ messageId: "rt-r2-none" }) });
+    expect(r.status).toBe(403);
   });
 });
 

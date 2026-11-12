@@ -115,5 +115,83 @@
     "root_cause_guess": "worktree .cache/models (LFS object not fetched)",
     "class": "environment",
     "lang": "all"
+  },
+  {
+    "id": "redteam-final-10",
+    "area": "privacy / officer report to the Collector",
+    "severity": "P1",
+    "title": "A citizen's name, phone and address written in an officer's completion report are shown to the Collector as they are, and go into the incident analysis given to the AI",
+    "what_happens": "Officer A closed a case with the remarks 'Called the complainant Ravi Kumar on 98400 12345, house 12 Gandhi Street' (made-up details) through the real Confirm it's you. GET /api/collector/incidents/<id> as the Collector returns the remarks word for word in decisions[].note, with the name, phone and address. The same remarks go, unchanged and with no 'this is data, not orders' fence, into the facts of the incident analysis prompt (lib/collector/analysis.ts:177) and into the Collector's instruction email (lib/collector/actionmail.ts:144). Jarvis did not speak them (it refused the phone question; its other lanes need a model, none ran) and Ask did not show them.",
+    "what_should_happen": "Free text written by an officer goes through the same redaction Jarvis uses (lib/thunai/privacy.ts redactText) before it reaches the Collector's pages, the analysis prompt or an email: phone numbers, and the complainant's name and address when known, are masked. The Collector sees that a report was sent and what was done, not the citizen's contact details.",
+    "repro": "cd chennai-grievance-portal-main && node tests/qa/pass4/server.mjs start --port 3230 --instance redteam-final-r2 && RT_BASE=http://127.0.0.1:3230 node tests/qa/pass4/redteam-final.r2.mjs officernote   |   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-10",
+    "evidence": "docs/qa/pass4/evidence/redteam-final/r2-officernote.json; chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-10)",
+    "root_cause_guess": "lib/collector/intel.ts:208 (remarks AS note) and :224, shown by api/collector/incidents/[id]; lib/collector/analysis.ts:177; lib/collector/actionmail.ts:144: none of them redact",
+    "class": "privacy leak through free text (officer remarks)",
+    "lang": "all"
+  },
+  {
+    "id": "redteam-final-11",
+    "area": "citizen profile photo",
+    "severity": "P1",
+    "title": "On the production build a profile photo uploads (200) but its address answers 404: the photo never shows",
+    "what_happens": "POST /api/profile/photo as citizen A returns 200 and profilePhoto /uploads/profile/user-<id>-<ms>.png, and the file is written under public/uploads/profile. GET of that address answers 404 for the owner and everyone else, because next start serves only the files that were in public/ at build time. The profile page then shows a broken image.",
+    "what_should_happen": "An uploaded photo is saved outside public/ and served by a route that checks who may see it (as complaint media are, api/complaints/media/[name]), so it shows for its owner on a production build.",
+    "repro": "cd chennai-grievance-portal-main && node tests/qa/pass4/server.mjs start --port 3230 --instance redteam-final-r2 && RT_BASE=http://127.0.0.1:3230 node tests/qa/pass4/redteam-final.r2.mjs photo   |   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-11",
+    "evidence": "docs/qa/pass4/evidence/redteam-final/r2-photo.json; chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-11)",
+    "root_cause_guess": "src/app/api/profile/photo/route.ts:40 writes to process.cwd()/public/uploads/profile after the build",
+    "class": "feature broken on the production build",
+    "lang": "all"
+  },
+  {
+    "id": "redteam-final-12",
+    "area": "unsafe action / Confirm it's you",
+    "severity": "P2",
+    "title": "Pausing a data source, changing its refresh, or removing an added source does not ask Confirm it's you, while approving one does",
+    "what_happens": "PATCH /api/collector/sources/1 {enabled:false} with the console's soft header x-diq-confirm: json answers 200 and the source is paused (the run put it back). The route file has no requireConfirm for POST (run now), PATCH or DELETE; only approving a new source asks.",
+    "what_should_happen": "Turning a data feed off, slowing it to once a day or removing it changes what the Collector's console shows from then on; it asks Confirm it's you like approving a source (or the policy in lib/security/stepup.ts says plainly why it does not).",
+    "repro": "cd chennai-grievance-portal-main && node tests/qa/pass4/server.mjs start --port 3230 --instance redteam-final-r2 && RT_BASE=http://127.0.0.1:3230 node tests/qa/pass4/redteam-final.r2.mjs srcchange   |   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-12",
+    "evidence": "docs/qa/pass4/evidence/redteam-final/r2-srcchange.json; chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-12)",
+    "root_cause_guess": "src/app/api/collector/sources/[id]/route.ts:32 (PATCH) and :49 (DELETE): collectorSession only",
+    "class": "missing step-up on a change",
+    "lang": "all"
+  },
+  {
+    "id": "redteam-final-13",
+    "area": "sessions / sign-out",
+    "severity": "P2",
+    "title": "Signing out only clears the cookie in the browser: a copy of the session cookie keeps working for its full 12 hours",
+    "what_happens": "Officer C signs in; POST /api/auth/logout answers 200 and clears the cookie, but the same cookie value sent again gets 200 from /api/auth/me, /api/officer/grievances and /api/profile. The token lives 12 hours. The route comment says other sessions are not revoked; this one is not revoked either.",
+    "what_should_happen": "Sign-out ends that session on the server too (a per-session id in the token that sign-out marks as ended), so a cookie copied from a shared office computer stops working when the person signs out. The step-up design already names a copied cookie as a threat.",
+    "repro": "cd chennai-grievance-portal-main && node tests/qa/pass4/server.mjs start --port 3230 --instance redteam-final-r2 && RT_BASE=http://127.0.0.1:3230 node tests/qa/pass4/redteam-final.r2.mjs signout   |   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-13",
+    "evidence": "docs/qa/pass4/evidence/redteam-final/r2-signout.json; chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-13)",
+    "root_cause_guess": "src/app/api/auth/logout/route.ts:8 clears the cookie only; tokens are checked by signature, expiry and tv only",
+    "class": "session not ended on sign-out",
+    "lang": "all"
+  },
+  {
+    "id": "redteam-final-14",
+    "area": "citizen profile",
+    "severity": "P2",
+    "title": "Changing the mobile number on the profile keeps the old number's Verified mark",
+    "what_happens": "PUT /api/profile writes mobile_number = COALESCE(?, mobile_number) and never touches mobile_verified, so after a verified number is replaced by a new, never-checked one the profile page shows the new number with the green Verified chip. Shown with the route's database faked: no test account has a verified number, and the verify code goes only by email, which is off on test servers.",
+    "what_should_happen": "A PUT whose number differs from the stored one sets mobile_verified to false (or refuses a number change outside the code-checked mobile-otp flow).",
+    "repro": "cd chennai-grievance-portal-main && npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-14",
+    "evidence": "chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-14); docs/qa/pass4/evidence/redteam-final/r2-mobile.json (live: the number change is accepted with no code; the flag was already false)",
+    "root_cause_guess": "src/app/api/profile/route.ts UPDATE user_profiles ... mobile_number = COALESCE(?, mobile_number), no mobile_verified",
+    "class": "stale verification flag",
+    "lang": "all"
+  },
+  {
+    "id": "redteam-final-15",
+    "area": "cross-site wall (middleware)",
+    "severity": "P3",
+    "title": "The cross-site wall takes its own host from X-Forwarded-Host, which the request itself sets",
+    "what_happens": "A POST with Origin http://evil.example and X-Forwarded-Host evil.example (or 'evil.example, <own host>') passes middleware.crossSite and reaches the route (400, 404 or 200 from the route instead of 403), on all 5 write routes tried. A browser on another site cannot send that header without a CORS preflight, and the preflight answers with no Access-Control-Allow-Origin, so this is not reachable from a page today; it is a wall that trusts what the caller writes, unlike getClientIp, which ignores forwarded headers unless TRUST_PROXY_HOPS is set.",
+    "what_should_happen": "crossSite compares the Origin with the Host header (and X-Forwarded-Host only behind a trusted proxy, the same TRUST_PROXY_HOPS switch), or with a fixed list of the site's public origins.",
+    "repro": "cd chennai-grievance-portal-main && node tests/qa/pass4/server.mjs start --port 3230 --instance redteam-final-r2 && RT_BASE=http://127.0.0.1:3230 node tests/qa/pass4/redteam-final.r2.mjs csrf   |   npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/redteam-final.test.ts -t redteam-final-15",
+    "evidence": "docs/qa/pass4/evidence/redteam-final/r2-csrf.json; chennai-grievance-portal-main/tests/qa/pass4/redteam-final.test.ts (redteam-final-15)",
+    "root_cause_guess": "src/middleware.ts crossSite(): const own = (x-forwarded-host ?? host ...)",
+    "class": "trusting a client-set header",
+    "lang": "all"
   }
 ]
