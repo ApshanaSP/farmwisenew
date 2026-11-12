@@ -28,6 +28,18 @@ export const STAGE_CLASS: Record<Stage, string> = {
 export const STEP_LABELS = ["Received", "In action", "Sent to Collector", "Verified"] as const;
 export const STAGE_INDEX: Record<Stage, number> = { new: 0, approved: 1, action: 1, sent: 2, verified: 3, closed: 3 };
 
+/**
+ * The step bar for one grievance: the path it is on and how far along it is (officer-day-26). A severe grievance, or one that was
+ * sent, goes Received -> In action -> Sent to Collector -> Verified. Any other is closed by the department itself and never passes
+ * "Sent to Collector": Received -> In action -> Closed by your department (or, when the Collector decided it first, what the
+ * Collector did). `closedByDept`: the last officer step was the department's own close.
+ */
+export function stepsOf(stage: Stage, severe: boolean, closedByDept = false): { labels: readonly string[]; at: number } {
+  if (!closedByDept && (severe || stage === "sent")) return { labels: STEP_LABELS, at: STAGE_INDEX[stage] ?? 0 };
+  const end = closedByDept || (stage !== "verified" && stage !== "closed") ? "Closed by your department" : stage === "verified" ? "Verified by Collector" : "Closed";
+  return { labels: ["Received", "In action", end], at: stage === "new" ? 0 : stage === "approved" || stage === "action" ? 1 : 2 };
+}
+
 /** The stages each recorded step starts from (the same table as recordStep's in lib/officer/data.ts, which checks again under its lock). */
 export const STEP_FROM: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"], send: ["approved", "action"], close: ["approved", "action", "sent"] };
 
@@ -45,8 +57,21 @@ export function stepRefusal(step: "approve" | "send" | "close", stage: string, s
   return null;
 }
 
-/** The one step an officer can take from each stage. */
+/** The one step an officer can take from each stage, for a severe grievance. Use nextStep() for any grievance. */
 export const NEXT_STEP: Partial<Record<Stage, "approve" | "send">> = { new: "approve", approved: "send", action: "send" };
+
+/**
+ * The one step an officer can take on this grievance: approve a new one; then send a severe one to the Collector, and close any
+ * other (officer-day-26: the API said "send" for every case in action). A non-severe grievance at "sent" (sent before the rule)
+ * is closed by the department too, as the drawer offers. Null when there is nothing left for the officer to do.
+ */
+export function nextStep(stage: string, severity: string | null | undefined): "approve" | "send" | "close" | null {
+  if (stage === "new") return "approve";
+  const severe = severity === "Severe";
+  if (stage === "approved" || stage === "action") return severe ? "send" : "close";
+  if (stage === "sent" && !severe) return "close";
+  return null;
+}
 
 export function isStage(v: unknown): v is Stage {
   return typeof v === "string" && Object.prototype.hasOwnProperty.call(STAGE_LABEL, v);
