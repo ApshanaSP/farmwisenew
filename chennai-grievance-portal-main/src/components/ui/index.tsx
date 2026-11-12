@@ -19,6 +19,7 @@ import {
   RotateCcw, Send, ShieldCheck, Upload, Wrench, X, XCircle
 } from "lucide-react";
 import { EASE_OUT, T, dialog as dialogV, drawer as drawerV, reduced, scrim as scrimV, sheet as sheetV, spring } from "./motion";
+import { typedDigits } from "@/lib/typed-digits";
 
 const cx = (...a: (string | false | null | undefined)[]) => a.filter(Boolean).join(" ");
 
@@ -639,7 +640,7 @@ export function OtpInput({ value, onChange, length = 6, autoFocus, label = "One-
         <input key={i} ref={(el) => { refs.current[i] = el; }} className={cx("ui-otp-c", d && "fill")} inputMode="numeric" autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={1} value={d} disabled={disabled} autoFocus={autoFocus && i === 0} aria-label={`Digit ${i + 1}`}
           onChange={(e) => {
-            const v = e.target.value.replace(/\D/g, "");
+            const v = typedDigits(e.target.value);
             if (!v) return set(i, "");
             set(i, v[v.length - 1]);
             refs.current[i + 1]?.focus();
@@ -650,7 +651,7 @@ export function OtpInput({ value, onChange, length = 6, autoFocus, label = "One-
             if (e.key === "ArrowRight" && i < length - 1) refs.current[i + 1]?.focus();
           }}
           onPaste={(e) => {
-            const p = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+            const p = typedDigits(e.clipboardData.getData("text")).slice(0, length);
             if (!p) return;
             e.preventDefault();
             onChange(p);

@@ -2,6 +2,7 @@
 /** Public: where a petition stands, for anyone holding the slip. The QR code opens this page already filled in. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@/components/manu/manu.css";
+import { typedDigits } from "@/lib/typed-digits";
 
 interface Step { status: string; stage: string; note: string | null; at: string }
 interface View { code: string; status: string; filedAt: string; department: string; dueBy: string | null; steps: Step[] }
@@ -45,7 +46,7 @@ export default function TrackPage() {
       {!view && (
         <form className="trk-card trk-form" onSubmit={(e) => { e.preventDefault(); void ask(code, { last4 }); }}>
           <label>Number on your slip<input ref={codeBox} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="2026-123ABC" autoComplete="off" /></label>
-          <label>Last 4 digits of your mobile<input value={last4} onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} autoComplete="off" /></label>
+          <label>Last 4 digits of your mobile<input value={last4} onChange={(e) => setLast4(typedDigits(e.target.value))} inputMode="numeric" maxLength={4} autoComplete="off" /></label>
           <button className="trk-btn" disabled={busy}>{busy ? "Checking…" : "Check status"}</button>
           {err && <p className="trk-err" role="alert">{err}</p>}
         </form>

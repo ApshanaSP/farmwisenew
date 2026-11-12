@@ -34,6 +34,7 @@ import ComplaintTypeSelector, {
 import type { LocationSelection } from "@/components/MapPicker";
 import { Confetti, Dropzone, RollingText, Skeleton, Stepper, SuccessCheck, Timeline } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
+import { typedDigits } from "@/lib/typed-digits";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 
@@ -728,13 +729,13 @@ export default function FileComplaintPage() {
                     <div>
                       <label className="form-label" htmlFor="cmobile">Mobile number<span className="text-red-600">*</span></label>
                       <input id="cmobile" inputMode="numeric" maxLength={10} required className="form-input font-mono" value={mobileNumber}
-                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))} />
+                        onChange={(e) => setMobileNumber(typedDigits(e.target.value))} />
                       <p className="form-hint">10 digits, so the department can reach you.</p>
                     </div>
                     <div>
                       <label className="form-label" htmlFor="cpincode">Your PIN code <span className="normal-case text-ink-subtle">(optional)</span></label>
                       <input id="cpincode" inputMode="numeric" maxLength={6} className={`form-input font-mono ${pincode && !/^\d{6}$/.test(pincode) ? "border-red-300" : ""}`}
-                        value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))} aria-invalid={pincode ? !/^\d{6}$/.test(pincode) : undefined} />
+                        value={pincode} onChange={(e) => setPincode(typedDigits(e.target.value))} aria-invalid={pincode ? !/^\d{6}$/.test(pincode) : undefined} />
                       {pincode && !/^\d{6}$/.test(pincode) && <p className="form-error">A PIN code has 6 digits.</p>}
                     </div>
                   </div>
@@ -895,7 +896,7 @@ export default function FileComplaintPage() {
                     <label className="form-label" htmlFor="locationPincode">PIN code of this location <span className="normal-case text-ink-subtle">(optional)</span></label>
                     <input id="locationPincode" inputMode="numeric" maxLength={6} className={`form-input font-mono ${locationPincode && !/^\d{6}$/.test(locationPincode) ? "border-red-300" : ""}`}
                       value={locationPincode}
-                      onChange={(e) => { markEdited("locationPincode"); setLocationPincode(e.target.value.replace(/\D/g, "")); }} />
+                      onChange={(e) => { markEdited("locationPincode"); setLocationPincode(typedDigits(e.target.value)); }} />
                     {locationPincode && !/^\d{6}$/.test(locationPincode) && <p className="form-error">A PIN code has 6 digits.</p>}
                   </div>
 
