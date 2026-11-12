@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CODE_RE, complaintForTrack, mayTrack, trackView } from "@/lib/manu/track";
 import { checkRateLimit, getClientIp, ipLimit } from "@/lib/rate-limit";
+import { readJsonCapped, tooLargeResponse } from "@/lib/body-cap";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,10 @@ const NOT_FOUND = "We could not find that. Check the number on your slip and the
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
   if (!checkRateLimit(`track:${ip}`, ipLimit(ip, 30), 600).allowed) return NextResponse.json({ error: "Too many tries. Please wait a few minutes." }, { status: 429 });
-  const parsed = schema.safeParse(await req.json().catch(() => null));
+  // public: the body is read with a limit before anything parses it (pass 4's RC-17 rule; QA pass 5, P5-013)
+  const { body, tooLarge } = await readJsonCapped(req, 4 * 1024);
+  if (tooLarge) return tooLargeResponse();
+  const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: NOT_FOUND }, { status: 404 });
   const { code, key, last4 } = parsed.data;
   if (!checkRateLimit(`track-code:${code}`, 12, 600).allowed) return NextResponse.json({ error: "Too many tries. Please wait a few minutes." }, { status: 429 });

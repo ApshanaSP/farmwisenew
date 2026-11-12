@@ -13,7 +13,8 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 const routes = walk(path.join(ROOT, "src/app/api")).filter((f) => /route\.ts$/.test(f));
-const SIGNED = /getSession|getActivePortalSession|getActiveSession|collectorSession|assistantSession|officerSession|requireRole|localOnly|allowed\(req\)/;
+// QA pass 5: manuStaff() and seesEveryPetition() (lib/manu/guard.ts, main's Manu Desk) are session checks too
+const SIGNED = /getSession|getActivePortalSession|getActiveSession|collectorSession|assistantSession|officerSession|manuStaff|seesEveryPetition|requireRole|localOnly|allowed\(req\)/;
 
 describe("RC-17 class guard: no route without a sign-in reads its body unbounded", () => {
   it("every route that checks no session reads JSON through readJsonCapped", () => {
