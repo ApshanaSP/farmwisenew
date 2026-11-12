@@ -9,7 +9,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-// @ts-expect-error a plain ES module script, no types
 import { OUT, bundle } from "../../../../scripts/build-parse-worker.mjs";
 
 const ROOT = path.resolve(__dirname, "../../../..");
