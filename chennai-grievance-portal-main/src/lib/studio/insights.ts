@@ -35,6 +35,17 @@ const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 const r1 = (x: number) => Math.round(x * 10) / 10;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// Text a person typed into the file (a status, a place, a type) is written into these sentences, and the sentences go to the AI brief
+// (ai.ts briefAI). A cell's line breaks, control and zero-width characters become one space, so a value can never start a new line of a
+// prompt or a page (QA pass 6, hunt2-sec-14); a value quoted in a sentence also loses its double quotes and angle brackets (it cannot
+// close its own quotes or a fence) and is cut to 40 characters.
+const ONE_LINE = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]+/g;
+const oneLine = (s: string) => s.replace(ONE_LINE, " ").replace(/ {2,}/g, " ").trim();
+export function said(v: unknown, max = 40): string {
+  const s = oneLine(String(v ?? "").normalize("NFKC")).replace(/["<>`]/g, "'");
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
+}
+
 /** A way to split the rows: by zone, or by one of the file's own type columns. */
 interface Dim { id: string; label: string; by: Plan["by"]; byCol: string | null; zone: boolean; of: (r: DRow) => string | number | null; name: (k: string | number) => string }
 
@@ -75,7 +86,8 @@ export function computeInsights(rows: DRow[], spec: Spec, det: Detective, link: 
   const more = rows.length < 3 ? [] : computeInsights2({ rows, spec, window, names, today });
   const span = window.from && window.to ? (window.from === window.to ? fmtDay(window.to) : `${fmtDay(window.from, false)} – ${fmtDay(window.to)}`) : null;
   const all = [...base.map((x) => ({ ...x, n: x.n ?? rows.length, method: x.method ?? "Counted over the cleaned rows" })), ...more.map((x, i) => ({ ...x, id: `i${base.length + i + 1}` }))]
-    .map((x) => ({ ...x, confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
+    .map((x) => ({ ...x, text: oneLine(x.text), title: oneLine(x.title), metric: { ...x.metric, caption: oneLine(x.metric.caption) },
+      confidence: [`n = ${(x.n ?? rows.length).toLocaleString("en-IN")}`, x.method, span].filter(Boolean).join(" · ") }));
   const things = !spec.columns.some((c) => c.role === "status") && !spec.openValues.length;
   const seen = new Set((prev?.items ?? []).map((x) => `${x.label}|${x.title}`));
   const fam = family ?? detectFamily(spec).key;
@@ -148,7 +160,7 @@ function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkRe
     const bars = status ? topCounts(open, (r) => (r[status.key] == null ? null : String(r[status.key])), 4).map((b, i) => ({ ...b, hi: i === 0, fmt: n(b.value) })) : [];
     add({ label: "Backlog", tone: rate >= 30 ? "sev" : rate >= 12 ? "high" : "info", score: 52 + Math.min(28, rate),
       title: `${n(open.length)} ${plural} ${ow}`, metric: { value: n(open.length), caption: `${rate}% of ${n(rows.length)} ${ow}` },
-      text: `${n(open.length)} of ${n(rows.length)} ${plural} (${rate}%) ${are}${status && bars[0] ? `; the largest group is "${bars[0].label}" with ${n(bars[0].value)}` : ""}.`,
+      text: `${n(open.length)} of ${n(rows.length)} ${plural} (${rate}%) ${are}${status && bars[0] ? `; the largest group is "${said(bars[0].label)}" with ${n(bars[0].value)}` : ""}.`,
       bars, plan: status ? mk({ id: "ins-open", title: `${cap(plural)} ${ow}, by status`, chart: "hbar", by: "col", byCol: status.key, filters: openF, limit: 10 }) : null });
 
     // the urgent ones among them: a priority / severity value that says "high", or the top fifth of a score
@@ -581,7 +593,7 @@ function computeInsights1(rows: DRow[], spec: Spec, det: Detective, link: LinkRe
   const placed = rows.filter((r) => r._z != null).length;
   if (hasPlace && placed < rows.length * 0.8 && rows.length - placed >= 10)
     add({ label: "Data gap", tone: "low", score: 26, title: `${pct(rows.length - placed, rows.length)}% of ${plural} not on the map`, metric: { value: n(rows.length - placed), caption: "rows without a usable place" },
-      text: `${n(rows.length - placed)} of ${n(rows.length)} ${plural} (${pct(rows.length - placed, rows.length)}%) have no place the map could match${det.unplaced[0] ? `, such as "${det.unplaced[0].v}"` : ""}; zone figures leave them out.` });
+      text: `${n(rows.length - placed)} of ${n(rows.length)} ${plural} (${pct(rows.length - placed, rows.length)}%) have no place the map could match${det.unplaced[0] ? `, such as "${said(det.unplaced[0].v)}"` : ""}; zone figures leave them out.` });
   const missingDates = date ? rows.filter((r) => r._d == null).length : 0;
   if (missingDates >= Math.max(10, rows.length * 0.1))
     add({ label: "Data gap", tone: "low", score: 22, title: `${pct(missingDates, rows.length)}% without a date`, metric: { value: n(missingDates), caption: "rows without a readable date" },

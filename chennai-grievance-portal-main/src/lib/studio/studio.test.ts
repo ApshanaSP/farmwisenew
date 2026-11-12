@@ -377,7 +377,8 @@ describe("insights and the brief", () => {
     const [a, b, c] = ins;
     const gw = await import("@/lib/ai/gateway");
     const spy = vi.spyOn(gw, "generateJson").mockResolvedValue({ info: { step: "s", provider: "groq", model: "m", ms: 1, inputTokens: 1, outputTokens: 1, attempts: 1 }, object: {
-      verdict: "Drains are the weak point", summary: ["One.", "Two.", "Three with 99999 invented."],
+      // QA pass 7 (hunt2-sec-14): a summary line must be about the data (a word of the insights or a computed figure)
+      verdict: "Drains are the weak point", summary: ["Drains stay open.", "Complaints wait long.", "Three with 99999 invented."],
       items: [
         { id: a.id, headline: "First", why: "Long waits lead to escalation to the Collector.", action: "Report weekly.", priority: "act" },
         { id: b.id, headline: "Second", why: "Waiting builds frustration among residents.", action: null, priority: "watch" },
@@ -394,7 +395,7 @@ describe("insights and the brief", () => {
     expect(brief.by).toBe("ai");
     // the rules' strongest others fill the brief to five
     expect(brief.items).toHaveLength(5);
-    expect(brief.summary).toEqual(["One.", "Two."]);
+    expect(brief.summary).toEqual(["Drains stay open.", "Complaints wait long."]);
   });
 
   it("writes the open word after the noun and as a verb", async () => {
