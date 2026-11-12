@@ -6,7 +6,7 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { PERIODS, PLACE_FILTERS, asOf, attentionRows, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
+import { PERIODS, PLACE_FILTERS, asOf, attentionRows, awaitingByDept, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
@@ -147,7 +147,7 @@ export async function insights(period: Period, zone: number | null, dept: string
        FROM actions a JOIN incidents i ON i.incident_id = a.incident_id
        WHERE ${w.sql} AND ${OPEN} = 1 AND a.status NOT IN ('Done', 'Verified')`, w.params)),
     when(B, () => q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS open, SUM(${pastDueSql(now)}) AS overdue,
-              SUM(i.severity_level IN ('Severe', 'High')) AS serious, SUM(i.awaiting_collector) AS awaiting,
+              SUM(i.severity_level IN ('Severe', 'High')) AS serious,
               SUM(i.citizen_complaints) AS complaints
        ${FROM} WHERE ${w.sql} AND ${OPEN} = 1 GROUP BY i.lead_dept, dp.name, dp.head
        ORDER BY serious DESC, overdue DESC, open DESC`, w.params)),
@@ -338,9 +338,12 @@ export async function insights(period: Period, zone: number | null, dept: string
     `SELECT * FROM (SELECT ${INC}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY i.priority_score DESC) AS rk
                     ${FROM} WHERE ${w.sql} AND ${OPEN} = 1) x WHERE rk <= 3`, w.params));
   for (const i of topByDept) (perDept.get(i.dept) ?? perDept.set(i.dept, []).get(i.dept)!).push(i);
+  // "N to check" per department is that department's My Tasks (intel.ts awaitingByDept, the departments table's figure), not the
+  // pipeline's awaiting flag on any severity (P7 review 2 of console-sync-07)
+  const toCheck = B ? new Map((await awaitingByDept({ period, zone, cat: s.cat, taluk: s.taluk }, now)).map((x) => [x.code, x.n])) : new Map<string, number>();
   const deptActions = deptRows.map((d) => ({
     code: d.code, name: d.name ?? d.code, head: d.head, open: Number(d.open), overdue: Number(d.overdue ?? 0), serious: Number(d.serious ?? 0),
-    awaiting: Number(d.awaiting ?? 0), complaints: Number(d.complaints ?? 0),
+    awaiting: toCheck.get(String(d.code)) ?? 0, complaints: Number(d.complaints ?? 0),
     followUps: (perDept.get(d.code) ?? []).map((i) => ({ id: i.id, title: i.title || i.type, sev: i.sev, overdue: isPastDeadline(i, now), next: proposed(i) }))
   }));
 

@@ -292,8 +292,10 @@ const BatchSchema = z.object({
 });
 
 /** One department's open cases among `ids`, worst first (re-read from the store: never taken from the browser). */
-async function deptCases(ids: string[], dept: string): Promise<Row[]> {
+async function deptCases(idsIn: string[], dept: string): Promise<Row[]> {
   const out: Row[] = [];
+  // each case once: an id sent twice (500 apart, two reads) was listed and followed up twice (P7 review 2 of reviewer4-02)
+  const ids = [...new Set(idsIn)];
   for (let k = 0; k < ids.length; k += 500) {
     const part = ids.slice(k, k + 500);
     out.push(...await q(`SELECT i.incident_id AS id, COALESCE(i.headline, i.title) AS title, i.severity_level AS sev, i.place_text AS place, i.zone_name, i.ward_no AS ward,

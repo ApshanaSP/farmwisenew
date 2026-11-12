@@ -182,10 +182,14 @@ const DECIDED = (decisions: string) =>
 const EFF = effectiveSql(ops("collector_decisions"));
 /**
  * "Severe, not yet checked" (the snapshot tile and the list it opens, one rule): open now and severe, with the effective verified flag
- * still 0, or the department asking for the Collector's check. Read from the effective state (the latest decision with an effect), not
- * from "ever decided": a case the Collector resolved, verified or rejected and then reopened is open and unchecked again (console-sync-06).
+ * still 0, or the department asking for the Collector's check: the pipeline's awaiting flag, or a completion report an officer sent
+ * from the console (as in My Tasks; P7 review 2 found the console sends missing, while 144 of 164 open severe cases are verified = 1).
+ * Read from the effective state (the latest decision with an effect), not from "ever decided": a case the Collector resolved, verified
+ * or rejected and then reopened is open and unchecked again (console-sync-06).
  */
-const NOT_YET_CHECKED = `(${EFF.open} = 1 AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1))`;
+async function notYetChecked(): Promise<string> {
+  return `((${EFF.open} = 1 AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1)) OR ${await sentByOfficer()})`;
+}
 
 // ---- Shared with the Department Officer console (src/lib/officer): completion reports officers send.
 // A grievance waits for the Collector when the department's latest officer step is "send" and the
@@ -808,6 +812,21 @@ async function awaitingRule(period: Period | null, now: string): Promise<{ mine:
   return { mine: `((${core} AND ${FOR_COLLECTOR}) OR ${sent})`, others: `(${core} AND NOT ${FOR_COLLECTOR} AND NOT ${sent})`, params: tw?.params ?? [], sent };
 }
 
+/**
+ * My Tasks per department (awaitingRule), one per group, in a zone / category / taluk (never a department filter): the ONE figure behind
+ * the departments table's "Awaiting your verification" and the Briefing's department follow-ups ("N to check", Jarvis's dept_followups
+ * "Awaiting verification"). console-sync-07; P7 review 2 found the Briefing still counting the pipeline's awaiting flag, any severity.
+ */
+export async function awaitingByDept(s: { period: Period; zone?: number | null; cat?: string | null; taluk?: string | null }, now: string):
+  Promise<{ code: string; name: string; head: string | null; n: number }[]> {
+  const A = await awaitingRule(s.period, now);
+  const scope = `${s.zone ? "AND i.zone_no = ?" : ""} ${s.cat ? "AND i.category_code = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`;
+  const params = [...(s.zone ? [s.zone] : []), ...(s.cat ? [s.cat] : []), ...(s.taluk ? [s.taluk] : [])];
+  const r = await q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(DISTINCT ${CLUSTER}) AS n ${FROM}
+     WHERE 1 = 1 ${scope} AND ${A.mine} GROUP BY i.lead_dept, dp.name, dp.head`, [...params, ...A.params]);
+  return r.map((x) => ({ code: String(x.code), name: String(x.name ?? x.code), head: x.head ?? null, n: Number(x.n) }));
+}
+
 /** Everything on the console's first pages. Read-only: routing news complaints is a job (routeNewsComplaints). */
 export async function overview(period: Period, zone: number | null, dept: string | null = null, focus: Focus = {}) {
   const now = await asOf();
@@ -830,10 +849,6 @@ export async function overview(period: Period, zone: number | null, dept: string
   const scopeParams = [...(zone ? [zone] : []), ...(dept ? [dept] : []), ...(cat ? [cat] : []), ...(taluk ? [taluk] : [])];
   const qWhere = `1 = 1 ${inScope} AND ${A.mine}`;
   const qParams = [...scopeParams, ...A.params];
-  // the departments table's "Awaiting your verification": My Tasks per department, in the zone / category / taluk (not the department
-  // filter, as the rest of the table), one per group (console-sync-07)
-  const ndScope = `${zone ? "AND i.zone_no = ?" : ""} ${cat ? "AND i.category_code = ?" : ""} ${taluk ? "AND i.taluk_code = ?" : ""}`;
-  const ndParams = [...(zone ? [zone] : []), ...(cat ? [cat] : []), ...(taluk ? [taluk] : [])];
   // Severity-based incidents: open incidents in the period, minus news complaints sent to a department.
   const sevWhere = `${w.sql} AND ${EFF.open} = 1 AND NOT ${ROUTED}`;
 
@@ -929,13 +944,12 @@ export async function overview(period: Period, zone: number | null, dept: string
          ${FROM} WHERE ${nd.sql} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY open DESC, n DESC`,
         nd.params
       ),
-      q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(DISTINCT ${CLUSTER}) AS unverified ${FROM}
-         WHERE 1 = 1 ${ndScope} AND ${A.mine} GROUP BY i.lead_dept, dp.name, dp.head`, [...ndParams, ...A.params])
+      awaitingByDept({ period, zone, cat, taluk }, now)
     ]).then(([rows, waiting]) => {
       // a department with work waiting for the check but nothing reported in the period is still listed, with its count
-      const by = new Map(waiting.map((w) => [String(w.code), Number(w.unverified)]));
+      const by = new Map(waiting.map((w) => [w.code, w.n]));
       const out: Row[] = rows.map((r) => ({ ...r, unverified: by.get(String(r.code)) ?? 0 }));
-      for (const w of waiting) if (!rows.some((r) => String(r.code) === String(w.code))) out.push({ ...w, open: 0, n: 0, severe: 0 });
+      for (const w of waiting) if (!rows.some((r) => String(r.code) === w.code)) out.push({ code: w.code, name: w.name, head: w.head, open: 0, n: 0, severe: 0, unverified: w.n });
       return out;
     }),
     dept ? deptSnapshot(dept, s, now) : zone ? areaSnapshot(zone, s, now) : districtSnapshot(s, now),
@@ -1210,7 +1224,7 @@ async function districtSnapshot(s: Scope, now: string) {
     // any date (as the list it opens, scope "all"), but the console's other filters as the list applies them: the tile counted the whole
     // district whatever the category or taluk (20 against a list of 6, or of 0: QA pass 6, P6-028)
     q(
-      `SELECT COUNT(*) AS n FROM incidents i WHERE ${NOT_YET_CHECKED}
+      `SELECT COUNT(*) AS n FROM incidents i WHERE ${await notYetChecked()}
        ${s.zone ? "AND i.zone_no = ?" : ""} ${s.dept ? "AND i.lead_dept = ?" : ""} ${s.cat ? "AND i.category_code = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`,
       [s.zone, s.dept, s.cat, s.taluk].filter((v) => v != null && v !== "")
     ),
@@ -1451,7 +1465,7 @@ export async function list(f: ListFilter) {
   else if (st === "overdue") where.push(`${EFF.open} = 1 AND ${pastDueSql(now)} AND NOT ${ROUTED}`);
   else if (st === "awaiting") where.push((await awaitingRule(null, now)).mine); // any date (scope all / 30d): the same rule without the period
   else if (st === "critical")
-    where.push(NOT_YET_CHECKED);
+    where.push(await notYetChecked());
   else if (st) (where.push(`${EFF.status} = ?`), params.push(st));
   if (f.q) {
     // every word in any order, as in the search box (the list once matched "velachery flooding" as one phrase: 0 rows)

@@ -91,9 +91,11 @@ function MapCard({ c, style }: { c: Ctx; style: React.CSSProperties }) {
   }, [ask.grown]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { box.current?.closest(".dic")?.classList.remove("map-grown"); }, []);
   const pins = useMemo(() => d.map.pins, [d.map.pins]);
+  // the pins drawn per layer, with the layer's total beside them when the map's pin limit cut it (as the Collector's legend, hunt2-ops-11)
   const LAYERS = [
-    ["severe", "Severe", "#F2555A", d.map.layerCounts.severe], ["complaint", "Complaints", "#FFA114", d.map.layerCounts.complaint],
-    ["other", "Other", "#4D8DFF", d.map.layerCounts.other]
+    ["severe", "Severe", "#F2555A", d.map.drawn.severe, d.map.layerCounts.severe],
+    ["complaint", "Complaints", "#FFA114", d.map.drawn.complaint, d.map.layerCounts.complaint],
+    ["other", "Other", "#4D8DFF", d.map.drawn.other, d.map.layerCounts.other]
   ] as const;
   return (
     <article className="card a-map" style={style} ref={box}>
@@ -110,10 +112,11 @@ function MapCard({ c, style }: { c: Ctx; style: React.CSSProperties }) {
         </div>
       </div>
       <div className="map-leg2" role="group" aria-label="Show on the map">
-        {LAYERS.map(([key, l, col, n]) => (
+        {LAYERS.map(([key, l, col, n, all]) => (
           <button key={key} className={layers[key] ? "" : "off"} aria-pressed={layers[key]} onClick={() => setLayers((x) => ({ ...x, [key]: !x[key] }))}
-            title={`Show or hide ${l.toLowerCase()} pins`}>
-            <i style={{ background: col }} />{l}<b>{Number(n).toLocaleString("en-IN")}</b>
+            title={n < all ? `Show or hide ${l.toLowerCase()} pins. ${n.toLocaleString("en-IN")} of ${all.toLocaleString("en-IN")} are drawn: the map draws the ${d.map.pinLimit} most urgent (open first, then the most severe).`
+              : `Show or hide ${l.toLowerCase()} pins`}>
+            <i style={{ background: col }} />{l}<b>{Number(n).toLocaleString("en-IN")}</b>{n < all && <small>of {all.toLocaleString("en-IN")}</small>}
           </button>
         ))}
       </div>
