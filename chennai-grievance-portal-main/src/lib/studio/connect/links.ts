@@ -120,3 +120,73 @@ export function scriptJsonUrls(html: string, base: string): string[] {
   for (const m of scripts.matchAll(/["'`]((?:https?:\/\/[^"'`\s]+|\/[^"'`\s]*)\.json(?:\?[^"'`\s]*)?)["'`]/g)) add1(m[1]);
   return [...out].filter((u) => !NOT_DATA.test(u)).slice(0, 6);
 }
+
+/**
+ * Is the document's root element a feed (rss, Atom's feed, RSS 1.0's rdf:RDF), after its prolog: the XML declaration and other
+ * processing instructions, comments, a DOCTYPE, white space. Scanned by hand, each part found with indexOf, so the time is linear. The
+ * pattern it replaces, /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i, let a comment's lazy body run on across "-->"
+ * into the next comment, so n comments split 2^(n-1) ways and a root that was not a feed made it try them all: 24 comments (337 bytes)
+ * held the server's thread 8 s, 30 a few minutes (reviewer5-09). The Studio's reader (parse.ts) and the Collector's source onboarding
+ * (collector/onboard.ts) both use it.
+ */
+export function feedRoot(t: string): boolean {
+  const after = (from: number, close: string) => { const e = t.indexOf(close, from); return e < 0 ? -1 : e + close.length; };
+  let i = 0;
+  while (i < t.length) {
+    // white space between the parts
+    if (/\s/.test(t[i])) { i++; continue; }
+    let end: number;
+    if (t.startsWith("<?", i)) end = after(i + 2, "?>");
+    else if (t.startsWith("<!--", i)) end = after(i + 4, "-->");
+    else if (t.slice(i, i + 9).toUpperCase() === "<!DOCTYPE") {
+      // a DOCTYPE ends at the ">" after its internal subset ([...]) when it has one; "[" is looked for only before the first ">", so a run
+      // of DOCTYPEs does not search to the end of the file each time (QA pass 7 reviewer)
+      const gt = t.indexOf(">", i);
+      if (gt < 0) return false;
+      const sub = t.slice(i, gt).indexOf("[");
+      const close = sub < 0 ? -2 : t.indexOf("]", i + sub);
+      end = close === -1 ? -1 : after(close >= 0 ? close : i, ">");
+    } else break;
+    // a part that never ends: the root is never reached
+    if (end < 0) return false;
+    i = end;
+  }
+  return /^<(rss|feed|rdf:RDF)\b/i.test(t.slice(i, i + 12));
+}
+
+/** What a fetched page is, besides its data: its title, and whether it is an article, a sign-in form, a CAPTCHA wall, a JavaScript app. */
+export interface PageFacts { title: string | null; article: boolean; login: boolean; captcha: boolean; jsapp: boolean }
+
+/** A page that reads as an article or a blog post (one story, many paragraphs). (Moved from resolve.ts.) */
+function articleLike(html: string): boolean {
+  if (/<meta[^>]+property=["']og:type["'][^>]+content=["']article["']/i.test(html) || /<meta[^>]+content=["']article["'][^>]+property=["']og:type["']/i.test(html)) return true;
+  // paragraphs, split by hand (no backtracking on unclosed tags)
+  const paras = html.slice(0, 3_000_000).split(/<p\b/i).slice(1, 400).map((x) => x.split(/<\/p>/i)[0].slice(0, 5000).replace(/<[^>]+>/g, " ").trim()).filter((p) => p.split(/\s+/).length >= 20);
+  return /<article\b/i.test(html) ? paras.length >= 3 : paras.length >= 6;
+}
+const loginPage = (html: string) => /<input\b[^>]*type\s*=\s*["']?password/i.test(html);
+/**
+ * A page that is a challenge, not content: a CAPTCHA widget or a "verify you are human" wall, on a page with little
+ * text of its own. The word "captcha" alone (in a script, a footer, an edit form) does not make a page a challenge. (Moved from resolve.ts.)
+ */
+const captchaPage = (html: string) => {
+  const widget = /class=["'][^"']*\b(g-recaptcha|h-captcha|cf-turnstile)\b|challenges\.cloudflare\.com\/(turnstile|cdn-cgi)|\/cdn-cgi\/challenge-platform/i.test(html);
+  const wall = /verify (that )?you are (a )?human|are you a robot|enter the (characters|text) (you see|shown)|checking your browser before/i.test(html);
+  const text = html.replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
+  return (widget || wall) && text < 4000;
+};
+
+/**
+ * The page's facts, with the patterns resolve.ts, connect/index.ts and explore.ts ran on the server's thread (moved here unchanged). Some
+ * backtrack on a crafted page (150 KB of "<meta " held the thread 7.7 s, QA pass 7 reviewer), so the server asks the file reader for them
+ * (parse-pool.ts readFacts), under its time limit.
+ */
+export function pageFacts(html: string): PageFacts {
+  return {
+    title: html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null,
+    article: articleLike(html),
+    login: loginPage(html),
+    captcha: captchaPage(html),
+    jsapp: /<script\b/i.test(html) && html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").trim().length < 400
+  };
+}

@@ -14,7 +14,7 @@
 import crypto from "crypto";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
 import { robotsAllow } from "@/lib/studio/connect/robots";
-import { parseAllAsync, type Table } from "@/lib/studio/parse";
+import { MAX_ROWS, parseAllAsync, type Table } from "@/lib/studio/parse";
 import { ParseLimitError, readPage } from "@/lib/studio/parse-pool";
 import type { Page } from "@/lib/studio/parse-worker";
 import { FILE_EXT, NOT_DATA, safeDecode } from "@/lib/studio/connect/links";
@@ -312,8 +312,9 @@ async function paginate(t: Table, first: string | null, url: string, cred: Param
   let next = first;
   const seen = new Set([url]);
   const rows = [...t.rows];
-  let pages = 1;
-  while (next && !seen.has(next) && pages < 20 && new URL(next).origin === new URL(url).origin) {
+  let pages = 1, cut = 0;
+  // at most MAX_ROWS rows in all, as any table: 20 pages of 50 000 rows each built a million on the server (QA pass 7 reviewer)
+  while (next && !seen.has(next) && pages < 20 && rows.length < MAX_ROWS && new URL(next).origin === new URL(url).origin) {
     seen.add(next);
     if (!(await robotsAllow(next))) break;
     try {
@@ -322,13 +323,15 @@ async function paginate(t: Table, first: string | null, url: string, cred: Param
       const p = await readPage(f.buf.toString("utf8"), f.url);
       const g = p.tables.find((x) => x && x.headers.join("|") === t.headers.join("|"));
       if (!g) break;
-      rows.push(...g.rows);
+      const room = MAX_ROWS - rows.length;
+      rows.push(...g.rows.slice(0, room));
+      cut += Math.max(0, g.rows.length - room);
       pages++;
       next = p.next;
     } catch { break; }
   }
   if (pages > 1) log(`The table runs over ${pages} pages: read all ${rows.length.toLocaleString("en-IN")} rows.`);
-  return pages > 1 ? { ...t, rows, part: `${pages} pages` } : t;
+  return pages > 1 ? { ...t, rows, part: `${pages} pages`, truncated: t.truncated + cut } : t;
 }
 
 /** The data the run should use: the Collector's choice if it still exists, else the same table as before, else the best. */

@@ -10,13 +10,15 @@
  */
 import { MAX_COLS, MAX_ROWS, NeedsOcr, ParseError, UserError, feedLinkIn, headlinesIn, htmlTables, parseAll, shape, type Cell, type Table } from "@/lib/studio/parse";
 import { pdfImages } from "@/lib/studio/ocr";
-import { fileLinksIn, nextPageLink, scriptJsonUrls } from "@/lib/studio/connect/links";
+import { fileLinksIn, nextPageLink, pageFacts, scriptJsonUrls, type PageFacts } from "@/lib/studio/connect/links";
 
 /** A file to read: every table in it (or, `main`, only the largest); `ocr`: a picture or a scan comes back as images to read with OCR. */
 export interface FileJob { op: "file"; buf: Uint8Array; name: string; contentType: string; base: string; ocr: boolean; main: boolean }
 /** A fetched web page: its tables (shaped), its feed, headlines, data files, the JSON its scripts load and its next page. */
 export interface PageJob { op: "page"; html: string; url: string }
-export type Job = FileJob | PageJob;
+/** A fetched page's facts (pageFacts in links.ts): its title, and whether it is an article, a sign-in, a CAPTCHA wall, a JavaScript app. */
+export interface FactsJob { op: "facts"; html: string }
+export type Job = FileJob | PageJob | FactsJob;
 
 export interface Page {
   /** the page's tables, largest first (null: a grid that is not a table) */
@@ -31,6 +33,7 @@ export type Reply =
   | { tables: Table[] }
   | { ocr: { kind: "image" | "scan"; images: Uint8Array[]; skipped: number } }
   | { page: Page }
+  | { facts: PageFacts }
   | { error: { type: "parse" | "user" | "other"; message: string } };
 
 /** What the reader process writes before its watchdog ends it (parse-worker-main.ts): parse-pool.ts reads it to say the file needed too much memory. */
@@ -96,5 +99,67 @@ function fail(e: unknown): Reply {
 }
 
 export function work(job: Job): Reply {
+  if (job.op === "facts") { try { return { facts: pageFacts(job.html) }; } catch (e) { return fail(e); } }
   return job.op === "page" ? readPage(job) : readFile(job);
+}
+
+// ----------------------------------------------------------- the wire --
+
+/**
+ * A table as it crosses from the reader to the server: each distinct text once, every cell an index (or -1 a number, -2 empty), the
+ * numbers in a typed array. Sent as plain arrays, a text was copied once per cell that held it: a 1.3 MB workbook of one shared
+ * 800-character string in 500 000 cells became 392 MB on the server, where reading it on the server's thread had cost 4 MB (QA pass 7
+ * reviewer). Rebuilt, the server holds each text once, as SheetJS itself did.
+ */
+export interface PackedTable { meta: Omit<Table, "rows">; strings: string[]; kind: Int32Array; nums: Float64Array; widths: Int32Array }
+
+export function packTable(t: Table): PackedTable {
+  const { rows, ...meta } = t;
+  const widths = new Int32Array(rows.length);
+  let n = 0;
+  for (let r = 0; r < rows.length; r++) { widths[r] = rows[r]?.length ?? 0; n += widths[r]; }
+  const kind = new Int32Array(n), nums = new Float64Array(n);
+  const strings: string[] = [];
+  const seen = new Map<string, number>();
+  let i = 0;
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    for (let c = 0; c < widths[r]; c++, i++) {
+      const v = row[c];
+      if (v == null) kind[i] = -2;
+      else if (typeof v === "number") { kind[i] = -1; nums[i] = v; }
+      else {
+        let k = seen.get(v);
+        if (k === undefined) { k = strings.length; strings.push(v); seen.set(v, k); }
+        kind[i] = k;
+      }
+    }
+  }
+  return { meta, strings, kind, nums, widths };
+}
+
+export function unpackTable(p: PackedTable): Table {
+  const rows: Cell[][] = new Array(p.widths.length);
+  let i = 0;
+  for (let r = 0; r < p.widths.length; r++) {
+    const row: Cell[] = new Array(p.widths[r]);
+    for (let c = 0; c < row.length; c++, i++) { const k = p.kind[i]; row[c] = k >= 0 ? p.strings[k] : k === -1 ? p.nums[i] : null; }
+    rows[r] = row;
+  }
+  return { ...p.meta, rows } as Table;
+}
+
+/** A reply as sent: its tables packed. */
+export type WireReply = Exclude<Reply, { tables: Table[] } | { page: Page }> | { packed: PackedTable[] } | { page: Omit<Page, "tables"> & { packed: (PackedTable | null)[] } };
+
+export function toWire(r: Reply): WireReply {
+  if ("tables" in r) return { packed: r.tables.map(packTable) };
+  if ("page" in r) { const { tables, ...rest } = r.page; return { page: { ...rest, packed: tables.map((t) => (t ? packTable(t) : null)) } }; }
+  return r;
+}
+
+export function fromWire(w: WireReply): Reply {
+  if ("packed" in w) return { tables: w.packed.map(unpackTable) };
+  if ("page" in w) { const { packed, ...rest } = w.page; return { page: { ...rest, tables: packed.map((t) => (t ? unpackTable(t) : null)) } }; }
+  return w;
 }

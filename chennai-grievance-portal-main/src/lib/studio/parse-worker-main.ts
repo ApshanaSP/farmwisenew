@@ -9,12 +9,16 @@
  * promise that (a large allocation near its limit aborted the whole process: "FATAL ERROR: Reached heap limit").
  */
 import { Worker } from "node:worker_threads";
-import { MEMORY_MARK, work, type Job, type Reply } from "@/lib/studio/parse-worker";
+import { MEMORY_MARK, toWire, work, type Job, type Reply } from "@/lib/studio/parse-worker";
 
 const WATCHDOG = `
 const { workerData } = require("node:worker_threads");
 const fs = require("node:fs");
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
 setInterval(() => {
+  // the server is gone (it crashed or was killed while this process was held in a parser, so "disconnect" could not run): this process
+  // goes too, never left reading for ever. On Linux an orphan is given a new parent; on any system the old one stops answering.
+  if (process.ppid !== workerData.parent || !alive(workerData.parent)) process.kill(process.pid, "SIGKILL");
   const rss = process.memoryUsage.rss();
   if (rss <= workerData.cap) return;
   try { fs.writeSync(2, "\\n" + workerData.mark + " (" + Math.round(rss / 1048576) + " MB)\\n"); } catch {}
@@ -23,14 +27,15 @@ setInterval(() => {
 `;
 
 const capMb = Number(process.env.STUDIO_PARSE_RSS_MB) || 1536;
-new Worker(WATCHDOG, { eval: true, workerData: { cap: capMb * 1024 * 1024, mark: MEMORY_MARK } }).unref();
+new Worker(WATCHDOG, { eval: true, workerData: { cap: capMb * 1024 * 1024, mark: MEMORY_MARK, parent: process.ppid } }).unref();
 
 const send = (m: unknown) => { try { process.send?.(m); } catch { /* the server went away */ } };
 
 process.on("message", (m: { id: number; job: Job }) => {
   let reply: Reply;
   try { reply = work(m.job); } catch (e) { reply = { error: { type: "other", message: String((e as Error)?.message ?? e) } }; }
-  send({ id: m.id, reply });
+  // tables go packed (each text once): parse-worker.ts toWire
+  send({ id: m.id, reply: toWire(reply) });
 });
 // the server closed the channel (it stopped, or it let this process go when idle)
 process.on("disconnect", () => process.exit(0));

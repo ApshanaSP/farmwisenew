@@ -15,6 +15,7 @@
  */
 import { UnsafeUrlError, assertPublicUrl, safeFetch as netFetch } from "@/lib/netsafe";
 import { z } from "zod";
+import { feedRoot } from "@/lib/studio/connect/links";
 import intelPool, { ops } from "@/lib/collector/db";
 import { encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
@@ -145,7 +146,9 @@ const looksLikeLogin = (status: number, url: string, html: string) =>
 function kindOf(contentType: string, text: string): FetchKind {
   const head = text.slice(0, 800).trimStart();
   if (/json/.test(contentType) || head.startsWith("{") || head.startsWith("[")) return "json";
-  if (/(rss|atom)\+xml/.test(contentType) || /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i.test(head)) return "rss";
+  // feedRoot (a linear scan): the pattern it replaced backtracked exponentially on a run of comments, 26 of them (429 bytes) held the
+  // server's thread 2.8 s (reviewer5-09; this copy found by the QA pass 7 reviewer)
+  if (/(rss|atom)\+xml/.test(contentType) || feedRoot(head)) return "rss";
   if (/xml/.test(contentType) && /<(item|entry)\b/i.test(text.slice(0, 50000))) return "rss";
   return "html";
 }

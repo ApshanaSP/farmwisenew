@@ -20,7 +20,8 @@
 import path from "path";
 import type { ChildProcess } from "node:child_process";
 import { ParseError, UserError, type Table } from "@/lib/studio/parse";
-import { MEMORY_MARK, type FileJob, type Job, type Page, type Reply } from "@/lib/studio/parse-worker";
+import { MEMORY_MARK, fromWire, type FileJob, type Job, type Page, type Reply, type WireReply } from "@/lib/studio/parse-worker";
+import type { PageFacts } from "@/lib/studio/connect/links";
 
 /** A file stopped by one of the reader's limits, with what the Collector can do about it. */
 export class ParseLimitError extends ParseError {
@@ -95,14 +96,17 @@ function spawn(): Proc | null {
   // a process that never says it is ready (a missing bundle, a broken install) fails what waits on it, not for ever
   const start = setTimeout(() => { if (!proc.ready) end(proc, "start"); }, START_MS);
   start.unref();
-  child.on("message", (m: { ready?: boolean; id?: number; reply?: Reply }) => {
-    if (m?.ready) { clearTimeout(start); proc.ready = true; pump(); return; }
+  child.on("message", (m: { ready?: boolean; id?: number; reply?: WireReply }) => {
+    // ready: a job, or the idle clock (a process started for a job another one took still leaves: QA pass 7 reviewer)
+    if (m?.ready) { clearTimeout(start); proc.ready = true; pump(); if (!proc.job) rest(proc); return; }
     const p = proc.job;
     if (!p || m?.id !== p.id || !m.reply) return;
     if (proc.timer) clearTimeout(proc.timer);
     proc.timer = null;
     proc.job = null;
-    p.ok(m.reply);
+    let reply: Reply;
+    try { reply = fromWire(m.reply); } catch (e) { reply = { error: { type: "other", message: String((e as Error)?.message ?? e) } }; }
+    p.ok(reply);
     rest(proc);
     pump();
   });
@@ -209,6 +213,24 @@ export async function readInReader(buf: Buffer, name: string, contentType: strin
   if ("ocr" in r) return { ocr: { kind: r.ocr.kind, skipped: r.ocr.skipped, images: r.ocr.images.map((u) => Buffer.from(u.buffer, u.byteOffset, u.byteLength)) } };
   if ("tables" in r) return { tables: r.tables };
   throw new Error("The file reader answered with something else than tables.");
+}
+
+/**
+ * A fetched page's facts (its title; an article, a sign-in, a CAPTCHA wall, a JavaScript app), worked out in the reader: the patterns
+ * that find them backtrack on a crafted page (QA pass 7 reviewer). A page the reader had to stop has none of them: the caller goes on
+ * as for a page with no title that is none of these.
+ */
+export async function readFacts(html: string): Promise<PageFacts> {
+  const none: PageFacts = { title: null, article: false, login: false, captcha: false, jsapp: false };
+  try {
+    const r = await run({ op: "facts", html });
+    if ("facts" in r) return r.facts;
+    if ("error" in r) throw thrown(r);
+    return none;
+  } catch (e) {
+    if (e instanceof ParseLimitError) return none;
+    throw e;
+  }
 }
 
 /** A fetched web page read in the reader: its tables, feed, headlines, data-file links, the JSON its scripts load and its next page. */

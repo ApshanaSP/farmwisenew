@@ -12,6 +12,9 @@
 import * as XLSX from "xlsx";
 import { FormatError, decodeText, docxTables, geojsonRecords, isZip, kmlGrid, legacyTamil, pdfTables, unzip, xmlGrid, zipIntact, zipKind } from "@/lib/studio/formats";
 import { isImage } from "@/lib/studio/ocr";
+import { feedRoot } from "@/lib/studio/connect/links";
+// the feed test lives with the page helpers (pure), so collector/onboard.ts uses it too
+export { feedRoot };
 import { excelDate, tidy } from "@/lib/studio/values";
 
 export type Cell = string | number | null;
@@ -131,35 +134,6 @@ function pdf(buf: Buffer): Table[] {
 }
 
 // -------------------------------------------------------------------- feed --
-
-/**
- * Is the document's root element a feed (rss, Atom's feed, RSS 1.0's rdf:RDF), after its prolog: the XML declaration and other
- * processing instructions, comments, a DOCTYPE, white space. Scanned by hand, each part found with indexOf, so the time is linear. The
- * pattern it replaces, /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(rss|feed|rdf:RDF)\b/i, let a comment's lazy body run on across "-->"
- * into the next comment, so n comments split 2^(n-1) ways and a root that was not a feed made it try them all: 24 comments (337 bytes)
- * held the server's thread 8 s, 30 a few minutes (reviewer5-09).
- */
-export function feedRoot(t: string): boolean {
-  const after = (from: number, close: string) => { const e = t.indexOf(close, from); return e < 0 ? -1 : e + close.length; };
-  let i = 0;
-  while (i < t.length) {
-    // white space between the parts
-    if (/\s/.test(t[i])) { i++; continue; }
-    let end: number;
-    if (t.startsWith("<?", i)) end = after(i + 2, "?>");
-    else if (t.startsWith("<!--", i)) end = after(i + 4, "-->");
-    else if (t.slice(i, i + 9).toUpperCase() === "<!DOCTYPE") {
-      // a DOCTYPE ends at the ">" after its internal subset ([...]) when it has one
-      const gt = t.indexOf(">", i), sub = t.indexOf("[", i);
-      const close = sub >= 0 && (gt < 0 || sub < gt) ? t.indexOf("]", sub) : -2;
-      end = close === -1 ? -1 : after(close >= 0 ? close : i, ">");
-    } else break;
-    // a part that never ends: the root is never reached
-    if (end < 0) return false;
-    i = end;
-  }
-  return /^<(rss|feed|rdf:RDF)\b/i.test(t.slice(i, i + 12));
-}
 
 const ENT: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s: string): string {
@@ -297,8 +271,21 @@ export function feedLinkIn(html: string, base: string): string | null {
 
 // ------------------------------------------------------------------- excel --
 
+/**
+ * SheetJS keeps one number-format table for all reads, and a legacy .xls's FORMAT records write into it (an .xls read never resets it):
+ * a crafted .xls that redefined format 14 (the built-in date) made the next Collector's register read its dates as plain numbers, in the
+ * same process (QA pass 7 reviewer). The table is set back to SheetJS's own defaults before every workbook.
+ */
+const FORMATS = { ...XLSX.SSF.get_table() };
+function resetFormats() {
+  const t = XLSX.SSF.get_table() as Record<number, string>;
+  for (const k of Object.keys(t)) delete t[Number(k)];
+  Object.assign(t, FORMATS);
+}
+
 /** Every sheet of a workbook that holds a table, the largest first. */
 function excelAll(buf: Buffer): Table[] {
+  resetFormats();
   // a workbook is a ZIP: a cut-off one (the first 30 or 40 bytes) made XLSX.read run without returning, on the server's own thread (P6-008)
   // (any "PK" start is read as a ZIP by SheetJS, not only a local header: a cut-off "PK\x07\x08..." named .xls hung it too: reviewer 3)
   if ((isZip(buf) || (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b)) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");

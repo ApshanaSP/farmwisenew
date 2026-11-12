@@ -448,6 +448,166 @@ function legacyTamil(text2) {
 // src/lib/studio/parse.ts
 init_ocr();
 
+// src/lib/studio/connect/links.ts
+var NOT_DATA = /\/maps\/vt|\/vt\/|tiles?[./]|mapbox|arcgis.*\/(tile|basemap)|openstreetmap|google(apis|tagmanager|-analytics|syndication)|doubleclick|facebook|twitter|x\.com|tweet|syndication|youtube|instagram|linkedin|analytics|gtag|hotjar|clarity\.ms|recaptcha|consent|cookie|fonts?\.|translate/i;
+var ENT2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+var unent2 = (s) => s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
+  if (e[0] !== "#") return ENT2[e.toLowerCase()] ?? m;
+  const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1));
+  return Number.isInteger(c) && c >= 0 && c <= 1114111 ? String.fromCodePoint(c) : m;
+});
+var linkText = (s) => unent2(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+var FILE_EXT = /\.(csv|tsv|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|zip|pdf|docx)(\?|$)/i;
+function anchors(html) {
+  const s = html.slice(0, 3e6);
+  const low = s.toLowerCase();
+  const out = [];
+  let i = 0;
+  while (out.length < 2e3) {
+    const a = low.indexOf("<a", i);
+    if (a < 0) break;
+    const c = low[a + 2];
+    if (c !== " " && c !== "	" && c !== "\n" && c !== "\r" && c !== ">") {
+      i = a + 2;
+      continue;
+    }
+    const gt = s.indexOf(">", a);
+    if (gt < 0) break;
+    const end = low.indexOf("</a>", gt);
+    const stop = end < 0 || end - gt > 2e3 ? Math.min(s.length, gt + 1 + 300) : end;
+    out.push({ attrs: s.slice(a + 2, gt), inner: s.slice(gt + 1, stop) });
+    i = end < 0 || end - gt > 2e3 ? gt + 1 : end + 4;
+  }
+  return out;
+}
+function dropComments(html) {
+  const parts = [];
+  let i = 0;
+  for (; ; ) {
+    const open = html.indexOf("<!--", i);
+    if (open < 0) break;
+    const close = html.indexOf("-->", open + 4);
+    if (close < 0) break;
+    parts.push(html.slice(i, open));
+    i = close + 3;
+  }
+  parts.push(html.slice(i));
+  return parts.join("");
+}
+function linksIn(html, base) {
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const a of anchors(html.length < 3e6 ? dropComments(html) : html)) {
+    const m = [a.attrs, a.attrs, a.inner];
+    const href = m[1].match(/href\s*=\s*["']([^"'#]+)["']/i)?.[1] ?? m[1].match(/href\s*=\s*([^\s>"'#]+)/i)?.[1];
+    if (!href || /^(mailto|tel|javascript|data):/i.test(href)) continue;
+    let url;
+    try {
+      url = new URL(unent2(href), base).toString();
+    } catch {
+      continue;
+    }
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push({ url, text: `${linkText(m[2])} ${m[1].match(/(?:title|aria-label)\s*=\s*["']([^"']+)["']/i)?.[1] ?? ""}`.trim() });
+  }
+  return out;
+}
+function fileLinksIn(html, base) {
+  return linksIn(html, base).filter((l) => {
+    const h = l.url.toLowerCase();
+    return FILE_EXT.test(h) || /[?&](?:format|type|output|export)=(csv|xlsx|xls|json|geojson|kml)\b/.test(h) || /(^|\W)(csv|xlsx?|excel|geojson|kml)(\W|$)/i.test(l.text) && !/\.(html?|php|aspx?)(\?|$)/.test(h);
+  }).slice(0, 80);
+}
+function nextPageLink(html, url) {
+  const rel = html.match(/<a\b[^>]*rel=["']next["'][^>]*href=["']([^"'#]+)["']|<a\b[^>]*href=["']([^"'#]+)["'][^>]*rel=["']next["']/i);
+  if (rel) {
+    try {
+      return new URL(unent2(rel[1] ?? rel[2]), url).toString();
+    } catch {
+    }
+  }
+  const here = new URL(url);
+  const n = Number(here.searchParams.get("page") ?? here.searchParams.get("p") ?? 1);
+  for (const l of linksIn(html, url)) {
+    if (/^(next|next page|next ›|next »|›|»|>|அடுத்து)$/i.test(l.text)) return l.url;
+    try {
+      const u = new URL(l.url);
+      if (u.pathname === here.pathname && Number(u.searchParams.get("page") ?? u.searchParams.get("p")) === n + 1) return l.url;
+    } catch {
+    }
+  }
+  return null;
+}
+function scriptJsonUrls(html, base) {
+  const out = /* @__PURE__ */ new Set();
+  const low = html.slice(0, 3e6).toLowerCase();
+  const parts = [];
+  for (let i = low.indexOf("<script"); i >= 0 && parts.length < 50; i = low.indexOf("<script", i + 7)) {
+    const gt = low.indexOf(">", i), end = low.indexOf("</script>", gt);
+    if (gt < 0 || end < 0) break;
+    parts.push(html.slice(gt + 1, Math.min(end, gt + 1 + 4e5)));
+  }
+  const scripts = parts.join("\n");
+  const add1 = (s) => {
+    try {
+      const u = new URL(s, base);
+      if (u.origin === new URL(base).origin) out.add(u.toString());
+    } catch {
+    }
+  };
+  for (const m of scripts.matchAll(/(?:fetch|axios\.get|\$\.getJSON|\.open\(\s*["']GET["']\s*,)\s*\(?\s*["'`]([^"'`\s]+)["'`]/g)) add1(m[1]);
+  for (const m of scripts.matchAll(/["'`]((?:https?:\/\/[^"'`\s]+|\/[^"'`\s]*)\.json(?:\?[^"'`\s]*)?)["'`]/g)) add1(m[1]);
+  return [...out].filter((u) => !NOT_DATA.test(u)).slice(0, 6);
+}
+function feedRoot(t) {
+  const after = (from, close) => {
+    const e = t.indexOf(close, from);
+    return e < 0 ? -1 : e + close.length;
+  };
+  let i = 0;
+  while (i < t.length) {
+    if (/\s/.test(t[i])) {
+      i++;
+      continue;
+    }
+    let end;
+    if (t.startsWith("<?", i)) end = after(i + 2, "?>");
+    else if (t.startsWith("<!--", i)) end = after(i + 4, "-->");
+    else if (t.slice(i, i + 9).toUpperCase() === "<!DOCTYPE") {
+      const gt = t.indexOf(">", i);
+      if (gt < 0) return false;
+      const sub = t.slice(i, gt).indexOf("[");
+      const close = sub < 0 ? -2 : t.indexOf("]", i + sub);
+      end = close === -1 ? -1 : after(close >= 0 ? close : i, ">");
+    } else break;
+    if (end < 0) return false;
+    i = end;
+  }
+  return /^<(rss|feed|rdf:RDF)\b/i.test(t.slice(i, i + 12));
+}
+function articleLike(html) {
+  if (/<meta[^>]+property=["']og:type["'][^>]+content=["']article["']/i.test(html) || /<meta[^>]+content=["']article["'][^>]+property=["']og:type["']/i.test(html)) return true;
+  const paras = html.slice(0, 3e6).split(/<p\b/i).slice(1, 400).map((x) => x.split(/<\/p>/i)[0].slice(0, 5e3).replace(/<[^>]+>/g, " ").trim()).filter((p) => p.split(/\s+/).length >= 20);
+  return /<article\b/i.test(html) ? paras.length >= 3 : paras.length >= 6;
+}
+var loginPage = (html) => /<input\b[^>]*type\s*=\s*["']?password/i.test(html);
+var captchaPage = (html) => {
+  const widget = /class=["'][^"']*\b(g-recaptcha|h-captcha|cf-turnstile)\b|challenges\.cloudflare\.com\/(turnstile|cdn-cgi)|\/cdn-cgi\/challenge-platform/i.test(html);
+  const wall = /verify (that )?you are (a )?human|are you a robot|enter the (characters|text) (you see|shown)|checking your browser before/i.test(html);
+  const text2 = html.replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
+  return (widget || wall) && text2 < 4e3;
+};
+function pageFacts(html) {
+  return {
+    title: html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null,
+    article: articleLike(html),
+    login: loginPage(html),
+    captcha: captchaPage(html),
+    jsapp: /<script\b/i.test(html) && html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").trim().length < 400
+  };
+}
+
 // src/lib/studio/values.ts
 var pad = (n) => String(n).padStart(2, "0");
 function excelDate(serial) {
@@ -557,33 +717,9 @@ function pdf(buf) {
   if (!r.grids.length) throw new ParseError(`This PDF has text (${r.words.toLocaleString("en-IN")} words over ${r.pages} ${r.pages === 1 ? "page" : "pages"}) but no table in it.`);
   return grids(r.grids, "pdf", "PDF table", "This PDF has no table in it.").map((t) => ({ ...t, notes: ["Read from a PDF: check a few numbers against the original."] }));
 }
-function feedRoot(t) {
-  const after = (from, close) => {
-    const e = t.indexOf(close, from);
-    return e < 0 ? -1 : e + close.length;
-  };
-  let i = 0;
-  while (i < t.length) {
-    if (/\s/.test(t[i])) {
-      i++;
-      continue;
-    }
-    let end;
-    if (t.startsWith("<?", i)) end = after(i + 2, "?>");
-    else if (t.startsWith("<!--", i)) end = after(i + 4, "-->");
-    else if (t.slice(i, i + 9).toUpperCase() === "<!DOCTYPE") {
-      const gt = t.indexOf(">", i), sub = t.indexOf("[", i);
-      const close = sub >= 0 && (gt < 0 || sub < gt) ? t.indexOf("]", sub) : -2;
-      end = close === -1 ? -1 : after(close >= 0 ? close : i, ">");
-    } else break;
-    if (end < 0) return false;
-    i = end;
-  }
-  return /^<(rss|feed|rdf:RDF)\b/i.test(t.slice(i, i + 12));
-}
-var ENT2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+var ENT3 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 function unxml(s) {
-  return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT2[e.toLowerCase()] ?? m);
+  return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENT3[e.toLowerCase()] ?? m);
 }
 var tagOf = (xml, name) => xml.match(new RegExp(`<${name}\\b[^>]*>([\\s\\S]*?)</${name}>`, "i"))?.[1] ?? null;
 var plain = (s) => s == null ? null : tidy(unxml(unxml(s)).replace(/<[^>]+>/g, " ")) || null;
@@ -698,7 +834,14 @@ function feedLinkIn(html, base) {
   }
   return null;
 }
+var FORMATS = { ...XLSX.SSF.get_table() };
+function resetFormats() {
+  const t = XLSX.SSF.get_table();
+  for (const k of Object.keys(t)) delete t[Number(k)];
+  Object.assign(t, FORMATS);
+}
 function excelAll(buf) {
+  resetFormats();
   if ((isZip(buf) || buf.length >= 2 && buf[0] === 80 && buf[1] === 75) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
   let wb;
   try {
@@ -942,121 +1085,6 @@ function shapeFrom(headerCells, body, caption) {
 
 // src/lib/studio/parse-worker.ts
 init_ocr();
-
-// src/lib/studio/connect/links.ts
-var NOT_DATA = /\/maps\/vt|\/vt\/|tiles?[./]|mapbox|arcgis.*\/(tile|basemap)|openstreetmap|google(apis|tagmanager|-analytics|syndication)|doubleclick|facebook|twitter|x\.com|tweet|syndication|youtube|instagram|linkedin|analytics|gtag|hotjar|clarity\.ms|recaptcha|consent|cookie|fonts?\.|translate/i;
-var ENT3 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-var unent2 = (s) => s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
-  if (e[0] !== "#") return ENT3[e.toLowerCase()] ?? m;
-  const c = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1));
-  return Number.isInteger(c) && c >= 0 && c <= 1114111 ? String.fromCodePoint(c) : m;
-});
-var linkText = (s) => unent2(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
-var FILE_EXT = /\.(csv|tsv|xlsx|xlsm|xls|ods|json|geojson|kml|kmz|xml|zip|pdf|docx)(\?|$)/i;
-function anchors(html) {
-  const s = html.slice(0, 3e6);
-  const low = s.toLowerCase();
-  const out = [];
-  let i = 0;
-  while (out.length < 2e3) {
-    const a = low.indexOf("<a", i);
-    if (a < 0) break;
-    const c = low[a + 2];
-    if (c !== " " && c !== "	" && c !== "\n" && c !== "\r" && c !== ">") {
-      i = a + 2;
-      continue;
-    }
-    const gt = s.indexOf(">", a);
-    if (gt < 0) break;
-    const end = low.indexOf("</a>", gt);
-    const stop = end < 0 || end - gt > 2e3 ? Math.min(s.length, gt + 1 + 300) : end;
-    out.push({ attrs: s.slice(a + 2, gt), inner: s.slice(gt + 1, stop) });
-    i = end < 0 || end - gt > 2e3 ? gt + 1 : end + 4;
-  }
-  return out;
-}
-function dropComments(html) {
-  const parts = [];
-  let i = 0;
-  for (; ; ) {
-    const open = html.indexOf("<!--", i);
-    if (open < 0) break;
-    const close = html.indexOf("-->", open + 4);
-    if (close < 0) break;
-    parts.push(html.slice(i, open));
-    i = close + 3;
-  }
-  parts.push(html.slice(i));
-  return parts.join("");
-}
-function linksIn(html, base) {
-  const out = [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const a of anchors(html.length < 3e6 ? dropComments(html) : html)) {
-    const m = [a.attrs, a.attrs, a.inner];
-    const href = m[1].match(/href\s*=\s*["']([^"'#]+)["']/i)?.[1] ?? m[1].match(/href\s*=\s*([^\s>"'#]+)/i)?.[1];
-    if (!href || /^(mailto|tel|javascript|data):/i.test(href)) continue;
-    let url;
-    try {
-      url = new URL(unent2(href), base).toString();
-    } catch {
-      continue;
-    }
-    if (seen.has(url)) continue;
-    seen.add(url);
-    out.push({ url, text: `${linkText(m[2])} ${m[1].match(/(?:title|aria-label)\s*=\s*["']([^"']+)["']/i)?.[1] ?? ""}`.trim() });
-  }
-  return out;
-}
-function fileLinksIn(html, base) {
-  return linksIn(html, base).filter((l) => {
-    const h = l.url.toLowerCase();
-    return FILE_EXT.test(h) || /[?&](?:format|type|output|export)=(csv|xlsx|xls|json|geojson|kml)\b/.test(h) || /(^|\W)(csv|xlsx?|excel|geojson|kml)(\W|$)/i.test(l.text) && !/\.(html?|php|aspx?)(\?|$)/.test(h);
-  }).slice(0, 80);
-}
-function nextPageLink(html, url) {
-  const rel = html.match(/<a\b[^>]*rel=["']next["'][^>]*href=["']([^"'#]+)["']|<a\b[^>]*href=["']([^"'#]+)["'][^>]*rel=["']next["']/i);
-  if (rel) {
-    try {
-      return new URL(unent2(rel[1] ?? rel[2]), url).toString();
-    } catch {
-    }
-  }
-  const here = new URL(url);
-  const n = Number(here.searchParams.get("page") ?? here.searchParams.get("p") ?? 1);
-  for (const l of linksIn(html, url)) {
-    if (/^(next|next page|next ›|next »|›|»|>|அடுத்து)$/i.test(l.text)) return l.url;
-    try {
-      const u = new URL(l.url);
-      if (u.pathname === here.pathname && Number(u.searchParams.get("page") ?? u.searchParams.get("p")) === n + 1) return l.url;
-    } catch {
-    }
-  }
-  return null;
-}
-function scriptJsonUrls(html, base) {
-  const out = /* @__PURE__ */ new Set();
-  const low = html.slice(0, 3e6).toLowerCase();
-  const parts = [];
-  for (let i = low.indexOf("<script"); i >= 0 && parts.length < 50; i = low.indexOf("<script", i + 7)) {
-    const gt = low.indexOf(">", i), end = low.indexOf("</script>", gt);
-    if (gt < 0 || end < 0) break;
-    parts.push(html.slice(gt + 1, Math.min(end, gt + 1 + 4e5)));
-  }
-  const scripts = parts.join("\n");
-  const add1 = (s) => {
-    try {
-      const u = new URL(s, base);
-      if (u.origin === new URL(base).origin) out.add(u.toString());
-    } catch {
-    }
-  };
-  for (const m of scripts.matchAll(/(?:fetch|axios\.get|\$\.getJSON|\.open\(\s*["']GET["']\s*,)\s*\(?\s*["'`]([^"'`\s]+)["'`]/g)) add1(m[1]);
-  for (const m of scripts.matchAll(/["'`]((?:https?:\/\/[^"'`\s]+|\/[^"'`\s]*)\.json(?:\?[^"'`\s]*)?)["'`]/g)) add1(m[1]);
-  return [...out].filter((u) => !NOT_DATA.test(u)).slice(0, 6);
-}
-
-// src/lib/studio/parse-worker.ts
 var MEMORY_MARK = "studio-parse: memory limit";
 var MAX_CELLS = 2 * MAX_ROWS * MAX_COLS;
 var size = (t) => t.rows.length * t.headers.length;
@@ -1115,14 +1143,66 @@ function fail(e) {
   return { error: { type: "other", message } };
 }
 function work(job) {
+  if (job.op === "facts") {
+    try {
+      return { facts: pageFacts(job.html) };
+    } catch (e) {
+      return fail(e);
+    }
+  }
   return job.op === "page" ? readPage(job) : readFile(job);
+}
+function packTable(t) {
+  const { rows, ...meta } = t;
+  const widths = new Int32Array(rows.length);
+  let n = 0;
+  for (let r = 0; r < rows.length; r++) {
+    widths[r] = rows[r]?.length ?? 0;
+    n += widths[r];
+  }
+  const kind = new Int32Array(n), nums = new Float64Array(n);
+  const strings = [];
+  const seen = /* @__PURE__ */ new Map();
+  let i = 0;
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    for (let c = 0; c < widths[r]; c++, i++) {
+      const v = row[c];
+      if (v == null) kind[i] = -2;
+      else if (typeof v === "number") {
+        kind[i] = -1;
+        nums[i] = v;
+      } else {
+        let k = seen.get(v);
+        if (k === void 0) {
+          k = strings.length;
+          strings.push(v);
+          seen.set(v, k);
+        }
+        kind[i] = k;
+      }
+    }
+  }
+  return { meta, strings, kind, nums, widths };
+}
+function toWire(r) {
+  if ("tables" in r) return { packed: r.tables.map(packTable) };
+  if ("page" in r) {
+    const { tables, ...rest } = r.page;
+    return { page: { ...rest, packed: tables.map((t) => t ? packTable(t) : null) } };
+  }
+  return r;
 }
 
 // src/lib/studio/parse-worker-main.ts
 var WATCHDOG = `
 const { workerData } = require("node:worker_threads");
 const fs = require("node:fs");
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
 setInterval(() => {
+  // the server is gone (it crashed or was killed while this process was held in a parser, so "disconnect" could not run): this process
+  // goes too, never left reading for ever. On Linux an orphan is given a new parent; on any system the old one stops answering.
+  if (process.ppid !== workerData.parent || !alive(workerData.parent)) process.kill(process.pid, "SIGKILL");
   const rss = process.memoryUsage.rss();
   if (rss <= workerData.cap) return;
   try { fs.writeSync(2, "\\n" + workerData.mark + " (" + Math.round(rss / 1048576) + " MB)\\n"); } catch {}
@@ -1130,7 +1210,7 @@ setInterval(() => {
 }, 50);
 `;
 var capMb = Number(process.env.STUDIO_PARSE_RSS_MB) || 1536;
-new Worker(WATCHDOG, { eval: true, workerData: { cap: capMb * 1024 * 1024, mark: MEMORY_MARK } }).unref();
+new Worker(WATCHDOG, { eval: true, workerData: { cap: capMb * 1024 * 1024, mark: MEMORY_MARK, parent: process.ppid } }).unref();
 var send = (m) => {
   try {
     process.send?.(m);
@@ -1144,7 +1224,7 @@ process.on("message", (m) => {
   } catch (e) {
     reply = { error: { type: "other", message: String(e?.message ?? e) } };
   }
-  send({ id: m.id, reply });
+  send({ id: m.id, reply: toWire(reply) });
 });
 process.on("disconnect", () => process.exit(0));
 send({ ready: true });

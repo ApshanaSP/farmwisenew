@@ -18,6 +18,7 @@ import { adapterFor } from "@/lib/studio/connect/adapters";
 import { robotsAllow } from "@/lib/studio/connect/robots";
 import { fetchOnce, LinkError } from "@/lib/studio/fetchurl";
 import { parseAllAsync, ParseError } from "@/lib/studio/parse";
+import { ParseLimitError, readFacts } from "@/lib/studio/parse-pool";
 import type { AuthInput } from "@/lib/studio/types";
 
 export interface Connected {
@@ -69,7 +70,8 @@ export async function connectLink(url: string, auth: AuthInput, opts: { session?
     if (!isHtml(got.buf, got.contentType)) {
       log(`Received ${(got.buf.length / 1024).toFixed(0)} KB (${got.contentType.split(";")[0] || "a file"}).`);
       let tables;
-      try { tables = await parseAllAsync(got.buf, got.name, got.contentType, got.url); } catch (e) { if (e instanceof ParseError) throw fileError(e); throw e; }
+      // a file the reader refused because it was busy is not a damaged file: that error goes up as it is (QA pass 7 reviewer)
+      try { tables = await parseAllAsync(got.buf, got.name, got.contentType, got.url); } catch (e) { if (e instanceof ParseError && !(e instanceof ParseLimitError && e.reason === "busy")) throw fileError(e); throw e; }
       const found: Found[] = [];
       for (const t of tables) {
         const feed = t.format === "feed";
@@ -81,7 +83,8 @@ export async function connectLink(url: string, auth: AuthInput, opts: { session?
     }
     if (!(await robotsAllow(got.url))) throw new LinkError(`${host(got.url)} asks automated readers to stay out of this page (robots.txt), so the Studio does not read it. Download the data from the page and add the file instead.`, "robots");
     const html = got.buf.toString("utf8");
-    const title = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? null;
+    // the title, read in the file reader: its pattern backtracks on a page of unclosed <title> tags (QA pass 7 reviewer)
+    const title = (await readFacts(html)).title;
     log(`A web page${title ? `: "${title.slice(0, 80)}"` : ""}. Looking for its data…`);
     const found = await discover({ ...got, html, json: [], title }, log, cred, checked);
     const good = found.find((f) => f.cand.kind !== "headlines" && f.cand.score >= 40);
