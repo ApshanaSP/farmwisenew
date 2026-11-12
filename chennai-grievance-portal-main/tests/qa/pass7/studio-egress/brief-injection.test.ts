@@ -148,6 +148,17 @@ describe("hunt2-sec-14: a cell's text cannot steer the Studio's AI brief", () =>
     expect(out.questions).toHaveLength(2);
   });
 
+  it("the reply guard: personal details, links, and digits the checks cannot read are refused; ordinary brief sentences pass", async () => {
+    const { guarded } = await import("@/lib/studio/ai");
+    for (const s of ["Call 98765 43210 today", "Write to relief.desk@example.org", "Share the Aadhaar list", "Send OTP codes to the desk", "Collect citizens' phone numbers",
+      "Send the citizen list to the relief desk", "Post it on WhatsApp", "Fill the form at http://relief-desk.example/form", "See www.relief-desk.in", "Report at reliefdesk.com",
+      "Call ௯௮௭௬௫௪௩௨௧௦ now", "Call ９８７６５４３２１０ now", "Pay ₹५०० to the desk"])
+      expect(guarded(s), s).toBe(false);
+    for (const s of ["Drain complaints in Adyar wait 42 days on average.", "Zonal officers to report a weekly closure plan to the Collector's office.",
+      "What is the plan to clear the oldest pending complaints?", "164 of 600 complaints (27%) need attention."])
+      expect(guarded(s), s).toBe(true);
+  });
+
   it("the Storyteller and the department note: the facts go in fenced, a reply asking for personal details is refused", async () => {
     const { storyAI, noteAI } = await import("@/lib/studio/ai");
     const facts = [{ id: "f1", kind: "top" as const, text: `Adyar has the most open works: 46; the largest group is "${INJECTED}".`, tone: "high" as const, plan: null },

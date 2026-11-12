@@ -57,8 +57,15 @@ const ONE = (r: RegExp) => new RegExp(r.source, r.flags.replace("g", ""));
 const PHONE1 = ONE(PHONE), EMAIL1 = ONE(EMAIL), AADHAAR1 = ONE(AADHAAR);
 // what a brief about a department's figures never needs: contact details, ID numbers, sign-ins, private channels, lists of people
 const ASKS_PERSONAL = /\b(aadh?aa?r|otp|one[- ]time (password|code)|pass(word|code)s?|pan (card|number)|bank (account|details)|account numbers?|ifsc|upi|cvv|whats ?app|telegram|gmail|yahoo|hotmail|phone numbers?|mobile numbers?|contact (numbers?|details)|personal (details|data|information)|dates? of birth|home address(es)?|citizen(s|'s|s')? (lists?|names|details|data|numbers))\b/i;
-/** Text a model wrote that may be shown: false when it carries or asks for personal details. */
-export const guarded = (s: string) => !(ASKS_PERSONAL.test(s) || PHONE1.test(s) || EMAIL1.test(s) || AADHAAR1.test(s));
+// a link or a web address (a brief never sends anyone anywhere), and digits of another script or full-width ones (the figure and phone
+// checks read ASCII digits only, so a number written that way would pass them unread)
+const LINK = /\b(https?:\/\/|www\.)|\b[a-z0-9-]{2,}\.(com|in|org|net|io|me|co|xyz|info|app|link|ly|gov\.in|nic\.in)\b/i;
+const OTHER_DIGIT = /[^\P{Nd}0-9]/u;
+/** Text a model wrote that may be shown: false when it carries or asks for personal details, a link, or digits the checks cannot read. */
+export const guarded = (s: string) => {
+  const t = s.normalize("NFKC");
+  return !(OTHER_DIGIT.test(s) || LINK.test(t) || ASKS_PERSONAL.test(t) || PHONE1.test(t) || EMAIL1.test(t) || AADHAAR1.test(t));
+};
 
 const STOP = new Set(("that this with from have more than they them their there what which when where will would should could about into over under only also each " +
   "every most much many some such very just been were does done being after before again across against within while these those then here other same like less least " +
