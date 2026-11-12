@@ -3,7 +3,7 @@
 This is the short version. The numbers are in `FINAL_REPORT.md` (made by a script, not typed). Nothing was pushed, merged into main, or opened as a pull request.
 
 ## In numbers (from FINAL_REPORT.md)
-38 bugs recorded: 5 serious (P0), 10 major (P1), 20 medium (P2), 3 minor (P3). Fixed: 20, each with a test that fails without the fix. Open: 15. Yours to decide: 3. On the final commit the type check, lint (no errors), production build and all 3,315 unit tests (4 runs, two time zones) pass.
+38 bugs recorded: 5 serious (P0), 10 major (P1), 20 medium (P2), 3 minor (P3). Fixed: 20; 19 of them with a test that fails without the fix, and one test-tooling fix checked by reading. Open: 15. Yours to decide: 3. On the final commit the type check, lint (no errors), production build and all 3,315 unit tests (4 runs, two time zones) pass.
 
 ## What happened
 - Pass 4's fixes were joined onto the newest main on the branch `claude/qa-pass5-05abfd`. Four files clashed; each kept both sides.
@@ -12,12 +12,12 @@ This is the short version. The numbers are in `FINAL_REPORT.md` (made by a scrip
 
 ## What works now that did not
 - The officer page and the Manu Desk build and run on the newer Next.js that pass 4 brought in.
-- Scanned petitions and large complaint videos over 10 MB upload again.
+- Scanned petitions over 10 MB (up to the desk's 20 MB a PDF) upload again; before, Next.js cut every request at 10 MB, so a complaint video right at its 10 MB limit could fail too.
 - A whole Aadhaar number is no longer stored when the reader or the officer puts it in the wrong box, or writes it with dashes, Tamil digits or line breaks.
 - Dates, wards and phone numbers on petitions are read correctly in Tamil and full-width digits, and doubtful ones are marked for checking.
 - Public tracking shows standard words for each step, never what staff typed.
 - The desk's "has this person written before?" check no longer shows anonymous online complaints, and finds the same person when the name is written a little differently.
-- Petition SMS go out once, say the right result, and never go out from a test or teammate copy of the site.
+- Petition SMS are no longer sent twice by two server processes, a retried closing SMS says the complaint's current result, and no SMS goes out from a test or teammate copy of the site. (Still open: a send the provider accepted late can go again, P5-022; and a closing SMS cannot be corrected after a reopen, P5-020.)
 - "Your decision has been recorded" no longer appears while the password box is still open.
 - The petition desk login opens only the desk, not Jarvis, the map or traffic.
 
@@ -27,7 +27,7 @@ This is the short version. The numbers are in `FINAL_REPORT.md` (made by a scrip
 - PaddleOCR runs before the AI reader, so a slow PaddleOCR delays every petition (P5-026).
 - Rate limits are shared by every visitor unless `TRUST_PROXY_HOPS` is set (P5-027).
 - A small PDF can expand to a very large size in memory before it is refused (P5-028).
-- Ten of pass 4's own tests fail on the joined branch and were not traced (P5-034).
+- Pass 4's own real-path suite, run once on the busy machine: 12 tests failed and 7 test files did not run at all (timeouts, a server that did not start, one parse error). Two were fixed (P5-013, P5-015); the rest were not traced (P5-034).
 - Petitions to Metrowater, TANGEDCO, Police and five other desk departments never match the same person's online complaint (P5-037).
 - Two citizen pages have text with too little contrast on a phone (P5-038).
 - A desk upload that is not a file form gets a server error instead of a clear message (P3).
