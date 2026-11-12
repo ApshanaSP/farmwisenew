@@ -1,0 +1,30 @@
+RC-11 sweep, 7 Nov 2026: keyword routes tried in a fixed order, where a subject word beats the thing asked
+--- offlineRoute (guard.ts) routes placed before the data-question check, by subject word: hospital, lake, warning, rain, aqi, price, hotspot, department, zone
+128:  if (/^(hi|hello|hey|thanks|thank you|vanakkam|nandri)\b|வணக்கம்|நன்றி/.test(t)) 
+130:  if (/\b(what (is|was) (this|that|the)|tell me (more )?about|explain|details? (of|about)|what happened)\b
+133:  if (/test data|what does .{0,40}mean|meaning of|what can you do|how (do|can|should) (i|we) (use|ask)|^\s
+134:  if (/what('s| is) (happening|going on)|situation|overview|status of/.test(t)) return r("overview_kpis");
+135:  if (/\bfilter\b|வடிகட்டு/.test(t)) {
+143:  if (/brief|summar/.test(t)) return { intent: "briefing", tools: [{ name: "briefing", args: {} }], period
+144:  if (/verif|waiting|my tasks/.test(t)) return r("verification_queue");
+145:  if (/slow|backlog|oldest|delay/.test(t)) return r("dept_backlog");
+149:  if (/\bhospitals?\b|\bbeds?\b/.test(t)) return r("environment", { metric: "bed_occupancy_pct", above: Nu
+150:  if (/lake|reservoir|ஏரி/.test(t)) return r("environment", { metric: "lake_pct_full", above: Number
+151:  if (/warning|alert|imd/.test(t)) return r("environment", { metric: "imd_warning_level" });
+152:  if (/rain|மழை/.test(t)) return r("environment", { metric: "rainfall_24h_mm" });
+153:  if (/aqi|air quality|pollution/.test(t)) return r("environment", { metric: "aqi" });
+154:  if (/price|mandi|market|tomato|onion|potato|brinjal|thakkali|vengayam/.test(t)) {
+159:  if (/hotspot|cluster/.test(t)) return r("hotspots");
+160:  if (/\b(list|show)\b.{0,30}\b(incidents|complaints|cases)\b/.test(t) && !/\bby (zone|department|dept|tal
+162:  if (/(location|area|place|locality|ward)[ -]?wise|which (areas|parts|places|localities|wards)|where exac
+163:  if (/stor(y|ies)|developing/.test(t)) return r("developing_stories", { place: t.match(/about ([a-z ]+?)(
+164:  if (/news/.test(t) && /(not|no|without|missing)/.test(t)) return r("news_gaps");
+165:  if (/source|feed|fresh/.test(t)) return r("source_health");
+166:  if (/trend|over time|per day|daily count/.test(t)) return r("incident_series");
+167:  if (/taluk/.test(t)) return r("taluks");
+168:  if (/department|dept|துறை/.test(t)) return r("departments");
+169:  if (/zone|attention|where|மண்டல/.test(t)) return r("zones");
+170:  if (/severity|severe|கடுமை/.test(t)) return r("severity");
+171:  if (/incident|complaint|how many|சம்பவ|புகார்|எத்தனை/.test(t)) return 
+--- fixed: aboutTheData() in help.ts is read first by offlineRoute, directTool and looksBulk; BY_DEPT and LATE now know Tamil and Tanglish; 'late by department' goes to dept_followups
+--- not fixed: 'complaints by department' (the departments tool has no complaints column, the headline says open incidents), and the other subject-word-first routes listed above are untested for two-intent sentences

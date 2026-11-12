@@ -1,0 +1,40 @@
+# RC-01 sweep: every call of the entity resolver and every lane entry, to see which ask the outside question (foreignIn) first
+## grep -rn 'resolveEntity(\|briefTurn(\|quickScreen(\|resolveFrame(\|foreignIn(' src (non-test)
+src/components/collector/app/thunai/Thunai.tsx:1195:    if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.l
+src/components/collector/app/thunai/Thunai.tsx:1481:        const q = quickScreen(t, w);
+src/lib/thunai/agentServer.ts:55:  const quick = quickScreen(b.text, world);
+src/lib/thunai/entities.ts:219:export function resolveEntity(text: string, w: World): Resolution {
+src/lib/thunai/entities.ts:373:export function foreignIn(text: string, w: World): string | null {
+src/lib/thunai/entities.ts:375:  const r = resolveEntity(text, w);
+src/lib/thunai/entities.ts:389:export function briefTurn(text: string, w: World): BriefTurn | null {
+src/lib/thunai/entities.ts:392:    const far = foreignIn(text, w);
+src/lib/thunai/entities.ts:393:    if (far) { const r = resolveEntity(text, w); return { kind: "reply", conf: 0, via: "unknown", text: noData(far, r.kind === "unknown" ? r.near : null) }; }
+src/lib/thunai/entities.ts:398:  const r = resolveEntity(text, w);
+src/lib/thunai/frame.ts:50:  const q = quickScreen(heard, i.world, { noBail: true });
+src/lib/thunai/frame.ts:70:export function resolveFrame(i: FrameInput): Frame {
+src/lib/thunai/frame.ts:72:  if (foreignIn(raw, i.world)) return { kind: "none" }; // a follow-up about another place is a new question, which the brief turn answers (RC-01)
+src/lib/thunai/holdout.live.ts:53:  const q = quickScreen(text, world);
+src/lib/thunai/holdout.live.ts:155:    const q = quickScreen(x.text, world);
+src/lib/thunai/holdout.live.ts:178:    const q = quickScreen(x.text, world);
+src/lib/thunai/holdout.live.ts:197:    const q = quickScreen(after, world, { noBail: true });
+src/lib/thunai/holdout.live.ts:203:    const f = resolveFrame({ text: x.text, stage, turns: [{ heard: x.after, did: "showed a screen" }], lastPlace: null, lastText: x.after, world });
+src/lib/thunai/holdout.live.ts:207:    const q = quickScreen(x.after, world, { noBail: true });
+src/lib/thunai/qa.live.ts:180:    const b = briefTurn(x.text, world);
+src/lib/thunai/quick.ts:247:export function quickScreen(text: string, w: World, o: { noBail?: boolean } = {}): Quick | null {
+src/lib/thunai/quick.ts:251:  if (foreignIn(text, w)) return null;
+src/lib/thunai/round.ts:290:    const frame = resolveFrame({ text: b.text, stage, turns: b.turns ?? [], lastPlace: b.state.lastPlace ?? null, lastText: b.lastText ?? null, world });
+src/lib/thunai/round.ts:299:    const who = briefTurn(b.text, world);
+src/lib/thunai/round.ts:325:    const quick = open && isElliptical(b.text) ? null : quickScreen(b.text, world);
+src/lib/thunai/round.ts:389:    const q = quickScreen(b.text, world, { noBail: true });
+src/lib/thunai/router.ts:36:  if (district || quickScreen(text, w, { noBail: true })) return { lane: "district", bundle, why: "district-noun" };
+src/lib/thunai/rules.ts:22:  const frame = resolveFrame({ text, stage, turns: [], lastPlace: null, lastText: ctx.after ?? null, world });
+src/lib/thunai/rules.ts:26:  const q = quickScreen(text, world);
+src/lib/thunai/understand.ts:298:  const alien = foreignIn(input, world);
+
+## result: lane entries and where the outside check sits
+quick.ts quickScreen: foreignIn before any screen (added)
+frame.ts resolveFrame: foreignIn first (added)
+understand.ts understand: foreignIn before view steps (added, replaces the department-only foreign test)
+entities.ts briefTurn: foreignIn first, even with no brief word (added)
+round.ts / agent.ts / Thunai.tsx call these entries (not edited: other lanes)
+## closed lists left: outside.ts ONE/TWO/TA are reference data (Constitution First Schedule, Census 2011, ISO 3166); the rule for an unlisted name is nameBeside() in entities.ts (unknown word in front of an agency word is not ours), so a town not on any list still stops

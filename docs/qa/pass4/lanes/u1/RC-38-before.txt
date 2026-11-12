@@ -1,0 +1,164 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] news-media-only@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/invariants-app.test.ts[2m > [22m[2mdata invariants: what the app does with the data
+[22m[39m[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+ [31m❯[39m tests/qa/pass4/invariants-app.test.ts [2m([22m[2m17 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 39616[2mms[22m[39m
+[31m   [31m×[31m data invariants: what the app does with the data[2m > [22mINV-1: incidents the app's build drops[2m > [22mINV-1 no article is left linked to an incident the build took out[39m[32m 61[2mms[22m[39m
+[31m     → expected 149 to be +0 // Object.is equality[39m
+[31m   [31m×[31m data invariants: what the app does with the data[2m > [22mINV-1: incidents the app's build drops[2m > [22mINV-1 a news result in the search box opens an incident that exists[39m[32m 162[2mms[22m[39m
+[31m     → expected null not to be null[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-1: incidents the app's build drops[2m > [22mthe other path out of the build (dropIncidents) leaves no link behind, so the rule is known[32m 87[2mms[22m[39m
+[31m   [31m×[31m data invariants: what the app does with the data[2m > [22mINV-2: personal data in a news headline[2m > [22mINV-2 the search box shows no phone number or email in a news headline[39m[32m 284[2mms[22m[39m
+[31m     → expected 3 to be +0 // Object.is equality[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-2: personal data in a news headline[2m > [22mthe same headline is hidden on Jarvis's path: the rule exists, the search box does not use it[32m 15[2mms[22m[39m
+   [33m[2m✓[22m[39m data invariants: what the app does with the data[2m > [22mINV-3: closed within the deadline[2m > [22mINV-3 Ask District IQ's 'within the deadline' counts incidents closed by their due time [33m 434[2mms[22m[39m
+   [33m[2m✓[22m[39m data invariants: what the app does with the data[2m > [22mINV-3: closed within the deadline[2m > [22mINV-3 the resolution_times answer states the true share [33m 401[2mms[22m[39m
+   [33m[2m✓[22m[39m data invariants: what the app does with the data[2m > [22mINV-3: closed within the deadline[2m > [22mINV-3 the officer's 'Closed on time' tile counts incidents closed by their due time [33m 581[2mms[22m[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-3, the control: where the deadline is about closing, the tile is right[2m > [22mSolid Waste Management's tile agrees with closing by the due time[32m 298[2mms[22m[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-4 (OPEN-7): past deadline[2m > [22mthe case page's rule says missed for these incidents[32m 139[2mms[22m[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-4 (OPEN-7): past deadline[2m > [22mINV-4 an incident the case page calls missed is on the Past deadline list[32m 130[2mms[22m[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-4 (OPEN-7): past deadline[2m > [22mINV-4 the Past deadline list holds every open incident whose due time has gone[32m 192[2mms[22m[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-5 (OPEN-11): a forecast stored as an incident[2m > [22mno list shows it: the lists stop at the store's time[32m 124[2mms[22m[39m
+[31m   [31m×[31m data invariants: what the app does with the data[2m > [22mINV-5 (OPEN-11): a forecast stored as an incident[2m > [22mINV-5 the incident's answer never says it has been open for less than no time[39m[32m 135[2mms[22m[39m
+[31m     → expected -1.1 to be greater than or equal to 0[39m
+   [32m✓[39m data invariants: what the app does with the data[2m > [22mINV-6: a ward in another zone[2m > [22mthe route takes a ward of the zone and refuses one outside its range[32m 10[2mms[22m[39m
+[31m   [31m×[31m data invariants: what the app does with the data[2m > [22mINV-6: a ward in another zone[2m > [22mINV-6 the route refuses Adyar's ward 175 for zone 14, whose range wraps around Adyar[39m[32m 2[2mms[22m[39m
+[31m     → expected 200 to be 400 // Object.is equality[39m
+   [33m[2m✓[22m[39m data invariants: what the app does with the data[2m > [22mthe same checks after the app's build steps[2m > [22mevery difference is known, and the evidence is written [33m 29157[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m12 passed[39m[22m[90m (17)[39m
+[2m   Start at [22m 14:53:42
+[2m   Duration [22m 42.32s[2m (transform 1.11s, setup 0ms, collect 1.68s, tests 39.62s, environment 0ms, prepare 127ms)[22m
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] news-media-only@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+[90mstdout[2m | tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22m[2mRC-38: no console path prints a private phone number or email from a news headline
+[22m[39m[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+ [31m❯[39m tests/qa/pass4/rc38-news-privacy.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 10800[2mms[22m[39m
+   [32m✓[39m RC-38: no console path prints a private phone number or email from a news headline[2m > [22mthe snapshot has such headlines, so the checks below are not empty[32m 1[2mms[22m[39m
+[31m   [31m×[31m RC-38: no console path prints a private phone number or email from a news headline[2m > [22mone story's reports (the news preview) hide them[39m[32m 8[2mms[22m[39m
+[31m     → expected 4 to be +0 // Object.is equality[39m
+   [32m✓[39m RC-38: no console path prints a private phone number or email from a news headline[2m > [22mthe news stories and their original headlines hide them[32m 110[2mms[22m[39m
+[31m   [31m×[31m RC-38: no console path prints a private phone number or email from a news headline[2m > [22man incident's reports hide them[39m[32m 1[2mms[22m[39m
+[31m     → expected 0 to be greater than 0[39m
+   [33m[2m✓[22m[39m RC-38: no console path prints a private phone number or email from a news headline[2m > [22mthe overview's news headlines hide them [33m 3091[2mms[22m[39m
+[31m   [31m×[31m RC-38: no console path prints a private phone number or email from a news headline[2m > [22mthe search box hides them for a word of each of the first headlines[39m[33m 355[2mms[22m[39m
+[31m     → expected 4 to be +0 // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22mRC-38: no console path prints a private phone number or email from a news headline[2m > [22mone story's reports (the news preview) hide them
+[31m[1mAssertionError[22m: expected 4 to be +0 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 4[39m
+
+[36m [2m❯[22m tests/qa/pass4/rc38-news-privacy.test.ts:[2m31:101[22m[39m
+    [90m 29| [39m    [35mconst[39m arts [33m=[39m [35mawait[39m [34mnewsArticles[39m(leaky[33m.[39m[34mmap[39m((l) [33m=>[39m l[33m.[39mid))[33m;[39m
+    [90m 30| [39m    [34mexpect[39m(arts[33m.[39mlength)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+    [90m 31| [39m    expect(arts.filter((a: any) => leaks(a.title) || leaks(a.title_en)…
+    [90m   | [39m                                                                                                    [31m^[39m
+    [90m 32| [39m  })[33m;[39m
+    [90m 33| [39m  it("the news stories and their original headlines hide them", async …
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22mRC-38: no console path prints a private phone number or email from a news headline[2m > [22man incident's reports hide them
+[31m[1mAssertionError[22m: expected 0 to be greater than 0[39m
+[36m [2m❯[22m tests/qa/pass4/rc38-news-privacy.test.ts:[2m47:18[22m[39m
+    [90m 45| [39m      expect((d.reports ?? []).filter((r: any) => leaks(r.title) || le…
+    [90m 46| [39m    }
+    [90m 47| [39m    [34mexpect[39m(seen)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m 48| [39m  })[33m;[39m
+    [90m 49| [39m  [34mit[39m([32m"the overview's news headlines hide them"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/qa/pass4/rc38-news-privacy.test.ts[2m > [22mRC-38: no console path prints a private phone number or email from a news headline[2m > [22mthe search box hides them for a word of each of the first headlines
+[31m[1mAssertionError[22m: expected 4 to be +0 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 4[39m
+
+[36m [2m❯[22m tests/qa/pass4/rc38-news-privacy.test.ts:[2m58:15[22m[39m
+    [90m 56| [39m    [35mlet[39m n [33m=[39m [34m0[39m[33m;[39m
+    [90m 57| [39m    for (const w of words.filter(Boolean)) { const r = await search(w)…
+    [90m 58| [39m    [34mexpect[39m(n)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 59| [39m  })[33m;[39m
+    [90m 60| [39m})[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 14:57:58
+[2m   Duration [22m 12.21s[2m (transform 300ms, setup 0ms, collect 524ms, tests 10.80s, environment 0ms, prepare 112ms)[22m
+

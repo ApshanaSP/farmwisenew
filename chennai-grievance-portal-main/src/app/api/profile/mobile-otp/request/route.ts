@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null); // a malformed body is a 400 from the schema, not a 500
-  const parsed = mobileSchema.safeParse(body.mobileNumber);
+  const parsed = mobileSchema.safeParse(body?.mobileNumber);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
@@ -34,6 +34,6 @@ export async function POST(req: NextRequest) {
 
   await sendMail(session.email, "Verify your mobile number", otpEmailHtml(result.otp, "mobile number verification"));
 
-  const devOtp = devOtpForResponse(result.otp);
+  const devOtp = devOtpForResponse(result.otp, req.headers);
   return NextResponse.json({ message: "OTP sent.", devOtp });
 }

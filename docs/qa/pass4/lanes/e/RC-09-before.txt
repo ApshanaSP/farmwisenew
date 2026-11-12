@@ -1,0 +1,559 @@
+
+ RUN  v3.2.7 E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] news-media-only@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-understanding.test.ts
+[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts (356 tests | 8 failed | 347 skipped) 14567ms
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > chennai city police report
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > Chennai City Police report please
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > சென்னை காவல்துறை அறிக்கை
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > சென்னை போலீஸ் ரிப்போர்ட் கொடு
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > chennai police report kudu
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > GCP status
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > போலீஸ் நிலவரம் சொல்லு
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > police nilavaram sollu
+   ↓ BUG-001 holds on the round: a report on a named body is a brief, not a list (for the browser, see audit-understanding-23) > the corporation and Metrowater too
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > Mumbai police
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > filter Coimbatore police
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > மும்பை போலீஸ்
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > கோயம்புத்தூர் காவல்துறை
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > கோவை போலீஸ் பில்டர் பண்ணு
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > Coimbatore police filter pannu
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > Mumbai police cases kaattu
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > show Delhi police cases
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > filter by Bangalore police
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > மதுரை போலீஸ் கேஸ் காட்டு
+   ↓ BUG-002 holds for the named cities: no Chennai filter or brief > Mumbai police report says it has no data
+   ↓ BUG-003 holds where the period is read: the brief says its own period > district brief this week
+   ↓ BUG-003 holds where the period is read: the brief says its own period > give me the brief for this month
+   ↓ BUG-003 holds where the period is read: the brief says its own period > brief me on the last quarter
+   ↓ BUG-003 holds where the period is read: the brief says its own period > indha maasam brief sollu
+   ↓ BUG-003 holds where the period is read: the brief says its own period > indha vaaram brief sollu
+   ↓ BUG-003 holds where the period is read: the brief says its own period > இந்த மாதம் சுருக்கம்
+   ↓ BUG-003 holds where the period is read: the brief says its own period > police report this week
+   ↓ BUG-003 holds where the period is read: the brief says its own period > போலீஸ் அறிக்கை இந்த மாதம்
+   ↓ BUG-003 holds where the period is read: the brief says its own period > today's brief
+   ↓ BUG-005 holds: the skeptic's own breaks > full police report is our police
+   ↓ BUG-005 holds: the skeptic's own breaks > Jarvis police report is our police
+   ↓ BUG-005 holds: the skeptic's own breaks > export police report is not called a body
+   ↓ BUG-005 holds: the skeptic's own breaks > Mylapur police report is not called foreign
+   ↓ BUG-005 holds: the skeptic's own breaks > Chetpet police report is not called foreign
+   ↓ BUG-005 holds: the skeptic's own breaks > Anna Salai police report is not called foreign
+   ↓ BUG-005 holds: the skeptic's own breaks > தி நகர் போலீஸ் அறிக்கை is not called foreign
+   ↓ BUG-005 holds: the skeptic's own breaks > Madurai police report has no data
+   ↓ BUG-005 holds: the skeptic's own breaks > Chengai police report has no data
+   ↓ BUG-005 holds: the skeptic's own breaks > Coimbatore city traffic police report has no data
+   ↓ BUG-005 holds: the skeptic's own breaks > police in Mumbai is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > Poondi reservoir level keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > police news keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > reservoir report keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > air quality report keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > மழை அறிக்கை keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > ஏரி அறிக்கை keeps its own screen
+   ↓ BUG-005 holds: the skeptic's own breaks > compare police and corporation is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > show incident INC-1234 is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > draft a note to the police is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > where is the nearest police station is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > போலீஸ் மற்றும் மாநகராட்சி ஒப்பிடு is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > report a pothole in Adyar is not a brief
+   ↓ BUG-005 holds: the skeptic's own breaks > a two-word zone does not beat the body
+   ↓ BUG-005 holds: the skeptic's own breaks > a locality in the reference is said, not dropped
+   ↓ BUG-020 holds for the original words > explain the flooding complaint in Adyar
+   ↓ BUG-020 holds for the original words > tell me about the flooding complaint in Adyar
+   ↓ BUG-020 holds for the original words > அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க
+   ↓ BUG-020 holds for the original words > அடையாறு வெள்ளம் பற்றி விளக்குங்க
+   ↓ BUG-020 holds for the original words > Adyar flooding complaint pathi explain pannu
+   ↓ BUG-020 holds for the original words > Adyar flooding complaint ah simple ah sollu
+   ↓ BUG-020 holds for the original words > a real follow-up still re-scopes: and in Adyar
+   ↓ BUG-020 holds for the original words > a real follow-up still re-scopes: what about Adyar
+   ↓ BUG-020 holds for the original words > a real follow-up still re-scopes: same for Adyar
+   ↓ BUG-020 holds for the original words > a real follow-up still re-scopes: அடையாறு மட்டும்
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, describe the flooding complaint in Adyar: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, summarize the flooding complaint in Adyar: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, what's the flooding complaint in Adyar: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, அடையாறு வெள்ள புகார் பத்தி சொல்லு: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, அடையாறு வெள்ளம் பத்தி சொல்லுங்க: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, அடையாறுல வெள்ளம் புகார் என்ன ஆச்சு: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, Adyar flooding complaint pathi sollu: not the police brief re-scoped
+   ↓ BUG-020 holds for the original words > audit-understanding-7 police brief open, Adyar flooding complaint enna aachu: not the police brief re-scoped
+   ↓ audit-understanding-7, other screens open > the original words hold with a corporation brief open
+   ↓ audit-understanding-7, other screens open > audit-understanding-7 give me the corporation update open, describe the flooding complaint in Adyar: not that body's brief re-scoped
+   ↓ audit-understanding-7, other screens open > audit-understanding-7 give me the corporation update open, அடையாறு வெள்ள புகார் பத்தி சொல்லு: not that body's brief re-scoped
+   ↓ audit-understanding-7, other screens open > audit-understanding-7 Metrowater report open, Adyar flooding complaint pathi sollu: not that body's brief re-scoped
+   ↓ audit-understanding-7, other screens open > audit-understanding-7 சென்னை காவல்துறை அறிக்கை open, describe the flooding complaint in Adyar: not that body's brief re-scoped
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > remember to check the police report
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > remember to check the police report tomorrow
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > remind me at 5 pm to read the police report
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > save this view as police report
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > type police report in the search box
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > pin the corporation status
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > make a note to read the police report
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > police report paakanum nu remind pannu
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > police report save pannu
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > police report ah type pannu
+   ↓ BUG-022 holds on the round for the original English words (for the browser, see audit-understanding-23) > the rules still read the note
+   ↓ BUG-023 holds for naming by category, on real records > explain the road accident in Adyar
+   ↓ BUG-023 holds for naming by category, on real records > அடையாறு விபத்து புகார் விளக்குங்க
+   ↓ BUG-023 holds for naming by category, on real records > Adyar road accident enna aachu
+   ↓ BUG-023 holds for naming by category, on real records > Adyar la accident pathi simple ah sollu
+   ↓ BUG-024 holds for the original words: only the overdue ones > severe cases past the deadline
+   ↓ BUG-024 holds for the original words: only the overdue ones > Severe cases past the deadline
+   ↓ BUG-024 holds for the original words: only the overdue ones > which severe cases are overdue
+   ↓ BUG-024 holds for the original words: only the overdue ones > overdue high priority cases in Adyar
+   ↓ BUG-024 holds for the original words: only the overdue ones > severe cases past their deadline in Adyar
+   ↓ BUG-024 holds for the original words: only the overdue ones > severe cases deadline crossed
+   ↓ BUG-024 holds for the original words: only the overdue ones > overdue severe cases kaattu
+   ↓ BUG-024 holds for the original words: only the overdue ones > severe cases alone are not narrowed
+   ↓ BUG-030 holds for the bodies and places on its list > திருச்சி காவல்துறை அறிக்கை
+   ↓ BUG-030 holds for the bodies and places on its list > திருச்சி போலீஸ் ரிப்போர்ட்
+   ↓ BUG-030 holds for the bodies and places on its list > திருச்சியில் போலீஸ் நிலவரம்
+   ↓ BUG-030 holds for the bodies and places on its list > போலீஸ் அறிக்கை திருச்சி
+   ↓ BUG-030 holds for the bodies and places on its list > Trichy police report kudu
+   ↓ BUG-030 holds for the bodies and places on its list > railway police report
+   ↓ BUG-030 holds for the bodies and places on its list > ரயில்வே போலீஸ் அறிக்கை
+   ↓ BUG-030 holds for the bodies and places on its list > railway police nilavaram sollu
+   ↓ BUG-030 holds for the bodies and places on its list > income tax department report
+   ↓ BUG-030 holds for the bodies and places on its list > வருமான வரித் துறை அறிக்கை
+   ↓ BUG-032 holds for the original words > திருவொற்றியூர்ல தெருவிளக்கு புகார்கள் காட்டுங்க is a street-light list
+   ↓ BUG-032 holds for the original words > அடையாறு தெருவிளக்கு புகார்கள் காட்டு is a street-light list
+   ↓ BUG-032 holds for the original words > அடையார் தெரு விளக்கு புகார்கள் காட்டு is a street-light list
+   ↓ BUG-032 holds for the original words > அடையாறு தெரு விளக்கு புகார் காட்டு is a street-light list
+   ↓ BUG-032 holds for the original words > Adyar la street light complaints kaattu is a street-light list
+   ↓ BUG-032 holds for the original words > tell me about the severe cases in Adyar is the severe list
+   ↓ BUG-032 holds for the original words > explain the severe cases in Adyar is the severe list
+   ↓ BUG-032 holds for the original words > அடையாறு கடுமையான புகார்கள் விளக்குங்க is the severe list
+   ↓ BUG-032 holds for the original words > Adyar la severe cases explain pannu is the severe list
+   ↓ BUG-032 holds for the original words > explain the rise in dengue is not one case
+   ↓ BUG-032 holds for the original words > explain the rise in dengue cases in Adyar is not one case
+   ↓ BUG-032 holds for the original words > explain the dengue spike is not one case
+   ↓ BUG-032 holds for the original words > explain why dengue went up is not one case
+   ↓ BUG-032 holds for the original words > explain the jump in flooding in Adyar is not one case
+   ↓ BUG-032 holds for the original words > டெங்கு அதிகரிப்பு விளக்குங்க is not one case
+   ↓ BUG-032 holds for the original words > டெங்கு ஏன் அதிகமாச்சு விளக்குங்க is not one case
+   ↓ BUG-032 holds for the original words > அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க is the flooding case in Adyar
+   ↓ BUG-032 holds for the original words > அடையாறு வெள்ள புகார் விளக்கமாக சொல்லுங்கள் is the flooding case in Adyar
+   ↓ BUG-032 holds for the original words > அடையாறு வெள்ள புகார் விளக்கி சொல்லு is the flooding case in Adyar
+   ↓ BUG-032 holds for the original words > Adyar flooding complaint vilakkama sollu is the flooding case in Adyar
+   ↓ BUG-032 holds for the original words > explain the power cut complaint in Ambattur is not the zone's top case
+   ↓ BUG-032 holds for the original words > tell me about the power cut complaint in Ambattur is not the zone's top case
+   ↓ BUG-032 holds for the original words > அம்பத்தூர் மின்வெட்டு புகார் விளக்கமா சொல்லுங்க is not the zone's top case
+   ↓ BUG-032 holds for the original words > அம்பத்தூர் பவர் கட் புகார் என்ன ஆச்சு is not the zone's top case
+   ↓ BUG-032 holds for the original words > Ambattur power cut complaint ah simple ah sollu is not the zone's top case
+   ↓ BUG-032 holds for the original words > explain the tanker complaint in Adyar is not the zone's top case
+   ↓ BUG-033 holds: every category keeps its own name, on real records > three records of each of the 35 categories
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases this week: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases today: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases in Adyar: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 cases past the deadline this week: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue complaints this month: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue garbage complaints this week: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 overdue cases in Adyar kaattu: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 இந்த வாரம் கெடு தாண்டிய புகார்கள் காட்டு: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 அடையாறு கெடு தாண்டிய புகார்கள் காட்டு: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > audit-understanding-1 high priority cases past the deadline this week: the list is not empty
+   ↓ audit-understanding-1 P0: overdue cases are said not to exist > the severe list of the same week has overdue cases, so the empty answers are false
+   ↓ audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 severe cases past deadline this week: every case on an overdue list is overdue, so the two figures agree
+   ↓ audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 the line does not say fewer are late than the list counts
+   ↓ audit-understanding-2 P0: past-deadline figures are counted from one page > audit-understanding-2 severe cases this week: the figure counts more than the page
+   ↓ audit-understanding-3 P0: another town's police puts our police filter on (BUG-002) > audit-understanding-3 filter Kumbakonam police: no filter
+   ↓ audit-understanding-3 P0: another town's police puts our police filter on (BUG-002) > audit-understanding-3 கும்பகோணம் போலீஸ் பில்டர் போடு: no filter
+   ↓ audit-understanding-3 P0: another town's police puts our police filter on (BUG-002) > audit-understanding-3 Nagercoil police filter pannu: no filter
+   ↓ audit-understanding-3 P0: another town's police puts our police filter on (BUG-002) > audit-understanding-3 filter Pollachi police: no filter
+   ↓ audit-understanding-3 P0: another town's police puts our police filter on (BUG-002) > audit-understanding-3 filter Karaikudi police: no filter
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Kumbakonam police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 கும்பகோணம் போலீஸ் அறிக்கை: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Nagercoil police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 நாகர்கோவில் காவல்துறை அறிக்கை: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 பொள்ளாச்சி போலீஸ் ரிப்போர்ட்: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 காரைக்குடி மாநகராட்சி அறிக்கை: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Thirupathi police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 airport police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 central police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Sivakasi police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Rameswaram police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Kodaikanal police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 கொடைக்கானல் போலீஸ் அறிக்கை: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Tiruchendur police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 London police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Dubai police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Singapore police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 துபாய் போலீஸ் அறிக்கை: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Pondy police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 TN police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 state police report: no Chennai brief
+   ↓ audit-understanding-4 P0: another place's or kind of body gets a Chennai brief (BUG-030) > audit-understanding-4 Kumbakonam corporation report: no Chennai brief
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 இந்த வாரம் நிலவரம்: not zone 3
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 இந்த வாரம் சுருக்கம் சொல்லு: not zone 3
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 இந்த வாரம் அறிக்கை: not zone 3
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 காலாண்டு சுருக்கம்: not zone 12
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 காலாண்டு அறிக்கை: not zone 12
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 ஆட்சியர் சுருக்கம்: not zone 13
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 ஆட்சியர் நிலவரம்: not zone 13
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 மாநில நிலவரம்: not zone 2
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 மாநில காவல்துறை அறிக்கை: not zone 2
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 maanila report: not zone 2
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 Manila report: not zone 2
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 ஆட்சியர் அறிக்கை: not zone 13
+   ↓ audit-understanding-5 P0: an ordinary Tamil word is heard as a zone by sound (BUG-005) > audit-understanding-5 மாவட்ட ஆட்சியர் சுருக்கம்: not zone 13
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna Salai police report: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 அண்ணா சாலை போலீஸ் அறிக்கை: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna Salai la police report: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna Salai status: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna University status: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna University police report: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna Arivalayam status: not Anna Nagar's figures
+   ↓ audit-understanding-6 P0: any 'Anna' is Anna Nagar (BUG-005) > audit-understanding-6 Anna flyover report: not Anna Nagar's figures
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 explain the garbage complaint in Mylapore: the case told is in that place
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 மயிலாப்பூர் குப்பை புகார் விளக்குங்க: the case told is in that place
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 explain the flooding complaint in Velachery: the case told is in that place
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 வேளச்சேரி வெள்ள புகார் விளக்கமா சொல்லுங்க: the case told is in that place
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 Velachery flooding complaint pathi simple ah explain pannu: the case told is in that place
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 explain the accident on OMR: the case told is on OMR
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 explain the flooding complaint in Madurai: no case from somewhere else
+   ↓ audit-understanding-8 P0: a place with no zone is dropped from 'explain', and another place's case is told (BUG-032) > audit-understanding-8 explain the flooding complaint in Anna Salai: no case from somewhere else
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 போலீஸ் ரிப்போர்ட் பார்க்க நினைவூட்டு: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 போலீஸ் அறிக்கையை பார்க்க நினைவில் வை: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 போலீஸ் அறிக்கையை ஞாபகம் வச்சுக்கோ: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 போலீஸ் ரிப்போர்ட் சேவ் பண்ணு: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 போலீஸ் ரிப்போர்ட் டைப் பண்ணு: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 police report ah nyabagam vechukko: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 nalaikku police report paakanum nu nyabagapaduthu: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 don't let me forget the police report: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 keep the police report for later: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 the rules read the Tamil reminder, and the brief still takes it
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > sending a report in Tamil is refused in code, not briefed
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 other lanes in Tamil, போலீஸ் அறிக்கை டவுன்லோட் பண்ணு: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 other lanes in Tamil, போலீஸ் அறிக்கை ஒப்பிடு: not a brief
+   ↓ audit-understanding-9 P1: keeping or typing a report in Tamil or other words is lost to a brief (BUG-022) > audit-understanding-9 other lanes in Tamil, போலீஸ் ஸ்டேஷன் அறிக்கை: not a brief
+   ↓ audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005) > audit-understanding-10 Mylapur police report: says the figures are the whole district's
+   ↓ audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005) > audit-understanding-10 Chetpet police report: says the figures are the whole district's
+   ↓ audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005) > audit-understanding-10 தி நகர் போலீஸ் அறிக்கை: says the figures are the whole district's
+   ↓ audit-understanding-10 P1: a locality the reference does not spell is silently dropped (BUG-005) > audit-understanding-10 Mylapur la police report kudu: says the figures are the whole district's
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 quarterly brief: the last 90 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 police report last quarter: the last 90 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 police report for the last 90 days: the last 90 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 police report quarterly: the last 90 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த வார நிலவரம்: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த மாத சுருக்கம்: the last 30 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 வாராந்திர சுருக்கம்: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த வார போலீஸ் அறிக்கை: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த மாத காவல்துறை அறிக்கை: the last 30 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 last week's brief: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 police report for the last 7 days: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த வாரத்தின் சுருக்கம்: this week
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 இந்த மாதத்தின் சுருக்கம்: the last 30 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 மாதாந்திர சுருக்கம்: the last 30 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 மாதாந்திர போலீஸ் அறிக்கை: the last 30 days
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 yesterday's brief: does not hand over today's as if it were asked for
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 நேற்றைய சுருக்கம்: does not hand over today's as if it were asked for
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 netru brief sollu: does not hand over today's as if it were asked for
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 police report yesterday: does not hand over today's as if it were asked for
+   ↓ audit-understanding-11 P1: the asked period is ignored, and 'today' is given (BUG-003) > audit-understanding-11 நேற்று நிலவரம்: does not hand over today's as if it were asked for
+   ↓ audit-understanding-11, another week asked for: this week is given as if it were the one > audit-understanding-11 கடந்த வாரம் நிலவரம்: not this week's brief with no word about it
+   ↓ audit-understanding-11, another week asked for: this week is given as if it were the one > audit-understanding-11 அடுத்த வாரம் நிலவரம்: not this week's brief with no word about it
+   ↓ audit-understanding-11, another week asked for: this week is given as if it were the one > audit-understanding-11 pona vaaram brief sollu: not this week's brief with no word about it
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 explain the flood relief need in Adyar: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 explain the flood relief complaint in Adyar: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 அடையாறு வெள்ள நிவாரணம் விளக்குங்க: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 Adyar flood relief pathi simple ah sollu: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 அடையாறு வெள்ள எச்சரிக்கை விளக்குங்க: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 explain the flood relief need in Ambattur: not standing water
+   ↓ audit-understanding-12 P1: a question about relief or warnings is answered with standing water (BUG-023) > audit-understanding-12 explain the flood alert in Ambattur: not standing water
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 severe cases beyond the deadline: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 severe cases after the deadline: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 delayed severe cases: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 தாமதமான கடுமையான புகார்கள்: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 severe cases deadline thaandi pochu: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 deadline mudinja severe cases kaattu: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 severe cases not resolved in time: only the overdue ones
+   ↓ audit-understanding-13 P1: other deadline words list every severe case (BUG-024) > audit-understanding-13 severe cases deadline mudinjiduchu: only the overdue ones
+   ↓ audit-understanding-14 P1: other words for a rise still give one case (BUG-032) > audit-understanding-14 explain the surge in dengue: not one case
+   ↓ audit-understanding-14 P1: other words for a rise still give one case (BUG-032) > audit-understanding-14 explain the growth in dengue: not one case
+   ↓ audit-understanding-14 P1: other words for a rise still give one case (BUG-032) > audit-understanding-14 explain how dengue went up in Adyar: not one case
+   ↓ audit-understanding-14 P1: other words for a rise still give one case (BUG-032) > audit-understanding-14 டெங்கு உயர்வு விளக்குங்க: not one case
+   ↓ audit-understanding-14 P1: other words for a rise still give one case (BUG-032) > audit-understanding-14 dengue athigam aana reason vilakkam sollu: not one case
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the spoken line names it 1860ms
+     → expected 'Taking that as Greater Chennai Police…' to match /Anna Nagar/
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the title names it 8ms
+     → expected 'Greater Chennai Police · brief, today' to match /Anna Nagar/
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the spoken line names it 1610ms
+     → expected 'Taking that as Greater Chennai Police…' to match /Adyar/
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the title names it 12ms
+     → expected 'Greater Chennai Police · brief, today' to match /Adyar/
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the spoken line names it 1483ms
+     → expected 'Taking that as Greater Chennai Corpor…' to match /Adyar/
+   × audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the title names it 3ms
+     → expected 'Greater Chennai Corporation · brief, …' to match /Adyar/
+   ↓ audit-understanding-16 P2: a topic the rules cannot read is dropped from a list > audit-understanding-16 the power cut complaint in Ambattur: not every case in the zone
+   ↓ audit-understanding-16 P2: a topic the rules cannot read is dropped from a list > audit-understanding-16 அடையாறு மின் விளக்கு புகார்கள்: the street-light cases, not all of them
+   ↓ audit-understanding-16 P2: a topic the rules cannot read is dropped from a list > audit-understanding-16 Adyar la therukku vilakku complaints kaattu: the street-light cases, not all of them
+   ↓ audit-understanding-16 P2: a topic the rules cannot read is dropped from a list > audit-understanding-16 theru vilakku complaints Adyar la kaattu: the street-light cases, not all of them
+   ↓ audit-understanding-16 P2: a topic the rules cannot read is dropped from a list > audit-understanding-16 மின்விளக்கு புகார் அடையாறு: the street-light cases, not all of them
+   ↓ audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 இந்த மாதம் சுருக்கம்: the Tamil line has no English sentence
+   ↓ audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 சுருக்கம் சொல்லு: the Tamil line has no English sentence
+   ↓ audit-understanding-17 P2: a Tamil answer carries an English sentence > audit-understanding-17 a body it does not know is not said back in made-up spelling
+   ↓ with a fake model at the boundary (no live model in this phase) > audit-understanding-18 filter Coimbatore police: code does not let a model put our police filter on for another city's police
+   ↓ with a fake model at the boundary (no live model in this phase) > audit-understanding-18 Mumbai police: code does not let a model put our police filter on for another city's police
+   ↓ with a fake model at the boundary (no live model in this phase) > audit-understanding-18 மும்பை போலீஸ்: code does not let a model put our police filter on for another city's police
+   × audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261031-345A17, a drinking-water problem: not "ask the conservancy team to clear it" 136ms
+     → expected 'There\'s a drinking-water problem at …' not to match /conservancy team to clear it/
+   × audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261030-AE844C, a lake or bund problem: not "ask the conservancy team to clear it" 132ms
+     → expected 'There\'s a lake or bund problem at Pu…' not to match /conservancy team to clear it/
+   ↓ audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 one incident: not "1 incident were reported"
+   ↓ audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 relief: not "There's people"
+   ↓ audit-understanding-20 P3: lines that do not read as English > audit-understanding-20 a list over a period: not "59 severe cases the last 30 days"
+   ✓ audit-understanding-19, how far it reaches: every incident in the pinned build, as the case screen labels it > records the count, ids and categories only 128ms
+   ↓ what the browser does before any round (Thunai.tsx: the rules act alone when sure) > records the sentences no round ever sees
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 High Court report: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high court cases: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high school complaints: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high tide in Royapuram: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high tide warning: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high rise building complaints: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 high mast light complaints in Adyar: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 low lying areas in Adyar: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 low lying area flooding: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 low lying areas la flooding complaints kaattu: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 low voltage complaints in Ambattur: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 low pressure area report: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > audit-understanding-21 கடுமையான வெயில்: no severity list
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > a real severity still reads as one: high priority cases in Adyar this week
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > a real severity still reads as one: low priority cases today
+   ↓ audit-understanding-21 P0: an ordinary phrase with high or low is read as a severity (the kind of bug BUG-032 fixed for explain) > a real severity still reads as one: low severity cases in Adyar
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to check the severe cases: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me at 5 pm to check the severe cases: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to check the garbage complaints in Adyar: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 note: check the severe cases tomorrow: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to read the news: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to check Poondi reservoir level: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to see the air quality report: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to read today's brief: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me at 5 pm about the brief: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 remind me to check the corporation update: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 make a note to check the corporation update: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 கடுமையான புகார்கள் பார்க்க நினைவூட்டு: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 நாளை கடுமையான புகார்கள் பார்க்க ஞாபகப்படுத்து: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > audit-understanding-22 அடையாறு வெள்ள புகார்கள் பார்க்க நினைவூட்டு: the round leaves it to the rules' reminder
+   ↓ audit-understanding-22 P1: a reminder or note about anything but a named body's report is lost to the fast lane (BUG-022) > the rules did read it as a reminder
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 சென்னை போலீஸ் ரிப்போர்ட்: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 சென்னை போலீஸ் ரிப்போர்ட் கொடு: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் அறிக்கை: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் நிலவரம் சொல்லு: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் அறிக்கை இந்த மாதம்: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 மயிலாப்பூர் போலீஸ் ரிப்போர்ட்: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் செய்தி: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸுக்கு கடிதம் எழுது: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் அறிக்கையை மெயில் அனுப்பு: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 போலீஸ் ரிப்போர்ட் சேவ் பண்ணு: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 கும்பகோணம் போலீஸ் அறிக்கை: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 துபாய் போலீஸ் அறிக்கை: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 police report save pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 police report ah type pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 police report ah note pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 police report paakanum nu remind pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 severe cases paaka remind pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > audit-understanding-23 Adyar flooding complaints paaka remind pannu: the rules do not take it alone
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > the same request by another word does reach the round: சென்னை காவல்துறை அறிக்கை
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > the same request by another word does reach the round: chennai police report kudu
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > the same request by another word does reach the round: police nilavaram sollu
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > the same request by another word does reach the round: திருச்சி போலீஸ் ரிப்போர்ட்
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > the same request by another word does reach the round: ரயில்வே போலீஸ் அறிக்கை
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > a real command to move still acts at once: go to trends
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > a real command to move still acts at once: அடையாறுக்கு மாற்று
+   ↓ audit-understanding-23 P0: in the browser, a sentence with போலீஸ் or pannu never reaches the round: a filter goes on and nothing is said (BUG-001, BUG-022, BUG-030) > a real command to move still acts at once: filter Adyar
+   ↓ audit-understanding-24 P1: the rules hear words starting with கொ as கொசு, mosquito > audit-understanding-24 சென்னை போலீஸ் ரிப்போர்ட் கொடு: no Vector disease filter
+   ↓ audit-understanding-24 P1: the rules hear words starting with கொ as கொசு, mosquito > audit-understanding-24 கொடைக்கானல் போலீஸ் அறிக்கை: no Vector disease filter
+   ↓ audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control) > audit-understanding-25 police brief open, only Adyar: not "None of these mention"
+   ↓ audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control) > audit-understanding-25 police brief open, அடையாறு மட்டும்: not "None of these mention"
+   ↓ audit-understanding-25 P1: with a brief open, the Stage's own filter answers a follow-up about a place (BUG-020's control) > audit-understanding-25 police brief open, Adyar mattum: not "None of these mention"
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the spoken line names it
+AssertionError: expected 'Taking that as Greater Chennai Police…' to match /Anna Nagar/
+
+- Expected: 
+/Anna Nagar/
+
++ Received: 
+"Taking that as Greater Chennai Police. 7 new incidents came in today; 7 cases are still open, and 2 are past the deadline. That backlog is the thing to chase today. These are generated police test records, not an official police report. This is from today's records."
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:296:117
+    294| describe("audit-understanding-15 P1: a body's brief for one zone does …
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+       |                                                                                                                     ^
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+    298|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the title names it
+AssertionError: expected 'Greater Chennai Police · brief, today' to match /Anna Nagar/
+
+- Expected: 
+/Anna Nagar/
+
++ Received: 
+"Greater Chennai Police · brief, today"
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:297:110
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+       |                                                                                                              ^
+    298|   }
+    299| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the spoken line names it
+AssertionError: expected 'Taking that as Greater Chennai Police…' to match /Adyar/
+
+- Expected: 
+/Adyar/
+
++ Received: 
+"Taking that as Greater Chennai Police. 5 new incidents came in today; 5 cases are still open, and 1 is past the deadline. That backlog is the thing to chase today. These are generated police test records, not an official police report. This is from today's records."
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:296:117
+    294| describe("audit-understanding-15 P1: a body's brief for one zone does …
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+       |                                                                                                                     ^
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+    298|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the title names it
+AssertionError: expected 'Greater Chennai Police · brief, today' to match /Adyar/
+
+- Expected: 
+/Adyar/
+
++ Received: 
+"Greater Chennai Police · brief, today"
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:297:110
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+       |                                                                                                              ^
+    298|   }
+    299| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the spoken line names it
+AssertionError: expected 'Taking that as Greater Chennai Corpor…' to match /Adyar/
+
+- Expected: 
+/Adyar/
+
++ Received: 
+"Taking that as Greater Chennai Corporation. 13 cases are open across its departments; none is past the deadline. Most of it sits with Storm Water Drain. Most complaint records here are test filings. This is from today's records."
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:296:117
+    294| describe("audit-understanding-15 P1: a body's brief for one zone does …
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+       |                                                                                                                     ^
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+    298|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the title names it
+AssertionError: expected 'Greater Chennai Corporation · brief, …' to match /Adyar/
+
+- Expected: 
+/Adyar/
+
++ Received: 
+"Greater Chennai Corporation · brief, today"
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:297:110
+    295|   for (const [s, zone] of [["Anna Nagar police report", /Anna Nagar/],…
+    296|     it(`audit-understanding-15 ${s}: the spoken line names it`, async …
+    297|     it(`audit-understanding-15 ${s}: the title names it`, async () => …
+       |                                                                                                              ^
+    298|   }
+    299| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261031-345A17, a drinking-water problem: not "ask the conservancy team to clear it"
+AssertionError: expected 'There\'s a drinking-water problem at …' not to match /conservancy team to clear it/
+
+- Expected: 
+/conservancy team to clear it/
+
++ Received: 
+"There's a drinking-water problem at Chennai. It's been open for about a week, and it's past its deadline. I'd ask the conservancy team to clear it today."
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:331:28
+    329|       const d = stageOf(await round("audit", { direct: { recipe: "case…
+    330|       expect(d.say.en).toContain(code);
+    331|       expect(d.say.en).not.toMatch(/conservancy team to clear it/);
+       |                            ^
+    332|     });
+    333| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261030-AE844C, a lake or bund problem: not "ask the conservancy team to clear it"
+AssertionError: expected 'There\'s a lake or bund problem at Pu…' not to match /conservancy team to clear it/
+
+- Expected: 
+/conservancy team to clear it/
+
++ Received: 
+"There's a lake or bund problem at Pulianthope (Otteri Nullah Regulator, Basin Bridge). It's been open for about a week, and it's past its deadline. I'd ask the conservancy team to clear it today."
+
+ ❯ tests/qa/pass4/audit-understanding.test.ts:331:28
+    329|       const d = stageOf(await round("audit", { direct: { recipe: "case…
+    330|       expect(d.say.en).toContain(code);
+    331|       expect(d.say.en).not.toMatch(/conservancy team to clear it/);
+       |                            ^
+    332|     });
+    333| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed | 347 skipped (356)
+   Start at  13:31:48
+   Duration  18.21s (transform 1.31s, setup 0ms, collect 2.58s, tests 14.57s, environment 0ms, prepare 153ms)
+

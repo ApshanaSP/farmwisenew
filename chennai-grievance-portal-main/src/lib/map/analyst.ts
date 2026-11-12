@@ -10,6 +10,7 @@ import { generateJson } from "@/lib/ai/gateway";
 import { extractNumbers } from "@/lib/assistant/verify";
 import { askMap, type AskInput, type AskResponse } from "./ask";
 import type { Plan } from "./plan";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 const Analyst = z.object({
   summary: z.string().describe("Two or three plain sentences: what this answer means for the District Collector today"),
@@ -56,6 +57,7 @@ export function verified(text: string, allowed: Set<number>): { text: string; dr
 export async function analyse(input: { plan: Plan; user: AskInput["user"]; signal?: AbortSignal }): Promise<AnalystOut | null> {
   const key = `${input.user.role}|${input.user.lockDept ?? ""}|${JSON.stringify(input.plan)}`;
   const cache = (global.__mapAnalyst ??= new Map());
+  syncEpoch(cache); // a decision empties it (RC-35)
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < 5 * 60_000) return hit.out;
   const r = await askMap({ text: null, plan: input.plan, prev: null, user: input.user, reword: false, signal: input.signal,

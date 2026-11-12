@@ -24,8 +24,11 @@ import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
 import { NEXT_STEP, STAGE_LABEL, TAB_STAGES, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
-import { syncComplaints } from "@/lib/complaint-progress";
+import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
+import { queueNoteFor } from "./queue-note";
 import { orEmpty } from "@/lib/fallback";
+import { pastDueSql } from "@/lib/reference/metrics";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, any>;
 
@@ -130,14 +133,14 @@ function windowWhere(now: string, s: Scope) {
   };
 }
 /** The Collector's snapshot tiles: open and severe or high; open and past the deadline. */
-const FLAG_SQL = {
+const flagSql = (now: string) => ({
   open: `w.stage IN ('new', 'approved', 'action', 'sent')`,
   serious: `w.stage IN ('new', 'approved', 'action', 'sent') AND w.severity_level IN ('Severe', 'High')`,
-  overdue: `w.stage IN ('new', 'approved', 'action', 'sent') AND w.sla_breached = 1`
-} as const;
+  overdue: `w.stage IN ('new', 'approved', 'action', 'sent') AND ${pastDueSql(now, "w")}`
+}) as const;
 /** Open, not yet past the deadline, and due within the next 24 hours of `now` (params: now, now). */
 const DUE_SQL = `w.stage IN ('new', 'approved', 'action', 'sent') AND COALESCE(w.sla_breached, 0) = 0 AND w.sla_due_at > ? AND w.sla_due_at <= ? + INTERVAL 1 DAY`;
-export type ListFlagKey = keyof typeof FLAG_SQL | "due";
+export type ListFlagKey = keyof ReturnType<typeof flagSql> | "due";
 
 const ROW = `w.incident_id AS id, w.title, w.category_label AS type, w.category_code AS cat, w.zone_no AS zone, w.zone_name,
   w.ward_no AS ward, w.taluk_code AS taluk, w.place_text AS loc, w.lat, w.lon, w.severity_level AS sev, w.status_std AS status, w.stage,
@@ -218,10 +221,10 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   const areaKey = level === "zone" ? "w.zone_no" : level === "taluk" ? "w.taluk_code" : "w.ward_no";
   const areaLabel = level === "zone" ? "w.zone_name" : level === "taluk" ? "COALESCE(tk.name, w.taluk_code)" : "CONCAT('Ward ', w.ward_no)";
 
-  const [counts, pins, byZone, byArea, byType, news, trend, feedback, geo, meta, feeds, contacts, oldest, board, qNew, qAction] = await Promise.all([
+  const [counts, pins, byZone, byArea, byType, news, trend, feedback, geo, meta, feeds, contacts, oldest, board, qNew, qAction, bySev] = await Promise.all([
     q(`${b.sql} SELECT SUM(stage = 'new') AS new, SUM(stage IN ('approved', 'action')) AS action, SUM(stage = 'sent') AS sent,
          SUM(stage = 'verified') AS verified, SUM(stage IN ('approved', 'action') AND returned) AS returned,
-         SUM(${FLAG_SQL.serious}) AS serious, SUM(${FLAG_SQL.overdue}) AS overdue,
+         SUM(${flagSql(now).serious}) AS serious, SUM(${flagSql(now).overdue}) AS overdue,
          SUM(stage = 'new' AND severity_level IN ('Severe', 'High')) AS new_serious, SUM(${DUE_SQL}) AS due FROM w WHERE ${win.sql}`,
       [...b.params, now, now, ...win.params]),
     q(`${b.sql} SELECT w.incident_id AS id, w.lat, w.lon, w.severity_level AS sev, w.title, w.stage, 1 AS open
@@ -244,7 +247,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     collectorFeedback(dept.code, s, OFFICER.feedbackItems),
     zonesAndTaluks(),
     exportMeta(),
-    q(`SELECT source, status, ${fmt("newest_record_at")} AS newest FROM source_health
+    q(`SELECT source, kind, status, ${fmt("newest_record_at")} AS newest FROM source_health
        ORDER BY FIELD(source, 'grievance', 'police', 'pwd', 'hospital', 'news', 'imd', 'cpcb', 'cfm')`),
     contactsFor(dept.code, s.zone).catch(orEmpty("data:247")),
     // the open grievance waiting longest, for the officer's priorities
@@ -252,7 +255,9 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     deptBoard(dept.code, s),
     // the officer's work queue on the first page: what to approve, and what is in action (most severe first)
     grievanceList(dept, { ...s, tab: "new", page: 0, per: 8, cat: null, q: null }),
-    grievanceList(dept, { ...s, tab: "action", page: 0, per: 8, cat: null, q: null })
+    grievanceList(dept, { ...s, tab: "action", page: 0, per: 8, cat: null, q: null }),
+    // the map legend counts every open grievance in the window, not the capped pins drawn (OPEN-4)
+    q(`${b.sql} SELECT w.severity_level AS sev, COUNT(*) AS n FROM w WHERE ${win.sql} AND w.stage IN ${OPEN_STAGES} AND w.lat IS NOT NULL GROUP BY w.severity_level`, [...b.params, ...win.params])
   ]);
 
   const c = counts[0] ?? {};
@@ -295,7 +300,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     map: {
       pins: pins.map((p): Row => ({ ...p, cat: p.sev })),
       zoneCounts: Object.fromEntries(byZone.map((z) => [z.zone, Number(z.v)])),
-      sevCounts: ["Severe", "High", "Medium", "Low"].map((sv) => ({ sev: sv, n: pins.filter((p) => p.sev === sv).length }))
+      sevCounts: ["Severe", "High", "Medium", "Low"].map((sv) => ({ sev: sv, n: Number(bySev.find((r) => r.sev === sv)?.n ?? 0) }))
     },
     byType: byType.map((r) => ({ code: r.code as string, l: String(r.l ?? r.code), v: Number(r.v) })),
     byArea: { level, rows: byArea.map((r) => ({ key: String(r.k), l: String(r.l), v: Number(r.v) })) },
@@ -307,7 +312,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     taluks: geo.taluks,
     /** every department has an insights page: its own work record, plus the store's data that concerns it */
     hasData: true,
-    feeds: feeds.map((f) => ({ source: String(f.source), status: String(f.status), newest: f.newest as string | null })),
+    feeds: feeds.map((f) => ({ source: String(f.source), kind: f.kind == null ? null : String(f.kind), status: String(f.status), newest: f.newest as string | null })),
     /** the Collector console's overview with this department as its filter: the same headline numbers, map, snapshot, severity and news */
     board,
     /** the first rows of New and In action, for the first page's work queue */
@@ -344,18 +349,20 @@ export async function officerPulse(dept: DeptProfile) {
 /** Current IST wall-clock time, "YYYY-MM-DD HH:MM:SS" (decisions carry real times, not the pipeline's as-of). */
 const istNow = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
 
-/** The Collector's verify / return decisions on this department's grievances, made in the period. */
+/** The Collector's verify / return (reopen, reject) decisions on this department's grievances, made in the period. */
 async function collectorFeedback(dept: string, s: Scope, limit: number) {
   const r = await q(
     `SELECT d.decision_id AS did, d.incident_id AS id, d.decision, d.note, ${fmt("d.decided_at")} AS at,
             ${TITLE} AS title, i.category_label AS type, i.place_text AS loc, i.zone_name
      FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
-     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen') AND d.decided_at >= ?
+     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?
        ${s.zone ? "AND i.zone_no = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}
      ORDER BY d.decided_at DESC, d.decision_id DESC LIMIT ${Math.max(1, Math.min(50, limit))}`,
     [dept, periodSince(s.period, istNow()), ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])]
   );
-  return r.map((x) => ({ ...x, ok: x.decision !== "reopen" })) as Row[];
+  // the department's own close is stored as a 'resolve' by its officer (decided_role): it is not the Collector's work. A reject
+  // is returned work like a reopen: the officer must see it
+  return r.map((x) => ({ ...x, ok: x.decision === "verify" || x.decision === "resolve" })) as Row[];
 }
 
 /** Publishers of the articles linked to each incident (and their news stories). */
@@ -397,7 +404,7 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
   if (f.cat) (where.push("w.category_code = ?"), params.push(f.cat));
   if (f.sev) (where.push("w.severity_level = ?"), params.push(f.sev));
   if (f.flag === "due") (where.push(DUE_SQL), params.push(now, now));
-  else if (f.flag) where.push(FLAG_SQL[f.flag]);
+  else if (f.flag) where.push(flagSql(now)[f.flag]);
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
     where.push("(w.title LIKE ? OR w.place_text LIKE ? OR w.incident_id LIKE ? OR w.category_label LIKE ? OR w.zone_name LIKE ?)");
@@ -411,7 +418,9 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
     q(`${b.sql} SELECT ${ROW} FROM w WHERE ${W} ORDER BY ${order} LIMIT ${per} OFFSET ${Math.max(0, f.page) * per}`, params),
     q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${W}`, params)
   ]);
-  return { now, rows: rows.map(tidy), total: Number(tot?.n ?? 0), page: f.page, per };
+  // RC-47: complaints filed with this department that the next update will add to the queue
+  const waiting = f.page === 0 && !f.q ? await awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : 0;
+  return { now, rows: rows.map(tidy), total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting) };
 }
 
 /** Search every grievance of the last 90 days, whatever the filters. */
@@ -579,6 +588,7 @@ export async function recordStep(
         JSON.stringify({ step_id: res.insertId, step, report_id: reportId, photos: report?.photos.length ?? 0 })]
     );
     await conn.commit();
+    bumpDataEpoch(); // a closing step is a decision too: the caches that hold the store's status are emptied (RC-35)
     // the residents whose complaints are in this grievance see the step on their tracker
     await syncComplaints([id], actor.userId);
     return { stage: step === "approve" ? "approved" : step === "close" ? "verified" : "sent", reportId };

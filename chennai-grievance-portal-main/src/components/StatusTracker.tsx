@@ -2,6 +2,7 @@
 
 import { Timeline, type TimelineItem } from "@/components/ui";
 import { ComplaintStatus } from "@/types";
+import { istDateTime } from "@/lib/ist-dates";
 
 interface HistoryRow { status: string; stage?: string | null; remarks?: string | null; created_at: string }
 interface StatusTrackerProps {
@@ -35,7 +36,7 @@ export function chainFor(status: ComplaintStatus): ComplaintStatus[] {
 }
 
 const when = (s: string) =>
-  new Date(s).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
+  istDateTime(s);
 
 /**
  * The complaint's journey as a vertical timeline: completed stages filled, the current one pulses once, later ones

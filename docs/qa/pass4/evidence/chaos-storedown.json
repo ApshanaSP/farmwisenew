@@ -1,0 +1,135 @@
+{
+ "label": "storedown",
+ "port": "3188",
+ "probes": [
+  {
+   "name": "login collector",
+   "status": 500
+  },
+  {
+   "name": "login citizenA",
+   "status": 500
+  },
+  {
+   "name": "login officerA",
+   "status": 500
+  },
+  {
+   "name": "login page",
+   "path": "/login",
+   "status": 200,
+   "ms": 71,
+   "type": "text/html; charset=utf-8",
+   "body": "<!DOCTYPE html><html lang=\"en\" class=\"__variable_8adcd2 __variable_46451f\" data-theme=\"light\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"/brand/districtiq-wordmark.png\"/><link rel=\"preload\" as=\"image\" href=\"/",
+   "leaksStack": false
+  },
+  {
+   "name": "home",
+   "path": "/",
+   "status": 307,
+   "ms": 167,
+   "type": "text/html; charset=utf-8",
+   "body": "<!DOCTYPE html><html id=\"__next_error__\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-f8dbfcc53785bd9e.js\"/><script src=\"/_next/static/chunks/fd9d1056-910789d12",
+   "leaksStack": false
+  },
+  {
+   "name": "auth me (collector)",
+   "path": "/api/auth/me",
+   "status": 401,
+   "ms": 18,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "bad login",
+   "path": "/api/auth/login",
+   "status": 400,
+   "ms": 14,
+   "type": "application/json",
+   "body": "{\"error\":\"Invalid email or password.\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "citizen complaints list",
+   "path": "/api/complaints",
+   "status": 401,
+   "ms": 20,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector brief",
+   "path": "/api/collector/brief",
+   "status": 401,
+   "ms": 470,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector overview page",
+   "path": "/collector",
+   "status": 307,
+   "ms": 17,
+   "type": null,
+   "body": "http://localhost:3188/login?redirect=%2Fcollector",
+   "leaksStack": false
+  },
+  {
+   "name": "assistant status",
+   "path": "/api/collector/assistant/status",
+   "status": 401,
+   "ms": 35,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "assistant chat (how many open complaints)",
+   "path": "/api/collector/assistant/chat",
+   "status": 401,
+   "ms": 479,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "thunai agent (how many open complaints)",
+   "path": "/api/collector/thunai/agent",
+   "status": 401,
+   "ms": 72,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "map ask",
+   "path": "/api/map/ask",
+   "status": 401,
+   "ms": 13,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector assistant insights",
+   "path": "/api/collector/assistant/insights",
+   "status": 401,
+   "ms": 12,
+   "type": "application/json",
+   "body": "{\"error\":\"Not authenticated\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector assistant briefing",
+   "path": "/api/collector/assistant/briefing",
+   "status": 405,
+   "ms": 14,
+   "type": null,
+   "body": "",
+   "leaksStack": false
+  }
+ ]
+}

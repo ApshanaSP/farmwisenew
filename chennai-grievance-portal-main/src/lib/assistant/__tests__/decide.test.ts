@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { planFromDecision, type Decision, type RouteLike } from "@/lib/assistant/decide";
 import { contextForRouter, type ConversationContext } from "@/lib/assistant/context";
 
@@ -103,8 +103,11 @@ describe("a window in the question's own words", () => {
 });
 
 describe("contact questions go to the officials' directory", () => {
-  it("recognises contact phrasing, not counts or officer checks", async () => {
-    const { CONTACT } = await import("@/lib/assistant/pipeline");
+  // The pipeline is a big module: loading it is not what this test measures, so it is loaded in beforeAll, which has its own limit
+  // (inside the test it counted against the 5 s test limit and failed when the machine was busy: QA4 RC-36).
+  let CONTACT: RegExp;
+  beforeAll(async () => { ({ CONTACT } = await import("@/lib/assistant/pipeline")); }, 120_000);
+  it("recognises contact phrasing, not counts or officer checks", () => {
     for (const q of ["contact of health department", "who is the officer for PWD in Adyar", "health department officer", "helpline for flooding", "who handles drainage in Zone 9"])
       expect(CONTACT.test(q), q).toBe(true);
     for (const q of ["number of road accidents this week", "incidents not confirmed by an officer", "how many health incidents", "what is the Black Flag March"])

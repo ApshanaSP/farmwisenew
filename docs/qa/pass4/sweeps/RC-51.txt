@@ -1,0 +1,34 @@
+# RC-51 sweep: files read with JSON.parse inside a catch that answers empty, in code that also writes the same file
+$ grep -rn "JSON.parse(fs.readFileSync" src --include=*.ts | grep -v test | grep -v live
+src/lib/assistant/lance.ts:107:    const head = JSON.parse(fs.readFileSync(`${LEGACY}.json`, "utf8")) as { model: string; dim: number; hash: string[] };
+src/lib/assistant/scope.ts:43:    const ref = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "intel-reference.json"), "utf8"));
+src/lib/collector/aibrief.ts:50:  try { g.cache = new Map(Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8")))); } catch { g.cache = new Map(); }
+src/lib/collector/alerts.ts:156:    try { const s = JSON.parse(fs.readFileSync(SACHET_FILE, "utf8")); return { at: Number(s.at) || 0, items: s.items ?? [], error: null, loading: null }; }
+src/lib/collector/analysis.ts:78:  try { g.cache = new Map(Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8")))); } catch { g.cache = new Map(); }
+src/lib/collector/fulltext.ts:33:  try { g.cache = JSON.parse(fs.readFileSync(CACHE, "utf8")); } catch { g.cache = {}; }
+src/lib/collector/lakes.ts:83:  try { G.saved = JSON.parse(fs.readFileSync(FILE, "utf8")) as Saved; } catch { G.saved = { days: {}, todayFetchedAt: 0, error: null }; }
+src/lib/collector/nearby.ts:183:  try { G.saved = JSON.parse(fs.readFileSync(FILE, "utf8")) as Saved; } catch { G.saved = { fetchedAt: 0, items: [], error: null }; }
+src/lib/collector/nlp.ts:21:  if (!ref) ref = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "intel-reference.json"), "utf8"));
+src/lib/map/map.golden.ts:73:  const feats = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "layers", `${layer}.geojson`), "utf8")).features;
+src/lib/map/world.ts:45:  try { return JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), "meta.json"), "utf8")).layers ?? {}; } catch { return {}; }
+src/lib/map/world.ts:48:  try { return JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), `${id}.geojson`), "utf8")).features ?? []; } catch { return []; }
+src/lib/map/world.ts:303:    const ref = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "intel-reference.json"), "utf8"));
+src/lib/map/world.ts:358:    const s = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "streets.json"), "utf8"));
+src/lib/rehearsal/impacts.ts:687:  try { return JSON.parse(fs.readFileSync(path.join(LAYERS(), `${id}.geojson`), "utf8")).features ?? []; } catch { return []; }
+src/lib/rehearsal/impacts.ts:690:  try { return JSON.parse(fs.readFileSync(path.join(LAYERS(), "transit.json"), "utf8")) as Transit; } catch { return null; }
+src/lib/rehearsal/rehearsal.golden.ts:113:    const fire = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "layers", "fire_stations.geojson"), "utf8")).features;
+src/lib/rehearsal/rehearsal.golden.ts:114:    const hosp = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "layers", "hospitals.geojson"), "utf8")).features.filter((f: any) => f.properties.governmen
+src/lib/rehearsal/source.ts:142:      const raw = JSON.parse(fs.readFileSync(path.join(root, d, f), "utf8"));
+src/lib/studio/connect/gate.ts:84:    const ref = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "intel-reference.json"), "utf8")) as {
+src/lib/studio/connectors.ts:104:export function getConnector(id: string): Connector | null { try { return JSON.parse(fs.readFileSync(file(id, ".json"), "utf8")); } catch { return null; } }
+src/lib/studio/store.ts:91:  try { return JSON.parse(fs.readFileSync(p(id, ".json"), "utf8")); } catch { return null; }
+src/lib/studio/store.ts:118:  try { return JSON.parse(fs.readFileSync(p(id, ".pending.json"), "utf8")); } catch { return null; }
+src/lib/studio/store.ts:239:  try { return JSON.parse(fs.readFileSync(path.join(DIR, "board.json"), "utf8")); } catch { return []; }
+src/lib/thunai/world.ts:23:    const r = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "gcc-reference", "intel-reference.json"), "utf8"));
+src/lib/wards.ts:82:    const gj = JSON.parse(fs.readFileSync(GEOJSON_PATH, "utf8"));
+src/lib/wards.ts:84:      ? JSON.parse(fs.readFileSync(META_PATH, "utf8"))
+
+# Reading of the sweep
+- Derived caches rebuilt from a source (aibrief, analysis, fulltext, lakes, nearby, alerts Sachet, map layers, reference data, wards): an empty read only causes a refetch, no user data is lost. Left alone.
+- User data read as empty and then overwritten: Thunai memory (fixed: strict read, copy aside on write, GET answers 503) and Studio board.json (fixed: copy aside in saveBoard).
+- Studio getMeta / getConnector / pending read null on a damaged file; they are not rewritten from an empty copy by a read-modify-write that was checked. Not fixed, noted as unchecked.

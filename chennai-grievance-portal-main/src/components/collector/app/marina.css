@@ -156,7 +156,7 @@
 /* ---------------- cards ---------------- */
 .dic .card,.dic .bb-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
 .dic .ch,.dic .bb-h{padding:12px 15px 9px}
-.dic .ch h3,.dic .bb-h h3{font:750 14.5px/1.2 var(--font-ui);letter-spacing:-.012em}
+.dic .ch :is(h2,h3),.dic .bb-h h3{font:750 14.5px/1.2 var(--font-ui);letter-spacing:-.012em}
 .dic .ch>.ic,.dic .ch>svg.ic,.dic .bb-h>.ic{width:30px;height:30px;padding:7px;border-radius:10px;box-shadow:none}
 .dic .a-map .ch>.ic{--tc:var(--accent)}
 .dic .ch .more,.dic .bb-more,.dic .lnk{color:var(--accent-2)}
@@ -292,3 +292,6 @@
 .dic .a-brief .btabs{gap:0;margin-left:10px;margin-right:10px}
 .dic .a-brief .btabs button{flex:1 1 auto;min-width:0;padding:5px 5px 6px;font-size:12px}
 .dic .a-brief .btabs .tab-n{padding:0 5px;margin-left:1px;font-size:10.5px}
+
+/* the zone, taluk and department selects show where the keyboard is: the select itself had `outline:none` and its pill no ring (RC-49, PB-326) */
+.dic .fsel select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}

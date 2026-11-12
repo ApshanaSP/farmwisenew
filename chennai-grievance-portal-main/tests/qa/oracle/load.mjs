@@ -12,8 +12,8 @@ export const CACHE_DIR = process.env.QA_CACHE_DIR || path.join(APP_ROOT, "data",
 /** Every cached table file: { table, file, mtime }. The table name is the part before "-<sha>.json.gz". */
 export function listTables(dir = CACHE_DIR) {
   return fs.readdirSync(dir)
-    .filter((f) => /^[a-z0-9_]+-[0-9a-f]{16,}\.json\.gz$/i.test(f))
-    .map((f) => ({ table: f.replace(/-[0-9a-f]+\.json\.gz$/i, ""), file: path.join(dir, f), mtime: fs.statSync(path.join(dir, f)).mtimeMs }));
+    .filter((f) => /^[a-z0-9_]+(-[0-9a-f]{16,})?\.json\.gz$/i.test(f)) // <table>-<sha>.json.gz, or the pinned snapshot's <table>.json.gz
+    .map((f) => ({ table: f.replace(/(-[0-9a-f]{16,})?\.json\.gz$/i, ""), file: path.join(dir, f), mtime: fs.statSync(path.join(dir, f)).mtimeMs }));
 }
 
 const cache = new Map();

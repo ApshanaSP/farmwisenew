@@ -1,0 +1,11 @@
+# failing before the fix (in-process run, pinned snapshot): RC-09
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the spoken line names it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar corporation update: the title names it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the spoken line names it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Adyar police report: the title names it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the spoken line names it
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-15 P1: a body's brief for one zone does not say which zone > audit-understanding-15 Anna Nagar police report: the title names it
+# RC-09
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-11 zone performance's 'Reported' is the reported figure on the same screen's trend
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-3 Jarvis's department performance for Solid Waste shows Solid Waste's open count, not the district's
+ FAIL  tests/qa/pass4/same-number.test.ts > same number everywhere > same-number-5 a dashboard for one zone does not say 'Most in' another zone

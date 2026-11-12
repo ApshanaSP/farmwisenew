@@ -1,0 +1,25 @@
+# RC-05 sweep: category, status, filter and language readings that were separate per lane
+## catIn / sevIn / periodIn / statusIn / deptWordIn: who reads them
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:91:  if (WHY.test(t) && !catIn(t)) {
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:107:  if (i.stage && short && VIEW.test(t) && !hasNewPlace.length && !catIn(t)) {
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:131:  if (short && periodIn(t) && !catIn(t)) {
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:136:  const cat = catIn(t);
+chennai-grievance-portal-main/src/lib/thunai/frame.ts:141:const withTopic = (t: string, slots: Record<string, unknown>) => { const c = catIn(t); return c ? { cat: c } : {
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:76:export function catIn(t: string): string | null {
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:97:export function statusIn(t: string): "overdue" | "open" | null {
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:101:export function deptWordIn(t: string): string | null {
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:167:  if (zonesIn(t, w).length || catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[\u0B80-\u0BFF]/.test(d) && 
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:177:  return zonesIn(t, w).length > 0 || !!catIn(t) || has(t, DISTRICT) || DISTRICT.some((d) => /[஀-௿]/.test(d) 
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:280:  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = periodIn(t);
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:329:    const status = statusIn(t);
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:331:    if (!cat && deptWordIn(t)) return null;
+chennai-grievance-portal-main/src/lib/thunai/round.ts:165:  const hints = [zonesIn(t, w).length ? `zones ${zonesIn(t, w).join(",")}` : "", places.length ? `places ${place
+
+## regexes that look for overdue or deadline words outside statusIn (grep -rn 'deadline' src/lib/thunai)
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:93: * past the deadline, or still open: every way it is said in the three languages, read by every lane that builds 
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:95:const OVERDUE_RE = /\b(overdue|over due|delayed|delay)\b|\b(past|beyond|after|crossed|crossing|missed|breached|br
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:157:  "severe", "deadline", "overdue", "brief", "briefing", "trend", "trends", "map", "report", "alert", "gcc", "cmw
+chennai-grievance-portal-main/src/lib/thunai/quick.ts:328:    // "past the deadline", "overdue": only those (BUG-024)
+
+## result
+one status reader (statusIn: overdue wins over open) used by the cases branch; category table gets stems and data-filed topics derived in lexicon.ts and a structural test that no name is in two categories; catIn compares word positions, not the space before; bare water yields to lakes, rain, dam; a ward or a department the lane has no slot for goes to the agent; one extra topic word in an explain is not answered as the first topic; detectLang no longer reads a zone name as language (RC-01 normalise.ts)

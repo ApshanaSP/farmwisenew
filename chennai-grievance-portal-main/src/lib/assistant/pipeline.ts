@@ -36,16 +36,19 @@ import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
 import { directTool } from "@/lib/assistant/direct";
 import { loadCatalog, renderCatalog } from "@/lib/assistant/catalog";
 import { CompileError, PlanSchema, compileQuery, runCompiled, type QueryPlan, type QueryResult } from "@/lib/assistant/compile";
-import { helpFor, isHelpQuestion } from "@/lib/assistant/help";
+import { aboutTheData, helpFor, isHelpQuestion } from "@/lib/assistant/help";
 import { insightByKey } from "@/lib/assistant/insightcards";
 import { editFromText, isBareEdit, topNFromText } from "@/lib/assistant/edits";
-import { actionCard, baseCard, clarifyCard, errorCard, notYetCard, refusalCard, resetCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
+import { actionCard, baseCard, clarifyCard, errorCard, notDoneCard, notYetCard, refusalCard, resetCard, smalltalkCard, templateCard, validActions } from "@/lib/assistant/cards";
 import { addMessage, ensureSession, getPin, lastCardWithData, messagePayload, recentTurns } from "@/lib/assistant/store";
 import { LIMITS, forModel } from "@/lib/assistant/limits";
 import { customWindow, fastPath } from "@/lib/assistant/fastpath";
+import { SINCE_YESTERDAY, YESTERDAY } from "@/lib/assistant/when";
 import { contextForRouter, filtersOf, lastContext, type ConversationContext } from "@/lib/assistant/context";
 import { detectIntent, type Detected } from "@/lib/assistant/intent";
 import { deptFromWords } from "@/lib/assistant/deptwords";
+import { knownWord, unresolvedInput } from "@/lib/assistant/unresolved";
+import { notDone, shareAsked } from "@/lib/assistant/cannot";
 import { LIST_DATASETS, datasetAnswerCard, datasetNamed, datasetsListCard } from "@/lib/assistant/studiolink";
 import { ask as studioAsk } from "@/lib/studio/pipeline";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
@@ -58,6 +61,8 @@ import type { Fact, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
 import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, warningsNow } from "@/lib/assistant/warnings";
 import { mapCard } from "@/lib/map/assistant";
+import { syncEpoch } from "@/lib/collector/epoch";
+import { zoneNoIn } from "@/lib/zone-no";
 
 type Row = Record<string, any>;
 export type Stage = "understanding" | "fetching" | "drawing";
@@ -118,6 +123,7 @@ const agentRole = (): "fast" | "reasoning" => ((process.env.AI_AGENT_ROLE ?? "")
 
 const cache = new Map<string, { at: number; value: unknown }>();
 function cached<T>(key: string): T | null {
+  syncEpoch(cache); // a decision empties it (RC-35)
   const hit = cache.get(key);
   if (!hit || Date.now() - hit.at > 10 * 60_000) return null;
   return hit.value as T;
@@ -267,7 +273,7 @@ const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoo
 /** the whole message is a greeting, thanks or goodbye (not "hi, how many accidents today?"); "ok" stays with the router */
 export const ONLY_SMALLTALK = /^\s*(hi+|hello|hey|thanks|thank you( so much| very much)?|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|bye|goodbye|வணக்கம்|நன்றி)(\s+(sir|madam|mam|there|all|team))?\s*[.!?]*\s*$/i;
 /** A message that names a period (a follow-up without one keeps the previous answer's). */
-const PERIOD_WORDS = /\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/i;
+const PERIOD_WORDS = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|quarter|quarterly|hours?|hrs?|24 ?h|year|since)\b|இன்று|இன்றைய|நேற்று|நேற்றைய|வார|மாத|காலாண்டு|innaiki|indha vaaram|maasam|vaaram/.source}`, "i");
 /** The period the question's own words name, or null. */
 export function periodFromWords(m: string): Scope["period"] | null {
   // "open for more than 7 days", "pending over 30 days": how long something has been open, not the period asked about
@@ -418,7 +424,7 @@ function needsPicture(question: string, results: ToolResult[], routerSays: boole
 
 /** Tools whose rule match is specific enough to beat the planner. */
 const PREFER_TOOL = new Set(["departments", "zones", "dept_backlog", "resolution_times", "verification_queue", "environment", "mandi_prices", "hotspots", "news_gaps",
-  "developing_stories", "source_health", "taluks", "incident_series", "place_breakdown"]);
+  "developing_stories", "source_health", "dept_followups", "taluks", "incident_series", "place_breakdown"]);
 
 function applyScope(base: Scope, r: Row, n: RefNames): Scope {
   const s: Scope = { ...base };
@@ -649,8 +655,8 @@ function rulesRoute(message: string, base: Scope, n: RefNames, hasPlace = false,
   }
   const scope: Scope = o.period ? { ...base, period: o.period } : { ...base };
   // "yesterday": the previous day's window, for these tools as for the lists
-  if (/\b(yesterday|nethu|neththu)\b|நேற்று/i.test(message) && !/\b(since|from) yesterday\b/i.test(message)) (scope.period = "daily", scope.offset = 1);
-  const zn = Number(message.match(/\bzone\s*-?\s*(\d{1,2})\b/i)?.[1]);
+  if (YESTERDAY.test(message) && !SINCE_YESTERDAY.test(message)) (scope.period = "daily", scope.offset = 1);
+  const zn = zoneNoIn(message) ?? NaN;
   if (zn && n.zones.has(zn)) scope.zone = zn;
   // a category named in the question ("road accident trend"), by the console's own keyword classifier
   const cat = classify(message);
@@ -1060,7 +1066,7 @@ const ROUTE_FIXES: RouteFix[] = [
     // side by side, instead of the data being narrowed to the one subject a single category filter can hold
     name: "several-subjects",
     run: (route, { message }) => {
-      const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent) && !route.forcedQuery
+      const parts = ["tool_question", "adhoc_question", "briefing", "insight_request"].includes(route.intent) && !route.forcedQuery && !aboutTheData(message)
         && !route.tools.some((t) => ["incident_story", "incident_detail", "mandi_prices", "environment", "contacts", "change_drivers"].includes(t.name)) ? multiPart(message) : null;
       return parts ? { ...route, intent: "tool_question", scope: { ...route.scope, cat: null }, tools: [{ name: "category_summary", args: { scope: { ...route.scope, cat: null }, parts } }],
         assumptions: [...route.assumptions.filter((a) => !/^Narrowed to /.test(a)), `Answered part by part: ${parts.map((x) => x.label).join("; ")}.`] } : null;
@@ -1270,7 +1276,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     // answered "3 of 1,620" rows of an upload); a breakdown by zone or over time is the uploaded dataset's
     const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest|overload\w*|over-?crowd\w*|crowded|full|capacity|shortage|available)\b/i.test(message)
       && !/\b(by|per|each)\s+(zone|taluk|ward|month|week|day)|\b(trend|over time)\b/i.test(message);
-    const ds = live ? null : datasetNamed(message);
+    const ds = live || aboutTheData(message) ? null : datasetNamed(message); // "is the hospital data real?" asks about the data, not for the rows of an upload named like it (RC-11, PB-014)
     if (ds) {
       i.stage("fetching");
       const r = await studioAsk(ds.id, message, i.user).catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });
@@ -1284,6 +1290,13 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const placeData = message.trim().length < 2 ? null
     : await runTool("resolve_place", { text: message.slice(0, 120) }).then((r) => r.data as Row | null).catch(orNull("pipeline:resolve_place"));
   const place = placeData ? JSON.stringify(placeData) : "";
+  // an input that is read but cannot be applied (zone 99, a place the district does not have, "last 0 days", "31 February", a year to come) is
+  // said so, not answered with the whole district or the last 90 days (RC-43)
+  if (!i.pinId && !i.insightKey) {
+    const bad = unresolvedInput(typed, { zones: [...names.zones.keys()], now, placeFound: !!(placeData?.place || placeData?.taluk_named), wardFound: placeData?.ward_asked === true,
+      rulesOnly: !aiStatus().available, known: (word) => knownWord(word, names) });
+    if (bad) return finish(clarifyCard(card0(null), bad.say[lang]), { intent: "unresolved_input", unresolved: { kind: bad.kind, asked: bad.asked } });
+  }
   const ctx = lastContext(turns);
   // answers from the store (lists, counts, one incident's facts, news): `decided` is the router's understanding; without
   // it the keyword rules read the message (the fallback when no model is available)
@@ -1333,6 +1346,18 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   };
   // exact requests need no understanding: a question naming an incident id, or the previous list as a map or table
   const exact = detectIntent(message, ctx);
+  // what chat does not do (save a workspace, list every source, forecast, draft a letter) is said, with where to do it: never the default
+  // list or KPIs as if they answered (RC-44). A forecast and a letter are said only when no model reads the question.
+  if (!i.pinId && !i.insightKey) {
+    const no = notDone(typed, !aiStatus().available);
+    if (no) return finish(notDoneCard(card0(null), no.say[lang]), { intent: "not_done", notDone: no.kind });
+    // "what percentage of complaints are resolved?" is a share of the incidents reported, counted, not an incident list (RC-44)
+    const share = shareAsked(typed);
+    if (share) {
+      const r = await fast(consoleScope, { ...exact, intent: "INCIDENT_COUNT", share, refinement: false, because: "asks for a share (a percentage)" });
+      if (r) return r;
+    }
+  }
   // agent mode: the model calls the tools, reads what they return and looks further before the composer writes. The rules
   // keep only exact requests (an incident id, the previous list as a map or table), and answer when the model is out.
   let agentFailed = false;
@@ -1506,7 +1531,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
         && message.length <= 100 && !/\b(why|trend|compare|vs\.?|versus|rising|increas|decreas|chart|map)\b/i.test(message))
       // no model: the rules answer, except a question one console tool plainly answers ("which ward has the most garbage
       // complaints", "average resolution time"), which takes that tool as it does with a model
-      || (!aiStatus().available && !(directTool(message) && !(turns.length && isRefinement(message, !!placeData)))
+      || (!aiStatus().available && !(directTool(message, { ranking: true }) && !(turns.length && isRefinement(message, !!placeData)))
         // (one incident described in words, "when was the Porur bund breach reported", is told as its story below)
         // (places compared side by side are counted the same way each, below)
         && !sidesOf(message) && !storySearchText(message, names) && !CONTACT.test(message)
@@ -1590,7 +1615,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   // a named case or story ("youtuber harish case give me brief") is that story, before any keyword rule: "brief" once
   // answered it with the whole district's briefing
   if (rulesOnly && !route && !i.pinId && !i.insightKey && storySearchText(message, names)) route = storyRoute(message, consoleScope, names);
-  const direct = rulesOnly && !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message) : null;
+  const direct = rulesOnly && !route && !i.pinId && !i.insightKey && !(turns.length && isRefinement(message, !!placeData)) ? directTool(message, { ranking: true }) : null;
   if (direct) {
     const s = { ...consoleScope, period: periodFromWords(message) ?? consoleScope.period };
     // "which ward has the most garbage complaints": the ranking counts only the kind the question names
@@ -1911,7 +1936,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
   const context = [...contextNumbers(c.message, base.scopeLine, c.route.normalized, ...c.caveats, ...articles), ...placeNumbers];
   quotable.push(...articles);
   const fallback = (why: string | null): AnswerCard => {
-    const t = templateCard({ ...base, table: p.table, display: p.display, chart: p.chart ? checkChart(p.chart, p.datasets).spec : null, caveats: c.caveats }, p, facts, p.kpis);
+    const t = templateCard({ ...base, table: p.table, display: p.display, chart: p.chart ? checkChart(p.chart, p.datasets).spec : null, caveats: c.caveats }, p, facts, p.kpis, c.message);
     t.followUps = EXAMPLES[lang].slice(0, 3);
     t.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
     if (why) t.sources.limits.push(why);
@@ -2145,6 +2170,7 @@ async function compose(i: ChatInput, c: ComposeCtx): Promise<AnswerCard> {
 
 const cardCache = new Map<string, { at: number; card: AnswerCard }>();
 function cachedCard(key: string): AnswerCard | null {
+  syncEpoch(cardCache); // a decision empties it (RC-35)
   const hit = cardCache.get(key);
   return hit && Date.now() - hit.at < 10 * 60_000 ? structuredClone(hit.card) : null;
 }

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { fmtValue } from "@/lib/assistant/chartspec";
 import type { ActionGroup, EvidenceItem, IncidentDetail, IncidentItem, Kpi, NewsStory } from "@/lib/assistant/answer";
 import { I, type IconName } from "../icons";
+import { IST } from "@/lib/ist-dates";
 
 const SEV_CLASS: Record<string, string> = { Severe: "sev", High: "high", Medium: "med", Low: "low" };
 const SOURCE_ICON: Record<string, IconName> = { news: "news", police: "shield", grievance: "user", pwd: "cone", hospital: "health" };
@@ -15,9 +16,11 @@ const SOURCE_ICON: Record<string, IconName> = { news: "news", police: "shield", 
 /** "3 Oct, 9:59 PM" from "2026-10-03 21:59:45". */
 export function when(t: string | null | undefined): string {
   if (!t) return "";
-  const d = new Date(t.replace(" ", "T"));
+  // a stored time is an IST wall-clock string: read it as Chennai time and print it as Chennai time (RC-16)
+  const iso = t.replace(" ", "T");
+  const d = new Date(/(Z|[+-]\d\d:?\d\d)$/i.test(iso) ? iso : `${iso}+05:30`);
   if (Number.isNaN(d.getTime())) return t;
-  return `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`;
+  return `${d.toLocaleDateString("en-GB", { ...IST, day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-IN", { ...IST, hour: "numeric", minute: "2-digit" })}`;
 }
 
 export function SevBadge({ s }: { s: string }) {
@@ -50,7 +53,7 @@ export function IncidentCard({ x, rank, onOpen, onAsk }: { x: IncidentItem; rank
         <b className="aq-rank">{rank}</b>
         <SevBadge s={x.severity} />
         {x.dead > 0 && <span className="aq-tag sev">{x.dead} dead</span>}
-        <span className="aq-tag">{x.status}</span>
+        <span className="aq-tag" data-i18n-ctx="status">{x.status}</span>
       </header>
       <button className="aq-inc-t" onClick={() => onAsk(`Tell me more about the ${ORD[rank - 1] ?? `number ${rank}`} one`)}>{x.title}</button>
       <p className="aq-inc-s">{x.summary}</p>
@@ -79,7 +82,7 @@ export function IncidentDetailResponse({ x, onOpen }: { x: IncidentDetail; onOpe
     <div className={`aq-det ${SEV_CLASS[x.severity] ?? ""}`}>
       <header className="aq-det-h">
         <SevBadge s={x.severity} />
-        <span className="aq-tag">{x.status}{x.deadlineMissed ? " · past deadline" : ""}</span>
+        <span className="aq-tag" data-i18n-ctx="status">{x.status}{x.deadlineMissed ? " · past deadline" : ""}</span>
         <span className="aq-tag">{x.category}</span>
         <code>{x.incidentId}</code>
       </header>
@@ -88,7 +91,7 @@ export function IncidentDetailResponse({ x, onOpen }: { x: IncidentDetail; onOpe
       <div className="aq-det-grid">
         <section className={x.focus === "where" ? "hl" : ""}><h5><I n="pin" />Where</h5><p>{where || "Not recorded"}</p></section>
         <section className={x.focus === "when" ? "hl" : ""}><h5><I n="clock" />When</h5><p>{when(x.occurredAt) || "Not recorded"}{x.closedAt ? ` · closed ${when(x.closedAt)}` : ""}</p></section>
-        <section className={x.focus === "status" ? "hl" : ""}><h5><I n="timer" />Status</h5><p>{x.status}{x.deadline ? ` · deadline ${when(x.deadline)}${x.deadlineMissed ? " (missed)" : ""}` : ""}</p></section>
+        <section className={x.focus === "status" ? "hl" : ""}><h5><I n="timer" />Status</h5><p data-i18n-ctx="status">{x.status}{x.deadline ? ` · deadline ${when(x.deadline)}${x.deadlineMissed ? " (missed)" : ""}` : ""}</p></section>
         <section className={x.focus === "who" ? "hl" : ""}><h5><I n="gov" />Responsible</h5><p>{x.department ?? "Not assigned"}
           {x.officials.length > 0 && <small>{x.officials.map((o) => `${o.name}${o.designation ? `, ${o.designation}` : ""}`).join(" · ")}</small>}</p></section>
       </div>

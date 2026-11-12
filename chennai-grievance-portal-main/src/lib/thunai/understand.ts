@@ -14,11 +14,15 @@
  * Every slot one sentence sets is one transaction (one render, one undo). Confidence follows the brief:
  * 0.30 speech + 0.30 match + 0.20 context agreement + 0.20 margin over the runner-up.
  */
-import { resolveEntity } from "./entities";
-import { CAT_ALIASES, DEPT_ALIASES, DESTRUCTIVE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_WORDS,
+import { foreignIn, noData } from "./entities";
+import { CAT_ALIASES, CHANGE_RECORD, DEPT_ALIASES, DEPT_TA, DESTRUCTIVE, EXPLAIN_TA, HARSH_BESIDE, LAYER_WORDS, PAGE_WORDS, PANEL_WORDS, PERIOD_WORDS, REPAIR, RESERVOIR_ALIASES, SEV_NOUN, SEV_WORDS, WEAK_SEV,
   ZONES } from "./lexicon";
+import { betterCategory, saidStems } from "./catlabels";
+import { CAT_LABEL_TA } from "./narrate";
 import { detectLang, editDistance, normalise, skeleton, taMatch } from "./normalise";
 import type { Bilingual, Lang, PageKey, Panel, PeriodKey, ScreenState, Sev, Step, Understood, View, World } from "./types";
+import { asksForbidden, NEVER_REPLY } from "./privacy";
+import { statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn } from "./quick";
 
 const TA = /[஀-௿]/;
 
@@ -29,10 +33,13 @@ interface Hit { start: number; end: number; score: number }
 /** One phrase word against one token: 1 exact, 0.95 a Tamil stem (case endings), 0.8 a close Latin spelling. */
 function wordScore(tok: string, w: string): number {
   if (tok === w) return 1;
+  // a name with a Tanglish case ending joined on ("Adyarla", "Manalile", "Mylaporeku"): the name and its ending, as "Adyar-la" already reads (QA4 G1)
+  if (w.length >= 5 && tok.length > w.length && tok.startsWith(w) && !TA.test(w) && /^(la|le|il|ku|kku|ukku|oda|ode|ai|ula)$/.test(tok.slice(w.length))) return 0.9;
   if (TA.test(w)) return taMatch(tok, w) ? 0.95 : 0;
   // near spellings only for longer words: "water" must not become "weather", nor "incident" "accident"
   if (/\d/.test(w) || w.length < 6 || tok.length < 6 || TA.test(tok) || tok[0] !== w[0]) return 0;
-  if (skeleton(tok) === skeleton(w) && Math.abs(tok.length - w.length) <= 3) return 0.85;
+  // by sound only for names of seven letters or more: a six-letter skeleton is shared with ordinary words (pannidu, "do it", is Poondi by skeleton) (RC-02)
+  if (w.length >= 7 && tok.length >= 7 && skeleton(tok) === skeleton(w) && Math.abs(tok.length - w.length) <= 3) return 0.85;
   const d = editDistance(tok, w, 2);
   return d <= (w.length >= 10 ? 2 : 1) ? 0.8 : 0;
 }
@@ -78,8 +85,38 @@ function lastStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null 
   return keep.length ? keep[keep.length - 1] : null;
 }
 
+/** Two different kinds of complaint named in as many words each, neither taken back ("fire accident"): neither is the topic. */
+function tiedTopics<T>(ms: Mention<T>[], tokens: string[]): boolean {
+  const kept = ms.filter((m, i) => {
+    const until = i + 1 < ms.length ? ms[i + 1].start : tokens.length;
+    for (let k = m.end; k < until; k++) if (REPAIR.has(tokens[k])) return false;
+    return true;
+  });
+  const top = Math.max(0, ...kept.map((m) => m.end - m.start));
+  return new Set(kept.filter((m) => m.end - m.start === top).map((m) => m.value)).size > 1;
+}
+/**
+ * The kind of complaint, when a sentence names two without taking the first back: the one said in more words is the topic ("வடிகால் வேலை ... பள்ளம்", a pit at a drain-works site, is the
+ * drain-works category, not the road's pothole). Between equals the last said stands, as in lastStanding (RC-02, open-baseline-38).
+ */
+function longestStanding<T>(ms: Mention<T>[], tokens: string[]): Mention<T> | null {
+  const last = lastStanding(ms, tokens);
+  if (!last) return null;
+  const kept = ms.filter((m, i) => {
+    const until = i + 1 < ms.length ? ms[i + 1].start : tokens.length;
+    for (let k = m.end; k < until; k++) if (REPAIR.has(tokens[k])) return false;
+    return true;
+  });
+  return kept.reduce((best, m) => (m.end - m.start >= best.end - best.start ? m : best), last);
+}
+
 // ------------------------------------------------------------------ dictionaries --
 
+/** Does the sentence name a zone, a taluk, a department or a kind of complaint? Then a verb like "explain" is about that, not about the screen. */
+function namesSomething(tk: string[], world: World): boolean {
+  const none = () => new Array(tk.length).fill(false);
+  return mentions(tk, zoneDict(world), none()).length > 0 || mentions(tk, talukDict(world), none()).length > 0 || mentions(tk, deptDict(world), none()).length > 0 || mentions(tk, catDict(world), none()).length > 0;
+}
 function zoneDict(world: World): [string, number][] {
   const out: [string, number][] = [];
   for (const z of world.zones) {
@@ -94,11 +131,19 @@ function zoneDict(world: World): [string, number][] {
 }
 function deptDict(world: World): [string, string][] {
   const out: [string, string][] = [];
-  for (const d of world.depts) {
+  // the bodies that have no records in this build (District Revenue, TANGEDCO) are listed too, so that their own longer name wins over a word of another department ("district revenue" is
+  // not the Corporation's "revenue"); a sentence that names one is handed on, and the lane that knows it has no records says so (RC-02, open-baseline-37)
+  const bodies = (world.bodies ?? []).filter((b) => !world.depts.some((d) => d.code === b.code));
+  for (const d of [...world.depts, ...bodies]) {
     out.push([d.name.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim(), d.code]);
     for (const a of DEPT_ALIASES[d.code] ?? []) out.push([a, d.code]);
   }
   return out;
+}
+/** a one-word category name that another category's label says more of in this sentence is that other category (catlabels.ts) */
+function refineByLabel(ms: Mention<string>[], tk: string[], world: World): Mention<string>[] {
+  const said = saidStems(tk);
+  return ms.map((m) => (m.end - m.start === 1 ? { ...m, value: betterCategory(m.value, tk[m.start], said, world.cats) } : m));
 }
 function catDict(world: World): [string, string][] {
   const out: [string, string][] = [];
@@ -199,7 +244,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/what did you (just )?do|என்ன செஞ்ச|enna senja|what happened just now|what was that/.test(s)) return done([{ a: "whatDid" }]);
   if (/what am i (looking at|seeing)|where am i|what is on (the )?screen|whats on (the )?screen|என்ன பார்க்கிறேன்|enna paakuren|இந்தத் திரை என்ன/.test(s)) return done([{ a: "whereAmI" }]);
   if (/^(repeat|again|say (that |it )?again|once more|repeat that|marupadi|மறுபடி|மீண்டும் சொல்|thirumba sollu)$/.test(s)) return done([{ a: "repeat" }]);
-  if (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)|விளக்கு|vilakku|vilakkam/.test(s)) return done([{ a: "explain" }]);
+  // the Tamil and Tanglish verb "explain" is a whole word, and not the word for a lamp (தெரு விளக்கு, street light; theru vilakku): the edge is in the pattern (RC-03)
+  // "explain" with a place, a body or a topic in the sentence is a question about that thing, not the order to explain the screen: it goes on to the slots (QA4 G1, ta-explain-16)
+  if (!namesSomething(tk, world) && (/^explain|explain (this|that|the) (chart|graph|card|number)|what does this (chart|graph|card) (show|mean)/.test(s) || EXPLAIN_TA.test(` ${s} `) || /(^| )(?<!(theru|therukku|street|min|current|kambam|lamp) )(vilakku|vilakkam|vilakkunga|vilakkama)( |$)/.test(s))) return done([{ a: "explain" }]);
 
   // undo / go back (but "go back to the briefing" is navigation)
   const undo = /^(undo|go back|back|revert|previous view|pazhaya padi|பழையபடி மாத்து|பழையபடி|திரும்பிப் போ|go back pannu|undo pannu)(?=\s|$)/.exec(s);
@@ -215,7 +262,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   const click = /^(click|press|tap|select|hit|அழுத்து|கிளிக்)( on)? (.+)$/.exec(s);
   if (click) {
     const target = click[3].trim();
-    return /^\d{1,3}$/.test(target) ? done([{ a: "click", n: Number(target), name: null }]) : done([{ a: "click", n: null, name: rest(heard, /^\s*(click|press|tap|select|hit|அழுத்து|கிளிக்)(\s+on)?\s*/i) }]);
+    return /^\d{1,3}$/.test(target) ? done([{ a: "click", n: Number(target), name: null }]) : done([{ a: "click", n: null, name: rest(heard, /^\s*(?:(?:hey|ok|okay|hi|hello|jarvis|javis|jervis|please|kindly)[ ,:–-]+)*(click|press|tap|select|hit|அழுத்து|கிளிக்)(\s+on)?\s*/i) }]);
   }
   if (state.numbers && /^\d{1,3}$/.test(s)) return done([{ a: "click", n: Number(s), name: null }]);
   const scroll = /^(scroll|go|move|page)? ?(down|up)$|^scroll (down|up)( a bit| more)?$|^(scroll to (the )?)?(top|bottom)$|^(கீழே|மேலே)( போ| நகர்த்து)?$/.exec(s);
@@ -234,8 +281,9 @@ export function understand(input: string, state: ScreenState, world: World, opts
     const text = rest(heard, /^\s*(remember|note|make a note)(\s+that)?\s*/i);
     return text ? done([{ a: "remember", text }]) : { kind: "unknown", lang, heard, suggestions: SUGGEST };
   }
-  const nyabagam = /^(.+?)\s*(nu |என்று |என )?(நினைவில் வை|நினைவில் வச்சுக்க|ஞாபகம் வச்சுக்க|nyabagam vechuko|nyabagam vachuko)$/.exec(heard.trim());
-  if (nyabagam) return done([{ a: "remember", text: nyabagam[1].trim() }]);
+  // "<note> ஞாபகம் வச்சுக்கோ / நினைவில் வை / nyabagam vechuko": any ending of the verb (வச்சுக்கோ, வச்சுக்கோங்க, வெச்சுக்க, வைத்துக்கொள்), the note without its quoting ending (னு, ன்னு, nu)
+  const nyabagam = /^(.+?)\s*(?:nu |என்று |என )?(?:ஞாபகம்|நினைவில்?|nyabagam|nyabagapaduthi)\s*(?:வை|வச்சுக்|வெச்சுக்|வைத்துக்கொள்|vechuko|vechukko|vachuko|vachukko)[஀-௿a-z]*$/.exec(heard.trim());
+  if (nyabagam) return done([{ a: "remember", text: nyabagam[1].trim().replace(/\s*(?:ன்னு|னு|nu)$/, "").trim() }]);
   if (/^remind me\b|நினைவூட்டு|nyabagapaduthu/.test(s)) {
     const m = /^remind me (?:(.+?) )?to (.+?)(?: (on .+|at .+|tomorrow.*|today.*|in \d+ .+))?$/i.exec(heard.trim());
     const what = (m?.[2] ?? rest(heard, /^\s*remind me\s*/i)).trim();
@@ -265,24 +313,40 @@ export function understand(input: string, state: ScreenState, world: World, opts
   if (/^(mute|silent|silence|visual only|text only|no voice|don'?t speak|dont speak|சத்தம் வேண்டாம்|பேச வேண்டாம்)$/.test(s)) return done([{ a: "mode", mode: "visual" }]);
   if (/^(unmute|voice on|speak|talk to me|voice mode|பேசு)$/.test(s)) return done([{ a: "mode", mode: "voice" }]);
   if (/quiet mode|do not disturb|^dnd$|disturb pannadhe/.test(s)) return done([{ a: "mode", mode: "quiet" }]);
-  if (/\b(slower|slow down|speak slowly)\b|மெதுவா|methuva/.test(s)) return done([{ a: "speed", faster: false }]);
-  if (/\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
+  // how fast Jarvis talks: a short order or one about the voice, never a question about the data ("which department is slow") (RC-04)
+  const SPEED_Q = /\?|எந்த|என்ன|எப்படி|ஏன்|எத்தனை|யார்|\b(which|what|why|how|who|when|where)\b|enna\b|evlo|yen\b|eppadi|endha/i;
+  const SPEED_VOICE = /(speak|talk|voice|say|reply|answer|read|pesu|பேசு|குரல்|சொல்லு|பேச)/i;
+  const speedOrder = !SPEED_Q.test(heard) && (tk.length <= 3 || SPEED_VOICE.test(heard));
+  if (speedOrder && /\b(slower|slow down|speak slowly)\b|மெதுவா|methuva/.test(s)) return done([{ a: "speed", faster: false }]);
+  if (speedOrder && /\b(faster|speed up|speak faster)\b|வேகமா|vegama/.test(s)) return done([{ a: "speed", faster: true }]);
 
   // workspaces
-  const saveAs = /^save (this |the view |this view |the screen |it )?(as )?(.+)$/.exec(s);
-  if (saveAs && saveAs[3] && !/^(it|this)$/.test(saveAs[3])) {
-    return done([{ a: "workspace", op: "save", name: cleanName(rest(heard, /^\s*save\s+(this\s+view\s+|the\s+view\s+|this\s+|the\s+screen\s+|it\s+)?(as\s+)?/i)) }]);
+  // the thing saved ("this screen", "the view", "my layout") is not part of its name: "save this screen as morning check" is named "morning check" (QA4 G2, JARVIS1-12)
+  const SAVED_THING = String.raw`(?:(?:this|the|my|current|it)\s+)?(?:(?:view|screen|layout|workspace|page|dashboard)\s+)?`;
+  const saveAs = new RegExp(String.raw`^save ${SAVED_THING}(?:as )?(.+)$`).exec(s);
+  if (saveAs && saveAs[1] && !/^(it|this|screen|view|layout|workspace|page|dashboard|the screen|this screen|this view|the view)$/.test(saveAs[1])) {
+    return done([{ a: "workspace", op: "save", name: cleanName(rest(heard, new RegExp(String.raw`^\s*save\s+${SAVED_THING}(?:as\s+)?`, "i"))) }]);
   }
   const saveTa = /^(?:idha |இதை )?['‘]?(.+?)['’]?\s*(?:nu save pannu|என்று சேமி|ன்னு சேமி)$/i.exec(heard.trim());
   if (saveTa) return done([{ a: "workspace", op: "save", name: cleanName(saveTa[1]) }]);
   const openWs = /^open (my )?(workspace|saved view|view) (.+)$|^open (my )?(.+) (workspace|view)$/.exec(s);
   if (openWs) return done([{ a: "workspace", op: "open", name: cleanName(openWs[3] ?? openWs[5] ?? "") }]);
+  // the same, said in Tamil or Tanglish: "<name> ஒர்க்ஸ்பேஸ் திற", "<name> workspace open pannu", "<name> workspace-a thira" (RC-04)
+  const openWsTa = /^(.+?)\s+(?:ஒர்க்ஸ்பேஸ்|வொர்க்ஸ்பேஸ்|பணியிடத்தை|பணியிடம்|workspace|saved view)(?:-?a|ஐ)?\s+(?:திற\S*|தொற\S*|open(?:\s+pannu)?|thira\S*|thora\S*)$/i.exec(heard.trim());
+  if (openWsTa) return done([{ a: "workspace", op: "open", name: cleanName(openWsTa[1]) }]);
 
   // refusals: there is no such action, and nothing changes
   if (DESTRUCTIVE.test(s) && !/^clear/.test(s)) {
     return { kind: "refuse", lang, heard, why: b("I can't delete anything. Nothing was changed.", "என்னால் எதையும் நீக்க முடியாது. எதுவும் மாற்றப்படவில்லை.") };
   }
 
+  // an order to change a record ("mark it closed", "status closed-a maathidu", "set the status to resolved"): the console does not do it, in any language (RC-04)
+  if (CHANGE_RECORD.test(heard) && /\b(fir|records?|complaints?|cases?|incidents?|inc-\d+)\b|பதிவு|புகார்/i.test(heard) && /\b(status|closed?|resolved?)\b|நிலை|முடிந்த/i.test(heard)) {
+    return { kind: "refuse", lang, heard, why: b("I can't change a record or its status. Nothing was changed.", "ஒரு பதிவையோ அதன் நிலையையோ என்னால் மாற்ற முடியாது. எதுவும் மாற்றப்படவில்லை.") };
+  }
+  // an order Jarvis never carries out (close, send, approve, delete ... records): the refusal says so, in the console too: it was a filter for "Severe" and the word "close" went unanswered (RC-04, PB-283)
+  // (closing a panel, or all of them, is the console's own tidy-up: those exact commands are handled below)
+  if (asksForbidden(heard) && !/^close (all|everything|it|this|that|the panel)$|^close all (panels|windows)$|^(close pannu|மூடு|இதை மூடு)$|எல்லாவற்றையும் மூடு|ellaam close/.test(s)) return { kind: "refuse", lang, heard, why: b(NEVER_REPLY.en, NEVER_REPLY.ta) };
   // Ask District IQ, by name
   const askDiq = /^(ask|ask district iq|ask the assistant|ask the chatbot)( to| about| whether| if)?\s+(.+)$/.exec(s);
   if (askDiq && !/^(ask )?the map\b/.test(askDiq[3])) {
@@ -293,6 +357,10 @@ export function understand(input: string, state: ScreenState, world: World, opts
     const q = heard.replace(kelu[0], "").replace(/^[\s,.-]+|[\s,.-]+$/g, "");
     if (q) return done([{ a: "ask", q }]);
   }
+
+  // another place's or body's name anywhere: nothing of ours is put on for it, and nothing is changed (RC-01)
+  const alien = foreignIn(input, world);
+  if (alien) { const why = noData(alien); return { kind: "refuse", lang, heard, why: b(why.en, why.ta) }; }
 
   // ---------------------------------------------------- questions and readings --
   const resv = mentions(tk, reservoirDict(world), new Array(tk.length).fill(false));
@@ -320,6 +388,13 @@ export function understand(input: string, state: ScreenState, world: World, opts
   // mentions a period or a place: answering is the assistant's job, not a filter change
   if (/^(how many|how much|which|why|who|when|is there|are there|did|does|do we|has|have)\b|^(எத்தனை|ஏன்|யார்|எப்போது)/.test(s)) return done([{ a: "ask", q: heard }]);
 
+  // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
+  if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|\b(save|type|note|pin|write|draft|bookmark)( ah| a)? (pannu|panni|pannunga|pannidu|seiyu)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has. It is never answered with the current one (RC-06),
+  // and it is not a refusal either: the rest of the sentence (the place, the topic) is read, and the Collector is asked which window to show it in (QA4 G1, ta-explain-14, ta-noisy-07)
+  const oneDayBack = /\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard);
+  // "two weeks ago", "a month ago", "last year", "next week": also not a window the console holds, and not the current one either (SK-5)
+  const otherTime = !oneDayBack && unheldWindowIn(s, heard.toLowerCase());
   // ---------------------------------------------------- the bag of slots --
   const taken: boolean[] = new Array(tk.length).fill(false);
   const steps: Step[] = [];
@@ -348,6 +423,8 @@ export function understand(input: string, state: ScreenState, world: World, opts
     for (const j of [i + 1, i - 1]) {
       if (j >= 0 && j < tk.length && /^\d{1,3}$/.test(tk[j]) && !taken[j]) {
         const v = Number(tk[j]);
+        // "top 5 zones", "first three zones": a count of zones, not zone 5 (RC-02)
+        if (j < i && (tok === "zones" || /^(top|first|last|bottom|worst|best|highest|lowest|முதல்|கடைசி)$/.test(tk[j - 1] ?? ""))) return;
         if (v >= 1 && v <= 15) { zoneNumMentions.push({ value: v, start: Math.min(i, j), end: Math.max(i, j) + 1, score: 1 }); taken[i] = taken[j] = true; }
         return;
       }
@@ -369,14 +446,13 @@ export function understand(input: string, state: ScreenState, world: World, opts
   for (const m of [...zoneMs, ...talukMs]) for (let k = m.start; k < m.end; k++) taken[k] = true;
   // departments and categories (one word may be both: ask once)
   // a body of some other place ("Mumbai police", "Tambaram police") is not ours: no department filter is put on for it
-  const foreign = resolveEntity(input, world).kind === "unknown";
-  const deptAll = foreign ? [] : mentions(tk, deptDict(world), [...taken]);
+  const deptAll = mentions(tk, deptDict(world), [...taken]);
   const catAll = mentions(tk, catDict(world), [...taken]);
   // "Metro Water" (a department) holds the word "water" (a category): the longer phrase wins the overlap
   const overlaps = (a: Mention<string>, c: Mention<string>) => a.start < c.end && c.start < a.end;
   const len = (m: Mention<string>) => m.end - m.start;
   const deptMs = deptAll.filter((d) => !catAll.some((c) => overlaps(d, c) && len(c) > len(d)));
-  const catMs = catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c)));
+  const catMs = refineByLabel(catAll.filter((c) => !deptAll.some((d) => overlaps(d, c) && len(d) > len(c))), tk, world);
   const clash = deptMs.find((d) => catMs.some((c) => c.start === d.start && c.end === d.end));
   if (clash) {
     const c = catMs.find((x) => x.start === clash.start)!;
@@ -393,12 +469,26 @@ export function understand(input: string, state: ScreenState, world: World, opts
   }
   for (const m of [...deptMs, ...catMs]) for (let k = m.start; k < m.end; k++) taken[k] = true;
   // severity
-  const sevM = lastStanding(mentions(tk, SEV_WORDS, taken), tk);
+  // high, low, medium count only beside a word that says severity ("High Court", "low lying" do not) (RC-03)
+  const sevAll = mentions(tk, SEV_WORDS, taken).filter((m) => {
+    const w = tk.slice(m.start, m.end).join(" ");
+    // "கடுமையான வெயில்" is harsh sun, not severe cases: beside a word of the weather the adjective is the weather's (RC-03)
+    if (/^(?:கடுமையான|கடுமை)$/.test(w) && HARSH_BESIDE.test(`${w} ${tk[m.end] ?? ""}`)){ for (let k = m.start; k < m.end; k++) taken[k] = false; return false; }
+    if (!WEAK_SEV.has(w)) return true;
+    if (SEV_NOUN.has(tk[m.end] ?? "") || SEV_NOUN.has(tk[m.start - 1] ?? "")) return true;
+    for (let k = m.start; k < m.end; k++) taken[k] = false;
+    return false;
+  });
+  const sevM = lastStanding(sevAll, tk);
 
   const zoneM = lastStanding(zoneMs, tk);
   const talukM = lastStanding(talukMs, tk);
   const deptM = lastStanding(deptMs, tk);
-  const catM = lastStanding(catMs, tk);
+  // a body this console holds no records of: no department filter is put on for it, and the sentence is handed on to the lane that says so
+  if (deptM && !world.depts.some((d) => d.code === deptM.value)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // two kinds of complaint of the same weight and none taken back ("fire accident"): the sentence is handed on, not filtered by the last one said
+  if (tiedTopics(catMs, tk)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  const catM = longestStanding(catMs, tk);
   if (zoneM) { view.zone = zoneM.value; match = Math.min(match, zoneM.score); }
   if (talukM) { view.taluk = talukM.value; match = Math.min(match, talukM.score); }
   if (deptM) { view.dept = deptM.value; match = Math.min(match, deptM.score); }
@@ -463,7 +553,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
   let itemStep: Step | null = null;
   if (/\b(next|adutha|aduthadhu)\b|அடுத்தது|அடுத்த/.test(s) && /\b(one|1|incident|item|thing)\b|அடுத்தது|adutha/.test(s)) itemStep = { a: "item", which: "next" };
   else if (/\b(previous|prev)\b|முந்தைய/.test(s) && /\b(one|1|incident|item)\b|முந்தைய/.test(s)) itemStep = { a: "item", which: "prev" };
-  else if (/\b(the )?(worst|top|first)( one| incident| item| case| complaint)?\b|மோசமான|முதல் (நிகழ்வு|நிகழ்வைத்)|முதல்$/.test(s) && !/worst zone|மண்டல/.test(s)
+  else if (/\b(the )?(worst|top|first)( one| incident| item| case| complaint)?\b|மோசமான|முதல் (நிகழ்வு|நிகழ்வைத்)|முதல்$/.test(s) && !/worst zone|மண்டல/.test(s) && !/\b(top|worst|first|best)\s+(\d+\s+|few\s+)?(zones|departments|depts|wards|taluks|places|areas|categories|kinds|types)\b/.test(s)
     && (/\bopen\b|திற|kaatu|show|the worst|^worst|top incident|first incident|முதல்|மோசமான/.test(s))) itemStep = { a: "item", which: 1 };
   const ordinal = /\b(\d{1,2}) (one|incident|item|row)\b|number (\d{1,2})\b/.exec(s);
   if (!itemStep && ordinal) itemStep = { a: "item", which: Number(ordinal[1] ?? ordinal[3]) };
@@ -474,6 +564,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   // assemble: page first, then the filters as one transaction, then period, map, panel, item
   const hasView = Object.keys(view).length > 0;
+  // a status ("open cases", "pending", "unresolved", "past the deadline") is a filter the console's view cannot hold: a view step with only the place would drop it without a word, so the rules hand the
+  // sentence on to the lane that lists by status, in every language the same way (SK-6, RC-05)
+  if (hasView && !itemStep && statusIn(` ${s} `)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
+  // a kind of complaint nothing here reads ("GH bed doctor prachanai complaints"): a window or a place alone would answer about something else (RC-05)
+  if (!itemStep && !catM && (perM || hasView) && !steps.some((x) => x.a === "page" || x.a === "panel") && (unknownTopicIn(` ${s} `, world) || unreadClauseIn(` ${s} `, world))) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   if (pageM) steps.push({ a: "page", page: pageM.value as PageKey });
   if (hasView) steps.push({ a: "view", view });
   if (perM) steps.push({ a: "period", period: perM.value as PeriodKey });
@@ -490,6 +585,17 @@ export function understand(input: string, state: ScreenState, world: World, opts
     steps.push({ a: "draft" });
   }
 
+  if (oneDayBack || otherTime) {
+    const base = steps.filter((x) => x.a === "view" || x.a === "page");
+    return { kind: "ask", lang, heard,
+      question: oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
+        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?"),
+      choices: [
+        { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
+        { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },
+        { label: b("Never mind", "வேண்டாம்"), steps: [] }
+      ] };
+  }
   // a question nothing above could place goes to Ask District IQ, whose tools answer it
   if (QUESTION.test(s) && (!steps.length || (steps.length === 1 && steps[0].a === "view"))) {
     return done([{ a: "ask", q: heard }], 1, 1, 1);
@@ -522,8 +628,8 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
       const parts: string[] = [];
       if (v.zone !== undefined && !(fresh && v.zone === null)) parts.push(v.zone == null ? (ta ? "எல்லா மண்டலங்கள்" : "All zones") : `${ta ? "மண்டலம்" : "Zone"} ${v.zone} · ${stateZoneName(world, v.zone, lang)}`);
       if (v.taluk !== undefined && !(fresh && v.taluk === null)) parts.push(v.taluk == null ? (ta ? "எல்லா வட்டங்கள்" : "All taluks") : `${world.taluks.find((t) => t.code === v.taluk)?.name ?? v.taluk} ${ta ? "வட்டம்" : "taluk"}`);
-      if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
-      if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
+      if (v.dept !== undefined && !(fresh && v.dept === null)) parts.push(v.dept == null ? (ta ? "எல்லா துறைகள்" : "All departments") : (ta ? DEPT_TA[v.dept] : null) ?? world.depts.find((d) => d.code === v.dept)?.name ?? v.dept);
+      if (v.cat !== undefined && !(fresh && v.cat === null)) parts.push(v.cat == null ? (ta ? "எல்லா வகைகள்" : "All categories") : (ta ? CAT_LABEL_TA[v.cat] : null) ?? world.cats.find((c) => c.code === v.cat)?.label ?? v.cat);
       if (v.sev !== undefined && !(fresh && v.sev === null)) parts.push(v.sev == null ? (ta ? "எல்லா தீவிரங்கள்" : "All severities") : ta ? SEV_TA[v.sev] : v.sev);
       return parts.join(" · ");
     }
@@ -550,7 +656,7 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
     case "clearText": return ta ? "அழி" : "Clear text";
     case "remember": return ta ? "நினைவில் வைத்தேன்" : "Remember";
     case "recall": return ta ? "நினைவுகள்" : "Memory";
-    case "forget": return step.all ? (ta ? "எல்லாம் மற" : "Forget all") : (ta ? "மற" : "Forget");
+    case "forget": return step.all ? (ta ? "எல்லாவற்றையும் மறந்துவிட்டேன்" : "Forget all") : (ta ? "மறந்துவிட்டேன்" : "Forget");
     case "remind": return ta ? "நினைவூட்டல்" : "Reminder";
     case "send": return ta ? "அனுப்பு" : "Send";
     case "confirm": return `${ta ? "உறுதி" : "Confirm"} ${step.n ?? ""}`.trim();

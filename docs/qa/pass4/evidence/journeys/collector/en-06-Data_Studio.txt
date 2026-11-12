@@ -1,0 +1,97 @@
+Chennai · Collector
+Overview
+Briefing
+Trends
+Environment
+Data Studio
+Search
+/
+அ
+தமிழ்
+Menu
+6
+CO
+Cyclone Murasu
+Collected 6 Nov, 06:10 PM
+Data Studio
+Your files · not filtered
+Add data
+RULES ONLY
+Drop a file or browse
+Excel · CSV · PDF · a photo of a table · up to 15 MB
+Connect with sign-in or schedule
+SAMPLES
+Storm-water drain desilting register
+Excel
+Fever & dengue surveillance
+CSV
+Ration shop stock (Tamil headers)
+CSV
+Hospital beds and OPD, daily
+CSV
+Your data
+7
+On the dashboard
+Add charts from any dataset
+Live Connectors
+Sites that publish daily
+R
+3 rows · health 100
+D
+2 rows · health 100
+புகார்
+2 rows · health 100
+Semi
+2 rows · health 100
+Future
+3 rows · health 92
+Tamil16
+3 rows · health 92
+Tamil Bom
+3 rows · health 92
+R
+r.csv
+3 rows
+Rules-read
+த
+Insights
+Alerts
+Data Detective
+100
+2 issues
+AI reading
+Rows
+Data card
+Chennai data
+A few figures: shown as numbers, not charts. Make it more useful:
+Compare with the last refresh
+Compare with district incidents
+Per 1,000 people (needs population)
+What should this be compared with?
+BRIEF (RULES)
+Written from the computed insights · 0 of 1 insights
+Re-analyse
+Records at a glance
+Ask the department
+Which records need the Collector's direct intervention this week?
+Records
+2
+rows after cleaning
+What matters
+0 insights · click any card for the records behind it
+The evidence
+live charts · click a bar, slice or zone to open it
+The figures
+records
+Add to dashboard
+WARD	COUNT	DATE	COLUMN 4	ZONE
+1	2	—	—	Thiruvottiyur
+2	3	2026-11-01	extra	Thiruvottiyur
+3	X	Notadate	—	Thiruvottiyur
+
+Rows to read: a table.
+
+Jarvis
+Ask District IQ
+Ctrl K
+5

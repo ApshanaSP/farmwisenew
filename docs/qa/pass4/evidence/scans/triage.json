@@ -1,0 +1,106 @@
+{
+  "gitleaks": {
+    "raw": ["gitleaks-history.json", "gitleaks-history.log", "gitleaks-history-no-textconv.json", "gitleaks-history-no-textconv.log"],
+    "coverage": "All refs, whole history: 243 commits with changes, of 258 reachable (13 are merges), about 954 MB of diffs. The first run logged `stderr is not empty` because Git for Windows' astextplain could not convert docs/audits/District_IQ_Audit_Report.docx. The second run, with --no-textconv, has no error and gives the same 3 hits, so the error did not cut the scan short. The .docx itself was read by scan-history.mjs.",
+    "hits": [
+      { "rule": "generic-api-key", "where": "district_intel/output/state/incident_ids.json:1, commit 18f78ef1", "verdict": "false positive", "why": "The text is a complaint number mapped to an incident number, in the shape GRV-9999-999AAA to INC-99999999-XXXXXX. The file is a plain table of those. No key." },
+      { "rule": "generic-api-key", "where": "chennai-grievance-portal-main/data/datasets/_truth/duplicate_truth.csv:929, commit 76423ba7", "verdict": "false positive", "why": "The file's two columns are Complaint No and Truth Group. The match is a complaint number followed by a group id, shape 999-999AAA,GRV-9999-999AAA. No key." },
+      { "rule": "generic-api-key", "where": "chennai-grievance-portal-main/data/datasets/_truth/duplicate_truth.csv:1047, commit e6c033bc", "verdict": "false positive", "why": "The same file and shape, in an older commit." }
+    ],
+    "real_secrets": 0
+  },
+  "was_a_key_ever_committed": {
+    "dot_env_file": "Never. `git log --all` shows no commit that adds, changes or deletes a file named .env in any folder. Only .env.example (9 versions), .env.aws.example (3), police_dataset_generator/.env.example and chennai_news_pipeline/.env.example.",
+    "todays_env_values": "scan-history.mjs looked for all 25 .env values longer than 7 characters, as they are and base64, URL and JSON encoded, in 4,167 file versions (1,580 MB), inside 38 compressed files as well, across all refs and the reflog. It also looked for 17 key shapes (AKIA, ASIA, gsk_, sk-ant, sk-, AIza, GitHub, Slack, Brevo, SendGrid, Stripe, Hugging Face, Bedrock, signed JWT, private key block, database URL with a password, Bearer). No real key found.",
+    "the_5_hits": [
+      { "what": "SMTP_USER and SMTP_PASS values, in .env.example, 9 versions, first 6d3b34d", "verdict": "test value: placeholder", "why": "The .env value is exactly the placeholder text from .env.example (checked in code: same string, reads as a placeholder). So .env has no real SMTP password at all, and that is why it shows up." },
+      { "what": "database-url-with-password shape, in DEPLOYMENT.md:91, README.md:390 and scripts/db-config.js:8", "verdict": "test value: documentation", "why": "All three are the same documentation example, with the literal words user and pass and host in place of real details." }
+    ],
+    "example_files": ".env.example has values for DB_PASSWORD and JWT_SECRET, .env.aws.example for JWT_SECRET. Each differs from .env and reads as a placeholder (checked in code). src/lib/secrets.ts refuses a short secret in production.",
+    "git_lfs": "scan-lfs.mjs read all 52 LFS objects in .git/lfs/objects (6.66 GB) for the secret values and the key shapes: 0 hits. 20 LFS pointers are in history.",
+    "unreachable_commits": "git fsck found 0 unreachable commits.",
+    "limits": "An old key that has since been changed is only found by its shape or by gitleaks' rules, not by the exact-value search. DB_PASSWORD is too short to search for without false matches, and it was not.",
+    "committed_personal_data_check": "exports/complaints.xlsx is in git at HEAD, the GitHub repo answers without sign-in, and it has columns Complainant, Mobile, Email and Complainant Address, 8,112 rows. It is fabricated: all 3,426 email addresses are at example.com or example.in, and all 7,441 mobile numbers start 90000, the generator's fixed prefix (scripts/generate-synthetic-grievances.js:937). Not a leak."
+  },
+  "client_bundle": {
+    "script": "chennai-grievance-portal-main/tests/qa/pass4/scan-bundle.mjs",
+    "raw": ["bundle-scan.json", "bundle-scan.log"],
+    "result": "145 files, 8.4 MB (.next-qa/static/**, server/app/**/*.html and *.rsc, server/pages/**/*.html, public/**). Secret values found: 0. Key shapes found: 0. Server secret variable names in browser JavaScript: 0. The script's self-test, on a planted value and a planted key, passed, so the zero means something.",
+    "settings_seen_not_secret": [
+      { "name": "NODE_ENV", "files": 4, "why": "a common word inside React and Next chunks" },
+      { "name": "DB_HOST", "files": 1, "why": "a loopback name, in the polyfills chunk" }
+    ],
+    "skipped_as_7_characters_or_fewer": "AI_FORCE_PROVIDER, AI_PROVIDER, ASSISTANT_DAILY_TOKENS, DATA_BACKEND, DB_PASSWORD, DB_PORT, DB_USER, EMAIL_MODE, JWT_EXPIRES_IN, NEXT_PUBLIC_DEV_SHOW_OTP, SMTP_PORT, TTS_PROVIDER"
+  },
+  "next_public_variables": [
+    { "name": "NEXT_PUBLIC_DEV_SHOW_OTP", "set_in_env": "yes, turned on", "read_at": "src/lib/otp.ts:243, server only", "exposes": "Nothing in a production build: the name is in no file under .next-qa/server or .next-qa/static, and the helper compiled to an empty function. See otp_check." },
+    { "name": "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY", "set_in_env": "empty", "read_at": "src/components/MapPicker.tsx:68, client", "exposes": "Nothing today. If set, the key goes to every browser by design; .env.example says to restrict it to this site's addresses." },
+    { "name": "NEXT_PUBLIC_JARVIS_SPEC", "set_in_env": "not present", "read_at": "src/app/dev/thunai/page.tsx:8, api/dev/thunai/hear/route.ts:12, api/dev/thunai/agent/round/route.ts:14, thunai/ears.ts:107, thunai/Thunai.tsx:58", "exposes": "Nothing today: /dev/thunai and both API routes answered 404 on the real build. If set to 1 at build time, a production build would open those test routes." }
+  ],
+  "otp_check": {
+    "question": "NEXT_PUBLIC_DEV_SHOW_OTP is turned on in .env, and .env also sets NODE_ENV to a non-production value. Can a password-reset code reach a browser in a production build?",
+    "answer": "No. Checked on the real build, built with this .env.",
+    "compiled_code": "In .next-qa/server/app/api/auth/forgot-password/request-otp/route.js the helper devOtpForResponse is `function f(e){}`. Next replaced process.env.NODE_ENV with production at build time and removed the rest, so the NODE_ENV line in .env cannot bring it back.",
+    "real_run": "runtime-prod.json, port 3977. POST /api/auth/forgot-password/request-otp for a real test account: 200, keys [message], no devOtp, no 6 digits in the body. A second request got cooldownRemaining, which proves the first really made a code. POST /api/profile/mobile-otp/request, signed in: the same. GET /forgot-password: no [Dev mode] text.",
+    "leftover": "The page's render branch for `[Dev mode] OTP:` is still in the chunks for /forgot-password and /profile. It only shows if the API sends devOtp, which this build cannot do.",
+    "dev_server": "With `next dev` and this .env, the code IS returned: that is the documented behaviour (README section Dev-mode OTPs) and the unit test covers the branch. See SCAN-4. A real dev server run was not done: the shared machine had about 2.5 GB free."
+  },
+  "dependencies": {
+    "raw": ["npm-audit-prod.json", "npm-audit-full.json", "osv-scanner.json", "osv-scanner.err"],
+    "npm_audit_prod_totals": { "critical": 1, "high": 2, "moderate": 0, "low": 0 },
+    "osv_lockfile": "1,068 packages, 13 with advisories: 4 in production (next, postcss in next, xlsx, zod), 9 dev only.",
+    "production_high_or_critical": [
+      { "package": "next@14.2.35", "advisory": "GHSA-p293-qw3h-jr36", "severity": "critical", "what": "Unauthenticated remote code execution on Windows-hosted servers", "reachable": "YES by the advisory's own terms, not tested: the site is hosted on Windows and host-tunnel.bat publishes it. No known workaround. SCAN-2.", "fix": "next 15.5.24 or 16.3.3" },
+      { "package": "next@14.2.35", "advisory": "GHSA-2xp9-vwfh-vxw4", "severity": "critical", "what": "RCE in the image optimizer through AVIF", "reachable": "No. /_next/image answers 404 on the real build (images.unoptimized in next.config.js). Earlier claim confirmed.", "fix": "next 15.5.24 or 16.3.3" },
+      { "package": "next@14.2.35", "advisory": "GHSA-2464-fhr4-w9xw", "severity": "critical", "what": "RCE in the image optimizer through SVG, on glibc Linux", "reachable": "No, the same 404, and the host is Windows.", "fix": "next 15.5.28 or 16.4.1" },
+      { "package": "next@14.2.35", "advisory": "GHSA-h25m-26qc-wcjf", "severity": "high", "what": "Denial of service: crafted request to an App Router Server Function endpoint", "reachable": "Cannot rule out, not tested. The app has no server actions (no `use server` in src), but the App Router still reads POSTs carrying a Next-Action header. SCAN-3.", "fix": "next 15.5.10 or 16.1.5" },
+      { "package": "next@14.2.35", "advisory": "GHSA-q4gf-8mx6-v5v3", "severity": "high", "what": "The same kind of denial of service", "reachable": "Cannot rule out, not tested. SCAN-3.", "fix": "next 15.5.15 or 16.2.3" },
+      { "package": "next@14.2.35", "advisory": "GHSA-8h8q-6873-q5fj", "severity": "high", "what": "The same kind of denial of service", "reachable": "Cannot rule out, not tested. SCAN-3.", "fix": "next 15.5.16 or 16.2.5" },
+      { "package": "next@14.2.35", "advisory": "GHSA-c4j6-fc7j-m34r", "severity": "high", "what": "SSRF through crafted WebSocket upgrades in the built-in server", "reachable": "The code is reached, on the real build: an upgrade with an absolute address made the server try to proxy (log: Failed to proxy, connect refused on port 80). Choosing the target host was not shown: my listener was never called in 5 forms. SCAN-3.", "fix": "next 15.5.16 or 16.2.5" },
+      { "package": "next@14.2.35", "advisory": "GHSA-36qx-fr4f-26g5", "severity": "high", "what": "Middleware bypass in the Pages Router with i18n", "reachable": "No. There is no pages folder and next.config.js has no i18n.", "fix": "next 15.5.16 or 16.2.5" },
+      { "package": "next@14.2.35", "advisory": "GHSA-m99w-x7hq-7vfj", "severity": "high", "what": "Denial of service using Server Actions", "reachable": "No. The advisory says apps without Server Actions are not vulnerable, and src has no `use server`.", "fix": "next 15.5.21 or 16.2.11" },
+      { "package": "next@14.2.35", "advisory": "GHSA-p3m5-59mp-jv5r", "severity": "high", "what": "Denial of service using Server Actions", "reachable": "No, for the same reason.", "fix": "next 15.5.28 or 16.4.1" },
+      { "package": "next@14.2.35", "advisory": "GHSA-89xv-2m56-2m9x", "severity": "high", "what": "SSRF in Server Actions on custom servers", "reachable": "No. No Server Actions, and this is `next start`, not a custom server.", "fix": "next 15.5.21 or 16.2.11" },
+      { "package": "next@14.2.35", "advisory": "GHSA-p9j2-gv94-2wf4", "severity": "high", "what": "SSRF in rewrites with a hostname built from the request", "reachable": "No. routes-manifest.json has no rewrites and only the 1 default redirect.", "fix": "next 15.5.21 or 16.2.11" },
+      { "package": "postcss@8.4.31 (inside next)", "advisory": "GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849", "severity": "high", "what": "Reads files named by a sourceMappingURL comment in CSS", "reachable": "No. It runs at build time on this repo's own CSS, and neither src nor scripts imports it.", "fix": "postcss 8.5.18 or later. next@16.4.5 brings 8.5.23. next@15.5.28 still pins 8.4.31, so it would need an npm override." },
+      { "package": "zod@3.25.76", "advisory": "GHSA-mrhx-c7xc-m3w5", "severity": "high", "what": "Memory exhaustion validating a large array", "reachable": "YES, and it crashed the test server with one unsigned POST. SCAN-1.", "fix": "zod 4.6.6 (a major upgrade; 3.25.76 is the last 3.x), or refuse large bodies first, which needs no upgrade." },
+      { "package": "xlsx@0.20.3 (from cdn.sheetjs.com)", "advisory": "GHSA-4r6h-8v6p-xvw6, GHSA-5pgg-2g8v-p4x9", "severity": "high (OSV only, npm audit does not list it)", "what": "Prototype pollution, ReDoS", "reachable": "False positive. The advisories say through 0.19.2 and before 0.20.2, and 0.20.3 is installed. OSV has no fixed version because the fix was never published on npm.", "fix": "none needed" }
+    ],
+    "upgrade_summary": "next@15.5.28 clears all 25 next advisories by OSV's fixed versions, and its peer range still takes React 18 (^18.2.0). next@16.4.5 also clears postcss; npm's peer range for it also lists ^18.2.0, unlike docs/SECURITY_AUDIT.md's `React 19 is required`, though neither was built here.",
+    "dev_only_high_or_critical": "vitest and tinypool (critical), @next/eslint-plugin-next, eslint-config-next and glob (high). Not shipped; run only on this repo's own code."
+  },
+  "semgrep": {
+    "raw": ["semgrep-raw.json", "semgrep-run.log"],
+    "results": [
+      { "rule": "gcm-no-tag-length", "at": "src/lib/crypto.ts:23", "verdict": "real, low", "why": "createDecipheriv is not told the tag length, and a 4-byte tag on an empty message is accepted (test proves it). Reaching it needs write access to stored ciphertext, and only an empty message can pass. SCAN-5." },
+      { "rule": "bypass-tls-verification", "at": "src/lib/db.ts:17", "verdict": "already guarded", "why": "rejectUnauthorized is false only when DB_SSL_INSECURE=true is set on purpose. It is not set in .env, and the default checks the certificate." },
+      { "rule": "bypass-tls-verification", "at": "scripts/db-config.js:34", "verdict": "already guarded", "why": "The same rule in the script copy." },
+      { "rule": "bypass-tls-verification", "at": "src/lib/db.tls.test.ts:16", "verdict": "false positive", "why": "A test that the opt-in works." }
+    ],
+    "note": "`extra.lines` in the raw output says `requires login`, so Semgrep's output holds no source text. Only 4 results from community rules is not proof of safety, so the written search below was done as well."
+  },
+  "written_search_over_src": {
+    "raw": "code-search-ast.json",
+    "method": "src is parsed with the TypeScript parser, so code spanning lines is seen (538 files, no test or golden files), plus grep for the words. Searched: SQL keywords in a template with an interpolation (274, with `${ops(\"name\")}` left out as fixed); string + after SQL keywords; dangerouslySetInnerHTML; innerHTML; eval; new Function; document.write; child_process, spawn, exec; path.join, path.resolve and fs calls with a variable; fetch with a non-literal address; page.goto; http.get and https.request; NextResponse.redirect, redirect, router.push and replace, location.assign and replace and href; request bodies with no schema.",
+    "results": [
+      { "what": "Raw SQL", "verdict": "already guarded", "at": "all of lib/assistant, lib/collector, lib/officer, lib/aws/store.ts, lib/studio", "why": "No request value is placed in SQL text. Values go through `?`. What is interpolated is fixed text or checked: order by map lookup (collector/intel.ts:1385), LIMIT and OFFSET clamped by Math (officer/data.ts:406-411), Number(a.lat) (assistant/incidents.ts:348), alias allow-list and quoting (assistant/compile.ts:273), identifiers from the store's own manifest (aws/store.ts via q and lit). LIKE text is escaped and passed as a parameter." },
+      { "what": "mysql2 object-as-parameter", "verdict": "already guarded", "at": "src/app/api/auth/tab/route.ts, api/collector/incidents/[id]/action/route.ts, api/dev/thunai/tool/route.ts, api/rehearsal/dev/route.ts", "why": "The 4 routes with req.json() and no schema in the route. tab uses isSlot, action validates in actionmail.ts:217, and the 2 dev routes answer 404 in production." },
+      { "what": "dangerouslySetInnerHTML with text", "verdict": "already guarded", "at": "assistant/AnswerCard.tsx:85, CollectorApp.tsx:929, Insights.tsx:145", "why": "All go through mdToHtml (src/lib/markdown.ts), which escapes first and adds no attributes. Tested with 5 attack strings in scan-findings.test.ts." },
+      { "what": "dangerouslySetInnerHTML with scripts", "verdict": "false positive", "at": "src/app/layout.tsx:36, 38, 40", "why": "Fixed text, no input." },
+      { "what": "innerHTML", "verdict": "already guarded", "at": "assistant/MapAnswer.tsx:125, 136", "why": "Fixed colour tables and esc() on the label and the number." },
+      { "what": "eval, new Function", "verdict": "false positive", "at": "src/lib/tab-session.test.ts:23", "why": "A test file. None in shipped code." },
+      { "what": "child_process", "verdict": "already guarded", "at": "src/lib/collector/sources.ts:547", "why": "spawn with fixed arguments, no shell, no input." },
+      { "what": "File paths from a request", "verdict": "already guarded", "at": "thunai-ort/[file]/route.ts:18, complaint-media.ts:49, 59, officer/photos.ts:37, 54, studio/store.ts:41, studio/connect/vault.ts:17, api/map/layers/[id]/route.ts:12, api/i18n/route.ts:18, profile/photo/route.ts:43", "why": "Allow-list or strict regex before the path is used; the upload name is made by the server." },
+      { "what": "fetch and browser with an address someone typed", "verdict": "already guarded, with a stated gap", "at": "src/lib/netsafe.ts, studio/connect/browser.ts:74", "why": "safeFetch checks every hop against private ranges, and every browser request goes through the same check. Its own comment says DNS rebinding is not covered. Collector only. Not re-tested here." },
+      { "what": "Other fetch with a variable", "verdict": "false positive", "at": "jarvis/say/route.ts:37, 47, aws/store.ts:115-404, collector/alerts.ts:147, lakes.ts:96, nearby.ts:192, sources.ts:532, 562, 647, 706, rehearsal/cfmlive.ts:43, traffic.ts:48, 70", "why": "Fixed hosts. Query text is encoded, and traffic tile numbers are integer-checked at traffic.ts:31." },
+      { "what": "Redirect", "verdict": "already guarded", "at": "src/middleware.ts:59, 110, login/page.tsx:28", "why": "Middleware changes only the path on its own URL. The login page goes to redirectTo from the server, set by role (security/session.ts:26), never to the `redirect` query value." }
+    ]
+  },
+  "not_run": [
+    "A crafted payload for the three Next denial-of-service advisories, and any attempt at the Windows RCE: no public exploit used, and none written.",
+    "The zod crash at the default heap (4,288 MB on this machine): the shared machine had 1.2 to 2.5 GB free, so only the launcher's 2,048 MB cap was tested.",
+    "The request through a real public tunnel: rules forbid running host-tunnel.bat.",
+    "A real `next dev` run for the OTP branch: memory, as above. The helper's branch is covered by a unit test.",
+    "Signing in to MySQL, or reaching it from another machine, for SCAN-7."
+  ]
+}

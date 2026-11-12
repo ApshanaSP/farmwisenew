@@ -1,0 +1,23 @@
+RC-04, RC-05, RC-07 sweep (QA4 G2), lane a's leftovers.
+
+Class 1: a number said as a word or in Tamil letters is ignored by a reader that takes digits only ("zone five", "மண்டலம் ஐந்து", "zone anju").
+Search: grep -rnE '(zone|ward)[^a-z`"]{0,6}\(\d|\d\{1,2\}\)' src/lib/thunai src/lib/assistant src/lib/map --include=*.ts (tests and numbergate excluded)
+Found (each read "zone N" with its own digits-only pattern):
+  src/lib/thunai/quick.ts zonesIn      read only the first "zone N" and only digits  -> reads every zone named, numbers by normalise()
+  src/lib/assistant/compare.ts:39      a side "zone five" went to the gazetteer as a place  -> zoneNoIn()
+  src/lib/assistant/guard.ts:138       "filter zone five" was not a console action          -> zoneNoIn()
+  src/lib/assistant/pipeline.ts:658    a question's scope took no zone from "zone five"     -> zoneNoIn()
+  src/lib/assistant/tools.ts:54        a place lookup took no zone from "zone five"         -> zoneNoIn()
+Not changed, with the reason: src/lib/map/resolve.ts:59-60 (the map's place finder) needs the character offsets of the match in the original sentence, which a normalised copy does not keep; its zone and ward numbers are digits only. Listed in g2.jsonl, not fixed.
+Real run before the fix (Ask District IQ, "how many open complaints in zone five"): "1,238 open citizen complaints, last 90 days" (the whole district); after: Royapuram's. Tamil "மண்டலம் ஐந்து": 9,113 (the district) before.
+Guard: src/lib/zone-no.pass4.test.ts fails if a reader of a zone number in those five files takes digits only; tests/qa/pass4/g2-real.test.ts checks every zone 1 to 15 in six wordings through Jarvis's lane.
+
+Class 2: a note to keep ("remember", "keep in mind", Tamil ஞாபகம் வச்சுக்கோ) is read as a filter and opens a screen.
+Search: grep -n 'nyabagam\|ஞாபக\|நினைவில்' src/lib/thunai/understand.ts src/lib/thunai/lexicon.ts
+Found: the one rule for "<note> ஞாபகம் வச்சுக்க" took one ending only; "வச்சுக்கோ", "வச்சுக்கோங்க", "வெச்சுக்க", "நினைவில் வச்சுக்கோங்க", Tanglish "vechukonga" fell through to the filters -> one ending pattern, the note without its quoting ending (னு).
+
+Class 3: a verb that is an order Jarvis never carries out ("close", "delete", "send" ...) in a sentence with a filter word moves the console.
+Search: the metamorphic and open-baseline-45 rows (6 rows, English, Tamil, Tanglish) and 5 new ones in g2-real.test.ts.
+Fixed by the interrupted agent's edits, finished here: understand.ts refuses before the rules read the filter; quick.ts unsureWhy sends a forbidden order to the refusal. open-baseline-45 is "fixed": true in findings/open-baseline.json (its it.fails now passes).
+
+Class 4 (found on the way): a closed list that says what chat does not do can swallow a question the data holds. cannot.ts "complaints by department" took "past deadline by department" in Tamil (the lane e test e-routes RC-11); the past-deadline count IS held per department -> exempt (PAST_DEADLINE).

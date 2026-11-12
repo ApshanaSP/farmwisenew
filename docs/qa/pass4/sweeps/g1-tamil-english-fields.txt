@@ -1,0 +1,6 @@
+# G1 sweep: lines in src/lib/thunai/screens.ts with Tamil text that interpolate a field holding an English sentence (title, why, summary, text, headline, a case label)
+288: ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""} காலக்கெடு தாண்டிவிட்டது${h ? `; ${h} துறையை அழையுங்கள்` : ""}.`, id: first.id }
+290: ta: `முதலில்: ${clip(first.title, 120)}${p ? `, ${p}` : ""}${h ? `; ${h} வசம் உள்ளது` : ""}.`, id: first.id });
+580: late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(where).join(", ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${where(first[0])}.`,
+688: say: bi(`${plural(items.length, "headline", "headlines")}${topic}. Reading them now.`, `${taTopic}${spoken(items.length)} தலைப்புச் செய்திகள். படிக்கிறேன்.`),
+1388: say: bi(`${points.length} points in the brief for ${PERIOD_EN[c.s.period]}. ${points[0]?.text ?? ""}`, `${PERIOD_TA[c.s.period]} சுருக்கத்தில் ${points.length} குறிப்புகள். ${points[0] ? leadTa : ""}`),

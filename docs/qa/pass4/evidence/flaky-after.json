@@ -1,0 +1,44 @@
+{
+ "note": "Target 0 flaky failures. 40 shuffled full-suite runs (20 per hunt: 10 UTC, 10 Asia/Kolkata), through the vitest-full lock. Hunt 1 (after-u2) overlapped with the fixer's own edits: its 2 failing runs (seeds below) were the fixer's half-written regex guard and injection.ts, since fixed and committed. Hunt 2 (after-u2-clean) ran on the committed tree: its only failure, direct.test.ts 'List the taluks...', failed in all 20 runs, so it is not flaky: it comes from another fixer's uncommitted edit of src/lib/assistant/direct.ts (not this lane).",
+ "flaky_failures_in_the_fixed_tests": 0,
+ "hunt1": {
+  "label": "after-u2",
+  "runs_done": 20,
+  "runs_with_any_failure": 2,
+  "failures": [
+   {
+    "name": "regex source guards (QA4 RC-37) every RegExp(...) built from a string or template keeps its backslashes doubled",
+    "file": "src/lib/regex-source-guard.pass4.test.ts",
+    "failed_in_runs": [
+     9
+    ],
+    "seeds": [
+     1689315304
+    ]
+   },
+   {
+    "name": "RC-19 guard: a step needs the Collector to ask for it, in the shape of a command type runs for: type approved in the box",
+    "file": "src/lib/thunai/exitgate.guard.pass4.test.ts",
+    "failed_in_runs": [
+     10
+    ],
+    "seeds": [
+     1457897494
+    ]
+   }
+  ]
+ },
+ "hunt2": {
+  "label": "after-u2-clean",
+  "runs_done": 20,
+  "runs_with_any_failure": 20,
+  "failures": [
+   {
+    "name": "questions answered by one console tool leaves List the taluks with the highest number of unresolved incidents during the last month to the router",
+    "file": "src/lib/assistant/__tests__/direct.test.ts",
+    "failed_in_runs": "20 of 20 runs",
+    "first_seed": 1750678904
+   }
+  ]
+ }
+}

@@ -1,0 +1,26 @@
+   × 1 a place with a Tamil case ending is ours, not another body's > Tamil letters, a second place: மாதவரத்துல கார்ப்பரேஷன் வேலை எப்படி போகுது 37ms
+     → Matavarattula Corporation பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில
+   × 1 a place with a Tamil case ending is ours, not another body's > Tanglish, a second place: Velacherila corporation work eppadi irukku 23ms
+     → இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட�
+   × 2 a Tanglish verb or question word is not the name of another body > Adyar work site-la quality mosam nu solraanga, andha Corporation work vishayam enna 21ms
+     → Solraanga Corporation பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் 
+   × 2 a Tanglish verb or question word is not the name of another body > ellarum solraanga corporation work mosam nu 9ms
+     → Solraanga Corporation பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; அருகில் 
+   × 3 yesterday is asked about, not refused, and nothing is shown for today as if it were yesterday > English: show the fire complaints in Adyar yesterday 11ms
+     → expected 'refuse' to be 'clarify' // Object.is equality
+   × 3 yesterday is asked about, not refused, and nothing is shown for today as if it were yesterday > Tamil letters: நேத்து அடையாறுல தீ விபத்து ஆச்சு, என்ன ஏதுன்னு சொல்ல�
+     → expected 'refuse' to be 'clarify' // Object.is equality
+   × 3 yesterday is asked about, not refused, and nothing is shown for today as if it were yesterday > Tanglish: nethu Adyar la fire accident enna aachu 11ms
+     → expected 'refuse' to be 'clarify' // Object.is equality
+   × 4 'explain' with a place or a topic in the sentence is not the order to explain the screen > Tamil letters: மணலி பக்கம் குப்பை ஜாஸ்தியாம், விளக்கி சொல்லு 18ms
+     → expected [ 'explain' ] to not deeply equal [ 'explain' ]
+   × 4 'explain' with a place or a topic in the sentence is not the order to explain the screen > Tanglish: Manali pakkam kuppai jaasthiyaam, vilakkunga 13ms
+     → expected [ 'explain' ] to not deeply equal [ 'explain' ]
+   × 5 the category whose label the sentence says more of wins over a one-word name > Tanglish: Adyar-la drain work pallam thorandhu kedakku, safety issue explain pannu 22ms
+     → மண்டலம் 13 · அடையாறு · Drainage & sewage: expected 'DRAINAGE_SEWAGE' to be 'DRAIN_WORKS_SAFETY' // Object.is equality
+   × 5 the category whose label the sentence says more of wins over a one-word name > English: drain works site safety problem in Adyar 22ms
+     → 7 cases this week; here are the 6 that matter most. The most urgent: a drainage or sewage problem at Sathya Street, Anbazhagan Nagar, Taramani in Adyar. Storm Water Drain holds 3 of them. Say "read them", or "open" and a number.: expected 'DRAINAGE_SE
+   × a body said back in the words it was said in (audit-understanding-17) > தீயணைப்பு துறை அறிக்கை 7ms
+     → expected 'Tiyanaippu Department பற்றி என்னிடம் …' not to match /Tiyanaippu|\b[A-Z][a-z]+ Department\b/
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 16 passed (28)

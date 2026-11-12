@@ -8,7 +8,7 @@ import { saveResult } from "./helpers";
  *   SCREENS=1 npx playwright test tests/e2e/hud.spec.ts --project=...
  */
 const OUT = path.join(process.cwd(), "..", "docs", "jarvis", "screens");
-test.use({ channel: process.env.PW_CHANNEL || undefined, launchOptions: { args: ["--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] } });
+test.use({ channel: process.env.PW_CHANNEL || undefined, launchOptions: { args: ["--mute-audio", "--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] } });
 
 async function open(page: Page, lang: "en" | "ta", size: { width: number; height: number }) {
   await page.setViewportSize(size);

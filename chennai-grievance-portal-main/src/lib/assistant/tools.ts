@@ -9,7 +9,7 @@
  * Rows never carry citizens' details: no complaint text, reporter, phone or email.
  */
 import { z } from "zod";
-import { PERIODS, asOf, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
+import { PERIODS, areaSnapshot, asOf, asOfNow, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
 import { insights, type Insights } from "@/lib/collector/insights";
 import { threads } from "@/lib/collector/threads";
 import { mapGeo } from "@/lib/collector/geo";
@@ -31,9 +31,12 @@ import {
 } from "@/lib/assistant/queries";
 import type { Fact, SourceRef, ToolResult } from "@/lib/assistant/types";
 import { orEmpty, orNull } from "@/lib/fallback";
-import intelPool, { TITLE } from "@/lib/collector/db";
+import intelPool, { TITLE, ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import type { RowDataPacket } from "mysql2";
-import { MIN_PCT_BASE } from "@/lib/reference/metrics";
+import { MIN_PCT_BASE, isPastDeadline } from "@/lib/reference/metrics";
+import { syncEpoch } from "@/lib/collector/epoch";
+import { zoneNoIn } from "@/lib/zone-no";
 
 type Row = Record<string, any>;
 
@@ -49,7 +52,7 @@ export async function numberedPlace(text: string, names: Awaited<ReturnType<type
     const w = rows[0];
     if (w) return { place: `Ward ${ward}`, ward, ward_asked: true, zone: Number(w.zone_no), taluk: w.taluk_code ?? null, lat: Number(w.lat), lon: Number(w.lon), conf: 1 };
   }
-  const zone = Number(text.match(/\bzone\s*(?:no\.?|number|#)?\s*-?\s*(\d{1,2})\b/i)?.[1] ?? text.match(/மண்டலம்\s*(\d{1,2})/)?.[1]);
+  const zone = zoneNoIn(text) ?? NaN;
   if (zone && names.zones.has(zone)) return { place: names.zones.get(zone)!.name, ward: null, zone, taluk: null, lat: null, lon: null, conf: 1 };
   return null;
 }
@@ -98,22 +101,42 @@ const TOPIC_WORDS = new Set(["murder", "accident", "crash", "flood", "flooding",
   "fire", "protest", "drain", "drainage", "sewage", "pothole", "streetlight", "suicide", "rape", "harassment", "missing", "drug", "ganja", "liquor", "collapse",
   "stray", "dog", "water", "power", "crime", "asphyxiation", "gas", "lake", "bund"]);
 
+/** The Collector's decisions on the pipeline's status (effective.ts): the keyword lane shows the status the console shows. */
+const EFF = effectiveSql(ops("collector_decisions"));
+
 /** Incidents whose title or place contains every word, newest first (the search's fallback when the meaning index is not ready). */
 async function keywordIncidents(words: string[], since: number | null, until: number, zone: number | null, cat: string | null, dept: string | null): Promise<Row[]> {
   const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
-  const parts = words.map(() => "(LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)");
-  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
+  // the title the console shows (the headline over the raw title) or the raw one, or the place
+  const parts = words.map(() => `(LOWER(COALESCE(${TITLE}, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ? OR LOWER(COALESCE(i.place_text, '')) LIKE ?)`);
+  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
   if (since != null) (parts.push("i.first_reported_at > ?"), params.push(ist(since)));
   parts.push("i.first_reported_at <= ?"); params.push(ist(until));
   if (zone != null) (parts.push("i.zone_no = ?"), params.push(zone));
   if (cat) (parts.push("i.category_code = ?"), params.push(cat));
   if (dept) (parts.push("i.lead_dept = ?"), params.push(dept));
   const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT i.incident_id AS id, i.title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, i.status_std AS status, i.dead,
+    `SELECT i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.zone_name, i.place_text AS place, i.severity_level AS sev, ${EFF.status} AS status, i.dead,
             DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i') AS t
      FROM incidents i WHERE ${parts.join(" AND ")} ORDER BY i.first_reported_at DESC LIMIT 12`, params);
   return rows as Row[];
 }
+/** News headlines whose title holds every word (the search's fallback when the meaning index is not ready). */
+async function keywordNews(words: string[], since: number | null, until: number): Promise<Row[]> {
+  const ist = (sec: number) => new Date(sec * 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const parts = words.map(() => "(LOWER(COALESCE(d.title, '')) LIKE ? OR LOWER(COALESCE(d.title_en, '')) LIKE ?)");
+  const params: unknown[] = words.flatMap((w) => [`%${w.replace(/[%_]/g, "")}%`, `%${w.replace(/[%_]/g, "")}%`]);
+  if (since != null) (parts.push("d.published_at > ?"), params.push(ist(since)));
+  parts.push("d.published_at <= ?"); params.push(ist(until));
+  const [rows] = await intelPool.query<RowDataPacket[]>(
+    `SELECT d.doc_id AS id, d.title, d.publisher, d.url, d.place_text AS place, d.linked_incident_id AS incident, d.dead,
+            DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i') AS t
+     FROM documents d WHERE d.source_kind = 'news' AND d.is_district = 1 AND ${parts.join(" AND ")} ORDER BY d.published_at DESC LIMIT 8`, params);
+  return rows as Row[];
+}
+
+/** the direction of each list sort that puts what matters first: the severity rank runs Severe = 1, so most severe first is ascending (the console's own buttons send 1) */
+const NATURAL_DIR = { t: -1, sev: 1, c: -1, r: 1, d: 1 } as const;
 type Body = Omit<ToolResult, "tool" | "args">;
 
 export class ToolError extends Error {}
@@ -123,6 +146,7 @@ export class ToolError extends Error {}
 const memo = new Map<string, { at: number; p: Promise<unknown> }>();
 /** One shared result per key for a minute: a question often needs several tools over the same overview. */
 function once<T>(key: string, run: () => Promise<T>, ttl = 60_000): Promise<T> {
+  syncEpoch(memo); // a decision empties it (RC-35)
   const now = Date.now();
   for (const [k, v] of memo) if (now - v.at > ttl) memo.delete(k);
   const hit = memo.get(key);
@@ -182,7 +206,9 @@ export function readableTime(t: unknown): string | null {
 }
 
 /** 310.9 hours as "13 days" (a Collector reads days, not hours, past two days) */
-const openFor = (hours: number | null) => hours == null ? null : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
+/** An incident the store dates after its as-of time (a forecast stored as an incident, OPEN-11) has not been open at all: never "-1 hours" (RC-38, PB-234) */
+const openedHours = (h: number | null) => (h == null ? null : Math.max(0, h));
+const openFor = (hours: number | null) => hours == null ? null : hours < 0 ? "not started yet" : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
 const inr = (v: number) => v.toLocaleString("en-IN");
 const periodOf = (s: AssistantScope) => PERIODS[s.period].label.toLowerCase();
 
@@ -202,7 +228,7 @@ export function incRow(i: Row, withWhy = false) {
     zone_name: i.zone_name ?? null, loc: i.loc ?? null, ward: i.ward ?? null, dept: i.dept ?? null, dept_name: i.dept_name ?? null, sev: i.sev ?? null,
     status: i.status ?? null, open: Number(i.open) === 1, complaints: Number(i.complaints ?? 0), t: i.t ?? null,
     lat: i.lat == null ? null : Number(i.lat), lon: i.lon == null ? null : Number(i.lon), sources: i.sources ?? null,
-    priority: i.priority == null ? null : round(Number(i.priority)), overdue: Number(i.breached) === 1,
+    priority: i.priority == null ? null : round(Number(i.priority)), overdue: i.overdue === true || isPastDeadline(i, asOfNow()),
     ...(withWhy ? { why: i.why ?? explain(i) } : {})
   };
 }
@@ -350,7 +376,7 @@ async function incidentBody(id: string, now: string): Promise<Body | null> {
   const i = d.incident;
   const data = {
     incident: { ...incRow(i), why: i.why, summary: i.summary ?? null, place: i.loc ?? null, closed_at: i.closed_at ?? null, sla_due: i.sla_due ?? null,
-      hours_open: i.hours_open == null ? null : round(Number(i.hours_open)), dead: Number(i.dead ?? 0), injured: Number(i.injured ?? 0), taluk: i.taluk_name ?? null,
+      hours_open: i.hours_open == null ? null : round(openedHours(Number(i.hours_open))!), dead: Number(i.dead ?? 0), injured: Number(i.injured ?? 0), taluk: i.taluk_name ?? null,
       dept_head: i.dept_head ?? null, src: i.src ?? null, first_reported: readableTime(i.t), open_for: openFor(i.hours_open == null ? null : Number(i.hours_open)) },
     // report titles, sources and times; complaint text stays in the console
     reports: d.reports.map((r) => ({ t: readableTime(r.t), source: r.source, what: r.what, title: r.title ?? null, publisher: r.publisher ?? null, url: r.url ?? null, first: r.first })),
@@ -389,7 +415,7 @@ const tool = <A extends z.ZodTypeAny>(t: ToolDef<A>) => t;
 const scopeOnly = z.object({ scope: ScopeSchema.default({}) });
 
 const SEVS = ["Severe", "High", "Medium", "Low"] as const;
-const LIST_STATUSES = ["open", "awaiting", "unverified", "verified", "critical", "Open", "Under review", "Assigned", "In progress",
+const LIST_STATUSES = ["open", "overdue", "awaiting", "unverified", "verified", "critical", "Open", "Under review", "Assigned", "In progress",
   "Awaiting verification", "Resolved", "Rejected", "Lapsed"] as const;
 
 export const TOOLS = [
@@ -462,7 +488,8 @@ export const TOOLS = [
       const d = await ov(s);
       const [ranks, names] = await Promise.all([zoneAttention({ ...scope, zone: null }, d.now), refNames()]);
       const at = ranks.findIndex((r) => r.zone === zone);
-      const snap0 = d.snapshot.kind === "area" ? d.snapshot : null;
+      // with a department chosen the overview's snapshot is the department's, not the zone's: ask for the zone's own (same scope, so open and complaints are the zone's under that filter, never an empty 0)
+      const snap0 = d.snapshot.kind === "area" ? d.snapshot : await areaSnapshot(zone, s, d.now).catch(orNull("tools:zone snapshot"));
       // an earlier window ("yesterday"): the zone's own records for that day, not the console's current snapshot
       const day = scope.offset ? await windowRows({ period: s.period, zone, dept: s.dept, cats: s.cat ? [s.cat] : null, taluk: s.taluk, offset: scope.offset }, d.now, 5) : null;
       const snap = day && snap0 ? { ...snap0, active: day.open, complaints: day.complaints } : snap0;
@@ -574,7 +601,7 @@ export const TOOLS = [
         scope, asOf: now,
         data: { rows: rows.map((r) => ({ ...r, hours: round(r.hours), days: round(r.hours / 24), prevHours: r.prevHours == null ? null : round(r.prevHours),
           onTimePct: r.n ? Math.round((r.onTime / r.n) * 100) : 0 })), closed, avgHours: round(avg), onTime },
-        facts, sources: [fn("incidents.resolutionTimes"), tbl("incidents", "first_reported_at, closed_at, sla_breached")], incidentIds: [], testData: false,
+        facts, sources: [fn("incidents.resolutionTimes"), tbl("incidents", "first_reported_at, closed_at, sla_due_at")], incidentIds: [], testData: false,
         caveats: ["Counted by when each incident was closed as resolved; time is from the first report to closing. Departments with fewer than 3 closed are left out."]
       };
     }
@@ -605,26 +632,29 @@ export const TOOLS = [
 
   tool({
     name: "incidents",
-    description: "Incidents matching filters, 12 per page, as the console's incident list: severity, status ('open', 'awaiting' your verification, 'unverified', 'verified', 'critical' = severe and not verified, or a status name), keyword, sort (t time, sev severity, c complaints, r zone, d department), page; within the period (default) or all 180 days.",
+    description: "Incidents matching filters, 12 per page, as the console's incident list: severity, status ('open', 'overdue' = open past its deadline, 'awaiting' your verification, 'unverified', 'verified', 'critical' = severe and not verified, or a status name), keyword, sort (t time, sev severity, c complaints, r zone, d department), page; within the period (default) or all 180 days.",
     args: z.object({
       scope: ScopeSchema.default({}),
       sev: z.enum(SEVS).nullable().default(null),
       status: z.enum(LIST_STATUSES).nullable().default(null),
       q: z.string().trim().max(80).nullable().default(null),
       sort: z.enum(["t", "sev", "c", "r", "d"]).default("t"),
-      dir: z.union([z.literal(1), z.literal(-1)]).default(-1),
+      /** left out: the sort's own natural direction (newest first, most severe first, most complaints first, A to Z) */
+      dir: z.union([z.literal(1), z.literal(-1)]).nullable().default(null),
       page: z.number().int().min(0).max(8).default(0),
       allTime: z.boolean().default(false)
     }),
     async run(a) {
       const s = a.scope;
       const r = await list({ period: s.period, zone: s.zone, dept: s.dept, sev: a.sev, cat: s.cat, taluk: s.taluk, status: a.status, q: a.q || null,
-        sort: a.sort, dir: a.dir, page: a.page, scope: a.allTime ? "all" : "period" });
+        sort: a.sort, dir: a.dir ?? NATURAL_DIR[a.sort], page: a.page, scope: a.allTime ? "all" : "period" });
       const rows = r.rows.map((i) => incRow(i));
       const now = await asOf();
       return {
-        scope: s, asOf: now, data: { rows, total: r.total, complaints: r.complaints, page: a.page, pageSize: 12 },
-        facts: [fact("list.total", "Incidents matching", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
+        scope: s, asOf: now, // `total` is the number of rows to page through (one per group of the same problem in the same area); `incidents` is what the tiles
+        // count, and what "Incidents matching" says (PB-065)
+        data: { rows, total: r.total, incidents: r.incidents, complaints: r.complaints, page: a.page, pageSize: 12 },
+        facts: [fact("list.total", "Incidents matching", r.incidents), fact("list.groups", "Groups of the same problem in the same area, the list's rows", r.total), fact("list.complaints", "Citizen complaints linked to them", r.complaints)],
         sources: [fn("intel.list"), tbl("incidents")], incidentIds: rows.map((x) => x.id),
         testData: true, caveats: a.allTime ? ["Covers all 180 days in the store, not only the period."] : [], untrusted: ["title", "loc"]
       };
@@ -648,20 +678,27 @@ export const TOOLS = [
       const zone = s.zone ?? (place?.zone != null ? Number(place.zone) : null);
       const f = { since: a.allTime ? null : nowT - PERIODS[s.period].hours * 3600, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
       const [inc, news] = await Promise.all([
-        a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve([]),
-        a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve([])
+        // a kind not asked for is not searched: null, the same as "no index", so the fallback below runs when every asked kind has none
+        a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve(null),
+        a.kinds.includes("news") ? hybridSearch("news", a.text, { since: f.since, until: f.until, cats: f.cats }, 8) : Promise.resolve(null)
       ]);
       // no meaning index yet: the question's own words, matched against incident titles and places in the period
       if (inc === null && news === null) {
-        const words = keywordsOf(a.text);
-        const rows = words.length ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
+        // the words that say what happened: "any reports about a sinkhole" searches "sinkhole", not "report" (ASKING words say what is asked)
+        const words = keywordsOf(a.text).filter((w) => !ASKING.has(w) && !GENERIC_WORDS.has(w));
+        const rows = words.length && a.kinds.includes("incidents") ? await keywordIncidents(words, f.since, f.until, zone, s.cat, s.dept) : [];
+        const newsRows = words.length && a.kinds.includes("news") ? await keywordNews(words, f.since, f.until).catch(orEmpty("tools:keyword news")) : [];
+        const articles = newsRows.map((r) => ({ id: String(r.id), title: r.title, publisher: r.publisher, place: r.place ?? null, url: r.url ?? null, incident: r.incident || null,
+          dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
         const incidents = rows.map((r) => ({ id: String(r.id), title: r.title, type: r.type, zone_name: r.zone_name, place: r.place, sev: r.sev, status: r.status,
           dead: Number(r.dead ?? 0), t: r.t, match: "keywords" }));
-        return { scope: s, asOf: now, data: { found: incidents.length > 0, query: a.text, zone, incidents, news: [] },
-          facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length), fact("search.news", "News reports matching the description (best 8 shown)", 0)],
+        return { scope: s, asOf: now, data: { found: incidents.length + articles.length > 0, query: a.text, zone, incidents, news: articles },
+          facts: [fact("search.incidents", "Incidents matching the description (best 12 shown)", incidents.length), fact("search.news", "News reports matching the description (best 8 shown)", articles.length)],
           sources: [tbl("incidents", `title or place contains: ${words.join(", ") || "(no words to search)"}`)], incidentIds: incidents.map((x) => x.id), testData: false,
-          caveats: [`Searched the incident records for the words ${words.map((w) => `"${w}"`).join(", ") || "in the question"}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`],
-          untrusted: ["title", "incidents"] };
+          caveats: [words.length
+            ? `Searched the incident records and news headlines for the words ${words.map((w) => `"${w}"`).join(", ")}${a.allTime ? "" : ` in the ${periodOf(s)}`}; the meaning search is not available right now.`
+            : "Could not search: the meaning search is not available right now, and the question has no word to look for in the titles. Nothing was searched, so this is not a finding that nothing matches."],
+          untrusted: ["title", "incidents", "news"] };
       }
       // a match: in the keyword results, or close in meaning. A subject the district's data has no word for ("earthquakes")
       // matches only records that name it: the nearest records in meaning are something else, and were once reported as

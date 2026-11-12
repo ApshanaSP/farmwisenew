@@ -1,0 +1,46 @@
+   × effective closed time and verified flag (RC-27) > a Collector's resolve is counted in the week it was made, a reopen removes the pipeline's close, an escalate changes nothing 11ms
+   × effective closed time and verified flag (RC-27) > verified follows a resolve or a verify, and the alias is the caller's 2ms
+ FAIL  src/lib/collector/effective.closed.sqlite.test.ts > effective closed time and verified flag (RC-27) > a Collector's resolve is counted in the week it was made, a reopen removes the pipeline's close, an escalate changes noth
+ FAIL  src/lib/collector/effective.closed.sqlite.test.ts > effective closed time and verified flag (RC-27) > verified follows a resolve or a verify, and the alias is the caller's
+   × gaps still open > DECISIONS-15: an officer's report on an incident the Collector reopened reaches My Tasks 1ms
+   × gaps still open > DECISIONS-4: the search box's rows and Ask District IQ's search tool carry the decided status 1ms
+   × gaps still open > DECISIONS-4: search_records' keyword lane carries the decided status 1ms
+   × gaps still open > DECISIONS-16: an officer's send leaves one row per incident on the action list (CSV) 0ms
+   × gaps still open > DECISIONS-7: a reopened severe incident is back on the Collector's action list (CSV) 0ms
+   × gaps still open > DECISIONS-8: Ask District IQ's "how many resolved" counts a Collector's resolve 0ms
+   × gaps still open > DECISIONS-8: the Briefing's "resolved" counts a Collector's resolve 0ms
+   × gaps still open > DECISIONS-9: a hotspot's "N open" on Trends follows a decision 0ms
+   × gaps still open > DECISIONS-10: a pattern's incident row shows the decided status, not "In progress (closed)" 0ms
+   × gaps still open > DECISIONS-10: a reopened incident under Needs your attention does not say Resolved 0ms
+   × gaps still open > DECISIONS-10: the Briefing book's department row shows the decided status 0ms
+   × gaps still open > DECISIONS-11: an incident the Collector verified is in the list's verified filter, as its row says 0ms
+   × OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: a model-written query's "still open" follows the Collector's decision 1ms
+   × OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: a model-written query's status filter follows the Collector's decision 0ms
+   × OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: the whole path, a question through a fake model's plan, answers with the decided figure 0ms
+   × OPEN-16: the search index > DECISIONS-14: after a resolve and a sync, the open-only search no longer returns the incident 1ms
+   × OPEN-16: the search index > DECISIONS-14: after a reopen and a sync, the open-only search finds the incident 0ms
+   × OPEN-16: the search index > DECISIONS-14: the index's record carries the decided status, which search_records shows 0ms
+   × after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 the Briefing Book's rows say the case's status after a decision 1025ms
+   × after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 a reopened case leaves the Briefing Book's good news 1988ms
+   × new, found on the way > AUD-NF-14 a reopened case is not 'open ... closed on' 161ms
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 the Briefing Book's rows say the case's status after a decision
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 a reopened case leaves the Briefing Book's good news
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-14 a reopened case is not 'open ... closed on'
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-15: an officer's report on an incident the Collector reopened reaches My Tasks
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-4: the search box's rows and Ask District IQ's search tool carry the decided status
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-4: search_records' keyword lane carries the decided status
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-16: an officer's send leaves one row per incident on the action list (CSV)
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-7: a reopened severe incident is back on the Collector's action list (CSV)
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-8: Ask District IQ's "how many resolved" counts a Collector's resolve
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-8: the Briefing's "resolved" counts a Collector's resolve
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-9: a hotspot's "N open" on Trends follows a decision
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-10: a pattern's incident row shows the decided status, not "In progress (closed)"
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-10: a reopened incident under Needs your attention does not say Resolved
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-10: the Briefing book's department row shows the decided status
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > gaps still open > DECISIONS-11: an incident the Collector verified is in the list's verified filter, as its row says
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: a model-written query's "still open" follows the Collector's decision
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: a model-written query's status filter follows the Collector's decision
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the two readers on the pipeline's flag > DECISIONS-13: the whole path, a question through a fake model's plan, answers with the decided figure
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the search index > DECISIONS-14: after a resolve and a sync, the open-only search no longer returns the incident
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the search index > DECISIONS-14: after a reopen and a sync, the open-only search finds the incident
+ FAIL  tests/qa/pass4/decision-matrix.test.ts > OPEN-16: the search index > DECISIONS-14: the index's record carries the decided status, which search_records shows

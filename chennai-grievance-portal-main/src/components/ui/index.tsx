@@ -71,7 +71,9 @@ export function useIndicator<T extends HTMLElement>(active: string | number | nu
     const el = ref.current;
     if (!el) return;
     const on = el.querySelector<HTMLElement>(`[data-key="${String(active)}"]`);
-    setBox(on ? { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight } : null);
+    const next = on ? { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight } : null;
+    // the same box is the same state: observing the labels must not make a render loop
+    setBox((b) => (b && next && b.x === next.x && b.y === next.y && b.w === next.w && b.h === next.h ? b : next));
   }, [active]);
   useLayoutEffect(() => {
     measure();
@@ -79,8 +81,15 @@ export function useIndicator<T extends HTMLElement>(active: string | number | nu
     if (!el) return;
     const ro = new ResizeObserver(() => measure());
     ro.observe(el);
+    // a label can change width while the control keeps its own width: the page's words are translated after the first paint, and a
+    // font arrives late. The pill follows the labels, or it sits over the wrong one (RC-46, PB-328)
+    for (const k of Array.from(el.querySelectorAll("[data-key]"))) ro.observe(k);
+    let raf = 0;
+    const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
+    const mo = new MutationObserver(later);
+    mo.observe(el, { subtree: true, childList: true, characterData: true });
     document.fonts?.ready.then(measure).catch(() => {});
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); mo.disconnect(); cancelAnimationFrame(raf); };
   }, [measure, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
   const animateNow = !first.current;
   useEffect(() => { if (box) first.current = false; }, [box]);
@@ -224,7 +233,7 @@ export function CardHeader({ icon, tone = "accent", title, subtitle, count, onMo
   return (
     <header className="ui-ch">
       {icon && <span className="ui-ch-ic" data-tone={tone} aria-hidden="true">{icon}</span>}
-      <div className="ui-ch-t"><h3>{title}</h3>{subtitle && <small>{subtitle}</small>}</div>
+      <div className="ui-ch-t"><h2>{title}</h2>{subtitle && <small>{subtitle}</small>}</div>
       <div className="ui-ch-r">
         {count != null && <span className="ui-count">{count.toLocaleString("en-IN")}</span>}
         {children}

@@ -22,10 +22,11 @@ import { AiBudgetError } from "@/lib/ai/gateway";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 /** The dataset with its dashboard computed (?zone= narrows every panel to one zone), or the cleaned rows (?export=csv). */
-export async function GET(req: NextRequest, { params }: Ctx) {
+export async function GET(req: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   if (!validId(params.id)) return NextResponse.json({ error: "Unknown dataset." }, { status: 404 });
@@ -126,7 +127,8 @@ const Patch = z.union([
 ]);
 
 /** Rename ({ name }), or correct what columns mean ({ columns }: re-runs the agents, streamed). */
-export async function PATCH(req: NextRequest, { params }: Ctx) {
+export async function PATCH(req: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const meta = validId(params.id) ? getMeta(params.id) : null;
@@ -146,7 +148,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   });
 }
 
-export async function DELETE(req: NextRequest, { params }: Ctx) {
+export async function DELETE(req: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const meta = validId(params.id) ? getMeta(params.id) : null;
@@ -189,7 +192,8 @@ const Action = z.discriminatedUnion("action", [
 const PendingAction = z.object({ action: z.enum(["force", "discard"]) });
 
 /** Ask the data, pin a panel to the board, add or remove a dashboard panel, set or drop an alert, fetch a link again. */
-export async function POST(req: NextRequest, { params }: Ctx) {
+export async function POST(req: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const body = await req.json().catch(() => ({}));

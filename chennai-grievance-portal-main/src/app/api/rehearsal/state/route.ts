@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     if (req.headers.get("if-none-match") === tag) return new NextResponse(null, { status: 304, headers: { ETag: tag } });
     return new NextResponse(body, { status: 200, headers: { "content-type": "application/json", ETag: tag, "Cache-Control": "no-store" } });
   } catch (e) {
-    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: 503 });
+    if (e instanceof RehearsalUnavailable) return NextResponse.json({ error: e.message }, { status: e.status });
     return failed(e, "the rain rehearsal");
   }
 }

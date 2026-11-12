@@ -1,6 +1,6 @@
 /* Jarvis's button above the chatbot's: the light-blue core on the console's own surface. */
 .dic .jvf-wrap { position: fixed; right: 18px; bottom: 78px; z-index: 70; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.dic:not(.fit) .jvf-wrap { bottom: 136px; }
+.dic:not(.fit) .jvf-wrap { bottom: calc(136px + env(safe-area-inset-bottom, 0px)); }
 .dic .jvf { display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 16px 0 8px; border-radius: 24px; border: 1px solid rgba(8, 145, 178, .38); background: var(--elev, #fff); color: var(--text, #0f172a); font: 650 14px var(--font-ui, inherit); cursor: pointer; box-shadow: 0 12px 28px -12px rgba(8, 47, 73, .45); transition: transform .15s, box-shadow .15s; }
 .dic .jvf:hover, .dic .jvf:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 3px rgba(34, 211, 238, .22), 0 14px 30px -12px rgba(8, 47, 73, .5); }
 .dic .jvf:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
@@ -23,7 +23,7 @@
 .dic .jvf-q em { position: absolute; top: -5px; right: -5px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #0e7490; color: #fff; font: 700 11px/19px var(--font-ui, inherit); font-style: normal; text-align: center; }
 /* the earlier questions: drawn on the page itself, one layer above Jarvis's screens and bar, so an open screen never hides them */
 .jq { position: fixed; right: 18px; bottom: 136px; z-index: 2147482996; width: min(380px, calc(100vw - 32px)); max-height: min(520px, calc(100dvh - 200px)); display: flex; flex-direction: column; border-radius: 14px; background: var(--elev, #fff); color: var(--text, #0f172a); border: 1px solid rgba(8, 145, 178, .3); border-top: 3px solid #22d3ee; box-shadow: 0 22px 48px -18px rgba(8, 47, 73, .55); font: 400 13.5px/1.45 var(--font-ui, inherit); animation: jq-in .18s ease both; }
-.jq.jq-tall { bottom: 194px; }
+.jq.jq-tall { bottom: calc(194px + env(safe-area-inset-bottom, 0px)); }
 html.jv-hud .jq { bottom: 128px; }
 @keyframes jq-in { from { opacity: 0; transform: translateY(8px); } }
 .jq header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 10px 8px 14px; border-bottom: 1px solid var(--line, rgba(15, 23, 42, .1)); }
@@ -61,3 +61,13 @@ html.jv-hud .jq { bottom: 128px; }
 .jpins span { opacity: .8; font-weight: 600; }
 .jpins button { height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(128, 140, 160, .45); background: rgba(128, 140, 160, .12); color: inherit; font: inherit; cursor: pointer; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jpins button:hover { background: rgba(128, 140, 160, .24); }
+
+/* a phone: Jarvis's button is its round core alone (the words stay for screen readers), so the pair covers 98 px of the map and
+   the cards under it instead of 155 px (RC-46, PB-319) */
+@media (max-width: 480px) {
+  /* one row with Ask District IQ's round button, above the bottom bar, instead of a column that stands on the map's zoom control */
+  .dic:not(.fit) .jvf-wrap { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); right: 72px; }
+  .dic:not(.fit) .jq { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+  .dic .jvf { padding: 0 7px; }
+  .dic .jvf > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

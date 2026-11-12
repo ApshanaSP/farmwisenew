@@ -5,6 +5,7 @@ import { I } from "@/components/collector/app/icons";
 import { SevChip, deptIcon, fmtShort, fullTitle, type Row } from "@/components/collector/app/lib";
 import { OFFICER } from "@/lib/officer/departments";
 import type { Ctx } from "./OfficerApp";
+import { sevLabel } from "@/lib/sev-label";
 
 /** Scales a photo down in the browser (longest side OFFICER.photoMaxPx, JPEG) so reports upload quickly. */
 async function shrink(file: File): Promise<Blob> {
@@ -117,7 +118,7 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () =>
       {err && <div className="oerr" role="alert">{err}</div>}
       <div className="osend-f">
         <button className="btn plain" onClick={c.closeAll} disabled={busy}>Cancel</button>
-        {!toCollector && <span className="hint" style={{ marginRight: "auto" }}>Not severe: your department verifies and closes it.</span>}
+        {!toCollector && <span className="hint" style={{ marginRight: "auto" }}>{sevLabel(row.sev)}: your department verifies and closes it; only Severe cases go to the Collector.</span>}
         <button className="btn" onClick={send} disabled={busy}>{busy ? <><I n="refresh" className="spin" />{toCollector ? "Sending…" : "Closing…"}</>
           : toCollector ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
       </div>

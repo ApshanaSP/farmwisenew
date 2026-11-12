@@ -29,20 +29,20 @@ export type { Portal } from "@/lib/session-cookies";
  * Which portal the current request belongs to: the header middleware sets on
  * page requests, else the page that made the call (Referer) for API requests.
  */
-export function resolvePortal(): Portal | null {
-  const h = headers();
+export async function resolvePortal(): Promise<Portal | null> {
+  const h = await headers();
   const explicit = h.get(PORTAL_HEADER);
   if (isPortal(explicit)) return explicit;
   return portalFromUrl(h.get("referer"));
 }
 
 /** The browser tab this request came from (lib/session-cookies.ts); null = the unslotted cookies. */
-export function resolveSlot(): string | null {
-  return requestSlot(headers().get(TAB_HEADER), cookies().get(TAB_COOKIE)?.value);
+export async function resolveSlot(): Promise<string | null> {
+  return requestSlot((await headers()).get(TAB_HEADER), (await cookies()).get(TAB_COOKIE)?.value);
 }
 
 async function readSession(cookieName: string, portal: Portal): Promise<JwtPayload | null> {
-  const token = cookies().get(cookieName)?.value;
+  const token = (await cookies()).get(cookieName)?.value;
   if (!token) return null;
   const session = await verifyToken(token);
   return session && session.role === portalRole(portal) ? session : null;
@@ -100,7 +100,7 @@ export async function revokeSessions(userId: number): Promise<number> {
  * cookie, so another tab's sign-in or sign-out never shows here; without one, the unslotted (or legacy) cookie.
  */
 export async function getPortalSession(portal: Portal): Promise<JwtPayload | null> {
-  const slot = resolveSlot();
+  const slot = await resolveSlot();
   return stillValid(
     (await readSession(portalCookieName(portal, slot), portal)) ??
     (slot ? null : await readSession(LEGACY_COOKIE_NAME, portal))
@@ -114,7 +114,7 @@ export async function getPortalSession(portal: Portal): Promise<JwtPayload | nul
  * first signed-in session in PORTAL_FALLBACK_ORDER.
  */
 export async function getSessionFromCookies(): Promise<JwtPayload | null> {
-  const portal = resolvePortal();
+  const portal = await resolvePortal();
   if (portal) return getPortalSession(portal);
   for (const p of PORTAL_FALLBACK_ORDER) {
     const session = await getPortalSession(p);
@@ -124,21 +124,21 @@ export async function getSessionFromCookies(): Promise<JwtPayload | null> {
 }
 
 /** Record a slot's use and drop the cookies of slots unused the longest (beyond MAX_SLOTS). */
-export function touchSlot(res: NextResponse, slot: string, keep: string[] = []) {
-  const jar = cookies();
+export async function touchSlot(res: NextResponse, slot: string, keep: string[] = []) {
+  const jar = await cookies();
   rememberSlot(res, jar.getAll().map((c) => c.name), jar.get(SLOT_INDEX_COOKIE)?.value, slot, keep);
 }
 
 /** Sign in one portal in this tab only (its slot's cookie). */
-export function setAuthCookie(res: NextResponse, token: string, portal: Portal, maxAge?: number) {
-  const slot = resolveSlot();
+export async function setAuthCookie(res: NextResponse, token: string, portal: Portal, maxAge?: number) {
+  const slot = await resolveSlot();
   setSessionCookie(res, portalCookieName(portal, slot), token, maxAge);
-  if (slot) touchSlot(res, slot);
+  if (slot) await touchSlot(res, slot);
 }
 
 /** Sign out one portal in this tab only. */
-export function clearAuthCookie(res: NextResponse, portal: Portal) {
-  clearCookie(res, portalCookieName(portal, resolveSlot()));
+export async function clearAuthCookie(res: NextResponse, portal: Portal) {
+  clearCookie(res, portalCookieName(portal, await resolveSlot()));
 }
 
 /**
@@ -147,7 +147,7 @@ export function clearAuthCookie(res: NextResponse, portal: Portal) {
  * Copying from the unslotted cookies moves them (they belonged to a tab from before per-tab sessions).
  */
 export async function copySlot(res: NextResponse, from: string | null, to: string) {
-  const jar = cookies();
+  const jar = await cookies();
   for (const portal of PORTAL_FALLBACK_ORDER) {
     let token = jar.get(portalCookieName(portal, from))?.value;
     if (!token && !from) {
@@ -159,7 +159,7 @@ export async function copySlot(res: NextResponse, from: string | null, to: strin
     if (!from) clearCookie(res, portalCookieName(portal, null));
   }
   if (!from && jar.get(LEGACY_COOKIE_NAME)) clearCookie(res, LEGACY_COOKIE_NAME);
-  touchSlot(res, to, from ? [from] : []);
+  await touchSlot(res, to, from ? [from] : []);
 }
 
 /**
@@ -167,11 +167,12 @@ export async function copySlot(res: NextResponse, from: string | null, to: strin
  * a new sign-in for another portal does not knock it out.
  */
 export async function migrateLegacyCookie(res: NextResponse) {
-  const token = cookies().get(LEGACY_COOKIE_NAME)?.value;
+  const jar = await cookies();
+  const token = jar.get(LEGACY_COOKIE_NAME)?.value;
   if (!token) return;
   const session = await verifyToken(token);
   const portal = session ? roleToPortal(session.role) : null;
-  if (portal && !cookies().get(portalCookieName(portal, null))?.value) {
+  if (portal && !jar.get(portalCookieName(portal, null))?.value) {
     setSessionCookie(res, portalCookieName(portal, null), token);
   }
   clearCookie(res, LEGACY_COOKIE_NAME);

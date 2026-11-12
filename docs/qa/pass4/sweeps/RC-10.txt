@@ -1,0 +1,17 @@
+RC-10 sweep, 7 Nov 2026: every place that reads 'yesterday', 'last week' or 'last month' by its own pattern, and every count line that says 'reported'
+--- grep -n "yesterday|nethu|neththu|நேற்று" src (non-test, after the fix)
+src/lib/assistant/decide.ts:13:const NAMES_PERIOD = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|tonight|yesterday|nethu|daily|day|days|week|weekly|month|monthly|quart
+src/lib/assistant/direct.ts:67:const HAPPENED = /^\s*(so\s+)?what('s| has| all| all has)?\s*(happened|been happening)\s*(today|yesterday|this week|this month|last week|la
+src/lib/assistant/fastpath.ts:94:  const when = yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்"
+src/lib/assistant/pipeline.ts:271:const PERIOD_WORDS = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|yesterday|nethu|neththu|daily|day|days|week|weekly|month|monthly|qu
+src/lib/assistant/scope.ts:105:  const parts: string[] = [prevDay ? ({ en: "Previous day (yesterday)", ta: "நேற்று", tanglish: "Nethu (previous day)" } as Rec
+src/lib/i18n/ta.ts:50:  "# days ago": "# நாட்கள் முன்பு", "# day ago": "# நாள் முன்பு", "yesterday": "நேற்று", "
+src/lib/thunai/addressed.ts:45:const SIDE_TENSE_TA = /(நேத்து|நேற்று|நாளைக்கு|நாளை )/;
+src/lib/thunai/gloss.ts:27:  [["nethu", "nethiku", "நேத்து", "நேற்று"], "yesterday"],
+src/lib/thunai/quick.ts:144:const CALENDAR_EN = /\b(yesterdays?|day before( yesterday)?|next (week|month|quarter)s?)\b|\b(nethu|neththu|netru|netraiya|pona (vaaram|maasam
+src/lib/thunai/quick.ts:145:const CALENDAR_TA = ["நேற்று", "நேத்து", "நேற்றைய", "கடந்த வாரம்", "கடந்த 
+--- fixed: fastpath.ts periodNamed + customWindow, pipeline.ts (PERIOD_WORDS, the tools' offset), decide.ts (NAMES_PERIOD) now read YESTERDAY from src/lib/assistant/when.ts
+--- left (other lanes, named): direct.ts HAPPENED/COMPARE_PREV, intent.ts, tools.ts NOT_SUBJECT (a word list for other purposes, not a window)
+--- count lines said as reported: grep report aagirukku|பதிவாகியுள்ளன
+src/lib/assistant/fastpath.ts:91:    const text = `${at}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnad
+src/lib/assistant/fastpath.ts:109:  const text = `${when}${at} ${f(c.n)} ${kind} பதிவாகியுள்ளன

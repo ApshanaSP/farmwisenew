@@ -1,0 +1,29 @@
+{
+ "at": "2026-11-07T04:43:43.419Z",
+ "left": {
+  "qwen/qwen3.8-27b": {
+   "rpm": 55,
+   "rpd": 993,
+   "tpm": 868,
+   "tpd": 186127,
+   "ash": null,
+   "asd": null
+  },
+  "openai/gpt-oss-20b": {
+   "rpm": 26,
+   "rpd": 990,
+   "tpm": -246,
+   "tpd": 175276,
+   "ash": null,
+   "asd": null
+  },
+  "openai/gpt-oss-120b": {
+   "rpm": 27,
+   "rpd": 991,
+   "tpm": 2761,
+   "tpd": 176516,
+   "ash": null,
+   "asd": null
+  }
+ }
+}

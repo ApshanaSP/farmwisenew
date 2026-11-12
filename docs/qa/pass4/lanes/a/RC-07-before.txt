@@ -1,0 +1,9 @@
+RC-07: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+RC-07 rows are mostly in the audit tests, not the open set. Before (it.fails, now plain it): audit-understanding-7 (a six-word new request with a place, with a brief open, re-scoped the open brief), -25 (only Adyar on a brief said None of these mention Adyar), -14, AUD-NF-5 (a Tamil place in an explain was answered with a Chennai case). Still it.fails: audit-understanding-8 (explain naming a place with no zone: the lane now stays silent but does not name the place).
+
+en-followup-11 | grade=wrong CONFIDENT-WRONG | lane=frame | not this Manali, the Himachal one
+   said: 4 points in the brief for today. 1 incident were reported in Manali (last 24 hours), 80% fewer than the previous period.
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+ta-followup-06 | grade=wrong CONFIDENT-WRONG | lane=frame | போன வாரம்?
+   said: இந்த வாரம் 160 சம்பவங்கள். மிக அவசரமானது: standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai in Perungudi. Storm Water Drain வசம் 12. "படி" அல்லது "திற" என்று எண்ணுடன் சொல்லுங்கள்.
+   reasons: ["5_language failed","7_action failed","3_period_words failed","6_scope failed","2_list failed","2_total failed"]

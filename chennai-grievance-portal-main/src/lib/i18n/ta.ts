@@ -25,7 +25,7 @@ export const TA: Record<string, string> = {
   "All 15 zones": "அனைத்து 15 மண்டலங்கள்", "All # zones": "அனைத்து # மண்டலங்கள்", "All taluks": "அனைத்து வட்டங்கள்", "All departments": "அனைத்து துறைகள்",
   "Clear": "அழி", "Zone": "மண்டலம்", "Taluk": "வட்டம்", "Department": "துறை", "Period": "காலம்", "Filters": "வடிப்பான்கள்",
   "District-wide · not filtered": "மாவட்டம் முழுவதும் · வடிகட்டப்படவில்லை", "Your files · not filtered": "உங்கள் கோப்புகள் · வடிகட்டப்படவில்லை",
-  "Collected today, #:# AM": "இன்று சேகரிக்கப்பட்டது, காலை #:#", "Collected today, #:# PM": "இன்று சேகரிக்கப்பட்டது, மதியம் #:#",
+  "Collected today, #:# AM": "இன்று சேகரிக்கப்பட்டது, முற்பகல் #:#", "Collected today, #:# PM": "இன்று சேகரிக்கப்பட்டது, பிற்பகல் #:#",
   "# of # feeds current · #/# live": "# / # ஊட்டங்கள் நடப்பில் · #/# நேரலை",
 
   // ---- KPI tiles and snapshot
@@ -92,5 +92,33 @@ export const TA: Record<string, string> = {
   "Take action": "நடவடிக்கை எடு", "Approve and send": "ஒப்புதல் அளித்து அனுப்பு", "Show on map": "வரைபடத்தில் காட்டு", "Details": "விவரங்கள்",
   "Ask District IQ": "District IQ-விடம் கேளுங்கள்", "Ask Jarvis": "ஜார்விஸிடம் கேளுங்கள்", "Jarvis": "ஜார்விஸ்", "Chat": "அரட்டை", "Talk": "பேசு",
   "Welcome back": "மீண்டும் வருக", "Email address": "மின்னஞ்சல் முகவரி", "Password": "கடவுச்சொல்", "Sign in": "உள்நுழை", "Forgot password?": "கடவுச்சொல் மறந்ததா?",
-  "Create an account": "கணக்கை உருவாக்கு", "Signing in…": "உள்நுழைகிறது…"
+  "Create an account": "கணக்கை உருவாக்கு", "Signing in…": "உள்நுழைகிறது…",
+  // ---- the Collector's Briefing page: fixed labels (QA pass 4, RC-15, PB-300; guard in ta.pass4.test.ts reads these components)
+  "Critical now": "இப்போது மிக முக்கியமானவை", "Warnings": "எச்சரிக்கைகள்", "IMD warning": "வானிலை ஆய்வு மையத்தின் எச்சரிக்கை", "Oldest open complaint": "மிகப் பழைய திறந்த புகார்",
+  "Most serious reports": "மிகத் தீவிரமான பதிவுகள்", "Watch": "கவனிக்க",  "Latest": "சமீபத்தியது",
+  "Normal": "இயல்பு", "Watchful": "கண்காணிப்பில்", "Alert": "எச்சரிக்கை", "Meanwhile:": "இதற்கிடையில்:",
+  "Developing stories": "வளர்ந்துவரும் செய்திகள்", "Where it stands": "தற்போதைய நிலை", "What happened:": "என்ன நடந்தது:", "open incident": "திறந்த சம்பவம்", "added source": "சேர்ந்த மூலம்",
+  "· same event over time": "· ஒரே நிகழ்வு காலப்போக்கில்",
+  "First report": "முதல் செய்தி", "Arrest": "கைது", "Death": "உயிரிழப்பு", "Court": "நீதிமன்றம்", "Probe": "விசாரணை", "Protest": "போராட்டம்", "Action": "நடவடிக்கை",
+  "Warning": "எச்சரிக்கை", "Completed": "நிறைவு", "Update": "புதுப்பிப்பு",
+  "# report · # outlet": "# செய்தி · # ஊடகம்", "# report · # outlets": "# செய்தி · # ஊடகங்கள்", "# reports · # outlet": "# செய்திகள் · # ஊடகம்", "# reports · # outlets": "# செய்திகள் · # ஊடகங்கள்",
+  "· updated": "· புதுப்பிக்கப்பட்டது", "# developments ·": "# வளர்ச்சிகள் ·",
+  "Written by AI from the records; numbers checked against the data": "பதிவுகளிலிருந்து AI எழுதியது; எண்கள் தரவுடன் சரிபார்க்கப்பட்டன",
+  "Reading the period's incidents, grievances and news…": "இந்தக் காலத்தின் சம்பவங்கள், புகார்கள், செய்திகளைப் படிக்கிறது…", "Writing a short brief…": "சிறு சுருக்கத்தை எழுதுகிறது…",
+  "Joining reports about the same event…": "ஒரே நிகழ்வு பற்றிய செய்திகளை இணைக்கிறது…", "Joining the reports about each event…": "ஒவ்வொரு நிகழ்வு பற்றிய செய்திகளையும் இணைக்கிறது…",
+  "No department received a report in this period.": "இந்தக் காலத்தில் எந்தத் துறைக்கும் புகார் வரவில்லை.", "No story developed further in this period.": "இந்தக் காலத்தில் எந்தச் செய்தியும் மேலும் வளரவில்லை.",
+  "Every incident in the news has a department record.": "செய்தியில் உள்ள ஒவ்வொரு சம்பவத்துக்கும் துறைப் பதிவு உள்ளது.",
+   "what each received · last 7 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 7 நாட்கள்",
+  "what each received · last 30 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 30 நாட்கள்", "what each received · last 90 days": "ஒவ்வொன்றும் பெற்றவை · கடந்த 90 நாட்கள்"
+};
+
+/**
+ * Words whose Tamil depends on where they stand (QA pass 4, RC-15, PB-299): the dictionary above is by English text alone, so a status "Open" took the Tamil of the
+ * button "Open" (திற, the order "open it"). An element marked data-i18n-ctx="status" is looked up here first.
+ */
+export const TA_CTX: Record<string, Record<string, string>> = {
+  status: {
+    "Open": "திறந்துள்ளது", "Under review": "பரிசீலனையில்", "Assigned": "ஒதுக்கப்பட்டது", "In progress": "நடைபெறுகிறது", "Awaiting verification": "சரிபார்ப்புக்காகக் காத்திருக்கிறது",
+    "Resolved": "தீர்க்கப்பட்டது", "Rejected": "நிராகரிக்கப்பட்டது", "Lapsed": "காலாவதியானது", "Closed": "மூடப்பட்டது", "Reopened": "மீண்டும் திறக்கப்பட்டது"
+  }
 };

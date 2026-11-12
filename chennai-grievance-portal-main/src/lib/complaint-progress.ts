@@ -154,7 +154,7 @@ export async function syncComplaints(incidentIds: string[], actorUserId: number 
   try {
     const codes = await codesOf(incidentIds);
     if (!codes.length) return 0;
-    const [rows] = await pool.query<RowDataPacket[]>(`SELECT id, complaint_code, status, created_at FROM complaints WHERE complaint_code IN (?)`, [codes]);
+    const [rows] = await pool.query<RowDataPacket[]>(`SELECT id, complaint_code, status, remarks, created_at FROM complaints WHERE complaint_code IN (?)`, [codes]);
     const prog = await progressFor(rows.map((r) => ({ code: String(r.complaint_code), createdAt: r.created_at })));
     let changed = 0;
     for (const r of rows) {
@@ -191,10 +191,40 @@ export async function citizenMayViewReport(userId: number, photoDir: string): Pr
   return own.length > 0;
 }
 
+/**
+ * The remarks to show with the progress laid over a complaint. A rejection's reason belongs to the rejection: once the
+ * complaint has moved on (the Collector sent it back) the reason is dropped, whether it was copied into the stored
+ * remarks or not. Other remarks (the complaint's own) stay (RC-26, PB-180).
+ */
+export function remarksFor(stored: unknown, p: Progress | null | undefined): string | null {
+  const own = stored == null || stored === "" ? null : String(stored);
+  if (!p) return own;
+  if (p.status === "Rejected") return p.remarks ?? own;
+  const reasons = new Set(p.journey.filter((j) => j.status === "Rejected").map((j) => j.remarks));
+  return own != null && reasons.has(own) ? null : own;
+}
+
 /** The complaint's own history with the progress laid over it (oldest first); the progress decides the status. */
 export function withProgress<T extends { status: string; created_at: unknown }>(history: T[], p: Progress | null | undefined): (T | JourneyRow)[] {
   if (!p) return history;
   const key = (h: { status: string; created_at: unknown }) => `${h.status}|${str(h.created_at).slice(0, 16)}`;
   const have = new Set(history.map(key));
   return [...history, ...p.journey.filter((j) => !have.has(key(j)))].sort((a, b) => str(a.created_at).localeCompare(str(b.created_at)));
+}
+
+/**
+ * RC-47 (PB-315): complaints filed with this department that are not in its queue yet. The officer queue is built from the
+ * pipeline's incidents, so a new complaint shows there only after the next refresh. This counts the ones still waiting (filed in the
+ * last `days` days, not yet worked, with no grievance event), so the officer can be told they are on the way.
+ */
+export async function awaitingQueue(portalName: string | undefined, days = 7, now: Date = new Date()): Promise<number> {
+  if (!portalName) return 0;
+  const since = new Date(now.getTime() - days * 86400000).toISOString().slice(0, 19).replace("T", " ");
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT c.complaint_code AS code FROM complaints c JOIN departments d ON d.id = c.department_id
+      WHERE d.name = ? AND c.status IN ('Complaint Filed', 'Pending Approval') AND c.created_at >= ? LIMIT 500`, [portalName, since]);
+  const codes = rows.map((r) => String(r.code));
+  if (!codes.length) return 0;
+  const seen = await incidentsOf(codes);
+  return codes.filter((c) => !seen.has(c)).length;
 }

@@ -173,7 +173,7 @@
 .dic .env2-col{min-height:0;min-width:0;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px}
 .dic .env2 .env{grid-column:auto;min-height:0;display:flex;flex-direction:column}
 .dic .env2 .env .ch{padding:9px 12px 4px}
-.dic .env2 .env .ch h3{font-size:13.5px}
+.dic .env2 .env .ch :is(h2,h3){font-size:13.5px}
 .dic .env2 .env .ch>.ic{width:24px;height:24px;padding:5px}
 .dic .env2 .env .sel{height:28px;font-size:12px;max-width:150px!important}
 .dic .env2 .env .cb{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:14px;row-gap:5px;padding:2px 12px 10px}

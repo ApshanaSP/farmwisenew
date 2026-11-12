@@ -308,14 +308,9 @@ function newsMedia(db: DB) {
   const drop = (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[])
     .map((r) => String(r.id)).filter((id) => seen.has(id) && !ok.has(id));
   if (!drop.length) return;
-  tx(db, () => {
-    const del = db.prepare(`DELETE FROM incidents WHERE incident_id = ?`);
-    for (const id of drop) del.run(id);
-    if (has(db, "incident_members")) {
-      const dm = db.prepare(`DELETE FROM incident_members WHERE incident_id = ?`);
-      for (const id of drop) dm.run(id);
-    }
-  });
+  // the same way out as every other drop: the incident's members, timeline, actions and gaps go with it and its articles and
+  // events are unlinked, so the search box and a news card never open an incident that is not there (RC-38, PB-198)
+  tx(db, () => dropIncidents(db, drop));
   console.log(`[derive] ${drop.length} news-only incidents from sites that are not news media left out`);
 }
 
@@ -551,7 +546,7 @@ onBuild("cmwssb-reservoirs@1", reservoirs);
 onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
-onBuild("news-media-only@1", newsMedia);
+onBuild("news-media-only@2", newsMedia); // @2: its articles and events are unlinked from the incidents it drops (RC-38)
 onBuild("report-kinds@4", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news
 onBuild("news-sanity@6", newsSanity);
 onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group too

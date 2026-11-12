@@ -1,0 +1,24 @@
+# G1 failing output before the fix: narrate_and_figures NF-7/11/16/17, audit-understanding-17/20, same-number-21 (qa4 run, merged tree)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+FAIL BUG-019 partly: a name with no Tamil gets the suffix glued on AUD-NF-7 DIST-DM
+     AssertionError: expected 'District Disaster Managementஇடம்' not to match /[A-Za-z]இடம்/
+FAIL BUG-019 partly: a name with no Tamil gets the suffix glued on AUD-NF-7 TNPCB
+     AssertionError: expected 'Pollution Control Boardஇடம்' not to match /[A-Za-z]இடம்/
+FAIL new, found on the way AUD-NF-11 two complaints are not 'a lot of residents'
+     AssertionError: expected 'There\'s standing water at Guindy. It…' not to match /a lot of residents/
+FAIL new, found on the way AUD-NF-16 the English reads right: 'in the last 30 days'
+     AssertionError: expected '102 severe cases the last 30 days; he…' not to match /cases the last 30 days/
+FAIL new, found on the way AUD-NF-17 a Tamil spoken list has no English sentence in it
+     AssertionError: expected 'இந்த வாரம் 54 கடுமையான சம்பவங்கள். 54…' not to match /standing water at|[a-z]+ [a-z]+ at [A…/
+FAIL audit-understanding-17 P2: a Tamil answer carries an English sentence audit-understanding-17 இந்த மாதம் சுருக்கம்: the Tamil line has no English sentence
+     AssertionError: expected 'கடந்த 30 நாட்களில் சுருக்கத்தில் 10 க…' not to match /incidents were reported/
+FAIL audit-understanding-17 P2: a Tamil answer carries an English sentence audit-understanding-17 சுருக்கம் சொல்லு: the Tamil line has no English sentence
+     AssertionError: expected 'இன்று சுருக்கத்தில் 10 குறிப்புகள். 2…' not to match /incidents were reported/
+FAIL audit-understanding-20 P3: lines that do not read as English audit-understanding-20 one incident: not "1 incident were reported"
+     AssertionError: expected '4 points in the brief for today. 1 in…' not to match /\b1 incident were\b/
+FAIL audit-understanding-20 P3: lines that do not read as English audit-understanding-20 relief: not "There's people"
+     AssertionError: expected 'There\'s people who need flood relief…' not to match /^There's people/
+FAIL audit-understanding-20 P3: lines that do not read as English audit-understanding-20 a list over a period: not "59 severe cases the last 30 days"
+     AssertionError: expected '102 severe cases the last 30 days; he…' not to match /cases the last 30 days/
+FAIL same number everywhere same-number-21 Jarvis's spoken lines read as sentences
+     AssertionError: expected [ …(10) ] to deeply equal []

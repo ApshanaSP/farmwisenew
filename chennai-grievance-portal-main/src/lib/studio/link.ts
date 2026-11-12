@@ -7,6 +7,8 @@
  */
 import type { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
+import { asOf } from "@/lib/collector/intel";
+import { isPastDeadline } from "@/lib/reference/metrics";
 import { effectiveSql } from "@/lib/collector/effective";
 import type { DRow } from "@/lib/studio/clean";
 import type { Refs } from "@/lib/studio/refs";
@@ -28,11 +30,12 @@ async function incidents(): Promise<{ list: Inc[]; from: string; to: string }> {
   const c = global.__studioInc;
   if (c && Date.now() - c.at < 10 * 60_000) return c;
   const [rows] = await intelPool.query<RowDataPacket[]>(
-    `SELECT zone_no, ward_no, category_code, family, ${OPEN} AS is_open, outlet_count, sla_breached, first_reported_at FROM incidents i WHERE first_reported_at IS NOT NULL`
+    `SELECT zone_no, ward_no, category_code, family, ${OPEN} AS is_open, outlet_count, sla_breached, DATE_FORMAT(sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, first_reported_at FROM incidents i WHERE first_reported_at IS NOT NULL`
   );
+  const now = await asOf();
   const list: Inc[] = rows.map((r) => ({
     z: r.zone_no == null ? null : Number(r.zone_no), w: r.ward_no == null ? null : Number(r.ward_no), c: String(r.category_code), f: String(r.family),
-    o: Number(r.is_open) === 1, news: Number(r.outlet_count) > 0, late: Number(r.sla_breached) === 1, d: String(r.first_reported_at).slice(0, 10)
+    o: Number(r.is_open) === 1, news: Number(r.outlet_count) > 0, late: isPastDeadline({ open: r.is_open, breached: r.sla_breached, due: r.due }, now), d: String(r.first_reported_at).slice(0, 10)
   }));
   const days = list.map((x) => x.d).sort();
   const out = { at: Date.now(), list, from: days[0] ?? "2026-01-01", to: days[days.length - 1] ?? "2026-01-01" };

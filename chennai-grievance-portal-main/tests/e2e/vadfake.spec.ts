@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { FX } from "./helpers";
 
 // through the fake capture device: the real getUserMedia path, a fixture on disk instead of the injected stream
-test.use({ launchOptions: { args: ["--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${path.join(FX, "b1.wav")}%noloop`] } });
+test.use({ launchOptions: { args: ["--mute-audio", "--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${path.join(FX, "b1.wav")}%noloop`] } });
 
 test("a sentence from the capture device reaches the transcriber", async ({ page }) => {
   await page.addInitScript(() => { try { localStorage.setItem("jarvis-mode-seen", "1"); localStorage.setItem("thunai-greeted", new Date().toDateString()); } catch { /* */ } });

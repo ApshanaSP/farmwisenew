@@ -1,0 +1,383 @@
+{
+ "build": null,
+ "auth": [
+  {
+   "who": "nobody",
+   "route": "agent",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "nobody",
+   "route": "round",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "nobody",
+   "route": "plan",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "officer",
+   "route": "agent",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "officer",
+   "route": "round",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "officer",
+   "route": "plan",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "citizen",
+   "route": "agent",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "citizen",
+   "route": "round",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  },
+  {
+   "who": "citizen",
+   "route": "plan",
+   "status": 401,
+   "body": "{\"error\":\"Not authenticated\"}"
+  }
+ ],
+ "fire": [
+  {
+   "text": "severe cases in Adyar",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": 1,
+   "say_first": "1 severe case today."
+  },
+  {
+   "text": "severe complaints in Adyar",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": 1,
+   "say_first": "1 severe case today."
+  },
+  {
+   "text": "அடையாறில் கடுமையான புகார்கள்",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": 1,
+   "say_first": "இன்று 1 கடுமையான சம்பவங்கள்."
+  },
+  {
+   "text": "அடையாறில் தீவிர புகார்கள்",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": 13,
+    "dept": null,
+    "cat": "FIRE_EXPLOSION",
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": null,
+   "say_first": "இந்தப் பார்வையில் இன்று கடுமையான சம்பவங்கள் இல்லை."
+  },
+  {
+   "text": "unresolved complaints in Adyar",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "complete",
+   "scope": {
+    "period": "weekly",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null
+   },
+   "total": null,
+   "say_first": "Nothing here to complete."
+  },
+  {
+   "text": "open complaints in Adyar",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "text": "தீர்வு செய்யப்படாத புகார்கள் அடையாறில்",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "weekly",
+    "zone": 13,
+    "dept": null,
+    "cat": "FIRE_EXPLOSION",
+    "taluk": null,
+    "sev": null
+   },
+   "total": 2,
+   "say_first": "இந்த வாரம் 2 சம்பவங்கள்."
+  },
+  {
+   "text": "அடையாறில் தீர்க்கப்படாத புகார்கள்",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "complete",
+   "scope": {
+    "period": "weekly",
+    "zone": 13,
+    "dept": null,
+    "cat": "FIRE_EXPLOSION",
+    "taluk": null,
+    "sev": null
+   },
+   "total": null,
+   "say_first": "நிரப்ப வேண்டியது எதுவும் இல்லை."
+  },
+  {
+   "text": "தீபாவளி அன்று அடையாறில் புகார்கள்",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "text": "தீவிரமான புகார்கள்",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": "FIRE_EXPLOSION",
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": null,
+   "say_first": "இந்தப் பார்வையில் இன்று கடுமையான சம்பவங்கள் இல்லை."
+  },
+  {
+   "text": "தீவிர சம்பவங்கள் எத்தனை",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": "FIRE_EXPLOSION",
+    "taluk": null,
+    "sev": "Severe"
+   },
+   "total": null,
+   "say_first": "இந்தப் பார்வையில் இன்று கடுமையான சம்பவங்கள் இல்லை."
+  },
+  {
+   "text": "Adyar la theevira complaints",
+   "lane": "quick",
+   "kind": "do",
+   "note": "quick",
+   "recipe": "cases",
+   "scope": {
+    "period": "weekly",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null
+   },
+   "total": 105,
+   "say_first": "105 cases this week;"
+  },
+  {
+   "text": "அடையாறில் தீ விபத்து",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "text": "அடையாறில் தீ",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "text": "fire in Adyar",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  }
+ ],
+ "asks": [],
+ "bypass": [
+  {
+   "what": "round 0",
+   "lane": "refuse",
+   "kind": "refuse",
+   "note": "privacy",
+   "total": null,
+   "say_first": "I can't share a citizen's name, phone number, Aadhaar or their own words."
+  },
+  {
+   "what": "round 1, same sentence",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "what": "round 2, same sentence",
+   "lane": "no-model",
+   "kind": "none",
+   "note": "no-model",
+   "total": null,
+   "say_first": ""
+  },
+  {
+   "what": "direct case with a private sentence on /round",
+   "lane": "direct",
+   "kind": "do",
+   "note": null,
+   "recipe": "case",
+   "scope": {
+    "period": "daily",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null,
+    "sev": null
+   },
+   "total": null,
+   "say_first": "There's standing water at Saidapet (Adyar River - Saidapet stretch)."
+  },
+  {
+   "what": "direct case with a private sentence on /agent",
+   "kind": "refuse",
+   "note": "privacy",
+   "total": null,
+   "say_first": "I can't share a citizen's name, phone number, Aadhaar or their own words."
+  }
+ ],
+ "scan": [
+  {
+   "what": "case",
+   "status": 200,
+   "personal": false
+  },
+  {
+   "text": "read the news",
+   "status": 200,
+   "kind": "do",
+   "personal": false
+  },
+  {
+   "text": "today's brief",
+   "status": 200,
+   "kind": "do",
+   "personal": false
+  },
+  {
+   "text": "severe cases",
+   "status": 200,
+   "kind": "do",
+   "personal": false
+  },
+  {
+   "text": "top 5 zones by open complaints",
+   "status": 200,
+   "kind": "none",
+   "personal": false
+  }
+ ],
+ "devPages": [
+  {
+   "path": "/dev/assistant",
+   "status": 404
+  },
+  {
+   "path": "/dev/collector",
+   "status": 404
+  },
+  {
+   "path": "/dev/officer",
+   "status": 404
+  },
+  {
+   "path": "/dev/rehearsal",
+   "status": 404
+  },
+  {
+   "path": "/dev/thunai",
+   "status": 404
+  },
+  {
+   "path": "/dev/ui",
+   "status": 404
+  },
+  {
+   "path": "/api/rehearsal/dev?kind=geo",
+   "status": 404
+  }
+ ]
+}

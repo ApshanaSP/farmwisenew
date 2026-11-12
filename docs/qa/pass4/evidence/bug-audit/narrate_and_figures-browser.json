@@ -1,0 +1,43 @@
+{
+ "errors": [],
+ "narrate_and_figures-bug007-no-cases.png": {
+  "asked": "overdue cases this week",
+  "lane": "quick",
+  "say": "There are no cases this week for this view.",
+  "onScreen": [
+   "There are no cases this week for this view.",
+   "There are no cases this week for this view."
+  ]
+ },
+ "narrate_and_figures-bug007-no-cases-tanglish.png": {
+  "asked": "indha week overdue cases kaattu",
+  "lane": "frame",
+  "say": "There are no cases this week for this view.",
+  "onScreen": []
+ },
+ "narrate_and_figures-new-wrong-place-madurai.png": {
+  "asked": "explain the garbage complaint in Madurai",
+  "lane": "quick",
+  "say": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "onScreen": [
+   "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+   "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it."
+  ]
+ },
+ "narrate_and_figures-new-wrong-place-velachery.png": {
+  "asked": "explain the flooding complaint in Velachery",
+  "lane": "quick",
+  "say": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "onScreen": [
+   "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+   "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there."
+  ]
+ },
+ "briefingWeekly": "1,167 incidents are still open, 339 of them past the deadline; 65 severe events.",
+ "yesterdayCard": [
+  "how many incidents yesterday",
+  "239 incidents · yesterday (5 Nov)",
+  "239 incidents were reported in yesterday (5 Nov) (174 in the period before): 17 severe, 222 still open, 4 deaths.",
+  "Yesterday (5 Nov) · District-wide · all departments · as of 6 Nov, 6:08 PM"
+ ]
+}

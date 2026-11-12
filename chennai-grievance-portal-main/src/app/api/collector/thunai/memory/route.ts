@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
-import { changeMemory, readMemory, type MemoryOp } from "@/lib/thunai/store";
+import { MemoryDamagedError, changeMemory, readMemoryStrict, type MemoryOp } from "@/lib/thunai/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,8 +26,9 @@ export async function GET() {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   try {
-    return NextResponse.json(readMemory(s.userId));
+    return NextResponse.json(readMemoryStrict(s.userId));
   } catch (err) {
+    if (err instanceof MemoryDamagedError) return NextResponse.json({ error: "Thunai's saved notes file is damaged, so it is not shown as empty. The next change keeps a copy of it aside.", damaged: true }, { status: 503 });
     return failed(err, "Thunai's memory");
   }
 }
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     return NextResponse.json(changeMemory(s.userId, parsed.data as MemoryOp));
   } catch (err) {
+    if (err instanceof MemoryDamagedError) return NextResponse.json({ error: "Thunai's saved notes file could not be read just now, so nothing was changed. Try again in a moment.", damaged: true }, { status: 503 });
     return failed(err, "Thunai's memory");
   }
 }

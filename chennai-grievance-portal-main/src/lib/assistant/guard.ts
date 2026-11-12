@@ -8,10 +8,12 @@
  * tool, so the dialog still answers (every number still comes from the tools) and says it
  * is working without the language model.
  */
+import { aboutTheData, isHelpQuestion } from "@/lib/assistant/help";
 import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { looksBulk } from "@/lib/assistant/limits";
 import type { RefNames } from "@/lib/assistant/scope";
+import { zoneNoIn } from "@/lib/zone-no";
 
 export type GuardVerdict = { kind: "unsafe"; reason: string } | { kind: "off_topic"; topic: string } | { kind: "bulk" } | null;
 
@@ -134,14 +136,16 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   if (/\bfilter\b|வடிகட்டு/.test(t)) {
     const taluk = [...names.taluks.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));
     const zone = [...names.zones.entries()].find(([, v]) => t.includes(v.name.toLowerCase()));
-    const zn = t.match(/zone\s*(\d{1,2})/);
+    const zn = zoneNoIn(t);
     if (taluk || zone || zn) return { intent: "console_action", tools: [], period, actions: [taluk ? { action: "filter_taluk", taluk: taluk[0] }
-      : { action: "filter_zone", zone: zone ? zone[0] : Number(zn![1]) }] };
+      : { action: "filter_zone", zone: zone ? zone[0] : zn! }] };
   }
   if (looksBulk(t)) return { intent: "bulk_request", tools: [], period, actions: [] };
   if (/brief|summar/.test(t)) return { intent: "briefing", tools: [{ name: "briefing", args: {} }], period, actions: [] };
   if (/verif|waiting|my tasks/.test(t)) return r("verification_queue");
   if (/slow|backlog|oldest|delay/.test(t)) return r("dept_backlog");
+  // a question about the data itself goes before any subject route (RC-11): the test-data words are the help topic, the rest the feeds' freshness
+  if (aboutTheData(t)) return isHelpQuestion(t) ? { intent: "help", tools: [], period, actions: [] } : r("source_health");
   // (whole words: "onion price in Koyambedu" was once answered with hospital beds)
   if (/\bhospitals?\b|\bbeds?\b/.test(t)) return r("environment", { metric: "bed_occupancy_pct", above: Number(t.match(/(\d{2})\s*%/)?.[1]) || null });
   if (/lake|reservoir|ஏரி/.test(t)) return r("environment", { metric: "lake_pct_full", above: Number(t.match(/(\d{2})\s*%/)?.[1]) || null });
@@ -164,7 +168,8 @@ export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   if (/taluk/.test(t)) return r("taluks");
   if (/department|dept|துறை/.test(t)) return r("departments");
   if (/zone|attention|where|மண்டல/.test(t)) return r("zones");
-  if (/severity|severe|கடுமை/.test(t)) return r("severity");
+  // (a level named as the thing counted, "how many high", is the severity card too: it was the headline KPIs, figures about something else)
+  if (/severity|severe|கடுமை/.test(t) || /\b(how many|number of|count of|count)\b.{0,25}\b(high|medium|low)\b(?!\s+(rise|rain|tide|water|price|cost))/.test(t)) return r("severity");
   if (/incident|complaint|how many|சம்பவ|புகார்|எத்தனை/.test(t)) return r("overview_kpis");
   return { intent: "unknown", tools: [], period, actions: [] };
 }

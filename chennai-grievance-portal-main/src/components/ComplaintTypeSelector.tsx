@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
+import { istDate } from "@/lib/ist-dates";
 
 export interface Subcomplaint {
   id: number;
@@ -138,13 +139,13 @@ export default function ComplaintTypeSelector({
         </button>
         {category && (
           <>
-            <ChevronRight className="h-3.5 w-3.5 text-ink-faint" aria-hidden="true" />
+            <ChevronRight className="h-3.5 w-3.5 text-ink-subtle" aria-hidden="true" />
             <span className={`px-1 font-semibold ${selected ? "text-ink-muted" : "text-ink"}`}>{title(category.name)}</span>
           </>
         )}
         {selected && (
           <>
-            <ChevronRight className="h-3.5 w-3.5 text-ink-faint" aria-hidden="true" />
+            <ChevronRight className="h-3.5 w-3.5 text-ink-subtle" aria-hidden="true" />
             <span className="truncate px-1 font-semibold text-ink">{selected.label}</span>
           </>
         )}
@@ -188,7 +189,7 @@ export default function ComplaintTypeSelector({
           <motion.div key={`sub-${category.id}`} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.22, ease: EASE_OUT }}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <label className="form-label mb-0" htmlFor="complaintSubtypeSearch">
-                Sub type <span className="text-red-600">*</span> <span className="normal-case tracking-normal text-ink-faint">· {subtypes.length} under {title(category.name)}</span>
+                Sub type <span className="text-red-600">*</span> <span className="normal-case tracking-normal text-ink-subtle">· {subtypes.length} under {title(category.name)}</span>
               </label>
               {subtypes.length > 6 && (
                 <div className="relative w-full sm:w-64">
@@ -270,7 +271,7 @@ export default function ComplaintTypeSelector({
             </motion.div>
           ) : (
             <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-start gap-1.5 text-sm text-ink-muted">
-              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-faint" aria-hidden="true" />
+              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
               {category ? "Choose the sub type that fits best." : <>Choose a complaint type, then the sub type that fits best. If nothing matches, pick <span className="font-semibold text-ink">Other</span> and describe it.</>}
             </motion.p>
           )}
@@ -278,10 +279,10 @@ export default function ComplaintTypeSelector({
       </div>
 
       {source && (
-        <p className="mt-4 border-t border-canvas-border pt-3 text-[11px] leading-relaxed text-ink-faint">
+        <p className="mt-4 border-t border-canvas-border pt-3 text-[11px] leading-relaxed text-ink-subtle">
           Complaint types imported from the Greater Chennai Corporation grievance portal (
           <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-navy-600">source</a>
-          ) on {new Date(source.fetchedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}.
+          ) on {istDate(source.fetchedAt)}.
         </p>
       )}
     </div>

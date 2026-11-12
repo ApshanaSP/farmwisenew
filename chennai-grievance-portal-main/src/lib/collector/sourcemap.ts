@@ -328,6 +328,8 @@ export function fieldsOf(records: Rec[]): { key: string; filled: number; sample:
   return [...seen].map(([key, s]) => ({ key, ...s }));
 }
 
+/** Chennai is UTC+05:30 all year (India keeps no daylight saving) */
+const CHENNAI_OFFSET_MS = 330 * 60_000;
 const MONTHS: Record<string, number> = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
 
 /** A date in IST from a source value; `fmt` settles 05/10/2026 (dmy, the Indian order, or mdy). */
@@ -352,7 +354,11 @@ export function parseWhen(v: string | null | undefined, fmt: DateFormat = "auto"
   // a date with no time zone is Chennai time
   const plain = s.match(/^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?))?$/);
   if (plain) { const d = new Date(`${plain[1]}T${plain[2] ?? "00:00"}${plain[2]?.length === 5 ? ":00" : ""}+05:30`); return Number.isNaN(d.getTime()) ? null : d; }
-  const d = new Date(s);
+  // any other form ("02 Oct 2026", "Fri, 02 Oct 2026 23:30:00", "October 2, 2026 11:30 PM"): the zone the text names wins; a text that names
+  // none is Chennai time, read the same on every machine (RC-16). Date.parse reads a zone-less text in the server's zone, so the
+  // wall clock is read as UTC (a zone appended) and moved back by Chennai's offset, which no server zone can change.
+  const named = /(?:\dZ|[+-]\d{2}:?\d{2}|\b(?:GMT|UTC|UT|IST|[ECMP][SD]T)\b)\s*(?:\([^)]*\))?\s*$/i.test(s);
+  const d = named ? new Date(s) : new Date(Date.parse(`${s.replace(/^(\d{4}-\d{2}-\d{2})T/, "$1 ")} UTC`) - CHENNAI_OFFSET_MS);
   if (!Number.isNaN(d.getTime())) return d;
   const w = s.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})/);
   if (!w) return null;

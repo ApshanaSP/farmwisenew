@@ -1,0 +1,5307 @@
+{
+ "a": "lane-d",
+ "b": "lane-d2",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 82,
+ "added": 0,
+ "removed": 0,
+ "context": {
+  "next_build_id": {
+   "a": "iYMZEWqEj358QYVEclcav",
+   "b": "PLo21dsAFYYPI1mRTGu2-"
+  }
+ },
+ "routes": [
+  {
+   "route": "/api/collector/list",
+   "requests": 70,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.rows[*].overdue",
+     "count": 725
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/insights",
+   "requests": 8,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.deptActions[*].followUps[*].overdue",
+     "count": 11
+    },
+    {
+     "path": "$.briefing.attention[*].overdue",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/thunai/agent/round",
+   "requests": 3,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.next[*].ids[*]",
+     "count": 5
+    },
+    {
+     "path": "$.result.stage.blocks[*].rows[*].overdue",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.takeaway.en",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.blocks[*].items[*].value",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.next[*].label.en",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.next[*].label.ta",
+     "count": 3
+    },
+    {
+     "path": "$.result.say",
+     "count": 3
+    },
+    {
+     "path": "$.result.stage.next[*].ids.length",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "route": "/api/map/send",
+   "requests": 1,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.drafts[*].body",
+     "count": 1
+    }
+   ]
+  }
+ ],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": [
+  {
+   "id": "92c0f3216614a7bd",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "316d433d2d5fe910",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?cat=SOLID_WASTE",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16301,
+    "b": 16493
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "4a1d78c14c209afb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?cat=DARK_SPOT_SAFETY",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 2841,
+    "b": 2873
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "a59eb3d669447d50",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?cat=FOOD_SAFETY",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 2816,
+    "b": 2848
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "bb0dd24b6b45180e",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?cat=PUBLIC_ORDER",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 7610,
+    "b": 7706
+   },
+   "path_count": 6,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "68be18beff790611",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?cat=FLOOD_RELIEF",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 4109,
+    "b": 4157
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "2bb93857a493d6c0",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=GCC-SWM",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16463,
+    "b": 16655
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "4bd160d801037be8",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=GCC-ELE",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 17688,
+    "b": 17880
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "e012e5214733f5c8",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=POL-GCP",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 14907,
+    "b": 15099
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "64f7392c82bb56d6",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=not+a+dept",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "7e9a2e8dfaee6ea1",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dir=1",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16854,
+    "b": 17045
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "cb79a42eee05dd02",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?page=1",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16538,
+    "b": 16730
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "bf89cf4f65c26ff3",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=daily",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "3dc78319781759f5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=weekly",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16294,
+    "b": 16486
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "73e18d7c81ae0c7d",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=monthly",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16295,
+    "b": 16487
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "d3be032ceed0cb71",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=quarterly",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16297,
+    "b": 16489
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "c9cde797d32f826b",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=bogus",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "85552d7278baa875",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?place=unlocated",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 6167,
+    "b": 6247
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "8f74daca77a1af6f",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?place=nozone",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 3695,
+    "b": 3743
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "b2cd6b30ead4a988",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?place=notaluk",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 3695,
+    "b": 3743
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "3c2f891f388dbd39",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?q=Adyar",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16274,
+    "b": 16466
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "598d1f85747dd279",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?q=garbage",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16301,
+    "b": 16493
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "1b0fa387504c0f23",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?q=kuppai",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 4158,
+    "b": 4206
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "b5fc96e7e9b58a3b",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?scope=all",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16298,
+    "b": 16490
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "a7a3af80f3730fbf",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?scope=30d",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16295,
+    "b": 16487
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "71207e97504b091d",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sev=Severe",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 13297,
+    "b": 13432
+   },
+   "path_count": 9,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "5a015025073f2be2",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sev=High",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15595,
+    "b": 15787
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "06f7a814e9b313fe",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sev=Medium",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16656,
+    "b": 16848
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "c1e487225451d842",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sev=Low",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16163,
+    "b": 16355
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "13093d57a1113c1f",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sev=bogus",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "ea66ca791f752577",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sort=sev",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16166,
+    "b": 16358
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "b1a12289ae303cdd",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sort=c",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 17219,
+    "b": 17410
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "562a3a76481eb0a0",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sort=r",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16099,
+    "b": 16291
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "6cd5b11c893dd3c8",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?sort=d",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 17691,
+    "b": 17883
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "b790513fbc8014b2",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=open",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "dce8008690f770eb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=unverified",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16587,
+    "b": 16779
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "7410c49dd3e4c6e4",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=verified",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 14976,
+    "b": 15168
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "fb9bb38951c11ca3",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=critical",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 5999,
+    "b": 6059
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "d3ab709c8bb22c07",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=overdue",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15852,
+    "b": 16032
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "02c0953b05797381",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=Open",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15527,
+    "b": 15719
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "2551c4cc475b8fce",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=Under+review",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 17263,
+    "b": 17455
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "9ae0e7c672fece3d",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=Assigned",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16181,
+    "b": 16373
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "3d8b428b7d3ce1ff",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=In+progress",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16046,
+    "b": 16237
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "2729d06095cb563f",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=Resolved",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15965,
+    "b": 16154
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "064e0fa86266673a",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=bogus",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "0c9e21ba4606c68a",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?taluk=TLK-MYL",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16892,
+    "b": 17083
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "64a695da27549caa",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?taluk=TLK-SHN",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 13959,
+    "b": 14117
+   },
+   "path_count": 10,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "e29402db83336acb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?taluk=TLK-MDR",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16200,
+    "b": 16392
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "b2f3480db7448ae6",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?taluk=TLK-AYN",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 12278,
+    "b": 12422
+   },
+   "path_count": 9,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "9040397c6ff0d296",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=5",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16567,
+    "b": 16759
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "c9be462ce57fca6a",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=13",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16385,
+    "b": 16577
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "7e54b0adc5291374",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=1",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 7949,
+    "b": 8044
+   },
+   "path_count": 6,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "ee020434b2ab372b",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=8",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15392,
+    "b": 15582
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "7c823a43ebed5df5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=15",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 11220,
+    "b": 11346
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "2c29acd576a08d35",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=99",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "d70aaf11e5e24e5a",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=abc",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "af22c0709a6e3bc1",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=weekly&zone=5",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16393,
+    "b": 16584
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "9529f03f08f59914",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=monthly&zone=13",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16235,
+    "b": 16427
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "32780888e1c643bb",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=quarterly&zone=1",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15759,
+    "b": 15947
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "3f2d0e9d6219ec8e",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=weekly&dept=GCC-SWM",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16473,
+    "b": 16665
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "0a65504cd8363dcc",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=monthly&dept=CMWSSB",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 15008,
+    "b": 15188
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "683e1235e2906431",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=monthly&zone=13&cat=SOLID_WASTE",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16606,
+    "b": 16789
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "c2cc223f0d117bd9",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=weekly&taluk=TLK-MYL",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16783,
+    "b": 16974
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "21df7383258658e3",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=GCC-SWM&taluk=TLK-MYL",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 4066,
+    "b": 4114
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "4e9af0efec8089ab",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=quarterly&zone=5&dept=GCC-SWM&cat=SOLID_WASTE",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16379,
+    "b": 16567
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "4ff34bdbd93a1f31",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=weekly&cat=DARK_SPOT_SAFETY&sev=High",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 1532,
+    "b": 1547
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "4c3823598613c9d2",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=monthly&zone=5&status=open",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16394,
+    "b": 16585
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "a4a4658926d8a105",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=quarterly&sev=Severe&status=overdue",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 18625,
+    "b": 18805
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": true
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "efa12c9a2336cbb1",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 184967,
+    "b": 184966
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "23c9e93c54bea3e0",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?part=briefing",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 164519,
+    "b": 164518
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "e68c97b03cf9aeda",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?part=bogus",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 184967,
+    "b": 184966
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "3918cee750c27772",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?period=daily",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 184967,
+    "b": 184966
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "a69318590c466904",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?taluk=TLK-MYL",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 136278,
+    "b": 136276
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "c97a3f9d553bab49",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?zone=13",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 135908,
+    "b": 135906
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.briefing.attention[2].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.deptActions[1].followUps[0].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "f8b54a16fd2ba1e7",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?zone=1",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 126021,
+    "b": 126019
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.briefing.attention[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.deptActions[0].followUps[0].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "ef53ddd2fe4a4b2f",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/insights?period=quarterly&zone=1",
+   "route": "/api/collector/insights",
+   "fields": {},
+   "bytes": {
+    "a": 169942,
+    "b": 169939
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.deptActions[0].followUps[0].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.deptActions[0].followUps[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.deptActions[0].followUps[2].overdue",
+     "a": false,
+     "b": true
+    }
+   ]
+  },
+  {
+   "id": "688942c0db7068e8",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/map/send",
+   "route": "/api/map/send",
+   "note": "plan of sentence 1",
+   "fields": {},
+   "bytes": {
+    "a": 13268,
+    "b": 13553
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.drafts[1].body",
+     "a": "Dear Department officer,\n\nThe Collector's map shows 21 open cases for Greater Chennai Police that match \"Which zone has the most severe inci... (3215 chars)",
+     "b": "Dear Department officer,\n\nThe Collector's map shows 21 open cases for Greater Chennai Police that match \"Which zone has the most severe inci... (3500 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ac136777a4aee429",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 12427,
+    "b": 12581
+   },
+   "path_count": 11,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "1 of the 12 shown is past its deadline.",
+     "b": "2 of the 12 shown are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 1 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "காட்டப்பட்ட 12-இல் 2 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "23 cases today; here are the 12 that matter most. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Sa... (234 chars)",
+     "b": "23 cases today; here are the 12 that matter most. 2 are past their deadline and need you first: standing water at Saidapet (Adyar River - Sa... (280 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). PWD Wate... (206 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (248 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 1 past deadline",
+     "b": "Draft for the 2 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 1-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 2-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "(absent)",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). PWD Wate... (206 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (248 chars)"
+    }
+   ]
+  },
+  {
+   "id": "fa394469d1d31521",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11196,
+    "b": 11194
+   },
+   "path_count": 13,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "6 of the 12 shown are past their deadline.",
+     "b": "8 of the 12 shown are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 6 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "காட்டப்பட்ட 12-இல் 8 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "105 cases this week; here are the 12 that matter most. 6 are past their deadline and need you first: standing water at Saidapet (Adyar River... (284 chars)",
+     "b": "105 cases this week; here are the 12 that matter most. 8 are past their deadline and need you first: standing water at Saidapet (Adyar River... (284 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 105 சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (253 chars)",
+     "b": "இந்த வாரம் 105 சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (253 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 6,
+     "b": 8
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[4].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 6 past deadline",
+     "b": "Draft for the 8 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 6-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 8-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[2]",
+     "a": "INC-20260708-E4914B",
+     "b": "INC-20261101-86BE85"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[3]",
+     "a": "INC-20261104-39E85E",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261104-1D6F0C",
+     "b": "INC-20260708-E4914B"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 105 சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (253 chars)",
+     "b": "இந்த வாரம் 105 சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (253 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ef7c2b826ce05b4d",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 17",
+   "fields": {},
+   "bytes": {
+    "a": 12343,
+    "b": 12497
+   },
+   "path_count": 11,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "1 of the 12 shown is past its deadline.",
+     "b": "2 of the 12 shown are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "காட்டப்பட்ட 12-இல் 1 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "காட்டப்பட்ட 12-இல் 2 காலக்கெடுவைத் தாண்டியவை."
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "a": "23 cases today; here are the 12 that matter most. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - Sa... (234 chars)",
+     "b": "23 cases today; here are the 12 that matter most. 2 are past their deadline and need you first: standing water at Saidapet (Adyar River - Sa... (280 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). PWD Wate... (206 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (248 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[0].items[1].value",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[1].overdue",
+     "a": false,
+     "b": true
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 1 past deadline",
+     "b": "Draft for the 2 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 1-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 2-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "(absent)",
+     "b": "INC-20261106-444D4F"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch). PWD Wate... (206 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (248 chars)"
+    }
+   ]
+  },
+  {
+   "id": "5fe0b0ed335c49e4",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 16292,
+    "b": 16484
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  },
+  {
+   "id": "50228dd8087cb116",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?status=verified&period=quarterly",
+   "route": "/api/collector/list",
+   "fields": {},
+   "bytes": {
+    "a": 14981,
+    "b": 15173
+   },
+   "path_count": 12,
+   "paths": [
+    {
+     "path": "$.rows[0].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[1].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[2].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[3].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[4].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[5].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[6].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[7].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[8].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[9].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[10].overdue",
+     "a": "(absent)",
+     "b": false
+    },
+    {
+     "path": "$.rows[11].overdue",
+     "a": "(absent)",
+     "b": false
+    }
+   ]
+  }
+ ]
+}

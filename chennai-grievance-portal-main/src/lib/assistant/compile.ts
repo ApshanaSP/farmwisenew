@@ -14,6 +14,8 @@ import mysql, { type Pool, type RowDataPacket } from "mysql2/promise";
 import { z } from "zod";
 import { connectionSettings } from "@/lib/db";
 import intelPool, { INTEL_DB } from "@/lib/collector/db";
+import { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
 import { qualified, type Catalog, type CatalogColumn, type CatalogTable } from "@/lib/assistant/catalog";
 import { LIMITS } from "@/lib/assistant/limits";
 import type { Scope } from "@/lib/assistant/answer";
@@ -108,13 +110,23 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
   const notes: string[] = [];
   const joins: { table: CatalogTable; alias: string; on: string }[] = [];
 
+  /**
+   * The incidents columns the Collector's decisions move are read through the same effective rule as the console (effective.ts),
+   * never raw: "still open", status, verified and closed time of a model-written query then follow a resolve or a reopen (RC-27).
+   */
+  const column = (table: string, alias: string, c: string): string => {
+    if (table !== "incidents") return `${alias}.${q(c)}`;
+    const e = effectiveSql(ops("collector_decisions"), alias);
+    return ({ is_open: e.open, status_std: e.status, verified: e.verified, closed_at: e.closedAt } as Record<string, string>)[c] ?? `${alias}.${q(c)}`;
+  };
+
   /** a field of the base table ("zone_no") or of a table joined along a declared key ("ref_departments.name") */
   const ref = (name: string, purpose: string): Ref => {
     const [t, c] = name.includes(".") ? name.split(".", 2) : [base.name, name];
     if (t === base.name) {
       const col = base.columns.get(c);
       if (!col) throw new CompileError(`Column "${c}" (${purpose}) is not available on ${base.name}. Available: ${[...base.columns.keys()].join(", ")}.`);
-      return { sql: `b.${q(c)}`, col, table: base, alias: "b" };
+      return { sql: column(base.name, "b", c), col, table: base, alias: "b" };
     }
     const other = cat.tables.get(t);
     if (!other) throw new CompileError(`Table "${t}" (${purpose}) is not in the catalog.`);
@@ -130,7 +142,7 @@ export function compileQuery(pq: PlanQuery, cat: Catalog, asOf: string, scope: S
       else throw new CompileError(`${t} cannot be joined to ${base.name}: no declared key links them.`);
       joins.push(j);
     }
-    return { sql: `${j.alias}.${q(c)}`, col, table: other, alias: j.alias };
+    return { sql: column(other.name, j.alias, c), col, table: other, alias: j.alias };
   };
 
   if (pq.measures.length === 0 && pq.dimensions.length === 0) throw new CompileError("Select at least one measure or dimension.");

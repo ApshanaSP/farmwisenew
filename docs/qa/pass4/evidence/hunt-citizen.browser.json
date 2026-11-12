@@ -1,0 +1,38 @@
+{
+ "/citizen": {
+  "errs": [
+   "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #418; visit https://react.dev/errors/418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+   "PAGEERROR Error: Minified React error #423; visit https://react.dev/errors/423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+  ],
+  "txt": "அ\nதமிழ்\nQ\nOverview\nFile\nTrack\n\nSaturday, 7 November\n\nVanakkam, Qa · வணக்கம்\n\nReport a civic issue in your neighbourhood or follow one you have filed. Most complaints reach a department within minutes.\n\nTrack status\nFile a complaint\n\nTOTAL FILED\n\n6\n\nEvery complaint you have raised\n\nIN PROGRESS\n\n6\n\nWith a department right now\n\nRESOLVED\n\n0\n\nWork done and checked\n\n0%\nRecent complaints\nYour latest three, with where each one is\nSee all\n\n2026-484SQP\n\nதெரு விளக்கு எரிகிறது\n\nElectrical Department · 7 Nov 2026\n\nComplaint Filed\n\n2026-539DTS\n\nzone mismatch\n\nElectrical Department · 7 Nov 2026\n\nComplaint Filed\n\n2026-381IAK\n\nanon one\n\nElectrical Department · 7 Nov 2026\n\nComplaint Filed\nFile a complaint\nRep"
+ },
+ "/citizen/track-complaints": {
+  "errs": [],
+  "txt": "அ\nதமிழ்\nQC\nOverview\nFile\nTrack\nBack to overview\nTrack complaint status\n\nEvery complaint you've filed, with its current stage.\n\nSearch\nAll\nFiled\nPending approval\nApproved\nIn progress\nAwaiting Collector\nVerified\nResolved\nRejected\n\n2026-484SQP\n\nதெரு விளக்கு எரிகிறது\n\nBurning of street light in daytime · 7 Nov 2026\n\nComplaint Filed\n\n2026-539DTS\n\nzone mismatch\n\nBurning of street light in daytime · 7 Nov 2026\n\nComplaint Filed\n\n2026-381IAK\n\nanon one\n\nBurning of street light in daytime · 7 Nov 2026\n\nComplaint Filed\n\n2026-809PFH\n\ninside coords\n\nBurning of street light in daytime · 7 Nov 2026\n\nComplaint Filed\n\n2026-169GKO\n\n<img src=x onerror=alert(1)>\n\nBurning of street light in daytime · 7 Nov 2026\n\n"
+ },
+ "/citizen/file-complaint": {
+  "errs": [],
+  "txt": "அ\nதமிழ்\nQC\nOverview\nFile\nTrack\nBack to overview\nFile a complaint\n\nPublic Grievance Redressal — Greater Chennai Corporation\n\n1\nYour Details\n2\nLocation\n3\nType\n4\nDetails\nYour details\n\nFields marked * are required. They are saved to your profile, so you will not be asked again.\n\nPrefilled from your profile\n\nNAME\nQa CitizenA\nEMAIL\nqa.citizen.a@example.test\nMOBILE\n9000000001\n\nSomething out of date? Update it in your profile.\n\nThese are missing from your profile. Fill them in once and future complaints will use them automatically.\n\nGENDER *\nMale\nFemale\nTransgender\nYOUR ADDRESS * (where you live, not the problem location)\nCancel\nNext: Location\n\nDistrict IQ · Chennai Intelligent District Governance P"
+ },
+ "/profile": {
+  "errs": [],
+  "txt": "அ\nதமிழ்\nQC\nOverview\nFile\nTrack\nMy profile\n\nChange photo\n\nQa CitizenA\n\nCitizen\n\n8%\n\nProfile completeness\n\nComplete it so complaints prefill.\n\nAccount information\nPersonal details\nMobile number\nPassword\nLOGIN EMAIL\nqa.citizen.a@example.test\nROLE\nCitizen\n\nContact admin to change your role or email.\n\nDistrict IQ · Chennai Intelligent District Governance Platform · Helpline 1913\n\n24×7 · © 2026 District Administration, Chennai"
+ },
+ "/register": {
+  "errs": [],
+  "txt": "CHENNAI\nHelpline\n1913\nஅ\nதமிழ்\nCitizen\nOfficer\nCollector\nAcross Chennai's 15 zones\nRaise a complaint. Follow it to the end.\n\nComplaints, field reports, news, weather and water levels in one place, so every desk works from the same picture.\n\n13\n\nZONES\n\n176\n\nWARDS\n\n7\n\nDATA FEEDS\n\nCreate a citizen account\n\nTakes under a minute. File complaints and track every step.\n\nFirst name\nLast name (optional)\nEmail address\nPassword\nConfirm password\n8+ chars\nA–Z\na–z\n0–9\nsymbol\nno spaces\nCreate account\n\nAlready have an account? Sign in\n\nDepartment officers and the Collector's office don't register here. Their accounts are issued by the Collector's office; just sign in.\n\nDistrict IQ · Chennai Intelligent Distr"
+ },
+ "/forgot-password": {
+  "errs": [],
+  "txt": "CHENNAI\nHelpline\n1913\nஅ\nதமிழ்\nCitizen\nOfficer\nCollector\nAcross Chennai's 15 zones\nLocked out? Back in three short steps.\n\nComplaints, field reports, news, weather and water levels in one place, so every desk works from the same picture.\n\n13\n\nZONES\n\n176\n\nWARDS\n\n7\n\nDATA FEEDS\n\nForgot password\n\nEnter your registered email and we'll send a one-time code.\n\n1\nRequest OTP\n2\nVerify\n3\nNew password\nRegistered email\nSend OTP\n\nRemembered your password? Back to sign in\n\nDistrict IQ · Chennai Intelligent District Governance Platform · Helpline 1913\n\n24×7 · © 2026 District Administration, Chennai"
+ },
+ "/login": {
+  "errs": [],
+  "txt": "CHENNAI\nHelpline\n1913\nஅ\nதமிழ்\nCitizen\nOfficer\nCollector\nAcross Chennai's 15 zones\nOne platform for Chennai's citizens, officers and Collector.\n\nComplaints, field reports, news, weather and water levels in one place, so every desk works from the same picture.\n\n14\n\nZONES\n\n182\n\nWARDS\n\n7\n\nDATA FEEDS\n\nWelcome back\n\nSign in with your District IQ account. You'll land on the dashboard for your role.\n\nEmail address\nPassword\nForgot password?\nSign in\n\nOne sign-in for citizens, department officers and the Collector's office.\n\nCitizen and new here? Create an account\n\nOfficer and Collector accounts are issued by the Collector's office.\n\nDistrict IQ · Chennai Intelligent District Governance Platform · Help"
+ }
+}

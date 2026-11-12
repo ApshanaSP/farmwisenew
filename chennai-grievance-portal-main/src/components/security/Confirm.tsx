@@ -16,33 +16,51 @@ import "./confirm.css";
 interface Ask { action: string; title: string; summary: string; scope: string }
 type Method = "email" | "password";
 const GRANT_HEADER = "x-diq-grant";
+// the same two names as lib/security/stepup.ts (not imported: that file reads server-only code)
+const SOFT_HEADER = "x-diq-confirm", SOFT_ANSWER = "x-diq-confirm";
 
 export default function ConfirmHost() {
-  const [ask, setAsk] = useState<(Ask & { done: (grant: string | null) => void; why: string | null }) | null>(null);
+  const [ask, setAsk] = useState<(Ask & { id: number; done: (grant: string | null) => void; why: string | null }) | null>(null);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const seq = useRef(0); // one key per box, so a second box never starts with the first one's typed password (audit-client_browser-15)
 
   useEffect(() => {
     const prev = window.fetch;
-    const open = (a: Ask, why: string | null) => new Promise<string | null>((done) => setAsk({ ...a, why, done: (g) => { setAsk(null); done(g); } }));
+    const open = (a: Ask, why: string | null) => new Promise<string | null>((done) => setAsk({ ...a, why, id: ++seq.current, done: (g) => { setAsk(null); done(g); } }));
+    // The console says it reads a confirm answer as a 200 with a header (x-diq-confirm), so the browser logs no failed request for what is
+    // the next step and not an error (PB-316). The server's check is the same either way: without a grant the route does nothing.
+    const mine = (input: RequestInfo | URL) => {
+      try { return new URL(input instanceof Request ? input.url : String(input), window.location.href).origin === window.location.origin; } catch { return false; }
+    };
+    const withHeaders = (input: RequestInfo | URL, init: RequestInit | undefined, set: Record<string, string>): [RequestInfo | URL, RequestInit | undefined] => {
+      const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+      for (const [k, v] of Object.entries(set)) headers.set(k, v);
+      return input instanceof Request ? [new Request(input, { headers }), init ? { ...init, headers: undefined } : undefined] : [input, { ...init, headers }];
+    };
+    /** the answer a caller expects: a confirm answer is a 428 for every caller above this wrapper, as it was before the header */
+    const asCaller = async (r: Response) => (r.headers.get(SOFT_ANSWER) === "required"
+      ? new Response(await r.text(), { status: 428, headers: { "content-type": "application/json" } }) : r);
     const wrapped: typeof window.fetch = async (input, init) => {
-      const r = await prev(input, init);
-      if (r.status !== 428) return r;
+      const soft = mine(input);
+      const [i0, n0] = soft ? withHeaders(input, init, { [SOFT_HEADER]: "json" }) : [input, init];
+      const r = await prev(i0, n0);
+      if (r.status !== 428 && r.headers.get(SOFT_ANSWER) !== "required") return r;
       const j = await r.clone().json().catch(() => null);
-      if (!j?.confirm?.scope) return r;
+      if (!j?.confirm?.scope) return soft ? asCaller(r) : r;
       // one box at a time: a second guarded request waits for the first to be confirmed or cancelled
       const turn = queue.current.then(() => open(j.confirm as Ask, typeof j.error === "string" && j.error !== "Confirm it's you first." ? j.error : null));
       queue.current = turn.catch(() => null);
       const grant = await turn;
       if (!grant) return new Response(JSON.stringify({ error: "Not confirmed: nothing was done.", cancelled: true }), { status: 428, headers: { "content-type": "application/json" } });
-      const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
-      headers.set(GRANT_HEADER, grant);
-      return prev(input instanceof Request ? new Request(input, { headers }) : input, { ...init, headers });
+      const [i1, n1] = withHeaders(input, init, { [GRANT_HEADER]: grant, ...(soft ? { [SOFT_HEADER]: "json" } : {}) });
+      const again = await prev(i1, n1);
+      return soft ? asCaller(again) : again;
     };
     window.fetch = wrapped;
     return () => { if (window.fetch === wrapped) window.fetch = prev; };
   }, []);
 
-  return ask ? <ConfirmBox ask={ask} why={ask.why} onDone={ask.done} /> : null;
+  return ask ? <ConfirmBox key={ask.id} ask={ask} why={ask.why} onDone={ask.done} /> : null;
 }
 
 function ConfirmBox({ ask, why, onDone }: { ask: Ask; why: string | null; onDone: (grant: string | null) => void }) {

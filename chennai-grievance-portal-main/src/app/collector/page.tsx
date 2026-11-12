@@ -7,11 +7,6 @@ import { deptList, overview } from "@/lib/collector/intel";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Collector Console · District IQ" };
 
-// Loaded by the browser, as in the design: next/font would fetch at build time, which some
-// networks (TLS inspection) block. The CSS falls back to system fonts if this cannot load.
-const FONTS =
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap";
-
 export default async function CollectorPage() {
   const session = await getSessionFromCookies();
   if (!session || session.role !== "collector") redirect("/login");
@@ -20,8 +15,6 @@ export default async function CollectorPage() {
     const [initial, depts] = await Promise.all([overview("daily", null), deptList()]);
     return (
       <>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href={FONTS} />
         <CollectorApp initial={initial} allDepts={depts} user={session.email} />
       </>
     );

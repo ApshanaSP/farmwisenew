@@ -1,0 +1,1202 @@
+{
+ "BUG-012 abort": {
+  "said": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2,
+  "actionPosts": 2,
+  "audit": "sent 0 of 2 (sandbox only); 2 kept; 0 opened in the incident panel"
+ },
+ "BUG-012 500": {
+  "said": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2
+ },
+ "BUG-012 cancel": {
+  "boxReach": {
+   "cancel": {
+    "there": true,
+    "onTop": true,
+    "top": "button."
+   },
+   "code": {
+    "there": true,
+    "onTop": true,
+    "top": "input."
+   },
+   "confirm": {
+    "there": true,
+    "onTop": true,
+    "top": "button.pri"
+   }
+  },
+  "title": "Confirm it's you",
+  "said": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2,
+  "actionPosts": 2,
+  "audit": "sent 0 of 2 (sandbox only); 2 kept; 0 opened in the incident panel"
+ },
+ "BUG-012 partial": {
+  "said": "1 could not be sent and are still in the tray. 1 went through.",
+  "tray": 1,
+  "audit": "sent 1 of 2 (sandbox only); 1 kept; 0 opened in the incident panel"
+ },
+ "BUG-012 control": {
+  "said": "Sent 2 through the test channel.",
+  "tray": 0,
+  "audit": "sent 2 of 2 (sandbox only); 0 kept; 0 opened in the incident panel"
+ },
+ "BUG-012 retry": {
+  "tooEarly": {
+   "line": "Please read the drafts first, then say confirm 2.",
+   "posts": 0,
+   "tray": 2
+  },
+  "said": "Sent 2 through the test channel.",
+  "tray": 0,
+  "audit": "sent 2 of 2 (sandbox only); 0 kept; 0 opened in the incident panel"
+ },
+ "BUG-012 veil": {
+  "said": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2
+ },
+ "BUG-012 tamil": {
+  "said": "2 அனுப்ப முடியவில்லை, இன்னும் தட்டில் உள்ளன. 0 அனுப்பப்பட்டன.",
+  "tray": 2
+ },
+ "BUG-012 tanglish": {
+  "said": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2
+ },
+ "BUG-012 box under the screen": {
+  "reach": {
+   "cancel": {
+    "there": true,
+    "onTop": false,
+    "top": "span.acts"
+   },
+   "code": {
+    "there": true,
+    "onTop": false,
+    "top": "main.st-grid fit"
+   },
+   "confirm": {
+    "there": true,
+    "onTop": false,
+    "top": "div.ds-map-c leaflet-container leaflet-touch"
+   }
+  },
+  "postsAfterSecondTap": 1,
+  "lineWhileWaiting": "2 drafts ready. Say confirm 2.",
+  "lineAfterEsc": "2 could not be sent and are still in the tray. 0 went through.",
+  "tray": 2
+ },
+ "BUG-012 double tap": {
+  "drafts": 2,
+  "boxes": 4,
+  "prefilled": 3,
+  "addedOnTheServerForEachDraft": [
+   2,
+   2
+  ],
+  "line": "Sent 2 through the test channel.",
+  "tray": 0,
+  "audit": [
+   "sent 2 of 2 (sandbox only); 0 kept; 0 opened in the incident panel",
+   "sent 2 of 2 (sandbox only); 0 kept; 0 opened in the incident panel"
+  ]
+ },
+ "BUG-012 spoken confirm": {
+  "hint": "Say \"confirm 2\"",
+  "out": {
+   "confirm 2": {
+    "line": "Approving is yours to tap: the Approve button is in the tray. I never send.",
+    "actionPosts": 0,
+    "tray": 2
+   },
+   "உறுதி 2": {
+    "line": "அனுப்புவது உங்கள் கையால்: தட்டில் உள்ள ஒப்புதல் பொத்தானைத் தட்டுங்கள்.",
+    "actionPosts": 0,
+    "tray": 2
+   },
+   "uruthi 2 pannu": {
+    "line": "அனுப்புவது உங்கள் கையால்: தட்டில் உள்ள ஒப்புதல் பொத்தானைத் தட்டுங்கள்.",
+    "actionPosts": 0,
+    "tray": 2
+   }
+  }
+ },
+ "BUG-012 live drafts": {
+  "label": "Approve and send 2",
+  "line": "Approved. Send it from the incident panel.",
+  "tray": 0,
+  "actionPosts": 0
+ },
+ "BUG-016 control whisper yes": {
+  "savedPosts": 1,
+  "line": "Saved as Monsoon."
+ },
+ "BUG-016 captions yes (fail)": {
+  "said": "I couldn't hear that yes clearly. Tap the card, or say yes again.",
+  "card": "Save this view as Monsoon?",
+  "agentPosts": 0,
+  "savedAfterTap": 1,
+  "line": "Saved as Monsoon."
+ },
+ "BUG-016 captions yes (503)": {
+  "said": "I couldn't hear that yes clearly. Tap the card, or say yes again.",
+  "card": "Save this view as Monsoon?",
+  "agentPosts": 0,
+  "savedAfterTap": 1,
+  "line": "Saved as Monsoon."
+ },
+ "BUG-016 accepted words by captions": {
+  "Yes.": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "ok": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "okay": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "save": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "do it": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "ஆம்": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "ஆமா": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "சரி": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "aama": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "sari": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "seri": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "Jarvis, yes": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  },
+  "ஜார்விஸ், சரி": {
+   "reached": 1,
+   "card": 1,
+   "agentPosts": 0,
+   "saved": 0,
+   "line": "I couldn't hear that yes clearly. Tap the card, or say yes again."
+  }
+ },
+ "BUG-016 while speaking": {
+  "card": 1,
+  "agentPosts": 0
+ },
+ "BUG-016 ribbon": {
+  "reached": 1,
+  "card": 1,
+  "agentPosts": 0
+ },
+ "BUG-016 pin card": {
+  "pinsBefore": 0,
+  "pinsAfter": 1
+ },
+ "BUG-016 other yes words by captions": {
+  "ஆமாம்": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: ஆமாம்",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "yes please": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: yes please",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "yes save it": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: yes save it",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "யெஸ்": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: யெஸ்",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "ஓகே": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: ஓகே",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "aamam": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: aamam",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "seri seri": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: seri seri",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "okay da": {
+   "reached": 1,
+   "cardRightAfter": 0,
+   "agentPosts": 1,
+   "saved": 0,
+   "newLines": [
+    "you: okay da",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  }
+ },
+ "BUG-016 other yes words by Whisper": {
+  "ஆமாம்": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: ஆமாம்",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "yes please": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: yes please",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "யெஸ்": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: யெஸ்",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "ஓகே": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: ஓகே",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவ"
+   ]
+  },
+  "aamam": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: aamam",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  },
+  "seri seri": {
+   "saved": 0,
+   "card": 0,
+   "agentPosts": 1,
+   "newLines": [
+    "you: seri seri",
+    "jarvis: I cannot reason right now: no model is answering. Plain requests still work, lik"
+   ]
+  }
+ },
+ "BUG-016 echo": {
+  "first": "Save this view as Monsoon?",
+  "reached": 1,
+  "now": "Save this view as Monsoon??",
+  "agentPosts": 1,
+  "newLines": [
+   "you: Save this view as Monsoon?",
+   "jarvis: Save this view as Monsoon??"
+  ]
+ },
+ "BUG-016 asked in Tamil script": {
+  "card": "இந்தப் பார்வையை திங்கள் ஆய்வு என்று சேமிக்கவா?",
+  "reached": 1,
+  "said": "அந்த ஆம் தெளிவாகக் கேட்கவில்லை. அட்டையைத் தட்டுங்கள், அல்லது மீண்டும் ஆம் என்று சொல்லுங்கள்.",
+  "cardStill": 1,
+  "agentPosts": 0,
+  "saved": 0
+ },
+ "BUG-016 asked in Tanglish": {
+  "card": "இந்தப் பார்வையை Monday review என்று சேமிக்கவா?",
+  "reached": 1,
+  "said": "அந்த ஆம் தெளிவாகக் கேட்கவில்லை. அட்டையைத் தட்டுங்கள், அல்லது மீண்டும் ஆம் என்று சொல்லுங்கள்.",
+  "cardStill": 1,
+  "agentPosts": 0,
+  "saved": 0
+ },
+ "BUG-015 control": {
+  "asked": "how many rows are there",
+  "answer": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "inThread": true,
+  "spoken": true,
+  "card": "16 case reports match; the latest are listed."
+ },
+ "BUG-015 newer": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "asks": [
+   "how many rows are there",
+   "which zone has the most fever cases"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: which zone has the most fever cases",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 newer-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Case reports: 16 (16 வரிசைகளிலிருந்து கணக்கிடப்பட்டது).",
+  "asks": [
+   "how many rows are there",
+   "எந்த மண்டலத்தில் அதிக காய்ச்சல்"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: எந்த மண்டலத்தில் அதிக காய்ச்சல்",
+   "jarvis: Case reports: 16 (16 வரிசைகளிலிருந்து கணக்கிடப்பட்டது)."
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 newer-tg": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "asks": [
+   "how many rows are there",
+   "entha zone la fever adhigam"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: entha zone la fever adhigam",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 stop": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Stop",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: stop",
+   "jarvis: Stop"
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 stop-voice": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [],
+  "inThread": true,
+  "linesAfterRelease": 1,
+  "spoken": true,
+  "card": "16 case reports match; the latest are listed.",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 stop-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "நிறுத்து",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: நிறுத்து",
+   "jarvis: நிறுத்து"
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 stop-tg": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "நிறுத்து",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: niruthu",
+   "jarvis: நிறுத்து"
+  ],
+  "stuck": 0,
+  "core": "listening"
+ },
+ "BUG-015 esc": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…"
+  ],
+  "stuck": 1,
+  "core": "listening"
+ },
+ "BUG-015 close": {
+  "late": "16 case reports match; the latest are listed.",
+  "delivered": true,
+  "aborted": [
+   "net::ERR_ABORTED"
+  ],
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there"
+  ],
+  "stuck": 0,
+  "core": "closed"
+ },
+ "BUG-015 sp-stop": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…"
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-jarvis-stop": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…"
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-stop-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…"
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-stop-tg": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "asks": [
+   "how many rows are there"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…"
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-newer": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "asks": [
+   "how many rows are there",
+   "which zone has the most fever cases"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…",
+   "you: which zone has the most fever cases",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-newer-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Case reports: 16 (16 வரிசைகளிலிருந்து கணக்கிடப்பட்டது).",
+  "asks": [
+   "how many rows are there",
+   "எந்த மண்டலத்தில் அதிக காய்ச்சல்"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…",
+   "you: எந்த மண்டலத்தில் அதிக காய்ச்சல்",
+   "jarvis: Case reports: 16 (16 வரிசைகளிலிருந்து கணக்கிடப்பட்டது)."
+  ],
+  "core": "listening"
+ },
+ "BUG-015 sp-newer-tg": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "asks": [
+   "how many rows are there",
+   "entha zone la fever adhigam"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: Counting it in Fever & dengue surveillance (sample)…",
+   "you: entha zone la fever adhigam",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ],
+  "core": "listening"
+ },
+ "BUG-015 ty-newer": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": false,
+  "linesAfterRelease": 0,
+  "spoken": false,
+  "card": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "asks": [
+   "how many rows are there",
+   "which zone has the most fever cases"
+  ],
+  "lines": [
+   "you: how many rows are there",
+   "you: which zone has the most fever cases",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ],
+  "core": "listening"
+ },
+ "BUG-015 typed question then spoken name": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Waiting\nSay \"continue\" to hear the rest.",
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken name-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Waiting\nSay \"continue\" to hear the rest.",
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken name-tg": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Waiting\nSay \"continue\" to hear the rest.",
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken engaged": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Waiting\nSay \"continue\" to hear the rest.",
+  "lines": [
+   "you: how many hospitals are there",
+   "jarvis: Case reports: 16 (of 400 in all).",
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken engaged-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Waiting\nSay \"continue\" to hear the rest.",
+  "lines": [
+   "you: how many hospitals are there",
+   "jarvis: Case reports: 16 (of 400 in all).",
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken bare": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Working on it",
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 typed question then spoken bare-ta": {
+  "late": "16 case reports match; the latest are listed.",
+  "inThread": true,
+  "spoken": true,
+  "stateAfterStop": "Working on it",
+  "lines": [
+   "you: how many rows are there",
+   "jarvis: 16 case reports match; the latest are listed."
+  ]
+ },
+ "BUG-015 late failure": {
+  "saidFail": false,
+  "lines": [
+   "you: how many rows are there",
+   "you: which zone has the most fever cases",
+   "jarvis: Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+  ]
+ },
+ "BUG-015 esc leaves counting": {
+  "card": "Counting it in Fever & dengue surveillance (sample)…",
+  "core": "listening",
+  "state": "Listening\nGo ahead, no need to say my name.",
+  "stuckInThread": 1
+ },
+ "Data Studio answers (rules only)": {
+  "how many rows are there": "16 case reports match; the latest are listed.",
+  "which zone has the most fever cases": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13.",
+  "எந்த மண்டலத்தில் அதிக காய்ச்சல்": "Case reports: 16 (16 வரிசைகளிலிருந்து கணக்கிடப்பட்டது).",
+  "entha zone la fever adhigam": "Kodambakkam leads with 3 — 19% of the total; then Adyar (2), Anna Nagar (1). Top 10 of 13."
+ },
+ "BUG-014 save new version": {
+  "Jarvis, click save new version": {
+   "saved": 0,
+   "lines": [
+    "you: click save new version",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ],
+   "stillOpen": 1
+  },
+  "press save new version": {
+   "saved": 0,
+   "lines": [
+    "you: press save new version",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ],
+   "stillOpen": 1
+  },
+  "tap save new version": {
+   "saved": 0,
+   "lines": [
+    "you: tap save new version",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ],
+   "stillOpen": 1
+  },
+  "ஜார்விஸ், கிளிக் save new version": {
+   "saved": 0,
+   "lines": [
+    "you: கிளிக் save new version",
+    "jarvis: சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்."
+   ],
+   "stillOpen": 1
+  },
+  "அழுத்து save new version": {
+   "saved": 0,
+   "lines": [
+    "you: அழுத்து save new version",
+    "jarvis: சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்."
+   ],
+   "stillOpen": 1
+  },
+  "hit save new version": {
+   "saved": 0,
+   "lines": [
+    "you: hit save new version",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ],
+   "stillOpen": 1
+  },
+  "click 3 (the badge on Save new version)": {
+   "saved": 0,
+   "lines": [
+    "you: click 3",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ],
+   "stillOpen": 1
+  }
+ },
+ "BUG-014 tanglish with a fake model": {
+  "no model: Jarvis, save new version click pannu": {
+   "saved": 0,
+   "lines": [
+    "you: save new version click pannu",
+    "jarvis: இந்தப் பார்வையை new version click pannu என்று சேமிக்கவா?"
+   ]
+  },
+  "no model: ஜார்விஸ், புதிய பதிப்பை சேமி பட்டனை அழுத்து": {
+   "saved": 0,
+   "lines": [
+    "you: புதிய பதிப்பை சேமி பட்டனை அழுத்து",
+    "jarvis: இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட்டு, போக்குகள் பக்கத்துக்குப்"
+   ]
+  },
+  "fake model: Jarvis, save new version click pannu": {
+   "saved": 0,
+   "lines": [
+    "you: save new version click pannu",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  },
+  "fake model: ஜார்விஸ், புதிய பதிப்பை சேமி பட்டனை அழுத்து": {
+   "saved": 0,
+   "lines": [
+    "you: புதிய பதிப்பை சேமி பட்டனை அழுத்து",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  }
+ },
+ "BUG-014 control": {
+  "byName": {
+   "expanded": "true",
+   "lines": [
+    "you: click account",
+    "jarvis: Click account"
+   ]
+  },
+  "byNumber": {
+   "n": 4,
+   "selected": "environment"
+  }
+ },
+ "click Trends by name": {
+  "Jarvis, click Trends": {
+   "selected": "overview",
+   "lines": [
+    "you: click trends",
+    "jarvis: 5516 incidents of incidents the last 30 days. The peak was 267 around 20 Oct. The second half had 4% more than the first"
+   ]
+  },
+  "Jarvis, press trends": {
+   "selected": "trends",
+   "lines": [
+    "you: press trends",
+    "jarvis: Click trends"
+   ]
+  },
+  "ஜார்விஸ், கிளிக் trends": {
+   "selected": "trends",
+   "lines": [
+    "you: கிளிக் trends",
+    "jarvis: அழுத்து trends"
+   ]
+  }
+ },
+ "BUG-014 pin": {
+  "name": "Pin this answer (re-runs on fresh data)",
+  "Jarvis, click pin": {
+   "pinPosts": 0,
+   "pinned": 0,
+   "lines": [
+    "you: click pin",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  },
+  "Jarvis, press pin this answer": {
+   "pinPosts": 0,
+   "pinned": 0,
+   "lines": [
+    "you: press pin this answer",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  },
+  "ஜார்விஸ், கிளிக் pin": {
+   "pinPosts": 0,
+   "pinned": 0,
+   "lines": [
+    "you: கிளிக் pin"
+   ]
+  },
+  "byVoice": 0,
+  "byTap": 1
+ },
+ "BUG-014 pin this screen": {
+  "Jarvis, click pin": {
+   "pins": 0,
+   "card": 0,
+   "lines": [
+    "you: click pin",
+    "jarvis: Click pin"
+   ]
+  },
+  "Jarvis, press pin this screen": {
+   "pins": 0,
+   "card": 0,
+   "lines": [
+    "you: press pin this screen",
+    "jarvis: I heard \"press pin this screen\" but did not understand. Try: show numbers, click 3."
+   ]
+  },
+  "ஜார்விஸ், கிளிக் pin": {
+   "pins": 0,
+   "card": 0,
+   "lines": [
+    "you: கிளிக் pin",
+    "jarvis: அழுத்து pin"
+   ]
+  },
+  "ஜார்விஸ், அழுத்து இந்தத் திரையைப் பின் செய்": {
+   "pins": 0,
+   "card": 0,
+   "lines": [
+    "you: அழுத்து இந்தத் திரையைப் பின் செய்",
+    "jarvis: \"அழுத்து இந்தத் திரையைப் பின் செய்\" என்று கேட்டேன், புரியவில்லை. இப்படிச் சொல்லுங்கள்: show numbers, click 3."
+   ]
+  },
+  "byVoice": 0,
+  "stillOpen": 1,
+  "afterTap": 1,
+  "cardAfterTap": 0
+ },
+ "Confirm box keeps the password": {
+  "box": 1,
+  "filled": true,
+  "confirmEnabled": true
+ },
+ "click menu by name": {
+  "expanded": "false",
+  "title": "Export, workspaces, customize, theme and language",
+  "lines": [
+   "you: click menu",
+   "jarvis: I heard \"click menu\" but did not understand. Try: show numbers, click 3."
+  ]
+ },
+ "BUG-014 click on an open screen": {
+  "Jarvis, click pin": {
+   "pressed": [
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "pins"
+    }
+   ],
+   "selected": "overview",
+   "lines": [
+    "you: click pin",
+    "jarvis: Click pin"
+   ],
+   "screen": 1
+  },
+  "ஜார்விஸ், கிளிக் pin": {
+   "pressed": [
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "pins"
+    },
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "pins"
+    }
+   ],
+   "selected": "overview",
+   "lines": [
+    "you: கிளிக் pin",
+    "jarvis: அழுத்து pin"
+   ],
+   "screen": 1
+  },
+  "Jarvis, press trends": {
+   "pressed": [
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "pins"
+    },
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "pins"
+    },
+    {
+     "tag": "button",
+     "behindScreen": true,
+     "word": "Trends"
+    }
+   ],
+   "selected": "trends",
+   "lines": [
+    "you: press trends",
+    "jarvis: Click trends"
+   ],
+   "screen": 1
+  }
+ },
+ "BUG-014 unpin": {
+  "before": 4,
+  "Jarvis, click unpin": {
+   "unpinPosts": 0,
+   "onBoard": 4,
+   "lines": [
+    "you: click unpin",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  },
+  "Jarvis, press unpin": {
+   "unpinPosts": 0,
+   "onBoard": 4,
+   "lines": [
+    "you: press unpin",
+    "jarvis: Saving and pinning need your tap. Say \"save this\" and I'll ask first."
+   ]
+  },
+  "ஜார்விஸ், கிளிக் unpin": {
+   "unpinPosts": 0,
+   "onBoard": 4,
+   "lines": [
+    "you: கிளிக் unpin",
+    "jarvis: சேமிப்பதும் பின் செய்வதும் உங்கள் தட்டலில் மட்டுமே. \"இதைச் சேமி\" என்று சொன்னால் கேட்டுவிட்டுச் செய்கிறேன்."
+   ]
+  }
+ },
+ "BUG-014 data card yes by number (en)": {
+  "label": "Yes",
+  "num": 34,
+  "familyPosts": 1,
+  "yesStill": 0,
+  "lines": [
+   "you: click 34",
+   "jarvis: Click 34"
+  ]
+ },
+ "BUG-014 data card yes by number (ta)": {
+  "label": "ஆம்",
+  "num": 33,
+  "familyPosts": 1,
+  "yesStill": 0,
+  "lines": [
+   "you: கிளிக் 33",
+   "jarvis: அழுத்து 33"
+  ]
+ },
+ "BUG-014 data card yes by name": {
+  "Jarvis, click yes": {
+   "familyPosts": 0,
+   "yesStill": 1,
+   "lines": [
+    "you: click yes",
+    "jarvis: Records: 24 (rows after cleaning)."
+   ]
+  },
+  "Jarvis, press yes": {
+   "familyPosts": 0,
+   "yesStill": 1,
+   "lines": [
+    "you: press yes",
+    "jarvis: Records: 24 (rows after cleaning)."
+   ]
+  },
+  "ஜார்விஸ், கிளிக் yes": {
+   "familyPosts": 0,
+   "yesStill": 1,
+   "lines": [
+    "you: கிளிக் yes",
+    "jarvis: Records: 24 (24 வரிசைகளிலிருந்து கணக்கிடப்பட்டது)."
+   ]
+  },
+  "ஜார்விஸ், yes click pannu": {
+   "familyPosts": 0,
+   "yesStill": 1,
+   "lines": [
+    "you: yes click pannu",
+    "jarvis: Records: 24 (rows after cleaning)."
+   ]
+  }
+ },
+ "BUG-014 add to dashboard by number": {
+  "num": 37,
+  "name": "Add this chart to the dashboard (Environment page)",
+  "pinPosts": 1,
+  "lines": [
+   "you: click 37",
+   "jarvis: Click 37"
+  ],
+  "markedOn": 1
+ },
+ "show numbers inside a dataset": {
+  "badges": 0,
+  "lines": [
+   "you: show numbers",
+   "jarvis: Case reports: 16 (of 400 in all)."
+  ]
+ }
+}

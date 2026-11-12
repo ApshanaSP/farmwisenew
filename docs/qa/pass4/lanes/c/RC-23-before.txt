@@ -1,0 +1,20 @@
+   × open findings > SCAN-6 a malformed body on the mobile code request is a 400, as the route's own comment says, not a 500 156ms
+   × RC-23 class guard: a bad body or a Tamil word is a 400 or an answer, never a throw > every route that reads a form does it behind a catch 103ms
+   × RC-23 class guard: a bad body or a Tamil word is a 400 or an answer, never a throw > no route reads a field of a body it read with .catch(() => null) without a null check 148ms
+   × RC-23 class guard: a bad body or a Tamil word is a 400 or an answer, never a throw > every rehearsal route says 404 for what is not in the record and 503 only for an unavailable service 1801ms
+   × RC-23 searchGroups: a Tamil word is a word > குப்பை makes at least one group 2ms
+   × RC-23 searchGroups: a Tamil word is a word > சாலை makes at least one group 1ms
+   × RC-23 searchGroups: a Tamil word is a word > புகார் makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > குடிநீர் makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > தீ makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > நோய் makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > கொசு makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > பேருந்து makes at least one group 0ms
+   × RC-23 searchGroups: a Tamil word is a word > மழை makes at least one group 1ms
+   × RC-23 searchGroups: a Tamil word is a word > வெள்ளம் அடையாறு makes at least one group 1ms
+   × RC-23 searchGroups: a Tamil word is a word > any text with a letter in it makes a group, in any script, so the SQL built from it is never empty 45ms
+   × RC-23 routes: a request that is not what the route reads > the photo route gets a 400 for a request that is not multipart 21ms
+   × RC-23 routes: a request that is not what the route reads > mobile-otp request gets a 400 for a body that is not JSON 24ms
+   × RC-23 routes: a request that is not what the route reads > mobile-otp verify gets a 400 for a body that is not JSON 26ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  18 failed | 8 passed (26)

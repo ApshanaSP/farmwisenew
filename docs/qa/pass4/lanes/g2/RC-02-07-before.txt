@@ -1,0 +1,30 @@
+RC-02, RC-03, RC-05, RC-06, RC-07 (lane a's leftovers): tests/qa/pass4/g2-real.test.ts run against HEAD 8c6d934 for understand.ts, quick.ts, entities.ts and lexicon.ts (the four files this batch changes). 26 of 62 failed:
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > the table: every word of the one period table reads as its own window in the fast lane 9ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > weekly: the same window whatever the language 962ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > weekly: the same window whatever the language 107ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > show severe cases two weeks ago is asked about, not answered with the current window 47ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > cases a month ago is asked about, not answered with the current window 449ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > severe cases last year is asked about, not answered with the current window 18ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > cases next week is asked about, not answered with the current window 17ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > இரண்டு வாரம் முன்பு கடுமையான புகார்கள் is asked about, not ans
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > ஒரு மாசம் முன்னாடி புகார்கள் is asked about, not answered with the current windo
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > அடுத்த வாரம் புகார்கள் is asked about, not answered with the current window 19ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > rendu vaaram munnaadi severe cases kaattu is asked about, not answered with the current window 52ms
+   × last week and last month mean the same window in all three languages (PB-043..PB-050 class) > adutha vaaram cases kaattu is asked about, not answered with the current window 17ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > a place of ours that no zone holds, Latin letters: the brief says it cannot narrow to it 2067ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > a place of ours that no zone holds, a street name: the brief says it cannot narrow to it 23ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > a place of ours that no zone holds, Tamil letters: the brief says it cannot narrow to it 25ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > the longer name of a body with no records here is not the Corporation's Revenue: English, a long 
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > the longer name of a body with no records here is not the Corporation's Revenue: Tanglish 20ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > the longer name of a body with no records here is not the Corporation's Revenue: a short request 
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > drain works pit, Tamil letters 46ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > street-light words in Tamil lamp words read as the street-light category 65ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > street-light words in Tamil lamp words, other order read as the street-light category 62ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > கடுமையான வெயில் is the weather, not severe cases 39ms
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > கடுமையான குளிர் இருக்கு is the weather, not severe case
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > கடுமையான வெப்பம் பற்றி சொல்லு is the weather,
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > the power cut complaint in Ambattur: a topic no category names is not answered with every case of
+   × a place or topic that cannot be applied is named, and the longest name wins (PB-091, PB-114, PB-130, PB-131, PB-173, PB-024) > noise complaints in Adyar this week: a topic no category names is not answered with every case of
+      Tests  26 failed | 36 passed (62)
+
+And the it.fails rows that were red-as-expected at HEAD and are plain tests now: a-skeptic SK-5 and SK-6; audit-understanding-10 (Chetpet, தி நகர்), -16 (power cut; Tamil lamp words), -21 (harsh sun); open-baseline-37 and -38; metamorphic m07:ta.

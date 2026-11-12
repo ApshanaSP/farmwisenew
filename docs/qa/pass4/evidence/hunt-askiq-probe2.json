@@ -1,0 +1,4566 @@
+[
+ {
+  "q": "worst zone",
+  "status": 200,
+  "err": null,
+  "headline": "Royapuram leads with 268 open incidents",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "0a76df5a-ff7b-447c-bf9e-bab92707dd73",
+   "kind": "answer",
+   "language": "en",
+   "display": "chart",
+   "headline": "Royapuram leads with 268 open incidents",
+   "answerMarkdown": "Highest open incidents: Royapuram (268), Anna Nagar (229), Teynampet (226), Kodambakkam (213), Thiru-Vi-Ka-Nagar (210).",
+   "voiceSummary": "Royapuram leads with 268 open incidents",
+   "voiceLang": "en-IN",
+   "chart": {
+    "type": "horizontal_bar",
+    "dataset": "zones",
+    "title": "Zones by open incidents",
+    "subtitle": "zones ranked by severe incidents (counted three times) and high-severity incidents in the period; the score is for ordering only; last 90 da",
+    "x": "name",
+    "y": [
+     "open"
+    ],
+    "series": null,
+    "compare": false,
+    "normalBand": false,
+    "threshold": null,
+    "highlight": "max",
+    "callout": true,
+    "sort": "desc",
+    "topN": 10,
+    "labels": []
+   },
+   "datasets": [
+    {
+     "id": "zones",
+     "title": "Zones",
+     "drill": {
+      "field": "zone",
+      "action": "filter_zone"
+     },
+     "fields": [
+      {
+       "key": "name",
+       "label": "Zone",
+       "kind": "category"
+      },
+      {
+       "key": "zone",
+       "label": "Zone number",
+       "kind": "id"
+      },
+      {
+       "key": "severe",
+       "label": "Severe incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "high",
+       "label": "High incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "n",
+       "label": "Incidents reported",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "open",
+       "label": "Open incidents",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "complaints",
+       "label": "Open complaints",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      },
+      {
+       "key": "n_prev",
+       "label": "Incidents reported, the period before",
+       "kind": "value",
+       "unit": null,
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "name": "Royapuram",
+       "zone": 5,
+       "severe": 100,
+       "high": 278,
+       "n": 1556,
+       "open": 268,
+       "complaints": 156,
+       "n_prev": 1257
+      },
+      {
+       "name": "Anna Nagar",
+       "zone": 8,
+       "severe": 58,
+       "high": 265,
+       "n": 1330,
+       "open": 229,
+       "complaints": 96,
+       "n_prev": 1248
+      },
+      {
+       "name": "Adyar",
+       "zone": 13,
+       "severe": 48,
+       "high": 245,
+       "n": 1297,
+       "open": 191,
+       "complaints": 100,
+       "n_prev": 1069
+      },
+      {
+       "name": "Thiru-Vi-Ka-Nagar",
+       "zone": 6,
+       "severe": 43,
+       "high": 177,
+       "n": 1193,
+       "open": 210,
+       "complaints": 91,
+       "n_prev": 1057
+      },
+      {
+       "name": "Tondiarpet",
+       "zone": 4,
+       "severe": 38,
+       "high": 192,
+       "n": 1170,
+       "open": 187,
+       "complaints": 134,
+       "n_prev": 944
+      },
+      {
+       "name": "Ambattur",
+       "zone": 7,
+       "severe": 46,
+       "high": 166,
+       "n": 952,
+       "open": 148,
+       "complaints": 76,
+       "n_prev": 898
+      },
+      {
+       "name": "Kodambakkam",
+       "zone": 10,
+       "severe": 34,
+       "high": 200,
+       "n": 1345,
+       "open": 213,
+       "complaints": 109,
+       "n_prev": 1150
+      },
+      {
+       "name": "Teynampet",
+       "zone": 9,
+       "severe": 39,
+       "high": 165,
+       "n": 1356,
+       "open": 226,
+       "complaints": 149,
+       "n_prev": 1160
+      },
+      {
+       "name": "Valasaravakkam",
+       "zone": 11,
+       "severe": 43,
+       "high": 136,
+       "n": 861,
+       "open": 129,
+       "complaints": 64,
+       "n_prev": 723
+      },
+      {
+       "name": "Thiruvottiyur",
+       "zone": 1,
+       "severe": 35,
+       "high": 121,
+       "n": 791,
+       "open": 103,
+       "complaints": 58,
+       "n_prev": 756
+      },
+      {
+       "name": "Alandur",
+       "zone": 12,
+       "severe": 34,
+       "high": 122,
+       "n": 690,
+       "open": 114,
+       "complaints": 40,
+       "n_prev": 614
+      },
+      {
+       "name": "Sholinganallur",
+       "zone": 15,
+       "severe": 28,
+       "high": 129,
+       "n": 690,
+       "open": 124,
+       "complaints": 38,
+       "n_prev": 617
+      },
+      {
+       "name": "Madhavaram",
+       "zone": 3,
+       "severe": 32,
+       "high": 97,
+       "n": 636,
+       "open": 94,
+       "complaints": 49,
+       "n_prev": 582
+      },
+      {
+       "name": "Perungudi",
+       "zone": 14,
+       "severe": 9,
+       "high": 84,
+       "n": 565,
+       "open": 87,
+       "complaints": 61,
+       "n_prev": 459
+      },
+      {
+       "name": "Manali",
+       "zone": 2,
+       "severe": 6,
+       "high": 48,
+       "n": 288,
+       "open": 36,
+       "complaints": 17,
+       "n_prev": 221
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [
+    {
+     "action": "filter_zone",
+     "label": "Filter the console to Royapuram",
+     "zone": 5,
+     "dept": null,
+     "taluk": null,
+     "cat": null,
+     "period": null,
+     "id": null
+    }
+   ],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "zones",
+      "args": {
+       "scope": {
+        "period": "quarterly",
+        "zone": null,
+        "dept": null,
+        "cat": null,
+        "taluk": null
+       }
+      },
+      "ms": 605
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "function",
+      "name": "intel.scopeWhere"
+     },
+     {
+      "kind": "table",
+      "name": "incidents"
+     },
+     {
+      "kind": "table",
+      "name": "ref_wards"
+     }
+    ],
+    "rows": 15,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as: asks for the top zones."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "tool_question",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null
+    },
+    "lastResponseType": "chart",
+    "selectedIncidentId": null,
+    "selectedTitle": null,
+    "selectedNewsStoryId": null,
+    "lastVisualization": "horizontal_bar"
+   },
+   "sessionId": "5148adf2-240f-4ff6-91b9-d5c32ce57d83"
+  }
+ },
+ {
+  "q": "percentage of resolved complaints",
+  "status": 200,
+  "err": null,
+  "headline": "Incidents · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "547a5d3d-68ac-428f-ac45-3093eafddc02",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Incidents · last 90 days",
+   "answerMarkdown": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceSummary": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261106-896A64",
+       "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+       "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:08:00",
+       "priority": 30,
+       "lat": 13.1145099,
+       "lon": 80.2837677
+      },
+      {
+       "id": "INC-20261106-6EAFF2",
+       "title": "Play Equipment in the park near our street. Please look into it",
+       "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:05:00",
+       "priority": 20,
+       "lat": 13.1154857,
+       "lon": 80.2454152
+      },
+      {
+       "id": "INC-20261106-AD9834",
+       "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+       "place": "Church Cross Lane",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 18:03:00",
+       "priority": 56,
+       "lat": 13.1272299,
+       "lon": 80.2893903
+      },
+      {
+       "id": "INC-20261106-54AD93",
+       "title": "Building plan approval oru maasama pending la irukku",
+       "place": "Annai Sathya 3Rd Street",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:00:00",
+       "priority": 20,
+       "lat": 13.154035965080077,
+       "lon": 80.25055201943273
+      },
+      {
+       "id": "INC-20261106-5C22B2",
+       "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+       "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 17:59:00",
+       "priority": 30,
+       "lat": 12.9176562,
+       "lon": 80.2242553
+      },
+      {
+       "id": "INC-20261106-31714F",
+       "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+       "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:54:00",
+       "priority": 43,
+       "lat": 12.9850693,
+       "lon": 80.2465486
+      },
+      {
+       "id": "INC-20261106-A67D6A",
+       "title": "Three street lights in a row are not burning on masjid extn Salai",
+       "place": "Masjid Extn Salai",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 17:45:00",
+       "priority": 48,
+       "lat": 13.1104012,
+       "lon": 80.2831674
+      },
+      {
+       "id": "INC-20260827-E83916",
+       "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+       "place": "Balaji Nagar 3Rd Street, Royapettah",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:42:06",
+       "priority": 45,
+       "lat": 13.061152763043637,
+       "lon": 80.2632021642729
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "recent_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 8
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident list: names a kind of incident."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261106-896A64",
+     "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "summary": "Complaint about removal of garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet, Tondiarpet.",
+     "aiWritten": false,
+     "category": "Garbage & solid waste",
+     "location": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "ward": 48,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:08:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "5 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Solid Waste Management",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1145099,
+     "lon": 80.2837677,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Removal of Garbage, Thangavel Pillai Thottam 3Rd Street, Ward 48",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:08:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-6EAFF2",
+     "title": "Play Equipment in the park near our street. Please look into it",
+     "summary": "Complaint about play equipment at Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur, Tondiarpet. During rain.",
+     "aiWritten": false,
+     "category": "Trees, parks & playgrounds",
+     "location": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+     "ward": 44,
+     "zone": "Tondiarpet",
+     "taluk": "Perambur",
+     "occurredAt": "2026-11-06 18:05:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Parks & Play Fields",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1154857,
+     "lon": 80.2454152,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Play Equipment, Raghavan Nagar 2Nd Street, Ward 44",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:05:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-AD9834",
+     "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "summary": "Complaint about stagnation of water at Church Cross Lane, Tondiarpet. Near a hospital and a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Church Cross Lane",
+     "ward": 42,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:03:00",
+     "severity": "Medium",
+     "priorityScore": 56,
+     "priorityReasons": [
+      "Affects hospital",
+      "Linked to a rain event",
+      "20 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1272299,
+     "lon": 80.2893903,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Church Cross Lane, Ward 42",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:03:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-54AD93",
+     "title": "Building plan approval oru maasama pending la irukku",
+     "summary": "Complaint about building plan sanction at Annai Sathya 3Rd Street, Madhavaram.",
+     "aiWritten": false,
+     "category": "Tax, certificates & electoral services",
+     "location": "Annai Sathya 3Rd Street",
+     "ward": 28,
+     "zone": "Madhavaram",
+     "taluk": "Madhavaram",
+     "occurredAt": "2026-11-06 18:00:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "45 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Roads & Building Permissions",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.154035965080077,
+     "lon": 80.25055201943273,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Building Plan Sanction, Annai Sathya 3Rd Street, Ward 28",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:00:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-5C22B2",
+     "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "summary": "Complaint about stagnation of water at Annai Therasa Street Ext, Pallikaranai, Perungudi. During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+     "ward": 190,
+     "zone": "Perungudi",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:59:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9176562,
+     "lon": 80.2242553,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Annai Therasa Street Ext, Ward 190",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:59:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-31714F",
+     "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "summary": "Complaint about desilting of drain at Sathya Street, Anbazhagan Nagar, Taramani, Adyar. Near a school · During rain.",
+     "aiWritten": false,
+     "category": "Drainage & sewage",
+     "location": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "ward": 180,
+     "zone": "Adyar",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:54:00",
+     "severity": "Medium",
+     "priorityScore": 43,
+     "priorityReasons": [
+      "Affects school",
+      "Linked to a rain event"
+     ],
+     "status": "Under review",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9850693,
+     "lon": 80.2465486,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Desilting of Drain, Sathya Street, Ward 180",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:54:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-A67D6A",
+     "title": "Three street lights in a row are not burning on masjid extn Salai",
+     "summary": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Street lights & electrical hazards",
+     "location": "Masjid Extn Salai",
+     "ward": 51,
+     "zone": "Royapuram",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 17:45:00",
+     "severity": "Medium",
+     "priorityScore": 48,
+     "priorityReasons": [
+      "Affects worship",
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Street Lighting & Electrical",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1104012,
+     "lon": 80.2831674,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Street light not working",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:45:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260827-E83916",
+     "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+     "summary": "Mosquito menace at Balaji Nagar 3Rd Street, Royapettah, Teynampet. During rain.",
+     "aiWritten": false,
+     "category": "Vector- & water-borne disease",
+     "location": "Balaji Nagar 3Rd Street, Royapettah",
+     "ward": 115,
+     "zone": "Teynampet",
+     "taluk": "Mylapore",
+     "occurredAt": "2026-11-06 17:42:06",
+     "severity": "Medium",
+     "priorityScore": 45,
+     "priorityReasons": [
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Under review",
+     "department": "Public Health (GCC)",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.061152763043637,
+     "lon": 80.2632021642729,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Mosquito Menace, Balaji Nagar 3Rd Street, Ward 115",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:42:06"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "resultTitles": [
+     "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "Play Equipment in the park near our street. Please look into it",
+     "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "Building plan approval oru maasama pending la irukku",
+     "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "Three street lights in a row are not burning on masjid extn Salai",
+     "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 8
+   },
+   "sessionId": "a431d38c-8840-410b-8817-4aa7adf08fb4"
+  }
+ },
+ {
+  "q": "compare zone 1 and zone 1",
+  "status": 200,
+  "err": null,
+  "headline": "Thiruvottiyur zone and Thiruvottiyur zone level: 791 incidents each",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "27dac8d8-1b3a-4e76-b3ac-4da7eaf7d485",
+   "kind": "answer",
+   "language": "en",
+   "display": "chart",
+   "headline": "Thiruvottiyur zone and Thiruvottiyur zone level: 791 incidents each",
+   "answerMarkdown": "The places are level in the last 90 days.\n\n**Thiruvottiyur zone**: 791 reported (756 in the period before), 103 still open, 35 severe, 11 deaths\n\n**Thiruvottiyur zone**: 791 reported (756 in the period before), 103 still open, 35 severe, 11 deaths",
+   "voiceSummary": "The places are level in the last 90 days.",
+   "voiceLang": "en-IN",
+   "chart": {
+    "subtitle": null,
+    "x": "label",
+    "y": [
+     "v"
+    ],
+    "series": null,
+    "compare": true,
+    "normalBand": false,
+    "threshold": null,
+    "highlight": "max",
+    "callout": true,
+    "sort": "desc",
+    "topN": 10,
+    "labels": [],
+    "type": "bar",
+    "dataset": "sides",
+    "title": "Level with each other"
+   },
+   "datasets": [
+    {
+     "id": "sides",
+     "title": "Incidents by place",
+     "tab": "Places",
+     "hasPrev": true,
+     "fields": [
+      {
+       "key": "label",
+       "label": "Place",
+       "kind": "category"
+      },
+      {
+       "key": "v",
+       "label": "Incidents",
+       "kind": "value",
+       "format": "integer"
+      },
+      {
+       "key": "v_prev",
+       "label": "Period before",
+       "kind": "value",
+       "format": "integer"
+      },
+      {
+       "key": "open",
+       "label": "Still open",
+       "kind": "value",
+       "format": "integer"
+      },
+      {
+       "key": "severe",
+       "label": "Severe",
+       "kind": "value",
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "label": "Thiruvottiyur zone",
+       "v": 791,
+       "v_prev": 756,
+       "open": 103,
+       "severe": 35
+      },
+      {
+       "label": "Thiruvottiyur zone",
+       "v": 791,
+       "v_prev": 756,
+       "open": 103,
+       "severe": 35
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": 1,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · Thiruvottiyur zone vs Thiruvottiyur zone · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "compare_places",
+      "args": {
+       "period": "quarterly",
+       "zone": 1,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "sides": [
+        "zone 1",
+        "zone 1"
+       ]
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as comparison: a comparison of places, side by side."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "COMPARISON",
+   "responseType": "chart",
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "COMPARISON",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": 1,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "chart"
+   },
+   "sessionId": "fa6e62ba-6050-4919-85e0-c4f97975a47c"
+  }
+ },
+ {
+  "q": "complaints from 2030",
+  "status": 200,
+  "err": null,
+  "headline": "Incidents · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "87932e9e-8198-4e33-b5bc-6e39c7a059c3",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Incidents · last 90 days",
+   "answerMarkdown": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceSummary": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261106-896A64",
+       "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+       "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:08:00",
+       "priority": 30,
+       "lat": 13.1145099,
+       "lon": 80.2837677
+      },
+      {
+       "id": "INC-20261106-6EAFF2",
+       "title": "Play Equipment in the park near our street. Please look into it",
+       "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:05:00",
+       "priority": 20,
+       "lat": 13.1154857,
+       "lon": 80.2454152
+      },
+      {
+       "id": "INC-20261106-AD9834",
+       "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+       "place": "Church Cross Lane",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 18:03:00",
+       "priority": 56,
+       "lat": 13.1272299,
+       "lon": 80.2893903
+      },
+      {
+       "id": "INC-20261106-54AD93",
+       "title": "Building plan approval oru maasama pending la irukku",
+       "place": "Annai Sathya 3Rd Street",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:00:00",
+       "priority": 20,
+       "lat": 13.154035965080077,
+       "lon": 80.25055201943273
+      },
+      {
+       "id": "INC-20261106-5C22B2",
+       "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+       "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 17:59:00",
+       "priority": 30,
+       "lat": 12.9176562,
+       "lon": 80.2242553
+      },
+      {
+       "id": "INC-20261106-31714F",
+       "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+       "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:54:00",
+       "priority": 43,
+       "lat": 12.9850693,
+       "lon": 80.2465486
+      },
+      {
+       "id": "INC-20261106-A67D6A",
+       "title": "Three street lights in a row are not burning on masjid extn Salai",
+       "place": "Masjid Extn Salai",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 17:45:00",
+       "priority": 48,
+       "lat": 13.1104012,
+       "lon": 80.2831674
+      },
+      {
+       "id": "INC-20260827-E83916",
+       "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+       "place": "Balaji Nagar 3Rd Street, Royapettah",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:42:06",
+       "priority": 45,
+       "lat": 13.061152763043637,
+       "lon": 80.2632021642729
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "recent_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 8
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident list: names a kind of incident."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261106-896A64",
+     "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "summary": "Complaint about removal of garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet, Tondiarpet.",
+     "aiWritten": false,
+     "category": "Garbage & solid waste",
+     "location": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "ward": 48,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:08:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "5 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Solid Waste Management",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1145099,
+     "lon": 80.2837677,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Removal of Garbage, Thangavel Pillai Thottam 3Rd Street, Ward 48",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:08:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-6EAFF2",
+     "title": "Play Equipment in the park near our street. Please look into it",
+     "summary": "Complaint about play equipment at Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur, Tondiarpet. During rain.",
+     "aiWritten": false,
+     "category": "Trees, parks & playgrounds",
+     "location": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+     "ward": 44,
+     "zone": "Tondiarpet",
+     "taluk": "Perambur",
+     "occurredAt": "2026-11-06 18:05:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Parks & Play Fields",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1154857,
+     "lon": 80.2454152,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Play Equipment, Raghavan Nagar 2Nd Street, Ward 44",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:05:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-AD9834",
+     "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "summary": "Complaint about stagnation of water at Church Cross Lane, Tondiarpet. Near a hospital and a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Church Cross Lane",
+     "ward": 42,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:03:00",
+     "severity": "Medium",
+     "priorityScore": 56,
+     "priorityReasons": [
+      "Affects hospital",
+      "Linked to a rain event",
+      "20 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1272299,
+     "lon": 80.2893903,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Church Cross Lane, Ward 42",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:03:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-54AD93",
+     "title": "Building plan approval oru maasama pending la irukku",
+     "summary": "Complaint about building plan sanction at Annai Sathya 3Rd Street, Madhavaram.",
+     "aiWritten": false,
+     "category": "Tax, certificates & electoral services",
+     "location": "Annai Sathya 3Rd Street",
+     "ward": 28,
+     "zone": "Madhavaram",
+     "taluk": "Madhavaram",
+     "occurredAt": "2026-11-06 18:00:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "45 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Roads & Building Permissions",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.154035965080077,
+     "lon": 80.25055201943273,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Building Plan Sanction, Annai Sathya 3Rd Street, Ward 28",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:00:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-5C22B2",
+     "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "summary": "Complaint about stagnation of water at Annai Therasa Street Ext, Pallikaranai, Perungudi. During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+     "ward": 190,
+     "zone": "Perungudi",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:59:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9176562,
+     "lon": 80.2242553,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Annai Therasa Street Ext, Ward 190",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:59:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-31714F",
+     "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "summary": "Complaint about desilting of drain at Sathya Street, Anbazhagan Nagar, Taramani, Adyar. Near a school · During rain.",
+     "aiWritten": false,
+     "category": "Drainage & sewage",
+     "location": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "ward": 180,
+     "zone": "Adyar",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:54:00",
+     "severity": "Medium",
+     "priorityScore": 43,
+     "priorityReasons": [
+      "Affects school",
+      "Linked to a rain event"
+     ],
+     "status": "Under review",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9850693,
+     "lon": 80.2465486,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Desilting of Drain, Sathya Street, Ward 180",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:54:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-A67D6A",
+     "title": "Three street lights in a row are not burning on masjid extn Salai",
+     "summary": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Street lights & electrical hazards",
+     "location": "Masjid Extn Salai",
+     "ward": 51,
+     "zone": "Royapuram",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 17:45:00",
+     "severity": "Medium",
+     "priorityScore": 48,
+     "priorityReasons": [
+      "Affects worship",
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Street Lighting & Electrical",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1104012,
+     "lon": 80.2831674,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Street light not working",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:45:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260827-E83916",
+     "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+     "summary": "Mosquito menace at Balaji Nagar 3Rd Street, Royapettah, Teynampet. During rain.",
+     "aiWritten": false,
+     "category": "Vector- & water-borne disease",
+     "location": "Balaji Nagar 3Rd Street, Royapettah",
+     "ward": 115,
+     "zone": "Teynampet",
+     "taluk": "Mylapore",
+     "occurredAt": "2026-11-06 17:42:06",
+     "severity": "Medium",
+     "priorityScore": 45,
+     "priorityReasons": [
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Under review",
+     "department": "Public Health (GCC)",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.061152763043637,
+     "lon": 80.2632021642729,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Mosquito Menace, Balaji Nagar 3Rd Street, Ward 115",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:42:06"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "resultTitles": [
+     "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "Play Equipment in the park near our street. Please look into it",
+     "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "Building plan approval oru maasama pending la irukku",
+     "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "Three street lights in a row are not burning on masjid extn Salai",
+     "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 8
+   },
+   "sessionId": "0ecfc8e7-5f87-4ffe-bca9-ee2e63c3f9e7"
+  }
+ },
+ {
+  "q": "complaints on 31 February",
+  "status": 200,
+  "err": null,
+  "headline": "Incidents · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "2c8d5bf9-44c6-48ca-a47b-1b24d52ec294",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Incidents · last 90 days",
+   "answerMarkdown": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceSummary": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261106-896A64",
+       "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+       "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:08:00",
+       "priority": 30,
+       "lat": 13.1145099,
+       "lon": 80.2837677
+      },
+      {
+       "id": "INC-20261106-6EAFF2",
+       "title": "Play Equipment in the park near our street. Please look into it",
+       "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:05:00",
+       "priority": 20,
+       "lat": 13.1154857,
+       "lon": 80.2454152
+      },
+      {
+       "id": "INC-20261106-AD9834",
+       "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+       "place": "Church Cross Lane",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 18:03:00",
+       "priority": 56,
+       "lat": 13.1272299,
+       "lon": 80.2893903
+      },
+      {
+       "id": "INC-20261106-54AD93",
+       "title": "Building plan approval oru maasama pending la irukku",
+       "place": "Annai Sathya 3Rd Street",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:00:00",
+       "priority": 20,
+       "lat": 13.154035965080077,
+       "lon": 80.25055201943273
+      },
+      {
+       "id": "INC-20261106-5C22B2",
+       "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+       "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 17:59:00",
+       "priority": 30,
+       "lat": 12.9176562,
+       "lon": 80.2242553
+      },
+      {
+       "id": "INC-20261106-31714F",
+       "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+       "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:54:00",
+       "priority": 43,
+       "lat": 12.9850693,
+       "lon": 80.2465486
+      },
+      {
+       "id": "INC-20261106-A67D6A",
+       "title": "Three street lights in a row are not burning on masjid extn Salai",
+       "place": "Masjid Extn Salai",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 17:45:00",
+       "priority": 48,
+       "lat": 13.1104012,
+       "lon": 80.2831674
+      },
+      {
+       "id": "INC-20260827-E83916",
+       "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+       "place": "Balaji Nagar 3Rd Street, Royapettah",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:42:06",
+       "priority": 45,
+       "lat": 13.061152763043637,
+       "lon": 80.2632021642729
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "recent_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 8
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident list: names a kind of incident."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261106-896A64",
+     "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "summary": "Complaint about removal of garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet, Tondiarpet.",
+     "aiWritten": false,
+     "category": "Garbage & solid waste",
+     "location": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "ward": 48,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:08:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "5 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Solid Waste Management",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1145099,
+     "lon": 80.2837677,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Removal of Garbage, Thangavel Pillai Thottam 3Rd Street, Ward 48",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:08:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-6EAFF2",
+     "title": "Play Equipment in the park near our street. Please look into it",
+     "summary": "Complaint about play equipment at Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur, Tondiarpet. During rain.",
+     "aiWritten": false,
+     "category": "Trees, parks & playgrounds",
+     "location": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+     "ward": 44,
+     "zone": "Tondiarpet",
+     "taluk": "Perambur",
+     "occurredAt": "2026-11-06 18:05:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Parks & Play Fields",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1154857,
+     "lon": 80.2454152,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Play Equipment, Raghavan Nagar 2Nd Street, Ward 44",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:05:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-AD9834",
+     "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "summary": "Complaint about stagnation of water at Church Cross Lane, Tondiarpet. Near a hospital and a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Church Cross Lane",
+     "ward": 42,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:03:00",
+     "severity": "Medium",
+     "priorityScore": 56,
+     "priorityReasons": [
+      "Affects hospital",
+      "Linked to a rain event",
+      "20 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1272299,
+     "lon": 80.2893903,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Church Cross Lane, Ward 42",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:03:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-54AD93",
+     "title": "Building plan approval oru maasama pending la irukku",
+     "summary": "Complaint about building plan sanction at Annai Sathya 3Rd Street, Madhavaram.",
+     "aiWritten": false,
+     "category": "Tax, certificates & electoral services",
+     "location": "Annai Sathya 3Rd Street",
+     "ward": 28,
+     "zone": "Madhavaram",
+     "taluk": "Madhavaram",
+     "occurredAt": "2026-11-06 18:00:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "45 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Roads & Building Permissions",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.154035965080077,
+     "lon": 80.25055201943273,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Building Plan Sanction, Annai Sathya 3Rd Street, Ward 28",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:00:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-5C22B2",
+     "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "summary": "Complaint about stagnation of water at Annai Therasa Street Ext, Pallikaranai, Perungudi. During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+     "ward": 190,
+     "zone": "Perungudi",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:59:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9176562,
+     "lon": 80.2242553,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Annai Therasa Street Ext, Ward 190",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:59:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-31714F",
+     "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "summary": "Complaint about desilting of drain at Sathya Street, Anbazhagan Nagar, Taramani, Adyar. Near a school · During rain.",
+     "aiWritten": false,
+     "category": "Drainage & sewage",
+     "location": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "ward": 180,
+     "zone": "Adyar",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:54:00",
+     "severity": "Medium",
+     "priorityScore": 43,
+     "priorityReasons": [
+      "Affects school",
+      "Linked to a rain event"
+     ],
+     "status": "Under review",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9850693,
+     "lon": 80.2465486,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Desilting of Drain, Sathya Street, Ward 180",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:54:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-A67D6A",
+     "title": "Three street lights in a row are not burning on masjid extn Salai",
+     "summary": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Street lights & electrical hazards",
+     "location": "Masjid Extn Salai",
+     "ward": 51,
+     "zone": "Royapuram",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 17:45:00",
+     "severity": "Medium",
+     "priorityScore": 48,
+     "priorityReasons": [
+      "Affects worship",
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Street Lighting & Electrical",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1104012,
+     "lon": 80.2831674,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Street light not working",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:45:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260827-E83916",
+     "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+     "summary": "Mosquito menace at Balaji Nagar 3Rd Street, Royapettah, Teynampet. During rain.",
+     "aiWritten": false,
+     "category": "Vector- & water-borne disease",
+     "location": "Balaji Nagar 3Rd Street, Royapettah",
+     "ward": 115,
+     "zone": "Teynampet",
+     "taluk": "Mylapore",
+     "occurredAt": "2026-11-06 17:42:06",
+     "severity": "Medium",
+     "priorityScore": 45,
+     "priorityReasons": [
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Under review",
+     "department": "Public Health (GCC)",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.061152763043637,
+     "lon": 80.2632021642729,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Mosquito Menace, Balaji Nagar 3Rd Street, Ward 115",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:42:06"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "resultTitles": [
+     "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "Play Equipment in the park near our street. Please look into it",
+     "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "Building plan approval oru maasama pending la irukku",
+     "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "Three street lights in a row are not burning on masjid extn Salai",
+     "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 8
+   },
+   "sessionId": "0c5b3efa-56ef-46ea-a022-7ce3e1506880"
+  }
+ },
+ {
+  "q": "how many complaints in Adyar in the last 0 days",
+  "status": 200,
+  "err": null,
+  "headline": "690 citizen complaints · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "6f882437-0aab-43d5-a1be-97635683988f",
+   "kind": "answer",
+   "language": "en",
+   "display": "kpi",
+   "headline": "690 citizen complaints · last 90 days",
+   "answerMarkdown": "**690** citizen complaints in the last 90 days in Adyar zone.\n\n- They are about 614 incidents, 70 of them still open",
+   "voiceSummary": "690 citizen complaints in the last 90 days in Adyar zone.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [],
+   "kpis": [
+    {
+     "label": "Complaints",
+     "value": 690,
+     "prev": 520,
+     "tone": "info"
+    },
+    {
+     "label": "Incidents with complaints",
+     "value": 614,
+     "prev": 497
+    },
+    {
+     "label": "Of them open",
+     "value": 70
+    }
+   ],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · Adyar (Zone 13) · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "count_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": 13,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident count: asks how many."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_COUNT",
+   "responseType": "kpi",
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "INCIDENT_COUNT",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": 13,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "kpi"
+   },
+   "sessionId": "a4261735-e7fb-440c-b3c9-65669ea16689"
+  }
+ },
+ {
+  "q": "ward 500 complaints",
+  "status": 200,
+  "err": null,
+  "headline": "Incidents · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "a3be7941-7c5d-47b8-9d12-a9b19c2c4f7a",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Incidents · last 90 days",
+   "answerMarkdown": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceSummary": "15,115 incidents in the last 90 days; the eight newest are listed.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261106-896A64",
+       "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+       "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:08:00",
+       "priority": 30,
+       "lat": 13.1145099,
+       "lon": 80.2837677
+      },
+      {
+       "id": "INC-20261106-6EAFF2",
+       "title": "Play Equipment in the park near our street. Please look into it",
+       "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:05:00",
+       "priority": 20,
+       "lat": 13.1154857,
+       "lon": 80.2454152
+      },
+      {
+       "id": "INC-20261106-AD9834",
+       "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+       "place": "Church Cross Lane",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 18:03:00",
+       "priority": 56,
+       "lat": 13.1272299,
+       "lon": 80.2893903
+      },
+      {
+       "id": "INC-20261106-54AD93",
+       "title": "Building plan approval oru maasama pending la irukku",
+       "place": "Annai Sathya 3Rd Street",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:00:00",
+       "priority": 20,
+       "lat": 13.154035965080077,
+       "lon": 80.25055201943273
+      },
+      {
+       "id": "INC-20261106-5C22B2",
+       "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+       "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 17:59:00",
+       "priority": 30,
+       "lat": 12.9176562,
+       "lon": 80.2242553
+      },
+      {
+       "id": "INC-20261106-31714F",
+       "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+       "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:54:00",
+       "priority": 43,
+       "lat": 12.9850693,
+       "lon": 80.2465486
+      },
+      {
+       "id": "INC-20261106-A67D6A",
+       "title": "Three street lights in a row are not burning on masjid extn Salai",
+       "place": "Masjid Extn Salai",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 17:45:00",
+       "priority": 48,
+       "lat": 13.1104012,
+       "lon": 80.2831674
+      },
+      {
+       "id": "INC-20260827-E83916",
+       "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+       "place": "Balaji Nagar 3Rd Street, Royapettah",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:42:06",
+       "priority": 45,
+       "lat": 13.061152763043637,
+       "lon": 80.2632021642729
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "recent_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 8
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident list: names a kind of incident."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261106-896A64",
+     "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "summary": "Complaint about removal of garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet, Tondiarpet.",
+     "aiWritten": false,
+     "category": "Garbage & solid waste",
+     "location": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "ward": 48,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:08:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "5 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Solid Waste Management",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1145099,
+     "lon": 80.2837677,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Removal of Garbage, Thangavel Pillai Thottam 3Rd Street, Ward 48",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:08:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-6EAFF2",
+     "title": "Play Equipment in the park near our street. Please look into it",
+     "summary": "Complaint about play equipment at Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur, Tondiarpet. During rain.",
+     "aiWritten": false,
+     "category": "Trees, parks & playgrounds",
+     "location": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+     "ward": 44,
+     "zone": "Tondiarpet",
+     "taluk": "Perambur",
+     "occurredAt": "2026-11-06 18:05:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Parks & Play Fields",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1154857,
+     "lon": 80.2454152,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Play Equipment, Raghavan Nagar 2Nd Street, Ward 44",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:05:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-AD9834",
+     "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "summary": "Complaint about stagnation of water at Church Cross Lane, Tondiarpet. Near a hospital and a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Church Cross Lane",
+     "ward": 42,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:03:00",
+     "severity": "Medium",
+     "priorityScore": 56,
+     "priorityReasons": [
+      "Affects hospital",
+      "Linked to a rain event",
+      "20 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1272299,
+     "lon": 80.2893903,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Church Cross Lane, Ward 42",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:03:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-54AD93",
+     "title": "Building plan approval oru maasama pending la irukku",
+     "summary": "Complaint about building plan sanction at Annai Sathya 3Rd Street, Madhavaram.",
+     "aiWritten": false,
+     "category": "Tax, certificates & electoral services",
+     "location": "Annai Sathya 3Rd Street",
+     "ward": 28,
+     "zone": "Madhavaram",
+     "taluk": "Madhavaram",
+     "occurredAt": "2026-11-06 18:00:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "45 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Roads & Building Permissions",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.154035965080077,
+     "lon": 80.25055201943273,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Building Plan Sanction, Annai Sathya 3Rd Street, Ward 28",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:00:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-5C22B2",
+     "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "summary": "Complaint about stagnation of water at Annai Therasa Street Ext, Pallikaranai, Perungudi. During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+     "ward": 190,
+     "zone": "Perungudi",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:59:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9176562,
+     "lon": 80.2242553,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Annai Therasa Street Ext, Ward 190",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:59:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-31714F",
+     "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "summary": "Complaint about desilting of drain at Sathya Street, Anbazhagan Nagar, Taramani, Adyar. Near a school · During rain.",
+     "aiWritten": false,
+     "category": "Drainage & sewage",
+     "location": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "ward": 180,
+     "zone": "Adyar",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:54:00",
+     "severity": "Medium",
+     "priorityScore": 43,
+     "priorityReasons": [
+      "Affects school",
+      "Linked to a rain event"
+     ],
+     "status": "Under review",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9850693,
+     "lon": 80.2465486,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Desilting of Drain, Sathya Street, Ward 180",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:54:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-A67D6A",
+     "title": "Three street lights in a row are not burning on masjid extn Salai",
+     "summary": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Street lights & electrical hazards",
+     "location": "Masjid Extn Salai",
+     "ward": 51,
+     "zone": "Royapuram",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 17:45:00",
+     "severity": "Medium",
+     "priorityScore": 48,
+     "priorityReasons": [
+      "Affects worship",
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Street Lighting & Electrical",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1104012,
+     "lon": 80.2831674,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Street light not working",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:45:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260827-E83916",
+     "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+     "summary": "Mosquito menace at Balaji Nagar 3Rd Street, Royapettah, Teynampet. During rain.",
+     "aiWritten": false,
+     "category": "Vector- & water-borne disease",
+     "location": "Balaji Nagar 3Rd Street, Royapettah",
+     "ward": 115,
+     "zone": "Teynampet",
+     "taluk": "Mylapore",
+     "occurredAt": "2026-11-06 17:42:06",
+     "severity": "Medium",
+     "priorityScore": 45,
+     "priorityReasons": [
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Under review",
+     "department": "Public Health (GCC)",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.061152763043637,
+     "lon": 80.2632021642729,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Mosquito Menace, Balaji Nagar 3Rd Street, Ward 115",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:42:06"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "resultTitles": [
+     "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "Play Equipment in the park near our street. Please look into it",
+     "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "Building plan approval oru maasama pending la irukku",
+     "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "Three street lights in a row are not burning on masjid extn Salai",
+     "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 8
+   },
+   "sessionId": "ed83fbce-bada-4f9f-a905-aff0a94b2703"
+  }
+ },
+ {
+  "q": "complaints last 400 days",
+  "status": 200,
+  "err": null,
+  "headline": "Incidents · last 400 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "1d0c250d-2faa-4591-ad6b-1a5341800b7c",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Incidents · last 400 days",
+   "answerMarkdown": "27,918 incidents in the last 400 days; the eight newest are listed.",
+   "voiceSummary": "27,918 incidents in the last 400 days; the eight newest are listed.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261106-896A64",
+       "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+       "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:08:00",
+       "priority": 30,
+       "lat": 13.1145099,
+       "lon": 80.2837677
+      },
+      {
+       "id": "INC-20261106-6EAFF2",
+       "title": "Play Equipment in the park near our street. Please look into it",
+       "place": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:05:00",
+       "priority": 20,
+       "lat": 13.1154857,
+       "lon": 80.2454152
+      },
+      {
+       "id": "INC-20261106-AD9834",
+       "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+       "place": "Church Cross Lane",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 18:03:00",
+       "priority": 56,
+       "lat": 13.1272299,
+       "lon": 80.2893903
+      },
+      {
+       "id": "INC-20261106-54AD93",
+       "title": "Building plan approval oru maasama pending la irukku",
+       "place": "Annai Sathya 3Rd Street",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 18:00:00",
+       "priority": 20,
+       "lat": 13.154035965080077,
+       "lon": 80.25055201943273
+      },
+      {
+       "id": "INC-20261106-5C22B2",
+       "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+       "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+       "sev": "Low",
+       "status": "Open",
+       "when": "2026-11-06 17:59:00",
+       "priority": 30,
+       "lat": 12.9176562,
+       "lon": 80.2242553
+      },
+      {
+       "id": "INC-20261106-31714F",
+       "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+       "place": "Sathya Street, Anbazhagan Nagar, Taramani",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:54:00",
+       "priority": 43,
+       "lat": 12.9850693,
+       "lon": 80.2465486
+      },
+      {
+       "id": "INC-20261106-A67D6A",
+       "title": "Three street lights in a row are not burning on masjid extn Salai",
+       "place": "Masjid Extn Salai",
+       "sev": "Medium",
+       "status": "Open",
+       "when": "2026-11-06 17:45:00",
+       "priority": 48,
+       "lat": 13.1104012,
+       "lon": 80.2831674
+      },
+      {
+       "id": "INC-20260827-E83916",
+       "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+       "place": "Balaji Nagar 3Rd Street, Royapettah",
+       "sev": "Medium",
+       "status": "Under review",
+       "when": "2026-11-06 17:42:06",
+       "priority": 45,
+       "lat": 13.061152763043637,
+       "lon": 80.2632021642729
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 400 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "recent_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": 4320,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 8
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident list: names a kind of incident."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261106-896A64",
+     "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "summary": "Complaint about removal of garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet, Tondiarpet.",
+     "aiWritten": false,
+     "category": "Garbage & solid waste",
+     "location": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+     "ward": 48,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:08:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "5 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Solid Waste Management",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1145099,
+     "lon": 80.2837677,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Removal of Garbage, Thangavel Pillai Thottam 3Rd Street, Ward 48",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:08:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-6EAFF2",
+     "title": "Play Equipment in the park near our street. Please look into it",
+     "summary": "Complaint about play equipment at Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur, Tondiarpet. During rain.",
+     "aiWritten": false,
+     "category": "Trees, parks & playgrounds",
+     "location": "Raghavan Nagar 2Nd Street, Raghavan Nagar, Kodungaiyur",
+     "ward": 44,
+     "zone": "Tondiarpet",
+     "taluk": "Perambur",
+     "occurredAt": "2026-11-06 18:05:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Parks & Play Fields",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1154857,
+     "lon": 80.2454152,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Play Equipment, Raghavan Nagar 2Nd Street, Ward 44",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:05:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-AD9834",
+     "title": "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "summary": "Complaint about stagnation of water at Church Cross Lane, Tondiarpet. Near a hospital and a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Church Cross Lane",
+     "ward": 42,
+     "zone": "Tondiarpet",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 18:03:00",
+     "severity": "Medium",
+     "priorityScore": 56,
+     "priorityReasons": [
+      "Affects hospital",
+      "Linked to a rain event",
+      "20 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1272299,
+     "lon": 80.2893903,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Church Cross Lane, Ward 42",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:03:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-54AD93",
+     "title": "Building plan approval oru maasama pending la irukku",
+     "summary": "Complaint about building plan sanction at Annai Sathya 3Rd Street, Madhavaram.",
+     "aiWritten": false,
+     "category": "Tax, certificates & electoral services",
+     "location": "Annai Sathya 3Rd Street",
+     "ward": 28,
+     "zone": "Madhavaram",
+     "taluk": "Madhavaram",
+     "occurredAt": "2026-11-06 18:00:00",
+     "severity": "Low",
+     "priorityScore": 20,
+     "priorityReasons": [
+      "45 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Roads & Building Permissions",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.154035965080077,
+     "lon": 80.25055201943273,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Building Plan Sanction, Annai Sathya 3Rd Street, Ward 28",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 18:00:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-5C22B2",
+     "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "summary": "Complaint about stagnation of water at Annai Therasa Street Ext, Pallikaranai, Perungudi. During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+     "ward": 190,
+     "zone": "Perungudi",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:59:00",
+     "severity": "Low",
+     "priorityScore": 30,
+     "priorityReasons": [
+      "Linked to a rain event"
+     ],
+     "status": "Open",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9176562,
+     "lon": 80.2242553,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Stagnation of Water, Annai Therasa Street Ext, Ward 190",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:59:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-31714F",
+     "title": "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "summary": "Complaint about desilting of drain at Sathya Street, Anbazhagan Nagar, Taramani, Adyar. Near a school · During rain.",
+     "aiWritten": false,
+     "category": "Drainage & sewage",
+     "location": "Sathya Street, Anbazhagan Nagar, Taramani",
+     "ward": 180,
+     "zone": "Adyar",
+     "taluk": "Velachery",
+     "occurredAt": "2026-11-06 17:54:00",
+     "severity": "Medium",
+     "priorityScore": 43,
+     "priorityReasons": [
+      "Affects school",
+      "Linked to a rain event"
+     ],
+     "status": "Under review",
+     "department": "Storm Water Drain",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 12.9850693,
+     "lon": 80.2465486,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Desilting of Drain, Sathya Street, Ward 180",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:54:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261106-A67D6A",
+     "title": "Three street lights in a row are not burning on masjid extn Salai",
+     "summary": "Complaint about non burning of street lights at Masjid Extn Salai, Royapuram. Near a place of worship · During rain.",
+     "aiWritten": false,
+     "category": "Street lights & electrical hazards",
+     "location": "Masjid Extn Salai",
+     "ward": 51,
+     "zone": "Royapuram",
+     "taluk": "Tondiarpet",
+     "occurredAt": "2026-11-06 17:45:00",
+     "severity": "Medium",
+     "priorityScore": 48,
+     "priorityReasons": [
+      "Affects worship",
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Open",
+     "department": "Street Lighting & Electrical",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.1104012,
+     "lon": 80.2831674,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Street light not working",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:45:00"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260827-E83916",
+     "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+     "summary": "Mosquito menace at Balaji Nagar 3Rd Street, Royapettah, Teynampet. During rain.",
+     "aiWritten": false,
+     "category": "Vector- & water-borne disease",
+     "location": "Balaji Nagar 3Rd Street, Royapettah",
+     "ward": 115,
+     "zone": "Teynampet",
+     "taluk": "Mylapore",
+     "occurredAt": "2026-11-06 17:42:06",
+     "severity": "Medium",
+     "priorityScore": 45,
+     "priorityReasons": [
+      "Linked to a rain event",
+      "8 similar incidents at this place in 90 days"
+     ],
+     "status": "Under review",
+     "department": "Public Health (GCC)",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 1,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.061152763043637,
+     "lon": 80.2632021642729,
+     "evidence": [
+      {
+       "kind": "grievance",
+       "label": "Citizen complaint",
+       "title": "Mosquito Menace, Balaji Nagar 3Rd Street, Ward 115",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-06 17:42:06"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261106-896A64",
+     "INC-20261106-6EAFF2",
+     "INC-20261106-AD9834",
+     "INC-20261106-54AD93",
+     "INC-20261106-5C22B2",
+     "INC-20261106-31714F",
+     "INC-20261106-A67D6A",
+     "INC-20260827-E83916"
+    ],
+    "resultTitles": [
+     "Thangavel Pillai Thottam people sarbaaga indha complaint",
+     "Play Equipment in the park near our street. Please look into it",
+     "Mazhai thanni oru maasama thengi nikkudhu, kosu romba jaasthi aayiduchu",
+     "Building plan approval oru maasama pending la irukku",
+     "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+     "வடிகால் முழுவதும் வண்டல் நிரம்பியுள்ளது. தண்ணீர் வெளியேறவில்லை",
+     "Three street lights in a row are not burning on masjid extn Salai",
+     "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 8
+   },
+   "sessionId": "07265dda-3dc9-4947-87c2-b88a13fd6dc3"
+  }
+ },
+ {
+  "q": "Adyar zone complaints vs Adyar",
+  "status": 200,
+  "err": null,
+  "headline": "Adyar zone and Adyar zone level: 690 citizen complaints each",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "d69e1699-5143-42e7-9cbf-b0e404950327",
+   "kind": "answer",
+   "language": "en",
+   "display": "chart",
+   "headline": "Adyar zone and Adyar zone level: 690 citizen complaints each",
+   "answerMarkdown": "The places are level in the last 90 days.\n\n**Adyar zone**: 690 citizen complaints; they are about 1,297 incidents, 191 still open, 15 deaths\n\n**Adyar zone**: 690 citizen complaints; they are about 1,297 incidents, 191 still open, 15 deaths",
+   "voiceSummary": "The places are level in the last 90 days.",
+   "voiceLang": "en-IN",
+   "chart": {
+    "subtitle": null,
+    "x": "label",
+    "y": [
+     "v"
+    ],
+    "series": null,
+    "compare": false,
+    "normalBand": false,
+    "threshold": null,
+    "highlight": "max",
+    "callout": true,
+    "sort": "desc",
+    "topN": 10,
+    "labels": [],
+    "type": "bar",
+    "dataset": "sides",
+    "title": "Level with each other"
+   },
+   "datasets": [
+    {
+     "id": "sides",
+     "title": "Citizen complaints by place",
+     "tab": "Places",
+     "hasPrev": false,
+     "fields": [
+      {
+       "key": "label",
+       "label": "Place",
+       "kind": "category"
+      },
+      {
+       "key": "v",
+       "label": "Citizen complaints",
+       "kind": "value",
+       "format": "integer"
+      },
+      {
+       "key": "open",
+       "label": "Still open",
+       "kind": "value",
+       "format": "integer"
+      },
+      {
+       "key": "severe",
+       "label": "Severe",
+       "kind": "value",
+       "format": "integer"
+      }
+     ],
+     "rows": [
+      {
+       "label": "Adyar zone",
+       "v": 690,
+       "open": 191,
+       "severe": 48
+      },
+      {
+       "label": "Adyar zone",
+       "v": 690,
+       "open": 191,
+       "severe": 48
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · Adyar zone vs Adyar zone · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "compare_places",
+      "args": {
+       "period": "quarterly",
+       "zone": 13,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "sides": [
+        "Adyar zone complaints",
+        "Adyar"
+       ]
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as comparison: a comparison of places, side by side."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "COMPARISON",
+   "responseType": "chart",
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "COMPARISON",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": 13,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "chart"
+   },
+   "sessionId": "4074b8a7-ae5d-48dd-86d2-b957f9a4c5af"
+  }
+ },
+ {
+  "q": "how many complaints in Chennai",
+  "status": 200,
+  "err": null,
+  "headline": "9,113 citizen complaints · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "visualAsked",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "f6c78ca0-dcac-403b-bce0-4a2ff734b259",
+   "kind": "answer",
+   "language": "en",
+   "display": "kpi",
+   "headline": "9,113 citizen complaints · last 90 days",
+   "answerMarkdown": "**9,113** citizen complaints in the last 90 days.\n\n- They are about 8,165 incidents, 1,040 of them still open",
+   "voiceSummary": "9,113 citizen complaints in the last 90 days.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [],
+   "kpis": [
+    {
+     "label": "Complaints",
+     "value": 9113,
+     "prev": 7836,
+     "tone": "info"
+    },
+    {
+     "label": "Incidents with complaints",
+     "value": 8165,
+     "prev": 7258
+    },
+    {
+     "label": "Of them open",
+     "value": 1040
+    }
+   ],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": null,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · District-wide · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": false,
+   "sources": {
+    "tools": [
+     {
+      "name": "count_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": null,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": null,
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as incident count: asks how many."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "INCIDENT_COUNT",
+   "responseType": "kpi",
+   "visualAsked": true,
+   "context": {
+    "lastIntent": "INCIDENT_COUNT",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": null,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": null,
+     "openOnly": false,
+     "overdue": false
+    },
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "kpi"
+   },
+   "sessionId": "c927a5c9-3f70-43e0-a354-f6856e692bad"
+  }
+ },
+ {
+  "q": "severe complaints in Adyar",
+  "status": 200,
+  "err": null,
+  "headline": "Top 5 priority severe incidents · last 90 days",
+  "keys": [
+   "id",
+   "kind",
+   "language",
+   "display",
+   "headline",
+   "answerMarkdown",
+   "voiceSummary",
+   "voiceLang",
+   "chart",
+   "datasets",
+   "kpis",
+   "table",
+   "followUps",
+   "chips",
+   "consoleActions",
+   "autoActions",
+   "caveats",
+   "scope",
+   "scopeLine",
+   "asOf",
+   "testData",
+   "sources",
+   "download",
+   "intent",
+   "responseType",
+   "incidents",
+   "context",
+   "sessionId"
+  ],
+  "a": {
+   "id": "0d82e235-2f1e-4c48-971a-8581dda5d4f1",
+   "kind": "answer",
+   "language": "en",
+   "display": "text",
+   "headline": "Top 5 priority severe incidents · last 90 days",
+   "answerMarkdown": "**Active alert: Orange warning for Chennai; Cyclone Murasu in the news.** The sources agree: orange for Chennai (IMD), and 5 news outlets report Cyclone Murasu.\n\nThese are the five highest-priority severe incidents recorded in the last 90 days in Adyar zone, ranked by the console's priority score.\n\n1. **Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River** (Saidapet (Adyar River - Saidapet stretch), Adyar): severe, in progress; Still open at more than twice its 6-hour deadline.\n2. **Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை** (Little Mount, Adyar): severe, in progress; Still open at more than twice its 6-hour deadline.\n3. **Maraimalai Adigal Bridge, Saidapet: railing broken and potholes on approach, Saidapet** (Saidapet (Maraimalai Adigal Bridge, Saidapet), Adyar): severe, in progress; Still open at more than twice its 24-hour deadline.\n4. **Maraimalai Adigal Bridge, Saidapet இணைப்பு சாலையில் அரிப்பு, வாகன ஓட்டிகள் அச்சம்** (Saidapet (Maraimalai Adigal Bridge, Saidapet), Adyar): severe, in progress; Still open at more than twice its 24-hour deadline.\n5. **Jafferkhanpet: road accident claims a life** (Jafferkhanpet, Adyar): severe, in progress; 1 death.",
+   "voiceSummary": "These are the five highest-priority severe incidents recorded in the last 90 days in Adyar zone, ranked by the console's priority score.",
+   "voiceLang": "en-IN",
+   "chart": null,
+   "datasets": [
+    {
+     "id": "incidents",
+     "title": "Incidents",
+     "tab": "Incidents",
+     "idField": "id",
+     "fields": [
+      {
+       "key": "id",
+       "label": "Incident",
+       "kind": "id"
+      },
+      {
+       "key": "title",
+       "label": "Incident",
+       "kind": "category"
+      },
+      {
+       "key": "place",
+       "label": "Place",
+       "kind": "text"
+      },
+      {
+       "key": "sev",
+       "label": "Severity",
+       "kind": "text"
+      },
+      {
+       "key": "status",
+       "label": "Status",
+       "kind": "text"
+      },
+      {
+       "key": "when",
+       "label": "Reported",
+       "kind": "text"
+      },
+      {
+       "key": "priority",
+       "label": "Priority",
+       "kind": "value",
+       "format": "decimal1",
+       "additive": false
+      },
+      {
+       "key": "lat",
+       "label": "lat",
+       "kind": "geo"
+      },
+      {
+       "key": "lon",
+       "label": "lon",
+       "kind": "geo"
+      }
+     ],
+     "rows": [
+      {
+       "id": "INC-20261105-5C94BB",
+       "title": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River",
+       "place": "Saidapet (Adyar River - Saidapet stretch)",
+       "sev": "Severe",
+       "status": "In progress",
+       "when": "2026-11-05 23:41:50",
+       "priority": 113,
+       "lat": 13.010337,
+       "lon": 80.206788
+      },
+      {
+       "id": "INC-20261105-BFD2E3",
+       "title": "Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை",
+       "place": "Little Mount",
+       "sev": "Severe",
+       "status": "In progress",
+       "when": "2026-11-05 16:12:45",
+       "priority": 108,
+       "lat": 13.013665,
+       "lon": 80.214627
+      },
+      {
+       "id": "INC-20261029-A570CE",
+       "title": "Maraimalai Adigal Bridge, Saidapet: railing broken and potholes on approach, Saidapet",
+       "place": "Saidapet (Maraimalai Adigal Bridge, Saidapet)",
+       "sev": "Severe",
+       "status": "In progress",
+       "when": "2026-10-29 06:49:17",
+       "priority": 108,
+       "lat": 13.011693,
+       "lon": 80.208155
+      },
+      {
+       "id": "INC-20261024-CC1F95",
+       "title": "Maraimalai Adigal Bridge, Saidapet இணைப்பு சாலையில் அரிப்பு, வாகன ஓட்டிகள் அச்சம்",
+       "place": "Saidapet (Maraimalai Adigal Bridge, Saidapet)",
+       "sev": "Severe",
+       "status": "In progress",
+       "when": "2026-10-24 21:42:24",
+       "priority": 103,
+       "lat": 13.013096,
+       "lon": 80.20809
+      },
+      {
+       "id": "INC-20260928-A4DC12",
+       "title": "Jafferkhanpet: road accident claims a life",
+       "place": "Jafferkhanpet",
+       "sev": "Severe",
+       "status": "In progress",
+       "when": "2026-09-28 09:08:45",
+       "priority": 100,
+       "lat": 13.027956,
+       "lon": 80.203112
+      }
+     ]
+    }
+   ],
+   "kpis": [],
+   "table": null,
+   "followUps": [],
+   "chips": [],
+   "consoleActions": [],
+   "autoActions": [],
+   "caveats": [],
+   "scope": {
+    "period": "quarterly",
+    "zone": 13,
+    "dept": null,
+    "cat": null,
+    "taluk": null
+   },
+   "scopeLine": "Last 90 days · Adyar (Zone 13) · all departments · as of 6 Nov, 6:08 PM",
+   "asOf": "2026-11-06 18:08:00",
+   "testData": true,
+   "sources": {
+    "tools": [
+     {
+      "name": "priority_incidents",
+      "args": {
+       "period": "quarterly",
+       "zone": 13,
+       "taluk": null,
+       "dept": null,
+       "cats": null,
+       "sev": "Severe",
+       "openOnly": false,
+       "hours": null,
+       "place": null,
+       "offset": 0,
+       "overdue": false,
+       "ward": null,
+       "range": null,
+       "minOpenDays": null,
+       "n": 5
+      },
+      "ms": 0
+     }
+    ],
+    "sql": [],
+    "plan": null,
+    "refs": [
+     {
+      "kind": "table",
+      "name": "incidents"
+     }
+    ],
+    "rows": 0,
+    "incidentIds": [
+     "INC-20261105-5C94BB",
+     "INC-20261105-BFD2E3",
+     "INC-20261029-A570CE",
+     "INC-20261024-CC1F95",
+     "INC-20260928-A4DC12"
+    ],
+    "models": [],
+    "verifier": {
+     "checked": 0,
+     "unmatched": [],
+     "regenerated": false,
+     "template": true
+    },
+    "assumptions": [
+     "Read as priority incident list: asks for the most important incidents themselves."
+    ],
+    "limits": []
+   },
+   "download": null,
+   "intent": "PRIORITY_INCIDENT_LIST",
+   "responseType": "incident_list",
+   "incidents": [
+    {
+     "incidentId": "INC-20261105-5C94BB",
+     "title": "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River",
+     "summary": "Canal overflow at Saidapet (Adyar River - Saidapet stretch). Service fully cut off · About 500 people affected · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Saidapet (Adyar River - Saidapet stretch)",
+     "ward": 170,
+     "zone": "Adyar",
+     "taluk": "Guindy",
+     "occurredAt": "2026-11-05 23:41:50",
+     "severity": "Severe",
+     "priorityScore": 113,
+     "priorityReasons": [
+      "Still open at more than twice its 6-hour deadline",
+      "Not yet confirmed by an officer on the ground",
+      "Linked to a rain event",
+      "15 similar incidents at this place in 90 days"
+     ],
+     "status": "In progress",
+     "department": "PWD Water Resources",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 0,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.010337,
+     "lon": 80.206788,
+     "evidence": [
+      {
+       "kind": "pwd",
+       "label": "PWD record",
+       "title": "Canal overflow, Saidapet",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-05 23:41:50"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261105-BFD2E3",
+     "title": "Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை",
+     "summary": "Waterlogging at Little Mount, Adyar. Service fully cut off · Access blocked · About 200 people affected · During rain.",
+     "aiWritten": false,
+     "category": "Flooding & waterlogging",
+     "location": "Little Mount",
+     "ward": 170,
+     "zone": "Adyar",
+     "taluk": "Guindy",
+     "occurredAt": "2026-11-05 16:12:45",
+     "severity": "Severe",
+     "priorityScore": 108,
+     "priorityReasons": [
+      "Still open at more than twice its 6-hour deadline",
+      "Not yet confirmed by an officer on the ground",
+      "Linked to a rain event",
+      "14 similar incidents at this place in 90 days"
+     ],
+     "status": "In progress",
+     "department": "PWD Water Resources",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 0,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.013665,
+     "lon": 80.214627,
+     "evidence": [
+      {
+       "kind": "pwd",
+       "label": "PWD record",
+       "title": "Waterlogging at Little Mount",
+       "publisher": null,
+       "url": null,
+       "t": "2026-11-05 16:12:45"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261029-A570CE",
+     "title": "Maraimalai Adigal Bridge, Saidapet: railing broken and potholes on approach, Saidapet",
+     "summary": "Bridge damage at Saidapet (Maraimalai Adigal Bridge, Saidapet), Adyar. Service fully cut off · Access blocked · About 300 people affected.",
+     "aiWritten": false,
+     "category": "Roads, footpaths & bridges",
+     "location": "Saidapet (Maraimalai Adigal Bridge, Saidapet)",
+     "ward": 170,
+     "zone": "Adyar",
+     "taluk": "Guindy",
+     "occurredAt": "2026-10-29 06:49:17",
+     "severity": "Severe",
+     "priorityScore": 108,
+     "priorityReasons": [
+      "Still open at more than twice its 24-hour deadline",
+      "Not yet confirmed by an officer on the ground",
+      "4 similar incidents at this place in 90 days"
+     ],
+     "status": "In progress",
+     "department": "PWD Water Resources",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 0,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.011693,
+     "lon": 80.208155,
+     "evidence": [
+      {
+       "kind": "pwd",
+       "label": "PWD record",
+       "title": "Damage to Maraimalai Adigal Bridge, Saidapet reported",
+       "publisher": null,
+       "url": null,
+       "t": "2026-10-29 06:49:17"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20261024-CC1F95",
+     "title": "Maraimalai Adigal Bridge, Saidapet இணைப்பு சாலையில் அரிப்பு, வாகன ஓட்டிகள் அச்சம்",
+     "summary": "Bridge damage at Saidapet (Maraimalai Adigal Bridge, Saidapet), Adyar. Service partly disrupted · Access blocked · About 500 people affected · During rain.",
+     "aiWritten": false,
+     "category": "Roads, footpaths & bridges",
+     "location": "Saidapet (Maraimalai Adigal Bridge, Saidapet)",
+     "ward": 170,
+     "zone": "Adyar",
+     "taluk": "Guindy",
+     "occurredAt": "2026-10-24 21:42:24",
+     "severity": "Severe",
+     "priorityScore": 103,
+     "priorityReasons": [
+      "Still open at more than twice its 24-hour deadline",
+      "Not yet confirmed by an officer on the ground",
+      "Linked to a rain event"
+     ],
+     "status": "In progress",
+     "department": "PWD Water Resources",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 0,
+     "dead": 0,
+     "injured": 0,
+     "lat": 13.013096,
+     "lon": 80.20809,
+     "evidence": [
+      {
+       "kind": "pwd",
+       "label": "PWD record",
+       "title": "Bridge damage, Saidapet",
+       "publisher": null,
+       "url": null,
+       "t": "2026-10-24 21:42:24"
+      }
+     ]
+    },
+    {
+     "incidentId": "INC-20260928-A4DC12",
+     "title": "Jafferkhanpet: road accident claims a life",
+     "summary": "Road accident at Jafferkhanpet, Adyar. 1 death · 3 people injured · Road blocked for 75 minutes.",
+     "aiWritten": false,
+     "category": "Road accident",
+     "location": "Jafferkhanpet",
+     "ward": 170,
+     "zone": "Adyar",
+     "taluk": "Guindy",
+     "occurredAt": "2026-09-28 09:08:45",
+     "severity": "Severe",
+     "priorityScore": 100,
+     "priorityReasons": [
+      "1 death reported",
+      "3 injured"
+     ],
+     "status": "In progress",
+     "department": "Greater Chennai Police",
+     "sourceCount": 1,
+     "newsOutletCount": 0,
+     "citizenComplaintCount": 0,
+     "dead": 1,
+     "injured": 3,
+     "lat": 13.027956,
+     "lon": 80.203112,
+     "evidence": [
+      {
+       "kind": "police",
+       "label": "Police record",
+       "title": "Jafferkhanpet: road accident claims a life",
+       "publisher": null,
+       "url": null,
+       "t": "2026-09-28 09:08:45"
+      }
+     ]
+    }
+   ],
+   "context": {
+    "lastIntent": "PRIORITY_INCIDENT_LIST",
+    "activeFilters": {
+     "period": "quarterly",
+     "zone": 13,
+     "taluk": null,
+     "dept": null,
+     "cat": null,
+     "topic": null,
+     "sev": "Severe",
+     "openOnly": false,
+     "overdue": false
+    },
+    "resultIds": [
+     "INC-20261105-5C94BB",
+     "INC-20261105-BFD2E3",
+     "INC-20261029-A570CE",
+     "INC-20261024-CC1F95",
+     "INC-20260928-A4DC12"
+    ],
+    "resultTitles": [
+     "Call recd: canal water flowing into Srinivasa Nagar 6th St, Saidapet from Adyar River",
+     "Little Mount பெட்ரோல் பங்க் எதிரில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை",
+     "Maraimalai Adigal Bridge, Saidapet: railing broken and potholes on approach, Saidapet",
+     "Maraimalai Adigal Bridge, Saidapet இணைப்பு சாலையில் அரிப்பு, வாகன ஓட்டிகள் அச்சம்",
+     "Jafferkhanpet: road accident claims a life"
+    ],
+    "selectedTitle": null,
+    "selectedIncidentId": null,
+    "selectedNewsStoryId": null,
+    "lastResponseType": "incident_list",
+    "n": 5
+   },
+   "sessionId": "54450823-ff4b-4ca3-915b-423ae6097248"
+  }
+ }
+]

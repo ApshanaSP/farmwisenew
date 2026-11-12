@@ -5,6 +5,8 @@
  * correction refines the request that was cut off. Pure.
  */
 import { EXPLAIN_TA } from "./lexicon";
+import { foreignIn } from "./entities";
+import { singlePosition } from "./ordinal";
 import { catIn, periodIn, quickScreen, sevIn, zonesIn } from "./quick";
 import type { Recipe } from "./stage";
 import type { StageContext } from "./stage";
@@ -28,10 +30,6 @@ export type Frame =
 
 const norm = (s: string) => ` ${s.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9஀-௿]+/g, " ").replace(/\s+/g, " ").trim()} `;
 
-const ORD: [RegExp, number][] = [
-  [/ (first|1st|top|mudhal|muthal|modhal|onnu|முதல்|முதலாவது|முதலாம்) /, 1], [/ (second|2nd|rendavathu|rendaavathu|irandaavathu|rendu|இரண்டாவது|ரெண்டாவது|இரண்டாம்) /, 2],
-  [/ (third|3rd|moonavathu|munavathu|moonu|மூன்றாவது|மூணாவது|மூன்றாம்) /, 3], [/ (fourth|4th|naalavathu|naalu|நான்காவது|நாலாவது) /, 4], [/ (fifth|5th|anjavathu|anju|ஐந்தாவது|அஞ்சாவது) /, 5]
-];
 const PICK_NOUN = / (one|case|item|row|incident|complaint|that|thing|ஒன்று|ஒண்ணு|சம்பவம்|புகார்|கேஸ்|onnu|case-a) /;
 
 /** A sentence that leans on what came before: it stays out of the fast lane when a Stage or a recent turn could explain it. */
@@ -52,7 +50,7 @@ function lastFrame(i: FrameInput): { recipe: Recipe; slots: Record<string, unkno
 
 /** a follow-up's shape: short, or led by the words people use to go on from the last thing */
 const ELLIPSIS_EN = /^ (and|what about|how about|same|same for|same in|also|now|then|no|not|actually|instead|only|just|in|for|at|but|ok|okay) /;
-const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
+const ELLIPSIS_TA = /(^ (மற்றும்|அப்புறம்|அதே|இல்ல|இல்லை|வேண்டாம்) )|(பத்தி\?|மட்டும்|க்கு\?|ல\?|ில்\?|இல்\?|ஆ\?)/;
 const ELLIPSIS_TG = /^ (appo|apram|adhe|athe|illa|venam|vendaam|sari) | (la|le|ku|mattum|pathi)\??\s*$/;
 // a sentence that carries its own request (explain this issue, a report or status on something) is a new request, never "and in X?" (BUG-020)
 const LIKE_NEW_REQUEST = /\b(show|open|list|display|go to|read|tell me|give me|find|make|build|compare|rank|explain|brief|report|status|update|whats going on|what s going on|what is going on|whats wrong|vilakku|vilakkam)\b|அறிக்கை|நிலவரம்/;
@@ -68,6 +66,7 @@ const VIEW = /(as a|as|into a|in a|to a|la|-a|ஆக)?\s*(table|chart|graph|map|
 /** The follow-up, resolved; or none: the sentence stands on its own. */
 export function resolveFrame(i: FrameInput): Frame {
   const raw = i.text.trim();
+  if (foreignIn(raw, i.world)) return { kind: "none" }; // a follow-up about another place is a new question, which the brief turn answers (RC-01)
   const t = norm(raw);
   const last = lastFrame(i);
   const words = t.trim().split(" ").filter(Boolean);
@@ -75,14 +74,18 @@ export function resolveFrame(i: FrameInput): Frame {
 
   // "the second one": an item on the open Stage
   if (i.stage && (PICK_NOUN.test(t) || words.length <= 3 || /^ (open|thira) |திற/.test(t))) {
-    const hit = ORD.find(([re]) => re.test(t));
-    if (hit && i.stage.blocks.some((b) => b.ids.length >= hit[1])) return { kind: "stageOp", op: "open", n: hit[1], text: null, why: "ordinal" };
+    // one position read from the whole sentence: a place or any other word beside the number means this is not "open the Nth" (RC-42)
+    const n = singlePosition(raw);
+    if (n && i.stage.blocks.some((b) => b.ids.length >= n)) return { kind: "stageOp", op: "open", n, text: null, why: "ordinal" };
   }
   if (!last) return { kind: "none" };
 
   const hasNewPlace = zonesIn(t, i.world);
   const short = words.length <= 6;
-  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && !isNewRequest(t));
+  // a follow-up has a positive sign: a word that points back ("and", "same", "only", "what about", "no,"), or it is only a word or two ("Adyar?", "weekly"). Six words with no listed verb is not one:
+  // "describe the flooding complaint in Adyar" is a new request, and re-scoping the open brief with it would answer a different question (RC-07)
+  const POINTS_BACK = /^ (and|in|for|at|on|what about|how about|also|now|then|only|just|same|no|not|instead|ok|okay) /;
+  const ellipsis = ELLIPSIS_EN.test(t) || ELLIPSIS_TG.test(t) || ELLIPSIS_TA.test(raw) || (short && POINTS_BACK.test(t) && !isNewRequest(t)) || (words.length <= 3 && !isNewRequest(t));
   const slots = { ...last.slots };
 
   // "why?", "why so many?", "ஏன் இந்த தாமதம்?": the reason for what is on screen (a why naming a new place is a new question)

@@ -11,6 +11,7 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { insights } from "@/lib/collector/insights";
 import type { Lang } from "@/lib/assistant/lang";
 import type { Scope } from "@/lib/assistant/answer";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, any>;
 
@@ -35,6 +36,7 @@ const cache = new Map<string, { at: number; items: InsightItem[] }>();
 
 /** Today's insights, ranked, at most `limit`. Cached for five minutes (the store changes with each pipeline run). `dept`: one department's only. */
 export async function todayInsights(owner: string, limit = 5, dept: string | null = null): Promise<InsightItem[]> {
+  syncEpoch(cache); // a decision empties it (RC-35)
   let hit = cache.get(dept ?? "");
   if (!hit || Date.now() - hit.at > 5 * 60_000) cache.set(dept ?? "", hit = { at: Date.now(), items: await build(dept) });
   const votes = await feedbackByKey(owner);

@@ -1,0 +1,5 @@
+QA pass 4, audit-ui_honesty-11. A fresh server on port 3134, /api/collector/assistant/status polled every 5 s.
+model_quantized.onnx in this worktree: 134 bytes
+status search.ready: false
+status search.error, after 481 s: null
+server log lines with "embedding index": 0

@@ -1,0 +1,132 @@
+{
+ "label": "corrupt",
+ "port": "3189",
+ "probes": [
+  {
+   "name": "login collector",
+   "status": 200
+  },
+  {
+   "name": "login citizenA",
+   "status": 200
+  },
+  {
+   "name": "login officerA",
+   "status": 200
+  },
+  {
+   "name": "login page",
+   "path": "/login",
+   "status": 200,
+   "ms": 118,
+   "type": "text/html; charset=utf-8",
+   "body": "<!DOCTYPE html><html lang=\"en\" class=\"__variable_8adcd2 __variable_46451f\" data-theme=\"light\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"/brand/districtiq-wordmark.png\"/><link rel=\"preload\" as=\"image\" href=\"/",
+   "leaksStack": false
+  },
+  {
+   "name": "home",
+   "path": "/",
+   "status": 307,
+   "ms": 179,
+   "type": "text/html; charset=utf-8",
+   "body": "<!DOCTYPE html><html id=\"__next_error__\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-f8dbfcc53785bd9e.js\"/><script src=\"/_next/static/chunks/fd9d1056-910789d12",
+   "leaksStack": false
+  },
+  {
+   "name": "auth me (collector)",
+   "path": "/api/auth/me",
+   "status": 200,
+   "ms": 23,
+   "type": "application/json",
+   "body": "{\"user\":{\"id\":1000000001,\"email\":\"qa.collector@example.test\",\"role\":\"collector\",\"department_id\":null,\"department_name\":null,\"first_name\":null,\"last_name\":null}}",
+   "leaksStack": false
+  },
+  {
+   "name": "bad login",
+   "path": "/api/auth/login",
+   "status": 400,
+   "ms": 13,
+   "type": "application/json",
+   "body": "{\"error\":\"Invalid email or password.\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "citizen complaints list",
+   "path": "/api/complaints",
+   "status": 200,
+   "ms": 25,
+   "type": "application/json",
+   "body": "{\"complaints\":[]}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector brief",
+   "path": "/api/collector/brief",
+   "status": 400,
+   "ms": 512,
+   "type": "application/json",
+   "body": "{\"error\":\"Unknown kind.\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector overview page",
+   "path": "/collector",
+   "status": 200,
+   "ms": 1369,
+   "type": "text/html; charset=utf-8",
+   "body": "<!DOCTYPE html><html lang=\"en\" class=\"__variable_8adcd2 __variable_46451f\" data-theme=\"light\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"/brand/districtiq-mark.png\"/><link rel=\"preload\" as=\"image\" href=\"/bran",
+   "leaksStack": false
+  },
+  {
+   "name": "assistant status",
+   "path": "/api/collector/assistant/status",
+   "error": "fetch failed",
+   "ms": 17
+  },
+  {
+   "name": "assistant chat (how many open complaints)",
+   "path": "/api/collector/assistant/chat",
+   "status": 200,
+   "ms": 1884,
+   "type": "text/event-stream; charset=utf-8",
+   "body": "event: status\ndata: {\"stage\":\"understanding\",\"requestId\":\"1572348d-838a-49cf-aa3d-3cf59a590acc\"}\n\nevent: status\ndata: {\"stage\":\"fetching\"}\n\nevent: status\ndata: {\"stage\":\"understanding\"}\n\nevent: answer\ndata: {\"id\":\"4186b1fc-3a8a-4647-89b2-f9b0e7fcc8a1\",\"kind\":\"answer\",\"language\":\"en\",\"display\":\"kpi\",",
+   "leaksStack": false
+  },
+  {
+   "name": "thunai agent (how many open complaints)",
+   "path": "/api/collector/thunai/agent",
+   "status": 400,
+   "ms": 289,
+   "type": "application/json",
+   "body": "{\"result\":{\"kind\":\"none\"},\"why\":\"bad request\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "map ask",
+   "path": "/api/map/ask",
+   "status": 400,
+   "ms": 258,
+   "type": "application/json",
+   "body": "{\"error\":\"Type a question first.\"}",
+   "leaksStack": false
+  },
+  {
+   "name": "collector assistant insights",
+   "path": "/api/collector/assistant/insights",
+   "status": 200,
+   "ms": 4540,
+   "type": "application/json",
+   "body": "{\"items\":[{\"key\":\"attention:INC-20261106-BAE416\",\"kind\":\"attention\",\"title\":\"School van driver arrested for sexually assaulting five-year-old girl in Chennai\",\"finding\":\"Severe, Madhavaram, Open: Crimes against women at Puzhal, Madhavaram.; 1 person injured; Victim is a child, woman or elderly perso",
+   "leaksStack": false
+  },
+  {
+   "name": "collector assistant briefing",
+   "path": "/api/collector/assistant/briefing",
+   "status": 405,
+   "ms": 37,
+   "type": null,
+   "body": "",
+   "leaksStack": false
+  }
+ ]
+}

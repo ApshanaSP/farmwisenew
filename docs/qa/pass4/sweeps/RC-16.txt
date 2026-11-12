@@ -1,0 +1,22 @@
+RC-16 sweep: code that reads or prints a date in the server's own time zone (7 Nov)
+search: grep -rnE "toLocale(Date|Time)String\(|\.(getHours|getMinutes|getDate|getDay|getMonth|getFullYear|setHours|setDate|setMonth|setFullYear)\(|getTimezoneOffset" src (37 lines without a timeZone), and the whole unit suite under TZ=UTC, America/Los_Angeles and Asia/Kolkata (tests/qa/pass4/with-tz.mjs)
+
+FIXED
+ src/lib/collector/sourcemap.ts parseWhen: new Date(text) read a text with a month name, an RFC date, or an ISO date-time with no zone in the server's zone. Now a zone named in the text wins; a text that names none is Chennai time, read as UTC wall clock minus 05:30 so no server zone can move it. Run under 7 zones in src/lib/collector/tz.pass4.test.ts.
+ src/components/citizen/CitizenHome.tsx: today's date and the recent-complaint dates are printed in Asia/Kolkata, so the server and the browser agree (React error 425, hunt-citizen-1)
+
+CHECKED, ROUND TRIP IN ONE ZONE (parsed and printed in the same zone, so the calendar day cannot move)
+ src/lib/collector/insights.ts:291, 436, 485, 586 (new Date(d + "T00:00:00") then toLocaleDateString)
+CHECKED, RUNS IN THE COLLECTOR'S BROWSER (his own zone, which is Chennai) AND DESIGNED AS "LOCAL TIME"
+ src/lib/thunai/understand.ts:148-164 reminder time words, watch.ts:47, Thunai.tsx:1772, Shell.tsx:128, AssistantDialog.tsx:292, Insights.tsx:88
+
+NOT CHANGED, FILES BEING EDITED BY ANOTHER AGENT IN THIS WORKTREE (handed on, one line each)
+ src/app/citizen/track-complaints/page.tsx:38 fmtDate and src/components/ComplaintTypeSelector.tsx:284: toLocaleDateString("en-IN") with no timeZone, rendered on the server and in the browser: add { timeZone: "Asia/Kolkata" } as in CitizenHome.tsx
+
+NOT CHANGED, LOW REACH (a calendar year or a file-name date, no figure shown)
+ src/lib/complaint-code.ts:25 year of a new complaint code; complaint-media.ts:33 and officer/photos.ts:31 date folder of an upload; Footer.tsx:20 copyright year (a hydration gap only in the first hours of 1 January)
+NOT CHANGED, NEEDS THE OWNER OF THE FEED
+ src/lib/collector/sources.ts:640 mandi week slot from the server date; src/lib/studio/values.ts:52 a Date cell from a sheet is read with local getters (depends on how the sheet library builds the Date)
+
+STILL OPEN
+ parseWhen("2 Oct", ...) with no year still reads as 2001 (V8's default), as before.

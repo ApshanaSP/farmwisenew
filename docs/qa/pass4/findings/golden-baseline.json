@@ -1,0 +1,54 @@
+[
+  {
+    "id": "GB-1",
+    "area": "Collector console search box",
+    "severity": "P1",
+    "title": "Searching in Tamil in the console's search box fails with a server error (500)",
+    "what_happens": "GET /api/collector/search?q=குப்பை answers 500 for the Collector, and the server log says: 1st ORDER BY term out of range. The word split cuts a Tamil word at each vowel sign. Of 20 common Tamil words tried on a real server, 8 leave no piece (குப்பை, சாலை, புகார், குடிநீர், தீ, நோய், கொசு, பேருந்து) and answer 500. The other 12 answer 200, but are searched by a broken piece of the word (மழை as மழ, மின்சாரம் as ரம, which finds 334 incidents), so what they find can be unrelated. A word in English answers 200.",
+    "what_should_happen": "Tamil words are searched like English ones and the route answers 200, with matches or an empty list.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/golden-baseline.test.ts (GB-1). Or sign in as the Collector and GET /api/collector/search?q=%E0%AE%95%E0%AF%81%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AF%88",
+    "evidence": "tests/qa/pass4/golden-baseline.test.ts; docs/qa/pass4/golden/baseline-abef9da.manifest.json (the 500 on /api/collector/search); server log data/aws-cache/qa/golden/baseline-abef9da/server-reads.log (gitignored)",
+    "root_cause_guess": "src/lib/collector/searchwords.ts:33 splits on [^\\p{L}\\p{N}-]+, and Tamil vowel signs are \\p{M}, so they count as separators and every piece is under 2 letters. searchGroups then returns nothing, and src/lib/collector/intel.ts:1438 makes inTitle the text 0, giving ORDER BY 0 DESC, which SQLite refuses. Fix both: add \\p{M} to the kept characters, and do not order by a bare 0.",
+    "class": "language handling: Tamil text broken by a word split; crash on an empty word list",
+    "lang": "ta"
+  },
+  {
+    "id": "GB-2",
+    "area": "Rain Rehearsal",
+    "severity": "P3",
+    "title": "Asking for a rain that is not in the record answers 503 instead of 404",
+    "what_happens": "GET /api/rehearsal/state?replay=rain-1999-01-01 answers 503 with the error 'No such rain in the record.' A 503 says the service is down and a client may retry.",
+    "what_should_happen": "404, because the request is what is wrong.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/golden-baseline.test.ts (GB-2)",
+    "evidence": "tests/qa/pass4/golden-baseline.test.ts; docs/qa/pass4/golden/baseline-abef9da.manifest.json (the 503 on /api/rehearsal/state)",
+    "root_cause_guess": "src/lib/rehearsal/engine.ts:133 throws RehearsalUnavailable for an unknown replay, the error meant for 'the road network is not built'; src/app/api/rehearsal/state/route.ts turns that into 503.",
+    "class": "wrong status code",
+    "lang": "all"
+  },
+  {
+    "id": "GB-3",
+    "area": "Collector workspaces",
+    "severity": "P2",
+    "title": "On a server that does not save to the real store, a workspace just saved cannot be opened",
+    "what_happens": "POST /api/collector/workspaces gives id 1000000001. GET /api/collector/workspaces/1000000001 then answers 404, because the route only takes ids of up to 9 digits. Every server without AWS_STORE_SAVE=1 starts new ids at 1,000,000,001, so the Collector sees 'Workspace not found' for each workspace saved there. /api/collector/sources/[id] has the same check.",
+    "what_should_happen": "A workspace opens by the id the save gave it, on every server.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/golden-baseline.test.ts (GB-3)",
+    "evidence": "tests/qa/pass4/golden-baseline.test.ts; docs/qa/pass4/golden/baseline-abef9da.manifest.json (session writes, /api/collector/workspaces/1000000001, 404)",
+    "root_cause_guess": "src/app/api/collector/workspaces/[id]/route.ts:10 and src/app/api/collector/sources/[id]/route.ts:9 use /^\\d{1,9}$/; src/lib/aws/store.ts:298 sets LOCAL_IDS = 1_000_000_000, which has 10 digits.",
+    "class": "two pieces of code disagree on a limit",
+    "lang": "all"
+  },
+  {
+    "id": "GB-4",
+    "area": "Ask District IQ, search",
+    "severity": "P2",
+    "title": "If the embedding model cannot load, Ask District IQ fails instead of using its keyword search",
+    "what_happens": "With a search index present and a model that fails at once (a damaged or missing model file, no network for the first download), hybridSearch rethrows the error and the chat answers 'Something went wrong while answering'. It only falls back to keywords for the error that means 'still loading'. A trial recording logged 'assistant chat failed' for this reason, while another agent's test had left a table in data/lancedb and the model was off.",
+    "what_should_happen": "A model that cannot load is treated like one that is still loading: the keyword search answers, as the comments in lance.ts and embed.ts promise.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/golden-baseline.test.ts (GB-4). The test beside it shows the fallback working for 'still loading'.",
+    "evidence": "tests/qa/pass4/golden-baseline.test.ts. The trial log is not kept: the tool now switches the index off so that a recording does not depend on it (docs/qa/pass4/golden/NORMALISE.md).",
+    "root_cause_guess": "src/lib/assistant/lance.ts:237 (and src/lib/assistant/embed.ts:282): the catch returns null only for ModelNotReady and rethrows the rest. src/lib/assistant/fastpath.ts:614 and src/lib/assistant/tools.ts:651 do not catch it.",
+    "class": "fallback does not cover a real failure",
+    "lang": "all"
+  }
+]

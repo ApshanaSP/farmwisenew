@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
  * A complaint's private photo or video, for the citizen who uploaded it (or whose complaint it is attached to), an
  * officer of that complaint's department, or the Collector. Anyone else gets "Not found", so a name cannot be probed.
  */
-export async function GET(_req: NextRequest, { params }: { params: { name: string } }) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ name: string }> }) {
+  const params = await ctx.params;
   // every sign-in this browser holds: a photo opened in a new tab carries no page to say which portal asked
   const sessions = await getActiveSessions();
   if (!sessions.length) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

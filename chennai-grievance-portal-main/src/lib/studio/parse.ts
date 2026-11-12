@@ -86,9 +86,13 @@ function readAll(buf: Buffer, name: string, contentType: string, base: string, d
     if (!out.length) throw new ParseError(`The ZIP holds no table the Studio can read${skipped.length ? ` (${skipped.slice(0, 4).join(", ")})` : ""}.`);
     return out;
   }
+  // a name that says Excel (a zip underneath) on bytes that are not a workbook is a damaged or renamed file, not an empty one (RC-43, PB-265)
+  if (!ole && ["xlsx", "xlsm", "ods", "xlsb"].includes(ext)) throw new ParseError(`"${name}" could not be opened as an Excel workbook: its bytes are not a workbook, so it may be damaged or another kind of file renamed. Save it again from Excel as .xlsx, or ask for a fresh copy.`);
   if (ole || ["xlsx", "xlsm", "xls", "ods", "xlsb"].includes(ext)) return excelAll(buf);
   if (buf.subarray(0, 1024).toString("latin1").includes("%PDF") || /pdf/i.test(contentType)) return pdf(buf);
   const dec = decodeText(buf);
+  // bytes with NUL characters that are not UTF-16 text are not a table: say so, not that the file holds no rows
+  if (dec.encoding !== "UTF-16" && buf.subarray(0, 4096).includes(0)) throw new ParseError(`"${name}" could not be read as text: it holds binary data, not a table. Save the table again as .csv or .xlsx, or ask for a fresh copy.`);
   const text = dec.text;
   const notes = dec.encoding === "UTF-16" ? ["Read as UTF-16 text."] : [];
   if (legacyTamil(text)) notes.push("Some text looks typed in an old Tamil font (TAB, TSCII or Bamini): it cannot be read as Tamil letters. Save the file again in Unicode (UTF-8) for correct Tamil.");

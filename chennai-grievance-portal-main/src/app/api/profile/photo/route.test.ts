@@ -1,6 +1,6 @@
 /** A profile photo is checked by its bytes: a page renamed .png is refused before anything is written under public/. */
 import { NextRequest } from "next/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ written: [] as string[] }));
 vi.mock("@/lib/auth", () => ({ getSessionFromCookies: async () => ({ userId: 5, role: "citizen" }) }));
@@ -17,6 +17,7 @@ const upload = (bytes: Uint8Array<ArrayBuffer>, type: string) => {
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
 
 describe("profile photo upload", () => {
+  beforeEach(() => { h.written.length = 0; });
   it("refuses HTML that claims to be a PNG, and writes nothing", async () => {
     const r = await upload(new Uint8Array(new TextEncoder().encode("<html><script>alert(1)</script></html>")), "image/png");
     expect(r.status).toBe(400);

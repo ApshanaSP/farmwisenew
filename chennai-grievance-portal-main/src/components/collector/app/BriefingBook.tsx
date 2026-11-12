@@ -6,7 +6,7 @@ import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import type { Story } from "@/lib/collector/storyai";
 import { I, type IconName } from "./icons";
-import { SEV_HEX, deptIcon, fmtDate, rel, useFit, watchBrief, type Row } from "./lib";
+import { SEV_HEX, deptIcon, fmtDate, rel, reportsOutlets, useFit, watchBrief, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 import { api } from "./studio/client";
@@ -317,7 +317,7 @@ function DeptRow({ x, on, toggle, c }: { x: Dept; on: boolean; toggle: () => voi
               <span className="dp-lbl">Most serious reports</span>
               {items.map((i) => (
                 <button key={i.id} className="bb-di" onClick={() => c.openInc(i.id)} title="Open the incident">
-                  <i style={{ background: SEV_HEX[i.sev] }} /><span>{i.title}</span><small>{i.status}</small>
+                  <i style={{ background: SEV_HEX[i.sev] }} /><span>{i.title}</span><small data-i18n-ctx="status">{i.status}</small>
                 </button>
               ))}
             </div>
@@ -368,7 +368,7 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
                       <span key={k} className={k === 0 ? "first" : ""}><i />{g.stage}<em>{fmtDate(g.t)}</em></span>
                     ))}
                   </span>
-                  <small>{ms.length ? `${ms.length} developments · ` : ""}{s.reports} reports · {s.outlets.length} outlet{s.outlets.length === 1 ? "" : "s"} · updated {rel(s.last, ins.now)}</small>
+                  <small>{ms.length ? `${ms.length} developments · ` : ""}{reportsOutlets(s.reports, s.outlets.length)} · updated {rel(s.last, ins.now)}</small>
                 </button>
               </li>
             );

@@ -1,0 +1,13 @@
+ [31m❯[39m src/lib/dataset/append.pass4.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 600[2mms[22m[39m
+[31m   [31m×[31m RC-45 the dataset write follows the same dry-run switch as the store[2m > [22mPB-266: a dry-run server with no folder of its own writes nothing and does not even query[39m[32m 77[2mms[22m[39m
+[31m   [31m×[31m RC-45 the dataset write follows the same dry-run switch as the store[2m > [22man aws-backed server that is not set to save also writes nothing[39m[32m 2[2mms[22m[39m
+   [32m✓[39m RC-45 the dataset write follows the same dry-run switch as the store[2m > [22ma server given its own DATASET_DIR still writes there (the dry-run store does not stop a private folder)[32m 1[2mms[22m[39m
+   [32m✓[39m RC-45 the dataset write follows the same dry-run switch as the store[2m > [22ma live server (saving on) keeps the old behaviour[32m 1[2mms[22m[39m
+   [32m✓[39m RC-45 class guard: nothing under src reaches the dataset folder without the gate[2m > [22mevery file that asks for the dataset paths also asks the gate[32m 261[2mms[22m[39m
+   [32m✓[39m RC-45 class guard: nothing under src reaches the dataset folder without the gate[2m > [22mno file writes to a literal data/datasets path[32m 256[2mms[22m[39m
+   [32m✓[39m RC-45 class guard: nothing under src reaches the dataset folder without the gate[2m > [22mthe launcher gives every test server a DATASET_DIR of its own[32m 1[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/lib/dataset/append.pass4.test.ts[2m > [22mRC-45 the dataset write follows the same dry-run switch as the store[2m > [22mPB-266: a dry-run server with no folder of its own writes nothing and does not even query
+[41m[1m FAIL [22m[49m src/lib/dataset/append.pass4.test.ts[2m > [22mRC-45 the dataset write follows the same dry-run switch as the store[2m > [22man aws-backed server that is not set to save also writes nothing
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (7)[39m

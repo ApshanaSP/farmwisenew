@@ -34,7 +34,20 @@
     background: rgb(var(--c-navy-500) / 0.3);
   }
 
+  /* A keyboard ring on everything that takes focus (RC-49, PB-326): this was `outline: none`, so every link and button without its own ring
+     (the citizen top bar, the sign-in links, the eye button) showed nothing. A component that draws its own ring switches this one off
+     below, and the staff consoles (.dic) keep their own focus styles. */
   :focus-visible {
+    outline: 2px solid rgb(var(--c-navy-500) / 0.85);
+    outline-offset: 2px;
+  }
+  .dic :focus-visible,
+  .btn:focus-visible,
+  .form-input:focus-visible,
+  .auth-input:focus-visible,
+  [class*="focus-visible:ring"]:focus-visible,
+  [class*="focus:ring"]:focus-visible,
+  [class*="focus-visible:outline-none"]:focus-visible {
     outline: none;
   }
 

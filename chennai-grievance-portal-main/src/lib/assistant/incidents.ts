@@ -7,10 +7,12 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { explain, incident as incidentFull, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
+import { closedLateSql, closedOnTimeSql, isPastDeadline, pastDueSql } from "@/lib/reference/metrics";
+import { asOf, explain, incident as incidentFull, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
+import { sevLabel } from "@/lib/sev-label";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -32,7 +34,7 @@ export interface IncidentFilters {
   dept?: string | null;
   /** categories (a topic may cover several) */
   cats?: string[] | null;
-  sev?: "Severe" | "High" | null;
+  sev?: "Severe" | "High" | "Medium" | "Low" | null;
   openOnly?: boolean;
   /** a window the question names in its own words ("last 10 days" = 240), instead of the period's */
   hours?: number | null;
@@ -56,16 +58,19 @@ const COLS = `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, 
   i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, tk.name AS taluk_name, i.severity_level AS sev, ${EFF.status} AS status,
   ${OPEN} AS open, i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.outlet_count, i.media_only,
   i.priority_score AS priority, i.sla_breached AS breached, i.severity_reasons, i.priority_reasons, i.attention_reason, i.dead, i.injured,
-  i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, i.verified,
+  i.lat, i.lon, i.summary, i.ai_summary, i.ai_attention, i.ai_next_step, ${EFF.verified} AS verified,
   DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due,
-  DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed_at`;
+  DATE_FORMAT(${EFF.closedAt}, '%Y-%m-%d %H:%i:%s') AS closed_at`;
 const FROM = `FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept LEFT JOIN ref_taluks tk ON tk.taluk_code = i.taluk_code`;
 
-function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at") {
+function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "i.first_reported_at", openEnd = false) {
   const h = hours ?? f.hours ?? null;
-  const k = off + (f.offset ?? 0);
+  // a calendar range already IS the window ("yesterday" is its own day): the offset is for rolling windows only, or it would be moved back twice (BUG-018, PB-003)
+  const k = off + (f.range ? 0 : f.offset ?? 0);
   // a calendar window (a month, "since 1 October"): its exact bounds; the window before it has the same length
-  const w = f.range ? rangeWindow(f.range, k, col) : periodWindow(f.period, now, col, k, h ?? undefined);
+  const w = f.range ? rangeWindow(f.range, k, col)
+    : openEnd && k === 0 ? periodSinceWindow(f.period, now, col, h ?? undefined) // closed time: a decision made since the refresh counts
+    : periodWindow(f.period, now, col, k, h ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
   if (f.zone) (parts.push("i.zone_no = ?"), params.push(f.zone));
   if (f.ward) (parts.push("i.ward_no = ?"), params.push(f.ward));
@@ -75,8 +80,10 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   if (f.cats?.length) (parts.push("i.category_code IN (?)"), params.push(f.cats));
   if (f.sev === "Severe") parts.push("i.severity_level = 'Severe'");
   if (f.sev === "High") parts.push("i.severity_level IN ('Severe', 'High')");
+  if (f.sev === "Medium") parts.push("i.severity_level = 'Medium'");
+  if (f.sev === "Low") parts.push("i.severity_level = 'Low'");
   if (f.openOnly || f.overdue) parts.push(`${OPEN} = 1`);
-  if (f.overdue) parts.push("i.sla_breached = 1");
+  if (f.overdue) parts.push(pastDueSql(now));
   if (f.roads?.length) {
     parts.push(`(${f.roads.map(() => "LOWER(COALESCE(i.place_text, '')) LIKE ? OR LOWER(COALESCE(i.title, '')) LIKE ?").join(" OR ")})`);
     for (const r of f.roads) params.push(`%${r}%`, `%${r}%`);
@@ -120,7 +127,7 @@ export function reasonsOf(r: Row): string[] {
     else if ((m = p.match(/^(\d+) similar incidents here in (\d+) days/))) add(`${m[1]} similar incidents at this place in ${m[2]} days`);
   }
   if (/several departments/i.test(String(r.attention_reason ?? ""))) add("Needs several departments to act together");
-  if (!out.length) add(`${r.sev} severity`);
+  if (!out.length) add(sevLabel(r.sev));
   return out.slice(0, 5);
 }
 
@@ -223,13 +230,26 @@ export async function countIncidents(f: IncidentFilters, now: string) {
     complaintIncidents: num(a?.complaint_incidents), complaintOpen: num(a?.complaint_open), prevComplaintIncidents: num(b?.complaint_incidents) };
 }
 
+/**
+ * Of the incidents reported in the window, how many are now resolved, still open, severe, and open past their deadline (for "what percentage of
+ * complaints are resolved"): the same filters and the same decision-aware status as every count, so the share and the counts beside it agree.
+ * Rejected and lapsed incidents are in the total and are not resolved.
+ */
+export async function shareOfIncidents(f: IncidentFilters, now: string) {
+  const g = { ...f, openOnly: false, overdue: false };
+  const w = where(g, now);
+  const [a] = await q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0 AND ${EFF.status} = 'Resolved') AS resolved, SUM(${OPEN} = 1) AS open, SUM(i.severity_level = 'Severe') AS severe,
+    SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue FROM incidents i WHERE ${w.sql}`, w.params);
+  return { n: num(a?.n), resolved: num(a?.resolved), open: num(a?.open), severe: num(a?.severe), overdue: num(a?.overdue) };
+}
+
 /** Incidents closed as resolved in the window (by when they were closed, not when they were reported), and the window before. */
 export async function countResolved(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
-  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
+  const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
   const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved'`;
   const [[a], [b]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(i.sla_breached = 1) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
+    q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(${closedLateSql(EFF.closedAt)}) AS late FROM incidents i WHERE ${w.sql} AND ${done}`, w.params),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${p.sql} AND ${done}`, p.params)]);
   return { n: num(a?.n), severe: num(a?.severe), late: num(a?.late), prev: num(b?.n) };
 }
@@ -241,12 +261,12 @@ export async function countResolved(f: IncidentFilters, now: string) {
  */
 export async function resolutionTimes(f: IncidentFilters, now: string) {
   const g = { ...f, openOnly: false, overdue: false };
-  const w = where(g, now, undefined, 0, "i.closed_at"), p = where(g, now, undefined, 1, "i.closed_at");
-  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND i.closed_at >= i.first_reported_at`;
-  const hrs = "TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60";
+  const w = where(g, now, undefined, 0, EFF.closedAt, true), p = where(g, now, undefined, 1, EFF.closedAt);
+  const done = `${OPEN} = 0 AND ${EFF.status} = 'Resolved' AND ${EFF.closedAt} >= i.first_reported_at`;
+  const hrs = `TIMESTAMPDIFF(MINUTE, i.first_reported_at, ${EFF.closedAt}) / 60`;
   const [rows, prev] = await Promise.all([
     q(`SELECT i.lead_dept AS code, COALESCE(dp.name, i.lead_dept) AS name, COUNT(*) AS n, AVG(${hrs}) AS hours,
-              SUM(COALESCE(i.sla_breached, 0) = 0) AS on_time
+              SUM(${closedOnTimeSql(EFF.closedAt)}) AS on_time
        FROM incidents i LEFT JOIN ref_departments dp ON dp.code = i.lead_dept
        WHERE ${w.sql} AND ${done} AND i.lead_dept IS NOT NULL GROUP BY i.lead_dept, dp.name HAVING COUNT(*) >= 3 ORDER BY hours`, w.params),
     q(`SELECT i.lead_dept AS code, AVG(${hrs}) AS hours FROM incidents i WHERE ${p.sql} AND ${done} AND i.lead_dept IS NOT NULL
@@ -298,12 +318,14 @@ export async function categoryRanking(f: IncidentFilters, now: string, n: number
 
 /** One incident in full: what happened, where, when, status, why, who, how it unfolded, and the evidence. */
 export async function incidentDetail(id: string, focus: IncidentDetail["focus"] = "all"): Promise<IncidentDetail | null> {
-  const [[r], full, steps] = await Promise.all([
+  const [[r], full, steps, now] = await Promise.all([
     q(`SELECT ${COLS} ${FROM} WHERE i.incident_id = ?`, [id]),
     incidentFull(id),
-    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210"))
+    q(`SELECT DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS t, step, actor, note FROM incident_timeline WHERE incident_id = ? ORDER BY at LIMIT 30`, [id]).catch(orEmpty("incidents:210")),
+    asOf()
   ]);
   if (!r || !full) return null;
+  const missed = isPastDeadline(r, now);
   const why = explain(r);
   const reports = full.reports as Row[];
   const evidence: EvidenceItem[] = reports.slice(0, 12).map((x) => ({ kind: x.source, label: SOURCE_LABEL[x.source] ?? x.what ?? x.source,
@@ -323,11 +345,11 @@ export async function incidentDetail(id: string, focus: IncidentDetail["focus"] 
     else if (lead?.title && r.title && String(r.title) !== String(r.type) && !String(r.title).startsWith(String(r.type)))
       sentences.push(`Reported as: “${String(r.title).slice(0, 200)}”.`);
     const by = [...new Set(reports.map((x) => SOURCE_LABEL[x.source] ?? x.source))].slice(0, 3).join(", ").toLowerCase();
-    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${num(r.breached) ? " and past its deadline" : ""}.`);
+    sentences.push(`It was first reported ${r.t ? `on ${r.t.slice(0, 16)}` : ""}${by ? ` through ${by}` : ""}; it is ${String(r.status).toLowerCase()}${missed ? (num(r.open) === 1 ? " and past its deadline" : ", and was closed after its deadline") : ""}.`);
   }
   return {
     ...base, whatHappened: sentences.join(" "), facts: why.facts, attention: why.needsYou ? why.attention : [], timeline,
-    deadline: r.due ?? null, deadlineMissed: num(r.breached) === 1, closedAt: r.closed_at ?? null,
+    deadline: r.due ?? null, deadlineMissed: missed, closedAt: r.closed_at ?? null,
     officials: (full.contacts as Row[]).slice(0, 3).map((c) => ({ name: String(c.name), designation: c.designation ?? null, office: c.office ?? null })), focus
   };
 }

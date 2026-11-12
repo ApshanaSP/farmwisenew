@@ -1,0 +1,125 @@
+ RUN  v3.2.7 E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main
+[assistant] corrections: bulk-request
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): clarify/text
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+stderr | tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > Is the hospital data real?: not bed occupancy, not the top incidents
+[studio] analyst fell back to rules: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+stderr | tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > hospital data fake-a?: not bed occupancy, not the top incidents
+[studio] analyst fell back to rules: No AI provider is configured: add ANTHROPIC_API_KEY (or the AWS keys for Amazon Bedrock) to the portal's .env.
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+[assistant] PRIORITY_INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (router)
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+[assistant] INCIDENT_LIST answered from the store in 0 ms (0 ms since the question) (rules)
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/chart template
+ ❯ tests/qa/pass4/e-routes.test.ts (12 tests | 8 failed) 17311ms
+   × RC-11: a question about the data goes to the feeds, not to the subject's figures > Are all the data feeds live? 5158ms
+     → expected 'kpi_series' to be 'feeds' // Object.is equality
+   × RC-11: a question about the data goes to the feeds, not to the subject's figures > How many feeds are live? 1228ms
+     → expected undefined to be 'feeds' // Object.is equality
+   ✓ RC-11: a question about the data goes to the feeds, not to the subject's figures > Which data sources are healthy? 20ms
+   × RC-11: a question about the data goes to the feeds, not to the subject's figures > தரவு ஊட்டங்கள் நேரலையில் உள்ளனவா? 25ms
+     → expected undefined to be 'feeds' // Object.is equality
+   ✓ RC-11: a question about the data goes to the feeds, not to the subject's figures > data feeds ellam live-a irukka? 19ms
+   ✓ RC-11: a question about the data goes to the feeds, not to the subject's figures > Is the hospital data real?: not bed occupancy, not the top incidents 36ms
+   ✓ RC-11: a question about the data goes to the feeds, not to the subject's figures > hospital data fake-a?: not bed occupancy, not the top incidents 25ms
+   × RC-11: a question about the data goes to the feeds, not to the subject's figures > காவல் துறை தரவு உண்மையானதா அல்லது சோதனை தரவா?: not bed occupancy, not the top incidents 105ms
+     → expected 'கடந்த 90 நாட்களில் பதிவான மிக முக்கிய…' not to match /bed occupancy|சம்பவங்கள் \(மொத்தம்/
+   × RC-11: 'past deadline by department' is the past-deadline count of each department > past deadline by department this week 32ms
+     → expected '0 matching incidents and 3 news repor…' not to match /^No incidents|^0 matching/
+   × RC-11: 'past deadline by department' is the past-deadline count of each department > overdue cases department-wise this week 1385ms
+     → expected 'departments' to be 'followups' // Object.is equality
+   × RC-11: 'past deadline by department' is the past-deadline count of each department > இந்த வாரம் துறை வாரியாக கெடு தாண்டிய புகார்கள் 65ms
+     → expected 'incidents' to be 'followups' // Object.is equality
+   × RC-11: 'past deadline by department' is the past-deadline count of each department > indha week department wise deadline thaandiya cases 26ms
+     → expected 'departments' to be 'followups' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > Are all the data feeds live?
+AssertionError: expected 'kpi_series' to be 'feeds' // Object.is equality
+Expected: "feeds"
+Received: "kpi_series"
+ ❯ tests/qa/pass4/e-routes.test.ts:18:37
+     16| describe("RC-11: a question about the data goes to the feeds, not to t…
+     17|   it.each(["Are all the data feeds live?", "How many feeds are live?",…
+     18|     expect(feeds(await askChat(q))).toBe("feeds");
+       |                                     ^
+     19|   });
+     20|   it.each(["Is the hospital data real?", "hospital data fake-a?", "காவ…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > How many feeds are live?
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > தரவு ஊட்டங்கள் நேரலையில் உள்ளனவா?
+AssertionError: expected undefined to be 'feeds' // Object.is equality
+- Expected: 
+"feeds"
++ Received: 
+undefined
+ ❯ tests/qa/pass4/e-routes.test.ts:18:37
+     16| describe("RC-11: a question about the data goes to the feeds, not to t…
+     17|   it.each(["Are all the data feeds live?", "How many feeds are live?",…
+     18|     expect(feeds(await askChat(q))).toBe("feeds");
+       |                                     ^
+     19|   });
+     20|   it.each(["Is the hospital data real?", "hospital data fake-a?", "காவ…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: a question about the data goes to the feeds, not to the subject's figures > காவல் துறை தரவு உண்மையானதா அல்லது சோதனை தரவா?: not bed occupancy, not the top incidents
+AssertionError: expected 'கடந்த 90 நாட்களில் பதிவான மிக முக்கிய…' not to match /bed occupancy|சம்பவங்கள் \(மொத்தம்/
+- Expected: 
+/bed occupancy|சம்பவங்கள் \(மொத்தம்/
++ Received: 
+"கடந்த 90 நாட்களில் பதிவான மிக முக்கியமான 5 சம்பவங்கள் (மொத்தம் 5,302):
+1. **Tree falls across road at Manali** (Manali, Manali)
+2. **Wife dies in front of husband's eyes as lorry hits near Porur toll plaza** (Porur, Valasaravakkam)
+3. **Woman with disability dies in midnight fire at Korattur apartment** (Korattur, Ambattur)
+4. **Prisoner under police custody escapes in Kolathur, Chennai!** (Puzhal, Madhavaram)
+5. **Man electrocuted after bike falls into waterlogged pothole in Madhavaram** (Madhavaram, Madhavaram)"
+ ❯ tests/qa/pass4/e-routes.test.ts:22:47
+     20|   it.each(["Is the hospital data real?", "hospital data fake-a?", "காவ…
+     21|     const a = await askChat(q);
+     22|     expect(String(a.card.answerMarkdown)).not.toMatch(/bed occupancy|ச…
+       |                                               ^
+     23|     expect(a.card.headline).not.toMatch(/severe events|முக்கியமான/);
+     24|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: 'past deadline by department' is the past-deadline count of each department > past deadline by department this week
+AssertionError: expected '0 matching incidents and 3 news repor…' not to match /^No incidents|^0 matching/
+- Expected: 
+/^No incidents|^0 matching/
++ Received: 
+"0 matching incidents and 3 news reports in the last 7 days"
+ ❯ tests/qa/pass4/e-routes.test.ts:30:33
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: 'past deadline by department' is the past-deadline count of each department > overdue cases department-wise this week
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: 'past deadline by department' is the past-deadline count of each department > indha week department wise deadline thaandiya cases
+AssertionError: expected 'departments' to be 'followups' // Object.is equality
+Expected: "followups"
+Received: "departments"
+ ❯ tests/qa/pass4/e-routes.test.ts:31:38
+     29|     const a = await askChat(q);
+     30|     expect(a.card.headline).not.toMatch(/^No incidents|^0 matching/);
+     31|     expect(a.card.datasets?.[0]?.id).toBe("followups");
+       |                                      ^
+     32|   });
+     33| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+ FAIL  tests/qa/pass4/e-routes.test.ts > RC-11: 'past deadline by department' is the past-deadline count of each department > இந்த வாரம் துறை வாரியாக கெடு தாண்டிய புகார்கள்
+AssertionError: expected 'incidents' to be 'followups' // Object.is equality
+Expected: "followups"
+Received: "incidents"
+ ❯ tests/qa/pass4/e-routes.test.ts:31:38
+     29|     const a = await askChat(q);
+     30|     expect(a.card.headline).not.toMatch(/^No incidents|^0 matching/);
+     31|     expect(a.card.datasets?.[0]?.id).toBe("followups");
+       |                                      ^
+     32|   });
+     33| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed (12)
+   Start at  13:45:06
+   Duration  21.84s (transform 1.98s, setup 0ms, collect 3.55s, tests 17.31s, environment 0ms, prepare 129ms)

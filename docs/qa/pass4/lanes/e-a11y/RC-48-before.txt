@@ -1,0 +1,3 @@
+   × RC-49 a11y class guards > PB-321: no page loads a stylesheet or font from another host (the Content-Security-Policy blocks the fetch and the console logs an error) 14ms
+     → expected [ 'app\collector\page.tsx', …(1) ] to deeply equal []
+browser before: 56 console errors 'Connecting to https://fonts.googleapis.com/css2 ... connect-src' in axe-before.json (52 collector, 4 officer runs). The 428 on closing a case (PB-316) is the step-up protocol answering before the password box; the browser logs every 4xx, so it needs a server-side change (see lanes/e-a11y.jsonl).

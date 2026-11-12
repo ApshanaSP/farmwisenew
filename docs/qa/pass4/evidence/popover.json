@@ -1,0 +1,18 @@
+[
+ {
+  "lang": "en",
+  "chip": 1,
+  "opened": 1,
+  "closedByEscape": true,
+  "focusBackOnChip": true,
+  "closedByOutsidePress": true
+ },
+ {
+  "lang": "ta",
+  "chip": 1,
+  "opened": 1,
+  "closedByEscape": true,
+  "focusBackOnChip": true,
+  "closedByOutsidePress": true
+ }
+]

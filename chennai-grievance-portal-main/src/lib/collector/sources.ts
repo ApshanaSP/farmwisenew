@@ -85,7 +85,7 @@ export async function listSources() {
               DATE_FORMAT(last_run_at, '%Y-%m-%d %H:%i:%s') AS last_run_at, DATE_FORMAT(last_ok_at, '%Y-%m-%d %H:%i:%s') AS last_ok_at,
               last_error, items_total, created_by, DATE_FORMAT(session_expires_at, '%Y-%m-%d %H:%i:%s') AS session_expires_at
        FROM ${ops("sources")} WHERE kind <> 'ocr' ORDER BY FIELD(kind, 'pipeline', 'agmarknet', 'rss', 'html', 'json'), source_id`),
-    q(`SELECT source, status, minutes_since_success, \`rows\` AS row_count, DATE_FORMAT(newest_record_at, '%Y-%m-%d %H:%i:%s') AS newest,
+    q(`SELECT source, kind, status, minutes_since_success, \`rows\` AS row_count, DATE_FORMAT(newest_record_at, '%Y-%m-%d %H:%i:%s') AS newest,
               detail, endpoints_ok AS ep_ok, endpoints_total AS ep_total FROM source_health`),
     q(`SELECT source_id, ok, error, items_new, login, DATE_FORMAT(started_at, '%Y-%m-%d %H:%i:%s') AS t FROM (
          SELECT r.*, ROW_NUMBER() OVER (PARTITION BY source_id ORDER BY run_id DESC) rn FROM ${ops("source_runs")} r) x WHERE rn <= 5`)
@@ -99,7 +99,9 @@ export async function listSources() {
       mapped: Number(s.mapped) === 1,
       // pipeline feeds take their status from the store; "partial" = today's data arrived but some endpoints are blocked.
       // Their own last_error only holds a Refresh click's reply (already shown as a toast), so it is never shown here.
-      status: pipe ? (pipe.status === "ok" ? "ok" : pipe.status === "degraded" ? "partial" : "stale") : s.status,
+      // a feed made by a generator (source_health.kind "synthetic": police, PWD, hospital) is test data: never "Healthy"
+      generated: !!pipe && /synthetic/i.test(String(pipe.kind ?? "")),
+      status: pipe && /synthetic/i.test(String(pipe.kind ?? "")) ? "test" : pipe ? (pipe.status === "ok" ? "ok" : pipe.status === "degraded" ? "partial" : "stale") : s.status,
       last_error: pipe ? (pipe.status === "degraded"
         ? (pipe.ep_total ? `${pipe.ep_total - pipe.ep_ok} of ${pipe.ep_total} endpoints blocked by the site; the rest delivered today's data` : "Some endpoints are blocked")
         : pipe.status === "ok" ? null : PIPE_NOTE[s.pipeline_key] ?? null) : s.last_error,

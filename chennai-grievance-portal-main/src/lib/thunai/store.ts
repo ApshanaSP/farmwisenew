@@ -30,11 +30,44 @@ const EMPTY: Memory = { notes: [], habits: {}, pending: {}, prefs: {}, reminders
 
 function file(user: number) { return path.join(dir(), `memory-${Number(user)}.json`); }
 
-export function readMemory(user: number): Memory {
+const blank = (): Memory => ({ ...EMPTY, notes: [], habits: {}, pending: {}, prefs: {}, reminders: [], recent: [], pins: [] });
+
+/** RC-51 (PB-329): the memory file exists but cannot be read as a memory (cut short by a crash or a full disk, or not an object). */
+export class MemoryDamagedError extends Error {
+  constructor(public user: number) { super("Thunai's saved memory file is damaged"); this.name = "MemoryDamagedError"; }
+}
+
+/** A missing file is an empty memory. A file that is there but unreadable is damaged, and must never be treated as empty. */
+function load(user: number): { m: Memory; damaged: boolean; unreadable?: boolean } {
+  let text: string;
+  try { text = fs.readFileSync(file(user), "utf8"); }
+  catch (e) { const gone = (e as NodeJS.ErrnoException)?.code === "ENOENT"; return { m: blank(), damaged: !gone, unreadable: !gone }; } // not readable (a lock, no permission): says nothing about the notes
   try {
-    const m = JSON.parse(fs.readFileSync(file(user), "utf8"));
-    return { ...EMPTY, ...m };
-  } catch { return { ...EMPTY, habits: {}, pending: {}, prefs: {}, pins: [] }; }
+    const m = JSON.parse(text);
+    if (!m || typeof m !== "object" || Array.isArray(m)) return { m: blank(), damaged: true };
+    return { m: { ...blank(), ...m }, damaged: false };
+  } catch { return { m: blank(), damaged: true }; }
+}
+
+/** For the prompt-building routes: never throws; a damaged file reads as empty here but stays on disk untouched until a write keeps it aside. */
+export function readMemory(user: number): Memory { return load(user).m; }
+
+/** For answering the person: throws MemoryDamagedError instead of showing empty lists for a file that still holds their notes. */
+export function readMemoryStrict(user: number): Memory {
+  const r = load(user);
+  if (r.damaged) throw new MemoryDamagedError(user);
+  return r.m;
+}
+
+/** Copies a damaged file beside itself before anything is written over it. Returns the copy's name, or null when the file is fine. */
+function keepDamagedAside(user: number): string | null {
+  const r = load(user);
+  if (r.unreadable) throw new MemoryDamagedError(user); // a transient lock must never end with the notes replaced (review point 6)
+  if (!r.damaged) return null;
+  const kept = `${file(user)}.damaged-${Date.now()}`;
+  try { fs.copyFileSync(file(user), kept); } catch { return null; }
+  console.error("[thunai] memory file for user " + Number(user) + " was damaged; kept as " + path.basename(kept));
+  return kept;
 }
 
 function writeMemory(user: number, m: Memory) {
@@ -61,6 +94,7 @@ export type MemoryOp =
 
 /** Apply one change and return the new memory. Corrections become a habit on the second identical one. */
 export function changeMemory(user: number, op: MemoryOp, now = new Date()): Memory {
+  keepDamagedAside(user); // RC-51: a half-written file is copied aside before the new note replaces it
   const m = readMemory(user);
   const at = now.toISOString();
   switch (op.op) {

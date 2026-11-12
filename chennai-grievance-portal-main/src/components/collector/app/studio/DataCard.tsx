@@ -76,7 +76,7 @@ export default function DataCardTab({ id, card, fam, c, onChanged }: { id: strin
         <section className="ds-card-s">
           <h3 lang={lang}><I n="layers" />{t.family}</h3>
           {fam && <p><b>{lang === "ta" ? FAMILIES.find((f) => f[0] === fam.key)?.[2] ?? fam.name : fam.name}</b> <span className="ds-muted">· {fam.by === "you" ? "set by you" : `${Math.round(fam.confidence * 100)}% sure`}</span></p>}
-          {fam?.confirm && !picking && <div className="ds-out-acts"><span lang={lang}>{t.confirm}</span><button className="ds-btn sm" disabled={busy} onClick={() => setFamily(fam.key)}>{t.yes}</button><button className="ds-ghost" onClick={() => setPicking(true)}>{t.change}</button></div>}
+          {fam?.confirm && !picking && <div className="ds-out-acts"><span lang={lang}>{t.confirm}</span><button className="ds-btn sm" disabled={busy} onClick={() => setFamily(fam.key)} data-jarvis-never>{t.yes}</button><button className="ds-ghost" onClick={() => setPicking(true)}>{t.change}</button></div>}
           {!fam?.confirm && !picking && <button className="ds-lnk" onClick={() => setPicking(true)}><span lang={lang}>{t.change}</span></button>}
           {picking && <div className="ds-card-fams" role="group" aria-label={t.family}>{FAMILIES.map(([k, en, ta]) => <button key={k} className={k === fam?.key ? "ds-btn sm" : "ds-ghost"} disabled={busy} onClick={() => setFamily(k)} lang={lang}>{lang === "ta" ? ta : en}</button>)}</div>}
           {fam && <><small className="ds-muted" lang={lang}>{t.qs}</small><ul className="ds-card-l">{fam.questions.map((q) => <li key={q}>{q}</li>)}</ul></>}

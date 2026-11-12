@@ -11,11 +11,13 @@ import { ComplaintStatus } from "@/types";
 
 export interface RecentComplaint { code: string; title: string; status: ComplaintStatus; createdAt: string; department: string }
 
-const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+/** Chennai's calendar, whatever zone the server or the browser runs in: the server and the browser print the same day (RC-16) */
+const IST = { timeZone: "Asia/Kolkata" } as const;
+const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN", { ...IST, day: "numeric", month: "short", year: "numeric" });
 
 /** The citizen home: greeting, three KPI tiles, recent complaints with their progress, quick actions. */
 export default function CitizenHome({ name, stats, recent }: { name: string | null; stats: { total: number; open: number; resolved: number }; recent: RecentComplaint[] }) {
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  const today = new Date().toLocaleDateString("en-IN", { ...IST, weekday: "long", day: "numeric", month: "long" });
   const pct = stats.total ? stats.resolved / stats.total : 0;
   const tiles = [
     { label: "Total filed", value: stats.total, icon: ClipboardList, kc: "var(--accent)", note: "Every complaint you have raised" },
@@ -34,7 +36,7 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
         {/* the ocean band, as on the consoles: the day, the greeting and the two things a citizen comes to do */}
         <motion.section variants={enter} className="mesh-navy relative mb-6 flex flex-wrap items-end justify-between gap-5 overflow-hidden rounded-[20px] px-7 py-6 text-white shadow-lift">
           <div className="relative">
-            <p className="text-[13px] font-semibold text-[#D2EEDC]">{today}</p>
+            <p className="text-[13px] font-semibold text-[#D2EEDC]" suppressHydrationWarning>{today}</p>
             <h1 className="mt-1 text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-white">
               Vanakkam{name ? `, ${name}` : ""} <span className="font-medium text-[#9CCDB0]" lang="ta">· வணக்கம்</span>
             </h1>
@@ -50,7 +52,7 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
           </div>
         </motion.section>
 
-        <motion.section variants={stagger(0.05)} className="mb-6 grid gap-3 sm:grid-cols-3">
+        <motion.section variants={stagger(0.05)} className="mb-6 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
           {tiles.map(({ label, value, icon: Icon, kc, note, ring }) => (
             <motion.div key={label} variants={enter} className="diq-kpi" style={{ ["--kc" as string]: kc }}>
               <span className="diq-ic"><Icon className="h-[19px] w-[19px]" aria-hidden="true" /></span>
@@ -68,11 +70,11 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
           ))}
         </motion.section>
 
-        <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <motion.section variants={enter} className="diq-panel min-w-0 lg:self-start">
             <header className="ui-ch">
               <span className="ui-ch-ic" data-tone="accent" aria-hidden="true"><ClipboardList /></span>
-              <div className="ui-ch-t"><h3>Recent complaints</h3><small>Your latest three, with where each one is</small></div>
+              <div className="ui-ch-t"><h2>Recent complaints</h2><small>Your latest three, with where each one is</small></div>
               {recent.length > 0 && (
                 <div className="ui-ch-r"><Link href="/citizen/track-complaints" className="ui-more">See all<ArrowRight aria-hidden="true" /></Link></div>
               )}

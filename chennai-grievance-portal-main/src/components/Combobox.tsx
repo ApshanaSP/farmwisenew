@@ -270,14 +270,14 @@ export default function Combobox({
             type="button"
             onClick={clear}
             aria-label={`Clear selected ${noun}`}
-            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy-700"
+            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-subtle transition hover:text-navy-700"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint"
+            className="pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-subtle"
           >
             <ChevronDown className="h-4 w-4" />
           </span>
@@ -331,7 +331,7 @@ export default function Combobox({
                           <Highlighted text={opt.label} query={query} />
                         </span>
                         {opt.hint && (
-                          <span className="block truncate text-xs text-ink-faint">{opt.hint}</span>
+                          <span className="block truncate text-xs text-ink-subtle">{opt.hint}</span>
                         )}
                       </span>
                       {isSelected && (
@@ -342,7 +342,7 @@ export default function Combobox({
                 })}
               </ul>
               {matches.length > shown.length && (
-                <p className="border-t border-canvas-border px-3.5 py-2 text-xs text-ink-faint">
+                <p className="border-t border-canvas-border px-3.5 py-2 text-xs text-ink-subtle">
                   Showing {shown.length} of {matches.length.toLocaleString("en-IN")} matches &mdash;
                   keep typing to narrow it down.
                 </p>

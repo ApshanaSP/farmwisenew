@@ -164,7 +164,7 @@ export default function ForgotPasswordPage() {
                   <div className="flex items-center gap-2 text-sm">
                     {cooldown > 0 && <CountdownRing seconds={cooldown} onDone={() => setCooldown(0)} size={26} />}
                     <button type="button" onClick={(e) => requestOtp(e as unknown as FormEvent)} disabled={submitting || cooldown > 0}
-                      className="font-semibold text-navy-600 hover:underline disabled:cursor-default disabled:text-ink-faint disabled:no-underline">
+                      className="font-semibold text-navy-600 hover:underline disabled:cursor-default disabled:text-ink-subtle disabled:no-underline">
                       {cooldown > 0 ? "Resend OTP when the timer ends" : "Resend OTP"}
                     </button>
                   </div>
@@ -201,7 +201,7 @@ export default function ForgotPasswordPage() {
         {step < 4 && (
           <p className="mt-6 text-center text-sm text-ink-muted">
             Remembered your password?{" "}
-            <Link href="/login" className="font-semibold text-navy-500 hover:underline">Back to sign in</Link>
+            <Link href="/login" className="font-semibold text-navy-700 hover:underline">Back to sign in</Link>
           </p>
         )}
       </div>

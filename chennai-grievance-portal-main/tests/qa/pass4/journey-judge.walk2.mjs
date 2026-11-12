@@ -1,0 +1,30 @@
+// journey-judge walk 2: tabs and periods. node tests/qa/pass4/journey-judge.walk2.mjs
+import { chromium } from "playwright";
+import fs from "node:fs";
+const base = "http://localhost:3180", D = "../docs/qa/pass4/evidence/journeys/judge/";
+const { accounts } = await import("../seed-local-users.mjs");
+const acc = accounts().find((x) => x.key === "collector");
+const br = await chromium.launch({ args: ["--mute-audio"] });
+const page = await (await br.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+const errs = [];
+page.on("console", (m) => { if (m.type() === "error") errs.push(m.text().slice(0, 200)); });
+page.on("pageerror", (e) => errs.push("PAGEERROR " + String(e).slice(0, 200)));
+page.on("response", (r) => { if (r.status() >= 400) errs.push(`HTTP ${r.status()} ${r.url().slice(0, 120)}`); });
+await page.goto(base + "/login", { waitUntil: "networkidle" });
+await page.locator("input[type=email]").first().fill(acc.email);
+await page.locator("input[type=password]").first().fill(acc.password);
+await page.getByRole("button", { name: /^Sign in$/ }).click();
+await page.waitForURL(/\/collector/, { timeout: 60000 });
+await page.waitForTimeout(8000);
+const snap = async (name) => {
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: D + name + ".png" });
+  const t = await page.locator("body").innerText();
+  fs.writeFileSync(D + name + ".txt", t.slice(0, 9000));
+  console.log("==", name, "errs", errs.length, "\n", t.replace(/\n+/g, " | ").slice(0, 500));
+};
+const step = async (name, fn) => { try { await fn(); await snap(name); } catch (e) { console.log("FAIL", name, e.message.slice(0, 150)); await page.screenshot({ path: D + name + "-FAIL.png" }); } };
+for (const p of ["Weekly", "Monthly", "Quarterly", "Daily"]) await step("02-period-" + p, () => page.getByRole("button", { name: p, exact: true }).first().click());
+for (const t of ["Briefing", "Trends", "Environment", "Data Studio", "Search"]) await step("03-tab-" + t.replace(" ", ""), () => page.getByRole("link", { name: t, exact: true }).first().click().catch(() => page.getByText(t, { exact: true }).first().click()));
+fs.writeFileSync(D + "errs2.json", JSON.stringify(errs, null, 1));
+await br.close();

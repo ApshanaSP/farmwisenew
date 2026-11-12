@@ -1,0 +1,3487 @@
+{
+ "a": "merged",
+ "b": "merged2",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 124,
+ "added": 0,
+ "removed": 0,
+ "context": {
+  "next_build_id": {
+   "a": "So8m3taxH1GV7mmkDXSIV",
+   "b": "RDuLQPpMZxt0M0HX9y8Dj"
+  }
+ },
+ "routes": [
+  {
+   "route": "/api/officer/grievances",
+   "requests": 112,
+   "roles": [
+    "officerA",
+    "officerB"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.awaiting",
+     "count": 112
+    },
+    {
+     "path": "$.awaitingNote",
+     "count": 112
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/thunai/agent/round",
+   "requests": 6,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.blocks[*].rows[*].overdue",
+     "count": 7
+    },
+    {
+     "path": "$.result.stage.next[*].label.en",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.next[*].label.ta",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.next[*].ids[*]",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.takeaway.en",
+     "count": 2
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "count": 2
+    },
+    {
+     "path": "$.result.stage.say.en",
+     "count": 1
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "count": 1
+    },
+    {
+     "path": "$.result.stage.next[*].ids.length",
+     "count": 1
+    },
+    {
+     "path": "$.result.say",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/assistant/chat",
+   "requests": 4,
+   "roles": [
+    "collector",
+    "officerB"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$[*].data.headline",
+     "count": 4
+    },
+    {
+     "path": "$[*].data.answerMarkdown",
+     "count": 4
+    },
+    {
+     "path": "$[*].data.voiceSummary",
+     "count": 4
+    },
+    {
+     "path": "$[*].data.kpis[*].label",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/thunai/agent",
+   "requests": 1,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "count": 1
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "route": "/api/complaints",
+   "requests": 1,
+   "roles": [
+    "citizenA"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.queueNote",
+     "count": 1
+    }
+   ]
+  }
+ ],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": [
+  {
+   "id": "ea25e31de4431e9c",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 11951,
+    "b": 11928
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "54 of the 52 are past their deadline.",
+     "b": "54 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "52-இல் 54 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "54 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  },
+  {
+   "id": "804bfcdc2fda16e8",
+   "session": "reads",
+   "role": "officerB",
+   "method": "POST",
+   "url": "/api/collector/assistant/chat",
+   "route": "/api/collector/assistant/chat",
+   "fields": {},
+   "bytes": {
+    "a": 2729,
+    "b": 2630
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$[3].data.headline",
+     "a": "102 street lights and electrical incidents · கடந்த 90 நாட்களில்",
+     "b": "102 street lights and electrical incidents நிலுவையில் · கடந்த 90 நாட்களில்"
+    },
+    {
+     "path": "$[3].data.answerMarkdown",
+     "a": "கடந்த 90 நாட்களில் for Street Lighting & Electrical பகுதியில் 102 street lights and electrical incidents பதிவாகியுள்ளன: 0 கடுமையானவை, 102 இன... (171 chars)",
+     "b": "கடந்த 90 நாட்களில் for Street Lighting & Electrical பகுதியில் 102 street lights and electrical incidents இன்னும் நிலுவையில் உள்ளன, 1 உயிரிழப... (144 chars)"
+    },
+    {
+     "path": "$[3].data.voiceSummary",
+     "a": "கடந்த 90 நாட்களில் for Street Lighting & Electrical பகுதியில் 102 street lights and electrical incidents பதிவாகியுள்ளன: 0 கடுமையானவை, 102 இன... (171 chars)",
+     "b": "கடந்த 90 நாட்களில் for Street Lighting & Electrical பகுதியில் 102 street lights and electrical incidents இன்னும் நிலுவையில் உள்ளன, 1 உயிரிழப... (144 chars)"
+    },
+    {
+     "path": "$[3].data.kpis[0].label",
+     "a": "Reported",
+     "b": "Open"
+    }
+   ]
+  },
+  {
+   "id": "f302ff54235df88d",
+   "session": "reads",
+   "role": "officerB",
+   "method": "POST",
+   "url": "/api/collector/assistant/chat",
+   "route": "/api/collector/assistant/chat",
+   "fields": {},
+   "bytes": {
+    "a": 2142,
+    "b": 2099
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$[3].data.headline",
+     "a": "102 incidents · kadandha 90 naal-la",
+     "b": "102 incidents open · kadandha 90 naal-la"
+    },
+    {
+     "path": "$[3].data.answerMarkdown",
+     "a": "for Street Lighting & Electrical-la kadandha 90 naal-la 102 incidents report aagirukku: 0 severe, 102 innum open, 1 per uyirizhappu.",
+     "b": "for Street Lighting & Electrical-la kadandha 90 naal-la 102 incidents innum open-la irukku, 1 per uyirizhappu."
+    },
+    {
+     "path": "$[3].data.voiceSummary",
+     "a": "for Street Lighting & Electrical-la kadandha 90 naal-la 102 incidents report aagirukku: 0 severe, 102 innum open, 1 per uyirizhappu.",
+     "b": "for Street Lighting & Electrical-la kadandha 90 naal-la 102 incidents innum open-la irukku, 1 per uyirizhappu."
+    },
+    {
+     "path": "$[3].data.kpis[0].label",
+     "a": "Reported",
+     "b": "Open"
+    }
+   ]
+  },
+  {
+   "id": "7eeb6552758ef083",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "c764414b7e96d666",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a63cd91203e80cb4",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=DARK_SPOT_SAFETY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5b133ca94c4c7a79",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=FOOD_SAFETY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "38599b4205ddc926",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=PUBLIC_ORDER",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6c429b6659afeae3",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=FLOOD_RELIEF",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8cf49bc38fd3a17d",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=NOT_A_CATEGORY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "df59ac0a25b39e7d",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=open",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "86fe648fb2313370",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=serious",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "202312348c8e31e5",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=overdue",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4886,
+    "b": 4919
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6aa43fc1251ad051",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=due",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3515,
+    "b": 3548
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b80e2526078f9fa6",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=daily",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "dab66449b74ca1b2",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2abe95cf40e961d9",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "4d6d5cc1491e305b",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=quarterly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "907fc49d6c2daa96",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "9ae477fed53ec365",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=Adyar",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1223,
+    "b": 1256
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6f5ea0cf05916bbc",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=garbage",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "38d045617ce77adf",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=kuppai",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1238,
+    "b": 1271
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8e2e091c146aab59",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=குப்பை",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 2692,
+    "b": 2725
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "47382d59efd2454d",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=x",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6b43265a9552eb1e",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=INC-20260926-EB3B79",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "45d030a393df15d3",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Severe",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b0acfb1b1cccb1f4",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "589c5c009ff87a06",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Medium",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2fb26e6988b89b68",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Low",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4662,
+    "b": 4695
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "62b2ac71300e6edd",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "202f59f4d5b7398e",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=all",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4698,
+    "b": 4731
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "fc99fd364787f994",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=new",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "cd335786bb4b1f26",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=action",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4881,
+    "b": 4914
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "fcccf7473110520d",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=sent",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4998,
+    "b": 5031
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8cca66dfe5c75d49",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=verified",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4792,
+    "b": 4825
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "062b1f3ee4c425d3",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "998b40d6b77c7989",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-MYL",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3668,
+    "b": 3701
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2b4b43f247ef813b",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-SHN",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 650,
+    "b": 683
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "7446ab14b6b529d2",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-MDR",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1258,
+    "b": 1291
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8ead7f5458d73f91",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-AYN",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 701,
+    "b": 734
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "74d1c6aecd2808e2",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-XXX",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6a08aaa61e8c6db2",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=5",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4187,
+    "b": 4220
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "45f99be531bae84e",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=13",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1223,
+    "b": 1256
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "c5b8a20287f5a417",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=1",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 2333,
+    "b": 2366
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "976db2ef4409ac97",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=8",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 642,
+    "b": 675
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "65f730dac9bcfcca",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=15",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "c626f7d8036c7b1b",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=99",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "e4b13d4dc1e88463",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=abc",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4913,
+    "b": 4946
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "bd9bcf98ca294531",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&zone=5",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3624,
+    "b": 3657
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "04c300829a48b564",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&zone=13",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1223,
+    "b": 1256
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5801bd75500dcc15",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=quarterly&zone=1",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 2333,
+    "b": 2366
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "9d4f6c40252fe6aa",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&zone=13&cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1223,
+    "b": 1256
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "74b033f69cbfe84a",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&taluk=TLK-MYL",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3071,
+    "b": 3104
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8ab9462ee3b2758f",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&cat=DARK_SPOT_SAFETY&sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "e8266a0daa48aade",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&tab=all&sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3077,
+    "b": 3110
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "43ae454eea29528b",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&tab=all&cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4698,
+    "b": 4731
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "ff217ca4330d478b",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5d5796ae82d6a6af",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "ddb36b10d8076e5b",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=DARK_SPOT_SAFETY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "966d7e7a270fc4ca",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=FOOD_SAFETY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "aea65cc0258e35f8",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=PUBLIC_ORDER",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3f14ce8eada23484",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=FLOOD_RELIEF",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3fc5230d1f519688",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?cat=NOT_A_CATEGORY",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "20c68b0a09c6ea5c",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=open",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2f51489803aae58b",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=serious",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3606,
+    "b": 3639
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a8edc13a1f4c7381",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=overdue",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4771,
+    "b": 4804
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a3616728f164c30f",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?flag=due",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1288,
+    "b": 1321
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f04ceb455a7cc711",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=daily",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5086,
+    "b": 5119
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "5b8108cc84314973",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "374b4b739aa85e48",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "64a283f7200da639",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=quarterly",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6c4da859bec795fb",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5086,
+    "b": 5119
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6b0361534e367c8f",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=Adyar",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1468,
+    "b": 1501
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f35fa0210b13dc66",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=garbage",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "53aaf713f43059d5",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=kuppai",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "ac51bba83a6bba73",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=குப்பை",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "8690f640573a389b",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=x",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "4f14cb97e8542a0b",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?q=INC-20260926-EB3B79",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b9095ba278d0269a",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Severe",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "fe1c82627b30362d",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3606,
+    "b": 3639
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "7b4dc751bbe80260",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Medium",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5166,
+    "b": 5199
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "854d624445c3e8b4",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=Low",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4813,
+    "b": 4846
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "aa8f1cbe84cc99d8",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?sev=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "df11867e7ee6961a",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=all",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4945,
+    "b": 4978
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f05d989a02bb1710",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=new",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "76e6562a23d4d60a",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=action",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5054,
+    "b": 5087
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b2b83600db1de703",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=sent",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5345,
+    "b": 5378
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3debde103903e062",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=verified",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 5099,
+    "b": 5132
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a41d387198a2a447",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "04d4a5d3b49b34fe",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-MYL",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1375,
+    "b": 1408
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "dae89d212db972a0",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-SHN",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "50acb3e00dd5d506",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-MDR",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3005,
+    "b": 3038
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "0bd41e756d7a5b58",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-AYN",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1348,
+    "b": 1381
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "d52aae784a35feca",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?taluk=TLK-XXX",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "c1d092275969691f",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=5",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4234,
+    "b": 4267
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "420c2ac1d1a7cb29",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=13",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1468,
+    "b": 1501
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "38586f1f11e2b7b5",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=1",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1267,
+    "b": 1300
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "a036548660f9f1a6",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=8",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1308,
+    "b": 1341
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "9076c9512cdbf81d",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=15",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6697d1d8c97472b5",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=99",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "34627a782591adad",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=abc",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4758,
+    "b": 4791
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "b92acb53c8e1a9a6",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&zone=5",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 3595,
+    "b": 3628
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "af950460851c6def",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&zone=13",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1468,
+    "b": 1501
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "849d784629a50a4d",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=quarterly&zone=1",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1267,
+    "b": 1300
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3de6633ad4b8ddad",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&zone=13&cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "996ded8e43e1e0ed",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&taluk=TLK-MYL",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 1375,
+    "b": 1408
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "0524e049f8263f83",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=weekly&cat=DARK_SPOT_SAFETY&sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "6fba68681c70e54c",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&tab=all&sev=High",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4960,
+    "b": 4993
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "e58ac932678fce7a",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=monthly&tab=all&cat=SOLID_WASTE",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 66,
+    "b": 99
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "f1e6ac2ad90ac282",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 12224,
+    "b": 12201
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "54 of the 52 are past their deadline.",
+     "b": "54 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "52-இல் 54 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "54 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  },
+  {
+   "id": "484c3e63acc4f70c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11103,
+    "b": 11105
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.result.stage.blocks[1].rows[7].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 7 past deadline",
+     "b": "Draft for the 5 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 7-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 5-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261101-774B5E"
+    }
+   ]
+  },
+  {
+   "id": "f09bcf697432c0ab",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 10717,
+    "b": 10719
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.result.stage.blocks[1].rows[7].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 7 past deadline",
+     "b": "Draft for the 5 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 7-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 5-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261101-774B5E"
+    }
+   ]
+  },
+  {
+   "id": "f025856d46a1ca5f",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 6279,
+    "b": 5966
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.result.stage.say.en",
+     "a": "3 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Church Road, Padi, Mogappair in Amb... (333 chars)",
+     "b": "3 cases this week. One is past its deadline and needs you first: a street light or electrical problem at Church Road, Padi, Mogappair in Amb... (233 chars)"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (240 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[2].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 2 past deadline",
+     "b": "Draft for the 1 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 2-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 1-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.result.stage.next[0].ids[1]",
+     "a": "INC-20261031-651B9F",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (336 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (240 chars)"
+    }
+   ]
+  },
+  {
+   "id": "e2bf5af9ffe285e3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 18",
+   "fields": {},
+   "bytes": {
+    "a": 12140,
+    "b": 12117
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "54 of the 52 are past their deadline.",
+     "b": "54 are past their deadline."
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "52-இல் 54 காலக்கெடுவைத் தாண்டியவை.",
+     "b": "54 காலக்கெடுவைத் தாண்டியவை."
+    }
+   ]
+  },
+  {
+   "id": "61ed15dc04e17ba5",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 19",
+   "fields": {},
+   "bytes": {
+    "a": 11019,
+    "b": 11021
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.result.stage.blocks[1].rows[7].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.blocks[1].rows[9].overdue",
+     "a": true,
+     "b": false
+    },
+    {
+     "path": "$.result.stage.next[0].label.en",
+     "a": "Draft for the 7 past deadline",
+     "b": "Draft for the 5 past deadline"
+    },
+    {
+     "path": "$.result.stage.next[0].label.ta",
+     "a": "காலக்கெடு தாண்டிய 7-க்கு வரைவு",
+     "b": "காலக்கெடு தாண்டிய 5-க்கு வரைவு"
+    },
+    {
+     "path": "$.result.stage.next[0].ids[4]",
+     "a": "INC-20261101-C8D6E1",
+     "b": "INC-20261101-774B5E"
+    }
+   ]
+  },
+  {
+   "id": "83e4e1ba5a1f1ba4",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/assistant/chat",
+   "route": "/api/collector/assistant/chat",
+   "fields": {},
+   "bytes": {
+    "a": 2619,
+    "b": 2520
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$[3].data.headline",
+     "a": "153 street lights and electrical incidents · கடந்த 90 நாட்களில்",
+     "b": "153 street lights and electrical incidents நிலுவையில் · கடந்த 90 நாட்களில்"
+    },
+    {
+     "path": "$[3].data.answerMarkdown",
+     "a": "கடந்த 90 நாட்களில் 153 street lights and electrical incidents பதிவாகியுள்ளன: 0 கடுமையானவை, 153 இன்னும் நிலுவையில், 1 உயிரிழப்பு.",
+     "b": "கடந்த 90 நாட்களில் 153 street lights and electrical incidents இன்னும் நிலுவையில் உள்ளன, 1 உயிரிழப்பு."
+    },
+    {
+     "path": "$[3].data.voiceSummary",
+     "a": "கடந்த 90 நாட்களில் 153 street lights and electrical incidents பதிவாகியுள்ளன: 0 கடுமையானவை, 153 இன்னும் நிலுவையில், 1 உயிரிழப்பு.",
+     "b": "கடந்த 90 நாட்களில் 153 street lights and electrical incidents இன்னும் நிலுவையில் உள்ளன, 1 உயிரிழப்பு."
+    },
+    {
+     "path": "$[3].data.kpis[0].label",
+     "a": "Reported",
+     "b": "Open"
+    }
+   ]
+  },
+  {
+   "id": "c71378c43ea77a2a",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/assistant/chat",
+   "route": "/api/collector/assistant/chat",
+   "fields": {},
+   "bytes": {
+    "a": 2107,
+    "b": 2054
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$[3].data.headline",
+     "a": "2,411 incidents · kadandha 90 naal-la",
+     "b": "2,411 incidents open · kadandha 90 naal-la"
+    },
+    {
+     "path": "$[3].data.answerMarkdown",
+     "a": "kadandha 90 naal-la 2,411 incidents report aagirukku (munnadi 225): 137 severe, 2,411 innum open, 71 per uyirizhappu.",
+     "b": "kadandha 90 naal-la 2,411 incidents innum open-la irukku (137 severe), 71 per uyirizhappu."
+    },
+    {
+     "path": "$[3].data.voiceSummary",
+     "a": "kadandha 90 naal-la 2,411 incidents report aagirukku (munnadi 225): 137 severe, 2,411 innum open, 71 per uyirizhappu.",
+     "b": "kadandha 90 naal-la 2,411 incidents innum open-la irukku (137 severe), 71 per uyirizhappu."
+    },
+    {
+     "path": "$[3].data.kpis[0].label",
+     "a": "Reported",
+     "b": "Open"
+    }
+   ]
+  },
+  {
+   "id": "2aa1c2dda62808d8",
+   "session": "writes",
+   "role": "citizenA",
+   "method": "POST",
+   "url": "/api/complaints",
+   "route": "/api/complaints",
+   "fields": {},
+   "bytes": {
+    "a": 440,
+    "b": 988
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.queueNote",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    }
+   ]
+  },
+  {
+   "id": "78f15c9fa2f5ce11",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=new&per=4",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 2508,
+    "b": 2541
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "4696714d53061258",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=new",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4921,
+    "b": 4954
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "451c2f67b37e04a1",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=action",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4852,
+    "b": 4885
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "2b8dd7c0ee8764d4",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=sent",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4998,
+    "b": 5031
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "c17c6609e4007194",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=verified",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4843,
+    "b": 4876
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "39d40b4e83cd747b",
+   "session": "writes",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=all",
+   "route": "/api/officer/grievances",
+   "fields": {},
+   "bytes": {
+    "a": 4779,
+    "b": 4812
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.awaiting",
+     "a": "(absent)",
+     "b": 0
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": "(absent)",
+     "b": null
+    }
+   ]
+  }
+ ]
+}

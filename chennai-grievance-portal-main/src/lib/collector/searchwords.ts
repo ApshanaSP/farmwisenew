@@ -30,10 +30,14 @@ export function stem(w: string): string {
 
 /** The query as groups of alternatives: a record matches when every group has one alternative in it. */
 export function searchGroups(text: string): string[][] {
-  const words = String(text ?? "").toLowerCase().split(/[^\p{L}\p{N}-]+/u).filter((w) => w.length >= 2 && !STOP.has(w)).slice(0, 6);
+  // a word is its letters AND its combining marks: in Tamil the vowel signs are marks, so cutting at them left single letters and no word at all (RC-23: every such search was a 500)
+  const all = String(text ?? "").toLowerCase().split(/[^\p{L}\p{M}\p{N}-]+/u).filter((w) => w.length >= 1);
+  let words = all.filter((w) => w.length >= 2 && !STOP.has(w)).slice(0, 6);
+  // text that has words never gives an empty list (the callers build "WHERE" from the groups): when the filters take every word, the words are used as they are
+  if (!words.length) words = all.slice(0, 6);
   return words.map((w) => {
     const syn = SYNONYMS.find(([rx]) => rx.test(w))?.[1] ?? [];
-    return [...new Set([w, stem(w), ...syn])].filter((x) => x.length >= 2);
+    return [...new Set([w, stem(w), ...syn])].filter((x) => x.length >= 2 || x === w);
   });
 }
 

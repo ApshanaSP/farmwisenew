@@ -1,0 +1,16 @@
+# netstat -ano, port 3306, 2026-11-06T13:37:36Z. Only the listening lines; nothing was connected to.
+  TCP    0.0.0.0:3306           0.0.0.0:0              LISTENING       9208
+  TCP    [::]:3306              [::]:0                 LISTENING       9208
+"mysqld.exe","Services"
+# inbound firewall rules naming port 3306 or mysql (netsh, read only):
+Rule Name:                            Port 33060
+LocalPort:                            33060
+Rule Name:                            Port 3306
+LocalPort:                            3306
+# firewall profiles:
+Domain Profile Settings: 
+State                                 ON
+Private Profile Settings: 
+State                                 ON
+Public Profile Settings: 
+State                                 ON

@@ -391,7 +391,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
                 searchInputRef.current?.focus();
               }}
               aria-label="Clear search"
-              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint transition hover:text-navy-700"
+              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-subtle transition hover:text-navy-700"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -457,7 +457,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
       )}
       {providerNote && (
         <p className="mt-2 flex items-start gap-1.5 text-sm text-ink-muted">
-          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-faint" aria-hidden="true" />
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
           {providerNote}
         </p>
       )}

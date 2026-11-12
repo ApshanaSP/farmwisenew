@@ -1,0 +1,4 @@
+# G1 failing output before the fix: metamorphic m30 (qa4 run)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+FAIL QA pass 4: metamorphic (same facts when only the wording changes) m30:tanglish: "how many complaints were closed this week in Manali" and "indha vaaram Manali la evlo complaints close aachu" give the 
+     AssertionError: lane differs. base said: 30 cases this week; here are the 12 that matter most. 7 are past the deadline, not among these. The most urgent: a mosqu | rewrite said: அனுப்புவது, ஒப்புதல், நீக்குவது என் வேலை அல்ல. வரைவைத் தட்டில் வைக்கிறேன்; தட்டுவது உங்கள் கையில்.: expected 'refuse' to d

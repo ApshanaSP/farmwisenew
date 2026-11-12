@@ -5,7 +5,7 @@
  *
  * Extends the agent's figuresOk and spellsNumber (stage.ts, agent.ts) so one rule holds for digits and for words. Pure.
  */
-const TA_DIGITS = "௦௧௨௩௪௫௬௭௮௯";
+import { asciiDigits } from "./digits";
 const EN_WORDS: Record<string, number> = {
   zero: 0, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
   sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
@@ -25,13 +25,36 @@ const TA_STEMS: [RegExp, number][] = [
 ];
 const TA_TENS: [RegExp, number][] = [[/^இருபத/, 20], [/^முப்பத/, 30], [/^நாற்பத/, 40], [/^ஐம்பத/, 50], [/^அறுபத/, 60], [/^எழுபத/, 70], [/^எண்பத/, 80], [/^தொண்ணூ/, 90]];
 const TA_UNITS: [RegExp, number][] = [[/ொன்ப/, 9], [/ொன்ற/, 1], [/ரண்ட|ரெண்ட/, 2], [/மூன்ற|மூணு/, 3], [/நான்க|நால/, 4], [/ைந்த|ஐந்த|ஞ்சு/, 5], [/ாற/, 6], [/ேழ/, 7], [/ெட்ட/, 8]];
-const TG_WORDS: Record<string, number> = { rendu: 2, moonu: 3, naalu: 4, anju: 5, aaru: 6, ezhu: 7, ettu: 8, ombodhu: 9, pathu: 10, nooru: 100, aayiram: 1000 };
+/** Tanglish numerals, the Tamil numerals in Latin letters with the spellings in common use (a closed set: 2 to 10, 11 to 19, the tens, 100, 200, 1000, lakh, crore) */
+const TG_WORDS: Record<string, number> = {
+  rendu: 2, irandu: 2, moonu: 3, munu: 3, moondru: 3, mundru: 3, naalu: 4, naangu: 4, anju: 5, ainthu: 5, aaru: 6, ezhu: 7, yezhu: 7, ettu: 8, ombodhu: 9, onbadhu: 9, ombadhu: 9, onbathu: 9, pathu: 10,
+  pathinonnu: 11, pannirendu: 12, pannendu: 12, pathimoonu: 13, pathinaalu: 14, pathinaangu: 14, pathinanju: 15, pathinainthu: 15, pathinaaru: 16, pathinezhu: 17, pathinettu: 18, pathonbadhu: 19, pathombadhu: 19,
+  irubadhu: 20, irupadhu: 20, muppadhu: 30, nalpadhu: 40, naarpadhu: 40, naarpathu: 40, aimbadhu: 50, aimbathu: 50, arubadhu: 60, ezhubadhu: 70, enbadhu: 80, thonnooru: 90, thonnuru: 90,
+  nooru: 100, irunooru: 200, aayiram: 1000, laksham: 100_000, latcham: 100_000, kodi: 10_000_000
+};
 /** "ஆறு" is also a river and a place-name ending: only a whole word that stands as a number counts */
 const TA_RIVER = /(அடையாறு|பாலாறு|கூவம் ஆறு|ஆறு கரை|ஆற்று)/g;
 
+/** things a count is about: the nouns after "one" or "single" that make it a figure (reference data: the words this portal counts) */
+const COUNTED = "cases?|complaints?|incidents?|issues?|deaths?|persons?|people|reports?|alerts?|zones?|wards?|departments?|officers?|days?|weeks?|hours?|percent|lakh|crore|mm|millimetres?|floods?|flooding|leaks?|accidents?|fires?|areas?|streets?|localit(?:y|ies)|sites?|lakes?|schools?|hospitals?|stations?|taluks?|crews?|teams?|workers?|vehicles?|trees?|potholes?|drains?|roads?|tickets?|requests?|grievances?|petitions?|residents?|citizens?|households?|famil(?:y|ies)|houses?|buildings?|bridges?|pumps?|lights?|buses";
+const TG_COUNTED = "pugar|pugargal|sambavam|sambavangal|mandalam|thurai|naal|vaaram|manineram|maranam|nabar|edam|pagudhi|saalai|eri|vaardu";
+const TA_COUNTED = "புகார்|சம்பவ|மண்டல|வார்டு|வார்டி|துறை|அதிகாரி|நாள்|நாளி|வாரம்|வாரத்|மணி|எச்சரிக்கை|மரணம்|உயிரிழ|நபர்|கேஸ்|வழக்கு|இடத்|பகுதி|சாலை|ஏரி|வடிகால்|குடும்ப|வீடு|பள்ளி|மருத்துவமனை";
+/** "one" is not a count after these (the second one, this one, which one, no one) or before these (one moment, one by one) */
+const ONE_AFTER_WORD = new Set(["the", "this", "that", "these", "those", "which", "what", "no", "any", "each", "every", "another", "next", "last", "previous", "other", "same", "latest", "newest", "oldest", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "final", "big", "small", "little", "good", "bad", "right", "wrong", "young", "old", "pick", "choose", "select", "take", "try", "name", "by", "at", "some"]);
+const ONE_BEFORE_WORD = new Set(["moment", "moments", "second", "seconds", "sec", "minute", "minutes", "min", "by", "another", "thing", "point", "time", "times", "of", "can", "could", "would", "should", "who", "that", "which"]);
+const TENS_W: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+const UNITS_W = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
 export interface Figure { raw: string; value: number; words?: boolean }
 
-const taDigits = (s: string) => s.replace(/[௦-௯]/g, (d) => String(TA_DIGITS.indexOf(d)));
+/**
+ * The text as the gate reads it (RC-13): digits of every script as 0-9 (digits.ts), NFKC (fullwidth letters and digits,
+ * superscripts, circled numbers), Arabic and fullwidth separators, and no zero-width or direction marks inside a word or number.
+ */
+const invisible = (c: number) => (c >= 0x200b && c <= 0x200f) || (c >= 0x202a && c <= 0x202e) || c === 0x2060 || c === 0xfeff || c === 0xad;
+const ARABIC_DECIMAL = String.fromCharCode(0x66b), ARABIC_THOUSANDS = String.fromCharCode(0x66c);
+export const forGate = (text: string): string =>
+  asciiDigits(Array.from(text).filter((ch) => !invisible(ch.codePointAt(0) as number)).join("").normalize("NFKC")).split(ARABIC_DECIMAL).join(".").split(ARABIC_THOUSANDS).join(",");
 
 /** A Tamil word's value, or null: tens with their units (இருபத்தைந்து), thousands with their head (இரண்டாயிரம்). Ordinals (இரண்டாவது) and "both" (இரண்டையும்) are not figures. */
 function taNumber(w: string): number | null {
@@ -47,7 +70,7 @@ function taNumber(w: string): number | null {
 
 /** Every figure in the text, with its value: digits (grouped Indian or Western, decimals, %), Tamil digits, lakh/crore, words. */
 export function figuresIn(text: string): Figure[] {
-  const t = taDigits(text);
+  const t = forGate(text);
   const out: Figure[] = [];
   const seenWord = new Set<string>();
   // a code that starts with a letter is no figure (INC-2026-004, Covid-19), but a range is two (10-20)
@@ -62,16 +85,35 @@ export function figuresIn(text: string): Figure[] {
     out.push({ raw: m[0].trim(), value: base * mult });
     if (scale) seenWord.add(scale);
   }
-  for (const m of t.matchAll(/(?<![\p{L}])([a-z]+)(?![\p{L}])/giu)) {
+  // "twenty-one", "twenty one", "twentyone" are one figure, 21, not 20 and 1
+  const en = t.replace(/(?<![\p{L}])(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-]*(one|two|three|four|five|six|seven|eight|nine)(?![\p{L}])/giu, (m, tens: string, unit: string) => {
+    out.push({ raw: m, value: TENS_W[tens.toLowerCase()] + UNITS_W.indexOf(unit.toLowerCase()) + 1, words: true });
+    return " ";
+  });
+  for (const m of en.matchAll(/(?<![\p{L}])([a-z]+)(?![\p{L}])/giu)) {
     const w = m[1].toLowerCase();
     if (seenWord.has(w)) continue;
-    if (w === "double" && /^[\s-]*(check|click|tap)/i.test(t.slice((m.index ?? 0) + w.length))) continue;
-    if (EN_WORDS[w] != null) out.push({ raw: m[1], value: EN_WORDS[w], words: true });
-    else if (TG_WORDS[w] != null) out.push({ raw: m[1], value: TG_WORDS[w], words: true });
+    if (w === "double" && /^[\s-]*(check|click|tap)/i.test(en.slice((m.index ?? 0) + w.length))) continue;
+    // a word like constructor or toString is a property of every object, not a number word (scans-code-2, the same class as RC-14)
+    if (Object.hasOwn(EN_WORDS, w)) out.push({ raw: m[1], value: EN_WORDS[w], words: true });
+    else if (Object.hasOwn(TG_WORDS, w)) out.push({ raw: m[1], value: TG_WORDS[w], words: true });
   }
-  for (const m of t.matchAll(/(?<![\p{L}])(?:a|one)\s+(third|quarter|fifth|tenth)\s+of(?![\p{L}])/giu)) out.push({ raw: m[0], value: EN_PARTS[m[1].toLowerCase()], words: true });
-  // "one" before a thing counted is a figure ("only one severe case open"); "one moment", "the second one" are not (BUG-017)
-  for (const m of t.matchAll(/(?<![\p{L}])(?:only\s+|just\s+)?one\s+(?:more\s+|new\s+|open\s+|(?:severe|serious|critical|high|pending|overdue)\s+)?(case|cases|complaint|complaints|incident|incidents|issue|issues|death|deaths|person|people|report|reports|alert|alerts|zone|zones|ward|wards|department|departments|officer|officers|day|days|week|weeks|hour|hours|percent|lakh|crore|mm|millimetre|millimetres)(?![\p{L}])/giu)) out.push({ raw: m[0], value: 1, words: true });
+  for (const m of en.matchAll(/(?<![\p{L}])(?:a|one)\s+(third|quarter|fifth|tenth)\s+of(?![\p{L}])/giu)) out.push({ raw: m[0], value: EN_PARTS[m[1].toLowerCase()], words: true });
+  // "one" as a count (BUG-017, RC-13): a figure unless it stands for a thing already named ("the second one", "which one", "no one") or is a set phrase ("one moment", "one by one")
+  for (const m of en.matchAll(/(?<![\p{L}])one(?![\p{L}])/giu)) {
+    const before = en.slice(0, m.index).match(/([\p{L}'-]+)\W*$/u)?.[1]?.toLowerCase() ?? "";
+    const after = en.slice((m.index ?? 0) + 3).match(/^\W*([\p{L}'-]+)(?:\W+([\p{L}'-]+))?/u);
+    const next = after?.[1]?.toLowerCase() ?? "", next2 = after?.[2]?.toLowerCase() ?? "";
+    if (ONE_AFTER_WORD.has(before)) continue;
+    if (ONE_BEFORE_WORD.has(next) || (next === "more" && ONE_BEFORE_WORD.has(next2)) || (Object.hasOwn(EN_WORDS, next) && EN_WORDS[next] >= 100)) continue;
+    out.push({ raw: "one", value: 1, words: true });
+  }
+  // "a single severe case", "the sole officer": one, in other words (the noun must be a thing counted)
+  for (const m of en.matchAll(new RegExp(`(?<![\\p{L}])(?:single|sole|lone|solitary)\\s+(?:[\\p{L}-]+\\s+){0,2}(?:${COUNTED})(?![\\p{L}])`, "giu"))) out.push({ raw: m[0], value: 1, words: true });
+  // Tanglish: "oru severe case dhaan", "onnu dhaan", "ore oru complaint", "oru complaint"
+  for (const m of en.matchAll(new RegExp(`(?<![\\p{L}])(?:(?:ore|orey)\\s+oru|(?:onnu|onne|onnae)\\s+(?:dhaan|thaan|mattum|maatum)|oru\\s+(?:\\p{L}+\\s+){0,3}(?:dhaan|thaan|mattum|maatum)|oru\\s+(?:\\p{L}+\\s+){0,2}(?:${COUNTED}|${TG_COUNTED}))(?![\\p{L}])`, "giu"))) out.push({ raw: m[0], value: 1, words: true });
+  // Tamil: "ஒரே ஒரு", "ஒன்றே ஒன்று", "ஒன்று மட்டும்", "ஒரு புகார் மட்டும்", "ஒரு சம்பவம்"
+  for (const m of t.matchAll(new RegExp(`(?<![\\p{L}\\p{M}])(?:ஒரே\\s*(?:ஒரு|யொரு)|ஒரேயொரு|ஒன்றே\\s*ஒன்று|ஒன்(?:று|றை|றில்)\\s+(?:மட்டும்|மட்டுமே|தான்)|ஒரு\\s+(?:[\\p{L}\\p{M}]+\\s+){0,2}(?:மட்டும்|மட்டுமே)|ஒரு\\s+(?:[\\p{L}\\p{M}]+\\s+){0,2}(?:${TA_COUNTED})[\\p{L}\\p{M}]*)`, "gu"))) out.push({ raw: m[0], value: 1, words: true });
   if (/\b(percent|per cent)\b|சதவீத/i.test(t) && !/%/.test(t) && !out.some((f) => !f.words)) out.push({ raw: "percent", value: NaN, words: true });
   const clean = t.replace(TA_RIVER, " ");
   for (const m of clean.matchAll(/[஀-௿]+/g)) {

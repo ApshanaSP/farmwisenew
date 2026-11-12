@@ -1,0 +1,31 @@
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=constructor falls back to daily 1ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=constructor does not throw in the routes' date code 3ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=__proto__ falls back to daily 1ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=__proto__ does not throw in the routes' date code 0ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=toString falls back to daily 2ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=toString does not throw in the routes' date code 0ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=valueOf falls back to daily 1ms
+   × scans-code-3: a period from the address bar > scans-code-3 ?period=valueOf does not throw in the routes' date code 0ms
+   × BUG-007 reopened > AUD-NF-1 weekly: overdue cases with no severity are listed, not 'no cases' 1070ms
+   × BUG-007 reopened > AUD-NF-1 monthly: overdue cases with no severity are listed, not 'no cases' 1286ms
+   × BUG-007 reopened > AUD-NF-1 quarterly: overdue cases with no severity are listed, not 'no cases' 1758ms
+   × BUG-007 reopened > AUD-NF-1 daily: overdue cases with no severity are listed, not 'no cases' 990ms
+   × BUG-007 reopened > AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would 9ms
+   × BUG-007 reopened > AUD-NF-1 overdue cases this week 3ms
+   × BUG-007 reopened > AUD-NF-1 indha week overdue cases kaattu 4ms
+   × BUG-007 reopened > AUD-NF-1 காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம் 12ms
+   × new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 explain the flooding complaint in Adyar picks the most severe open case 10ms
+   × new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 Adyar flooding enna aachu picks the most severe open case 6ms
+   × new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 அடையாறு வெள்ளம் விளக்கு picks the most severe open case 8ms
+   × new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 a list's first row is its most severe 16ms
+   × BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-EDU has no report behind any emerging pattern 330ms
+   × BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-HLT has no report behind any emerging pattern 379ms
+   × BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-LND has no report behind any emerging pattern 327ms
+   × BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-BRG has no report behind any emerging pattern 341ms
+   × BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 the police's count is the police's 535ms
+   × new, found on the way > AUD-NF-18 Trends' oldest week is a whole week, as the others are 842ms
+   × RC-29: the figures that came from capped or grouped reads > the Briefing's 'routine' is the PDF's routine, and 'need your attention' is the CSV's whole list (no cap of 400) 868ms
+   × RC-29: the figures that came from capped or grouped reads > only in the news: the written line, the list on the page and the figure are one number 405ms
+   × RC-29: the figures that came from capped or grouped reads > the Resolved tile is what was closed in the window, as Ask District IQ counts it 665ms
+   × RC-29: the figures that came from capped or grouped reads > Trends: the 12 weeks hold whole weeks, the oldest as full as its neighbours, and the months hold all their days 849ms
+same-number-1, 4, 6, 10, 20, 22 and access-fuzz-1 were it.fails at 7d3a6f9 (they failed as written: see docs/qa/pass4/findings/same-number.json); at this branch's first rebuilt run they passed (the it.fails 'failed' as an unexpected pass) and were changed to it.

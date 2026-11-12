@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "vitest": false,
+  "playwright": false,
+  "entry": [
+    "src/app/**/{page,layout,route,loading,error,global-error,not-found,template,default,icon,apple-icon,opengraph-image,twitter-image,sitemap,robots,manifest}.{ts,tsx,js,jsx}",
+    "src/middleware.ts",
+    "src/instrumentation.ts",
+    "src/instrumentation-node.ts",
+    "next.config.js",
+    "postcss.config.js",
+    "tailwind.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx,js,jsx}", "!src/**/*.test.{ts,tsx}", "!src/**/*.live.ts", "!src/**/*.golden.ts"],
+  "ignore": [".next*/**", "data/**", "tmp/**", "uploads/**", "exports/**", "scripts/**", "tests/**"]
+}

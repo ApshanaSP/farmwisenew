@@ -1,0 +1,203 @@
+[
+ {
+  "q": "explain the flooding complaint in Velachery",
+  "place": "Velachery",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "FLOOD_WATERLOGGING"
+  },
+  "id": "INC-20261106-5C22B2",
+  "zone": "Perungudi",
+  "sev": "Low",
+  "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "explain the street light complaint in Velachery",
+  "place": "Velachery",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "STREETLIGHT_ELECTRICAL"
+  },
+  "id": "INC-20261106-31532C",
+  "zone": "Teynampet",
+  "sev": "Low",
+  "en": "There's a street light or electrical problem at Gopalapuram 6Th Street, Gopalapuram, Thousand Lights. It's been open for several hours. I'd ask the corporation for an update.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "explain the garbage complaint in Mylapore",
+  "place": "Mylapore",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "what's going on with the garbage in Tambaram",
+  "place": "Tambaram",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "explain the flooding in Saidapet",
+  "place": "Saidapet",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "FLOOD_WATERLOGGING"
+  },
+  "id": "INC-20261106-5C22B2",
+  "zone": "Perungudi",
+  "sev": "Low",
+  "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "Velachery flooding enna aachu",
+  "place": "Velachery",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "FLOOD_WATERLOGGING"
+  },
+  "id": "INC-20261106-5C22B2",
+  "zone": "Perungudi",
+  "sev": "Low",
+  "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "Mylapore kuppai enna aachu",
+  "place": "Mylapore",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "வேளச்சேரி வெள்ள புகார் விளக்கு",
+  "place": "Velachery",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "FLOOD_WATERLOGGING"
+  },
+  "id": "INC-20261106-5C22B2",
+  "zone": "Perungudi",
+  "sev": "Low",
+  "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க",
+  "place": "Mylapore",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "explain the flooding complaint in Mumbai",
+  "place": "Mumbai",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "FLOOD_WATERLOGGING"
+  },
+  "id": "INC-20261106-5C22B2",
+  "zone": "Perungudi",
+  "sev": "Low",
+  "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "explain the garbage complaint in Madurai",
+  "place": "Madurai",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ },
+ {
+  "q": "tell me about the flooding in Coimbatore",
+  "place": "Coimbatore",
+  "lane": "no-model",
+  "note": "no-model",
+  "slots": null,
+  "en": null,
+  "mentionsPlace": false
+ },
+ {
+  "q": "மதுரை குப்பை புகார் விளக்கு",
+  "place": "Madurai",
+  "lane": "quick",
+  "note": "quick",
+  "recipe": "case",
+  "slots": {
+   "zones": [],
+   "cat": "SOLID_WASTE"
+  },
+  "id": "INC-20261106-896A64",
+  "zone": "Tondiarpet",
+  "sev": "Low",
+  "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+  "mentionsPlace": false
+ }
+]

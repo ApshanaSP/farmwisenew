@@ -1,0 +1,217 @@
+RC-13 before the fix (HEAD code), 7 Nov
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+ [31m❯[39m src/lib/thunai/numbergate.pass4.test.ts [2m([22m[2m16 tests[22m[2m | [22m[31m11 failed[39m[2m)[22m[32m 48[2mms[22m[39m
+   [32m✓[39m RC-13: digits of every script[2m > [22mthe digit table covers many scripts (the property is not over a short list)[32m 1[2mms[22m[39m
+   [32m✓[39m RC-13: digits of every script[2m > [22mdigitValue reads every Unicode decimal digit as its value[32m 10[2mms[22m[39m
+[31m   [31m×[31m RC-13: digits of every script[2m > [22mproperty-1: a figure in the digits of any script never passes the gate[39m[32m 23[2mms[22m[39m
+[31m     → Property failed after 1 tests
+{ seed: 4242, path: "0:1:0:0:0:0:1", endOnFailure: true }
+Counterexample: [1,20]
+Shrunk 6 time(s)
+Hint: Enable verbose mode in order to have the list of all failing values encountered during the run[39m
+   [32m✓[39m RC-13: digits of every script[2m > [22mthe same figure passes when the data holds it, in any script[32m 6[2mms[22m[39m
+[31m   [31m×[31m RC-13: digits of every script[2m > [22msuperscript, circled and fullwidth-letter forms (NFKC) are figures too[39m[32m 1[2mms[22m[39m
+[31m     → there are ²⁵ open cases: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: digits of every script[2m > [22mArabic and fullwidth separators group digits like the ASCII ones[39m[32m 1[2mms[22m[39m
+[31m     → expected undefined to be 12345 // Object.is equality[39m
+[31m   [31m×[31m RC-13: digits of every script[2m > [22ma zero-width mark inside a number word or a figure does not hide it[39m[32m 0[2mms[22m[39m
+[31m     → word: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: digits of every script[2m > [22mspellsNumber (the agent's check) sees a digit of any script[39m[32m 0[2mms[22m[39m
+[31m     → 0: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mEnglish, 2 to 99, hyphenated, spaced or run together, in any case, is held[39m[32m 2[2mms[22m[39m
+[31m     → twentyone: expected false to be true // Object.is equality[39m
+   [32m✓[39m RC-13: every number word[2m > [22mEnglish multiples: hundred, thousand, lakh, crore, dozen, and 'one hundred and five'[32m 0[2mms[22m[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mEnglish words for one before a thing counted, in every frame[39m[32m 0[2mms[22m[39m
+[31m     → there is a single case open: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mTamil: one before a thing counted, in every frame[39m[32m 1[2mms[22m[39m
+[31m     → அடையாறில் ஒரு %s மட்டும் உள்ளது: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mTanglish: one before a thing counted, in every frame[39m[32m 0[2mms[22m[39m
+[31m     → Adyar la oru %s dhaan irukku: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mTamil numerals 2 to 30, the tens, hundreds and thousands are held, with a case ending too[39m[32m 1[2mms[22m[39m
+[31m     → இரண்டும்: expected false to be true // Object.is equality[39m
+[31m   [31m×[31m RC-13: every number word[2m > [22mTanglish numerals are held[39m[32m 0[2mms[22m[39m
+[31m     → irandu: expected false to be true // Object.is equality[39m
+   [32m✓[39m RC-13: every number word[2m > [22ma word that is not a number is not held (the gate does not eat ordinary speech)[32m 0[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 11 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: digits of every script[2m > [22mproperty-1: a figure in the digits of any script never passes the gate
+[31m[1mError[22m: Property failed after 1 tests
+{ seed: 4242, path: "0:1:0:0:0:0:1", endOnFailure: true }
+Counterexample: [1,20]
+Shrunk 6 time(s)
+Hint: Enable verbose mode in order to have the list of all failing values encountered during the run[39m
+[90m [2m❯[22m buildError node_modules/fast-check/lib/fast-check.js:[2m2469:16[22m[39m
+[90m [2m❯[22m throwIfFailed node_modules/fast-check/lib/fast-check.js:[2m2476:8[22m[39m
+[90m [2m❯[22m reportRunDetails node_modules/fast-check/lib/fast-check.js:[2m2492:14[22m[39m
+[90m [2m❯[22m Module.assert node_modules/fast-check/lib/fast-check.js:[2m2662:7[22m[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m24:8[22m[39m
+    [90m 22| [39m  it("digitValue reads every Unicode decimal digit as its value", () =…
+    [90m 23| [39m  it("property-1: a figure in the digits of any script never passes th…
+    [90m 24| [39m    fc.assert(fc.property(fc.integer({ min: 0, max: RUNS.length - 1 })…
+    [90m   | [39m       [31m^[39m
+    [90m 25| [39m      [35mconst[39m t [33m=[39m [34minScript[39m([33mRUNS[39m[k][33m,[39m n)[33m;[39m
+    [90m 26| [39m      [34mexpect[39m([34mheld[39m([32m`there are [39m[36m${[39mt[36m}[39m[32m open cases`[39m)[33m,[39m t)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+[31m[1mCaused by: AssertionError[22m: ٢٠: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m26:52[22m[39m
+[90m [2m❯[22m Property.predicate node_modules/fast-check/lib/fast-check.js:[2m1355:99[22m[39m
+[90m [2m❯[22m Property.run node_modules/fast-check/lib/fast-check.js:[2m1324:24[22m[39m
+[90m [2m❯[22m propertyExecution node_modules/fast-check/lib/fast-check.js:[2m2549:23[22m[39m
+[90m [2m❯[22m run node_modules/fast-check/lib/fast-check.js:[2m2639:91[22m[39m
+[90m [2m❯[22m runIt node_modules/fast-check/lib/fast-check.js:[2m2542:15[22m[39m
+[90m [2m❯[22m check node_modules/fast-check/lib/fast-check.js:[2m2655:14[22m[39m
+[90m [2m❯[22m Module.assert node_modules/fast-check/lib/fast-check.js:[2m2660:14[22m[39m
+[90m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m24:8[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: digits of every script[2m > [22msuperscript, circled and fullwidth-letter forms (NFKC) are figures too
+[31m[1mAssertionError[22m: there are ²⁵ open cases: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m36:168[22m[39m
+    [90m 34| [39m  })[33m;[39m
+    [90m 35| [39m  it("superscript, circled and fullwidth-letter forms (NFKC) are figur…
+    [90m 36| [39m    for (const s of ["there are ²⁵ open cases", "there are ⑫ open case…
+    [90m   | [39m                                                                                                                                                                       [31m^[39m
+    [90m 37| [39m  })[33m;[39m
+    [90m 38| [39m  it("Arabic and fullwidth separators group digits like the ASCII ones…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: digits of every script[2m > [22mArabic and fullwidth separators group digits like the ASCII ones
+[31m[1mAssertionError[22m: expected undefined to be 12345 // Object.is equality[39m
+[32m- Expected:[39m 
+12345
+[31m+ Received:[39m 
+undefined
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m39:64[22m[39m
+    [90m 37| [39m  })[33m;[39m
+    [90m 38| [39m  it("Arabic and fullwidth separators group digits like the ASCII ones…
+    [90m 39| [39m    expect(figuresIn("there are ١٢٬٣٤٥ open cases")[0]?.value).toBe(12…
+    [90m   | [39m                                                               [31m^[39m
+    [90m 40| [39m    expect(figuresIn("there are ３．５ lakh open cases")[0]?.value).toBe(…
+    [90m 41| [39m    expect(figuresIn("there are １２，３４５ open cases")[0]?.value).toBe(12…
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: digits of every script[2m > [22ma zero-width mark inside a number word or a figure does not hide it
+[31m[1mAssertionError[22m: word: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m45:54[22m[39m
+    [90m 43| [39m  it("a zero-width mark inside a number word or a figure does not hide…
+    [90m 44| [39m    [35mfor[39m ([35mconst[39m m [35mof[39m [[32m"​"[39m[33m,[39m [32m"‌"[39m[33m,[39m [32m"‍"[39m[33m,[39m [32m"⁠"[39m[33m,[39m [32m"﻿"[39m[33m,[39m [32m"­"[39m]) {
+    [90m 45| [39m      [34mexpect[39m([34mheld[39m([32m`tw[39m[36m${[39mm[36m}[39m[32mo cases are open`[39m)[33m,[39m [32m"word"[39m)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                                                     [31m^[39m
+    [90m 46| [39m      [34mexpect[39m([34mheld[39m([32m`there are 2[39m[36m${[39mm[36m}[39m[32m5 open cases`[39m)[33m,[39m [32m"digits"[39m)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m 47| [39m    }
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: digits of every script[2m > [22mspellsNumber (the agent's check) sees a digit of any script
+[31m[1mAssertionError[22m: 0: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m50:94[22m[39m
+    [90m 48| [39m  })[33m;[39m
+    [90m 49| [39m  it("spellsNumber (the agent's check) sees a digit of any script", ()…
+    [90m 50| [39m    for (const run of RUNS) expect(spellsNumber(`about ${inScript(run,…
+    [90m   | [39m                                                                                             [31m^[39m
+    [90m 51| [39m    expect(spellsNumber("about 25 cases")).toBe(false); // ASCII digit…
+    [90m 52| [39m  })[33m;[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mEnglish, 2 to 99, hyphenated, spaced or run together, in any case, is held
+[31m[1mAssertionError[22m: twentyone: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m66:193[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mEnglish words for one before a thing counted, in every frame
+[31m[1mAssertionError[22m: there is a single case open: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m73:307[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mTamil: one before a thing counted, in every frame
+[31m[1mAssertionError[22m: அடையாறில் ஒரு %s மட்டும் உள்ளது: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m77:224[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mTanglish: one before a thing counted, in every frame
+[31m[1mAssertionError[22m: Adyar la oru %s dhaan irukku: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m79:225[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mTamil numerals 2 to 30, the tens, hundreds and thousands are held, with a case ending too
+[31m[1mAssertionError[22m: இரண்டும்: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m83:164[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯[22m[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/numbergate.pass4.test.ts[2m > [22mRC-13: every number word[2m > [22mTanglish numerals are held
+[31m[1mAssertionError[22m: irandu: expected false to be true // Object.is equality[39m
+[32m- Expected[39m
+[31m+ Received[39m
+[32m- true[39m
+[31m+ false[39m
+[36m [2m❯[22m src/lib/thunai/numbergate.pass4.test.ts:[2m87:119[22m[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯[22m[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m11 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (16)[39m
+[2m   Start at [22m 14:16:50
+[2m   Duration [22m 1.16s[2m (transform 392ms, setup 0ms, collect 589ms, tests 48ms, environment 0ms, prepare 126ms)[22m
+
+--- props.pass4.test.ts property-1 (it.fails at HEAD; seed 4242), run as it():
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+ [31m❯[39m src/lib/thunai/zz_tmp_props.pass4.test.ts [2m([22m[2m19 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 615[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22ma mobile number in any grouping and Unicode separator is hidden[32m 30[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22ma mobile number in Tamil digits with ordinary separators is hidden[32m 13[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mproperty-2: a mobile number in Tamil digits with a Unicode dash or no-break space is hidden[32m 2[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mproperty-2b: an Aadhaar number in Tamil digits with a Unicode dash or no-break space is hidden[32m 2[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mproperty-3: a mobile number with a 0, 91 or +91 prefix and a 2-4-4 grouping ('0-60.0000 0000') is hidden[32m 2[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mproperty-7: a zero-width or direction mark inside a mobile number does not stop it being hidden[32m 2[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mproperty-4: a mobile number with every digit spaced ('9 8 4 0 1 2 3 4 5 6') is hidden[32m 3[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22man Aadhaar number (12 digits, 4-4-4 or run together, any separator) is hidden[32m 10[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22man email address is hidden[32m 9[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22man email written as 'name at host dot com' or [at]/[dot] is hidden[32m 7[2mms[22m[39m
+   [32m✓[39m redaction (property)[2m > [22mordinary text (words, small numbers, INC ids, dates) is left unchanged[32m 11[2mms[22m[39m
+   [33m[2m✓[22m[39m redaction (property)[2m > [22mnever throws and is idempotent on any string [33m 413[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22ma figure in digits that is not in the data never passes[32m 37[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22ma figure in the data passes in digits and Tamil digits[32m 27[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22ma figure in English words that is not in the data never passes[32m 8[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22mEnglish words in capitals or mixed case never pass either[32m 5[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22ma figure in Tamil words that is not in the data never passes[32m 10[2mms[22m[39m
+   [32m✓[39m number gate (property)[2m > [22ma figure in Tamil words passes only when its value is allowed[32m 10[2mms[22m[39m
+[31m   [31m×[31m number gate (property)[2m > [22mproperty-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate[39m[32m 11[2mms[22m[39m
+[31m     → Property failed after 1 tests
+{ seed: 4242, path: "0:0", endOnFailure: true }
+Counterexample: [20,"fw"]
+Shrunk 1 time(s)
+Hint: Enable verbose mode in order to have the list of all failing values encountered during the run[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m src/lib/thunai/zz_tmp_props.pass4.test.ts[2m > [22mnumber gate (property)[2m > [22mproperty-1: a figure written in fullwidth, Arabic-Indic or Devanagari digits never passes the gate
+[31m[1mError[22m: Property failed after 1 tests
+{ seed: 4242, path: "0:0", endOnFailure: true }
+Counterexample: [20,"fw"]
+Shrunk 1 time(s)
+Hint: Enable verbose mode in order to have the list of all failing values encountered during the run[39m
+[90m [2m❯[22m buildError node_modules/fast-check/lib/fast-check.js:[2m2469:16[22m[39m
+[90m [2m❯[22m throwIfFailed node_modules/fast-check/lib/fast-check.js:[2m2476:8[22m[39m
+[90m [2m❯[22m reportRunDetails node_modules/fast-check/lib/fast-check.js:[2m2492:14[22m[39m
+[90m [2m❯[22m Module.assert node_modules/fast-check/lib/fast-check.js:[2m2662:7[22m[39m
+[36m [2m❯[22m src/lib/thunai/zz_tmp_props.pass4.test.ts:[2m156:8[22m[39m
+    [90m154| [39m  // open: lane b flipped this to it() before any lane fixed it (the g…
+    [90m155| [39m  it("property-1: a figure written in fullwidth, Arabic-Indic or Devan…

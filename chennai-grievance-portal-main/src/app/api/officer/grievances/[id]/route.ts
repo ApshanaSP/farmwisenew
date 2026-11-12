@@ -6,7 +6,8 @@ import { WorkflowError, grievanceDetail, recordStep } from "@/lib/officer/data";
 export const dynamic = "force-dynamic";
 
 /** One grievance of the officer's department (404 for any other department's). */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
+  const params = await routeCtx.params;
   const ctx = await officerSession(req.nextUrl.searchParams);
   if (ctx instanceof NextResponse) return ctx;
   if (!ID_RE.test(params.id)) return NextResponse.json({ error: "Invalid grievance id." }, { status: 400 });
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 const StepSchema = z.object({ step: z.literal("approve") });
 
 /** Approve a new grievance (it moves to In action). Sending to the Collector is POST .../report. */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
+  const params = await routeCtx.params;
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
   if (!ID_RE.test(params.id)) return NextResponse.json({ error: "Invalid grievance id." }, { status: 400 });

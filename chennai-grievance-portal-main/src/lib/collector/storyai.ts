@@ -17,6 +17,7 @@ import { z } from "zod";
 import { aiJson } from "@/lib/collector/aibrief";
 import { when } from "@/lib/collector/analysis";
 import { threads, tokens, type Thread, type ThreadScope, type ThreadStep } from "@/lib/collector/threads";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 export interface Milestone { t: string; label: string; what: string; title: string; publisher: string | null; url: string | null; incident: string | null }
 export interface Story extends Thread {
@@ -194,7 +195,9 @@ export async function stories(scope: ThreadScope, now: string, user: string): Pr
   const base = await threads(scope, now);
   // bump V when the prompts or rules here change, so a remembered result is not reused
   const key = `${V}|${base.threads.map((t) => `${t.id}:${t.reports}`).join(",")}`;
-  const memo = (global.__stories ??= new Map()).get(key);
+  const kept = (global.__stories ??= new Map());
+  syncEpoch(kept); // the stories carry whether each is still open: a decision empties them (RC-35)
+  const memo = kept.get(key);
   if (memo && Date.now() - memo.at < 30 * 60_000) return memo.v;
 
   const cand = base.threads.filter((t) => !routine(t));

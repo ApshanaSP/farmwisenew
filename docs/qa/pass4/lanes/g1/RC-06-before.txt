@@ -1,0 +1,4 @@
+# G1 failing output before the fix: yesterday refused as a plain request (grader rows)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+ROW ta-explain-14: wrong | refused a plain request | said: நான் கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே வைத்திருக்கிறேன்; நேற்று மட்டும் அதில் இல்லை. எதுவும் மாற்றப்படவில்லை.
+ROW ta-noisy-07: wrong | refused a plain request | said: நான் கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே வைத்திருக்கிறேன்; நேற்று மட்டும் அதில் இல்லை. எதுவும் மாற்றப்படவில்லை.

@@ -185,3 +185,5 @@ export class Ledger {
 let shared: Ledger | null = null;
 /** The one ledger on this server (lazy: nothing opens until the first call). */
 export const ledger = () => (shared ??= new Ledger());
+/** Forget the shared ledger so the next call opens a fresh one (tests only: a cooling or a spend must not leak from one test to the next). */
+export function resetLedger() { shared = null; }

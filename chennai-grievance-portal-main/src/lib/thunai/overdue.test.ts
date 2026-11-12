@@ -32,3 +32,26 @@ it("severe overdue cases are counted from the severe list, page by page", async 
   const list = b.doc.blocks.find((x) => x.kind === "CaseList") as { total: number } | undefined;
   expect(list?.total).toBe(15);
 });
+
+// SK-1, SK-2 (lane a skeptic): a zone's overdue cases are not on the first page of 12 of the open list; the list is asked for the overdue ones
+it("overdue cases are asked for as overdue, and read past a first page that holds none", async () => {
+  const h = fakeHands();
+  const seenStatus: unknown[] = [];
+  const row = (p: number, i: number, late: boolean) => ({ id: `INC-Q${p}-${i}`, title: `Case ${p}-${i}`, sev: "High", status: "Open", zone: 13, breached: late ? 1 : 0, dept: "GCC-SWD", complaints: 1, t: "2026-11-01 10:00:00" });
+  const hands = { ...h, tool: async (n: string, a: Record<string, unknown>) => {
+    if (n === "incidents") {
+      seenStatus.push(a.status);
+      const p = Number(a.page ?? 0);
+      // the first page holds no overdue case when it is read as "open"; asked as overdue, every row is
+      const rows = Array.from({ length: p < 1 ? 3 : 0 }, (_, i) => row(p, i, true));
+      return { scope: null, asOf: null, data: { rows, total: 3 }, facts: [], sources: [], incidentIds: [], caveats: [] } as never;
+    }
+    return n === "dept_followups" ? { scope: null, asOf: null, data: { rows: [] }, facts: [], sources: [], incidentIds: [], caveats: [] } as never : h.tool(n, a);
+  } };
+  const world = { ...WORLD, ...referenceWorld() };
+  const b = await buildScreen("cases", { ...emptySlots(), status: "overdue", period: "weekly" }, { period: "weekly", zone: 13, dept: null, cat: null, taluk: null, sev: null }, world, hands, "overdue cases in Adyar");
+  const list = b.doc.blocks.find((x) => x.kind === "CaseList") as { total: number; rows: unknown[] } | undefined;
+  expect(seenStatus.every((x) => x === "overdue")).toBe(true);
+  expect(list?.total).toBe(3);
+  expect(list?.rows.length).toBe(3);
+});

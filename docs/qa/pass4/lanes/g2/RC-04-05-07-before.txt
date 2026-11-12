@@ -1,0 +1,48 @@
+RC-04, RC-05, RC-07 (lane a leftovers: jarvis2-1, -2, -7, -11; hunt-jarvis1-8, -11, -12): state on the tree before this fixer (HEAD 02fab5d: understand.ts and quick.ts as committed), tests/qa/pass4/g2-real.test.ts run against it.
+   ✓ RC-15 the Tamil brief carries Tamil lines (PB-207) > Tamil letters, the district: இன்றைய சுருக்கம் சொல்லு  3902ms
+   ✓ RC-15 the Tamil brief carries Tamil lines (PB-207) > Tamil letters, a zone: அடையாறு சுருக்கம்  1966ms
+   ✓ RC-15 the Tamil brief carries Tamil lines (PB-207) > Tanglish, the district: indha vaaram brief sollu  2946ms
+   ✓ RC-15 the Tamil brief carries Tamil lines (PB-207) > Tanglish, a zone: Perambur nelamai enna, konjam summary sollu 38ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > every department and category of the real world has its Tamil name (complete reference data) 2ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > a zone ranking, Tamil letters 116ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > a zone ranking, Tanglish 76ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > a trend, Tamil letters  421ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > a trend of one kind, Tamil letters  314ms
+   ✓ RC-15 the Tamil lines of a ranking, a trend and a dashboard say Tamil names (PB-161, PB-174 class) > a dashboard of one kind, Tamil letters  3136ms
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > the class: every zone, said as a number word, as digits and in Tamil letters, is the same zone 64ms
+     → expected [ …(75) ] to deeply equal []
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > English number word: the severe-cases screen is that zone's 53ms
+     → 8 severe cases today. 8 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say "read them",
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > Tamil letters, digits: the severe-cases screen is that zone's 61ms
+     → இன்று 8 கடுமையான சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம்,
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > Tamil letters, number word: the severe-cases screen is that zone's 50ms
+     → இன்று 8 கடுமையான சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம்,
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > Tanglish: the severe-cases screen is that zone's 41ms
+     → இன்று 8 கடுமையான சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம்,
+   × a zone said by number, as a word or in Tamil letters, is kept (PB-288, PB-289, PB-298) > two zones said by number are both kept, and compared 66ms
+     → Zone 9 · Teynampet: expected undefined to deeply equal [ 3, 9 ]
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > close all severe complaints is refused or asked about, and the console is left alone 8ms
+     → Severe: expected true to be false // Object.is equality
+   ✓ an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > delete every overdue case in Adyar is refused or asked about, and the console is left alone 3ms
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > மண்டலம் 5 புகார்களை எல்லாம் மூடு is refused or asked about, and the console is left alone 12ms
+     → மண்டலம் 5 · ராயபுரம்: expected true to be false // Object.is equality
+   ✓ an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > send all the drafts now is refused or asked about, and the console is left alone 8ms
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > Adyar la ella complaints-um close pannu is refused or asked about, and the console is left alone 8ms
+     → மண்டலம் 13 · அடையாறு: expected true to be false // Object.is equality
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > a note to keep, Tamil letters: asks to remember, opens nothing 18ms
+     → இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட�
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > a note to keep, Tamil letters, polite ending: asks to remember, opens nothing 9ms
+     → இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட�
+   × an order Jarvis does not carry out, and a note to keep, are not filters (PB-283, PB-284, PB-294) > a note to keep, Tanglish: asks to remember, opens nothing 12ms
+     → இப்போது என்னால் யோசிக்க முடியவில்லை: எந்த மாடலும் பதில் தரவில்லை. கடுமையான சம்பவங்களைக் காட�
+      Tests  12 failed | 12 passed (24)
+
+Ask District IQ, a zone said by a number word or in Tamil letters (tests/qa/pass4/g2-ask.test.ts), against HEAD's compare.ts, guard.ts, pipeline.ts, tools.ts:
+   × a zone said by a number word or in Tamil letters is the zone, in chat > en word 424ms
+     → 1,238 open citizen complaints · last 90 days: expected '1,238 open citizen complaints · last …' to match /Royapuram/
+   ✓ a zone said by a number word or in Tamil letters is the zone, in chat > en digits 113ms
+   × a zone said by a number word or in Tamil letters is the zone, in chat > ta word 188ms
+     → 9,113 புகார்கள் · கடந்த 90 நாட்களில்: expected '9,113 புகார்கள் · கடந்த 90 நாட்களில்\…' to match /ராயபுரம்|Royapuram/
+   × a zone said by a number word or in Tamil letters is the zone, in chat > tanglish word 165ms
+     → 9,113 complaints · kadandha 90 naal-la: expected '9,113 complaints · kadandha 90 naal-l…' to match /Royapuram|ராயபுரம்/
+      Tests  3 failed | 1 passed | 60 skipped (64)

@@ -36,7 +36,7 @@ export default function PasswordStrengthMeter({ password }: { password: string }
 
       <ul className="mt-2.5 grid grid-cols-1 gap-1 sm:grid-cols-2">
         {rules.map((rule) => (
-          <li key={rule.label} className={`flex items-center gap-1.5 text-[12px] transition-colors ${rule.passed ? "text-emerald-600" : "text-ink-faint"}`}>
+          <li key={rule.label} className={`flex items-center gap-1.5 text-[12px] transition-colors ${rule.passed ? "text-emerald-600" : "text-ink-subtle"}`}>
             <span aria-hidden="true" className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-full transition-colors ${rule.passed ? "bg-emerald-100" : "bg-canvas-sunken"}`}>
               {rule.passed && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
             </span>

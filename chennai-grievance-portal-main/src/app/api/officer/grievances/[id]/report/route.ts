@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
  * repeated, `step`). A severe grievance is sent to the Collector for verification (`step=send`, "Sent to
  * Collector"); any other is closed by the department itself (`step=close`, "Verified").
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
+  const params = await routeCtx.params;
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
   if (!ID_RE.test(params.id)) return NextResponse.json({ error: "Invalid grievance id." }, { status: 400 });

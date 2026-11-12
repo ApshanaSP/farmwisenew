@@ -165,7 +165,7 @@ const kpiText = (k: Kpi) => fmtValue(k.value, k.format ?? (Number.isInteger(k.va
  * as the headline, the other tiles in one line, and the chart's leaders in one sentence ("Highest severe incidents:
  * Royapuram (9), Teynampet (6), Adyar (4)."); the key facts as bullets only when there is neither.
  */
-export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], kpis: Kpi[]): AnswerCard {
+export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], kpis: Kpi[], question = ""): AnswerCard {
   const lang = base.language;
   // several subjects: one line each, so no part of the question goes unanswered
   const parts = p.datasets.find((d) => d.id === "parts")?.rows;
@@ -361,7 +361,12 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
     const top = rows.slice(0, Math.min(5, c.topN || 5)).map((r) => `${r[xf.key]} (${val(r)})`);
     if (top.length) lines.push(`${RANKED[lang](yf.label, low)}: ${top.join(", ")}.`);
     // the finding as the headline, not the chart's title
-    if (rows.length && !kpis.length && lang === "en") leader = `${rows[0][xf.key]} ${low ? "has the fewest" : "leads"} with ${val(rows[0])} ${yf.label.toLowerCase()}`;
+    if (rows.length && !kpis.length && lang === "en") {
+      leader = `${rows[0][xf.key]} ${low ? "has the fewest" : "leads"} with ${val(rows[0])} ${yf.label.toLowerCase()}`;
+      // the question names one of the rows ("how many severe"): the headline is that row's figure, not the biggest segment's (RC-44, PB-261)
+      const asked = rows.filter((r) => new RegExp(`\\b${String(r[xf.key]).replace(/[^\w ]/g, "").trim()}\\b`, "i").test(question) && String(r[xf.key]).trim().length >= 3);
+      if (asked.length === 1) leader = `${asked[0][xf.key]}: ${val(asked[0])} ${yf.label.toLowerCase()}${asked[0] === rows[0] ? "" : ` (${rows[0][xf.key]} leads with ${val(rows[0])})`}`;
+    }
   }
   if (lines.length) {
     const headline = leader ?? (lang === "en" ? lead : `${FRAME[lang]}: ${lead}`);
@@ -376,4 +381,9 @@ export function templateCard(base: AnswerCard, p: Presentation, facts: Fact[], k
   const bullets = pickFacts.map((f) => `- ${f.label}: ${fmtValue(f.value, Number.isInteger(f.value) ? "integer" : "decimal1")}${f.unit && f.unit !== "%" ? ` ${f.unit}` : f.unit === "%" ? "%" : ""}`);
   const headline = lang === "en" ? lead : `${FRAME[lang]}: ${lead}`;
   return { ...base, headline, answerMarkdown: bullets.join("\n") || headline, voiceSummary: headline };
+}
+
+/** A request chat does not do (cannot.ts): said plainly with where to do it, no figures, so nothing unrelated reads as the answer (RC-44). */
+export function notDoneCard(base: AnswerCard, text: string): AnswerCard {
+  return { ...base, kind: "refusal", display: "text", headline: text, answerMarkdown: text, voiceSummary: text, chips: EXAMPLES[base.language].slice(0, 3), scope: null, scopeLine: "", kpis: [], incidents: [], datasets: [], chart: null };
 }

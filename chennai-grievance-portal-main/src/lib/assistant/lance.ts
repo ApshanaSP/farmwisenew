@@ -15,7 +15,11 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { RowDataPacket } from "mysql2";
-import intelPool from "@/lib/collector/db";
+import intelPool, { ops } from "@/lib/collector/db";
+import { effectiveSql } from "@/lib/collector/effective";
+
+/** The Collector's decision laid over the pipeline's status and open flag (effective.ts): the index and its answers carry the decided state. */
+const EFF = effectiveSql(ops("collector_decisions"));
 import { ModelNotReady, embed } from "@/lib/assistant/embed";
 
 const DIR = path.join(process.cwd(), "data", "lancedb");
@@ -66,9 +70,9 @@ export interface Rec {
 async function rows(kind: Kind): Promise<Omit<Rec, "vector">[]> {
   const q = async (sql: string) => (await intelPool.query<RowDataPacket[]>(sql))[0];
   if (kind === "incidents") {
-    const r = await q(`SELECT incident_id AS id, category_label AS cat_label, category_code AS cat, title, place_text AS place, zone_no AS zone_no,
-        zone_name AS zone, taluk_code AS taluk, lead_dept AS dept, severity_level AS sev, status_std AS status, is_open AS open,
-        DATE_FORMAT(first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, dead, summary, sources FROM incidents`);
+    const r = await q(`SELECT i.incident_id AS id, i.category_label AS cat_label, i.category_code AS cat, i.title, i.place_text AS place, i.zone_no AS zone_no,
+        i.zone_name AS zone, i.taluk_code AS taluk, i.lead_dept AS dept, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open,
+        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t, i.dead, i.summary, i.sources FROM incidents i`);
     return r.map((x) => {
       // the same text the older index embedded, so its vectors can be reused
       const text = [clean(x.cat_label, 60), clean(x.title, 220), clean(x.place, 120), clean(x.zone, 40), clean(x.summary, 300)].filter(Boolean).join(". ");
@@ -230,12 +234,16 @@ export async function hybridSearch(kind: Kind, query: string, f: Filters = {}, k
   const tbl = await table(kind);
   if (!tbl) return null;
   const L = await lib();
-  const w = where(kind, f);
-  const pool = Math.max(k * 4, 40);
+  // the index holds the state it was built with; a decision made since moves an incident in or out of "open", so the open
+  // filter is applied after the live state is laid over the matches, not inside the index
+  const openOnly = kind === "incidents" && !!f.openOnly;
+  const w = where(kind, openOnly ? { ...f, openOnly: false } : f);
+  const pool = Math.max(k * (openOnly ? 12 : 4), 40);
   let qv: number[];
   try { qv = Array.from((await embed([`query: ${query.slice(0, 300)}`], { quick: true })).vecs); } catch (e) {
-    if (e instanceof ModelNotReady) return null; // keyword search answers until the model is ready
-    throw e;
+    // not ready, a damaged or missing model file, a failed load: whatever the reason, the keyword search answers (the caller says so)
+    if (!(e instanceof ModelNotReady)) console.warn(`[assistant] meaning search unavailable, using keywords: ${(e as Error).message}`);
+    return null;
   }
   const cols = ["id", "text", "title", "cat", "cat_label", "zone_no", "zone", "place", "taluk", "dept", "sev", "status", "open", "t", "dead", "source", "url", "story", "incident"];
   let vq = tbl.vectorSearch(qv).distanceType("cosine").limit(pool).select([...cols, "_distance"]);
@@ -262,7 +270,21 @@ export async function hybridSearch(kind: Kind, query: string, f: Filters = {}, k
   };
   vec.forEach((r, i) => add(r, i + 1, 1 - Number(r._distance)));
   fts.forEach((r, i) => add(r, i + 1, null));
-  return [...by.values()].sort((a, b) => b.score - a.score).slice(0, k);
+  const found = [...by.values()].sort((a, b) => b.score - a.score);
+  if (kind === "incidents") await layDecisions(found);
+  return (openOnly ? found.filter((x) => Number(x.rec.open) === 1) : found).slice(0, k);
+}
+
+/** Lays the Collector's decisions (effective.ts) over found incidents: their status and open flag as the console shows them now. */
+export async function layDecisions(found: Found[]): Promise<void> {
+  if (!found.length) return;
+  const [r] = await intelPool.query<RowDataPacket[]>(
+    `SELECT i.incident_id AS id, ${EFF.status} AS status, ${EFF.open} AS open FROM incidents i WHERE i.incident_id IN (?)`, [found.map((x) => x.id)]);
+  const live = new Map(r.map((x) => [String(x.id), x]));
+  for (const x of found) {
+    const l = live.get(x.id);
+    if (l) x.rec = { ...x.rec, status: String(l.status ?? x.rec.status), open: Number(l.open) };
+  }
 }
 
 /**

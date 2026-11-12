@@ -1,0 +1,40 @@
+{
+ "port": "3188",
+ "res": [
+  {
+   "n": "right password",
+   "status": 500,
+   "body": "{\"error\":\"Something went wrong. Please try again.\"}"
+  },
+  {
+   "n": "wrong password",
+   "status": 500,
+   "body": "{\"error\":\"Something went wrong. Please try again.\"}"
+  },
+  {
+   "n": "unknown email",
+   "status": 500,
+   "body": "{\"error\":\"Something went wrong. Please try again.\"}"
+  }
+ ]
+}
+{
+ "port": "3185",
+ "res": [
+  {
+   "n": "right password",
+   "status": 200,
+   "body": "{\"message\":\"Login successful\",\"redirectTo\":\"/citizen\",\"role\":\"citizen\"}"
+  },
+  {
+   "n": "wrong password",
+   "status": 401,
+   "body": "{\"error\":\"Invalid email or password.\"}"
+  },
+  {
+   "n": "unknown email",
+   "status": 401,
+   "body": "{\"error\":\"Invalid email or password.\"}"
+  }
+ ]
+}

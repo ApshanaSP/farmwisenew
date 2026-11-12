@@ -136,8 +136,9 @@ export function Pager({ pages, page, onPage, short }: { pages: { key: string; la
   const pi = pages.findIndex((p) => p.key === page);
   const { ref, box, animate } = useSlot<HTMLDivElement>(page, "x", [pages.length, page]);
   return (
-    <div ref={ref} className="pager" role="tablist" aria-label="Pages" data-tip="PageUp / PageDown">
+    <div ref={ref} className="pager" role="group" aria-label="Pages" data-tip="PageUp / PageDown">
       <button className="nx" onClick={() => pages[pi - 1] && onPage(pages[pi - 1].key)} disabled={pi <= 0} aria-label="Previous page"><I n="chevl" /></button>
+      <div role="tablist" aria-label="Pages" style={{ display: "contents" }}>
       {box && (
         <motion.span className="pg-pill" aria-hidden="true" initial={false} animate={{ x: box.o, width: box.s }}
           transition={animate ? spring.snappy : { duration: 0 }} />
@@ -147,6 +148,7 @@ export function Pager({ pages, page, onPage, short }: { pages: { key: string; la
           <i>{k + 1}</i>{page === p.key && <span>{short ? short(p.key) : p.label}</span>}
         </button>
       ))}
+      </div>
       <button className="nx" onClick={() => pages[pi + 1] && onPage(pages[pi + 1].key)} disabled={pi >= pages.length - 1} aria-label="Next page"><I n="chevr" /></button>
     </div>
   );
@@ -314,9 +316,9 @@ export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs 
   ].filter((g) => g.rows.length);
   return (
     <div className="rel">
-      <motion.button className="tbtn icon" data-pop onClick={onToggle} aria-label="Alerts" aria-expanded={open} key={shake}
+      <motion.button className="tbtn icon" data-pop onClick={onToggle} aria-label={unread > 0 ? `Alerts, ${unread} new` : "Alerts"} aria-expanded={open} key={shake}
         animate={shake ? { rotate: [0, -14, 12, -8, 5, 0] } : undefined} transition={{ duration: 0.6 }}>
-        <I n="bell" />{unread > 0 && <span className="dot-n">{unread}</span>}
+        <I n="bell" />{unread > 0 && <span className="dot-n" aria-hidden="true">{unread}</span>}
       </motion.button>
       <AnimatePresence>
         {open && (

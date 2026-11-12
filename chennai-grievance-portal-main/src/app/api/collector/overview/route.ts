@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { jsonWithEtag } from "@/lib/etag";
 import { asOf, exportMeta, overview, parseCat, parseDept, parsePeriod, parseTaluk, parseZone } from "@/lib/collector/intel";
+import { refuseBadFilter } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,8 @@ export async function GET(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
   const p = req.nextUrl.searchParams;
+  const bad = refuseBadFilter(p);
+  if (bad) return bad;
   try {
     // ?meta=1: a cheap check the console polls to learn that the pipeline published new data.
     // (Source and Data Studio refreshes run on the server's own schedule, lib/scheduler.ts, not from reads.)

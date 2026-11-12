@@ -85,6 +85,32 @@ const KINDS: [string, string, string | null, string | null][] = [
   ["FIRE_EXPLOSION", "Fire & explosion", "a fire", "தீ விபத்து"],
   ["SUICIDE_SELF_HARM", "Suicide & self-harm", "a self-harm report", "தற்கொலை தொடர்பான புகார்"]
 ];
+/**
+ * The Tamil of every category LABEL (the noun phrase a screen's title or scope shows, not the sentence about one issue above). Complete reference data: the codes
+ * and English labels are the store's category table (KINDS above); a test fails if a category has no line here (QA pass 4, RC-15).
+ */
+export const CAT_LABEL_TA: Record<string, string> = {
+  SOLID_WASTE: "குப்பை மற்றும் திடக்கழிவு", CRIME_PROPERTY: "திருட்டு, பறிப்பு மற்றும் மோசடி", STREETLIGHT_ELECTRICAL: "தெருவிளக்கு மற்றும் மின் ஆபத்துகள்", ROAD_ACCIDENT: "சாலை விபத்து",
+  FLOOD_WATERLOGGING: "வெள்ளம் மற்றும் நீர்த்தேக்கம்", DRAINAGE_SEWAGE: "வடிகால் மற்றும் கழிவுநீர்", ROAD_DAMAGE: "சாலைகள், நடைபாதைகள் மற்றும் பாலங்கள்",
+  PUBLIC_ORDER: "போராட்டங்கள் மற்றும் பொதுத் தொல்லை", TRAFFIC_OBSTRUCTION: "போக்குவரத்துத் தடை மற்றும் வாகன நிறுத்தம்", CRIME_VIOLENT: "வன்முறைக் குற்றம்",
+  SANITATION_TOILETS: "பொதுக் கழிப்பறைகள் மற்றும் திறந்தவெளி மலம் கழித்தல்", ADMIN_SERVICES: "வரி, சான்றிதழ் மற்றும் தேர்தல் சேவைகள்", ENCROACHMENT: "ஆக்கிரமிப்பு மற்றும் அனுமதியற்ற கட்டுமானம்",
+  DRAIN_WORKS_SAFETY: "வடிகால் பணியிடப் பாதுகாப்பு", OTHER: "பிற / வகைப்படுத்தப்படாதவை", TREES_PARKS: "மரங்கள், பூங்காக்கள் மற்றும் விளையாட்டு மைதானங்கள்", MISSING_PERSON: "காணாமல் போனவர்",
+  VECTOR_DISEASE: "கொசு மற்றும் நீர்வழி நோய்கள்", CRIMES_AGAINST_WOMEN: "பெண்கள் மற்றும் குழந்தைகளுக்கு எதிரான குற்றங்கள்", BUILDING_SAFETY: "பாதுகாப்பற்ற கட்டடங்கள் மற்றும் சுவர்கள்",
+  STRAY_ANIMALS: "தெரு விலங்குகள்", DARK_SPOT_SAFETY: "இருண்ட இடங்கள் மற்றும் பொதுப் பாதுகாப்பு", DRUGS_LIQUOR: "போதைப்பொருள் மற்றும் கள்ளச்சாராயம்",
+  HEALTH_SERVICES: "சுகாதாரச் சேவைகள் மற்றும் மருத்துவமனைத் திறன்", PUBLIC_WORKS: "பொதுப்பணித் தரம் மற்றும் பணியிடங்கள்", FOOD_SAFETY: "உணவுப் பாதுகாப்பு மற்றும் இறைச்சி சுகாதாரம்",
+  WATERBODY_INFRA: "ஏரிகள், கரைகள் மற்றும் மதகுகள்", FLOOD_RELIEF: "வெள்ள நிவாரணத் தேவைகள்", AIR_POLLUTION: "காற்று மாசு", FLOOD_RISK_SIGNAL: "வானிலை மற்றும் வெள்ள எச்சரிக்கைகள்",
+  POLICE_OTHER: "பிற காவல்துறை விவகாரங்கள்", CIVIC_FACILITIES: "பொதுக் கட்டடங்கள் மற்றும் வசதிகள்", WATER_SUPPLY: "குடிநீர் விநியோகம்", FIRE_EXPLOSION: "தீ மற்றும் வெடிப்பு",
+  SUICIDE_SELF_HARM: "தற்கொலை மற்றும் தன்னைத்தானே காயப்படுத்துதல்"
+};
+
+/** the Tamil of a category given its English label (a case row carries the label, not the code); null when it is not one of the store's */
+export const catTaOfLabel = (label: string | null | undefined): string | null => {
+  const k = KINDS.find(([, l]) => l.toLowerCase() === String(label ?? "").toLowerCase());
+  return k ? CAT_LABEL_TA[k[0]] ?? null : null;
+};
+
+/** the store's category codes and labels, for the lanes that have no World to ask (catlabels.ts) */
+export const CATEGORY_LABELS: { code: string; label: string }[] = KINDS.map(([code, label]) => ({ code, label }));
 const BY_KIND = new Map<string, { en: string; ta: string } | null>(KINDS.flatMap(([code, label, en, ta]) => {
   const v = en && ta ? { en, ta } : null;
   return [[code.toLowerCase(), v], [label.toLowerCase(), v]] as [string, { en: string; ta: string } | null][];
@@ -174,6 +200,8 @@ export function factSheet(row: CaseRowT, extra: { openFor?: unknown; firstAt?: s
 
 /** "to X" in Tamil, joined as the word ends: துறை -> துறையிடம், மாநகராட்சி -> மாநகராட்சியிடம், வாரியம் -> வாரியத்திடம், பிரிவு -> பிரிவிடம் */
 export function idam(word: string): string {
+  // a name with no Tamil in it ("Pollution Control Board") takes the ending after a hyphen: glued on, it reads as one broken word (BUG-019, AUD-NF-7)
+  if (/[A-Za-z0-9)]$/.test(word)) return `${word}-இடம்`;
   if (/[ைிீ]$/.test(word)) return `${word}யிடம்`;
   if (/ம்$/.test(word)) return `${word.slice(0, -2)}த்திடம்`;
   if (/ு$/.test(word)) return `${word.slice(0, -1)}ிடம்`;
@@ -196,21 +224,25 @@ export function explainIssue(f: FactSheet, label: string, sources: string[] = []
     const en = `${first} ${said.en}`;
     return { en: speechProblem(en, sources, [f.place ?? "", f.placeTa ?? ""]) ? `${plain} ${said.en}` : en, ta };
   }
-  const s1 = `There's ${what}${f.place ? ` at ${f.place}` : ""}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
+  // a plural kind ("people who need flood relief") takes "There are" (audit-understanding-20)
+  const there = /^people\b/.test(what) ? "There are" : "There's";
+  const s1 = `${there} ${what}${f.place ? ` at ${f.place}` : ""}${f.what ? "" : `, logged as ${label.toLowerCase()}`}.`;
   const age = ageWords(f.hours);
   const s2 = age ? `It's been open for ${age.en}${f.overdue ? ", and it's past its deadline" : ""}.` : f.overdue ? "It's past its deadline." : "";
-  const s3 = f.complaints >= 2 ? `${f.complaints} people have complained about it, so it's hitting a lot of residents${f.serious ? ", and it's one of the serious ones" : ""}.`
+  // how many are affected is said by how many complained: two complaints are not "a lot of residents" (AUD-NF-11)
+  const reach = f.complaints >= 10 ? { en: "a lot of residents", ta: "நிறைய பேரைப் பாதிக்கிறது" } : f.complaints >= 3 ? { en: "several households", ta: "பல குடும்பங்களைப் பாதிக்கிறது" } : { en: "more than one household", ta: "ஒன்றுக்கு மேற்பட்ட குடும்பங்களைப் பாதிக்கிறது" };
+  const s3 = f.complaints >= 2 ? `${f.complaints} people have complained about it, so it's hitting ${reach.en}${f.serious ? ", and it's one of the serious ones" : ""}.`
     : f.serious ? "It's one of the serious ones." : "";
   const s4 = f.next ? `I'd ${f.next.en}${f.overdue ? " today" : ""}.` : f.who ? `I'd ask ${f.who.en} for an update${f.overdue ? " today" : ""}.` : "";
   const en = [s1, s2, s3, s4].filter(Boolean).join(" ");
   const whatTa = f.what ? f.what.ta : "ஒரு பிரச்சினை";
   const t1 = `${f.placeTa ? `${f.placeTa} பகுதியில் ` : ""}${whatTa} இருக்கிறது.`;
   const t2 = age ? `${age.ta} தீர்க்கப்படாமல் இருக்கிறது${f.overdue ? ", கெடுவும் தாண்டிவிட்டது" : ""}.` : f.overdue ? "கெடு தாண்டிவிட்டது." : "";
-  const t3 = f.complaints >= 2 ? `${f.complaints} பேர் புகார் கொடுத்திருக்கிறார்கள், நிறைய பேரைப் பாதிக்கிறது${f.serious ? "; இது கடுமையானவற்றில் ஒன்று" : ""}.` : f.serious ? "இது கடுமையானவற்றில் ஒன்று." : "";
+  const t3 = f.complaints >= 2 ? `${f.complaints} பேர் புகார் கொடுத்திருக்கிறார்கள், ${reach.ta}${f.serious ? "; இது கடுமையானவற்றில் ஒன்று" : ""}.` : f.serious ? "இது கடுமையானவற்றில் ஒன்று." : "";
   const t4 = f.next ? `${f.next.ta}${f.overdue ? ", இன்றே" : ""}.` : f.who ? `${idam(f.who.ta)} ${f.overdue ? "இன்றே " : ""}நிலவரம் கேட்கலாம்.` : "";
   const ta = [t1, t2, t3, t4].filter(Boolean).join(" ");
   // the gates: a line that reads a record out, or carries a field, falls back to the plainest retelling
   const names = [f.place ?? "", f.placeTa ?? ""];
-  if (speechProblem(en, sources, names)) return { en: [`There's ${what}${f.place ? ` at ${f.place}` : ""}.`, s2, s4].filter(Boolean).join(" "), ta };
+  if (speechProblem(en, sources, names)) return { en: [`${there} ${what}${f.place ? ` at ${f.place}` : ""}.`, s2, s4].filter(Boolean).join(" "), ta };
   return { en, ta };
 }

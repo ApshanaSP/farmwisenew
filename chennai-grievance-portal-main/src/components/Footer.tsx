@@ -1,9 +1,10 @@
 import Logo from "@/components/Logo";
+import { IST } from "@/lib/ist-dates";
 
 /** District IQ · Chennai Intelligent District Governance Platform · Helpline 1913 */
 export default function Footer({ compact = false }: { compact?: boolean }) {
   return (
-    <footer className={`mt-auto border-t border-canvas-border bg-canvas/70 backdrop-blur ${compact ? "" : "mb-16 sm:mb-0"}`}>
+    <footer className={`mt-auto border-t border-canvas-border bg-canvas/70 backdrop-blur ${compact ? "" : "mb-16 lg:mb-0"}`}>
       <div
         className={`mx-auto flex max-w-[1200px] flex-col items-center gap-2 px-4 text-center sm:flex-row sm:justify-between sm:px-6 sm:text-left ${
           compact ? "py-2.5" : "py-6"
@@ -17,7 +18,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
           </p>
         </div>
         <p className="text-[12.5px] text-ink-subtle">
-          24&times;7 &middot; &copy; {new Date().getFullYear()} District Administration, Chennai
+          24&times;7 &middot; &copy; {new Date().toLocaleDateString("en-IN", { ...IST, year: "numeric" })} District Administration, Chennai
         </p>
       </div>
     </footer>

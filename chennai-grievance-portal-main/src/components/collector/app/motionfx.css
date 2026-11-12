@@ -92,7 +92,8 @@
 .dic .ask-fab.ask-fab-v2[aria-expanded="true"]{opacity:0;pointer-events:none;transform:translateY(8px)}
 .dic .ask-fab.ask-fab-v2 .ask-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:grid;place-items:center;
   font:700 11px/1 var(--font-num,system-ui);font-style:normal;background:#F0603F;color:#fff;box-shadow:0 0 0 2px var(--bg,#fff)}
-.dic:not(.fit) .ask-fab.ask-fab-v2{bottom:20px}
+/* with the bottom bar (60 px) the button sits above it, never on its last tab (RC-46, PB-319): this rule once said 20px and won over marina.css */
+.dic:not(.fit) .ask-fab.ask-fab-v2{bottom:calc(76px + env(safe-area-inset-bottom, 0px))}
 @media (max-width:760px){
   .dic .ask-fab.ask-fab-v2{padding:0 6px;right:14px;bottom:14px}
   .dic .ask-fab.ask-fab-v2 .ask-label{display:none}

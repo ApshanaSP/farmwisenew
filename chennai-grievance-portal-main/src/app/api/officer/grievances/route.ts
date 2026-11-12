@@ -3,6 +3,7 @@ import { failed, fresh, officerSession, parseScope } from "@/lib/officer/guard";
 import { grievanceList } from "@/lib/officer/data";
 import { parseTab } from "@/lib/officer/stages";
 import { parseCat } from "@/lib/collector/intel";
+import { refuseBadFilter, refuseBadTab } from "@/lib/collector/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const ctx = await officerSession(p);
   if (ctx instanceof NextResponse) return ctx;
+  const bad = refuseBadFilter(p);
+  if (bad) return bad;
+  const badTab = refuseBadTab(p);
+  if (badTab) return badTab;
   const int = (k: string, d: number) => (Number.isInteger(Number(p.get(k))) && p.get(k) !== null ? Number(p.get(k)) : d);
   const text = (p.get("q") ?? "").trim().slice(0, 80);
   const flag = p.get("flag");

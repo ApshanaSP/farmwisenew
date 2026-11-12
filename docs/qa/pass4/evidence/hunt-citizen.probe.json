@@ -1,0 +1,143 @@
+{
+ "reg-ok": {
+  "status": 200,
+  "text": "{\"message\":\"Account created successfully. Please sign in.\"}",
+  "ct": "application/json",
+  "ms": 211
+ },
+ "reg-case-dup": {
+  "status": 409,
+  "text": "{\"error\":\"An account with this email already exists.\"}",
+  "ct": "application/json",
+  "ms": 15
+ },
+ "reg-mismatch": {
+  "status": 400,
+  "text": "{\"error\":\"Passwords do not match\"}",
+  "ct": "application/json",
+  "ms": 13
+ },
+ "reg-space-email": {
+  "status": 200,
+  "text": "{\"message\":\"Account created successfully. Please sign in.\"}",
+  "ct": "application/json",
+  "ms": 105
+ },
+ "reg-ws-name": {
+  "status": 400,
+  "text": "{\"error\":\"First name is required\"}",
+  "ct": "application/json",
+  "ms": 13
+ },
+ "login-upper": {
+  "status": 200,
+  "text": "{\"message\":\"Login successful\",\"redirectTo\":\"/citizen\",\"role\":\"citizen\"}",
+  "ct": "application/json",
+  "ms": 118
+ },
+ "login-lower": {
+  "status": 200,
+  "text": "{\"message\":\"Login successful\",\"redirectTo\":\"/citizen\",\"role\":\"citizen\"}",
+  "ct": "application/json",
+  "ms": 103
+ },
+ "login-spaced": {
+  "status": 200,
+  "text": "{\"message\":\"Login successful\",\"redirectTo\":\"/citizen\",\"role\":\"citizen\"}",
+  "ct": "application/json",
+  "ms": 107
+ },
+ "otp-req": {
+  "status": 200,
+  "text": "{\"message\":\"If an account exists with this email, an OTP has been sent to it.\"}",
+  "ct": "application/json",
+  "ms": 105
+ },
+ "otp-req-nouser": {
+  "status": 200,
+  "text": "{\"message\":\"If an account exists with this email, an OTP has been sent to it.\"}",
+  "ct": "application/json",
+  "ms": 10
+ },
+ "otp-bad": {
+  "status": 400,
+  "text": "{\"error\":\"Incorrect OTP. Please try again.\"}",
+  "ct": "application/json",
+  "ms": 123
+ },
+ "otp-bad-2": {
+  "status": 400,
+  "text": "{\"error\":\"Required\"}",
+  "ct": "application/json",
+  "ms": 13
+ },
+ "citizenA-login": 200,
+ "me": {
+  "status": 200,
+  "text": "{\"user\":{\"id\":1000000005,\"email\":\"qa.citizen.a@example.test\",\"role\":\"citizen\",\"department_id\":null,\"department_name\":null,\"first_name\":\"Qa\",\"last_name\":\"CitizenA\"}}",
+  "ct": "application/json",
+  "ms": 22
+ },
+ "track-bad": {
+  "status": 404,
+  "text": "{\"error\":\"Complaint not found.\"}",
+  "ct": "application/json",
+  "ms": 16
+ },
+ "track-sqli": {
+  "status": 404,
+  "text": "{\"error\":\"Complaint not found.\"}",
+  "ct": "application/json",
+  "ms": 10
+ },
+ "list": {
+  "status": 200,
+  "text": "{\"complaints\":[]}",
+  "ct": "application/json",
+  "ms": 18
+ },
+ "media-fake-png": {
+  "status": 400,
+  "text": "{\"error\":\"No file uploaded.\"}",
+  "ct": "application/json",
+  "ms": 17
+ },
+ "media-svg": {
+  "status": 400,
+  "text": "{\"error\":\"No file uploaded.\"}",
+  "ct": "application/json",
+  "ms": 12
+ },
+ "studio-tamil-bom": {
+  "status": 200,
+  "tail": "s\"}\n{\"t\":\"step\",\"step\":\"link\",\"state\":\"done\",\"detail\":\"No clear link with district incidents\",\"by\":\"code\",\"model\":null,\"ms\":217}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"run\",\"detail\":\"Mining backlogs, delays, gaps, hotspots and trends\"}\n{\"t\":\"log\",\"text\":\"1 insights computed: Concentration\"}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"done\",\"detail\":\"0 insights chosen from 1 · by rules\",\"by\":\"rules\",\"model\":null,\"ms\":11}\n{\"t\":\"log\",\"text\":\"Verdict: Records at a glance\"}\n{\"t\":\"done\",\"id\":\"ds_mw4lja2v81vql\"}\n"
+ },
+ "studio-tamil-utf16": {
+  "status": 200,
+  "tail": "ents\"}\n{\"t\":\"step\",\"step\":\"link\",\"state\":\"done\",\"detail\":\"No clear link with district incidents\",\"by\":\"code\",\"model\":null,\"ms\":0}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"run\",\"detail\":\"Mining backlogs, delays, gaps, hotspots and trends\"}\n{\"t\":\"log\",\"text\":\"1 insights computed: Concentration\"}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"done\",\"detail\":\"0 insights chosen from 1 · by rules\",\"by\":\"rules\",\"model\":null,\"ms\":1}\n{\"t\":\"log\",\"text\":\"Verdict: Records at a glance\"}\n{\"t\":\"done\",\"id\":\"ds_mw4ljab6b9mln\"}\n"
+ },
+ "studio-empty": {
+  "status": 200,
+  "tail": "{\"t\":\"step\",\"step\":\"read\",\"state\":\"run\",\"detail\":\"Opening empty.csv\"}\n{\"t\":\"error\",\"message\":\"The file is empty.\"}\n"
+ },
+ "studio-headeronly": {
+  "status": 200,
+  "tail": "{\"t\":\"step\",\"step\":\"read\",\"state\":\"run\",\"detail\":\"Opening h.csv\"}\n{\"t\":\"step\",\"step\":\"read\",\"state\":\"done\",\"detail\":\"0 rows · 3 columns\",\"by\":\"code\",\"ms\":0}\n{\"t\":\"outcome\",\"outcome\":{\"kind\":\"nodata\",\"reason\":\"empty\",\"url\":null,\"why\":\"\\\"h.csv\\\" has no rows of data.\",\"checked\":[\"Read h.csv: 0 rows · 0 columns.\"],\"next\":[{\"label\":\"Ask the department for the full file\",\"act\":\"file\"}]}}\n"
+ },
+ "studio-future": {
+  "status": 200,
+  "tail": "s\"}\n{\"t\":\"step\",\"step\":\"link\",\"state\":\"done\",\"detail\":\"No clear link with district incidents\",\"by\":\"code\",\"model\":null,\"ms\":0}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"run\",\"detail\":\"Mining backlogs, delays, gaps, hotspots and trends\"}\n{\"t\":\"log\",\"text\":\"1 insights computed: Concentration\"}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"done\",\"detail\":\"0 insights chosen from 1 · by rules\",\"by\":\"rules\",\"model\":null,\"ms\":1}\n{\"t\":\"log\",\"text\":\"Verdict: Complaints at a glance\"}\n{\"t\":\"done\",\"id\":\"ds_mw4ljaceoer4m\"}\n"
+ },
+ "studio-semicolon": {
+  "status": 200,
+  "tail": "rict incidents\"}\n{\"t\":\"step\",\"step\":\"link\",\"state\":\"done\",\"detail\":\"No clear link with district incidents\",\"by\":\"code\",\"model\":null,\"ms\":0}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"run\",\"detail\":\"Mining backlogs, delays, gaps, hotspots and trends\"}\n{\"t\":\"log\",\"text\":\"0 insights computed: \"}\n{\"t\":\"step\",\"step\":\"story\",\"state\":\"done\",\"detail\":\"0 insights chosen from 0 · by rules\",\"by\":\"rules\",\"model\":null,\"ms\":0}\n{\"t\":\"log\",\"text\":\"Verdict: Complaints at a glance\"}\n{\"t\":\"done\",\"id\":\"ds_mw4ljad70hep2\"}\n"
+ },
+ "studio-link-local": {
+  "status": 200,
+  "tail": ",\"why\":\"That address is on this computer or a private network, so the Studio does not read it (a safety rule).\",\"checked\":[\"Checked the address before reading: it is this computer or a private network.\"],\"next\":[{\"label\":\"Use a public link\",\"act\":\"link\"}],\"url\":\"http://127.0.0.1:3175/api/auth/me\"}}\n"
+ },
+ "studio-list": {
+  "status": 200,
+  "text": "{\"connectors\":{\"count\":0,\"attention\":0},\"datasets\":[{\"id\":\"ds_mw4ljad70hep2\",\"name\":\"Semi\",\"kind\":\"file\",\"file\":\"semi.csv\",\"rows\":2,\"health\":100,\"department\":null,\"updatedAt\":\"2026-11-06T06:31:21.410Z\",\"link\":null,\"sample\":false,\"every\":null,\"failing\":false,\"auth\":\"none\"},{\"id\":\"ds_mw4ljaceoer4m\",\"name\":\"Future\",\"kind\":\"file\",\"file\":\"future.csv\",\"rows\":3,\"health\":92,\"department\":null,\"updatedAt\":\"2026-11-06T06:31:21.384Z\",\"link\":null,\"sample\":false,\"every\":null,\"failing\":false,\"auth\":\"none\"},{\"id\":\"ds_mw4ljab6b9mln\",\"name\":\"Tamil16\",\"kind\":\"file\",\"file\":\"tamil16.csv\",\"rows\":3,\"health\":92,\"department\":null,\"updatedAt\":\"2026-11-06T06:31:21.340Z\",\"link\":null,\"sample\":false,\"every\":null,\"failing\":false,\"auth\":\"none\"},{\"id\":\"ds_mw4lja2v81vql\",\"name\":\"Tamil Bom\",\"kind\":\"file\",\"file\":\"tamil-bom.csv\",\"rows\":3,\"health\":92,\"department\":null,\"updatedAt\":\"2026-11-06T06:31:21.300Z\",\"link\":null,\"sample\":false,\"every\":null,\"failing\":false,\"auth\":\"none\"}],\"hidden\":[],\"board\":[],\"samples\":[{\"key\":\"swd\",\"file\":\"GCC_SWD_Desilting_Register_Sep2026.xlsx\",\"title\":\"Storm-water drain desilting register\",\"dept\":\"GCC Storm Water Drain\",\"blurb\":\"Excel with a title row, merged zone cells, typos and a total row\",\"icon\":\"drop\",\"format\":\"Excel\"},{\"key\":\"fever\",\"file\":\"Fever_Surveillance_Weekly_2026.csv\",\"title\":\"Fever & dengue surveillance\",\"dept\":\"Government Hospitals\",\"blurb\":\"Weekly cases per hospital: links with flooding week by week\",\"icon\":\"health\",\"format\":\"CSV\"},{\"key\":\"pds\",\"file\":\"PDS_Ration_Shop"
+ }
+}

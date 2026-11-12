@@ -9,7 +9,7 @@
  */
 import { useEffect } from "react";
 import { getLang, type UiLang } from "@/lib/i18n/lang";
-import { TA } from "@/lib/i18n/ta";
+import { TA, TA_CTX } from "@/lib/i18n/ta";
 
 const NUM = /\d+(?:[.,]\d+)*/g;
 const LATIN = /[A-Za-z]{2,}/;
@@ -92,7 +92,10 @@ export default function Translator() {
       if (st && v === st.out) return;
       if (!LATIN.test(v)) return;
       if (n.parentElement && skipped(n.parentElement)) return;
-      const t = translate(v);
+      // a word whose Tamil depends on where it stands (a status "Open" is not the button "Open"): the element's own table first (RC-15, PB-299)
+      const ctx = n.parentElement?.closest("[data-i18n-ctx]")?.getAttribute("data-i18n-ctx");
+      const own = ctx ? TA_CTX[ctx]?.[keyOf(v)] : undefined;
+      const t = own != null ? (/^\s*/.exec(v)?.[0] ?? "") + own + (/\s*$/.exec(v)?.[0] ?? "") : translate(v);
       if (t != null && t !== v) { texts.set(n, { src: v, out: t }); n.nodeValue = t; }
       else if (t == null) { texts.set(n, { src: v, out: v }); remember(keyOf(v), n); }
     };

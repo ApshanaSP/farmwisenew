@@ -1,0 +1,80 @@
+{
+ "base": "http://127.0.0.1:3977",
+ "at": "2026-11-06T13:26:29.996Z",
+ "otp": {
+  "forgotFirst": {
+   "status": 200,
+   "keys": [
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false
+  },
+  "forgotSecond": {
+   "status": 200,
+   "keys": [
+    "cooldownRemaining",
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false,
+   "cooldown": true
+  },
+  "codeWasCreated": true,
+  "login": 200,
+  "mobileFirst": {
+   "status": 200,
+   "keys": [
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false
+  },
+  "malformedBodyOnMobileOtp": 500,
+  "forgotPage": {
+   "status": 200,
+   "htmlHasDevMode": false
+  }
+ },
+ "image": {
+  "/default-avatar.svg": {
+   "status": 404,
+   "contentType": "text/html; charset=utf-8"
+  },
+  "/brand/logo.png": {
+   "status": 404,
+   "contentType": "text/html; charset=utf-8"
+  }
+ },
+ "devRoutes": {
+  "/dev/thunai": 404,
+  "/api/dev/thunai/hear": 404,
+  "/api/dev/thunai/agent/round": 404
+ },
+ "upgrade": {
+  "canaryPath": "own listener on 127.0.0.1, random port",
+  "tries": {
+   "absoluteFormUpgrade": {
+    "answer": "Internal Server Error",
+    "canaryCalled": false
+   },
+   "pathStartsDoubleSlash": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "hostHeaderOnly": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "forwardedHost": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "absoluteFormPlainGet": {
+    "answer": "HTTP/1.1 308 Permanent Redirect",
+    "canaryCalled": false
+   }
+  },
+  "canaryCalledByAny": false
+ }
+}

@@ -1,0 +1,4563 @@
+{
+ "yesterday": {
+  "now": "2026-11-06 18:08:00",
+  "oracle_days": {
+   "2026-11-05": {
+    "reported": 245,
+    "severe": 18,
+    "open": 236,
+    "deaths": 21,
+    "complaints": 150,
+    "adyar": 17,
+    "resolved_by_closed_at": 165
+   },
+   "2026-11-04": {
+    "reported": 239,
+    "severe": 17,
+    "open": 222,
+    "deaths": 4,
+    "complaints": 133,
+    "adyar": 13,
+    "resolved_by_closed_at": 148
+   },
+   "2026-11-03": {
+    "reported": 174,
+    "severe": 8,
+    "open": 154,
+    "deaths": 4,
+    "complaints": 100,
+    "adyar": 17,
+    "resolved_by_closed_at": 158
+   }
+  },
+  "asked": [
+   {
+    "m": "how many incidents yesterday",
+    "status": 200,
+    "headline": "239 incidents · yesterday (5 Nov)",
+    "answer": "239 incidents were reported in yesterday (5 Nov) (174 in the period before): 17 severe, 222 still open, 4 deaths.",
+    "error": null
+   },
+   {
+    "m": "how many severe incidents yesterday",
+    "status": 200,
+    "headline": "17 incidents · yesterday (5 Nov)",
+    "answer": "17 incidents were reported in yesterday (5 Nov) (8 in the period before): 17 severe, 15 still open, 2 deaths.",
+    "error": null
+   },
+   {
+    "m": "how many incidents in Adyar yesterday",
+    "status": 200,
+    "headline": "13 incidents · yesterday (5 Nov)",
+    "answer": "13 incidents were reported in yesterday (5 Nov) in Adyar zone (17 in the period before): 0 severe, 12 still open.",
+    "error": null
+   },
+   {
+    "m": "how many incidents were closed yesterday",
+    "status": 200,
+    "headline": "148 incidents resolved · yesterday (5 Nov)",
+    "answer": "148 incidents were closed as resolved in yesterday (5 Nov) (158 in the period before), 2 of them severe; 82 were closed after the deadline.",
+    "error": null
+   },
+   {
+    "m": "yesterday's incidents",
+    "status": 200,
+    "headline": "Incidents · yesterday (5 Nov)",
+    "answer": "239 incidents in yesterday (5 Nov); the eight newest are listed.",
+    "error": null
+   },
+   {
+    "m": "நேற்று எத்தனை புகார்கள்",
+    "status": 200,
+    "headline": "133 புகார்கள் · நேற்று",
+    "answer": "நேற்று 133 குடிமக்கள் புகார்கள் உள்ளன (115 சம்பவங்கள்; 114 இன்னும் நிலுவையில்).",
+    "error": null
+   },
+   {
+    "m": "நேற்று எத்தனை புகார்கள் வந்தன",
+    "status": 200,
+    "headline": "133 புகார்கள் · நேற்று",
+    "answer": "நேற்று 133 குடிமக்கள் புகார்கள் உள்ளன (115 சம்பவங்கள்; 114 இன்னும் நிலுவையில்).",
+    "error": null
+   },
+   {
+    "m": "நேற்று அடையாறில் எத்தனை புகார்கள்",
+    "status": 200,
+    "headline": "6 புகார்கள் · நேற்று",
+    "answer": "நேற்று அடையாறு மண்டல பகுதியில் 6 குடிமக்கள் புகார்கள் உள்ளன (6 சம்பவங்கள்; 6 இன்னும் நிலுவையில்).",
+    "error": null
+   },
+   {
+    "m": "nethu evlo incidents",
+    "status": 200,
+    "headline": "239 incidents · netru",
+    "answer": "netru 239 incidents report aagirukku (munnadi 174): 17 severe, 222 innum open, 4 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "nethu evlo complaints",
+    "status": 200,
+    "headline": "133 complaints · netru",
+    "answer": "netru 133 citizen complaints irukku (115 incidents; 114 innum open).",
+    "error": null
+   },
+   {
+    "m": "nethu Adyar la evlo incidents",
+    "status": 200,
+    "headline": "13 incidents · netru",
+    "answer": "Adyar zone-la netru 13 incidents report aagirukku (munnadi 17): 0 severe, 12 innum open.",
+    "error": null
+   },
+   {
+    "m": "neththu evlo severe cases",
+    "status": 200,
+    "headline": "17 incidents · netru",
+    "answer": "netru 17 incidents report aagirukku (munnadi 8): 17 severe, 15 innum open, 2 per uyirizhappu.",
+    "error": null
+   }
+  ]
+ },
+ "csv": {
+  "runs": [
+   {
+    "who": "collector",
+    "q": "period=daily",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 47,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": null,
+    "unknown_ids": 0
+   },
+   {
+    "who": "collector",
+    "q": "period=weekly",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 293,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": null,
+    "unknown_ids": 0
+   },
+   {
+    "who": "collector",
+    "q": "period=monthly",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 346,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": null,
+    "unknown_ids": 0
+   },
+   {
+    "who": "collector",
+    "q": "period=weekly&zone=13",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 22,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": null,
+    "unknown_ids": 0
+   },
+   {
+    "who": "collector",
+    "q": "period=weekly&dept=GCC-SWD",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 24,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": 0,
+    "unknown_ids": 0
+   },
+   {
+    "who": "officerA",
+    "q": "period=weekly",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 11,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": 0,
+    "unknown_ids": 0
+   },
+   {
+    "who": "officerB",
+    "q": "period=weekly&dept=POL-GCP",
+    "http": 200,
+    "columns": [
+     "list",
+     "id",
+     "what",
+     "where",
+     "department",
+     "severity",
+     "why",
+     "reported",
+     "past_deadline",
+     "complaints"
+    ],
+    "rows": 21,
+    "uneven": 0,
+    "blanks": {
+     "list": 0,
+     "id": 0,
+     "what": 0,
+     "where": 0,
+     "department": 0,
+     "severity": 0,
+     "why": 0,
+     "reported": 0,
+     "past_deadline": 0,
+     "complaints": 0
+    },
+    "wrong_dept": 0,
+    "unknown_ids": 0
+   }
+  ],
+  "console_export_http": 428
+ },
+ "officer": {
+  "overview": [
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=daily",
+    "http": 200,
+    "ids": 20,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=weekly",
+    "http": 200,
+    "ids": 110,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=monthly",
+    "http": 200,
+    "ids": 164,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=quarterly",
+    "http": 200,
+    "ids": 170,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=weekly&zone=13",
+    "http": 200,
+    "ids": 12,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=weekly&zone=4",
+    "http": 200,
+    "ids": 9,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=weekly&dept=POL-GCP",
+    "http": 200,
+    "ids": 110,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "q": "period=weekly&dept=GCC-SWD",
+    "http": 200,
+    "ids": 110,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=daily",
+    "http": 200,
+    "ids": 25,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 2,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=weekly",
+    "http": 200,
+    "ids": 101,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=monthly",
+    "http": 200,
+    "ids": 154,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=quarterly",
+    "http": 200,
+    "ids": 170,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=weekly&zone=13",
+    "http": 200,
+    "ids": 12,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=weekly&zone=4",
+    "http": 200,
+    "ids": 18,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=weekly&dept=POL-GCP",
+    "http": 200,
+    "ids": 101,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "q": "period=weekly&dept=GCC-SWD",
+    "http": 200,
+    "ids": 101,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 6,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=daily",
+    "http": 200,
+    "ids": 0,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=weekly",
+    "http": 200,
+    "ids": 2,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=monthly",
+    "http": 200,
+    "ids": 16,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=quarterly",
+    "http": 200,
+    "ids": 25,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=weekly&zone=13",
+    "http": 200,
+    "ids": 0,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=weekly&zone=4",
+    "http": 200,
+    "ids": 0,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=weekly&dept=POL-GCP",
+    "http": 200,
+    "ids": 2,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "q": "period=weekly&dept=GCC-SWD",
+    "http": 200,
+    "ids": 2,
+    "foreign": 0,
+    "foreign_ids": [],
+    "bell": 0,
+    "bell_foreign": 0
+   }
+  ],
+  "insights": [
+   {
+    "key": "officerA",
+    "dept": "GCC-SWM",
+    "chips_http": 200,
+    "chips": [
+     {
+      "key": "change:2026-11-06",
+      "label": "Reports up on the previous day",
+      "headline": null
+     }
+    ],
+    "officer_insights_http": 200,
+    "foreign_ids": 0
+   },
+   {
+    "key": "officerB",
+    "dept": "GCC-ELE",
+    "chips_http": 200,
+    "chips": [
+     {
+      "key": "change:2026-11-06",
+      "label": "Reports up on the previous day",
+      "headline": null
+     },
+     {
+      "key": "attention:INC-20261106-DDB161",
+      "label": "தெருவிளக்கு கம்பத்தில் மின்சாரம் தாக்குகிறது",
+      "headline": null
+     },
+     {
+      "key": "attention:INC-20261105-45E2DD",
+      "label": "People are getting electric shock from the street light pole in our street",
+      "headline": null
+     }
+    ],
+    "officer_insights_http": 200,
+    "foreign_ids": 0
+   },
+   {
+    "key": "officerC",
+    "dept": "CMWSSB",
+    "chips_http": 200,
+    "chips": [],
+    "officer_insights_http": 200,
+    "foreign_ids": 0
+   }
+  ],
+  "collector_filter": [
+   {
+    "dept": "GCC-SWM",
+    "zone": null,
+    "emerging": []
+   },
+   {
+    "dept": "GCC-SWM",
+    "zone": 4,
+    "emerging": []
+   },
+   {
+    "dept": "GCC-ELE",
+    "zone": null,
+    "emerging": []
+   },
+   {
+    "dept": "GCC-ELE",
+    "zone": 4,
+    "emerging": []
+   },
+   {
+    "dept": "CMWSSB",
+    "zone": null,
+    "emerging": []
+   },
+   {
+    "dept": "CMWSSB",
+    "zone": 4,
+    "emerging": []
+   },
+   {
+    "dept": "GCC-SWD",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Veetukulla mazhai thanni vandhuduchu, udane help pannunga",
+      "dept_rows_in_zone_all_time": 87,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-SWD",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Veetukulla mazhai thanni vandhuduchu, udane help pannunga",
+      "dept_rows_in_zone_all_time": 87,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "POL-GCP",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Rain-hit wall caves in near MKB Nagar Bus Stand",
+      "dept_rows_in_zone_all_time": 19,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "POL-GCP",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Rain-hit wall caves in near MKB Nagar Bus Stand",
+      "dept_rows_in_zone_all_time": 19,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "PWD-WRD",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Kasimedu மின்வாரிய அலுவலகம் அருகில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை",
+      "dept_rows_in_zone_all_time": 55,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "PWD-WRD",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": "Kasimedu மின்வாரிய அலுவலகம் அருகில் சாலையில் தண்ணீர் தேங்கி வாகனங்கள் செல்ல முடியவில்லை",
+      "dept_rows_in_zone_all_time": 55,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-LND",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 0,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-LND",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 0,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-BRG",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 1,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-BRG",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "FLOOD_WATERLOGGING",
+      "zone": 4,
+      "observed": 10,
+      "text": "Flooding & waterlogging in Tondiarpet: 10 reports on 4 Nov, about 5 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 1,
+      "all_rows_in_zone_all_time": 162
+     }
+    ]
+   },
+   {
+    "dept": "GCC-EDU",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 2,
+      "observed": 8,
+      "text": "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 0,
+      "all_rows_in_zone_all_time": 12
+     },
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 0,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   },
+   {
+    "dept": "GCC-EDU",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 0,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   },
+   {
+    "dept": "GCC-HLT",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 2,
+      "observed": 8,
+      "text": "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 4,
+      "all_rows_in_zone_all_time": 12
+     },
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 8,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   },
+   {
+    "dept": "GCC-HLT",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": null,
+      "dept_rows_in_zone_all_time": 8,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   },
+   {
+    "dept": "TNPCB",
+    "zone": null,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 2,
+      "observed": 8,
+      "text": "Air pollution in Manali: 8 reports in the 10 days to 3 Nov, a slow rise, about 23 times the usual.",
+      "example": "Air pollution – Manali Village, Chennai - TNPCB",
+      "dept_rows_in_zone_all_time": 8,
+      "all_rows_in_zone_all_time": 12
+     },
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": "Air pollution – Kodungaiyur, Chennai - TNPCB",
+      "dept_rows_in_zone_all_time": 8,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   },
+   {
+    "dept": "TNPCB",
+    "zone": 4,
+    "emerging": [
+     {
+      "cat": "AIR_POLLUTION",
+      "zone": 4,
+      "observed": 8,
+      "text": "Air pollution in Tondiarpet: 8 reports in the 5 days to 31 Oct, a slow rise, about 23 times the usual.",
+      "example": "Air pollution – Kodungaiyur, Chennai - TNPCB",
+      "dept_rows_in_zone_all_time": 8,
+      "all_rows_in_zone_all_time": 16
+     }
+    ]
+   }
+  ]
+ },
+ "narrate": {
+  "sentences": [
+   {
+    "text": "explain the flooding complaint in Adyar",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Knee-deep water stagnation in our area; vehicles cannot pass",
+    "en": "There's standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-8D91A1",
+    "sev": "Low",
+    "place": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+    "zoneName": "Adyar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Adyar",
+    "field_label": false
+   },
+   {
+    "text": "explain the garbage complaint in Royapuram",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Cleaning of Water Table: the problem in our area has continued for the last 8 days",
+    "en": "There's uncleared garbage at Goyya Thoppu (T N S C B Quarters H Block), Pudupet, Pudupet. It's been open for several hours. I'd ask the conservancy team to clear it.",
+    "ta": "ராயபுரம் பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-2E1851",
+    "sev": "Low",
+    "place": "Goyya Thoppu (T N S C B Quarters H Block), Pudupet, Pudupet",
+    "zoneName": "Royapuram",
+    "oracle_status": "Under review",
+    "oracle_zone": "Royapuram",
+    "field_label": false
+   },
+   {
+    "text": "tell me about the street light complaint in Velachery",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Street light problem opp. Primary Health Centre: shifting of street light pole",
+    "en": "There's a street light or electrical problem at Gopalapuram 6Th Street, Gopalapuram, Thousand Lights. It's been open for several hours. I'd ask the corporation for an update.",
+    "ta": "தேனாம்பேட்டை பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-31532C",
+    "sev": "Low",
+    "place": "Gopalapuram 6Th Street, Gopalapuram, Thousand Lights",
+    "zoneName": "Teynampet",
+    "oracle_status": "Under review",
+    "oracle_zone": "Teynampet",
+    "field_label": false
+   },
+   {
+    "text": "explain the mosquito complaint in Teynampet",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Balaji Nagar 3rd Street பகுதியில் கொசு தொல்லை அதிகம், பலருக்கு காய்ச்சல்",
+    "en": "There's a mosquito or water-borne disease problem at Balaji Nagar 3Rd Street, Royapettah. It's been open for a couple of hours. I'd ask Health for fogging around it.",
+    "ta": "தேனாம்பேட்டை பகுதியில் கொசு அல்லது நீர்வழி நோய்ப் பிரச்சினை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. 2 பேர் புகார் கொடுத்திருக்கிறார்கள், நிறைய பேரைப் பாதிக்கிறது. சுகாதாரத் துறையிடம் அங்கே புகை மருந்து அடிக்கச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20260827-E83916",
+    "sev": "Medium",
+    "place": "Balaji Nagar 3Rd Street, Royapettah",
+    "zoneName": "Teynampet",
+    "oracle_status": "Under review",
+    "oracle_zone": "Teynampet",
+    "field_label": false
+   },
+   {
+    "text": "Adyar flooding enna aachu",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Knee-deep water stagnation in our area; vehicles cannot pass",
+    "en": "There's standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-8D91A1",
+    "sev": "Low",
+    "place": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+    "zoneName": "Adyar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Adyar",
+    "field_label": false
+   },
+   {
+    "text": "Anna Nagar kuppai enna aachu",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Removal of Debris: the problem near Children's park gate has continued for almost a month",
+    "en": "There's uncleared garbage at School Road, Jaganathapuram, Chetpet. It's been open for a couple of days. I'd ask the conservancy team to clear it.",
+    "ta": "அண்ணா நகர் பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு நாட்களாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261104-B6FF38",
+    "sev": "Low",
+    "place": "School Road, Jaganathapuram, Chetpet",
+    "zoneName": "Anna Nagar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Anna Nagar",
+    "field_label": false
+   },
+   {
+    "text": "Perungudi la kuppai problem enna aachu",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Solomon Avenue la kadai vechurukken. Engal street la garbage one week ah eduklala, romba smell varudhu",
+    "en": "There's uncleared garbage at Solomon Avenue, Thoraipakkam, Raman Nagar. It's been open for several hours. I'd ask the conservancy team to clear it.",
+    "ta": "பெருங்குடி பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-DF91D4",
+    "sev": "Low",
+    "place": "Solomon Avenue, Thoraipakkam, Raman Nagar",
+    "zoneName": "Perungudi",
+    "oracle_status": "Assigned",
+    "oracle_zone": "Perungudi",
+    "field_label": false
+   },
+   {
+    "text": "அடையாறு வெள்ளம் விளக்கு",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Knee-deep water stagnation in our area; vehicles cannot pass",
+    "en": "There's standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-8D91A1",
+    "sev": "Low",
+    "place": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+    "zoneName": "Adyar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Adyar",
+    "field_label": false
+   },
+   {
+    "text": "அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Knee-deep water stagnation in our area; vehicles cannot pass",
+    "en": "There's standing water at Arulayammanpet Cross Street, Arulyammanpet, Guindy. It's been open for several hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-8D91A1",
+    "sev": "Low",
+    "place": "Arulayammanpet Cross Street, Arulyammanpet, Guindy",
+    "zoneName": "Adyar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Adyar",
+    "field_label": false
+   },
+   {
+    "text": "அண்ணா நகர் குப்பை புகார் விளக்கவும்",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "Removal of Debris: the problem near Children's park gate has continued for almost a month",
+    "en": "There's uncleared garbage at School Road, Jaganathapuram, Chetpet. It's been open for a couple of days. I'd ask the conservancy team to clear it.",
+    "ta": "அண்ணா நகர் பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு நாட்களாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261104-B6FF38",
+    "sev": "Low",
+    "place": "School Road, Jaganathapuram, Chetpet",
+    "zoneName": "Anna Nagar",
+    "oracle_status": "Under review",
+    "oracle_zone": "Anna Nagar",
+    "field_label": false
+   },
+   {
+    "text": "பெருங்குடி தெருவிளக்கு புகார் விளக்கு",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "title": "No electricity in the corporation night shelter for three days",
+    "en": "There's a street light or electrical problem at Majesric Lane - Sivaprakash Nagar, Sivaprakasam Street, Puzhuthivakkam. It's been open for several hours. I'd ask the corporation for an update.",
+    "ta": "பெருங்குடி பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மாநகராட்சியிடம் நிலவரம் கேட்கலாம்.",
+    "reply": null,
+    "note": "quick",
+    "id": "INC-20261106-D065CE",
+    "sev": "Low",
+    "place": "Majesric Lane - Sivaprakash Nagar, Sivaprakasam Street, Puzhuthivakkam",
+    "zoneName": "Perungudi",
+    "oracle_status": "Under review",
+    "oracle_zone": "Perungudi",
+    "field_label": false
+   }
+  ],
+  "sweep": {
+   "sample": 213,
+   "spoke": 213,
+   "not_found": [],
+   "field_labels": [],
+   "closed": {
+    "n": 91,
+    "told_open_en": [],
+    "told_open_ta": []
+   },
+   "open": {
+    "n": 122,
+    "told_closed": []
+   },
+   "bad_join": [
+    {
+     "id": "INC-20261103-A41A60",
+     "dept": "DIST-DM",
+     "ta": "Managementஇடம் நிலவரம் கேட்கலாம்."
+    },
+    {
+     "id": "INC-20261103-A46CB2",
+     "dept": "DIST-DM",
+     "ta": "Managementஇடம் நிலவரம் கேட்கலாம்."
+    },
+    {
+     "id": "INC-20261103-444E9E",
+     "dept": "TNPCB",
+     "ta": "Boardஇடம் இன்றே நிலவரம் கேட்கலாம்."
+    },
+    {
+     "id": "INC-20261103-38B62A",
+     "dept": "TNPCB",
+     "ta": "Boardஇடம் இன்றே நிலவரம் கேட்கலாம்."
+    }
+   ],
+   "join_forms": {
+    "Managementஇடம்": 2,
+    "பிரிவிடம்": 13,
+    "மாநகராட்சியிடம்": 71,
+    "துறையிடம்": 18,
+    "வாரியத்திடம்": 8,
+    "காவல்துறையிடம்": 3,
+    "பொதுப்பணித்துறையிடம்": 5,
+    "Boardஇடம்": 2
+   },
+   "examples": {
+    "Open": {
+     "id": "INC-20261103-A41A60",
+     "en": "There's a weather or flood warning at Chennai district. It's been open for a couple of hours. I'd ask District Disaster Management for an update.",
+     "ta": "Chennai district பகுதியில் வானிலை அல்லது வெள்ள எச்சரிக்கை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. District Disaster Managementஇடம் நிலவரம் கேட்கலாம்."
+    },
+    "Under review": {
+     "id": "INC-20261106-31714F",
+     "en": "There's a drainage or sewage problem at Sathya Street, Anbazhagan Nagar, Taramani. It's been open for a couple of hours. I'd ask Metrowater for a status by this evening.",
+     "ta": "அடையாறு பகுதியில் வடிகால் அல்லது கழிவுநீர் பிரச்சினை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. குடிநீர் வாரியத்திடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்."
+    },
+    "In progress": {
+     "id": "INC-20261106-5E8B78",
+     "en": "There's standing water at Thoraipakkam. It's been open for a couple of hours. It's one of the serious ones. I'd ask Storm Water Drains to send a pump and check the drain there.",
+     "ta": "சோழிங்கநல்லூர் பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. இது கடுமையானவற்றில் ஒன்று. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்."
+    },
+    "Assigned": {
+     "id": "INC-20261106-8E5766",
+     "en": "There's a drainage or sewage problem at Ragavendhira Nagar, Ragavendhira Nagar, Ramapuram. It's been open for several hours. I'd ask Metrowater for a status by this evening.",
+     "ta": "வளசரவாக்கம் பகுதியில் வடிகால் அல்லது கழிவுநீர் பிரச்சினை இருக்கிறது. சில மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. குடிநீர் வாரியத்திடம் இன்று மாலைக்குள் நிலவரம் கேட்கலாம்."
+    },
+    "Resolved": {
+     "id": "INC-20261105-0F3696",
+     "en": "There was standing water at Guindy Industrial Estate (Guindy Industrial Estate Storm Water Channel). It's marked resolved, so there's nothing to chase unless it comes back.",
+     "ta": "அடையாறு பகுதியில் தண்ணீர் தேக்கம் இருந்தது. இது தீர்க்கப்பட்டதாகப் பதிவாகியுள்ளது; மீண்டும் வந்தால் மட்டும் பார்த்தால் போதும்."
+    },
+    "Awaiting verification": {
+     "id": "INC-20261104-CBCE27",
+     "en": "There's uncleared garbage at Village Street 1St Lane, Karikrishna Perumal Koil, Manali. It's been open for a couple of days. I'd ask the conservancy team to clear it.",
+     "ta": "மணலி பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு நாட்களாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்."
+    },
+    "Rejected": {
+     "id": "INC-20261104-0E8795",
+     "en": "There was a street light or electrical problem at Silandhi Kuttai Main Road, Silandhi Kuttai, Villivakkam. It was rejected and closed, so no work is pending on it.",
+     "ta": "அண்ணா நகர் பகுதியில் தெருவிளக்கு அல்லது மின் பிரச்சினை இருந்தது. இது நிராகரிக்கப்பட்டு முடிக்கப்பட்டது; இதில் நிலுவை வேலை எதுவும் இல்லை."
+    },
+    "Lapsed": {
+     "id": "INC-20261030-D0FA96",
+     "en": "There was a drainage or sewage problem at Ennore. It lapsed without being marked fixed, so it's worth checking whether the problem is still there.",
+     "ta": "திருவொற்றியூர் பகுதியில் வடிகால் அல்லது கழிவுநீர் பிரச்சினை இருந்தது. சரிசெய்யப்பட்ட பதிவு இல்லாமல் இது காலாவதியானது; பிரச்சினை இன்னும் இருக்கிறதா என்று பார்ப்பது நல்லது."
+    }
+   }
+  }
+ },
+ "overdue": {
+  "sentences": [
+   {
+    "text": "overdue cases this week",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Cases · this week",
+    "en": "There are no cases this week for this view.",
+    "ta": "இந்தப் பார்வையில் இந்த வாரம்  சம்பவங்கள் இல்லை.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "show me overdue cases today",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Cases · today",
+    "en": "There are no cases today for this view.",
+    "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "indha week overdue cases kaattu",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Cases · this week",
+    "en": "There are no cases this week for this view.",
+    "ta": "இந்தப் பார்வையில் இந்த வாரம்  சம்பவங்கள் இல்லை.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "innaiku overdue cases enna",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Cases · today",
+    "en": "There are no cases today for this view.",
+    "ta": "இந்தப் பார்வையில் இன்று  சம்பவங்கள் இல்லை.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "சம்பவங்கள் · இந்த வாரம்",
+    "en": "There are no cases this week for this view.",
+    "ta": "இந்தப் பார்வையில் இந்த வாரம்  சம்பவங்கள் இல்லை.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": null,
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "இன்று காலக்கெடு தாண்டிய சம்பவங்கள்",
+    "http": 200,
+    "kind": "none",
+    "recipe": null,
+    "title": null,
+    "en": null,
+    "ta": null,
+    "reply": null,
+    "note": "no-model",
+    "slots": null,
+    "list_total": null,
+    "list_rows": null,
+    "rows_overdue": null,
+    "rows_sev": null
+   },
+   {
+    "text": "severe overdue cases",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Severe cases · today",
+    "en": "6 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 6 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 6,
+    "list_rows": 6,
+    "rows_overdue": 6,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "severe cases past the deadline",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Severe cases · today",
+    "en": "6 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 6 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 6,
+    "list_rows": 6,
+    "rows_overdue": 6,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "overdue severe cases this week",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Severe cases · this week",
+    "en": "37 severe cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 9 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இந்த வாரம் 37 கடுமையான சம்பவங்கள். 10 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources வசம் 9. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 37,
+    "list_rows": 10,
+    "rows_overdue": 10,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "severe overdue cases innaiku",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "Severe cases · today",
+    "en": "6 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 6 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "daily",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 6,
+    "list_rows": 6,
+    "rows_overdue": 6,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "இந்த வாரம் கெடு தாண்டிய கடுமையான சம்பவங்கள் காட்டு",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "கடுமையான சம்பவங்கள் · இந்த வாரம்",
+    "en": "37 severe cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources holds 9 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இந்த வாரம் 37 கடுமையான சம்பவங்கள். 10 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Saidapet (Adyar River - Saidapet stretch). PWD Water Resources வசம் 9. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "Severe",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 37,
+    "list_rows": 10,
+    "rows_overdue": 10,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "overdue high priority cases in Adyar",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "title": "High cases · Adyar · this week",
+    "en": "None today. 11 high cases this week; here are the 8 that matter most. 8 are past their deadline and need you first: Flooding & waterlogging at Adayar in Adyar, and standing water at Guindy Industrial Estate in Adyar. Greater Chennai Police holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று எதுவும் இல்லை. இந்த வாரம் 11 அதிக முக்கியத்துவ சம்பவங்கள். 8 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: Flooding & waterlogging at Adayar in Adyar, standing water at Guindy Industrial Estate in Adyar. Greater Chennai Police வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "reply": null,
+    "note": "quick",
+    "slots": {
+     "period": "weekly",
+     "zones": [
+      13
+     ],
+     "dept": null,
+     "depts": [],
+     "cat": null,
+     "taluk": null,
+     "sev": "High",
+     "status": "overdue",
+     "q": null,
+     "metric": null,
+     "measure": null,
+     "by": null,
+     "order": "top",
+     "n": 20,
+     "id": null,
+     "name": null,
+     "what": null,
+     "sort": "priority",
+     "fresh": true
+    },
+    "list_total": 11,
+    "list_rows": 8,
+    "rows_overdue": 8,
+    "rows_sev": "High,High,High,High,High,High,High,High"
+   }
+  ],
+  "stats": {
+   "scopes": 100,
+   "with_overdue": 86,
+   "says_none": 51,
+   "no_sev_with_overdue": 20,
+   "no_sev_says_none": 20,
+   "sev_with_overdue": 66,
+   "sev_says_none": 31,
+   "total_differs_from_console": 63,
+   "console_differs_from_oracle": 0
+  },
+  "district": [
+   "daily/any: console 11 (groups 11), oracle 11, jarvis null (rows 0) \"There are no cases today for this view.\"",
+   "daily/Severe: console 6 (groups 6), oracle 6, jarvis 6 (rows 6) \"6 severe cases today. 6 are past their deadline and need you first: st\"",
+   "daily/High: console 5 (groups 5), oracle 5, jarvis null (rows 0) \"There are no high cases today for this view.\"",
+   "daily/Medium: console 0 (groups 0), oracle 0, jarvis null (rows 0) \"There are no medium cases today for this view.\"",
+   "daily/Low: console 0 (groups 0), oracle 0, jarvis null (rows 0) \"There are no low cases today for this view.\"",
+   "weekly/any: console 339 (groups 296), oracle 339, jarvis null (rows 0) \"There are no cases this week for this view.\"",
+   "weekly/Severe: console 39 (groups 37), oracle 39, jarvis 37 (rows 10) \"37 severe cases this week; here are the 10 that matter most. 10 are pa\"",
+   "weekly/High: console 139 (groups 128), oracle 139, jarvis null (rows 0) \"There are no high cases this week for this view.\"",
+   "weekly/Medium: console 125 (groups 104), oracle 125, jarvis null (rows 0) \"There are no medium cases this week for this view.\"",
+   "weekly/Low: console 36 (groups 36), oracle 36, jarvis null (rows 0) \"There are no low cases this week for this view.\"",
+   "monthly/any: console 742 (groups 690), oracle 742, jarvis null (rows 0) \"There are no cases the last 30 days for this view.\"",
+   "monthly/Severe: console 61 (groups 59), oracle 61, jarvis 59 (rows 10) \"59 severe cases the last 30 days; here are the 10 that matter most. 10\"",
+   "monthly/High: console 190 (groups 179), oracle 190, jarvis null (rows 0) \"There are no high cases the last 30 days for this view.\"",
+   "monthly/Medium: console 313 (groups 289), oracle 313, jarvis null (rows 0) \"There are no medium cases the last 30 days for this view.\"",
+   "monthly/Low: console 178 (groups 177), oracle 178, jarvis null (rows 0) \"There are no low cases the last 30 days for this view.\"",
+   "quarterly/any: console 888 (groups 831), oracle 888, jarvis null (rows 0) \"There are no cases the last 90 days for this view.\"",
+   "quarterly/Severe: console 65 (groups 63), oracle 65, jarvis 60 (rows 10) \"60 severe cases the last 90 days; here are the 10 that matter most. 10\"",
+   "quarterly/High: console 218 (groups 207), oracle 218, jarvis null (rows 0) \"There are no high cases the last 90 days for this view.\"",
+   "quarterly/Medium: console 370 (groups 343), oracle 370, jarvis null (rows 0) \"There are no medium cases the last 90 days for this view.\"",
+   "quarterly/Low: console 235 (groups 233), oracle 235, jarvis null (rows 0) \"There are no low cases the last 90 days for this view.\""
+  ],
+  "chat": [
+   {
+    "m": "how many overdue incidents today",
+    "status": 200,
+    "headline": "11 incidents past their deadline · last 24 hours",
+    "answer": "**11** incidents reported in the last 24 hours are past their deadline, 6 of them severe; 13 deaths recorded in them.",
+    "error": null
+   },
+   {
+    "m": "how many overdue incidents this week",
+    "status": 200,
+    "headline": "339 incidents past their deadline · last 7 days",
+    "answer": "**339** incidents reported in the last 7 days are past their deadline, 39 of them severe; 30 deaths recorded in them.",
+    "error": null
+   },
+   {
+    "m": "evlo overdue cases indha week",
+    "status": 200,
+    "headline": "339 incidents · kadandha 7 naal-la",
+    "answer": "kadandha 7 naal-la 339 incidents report aagirukku (munnadi 182): 39 severe, 339 innum open, 30 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "இந்த வாரம் எத்தனை காலக்கெடு தாண்டிய சம்பவங்கள்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   }
+  ],
+  "scopes": [
+   {
+    "period": "daily",
+    "zone": null,
+    "sev": null,
+    "console_incidents": 11,
+    "console_groups": 11,
+    "oracle_incidents": 11,
+    "oracle_groups": 11,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": null,
+    "sev": "Severe",
+    "console_incidents": 6,
+    "console_groups": 6,
+    "oracle_incidents": 6,
+    "oracle_groups": 6,
+    "jarvis_total": 6,
+    "jarvis_rows": 6,
+    "jarvis_rows_overdue": 6,
+    "say_en": "6 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, "
+   },
+   {
+    "period": "daily",
+    "zone": null,
+    "sev": "High",
+    "console_incidents": 5,
+    "console_groups": 5,
+    "oracle_incidents": 5,
+    "oracle_groups": 5,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": null,
+    "sev": "Medium",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": null,
+    "sev": "Low",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 13,
+    "sev": null,
+    "console_incidents": 1,
+    "console_groups": 1,
+    "oracle_incidents": 1,
+    "oracle_groups": 1,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 13,
+    "sev": "Severe",
+    "console_incidents": 1,
+    "console_groups": 1,
+    "oracle_incidents": 1,
+    "oracle_groups": 1,
+    "jarvis_total": 1,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "1 severe case today. One is past its deadline and needs you first: standing water at Saidapet (Adyar River - S"
+   },
+   {
+    "period": "daily",
+    "zone": 13,
+    "sev": "High",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 13,
+    "sev": "Medium",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 13,
+    "sev": "Low",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 4,
+    "sev": null,
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 4,
+    "sev": "Severe",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no severe cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 4,
+    "sev": "High",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": 3,
+    "jarvis_rows": 3,
+    "jarvis_rows_overdue": 3,
+    "say_en": "3 high cases today. 3 are past their deadline and need you first: Missing person at Kasimedu in Tondiarpet, an"
+   },
+   {
+    "period": "daily",
+    "zone": 4,
+    "sev": "Medium",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 4,
+    "sev": "Low",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 5,
+    "sev": null,
+    "console_incidents": 2,
+    "console_groups": 2,
+    "oracle_incidents": 2,
+    "oracle_groups": 2,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 5,
+    "sev": "Severe",
+    "console_incidents": 2,
+    "console_groups": 2,
+    "oracle_incidents": 2,
+    "oracle_groups": 2,
+    "jarvis_total": 2,
+    "jarvis_rows": 2,
+    "jarvis_rows_overdue": 2,
+    "say_en": "2 severe cases today. 2 are past their deadline and need you first: a lake or bund problem at Chetpet (Chetpet"
+   },
+   {
+    "period": "daily",
+    "zone": 5,
+    "sev": "High",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 5,
+    "sev": "Medium",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 5,
+    "sev": "Low",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 9,
+    "sev": null,
+    "console_incidents": 1,
+    "console_groups": 1,
+    "oracle_incidents": 1,
+    "oracle_groups": 1,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 9,
+    "sev": "Severe",
+    "console_incidents": 1,
+    "console_groups": 1,
+    "oracle_incidents": 1,
+    "oracle_groups": 1,
+    "jarvis_total": 1,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "1 severe case today. One is past its deadline and needs you first: standing water at Ice House in Teynampet. S"
+   },
+   {
+    "period": "daily",
+    "zone": 9,
+    "sev": "High",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 9,
+    "sev": "Medium",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases today for this view."
+   },
+   {
+    "period": "daily",
+    "zone": 9,
+    "sev": "Low",
+    "console_incidents": 0,
+    "console_groups": 0,
+    "oracle_incidents": 0,
+    "oracle_groups": 0,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases today for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": null,
+    "sev": null,
+    "console_incidents": 339,
+    "console_groups": 296,
+    "oracle_incidents": 339,
+    "oracle_groups": 296,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": null,
+    "sev": "Severe",
+    "console_incidents": 39,
+    "console_groups": 37,
+    "oracle_incidents": 39,
+    "oracle_groups": 37,
+    "jarvis_total": 37,
+    "jarvis_rows": 10,
+    "jarvis_rows_overdue": 10,
+    "say_en": "37 severe cases this week; here are the 10 that matter most. 10 are past their deadline and need you first: st"
+   },
+   {
+    "period": "weekly",
+    "zone": null,
+    "sev": "High",
+    "console_incidents": 139,
+    "console_groups": 128,
+    "oracle_incidents": 139,
+    "oracle_groups": 128,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": null,
+    "sev": "Medium",
+    "console_incidents": 125,
+    "console_groups": 104,
+    "oracle_incidents": 125,
+    "oracle_groups": 104,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": null,
+    "sev": "Low",
+    "console_incidents": 36,
+    "console_groups": 36,
+    "oracle_incidents": 36,
+    "oracle_groups": 36,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 13,
+    "sev": null,
+    "console_incidents": 26,
+    "console_groups": 23,
+    "oracle_incidents": 26,
+    "oracle_groups": 23,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 13,
+    "sev": "Severe",
+    "console_incidents": 2,
+    "console_groups": 2,
+    "oracle_incidents": 2,
+    "oracle_groups": 2,
+    "jarvis_total": 2,
+    "jarvis_rows": 2,
+    "jarvis_rows_overdue": 2,
+    "say_en": "2 severe cases this week. 2 are past their deadline and need you first: standing water at Saidapet (Adyar Rive"
+   },
+   {
+    "period": "weekly",
+    "zone": 13,
+    "sev": "High",
+    "console_incidents": 11,
+    "console_groups": 11,
+    "oracle_incidents": 11,
+    "oracle_groups": 11,
+    "jarvis_total": 11,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "11 high cases this week; here are the 8 that matter most. 8 are past their deadline and need you first: Floodi"
+   },
+   {
+    "period": "weekly",
+    "zone": 13,
+    "sev": "Medium",
+    "console_incidents": 10,
+    "console_groups": 7,
+    "oracle_incidents": 10,
+    "oracle_groups": 7,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 13,
+    "sev": "Low",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 4,
+    "sev": null,
+    "console_incidents": 28,
+    "console_groups": 28,
+    "oracle_incidents": 28,
+    "oracle_groups": 28,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 4,
+    "sev": "Severe",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": 3,
+    "jarvis_rows": 3,
+    "jarvis_rows_overdue": 3,
+    "say_en": "3 severe cases this week. 3 are past their deadline and need you first: standing water at M.K.B. Nagar in Tond"
+   },
+   {
+    "period": "weekly",
+    "zone": 4,
+    "sev": "High",
+    "console_incidents": 13,
+    "console_groups": 13,
+    "oracle_incidents": 13,
+    "oracle_groups": 13,
+    "jarvis_total": 13,
+    "jarvis_rows": 6,
+    "jarvis_rows_overdue": 6,
+    "say_en": "13 high cases this week; here are the 6 that matter most. 6 are past their deadline and need you first: Missin"
+   },
+   {
+    "period": "weekly",
+    "zone": 4,
+    "sev": "Medium",
+    "console_incidents": 9,
+    "console_groups": 9,
+    "oracle_incidents": 9,
+    "oracle_groups": 9,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 4,
+    "sev": "Low",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 5,
+    "sev": null,
+    "console_incidents": 39,
+    "console_groups": 37,
+    "oracle_incidents": 39,
+    "oracle_groups": 37,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 5,
+    "sev": "Severe",
+    "console_incidents": 9,
+    "console_groups": 8,
+    "oracle_incidents": 9,
+    "oracle_groups": 8,
+    "jarvis_total": 8,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "8 severe cases this week. 8 are past their deadline and need you first: a lake or bund problem at Chetpet (Che"
+   },
+   {
+    "period": "weekly",
+    "zone": 5,
+    "sev": "High",
+    "console_incidents": 17,
+    "console_groups": 17,
+    "oracle_incidents": 17,
+    "oracle_groups": 17,
+    "jarvis_total": 16,
+    "jarvis_rows": 9,
+    "jarvis_rows_overdue": 9,
+    "say_en": "16 high cases this week; here are the 9 that matter most. 9 are past their deadline and need you first: Floodi"
+   },
+   {
+    "period": "weekly",
+    "zone": 5,
+    "sev": "Medium",
+    "console_incidents": 10,
+    "console_groups": 10,
+    "oracle_incidents": 10,
+    "oracle_groups": 10,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 5,
+    "sev": "Low",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 9,
+    "sev": null,
+    "console_incidents": 27,
+    "console_groups": 26,
+    "oracle_incidents": 27,
+    "oracle_groups": 26,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases this week for this view."
+   },
+   {
+    "period": "weekly",
+    "zone": 9,
+    "sev": "Severe",
+    "console_incidents": 2,
+    "console_groups": 1,
+    "oracle_incidents": 2,
+    "oracle_groups": 1,
+    "jarvis_total": 1,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "1 severe case this week. One is past its deadline and needs you first: standing water at Ice House in Teynampe"
+   },
+   {
+    "period": "weekly",
+    "zone": 9,
+    "sev": "High",
+    "console_incidents": 10,
+    "console_groups": 10,
+    "oracle_incidents": 10,
+    "oracle_groups": 10,
+    "jarvis_total": 10,
+    "jarvis_rows": 5,
+    "jarvis_rows_overdue": 5,
+    "say_en": "10 high cases this week; here are the 5 that matter most. 5 are past their deadline and need you first: Floodi"
+   },
+   {
+    "period": "weekly",
+    "zone": 9,
+    "sev": "Medium",
+    "console_incidents": 11,
+    "console_groups": 11,
+    "oracle_incidents": 11,
+    "oracle_groups": 11,
+    "jarvis_total": 11,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "11 medium cases this week; here are the 1 that matter most. One is past its deadline and needs you first: a tr"
+   },
+   {
+    "period": "weekly",
+    "zone": 9,
+    "sev": "Low",
+    "console_incidents": 4,
+    "console_groups": 4,
+    "oracle_incidents": 4,
+    "oracle_groups": 4,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases this week for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": null,
+    "sev": null,
+    "console_incidents": 742,
+    "console_groups": 690,
+    "oracle_incidents": 742,
+    "oracle_groups": 690,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": null,
+    "sev": "Severe",
+    "console_incidents": 61,
+    "console_groups": 59,
+    "oracle_incidents": 61,
+    "oracle_groups": 59,
+    "jarvis_total": 59,
+    "jarvis_rows": 10,
+    "jarvis_rows_overdue": 10,
+    "say_en": "59 severe cases the last 30 days; here are the 10 that matter most. 10 are past their deadline and need you fi"
+   },
+   {
+    "period": "monthly",
+    "zone": null,
+    "sev": "High",
+    "console_incidents": 190,
+    "console_groups": 179,
+    "oracle_incidents": 190,
+    "oracle_groups": 179,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": null,
+    "sev": "Medium",
+    "console_incidents": 313,
+    "console_groups": 289,
+    "oracle_incidents": 313,
+    "oracle_groups": 289,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": null,
+    "sev": "Low",
+    "console_incidents": 178,
+    "console_groups": 177,
+    "oracle_incidents": 178,
+    "oracle_groups": 177,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 13,
+    "sev": null,
+    "console_incidents": 57,
+    "console_groups": 53,
+    "oracle_incidents": 57,
+    "oracle_groups": 53,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 13,
+    "sev": "Severe",
+    "console_incidents": 4,
+    "console_groups": 4,
+    "oracle_incidents": 4,
+    "oracle_groups": 4,
+    "jarvis_total": 4,
+    "jarvis_rows": 4,
+    "jarvis_rows_overdue": 4,
+    "say_en": "4 severe cases the last 30 days. 4 are past their deadline and need you first: standing water at Saidapet (Ady"
+   },
+   {
+    "period": "monthly",
+    "zone": 13,
+    "sev": "High",
+    "console_incidents": 14,
+    "console_groups": 14,
+    "oracle_incidents": 14,
+    "oracle_groups": 14,
+    "jarvis_total": 14,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "14 high cases the last 30 days; here are the 8 that matter most. 8 are past their deadline and need you first:"
+   },
+   {
+    "period": "monthly",
+    "zone": 13,
+    "sev": "Medium",
+    "console_incidents": 28,
+    "console_groups": 24,
+    "oracle_incidents": 28,
+    "oracle_groups": 24,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 13,
+    "sev": "Low",
+    "console_incidents": 11,
+    "console_groups": 11,
+    "oracle_incidents": 11,
+    "oracle_groups": 11,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 4,
+    "sev": null,
+    "console_incidents": 55,
+    "console_groups": 55,
+    "oracle_incidents": 55,
+    "oracle_groups": 55,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 4,
+    "sev": "Severe",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": 3,
+    "jarvis_rows": 3,
+    "jarvis_rows_overdue": 3,
+    "say_en": "3 severe cases the last 30 days. 3 are past their deadline and need you first: standing water at M.K.B. Nagar "
+   },
+   {
+    "period": "monthly",
+    "zone": 4,
+    "sev": "High",
+    "console_incidents": 20,
+    "console_groups": 20,
+    "oracle_incidents": 20,
+    "oracle_groups": 20,
+    "jarvis_total": 20,
+    "jarvis_rows": 6,
+    "jarvis_rows_overdue": 6,
+    "say_en": "20 high cases the last 30 days; here are the 6 that matter most. 6 are past their deadline and need you first:"
+   },
+   {
+    "period": "monthly",
+    "zone": 4,
+    "sev": "Medium",
+    "console_incidents": 16,
+    "console_groups": 16,
+    "oracle_incidents": 16,
+    "oracle_groups": 16,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 4,
+    "sev": "Low",
+    "console_incidents": 16,
+    "console_groups": 16,
+    "oracle_incidents": 16,
+    "oracle_groups": 16,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 5,
+    "sev": null,
+    "console_incidents": 86,
+    "console_groups": 84,
+    "oracle_incidents": 86,
+    "oracle_groups": 84,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 5,
+    "sev": "Severe",
+    "console_incidents": 12,
+    "console_groups": 11,
+    "oracle_incidents": 12,
+    "oracle_groups": 11,
+    "jarvis_total": 11,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "11 severe cases the last 30 days; here are the 8 that matter most. 8 are past their deadline and need you firs"
+   },
+   {
+    "period": "monthly",
+    "zone": 5,
+    "sev": "High",
+    "console_incidents": 25,
+    "console_groups": 25,
+    "oracle_incidents": 25,
+    "oracle_groups": 25,
+    "jarvis_total": 24,
+    "jarvis_rows": 9,
+    "jarvis_rows_overdue": 9,
+    "say_en": "24 high cases the last 30 days; here are the 9 that matter most. 9 are past their deadline and need you first:"
+   },
+   {
+    "period": "monthly",
+    "zone": 5,
+    "sev": "Medium",
+    "console_incidents": 33,
+    "console_groups": 33,
+    "oracle_incidents": 33,
+    "oracle_groups": 33,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 5,
+    "sev": "Low",
+    "console_incidents": 16,
+    "console_groups": 16,
+    "oracle_incidents": 16,
+    "oracle_groups": 16,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 9,
+    "sev": null,
+    "console_incidents": 67,
+    "console_groups": 65,
+    "oracle_incidents": 67,
+    "oracle_groups": 65,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 30 days for this view."
+   },
+   {
+    "period": "monthly",
+    "zone": 9,
+    "sev": "Severe",
+    "console_incidents": 5,
+    "console_groups": 4,
+    "oracle_incidents": 5,
+    "oracle_groups": 4,
+    "jarvis_total": 4,
+    "jarvis_rows": 4,
+    "jarvis_rows_overdue": 4,
+    "say_en": "4 severe cases the last 30 days. 4 are past their deadline and need you first: standing water at Ice House in "
+   },
+   {
+    "period": "monthly",
+    "zone": 9,
+    "sev": "High",
+    "console_incidents": 17,
+    "console_groups": 17,
+    "oracle_incidents": 17,
+    "oracle_groups": 17,
+    "jarvis_total": 17,
+    "jarvis_rows": 5,
+    "jarvis_rows_overdue": 5,
+    "say_en": "17 high cases the last 30 days; here are the 5 that matter most. 5 are past their deadline and need you first:"
+   },
+   {
+    "period": "monthly",
+    "zone": 9,
+    "sev": "Medium",
+    "console_incidents": 27,
+    "console_groups": 27,
+    "oracle_incidents": 27,
+    "oracle_groups": 27,
+    "jarvis_total": 27,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "27 medium cases the last 30 days; here are the 1 that matter most. One is past its deadline and needs you firs"
+   },
+   {
+    "period": "monthly",
+    "zone": 9,
+    "sev": "Low",
+    "console_incidents": 18,
+    "console_groups": 18,
+    "oracle_incidents": 18,
+    "oracle_groups": 18,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 30 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": null,
+    "sev": null,
+    "console_incidents": 888,
+    "console_groups": 831,
+    "oracle_incidents": 888,
+    "oracle_groups": 831,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": null,
+    "sev": "Severe",
+    "console_incidents": 65,
+    "console_groups": 63,
+    "oracle_incidents": 65,
+    "oracle_groups": 63,
+    "jarvis_total": 60,
+    "jarvis_rows": 10,
+    "jarvis_rows_overdue": 10,
+    "say_en": "60 severe cases the last 90 days; here are the 10 that matter most. 10 are past their deadline and need you fi"
+   },
+   {
+    "period": "quarterly",
+    "zone": null,
+    "sev": "High",
+    "console_incidents": 218,
+    "console_groups": 207,
+    "oracle_incidents": 218,
+    "oracle_groups": 207,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no high cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": null,
+    "sev": "Medium",
+    "console_incidents": 370,
+    "console_groups": 343,
+    "oracle_incidents": 370,
+    "oracle_groups": 343,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": null,
+    "sev": "Low",
+    "console_incidents": 235,
+    "console_groups": 233,
+    "oracle_incidents": 235,
+    "oracle_groups": 233,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 13,
+    "sev": null,
+    "console_incidents": 65,
+    "console_groups": 61,
+    "oracle_incidents": 65,
+    "oracle_groups": 61,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 13,
+    "sev": "Severe",
+    "console_incidents": 4,
+    "console_groups": 4,
+    "oracle_incidents": 4,
+    "oracle_groups": 4,
+    "jarvis_total": 4,
+    "jarvis_rows": 4,
+    "jarvis_rows_overdue": 4,
+    "say_en": "4 severe cases the last 90 days. 4 are past their deadline and need you first: standing water at Saidapet (Ady"
+   },
+   {
+    "period": "quarterly",
+    "zone": 13,
+    "sev": "High",
+    "console_incidents": 16,
+    "console_groups": 16,
+    "oracle_incidents": 16,
+    "oracle_groups": 16,
+    "jarvis_total": 16,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "16 high cases the last 90 days; here are the 8 that matter most. 8 are past their deadline and need you first:"
+   },
+   {
+    "period": "quarterly",
+    "zone": 13,
+    "sev": "Medium",
+    "console_incidents": 31,
+    "console_groups": 27,
+    "oracle_incidents": 31,
+    "oracle_groups": 27,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 13,
+    "sev": "Low",
+    "console_incidents": 14,
+    "console_groups": 14,
+    "oracle_incidents": 14,
+    "oracle_groups": 14,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 4,
+    "sev": null,
+    "console_incidents": 62,
+    "console_groups": 62,
+    "oracle_incidents": 62,
+    "oracle_groups": 62,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 4,
+    "sev": "Severe",
+    "console_incidents": 3,
+    "console_groups": 3,
+    "oracle_incidents": 3,
+    "oracle_groups": 3,
+    "jarvis_total": 3,
+    "jarvis_rows": 3,
+    "jarvis_rows_overdue": 3,
+    "say_en": "3 severe cases the last 90 days. 3 are past their deadline and need you first: standing water at M.K.B. Nagar "
+   },
+   {
+    "period": "quarterly",
+    "zone": 4,
+    "sev": "High",
+    "console_incidents": 22,
+    "console_groups": 22,
+    "oracle_incidents": 22,
+    "oracle_groups": 22,
+    "jarvis_total": 22,
+    "jarvis_rows": 6,
+    "jarvis_rows_overdue": 6,
+    "say_en": "22 high cases the last 90 days; here are the 6 that matter most. 6 are past their deadline and need you first:"
+   },
+   {
+    "period": "quarterly",
+    "zone": 4,
+    "sev": "Medium",
+    "console_incidents": 18,
+    "console_groups": 18,
+    "oracle_incidents": 18,
+    "oracle_groups": 18,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 4,
+    "sev": "Low",
+    "console_incidents": 19,
+    "console_groups": 19,
+    "oracle_incidents": 19,
+    "oracle_groups": 19,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 5,
+    "sev": null,
+    "console_incidents": 99,
+    "console_groups": 95,
+    "oracle_incidents": 99,
+    "oracle_groups": 95,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 5,
+    "sev": "Severe",
+    "console_incidents": 12,
+    "console_groups": 11,
+    "oracle_incidents": 12,
+    "oracle_groups": 11,
+    "jarvis_total": 11,
+    "jarvis_rows": 8,
+    "jarvis_rows_overdue": 8,
+    "say_en": "11 severe cases the last 90 days; here are the 8 that matter most. 8 are past their deadline and need you firs"
+   },
+   {
+    "period": "quarterly",
+    "zone": 5,
+    "sev": "High",
+    "console_incidents": 29,
+    "console_groups": 29,
+    "oracle_incidents": 29,
+    "oracle_groups": 29,
+    "jarvis_total": 28,
+    "jarvis_rows": 9,
+    "jarvis_rows_overdue": 9,
+    "say_en": "28 high cases the last 90 days; here are the 9 that matter most. 9 are past their deadline and need you first:"
+   },
+   {
+    "period": "quarterly",
+    "zone": 5,
+    "sev": "Medium",
+    "console_incidents": 38,
+    "console_groups": 38,
+    "oracle_incidents": 38,
+    "oracle_groups": 38,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no medium cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 5,
+    "sev": "Low",
+    "console_incidents": 20,
+    "console_groups": 19,
+    "oracle_incidents": 20,
+    "oracle_groups": 19,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 9,
+    "sev": null,
+    "console_incidents": 82,
+    "console_groups": 80,
+    "oracle_incidents": 82,
+    "oracle_groups": 80,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no cases the last 90 days for this view."
+   },
+   {
+    "period": "quarterly",
+    "zone": 9,
+    "sev": "Severe",
+    "console_incidents": 5,
+    "console_groups": 4,
+    "oracle_incidents": 5,
+    "oracle_groups": 4,
+    "jarvis_total": 4,
+    "jarvis_rows": 4,
+    "jarvis_rows_overdue": 4,
+    "say_en": "4 severe cases the last 90 days. 4 are past their deadline and need you first: standing water at Ice House in "
+   },
+   {
+    "period": "quarterly",
+    "zone": 9,
+    "sev": "High",
+    "console_incidents": 20,
+    "console_groups": 20,
+    "oracle_incidents": 20,
+    "oracle_groups": 20,
+    "jarvis_total": 20,
+    "jarvis_rows": 5,
+    "jarvis_rows_overdue": 5,
+    "say_en": "20 high cases the last 90 days; here are the 5 that matter most. 5 are past their deadline and need you first:"
+   },
+   {
+    "period": "quarterly",
+    "zone": 9,
+    "sev": "Medium",
+    "console_incidents": 35,
+    "console_groups": 35,
+    "oracle_incidents": 35,
+    "oracle_groups": 35,
+    "jarvis_total": 35,
+    "jarvis_rows": 1,
+    "jarvis_rows_overdue": 1,
+    "say_en": "35 medium cases the last 90 days; here are the 1 that matter most. One is past its deadline and needs you firs"
+   },
+   {
+    "period": "quarterly",
+    "zone": 9,
+    "sev": "Low",
+    "console_incidents": 22,
+    "console_groups": 22,
+    "oracle_incidents": 22,
+    "oracle_groups": 22,
+    "jarvis_total": null,
+    "jarvis_rows": 0,
+    "jarvis_rows_overdue": 0,
+    "say_en": "There are no low cases the last 90 days for this view."
+   }
+  ]
+ },
+ "extra": {
+  "jarvis": [
+   {
+    "text": "explain the garbage complaint in Madurai",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+    "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+    "ta": "தண்டையார்பேட்டை பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "id": "INC-20261106-896A64",
+    "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+    "oracle_zone": "Tondiarpet",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "explain the flooding complaint in Mumbai",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+    "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "பெருங்குடி பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "id": "INC-20261106-5C22B2",
+    "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+    "oracle_zone": "Perungudi",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "explain the flooding complaint in Velachery",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+    "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "பெருங்குடி பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "id": "INC-20261106-5C22B2",
+    "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+    "oracle_zone": "Perungudi",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "explain the garbage complaint in Mylapore",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+    "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+    "ta": "தண்டையார்பேட்டை பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "id": "INC-20261106-896A64",
+    "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+    "oracle_zone": "Tondiarpet",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "Velachery flooding enna aachu",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+    "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "பெருங்குடி பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "id": "INC-20261106-5C22B2",
+    "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+    "oracle_zone": "Perungudi",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "மதுரை குப்பை புகார் விளக்கு",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Thangavel Pillai Thottam people sarbaaga indha complaint",
+    "en": "There's uncleared garbage at Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet. It's been open for a couple of hours. I'd ask the conservancy team to clear it.",
+    "ta": "தண்டையார்பேட்டை பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.",
+    "id": "INC-20261106-896A64",
+    "place": "Thangavel Pillai Thottam 3Rd Street, Thangavel Pillai Thottam, Korukkupet",
+    "oracle_zone": "Tondiarpet",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "வேளச்சேரி வெள்ள புகார் விளக்கு",
+    "http": 200,
+    "kind": "do",
+    "recipe": "case",
+    "note": "quick",
+    "title": "Knee-deep water stagnation behind Bus Depot; vehicles cannot pass",
+    "en": "There's standing water at Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai. It's been open for a couple of hours. I'd ask Storm Water Drains to send a pump and check the drain there.",
+    "ta": "பெருங்குடி பகுதியில் தண்ணீர் தேக்கம் இருக்கிறது. இரண்டு மணி நேரமாக தீர்க்கப்படாமல் இருக்கிறது. மழைநீர் வடிகால் துறையிடம் பம்பு அனுப்பி வடிகாலைப் பார்க்கச் சொல்லலாம்.",
+    "id": "INC-20261106-5C22B2",
+    "place": "Annai Therasa Street Ext, Annai Therasa Street Ext, Pallikaranai",
+    "oracle_zone": "Perungudi",
+    "list_total": null,
+    "rows_sev": null
+   },
+   {
+    "text": "severe cases yesterday",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "note": "quick",
+    "title": "Severe cases · today",
+    "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "id": null,
+    "place": null,
+    "oracle_zone": null,
+    "list_total": 8,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "நேற்று கடுமையான சம்பவங்கள்",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "note": "quick",
+    "title": "கடுமையான சம்பவங்கள் · இன்று",
+    "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "id": null,
+    "place": null,
+    "oracle_zone": null,
+    "list_total": 8,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "nethu severe cases",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "note": "quick",
+    "title": "Severe cases · today",
+    "en": "8 severe cases today. 6 are past their deadline and need you first: standing water at Ice House in Teynampet, and standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources holds 6 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இன்று 8 கடுமையான சம்பவங்கள். 6 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Ice House in Teynampet, standing water at Pallikaranai (Pallikaranai Marsh Outlet Drain) in Sholinganallur. PWD Water Resources வசம் 6. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "id": null,
+    "place": null,
+    "oracle_zone": null,
+    "list_total": 8,
+    "rows_sev": "Severe,Severe,Severe,Severe,Severe,Severe,Severe,Severe"
+   },
+   {
+    "text": "cases in Adyar yesterday",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "note": "quick",
+    "title": "Cases · Adyar · this week",
+    "en": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "id": null,
+    "place": null,
+    "oracle_zone": null,
+    "list_total": 105,
+    "rows_sev": "Low,Low,Low,Low,Low,Low,Low,Low,Low,Low,Low,Low"
+   },
+   {
+    "text": "cases in Adyar this week",
+    "http": 200,
+    "kind": "do",
+    "recipe": "cases",
+    "note": "quick",
+    "title": "Cases · Adyar · this week",
+    "en": "105 cases this week; here are the 12 that matter most. The most urgent: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain holds 4 of them. Say \"read them\", or \"open\" and a number.",
+    "ta": "இந்த வாரம் 105 சம்பவங்கள். மிக அவசரமானது: an encroachment or unauthorised construction at Vallalar Extn Extension in Adyar. Storm Water Drain வசம் 4. \"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்.",
+    "id": null,
+    "place": null,
+    "oracle_zone": null,
+    "list_total": 105,
+    "rows_sev": "Low,Low,Low,Low,Low,Low,Low,Low,Low,Low,Low,Low"
+   }
+  ],
+  "ask": [
+   {
+    "m": "how many overdue incidents this week",
+    "status": 200,
+    "headline": "339 incidents past their deadline · last 7 days",
+    "answer": "**339** incidents reported in the last 7 days are past their deadline, 39 of them severe; 30 deaths recorded in them.",
+    "error": null
+   },
+   {
+    "m": "evlo overdue cases indha week",
+    "status": 200,
+    "headline": "339 incidents · kadandha 7 naal-la",
+    "answer": "kadandha 7 naal-la 339 incidents report aagirukku (munnadi 182): 39 severe, 339 innum open, 30 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "indha week evlo overdue incidents",
+    "status": 200,
+    "headline": "339 incidents · kadandha 7 naal-la",
+    "answer": "kadandha 7 naal-la 339 incidents report aagirukku (munnadi 182): 39 severe, 339 innum open, 30 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "indha week evlo open cases",
+    "status": 200,
+    "headline": "1,167 incidents · kadandha 7 naal-la",
+    "answer": "kadandha 7 naal-la 1,167 incidents report aagirukku (munnadi 449): 54 severe, 1,167 innum open, 37 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "how many incidents are still open this week",
+    "status": 200,
+    "headline": "1,167 incidents still open · last 7 days",
+    "answer": "**1,167** incidents reported in the last 7 days are still open, 54 of them severe; 37 deaths recorded in them.",
+    "error": null
+   },
+   {
+    "m": "இந்த வாரம் எத்தனை காலக்கெடு தாண்டிய சம்பவங்கள்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "இந்த வாரம் கெடு தாண்டிய சம்பவங்கள் எத்தனை",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "இந்த வாரம் எத்தனை சம்பவங்கள் நிலுவையில்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "நிலுவையில் உள்ள சம்பவங்கள் எத்தனை இந்த வாரம்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "how many incidents this week",
+    "status": 200,
+    "headline": "1,357 incidents · last 7 days",
+    "answer": "1,357 incidents were reported in the last 7 days (1,284 in the period before): 65 severe, 1,167 still open, 37 deaths.",
+    "error": null
+   },
+   {
+    "m": "indha week evlo incidents",
+    "status": 200,
+    "headline": "1,357 incidents · kadandha 7 naal-la",
+    "answer": "kadandha 7 naal-la 1,357 incidents report aagirukku (munnadi 1,284): 65 severe, 1,167 innum open, 37 per uyirizhappu.",
+    "error": null
+   },
+   {
+    "m": "இந்த வாரம் எத்தனை சம்பவங்கள்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "நேற்று எத்தனை சம்பவங்கள்",
+    "status": 200,
+    "headline": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை",
+    "answer": "இதற்குப் பொருந்தும் சம்பவங்களோ செய்திகளோ இல்லை.",
+    "error": null
+   },
+   {
+    "m": "நேற்றைய புகார்கள் எத்தனை",
+    "status": 200,
+    "headline": "147 புகார்கள் · கடந்த 24 மணி நேரத்தில்",
+    "answer": "கடந்த 24 மணி நேரத்தில் 147 குடிமக்கள் புகார்கள் உள்ளன (143 சம்பவங்கள்; 143 இன்னும் நிலுவையில்).",
+    "error": null
+   },
+   {
+    "m": "நேத்து எவ்வளவு புகார்",
+    "status": 200,
+    "headline": "9,113 புகார்கள் · கடந்த 90 நாட்களில்",
+    "answer": "கடந்த 90 நாட்களில் 9,113 குடிமக்கள் புகார்கள் உள்ளன (8,165 சம்பவங்கள்; 1,040 இன்னும் நிலுவையில்).",
+    "error": null
+   },
+   {
+    "m": "how many were resolved yesterday",
+    "status": 200,
+    "headline": "9 severe events · 147 open citizen complaints · 236 ongoing incidents",
+    "answer": "In the previous day (yesterday): **9** severe events, **147** open citizen complaints, **236** ongoing incidents, **3** resolved this day.",
+    "error": null
+   },
+   {
+    "m": "how many deaths yesterday",
+    "status": 200,
+    "headline": "9 severe events · 147 open citizen complaints · 236 ongoing incidents",
+    "answer": "In the previous day (yesterday): **9** severe events, **147** open citizen complaints, **236** ongoing incidents, **3** resolved this day.",
+    "error": null
+   }
+  ],
+  "oracle_week": {
+   "reported": 1357,
+   "open": 1167,
+   "overdue": 339
+  }
+ },
+ "decisions": {
+  "ids": {
+   "T1": "INC-20261105-45E2DD",
+   "T2": "INC-20260515-B939EB",
+   "T3": "INC-20260905-319067",
+   "T4": "INC-20260601-8D191C"
+  },
+  "before": {
+   "tag": "before",
+   "overview": {
+    "kpi": {
+     "severe": 9,
+     "complaints": 147,
+     "ongoing": 236,
+     "resolved": 3,
+     "severe_open": 8,
+     "complaint_inc": 143,
+     "urgent": 54,
+     "reported": 239
+    },
+    "overdue": 11,
+    "stories": []
+   },
+   "briefing": {
+    "stats": {
+     "reported": 239,
+     "change": 3,
+     "open": 236,
+     "overdue": 11,
+     "severe": 9,
+     "multi": 3,
+     "newsOnly": 13,
+     "handledByDepts": 230
+    },
+    "line": "236 incidents are still open, 11 of them past the deadline; 9 severe events.",
+    "attention_has": {
+     "T1": false,
+     "T2": true,
+     "T3": false,
+     "T4": false
+    },
+    "followups_has": {
+     "T1": true,
+     "T2": true,
+     "T3": false,
+     "T4": false
+    }
+   },
+   "book": {
+    "rows": {
+     "T1": "Under review",
+     "T2": "In progress",
+     "T3": null,
+     "T4": null
+    },
+    "good_serious_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "good_resolved": 175
+   },
+   "officer": {
+    "kpi": {
+     "severe": 0,
+     "complaints": 23,
+     "ongoing": 23,
+     "resolved": 0,
+     "severe_open": 0,
+     "complaint_inc": 23,
+     "urgent": 2,
+     "reported": 23
+    },
+    "counts": {
+     "new": 19,
+     "action": 4,
+     "sent": 0,
+     "verified": 0,
+     "returned": 0,
+     "serious": 2,
+     "overdue": 0,
+     "newSerious": 2,
+     "due": 2
+    }
+   },
+   "officerInsights": [
+    "Busiest ward=Ward 48 (Tondiarpet · 2 grievances, 2 open)",
+    "Closed=0% (0 of 23)",
+    "Closed on time=— (within the deadline)",
+    "Open past deadline=0 (of 23 still open)"
+   ],
+   "chat": {
+    "how many open incidents today": "236 incidents still open · last 24 hours | **236** incidents reported in the last 24 hours are still open, 8 of them severe; 14 deaths recorded in them.",
+    "how many overdue incidents today": "11 incidents past their deadline · last 24 hours | **11** incidents reported in the last 24 hours are past their deadline, 6 of them severe; 13 deaths recorded in them.",
+    "which department has the most open incidents": "Greater Chennai Police leads with 1,059 open incidents | Highest open incidents: Greater Chennai Police (1,059), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (242), Public Health (GCC) (113).",
+    "what is the status of INC-20261105-45E2DD": "People are getting electric shock from the street light pole in our street | It is under review.",
+    "what is the status of INC-20260515-B939EB": "Ice House: uprooted tree blocks road | It is in progress, and **past its deadline**.",
+    "what is the status of INC-20260601-8D191C": "Traffic held up on Annai Sathya Main Lane, Ward 100 due to a stalled bus | It is resolved; closed on 2026-11-05 15:49:39."
+   },
+   "chat_officer": "23 incidents still open · last 24 hours",
+   "warning_has": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": false
+   },
+   "cases": {
+    "T1": {
+     "en": "There's a street light or electrical problem at Perumal Koil 3Rd Colony. It's been open for about a day. It's one of the serious ones. I'd ask the corporation for an update.",
+     "status": "Under review",
+     "overdue": false
+    },
+    "T2": {
+     "en": "There's standing water at Ice House. It's been open for several hours, and it's past its deadline. 4 people have complained about it, so it's hitting a lot of residents, and it's one of the serious ones. I'd ask Storm Water Drains to send a pump and check the drain there today.",
+     "status": "In progress",
+     "overdue": true
+    },
+    "T3": {
+     "en": "There's a missing person report at Kasimedu. It's been open for about a day, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+     "status": "Open",
+     "overdue": true
+    },
+    "T4": {
+     "en": "There was a traffic blockage at Ward 100. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": false
+    }
+   },
+   "jarvis_brief": "reported=239 severe=9 overdue=11 newsOnly=13"
+  },
+  "made": {
+   "T1": 201,
+   "T2": 201,
+   "T3": 201,
+   "T4": 201
+  },
+  "after": {
+   "tag": "right after",
+   "overview": {
+    "kpi": {
+     "severe": 9,
+     "complaints": 143,
+     "ongoing": 233,
+     "resolved": 5,
+     "severe_open": 7,
+     "complaint_inc": 141,
+     "urgent": 51,
+     "reported": 239
+    },
+    "overdue": 9,
+    "stories": []
+   },
+   "briefing": {
+    "stats": {
+     "reported": 239,
+     "change": 3,
+     "open": 233,
+     "overdue": 9,
+     "severe": 9,
+     "multi": 3,
+     "newsOnly": 13,
+     "handledByDepts": 227
+    },
+    "line": "233 incidents are still open, 9 of them past the deadline; 9 severe events.",
+    "attention_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "followups_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    }
+   },
+   "book": {
+    "rows": {
+     "T1": "Under review",
+     "T2": "In progress",
+     "T3": null,
+     "T4": null
+    },
+    "good_serious_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "good_resolved": 175
+   },
+   "officer": {
+    "kpi": {
+     "severe": 0,
+     "complaints": 22,
+     "ongoing": 22,
+     "resolved": 1,
+     "severe_open": 0,
+     "complaint_inc": 22,
+     "urgent": 1,
+     "reported": 23
+    },
+    "counts": {
+     "new": 18,
+     "action": 4,
+     "sent": 0,
+     "verified": 1,
+     "returned": 0,
+     "serious": 1,
+     "overdue": 0,
+     "newSerious": 1,
+     "due": 1
+    }
+   },
+   "officerInsights": [
+    "Busiest ward=Ward 48 (Tondiarpet · 2 grievances, 2 open)",
+    "Closed=4% (1 of 23)",
+    "Closed on time=100% (within the deadline)",
+    "Open past deadline=0 (of 22 still open)"
+   ],
+   "chat": {
+    "how many open incidents today": "233 incidents still open · last 24 hours | **233** incidents reported in the last 24 hours are still open, 7 of them severe; 11 deaths recorded in them.",
+    "how many overdue incidents today": "9 incidents past their deadline · last 24 hours | **9** incidents reported in the last 24 hours are past their deadline, 5 of them severe; 10 deaths recorded in them.",
+    "which department has the most open incidents": "Greater Chennai Police leads with 1,059 open incidents | Highest open incidents: Greater Chennai Police (1,059), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (242), Public Health (GCC) (113).",
+    "what is the status of INC-20261105-45E2DD": "People are getting electric shock from the street light pole in our street | It is resolved.",
+    "what is the status of INC-20260515-B939EB": "Ice House: uprooted tree blocks road | It is rejected, and **past its deadline**.",
+    "what is the status of INC-20260601-8D191C": "Traffic held up on Annai Sathya Main Lane, Ward 100 due to a stalled bus | It is open; closed on 2026-11-05 15:49:39."
+   },
+   "chat_officer": "22 incidents still open · last 24 hours",
+   "warning_has": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": false
+   },
+   "cases": {
+    "T1": {
+     "en": "There's a street light or electrical problem at Perumal Koil 3Rd Colony. It's been open for about a day. It's one of the serious ones. I'd ask the corporation for an update.",
+     "status": "Under review",
+     "overdue": false
+    },
+    "T2": {
+     "en": "There's standing water at Ice House. It's been open for several hours, and it's past its deadline. 4 people have complained about it, so it's hitting a lot of residents, and it's one of the serious ones. I'd ask Storm Water Drains to send a pump and check the drain there today.",
+     "status": "In progress",
+     "overdue": true
+    },
+    "T3": {
+     "en": "There's a missing person report at Kasimedu. It's been open for about a day, and it's past its deadline. It's one of the serious ones. I'd ask the police for an update today.",
+     "status": "Open",
+     "overdue": true
+    },
+    "T4": {
+     "en": "There was a traffic blockage at Ward 100. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": false
+    }
+   },
+   "jarvis_brief": "reported=239 severe=9 overdue=11 newsOnly=13"
+  },
+  "later": {
+   "tag": "65 s after",
+   "overview": {
+    "kpi": {
+     "severe": 9,
+     "complaints": 143,
+     "ongoing": 233,
+     "resolved": 5,
+     "severe_open": 7,
+     "complaint_inc": 141,
+     "urgent": 51,
+     "reported": 239
+    },
+    "overdue": 9,
+    "stories": []
+   },
+   "briefing": {
+    "stats": {
+     "reported": 239,
+     "change": 3,
+     "open": 233,
+     "overdue": 9,
+     "severe": 9,
+     "multi": 3,
+     "newsOnly": 13,
+     "handledByDepts": 227
+    },
+    "line": "233 incidents are still open, 9 of them past the deadline; 9 severe events.",
+    "attention_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "followups_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    }
+   },
+   "book": {
+    "rows": {
+     "T1": "Under review",
+     "T2": "In progress",
+     "T3": null,
+     "T4": null
+    },
+    "good_serious_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "good_resolved": 175
+   },
+   "officer": {
+    "kpi": {
+     "severe": 0,
+     "complaints": 22,
+     "ongoing": 22,
+     "resolved": 1,
+     "severe_open": 0,
+     "complaint_inc": 22,
+     "urgent": 1,
+     "reported": 23
+    },
+    "counts": {
+     "new": 18,
+     "action": 4,
+     "sent": 0,
+     "verified": 1,
+     "returned": 0,
+     "serious": 1,
+     "overdue": 0,
+     "newSerious": 1,
+     "due": 1
+    }
+   },
+   "officerInsights": [
+    "Busiest ward=Ward 48 (Tondiarpet · 2 grievances, 2 open)",
+    "Closed=4% (1 of 23)",
+    "Closed on time=100% (within the deadline)",
+    "Open past deadline=0 (of 22 still open)"
+   ],
+   "chat": {
+    "how many open incidents today": "233 incidents still open · last 24 hours | **233** incidents reported in the last 24 hours are still open, 7 of them severe; 11 deaths recorded in them.",
+    "how many overdue incidents today": "9 incidents past their deadline · last 24 hours | **9** incidents reported in the last 24 hours are past their deadline, 5 of them severe; 10 deaths recorded in them.",
+    "which department has the most open incidents": "Greater Chennai Police leads with 1,059 open incidents | Highest open incidents: Greater Chennai Police (1,059), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (241), Public Health (GCC) (113).",
+    "what is the status of INC-20261105-45E2DD": "People are getting electric shock from the street light pole in our street | It is resolved.",
+    "what is the status of INC-20260515-B939EB": "Ice House: uprooted tree blocks road | It is rejected, and **past its deadline**.",
+    "what is the status of INC-20260601-8D191C": "Traffic held up on Annai Sathya Main Lane, Ward 100 due to a stalled bus | It is open; closed on 2026-11-05 15:49:39."
+   },
+   "chat_officer": "22 incidents still open · last 24 hours",
+   "warning_has": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": false
+   },
+   "cases": {
+    "T1": {
+     "en": "There was a street light or electrical problem at Perumal Koil 3Rd Colony. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": false
+    },
+    "T2": {
+     "en": "There was standing water at Ice House. It was rejected and closed, so no work is pending on it.",
+     "status": "Rejected",
+     "overdue": true
+    },
+    "T3": {
+     "en": "There was a missing person report at Kasimedu. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": true
+    },
+    "T4": {
+     "en": "There's a traffic blockage at Ward 100. It's been open for about a day. I'd ask the police for an update.",
+     "status": "Open",
+     "overdue": false
+    }
+   },
+   "jarvis_brief": "reported=239 severe=9 overdue=9 newsOnly=13"
+  },
+  "much_later": {
+   "tag": "11.6 min after",
+   "overview": {
+    "kpi": {
+     "severe": 9,
+     "complaints": 143,
+     "ongoing": 233,
+     "resolved": 5,
+     "severe_open": 7,
+     "complaint_inc": 141,
+     "urgent": 51,
+     "reported": 239
+    },
+    "overdue": 9,
+    "stories": []
+   },
+   "briefing": {
+    "stats": {
+     "reported": 239,
+     "change": 3,
+     "open": 233,
+     "overdue": 9,
+     "severe": 9,
+     "multi": 3,
+     "newsOnly": 13,
+     "handledByDepts": 227
+    },
+    "line": "233 incidents are still open, 9 of them past the deadline; 9 severe events.",
+    "attention_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "followups_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    }
+   },
+   "book": {
+    "rows": {
+     "T1": "Under review",
+     "T2": "In progress",
+     "T3": null,
+     "T4": null
+    },
+    "good_serious_has": {
+     "T1": false,
+     "T2": false,
+     "T3": false,
+     "T4": false
+    },
+    "good_resolved": 175
+   },
+   "officer": {
+    "kpi": {
+     "severe": 0,
+     "complaints": 22,
+     "ongoing": 22,
+     "resolved": 1,
+     "severe_open": 0,
+     "complaint_inc": 22,
+     "urgent": 1,
+     "reported": 23
+    },
+    "counts": {
+     "new": 18,
+     "action": 4,
+     "sent": 0,
+     "verified": 1,
+     "returned": 0,
+     "serious": 1,
+     "overdue": 0,
+     "newSerious": 1,
+     "due": 1
+    }
+   },
+   "officerInsights": [
+    "Busiest ward=Ward 48 (Tondiarpet · 2 grievances, 2 open)",
+    "Closed=4% (1 of 23)",
+    "Closed on time=100% (within the deadline)",
+    "Open past deadline=0 (of 22 still open)"
+   ],
+   "chat": {
+    "how many open incidents today": "233 incidents still open · last 24 hours | **233** incidents reported in the last 24 hours are still open, 7 of them severe; 11 deaths recorded in them.",
+    "how many overdue incidents today": "9 incidents past their deadline · last 24 hours | **9** incidents reported in the last 24 hours are past their deadline, 5 of them severe; 10 deaths recorded in them.",
+    "which department has the most open incidents": "Greater Chennai Police leads with 1,058 open incidents | Highest open incidents: Greater Chennai Police (1,058), Storm Water Drain (291), Roads & Building Permissions (257), PWD Water Resources (241), Public Health (GCC) (113).",
+    "what is the status of INC-20261105-45E2DD": "People are getting electric shock from the street light pole in our street | It is resolved.",
+    "what is the status of INC-20260515-B939EB": "Ice House: uprooted tree blocks road | It is rejected, and **past its deadline**.",
+    "what is the status of INC-20260601-8D191C": "Traffic held up on Annai Sathya Main Lane, Ward 100 due to a stalled bus | It is open; closed on 2026-11-05 15:49:39."
+   },
+   "chat_officer": "22 incidents still open · last 24 hours",
+   "warning_has": {
+    "T1": false,
+    "T2": false,
+    "T3": false,
+    "T4": false
+   },
+   "cases": {
+    "T1": {
+     "en": "There was a street light or electrical problem at Perumal Koil 3Rd Colony. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": false
+    },
+    "T2": {
+     "en": "There was standing water at Ice House. It was rejected and closed, so no work is pending on it.",
+     "status": "Rejected",
+     "overdue": true
+    },
+    "T3": {
+     "en": "There was a missing person report at Kasimedu. It's marked resolved, so there's nothing to chase unless it comes back.",
+     "status": "Resolved",
+     "overdue": true
+    },
+    "T4": {
+     "en": "There's a traffic blockage at Ward 100. It's been open for about a day. I'd ask the police for an update.",
+     "status": "Open",
+     "overdue": false
+    }
+   },
+   "jarvis_brief": "reported=239 severe=9 overdue=9 newsOnly=13"
+  },
+  "oracle_after": {
+   "open": 233,
+   "ongoing": 233,
+   "overdue_flag": 9,
+   "decisions_seen": [
+    [
+     "INC-20261105-45E2DD",
+     "resolve"
+    ],
+    [
+     "INC-20260515-B939EB",
+     "reject"
+    ],
+    [
+     "INC-20260905-319067",
+     "resolve"
+    ],
+    [
+     "INC-20260601-8D191C",
+     "reopen"
+    ]
+   ]
+  }
+ },
+ "tz": {
+  "utc-after-ist-midnight-sat": {
+   "label": "utc-after-ist-midnight-sat",
+   "tz_env": "UTC",
+   "clock_ist": "2026-11-07 00:30:00",
+   "console_now": "2026-11-07 00:30:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    272,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracle_weekly": [
+    1083,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-07",
+    "yday": "2026-11-06",
+    "oracle_yday": {
+     "reported": 149,
+     "severe": 3,
+     "open": 149,
+     "deaths": 1,
+     "complaints": 97,
+     "adyar": 17,
+     "resolved_by_closed_at": 129
+    },
+    "oracle_before": {
+     "reported": 245,
+     "severe": 18,
+     "open": 236,
+     "deaths": 21,
+     "complaints": 150,
+     "adyar": 17,
+     "resolved_by_closed_at": 165
+    },
+    "en": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "ta": "நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+    "headline": "245 incidents · yesterday (6 Nov)"
+   }
+  },
+  "utc-monday-0300-ist": {
+   "label": "utc-monday-0300-ist",
+   "tz_env": "UTC",
+   "clock_ist": "2026-11-09 03:00:00",
+   "console_now": "2026-11-09 03:00:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    974,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracle_weekly": [
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-09",
+    "yday": "2026-11-08",
+    "oracle_yday": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "oracle_before": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "en": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "ta": "நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+    "headline": "0 incidents · yesterday (8 Nov)"
+   }
+  },
+  "ist-monday-0030": {
+   "label": "ist-monday-0030",
+   "tz_env": "Asia/Kolkata",
+   "clock_ist": "2026-11-09 00:30:00",
+   "console_now": "2026-11-09 00:30:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    983,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracle_weekly": [
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-09",
+    "yday": "2026-11-08",
+    "oracle_yday": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "oracle_before": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "en": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "ta": "நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+    "headline": "0 incidents · yesterday (8 Nov)"
+   }
+  },
+  "newyork-monday-1000-ist": {
+   "label": "newyork-monday-1000-ist",
+   "tz_env": "America/New_York",
+   "clock_ist": "2026-11-09 10:00:00",
+   "console_now": "2026-11-09 10:00:00",
+   "keys": [
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26",
+    "2026-11-02"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    943,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "oracle_weekly": [
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164,
+    998
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-09",
+    "yday": "2026-11-08",
+    "oracle_yday": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "oracle_before": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "en": "0 incidents were reported in yesterday (8 Nov) (149 in the period before): 0 severe, 0 still open.",
+    "ta": "நேற்று 0 குடிமக்கள் புகார்கள் உள்ளன (0 சம்பவங்கள்; 0 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 0 incidents report aagirukku (munnadi 149): 0 severe, 0 innum open.",
+    "headline": "0 incidents · yesterday (8 Nov)"
+   }
+  },
+  "auckland-local-monday-ist-sunday": {
+   "label": "auckland-local-monday-ist-sunday",
+   "tz_env": "Pacific/Auckland",
+   "clock_ist": "2026-11-08 17:30:00",
+   "console_now": "2026-11-08 17:30:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    42,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracle_weekly": [
+    1083,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-08",
+    "yday": "2026-11-07",
+    "oracle_yday": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "oracle_before": {
+     "reported": 149,
+     "severe": 3,
+     "open": 149,
+     "deaths": 1,
+     "complaints": 97,
+     "adyar": 17,
+     "resolved_by_closed_at": 129
+    },
+    "en": "149 incidents were reported in yesterday (7 Nov) (245 in the period before): 3 severe, 149 still open, 1 death.",
+    "ta": "நேற்று 97 குடிமக்கள் புகார்கள் உள்ளன (93 சம்பவங்கள்; 93 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 149 incidents report aagirukku (munnadi 245): 3 severe, 149 innum open, 1 per uyirizhappu.",
+    "headline": "149 incidents · yesterday (7 Nov)"
+   }
+  },
+  "ist-after-midnight-sat": {
+   "label": "ist-after-midnight-sat",
+   "tz_env": "Asia/Kolkata",
+   "clock_ist": "2026-11-07 00:30:00",
+   "console_now": "2026-11-07 00:30:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    272,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracle_weekly": [
+    1083,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-07",
+    "yday": "2026-11-06",
+    "oracle_yday": {
+     "reported": 149,
+     "severe": 3,
+     "open": 149,
+     "deaths": 1,
+     "complaints": 97,
+     "adyar": 17,
+     "resolved_by_closed_at": 129
+    },
+    "oracle_before": {
+     "reported": 245,
+     "severe": 18,
+     "open": 236,
+     "deaths": 21,
+     "complaints": 150,
+     "adyar": 17,
+     "resolved_by_closed_at": 165
+    },
+    "en": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "ta": "நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+    "headline": "245 incidents · yesterday (6 Nov)"
+   }
+  },
+  "losangeles-sat-2350-ist": {
+   "label": "losangeles-sat-2350-ist",
+   "tz_env": "America/Los_Angeles",
+   "clock_ist": "2026-11-07 23:50:00",
+   "console_now": "2026-11-07 23:50:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    126,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracle_weekly": [
+    1083,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "zero_weeks": 0,
+   "yesterday": {
+    "today": "2026-11-07",
+    "yday": "2026-11-06",
+    "oracle_yday": {
+     "reported": 149,
+     "severe": 3,
+     "open": 149,
+     "deaths": 1,
+     "complaints": 97,
+     "adyar": 17,
+     "resolved_by_closed_at": 129
+    },
+    "oracle_before": {
+     "reported": 245,
+     "severe": 18,
+     "open": 236,
+     "deaths": 21,
+     "complaints": 150,
+     "adyar": 17,
+     "resolved_by_closed_at": 165
+    },
+    "en": "245 incidents were reported in yesterday (6 Nov) (239 in the period before): 18 severe, 236 still open, 21 deaths.",
+    "ta": "நேற்று 150 குடிமக்கள் புகார்கள் உள்ளன (129 சம்பவங்கள்; 129 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 245 incidents report aagirukku (munnadi 239): 18 severe, 236 innum open, 21 per uyirizhappu.",
+    "headline": "245 incidents · yesterday (6 Nov)"
+   }
+  },
+  "ist-sunday-2359": {
+   "label": "ist-sunday-2359",
+   "tz_env": "Asia/Kolkata",
+   "clock_ist": "2026-11-08 23:59:00",
+   "console_now": "2026-11-08 23:59:00",
+   "keys": [
+    "2026-08-10",
+    "2026-08-17",
+    "2026-08-24",
+    "2026-08-31",
+    "2026-09-07",
+    "2026-09-14",
+    "2026-09-21",
+    "2026-09-28",
+    "2026-10-05",
+    "2026-10-12",
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "all_mondays": true,
+   "weekly_totals": [
+    0,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "oracle_weekly": [
+    1083,
+    987,
+    1196,
+    1065,
+    1071,
+    1176,
+    1109,
+    1142,
+    1172,
+    1214,
+    1506,
+    1164
+   ],
+   "zero_weeks": 1,
+   "yesterday": {
+    "today": "2026-11-08",
+    "yday": "2026-11-07",
+    "oracle_yday": {
+     "reported": 0,
+     "severe": 0,
+     "open": 0,
+     "deaths": 0,
+     "complaints": 0,
+     "adyar": 0,
+     "resolved_by_closed_at": 0
+    },
+    "oracle_before": {
+     "reported": 149,
+     "severe": 3,
+     "open": 149,
+     "deaths": 1,
+     "complaints": 97,
+     "adyar": 17,
+     "resolved_by_closed_at": 129
+    },
+    "en": "149 incidents were reported in yesterday (7 Nov) (245 in the period before): 3 severe, 149 still open, 1 death.",
+    "ta": "நேற்று 97 குடிமக்கள் புகார்கள் உள்ளன (93 சம்பவங்கள்; 93 இன்னும் நிலுவையில்).",
+    "tanglish": "netru 149 incidents report aagirukku (munnadi 245): 3 severe, 149 innum open, 1 per uyirizhappu.",
+    "headline": "149 incidents · yesterday (7 Nov)"
+   }
+  }
+ },
+ "story": {
+  "id": "INC-20261104-BEC731",
+  "thread": "THR-f4b1b3a425",
+  "title": "Nine fishermen from Chennai missing at sea amid Cyclone Murasu",
+  "made": 201,
+  "open_before": true,
+  "open_right_after": true,
+  "open_11_min_after": false,
+  "still_listed_11_min_after": true
+ },
+ "after": {
+  "action_mail_for_rejected_T2": {
+   "http": 200,
+   "error": null,
+   "subject": "Urgent: Flooding & waterlogging at Ice House, Teynampet (INC-20260515-B939EB)",
+   "body_start": "Dear Officer, PWD Water Resources,\n\nCanal overflow at Ice House, Teynampet. This is a severe incident and needs your immediate attention.\n\nPlease:\n1. Deploy pumps and clear standing water at Ice House, Teynampet.\n2. Clear drain inlets and silt at Ice House, Teynampet.\n3. Send a completion report with site photos through the District IQ officer console.\n\nI expect the completion report within 24 hou",
+   "says_rejected": false
+  },
+  "detail_T2": {
+   "http": 200,
+   "status": "Rejected",
+   "open": 0
+  },
+  "map_ask": {
+   "http": 200,
+   "has_T1": false,
+   "kind": "answer"
+  },
+  "map_draft": {
+   "http": 200,
+   "closed": 0,
+   "ids": 5,
+   "has_T1": false
+  },
+  "overdue_card_kpis": [
+   {
+    "label": "Reported",
+    "value": 336,
+    "prev": 182,
+    "tone": "info"
+   },
+   {
+    "label": "Severe",
+    "value": 38,
+    "tone": "sev"
+   },
+   {
+    "label": "Still open",
+    "value": 336
+   },
+   {
+    "label": "Deaths",
+    "value": 27,
+    "tone": "sev"
+   }
+  ],
+  "news_only": {
+   "stat": 13,
+   "lists_T3": false
+  },
+  "overview_mentions_T3": [
+   "news",
+   "allNews"
+  ]
+ }
+}

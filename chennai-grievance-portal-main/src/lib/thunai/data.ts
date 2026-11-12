@@ -6,9 +6,9 @@
  * - ask_map: Ask the Map's own engine (lib/map/ask.ts askMap), so place-and-distance questions are answered by the same
  *   code as the console's map. No second data layer, no second spatial engine.
  */
-import { overview, asOf } from "@/lib/collector/intel";
+import { overview, asOf, list } from "@/lib/collector/intel";
 import { askMap, type AskResponse } from "@/lib/map/ask";
-import { runTool } from "@/lib/assistant/tools";
+import { runTool, incRow } from "@/lib/assistant/tools";
 import type { ToolResult } from "@/lib/assistant/types";
 import { datasetIds, getMeta, getRows } from "@/lib/studio/store";
 import { loadWardDataset, resolveWard } from "@/lib/wards";
@@ -16,12 +16,14 @@ import { referenceLeads } from "./world";
 import { studioRow, type Lookups, type InRow } from "./complete";
 import type { World } from "./types";
 import type { ScopeT } from "./stage";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 type Row = Record<string, unknown>;
 export interface MapUser { email: string; role: "collector" | "department_officer"; lockDept: string | null }
 
 const memo = new Map<string, { at: number; p: Promise<unknown> }>();
 function once<T>(key: string, run: () => Promise<T>, ttl = 45_000): Promise<T> {
+  syncEpoch(memo); // a decision empties it (RC-35)
   const now = Date.now();
   for (const [k, v] of memo) if (now - v.at > ttl) memo.delete(k);
   const hit = memo.get(key);
@@ -42,6 +44,18 @@ export async function consoleSevere(s: ScopeT): Promise<{ rows: Row[]; counts: R
   return { rows: ov.severity.rows as Row[], counts: ov.severity.counts as Record<string, number>, asOf: await asOf() };
 }
 
+/**
+ * The console's own incident list for a scope and a status ("open", "overdue"): its rows and the whole count, so a figure about the
+ * list (how many are past their deadline) never comes from the 12 rows of one page. Severity order is ascending in the store, every
+ * other order is descending; that is set here once so no caller can ask for "most serious first" and get the least serious.
+ */
+export async function consoleList(s: ScopeT, f: { sev: string | null; status: string | null; q: string | null; sort: "sev" | "t" | "c"; page?: number }) {
+  const r = await list({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk, sev: f.sev, status: f.status, q: f.q || null,
+    sort: f.sort, dir: f.sort === "sev" ? 1 : -1, page: f.page ?? 0, scope: "period" });
+  // total counts the list's rows (one per group of the same problem); incidents counts the incidents in them, as the console's tiles do
+  return { rows: r.rows.map((i) => incRow(i)) as Row[], total: r.total, incidents: r.incidents, asOf: await asOf() };
+}
+
 export async function consoleNews(s: ScopeT): Promise<{ rows: Row[]; total: number; asOf: string }> {
   const ov = await consoleOverview(s);
   return { rows: (ov.allNews ?? []) as Row[], total: ov.allNewsTotal ?? 0, asOf: await asOf() };
@@ -54,6 +68,7 @@ export async function mapAnswer(q: string, user: MapUser, signal?: AbortSignal):
 export interface Hands {
   tool: (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
   severe: (s: ScopeT) => ReturnType<typeof consoleSevere>;
+  list?: typeof consoleList;
   news: (s: ScopeT) => ReturnType<typeof consoleNews>;
   map: (q: string) => Promise<AskResponse>;
   dataset?: (name: string) => Promise<{ name: string; rows: InRow[]; total: number } | null>;
@@ -106,5 +121,5 @@ async function studioDataset(name: string): Promise<{ name: string; rows: InRow[
 }
 
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {
-  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups };
+  return { tool: (n, a) => runTool(n, a), severe: consoleSevere, list: consoleList, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups };
 }

@@ -491,7 +491,7 @@ function BlockBody(p: BP) {
             return (
               <li key={i} className={on ? "reading" : ""} aria-current={on ? "true" : undefined}>
                 <span className="n">{i + 1}</span>
-                <p>{on ? <Karaoke text={x.text} char={p.reading?.char ?? null} /> : x.text}</p>
+                <p>{on ? <Karaoke text={lang === "ta" ? x.ta || x.text : x.text} char={p.reading?.char ?? null} /> : lang === "ta" ? x.ta || x.text : x.text}</p>
                 {x.incidentId && <button className="st-link" onClick={() => a.openCase(x.incidentId!)}>{T(lang, "Open", "திற")}<I n="chevr" /></button>}
               </li>
             );
@@ -543,7 +543,7 @@ function BlockBody(p: BP) {
         {!p.tray.length ? <p className="st-empty">{T(lang, "No drafts waiting. Say \"draft action for 2\" on a list of cases.", "காத்திருக்கும் வரைவுகள் இல்லை.")}</p> : (
           <>
             <ol className="st-drafts">{p.tray.map((d, i) => <li key={d.incidentId}><span className="n">{i + 1}</span><b>{d.title}</b><small>{d.to ?? T(lang, "no recipient on record", "பெறுநர் இல்லை")}{d.sandbox ? T(lang, " · sandbox delivery", " · சோதனை வழி") : T(lang, " · send from the Take action panel", "")}</small></li>)}</ol>
-            <p className="st-hint">{T(lang, `Nothing is sent until you say "confirm ${p.tray.length}" or press the button.`, `"உறுதி ${p.tray.length}" என்று சொல்லும் வரை எதுவும் அனுப்பப்படாது.`)}</p>
+            <p className="st-hint">{T(lang, "Nothing is sent until you press the button. Jarvis cannot send by voice.", "பொத்தானை அழுத்தும் வரை எதுவும் அனுப்பப்படாது. குரலால் அனுப்ப முடியாது.")}</p>
             <div className="st-row"><button className="st-btn primary" onClick={a.confirmTray}><I n="send" />{T(lang, `Approve and send ${p.tray.length}`, `${p.tray.length} அனுப்பு`)}</button><button className="st-btn" onClick={a.discardTray}>{T(lang, "Discard", "நீக்கு")}</button></div>
           </>
         )}
@@ -588,7 +588,7 @@ function CaseCard({ r, n, asOf, on, lang, a }: { r: CaseRowT; n: number; asOf: s
             {ag && <span><I n="clock" />{ag}</span>}
             {r.complaints > 0 && <span><I n="chat" />{r.complaints} {T(lang, r.complaints === 1 ? "complaint" : "complaints", "புகார்")}</span>}
             {r.deptName && <span><I n="gov" />{r.deptName}</span>}
-            {r.status && <span className="st">{r.status}</span>}
+            {r.status && <span className="st" data-i18n-ctx="status">{r.status}</span>}
             {r.overdue && <span className="od"><I n="timer" />{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</span>}
           </span>
         </span>
@@ -607,7 +607,7 @@ function CaseDetail({ b, lang, a, doc }: BP & { b: Extract<BlockT, { kind: "Case
   return (
     <article className={`st-detail s-${SEV_CLASS[r.sev ?? ""] ?? "none"}`}>
       <div className="st-dhead">
-        <span className="chips">{r.sev && <em className="sv">{r.sev}</em>}{r.status && <em>{r.status}</em>}{r.overdue && <em className="od">{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</em>}</span>
+        <span className="chips">{r.sev && <em className="sv">{r.sev}</em>}{r.status && <em data-i18n-ctx="status">{r.status}</em>}{r.overdue && <em className="od">{T(lang, "Past deadline", "காலக்கெடு தாண்டியது")}</em>}</span>
         <h3>{r.title}</h3>
         <p className="id">{r.id}</p>
       </div>

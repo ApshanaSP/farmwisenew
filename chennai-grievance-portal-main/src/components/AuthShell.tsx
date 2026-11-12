@@ -17,7 +17,7 @@ export default function AuthShell({ children, headline }: { children: ReactNode;
     <div className="auth-bg flex h-[100dvh] min-h-[600px] flex-col overflow-hidden">
       <header className="diq-top relative z-20 flex-none">
         <div className="flex h-[56px] items-center justify-between gap-3 px-4 sm:px-6">
-          <Link href="/" aria-label="District IQ home" className="rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-600/25"><BrandWordmark size={32} /></Link>
+          <Link href="/" title="District IQ home" className="rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-600/25"><BrandWordmark size={32} /></Link>
           <div className="flex items-center gap-2">
             <a href="tel:1913" className="diq-tbtn hidden sm:inline-flex" title="Helpline, 24x7">
               <Phone className="h-4 w-4 text-navy-500" aria-hidden="true" />
@@ -29,7 +29,7 @@ export default function AuthShell({ children, headline }: { children: ReactNode;
         </div>
       </header>
 
-      <main className="grid min-h-0 flex-1 lg:grid-cols-[55fr_45fr]">
+      <main className="grid grid-cols-[minmax(0,1fr)] min-h-0 flex-1 lg:grid-cols-[minmax(0,55fr)_minmax(0,45fr)]">
         <AuthHero headline={headline ?? <>One platform for Chennai&apos;s citizens, officers and Collector.</>} />
         <section className="relative flex min-h-0 items-center justify-center overflow-y-auto px-5 py-6 sm:px-10">
           <AuthCard>{children}</AuthCard>

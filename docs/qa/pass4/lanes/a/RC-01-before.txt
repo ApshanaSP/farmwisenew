@@ -1,0 +1,57 @@
+RC-01: failing output before the fix (the frozen open baseline, code before lane a; same frozen clock, real client path, no model)
+Also failing before: tests/qa/pass4/audit-understanding.test.ts audit-understanding-3 (5 sentences), -4 (22), -18 (3) were it.fails (the sentences got our police filter or a Chennai brief). lane-a.pass4.test.ts RC-01 guard did not exist.
+
+en-followup-11 | grade=wrong CONFIDENT-WRONG | lane=frame | not this Manali, the Himachal one
+   said: 4 points in the brief for today. 1 incident were reported in Manali (last 24 hours), 80% fewer than the previous period.
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+en-other_body-03 | grade=wrong CONFIDENT-WRONG | lane=quick | Anna Nagar, Madurai side. Flood complaints there?
+   said: 13 cases this week; here are the 12 that matter most. 9 are past their deadline and need you first: standing water at Sivagami Street, Periyar Pethai, Arumbakkam in Anna Nagar, and Flooding & waterlogging at Aminjikarai in Anna Nagar. PWD Water Resources holds
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+en-other_body-04 | grade=wrong CONFIDENT-WRONG | lane=resolve | Manali-Leh highway landslide, what's the update?
+   said: 4 points in the brief for today. 1 incident were reported in Manali (last 24 hours), 80% fewer than the previous period.
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+en-other_body-08 | grade=wrong CONFIDENT-WRONG | lane=no-model | Old Madras Road in Bengaluru has potholes, tell me about those
+   said: Roads, footpaths & bridges
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+en-other_body-12 | grade=wrong CONFIDENT-WRONG | lane=no-model | Ambattur estate manufacturers' association, AIEMA. Anything from them?
+   said: Zone 7 · Ambattur
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+tanglish-other_body-01 | grade=wrong CONFIDENT-WRONG | lane=quick | Madurai Anna Nagar la kuppai prachanai enna aachu
+   said: அண்ணா நகர் பகுதியில் அகற்றப்படாத குப்பை இருக்கிறது. இரண்டு நாட்களாக தீர்க்கப்படாமல் இருக்கிறது. துப்புரவுப் பிரிவிடம் அகற்றச் சொல்லலாம்.
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+tanglish-other_body-03 | grade=wrong CONFIDENT-WRONG | lane=no-model | Mangalore pakkam Adyar nu oru ooru iruke, anga vellam eppadi
+   said: Zone 13 · Adyar · Flooding & waterlogging
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+tanglish-other_body-04 | grade=wrong CONFIDENT-WRONG | lane=no-model | Madurai airport pakkathula Perungudi, anga road nelamai sollu
+   said: மண்டலம் 14 · பெருங்குடி · Roads, footpaths & bridges
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+tanglish-other_body-07 | grade=wrong CONFIDENT-WRONG | lane=no-model | Pondy Anna Salai la accident nadandhucha, theriyuma
+   said: Road accident
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+tanglish-other_body-11 | grade=wrong CONFIDENT-WRONG | lane=no-model | Colombo-la vellam ennanga, romba mosama?
+   said: Flooding & waterlogging · Last 30 days
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+tanglish-other_body-15 | grade=wrong CONFIDENT-WRONG | lane=no-model | Loyola college health department-oda activities enna
+   said: Public Health (GCC)
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+tanglish-other_body-17 | grade=wrong CONFIDENT-WRONG | lane=no-model | CPCB Delhi office report enna solludhu, national air quality
+   said: காற்றின் தரம்
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+tanglish-other_body-19 | grade=wrong CONFIDENT-WRONG | lane=no-model | Bar Council meeting-la enna mudivu eduthaanga
+   said: Council
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+ta-other_body-08 | grade=wrong CONFIDENT-WRONG | lane=no-model | ஆவடில குப்பை கதை என்ன?
+   said: Garbage & solid waste
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+ta-other_body-18 | grade=wrong CONFIDENT-WRONG | lane=no-model | SRM காலேஜ் health department எப்படி இருக்கு?
+   said: Public Health (GCC)
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+ta-noisy-17 | grade=wrong CONFIDENT-WRONG | lane=no-model | செங்கல்பட்டு, இல்ல இல்ல, செங்கல்பட்டு district சாலை விபத்து ம்ம் கணக்கு போன வாரத்துக்கு இருக்கா?
+   said: Road accident · கடந்த 7 நாட்கள்
+   reasons: ["put a filter, brief or figure on a body of ours","6_outside failed"]
+en-noisy-17 | grade=wrong CONFIDENT-WRONG | lane=no-model | Anything from Coimbatore actually dengue er indha maasam?
+   said: Vector- & water-borne disease · கடந்த 30 நாட்கள்
+   reasons: ["put a filter, brief or figure on a body of ours","5_language failed","6_outside failed"]
+tanglish-brief-18 | grade=wrong CONFIDENT-WRONG | lane=resolve | City Health Officer kitta irukura department nelavaram kudu
+   said: Irukura Department பற்றி என்னிடம் தரவு இல்லை. இதில் சென்னை மாவட்டத்தின் பதிவுகள் மட்டுமே உள்ளன; மாநகராட்சி, காவல்துறை, குடிநீர் வாரியம், பொதுப்பணித்துறை அல்லது எந்த மண்டலத்தைப் பற்றியும் சொல்லலாம்.
+   reasons: ["a false none","1_honest_none failed"]

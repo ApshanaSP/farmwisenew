@@ -1,0 +1,29 @@
+[
+ {
+  "who": "collector",
+  "confirmed": {
+   "status": 200,
+   "hasCsv": true
+  },
+  "confirmBoxShown": true,
+  "callerSaw": {
+   "status": 428,
+   "cancelled": true
+  },
+  "consoleErrors": [],
+  "failedRequests": [],
+  "plainRequestStatus": 200
+ },
+ {
+  "who": "officerA",
+  "confirmed": null,
+  "confirmBoxShown": true,
+  "callerSaw": {
+   "status": 428,
+   "cancelled": true
+  },
+  "consoleErrors": [],
+  "failedRequests": [],
+  "plainRequestStatus": 200
+ }
+]

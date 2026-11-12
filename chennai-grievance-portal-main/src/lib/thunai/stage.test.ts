@@ -95,7 +95,7 @@ describe("what Thunai shows and says about a case", () => {
     expect(b.map((x) => x.text).join(" ")).not.toMatch(/INC-|Respected|9876/);
     expect(caseBrief(caseRow({ id: "INC-9", title: "Tree fall", zone_name: "Adyar", t: "2026-10-27 07:00:00", complaints: 3 }, WORLD), 1, "2026-10-29 07:00:00", "en"))
       .toBe("Second, in Adyar: Tree fall. Open 2 days. 3 citizens have complained.");
-    expect(narrationOf(d, "ta")[0].text).toMatch(/^முதலாவது, Royapuram: Wall collapse at Chetpet/);
+    expect(narrationOf(d, "ta")[0].text).toMatch(/^முதலாவது, ராயபுரம்: Wall collapse at Chetpet/);
   });
   it("news is read with a lead-in, and the highlight knows where the headline starts", async () => {
     const { doc } = await buildScreen("news", emptySlots(), SCOPE, WORLD, fakeHands(), "news");

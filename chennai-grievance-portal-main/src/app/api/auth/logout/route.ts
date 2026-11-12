@@ -7,8 +7,8 @@ import { roleToPortal } from "@/lib/session-cookies";
 // The account's other sessions are not revoked here; a password change or reset still ends all of them.
 export async function POST() {
   // Knowing the portal is enough to clear its cookie: the account is looked up only when the portal cannot be told, so signing out
-  // does not wait on the store.
-  let portal = resolvePortal();
+  // does not wait on the store. (Next 15: the request headers are read asynchronously.)
+  let portal = await resolvePortal();
   if (!portal) {
     const session = await getSessionFromCookies();
     portal = session ? roleToPortal(session.role) : null;
@@ -16,6 +16,6 @@ export async function POST() {
 
   const res = NextResponse.json({ message: "Logged out" });
   await migrateLegacyCookie(res);
-  if (portal) clearAuthCookie(res, portal);
+  if (portal) await clearAuthCookie(res, portal);
   return res;
 }

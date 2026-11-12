@@ -1,0 +1,182 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main[39m
+
+[2m5:04:31 pm[22m [33m[1m[vite][22m[39m [33m[2m(ssr)[22m[39m [33mwarning: invalid import "../../../src/app/api/collector/${r}/route". A file extension must be included in the static part of the import. For example: import(`./foo/${bar}.js`).[39m
+  Plugin: [35mvite:dynamic-import-vars[39m
+  File: [36mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/tests/qa/pass4/g2-routes.test.ts[39m
+[2m5:04:31 pm[22m [33m[1m[vite][22m[39m [33m[2m(ssr)[22m[39m [33mwarning: invalid import "../../../src/app/api/officer/${r}/route". A file extension must be included in the static part of the import. For example: import(`./foo/${bar}.js`).[39m
+  Plugin: [35mvite:dynamic-import-vars[39m
+  File: [36mE:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/tests/qa/pass4/g2-routes.test.ts[39m
+ [31m❯[39m tests/qa/pass4/g2-routes.test.ts [2m([22m[2m135 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 2256[2mms[22m[39m
+   [33m[2m✓[22m[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=99 [33m 786[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=0[32m 3[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=-1[32m 2[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=16[32m 3[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/overview?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=99[32m 10[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/list?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=99[32m 32[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/export?taluk=TLK-1[32m 1[2mms[22m[39m
+   [33m[2m✓[22m[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=99 [33m 891[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=0[32m 4[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/insights?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=99[32m 11[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/report?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=99[32m 82[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=0[32m 2[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/stories?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=99[32m 10[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/pattern?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=99[32m 13[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mcollector/brief?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=99[32m 77[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/overview?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=99[32m 41[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/insights?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=99[32m 10[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=0[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=abc[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=16[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=1.5[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?zone=9%3B[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?period=yearly[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?dept=nope[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?cat=not-a-code[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?taluk=TLK-1[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?tab=returned is refused, not shown as the New tab[32m 1[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?tab=NEW is refused, not shown as the New tab[32m 0[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?tab=x is refused, not shown as the New tab[32m 0[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22mofficer/grievances?tab=all2 is refused, not shown as the New tab[32m 0[2mms[22m[39m
+   [32m✓[39m RC-43 console: a zone, period, department, category or taluk that does not exist is a 400[2m > [22massistant/export refuses a zone that does not exist before it counts the download[32m 33[2mms[22m[39m
+   [32m✓[39m RC-43 class guard: every route that reads a zone, period, taluk or tab refuses a bad one[2m > [22mfinds the routes[32m 0[2mms[22m[39m
+   [32m✓[39m RC-43 class guard: every route that reads a zone, period, taluk or tab refuses a bad one[2m > [22ma route that calls parseZone, parseTaluk or parseScope also calls refuseBadFilter (or the filter check in the shared guard)[32m 16[2mms[22m[39m
+   [32m✓[39m RC-43 class guard: every route that reads a zone, period, taluk or tab refuses a bad one[2m > [22ma route that calls parseTab also calls refuseBadTab[32m 14[2mms[22m[39m
+[31m   [31m×[31m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.xlsx[39m[32m 113[2mms[22m[39m
+[31m     → expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+[31m   [31m×[31m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.xlsm[39m[32m 1[2mms[22m[39m
+[31m     → expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+[31m   [31m×[31m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.ods[39m[32m 1[2mms[22m[39m
+[31m     → expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+[31m   [31m×[31m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22mb.csv[39m[32m 2[2mms[22m[39m
+[31m     → expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+[31m   [31m×[31m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22mc.tsv[39m[32m 1[2mms[22m[39m
+[31m     → expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+   [32m✓[39m RC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma real, tiny CSV and an empty one are still read as before[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/qa/pass4/g2-routes.test.ts[2m > [22mRC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.xlsx
+[41m[1m FAIL [22m[49m tests/qa/pass4/g2-routes.test.ts[2m > [22mRC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.xlsm
+[41m[1m FAIL [22m[49m tests/qa/pass4/g2-routes.test.ts[2m > [22mRC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22ma.ods
+[41m[1m FAIL [22m[49m tests/qa/pass4/g2-routes.test.ts[2m > [22mRC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22mb.csv
+[41m[1m FAIL [22m[49m tests/qa/pass4/g2-routes.test.ts[2m > [22mRC-43 Data Studio: a corrupt file is unreadable, not empty[2m > [22mc.tsv
+[31m[1mAssertionError[22m: expected 'parsed 0 rows' to match /could not be (opened|read)|does not …/i[39m
+
+[32m- Expected:[39m 
+/could not be (opened|read)|does not (open|look)|not a .*(Excel|text|CSV)/i
+
+[31m+ Received:[39m 
+"parsed 0 rows"
+
+[36m [2m❯[22m tests/qa/pass4/g2-routes.test.ts:[2m76:17[22m[39m
+    [90m 74| [39m    [35mlet[39m msg [33m=[39m [32m""[39m[33m;[39m
+    [90m 75| [39m    try { const t = parseAll(buf, name); msg = `parsed ${t[0].rows.len…
+    [90m 76| [39m    expect(msg).toMatch(/could not be (opened|read)|does not (open|loo…
+    [90m   | [39m                [31m^[39m
+    [90m 77| [39m    [34mexpect[39m(msg)[33m.[39mnot[33m.[39m[34mtoMatch[39m([36m/no rows|is empty|no data/i[39m)[33m;[39m
+    [90m 78| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m130 passed[39m[22m[90m (135)[39m
+[2m   Start at [22m 17:04:30
+[2m   Duration [22m 3.80s[2m (transform 821ms, setup 0ms, collect 208ms, tests 2.26s, environment 0ms, prepare 164ms)[22m
+

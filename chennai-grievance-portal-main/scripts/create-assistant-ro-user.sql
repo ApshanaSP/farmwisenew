@@ -42,4 +42,8 @@ GRANT SELECT (`incident_id`, `dept_code`, `reason`, `status`, `assigned_at`)
 GRANT SELECT (`source_id`, `name`, `kind`, `description`, `pipeline_key`, `refresh_minutes`, `enabled`, `status`, `last_run_at`, `last_ok_at`, `items_total`)
   ON `district_intel_ops`.`sources` TO 'diq_assistant_ro'@'localhost';
 
+-- What the Collector decided: only the columns the assistant's effective status needs (effective.ts), not the notes or who decided.
+GRANT SELECT (`decision_id`, `incident_id`, `decision`, `decided_at`)
+  ON `district_intel_ops`.`collector_decisions` TO 'diq_assistant_ro'@'localhost';
+
 SHOW GRANTS FOR 'diq_assistant_ro'@'localhost';

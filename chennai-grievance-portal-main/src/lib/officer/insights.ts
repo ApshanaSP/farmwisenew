@@ -15,9 +15,11 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, asOf, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
+import { closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
-const OPEN = effectiveSql(ops("collector_decisions")).open;
+const EFF = effectiveSql(ops("collector_decisions"));
+const OPEN = EFF.open;
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -198,25 +200,25 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
   const W = `i.lead_dept = ? AND ${w.sql}${a.sql}`, P = [dept, ...w.params, ...a.params];
   const since = periodSince(s.period, now);
   const [[k], [kp], byType, byZone, repeats, [dec]] = await Promise.all([
-    q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0) AS closed, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS overdue,
+    q(`SELECT COUNT(*) AS n, SUM(${OPEN} = 0) AS closed, SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue,
               SUM(${OPEN} = 1) AS open, SUM(i.severity_level IN ('Severe', 'High')) AS serious,
               AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60 END) AS hrs,
               AVG(i.hours_to_first_action) AS first_h, SUM(i.citizen_complaints) AS complaints,
-              SUM(${OPEN} = 0 AND COALESCE(i.sla_breached, 0) = 0) AS on_time
+              SUM(${OPEN} = 0 AND ${closedOnTimeSql(EFF.closedAt)}) AS on_time
        FROM incidents i WHERE ${W}`, P),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE i.lead_dept = ? AND ${prev.sql}${a.sql}`, [dept, ...prev.params, ...a.params]),
     q(`SELECT i.category_label AS l, COUNT(*) AS n,
               AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 1440 END) AS days
        FROM incidents i WHERE ${W} GROUP BY i.category_label ORDER BY n DESC LIMIT 8`, P),
-    q(`SELECT i.zone_name AS l, SUM(${OPEN} = 1 AND i.sla_breached = 1) AS v FROM incidents i WHERE ${W} AND i.zone_name IS NOT NULL
+    q(`SELECT i.zone_name AS l, SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS v FROM incidents i WHERE ${W} AND i.zone_name IS NOT NULL
        GROUP BY i.zone_name HAVING v > 0 ORDER BY v DESC LIMIT 8`, P),
     // places that keep coming back: the pipeline's hotspots, with this department's incidents in the window
     q(`SELECT h.top_place AS place, i.category_label AS type, COUNT(*) AS n, SUM(${OPEN}) AS open, h.incidents AS total
        FROM incidents i JOIN hotspots h ON h.hotspot_id = i.hotspot_id WHERE ${W}
        GROUP BY h.hotspot_id, h.top_place, i.category_label, h.incidents ORDER BY n DESC, total DESC LIMIT 8`, P),
-    q(`SELECT SUM(d.decision IN ('verify', 'resolve')) AS verified, SUM(d.decision = 'reopen') AS returned
+    q(`SELECT SUM(d.decision IN ('verify', 'resolve')) AS verified, SUM(d.decision IN ('reopen', 'reject')) AS returned
        FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
-       WHERE i.lead_dept = ? AND d.decided_at >= ?${a.sql}`, [dept, since, ...a.params])
+       WHERE i.lead_dept = ? AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?${a.sql}`, [dept, since, ...a.params])
   ]);
   const total = Number(k?.n ?? 0);
   if (!total) return none(head, "No grievances for this department in this period and area.", now);
@@ -245,7 +247,7 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
       rows: repeats.map((r) => [r.place ?? "—", r.type ?? "—", n(Number(r.n)), n(Number(r.open ?? 0)), n(Number(r.total ?? 0))])
     }],
     notes: [
-      `${plural(total, "grievance")} ${change == null ? "were reported" : `were reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on the ${PERIODS[s.period].prev}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
+      `${plural(total, "grievance")} ${change == null ? `${total === 1 ? "was" : "were"} reported` : `${total === 1 ? "was" : "were"} reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on the ${PERIODS[s.period].prev}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
       closed ? `${pct((onTime / closed) * 100)} of the closed ones met their deadline.` : null,
       Number(k.overdue) ? `${plural(Number(k.overdue), "open grievance")} ${Number(k.overdue) === 1 ? "is" : "are"} past the deadline${byZone[0] ? `, most in ${byZone[0].l} (${n(Number(byZone[0].v))})` : ""}.` : "No open grievance is past its deadline.",
       slow ? `${slow.l} takes the longest to close (${n1(Number(slow.days))} days on average).` : null,

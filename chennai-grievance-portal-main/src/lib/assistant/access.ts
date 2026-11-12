@@ -20,7 +20,7 @@ export interface AssistantUser {
 /** The signed-in Collector or department officer, or the response to return. */
 export async function assistantSession(): Promise<AssistantUser | NextResponse> {
   // the Collector's or the officer's own session (the asking console first), never a citizen's that happens to be signed in
-  const order = resolvePortal() === "officer" ? ["officer", "collector"] as const : ["collector", "officer"] as const;
+  const order = (await resolvePortal()) === "officer" ? ["officer", "collector"] as const : ["collector", "officer"] as const;
   const s = (await getActivePortalSession(order[0])) ?? (await getActivePortalSession(order[1]));
   if (!s || (s.role !== "collector" && s.role !== "department_officer")) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

@@ -195,7 +195,7 @@ export default function FileComplaintPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [result, setResult] = useState<{ complaintCode: string; department: string; complaintType: string } | null>(null);
+  const [result, setResult] = useState<{ complaintCode: string; department: string; complaintType: string; queueNote?: { en: string; ta: string } | null } | null>(null);
 
   const selectedWard = wards.find((w) => String(w.wardNumber) === wardNumber) || null;
 
@@ -683,7 +683,7 @@ export default function FileComplaintPage() {
             {missingDetails.length > 0 && (
               <div className="mt-6 border-t border-canvas-border pt-5">
                 <p className="mb-4 flex items-start gap-1.5 text-sm text-ink-muted">
-                  <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-faint" aria-hidden="true" />
+                  <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
                   These are missing from your profile. Fill them in once and future complaints will use them automatically.
                 </p>
 
@@ -694,7 +694,7 @@ export default function FileComplaintPage() {
                       <input id="fname" required className="form-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                     </div>
                     <div>
-                      <label className="form-label" htmlFor="lname">Last name <span className="normal-case text-ink-faint">(optional)</span></label>
+                      <label className="form-label" htmlFor="lname">Last name <span className="normal-case text-ink-subtle">(optional)</span></label>
                       <input id="lname" className="form-input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                     </div>
                   </div>
@@ -717,7 +717,7 @@ export default function FileComplaintPage() {
                 {missingDetails.includes("streetAddress") && (
                   <div className="mb-5">
                     <label className="form-label" htmlFor="streetAddr">
-                      Your address <span className="text-red-600">*</span> <span className="normal-case text-ink-faint">(where you live, not the problem location)</span>
+                      Your address <span className="text-red-600">*</span> <span className="normal-case text-ink-subtle">(where you live, not the problem location)</span>
                     </label>
                     <input id="streetAddr" required className="form-input" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} />
                   </div>
@@ -732,7 +732,7 @@ export default function FileComplaintPage() {
                       <p className="form-hint">10 digits, so the department can reach you.</p>
                     </div>
                     <div>
-                      <label className="form-label" htmlFor="cpincode">Your PIN code <span className="normal-case text-ink-faint">(optional)</span></label>
+                      <label className="form-label" htmlFor="cpincode">Your PIN code <span className="normal-case text-ink-subtle">(optional)</span></label>
                       <input id="cpincode" inputMode="numeric" maxLength={6} className={`form-input font-mono ${pincode && !/^\d{6}$/.test(pincode) ? "border-red-300" : ""}`}
                         value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))} aria-invalid={pincode ? !/^\d{6}$/.test(pincode) : undefined} />
                       {pincode && !/^\d{6}$/.test(pincode) && <p className="form-error">A PIN code has 6 digits.</p>}
@@ -766,11 +766,11 @@ export default function FileComplaintPage() {
           <div className="card">
             <StepHead icon={MapPin} title="Complaint location" sub="Drop a pin where the problem is; the ward and zone fill in by themselves." />
 
-            <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                   <span className="form-label mb-0">Point to the problem on the map</span>
-                  <span className="text-xs text-ink-faint">Optional &mdash; you can type the details instead</span>
+                  <span className="text-xs text-ink-subtle">Optional &mdash; you can type the details instead</span>
                 </div>
                 <MapPicker
                   value={coords}
@@ -824,7 +824,7 @@ export default function FileComplaintPage() {
                       </AnimatePresence>
                       {autofilled.size > 0 && (
                         <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-muted">
-                          <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-faint" aria-hidden="true" />
+                          <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
                           Filled in from the map: {Array.from(autofilled).join(", ")}. Check them and correct anything that looks wrong.
                         </p>
                       )}
@@ -837,7 +837,7 @@ export default function FileComplaintPage() {
               <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-sm font-semibold text-ink">Address details</span>
-                  <span className="text-xs text-ink-faint">{coords ? "Confirm or correct these" : "Fill these in, or drop a pin"}</span>
+                  <span className="text-xs text-ink-subtle">{coords ? "Confirm or correct these" : "Fill these in, or drop a pin"}</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -886,13 +886,13 @@ export default function FileComplaintPage() {
                       <p className="mt-1.5 inline-flex items-start gap-1.5 text-xs text-emerald-700"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />Determined from the map pin.</p>
                     ) : (
                       wardNotice && (
-                        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-ink-muted"><Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-faint" aria-hidden="true" />{wardNotice}</p>
+                        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-ink-muted"><Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-subtle" aria-hidden="true" />{wardNotice}</p>
                       )
                     )}
                   </div>
 
                   <div>
-                    <label className="form-label" htmlFor="locationPincode">PIN code of this location <span className="normal-case text-ink-faint">(optional)</span></label>
+                    <label className="form-label" htmlFor="locationPincode">PIN code of this location <span className="normal-case text-ink-subtle">(optional)</span></label>
                     <input id="locationPincode" inputMode="numeric" maxLength={6} className={`form-input font-mono ${locationPincode && !/^\d{6}$/.test(locationPincode) ? "border-red-300" : ""}`}
                       value={locationPincode}
                       onChange={(e) => { markEdited("locationPincode"); setLocationPincode(e.target.value.replace(/\D/g, "")); }} />
@@ -900,7 +900,7 @@ export default function FileComplaintPage() {
                   </div>
 
                   <div>
-                    <label className="form-label" htmlFor="specificLoc">Specific location <span className="normal-case text-ink-faint">(door no. / landmark)</span></label>
+                    <label className="form-label" htmlFor="specificLoc">Specific location <span className="normal-case text-ink-subtle">(door no. / landmark)</span></label>
                     <input id="specificLoc" className="form-input" value={specificLocation}
                       onChange={(e) => { markEdited("specificLocation"); setSpecificLocation(e.target.value); }} />
                   </div>
@@ -969,7 +969,7 @@ export default function FileComplaintPage() {
 
         {/* STEP 4: COMPLAINT DETAILS, with the review summary beside it */}
         {step === 4 && (
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <form className="card" onSubmit={handleSubmit} noValidate>
               <StepHead icon={FileText} title="Complaint details" sub="Describe the issue and attach evidence." />
 
@@ -990,18 +990,18 @@ export default function FileComplaintPage() {
               <div className="mb-5">
                 <div className="flex items-baseline justify-between gap-3">
                   <label className="form-label" htmlFor="cdesc">Details of complaint</label>
-                  <span className="text-[11.5px] text-ink-faint">English, <span lang="ta">தமிழ்</span> or Tanglish — all welcome</span>
+                  <span className="text-[11.5px] text-ink-subtle">English, <span lang="ta">தமிழ்</span> or Tanglish — all welcome</span>
                 </div>
                 <textarea id="cdesc" required rows={6} maxLength={400} className="form-input" placeholder="What is the problem, since when, and how is it affecting people?"
                   value={description} onChange={(e) => setDescription(e.target.value)} />
                 <div className="mt-1.5 flex items-center justify-between text-xs">
-                  <span className="text-ink-faint">{lang ? `Writing in ${lang}` : ""}</span>
-                  <span className={`font-mono tabular-nums ${description.length > 360 ? "text-gold-600" : "text-ink-faint"}`}>{description.length}/400</span>
+                  <span className="text-ink-subtle">{lang ? `Writing in ${lang}` : ""}</span>
+                  <span className={`font-mono tabular-nums ${description.length > 360 ? "text-gold-600" : "text-ink-subtle"}`}>{description.length}/400</span>
                 </div>
               </div>
 
               <div className="mb-5">
-                <span className="form-label">Photograph / video <span className="normal-case text-ink-faint">(optional, max 10MB)</span></span>
+                <span className="form-label">Photograph / video <span className="normal-case text-ink-subtle">(optional, max 10MB)</span></span>
                 <AnimatePresence mode="wait" initial={false}>
                   {mediaFile ? (
                     <motion.div key="file" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
@@ -1024,7 +1024,7 @@ export default function FileComplaintPage() {
                   ) : (
                     <motion.div key="drop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <Dropzone accept="image/jpeg,image/png,video/mp4" multiple={false} onFiles={(f) => setMediaFile(f[0] ?? null)}>
-                        <span><b>Choose a photo or video</b> or drag it here<br /><span className="text-xs text-ink-faint">JPG, PNG or MP4 &middot; up to 10MB</span></span>
+                        <span><b>Choose a photo or video</b> or drag it here<br /><span className="text-xs text-ink-subtle">JPG, PNG or MP4 &middot; up to 10MB</span></span>
                       </Dropzone>
                     </motion.div>
                   )}
@@ -1074,7 +1074,7 @@ export default function FileComplaintPage() {
                   {r.d && <p className="mt-1 text-[12px] text-ink-muted">Goes to <b className="font-semibold text-ink">{r.d}</b></p>}
                 </div>
               ))}
-              {coords && <p className="font-mono text-[11.5px] text-ink-faint">Pin {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</p>}
+              {coords && <p className="font-mono text-[11.5px] text-ink-subtle">Pin {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</p>}
             </aside>
           </div>
         )}
@@ -1104,15 +1104,19 @@ export default function FileComplaintPage() {
               </div>
               <dl className="grid grid-cols-2 divide-x divide-canvas-border bg-canvas-raised">
                 <div className="px-5 py-3.5">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Department</dt>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Department</dt>
                   <dd className="mt-0.5 text-sm font-medium text-ink">{result.department}</dd>
                 </div>
                 <div className="px-5 py-3.5">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Type</dt>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Type</dt>
                   <dd className="mt-0.5 text-sm font-medium text-ink">{result.complaintType}</dd>
                 </div>
               </dl>
             </div>
+
+            {result.queueNote && (
+              <p role="status" data-testid="queue-note" className="mx-auto mt-5 max-w-sm text-sm text-ink-muted">{result.queueNote.en}</p>
+            )}
 
             <div className="mx-auto mt-7 max-w-sm text-left">
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">What happens next</h3>

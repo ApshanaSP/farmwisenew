@@ -23,6 +23,7 @@ import path from "path";
 import zlib from "zlib";
 import type { DatabaseSync as DB } from "node:sqlite";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
 
 // node:sqlite is loaded at run time, and only when this store is used: Next.js 14's bundler does not know the
 // node:sqlite scheme (and rewrites createRequire), and the MySQL backend never needs it
@@ -690,6 +691,8 @@ function run(db: DB, sql: string | { sql: string; values?: unknown[] }, params?:
     }
     const r = st.run(...(flat as any[]));
     if (/^\s*(CREATE|DROP|ALTER)\s/i.test(expanded)) catalog(db);
+    // a write to what the figures are laid over (the Collector's decisions, an officer's steps) empties the caches that hold a read (RC-35): whoever writes, here
+    if (/\b(collector_decisions|officer_steps)\b/i.test(expanded)) bumpDataEpoch();
     return [{ affectedRows: Number(r.changes), insertId: Number(r.lastInsertRowid), changedRows: Number(r.changes) }, undefined];
   } catch (e: any) {
     const err = new Error(`${e.message}\n  in SQLite: ${sqlite.slice(0, 600)}`) as Error & { code?: string; sqlMessage?: string };

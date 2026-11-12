@@ -1,0 +1,3436 @@
+{
+ "when": "2026-11-07T04:46:52.553Z",
+ "byImpact": {
+  "serious": 102,
+  "moderate": 116,
+  "critical": 52
+ },
+ "runs": [
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".normal-case :: Element has insufficient color contrast of 2.84 (foreground color: #4f6478, background color: #0d1d15, font size: 8.3pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      ".hover\\:text-navy-600 :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.0pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".normal-case :: Element has insufficient color contrast of 2.84 (foreground color: #4f6478, background color: #0d1d15, font size: 8.3pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      ".text-xs :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.0pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".a-map > .ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".me :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 14,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-scope :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".a-map > .ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".me :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 14,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-scope :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".a-map > .ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".me :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 14,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-scope :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/officer",
+   "violations": [
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".a-map > .ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".me :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 14,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-scope :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:overview",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:trends",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:environment",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:studio",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:daily",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:By severity\n82",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:My tasks\n0",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:1\nSevere",
+   "lang": "en",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:overview",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:trends",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:environment",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:studio",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:daily",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:By severity\n81",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:My tasks\n0",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:1\nSevere",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:overview",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:trends",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:environment",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:studio",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:daily",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:தீவிரம்\n81",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:பணிகள்\n0",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:1\nகடுமை",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:briefing",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:trends",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:environment",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:studio",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:தீவிரம்\n81",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:பணிகள்\n0",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "collector:1\nகடுமை",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/collector",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "nodes": 1,
+     "help": "Certain ARIA roles must contain particular children",
+     "sample": [
+      ".seg :: Element has children which are not allowed: button"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      ".ch > h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".lang-sw :: Text inside the element is not included in the accessible name",
+      ".icon :: Text inside the element is not included in the accessible name"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 11,
+     "help": "All page content should be contained by landmarks",
+     "sample": [
+      ".band-eb > span:nth-child(1) :: Some page content is not contained by landmarks",
+      "h1 :: Some page content is not contained by landmarks"
+     ]
+    }
+   ],
+   "console": [
+    "Connecting to 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap' violates the following Content Security Policy directive: \"connect-s"
+   ]
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "light",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "light",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 2.08 (foreground color: #a0aec0, background color: #f3f7f5, font size: 9.8pt ",
+      "span[title=\"At least 8 characters\"] :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 3.11 (foreground color: #4f6478, background color: #06120d, font size: 9.8pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 2.08 (foreground color: #a0aec0, background color: #f3f7f5, font size: 9.8pt ",
+      "span[title=\"At least 8 characters\"] :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 3.11 (foreground color: #4f6478, background color: #06120d, font size: 9.8pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".todo:nth-child(3) > .ui-step-l :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt (",
+      ".hover\\:underline :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 10.5pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".todo:nth-child(3) > .ui-step-l :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt (",
+      ".hover\\:underline :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 10.5pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  }
+ ]
+}

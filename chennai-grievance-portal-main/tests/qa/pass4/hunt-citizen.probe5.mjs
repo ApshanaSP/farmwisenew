@@ -1,0 +1,10 @@
+import { login, req } from "./lib/access-lib.mjs";
+const base = `http://127.0.0.1:${process.argv[2] || 3175}`;
+const J = { "content-type": "application/json" };
+const A = await login(base, "citizenA"), B = await login(base, "citizenB");
+const g = async (u) => JSON.parse((await req(base, "GET", u, { cookie: A.cookie })).text);
+const tax = await g("/api/complaint-taxonomy");
+const sub = tax.categories.flatMap(c => c.subtypes || c.types || [])[0];
+console.log("sub", JSON.stringify(sub), JSON.stringify(tax.categories[0]).slice(0,300));
+const zs = await g("/api/locations/zones"); console.log("zones", JSON.stringify(zs).slice(0,300));
+const ws = await g("/api/locations/wards"); console.log("wards", JSON.stringify(ws).slice(0,300));

@@ -79,5 +79,8 @@ describe("motion", () => {
   it("small follow-ups keep the view; a comparison or a new place moves it", () => {
     for (const e of ["distance", "severity", "period", "status"]) expect(followUpMoves(e)).toBe(false);
     for (const e of ["compare", null, "chip"]) expect(followUpMoves(e)).toBe(true);
+    // what useMapAsk.ts really does (it calls this function): a chip that keeps the shape of the question keeps the view
+    expect(followUpMoves("chip", true)).toBe(false);
+    expect(followUpMoves("compare", true)).toBe(true);
   });
 });

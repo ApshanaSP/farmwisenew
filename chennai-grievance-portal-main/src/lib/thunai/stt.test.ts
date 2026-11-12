@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import os from "os";
 import fs from "fs";
 import path from "path";
-import { ledger } from "./ledger";
+import { ledger, resetLedger } from "./ledger";
 import { choose, hearUtterance, MODEL_EN, MODEL_TA, promptEcho, PROMPT, repeats, scoreDecode, wavSeconds, type Decode } from "./stt";
 
 const dec = (lang: "en" | "ta", text: string, logprob = -0.3, extra: Partial<Decode["segments"][0]> = {}): Decode => ({ lang, model: lang === "ta" ? "whisper-large-v3" : "whisper-large-v3-turbo", text, segments: [{ avg_logprob: logprob, no_speech_prob: 0.02, compression_ratio: 1.3, ...extra }] });
@@ -46,8 +46,8 @@ describe("hearing an utterance", () => {
   let dir: string;
   const wav = () => { const b = new ArrayBuffer(44 + 32000), v = new DataView(b); v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); return b; };
   const ok = (text: string, lang: string) => new Response(JSON.stringify({ text, language: lang, duration: 1, segments: [{ avg_logprob: -0.2, no_speech_prob: 0.01, compression_ratio: 1.2 }] }), { status: 200 });
-  beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), "jv-stt-")); vi.stubEnv("THUNAI_DIR", dir); vi.stubEnv("GROQ_API_KEY", "x"); });
-  afterEach(() => { vi.unstubAllEnvs(); });
+  beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), "jv-stt-")); vi.stubEnv("THUNAI_DIR", dir); vi.stubEnv("GROQ_API_KEY", "x"); resetLedger(); });
+  afterEach(() => { vi.unstubAllEnvs(); resetLedger(); });
 
   it("an engaged turn: two parallel forced decodes, Tamil on large-v3 and English on turbo, each with the prompt", async () => {
     const seen: { model: string; lang: string; prompt: string }[] = [];

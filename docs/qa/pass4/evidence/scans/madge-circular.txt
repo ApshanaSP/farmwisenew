@@ -1,0 +1,45 @@
+- Finding files
+Processed 756 files (7.2s) (2 warnings)
+
+✖ Found 39 circular dependencies!
+
+1) lib/assistant/context.ts > lib/assistant/answer.ts
+2) lib/studio/parse.ts > lib/studio/formats.ts
+3) lib/studio/parse.ts > lib/studio/ocr.ts
+4) lib/map/ask.ts > lib/map/followups.ts
+5) lib/map/ask.ts > lib/map/followups.ts > lib/map/suggest.ts
+6) components/collector/app/CollectorApp.tsx > components/collector/app/Added.tsx
+7) components/collector/app/CollectorApp.tsx > components/collector/app/BriefingBook.tsx
+8) components/collector/app/CollectorApp.tsx > components/collector/app/Conflicts.tsx
+9) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx
+10) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Attention.tsx
+11) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx
+12) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Insights.tsx
+13) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Insights.tsx > components/collector/app/Stories.tsx
+14) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/Nearby.tsx
+15) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/Overview.tsx > components/collector/app/YourData.tsx
+16) components/collector/app/CollectorApp.tsx > components/collector/app/Detail.tsx > components/collector/app/TakeAction.tsx
+17) components/collector/app/CollectorApp.tsx > components/collector/app/NewsPreview.tsx
+18) components/collector/app/CollectorApp.tsx > components/collector/app/Overlays.tsx
+19) components/collector/app/CollectorApp.tsx > components/collector/app/Sources.tsx
+20) components/collector/app/CollectorApp.tsx > components/collector/app/Workspace.tsx
+21) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx
+22) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Connectors.tsx
+23) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx
+24) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Analyst.tsx
+25) components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Analyst.tsx
+26) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/DataCard.tsx
+27) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Drill.tsx
+28) components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Drill.tsx
+29) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Insights.tsx
+30) components/collector/app/CollectorApp.tsx > components/collector/app/studio/Studio.tsx > components/collector/app/studio/Dataset.tsx > components/collector/app/studio/Source.tsx
+31) components/collector/app/CollectorApp.tsx > components/collector/app/thunai/Thunai.tsx
+32) components/officer/OfficerApp.tsx > components/officer/Board.tsx
+33) components/officer/OfficerApp.tsx > components/officer/Board.tsx > components/officer/OfficerAttention.tsx
+34) components/officer/OfficerApp.tsx > components/officer/Drawer.tsx > components/officer/Cards.tsx > components/officer/Insights.tsx
+35) components/officer/OfficerApp.tsx > components/officer/Drawer.tsx > components/officer/Cards.tsx
+36) components/officer/OfficerApp.tsx > components/officer/Drawer.tsx
+37) components/officer/OfficerApp.tsx > components/officer/InsightsPage.tsx
+38) components/officer/OfficerApp.tsx > components/officer/Overlays.tsx
+39) components/officer/OfficerApp.tsx > components/officer/Report.tsx
+

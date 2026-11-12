@@ -1,0 +1,410 @@
+
+ RUN  v3.2.7 E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] durable store loaded: 27 tables, 61874 rows + 17 reference tables (local only: changes are not saved to AWS, and the data is reloaded from AWS every 100000 min; the one PC that saves has AWS_STORE_SAVE=1)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] cmwssb-reservoirs@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] readable-headlines@3 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] news-headlines@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] places-from-reports@2 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] 144 news-only incidents from sites that are not news media left out
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] news-media-only@1 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news kinds: 2758 government_action, 150 roundup, 457 opinion, 1500 alert, 455 other, 124 resolution; 29 news-only incidents that were not incidents taken out
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] report-kinds@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+[derive] news: 0 history, horoscope or obituary items left out, 0 gas deaths recategorised, 2 animal deaths not counted as people, 1 same-event incidents merged into 1, 0 death tolls held for confirmation
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] news-sanity@6 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts
+[aws-store] incident-clusters@4 applied to build 2026-11-06 18:21:19|76734f481810 in 0 ms
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday counts 5 Nov, not 4 Nov
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday counts 5 Nov, not 4 Nov
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 nethu evlo incidents counts 5 Nov, not 4 Nov
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 nethu evlo incidents counts 5 Nov, not 4 Nov
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday compares with the day before it
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday compares with the day before it
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many were resolved yesterday answers what was asked
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many deaths yesterday answers what was asked
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/text template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேற்றைய புகார்கள் எத்தனை is about yesterday
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேற்றைய புகார்கள் எத்தனை is about yesterday
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேத்து எவ்வளவு புகார் is about yesterday
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேத்து எவ்வளவு புகார் is about yesterday
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 evlo overdue cases indha week is not said as every incident reported
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 evlo overdue cases indha week is not said as every incident reported
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo overdue incidents is not said as every incident reported
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo overdue incidents is not said as every incident reported
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo open cases is not said as every incident reported
+[assistant] INCIDENT_COUNT answered from the store in 0 ms (0 ms since the question) (rules)
+
+stdout | tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo open cases is not said as every incident reported
+[assistant] answered in 0 ms (models 0 ms, other 0 ms): answer/kpi template
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts (108 tests | 12 failed | 96 skipped) 11587ms
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > explain the flooding complaint in Adyar reads no field out
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > Adyar flooding enna aachu reads no field out
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > அடையாறு வெள்ள புகார் விளக்கமா சொல்லுங்க reads no field out
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > a Resolved case has no job left in it, in either language
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > a Rejected case has no job left in it, in either language
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > a Lapsed case has no job left in it, in either language
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > by a sentence, explain ID (a fake model at the boundary picks the closed case by its id)
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > by a sentence, ID enna aachu (a fake model at the boundary picks the closed case by its id)
+   ↓ BUG-004, BUG-031: one issue is retold, and a closed one as closed (real store) > by a sentence, ID விளக்கு (a fake model at the boundary picks the closed case by its id)
+   ↓ BUG-008: week keys are Mondays and the weeks are not empty (this process's time zone; the server runs cover the others) > 2026-11-07 00:30:00
+   ↓ BUG-008: week keys are Mondays and the weeks are not empty (this process's time zone; the server runs cover the others) > 2026-11-09 00:30:00
+   ↓ BUG-008: week keys are Mondays and the weeks are not empty (this process's time zone; the server runs cover the others) > 2026-11-09 03:00:00
+   ↓ BUG-008: week keys are Mondays and the weeks are not empty (this process's time zone; the server runs cover the others) > the real Trends have reports in every week
+   ↓ BUG-026: the officer's bell keeps to the department > GCC-SWM
+   ↓ BUG-026: the officer's bell keeps to the department > GCC-ELE
+   ↓ BUG-026: the officer's bell keeps to the department > CMWSSB
+   ↓ BUG-026: the officer's bell keeps to the department > GCC-SWD
+   ↓ BUG-026: the officer's bell keeps to the department > POL-GCP
+   ↓ BUG-029: the assistant CSV's columns are filled > no column is blank on every row
+   ↓ BUG-017: the original line stays out (fake model at the boundary gives the chat line) > through the real round
+   ↓ BUG-019: the original Tamil join > every department with a Tamil name joins rightly
+   ↓ BUG-007 reopened > AUD-NF-1 weekly: overdue cases with no severity are listed, not 'no cases'
+   ↓ BUG-007 reopened > AUD-NF-1 monthly: overdue cases with no severity are listed, not 'no cases'
+   ↓ BUG-007 reopened > AUD-NF-1 quarterly: overdue cases with no severity are listed, not 'no cases'
+   ↓ BUG-007 reopened > AUD-NF-1 daily: overdue cases with no severity are listed, not 'no cases'
+   ↓ BUG-007 reopened > AUD-NF-1 'show overdue cases', a fake model picks the same screen the real planner would
+   ↓ BUG-007 reopened > AUD-NF-1 overdue cases this week
+   ↓ BUG-007 reopened > AUD-NF-1 indha week overdue cases kaattu
+   ↓ BUG-007 reopened > AUD-NF-1 காலக்கெடு தாண்டிய சம்பவங்கள் இந்த வாரம்
+   ↓ BUG-018 reopened: 'yesterday' is the day before yesterday > the data has a difference to see
+   × BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday counts 5 Nov, not 4 Nov 243ms
+     → expected 239 to be 245 // Object.is equality
+   × BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 nethu evlo incidents counts 5 Nov, not 4 Nov 32ms
+     → expected 239 to be 245 // Object.is equality
+   × BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday compares with the day before it 26ms
+     → expected 174 to be 239 // Object.is equality
+   × BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints 35ms
+     → expected 133 to be 150 // Object.is equality
+   ↓ BUG-021 partly > not every overdue case: the original failure is gone
+   ↓ BUG-021 partly > AUD-NF-3 weekly: 'severe overdue' says the console's count of incidents
+   ↓ BUG-021 partly > AUD-NF-3 monthly: 'severe overdue' says the console's count of incidents
+   ↓ BUG-021 partly > AUD-NF-3 quarterly: 'severe overdue' says the console's count of incidents
+   ↓ BUG-021 partly > AUD-NF-3 quarterly: not even the console's groups, the count stops after nine pages
+   ↓ BUG-021 partly > AUD-NF-3 daily: overdue High cases are not 'no high cases'
+   ↓ BUG-021 partly > AUD-NF-3 weekly: overdue High cases are not 'no high cases'
+   ↓ BUG-021 partly > AUD-NF-3 monthly: overdue High cases are not 'no high cases'
+   ↓ new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 explain the flooding complaint in Adyar picks the most severe open case
+   ↓ new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 Adyar flooding enna aachu picks the most severe open case
+   ↓ new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 அடையாறு வெள்ளம் விளக்கு picks the most severe open case
+   ↓ new: the issue or list that 'matters most' is the least severe (the list's sort runs backwards from the tool) > AUD-NF-4 a list's first row is its most severe
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 explain the flooding complaint in Velachery is about that place
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 explain the garbage complaint in Mylapore is about that place
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 Velachery flooding enna aachu is about that place
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 வேளச்சேரி வெள்ள புகார் விளக்கு is about that place
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 மயிலாப்பூர் குப்பை புகார் விளக்கமா சொல்லுங்க is about that place
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 explain the garbage complaint in Madurai is not answered with a Chennai case
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 explain the flooding complaint in Mumbai is not answered with a Chennai case
+   ↓ new: a place named in 'explain' is dropped when a topic was heard > AUD-NF-5 மதுரை குப்பை புகார் விளக்கு is not answered with a Chennai case
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > held: There is only one severe case open in Adyar.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > held: One complaint came in today.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > held: Just one incident is open.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Only one is open in Adyar.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 There is a single severe case open in Adyar.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Only one severe flooding case is open in Adyar.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 There's just one flood in Adyar.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 அடையாறில் ஒரே ஒரு கடுமையான சம்பவம் மட்டுமே உள்ளது.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 ஒரு புகார் மட்டும் வந்துள்ளது.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Adyar la oru severe case dhaan irukku.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 Adyar la onnu dhaan open la irukku.
+   ↓ BUG-017 partly: other ways to say one, or a count, pass the gate with nothing allowed (a model line never has any) > AUD-NF-6 through the real round, a fake model's line is said as it is
+   ↓ BUG-019 partly: a name with no Tamil gets the suffix glued on > AUD-NF-7 DIST-DM
+   ↓ BUG-019 partly: a name with no Tamil gets the suffix glued on > AUD-NF-7 TNPCB
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > a department with none of the kind gets none
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-EDU has no report behind any emerging pattern
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-HLT has no report behind any emerging pattern
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-LND has no report behind any emerging pattern
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 GCC-BRG has no report behind any emerging pattern
+   ↓ BUG-027 partly: a department that has no report behind a pattern still gets it > AUD-NF-8 the police's count is the police's
+   ↓ after a decision (BUG-028, BUG-035) > BUG-028 the briefing's counts follow a decision
+   ↓ after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 the Briefing Book's rows say the case's status after a decision
+   ↓ after a decision (BUG-028, BUG-035) > AUD-NF-9 BUG-028 a reopened case leaves the Briefing Book's good news
+   ↓ after a decision (BUG-028, BUG-035) > AUD-NF-10 BUG-035 Jarvis's case screen says closed at once
+   ↓ after a decision (BUG-028, BUG-035) > AUD-NF-10 BUG-035 a developing story says closed at once
+   ↓ BUG-035: the AI brief's figures, with a fake model at the gateway > a decided case leaves the figures the model is given
+   ↓ BUG-035: the other places a decision reaches (real store) > Data Studio's drill-down list says closed
+   ↓ BUG-035: the other places a decision reaches (real store) > the warning's list of open flood problems drops it
+   ↓ BUG-035: the other places a decision reaches (real store) > a reopened case is retold as open, and a closed one by a decision as closed
+   ↓ new, found on the way > the fake model's plan reaches the cases screen (so AUD-NF-1's fake-model test fails for the right reason)
+   ↓ new, found on the way > AUD-NF-11 two complaints are not 'a lot of residents'
+   ↓ new, found on the way > AUD-NF-12 Jarvis, severe cases yesterday: not today's list
+   ↓ new, found on the way > AUD-NF-12 Jarvis, நேற்று கடுமையான சம்பவங்கள்: not today's list
+   ↓ new, found on the way > AUD-NF-12 Jarvis, nethu severe cases: not today's list
+   ↓ new, found on the way > AUD-NF-13 a sewage case held by the drains team: the step names who holds it
+   ↓ new, found on the way > AUD-NF-14 a reopened case is not 'open ... closed on'
+   × new, found on the way > AUD-NF-15 how many were resolved yesterday answers what was asked 1481ms
+     → expected '9 severe events · 147 open citizen co…' to match /resolved/i
+   × new, found on the way > AUD-NF-15 how many deaths yesterday answers what was asked 29ms
+     → expected '9 severe events · 147 open citizen co…' to match /death/i
+   × new, found on the way > AUD-NF-15 நேற்றைய புகார்கள் எத்தனை is about yesterday 27ms
+     → expected '147 புகார்கள் · கடந்த 24 மணி நேரத்தில்' to match /நேற்று/
+   × new, found on the way > AUD-NF-15 நேத்து எவ்வளவு புகார் is about yesterday 140ms
+     → expected '9,113 புகார்கள் · கடந்த 90 நாட்களில்' to match /நேற்று/
+   ↓ new, found on the way > AUD-NF-16 the English reads right: 'in the last 30 days'
+   ↓ new, found on the way > AUD-NF-17 a Tamil spoken list has no English sentence in it
+   ↓ new, found on the way > AUD-NF-18 Trends' oldest week is a whole week, as the others are
+   ↓ new, found on the way > the English line keeps the word, so the count is right and only the Tanglish and Tamil lines lose it
+   × new, found on the way > AUD-NF-22 evlo overdue cases indha week is not said as every incident reported 27ms
+     → expected 'kadandha 7 naal-la 505 incidents repo…' not to match /[\d,]+ incidents report aagirukku/
+   × new, found on the way > AUD-NF-22 indha week evlo overdue incidents is not said as every incident reported 28ms
+     → expected 'kadandha 7 naal-la 505 incidents repo…' not to match /[\d,]+ incidents report aagirukku/
+   × new, found on the way > AUD-NF-22 indha week evlo open cases is not said as every incident reported 25ms
+     → expected 'kadandha 7 naal-la 1,167 incidents re…' not to match /[\d,]+ incidents report aagirukku/
+   × new, found on the way > AUD-NF-22 Tamil, with a fake router at the boundary that understood 'overdue': not said as every incident reported 12ms
+     → expected 'கடந்த 7 நாட்களில் 505 சம்பவங்கள் பதிவ…' not to match /பதிவாகியுள்ளன/
+   ↓ new, found on the way > AUD-NF-19 a closed case's screen has no 'past deadline' flag beside what is said
+   ↓ new, found on the way > AUD-NF-19 Ask District IQ: a closed case's status is not 'and past its deadline'
+   ↓ RC-29: the figures that came from capped or grouped reads > the Briefing's 'routine' is the PDF's routine, and 'need your attention' is the CSV's whole list (no cap of 400)
+   ↓ RC-29: the figures that came from capped or grouped reads > only in the news: the written line, the list on the page and the figure are one number
+   ↓ RC-29: the figures that came from capped or grouped reads > the Resolved tile is what was closed in the window, as Ask District IQ counts it
+   ↓ RC-29: the figures that came from capped or grouped reads > Trends: the 12 weeks hold whole weeks, the oldest as full as its neighbours, and the months hold all their days
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday counts 5 Nov, not 4 Nov
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 nethu evlo incidents counts 5 Nov, not 4 Nov
+AssertionError: expected 239 to be 245 // Object.is equality
+
+- Expected
++ Received
+
+- 245
++ 239
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:165:78
+    163|   it.each(["how many incidents yesterday", "nethu evlo incidents"])("A…
+    164|     const a = await askChat(message);
+    165|     expect(firstNumber((a as { card: { headline: string } }).card.head…
+       |                                                                              ^
+    166|   });
+    167|   it.each(["how many incidents yesterday"])("AUD-NF-2 %s compares with…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 how many incidents yesterday compares with the day before it
+AssertionError: expected 174 to be 239 // Object.is equality
+
+- Expected
++ Received
+
+- 239
++ 174
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:170:20
+    168|     const a = await askChat(message);
+    169|     const before = Number(String((a as { card: { answerMarkdown: strin…
+    170|     expect(before).toBe(await countDay(BEFORE));
+       |                    ^
+    171|   });
+    172|   it("AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints", as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > BUG-018 reopened: 'yesterday' is the day before yesterday > AUD-NF-2 நேற்று எத்தனை புகார்கள் adds up 5 Nov's complaints
+AssertionError: expected 133 to be 150 // Object.is equality
+
+- Expected
++ Received
+
+- 150
++ 133
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:175:78
+    173|     const a = await askChat("நேற்று எத்தனை புகார்கள்");
+    174|     const [r] = await q(`SELECT SUM(i.citizen_complaints) AS n FROM in…
+    175|     expect(firstNumber((a as { card: { headline: string } }).card.head…
+       |                                                                              ^
+    176|   });
+    177| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many were resolved yesterday answers what was asked
+AssertionError: expected '9 severe events · 147 open citizen co…' to match /resolved/i
+
+- Expected: 
+/resolved/i
+
++ Received: 
+"9 severe events · 147 open citizen complaints · 236 ongoing incidents"
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:399:73
+    397|   it.each([["how many were resolved yesterday", /resolved/i], ["how ma…
+    398|     const a = await askChat(message as string);
+    399|     expect(String((a as { card: { headline: string } }).card.headline)…
+       |                                                                         ^
+    400|   });
+    401|   it.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 how many deaths yesterday answers what was asked
+AssertionError: expected '9 severe events · 147 open citizen co…' to match /death/i
+
+- Expected: 
+/death/i
+
++ Received: 
+"9 severe events · 147 open citizen complaints · 236 ongoing incidents"
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:399:73
+    397|   it.each([["how many were resolved yesterday", /resolved/i], ["how ma…
+    398|     const a = await askChat(message as string);
+    399|     expect(String((a as { card: { headline: string } }).card.headline)…
+       |                                                                         ^
+    400|   });
+    401|   it.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேற்றைய புகார்கள் எத்தனை is about yesterday
+AssertionError: expected '147 புகார்கள் · கடந்த 24 மணி நேரத்தில்' to match /நேற்று/
+
+- Expected: 
+/நேற்று/
+
++ Received: 
+"147 புகார்கள் · கடந்த 24 மணி நேரத்தில்"
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:403:73
+    401|   it.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-…
+    402|     const a = await askChat(message);
+    403|     expect(String((a as { card: { headline: string } }).card.headline)…
+       |                                                                         ^
+    404|   });
+    405|   it("AUD-NF-16 the English reads right: 'in the last 30 days'", async…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-15 நேத்து எவ்வளவு புகார் is about yesterday
+AssertionError: expected '9,113 புகார்கள் · கடந்த 90 நாட்களில்' to match /நேற்று/
+
+- Expected: 
+/நேற்று/
+
++ Received: 
+"9,113 புகார்கள் · கடந்த 90 நாட்களில்"
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:403:73
+    401|   it.each(["நேற்றைய புகார்கள் எத்தனை", "நேத்து எவ்வளவு புகார்"])("AUD-…
+    402|     const a = await askChat(message);
+    403|     expect(String((a as { card: { headline: string } }).card.headline)…
+       |                                                                         ^
+    404|   });
+    405|   it("AUD-NF-16 the English reads right: 'in the last 30 days'", async…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 evlo overdue cases indha week is not said as every incident reported
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo overdue incidents is not said as every incident reported
+AssertionError: expected 'kadandha 7 naal-la 505 incidents repo…' not to match /[\d,]+ incidents report aagirukku/
+
+- Expected: 
+/[\d,]+ incidents report aagirukku/
+
++ Received: 
+"kadandha 7 naal-la 505 incidents report aagirukku (munnadi 364): 54 severe, 505 innum open, 37 per uyirizhappu."
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:430:89
+    428|     const [all] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE…
+    429|     expect(n).toBeLessThan(Number(all.n)); // the count itself is the …
+    430|     expect(String((a as { card: { answerMarkdown: string } }).card.ans…
+       |                                                                                         ^
+    431|   });
+    432|   it("AUD-NF-22 Tamil, with a fake router at the boundary that underst…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 indha week evlo open cases is not said as every incident reported
+AssertionError: expected 'kadandha 7 naal-la 1,167 incidents re…' not to match /[\d,]+ incidents report aagirukku/
+
+- Expected: 
+/[\d,]+ incidents report aagirukku/
+
++ Received: 
+"kadandha 7 naal-la 1,167 incidents report aagirukku (munnadi 449): 54 severe, 1,167 innum open, 37 per uyirizhappu."
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:430:89
+    428|     const [all] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE…
+    429|     expect(n).toBeLessThan(Number(all.n)); // the count itself is the …
+    430|     expect(String((a as { card: { answerMarkdown: string } }).card.ans…
+       |                                                                                         ^
+    431|   });
+    432|   it("AUD-NF-22 Tamil, with a fake router at the boundary that underst…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-22 Tamil, with a fake router at the boundary that understood 'overdue': not said as every incident reported
+AssertionError: expected 'கடந்த 7 நாட்களில் 505 சம்பவங்கள் பதிவ…' not to match /பதிவாகியுள்ளன/
+
+- Expected: 
+/பதிவாகியுள்ளன/
+
++ Received: 
+"கடந்த 7 நாட்களில் 505 சம்பவங்கள் பதிவாகியுள்ளன (முந்தைய காலத்தில் 364): 54 கடுமையானவை, 505 இன்னும் நிலுவையில், 37 உயிரிழப்பு."
+
+ ❯ tests/qa/pass4/audit-narrate_and_figures.test.ts:439:49
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 96 skipped (108)
+   Start at  13:20:35
+   Duration  17.45s (transform 2.08s, setup 0ms, collect 3.66s, tests 11.59s, environment 0ms, prepare 150ms)
+

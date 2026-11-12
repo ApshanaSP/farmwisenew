@@ -34,7 +34,8 @@ const T: Record<string, { en: string; ta: string }> = {
   sent: { en: "Sent {n} through the test channel.", ta: "சோதனை வழியில் {n} அனுப்பப்பட்டது." },
   approvedOnly: { en: "Approved. Send it from the incident panel.", ta: "ஒப்புதல் அளிக்கப்பட்டது. நிகழ்வுப் பலகையிலிருந்து அனுப்புங்கள்." },
   sendKept: { en: "{n} could not be sent and are still in the tray. {sent} went through.", ta: "{n} அனுப்ப முடியவில்லை, இன்னும் தட்டில் உள்ளன. {sent} அனுப்பப்பட்டன." },
-  yesNotTrusted: { en: "I couldn't hear that yes clearly. Tap the card, or say yes again.", ta: "அந்த ஆம் தெளிவாகக் கேட்கவில்லை. அட்டையைத் தட்டுங்கள், அல்லது மீண்டும் ஆம் என்று சொல்லுங்கள்." },
+  openedOne: { en: "Opened one draft in the incident panel: send it from there. {n} more are still in the tray.", ta: "ஒரு வரைவை நிகழ்வுப் பலகையில் திறந்தேன்: அங்கிருந்து அனுப்புங்கள். இன்னும் {n} தட்டில் உள்ளன." },
+  yesNotTrusted: { en: "I couldn't hear that yes clearly, and a yes only counts when it is heard clearly. Tap Yes on the card.", ta: "அந்த ஆம் தெளிவாகக் கேட்கவில்லை. தெளிவாகக் கேட்டால்தான் ஆம் செல்லும். அட்டையில் ஆம் என்பதைத் தட்டுங்கள்." },
   saved: { en: "Saved as {name}.", ta: "{name} என்று சேமித்தேன்." },
   remembered: { en: "I'll remember that.", ta: "நினைவில் வைத்துக்கொண்டேன்." },
   forgotten: { en: "Forgotten.", ta: "மறந்துவிட்டேன்." },
@@ -95,4 +96,22 @@ export function say(key: LineKey, lang: Lang, fields: Fields = {}): string {
     .replace(/(^|\s)1 (draft|case|incident|headline|day|hour|reminder)s\b/g, "$11 $2");
   if (!numberGuard(line, fields, tpl)) throw new Error(`number guard: ${key}`);
   return line;
+}
+
+/** A time the Collector can read in Chennai ("6 Nov, 5:00 pm"; in Tamil "6 நவ., 5:00 பிற்பகல்"), never the ISO string the step carries (RC-15, PB-281). */
+export function whenText(at: unknown, lang: Lang): string {
+  const d = typeof at === "string" || typeof at === "number" ? new Date(at) : at instanceof Date ? at : null;
+  if (!d || Number.isNaN(d.getTime())) return lang === "ta" ? "குறித்த நேரத்தில்" : "at the time you said";
+  const t = d.toLocaleString(lang === "ta" ? "ta-IN" : "en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
+  // the runtime's Tamil clock may still say AM and PM: the Tamil words for them, so no Latin letters stay in a Tamil line
+  return lang === "ta" ? t.replace(/\s*AM\b/i, " முற்பகல்").replace(/\s*PM\b/i, " பிற்பகல்") : t;
+}
+
+/** The question asked before a step that changes something saved is done (a view saved, a note kept or forgotten, a reminder set). One builder for the browser and the test copy of it. */
+export function confirmLine(s: { a: string; name?: string; text?: string; all?: boolean; at?: unknown }, lang: Lang): string | null {
+  if (s.a === "workspace") return say("saveAsk", lang, { name: s.name });
+  if (s.a === "remember") return say("rememberAsk", lang, { text: s.text });
+  if (s.a === "forget") return say("forgetAsk", lang, { what: s.all ? (lang === "ta" ? "எல்லாவற்றையும்" : "everything") : (lang === "ta" ? "கடைசி குறிப்பை" : "the last note") });
+  if (s.a === "remind") return say("remindAsk", lang, { when: whenText(s.at, lang), text: s.text });
+  return null;
 }

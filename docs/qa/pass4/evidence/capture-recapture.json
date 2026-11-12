@@ -1,0 +1,108 @@
+{
+ "job": "capture-recapture by Chapman, pairs of hunters with the same brief",
+ "made": "2026-11-07, at merge. Rows are in docs/qa/pass4/BUGS.json (PB-259 on).",
+ "formula": "N = (n1+1)(n2+1)/(m+1) - 1; Var = (n1+1)(n2+1)(n1-m)(n2-m) / ((m+1)^2 (m+2)); 95% interval = N +- 1.96 SE, never below the bugs already seen.",
+ "matching_rule": "Matched by bug, not by wording: two rows match when the same defect (same wrong behaviour from the same missing or wrong rule) is in both lists. A second phrasing of the same defect inside one hunter list is counted once for that hunter.",
+ "pairs": {
+  "jarvis": {
+   "hunters": [
+    "hunt-jarvis1 (12 rows in the file)",
+    "hunt-jarvis2 (11 rows in the file)"
+   ],
+   "within_hunter_merge": [
+    "hunt-jarvis1-3 merged into hunt-jarvis1-2 (same draft branch, a list of numbers is not parsed), so jarvis1 has 11 distinct bugs; jarvis2 has 11"
+   ],
+   "matches_strict": [
+    {
+     "jarvis1": "hunt-jarvis1-9",
+     "jarvis2": "jarvis2-7",
+     "bug": "Tamil and Tanglish keep-in-mind verbs are read as navigation, nothing is remembered (PB-284 and PB-294 in BUGS.json, PB-294 is marked duplicate_of PB-284)"
+    }
+   ],
+   "matches_lenient_extra": [
+    {
+     "jarvis1": "hunt-jarvis1-4",
+     "jarvis2": "jarvis2-3",
+     "bug": "stagelocal.ts numberIn reads the word one as the number 1, so the wrong case opens. Same root cause, but the inputs differ (second one open pannu, the one in Pallikaranai), so the strict count does not match them"
+    }
+   ],
+   "considered_and_not_matched": [
+    "hunt-jarvis1-10 (index clamp, 20th opens the last) with jarvis2-4 (sixteenth read as six): both open a case that was not asked for, but different defects",
+    "hunt-jarvis1-11 with jarvis2-10: both read a word as an item step, different rules",
+    "jarvis2-8 with hunt-jarvis1-9: same closed remember list, but a different phrase (English dont forget)",
+    "jarvis2-1 with jarvis2-2: both in zonesIn, counted as two (different missing forms)"
+   ],
+   "strict": {
+    "n1": 11,
+    "n2": 11,
+    "m": 1,
+    "observed_union": 21,
+    "N_hat": 71,
+    "se": 34.6,
+    "ci95_approx": [
+     21,
+     139
+    ],
+    "unseen_hat": 50
+   },
+   "lenient": {
+    "n1": 11,
+    "n2": 11,
+    "m": 2,
+    "observed_union": 20,
+    "N_hat": 47,
+    "se": 18,
+    "ci95_approx": [
+     20,
+     82
+    ],
+    "unseen_hat": 27
+   },
+   "sensitivity_rows_as_filed": {
+    "no_merge_of_jarvis1-3_strict": {
+     "n1": 12,
+     "n2": 11,
+     "m": 1,
+     "observed_union": 22,
+     "N_hat": 77,
+     "se": 37.8,
+     "ci95_approx": [
+      22,
+      151
+     ],
+     "unseen_hat": 55
+    },
+    "no_merge_of_jarvis1-3_lenient": {
+     "n1": 12,
+     "n2": 11,
+     "m": 2,
+     "observed_union": 21,
+     "N_hat": 51,
+     "se": 19.7,
+     "ci95_approx": [
+      21,
+      90
+     ],
+     "unseen_hat": 30
+    }
+   },
+   "already_known_before_the_hunts": "hunt-jarvis1-1 repeats PB-012 and hunt-jarvis1-5 repeats PB-098 (2 of 11 for jarvis1, 0 of 11 for jarvis2), so about 9 of jarvis1 and 11 of jarvis2 were new to the 258 rows."
+  },
+  "redsec": {
+   "hunters": [
+    "hunt-redsec1 (1 row)",
+    "hunt-redsec2 (no file, no test file, nothing in the findings folders)"
+   ],
+   "result": "not computed",
+   "why": "hunt-redsec2.json does not exist, so n2 is unknown and no overlap can be judged. With n1 = 1 and no second list any estimate would be meaningless. Run or re-run redsec2, then redo the Chapman step."
+  }
+ },
+ "how_rough": [
+  "Very rough. The overlap m is 1 (strict) or 2 (lenient). With m this small Chapman is unstable: the standard error is about as large as the estimate itself (strict 71 +- 35, lenient 47 +- 18), and moving one match changes N by 24.",
+  "The two hunters were not independent. They had the same brief and the same code, and found the same kind of bug (a closed word list, a substring match). Shared habits make the same bugs easy for both, which pushes m up and N down, so the true number is probably larger than the estimate.",
+  "Bugs are not equally easy to find (the heterogeneity problem). Easy bugs are found by both, hard bugs by neither, so Chapman is a lower-leaning guess of what a hunt of this kind can find, not of every bug in the area.",
+  "Sizes are small (11 each), and what counts as the same bug is a judgement call; the strict and lenient figures show how much that call matters.",
+  "N means bugs of the kind these two hunts can reach in the Jarvis understanding brief, about 20 seen so far. It is not a count of all defects in the app, and it says nothing about areas no hunter looked at.",
+  "Read it as: at least 20 seen; probably tens more of this kind remain (rough range 25 to 50 unseen); do not stop on a count."
+ ]
+}

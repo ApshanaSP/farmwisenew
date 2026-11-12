@@ -1,0 +1,527 @@
+{
+ "tried": 584,
+ "acted_with_no_round": 39,
+ "rows": [
+  {
+   "bug": "BUG-001",
+   "said": "சென்னை போலீஸ் ரிப்போர்ட் கொடு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP",
+      "cat": "VECTOR_DISEASE"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-001",
+   "said": "போலீஸ் நிலவரம் சொல்லு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "தி நகர் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "மயிலாப்பூர் போலீஸ் ரிப்போர்ட்",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "taluk": "TLK-MYL",
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-003",
+   "said": "இந்த வார போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-003",
+   "said": "போலீஸ் அறிக்கை இந்த மாதம்",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    },
+    {
+     "a": "period",
+     "period": "monthly"
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "வேளச்சேரி போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "taluk": "TLK-VLC",
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "அண்ணா நகர் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "zone": 8,
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "அண்ணா சாலை போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP",
+      "cat": "ROAD_DAMAGE"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "போலீஸ் ஸ்டேஷன் எங்கே",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "போலீஸ் செய்தி",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    },
+    {
+     "a": "panel",
+     "panel": "news"
+    }
+   ],
+   "round_would_have_given": "news"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "போலீஸுக்கு கடிதம் எழுது",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-005",
+   "said": "போக்குவரத்து போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP",
+      "cat": "TRAFFIC_OBSTRUCTION"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "போலீஸ் அறிக்கையை ஞாபகம் வச்சுக்கோ",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "நாளைக்கு போலீஸ் அறிக்கை பார்க்கணும்னு ஞாபகப்படுத்து",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "போலீஸ் ரிப்போர்ட் சேவ் பண்ணு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "போலீஸ் ரிப்போர்ட் டைப் பண்ணு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "police report paakanum nu remind pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "police report save pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "police report ah type pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "கும்பகோணம் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "பொள்ளாச்சி போலீஸ் ரிப்போர்ட்",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "மெட்ராஸ் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-003",
+   "said": "நேற்றைய போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-024",
+   "said": "போலீஸ் அறிக்கையை மெயில் அனுப்பு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "refuse"
+  },
+  {
+   "bug": "BUG-024",
+   "said": "போலீஸ் அறிக்கை டவுன்லோட் பண்ணு",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-024",
+   "said": "போலீஸ் ஸ்டேஷன் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-020",
+   "said": "அடையாறு மட்டும்",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "zone": 13
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "கொடைக்கானல் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP",
+      "cat": "VECTOR_DISEASE"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "இராமேஸ்வரம் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-030",
+   "said": "துபாய் போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-032",
+   "said": "உயர்நீதிமன்றம் அருகே போராட்டம்",
+   "steps": [
+    {
+     "a": "map",
+     "q": "உயர்நீதிமன்றம் அருகே போராட்டம்"
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "police report ah note pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "போலீஸ் அறிக்கையை சேமி",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "போலீஸ் அறிக்கையை குறித்து வை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "severe cases paaka remind pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "sev": "Severe"
+     }
+    }
+   ],
+   "round_would_have_given": "cases"
+  },
+  {
+   "bug": "BUG-022",
+   "said": "Adyar flooding complaints paaka remind pannu",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "zone": 13,
+      "cat": "FLOOD_WATERLOGGING"
+     }
+    }
+   ],
+   "round_would_have_given": "cases"
+  },
+  {
+   "bug": "BUG-002",
+   "said": "filter London police",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "none"
+  },
+  {
+   "bug": "BUG-003",
+   "said": "மாதாந்திர போலீஸ் அறிக்கை",
+   "steps": [
+    {
+     "a": "view",
+     "view": {
+      "dept": "POL-GCP"
+     }
+    }
+   ],
+   "round_would_have_given": "brief"
+  }
+ ]
+}

@@ -1,0 +1,1496 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "-c",
+      "tests/qa/pass4/pw.voice.config.ts"
+    ],
+    "configFile": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\pw.voice.config.ts",
+    "rootDir": "E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/tests/qa/pass4/test-results-voice",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/(vad|vadfake|bargein|hold|ambientrate|mode)\\.spec/"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/qa/pass4/evidence/voice-specs.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "ambientrate.spec.ts",
+      "file": "ambientrate.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ambient requests an hour, side talk throughout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "takes 10 minutes: run with LONG=1",
+                  "location": {
+                    "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\ambientrate.spec.ts",
+                    "line": 9,
+                    "column": 6
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T04:52:36.897Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "takes 10 minutes: run with LONG=1",
+                      "location": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\ambientrate.spec.ts",
+                        "line": 9,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "1f2303422acfee8e4887-31c4f81ad000e6cb8137",
+          "file": "ambientrate.spec.ts",
+          "line": 11,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "bargein.spec.ts",
+      "file": "bargein.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "barge-in, on the PCM path, timed from the fixture's known speech start",
+          "file": "bargein.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "pause p50 <= 150 ms, p90 <= 250 ms over eight sentences; the turn cancels; the sentence is transcribed",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 420000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 31343,
+                      "error": {
+                        "message": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.",
+                        "stack": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.\n    at speakingAnswer (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:10:14)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:21:7",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                          "column": 14,
+                          "line": 10
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  8 |\u001b[39m   ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"Jarvis, what is going on near the bridge\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m  9 |\u001b[39m   \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_adyar\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 10 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { speaking()\u001b[33m:\u001b[39m boolean\u001b[33m;\u001b[39m path()\u001b[33m:\u001b[39m string } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mspeaking() \u001b[33m&&\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { path()\u001b[33m:\u001b[39m string } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mpath() \u001b[33m===\u001b[39m \u001b[32m\"pcm\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m20\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 11 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(durOf(\u001b[32m\"cmd_adyar\"\u001b[39m) \u001b[33m+\u001b[39m \u001b[35m300\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 12 |\u001b[39m }\n \u001b[90m 13 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                            "column": 14,
+                            "line": 10
+                          },
+                          "message": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.\n\n   8 |   ctx.hear.push({ text: \"Jarvis, what is going on near the bridge\" });\n   9 |   await say(page, \"cmd_adyar\");\n> 10 |   await page.waitForFunction(() => (window as unknown as { __jv: { speaking(): boolean; path(): string } }).__jv.speaking() && (window as unknown as { __jv: { path(): string } }).__jv.path() === \"pcm\", null, { timeout: 20_000 });\n     |              ^\n  11 |   await page.waitForTimeout(durOf(\"cmd_adyar\") + 300);\n  12 | }\n  13 |\n    at speakingAnswer (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:10:14)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:21:7"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:52:38.337Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\bargein-barge-in-on-the-PC-57d3e-the-sentence-is-transcribed\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                        "column": 14,
+                        "line": 10
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "def3821b724c0beed78a-2f2f824e36293f051ca1",
+              "file": "bargein.spec.ts",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "a noise burst pauses and resumes; the question is not cancelled; nothing is sent",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 24469,
+                      "error": {
+                        "message": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.",
+                        "stack": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.\n    at speakingAnswer (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:10:14)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:48:5",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                          "column": 14,
+                          "line": 10
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  8 |\u001b[39m   ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"Jarvis, what is going on near the bridge\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m  9 |\u001b[39m   \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_adyar\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 10 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { speaking()\u001b[33m:\u001b[39m boolean\u001b[33m;\u001b[39m path()\u001b[33m:\u001b[39m string } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mspeaking() \u001b[33m&&\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { path()\u001b[33m:\u001b[39m string } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mpath() \u001b[33m===\u001b[39m \u001b[32m\"pcm\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m20\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 11 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(durOf(\u001b[32m\"cmd_adyar\"\u001b[39m) \u001b[33m+\u001b[39m \u001b[35m300\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 12 |\u001b[39m }\n \u001b[90m 13 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                            "column": 14,
+                            "line": 10
+                          },
+                          "message": "TimeoutError: page.waitForFunction: Timeout 20000ms exceeded.\n\n   8 |   ctx.hear.push({ text: \"Jarvis, what is going on near the bridge\" });\n   9 |   await say(page, \"cmd_adyar\");\n> 10 |   await page.waitForFunction(() => (window as unknown as { __jv: { speaking(): boolean; path(): string } }).__jv.speaking() && (window as unknown as { __jv: { path(): string } }).__jv.path() === \"pcm\", null, { timeout: 20_000 });\n     |              ^\n  11 |   await page.waitForTimeout(durOf(\"cmd_adyar\") + 300);\n  12 | }\n  13 |\n    at speakingAnswer (E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:10:14)\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:48:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:53:15.511Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\bargein-barge-in-on-the-PC-18ee1-t-cancelled-nothing-is-sent\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                        "column": 14,
+                        "line": 10
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "def3821b724c0beed78a-f0445d778b896ce83e86",
+              "file": "bargein.spec.ts",
+              "line": 45,
+              "column": 7
+            },
+            {
+              "title": "no old answer after a stop: Esc during thinking, and the late reply never speaks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9859,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:53:41.983Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "def3821b724c0beed78a-c663762ea56f9cf10974",
+              "file": "bargein.spec.ts",
+              "line": 61,
+              "column": 7
+            },
+            {
+              "title": "a new sentence replaces the one in flight, and only the new answer speaks",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11732,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:83:69",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                          "column": 69,
+                          "line": 83
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 81 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { hud()\u001b[33m:\u001b[39m { ribbon\u001b[33m:\u001b[39m string } } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mhud()\u001b[33m.\u001b[39mribbon\u001b[33m.\u001b[39mincludes(\u001b[32m\"second\"\u001b[39m)\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m 82 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m3800\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 83 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39msayCalls\u001b[33m.\u001b[39msome((t) \u001b[33m=>\u001b[39m t\u001b[33m.\u001b[39mincludes(\u001b[32m\"second question\"\u001b[39m)))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 84 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39msayCalls\u001b[33m.\u001b[39msome((t) \u001b[33m=>\u001b[39m t\u001b[33m.\u001b[39mincludes(\u001b[32m\"too late\"\u001b[39m)))\u001b[33m.\u001b[39mtoBe(\u001b[36mfalse\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 85 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 86 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                            "column": 69,
+                            "line": 83
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  81 |     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { ribbon: string } } }).__jv.hud().ribbon.includes(\"second\"), null, { timeout: 15_000 });\n  82 |     await page.waitForTimeout(3800);\n> 83 |     expect(ctx.sayCalls.some((t) => t.includes(\"second question\"))).toBe(true);\n     |                                                                     ^\n  84 |     expect(ctx.sayCalls.some((t) => t.includes(\"too late\"))).toBe(false);\n  85 |   });\n  86 |\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts:83:69"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:53:51.974Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\bargein-barge-in-on-the-PC-d0b04--only-the-new-answer-speaks\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\bargein.spec.ts",
+                        "column": 69,
+                        "line": 83
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "def3821b724c0beed78a-166422d173c56c037759",
+              "file": "bargein.spec.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "a late transcript is dropped once the next sentence has begun",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11114,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:54:05.996Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "def3821b724c0beed78a-6fcbdf9db97ebde78e01",
+              "file": "bargein.spec.ts",
+              "line": 87,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "hold.spec.ts",
+      "file": "hold.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "holding",
+          "file": "hold.spec.ts",
+          "line": 13,
+          "column": 6,
+          "specs": [
+            {
+              "title": "\"wait\": silent, nothing on screen changes, the word gets no answer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 9673,
+                      "error": {
+                        "message": "Error: locator.textContent: Error: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n",
+                        "stack": "Error: locator.textContent: Error: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:19:57",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                          "column": 57,
+                          "line": 19
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m speakingAnswer(page\u001b[33m,\u001b[39m ctx)\u001b[33m;\u001b[39m\n \u001b[90m 18 |\u001b[39m     \u001b[36mconst\u001b[39m agentBefore \u001b[33m=\u001b[39m ctx\u001b[33m.\u001b[39magentCalls\u001b[33m.\u001b[39mlength\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 19 |\u001b[39m     \u001b[36mconst\u001b[39m stateBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m\"state\"\u001b[39m)\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 20 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"wait\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"wait\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m until(page\u001b[33m,\u001b[39m \u001b[32m\"holding\"\u001b[39m\u001b[33m,\u001b[39m \u001b[35m8000\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                            "column": 57,
+                            "line": 19
+                          },
+                          "message": "Error: locator.textContent: Error: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n\n  17 |     await speakingAnswer(page, ctx);\n  18 |     const agentBefore = ctx.agentCalls.length;\n> 19 |     const stateBefore = await page.getByTestId(\"state\").textContent();\n     |                                                         ^\n  20 |     ctx.hear.push({ text: \"wait\" });\n  21 |     await say(page, \"wait\");\n  22 |     await until(page, \"holding\", 8000);\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:19:57"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:54:17.455Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\hold-holding-wait-silent-n-39376-ges-the-word-gets-no-answer\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                        "column": 57,
+                        "line": 19
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "33154081b5afa9ffbf25-ab9788a52e820b6fa007",
+              "file": "hold.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "\"continue\" resumes the answer from its chunk",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 34493,
+                      "error": {
+                        "message": "TimeoutError: page.waitForFunction: Timeout 10000ms exceeded.",
+                        "stack": "TimeoutError: page.waitForFunction: Timeout 10000ms exceeded.\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:40:16",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                          "column": 16,
+                          "line": 40
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 38 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"continue\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"wait\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 40 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { speaking()\u001b[33m:\u001b[39m boolean } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mspeaking()\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 41 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39magentCalls\u001b[33m.\u001b[39mfilter((c) \u001b[33m=>\u001b[39m \u001b[35m/continue/\u001b[39m\u001b[33m.\u001b[39mtest(c\u001b[33m.\u001b[39mtext))\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 43 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                            "column": 16,
+                            "line": 40
+                          },
+                          "message": "TimeoutError: page.waitForFunction: Timeout 10000ms exceeded.\n\n  38 |     ctx.hear.push({ text: \"continue\" });\n  39 |     await say(page, \"wait\");\n> 40 |     await page.waitForFunction(() => (window as unknown as { __jv: { speaking(): boolean } }).__jv.speaking(), null, { timeout: 10_000 });\n     |                ^\n  41 |     expect(ctx.agentCalls.filter((c) => /continue/.test(c.text)).length).toBe(0);\n  42 |   });\n  43 |\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:40:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:54:32.739Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\hold-holding-continue-resumes-the-answer-from-its-chunk\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                        "column": 16,
+                        "line": 40
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "33154081b5afa9ffbf25-1583547d757e17370160",
+              "file": "hold.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "\"wait, show Anna Nagar\" is hold plus command: handled as a command",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 10955,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 8\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 8\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:50:45",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                          "column": 45,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"wait, show Anna Nagar\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_zone\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m\"state\"\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'\"zone\": 8'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39magentCalls\u001b[33m.\u001b[39msome((c) \u001b[33m=>\u001b[39m c\u001b[33m.\u001b[39mtext \u001b[33m===\u001b[39m \u001b[32m\"show Anna Nagar\"\u001b[39m))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                            "column": 45,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 8\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n\n  48 |     ctx.hear.push({ text: \"wait, show Anna Nagar\" });\n  49 |     await say(page, \"cmd_zone\");\n> 50 |     await expect(page.getByTestId(\"state\")).toContainText('\"zone\": 8', { timeout: 15_000 });\n     |                                             ^\n  51 |     expect(ctx.agentCalls.some((c) => c.text === \"show Anna Nagar\")).toBe(true);\n  52 |   });\n  53 |\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:50:45"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:55:17.439Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\hold-holding-wait-show-Ann-0efc2-ommand-handled-as-a-command\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                        "column": 45,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "33154081b5afa9ffbf25-7127762d2ec4980df3d6",
+              "file": "hold.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "speech that cut Jarvis off but was not for it: the answer goes on",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16026,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:55:34.614Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "33154081b5afa9ffbf25-e2a746ff923a6ab3cf0d",
+              "file": "hold.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "Jarvis, go to sleep: off",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11355,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('switch')\nExpected: \u001b[32m\"false\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" getByRole('switch') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('switch')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('switch')\nExpected: \u001b[32m\"false\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" getByRole('switch') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('switch')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:72:44",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                          "column": 44,
+                          "line": 72
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 70 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_trends\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m \u001b[33m!\u001b[39m(window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { micLive()\u001b[33m:\u001b[39m boolean } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mmicLive()\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 72 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m\"switch\"\u001b[39m))\u001b[33m.\u001b[39mtoHaveAttribute(\u001b[32m\"aria-checked\"\u001b[39m\u001b[33m,\u001b[39m \u001b[32m\"false\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 73 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 74 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 75 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                            "column": 44,
+                            "line": 72
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('switch')\nExpected: \u001b[32m\"false\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" getByRole('switch') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('switch')\u001b[22m\n\n\n  70 |     await say(page, \"cmd_trends\");\n  71 |     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive(), null, { timeout: 15_000 });\n> 72 |     await expect(page.getByRole(\"switch\")).toHaveAttribute(\"aria-checked\", \"false\");\n     |                                            ^\n  73 |   });\n  74 | });\n  75 |\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts:72:44"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:55:50.869Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\hold-holding-Jarvis-go-to-sleep-off\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\hold.spec.ts",
+                        "column": 44,
+                        "line": 72
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "33154081b5afa9ffbf25-d7b608efb0bd457719a8",
+              "file": "hold.spec.ts",
+              "line": 66,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "mode.spec.ts",
+      "file": "mode.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "a sentence that goes on after a pause reaches Whisper whole, with its first part still there",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9356,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T05:00:18.255Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb79afa6b1e5ff353c34-1f9fa7f4197a71af938b",
+          "file": "mode.spec.ts",
+          "line": 187,
+          "column": 5
+        }
+      ],
+      "suites": [
+        {
+          "title": "Jarvis mode: always listening, no mic button",
+          "file": "mode.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "off and muted stop the microphone's tracks; on opens them; the bar says which",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7207,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('.hud')\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('.hud') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.hud')\u001b[22m\n\u001b[2m    14 × locator resolved to 1 element\u001b[22m\n\u001b[2m       - unexpected value \"1\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('.hud')\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('.hud') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.hud')\u001b[22m\n\u001b[2m    14 × locator resolved to 1 element\u001b[22m\n\u001b[2m       - unexpected value \"1\"\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:18:40",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                          "column": 40,
+                          "line": 18
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 16 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mkeyboard\u001b[33m.\u001b[39mpress(\u001b[32m\"Control+Shift+J\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 17 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m \u001b[33m!\u001b[39m(window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { micLive()\u001b[33m:\u001b[39m boolean } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mmicLive())\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 18 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m\".hud\"\u001b[39m))\u001b[33m.\u001b[39mtoHaveCount(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 19 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 20 |\u001b[39m\n \u001b[90m 21 |\u001b[39m   test(\u001b[32m\"the first time, the notice comes first: the microphone stays closed until it is read\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                            "column": 40,
+                            "line": 18
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('.hud')\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('.hud') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.hud')\u001b[22m\n\u001b[2m    14 × locator resolved to 1 element\u001b[22m\n\u001b[2m       - unexpected value \"1\"\u001b[22m\n\n\n  16 |     await page.keyboard.press(\"Control+Shift+J\");\n  17 |     await page.waitForFunction(() => !(window as unknown as { __jv: { micLive(): boolean } }).__jv.micLive());\n> 18 |     await expect(page.locator(\".hud\")).toHaveCount(0);\n     |                                        ^\n  19 |   });\n  20 |\n  21 |   test(\"the first time, the notice comes first: the microphone stays closed until it is read\", async ({ page }) => {\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:18:40"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:04.132Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\mode-Jarvis-mode-always-li-b07ba-ens-them-the-bar-says-which\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                        "column": 40,
+                        "line": 18
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-90bad8a70d60c704353f",
+              "file": "mode.spec.ts",
+              "line": 5,
+              "column": 7
+            },
+            {
+              "title": "the first time, the notice comes first: the microphone stays closed until it is read",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4431,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:16.454Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-945a18379d546d3c76b8",
+              "file": "mode.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "the name alone, then a pause, then the request: it listens on and asks no model for the name",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 8757,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 13\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 13\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:43:45",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                          "column": 45,
+                          "line": 43
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 41 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"put something together for Adyar\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_adyar\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 43 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m\"state\"\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'\"zone\": 13'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 44 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39mhearCalls[\u001b[35m1\u001b[39m]\u001b[33m.\u001b[39mlane)\u001b[33m.\u001b[39mtoBe(\u001b[32m\"engaged\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 45 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 46 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                            "column": 45,
+                            "line": 43
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": 13\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n\n  41 |     ctx.hear.push({ text: \"put something together for Adyar\" });\n  42 |     await say(page, \"cmd_adyar\");\n> 43 |     await expect(page.getByTestId(\"state\")).toContainText('\"zone\": 13', { timeout: 15_000 });\n     |                                             ^\n  44 |     expect(ctx.hearCalls[1].lane).toBe(\"engaged\");\n  45 |   });\n  46 |\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:43:45"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:21.226Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\mode-Jarvis-mode-always-li-1b6fd--asks-no-model-for-the-name\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                        "column": 45,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-d40c584085251eb1f0c4",
+              "file": "mode.spec.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "Esc forgets a cancelled question: a later ignored sentence does not bring it back",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14121,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:31.934Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-a48a2b59091380ee59c6",
+              "file": "mode.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "the tab out of sight closes the microphone, and it says so on return",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3376,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:46.206Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-8a26722dfce31b65b457",
+              "file": "mode.spec.ts",
+              "line": 62,
+              "column": 7
+            },
+            {
+              "title": "a denied microphone says so clearly, and Jarvis stays open to type",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1188,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:49.597Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-3aa0a5d42bf2418d3dc9",
+              "file": "mode.spec.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "with the voice model unreachable, the energy gate still hears",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5802,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:50.808Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-352b19a40390ecef2c39",
+              "file": "mode.spec.ts",
+              "line": 82,
+              "column": 7
+            },
+            {
+              "title": "level B on an open screen: a pin waits for its yes, and nothing is kept before it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18339,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:56:56.628Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-56ed8940765b815628c1",
+              "file": "mode.spec.ts",
+              "line": 92,
+              "column": 7
+            },
+            {
+              "title": "three commands with no click and no name: the console acts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6209,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"page\\\": \\\"trends\\\"\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"page\\\": \\\"trends\\\"\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:117:45",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                          "column": 45,
+                          "line": 117
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 115 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"Go to the trends page.\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 116 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_trends\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 117 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m\"state\"\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'\"page\": \"trends\"'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 118 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m800\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 119 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"Show the severe cases in Adyar.\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_adyar\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                            "column": 45,
+                            "line": 117
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"page\\\": \\\"trends\\\"\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n\n  115 |     ctx.hear.push({ text: \"Go to the trends page.\" });\n  116 |     await say(page, \"cmd_trends\");\n> 117 |     await expect(page.getByTestId(\"state\")).toContainText('\"page\": \"trends\"', { timeout: 15_000 });\n      |                                             ^\n  118 |     await page.waitForTimeout(800);\n  119 |     ctx.hear.push({ text: \"Show the severe cases in Adyar.\" });\n  120 |     await say(page, \"cmd_adyar\");\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:117:45"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:57:14.997Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\mode-Jarvis-mode-always-li-4b606-nd-no-name-the-console-acts\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                        "column": 45,
+                        "line": 117
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-20a7eef31a40d19a0661",
+              "file": "mode.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "a side conversation is ignored: a faint line, no planner call, nothing changes",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6714,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": null\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": null\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:137:45",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                          "column": 45,
+                          "line": 137
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 135 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { hud()\u001b[33m:\u001b[39m { faint\u001b[33m:\u001b[39m string } } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mhud()\u001b[33m.\u001b[39mfaint\u001b[33m.\u001b[39mincludes(\u001b[32m\"Adyar file\"\u001b[39m)\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m 136 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39magentCalls\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 137 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m\"state\"\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'\"zone\": null'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 138 |\u001b[39m     \u001b[90m// gone in two seconds\u001b[39m\n \u001b[90m 139 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { hud()\u001b[33m:\u001b[39m { faint\u001b[33m:\u001b[39m string } } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mhud()\u001b[33m.\u001b[39mfaint \u001b[33m===\u001b[39m \u001b[32m\"\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m4000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 140 |\u001b[39m     expect(ctx\u001b[33m.\u001b[39mhearCalls[\u001b[35m0\u001b[39m]\u001b[33m.\u001b[39mlane)\u001b[33m.\u001b[39mtoBe(\u001b[32m\"ambient\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                            "column": 45,
+                            "line": 137
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('state')\nExpected substring: \u001b[32m\"\\\"zone\\\": null\"\u001b[39m\nError: strict mode violation: getByTestId('state') resolved to 2 elements:\n    1) <pre data-testid=\"state\">{↵ \"page\": \"overview\",↵ \"period\": \"daily\",↵ \"zone…</pre> aka getByText('{ \"page\": \"overview\", \"period')\n    2) <div lang=\"en\" class=\"hud-state\" data-testid=\"state\">…</div> aka getByTestId('hud').getByTestId('state')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByTestId('state') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('state')\u001b[22m\n\n\n  135 |     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint.includes(\"Adyar file\"), null, { timeout: 15_000 });\n  136 |     expect(ctx.agentCalls.length).toBe(0);\n> 137 |     await expect(page.getByTestId(\"state\")).toContainText('\"zone\": null');\n      |                                             ^\n  138 |     // gone in two seconds\n  139 |     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { faint: string } } }).__jv.hud().faint === \"\", null, { timeout: 4000 });\n  140 |     expect(ctx.hearCalls[0].lane).toBe(\"ambient\");\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:137:45"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:57:23.484Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\mode-Jarvis-mode-always-li-95b21-lanner-call-nothing-changes\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                        "column": 45,
+                        "line": 137
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-7ed6b3d45845800fa202",
+              "file": "mode.spec.ts",
+              "line": 130,
+              "column": 7
+            },
+            {
+              "title": "the name works anywhere; a level B request with no name does not run",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19944,
+                      "error": {
+                        "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.",
+                        "stack": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:148:16",
+                        "location": {
+                          "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                          "column": 16,
+                          "line": 148
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 146 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"show Adyar and save this workspace as Daily\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 147 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_adyar\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 148 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m unknown \u001b[36mas\u001b[39m { __jv\u001b[33m:\u001b[39m { hud()\u001b[33m:\u001b[39m { answer\u001b[33m:\u001b[39m string } } })\u001b[33m.\u001b[39m__jv\u001b[33m.\u001b[39mhud()\u001b[33m.\u001b[39manswer\u001b[33m.\u001b[39mincludes(\u001b[32m\"Say Jarvis first\"\u001b[39m)\u001b[33m,\u001b[39m \u001b[36mnull\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m15\u001b[39m_000 })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 149 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m600\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 150 |\u001b[39m     ctx\u001b[33m.\u001b[39mhear\u001b[33m.\u001b[39mpush({ text\u001b[33m:\u001b[39m \u001b[32m\"Jarvis, save this workspace as Daily\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 151 |\u001b[39m     \u001b[36mawait\u001b[39m say(page\u001b[33m,\u001b[39m \u001b[32m\"cmd_trends\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                            "column": 16,
+                            "line": 148
+                          },
+                          "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n\n  146 |     ctx.hear.push({ text: \"show Adyar and save this workspace as Daily\" });\n  147 |     await say(page, \"cmd_adyar\");\n> 148 |     await page.waitForFunction(() => (window as unknown as { __jv: { hud(): { answer: string } } }).__jv.hud().answer.includes(\"Say Jarvis first\"), null, { timeout: 15_000 });\n      |                ^\n  149 |     await page.waitForTimeout(600);\n  150 |     ctx.hear.push({ text: \"Jarvis, save this workspace as Daily\" });\n  151 |     await say(page, \"cmd_trends\");\n    at E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts:148:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:57:32.293Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\qa\\pass4\\test-results-voice\\mode-Jarvis-mode-always-li-981b4-t-with-no-name-does-not-run\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\farm\\.claude\\worktrees\\qa-pass4-ecfcb9\\chennai-grievance-portal-main\\tests\\e2e\\mode.spec.ts",
+                        "column": 16,
+                        "line": 148
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-27e3fbed91846ede3636",
+              "file": "mode.spec.ts",
+              "line": 143,
+              "column": 7
+            },
+            {
+              "title": "an ambient sentence under 400 ms never leaves the browser, and the budget stops at 8 a minute",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 38842,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:57:54.743Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-96a759654d0b67536b71",
+              "file": "mode.spec.ts",
+              "line": 155,
+              "column": 7
+            },
+            {
+              "title": "the low budget ends after its minute, even with people still talking",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 104424,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T04:58:33.811Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bb79afa6b1e5ff353c34-6562c1be4025b410f184",
+              "file": "mode.spec.ts",
+              "line": 171,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "vad.spec.ts",
+      "file": "vad.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "the detector",
+          "file": "vad.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "loads Silero, hears a sentence, posts one 16 kHz WAV of about the right length",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8177,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T05:00:27.640Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3f68b0be06681202a9e9-155de1aa8ac1827cb6a4",
+              "file": "vad.spec.ts",
+              "line": 5,
+              "column": 7
+            },
+            {
+              "title": "near-silence is not speech",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6406,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-07T05:00:35.836Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "3f68b0be06681202a9e9-fa518438e1acd8c91909",
+              "file": "vad.spec.ts",
+              "line": 18,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "vadfake.spec.ts",
+      "file": "vadfake.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "a sentence from the capture device reaches the transcriber",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10362,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T05:00:44.618Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0aaa6b9dc7d05ea90d2c-173d89ecacadd9ea90c2",
+          "file": "vadfake.spec.ts",
+          "line": 8,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-07T04:52:35.008Z",
+    "duration": 501745.285,
+    "expected": 15,
+    "skipped": 1,
+    "unexpected": 12,
+    "flaky": 0
+  }
+}

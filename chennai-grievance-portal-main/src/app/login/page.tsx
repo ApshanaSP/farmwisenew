@@ -91,7 +91,7 @@ function LoginForm() {
         <div className="group">
           <div className="flex items-baseline justify-between">
             <label htmlFor="password" className="auth-label">Password</label>
-            <Link href="/forgot-password" className="text-[13px] font-semibold text-navy-500 transition hover:text-navy-700 hover:underline">
+            <Link href="/forgot-password" className="text-[13px] font-semibold text-navy-700 transition hover:text-navy-700 hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -102,7 +102,7 @@ function LoginForm() {
             <input id="password" type={showPassword ? "text" : "password"} required autoComplete="current-password"
               className="auth-input pl-11 pr-12" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
             <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-faint transition hover:text-navy-700">
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-subtle transition hover:text-navy-700">
               {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
             </button>
           </div>
@@ -130,7 +130,7 @@ function LoginForm() {
 
       <p className="mt-5 text-center text-[15px] text-ink-muted">
         Citizen and new here?{" "}
-        <Link href="/register" className="font-semibold text-navy-500 transition hover:underline">
+        <Link href="/register" className="font-semibold text-navy-700 transition hover:underline">
           Create an account
         </Link>
       </p>

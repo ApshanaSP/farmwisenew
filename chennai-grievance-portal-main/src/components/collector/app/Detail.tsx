@@ -10,6 +10,7 @@ import type { Console } from "./CollectorApp";
 import { SentNote, TakeAction } from "./TakeAction";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
+import { sevLabel } from "@/lib/sev-label";
 
 const CHANNEL: Record<string, string> = {
   citizen_app: "Citizen app", citizen_grievance: "Grievance portal", manu: "Manu (paper petition)", control_room_112: "Control room 112", fir_walk_in: "Police station",
@@ -149,8 +150,8 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
       <div className={`iv-h s-${String(i.sev).toLowerCase()}`}>
         <button className="xbtn" onClick={c.closeAll} aria-label="Close"><I n="x" /></button>
         <div className="iv-tags">
-          <span className="tg solid" style={{ color: SEV_COL[i.sev as string] }}><I n="alert" />{i.sev} severity</span>
-          <span className="tg">{i.status}</span>
+          <span className="tg solid" style={{ color: SEV_COL[i.sev as string] }}><I n="alert" />{sevLabel(i.sev as string)}</span>
+          <span className="tg" data-i18n-ctx="status">{i.status}</span>
           {emails.length > 0 && <span className="tg acted" title={emails[0].subject}><I n="checkc" />Action taken {rel(emails[0].t, c.now)}</span>}
           {dec?.decision === "verify" && <span className="tg"><I n="check" />Verified by you {rel(dec.t, c.now)}</span>}
           {dec?.decision === "resolve" && <span className="tg"><I n="check" />{byDept ? "Closed by the department" : "Resolved"} {rel(dec.t, c.now)}</span>}
@@ -193,7 +194,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
           <div>
             <div className="iv-t"><I n="doc" />Key facts</div>
             <div className="facts">
-              <div><small>{open ? "Open for" : "Closed"}</small><b>{open ? rel(i.t, c.now).replace(" ago", "") : i.closed_at ? fmtShort(i.closed_at) : i.status}</b></div>
+              <div><small>{open ? "Open for" : "Closed"}</small><b data-i18n-ctx="status">{open ? rel(i.t, c.now).replace(" ago", "") : i.closed_at ? fmtShort(i.closed_at) : i.status}</b></div>
               <div><small>Deadline</small><b style={{ color: overdue ? "var(--sev)" : undefined }}>{i.sla_due ? `${fmtShort(i.sla_due)}${overdue ? " · missed" : ""}` : "—"}</b></div>
               <div><small>Citizen complaints</small><b>{Number(i.complaints).toLocaleString("en-IN")}</b></div>
               <div><small>Field officer</small><b title={i.officer ?? undefined}>{i.officer || "—"}</b></div>
@@ -261,7 +262,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
             <div>
               <div className="iv-t"><I n="layers" />{group.length + 1} incidents merged into this one</div>
               <ul className="iv2-grp">
-                <li className="on"><b>This incident</b><small>{[i.loc, fmtShort(i.t), i.status].filter(Boolean).join(" · ")}</small></li>
+                <li className="on"><b>This incident</b><small data-i18n-ctx="status">{[i.loc, fmtShort(i.t), i.status].filter(Boolean).join(" · ")}</small></li>
                 {group.map((g) => (
                   <li key={g.id}><b title={g.title}>{g.title}</b><small>{[g.loc, fmtShort(g.t), g.status, g.complaints ? plural(Number(g.complaints), "complaint") : null].filter(Boolean).join(" · ")}</small></li>
                 ))}

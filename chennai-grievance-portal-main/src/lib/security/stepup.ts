@@ -20,6 +20,9 @@ import type { Factor } from "./factors";
 export type ActionKind = "send_email" | "decide" | "officer_report" | "delete_dataset" | "approve_source" | "export";
 
 export const GRANT_HEADER = "x-diq-grant";
+/** a request header: "the caller reads a confirm answer as a 200 with SOFT_ANSWER set" (PB-316); the grant check does not depend on it */
+export const SOFT_HEADER = "x-diq-confirm";
+export const SOFT_ANSWER = "x-diq-confirm";
 export const GRANT_TTL_S = 5 * 60;
 
 export const ACTION_WORD: Record<ActionKind, string> = {
@@ -54,12 +57,17 @@ export async function requireConfirm(req: NextRequest | Request, s: { userId: nu
   const g = await readTicket<Grant & Record<string, unknown>>("grant", req.headers.get(GRANT_HEADER));
   // the session's token version too, where the route has it: a grant from a session signed out since does not count
   if (g && g.uid === s.userId && (s.tv === undefined || g.tv === (Number(s.tv) || 0)) && g.act === act && g.scope === hash) return { ok: true, grant: g };
+  const body = {
+    error: g ? "The confirmation was for something else (the text or the cases changed). Confirm again." : "Confirm it's you first.",
+    confirm: { action: act, title: ACTION_WORD[act], summary, scope: hash }
+  };
+  // The console's own fetch says it reads the answer ("x-diq-confirm: json") and gets it as a 200 with a header: the browser logs every
+  // 4xx as a console error, and this answer is not an error but the next step (PB-316). The guard is the same: the route still returns
+  // this instead of acting, whatever the status. Any other caller gets the 428.
+  const soft = req.headers.get(SOFT_HEADER) === "json";
   return {
     ok: false,
-    res: NextResponse.json({
-      error: g ? "The confirmation was for something else (the text or the cases changed). Confirm again." : "Confirm it's you first.",
-      confirm: { action: act, title: ACTION_WORD[act], summary, scope: hash }
-    }, { status: 428 })
+    res: NextResponse.json(body, soft ? { status: 200, headers: { [SOFT_ANSWER]: "required", "cache-control": "no-store" } } : { status: 428 })
   };
 }
 

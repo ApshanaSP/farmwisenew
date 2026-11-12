@@ -1,0 +1,61 @@
+[
+ {
+  "id": "groq-1",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "severity": "P0",
+  "title": "Live Groq: 27 of 60 sampled open rows got a confident wrong answer (right 15, safe 7, wrong 38)",
+  "what_happens": "On the 60-row stratified open sample, 38 rows were wrong and 27 of those were confident (e.g. TANGEDCO rundown became a compare, Chennai-wide fire question answered none, Tondiarpet report with wrong period).",
+  "what_should_happen": "Right or an honest clarify; never a confident answer about the wrong thing.",
+  "repro": "cd chennai-grievance-portal-main; set QA_P4_PACE=1&& set QA_P4_MODE=live&& set QA_P4_SET=open&& set QA_P4_LABEL=open-baseline-groq&& set QA_P4_SAMPLE=60&& set QA_P4_SEED=20261106&& npx vitest run --config vitest.qa4-live.config.ts tests/qa/pass4/grader/run.test.ts",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "root_cause_guess": "",
+  "class": "understanding",
+  "lang": "all",
+  "skeptic": "confirmed",
+  "skeptic_why": "Evidence file recounts exactly (right 15, safe 7, wrong 38, confident_wrong 27; reasons are real grader checks such as wrong action/scope/figures). Fresh live Groq re-run of 12 of the same rows (docs/qa/pass4/results/skeptic-groq.json): 10 wrong, 9 confident wrong, 1 right; same rows wrong as before, plus 3 that were right/safe before. Caveat: 17 of 60 rows are code lanes, not Groq (e.g. Tondiarpet last month answered as last 30 days), so wrong is not all the model. Runner is in-process, so port 3191 was not used. Severity P0 stands (confident wrong answer)."
+ },
+ {
+  "id": "groq-2",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "severity": "P1",
+  "title": "Live Groq: brief, list, numbers and followup families almost never right",
+  "what_happens": "By family (right/n): brief 1/9, list 2/8, numbers 1/6, followup 1/6, noisy 1/6, other_body 2/9, explain 4/9, privacy_safety 3/6.",
+  "what_should_happen": "Most of these simple asks should be right.",
+  "repro": "cd chennai-grievance-portal-main; set QA_P4_PACE=1&& set QA_P4_MODE=live&& set QA_P4_SET=open&& set QA_P4_LABEL=open-baseline-groq&& set QA_P4_SAMPLE=60&& set QA_P4_SEED=20261106&& npx vitest run --config vitest.qa4-live.config.ts tests/qa/pass4/grader/run.test.ts",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "root_cause_guess": "",
+  "class": "understanding",
+  "lang": "all",
+  "skeptic": "confirmed",
+  "skeptic_why": "Per-family right/n recomputed from open-baseline-groq.json matches the claim (brief 1/9, list 2/8, numbers 1/6, followup 1/6, noisy 1/6, other_body 2/9, explain 4/9, privacy_safety 3/6). Re-run subset agrees (brief 0/3 right, list 0/3, other_body 0/3). Small n per family, and some failures are code-lane."
+ },
+ {
+  "id": "groq-3",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "severity": "P1",
+  "title": "Live Groq answers differ run to run for the same sentence",
+  "what_happens": "20 open rows x3 runs: grade changed on 2 rows (10%), route or grade changed on 6 (30%), wording changed on 7 (35%).",
+  "what_should_happen": "Same question, same answer on the same data.",
+  "repro": "cd chennai-grievance-portal-main; set QA_P4_PACE=1&& set QA_P4_MODE=live&& set QA_P4_SET=open&& set QA_P4_LABEL=open-baseline-groq&& set QA_P4_SAMPLE=60&& set QA_P4_SEED=20261106&& npx vitest run --config vitest.qa4-live.config.ts tests/qa/pass4/grader/run.test.ts",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "root_cause_guess": "",
+  "class": "steadiness",
+  "lang": "all",
+  "skeptic": "confirmed",
+  "skeptic_why": "Recomputed from steady-groq-1/2/3.json (same 20 rows): grade changed on 2 (10%), wording changed on 7 (35%); route or grade changed on 7, not 6 (claim slightly low). Re-run also flipped rows vs baseline (ta-brief-03, tanglish-explain-01 right to wrong). Severity corrected P1 to P2: model wording varies by nature, and grades flipped on only 2 of 20 rows; the harmful part is already counted in groq-1.",
+  "skeptic_severity": "P2"
+ },
+ {
+  "id": "groq-4",
+  "area": "Ask District IQ / Jarvis understanding, live Groq",
+  "severity": "P2",
+  "title": "The runner counts per-minute token limit as no-model and shows Thinking only",
+  "what_happens": "Without pacing, 32 of 60 rows got lane no-model (tpm 8000 across Groq models) and the console showed only Thinking. First run: right 5, wrong 26 with 32 capacity rows excluded as not a verdict.",
+  "what_should_happen": "When the model is rate limited the user should get a clear wait message or a code-lane answer, not a silent no-model.",
+  "repro": "cd chennai-grievance-portal-main; set QA_P4_PACE=1&& set QA_P4_MODE=live&& set QA_P4_SET=open&& set QA_P4_LABEL=open-baseline-groq&& set QA_P4_SAMPLE=60&& set QA_P4_SEED=20261106&& npx vitest run --config vitest.qa4-live.config.ts tests/qa/pass4/grader/run.test.ts",
+  "evidence": "docs/qa/pass4/results/open-baseline-groq.json (real-run rows, model recorded per row)",
+  "root_cause_guess": "",
+  "class": "capacity",
+  "lang": "all"
+ }
+]

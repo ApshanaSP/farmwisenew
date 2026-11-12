@@ -1,0 +1,16 @@
+# G1 failing output before the fix: same-number.test.ts on the merged tree (7 failed)
+# (real output of the run named, kept as it was printed; the fix is in the commit that names the cluster)
+FAIL same number everywhere reads every surface: no figure is missing and no route failed
+     AssertionError: expected [ { …(3) }, { …(3) }, { …(3) }, …(2) ] to deeply equal []
+FAIL same number everywhere thunai/round: every figure equals the oracle, on all core scopes, or is a difference named in same-number.md
+     AssertionError: expected [ …(10) ] to deeply equal []
+FAIL same number everywhere pairs: "reported" is one number across every surface, in each scope
+     AssertionError: expected { scope: 'daily · district', …(3) } to deeply equal { scope: 'daily · district', …(3) }
+FAIL same number everywhere pairs: "severe" is one number across every surface, in each scope
+     AssertionError: expected { scope: 'daily · district', …(3) } to deeply equal { scope: 'daily · district', …(3) }
+FAIL same number everywhere same-number-20 'complaints by department' answers about complaints, not open incidents
+     AssertionError: expected 'Greater Chennai Police leads with 405…' not to match /open incidents/
+FAIL same number everywhere same-number-21 Jarvis's spoken lines read as sentences
+     AssertionError: expected [ …(10) ] to deeply equal []
+FAIL same number everywhere same-number-23 Jarvis's 'severe cases this week' is the severe tile's figure or the open severe figure under it
+     AssertionError: expected [ 65, 54 ] to include 52

@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
   // every other device is signed out; this browser gets a fresh session so the user stays signed in here
   const tv = await revokeSessions(session.userId);
   const res = NextResponse.json({ message: "Password changed successfully. Other devices have been signed out." });
-  const portal = resolvePortal() ?? roleToPortal(session.role);
+  const portal = (await resolvePortal()) ?? roleToPortal(session.role);
   if (portal) {
     const { userId, email, role, departmentId } = session;
-    setAuthCookie(res, await signToken({ userId, email, role, departmentId, tv }), portal);
+    await setAuthCookie(res, await signToken({ userId, email, role, departmentId, tv }), portal);
   }
   return res;
 }

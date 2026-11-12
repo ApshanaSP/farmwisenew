@@ -1,0 +1,13 @@
+# sweep RC-18: places that match digits from a list of scripts or separators
+src/lib/assistant/verify.ts:39:  let t = ` ${String(text ?? "").replace(/[௦-௯]/g, (c) => String(c.charCodeAt(0) - 0x0be6))} `;
+src/lib/thunai/normalise.ts:81:    .replace(/[௦-௯]/g, (d) => String(d.charCodeAt(0) - 0x0be6)) // Tamil digits
+src/lib/thunai/numbergate.ts:34:const taDigits = (s: string) => s.replace(/[௦-௯]/g, (d) => String(TA_DIGITS.indexOf(d)));
+src/lib/thunai/privacy.ts:135:const PHONE = /(?<!\d)(?<!\d[.,:/-])(?<!\binc-)(?:(?:\+?91|0{1,2}(?:91)?)[ .-]?)?[6-9]\d(?:[ .-]?\d){8}(?![\d:])/gi;
+src/lib/thunai/privacy.ts:136:const LANDLINE = /(?<!\d)(?<!\d[.,:/-])(?<!\binc-)(?:\+91[ .-]?[1-9]\d(?:[ .-]?\d){8}|0[1-9](?:[ .-]?\d){8,9})(?![\d:])/gi;
+src/lib/thunai/privacy.ts:139:  const groups = m.replace(/^(?:\+?91|0{1,2}(?:91)?)[ .-]/, "").split(/[ .-]/);
+src/lib/thunai/privacy.ts:156:const ODD_DIGITS = /[\uFF10-\uFF19\u0BE6-\u0BEF]/g;
+# other callers of redactText/redact
+src/lib/thunai/agent.ts
+src/lib/thunai/privacy.ts
+src/lib/thunai/round.ts
+# note: normalise.ts, numbergate.ts, assistant/verify.ts keep their own Tamil-only digit maps; they are outside lane c (numbergate: property-1 stays it.fails)

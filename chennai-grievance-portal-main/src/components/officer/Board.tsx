@@ -97,7 +97,7 @@ function MapCard({ c, style }: { c: Ctx; style: React.CSSProperties }) {
   ] as const;
   return (
     <article className="card a-map" style={style} ref={box}>
-      <div className="ch"><I n="map" /><h3>{c.taluk ? `${c.talukName} taluk` : c.zoneName ?? `${c.dept.short} work in Chennai`}</h3></div>
+      <div className="ch"><I n="map" /><h2>{c.taluk ? `${c.talukName} taluk` : c.zoneName ?? `${c.dept.short} work in Chennai`}</h2></div>
       <div className="map-cb">
         <div className="map-wrap">
           <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={pins} zone={c.zone} layers={layers} stations={[]} added={[]}
@@ -174,7 +174,7 @@ function NewsCard({ c, openNews }: { c: Ctx; openNews: () => void }) {
   const rows = news.filter((r) => { const t = fullTitle(r).toLowerCase(); return seen.has(t) ? false : (seen.add(t), true); });
   return (
     <>
-      <div className="ch"><I n="news" /><h3>Today&apos;s Briefing</h3>
+      <div className="ch"><I n="news" /><h2>Today&apos;s Briefing</h2>
         <button className="more" onClick={openNews}>See more<I n="right" /></button>
       </div>
       <div className="fitlist">

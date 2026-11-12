@@ -1,0 +1,61 @@
+{
+ "port": "3189",
+ "inst": "corrupt",
+ "steps": [
+  {
+   "n": "me before",
+   "status": 200,
+   "body": "{\"user\":{\"id\":1000000001,\"email\":\"qa.collector@example.test\",\"role\":\"collector\",\"department_id\":null,\"department_name\":null,\"first_name\":null,\"last_name\":null}}"
+  },
+  {
+   "n": "note",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"bc052647d73f\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:46:55.262Z\"},{\"id\":\"5ddbd00aa987\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:47:22.836Z\"}],\"habits\":{\"chaosword\":\"Adyar\"},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "habit",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"bc052647d73f\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:46:55.262Z\"},{\"id\":\"5ddbd00aa987\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:47:22.836Z\"}],\"habits\":{\"chaosword\":\"Adyar\"},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "memory before restart",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"bc052647d73f\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:46:55.262Z\"},{\"id\":\"5ddbd00aa987\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:47:22.836Z\"}],\"habits\":{\"chaosword\":\"Adyar\"},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "me after restart (old cookie)",
+   "status": 200,
+   "body": "{\"user\":{\"id\":1000000001,\"email\":\"qa.collector@example.test\",\"role\":\"collector\",\"department_id\":null,\"department_name\":null,\"first_name\":null,\"last_name\":null}}"
+  },
+  {
+   "n": "memory after restart",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"bc052647d73f\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:46:55.262Z\"},{\"id\":\"5ddbd00aa987\",\"text\":\"chaos note: remember the ward 170 pump\",\"at\":\"2026-11-07T04:47:22.836Z\"}],\"habits\":{\"chaosword\":\"Adyar\"},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "collector page after restart",
+   "status": 200
+  },
+  {
+   "n": "thunai files",
+   "files": [
+    "memory-1000000001.json"
+   ]
+  },
+  {
+   "n": "memory after corrupt file",
+   "status": 200,
+   "body": "{\"notes\":[],\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "note after corrupt file",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"da56b9750a4c\",\"text\":\"after corruption\",\"at\":\"2026-11-07T04:47:41.631Z\"}],\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  },
+  {
+   "n": "memory after note",
+   "status": 200,
+   "body": "{\"notes\":[{\"id\":\"da56b9750a4c\",\"text\":\"after corruption\",\"at\":\"2026-11-07T04:47:41.631Z\"}],\"habits\":{},\"pending\":{},\"prefs\":{},\"reminders\":[],\"recent\":[],\"pins\":[]}"
+  }
+ ]
+}

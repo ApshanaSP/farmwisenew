@@ -1,0 +1,22 @@
+# Review of lane a (Jarvis understanding), branch claude/p4-lane-a
+
+Reviewer did not write the code. Read: git log, the non-test diff of 7d3a6f9...HEAD for entities.ts (fully), the test diff (fully), lanes/a.md, the golden explanation. Ran: full `npx vitest run` (167 files passed, 2 skipped, no failure) and a probe of 37 plain sentences. quick.ts, understand.ts, lexicon.ts, frame.ts, stagelocal.ts, normalise.ts were read through lanes/a.md and the guard tests, not line by line. Not run: tsc, a server, the sealed set.
+
+## Verdict
+The mechanisms are mostly real (one outside-place question asked by every lane, one period table, one word-edge function, one intent table, positive sign for a follow-up). The tests were not weakened except as noted. One cluster, RC-01, replaced a closed list with a rule that has a new false-positive class, and it is held back by a growing exception list.
+
+## Serious
+1. RC-01 `nameBeside`/`nameLike` (entities.ts): any word that is not on a list, placed before an agency word, is taken as another town's body. The answer is then "I have no data on X", with no screen. Probe on the final code, plain requests that were answered before and now go to "no data": "today's police report", "tomorrow police report", "cyber crime police report", "senior citizen police report", "damaged road department status", "Collectorate police report", "Mannady police report" (a Chennai locality; the Corporation's 250-name list does not hold it). Correct ones: "Tambaram", "Avadi" are rightly foreign. This is a confident wrong answer about a request that was fine, and it is the same class that the golden run already caught once ("top five departments", fixed by adding number words to ORDINARY). The fix for that was one more phrase list, so the class is still open. The accepted risk (an unknown name is foreign) needs a second signal, for example only when the word is capitalised in the original text, or only when it is not a plain English word from a dictionary, or a model check, rather than lists of ordinary words (ORDINARY, NAME_STOP_WORDS, INST, JURISDICTION).
+2. The guard for it covers one side. "our own bodies and places are not taken for foreign" has a short hand-written list of 20 or so sentences. It has no sentence with a time word, a topic phrase or a locality that is missing from the area list in front of an agency word, so it cannot catch item 1. The class guard should cross a list of ordinary words and Chennai localities (all the locality names in data/gcc-reference, not only the 250 words) with every agency head, and expect "ours".
+
+## Smaller
+3. The static guards "each lane calls foreignIn" and "foreignIn comes before a marker comment" read source text. They pass if the call is dead, behind an `if (false)`, or in a comment that holds the string. The behaviour test in the same describe (every sentence through every lane) is the real guard; keep it and drop or label the text checks as a convenience.
+4. AUD-NF-12 was loosened: `r.stage.title` became `r.stage?.title ?? ""`, so a reply with no screen now passes. This is explained in the test and matches the stated decision (the console holds no one-day window), and a screen titled today still fails. Accepted, but it no longer proves that the answer says the window is missing; add a check on the reply text.
+5. RC-06 keeps English "last week/month/quarter" as the matching current window (BUG-003, accepted earlier), while Tamil and Tanglish past words are refused. The languages now differ for the same request. The lane notes say so openly; left to the owner.
+6. Honest "partly" statuses (RC-02, 03, 04, 05, 06, 07) match the open `it.fails` rows kept in the tests (for example harsh-sun in Tamil). No target was lowered. metamorphic.known.json lost six keys and kept m07:ta; consistent with the plain tests.
+7. Untracked leftovers in the worktree: tests/qa/pass4/scratch-lane-a.test.ts and results/a-*.json. The scratch test should not be committed.
+
+## Other checks
+- No test deleted; every changed `it.fails` became `it` with the same assertion except AUD-NF-12 (item 4).
+- Object.hasOwn for lookups (RC-14) and Tamil word edges (RC-03) are mechanism fixes, with a guard that crosses every short alias with every lexicon word.
+- Golden diff: 7 changed, 1 added, 1 removed in lane-a explained; every explained change matches its cause. The one regression it found was fixed, but see item 1 for why more remain.

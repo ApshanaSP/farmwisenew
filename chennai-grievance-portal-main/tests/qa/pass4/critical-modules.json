@@ -1,0 +1,31 @@
+{
+  "note": "QA pass 4: the critical modules (docs/qa/pass4/TEST_PLAN.md), resolved to files. Paths are relative to chennai-grievance-portal-main. For Stryker: mutate = files.",
+  "target_branch_pct": 85,
+  "files": [
+    "src/lib/thunai/privacy.ts",
+    "src/lib/thunai/injection.ts",
+    "src/lib/thunai/numbergate.ts",
+    "src/lib/thunai/entities.ts",
+    "src/lib/thunai/outside.ts",
+    "src/lib/thunai/narrate.ts",
+    "src/lib/thunai/quick.ts",
+    "src/lib/thunai/frame.ts",
+    "src/lib/thunai/speechcheck.ts",
+    "src/lib/collector/effective.ts",
+    "src/lib/collector/guard.ts",
+    "src/lib/officer/guard.ts",
+    "src/lib/security/stepup.ts",
+    "src/lib/assistant/compile.ts",
+    "src/lib/csv.ts",
+    "src/lib/rate-limit.ts",
+    "src/lib/netsafe.ts"
+  ],
+  "not_found": [],
+  "similar_names_not_included": {
+    "src/lib/assistant/guard.ts": "the Ask District IQ question guard, not the collector or officer guard",
+    "src/lib/thunai/devguard.ts": "not named in the plan",
+    "src/components/collector/app/thunai/guards.ts": "browser-side checks, not the collector guard in src/lib/collector",
+    "src/lib/collector/onboard.ts": "has a small local safeFetch that only calls netsafe's safeFetch",
+    "src/lib/studio/fetchurl.ts": "Data Studio's download code, which calls netsafe's safeFetch"
+  }
+}

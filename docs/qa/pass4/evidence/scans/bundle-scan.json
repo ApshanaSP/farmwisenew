@@ -1,0 +1,198 @@
+{
+ "dist": ".next-qa",
+ "buildId": "uoCyfOgnc3qJwf1N3gZ7P",
+ "selfTest": "passed",
+ "filesScanned": 145,
+ "bytesScanned": 8350904,
+ "scopes": [
+  "static/**",
+  "server/app/**/*.html",
+  "server/app/**/*.rsc",
+  "server/pages/**/*.html",
+  "public/**"
+ ],
+ "envVariablesChecked": [
+  {
+   "name": "AADHAAR_ENCRYPTION_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "AI_BEDROCK_MODEL",
+   "class": "setting"
+  },
+  {
+   "name": "AI_CHAT_PROVIDER",
+   "class": "setting"
+  },
+  {
+   "name": "AI_FALLBACK_PROVIDER",
+   "class": "setting"
+  },
+  {
+   "name": "ANTHROPIC_API_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "AWS_ACCESS_KEY_ID",
+   "class": "secret"
+  },
+  {
+   "name": "AWS_BEARER_TOKEN_BEDROCK",
+   "class": "secret"
+  },
+  {
+   "name": "AWS_REGION",
+   "class": "setting"
+  },
+  {
+   "name": "AWS_SECRET_ACCESS_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "AWS_SESSION_TOKEN",
+   "class": "secret"
+  },
+  {
+   "name": "DB_HOST",
+   "class": "setting"
+  },
+  {
+   "name": "DB_NAME",
+   "class": "setting"
+  },
+  {
+   "name": "GEMINI_API_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "GROQ_API_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "GROQ_API_KEY_2",
+   "class": "secret"
+  },
+  {
+   "name": "GROQ_API_KEY_3",
+   "class": "secret"
+  },
+  {
+   "name": "INTEL_DB_NAME",
+   "class": "setting"
+  },
+  {
+   "name": "INTEL_OPS_DB_NAME",
+   "class": "setting"
+  },
+  {
+   "name": "JWT_SECRET",
+   "class": "secret"
+  },
+  {
+   "name": "NODE_ENV",
+   "class": "setting"
+  },
+  {
+   "name": "REFRESH_API_KEY",
+   "class": "secret"
+  },
+  {
+   "name": "SMTP_FROM",
+   "class": "setting"
+  },
+  {
+   "name": "SMTP_HOST",
+   "class": "setting"
+  },
+  {
+   "name": "SMTP_PASS",
+   "class": "secret"
+  },
+  {
+   "name": "SMTP_USER",
+   "class": "identity"
+  }
+ ],
+ "envVariablesSkippedAs7OrFewerCharacters": [
+  "AI_FORCE_PROVIDER",
+  "AI_PROVIDER",
+  "ASSISTANT_DAILY_TOKENS",
+  "DATA_BACKEND",
+  "DB_PASSWORD",
+  "DB_PORT",
+  "DB_USER",
+  "EMAIL_MODE",
+  "JWT_EXPIRES_IN",
+  "NEXT_PUBLIC_DEV_SHOW_OTP",
+  "SMTP_PORT",
+  "TTS_PROVIDER"
+ ],
+ "envVariablesEmpty": [
+  "ASSISTANT_RO_DB_PASSWORD",
+  "ASSISTANT_RO_DB_USER",
+  "AWS_API_URL",
+  "COLLECTOR_OFFICE_EMAIL",
+  "EMAIL_LIVE_ALLOWLIST",
+  "EMAIL_SANDBOX_TO",
+  "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+  "OFFICER_UPLOAD_DIR",
+  "OPENAI_API_KEY",
+  "SEED_OFFICER_PASSWORD"
+ ],
+ "patternsChecked": [
+  "aws-access-key-AKIA",
+  "aws-temp-key-ASIA",
+  "groq-gsk_",
+  "anthropic-sk-ant",
+  "openai-sk",
+  "google-AIza",
+  "github-token",
+  "slack-token",
+  "brevo-key",
+  "sendgrid-key",
+  "stripe-live-key",
+  "huggingface-hf_",
+  "bedrock-bearer",
+  "jwt-signed",
+  "private-key-block",
+  "database-url-with-password",
+  "bearer-literal"
+ ],
+ "secretValueHits": [],
+ "patternHits": [],
+ "settingValueHits": [
+  {
+   "name": "NODE_ENV",
+   "file": "static/chunks/2117-acecbb192205f686.js"
+  },
+  {
+   "name": "NODE_ENV",
+   "file": "static/chunks/2321-66505f0394039a62.js"
+  },
+  {
+   "name": "NODE_ENV",
+   "file": "static/chunks/5749-6624e849eca1ac23.js"
+  },
+  {
+   "name": "NODE_ENV",
+   "file": "static/chunks/main-5b2c89a5beb94998.js"
+  },
+  {
+   "name": "DB_HOST",
+   "file": "static/chunks/polyfills-42372ed130431b0a.js"
+  }
+ ],
+ "secretNameMentionsInBrowserJs": [],
+ "nextPublicInEnv": [
+  {
+   "name": "NEXT_PUBLIC_DEV_SHOW_OTP",
+   "setInEnv": true,
+   "class": "setting"
+  },
+  {
+   "name": "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+   "setInEnv": false,
+   "class": "secret"
+  }
+ ]
+}

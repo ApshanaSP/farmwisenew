@@ -1,0 +1,26 @@
+[
+  {
+    "id": "CHAOS-1",
+    "severity": "medium",
+    "title": "A corrupt Thunai memory file reads as empty with HTTP 200, and the next write overwrites it, so notes, reminders and pins are lost with no sign",
+    "where": "src/lib/thunai/store.ts readMemory (catch returns EMPTY for any error, including a half-written file) and writeMemory",
+    "evidence": ["docs/qa/pass4/evidence/chaos-restart.json (steps 'memory after corrupt file', 'note after corrupt file')", "tests/qa/pass4/chaos-findings.test.ts CHAOS-1 (fails)"],
+    "repro": "Corrupt data/aws-cache/qa/srv/<instance>/thunai/memory-<id>.json, GET /api/collector/thunai/memory -> 200 with every list empty; POST one note -> file now holds only that note; the old content is gone."
+  },
+  {
+    "id": "CHAOS-2",
+    "severity": "low",
+    "title": "With no model key, questions the rules cannot answer (forecasts, drafting a letter) get an unrelated confident answer instead of a plain 'I cannot do that without the model'",
+    "where": "/api/collector/assistant/chat rules lane",
+    "evidence": ["docs/qa/pass4/evidence/chaos-nokey.json", "tests/qa/pass4/chaos-findings.test.ts CHAOS-2 (3 cases fail, CHAOS_PORT=3185)"],
+    "repro": "'how many complaints will be resolved by Friday' -> '13,478 incidents resolved, last 90 days' (a past count, no caveat). 'predict how many complaints Adyar will get next week' -> '685 citizen complaints, last 90 days'. 'draft a polite letter to the Commissioner about flooding in Adyar' -> a list of flooding incidents. The thunai agent route returns kind 'none' with no reply for 'summarise the whole city situation in two lines' and the letter request (not checked in the UI)."
+  },
+  {
+    "id": "CHAOS-3",
+    "severity": "low",
+    "title": "Server log error on every embedding lookup: the embedding model file is a 134-byte placeholder (Protobuf parsing failed). Falls back to rules, so answers are unaffected",
+    "where": ".cache/models/Xenova/multilingual-e5-base/onnx/model_quantized.onnx (134 bytes, probably a Git LFS pointer not fetched in this worktree)",
+    "evidence": ["data/aws-cache/qa/run/srv-3185.log: '[assistant] embedding index: Load model ... failed:Protobuf parsing failed.'"],
+    "note": "May be a worktree artefact only; check the real checkout before treating it as an app bug."
+  }
+]

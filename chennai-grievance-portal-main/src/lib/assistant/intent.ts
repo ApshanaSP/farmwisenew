@@ -26,7 +26,7 @@ export interface Detected {
   /** how many the question asks for ("top 3"), else null */
   n: number | null;
   topic: Topic | null;
-  sev: "Severe" | "High" | null;
+  sev: "Severe" | "High" | "Medium" | "Low" | null;
   /** only open ones ("pending", "unresolved", "still open") */
   openOnly: boolean;
   /** only open ones past their deadline ("overdue", "missed the deadline") */
@@ -51,6 +51,8 @@ export interface Detected {
   period?: "daily" | "weekly" | "monthly" | "quarterly" | null;
   /** what a count is of: deaths ("road deaths today"), citizen complaints ("how many grievances"), else incidents */
   measure?: "deaths" | "complaints" | "injured" | null;
+  /** a count asked as a share ("what percentage of complaints are resolved"): of which kind (RC-44) */
+  share?: "resolved" | "open" | "severe" | "overdue" | null;
   /** compares the period with the one before ("this month vs last month"), not places */
   vsPrevious?: boolean;
   /** only incidents still open after this many days ("severe incidents open for more than 7 days") */
@@ -247,7 +249,10 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const t = toks.join(" ");
   const topic = topicOf(toks);
   const n = countAsked(message);
-  const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High" : null;
+  // (medium and low are read only as a level of the incidents counted, "medium incidents", "low severity cases", never "low-lying" or "medium of")
+  const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High"
+    : any(toks, ["medium severity", "medium incidents", "medium cases", "medium complaints", "medium level"]) ? "Medium"
+    : any(toks, ["low severity", "low incidents", "low cases", "low complaints", "low level"]) ? "Low" : null;
   // "open for more than 7 days", "pending over 30 days", "unresolved longer than 2 weeks": open, and at least that old
   const age = message.match(AGED);
   // "older than a week" = 7, "two months" = 60
@@ -320,7 +325,8 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   if (incidenty && any(toks, RANKING)) return mk("CATEGORY_RANKING", "asks which kinds, not which incidents");
   // "this month vs last month complaints": the period against the one before (a count that states both), not two places
   if ((incidenty || deaths) && VS_PREVIOUS.test(message)) return mk("INCIDENT_COUNT", "compares the period with the one before", { vsPrevious: true });
-  if (incidenty && any(toks, COUNT)) return mk("INCIDENT_COUNT", "asks how many");
+  // a count word is enough when what is counted is closed work or deaths ("how many were resolved yesterday", "how many deaths yesterday")
+  if ((incidenty || resolved || deaths) && any(toks, COUNT)) return mk("INCIDENT_COUNT", resolved && !incidenty ? "asks how many were resolved" : "asks how many");
   // "road deaths today", "gas poisoning deaths this week": how many people died (a list word still lists the incidents)
   // ("any dengue deaths?" asks whether anyone died: a count, though "any" is a list word)
   if (deaths && (topic || incidenty || any(toks, ["people", "persons", "workers", "road"])) && !any(toks, LIST.filter((w) => w !== "any")))

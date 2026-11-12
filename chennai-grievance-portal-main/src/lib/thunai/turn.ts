@@ -12,6 +12,7 @@
  * refines the last request.
  */
 import { TUNING } from "./vad";
+import { isStopWord } from "./addressed";
 
 export type TurnState = "off" | "listening" | "hearing" | "thinking" | "speaking" | "paused" | "interrupted" | "holding";
 
@@ -79,7 +80,7 @@ const HOLD = /^(stop|wait|wait a (sec|second|minute|moment)|hold on|hold|one (se
 const HOLD_LEAD = /^(?:(?:no,?\s+)?(?:wait|hold on|one (?:sec|second|minute)|stop)|நில்லு|இரு|ஒரு நிமிஷம்)[,.!\s]+(.+)$/i;
 const CONTINUE = /^(continue|go on|carry on|resume|keep going|go ahead|thodaru|thodarunga|sollunga|தொடரு|தொடருங்க|தொடருங்கள்|சொல்லுங்க)[.!]?$/i;
 const GOODBYE = /^(jarvis,?\s+)?(go to sleep|bye|goodbye|good bye|bye bye|that'?s all|that is all|thanks,? that'?s all|thank you,? that'?s all|we'?re done|stop listening|sleep now|pothum|podhum|போதும்|போதும் நன்றி|சரி போதும்|தூங்கு|bye jarvis)[.!]?$/i;
-export const isHoldOnly = (t: string) => HOLD.test(t.trim().replace(/^jarvis[,\s]+/i, ""));
+export const isHoldOnly = (t: string) => HOLD.test(t.trim().replace(/^jarvis[,\s]+/i, "")) || isStopWord(t);
 export const isStopOnly = isHoldOnly;
 export const isContinue = (t: string) => CONTINUE.test(t.trim().replace(/^jarvis[,\s]+/i, ""));
 export const isGoodbye = (t: string) => GOODBYE.test(t.trim());
@@ -152,7 +153,7 @@ export function turn(m: TurnModel, e: TurnEvent): { m: TurnModel; act: TurnActio
       if (!t) return m.state === "paused" ? goOn() : to(m.state === "speaking" ? "speaking" : m.handling ? "thinking" : "listening", [], done);
       if (isGoodbye(t)) return to("off", [{ a: "cancelVoice" }, { a: "endSession" }], { ...done, canContinue: false, handling: false, voice: false });
       // "wait": silent, nothing on screen changes, and a little longer to think; the hold word itself gets no answer
-      if (isHoldOnly(t)) return to("holding", [{ a: "cancelVoice" }, { a: "hold", ms: TUNING.holdExtendMs }], { ...done, voice: false });
+      if (isHoldOnly(t)) return to("holding", [{ a: "cancelVoice" }, ...(isStopWord(t) ? [{ a: "cancelTurn" } as TurnAction] : []), { a: "hold", ms: TUNING.holdExtendMs }], { ...done, voice: false });
       if (isContinue(t)) return m.canContinue ? to("speaking", [{ a: "resumeAnswer" }], { ...done, canContinue: false }) : m.state === "paused" ? goOn() : to("listening", [], done);
       const rest = afterHold(t);
       return to("thinking", [{ a: "handle", text: rest ?? t, gen: m.gen }], { ...done, canContinue: false, handling: true });

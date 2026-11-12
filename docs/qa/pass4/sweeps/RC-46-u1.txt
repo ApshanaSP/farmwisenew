@@ -1,0 +1,32 @@
+RC-46 sweep (U1)
+Class: a box wider than its container (a grid column that is auto, a flex row that cannot shrink), a floating control on top of something the person needs, an indicator that does not follow its label, a title with no room.
+
+1. Grids with a breakpoint grid-cols and no shrinkable base column, in the citizen, profile, login and shared pages (fixed):
+  now safe: 9
+  guard: src/components/layout.pass4.test.ts reads every one of them
+2. Fixed or sticky controls: grep -rn 'position:fixed' (collector css) and 'fixed ' in tsx:
+  src/components/collector/app/assistant/assistant.css
+  src/components/collector/app/civic.css
+  src/components/collector/app/collector.css
+  src/components/collector/app/marina.css
+  src/components/collector/app/motionfx.css
+  src/components/collector/app/studio/studio.css
+  src/components/collector/app/thunai/hud.css
+  src/components/collector/app/thunai/jarvisswitch.css
+  src/components/collector/app/thunai/stage.css
+  src/components/collector/app/thunai/thunai.css
+  src/components/console-loader.css
+  src/components/officer/officer.css
+  src/components/security/confirm.css
+  src/components/security/security.css
+  src/components/ui/ui.css
+  the ones that sit near the bottom bar: .ask-fab (fixed), .jvf-wrap and .jq (fixed): all three now keep clear of the 60 px bar; tests/qa/pass4/layout.mjs checks bottom-bar tabs and map controls at 360.
+3. Other popovers with their own open state that nothing closes: grep -rn 'createPortal' src/components/collector/app
+  src/components/collector/app/AlertBar.tsx
+  src/components/collector/app/thunai/Stage.tsx
+  src/components/collector/app/thunai/Thunai.tsx
+  src/components/ConsoleLoader.tsx
+  src/components/ui/index.tsx
+  AlertBar was the one with its own state and no outside close; the others close through pop in CollectorApp / OfficerApp (onClick on the shell) or are dialogs.
+4. Indicators that measure once: useIndicator (ui/index.tsx) serves the citizen top bar and SegmentedControl; it now watches labels and text changes.
+5. Real run: tests/qa/pass4/layout.mjs 9 pages x 2 languages x 5 widths (360, 768, 1280, 1440, 1920) = 90 runs: before 24 with a problem, after 0. It now also fails on a title cut by an ellipsis, a pill off its label and a floating button on a map control (these three were added after the fix, so they were only run on the fixed build).

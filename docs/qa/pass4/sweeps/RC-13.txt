@@ -1,0 +1,17 @@
+RC-13 sweep: code that reads digits or number words in text from a user or a model (7 Nov)
+search: grep -rn "௦-௯" src; grep -rnE "\d.*\.test\((reply|said|line)" src/lib/thunai src/lib/assistant; grep -rn "spellsNumber\|figuresOk(" src
+
+FIXED (all four read Tamil digits only, or ASCII only; now every script, by the Unicode Nd property in digits.ts)
+ src/lib/thunai/numbergate.ts figuresIn: forGate() = NFKC + digits of every script + Arabic separators + no zero-width marks; compound English numbers (twenty-one = 21); one as a count unless it stands for a thing already named; single/sole/lone; Tanglish and Tamil one forms and Tanglish numerals 11-90
+ src/lib/thunai/agent.ts spellsNumber: Tamil digits only -> any non-ASCII digit
+ src/lib/thunai/round.ts:236 and plan.ts:288,289,295: /\d/ or Tamil-only on a model line -> \p{Nd}
+ src/lib/thunai/stage.ts figuresOk: ASCII digits only -> asciiDigits first
+ src/lib/thunai/normalise.ts:81: Tamil digits only -> every script (so 'zone ४' is zone 4)
+ src/lib/assistant/verify.ts:39 extractNumbers: Tamil digits only -> asciiDigits
+
+CHECKED, NOT CHANGED
+ src/lib/thunai/privacy.ts redaction: already folds every script (asciiDigit, line 52-68)
+ PB-216 (constructor as a number word): already fixed in 7acbae2 (Object.hasOwn); scans-code-2 passes; class guard is the Object.prototype test in ordinal.pass4.test.ts and RC-14's
+
+STILL OPEN
+ Tamil words past thirty and Tanglish compounds beyond the table (for example pathinaaru 16 is there, but irubathonnu 21 is not): partly. A homoglyph (Cyrillic o in 'tw0') is not folded.

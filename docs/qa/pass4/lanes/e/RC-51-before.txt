@@ -1,0 +1,11 @@
+[31m   [31m×[31m RC-51 a damaged memory file is told apart from a missing one[2m > [22ma missing file is an empty memory, and the strict read agrees[39m[32m 30[2mms[22m[39m
+[31m   [31m×[31m RC-51 a damaged memory file is told apart from a missing one[2m > [22mthe next write keeps the damaged file aside, and the memory file is valid again[39m[32m 8[2mms[22m[39m
+[31m   [31m×[31m RC-51 class guard: the route that shows the person their memory uses the strict read[2m > [22mmemory GET answers an error for a damaged file[39m[32m 2[2mms[22m[39m
+[31m   [31m×[31m RC-51 class guard: the route that shows the person their memory uses the strict read[2m > [22mno catch in store.ts turns a read error into an empty memory without checking the file is missing[39m[32m 2[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (11)[39m
+[31m   [31m×[31m CHAOS-1 a corrupt Thunai memory file is not silently erased[2m > [22mthe unreadable file is kept (or the read fails loudly) before the next write replaces it[39m[32m 38[2mms[22m[39m
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[41m[1m FAIL [22m[49m tests/qa/pass4/chaos-findings.test.ts[2m > [22mCHAOS-1 a corrupt Thunai memory file is not silently erased[2m > [22mthe unreadable file is kept (or the read fails loudly) before the next write replaces it
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m3 skipped[39m[90m (4)[39m

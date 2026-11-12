@@ -1,0 +1,971 @@
+{
+ "when": "2026-11-07T04:42:23.520Z",
+ "byImpact": {
+  "serious": 60,
+  "moderate": 4
+ },
+ "runs": [
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": [
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #418; visit https://react.dev/errors/418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #423; visit https://react.dev/errors/423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+   ]
+  },
+  {
+   "page": "citizen",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": [
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #418; visit https://react.dev/errors/418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #423; visit https://react.dev/errors/423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+   ]
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": [
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #418; visit https://react.dev/errors/418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #423; visit https://react.dev/errors/423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+   ]
+  },
+  {
+   "page": "citizen",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "heading-order",
+     "impact": "moderate",
+     "nodes": 1,
+     "help": "Heading levels should only increase by one",
+     "sample": [
+      "h3 :: Heading order invalid"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": [
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #418; visit https://react.dev/errors/418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "PAGEERROR Error: Minified React error #423; visit https://react.dev/errors/423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+   ]
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".normal-case :: Element has insufficient color contrast of 2.84 (foreground color: #4f6478, background color: #0d1d15, font size: 8.3pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      ".hover\\:text-navy-600 :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.0pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-file",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/file-complaint",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".normal-case :: Element has insufficient color contrast of 2.84 (foreground color: #4f6478, background color: #0d1d15, font size: 8.3pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      ".text-xs :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.0pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "citizen-track",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/citizen/track-complaints",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "light",
+   "url": "http://localhost:3183/login?redirect=%2Fofficer",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "en",
+   "theme": "dark",
+   "url": "http://localhost:3183/login?redirect=%2Fofficer",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "light",
+   "url": "http://localhost:3183/login?redirect=%2Fofficer",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "officer",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "http://localhost:3183/login?redirect=%2Fofficer",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "light",
+   "url": "http://localhost:3183/login?redirect=%2Fcollector",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "en",
+   "theme": "dark",
+   "url": "http://localhost:3183/login?redirect=%2Fcollector",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "light",
+   "url": "http://localhost:3183/login?redirect=%2Fcollector",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "collector",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "http://localhost:3183/login?redirect=%2Fcollector",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "light",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[href$=\"forgot-password\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 9.8pt ",
+      "a[href$=\"register\"] :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 11.3pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "login",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/login",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "light",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 2.08 (foreground color: #a0aec0, background color: #f3f7f5, font size: 9.8pt ",
+      "span[title=\"At least 8 characters\"] :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 3.11 (foreground color: #4f6478, background color: #06120d, font size: 9.8pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 2.08 (foreground color: #a0aec0, background color: #f3f7f5, font size: 9.8pt ",
+      "span[title=\"At least 8 characters\"] :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt ("
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "register",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/register",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".font-normal :: Element has insufficient color contrast of 3.11 (foreground color: #4f6478, background color: #06120d, font size: 9.8pt "
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".todo:nth-child(3) > .ui-step-l :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt (",
+      ".hover\\:underline :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 10.5pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 2,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      ".rounded-lg :: Text inside the element is not included in the accessible name",
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      ".todo:nth-child(3) > .ui-step-l :: Element has insufficient color contrast of 4.4 (foreground color: #64748b, background color: #f3f7f5, font size: 9.4pt (",
+      ".hover\\:underline :: Element has insufficient color contrast of 3.82 (foreground color: #1c8f4c, background color: #f3f7f5, font size: 10.5pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "forgot",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/forgot-password",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "en",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "light",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "sample": [
+      "a[data-key=\"/citizen/file-complaint\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt",
+      "a[data-key=\"/citizen/track-complaints\"] :: Element has insufficient color contrast of 4.35 (foreground color: #64748b, background color: #f2f5f9, font size: 10.1pt"
+     ]
+    },
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  },
+  {
+   "page": "profile",
+   "lang": "ta",
+   "theme": "dark",
+   "url": "/profile",
+   "violations": [
+    {
+     "id": "label-content-name-mismatch",
+     "impact": "serious",
+     "nodes": 1,
+     "help": "Elements must have their visible text as part of their accessible name",
+     "sample": [
+      "button[translate=\"no\"] :: Text inside the element is not included in the accessible name"
+     ]
+    }
+   ],
+   "console": []
+  }
+ ]
+}

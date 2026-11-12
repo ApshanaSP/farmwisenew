@@ -1,0 +1,33 @@
+RC-38 sweep (U1)
+1. Ways an incident leaves the build: grep -n 'DELETE FROM incidents' src/lib/collector/derive.ts
+323:    const del = db.prepare(`DELETE FROM ${table} WHERE ${col} = ?`);
+341:      db.prepare(`DELETE FROM ${table} WHERE incident_id = ?`).run(from);
+347:      if (table !== "documents" && table !== "events") db.prepare(`DELETE FROM ${table} WHERE ${col} = ?`).run(from);
+353:  db.prepare(`DELETE FROM incidents WHERE incident_id = ?`).run(from);
+   -> dropIncidents (unlinks events and documents), mergeInto (moves links to the kept incident). newsMedia was the one that deleted and left links; it now calls dropIncidents.
+
+2. Places that print a document title or headline in src/lib/collector/intel.ts, and what they do now:
+13:import { redactText } from "@/lib/thunai/privacy";
+305:      original: lead.lang !== "en" ? redactText(String(lead.title)) : null,
+327:const cleanHeadline = (t: string) => redactText(t).replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim(
+345:    return { ...x, title: redactText(String(x.title ?? "")), title_en: x.title_en == null ? x.title_en : redactText(String(x.title_en)), summary: x.summary == null ? 
+931:    withDecisions(news.map((r) => (r.news_title == null ? r : { ...r, news_title: redactText(String(r.news_title)) }))).then(withSources),
+1242:    ...(d.lang === "ta" && d.title_en ? { title_en: redactText(String(d.title_en)) } : {}),
+1306:        title: redactText(String(d?.title ?? m.title ?? "")), text: m.source === "news" ? null : m.text, publisher: d?.publisher ?? null, url: d?.url ?? null,
+1313:      t: d.t, source: "news", what: "News report", channel: "media", inc: d.linked_incident_id ?? id, docId: d.doc_id, title: redactText(String(d.title ?? "")), text
+1499:  const safeNews = news.map((n) => ({ ...n, title: redactText(String(n.title ?? "")) }));
+   (search news, cleanHeadline for the news stories, original headline, newsArticles title/title_en/summary, incident reports title and title_en, overview news_title)
+
+3. Other readers of hours_open: grep -n hours_open src -r (not tests)
+src/lib/ai/prompts/planner.ts:27:- Time to close = avg of hours_open over incidents with closed_at not_null (say "hours"; days = hours / 24 
+src/lib/assistant/queries.ts:66:    `SELECT i.lead_dept AS code, dp.name, AVG(i.hours_open) AS h, COUNT(*) AS n, SUM(${pastDueSql(await asOf
+src/lib/assistant/tools.ts:376:      hours_open: i.hours_open == null ? null : round(openedHours(Number(i.hours_open))!), dead: Number(i.dea
+src/lib/assistant/tools.ts:377:      dept_head: i.dept_head ?? null, src: i.src ?? null, first_reported: readableTime(i.t), open_for: openFo
+src/lib/assistant/tools.ts:389:      fact(`inc.${id}.hours_open`, "Hours open", data.incident.hours_open ?? 0, "hours"),
+src/lib/assistant/tools.ts:390:      ...((data.incident.hours_open ?? 0) >= 48 ? [fact(`inc.${id}.days_open`, "Days open", Math.round(data.i
+src/lib/collector/analysis.ts:169:    `First reported ${when(i.t)}; open for ${Math.round(Number(i.hours_open) || 0)} hours. Deadline ${i.sl
+src/lib/collector/intel.ts:243:  i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due, i.hours_open, i.seve
+src/lib/collector/intel.ts:905:      `SELECT i.lead_dept AS code, dp.name, AVG(i.hours_open) AS h, COUNT(*) AS n ${FROM}
+   -> only tools.ts printed it as text; lists and averages use it as a number. Fixed there.
+
+4. Other routes that take a ward with a zone: src/app/api/complaints/route.ts takes the zone FROM the ward (zone_wards), so it cannot disagree; profile was the only one checking a range.

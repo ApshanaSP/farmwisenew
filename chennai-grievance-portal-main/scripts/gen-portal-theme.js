@@ -50,7 +50,7 @@ for (const [f, p] of Object.entries(families)) {
   for (const s of SHADES) put(`${f}-${s}`, d[s], p[s]);
 }
 // text and surfaces: tokens.css --text … --text-4, --bg, --surface, --surface-2 and --line
-put("ink", "#E8F1F8", "#0F1B2D"); put("ink-muted", "#AFC2D3", "#40506A"); put("ink-subtle", "#7F94A9", "#64748B"); put("ink-faint", "#4F6478", "#A0AEC0");
+put("ink", "#E8F1F8", "#0F1B2D"); put("ink-muted", "#AFC2D3", "#40506A"); put("ink-subtle", "#7F94A9", "#566680"); put("ink-faint", "#4F6478", "#A0AEC0");
 put("canvas", "#06120D", "#F3F7F5"); put("canvas-raised", "#0D1D15", "#FFFFFF"); put("canvas-sunken", "#12261C", "#ECF1F6"); put("canvas-border", "#1C3628", "#E0E7EF");
 // AI coral and the live green, for the few citizen-side AI and freshness hints
 put("ai", "#FF8466", "#E5533A"); put("live", "#34D399", "#0E9F6E");

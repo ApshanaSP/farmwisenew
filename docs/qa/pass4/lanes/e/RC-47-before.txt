@@ -1,0 +1,5 @@
+[41m[1m FAIL [22m[49m src/lib/complaint-awaiting.pass4.test.ts[2m [ src/lib/complaint-awaiting.pass4.test.ts ][22m
+[31m[1mError[22m: Cannot find module './officer/queue-note' imported from 'E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/complaint-awaiting.pass4.test.ts'[39m
+[31m[1mCaused by: Error[22m: Failed to load url ./officer/queue-note (resolved id: ./officer/queue-note) in E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main/src/lib/complaint-awaiting.pass4.test.ts. Does the file exist?[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [2mno tests[22m

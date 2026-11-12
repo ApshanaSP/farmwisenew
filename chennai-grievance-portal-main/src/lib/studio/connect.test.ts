@@ -156,7 +156,6 @@ const hasBrowser = await (async () => {
 })();
 
 describe.runIf(hasBrowser)("signing in with a browser", () => {
-  let session: string | null = null;
   it("signs in on the site's own form, reads the data the page loads, and keeps the session", async () => {
     const { connectLink } = await import("@/lib/studio/connect");
     const c = await connectLink(`${base}/dashboard`, { mode: "login", username: "officer@gcc.test", password: "Demo@123" }, { log });
@@ -166,11 +165,14 @@ describe.runIf(hasBrowser)("signing in with a browser", () => {
     expect(c.found[0].cand.kind).toBe("api");
     expect(c.found[0].table.rows).toHaveLength(4);
     expect(c.found.some((f) => f.cand.kind === "table")).toBe(true);
-    session = c.session;
-    expect(session).toBeTruthy();
+    expect(c.session).toBeTruthy();
   }, 90_000);
   it("reuses the kept session, and signs in again by itself when it has expired", async () => {
     const { connectLink } = await import("@/lib/studio/connect");
+    // its own first sign-in: this test no longer takes the session the test before it kept (RC-36)
+    const first = await connectLink(`${base}/dashboard`, { mode: "login", username: "officer@gcc.test", password: "Demo@123" }, { log });
+    const session = first.session;
+    expect(session).toBeTruthy();
     const again = await connectLink(`${base}/dashboard`, { mode: "login", username: "officer@gcc.test", password: "Demo@123" }, { session, log });
     expect(again.signedIn).toBe("reused");
     SESSIONS.clear(); // the site forgets every session

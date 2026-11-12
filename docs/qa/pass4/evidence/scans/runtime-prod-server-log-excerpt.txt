@@ -1,0 +1,14 @@
+# excerpt of the test server's log (port 3977, .next-qa, launcher default heap cap 2048 MB), after one POST /api/i18n of 20 MB, no sign-in
+100:[19856:000001A9E13ED000]   111807 ms: Scavenge (interleaved) 2027.1 (2047.9) -> 2014.6 (2048.6) MB, pooled: 0 MB, 17.43 / 0.00 ms  (average mu = 0.142, current mu = 0.035) allocation failure; 
+101:[19856:000001A9E13ED000]   112689 ms: Mark-Compact (reduce) 2024.1 (2048.6) -> 2020.5 (2026.6) MB, pooled: 0 MB, 55.67 / 0.00 ms  (+ 763.0 ms in 152 steps since start of marking, biggest step 7.4 
+102:FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+
+# excerpt: crafted upgrade request reaching the proxy code (GHSA-c4j6-fc7j-m34r), and the malformed-body crash
+22: ⨯ TypeError: Cannot read properties of null (reading 'mobileNumber')
+35:Failed to proxy http:/127.0.0.1:56513/absolute AggregateError [ECONNREFUSED]: 
+38:  code: 'ECONNREFUSED',
+40:    Error: connect ECONNREFUSED ::1:80
+44:      code: 'ECONNREFUSED',
+49:    Error: connect ECONNREFUSED 127.0.0.1:80
+53:      code: 'ECONNREFUSED',
+61: ⨯ TypeError: Cannot read properties of null (reading 'mobileNumber')

@@ -1,0 +1,250 @@
+{
+ "note": "Real POST /api/collector/assistant/chat, no model on the server, signed in as the Collector. Taken while data/lancedb held an index and the model file was the 134-byte git-lfs pointer. Headlines only, cut to 110 characters. Feeds questions and search-bound questions. On a restart with no index the same questions answered as in the test file, without the error.",
+ "feeds": [
+  {
+   "q": "Are all the data feeds live?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "kpi_series",
+    "zones",
+    "departments"
+   ],
+   "headline": "596 severe events · 1,238 open citizen complaints · 2,411 ongoing incidents",
+   "error": null
+  },
+  {
+   "q": "How many feeds are live?",
+   "http": 200,
+   "kind": null,
+   "datasets": null,
+   "headline": null,
+   "error": "Something went wrong while answering. Please try again."
+  },
+  {
+   "q": "Is the police feed live or generated?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "feeds"
+   ],
+   "headline": "6 feeds up to date · 8 feeds",
+   "error": null
+  },
+  {
+   "q": "Which data sources are healthy?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "feeds"
+   ],
+   "headline": "6 feeds up to date · 8 feeds",
+   "error": null
+  },
+  {
+   "q": "Is the data real or test data?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [],
+   "headline": "Data sources",
+   "error": null
+  },
+  {
+   "q": "Is the hospital data real?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "readings"
+   ],
+   "headline": "Rajiv Gandhi Government General Hospital leads with 99% hospital bed occupancy",
+   "error": null
+  },
+  {
+   "q": "Are the PWD records generated?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "error": null
+  },
+  {
+   "q": "தரவு ஊட்டங்கள் நேரலையில் உள்ளனவா?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "காவல் துறை தரவு உண்மையானதா அல்லது சோதனை தரவா?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "incidents"
+   ],
+   "headline": "முக்கியமான 5 சம்பவங்கள் · கடந்த 90 நாட்களில்",
+   "error": null
+  },
+  {
+   "q": "தரவு மூலங்களின் நிலை என்ன?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "சோதனை தரவு உள்ளதா?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "இந்த தரவு உண்மையானதா?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "போலீஸ் தரவு போலியா?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "எந்த தரவு மூலங்கள் நலமாக உள்ளன?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "இதைப் புரிந்துகொள்ள முடியவில்லை. சம்பவங்கள், புகார்கள், செய்திகள், இடங்கள் அல்லது துறைகள் பற்றிக் கேளுங்கள், அ",
+   "error": null
+  },
+  {
+   "q": "feeds ellam live-a irukka?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "feeds"
+   ],
+   "headline": "Idho figures: Feeds up to date: 6",
+   "error": null
+  },
+  {
+   "q": "police feed generated-a?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "feeds"
+   ],
+   "headline": "6 feeds up to date · 8 feeds",
+   "error": null
+  },
+  {
+   "q": "police data real-a illa test data-va?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [],
+   "headline": "Data sources",
+   "error": null
+  },
+  {
+   "q": "hospital data fake-a?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "readings"
+   ],
+   "headline": "Rajiv Gandhi Government General Hospital leads with 99% hospital bed occupancy",
+   "error": null
+  },
+  {
+   "q": "data sources status enna?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "feeds"
+   ],
+   "headline": "Idho figures: Feeds up to date: 6",
+   "error": null
+  }
+ ],
+ "search": [
+  {
+   "q": "Tell me about the fallen tree near Adyar",
+   "http": 200,
+   "kind": null,
+   "datasets": null,
+   "headline": null,
+   "error": "Something went wrong while answering. Please try again."
+  },
+  {
+   "q": "Any reports about a sinkhole?",
+   "http": 200,
+   "kind": null,
+   "datasets": null,
+   "headline": null,
+   "error": "Something went wrong while answering. Please try again."
+  },
+  {
+   "q": "Was there an earthquake in Chennai?",
+   "http": 200,
+   "kind": "clarify",
+   "datasets": [],
+   "headline": "I didn't understand that. Ask about incidents, complaints, news, places or departments, or try one of these:",
+   "error": null
+  },
+  {
+   "q": "How many streetlights are working?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [],
+   "headline": "1,413 street lights and electrical incidents · last 90 days",
+   "error": null
+  },
+  {
+   "q": "Adyar la maram vizhundha report irukka?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "localities",
+    "wards",
+    "place_types",
+    "place_points"
+   ],
+   "headline": "Idho figures: Incidents in Adyar: 1,297",
+   "error": null
+  },
+  {
+   "q": "sinkhole pathi report irukka?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [
+    "incidents"
+   ],
+   "headline": "Idho figures: Incidents matching: 625",
+   "error": null
+  },
+  {
+   "q": "அடையாறில் மரம் விழுந்த செய்தி உள்ளதா?",
+   "http": 200,
+   "kind": "answer",
+   "datasets": [],
+   "headline": "Top district news · last 7 days",
+   "error": null
+  },
+  {
+   "q": "பள்ளம் பற்றிய புகார் உள்ளதா?",
+   "http": 200,
+   "kind": null,
+   "datasets": null,
+   "headline": null,
+   "error": "Something went wrong while answering. Please try again."
+  }
+ ]
+}

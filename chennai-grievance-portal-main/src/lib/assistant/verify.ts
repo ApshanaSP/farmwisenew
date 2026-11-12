@@ -8,6 +8,7 @@
  * Numbers written as words are not checked; the composer is told to use digits.
  */
 import type { Fact } from "@/lib/assistant/types";
+import { asciiDigits } from "@/lib/thunai/digits";
 
 const MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december";
 const TA_MONTHS = "ஜன|பிப்|மார்|ஏப்|மே|ஜூன்|ஜூலை|ஆக|செப்|அக்|நவ|டிச";
@@ -36,7 +37,7 @@ export interface Verdict { ok: boolean; checked: number; unmatched: string[] }
 
 /** Numbers written in a text, with how many decimals each was written with. */
 export function extractNumbers(text: string, quotable: string[] = []): { raw: string; value: number; decimals: number; scale: number; before: string; after: string }[] {
-  let t = ` ${String(text ?? "").replace(/[௦-௯]/g, (c) => String(c.charCodeAt(0) - 0x0be6))} `;
+  let t = ` ${asciiDigits(String(text ?? ""))} `;
   // a headline quoted verbatim from the data carries its own numbers
   t = t.replace(/[“"‘']([^“”"‘’']{6,240})[”"’']/g, (m, inner: string) => (quotable.some((q) => q.includes(inner.trim())) ? " " : m));
   for (const re of PATTERNS) t = t.replace(re, " ");

@@ -1,0 +1,27 @@
+# RC-27 sweep: raw pipeline open/status/verified/closed reads left in src after the fix (the class guard allows only the listed ones)
+src/components/collector/app/Detail.tsx:195:              <div><small>{open ? "Open for" : "Closed"}</small><b>{open ? rel(i.t, c.now).replace(" ago", "") : i.closed_at ? fmtShort(i.closed_a
+src/lib/assistant/queries.ts:88:  const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
+src/lib/assistant/tools.ts:371:    incident: { ...incRow(i), why: i.why, summary: i.summary ?? null, place: i.loc ?? null, closed_at: i.closed_at ?? null, sla_due: i.sla_due ?? null,
+src/lib/collector/insights.ts:25:const HOT_OPEN = `h.open + COALESCE((SELECT SUM(${OPEN}) - SUM(i.is_open) FROM incidents i WHERE i.hotspot_id = h.hotspot_id), 0)`;
+src/lib/collector/insights.ts:148:       WHERE ${where(s, now).sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
+src/lib/collector/intel.ts:757:  const core = `${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
+src/lib/collector/intel.ts:785:  const awaitCore = `${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0
+src/lib/collector/intel.ts:1148:       AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve'")}`
+src/lib/collector/intel.ts:1361:    where.push(`((${tw.sql} AND i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
+src/lib/collector/intel.ts:1387:    where.push(`((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR} AND NOT ${DECIDED("'verify','reject','resolve',
+src/lib/collector/intel.ts:1390:    where.push(`${EFF.open} = 1 AND i.severity_level = 'Severe' AND (i.verified = 0 OR i.awaiting_collector = 1) AND NOT ${DECIDED("'verify','reject','resolve
+src/lib/collector/intel.ts:1500:    q(`SELECT ${ROW}, ${sent} AS officer_sent ${FROM} WHERE ((i.is_open = 1 AND i.awaiting_collector = 1 AND i.citizen_complaints > 0 AND ${FOR_COLLECTOR}
+src/lib/map/world.ts:65:              i.lat, i.lon, i.loc_precision_m AS prec, i.place_text AS place, i.status_std AS status, i.is_open AS open, i.severity_level AS sev,
+src/lib/officer/data.ts:83:    WHEN i.status_std IN ('Open', 'Under review') THEN 'new'
+src/lib/officer/data.ts:84:    WHEN i.status_std = 'Assigned' THEN 'approved'
+src/lib/officer/data.ts:85:    WHEN i.status_std = 'In progress' THEN 'action'
+src/lib/officer/data.ts:86:    WHEN i.status_std = 'Awaiting verification' THEN 'sent'
+src/lib/officer/data.ts:87:    WHEN i.status_std = 'Resolved' THEN 'verified'
+src/lib/officer/data.ts:109:               i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.source_count, i.officer,
+src/lib/officer/data.ts:110:               i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
+src/lib/officer/data.ts:143:  w.ward_no AS ward, w.taluk_code AS taluk, w.place_text AS loc, w.lat, w.lon, w.severity_level AS sev, w.status_std AS status, w.stage,
+src/lib/officer/data.ts:441:    `${b.sql} SELECT ${ROW}, w.summary, w.media_only, ${fmt("w.sla_due_at")} AS due, ${fmt("w.closed_at")} AS closed_at
+src/lib/officer/insights.ts:203:              AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 60 END) AS hrs,
+src/lib/officer/insights.ts:209:              AVG(CASE WHEN ${OPEN} = 0 AND i.closed_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, i.first_reported_at, i.closed_at) / 1440 END) AS days
+src/lib/rehearsal/source.ts:65:              DATE_FORMAT(i.closed_at, '%Y-%m-%d %H:%i:%s') AS closed, i.ward_no AS ward, i.lead_dept AS dept, ${TITLE} AS title, i.place_text AS place,
+src/lib/rehearsal/source.ts:66:              i.priority_score AS priority, i.sla_breached AS breached, i.status_std AS status, i.is_open AS open

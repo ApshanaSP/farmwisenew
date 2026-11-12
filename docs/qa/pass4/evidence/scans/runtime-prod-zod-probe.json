@@ -1,0 +1,119 @@
+{
+ "base": "http://127.0.0.1:3977",
+ "at": "2026-11-06T13:27:25.130Z",
+ "otp": {
+  "forgotFirst": {
+   "status": 200,
+   "keys": [
+    "cooldownRemaining",
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false
+  },
+  "forgotSecond": {
+   "status": 200,
+   "keys": [
+    "cooldownRemaining",
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false,
+   "cooldown": true
+  },
+  "codeWasCreated": true,
+  "login": 200,
+  "mobileFirst": {
+   "status": 200,
+   "keys": [
+    "message"
+   ],
+   "hasDevOtp": false,
+   "bodyHasSixDigits": false
+  },
+  "malformedBodyOnMobileOtp": 500,
+  "forgotPage": {
+   "status": 200,
+   "htmlHasDevMode": false
+  }
+ },
+ "image": {
+  "/default-avatar.svg": {
+   "status": 404,
+   "contentType": "text/html; charset=utf-8"
+  },
+  "/brand/logo.png": {
+   "status": 404,
+   "contentType": "text/html; charset=utf-8"
+  }
+ },
+ "devRoutes": {
+  "/dev/thunai": 404,
+  "/api/dev/thunai/hear": 404,
+  "/api/dev/thunai/agent/round": 404
+ },
+ "upgrade": {
+  "canaryPath": "own listener on 127.0.0.1, random port",
+  "tries": {
+   "absoluteFormUpgrade": {
+    "answer": "Internal Server Error",
+    "canaryCalled": false
+   },
+   "pathStartsDoubleSlash": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "hostHeaderOnly": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "forwardedHost": {
+    "answer": "(no answer, socket closed or idle)",
+    "canaryCalled": false
+   },
+   "absoluteFormPlainGet": {
+    "answer": "HTTP/1.1 308 Permanent Redirect",
+    "canaryCalled": false
+   }
+  },
+  "canaryCalledByAny": false
+ },
+ "zod": [
+  {
+   "pid": 19856,
+   "rssMbAtStart": 651
+  },
+  {
+   "elements": 200000,
+   "bodyMb": 0.4,
+   "status": 400,
+   "ms": 314,
+   "peakRssMb": 0,
+   "serverAfter": 200
+  },
+  {
+   "elements": 1000000,
+   "bodyMb": 2,
+   "status": 400,
+   "ms": 1031,
+   "peakRssMb": 1132,
+   "serverAfter": 200
+  },
+  {
+   "elements": 4000000,
+   "bodyMb": 8,
+   "status": 400,
+   "ms": 4762,
+   "peakRssMb": 1893,
+   "serverAfter": 200
+  },
+  {
+   "elements": 10000000,
+   "bodyMb": 20,
+   "status": "no answer (ECONNRESET)",
+   "ms": 15957,
+   "peakRssMb": 2588,
+   "serverAfter": "down (ECONNREFUSED)"
+  }
+ ]
+}

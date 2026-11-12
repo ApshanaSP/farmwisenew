@@ -18,6 +18,8 @@ import { detectLang } from "./normalise";
 import { fillTemplate, figuresIn } from "./numbergate";
 import { AiStep, type Turn } from "./plan";
 import { NEVER_REPLY, PRIVACY_REPLY, redact } from "./privacy";
+import { lineProblem, turnRecords } from "./exitgate";
+import { recordText } from "./injection";
 import { catIn, periodIn, placesIn, quickScreen, reservoirIn, sevIn, zonesIn } from "./quick";
 import { GENERAL_FALLBACK, GENERAL_LABEL, GENERAL_SYSTEM, GeneralSchema, ROUTER_SYSTEM, RouterSchema, routeByRules, type Bundle } from "./router";
 import { checkStage, RECIPES, STAGE_DIGEST_MAX, type StageContext } from "./stage";
@@ -26,6 +28,7 @@ import { telemetry } from "./telemetry";
 import type { Lang, Step, World } from "./types";
 import { AgentBody } from "./agentServer";
 import { briefTurn } from "./entities";
+import { syncEpoch } from "@/lib/collector/epoch";
 
 export const RoundBody = AgentBody.extend({
   turnId: z.string().min(2).max(40),
@@ -69,6 +72,7 @@ export function safeHands(h: Hands, signal?: AbortSignal): Hands {
     ...h,
     tool: (name, args) => {
       if (signal?.aborted) return Promise.reject(new DOMException("aborted", "AbortError"));
+      syncEpoch(toolCache); // a decision empties it (RC-35)
       const key = `${name}|${JSON.stringify(args)}`;
       const now = Date.now();
       for (const [k, v] of toolCache) if (now - v.at > 30_000) toolCache.delete(k);
@@ -228,9 +232,10 @@ export async function executeCalls(calls: AgentCallT[], base: { period: string }
 }
 
 /** A general answer, labelled so it is never taken for the district's data; a figure in it, and it is not said at all. */
-const generalReply = (reply: string | null | undefined, lang: Lang, t0: number, model: string | null): AgentResult => {
+const generalReply = (reply: string | null | undefined, lang: Lang, t0: number, model: string | null, records: string[] = []): AgentResult => {
   const said = reply?.trim();
-  if (!said || /[\d௦-௯]/.test(said) || figuresIn(said).length) return plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback");
+  // the one exit gate: a general line is a line like any other (a contact, a citizen's name, a record's words, an order to send or approve)
+  if (!said || /\p{Nd}/u.test(said) || figuresIn(said).length || lineProblem(said, { records })) return plainReply("chat", lang, GENERAL_FALLBACK[lang], t0, "general-fallback");
   return plainReply("chat", lang, `${GENERAL_LABEL[lang]}${said}`, t0, "general", model);
 };
 const none = (lang: Lang, t0: number, note: string | null): AgentResult => ({ kind: "none", lang, reply: null, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: Date.now() - t0, note });
@@ -269,6 +274,8 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   const lang: Lang = detectLang(b.text) === "ta" ? "ta" : "en";
   const stage = (b.stage ?? null) as StageContext | null;
   const trace: TraceItem[] = [];
+  // what this turn's model may have read: the screen's digest, the Stage's title, what Jarvis said in earlier turns
+  const heardRecords = [...(b.stageDigest ? [b.stageDigest] : []), ...(stage?.title ? [stage.title] : []), ...turnRecords(b.turns)];
   const timed = async <T>(label: string, f: () => Promise<T>): Promise<T> => { const s = Date.now(); try { const r = await f(); trace.push({ label, ms: Date.now() - s, ok: true }); return r; } catch (e) { trace.push({ label, ms: Date.now() - s, ok: false }); throw e; } };
   const out = (result: AgentResult | null, lane: string, o: Partial<RoundOut> = {}): RoundOut => {
     if (result) { const l = readLabel(result, lang); if (l) trace.push({ label: l, ms: 0, ok: true }); }
@@ -281,10 +288,11 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
 
   if (b.direct) return out(served(await directScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang)), "direct");
 
+  // 1. refused in code, before any model, on every round of a turn (a later round has the same words and the same rules)
+  const route = routeByRules(b.text, world, !!stage);
+  if (route.lane === "refuse") return out(plainReply("refuse", lang, route.why === "privacy" ? PRIVACY_REPLY[lang] : NEVER_REPLY[lang], t0, route.why), "refuse");
+
   if (b.round === 0) {
-    // 1. refused in code, before any model
-    const route = routeByRules(b.text, world, !!stage);
-    if (route.lane === "refuse") return out(plainReply("refuse", lang, route.why === "privacy" ? PRIVACY_REPLY[lang] : NEVER_REPLY[lang], t0, route.why), "refuse");
 
     // 2. the frame: "and in Adyar?", "why?", "the second one", before the lanes and the fast lane
     const frame = resolveFrame({ text: b.text, stage, turns: b.turns ?? [], lastPlace: b.state.lastPlace ?? null, lastText: b.lastText ?? null, world });
@@ -317,7 +325,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     }
     if (lane === "general") {
       const r = await timed(lang === "ta" ? "பொது அறிவு" : "General knowledge", () => callLlm({ name: "jarvis_general", system: GENERAL_SYSTEM, prompt: b.text, schema: GeneralSchema, maxOutputTokens: 120, user, lane: "router", until, signal, hedge: false }, deps.llm)).catch((e) => { if ((e as Error).name === "AbortError") throw e; return null; });
-      return out(generalReply(r?.object.reply, lang, t0, r?.model ?? null), "general", { tokens: tokens + (r?.tokens ?? 0), calls: calls + (r ? 1 : 0) });
+      return out(generalReply(r?.object.reply, lang, t0, r?.model ?? null, heardRecords), "general", { tokens: tokens + (r?.tokens ?? 0), calls: calls + (r ? 1 : 0) });
     }
 
     // 4. the fast lane (never for an elliptical sentence that a Stage or a recent turn could explain: the planner has the context)
@@ -382,7 +390,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
     if (again) { r = again; t.tokens += again.tokens; t.calls++; t.model = again.model; plan = toPlan(again.object); }
   }
   if ((plan.kind as string) === "other") plan = { ...plan, kind: "do" };
-  if ((plan.kind as string) === "general") return out(generalReply(plan.reply, lang, t0, t.model), "general", { hops: r.hops });
+  if ((plan.kind as string) === "general") return out(generalReply(plan.reply, lang, t0, t.model, [...heardRecords, ...recordText(t.results)]), "general", { hops: r.hops });
   // asked back, chatted, or left nothing usable about a sentence the rules can read: a screen says more than a question, and it can be corrected
   const rulesRead = async (why: string): Promise<RoundOut | null> => {
     if (b.round !== 0 || stage || bundle === "memory") return null;

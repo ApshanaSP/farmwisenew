@@ -5,9 +5,10 @@
  * department has the oldest pending work?" was answered "not recorded", and "missing from the departmental
  * application" was read as the Missing-person category). Pure: no database, no model.
  */
+import { aboutTheData, isHelpQuestion } from "@/lib/assistant/help";
 
 export interface DirectTool { name: "verification_queue" | "dept_backlog" | "news_gaps" | "environment" | "change_drivers" | "departments" | "zones" | "taluks" | "briefing"
-  | "place_breakdown" | "resolution_times" | "unusual_rises"; args: Record<string, unknown>; because: string }
+  | "place_breakdown" | "resolution_times" | "unusual_rises" | "source_health" | "dept_followups"; args: Record<string, unknown>; because: string }
 
 /** a question about incidents or complaints of that kind ("air pollution complaints"), not about the readings themselves */
 const INCIDENT_WORDS = /\b(complaints?|incidents?|cases?|reports?|grievances?|petitions?)\b|புகார்|சம்பவ/i;
@@ -38,7 +39,7 @@ const WHY_CHANGE = /\b(why|what (caused|is behind|explains|drove|is driving)|rea
  */
 const COUNTED = /\b(how many|number of|count|incidents?|complaints?|cases?|grievances?|severe|open|pending|reported)\b|எத்தனை|evlo|ethana/i;
 const BY = (unit: string) => new RegExp(`\\b(by|per|each|across|every|in each|for each)\\s+(the\\s+)?${unit}s?\\b|\\b${unit}[- ]?wise\\b|\\b${unit}s? breakdown\\b`, "i");
-const BY_DEPT = BY("(department|dept)"), BY_ZONE = BY("zone"), BY_TALUK = BY("taluk");
+const BY_DEPT = new RegExp(`${BY("(department|dept)").source}|துறை(கள்)? ?வாரியா|துறைவாரி|thurai ?(vaariya|wise)`, "i"), BY_ZONE = BY("zone"), BY_TALUK = BY("taluk");
 
 const VERIFY = /\b(need|needs|needing|awaiting|waiting( for)?|pending|due)\b.{0,30}\b(my |your |collector'?s? )?(verification|verify|verifying|approval|sign[- ]?off|check(ing)?)\b|\bmy tasks?\b|\b(to|for me to) (verify|approve)\b|\bverification (queue|list|pending)\b|சரிபார்க்க|சரிபார்ப்பு/i;
 const DEPT = /\b(department|departments|dept|depts)\b|துறை/i;
@@ -57,9 +58,12 @@ const FOCUS = /\bwhat should (i|we) (focus|look|concentrate|act|work) on\b|\bwhe
  */
 const WHICH_MOST = (unit: string) => new RegExp(`\\b(which|what|top|highest|worst)\\s+(\\d+\\s+)?${unit}s?\\b.{0,60}\\b(most|highest|maximum|max|more|biggest|largest|top|worst|leads?|leading)\\b`, "i");
 const MOST_DEPT = WHICH_MOST("(department|dept)"), MOST_ZONE = WHICH_MOST("zone"), MOST_TALUK = WHICH_MOST("taluk"), MOST_WARD = WHICH_MOST("(ward|area|locality|road|street|spot|place|location|junction)");
+/** "List the taluks with the highest number of unresolved incidents", "rank the zones by ...": a ranking asked as an order, not a question with which (RC-44, PB-307). Read only when the rules answer (o.ranking): a model reads this sentence itself. */
+const LIST_MOST = (unit: string) => new RegExp(`\\b(list|show|rank|give|name|display|tell)\\b.{0,25}\\b(the |all |me )?(top |bottom )?(\\d+\\s+)?${unit}s?\\b.{0,45}\\b(with|having|that have|by|ranked)\\b.{0,35}\\b(highest|most|largest|biggest|top|lowest|fewest|least|maximum|worst)\\b`, "i");
+const LIST_DEPT = LIST_MOST("(department|dept)"), LIST_ZONE = LIST_MOST("zone"), LIST_TALUK = LIST_MOST("taluk"), LIST_WARD = LIST_MOST("(ward|area|locality|road|street|spot|place|location|junction)");
 /** "average resolution time", "how quickly does Metrowater resolve complaints", "which department resolves fastest": time to close */
 const RESOLUTION = /\b(average|avg|mean|median|typical)\s+(time\s+(to|for)\s+(resolve|resolution|close|closing|fix)\w*|(resolution|closing|closure|turnaround|response)\s+time)\b|\b(resolution|closure|turnaround)\s+times?\b|\bhow (fast|quickly|long)\b.{0,40}\b(resolve|resolved|resolving|close|closed|closing|fix|fixed|fixing|clear|cleared|clearing)\b|\bresolves? (the )?(fastest|quickest|slowest)\b|\b(fastest|quickest|slowest) (to )?resolv\w*|\bresolv\w*\b.{0,30}\b(fastest|quickest|slowest|fast|quickly|slowly)\b|\b(fastest|quickest|slowest)\b.{0,15}\b(clos|resolv|fix|clear|dispos)\w*|\b(clos|dispos)\w*\b.{0,30}\b(fastest|quickest|slowest)\b/i;
-const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|missed (the |their )?deadline|sla)\b/i;
+const LATE = /\b(overdue|over-due|late|delayed|past (the |their )?deadline|missed (the |their )?deadline|sla)\b|கெடு தாண்டிய|காலக்கெடு|தாமத|\b(deadline|kedu) (thaandi(ya)?|thandi(ya)?|mudinja|mudinjiduchu)|\bthaamadham/i;
 /**
  * "what happened this week?", "indha week enna nadandhuchu", "இன்று என்ன நடந்தது?": the whole message asks what happened in a
  * period, and names nothing else ("what happened at Velachery lake" is one incident's story, not this)
@@ -86,15 +90,23 @@ const WHY_HIGH = /\bwhy\b.{0,50}\b(high|so (high|many|much|bad)|bad|worst|leads?
 const COMPARE_PREV = /\bcompare\b.{0,25}\b(this|today|the current)\b.{0,15}\b(week|month|day|quarter)?\b.{0,10}\b(with|to|vs\.?|versus|and)\b.{0,12}\b(last|previous|prior|yesterday)\b|\b(this|today)('s)? (week|month|day)?\b.{0,8}\b(vs\.?|versus|compared (to|with))\b.{0,10}\b(last|previous|yesterday)\b/i;
 
 /** The one tool that answers `message`, or null to let the router decide. */
-export function directTool(message: string): DirectTool | null {
+export function directTool(message: string, o: { ranking?: boolean } = {}): DirectTool | null {
   const t = message.toLowerCase();
   if (VERIFY.test(t)) return { name: "verification_queue", args: {}, because: "asks for the work awaiting the Collector's verification (My Tasks)" };
+  // the data itself ("are the feeds live?", "is the hospital data real?"): the feeds, before any subject word is read (RC-11); test-data words are the help topic
+  if (aboutTheData(t)) return isHelpQuestion(t) ? null : { name: "source_health", args: {}, because: "asks whether the data feeds are live or the data real" };
+  // "past deadline by department": the past-deadline count of each department (RC-11, PB-145), not an incident search
+  if (BY_DEPT.test(t) && LATE.test(t) && !WHY_CHANGE.test(t)) return { name: "dept_followups", args: {}, because: "asks for the past-deadline count department by department" };
   if (COUNTED.test(t) && !WHY_CHANGE.test(t)) {
     if (BY_DEPT.test(t)) return { name: "departments", args: {}, because: "asks for the figures department by department" };
     if (BY_ZONE.test(t)) return { name: "zones", args: {}, because: "asks for the figures zone by zone" };
     if (BY_TALUK.test(t)) return { name: "taluks", args: {}, because: "asks for the figures taluk by taluk" };
   }
   if (!WHY_CHANGE.test(t) && !/\b(why|reason)\b/.test(t)) {
+    if (o.ranking && LIST_WARD.test(t)) return { name: "place_breakdown", args: {}, because: "asks to list the wards or areas with the most (location-wise counts)" };
+    if (o.ranking && LIST_TALUK.test(t)) return { name: "taluks", args: {}, because: "asks to list the taluks with the most" };
+    if (o.ranking && LIST_ZONE.test(t)) return { name: "zones", args: {}, because: "asks to list the zones with the most" };
+    if (o.ranking && LIST_DEPT.test(t) && !(BACKLOG.test(t) || LATE.test(t))) return { name: "departments", args: {}, because: "asks to list the departments with the most" };
     if (MOST_WARD.test(t)) return { name: "place_breakdown", args: {}, because: "asks which ward or area has the most (location-wise counts)" };
     if (MOST_TALUK.test(t)) return { name: "taluks", args: {}, because: "asks which taluk has the most" };
     if (MOST_ZONE.test(t)) return { name: "zones", args: {}, because: /\b(improv\w*|better|worse\w*|chang\w*|compared?)\b/.test(t)

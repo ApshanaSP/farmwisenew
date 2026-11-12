@@ -43,7 +43,9 @@ export const DEPT_ALIASES: Record<string, string[]> = {
   "GCC-PRK": ["parks department", "parks"],
   "CMWSSB": ["metro water", "metrowater", "cmwssb", "water board", "metro water board", "குடிநீர் வாரியம்", "மெட்ரோ வாட்டர்", "water"],
   "GCC-GAD": ["general administration"],
-  "GCC-REV": ["revenue", "tax department"]
+  "GCC-REV": ["revenue", "tax department", "property tax department", "property tax"],
+  // the district's own revenue administration (the Collector's), not the Corporation's Revenue: "district revenue" is the longer name, so it wins over the word "revenue" (RC-02, open-baseline-37)
+  "DIST-REV": ["district revenue", "district revenue administration", "மாவட்ட வருவாய்"]
 };
 
 /**
@@ -52,12 +54,19 @@ export const DEPT_ALIASES: Record<string, string[]> = {
  */
 export const EXPLAIN_TA = / (?:விளக்குங்க|விளக்குங்கள்|விளக்கவும்|விளக்கி|விளக்கம்|விளக்கமா|விளக்கமாக) |(?<! தெரு| மின்) விளக்கு $/;
 
+/** the shape of a general-knowledge question ("what is deep learning", "who is the president", "write a poem"), and subjects that are not the district's */
+export const GENERAL = /^\s*(what is|what are|whats|what does|who is|who was|who are|define|explain|meaning of|tell me a|tell me about|how does|how do i|how to|write|translate|calculate|solve|teach me|give me a|sing|recommend)\b|joke|poem|story|recipe|என்றால் என்ன|யார்|விளக்கு|கதை சொல்|பாடல்|கவிதை/;
+export const SUBJECTS = /deep learning|machine learning|artificial intelligence|\bai\b|neural network|programming|python|javascript|java\b|coding|cricket|football|ipl|movie|film|actor|actress|song|music|president|prime minister|capital of|bitcoin|crypto|stock market|share price|history of|physics|chemistry|biology|mathematics|chatgpt|google|facebook|instagram|youtube/;
+
 /** department code -> its name in Tamil, as said aloud (the Tamil voice says this, never the English name) */
 export const DEPT_TA: Record<string, string> = {
   "POL-GCP": "பெருநகர சென்னை காவல்துறை", "GCC-SWD": "மழைநீர் வடிகால் துறை", "GCC-SWM": "திடக்கழிவு மேலாண்மைத் துறை", "GCC-ENG": "சாலைகள் மற்றும் கட்டட அனுமதித் துறை",
   "GCC-ELE": "தெருவிளக்கு மற்றும் மின் துறை", "GCC-HLT": "மாநகராட்சி சுகாதாரத் துறை", "GCC-PRK": "பூங்காக்கள் துறை", "GCC-REV": "வருவாய்த் துறை", "PWD-WRD": "பொதுப்பணித்துறை நீர்வளம்",
   "PWD-BLD": "பொதுப்பணித்துறை கட்டடங்கள்", "HLT-DMS": "அரசு மருத்துவமனைகள்", "CMWSSB": "சென்னை குடிநீர் வாரியம்", "TANGEDCO": "மின் பகிர்மானக் கழகம்", "TNPCB": "மாசு கட்டுப்பாடு வாரியம்",
-  "DIST-DM": "மாவட்டப் பேரிடர் மேலாண்மை", "DIST-REV": "மாவட்ட வருவாய்த் துறை"
+  "DIST-DM": "மாவட்டப் பேரிடர் மேலாண்மை", "DIST-REV": "மாவட்ட வருவாய்த் துறை",
+  // the rest of the Corporation's departments (the table in officer/departments.ts): complete, so no Tamil line has to say an English department name (QA pass 4, RC-15)
+  "GCC-BRG": "பாலங்கள் துறை", "GCC-BLD": "கட்டடங்கள் துறை", "GCC-CNL": "மன்றத் துறை", "GCC-EDU": "கல்வித் துறை", "GCC-FWD": "குடும்ப நலத் துறை",
+  "GCC-FMU": "நிதி மேலாண்மைப் பிரிவு", "GCC-GAD": "பொது நிர்வாகத் துறை", "GCC-LND": "நிலம் மற்றும் சொத்துத் துறை", "GCC-MEC": "இயந்திரப் பொறியியல் துறை"
 };
 
 /** category code -> spoken names */
@@ -69,7 +78,9 @@ export const CAT_ALIASES: Record<string, string[]> = {
   ROAD_ACCIDENT: ["accident", "accidents", "road accident", "road accidents", "விபத்து"],
   TRAFFIC_OBSTRUCTION: ["traffic", "parking", "traffic jam", "போக்குவரத்து"],
   SOLID_WASTE: ["garbage", "waste", "trash", "rubbish", "solid waste", "குப்பை", "kuppai"],
-  STREETLIGHT_ELECTRICAL: ["streetlight", "streetlights", "street light", "street lights", "electrical hazard", "தெருவிளக்கு", "தெரு விளக்கு"],
+  // a drain-works site (a pit left open where the drain is being built) is that category, not the road's "pothole": the longer phrase wins over "பள்ளம்" (RC-02, open-baseline-38)
+  DRAIN_WORKS_SAFETY: ["drain work", "drain works", "drain worksite", "drain work site", "வடிகால் வேலை", "வடிகால் பணி", "வடிகால் பணியிட"],
+  STREETLIGHT_ELECTRICAL: ["streetlight", "streetlights", "street light", "street lights", "electrical hazard", "தெருவிளக்கு", "தெரு விளக்கு", "மின்விளக்கு", "மின் விளக்கு", "street lamp", "lamp post", "high mast"],
   VECTOR_DISEASE: ["mosquito", "mosquitoes", "dengue", "malaria", "fever", "vector", "கொசு", "டெங்கு", "காய்ச்சல்", "kosu"],
   HEALTH_SERVICES: ["hospital", "hospital capacity", "health services", "மருத்துவமனை"],
   AIR_POLLUTION: ["air pollution", "pollution", "smoke", "காற்று மாசு"],
@@ -91,21 +102,34 @@ export const CAT_ALIASES: Record<string, string[]> = {
   FOOD_SAFETY: ["food safety", "hotel hygiene", "food poisoning"]
 };
 
+/**
+ * The Tamil word for severe is also the everyday word for harsh: "கடுமையான வெயில்" is harsh sun, "கடுமையான குளிர்" harsh cold, not a list of severe cases. Beside a word of the weather or the
+ * land it is the weather's adjective (RC-03, audit-understanding-21). Closed list: the nouns of weather and season a Collector can say; any other noun leaves it a severity.
+ */
+export const HARSH_BESIDE = /(?:கடுமையான|கடுமை)\s*(?:வெயில்|வெப்பம்|குளிர்|மழை|புயல்|காற்று|வறட்சி|பனி|மூடுபனி|கோடை|குளிர்காலம்)/;
 export const SEV_WORDS: [string, Sev][] = [
   ["critical", "Severe"], ["severe", "Severe"], ["urgent", "Severe"], ["serious", "Severe"], ["அவசரமானவை", "Severe"], ["அவசர", "Severe"],
   ["கடுமையான", "Severe"], ["தீவிர", "Severe"], ["high", "High"], ["medium", "Medium"], ["moderate", "Medium"], ["low", "Low"],
   ["நடுத்தர", "Medium"], ["குறைந்த", "Low"]
 ];
 
+/**
+ * The words for each window: ONE table, read by the fast lane (quick.ts periodIn), by the rules lane (PERIOD_WORDS below) and so by every language. A word added for one lane or one
+ * language is added here, so "pona vaaram" cannot be a week in one lane and nothing in another (QA pass 4, RC-06). "last week" and "last month" are the matching console window
+ * (the last 7 and 30 days) in all three languages (BUG-003, an accepted decision); a stretch the console does not hold ("two weeks ago", "yesterday") is not in this table.
+ */
+export const PERIOD_TABLE: Record<PeriodKey, string[]> = {
+  daily: ["last 24 hours", "24 hours", "today", "daily", "இன்று", "இன்னைக்கு", "இன்றைய", "தினசரி", "innaiku", "innaikku", "inniki"],
+  weekly: ["last 7 days", "7 days", "this week", "this weeks", "last week", "last weeks", "weekly", "week", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாராந்திரம்", "வாரம்", "வாரத்துக்கு", "வாரந்தோறும்",
+    "vaaram", "vaara", "vaarathukku"],
+  monthly: ["last 30 days", "30 days", "this month", "this months", "last month", "last months", "monthly", "month", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "மாசத்துக்கு", "மாதத்தோடு",
+    "maasam", "maatham", "maasathukku"],
+  quarterly: ["last 90 days", "90 days", "3 months", "three months", "this quarter", "last quarter", "quarterly", "quarter", "காலாண்டு", "மூன்று மாதம்", "மூன்று மாத"]
+};
+/** the rules lane's list: the table, and the words only that lane reads ("day", for the token reader) */
 export const PERIOD_WORDS: [string, PeriodKey][] = [
-  ["last 24 hours", "daily"], ["24 hours", "daily"], ["today", "daily"], ["daily", "daily"], ["day", "daily"], ["இன்று", "daily"],
-  ["இன்னைக்கு", "daily"], ["இன்றைய", "daily"], ["தினசரி", "daily"], ["innaiku", "daily"], ["innaikku", "daily"],
-  ["last 7 days", "weekly"], ["7 days", "weekly"], ["this week", "weekly"], ["last week", "weekly"], ["weekly", "weekly"], ["week", "weekly"],
-  ["வாராந்திர", "weekly"], ["வாராந்திரம்", "weekly"], ["வாரம்", "weekly"], ["வாரத்துக்கு", "weekly"], ["வாரத்துக்கு", "weekly"],
-  ["last 30 days", "monthly"], ["30 days", "monthly"], ["this month", "monthly"], ["last month", "monthly"], ["monthly", "monthly"], ["month", "monthly"],
-  ["மாதம்", "monthly"], ["மாசம்", "monthly"], ["மாசத்துக்கு", "monthly"], ["மாதத்தோடு", "monthly"], ["maasam", "monthly"],
-  ["last 90 days", "quarterly"], ["90 days", "quarterly"], ["3 months", "quarterly"], ["this quarter", "quarterly"], ["last quarter", "quarterly"],
-  ["quarterly", "quarterly"], ["quarter", "quarterly"], ["காலாண்டு", "quarterly"]
+  ...(Object.entries(PERIOD_TABLE) as [PeriodKey, string[]][]).flatMap(([k, ws]) => ws.map((w): [string, PeriodKey] => [w, k])),
+  ["day", "daily"]
 ];
 
 export const PAGE_WORDS: [string, PageKey][] = [
@@ -163,3 +187,49 @@ export const REPAIR = new Set(["no", "not", "illa", "illai", "இல்ல", "�
 
 /** destructive verbs: there is no such action, so the request is refused with no state change */
 export const DESTRUCTIVE = /\b(delete|remove|erase|wipe|drop|destroy|purge)\b|அழி|நீக்கிடு/;
+
+/**
+ * The sentence's intent classes, one table by language, read by every lane before it builds anything (RC-04). A Tamil word has no \b, so the Tamil half starts at a
+ * word edge (no Tamil letter before it) and takes any ending.
+ *  keep    the Collector's own note or a reminder: nothing about the data is asked
+ *  change  an order to change, close, assign or delete a record: the console does not do it
+ */
+export const KEEPING = /\b(remember|remind|reminder|reminders|note|notes|save|pin|bookmark|workspace|type|search box|draft|write|letter|email|e-mail|mail|send|compose|forward|forget|make a note|for later|keep (it|them|this|that|the [a-z ]{3,40}) (aside|for later|handy)|nyabagam|nyabagapaduthu|nyabagapaduthunga|ninaivoottu|ninaivil vai|vechukko|vechuko)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|நினைவு படுத்து|ஞாபக|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு|குறிப்பு எடு|குறித்து வை|மறந்துடாத|மறக்காம)/i;
+export const CHANGE_RECORD = /\b(change|edit|modify|update the (status|record)|reassign|assign|close it|mark\b[^.]{0,40}\b(as )?(closed|resolved|done)|set (the )?status|maathu\w*|maathid\w*|maatru\w*|maattu\w*|maathi\w*|mathidu)\b|(?<![஀-௿])(மாற்று|மாத்து|மாற்றி|திருத்து|ஒதுக்கு|முடிச்சிடு|மூடிடு)/i;
+
+/**
+ * More spoken names for the categories (RC-05). Two parts, both derived, not typed per sentence:
+ *  1. the stem of a word the table already holds ("drainage" is also "drain", "encroachment" is also "encroach"), kept only when it names one category and no other;
+ *  2. the topics Collectors say that the data files under a category (power cuts, flood alerts), with the source of each in the comment.
+ * Tamil, Tanglish and English all read the same table, so the same question has the same topic whatever language it is in.
+ */
+const CATEGORY_TOPICS: Record<string, string[]> = {
+  // "theru vilakku" is the Tanglish of the street light. Power cuts are not here: the data holds no power-cut category, so they stay unread and the lane asks
+  STREETLIGHT_ELECTRICAL: ["theru vilakku", "therukku vilakku", "street lamp"],
+  // IMD alerts are the flood-risk signal category
+  FLOOD_RISK_SIGNAL: ["flood alert", "flood alerts", "red alert", "orange alert", "வெள்ள எச்சரிக்கை"],
+  STRAY_ANIMALS: ["stray animal", "stray animals", "animal", "animals", "stray", "street dog", "street dogs"],
+  DRAINAGE_SEWAGE: ["drain", "drains", "drainage problem", "manhole", "sewerage", "வடிகால்"]
+};
+(function deriveCategoryAliases() {
+  for (const [code, words] of Object.entries(CATEGORY_TOPICS)) { const have = CAT_ALIASES[code]; if (have) for (const w of words) if (!have.includes(w)) have.push(w); }
+  const owner = new Map<string, Set<string>>();
+  const note = (w: string, code: string) => { const s = owner.get(w) ?? new Set<string>(); s.add(code); owner.set(w, s); };
+  for (const [code, words] of Object.entries(CAT_ALIASES)) {
+    for (const a of words) note(a.trim().toLowerCase(), code);
+  }
+  const add = (code: string, w: string) => { if (w.length >= 5 && (owner.get(w)?.size ?? 0) <= 1 && ![...(owner.get(w) ?? [])].some((c) => !c.startsWith(code)) && !CAT_ALIASES[code].includes(w)) CAT_ALIASES[code].push(w); };
+  for (const code of Object.keys(CAT_ALIASES)) {
+    for (const a of [...CAT_ALIASES[code]]) {
+      const m = /^([a-z]{5,})(age|ment)$/.exec(a.trim());
+      if (m && m[1].length >= 5) add(code, m[1]);
+    }
+  }
+})();
+
+/**
+ * High, low, medium and moderate are ordinary words ("High Court", "high tide", "low lying", "medium sized"): they name a severity only beside a word that says
+ * so (high priority, low severity, medium level, high cases). One rule for the fast lane and the rules (RC-03).
+ */
+export const WEAK_SEV = new Set(["high", "medium", "moderate", "low"]);
+export const SEV_NOUN = new Set(["priority", "severity", "risk", "level", "urgency", "cases", "complaints", "incidents", "issues", "problems", "ones", "case", "complaint", "incident", "issue"]);

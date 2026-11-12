@@ -5,6 +5,17 @@
  */
 import type { BlockT, CaseRowT, StageDocT } from "./stage";
 import type { Lang } from "./types";
+import { DEPT_TA, ZONES, ZONE_TA_NAME } from "./lexicon";
+import { asciiDigits } from "./digits";
+import { catTaOfLabel } from "./narrate";
+import { LAST, OPEN_VERBS, SOFT_VERBS, readPositions, tokensOf } from "./ordinal";
+
+/** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
+const zoneNamed = (x: string): number | null => {
+  const s = x.trim().toLowerCase();
+  for (const [n, z] of Object.entries(ZONES)) if (z.en.some((e) => s === e || s.startsWith(`${e} `) || s.endsWith(` ${e}`)) || z.ta.some((e) => s.startsWith(e.replace(/[்ுூ]$/, "")))) return Number(n);
+  return null;
+};
 
 export type LocalCmd =
   | { op: "filter"; text: string }
@@ -13,30 +24,25 @@ export type LocalCmd =
   | { op: "next" } | { op: "prev" } | { op: "stop" } | { op: "read" } | { op: "again" } | { op: "close" } | { op: "back" } | { op: "clear" }
   | { op: "pin" }
   | { op: "export"; what: "png" | "csv" | null }
-  | { op: "open"; n: number }
-  | { op: "draft"; n: number; first: boolean }
+  /** n is a 1-based position (LAST = the last one); several positions (ns) are refused in the reducer with a plain line; `where` is a place to find among the rows */
+  | { op: "open"; n: number; ns?: number[]; where?: string }
+  | { op: "draft"; n: number; first: boolean; ns?: number[]; it?: boolean }
   | { op: "map"; n: number | null }
   | { op: "full" }
   | { op: "everywhere" };
 
-const ORD: Record<string, number> = {
-  first: 1, one: 1, "1st": 1, second: 2, two: 2, "2nd": 2, third: 3, three: 3, "3rd": 3, fourth: 4, four: 4, "4th": 4, fifth: 5, five: 5, "5th": 5,
-  sixth: 6, six: 6, "6th": 6, seventh: 7, seven: 7, eighth: 8, eight: 8, ninth: 9, nine: 9, tenth: 10, ten: 10, top: 1, last: -1,
-  onnu: 1, rendu: 2, moonu: 3, naalu: 4, anju: 5, aaru: 6,
-  "முதல்": 1, "முதலாவது": 1, "இரண்டாவது": 2, "ரெண்டாவது": 2, "மூன்றாவது": 3, "நான்காவது": 4, "ஐந்தாவது": 5, "ஆறாவது": 6,
-  // spoken Tamil and Tanglish forms
-  "மூணாவது": 3, "நாலாவது": 4, "அஞ்சாவது": 5, mudhal: 1, rendavathu: 2, moonavathu: 3, munavathu: 3, naalavathu: 4, anjavathu: 5
-};
-const numberIn = (t: string): number | null => {
-  const d = t.match(/\b(\d{1,2})\b/);
-  if (d) return Number(d[1]);
-  for (const [w, n] of Object.entries(ORD)) if (new RegExp(`(^|[^\\p{L}])${w}`, "u").test(t)) return n;
-  return null;
+const DRAFT_WORDS = new Set(["draft", "வரைவு", "வரைவை", "டிராஃப்ட்", "டிராப்ட்"]);
+const DRAFT_LEAD = new Set(["an", "a", "action", "alert", "mail", "email", "letter", "for", "to", "the", "pannu", "panni", "pannunga", "பண்ணு", "செய்", "செய்யுங்கள்", "எழுது", "ezhudhu", "kudu", "கொடு"]);
+
+/** "the one in Pallikaranai": a position given by a place, to be matched against the rows on screen (never guessed from the word "one") */
+const whereOf = (words: string[]): string | null => {
+  const m = words.join(" ").match(/^(?:the )?(?:one|case|complaint|incident)s? (?:in|at|from|near|of) (?:the )?(.+)$/);
+  return m && m[1].length >= 3 ? m[1] : null;
 };
 
 /** A command on the open Stage that needs no model, or null (the sentence goes to the agent). */
 export function localStageCommand(raw: string): LocalCmd | null {
-  const t = raw.toLowerCase().replace(/[.!?,]+$/g, "").replace(/\s+/g, " ").trim();
+  const t = asciiDigits(raw).toLowerCase().replace(/[.!?,]+$/g, "").replace(/\s+/g, " ").trim();
   if (!t) return null;
   if (/^(next|next one|aduthathu|adutha|அடுத்தது|அடுத்து)$/.test(t)) return { op: "next" };
   if (/^(previous|prev|back one|munnadi|முந்தையது)$/.test(t)) return { op: "prev" };
@@ -64,19 +70,26 @@ export function localStageCommand(raw: string): LocalCmd | null {
   const mapIt = t.match(/^show (?:(?:number )?(\d{1,2}|this|it)) on the (?:main )?map$/);
   if (mapIt) return { op: "map", n: mapIt[1] && /\d/.test(mapIt[1]) ? Number(mapIt[1]) : null };
   if (/\b(zone|ward|taluk)\b|மண்டலம்|வார்டு/.test(t)) return null;
-  const open = t.match(/^(?:open|thira|திற)(?: me)?(?: the| number| no\.?)? (.+?)(?: one| case| item)?(?: thira| திற)?$/) ?? t.match(/^(.+?)(?:vathu|வது)?(?:ai)? ?(?:thira|திற|தைத் திற|ஐத் திற)$/);
-  if (open) { const n = numberIn(open[1]); if (n && n > 0) return { op: "open", n }; }
-  // spoken Tamil: "மூணாவது கேஸைத் திறந்து காட்டு", "3-வதைத் திற": an ordinal and an open verb in a short sentence
-  if (/(திற|thira|thirandhu|open pannu)/.test(t) && t.split(" ").length <= 5 && !/(பேனல்|panel|news|செய்தி)/.test(t)) {
-    const n = numberIn(t);
-    if (n && n > 0) return { op: "open", n };
+  const words = tokensOf(t);
+  const verbAt = words.findIndex((w) => OPEN_VERBS.has(w));
+  if (verbAt >= 0 && words.length <= 9) {
+    const rest = words.filter((w, i) => i !== verbAt && !OPEN_VERBS.has(w) && !SOFT_VERBS.has(w));
+    const ns = readPositions(rest);
+    if (ns) return ns.length === 1 ? { op: "open", n: ns[0] } : { op: "open", n: ns[0], ns };
+    const where = whereOf(rest);
+    if (where) return { op: "open", n: 0, where };
   }
-  const draft = t.match(/^draft(?: an?)?(?: action| alert| mail| email| letter)?(?: for| to)?(?: the)? (.+?)(?: ones?)?$/);
-  if (draft) {
-    // "the first three": the count follows "first"/"top"; "the first" alone is item 1
-    const first = /^(?:first|top)\s+\S/.test(draft[1]);
-    const n = numberIn(first ? draft[1].replace(/^(?:first|top)\s+/, "") : draft[1]);
-    if (n && n > 0) return { op: "draft", n, first };
+  const draftAt = words.findIndex((w) => DRAFT_WORDS.has(w));
+  if (draftAt >= 0 && words.length <= 10) {
+    const rest = words.filter((w, i) => i !== draftAt && !(DRAFT_LEAD.has(w) && (i < draftAt || w !== "to")));
+    let lead = 0;
+    while (lead < rest.length && (rest[lead] === "for" || rest[lead] === "to" || rest[lead] === "the")) lead++;
+    const body = rest.slice(lead);
+    if (body.length === 1 && /^(it|this|that)$/.test(body[0])) return { op: "draft", n: 0, first: false, it: true };
+    const first = (body[0] === "first" || body[0] === "top") && body.length > 1;
+    const ns = readPositions(body, { count: true });
+    if (ns && first) return { op: "draft", n: ns.length, first: true };
+    if (ns) return ns.length === 1 ? { op: "draft", n: ns[0], first: false } : { op: "draft", n: ns[0], first: false, ns };
   }
   return null;
 }
@@ -107,6 +120,11 @@ export const stageEmpty: StageModel = { doc: null, back: [], views: {}, filter: 
  * is given, so a digest made right after it is right. "open" and the like ask for a rebuild: the new screen arrives through
  * pushScreen.
  */
+const say = (en: string, ta: string): StageEffect => ({ fx: "say", en, ta, speak: true });
+const outOfRange = (have: number, asked: number): StageEffect => have
+  ? say(`There ${have === 1 ? "is only 1 item" : `are only ${have} items`} here${asked > 0 ? `, so there is no number ${asked}` : ""}.`, `இங்கே ${have} உருப்படிகள் மட்டுமே உள்ளன${asked > 0 ? `, ${asked}-வது இல்லை` : ""}.`)
+  : say("There is nothing here to pick from.", "இங்கே தேர்ந்தெடுக்க எதுவும் இல்லை.");
+
 export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx: StageEffect[] } {
   const doc = m.doc;
   if (!doc) return { m, fx: [] };
@@ -135,18 +153,37 @@ export function stageReducer(m: StageModel, cmd: LocalCmd): { m: StageModel; fx:
     case "sort": return { m: { ...m, doc: sortStage(doc, cmd.by) }, fx: [{ fx: "earcon" }, { fx: "say", en: `Sorted by ${cmd.by}.`, ta: "வரிசைப்படுத்தினேன்.", speak: false }] };
     case "filter": {
       const r = filterStage(doc, cmd.text);
+      // "only Adyar" on a screen whose rows do not name it (a brief, a ranking): the Collector named a place, so the screen is rebuilt for it, and never told that nothing mentions it (RC-07)
+      const named = !r.kept ? zoneNamed(cmd.text) : null;
+      if (named != null) return { m, fx: [{ fx: "rebuild", recipe: doc.recipe, slots: { ...doc.slots, zones: [named], fresh: true }, label: { en: cmd.text, ta: cmd.text }, clearConsole: false }] };
       if (!r.kept) return { m, fx: [{ fx: "say", en: `None of these mention ${cmd.text}.`, ta: `"${cmd.text}" எதிலும் இல்லை.`, speak: true }] };
       return { m: { ...m, doc: r.doc, filter: cmd.text }, fx: [{ fx: "say", en: `${r.kept} of the ${r.of} shown are about ${cmd.text}.`, ta: `${r.of}-இல் ${r.kept} மட்டும்.`, speak: true }] };
     }
     case "open": {
-      const id = caseIds(doc)[cmd.n - 1];
-      if (!id) return { m, fx: [{ fx: "say", en: "There is no such item.", ta: "அப்படி ஒரு உருப்படி இல்லை.", speak: true }] };
-      return { m, fx: [{ fx: "rebuild", recipe: "case", slots: { id }, label: { en: `Opening case ${cmd.n}`, ta: `${cmd.n}-வது சம்பவத்தைத் திறக்கிறேன்` } }] };
+      const ids = caseIds(doc);
+      if (cmd.ns && cmd.ns.length > 1) return { m, fx: [say("I can open one case at a time. Which one?", "ஒரு நேரத்தில் ஒரு சம்பவத்தைத்தான் திறக்க முடியும். எது?")] };
+      let at = cmd.n;
+      if (cmd.where) {
+        const rows = doc.blocks.flatMap((b) => (b.kind === "CaseList" ? b.rows : []));
+        const hit = rows.filter((r) => has([r.title, r.place, r.zoneName, r.deptName, r.cat], cmd.where as string));
+        if (!hit.length) return { m, fx: [say(`None of these cases mention ${cmd.where}.`, `"${cmd.where}" எந்தச் சம்பவத்திலும் இல்லை.`)] };
+        if (hit.length > 1) return { m, fx: [say(`${hit.length} of these cases mention ${cmd.where}. Say the number of the one you want.`, `${hit.length} சம்பவங்கள் "${cmd.where}" என்று உள்ளன. எந்த எண் என்று சொல்லுங்கள்.`)] };
+        at = ids.indexOf(hit[0].id) + 1;
+      }
+      const k = at === LAST ? ids.length : at;
+      if (k < 1 || k > ids.length) return { m, fx: [outOfRange(ids.length, at)] };
+      const id = ids[k - 1];
+      return { m, fx: [{ fx: "rebuild", recipe: "case", slots: { id }, label: { en: `Opening case ${k}`, ta: `${k}-வது சம்பவத்தைத் திறக்கிறேன்` } }] };
     }
     case "draft": {
       const ids = caseIds(doc);
-      const pick = cmd.first ? ids.slice(0, cmd.n) : doc.recipe === "case" ? ids.slice(0, 1) : ([ids[cmd.n - 1]].filter(Boolean) as string[]);
-      return { m, fx: [{ fx: "draft", ids: pick }] };
+      if (cmd.it) return { m, fx: [doc.recipe === "case" && ids.length ? { fx: "draft", ids: ids.slice(0, 1) } : say("Which case should I draft for? Say its number.", "எந்தச் சம்பவத்துக்கு வரைவு? எண்ணைச் சொல்லுங்கள்.")] };
+      if (cmd.first) return { m, fx: [{ fx: "draft", ids: ids.slice(0, cmd.n) }] };
+      if (doc.recipe === "case") return { m, fx: [{ fx: "draft", ids: ids.slice(0, 1) }] };
+      const want = cmd.ns ?? [cmd.n];
+      const bad = want.find((p) => (p === LAST ? ids.length : p) < 1 || (p === LAST ? ids.length : p) > ids.length);
+      if (bad !== undefined) return { m, fx: [outOfRange(ids.length, bad)] };
+      return { m, fx: [{ fx: "draft", ids: [...new Set(want.map((p) => ids[(p === LAST ? ids.length : p) - 1]))] }] };
     }
     case "map": {
       const ids = caseIds(doc);
@@ -264,24 +301,28 @@ const ageWords = (h: number | null, lang: Lang) => (h == null ? null : lang === 
   : h < 1 ? "under an hour" : h < 48 ? `${Math.round(h)} hours` : `${Math.round(h / 24)} days`);
 
 /** What the problem is, in a few words: the incident's own short summary, else its kind and place (never an id or a citizen's words). */
-export function problemOf(r: CaseRowT): string {
+export function problemOf(r: CaseRowT, lang: Lang = "en"): string {
   if (r.why && r.why.length <= 110 && !/[.!?].+[.!?]/.test(r.why)) return r.why.replace(/\.$/, "");
   const t = r.title.replace(/\bINC-[A-Z0-9-]+\b/g, "").replace(/\s+/g, " ").trim();
   if (t.length <= 90) return t;
-  return r.cat ? `${r.cat}${r.place ? ` at ${r.place}` : ""}` : t.slice(0, 90);
+  // a long title is not read: the kind of problem and the place (the kind in Tamil in a Tamil line)
+  return r.cat ? (lang === "ta" ? `${catTaOfLabel(r.cat) ?? r.cat}${r.place ? `, ${r.place}` : ""}` : `${r.cat}${r.place ? ` at ${r.place}` : ""}`) : t.slice(0, 90);
 }
 
 /**
  * One case as an aide would brief it: where, what, how long and why it matters, who has it. No ids, no complaint text.
  * "First, in Royapuram: wall collapse at Chetpet. Open 22 hours and past its deadline. PWD Water Resources has it."
  */
+/** a ranking's unit in Tamil (the units the ranking screens use) */
+export const UNIT_TA: Record<string, string> = { incidents: "சம்பவங்கள்", days: "நாட்கள்", hours: "மணி நேரம்", "₹/kg": "ரூபாய்/கிலோ", mm: "மி.மீ", "% full": "% நிரம்பியது" };
 export function caseBrief(r: CaseRowT, i: number, asOf: string | null, lang: Lang): string {
-  const what = problemOf(r);
+  const what = problemOf(r, lang);
   const where = r.zoneName && !what.toLowerCase().includes(r.zoneName.toLowerCase()) ? r.zoneName : null;
   const age = ageWords(hoursBetween(r.t, asOf), lang);
   if (lang === "ta") {
-    return [`${ord(i, lang)}${where ? `, ${where}` : ""}: ${what}.`, age ? `${age} திறந்துள்ளது${r.overdue ? ", காலக்கெடு தாண்டிவிட்டது" : ""}.` : r.overdue ? "காலக்கெடு தாண்டிவிட்டது." : "",
-      r.complaints > 0 ? `${r.complaints} புகார்கள் வந்துள்ளன.` : "", r.deptName ? `${r.deptName} பொறுப்பு.` : ""].filter(Boolean).join(" ");
+    const whereTa = r.zone != null && ZONE_TA_NAME[r.zone] ? ZONE_TA_NAME[r.zone] : where; // the zone's and the department's Tamil names, by number and code (lexicon.ts); a name it does not know stays as it is
+    return [`${ord(i, lang)}${whereTa && !what.includes(whereTa) ? `, ${whereTa}` : ""}: ${what}.`, age ? `${age} திறந்துள்ளது${r.overdue ? ", காலக்கெடு தாண்டிவிட்டது" : ""}.` : r.overdue ? "காலக்கெடு தாண்டிவிட்டது." : "",
+      r.complaints > 0 ? `${r.complaints} புகார்கள் வந்துள்ளன.` : "", r.deptName ? `${(r.dept && DEPT_TA[r.dept]) || r.deptName} பொறுப்பு.` : ""].filter(Boolean).join(" ");
   }
   const state = age ? `Open ${age}${r.overdue ? " and past its deadline" : ""}.` : r.overdue ? "Past its deadline." : "";
   return [`${ord(i, lang)}${where ? `, in ${where}` : ""}: ${what}.`, state, r.complaints > 0 ? `${r.complaints} ${r.complaints === 1 ? "citizen has" : "citizens have"} complained.` : "",
@@ -298,12 +339,18 @@ export function narrationOf(d: StageDocT, lang: Lang): { key: string; text: stri
       const lead = lang === "ta" ? `${ord(i, lang)}${x.source ? `, ${x.source}` : ""}: ` : `${i === 0 ? "First" : i === b.items.length - 1 ? "And finally" : "Next"}${x.source ? `, from ${x.source}` : ""}: `;
       return { key: x.id, lead, text: `${lead}${x.title}.` };
     });
-    if (b.kind === "Brief") return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: p.text }));
+    // a Tamil reading of a brief reads each point in Tamil where it has one (the sentences the code builds), the record's own title as it is (RC-15, PB-207)
+    if (b.kind === "Brief") return b.points.map((p, i) => ({ key: `brief-${i}`, lead: "", text: lang === "ta" ? p.ta ?? p.text : p.text })).filter((x, i) => !(lang === "ta" && b.points[i].ta === "")); // ta "": the pipeline AI wrote it in English only, so a Tamil reading leaves it out
   }
   const list = d.blocks.find((b) => b.kind === "CaseList");
   if (list && list.kind === "CaseList") return list.rows.slice(0, 10).map((r, i) => ({ key: r.id, lead: "", text: caseBrief(r, i, d.asOf, lang) }));
   const rank = d.blocks.find((b) => b.kind === "Ranking");
-  if (rank && rank.kind === "Ranking") return rank.items.slice(0, 8).map((x) => ({ key: x.key, lead: "", text: `${x.rank === 1 ? (lang === "ta" ? "முதலிடம்" : "Top") : `${lang === "ta" ? "இடம்" : "Number"} ${x.rank}`}: ${x.label}, ${x.value}${rank.unit && rank.unit !== "points" ? ` ${rank.unit}` : ""}.` }));
+  if (rank && rank.kind === "Ranking") return rank.items.slice(0, 8).map((x) => {
+      // in Tamil the zone and the department are said by their Tamil names (a zone by its number, a department by its code), the unit in Tamil
+      const label = lang !== "ta" ? x.label : x.action === "zone" && x.zone != null && ZONE_TA_NAME[x.zone] ? ZONE_TA_NAME[x.zone] : x.action === "dept" && DEPT_TA[x.key] ? DEPT_TA[x.key] : x.label;
+      const unit = rank.unit && rank.unit !== "points" ? (lang === "ta" ? UNIT_TA[rank.unit] ?? rank.unit : rank.unit) : "";
+      return { key: x.key, lead: "", text: `${x.rank === 1 ? (lang === "ta" ? "முதலிடம்" : "Top") : `${lang === "ta" ? "இடம்" : "Number"} ${x.rank}`}: ${label}, ${x.value}${unit ? ` ${unit}` : ""}.` };
+    });
   return [];
 }
 

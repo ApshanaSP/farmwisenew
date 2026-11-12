@@ -5,6 +5,7 @@
  * renders only these kinds (components/collector/app/thunai/Stage.tsx), so a reply can never carry UI code or a number
  * the data does not hold.
  */
+import { asciiDigits } from "./digits";
 import { z } from "zod";
 
 const num = z.number().finite();
@@ -54,7 +55,7 @@ export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Chart"), id: str(40), title: str(160), chart: z.enum(["bar", "hbar", "line", "donut"]), unit: str(30).nullable(),
     labels: z.array(str(80)).max(40), values: z.array(num).max(40) }),
   z.object({ kind: z.literal("Heat"), id: str(40), title: str(160), rows: z.array(str(80)).max(12), cols: z.array(str(80)).max(10), cells: z.array(z.array(num)).max(12) }),
-  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), incidentId: str(80).nullable() })).max(10) }),
+  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), ta: str(400).optional(), incidentId: str(80).nullable() })).max(10) }),
   z.object({ kind: z.literal("Answer"), id: str(40), title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
   z.object({ kind: z.literal("Drafts"), id: str(40), title: str(120) }),
   /** what stands out: each finding with its method, how many values it rests on, and a caveat (stats.ts) */
@@ -164,6 +165,7 @@ export function figuresOf(d: Pick<StageDocT, "blocks">): Set<string> {
 /** True when every figure in `text` is one the Stage holds (or the Collector said). */
 export function figuresOk(text: string, allowed: Set<string>, heard = ""): boolean {
   const norm = (x: string) => String(Number(x.replace(/,/g, "")));
-  const own = new Set((heard.match(/\d+(?:\.\d+)?/g) ?? []).map(norm));
-  return (text.match(/\d+(?:,\d{2,3})*(?:\.\d+)?/g) ?? []).map(norm).every((x) => allowed.has(x) || own.has(x));
+  // digits of every script are figures (RC-13)
+  const own = new Set((asciiDigits(heard).match(/\d+(?:\.\d+)?/g) ?? []).map(norm));
+  return (asciiDigits(text).match(/\d+(?:,\d{2,3})*(?:\.\d+)?/g) ?? []).map(norm).every((x) => allowed.has(x) || own.has(x));
 }

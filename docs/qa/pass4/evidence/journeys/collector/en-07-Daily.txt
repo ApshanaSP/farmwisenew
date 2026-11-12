@@ -1,0 +1,84 @@
+Chennai · Collector
+Overview
+Briefing
+Trends
+Environment
+Data Studio
+Search
+/
+அ
+தமிழ்
+Menu
+6
+CO
+Cyclone Murasu
+Collected 6 Nov, 06:10 PM
+Data Studio
+Your files · not filtered
+Add data
+RULES ONLY
+Drop a file or browse
+Excel · CSV · PDF · a photo of a table · up to 15 MB
+Connect with sign-in or schedule
+SAMPLES
+Storm-water drain desilting register
+Excel
+Fever & dengue surveillance
+CSV
+Ration shop stock (Tamil headers)
+CSV
+Hospital beds and OPD, daily
+CSV
+Your data
+7
+On the dashboard
+Add charts from any dataset
+Live Connectors
+Sites that publish daily
+R
+3 rows · health 100
+D
+2 rows · health 100
+புகார்
+2 rows · health 100
+Semi
+2 rows · health 100
+Future
+3 rows · health 92
+Tamil16
+3 rows · health 92
+Tamil Bom
+3 rows · health 92
+Hospital_Beds_Daily_2026.csv
+Sample data · 2.9s
+21
+%
+Hide
+Reader
+1,620 rows · 21 columns
+36 ms
+Profiler
+Reading the headers and sample rows
+Data Detective
+Checking and cleaning the data
+Geo-locator
+Placing rows on the district map
+Designer
+Designing the dashboard
+Linker
+Connecting to district incidents
+Insight Analyst
+Finding what the Collector should act on
+LIVE REASONING
+0 notes
+Profiler
+Reading the headers and sample rows
+NOW WORKING · PROFILER 2/7
+An AI model decides what every column means.
+
+It sees the headers, column statistics and ten sample rows with personal details masked, and says whether the data is Chennai's. Its answer is checked against the values before use.
+
+Jarvis
+Ask District IQ
+Ctrl K
+5

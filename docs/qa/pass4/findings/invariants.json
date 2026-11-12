@@ -1,0 +1,222 @@
+[
+  {
+    "id": "INV-3", "area": "Officer console Insights, Ask District IQ", "severity": "P0",
+    "title": "\"Closed on time\" and \"Within deadline\" count incidents closed months after their due time",
+    "what_happens": "The officer's Work record tile \"Closed on time\" (sub-label \"within the deadline\") and the note \"N% of the closed ones met their deadline\", and Ask District IQ's resolution_times answer (\"% on time\", \"Within deadline\"), all count an incident as on time when sla_breached = 0. For a \"response\" deadline that flag means only that the first action was in time. So district-wide over 90 days the app says 6,585 of 13,579 resolved incidents (48%) were within the deadline, and 2,923 (22%) were closed by their due time. Police is the worst: the tile says 77% (3,257 of 4,243), and 354 (8%) were closed by the due time. 6,457 Resolved incidents in the snapshot are counted on time though closed after the due time. Departments with \"resolution\" deadlines (Solid Waste, for example) are right, and a test holds that.",
+    "what_should_happen": "A figure called closed on time or within the deadline counts closed_at <= sla_due_at. Ready patch: in src/lib/assistant/incidents.ts:249 use SUM(i.closed_at <= i.sla_due_at) AS on_time, and in src/lib/officer/insights.ts:205 use SUM(OPEN = 0 AND i.closed_at <= i.sla_due_at) AS on_time. If the owner prefers the current count for police, the label must say so: \"Met its target (first response for police, closing for others)\". Owner's call on the words; the number as labelled is wrong today.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-3",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts (it.fails INV-3, and the control for GCC-SWM); docs/qa/pass4/evidence/invariants.json check resolved_said_within_deadline_but_closed_late",
+    "root_cause_guess": "src/lib/assistant/incidents.ts:249 and src/lib/officer/insights.ts:205, reading the pipeline's flag from district_intel/dintel/incidents.py:125-129",
+    "class": "wrong number: a flag read as something it does not mean", "lang": "all"
+  },
+  {
+    "id": "INV-4", "area": "Collector console, case page and Past deadline (OPEN-7, the app's side)", "severity": "P1",
+    "title": "914 open incidents say \"missed\" on the case page and are not on the Past deadline tile, list or briefing",
+    "what_happens": "Detail.tsx:130 marks the deadline missed when the due time has gone. The tile, the list (intel.ts:1369), the briefing and metrics.ts:65 count sla_breached = 1. 914 open incidents are past their due time with sla_breached = 0, the oldest due in May 2026. Example: INC-20260923-CBAAF5, due 24 Sep, says missed on its page and is not on the Past deadline list. The Past deadline list has 943 incidents; 1,873 open incidents are past their due time. explain() in intel.ts:470 uses the due time too, and analysis.ts:168 uses the flag, so one incident gets both answers.",
+    "what_should_happen": "One rule on every surface. Do not patch the pipeline's data. Ready patch for the smaller choice: in Detail.tsx:130 use Number(i.breached) === 1 for \"missed\", and for a response deadline with the flag at 0 show \"responded in time, still open\". The larger choice, counting by the due time everywhere, changes the list from 943 towards 1,873: that is the owner's decision.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-4",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts; docs/qa/pass4/evidence/invariants.json check case_page_says_missed_but_tile_does_not_count",
+    "root_cause_guess": "src/components/collector/app/Detail.tsx:130 against src/lib/reference/metrics.ts:65 and src/lib/collector/intel.ts:1369",
+    "class": "two definitions of one word", "lang": "all"
+  },
+  {
+    "id": "INV-1", "area": "Collector console, search box; the app's build steps", "severity": "P2",
+    "title": "A news result in the search box can open an incident the app's own build took out",
+    "what_happens": "The build step newsMedia (derive.ts:311) deletes news-only incidents from sites that are not news media, with their members, but leaves the rest pointing at them: 181 articles (144 incidents), 181 reports, 43 actions, 136 timeline rows and 8 gap rows. dropIncidents, just below it, does this properly. search() returns the article with its incident id, CollectorApp.tsx:786 opens that id, and incident() returns null. Tested with the article about the Kasimedu fishermen (INC-20261106-7D97AB). The review queue's count also still includes 16 gaps for dropped incidents.",
+    "what_should_happen": "The result opens the article, as an unlinked one does. Ready patch: in newsMedia, replace the two DELETE loops with dropIncidents(db, drop), which unlinks the articles and reports and removes the actions, timeline and gaps.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-1",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts; docs/qa/pass4/evidence/invariants-after-build.json",
+    "root_cause_guess": "src/lib/collector/derive.ts:311 (newsMedia does not use dropIncidents, derive.ts:324)",
+    "class": "dangling link made by the app's build", "lang": "all"
+  },
+  {
+    "id": "INV-2", "area": "Collector console, search box", "severity": "P2",
+    "title": "The search box shows a private person's home address and mobile number as a news headline",
+    "what_happens": "4 Dinamalar items are home Golu listings whose headline is a person's name, home address and mobile number or gmail address. 3 headlines hold a phone number, 1 an email, and 4 summaries repeat them. They are not on the News page, but search() matches every document and shows the title as stored: searching the locality name finds them. Jarvis's path hides the same text (privacy.ts redactText), so the rule exists and the search box does not use it. Rated P2 and not P0 because the text is already public on the publisher's site, it is seen only by a signed-in Collector, and no citizen's complaint data is involved. The owner may rate it higher.",
+    "what_should_happen": "No phone number or email in a headline the app shows. Ready patch: in src/lib/collector/intel.ts search(), map each news row through redactText(title), or leave out documents with category_code = 'OTHER' as the News page does.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-2",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts; docs/qa/pass4/evidence/invariants.json checks personal_data:documents.title, .title_en and .summary (ids only, no text copied)",
+    "root_cause_guess": "src/lib/collector/intel.ts:1420 search(), the news query, with no redaction and no filter",
+    "class": "personal data shown", "lang": "all"
+  },
+  {
+    "id": "INV-6", "area": "Citizen portal, profile", "severity": "P2",
+    "title": "The profile form accepts a ward that belongs to another zone",
+    "what_happens": "Zone 14's ward range is 168 to 191, but wards 170 to 182 are zone 13's (Adyar). 13 wards sit inside another zone's range. The form's limits and the server check (profile/route.ts:118) use the range as if it were exact, so PUT /api/profile with zone 14 and ward 175 returns 200 and saves it. One saved profile (id 1) holds ward 100 with zone 9; ward 100 is in zone 8. The range check would refuse that today, so that row is older than the check. The complaint route already takes the zone from the ward, so complaints are not affected.",
+    "what_should_happen": "Check the ward against zone_wards. Ready patch: in src/app/api/profile/route.ts replace the range test with SELECT 1 FROM zone_wards WHERE ward_number = ? AND zone_id = ?, and answer 400 when there is no row. In src/app/profile/page.tsx show the zone's real wards.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-6",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts (the real route, sign-in faked at the boundary, writing only to this process's throwaway file); docs/qa/pass4/evidence/invariants.json checks zone_range_contains_other_zones_ward and user_profile_ward_in_other_zone",
+    "root_cause_guess": "src/app/api/profile/route.ts:111-118, src/app/profile/page.tsx:459-460, and the zones.ward_start and ward_end columns, which cannot describe zone 14",
+    "class": "validation against the wrong table", "lang": "all"
+  },
+  {
+    "id": "INV-5", "area": "Ask District IQ and Jarvis, incident answer (OPEN-11, the app's side)", "severity": "P3",
+    "title": "A forecast stored as an incident is described as open for \"-1 hours\"",
+    "what_happens": "The 5 IMD incidents dated after the build have hours_open = -1.1. The lists hide them, because they stop at the store's time, but search by id finds them and the incident_detail tool answers open_for \"-1 hours\" and the fact \"Hours open: -1.1\". analysis.ts:168 would write \"open for -1 hours\" in the same way.",
+    "what_should_happen": "Never less than no time. The real fix is the pipeline's (INV-9). A display guard is the owner's call, since the rule is not to patch around pipeline data: openFor in tools.ts:185 could say \"not yet started\" when the hours are negative.",
+    "repro": "npx vitest run --config vitest.qa4.config.ts tests/qa/pass4/invariants-app.test.ts -t INV-5",
+    "evidence": "tests/qa/pass4/invariants-app.test.ts",
+    "root_cause_guess": "src/lib/assistant/tools.ts:185, src/lib/collector/analysis.ts:168",
+    "class": "impossible value shown", "lang": "all"
+  },
+  {
+    "id": "INV-7", "area": "pipeline", "severity": "P2",
+    "title": "OPEN-7 confirmed: 914 open incidents past their due time with sla_breached = 0 (was 933 on an older build)",
+    "what_happens": "912 have a \"response\" deadline and 2 a \"resolution\" deadline at exactly the limit. The same rule leaves 6,463 closed incidents closed after their due time and not marked late. sla_breached is exactly sla_ratio > 1 on every row (the check passes), and for a response deadline the ratio uses the time to the first action.",
+    "what_should_happen": "The pipeline owner decides what a response deadline means once the response is done. Reported, not patched. The app's part is INV-3 and INV-4.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks incident_open_past_due_not_breached, incident_closed_after_due_not_breached, sla_flag_is_the_pipeline_rule",
+    "root_cause_guess": "district_intel/dintel/incidents.py:125-129",
+    "class": "pipeline rule", "lang": "all"
+  },
+  {
+    "id": "INV-8", "area": "pipeline", "severity": "P3",
+    "title": "OPEN-8 confirmed with today's numbers, and the cause found: the kpis table uses two other definitions; no screen shows it",
+    "what_happens": "complaints_filed and complaints_open count complaints by their own filing time (they match events on every row). The console sums complaints over incidents first reported in the window. Daily 166 against 147 filed and 165 against 147 open; weekly 800 against 787 and 680 against 692; monthly 3,270 against 3,255 and 1,064 against 1,174; quarterly 9,120 against 9,113 and 1,118 against 1,238. kpis.resolved also counts Rejected: daily 179 against 175. Every other kpis column matches incidents on all 128 rows. The claim of 132 against 123 was an older build. Lowered from P2 to P3: the app does not read this table, and catalog.ts:360 keeps it from Ask District IQ.",
+    "what_should_happen": "Say which definition the table means, or align it. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks kpis_complaints_filed_vs_console_rule, kpis_complaints_open_vs_console_rule, kpis_resolved_counts_rejected, and known_items.open8",
+    "root_cause_guess": "district_intel/dintel/analytics.py:279-280",
+    "class": "two definitions", "lang": "all"
+  },
+  {
+    "id": "INV-9", "area": "pipeline", "severity": "P3",
+    "title": "OPEN-11, part 1: 5 IMD forecasts are stored as incidents with future times (the claim was 4)",
+    "what_happens": "5 incidents have a first report of 2026-11-06 19:11:33, after the build at 18:21:19 and the as-of at 18:08. 4 of them have an \"occurred\" date of 7 to 10 November. The pipeline's own data_quality row says 5 failing, severity hard, action quarantine, and they are still in incidents. 4 imd_warning_level readings are dated 7 to 10 November. New: 108 hospital readings, the latest dated 6 November, are later than the newest record source_health gives for hospital (5 November).",
+    "what_should_happen": "Apply the quarantine the pipeline's own table asks for, and keep forecasts out of incidents. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks incident_hours_open_negative, event_occurred_after_reported, date_future:*, event_newer_than_source_says, reading_newer_than_source_says, data_quality_quarantine_not_applied",
+    "root_cause_guess": "the IMD warning loader in district_intel; the quarantine step does not take the row out of incidents",
+    "class": "future date", "lang": "all"
+  },
+  {
+    "id": "INV-10", "area": "pipeline", "severity": "P3",
+    "title": "OPEN-11, part 2: 763 Lapsed incidents have no close time (the claim was 756; 611 after the app's build steps)",
+    "what_happens": "The pipeline sets closed_at only for Resolved and Rejected. A news-only incident with no new coverage for 7 days becomes Lapsed with none. All 763 are closed by age. 647 are news-only in the stored data. The app's build steps take some out, leaving 611. The case page shows the word Lapsed where the close time goes, which is right.",
+    "what_should_happen": "Set the close time when an incident lapses, or say that Lapsed has none. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs; the 611 is asserted in tests/qa/pass4/invariants-app.test.ts",
+    "evidence": "docs/qa/pass4/evidence/invariants.json check incident_lapsed_without_closed_at; docs/qa/pass4/evidence/invariants-after-build.json",
+    "root_cause_guess": "district_intel/dintel/incidents.py:88-93",
+    "class": "missing date", "lang": "all"
+  },
+  {
+    "id": "INV-11", "area": "pipeline", "severity": "P3",
+    "title": "OPEN-11, part 3: daily_counts has 228 fewer grievance rows than events, and leaves out IMD and CPCB",
+    "what_happens": "16,721 against 16,949 grievance rows: the 228 are the rows flagged junk, as claimed. New: IMD (139) and CPCB (17) are left out too. Once those three are set aside, every day, zone, category and source agrees, so the table is consistent with its own rule. No screen reads this table; only Ask District IQ's planner can.",
+    "what_should_happen": "Note the rule beside the table so nobody compares it with events. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks daily_counts_miss_junk_complaints, daily_counts_miss_imd_and_cpcb, daily_counts_vs_events_after_those_rules",
+    "root_cause_guess": "district_intel/dintel/analytics.py:29",
+    "class": "undocumented filter", "lang": "all"
+  },
+  {
+    "id": "INV-12", "area": "pipeline", "severity": "P2",
+    "title": "Work done on earlier builds no longer attaches to any incident, because incident ids change between builds",
+    "what_happens": "The durable tables name incidents this build does not have: 6 of 6 Collector decisions, 3 of 7 department assignments, 3 of 3 officer reports, 5 of 5 officer steps, 6 of 6 follow-ups, 6 of 6 emails, 4 of 4 action updates (by action id), and 23 incidents named in issued briefings. An id is the md5 of the incident's first report. 17 of the 29 old ids trace to a report that is still here, now inside an incident with another id (for example GRV-OVL-00119, once INC-20260925-2B958A, now in INC-20260920-6AF80C). So a merge or a changed first report renames the incident, and a Collector's decision on it no longer applies to the case. The pipeline has an id registry (output/state/incident_ids.json), and it did not hold these. Several of the traced reports are planted overlay records, so the rebuilt overlay may be part of the cause. All 6 emails are in sandbox mode, which points to testing; for the other rows the data cannot say. The rule matters more than the count.",
+    "what_should_happen": "An incident keeps its id across builds, or the build publishes old-to-new ids so the app can carry the work over. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks orphan_collector_decision, orphan_department_assignment, orphan_officer_report, orphan_officer_step, orphan_followup, orphan_outbound_email, orphan_action_update_action, archived_briefing_incident_missing, and known_items.lost_work",
+    "root_cause_guess": "district_intel/dintel/linking.py:98-101",
+    "class": "unstable id", "lang": "all"
+  },
+  {
+    "id": "INV-13", "area": "pipeline", "severity": "P3",
+    "title": "225 incidents are made only of reports the pipeline itself flags as unusable text (\"ok\", \"asdf\", \"testing\")",
+    "what_happens": "228 reports have junk_flag = 1 and the pipeline's data_quality row says \"hide from briefings\". 225 incidents have no other report: 6 are High, and 6 are open. Their titles look normal, because the title comes from the category and place, so nothing warns the reader. They count as citizen complaints in kpis and on the console's tiles. The app never reads junk_flag.",
+    "what_should_happen": "Leave such reports out when forming incidents, or carry a flag the app can use. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json check incident_only_junk_reports",
+    "root_cause_guess": "district_intel/dintel/incidents.py forms incidents without looking at junk_flag",
+    "class": "noise counted as data", "lang": "all"
+  },
+  {
+    "id": "INV-14", "area": "pipeline", "severity": "P3",
+    "title": "Duplicate news: 440 article URLs are stored more than once, and outlet_count counts articles and not outlets",
+    "what_happens": "440 URLs appear in 893 documents. 1,349 groups repeat the same headline from the same publisher on one day (2,758 documents). 49 incidents list the same URL twice (46 after the app's build). 77 groups of reports share title, text, time and place (76 news, 1 IMD). 1 group of incidents shares title, time and place (the 5 IMD forecasts of INV-9). outlet_count differs from the distinct publishers on 124 incidents (95 after the app's build), by up to 5, so \"covered by 2 or more outlets\" on Insights can be one outlet writing twice. The ids are unique: no duplicate doc_id, event_id, incident_id or article_id.",
+    "what_should_happen": "Key a document on its URL, and count distinct publishers. Reported, not patched. derive.ts already recounts distinct publishers for the incidents it merges.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks duplicate_news_article_url, duplicate_news_title_publisher_day, duplicate_news_url_in_one_incident, outlet_count_is_not_publishers, duplicate_event_same_text_time_place, duplicate_incident_same_title_time_place",
+    "root_cause_guess": "district_intel/dintel/incidents.py:70 for outlet_count",
+    "class": "duplicate documents", "lang": "all"
+  },
+  {
+    "id": "INV-15", "area": "pipeline", "severity": "P3",
+    "title": "135 times the same step for one department is listed twice in one incident",
+    "what_happens": "actions has rows with the same incident, text and department under different action ids. A list of an incident's next steps shows the same step twice.",
+    "what_should_happen": "One step per incident, text and department. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json check duplicate_action_same_incident_text_dept",
+    "root_cause_guess": "district_intel: actions are made per report and joined per incident (incidents.py:192)",
+    "class": "duplicate rows", "lang": "all"
+  },
+  {
+    "id": "INV-16", "area": "pipeline", "severity": "P3",
+    "title": "Small disagreements between status, dates and flags",
+    "what_happens": "114 incidents closed later than their last update, and 1,161 timeline steps later than the incident's last update, so last_update_at is not the last thing that happened. 24 Resolved or Rejected incidents with a report still open. 2 reports still In progress with a close time. 3 reports marked outside the district but given a zone. 13 actions with finish or check times but still In progress. 10 steps still open on a closed incident. The large rules all hold: is_open against status, closed_at against closed status, verified against verified_at, closed after opened.",
+    "what_should_happen": "Take last_update_at from the latest of the reports, timeline and close time, and close a report's steps with it. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks incident_closed_after_last_update, timeline_step_after_last_update, incident_resolved_with_open_report, event_in_progress_with_closed_at, event_outside_district_but_in_a_zone, action_finished_but_status_in_progress, action_open_on_closed_incident",
+    "root_cause_guess": "district_intel/dintel/incidents.py",
+    "class": "state disagreement", "lang": "all"
+  },
+  {
+    "id": "INV-17", "area": "pipeline", "severity": "P3",
+    "title": "The portal's complaints and the console's reports are two separate test sets, and 16,241 report links point to localhost",
+    "what_happens": "8,110 synthetic rows in complaints have no report in events, and 16,945 synthetic grievance reports have no row in complaints. Only the 4 real complaints are in both, and those 4 agree on department, zone and ward. 16,241 events.deep_link values start http://localhost:3000. The app hides that column (catalog.ts:382) and no screen shows it. So a complaint number from the portal's synthetic set would find no incident in the console. This is how the test data was made; it is listed so nobody reads it as data loss.",
+    "what_should_happen": "Nothing to patch in the app. Set a real base URL in the export if the links are ever to be used. How test data is described is the owner's decision.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks complaint_not_in_events, grievance_event_without_complaint, real_complaint_not_in_events, report_link_points_to_localhost",
+    "root_cause_guess": "district_intel grievance loader and the department generators",
+    "class": "test data shape", "lang": "all"
+  },
+  {
+    "id": "INV-18", "area": "pipeline", "severity": "P3",
+    "title": "Tamil fields: one garbled word in a brief, 12 of 15 notes with no Tamil, 26 English headlines still in Tamil",
+    "what_happens": "The monthly briefing's ai_summary_ta has Latin letters in the middle of a Tamil word. 12 of 15 briefing_notes have no text_ta (all the departments and news sections). 26 documents have Tamil in title_en, and 21 are marked English with a Tamil headline. Every other Tamil field holds Tamil: taluk names, all 4 incident AI summaries, the 4 briefings, reports and articles marked Tamil.",
+    "what_should_happen": "Check the model's Tamil before storing, write the missing notes, and fix the language mark. Reported, not patched. What the Tamil screen does with a note that has no Tamil was not tested here.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks tamil_garbled_word:briefings.ai_summary_ta, tamil_missing:briefing_notes.text_ta, english_article_with_tamil_title:documents, english_title_holds_tamil:documents.title_en",
+    "root_cause_guess": "district_intel/dintel/briefai.py and its news translation step",
+    "class": "language", "lang": "ta"
+  },
+  {
+    "id": "INV-19", "area": "pipeline", "severity": "P3",
+    "title": "456 incident pins are outside their own ward's shape, on average under 1 km from the ward's centre",
+    "what_happens": "Mostly police (255) and grievance (110) records, whose ward comes from the record and whose point comes from elsewhere. The average distance from the ward's centre is 0.5 to 0.9 km. One news incident is 5.5 km from its ward's centre. All pins are inside Chennai's bounds, and no ward is in the wrong zone.",
+    "what_should_happen": "Say which of the ward and the pin wins when they disagree. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks incident_pin_outside_own_ward, incident_pin_over_5km_from_ward_centre",
+    "root_cause_guess": "district_intel geocoding (geo_method pin, source_point+snapped)",
+    "class": "position", "lang": "all"
+  },
+  {
+    "id": "INV-20", "area": "pipeline", "severity": "P3",
+    "title": "The date inside 472 incident ids differs from the incident's first report",
+    "what_happens": "An id's date is fixed when it is first made, and later reports can move the first report. Nothing in the app reads a date from an id. Listed so nobody relies on it.",
+    "what_should_happen": "Nothing to do unless an id is ever read as a date.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json check incident_id_date_differs_from_first_report",
+    "root_cause_guess": "district_intel/dintel/linking.py:98-101",
+    "class": "misleading id", "lang": "all"
+  },
+  {
+    "id": "INV-21", "area": "pipeline", "severity": "P3",
+    "title": "Article text with broken characters or HTML left in it",
+    "what_happens": "14 documents have broken characters from a wrong encoding, 25 have HTML tags or codes in the text, and 2 source items have them in the title. The news preview shows the text as stored (news/article/route.ts:17). No incident or report title has either.",
+    "what_should_happen": "Clean the text when it is fetched. Reported, not patched.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks document_body_mojibake, document_body_html_left, source_item_title_html_left",
+    "root_cause_guess": "district_intel news fetcher",
+    "class": "broken text", "lang": "all"
+  },
+  {
+    "id": "INV-22", "area": "pipeline", "severity": "P3",
+    "title": "Article bodies hold contact details: mostly helplines, bookings and reporters' emails",
+    "what_happens": "193 document bodies hold a phone number or email (116 phone, 86 email). Read with digits masked, they are helplines, WhatsApp complaint numbers, restaurant bookings, book publishers and reporters' emails, with a few private organisers and some gmail addresses. This is the publisher's own text, and the news preview shows it. Jarvis's path hides it. No citizen's number or email is in any complaint or report text, and no Aadhaar-shaped number is in any shown field.",
+    "what_should_happen": "Owner's call whether the preview should hide numbers as Jarvis does. Whether each number is private was judged from a masked sample, not proved.",
+    "repro": "node tests/qa/pass4/invariants.mjs",
+    "evidence": "docs/qa/pass4/evidence/invariants.json checks personal_data:documents.body, aadhaar_shaped_in_any_shown_field, citizen_contact_in_shown_complaint_text",
+    "root_cause_guess": "the publishers' text, kept as stored",
+    "class": "personal data in third-party text", "lang": "all"
+  }
+]

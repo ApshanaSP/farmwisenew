@@ -9,6 +9,7 @@
  *   <id>.cand.json.gz   a link's candidate tables (every table, file, feed it held), so another can be chosen
  *   <id>.auth           a link's sign-in and browser session, encrypted (connect/vault.ts)
  *   <id>.pending.json   a run the Relevance gate stopped, waiting for "Use anyway"
+ *   <id>.pickof         the picker's token a dataset was made from: deleting the dataset removes that token's saved list and sign-in too
  *   board.json          panels pinned to the Studio board
  * Writes go to a temporary file first and are renamed into place, so a crash never leaves half a file.
  */
@@ -124,13 +125,40 @@ export function dropPending(id: string, all = false) {
 
 /** A link that held several datasets, waiting for the Collector's choice in the picker. */
 export interface SavedPick { pick: PickSet; found: { cand: Candidate; table: Table }[]; auth: AuthInput["mode"]; every: number | null; name: string | null; buf: string; contentType: string; pageUrl: string; method: "http" | "browser" }
-export function savePick(id: string, x: SavedPick) { write(p(id, ".pick.json.gz"), zlib.gzipSync(JSON.stringify(x))); }
+export function savePick(id: string, x: SavedPick) { sweepUnkept(); write(p(id, ".pick.json.gz"), zlib.gzipSync(JSON.stringify(x))); }
+/** What a picker's token saved: its list of datasets and the sign-in held for it (RC-21: nothing removed these before). */
+export function dropPick(token: string) {
+  if (!ID_RE.test(token)) return;
+  for (const ext of [".pick.json.gz", ".auth"]) fs.rmSync(p(token, ext), { force: true });
+}
+export function notePickOf(id: string, token: string) { write(p(id, ".pickof"), token); }
+
+/** Anything saved for an id that never became a dataset (a picker walked away from, a run that stopped) is removed after a day: a saved sign-in does not outlive the person's interest in it. */
+const KEEP_UNKEPT_MS = 24 * 3600_000;
+let lastSweep = 0;
+export function sweepUnkept(maxAgeMs = KEEP_UNKEPT_MS, now = Date.now()): number {
+  if (now - lastSweep < 600_000 && maxAgeMs === KEEP_UNKEPT_MS) return 0;
+  lastSweep = now;
+  let n = 0;
+  try {
+    const files = fs.readdirSync(DIR);
+    const kept = new Set(files.filter((f) => /^ds_[a-z0-9]+\.json$/.test(f)).map((f) => f.slice(0, -5)));
+    for (const f of files) {
+      const id = f.match(/^(ds_[a-z0-9]{6,24})\./)?.[1];
+      if (!id || kept.has(id)) continue;
+      try { if (now - fs.statSync(path.join(DIR, f)).mtimeMs > maxAgeMs) { fs.rmSync(path.join(DIR, f), { force: true }); n++; } } catch { /* gone */ }
+    }
+  } catch { /* no folder yet */ }
+  return n;
+}
 export function getPick(id: string): SavedPick | null {
   try { return JSON.parse(zlib.gunzipSync(fs.readFileSync(p(id, ".pick.json.gz"))).toString("utf8")); } catch { return null; }
 }
 
 export function deleteDataset(id: string) {
-  for (const ext of [".json", ".rows.json.gz", ".src", ".cand.json.gz", ".auth", ".pending.json"]) fs.rmSync(p(id, ext), { force: true });
+  // the picker this dataset was made from kept a sign-in of its own under its token: it goes with the dataset
+  try { dropPick(fs.readFileSync(p(id, ".pickof"), "utf8").trim()); } catch { /* not made from a picker */ }
+  for (const ext of [".json", ".rows.json.gz", ".src", ".cand.json.gz", ".auth", ".pending.json", ".pickof"]) fs.rmSync(p(id, ext), { force: true });
   rowCache.delete(id);
   const b = getBoard();
   saveBoard(b.filter((x) => x.datasetId !== id));
@@ -210,7 +238,13 @@ function listAll(): { cards: DatasetCard[]; hidden: { id: string; name: string }
 export function getBoard(): Pin[] {
   try { return JSON.parse(fs.readFileSync(path.join(DIR, "board.json"), "utf8")); } catch { return []; }
 }
-export function saveBoard(pins: Pin[]) { write(path.join(DIR, "board.json"), JSON.stringify(pins.slice(0, 24))); }
+export function saveBoard(pins: Pin[]) {
+  const f = path.join(DIR, "board.json");
+  // RC-51: a board file that is there but cannot be read (cut short by a crash) is copied aside before the new board replaces it
+  try { if (fs.existsSync(f) && !Array.isArray(JSON.parse(fs.readFileSync(f, "utf8")))) throw new Error("not a list"); }
+  catch { try { fs.copyFileSync(f, `${f}.damaged-${Date.now()}`); } catch { /* nothing to keep */ } }
+  write(f, JSON.stringify(pins.slice(0, 24)));
+}
 
 /** A dataset's most pressing findings, for the Briefing ("From your datasets"): read from its saved brief, no model. */
 export interface WatchItem {

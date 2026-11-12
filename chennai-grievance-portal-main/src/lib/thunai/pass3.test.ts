@@ -119,7 +119,7 @@ describe("a problem is named as its own kind (BUG-033)", () => {
   it("unclassified stays unnamed, whatever the title says", () => expect(plainWhat("Other / unclassified", "Traffic signal not working")).toBeNull());
   it.each([["Traffic signal not working at Guindy", "a traffic blockage"], ["Street dog menace", null], ["Wallet stolen at bus stand", null], ["Air conditioner repair at school", null], ["Robbed near Tambaram", null],
     ["Heat alert issued", null], ["Broad street closed", null], ["Fallen tree on the main road", "a fallen tree"], ["Flood risk signal", "a flood warning"]])("free text: %s", (title, want) => expect(plainWhat(null, title)?.en ?? null).toBe(want));
-  it("flood relief reads as English", () => expect(explainIssue(factSheet({ ...row, status: "Open", cat: "Flood relief needs" }, { openFor: "4 days", now: NOW }), "x").en).toMatch(/^There's people who need flood relief at /));
+  it("flood relief reads as English", () => expect(explainIssue(factSheet({ ...row, status: "Open", cat: "Flood relief needs" }, { openFor: "4 days", now: NOW }), "x").en).toMatch(/^There are people who need flood relief at /));
 });
 
 describe("a line copied from what the model read is not said (BUG-034)", () => {

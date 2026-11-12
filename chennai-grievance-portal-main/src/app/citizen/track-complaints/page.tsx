@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui";
 import { EASE_OUT, spring } from "@/components/ui/motion";
 import { ComplaintStatus } from "@/types";
 import { isPhotoPath, privateMediaName } from "@/lib/complaint-media-path";
+import { istDate } from "@/lib/ist-dates";
 
 const MiniMap = dynamic(() => import("@/components/citizen/MiniMap"), { ssr: false });
 
@@ -35,7 +36,8 @@ const SHORT: Record<string, string> = {
   "Complaint Filed": "Filed", "Pending Approval": "Pending approval", "Approved by Department Officer": "Approved", "In Progress": "In progress",
   "Completed - Pending Collector Verification": "Awaiting Collector", "Verified by Collector": "Verified", "Resolved by Department": "Resolved", Rejected: "Rejected"
 };
-const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+/** Chennai's day, whatever zone the browser or the server runs in (RC-16) */
+const fmtDate = istDate;
 
 /** Track complaints: the list (search by code, status chips) on the left, the selected complaint's journey on the right. */
 export default function TrackComplaintsPage() {
@@ -143,7 +145,7 @@ export default function TrackComplaintsPage() {
             <p className="mt-1 text-[15px] text-ink-muted">Every complaint you&apos;ve filed, with its current stage.</p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[400px_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[400px_minmax(0,1fr)]">
             {/* ------------------------------------------------------------------ list */}
             <section className={`min-w-0 ${sel ? "hidden lg:block" : ""}`}>
               <form onSubmit={handleSearchSubmit} className="flex gap-2">
@@ -241,9 +243,9 @@ export default function TrackComplaintsPage() {
                           { icon: CalendarDays, label: "Filed on", value: fmtDate(sel.created_at) }
                         ].map(({ icon: Icon, label, value }) => (
                           <div key={label} className="flex min-w-0 items-start gap-2">
-                            <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-faint" aria-hidden="true" />
+                            <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-subtle" aria-hidden="true" />
                             <div className="min-w-0">
-                              <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">{label}</dt>
+                              <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">{label}</dt>
                               <dd className="truncate text-[13px] font-medium text-ink-muted" title={value}>{value}</dd>
                             </div>
                           </div>
@@ -256,7 +258,7 @@ export default function TrackComplaintsPage() {
                       )}
                     </header>
 
-                    <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_260px]">
                       <div>
                         <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">Journey</h3>
                         {detailLoading ? (
@@ -297,13 +299,13 @@ export default function TrackComplaintsPage() {
                             </div>
                           )}
                           <dl className="space-y-3 text-[13px]">
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Street</dt><dd className="text-ink-muted">{detail.street_name}</dd></div>
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Specific location</dt><dd className="text-ink-muted">{detail.specific_location || "—"}</dd></div>
+                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Street</dt><dd className="text-ink-muted">{detail.street_name}</dd></div>
+                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Specific location</dt><dd className="text-ink-muted">{detail.specific_location || "—"}</dd></div>
                             <div className="flex gap-6">
-                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Ward</dt><dd className="font-mono text-ink-muted">{detail.ward_number}</dd></div>
-                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Anonymous</dt><dd className="text-ink-muted">{detail.is_anonymous ? "Yes" : "No"}</dd></div>
+                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Ward</dt><dd className="font-mono text-ink-muted">{detail.ward_number}</dd></div>
+                              <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Anonymous</dt><dd className="text-ink-muted">{detail.is_anonymous ? "Yes" : "No"}</dd></div>
                             </div>
-                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">Description</dt><dd className="leading-relaxed text-ink-muted">{detail.description}</dd></div>
+                            <div><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">Description</dt><dd className="leading-relaxed text-ink-muted">{detail.description}</dd></div>
                           </dl>
                           {detail.media_path && (
                             // private uploads (/api/complaints/media/...) load with the citizen's own session; older public ones as before

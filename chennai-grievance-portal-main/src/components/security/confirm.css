@@ -1,5 +1,5 @@
 /* "Confirm it's you" (Confirm.tsx): a small card over the console, in the console's own tokens (light and dark) */
-.dic .cfm-veil{position:fixed;inset:0;z-index:4000;display:grid;place-items:center;padding:16px;background:rgba(8,15,26,.48);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:cfm-fade .16s ease both}
+.dic .cfm-veil{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;background:rgba(8,15,26,.48);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:cfm-fade .16s ease both}
 .dic .cfm{width:min(420px,100%);display:flex;flex-direction:column;gap:9px;padding:16px 16px 14px;border-radius:16px;background:var(--elev);color:var(--text);box-shadow:0 0 0 1px var(--line-3),0 30px 70px -24px rgba(0,0,0,.6);font:var(--fs-sm)/1.45 var(--font-ui);animation:cfm-in .22s cubic-bezier(.2,.9,.3,1) both}
 .dic .cfm header{display:flex;align-items:center;gap:10px}
 .dic .cfm header h3{margin:0;font:700 15.5px var(--font-ui)}

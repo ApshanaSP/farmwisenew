@@ -13,7 +13,7 @@ export const metadata = { title: "Collector console preview · District IQ" };
  * API (/api/rehearsal/dev), so the map and the rain view work; ?rain=1 opens the rain view.
  */
 export default async function DevCollectorPage() {
-  const host = (headers().get("host") ?? "").split(":")[0];
+  const host = ((await headers()).get("host") ?? "").split(":")[0];
   if (process.env.NODE_ENV === "production" || process.env.AWS_STORE_DRY_RUN !== "1" || !(host === "localhost" || host === "127.0.0.1")) notFound();
   const [initial, depts] = await Promise.all([overview("daily", null), deptList()]);
   return <CollectorApp initial={initial} allDepts={depts} user="dev-preview@localhost" dev />;

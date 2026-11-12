@@ -1,0 +1,17 @@
+import { login, req } from "./lib/access-lib.mjs";
+import fs from "node:fs";
+const base = `http://127.0.0.1:${process.argv[2] || 3175}`;
+const J = { "content-type": "application/json" };
+const A = await login(base, "citizenA"), B = await login(base, "citizenB");
+const g = async (u) => JSON.parse((await req(base, "GET", u, { cookie: A.cookie })).text);
+const types = await g("/api/complaint-taxonomy").catch(()=>null);
+console.log("taxonomy keys", types && Object.keys(types));
+const zones = await g("/api/locations?type=zones").catch(()=>null); console.log("zones", JSON.stringify(zones).slice(0,200));
+const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+const fd = new FormData(); fd.append("media", new Blob([png], { type: "image/png" }), "ok.png");
+const up = await req(base, "POST", "/api/complaints/media", { cookie: A.cookie, body: fd }); console.log("media-ok", up.status, up.text);
+const fd2 = new FormData(); fd2.append("media", new Blob([Buffer.from("<svg onload=alert(1)>")], { type: "image/png" }), "x.png");
+const up2 = await req(base, "POST", "/api/complaints/media", { cookie: A.cookie, body: fd2 }); console.log("media-fake-png", up2.status, up2.text);
+const fd3 = new FormData(); fd3.append("media", new Blob([Buffer.from("<svg onload=alert(1)>")], { type: "image/svg+xml" }), "x.svg");
+const up3 = await req(base, "POST", "/api/complaints/media", { cookie: A.cookie, body: fd3 }); console.log("media-svg", up3.status, up3.text);
+fs.writeFileSync(process.env.TMPDIR_P || "t.json", JSON.stringify({ up: up.text }));

@@ -55,7 +55,8 @@ function liveLayer(id: string, conds: NonNullable<World["conds"]>) {
 }
 
 /** One facility or water layer, inside the district box (+3 km), with an ETag so the browser re-uses it. */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const params = await ctx.params;
   const s = await assistantSession();
   if (s instanceof NextResponse) return s;
   if (!TOGGLEABLE.has(params.id) && params.id !== "news" && !LIVE.has(params.id)) return NextResponse.json({ error: "No such layer." }, { status: 404 });

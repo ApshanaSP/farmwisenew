@@ -60,3 +60,22 @@ export function helpFor(text: string): string[] {
   const hits = HELP_TOPICS.filter((h) => h.match.test(text)).map((h) => h.text);
   return hits.length ? hits.slice(0, 3) : [HELP_TOPICS.find((h) => h.id === "assistant")!.text];
 }
+
+/**
+ * A question about the data itself, not about what it holds: "are the feeds live?", "is the hospital data real?", "hospital data fake-a?",
+ * "தரவு ஊட்டங்கள் நேரலையில் உள்ளனவா?". A data word AND a word about how real, fresh or live it is. Read by every rules lane
+ * (offlineRoute, directTool) BEFORE any subject route, so the subject word in the sentence ("hospital", "police", "department")
+ * cannot send it to that subject's figures (RC-11, PB-014, PB-171).
+ */
+const DATA_WORD = /\b(data|feeds?|datasets?|records? (feed|data))\b|\b(data|news|feed) sources?\b|தரவு|ஊட்ட|மூலம்|மூலங்கள்|விவரங்கள்/i;
+const REALNESS_WORD = /\b(live|real|fake|genuine|authentic|generated|mock|synthetic|dummy|test|healthy|fresh|stale|up to date|up-to-date|working)\b|\b(real|fake|nijam|nijama|asal)-?a\b|உண்மை|சோதனை|நேரலை|நேரடி|போலி|புதிய தரவு|புதுப்பிக்கப்/i;
+/**
+ * "What is the status of the data sources?", "தரவு மூலங்களின் நிலை என்ன?": the state of the feeds themselves, said with the word for status or condition instead of
+ * one for how live or real they are. It needs a feed or data-source noun (not the loose "source" or "மூலம்", which is also "by way of"), so the status of a
+ * complaint or of a water source stays with its own subject (QA4 G1, audit-ui_honesty-8: the Tamil question was not understood, the English one was read as the KPIs).
+ */
+const FEED_NOUN = /\b(feeds?|(data|news) sources?)\b|(தரவு|செய்தி) ?(மூலங்கள்|மூலங்களின்|மூலம்|ஊட்டங்கள்|ஊட்டங்களின்|ஊட்டம்)|ஊட்டங்கள|\b(tharavu|data) (moolangal\w*|moolam|oottam\w*|oottangal\w*)\b/i;
+const STATE_WORD = /\b(status|state of|condition|health|how are|how is|doing)\b|நிலை|நிலைமை|\bnilai(mai)?\b/i;
+export function aboutTheData(text: string): boolean {
+  return (DATA_WORD.test(text) && REALNESS_WORD.test(text)) || (FEED_NOUN.test(text) && STATE_WORD.test(text));
+}

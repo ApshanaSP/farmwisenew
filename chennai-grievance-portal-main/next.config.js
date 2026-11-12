@@ -46,11 +46,8 @@ const nextConfig = {
   // a second dev server in the same folder (another port) needs its own build folder: NEXT_DIST_DIR=.next-studio
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // LanceDB (Ask District IQ's search index) ships native binaries: Node loads it as is, the bundler leaves it out
-  experimental: {
-    serverComponentsExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core", "tesseract.js", "tesseract.js-core"],
-    // src/instrumentation.ts: the AWS store starts loading when the server starts
-    instrumentationHook: true
-  },
+  // (Next 15: this key left "experimental"; src/instrumentation.ts, where the AWS store starts loading, needs no flag any more)
+  serverExternalPackages: ["@lancedb/lancedb", "apache-arrow", "playwright-core", "tesseract.js", "tesseract.js-core"],
   eslint: {
     ignoreDuringBuilds: true
   }

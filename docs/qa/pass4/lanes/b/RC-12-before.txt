@@ -1,0 +1,6 @@
+# failing before the fix (in-process run, pinned snapshot): RC-12
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-13 a sewage case held by the drains team: the step names who holds it
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-19 Ask District IQ: a closed case's status is not 'and past its deadline'
+ FAIL  tests/qa/pass4/audit-narrate_and_figures.test.ts > new, found on the way > AUD-NF-19 a closed case's screen has no 'past deadline' flag beside what is said
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261030-AE844C, a lake or bund problem: not "ask th
+ FAIL  tests/qa/pass4/audit-understanding.test.ts > audit-understanding-19 P2: the next step is still read from loose words in the title (the kind of bug BUG-033 fixed for names) > audit-understanding-19 INC-20261031-345A17, a drinking-water problem: not "ask 

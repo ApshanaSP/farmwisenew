@@ -99,7 +99,7 @@ describe("citizen -> officer -> Collector -> citizen", () => {
     const decisions = await import("@/app/api/collector/decisions/route");
     const tracker = await import("@/app/api/complaints/[code]/route");
     const photo = await import("@/app/api/officer/photos/[dir]/[name]/route");
-    const params = { params: { id: "INC-LOOP" } };
+    const params = { params: Promise.resolve({ id: "INC-LOOP" }) };
 
     // 1. the officer approves
     h.who.officer = OFFICER;
@@ -116,7 +116,7 @@ describe("citizen -> officer -> Collector -> citizen", () => {
 
     // the resident already sees the work waiting for the Collector
     h.who.citizen = { userId: 50, role: "citizen" };
-    const mid = await (await tracker.GET(new NextRequest("http://x/api/complaints/2026-777AAA"), { params: { code: "2026-777AAA" } })).json();
+    const mid = await (await tracker.GET(new NextRequest("http://x/api/complaints/2026-777AAA"), { params: Promise.resolve({ code: "2026-777AAA" }) })).json();
     expect(mid.complaint.status).toBe("Completed - Pending Collector Verification");
 
     // 3. the Collector verifies
@@ -126,18 +126,18 @@ describe("citizen -> officer -> Collector -> citizen", () => {
 
     // 4. the resident's tracker: verified by the Collector, with the photo, once in the history
     h.who.collector = null; h.who.officer = null;
-    const done = await (await tracker.GET(new NextRequest("http://x/api/complaints/2026-777AAA"), { params: { code: "2026-777AAA" } })).json();
+    const done = await (await tracker.GET(new NextRequest("http://x/api/complaints/2026-777AAA"), { params: Promise.resolve({ code: "2026-777AAA" }) })).json();
     expect(done.complaint.status).toBe("Verified by Collector");
     expect(done.progress.checkedBy).toBe("collector");
     expect(done.progress.photos).toHaveLength(1);
     expect(done.history.map((x: { status: string }) => x.status)).toEqual(["Complaint Filed", "Approved by Department Officer",
       "Completed - Pending Collector Verification", "Verified by Collector"]);
     const [, , pdir, pname] = String(done.progress.photos[0]).match(/\/api\/officer\/photos\/(([^/]+)\/([^/]+))$/)!.slice(0);
-    const mine = await photo.GET(new NextRequest(`http://x${done.progress.photos[0]}`), { params: { dir: pdir, name: pname } });
+    const mine = await photo.GET(new NextRequest(`http://x${done.progress.photos[0]}`), { params: Promise.resolve({ dir: pdir, name: pname }) });
     expect(mine.status).toBe(200);
     // another resident cannot open it
     h.who.citizen = { userId: 51, role: "citizen" };
-    const theirs = await photo.GET(new NextRequest(`http://x${done.progress.photos[0]}`), { params: { dir: pdir, name: pname } });
+    const theirs = await photo.GET(new NextRequest(`http://x${done.progress.photos[0]}`), { params: Promise.resolve({ dir: pdir, name: pname }) });
     expect(theirs.status).toBe(404);
   });
 });

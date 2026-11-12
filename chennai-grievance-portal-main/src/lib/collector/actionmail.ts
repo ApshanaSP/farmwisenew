@@ -23,9 +23,10 @@ import { z } from "zod";
 import intelPool, { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import pool from "@/lib/db";
-import { incident, type Plain } from "@/lib/collector/intel";
+import { asOfNow, incident, type Plain } from "@/lib/collector/intel";
 import { generateJson } from "@/lib/ai/gateway";
 import { isSmtpConfigured, sendMail } from "@/lib/mailer";
+import { isPastDeadline } from "@/lib/reference/metrics";
 import { orEmpty } from "@/lib/fallback";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
@@ -134,7 +135,7 @@ function facts(i: Row, why: Plain, extra: { reports: number; outlets: string[]; 
     `Category: ${i.type}; severity: ${i.sev}; status: ${i.status}`,
     `Place: ${[i.loc, i.zone_name, i.ward ? `ward ${i.ward}` : null].filter(Boolean).join(", ") || "Chennai"}`,
     `Department: ${i.dept_name ?? i.dept}`,
-    `First reported: ${i.t}${i.sla_due ? `; deadline ${i.sla_due}${i.open && i.breached ? " (missed)" : ""}` : ""}`,
+    `First reported: ${i.t}${i.sla_due ? `; deadline ${i.sla_due}${i.open && isPastDeadline(i, asOfNow()) ? " (missed)" : ""}` : ""}`,
     `What happened: ${why.summary}`,
     why.attention.length ? `Why it needs attention: ${why.attention.join("; ")}` : "",
     why.next ? `Suggested next step: ${why.next}` : "",
@@ -296,7 +297,7 @@ async function deptCases(ids: string[], dept: string): Promise<Row[]> {
   for (let k = 0; k < ids.length; k += 500) {
     const part = ids.slice(k, k + 500);
     out.push(...await q(`SELECT i.incident_id AS id, COALESCE(i.headline, i.title) AS title, i.severity_level AS sev, i.place_text AS place, i.zone_name, i.ward_no AS ward,
-        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, i.priority_score AS priority, ${OPEN} AS open
+        DATE_FORMAT(i.first_reported_at, '%Y-%m-%d') AS day, i.sla_breached AS breached, DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS due, i.priority_score AS priority, ${OPEN} AS open
       FROM incidents i WHERE i.lead_dept = ? AND i.incident_id IN (${part.map(() => "?").join(", ")})`, [dept, ...part]).catch(orEmpty("actionmail:batch")));
   }
   return out.sort((a, b) => Number(b.priority) - Number(a.priority) || String(a.id).localeCompare(String(b.id)));
@@ -316,7 +317,7 @@ export async function draftBatchAction(ids: string[], dept: string, deptName: st
   // the place once: a recorded place that only repeats the ward or the zone is left out
   const where = (c: Row) => [...new Set([c.place && !/^ward\s*\d+$/i.test(String(c.place)) ? String(c.place) : null, c.zone_name ? String(c.zone_name) : null]
     .filter(Boolean).map((x) => x!.trim()))].filter((x, k, a) => a.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === k).concat(c.ward ? [`ward ${c.ward}`] : []).join(", ") || "Chennai";
-  const line = (c: Row, k: number) => `${k + 1}. ${String(c.title).slice(0, 140)} (${c.id}): ${where(c)}; ${c.sev}; reported ${c.day}${Number(c.breached) === 1 ? "; past its deadline" : ""}`;
+  const line = (c: Row, k: number) => `${k + 1}. ${String(c.title).slice(0, 140)} (${c.id}): ${where(c)}; ${c.sev}; reported ${c.day}${isPastDeadline(c, asOfNow()) ? "; past its deadline" : ""}`;
   const subject = `Action needed: ${cases.length} ${cases.length === 1 ? "case" : "cases"} from the Collector's map (${question.slice(0, 60)})`.slice(0, 160);
   const body = `Dear ${officer},\n\nThe Collector's map shows ${cases.length} open ${cases.length === 1 ? "case" : "cases"} for ${deptName} that ${cases.length === 1 ? "matches" : "match"} "${question.slice(0, 120)}". ` +
     `Please inspect and act on them, the first ones first:\n\n${listed.map(line).join("\n")}` +

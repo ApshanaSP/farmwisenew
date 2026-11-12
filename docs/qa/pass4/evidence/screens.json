@@ -1,0 +1,1121 @@
+[
+ {
+  "name": "citizen",
+  "lang": "ta",
+  "w": 360,
+  "url": "/citizen",
+  "scrollW": 368,
+  "W": 360,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 2,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "ta",
+  "w": 360,
+  "url": "/citizen/file-complaint",
+  "scrollW": 368,
+  "W": 360,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "ta",
+  "w": 360,
+  "url": "/citizen/track-complaints",
+  "scrollW": 368,
+  "W": 360,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "ta",
+  "w": 360,
+  "url": "/officer",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [
+   "div.ui-seg sm",
+   "button.ui-seg-o",
+   "img.leaflet-tile leaflet-tile-load",
+   "img.leaflet-tile leaflet-tile-load"
+  ],
+  "clipped": [],
+  "smallTargets": 8,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "ta",
+  "w": 360,
+  "url": "/collector",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [
+   "button.ptab",
+   "span.",
+   "button.ptab",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 7,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "ta",
+  "w": 360,
+  "url": "/login",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "ta",
+  "w": 360,
+  "url": "/register",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "ta",
+  "w": 360,
+  "url": "/forgot-password",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "ta",
+  "w": 360,
+  "url": "/profile",
+  "scrollW": 368,
+  "W": 360,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "button.ui-tab",
+   "button.ui-tab"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "ta",
+  "w": 768,
+  "url": "/citizen",
+  "scrollW": 1118,
+  "W": 768,
+  "wide": [
+   "nav.relative ml-4 hidden items-cen",
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 2,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "ta",
+  "w": 768,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1118,
+  "W": 768,
+  "wide": [
+   "nav.relative ml-4 hidden items-cen",
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "ta",
+  "w": 768,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1118,
+  "W": 768,
+  "wide": [
+   "nav.relative ml-4 hidden items-cen",
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "ta",
+  "w": 768,
+  "url": "/officer",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 39,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "ta",
+  "w": 768,
+  "url": "/collector",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 43,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "ta",
+  "w": 768,
+  "url": "/login",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "ta",
+  "w": 768,
+  "url": "/register",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "ta",
+  "w": 768,
+  "url": "/forgot-password",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "ta",
+  "w": 768,
+  "url": "/profile",
+  "scrollW": 1118,
+  "W": 768,
+  "wide": [
+   "nav.relative ml-4 hidden items-cen",
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/citizen",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1326,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "span.hidden max-w-[160px] truncate ",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1326,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "span.hidden max-w-[160px] truncate ",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/officer",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [
+   "button.brief",
+   "span.bic t-high",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 8,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/collector",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 18,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/login",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/register",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/forgot-password",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "ta",
+  "w": 1280,
+  "url": "/profile",
+  "scrollW": 1326,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "span.hidden max-w-[160px] truncate ",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/citizen",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/officer",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [
+   "button.brief",
+   "span.bic t-high",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/collector",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/login",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/register",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/forgot-password",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "ta",
+  "w": 1920,
+  "url": "/profile",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "en",
+  "w": 360,
+  "url": "/citizen",
+  "scrollW": 361,
+  "W": 360,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "en",
+  "w": 360,
+  "url": "/citizen/file-complaint",
+  "scrollW": 361,
+  "W": 360,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "en",
+  "w": 360,
+  "url": "/citizen/track-complaints",
+  "scrollW": 361,
+  "W": 360,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "en",
+  "w": 360,
+  "url": "/officer",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [
+   "img.leaflet-tile leaflet-tile-load",
+   "img.leaflet-tile leaflet-tile-load",
+   "img.leaflet-tile leaflet-tile-load",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 8,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "en",
+  "w": 360,
+  "url": "/collector",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [
+   "img.leaflet-tile leaflet-tile-load",
+   "img.leaflet-tile leaflet-tile-load",
+   "img.leaflet-tile leaflet-tile-load",
+   "svg.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 7,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "en",
+  "w": 360,
+  "url": "/login",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "en",
+  "w": 360,
+  "url": "/register",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "en",
+  "w": 360,
+  "url": "/forgot-password",
+  "scrollW": 360,
+  "W": 360,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "en",
+  "w": 360,
+  "url": "/profile",
+  "scrollW": 361,
+  "W": 360,
+  "wide": [
+   "button.ui-tab",
+   "button.ui-tab"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "en",
+  "w": 768,
+  "url": "/citizen",
+  "scrollW": 1097,
+  "W": 768,
+  "wide": [
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]",
+   "b.font-mono text-ink"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 2,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "en",
+  "w": 768,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1097,
+  "W": 768,
+  "wide": [
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]",
+   "b.font-mono text-ink"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "en",
+  "w": 768,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1097,
+  "W": 768,
+  "wide": [
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]",
+   "b.font-mono text-ink"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "en",
+  "w": 768,
+  "url": "/officer",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 39,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "en",
+  "w": 768,
+  "url": "/collector",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 43,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "en",
+  "w": 768,
+  "url": "/login",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "en",
+  "w": 768,
+  "url": "/register",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "en",
+  "w": 768,
+  "url": "/forgot-password",
+  "scrollW": 768,
+  "W": 768,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "en",
+  "w": 768,
+  "url": "/profile",
+  "scrollW": 1097,
+  "W": 768,
+  "wide": [
+   "a.diq-tbtn hidden md:inline-flex",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]",
+   "b.font-mono text-ink"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "en",
+  "w": 1280,
+  "url": "/citizen",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "en",
+  "w": 1280,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1305,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "en",
+  "w": 1280,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1305,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "en",
+  "w": 1280,
+  "url": "/officer",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [
+   "button.brief",
+   "span.bic t-high",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 8,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "en",
+  "w": 1280,
+  "url": "/collector",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 18,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "en",
+  "w": 1280,
+  "url": "/login",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "en",
+  "w": 1280,
+  "url": "/register",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "en",
+  "w": 1280,
+  "url": "/forgot-password",
+  "scrollW": 1280,
+  "W": 1280,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "en",
+  "w": 1280,
+  "url": "/profile",
+  "scrollW": 1305,
+  "W": 1280,
+  "wide": [
+   "div.relative",
+   "button.flex items-center gap-2 rounde",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": true,
+  "console": []
+ },
+ {
+  "name": "citizen",
+  "lang": "en",
+  "w": 1920,
+  "url": "/citizen",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-file",
+  "lang": "en",
+  "w": 1920,
+  "url": "/citizen/file-complaint",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 4,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "citizen-track",
+  "lang": "en",
+  "w": 1920,
+  "url": "/citizen/track-complaints",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "officer",
+  "lang": "en",
+  "w": 1920,
+  "url": "/officer",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [
+   "button.brief",
+   "span.bic t-high",
+   "svg.[object SVGAnimatedString]",
+   "path.[object SVGAnimatedString]"
+  ],
+  "clipped": [],
+  "smallTargets": 1,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "collector",
+  "lang": "en",
+  "w": 1920,
+  "url": "/collector",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "login",
+  "lang": "en",
+  "w": 1920,
+  "url": "/login",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "register",
+  "lang": "en",
+  "w": 1920,
+  "url": "/register",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "forgot",
+  "lang": "en",
+  "w": 1920,
+  "url": "/forgot-password",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [],
+  "smallTargets": 2,
+  "overflowX": false,
+  "console": []
+ },
+ {
+  "name": "profile",
+  "lang": "en",
+  "w": 1920,
+  "url": "/profile",
+  "scrollW": 1920,
+  "W": 1920,
+  "wide": [],
+  "clipped": [
+   ""
+  ],
+  "smallTargets": 3,
+  "overflowX": false,
+  "console": []
+ }
+]

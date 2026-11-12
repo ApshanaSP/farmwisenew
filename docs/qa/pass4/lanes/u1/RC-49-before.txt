@@ -1,0 +1,19 @@
+RC-49 before (U1): real runs on the build before the heading, landmark and focus-ring changes
+
+--- axe.mjs, build with my layout changes only (critical button-name came from my own header change and was fixed in the same stage) ---
+{ critical: 16, moderate: 112 } 84 runs
+critical:button-name 16 citizen/en/light, citizen/en/dark, citizen/ta/light, citizen/ta/dark 16
+moderate:heading-order 56 officer/en/light, officer/en/dark, officer/ta/light, officer/ta/dark 56
+moderate:region 628 officer/en/light, officer/en/dark, officer/ta/light, officer/ta/dark 56
+errors: []
+critical+serious rule hits: 16
+
+--- keys.mjs noRing lists in the 7 Nov run (docs/qa/pass4/evidence/keys.json at the start of this stage) ---
+citizen noRing: ["a:Overview","a:File a Complaint","a:Track Status","a:Helpline\n1913","button:Switch to Tamil","button:Switch to dark mode","a:Track status","a:1913"]
+file noRing: ["a:Overview","a:File a Complaint","a:Track Status","a:Helpline\n1913","button:Switch to Tamil","button:Switch to dark mode","a:Back to overview","a:Update it in your profile","button:Male","button:Female"]
+track noRing: ["a:Overview","a:File a Complaint","a:Track Status","a:Helpline\n1913","button:Switch to Tamil","button:Switch to dark mode","a:Back to overview","button:Filed","button:Pending approval","button:Approved"]
+officer noRing: ["select:Zone","select:Taluk"]
+login noRing: ["a:Helpline\n1913","button:Switch to Tamil","button:Switch to dark mode","a:Forgot password?","button:Show password","a:Create an account","a:1913"]
+register noRing: ["a:Helpline\n1913","button:Switch to Tamil","button:Switch to dark mode","button:Show password","a:Sign in","a:sign in","a:1913"]
+collector noRing: ["select:Zone","select:Taluk","select:Department"]
+jarvis dialog noRing: ["textarea:Ask about incidents, complaints, weather"]

@@ -1,0 +1,65 @@
+
+ RUN  v3.2.7 E:/farm/.claude/worktrees/qa-pass4-ecfcb9/chennai-grievance-portal-main
+
+ ❯ src/lib/security/stepup.test.ts (12 tests | 2 failed) 28ms
+   ✓ Confirm it's you (step-up) > answers 428 with a summary and the scope's hash when there is no grant 8ms
+   ✓ Confirm it's you (step-up) > lets the exact same action through with a grant for it 3ms
+   ✓ Confirm it's you (step-up) > the hash does not depend on the order of keys 0ms
+   ✓ Confirm it's you (step-up) > refuses a grant once a word of the email changed, for another action, another account or a signed-out session 3ms
+   ✓ Confirm it's you (step-up) > does not take a session token as a grant 1ms
+   × PB-316: the browser asks without a console error, the guard is the same > a browser that says it can read it is answered 200 with the same body and a header, so the console logs no failed request 7ms
+     → expected 428 to be 200 // Object.is equality
+   ✓ PB-316: the browser asks without a console error, the guard is the same > still never lets the action through without a grant, whatever the request says 2ms
+   ✓ PB-316: the browser asks without a console error, the guard is the same > a caller that does not send the header still gets the 428 0ms
+   ✓ PB-316: the browser asks without a console error, the guard is the same > a grant for the exact action still passes when the header is there 1ms
+   × PB-316: the browser asks without a console error, the guard is the same > a grant for something else gets the 200 confirm again, not the action 1ms
+     → expected 428 to be 200 // Object.is equality
+   ✓ email references > are stable, look like DIQ-XXXX-XXXX and change with any part of the email 1ms
+   ✓ cross-site write requests > refuses a post from another site, lets the site's own pages and jobs through 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/security/stepup.test.ts > PB-316: the browser asks without a console error, the guard is the same > a browser that says it can read it is answered 200 with the same body and a header, so the console logs no failed request
+AssertionError: expected 428 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 428
+
+ ❯ src/lib/security/stepup.test.ts:54:26
+     52|     expect(r.ok).toBe(false);
+     53|     if (r.ok) return;
+     54|     expect(r.res.status).toBe(200);
+       |                          ^
+     55|     expect(r.res.headers.get("x-diq-confirm")).toBe("required");
+     56|     expect(r.res.headers.get("cache-control")).toBe("no-store");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/lib/security/stepup.test.ts > PB-316: the browser asks without a console error, the guard is the same > a grant for something else gets the 200 confirm again, not the action
+AssertionError: expected 428 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 428
+
+ ❯ src/lib/security/stepup.test.ts:84:39
+     82|     const r = await requireConfirm(soft(g), S, "send_email", "Send", {…
+     83|     expect(r.ok).toBe(false);
+     84|     if (!r.ok) { expect(r.res.status).toBe(200); expect((await r.res.j…
+       |                                       ^
+     85|   });
+     86| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  15:31:14
+   Duration  1.07s (transform 177ms, setup 0ms, collect 450ms, tests 28ms, environment 0ms, prepare 124ms)
+

@@ -1,0 +1,21 @@
+{
+ "a": "lane-c",
+ "b": "lane-c2",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 0,
+ "added": 0,
+ "removed": 0,
+ "context": {
+  "next_build_id": {
+   "a": "KpVh4zL2FhpH-8L9BmZDS",
+   "b": "WZ7JVCj5TpPj-dySCF1pv"
+  }
+ },
+ "routes": [],
+ "added_requests": [],
+ "removed_requests": [],
+ "changes": []
+}

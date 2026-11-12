@@ -25,6 +25,7 @@ import type { RainLayer } from "./rehearsal/rainLayer";
 // Rain & flooding loads only when it is opened (the top bar's Rain button, the rain band, Ask the Map)
 const RainView = dynamic(() => import("./rehearsal/RainView"), { ssr: false });
 import { METRICS, labelled, shortWindow } from "@/lib/reference/metrics";
+import { sevIncident } from "@/lib/sev-label";
 
 // =================================================================== page 1 ==
 
@@ -66,9 +67,9 @@ function useKpis(d: OverviewData, c: Console) {
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
       tip="Incidents reported in the period that are not yet resolved. The same incidents are split by severity in the card below." />,
     resolved: <Kpi key="resolved" k="resolved" icon="checkc" tone="t-low" label={period1(c) ? "Resolved today" : `Resolved this ${P.unit.toLowerCase()}`} v={d.kpi.cur.resolved}
-      p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `${Math.round((100 * K.resolved) / K.reported)}% of ${fmtN(K.reported)} reported` : undefined}
+      p={d.kpi.prev.resolved} prevLabel={P.prev} style={iv()} sub={K.reported ? `closed in the period; ${fmtN(K.reported)} reported` : undefined}
       onClick={() => c.openList({ status: "Resolved" }, "Resolved incidents")}
-      tip="Incidents reported in the period that the department has already resolved." />
+      tip="Incidents closed as resolved in the period (by the day they were closed), including the ones you resolved." />
   };
   return c.layout.kpis.filter((k) => KPIS[k]).map((k) => KPIS[k]);
 }
@@ -185,8 +186,8 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                 </button>
               )}
               <div className="seg sm map-seg" role="tablist" aria-label="Map areas">
-                <button className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
-                <button className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
+                <button role="tab" aria-selected={c.mapMode === "zones"} className={c.mapMode === "zones" ? "on" : ""} onClick={() => c.setMapMode("zones")} title="GCC zones and wards">Zones</button>
+                <button role="tab" aria-selected={c.mapMode === "taluks"} className={c.mapMode === "taluks" ? "on" : ""} onClick={() => c.setMapMode("taluks")} title="Revenue taluks (wards coloured by taluk)">Taluks</button>
               </div>
             </div>
           </article>
@@ -371,7 +372,7 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
   const differ = c.conflicts?.stories.filter((s) => s.items.some((x) => x.kind === "conflict")).length ?? 0;
   return (
     <>
-      <div className="ch"><I n="news" /><h3>Latest news</h3>
+      <div className="ch"><I n="news" /><h2>Latest news</h2>
         {tab !== "differ" && <button className="more" onClick={() => (tab === "news" ? c.openNewsAll() : tab === "door" ? c.openNextDoor() : c.openAdded())}>See more<I n="right" /></button>}
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
@@ -439,7 +440,7 @@ export function StoryLink({ i }: { i: Story }) {
   const more = i.headlines > 1 ? ` · ${plural(i.headlines - 1, "similar report")}` : "";
   if (i.grievances > 0) return <span className="routed"><I n="user" />Also a grievance · {plural(i.grievances, "citizen complaint")}</span>;
   if (i.incident) return <span className="routed" title="Linked to an incident in our records; no citizen has complained about it yet">
-    <I n="alert" />{i.sev ? `${i.sev} severity incident` : "Incident on record"} · no citizen complaint yet</span>;
+    <I n="alert" />{i.sev ? sevIncident(i.sev as string) : "Incident on record"} · no citizen complaint yet</span>;
   return more ? <span className="routed dim"><I n="news" />{more.replace(/^ · /, "")}</span> : null;
 }
 
@@ -600,7 +601,7 @@ function lakeLevel(p: number): [string, string, string] {
 }
 
 function EnvHead({ icon, title, c, kind, all }: { icon: IconName; title: string; c: Console; kind: Kind; all: Station[] }) {
-  return <div className="ch"><I n={icon} /><h3>{title}</h3><StationPicker c={c} kind={kind} all={all} /></div>;
+  return <div className="ch"><I n={icon} /><h2>{title}</h2><StationPicker c={c} kind={kind} all={all} /></div>;
 }
 
 function RainCard({ d, c, env, style }: { d: OverviewData; c: Console; env: Env; style: React.CSSProperties }) {

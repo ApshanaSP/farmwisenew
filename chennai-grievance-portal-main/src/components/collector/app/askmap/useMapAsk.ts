@@ -12,6 +12,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
+import { followUpMoves } from "@/lib/map/camera";
 import type { Route } from "./actions";
 import { rehearsalIntent } from "@/lib/rehearsal/intent";
 
@@ -206,10 +207,9 @@ export function useMapAsk(context: () => MapAskContext): MapAsk {
       setRoute(null);
       if (a.kind === "answer" && a.plan) { setPlan(a.plan); save(PLAN_KEY, a.plan); }
       // a new question moves the camera; a small follow-up keeps the view (camera.ts followUpMoves)
-      const small = a.edited === "distance" || a.edited === "severity" || a.edited === "period" || a.edited === "status" || a.edited === "facility" || a.edited === "group"
-        || (a.edited === "chip" && !!planRef.current && sameShape(planRef.current, a.plan));
+      const moves = followUpMoves(a.edited ?? null, !!planRef.current && sameShape(planRef.current, a.plan));
       setTookOver(false);
-      setCue({ seq: ++seq.current, index: 0, move: !small });
+      setCue({ seq: ++seq.current, index: 0, move: moves });
       return a;
     } catch (e) {
       if ((e as Error).name === "AbortError") set({ pending: false, error: "Stopped: you asked something else before the answer came." });

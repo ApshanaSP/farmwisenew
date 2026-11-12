@@ -27,6 +27,7 @@
 /* ---- English / தமிழ் */
 .dic .lang-sw{gap:7px;padding:0 11px 0 6px}
 .dic .lang-sw .lang-a{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:700 13px/1 var(--font-ui)}
+.dic .lang-sw .lang-a::before{content:attr(data-g)} /* the letter is drawn, not text, so the button's name can be exactly the words it shows (PB-323) */
 @media (max-width:1180px){.dic .lang-sw span:last-child,.dic .tm-btn>span{display:none}.dic .lang-sw{padding:0 6px}}
 
 /* ---- the alert: one chip in the band's top line */
@@ -60,7 +61,7 @@
 .dic .env3-bot{min-height:0;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:12px}
 .dic .env3 .env{min-height:0;display:flex;flex-direction:column}
 .dic .env3 .env .ch{padding:10px 14px 4px}
-.dic .env3 .env .ch h3{font-size:14px}
+.dic .env3 .env .ch :is(h2,h3){font-size:14px}
 .dic .env3 .env .ch>.ic{width:26px;height:26px;padding:5px}
 .dic .env3 .env .sel{height:28px;font-size:12px;max-width:150px!important}
 .dic .env3 .env .cb{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);grid-template-rows:auto minmax(0,1fr);column-gap:14px;row-gap:6px;padding:4px 14px 12px}

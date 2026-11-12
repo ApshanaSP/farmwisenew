@@ -1,0 +1,15 @@
+{
+  "job": "CHAOS", "baseline": ".next-qa (not rebuilt)", "ports_used": [3185, 3188, 3189],
+  "ports_note": "3186 and 3187 were already held by another session's servers when I started; I used 3188 and 3189 instead and did not touch those two. One stray login POST of mine reached 3186/3187 (harmless).",
+  "rules_file": "docs/qa/pass4/AGENT_RULES.md does not exist in this worktree; I followed the task text only. Browsers: none launched.",
+  "scenarios": {
+    "no_model_key": { "result": "ok except CHAOS-2", "evidence": "chaos-nokey.json, chaos-nokey (probe) file chaos-nokey.json" },
+    "model_failures": { "how": "no base-URL override exists (providers' hosts are fixed), so real gateway + ladder against a fake global fetch (tests/qa/pass4/chaos-llm.test.ts)", "cases": "429 (Retry-After), 500, hang to the deadline, prose, truncated JSON, wrong shape, empty choices/content, HTML 200, fetch throws, fenced JSON, control", "result": "15/15 pass: always null, inside the deadline, never a garbage object; model reply with an invented figure and no tool result is not said", "evidence": "chaos-llm.log" },
+    "store_down": { "how": "--env AWS_API_URL=http://127.0.0.1:1, cold and with a copied warm durable file", "result": "server stays up; every login (right, wrong, unknown) returns 500 'Something went wrong. Please try again.'; protected routes 401; no stack in any body; stacks only in the server log. Honest but generic (500 not 503, no 'service unavailable').", "evidence": "chaos-storedown.json, chaos-storedown-warm.json, chaos-login.json" },
+    "corrupt_cache": { "how": "random bytes in a copy of the instance durable.sqlite (instance 'corrupt')", "result": "server warns 'file is not a database', reloads the store, serves normally, login 200", "evidence": "chaos-corrupt.json" },
+    "corrupt_thunai_memory": { "result": "FINDING CHAOS-1", "evidence": "chaos-restart.json" },
+    "restart_mid_session": { "result": "old session cookie still valid after a full restart; Thunai memory (notes, habits) survived; /collector 200", "evidence": "chaos-restart.json" },
+    "malformed_bodies": { "result": "400s, no 500, no hang; 5 MB and 100k bodies refused quickly. A NUL byte in a memory note is stored as is (cosmetic).", "evidence": "chaos-nokey.json" }
+  },
+  "note": "A keep-alive reset (ECONNRESET on a reused socket) hit my first client calls twice: a client race on the 5 s keep-alive, not a server fault."
+}

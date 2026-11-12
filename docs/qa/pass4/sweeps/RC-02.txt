@@ -1,0 +1,20 @@
+# RC-02 sweep: every fuzzy or sound match of a heard word to a name
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:184:    const d = editDistance(heard, want, 2);
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:186:    const a = phonetic(heard).replace(/ /g, ""), b = phonetic(want).replace(/ /g, "");
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:211:  if (!best && w.length >= 6) for (const v of QUAL) if (v.length >= 6 && editDistance(w, v, 1) <= 1) best = { w: v, s: 
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:327:  if (!s) { s = new Set([...reg.places, ...AREA_WORDS].filter((x) => x.length >= 5 && skeleton(x).length >= 4).map((x) 
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:338:  const known = (x: string) => reg.places.has(x) || AREA_WORDS.has(x) || reg.topics.has(x) || vocabWord(x, reg) != null
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:445:      if (ks.length === 1 && ks[0].length >= 5) r.push({ k: ks[0], s: skeleton(ks[0]), name: p.name, zone: p.zone });
+chennai-grievance-portal-main/src/lib/thunai/entities.ts:465:    const s = skeleton(x);
+chennai-grievance-portal-main/src/lib/thunai/normalise.ts:132:export function skeleton(word: string): string {
+chennai-grievance-portal-main/src/lib/thunai/normalise.ts:141:export function editDistance(a: string, b: string, cap = 3): number {
+chennai-grievance-portal-main/src/lib/thunai/normalise.ts:165:export function taMatch(tok: string, name: string): boolean {
+chennai-grievance-portal-main/src/lib/thunai/understand.ts:32:  if (TA.test(w)) return taMatch(tok, w) ? 0.95 : 0;
+chennai-grievance-portal-main/src/lib/thunai/understand.ts:36:  if (w.length >= 7 && tok.length >= 7 && skeleton(tok) === skeleton(w) && Math.abs(tok.length - w.length) <= 3) retur
+chennai-grievance-portal-main/src/lib/thunai/understand.ts:37:  const d = editDistance(tok, w, 2);
+chennai-grievance-portal-main/src/lib/thunai/xlit.ts:31:export function phonetic(s: string): string {
+chennai-grievance-portal-main/src/lib/thunai/xlit.ts:65:  const keys = [...grams].map((g) => phonetic(g).replace(/ /g, "")).filter((k) => k.length >= 4);
+chennai-grievance-portal-main/src/lib/thunai/xlit.ts:68:    const k = phonetic(name).replace(/ /g, "");
+
+## result
+entities.ts wordScore: first letter must match for a spelling match; an ordinary word (stop words, brief words, lanes' own words, adverbs, verbs) is a name only when spelt exactly; understand.ts wordScore: sound match only from seven letters; taMatch: a short Tamil name ending in -u needs the whole name; a one-word partial name of a zone is dropped; nagar after a name is nagar not city; locality() folds spelling for one-word places (worked out once per World, first 80 words only)

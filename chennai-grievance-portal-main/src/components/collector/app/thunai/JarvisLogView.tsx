@@ -10,9 +10,10 @@ import AnswerCard from "../assistant/AnswerCard";
 import { I } from "../icons";
 import { jarvisLog } from "./jarvislog";
 import StudioAnswer from "./StudioAnswer";
+import { istDateTime } from "@/lib/ist-dates";
 import "./jarvislog.css";
 
-const when = (at: number) => new Date(at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const when = (at: number) => istDateTime(at);
 
 export default function JarvisLogView({ geo, onClose }: { geo: MapGeo | null; onClose: () => void }) {
   const list = useSyncExternalStore(jarvisLog.subscribe, jarvisLog.get, jarvisLog.empty);

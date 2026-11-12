@@ -39,6 +39,23 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
     return () => clearTimeout(id);
   }, [shown, words.length]);
   const typing = !!card.answerMarkdown && card.answerMarkdown !== card.headline && shown < words.length;
+  // the CSV is fetched, not followed as a link: the export asks for the confirm step (a 428 the console's confirm box answers), and a plain link cannot send the grant
+  const [dl, setDl] = useState<"idle" | "busy" | "failed">("idle");
+  const download = async (e: { preventDefault(): void }) => {
+    e.preventDefault();
+    if (!card.download || dl === "busy") return;
+    setDl("busy");
+    try {
+      const r = await fetch(card.download.href);
+      if (!r.ok) throw new Error(String(r.status));
+      const name = r.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1] ?? "district-iq.csv";
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+      setDl("idle");
+    } catch { setDl("failed"); }
+  };
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [pinned, setPinned] = useState(false);
   // the question decides: a chart, map or table only when it asked for one (a list, a chart, a graph, a map); otherwise words only
@@ -94,7 +111,7 @@ function AnswerCard({ card, geo, onAsk, onAction, expanded, onExpand, onPin, rev
       {open && card.kpis.length > 0 && (card.display === "kpi" || !card.chart) && <KpiResponse kpis={card.kpis} t={t} />}
       {open && rt !== "incident_list" && <FigureResponse card={card} geo={geo} onAction={onAction} expanded={expanded} onExpand={onExpand} onAsk={onAsk} />}
 
-      {card.download && <a className="aq-dl" href={card.download.href} download><I n="download" />{card.download.label}</a>}
+      {card.download && <a className="aq-dl" href={card.download.href} onClick={download} aria-busy={dl === "busy"}><I n="download" />{card.download.label}{dl === "failed" ? " (not downloaded: try again)" : ""}</a>}
       {card.caveats.length > 0 && <ul className="aq-cav">{card.caveats.map((c, i) => <li key={i}><I n="info" />{c}</li>)}</ul>}
       {card.chips.length > 0 && <div className="aq-chips">{card.chips.map((q) => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>}
       {actions.length > 0 && (
