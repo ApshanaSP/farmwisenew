@@ -167,7 +167,9 @@ export function topicOf(toks: string[]): Topic | null {
 const NEWS = ["news", "headline", "headlines", "press", "media", "newspaper", "newspapers", "reported in the news", "story", "stories", "செய்தி", "seithi"];
 const NEWS_ONLY = ["only in the news", "news only", "news-only", "no department record", "not in any department", "missing from department", "not recorded by"];
 const INCIDENT_NOUNS = ["incident", "incidents", "case", "cases", "event", "events", "issue", "issues", "complaint", "complaints", "problem", "problems",
-  "grievance", "grievances", "petition", "petitions", "pending work", "pending works", "open work", "backlog", "emergency", "emergencies", "crisis", "prachanai", "pirachanai", "prechanai", "சம்பவம்", "புகார்", "வழக்கு", "பிரச்சனை"];
+  "grievance", "grievances", "petition", "petitions", "pending work", "pending works", "open work", "backlog", "emergency", "emergencies", "crisis", "prachanai", "pirachanai", "prechanai", "சம்பவம்", "புகார்", "வழக்கு", "பிரச்சனை",
+  // the Tamil plural changes the stem's last letter (சம்பவம், சம்பவங்கள்): the stem is the word (QA pass 7: "எத்தனை கடுமையான சம்பவங்கள்" was no count)
+  "சம்பவ", "பிரச்சனைகள்", "வழக்குகள்"];
 /** a count of citizens' complaints, not of incidents */
 const COMPLAINT_WORDS = ["complaint", "complaints", "grievance", "grievances", "petition", "petitions", "புகார்"];
 /** a count of people who died */
@@ -206,7 +208,7 @@ const TABLE = ["as a table", "in a table", "table"];
 export const OVERDUE = /\b(overdue|over-due|past (their |the |its )?(deadline|due date|sla)|missed (the |their )?deadline|deadline (missed|crossed|passed)|beyond (the )?(sla|deadline)|sla breach(ed)?|breached|delayed|late aag)/i;
 const AGED = /\b(?:open|opened|pending|unresolved|unsolved|stuck|lying|not (?:resolved|closed)|old)\b.{0,45}?\b(?:for\s+)?(?:more than|longer than|over|beyond|older than|at least)\s+(\d{1,3}|an?|one|two|three)\s+(days?|weeks?|months?)\b/i;
 const OPEN_ONLY = ["pending", "unresolved", "still open", "open ones", "not resolved", "not closed", "open complaints", "open complaint",
-  "open grievances", "open incidents", "open cases", "open issues", "open work", "backlog", "நிலுவை"];
+  "open grievances", "open incidents", "open cases", "open issues", "open work", "backlog", "நிலுவை", "திறந்த", "திறந்து", "innum open", "open la", "open irukku"];
 /** closed work: "resolved", "closed", "completed", "fixed", "solved", "disposed of" (not "unresolved" / "not closed") */
 const RESOLVED = /\b(resolved|closed|completed|fixed|solved|cleared|disposed)\b|தீர்க்கப்பட்ட|முடிக்கப்பட்ட/i;
 const ORDINALS: [string[], number][] = [[["first", "1st", "top one", "முதல்"], 0], [["second", "2nd", "இரண்டாவது"], 1], [["third", "3rd", "மூன்றாவது"], 2],
@@ -251,7 +253,7 @@ export function detectIntent(message: string, ctx: ConversationContext | null = 
   const topic = topicOf(toks);
   const n = countAsked(message);
   // (medium and low are read only as a level of the incidents counted, "medium incidents", "low severity cases", never "low-lying" or "medium of")
-  const sev = any(toks, ["severe", "critical", "most serious"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High"
+  const sev = any(toks, ["severe", "critical", "most serious", "கடுமையான", "தீவிர", "kadumaiyana"]) ? "Severe" : any(toks, ["high severity", "serious"]) ? "High"
     : any(toks, ["medium severity", "medium incidents", "medium cases", "medium complaints", "medium level"]) ? "Medium"
     : any(toks, ["low severity", "low incidents", "low cases", "low complaints", "low level"]) ? "Low" : null;
   // "open for more than 7 days", "pending over 30 days", "unresolved longer than 2 weeks": open, and at least that old

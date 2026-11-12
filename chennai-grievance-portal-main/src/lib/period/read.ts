@@ -111,6 +111,8 @@ const AGE = /\b(for\s+)?(more than|longer than|older than|beyond|at least)\s+(\d
 // the previous calendar unit: English, Tanglish, Tamil (with no Tamil case ending after it: "கடந்த வாரத்தில்", "in the past week", is the rolling week)
 const LAST_EN = /\b(?:last|previous|prior|pona|poona|ponna|kadandha|kadantha|kadanda|munthaiya|mundhaiya) (week|month|quarter|vaaram|varam|maasam|masam|maatham|kaalaandu)(?:'s|s)?\b(?!\s*(?:\d|of\b))/i;
 const LAST_TA = /(?:கடந்த|போன|சென்ற|முந்தைய) ?(வாரம்|மாதம்|மாசம்|காலாண்டு)(?![஀-௿])/;
+/** "கடந்த", "போன", "pona" left over when the unit after them carried a case ending ("கடந்த மாதத்தை விட"): part of the time phrase, not an unknown word */
+const LAST_LONE = /(?<![\u0B80-\u0BFF])(?:கடந்த|போன|சென்ற|முந்தைய)(?![\u0B80-\u0BFF])|\b(?:pona|kadandha|kadantha)\b/;
 /** "in the last week", "since last month", "over the past month": rolling, as the words say */
 const ROLLING_LAST = /\b(?:since|in the|during the|over the|within the|for the|throughout the) (?:last|past|previous|pona|kadandha|kadantha) (?:week|month|quarter|vaaram|maasam)\b/i;
 const LAST_WEEK_OF = /\b(?:the )?(?:last|final) week of (january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(20\d{2}))?/i;
@@ -457,7 +459,8 @@ export function keyOf(s: PeriodSpec): PeriodKey | null {
 /** The sentence with every time phrase the reader knows blanked out (for a lane that counts the words it could not read). */
 export function periodWordsOut(text: string): string {
   let t = ` ${text} `;
-  for (const re of [LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, SPAN_N, SPAN_N_TA, SPAN_W, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, AGO_EN, AGO_TG, AGO_TA, REF_EN, VS_TG, VS_TA, EITHER_WAY])
+  // the longest phrases first: a comparison holds a month word ("மாதத்தை விட"), and a month word taken out first would leave the rest of it behind
+  for (const re of [REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, SPAN_N, SPAN_N_TA, SPAN_W, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
     t = t.replace(new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`), " ");
   return t.replace(/\s+/g, " ");
 }

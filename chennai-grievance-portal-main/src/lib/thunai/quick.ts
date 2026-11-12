@@ -392,7 +392,8 @@ function readScreen(text: string, w: World, o: { noBail?: boolean }, spec: Perio
   // a ward (there are 200, the lane holds 15 zones) is not a zone: answering with the district list would drop it (RC-05)
   if (!o.noBail && /\b(wards?|ward no)\b|வார்டு/.test(t)) return null;
   // the period the sentence names, by the shared reader: a console window, or the window that stands for a span until withSpan dates it
-  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(t), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  // (the severity is read without the time phrase: "குறைந்ததா", "did it fall", in a comparison is not the level "low")
+  const zones = zonesIn(t, w), cat = catIn(t), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
