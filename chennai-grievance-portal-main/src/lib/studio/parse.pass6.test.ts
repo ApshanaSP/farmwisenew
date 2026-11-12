@@ -53,3 +53,29 @@ describe("QA pass 6, P6-008: a cut-off workbook is refused at once", () => {
     expect(zipIntact(bad)).toBe(false);
   });
 });
+
+describe("QA pass 6, P6-008 after review (reviewer 3): an intact table of contents over a cut-off entry, and other PK starts", () => {
+  const NAME = "[Content_Types].xml";
+  const withToc = (csize: number, usize: number): Buffer => {
+    const loc = started().subarray(0, 40);
+    const cd = Buffer.alloc(46 + NAME.length);
+    cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(8, 10); cd.writeUInt32LE(csize, 20); cd.writeUInt32LE(usize, 24); cd.writeUInt16LE(NAME.length, 28); cd.write(NAME, 46);
+    const end = Buffer.alloc(22);
+    end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(1, 8); end.writeUInt16LE(1, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(loc.length, 16);
+    return Buffer.concat([Buffer.from(loc), cd, end]);
+  };
+  it("a cut-off entry under a well-formed table of contents is not whole, and is refused at once", () => {
+    expect(zipIntact(withToc(30, 100_000_000))).toBe(false);
+    const t0 = performance.now();
+    expect(() => parseFile(withToc(30, 100_000_000), "register.xlsx")).toThrow(/damaged|cut off|could not be/i);
+    expect(performance.now() - t0).toBeLessThan(1000);
+  });
+  for (const [a, b] of [[0x07, 0x08], [0x05, 0x06], [0x01, 0x02], [0x03, 0x03]]) {
+    it(`the cut-off bytes starting PK ${a}/${b}, named .xls, are refused at once`, () => {
+      const buf = Buffer.from(started().subarray(0, 40)); buf[2] = a; buf[3] = b;
+      const t0 = performance.now();
+      expect(() => parseFile(buf, "register.xls")).toThrow();
+      expect(performance.now() - t0).toBeLessThan(1000);
+    });
+  }
+});

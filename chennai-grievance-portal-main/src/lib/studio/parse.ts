@@ -271,7 +271,8 @@ export function feedLinkIn(html: string, base: string): string | null {
 /** Every sheet of a workbook that holds a table, the largest first. */
 function excelAll(buf: Buffer): Table[] {
   // a workbook is a ZIP: a cut-off one (the first 30 or 40 bytes) made XLSX.read run without returning, on the server's own thread (P6-008)
-  if (isZip(buf) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
+  // (any "PK" start is read as a ZIP by SheetJS, not only a local header: a cut-off "PK\x07\x08..." named .xls hung it too: reviewer 3)
+  if ((isZip(buf) || (buf.length >= 2 && buf[0] === 0x50 && buf[1] === 0x4b)) && !zipIntact(buf)) throw new ParseError("This Excel file is incomplete or damaged: it may have been cut off while it was uploaded. Save it again as .xlsx or .csv and retry.");
   let wb: XLSX.WorkBook;
   try {
     wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellNF: true, cellText: false, sheetRows: MAX_ROWS + 40 });

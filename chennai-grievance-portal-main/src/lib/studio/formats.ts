@@ -32,9 +32,21 @@ export function zipIntact(buf: Buffer): boolean {
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
   if (eocd < 0) return false;
-  const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), at = buf.readUInt32LE(eocd + 16);
-  if (at + size > eocd) return false;
-  return count === 0 || (at + 4 <= buf.length && buf.readUInt32LE(at) === 0x02014b50);
+  const count = buf.readUInt16LE(eocd + 10), size = buf.readUInt32LE(eocd + 12), cd = buf.readUInt32LE(eocd + 16);
+  if (cd + size > eocd) return false;
+  // every entry the table of contents lists: its local header is where it says, and its data lies whole before the table of contents. An
+  // intact table of contents after a cut-off entry still made SheetJS run forever (reviewer 3 on P6-008)
+  let at = cd;
+  for (let k = 0; k < count; k++) {
+    if (at + 46 > cd + size || buf.readUInt32LE(at) !== 0x02014b50) return false;
+    const csize = buf.readUInt32LE(at + 20), local = buf.readUInt32LE(at + 42);
+    const nlen = buf.readUInt16LE(at + 28), xlen = buf.readUInt16LE(at + 30), clen = buf.readUInt16LE(at + 32);
+    if (local + 30 > cd || buf.readUInt32LE(local) !== 0x04034b50) return false;
+    const data = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
+    if (data + csize > cd) return false;
+    at += 46 + nlen + xlen + clen;
+  }
+  return at <= cd + size;
 }
 
 /** The files in a ZIP (folders and the macOS __MACOSX shadows left out). */
