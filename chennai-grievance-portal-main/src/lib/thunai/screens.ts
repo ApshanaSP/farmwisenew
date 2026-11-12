@@ -547,11 +547,13 @@ async function cases(c: Ctx): Promise<Part> {
   }
   const lateShown = rows.filter((r) => r.overdue).length;
   const late = lateAll ?? lateShown;
-  const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete });
+  // the severity panel's total counts cases (one per group of the same problem) and the past-deadline figure counts incidents, as the console's
+  // tiles do: the sentence says so, so "9 severe cases, 10 past their deadline" is not read as 10 of 9 (QA4 gate, FB-1)
+  const say = casesSay(rows, total, sev, s.period, { late: lateAll ?? undefined, complete, incidents: source === "console-severity" });
   // the figure is the list's own: "of the whole list" when the screen shows part of it, "of those shown" only when the count could not be made
   // the severity panel counts its own rows and the past-deadline figure counts incidents, so a part can be larger than the whole ("54 of the 52"): then it is said without the whole
   const takeaway = late ? (lateAll != null && late > total
-    ? bi(`${late} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${late} காலக்கெடுவைத் தாண்டியவை.`)
+    ? bi(`${late} ${source === "console-severity" ? `incident${late === 1 ? " is" : "s are"}` : late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${late} ${source === "console-severity" ? "பதிவுகள் " : ""}காலக்கெடுவைத் தாண்டியவை.`)
     : lateAll != null
     ? bi(`${late} of the ${total} ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `${total}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)
     : bi(`${late} of the ${rows.length} shown ${late === 1 ? "is" : "are"} past ${late === 1 ? "its" : "their"} deadline.`, `காட்டப்பட்ட ${rows.length}-இல் ${late} காலக்கெடுவைத் தாண்டியவை.`)) : null;
@@ -576,7 +578,7 @@ async function cases(c: Ctx): Promise<Part> {
  * their deadline), who holds most of them, and what to say next. Names come from each incident's own short summary,
  * never an id or a citizen's words; every figure is a count of the rows.
  */
-export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean } = {}): Bilingual {
+export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, period: PeriodKey, opts: { late?: number; complete?: boolean; incidents?: boolean } = {}): Bilingual {
   const sevWord = sev ? `${sev.toLowerCase()} ` : "";
   // a case is named by its short summary; a long title would be the record read out, so it is retold as its kind and place
   const where = (r: CaseRowT) => {
@@ -595,13 +597,16 @@ export function casesSay(rows: CaseRowT[], total: number, sev: Sev | null, perio
   // who holds most is a count over the rows given: said only for a list given whole
   const [lead] = (opts.complete ?? rows.length >= total) ? [...byDept.entries()].sort((a, b) => b[1] - a[1]) : [];
   const head = `${plural(total, `${sevWord}case`, `${sevWord}cases`)} ${inPeriod(period)}${rows.length < total ? `; here are the ${rows.length} that matter most` : ""}.`;
+  // when the total counts cases (groups) and the past-deadline figure counts incidents, the sentence names the unit
+  const unit = opts.incidents && opts.late != null ? "incident" : "";
+  const lateWho = (n: number) => (unit ? (n === 1 ? "One incident is" : `${spoken(n)} incidents are`) : n === 1 ? "One is" : `${spoken(n)} are`);
   const need = late.length
-    ? `${lateN === 1 ? "One is past its deadline and needs" : `${spoken(lateN)} are past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
-    : `${lateN ? `${lateN === 1 ? "One is" : `${spoken(lateN)} are`} past the deadline, not among these. ` : ""}The most urgent: ${where(first[0])}.`;
+    ? `${lateN === 1 ? `${unit ? "One incident is" : "One is"} past its deadline and needs` : `${unit ? `${spoken(lateN)} incidents are` : `${spoken(lateN)} are`} past their deadline and need`} you first: ${first.map(where).join(", and ")}.`
+    : `${lateN ? `${lateWho(lateN)} past the deadline, not among these. ` : ""}The most urgent: ${where(first[0])}.`;
   const who = lead && lead[1] >= 2 ? `${lead[0]} holds ${spoken(lead[1])} of them.` : "";
   const en = [head, need, who, "Say \"read them\", or \"open\" and a number."].filter(Boolean).join(" ");
   const ta = [`${PERIOD_TA[period]} ${spoken(total)} ${sev ? `${SEV_TA[sev]} ` : ""}சம்பவங்கள்.`,
-    late.length ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
+    late.length ? `${spoken(lateN)} ${unit ? "பதிவுகள் " : ""}காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: ${first.map(whereTa).join("; ")}.` : `${lateN ? `${spoken(lateN)} காலக்கெடு தாண்டியவை, இவற்றில் இல்லை. ` : ""}மிக அவசரமானது: ${whereTa(first[0])}.`,
     lead && lead[1] >= 2 ? `${lead[0]} வசம் ${spoken(lead[1])}.` : "", "\"படி\" அல்லது \"திற\" என்று எண்ணுடன் சொல்லுங்கள்."].filter(Boolean).join(" ");
   return bi(en, ta);
 }
@@ -787,7 +792,12 @@ async function readings(c: Ctx): Promise<Part> {
     .sort((a, b) => b.value - a.value);
   const title = `${e.en}${c.slots.name ? ` · ${c.slots.name}` : ""}`;
   if (!items.length) return { title, takeaway: null, say: bi(`There is no ${e.en.toLowerCase()} reading in the data.`, `${e.ta} அளவீடு தரவில் இல்லை.`), blocks: [] };
-  const named = c.slots.name ? items.find((x) => x.name.toLowerCase().includes(c.slots.name!.toLowerCase()) || c.slots.name!.toLowerCase().includes(x.name.toLowerCase().split(" ")[0])) : null;
+  // a station named in the question; else a zone named in it, read through a station whose name holds the zone's name (QA4 gate, FB-2: "the rainfall in
+  // Adyar" was answered with the city's highest reading). The data has stations, not zones, so a zone with no station of that name gets an honest line.
+  const asked = c.slots.name ? [] : [...new Set(c.slots.zones)].filter((z) => zoneName(c.w, z));
+  const named = c.slots.name ? items.find((x) => x.name.toLowerCase().includes(c.slots.name!.toLowerCase()) || c.slots.name!.toLowerCase().includes(x.name.toLowerCase().split(" ")[0]))
+    : asked.length ? items.find((x) => asked.some((z) => x.name.toLowerCase().includes(String(zoneName(c.w, z)).toLowerCase()))) ?? null : null;
+  const noStation = !c.slots.name && asked.length > 0 && !named;
   const top = named ?? items[0];
   const v = m === "lakes" ? Math.round(top.value) : top.value;
   const unitWord = m === "lakes" ? "% full" : ` ${e.unit}`;
@@ -795,7 +805,12 @@ async function readings(c: Ctx): Promise<Part> {
   // the Tamil line has its own month, clock and unit (a Latin "6 Nov, 8:30 AM" and "mm" in a Tamil line is a break: RC-15, SKG1-37)
   const atTa = when(top.t) ? labelTa(when(top.t) as string) : "சமீபத்திய அளவீடு";
   const unitTa = ({ rain: "மி.மீ", aqi: "AQI", lakes: "%", temp: "°C", humidity: "%" } as Record<Metric, string>)[m];
-  const say = named
+  const askedEn = asked.map((z) => zoneName(c.w, z)).join(" or ");
+  const askedTa = asked.map((z) => zoneTa(c.w, z)).join(" அல்லது ");
+  const say = noStation
+    ? bi(`There is no ${e.en.toLowerCase()} gauge in ${askedEn}: the data has stations, not zones. Across ${items.length} stations the highest is ${top.name} at ${spoken(v)}${unitWord}, as of ${at}.`,
+        `${askedTa} பகுதிக்கு ${e.ta} மானி இல்லை: தரவில் நிலையங்கள் மட்டுமே உள்ளன. ${items.length} நிலையங்களில் அதிகம்: ${top.name}, ${spoken(v)}${m === "lakes" ? "%" : ` ${unitTa}`}, ${atTa} நிலவரப்படி.`)
+    : named
     ? bi(`${top.name} is at ${spoken(v)}${unitWord}, as of ${at}.`, `${top.name}: ${spoken(v)}${m === "lakes" ? "% நிரம்பியுள்ளது" : ` ${unitTa}`}, ${atTa} நிலவரப்படி.`)
     : bi(`${items.length} readings. Highest: ${top.name} at ${spoken(v)}${unitWord}, as of ${at}.`, `${items.length} அளவீடுகள். அதிகம்: ${top.name}, ${spoken(v)}${m === "lakes" ? "%" : ` ${unitTa}`}, ${atTa} நிலவரப்படி.`);
   const vs = top.mean28 != null && top.mean28 > 0 ? change(top.value, top.mean28) : { delta: null, pct: null };
@@ -909,8 +924,11 @@ async function ranking(c: Ctx): Promise<Part> {
 }
 
 /** Departments with every measure the console has for them, joined by code. */
+// Every department, side by side, whatever department the console is filtered to: the tools that rank departments read the department filter
+// differently (departments and dept_backlog ignore it, dept_followups and resolution_times apply it), so with one department chosen the others
+// read 0 past deadline (QA4 gate, gate-oracle-2). A screen that wants one department picks its row from this list.
 async function deptMeasures(c: Ctx): Promise<Row[]> {
-  const sc = { scope: scopeArg(c.s) };
+  const sc = { scope: scopeArg({ ...c.s, dept: null }) };
   const [deps, backlog, res, fol] = await Promise.all([
     call(c, "departments", sc), call(c, "dept_backlog", sc), call(c, "resolution_times", sc), call(c, "dept_followups", sc).catch(() => null)
   ]);
@@ -990,14 +1008,14 @@ async function compareDepts(c: Ctx): Promise<Part> {
 
 // ------------------------------------------------------------------ trend --
 
-async function seriesBlock(c: Ctx, s: ScopeT, title: string): Promise<{ block: Extract<BlockT, { kind: "Trend" }>; values: number[]; open: number[]; labels: string[]; total: number }> {
+async function seriesBlock(c: Ctx, s: ScopeT, title: string): Promise<{ block: Extract<BlockT, { kind: "Trend" }>; values: number[]; open: number[]; severe: number[]; labels: string[]; total: number }> {
   const r = await call(c, "incident_series", { scope: scopeArg(s) });
   const d = r.data as { buckets: Row[]; unit: string; normal: { lo: number; hi: number; mean: number } | null };
   const values = d.buckets.map((b) => Number(b.n));
   const labels = d.buckets.map((b) => (d.unit === "2h" || /hour/.test(d.unit) ? when(b.from)?.split(", ")[1] ?? "" : when(b.from)?.split(",")[0] ?? ""));
   const normal = d.normal && Number.isFinite(d.normal.hi) ? { lo: Number(d.normal.lo), hi: Number(d.normal.hi) } : null;
   const marks = unusualPoints(values, normal).slice(0, 12).map((i) => ({ i, why: normal ? `Above the usual range (${spoken(normal.lo)}–${spoken(normal.hi)})` : "More than 2 standard deviations above the mean" }));
-  return { block: { kind: "Trend", id: "trend", title, unit: "incidents", labels, values, marks, normal }, values, open: d.buckets.map((b) => Number(b.open ?? 0)), labels, total: values.reduce((a, b) => a + b, 0) };
+  return { block: { kind: "Trend", id: "trend", title, unit: "incidents", labels, values, marks, normal }, values, open: d.buckets.map((b) => Number(b.open ?? 0)), severe: d.buckets.map((b) => Number(b.severe ?? 0)), labels, total: values.reduce((a, b) => a + b, 0) };
 }
 
 async function trend(c: Ctx): Promise<Part> {
@@ -1143,6 +1161,7 @@ async function zonePerformance(c: Ctx): Promise<Part> {
   const t = await seriesBlock(c, { ...s, zone: null }, "Incidents reported over time");
   const cols = [{ k: "n", l: "Reported" }, { k: "severe", l: "Severe" }, { k: "high", l: "High" }, { k: "open", l: "Open" }, { k: "complaints", l: "Complaints" }];
   const tot = (k: string) => rows.reduce((a, x) => a + Number(x[k] ?? 0), 0);
+  const sum = (v: number[]) => v.reduce((a, x) => a + x, 0);
   const title = `Zone performance · all zones · ${PERIOD_EN[s.period]}`;
   const [a, b] = ranked;
   if (!a) return { title, takeaway: null, say: bi("No zone data for this period.", "இந்தக் காலத்துக்கு மண்டலத் தரவு இல்லை."), blocks: [] };
@@ -1155,8 +1174,10 @@ async function zonePerformance(c: Ctx): Promise<Part> {
       { kind: "Kpis", id: "kpis", title: "Key numbers", items: [
         // the trend beside it counts every incident, those with no zone too: the tile is that count, so the two agree (RC-09, PB-067)
         { key: "n", label: `Reported, ${PERIOD_EN[s.period]}`, value: t.total, unit: null, prev: null, delta: null, tone: "neutral", spark: t.values.slice(-30) },
-        { key: "severe", label: "Severe", value: tot("severe"), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
-        { key: "open", label: "Open", value: tot("open"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
+        // Severe and Open are read from the same series as Reported: the zone rows leave out the incidents with no zone, and the whole-district
+        // figure on every other screen includes them (QA4 gate, gate-oracle-3)
+        { key: "severe", label: "Severe", value: sum(t.severe), unit: null, prev: null, delta: null, tone: "bad", spark: [] },
+        { key: "open", label: "Open", value: sum(t.open), unit: null, prev: null, delta: null, tone: "neutral", spark: [] },
         { key: "complaints", label: "Open complaints", value: tot("complaints"), unit: null, prev: null, delta: null, tone: "neutral", spark: [] }
       ] },
       { kind: "Ranking", id: "rank", title: "Zones by attention score (worst first)", unit: "points", method: "Attention score = 3 × severe + high, as the console's 'Hotspot zones' tile.", order: "top",
