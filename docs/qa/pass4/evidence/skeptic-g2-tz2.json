@@ -1,0 +1,78 @@
+[
+ {
+  "who": "collector",
+  "lang": "en",
+  "url": "/collector",
+  "onlyInIstOrOther": {
+   "America/Los_Angeles": {
+    "url": "/collector",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   },
+   "Pacific/Auckland": {
+    "url": "/collector",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   }
+  }
+ },
+ {
+  "who": "collector",
+  "lang": "ta",
+  "url": "/collector",
+  "onlyInIstOrOther": {
+   "America/Los_Angeles": {
+    "url": "/collector",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   },
+   "Pacific/Auckland": {
+    "url": "/collector",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   }
+  }
+ },
+ {
+  "who": "officerA",
+  "lang": "en",
+  "url": "/officer",
+  "onlyInIstOrOther": {
+   "America/Los_Angeles": {
+    "url": "/officer",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   },
+   "Pacific/Auckland": {
+    "url": "/officer",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   }
+  }
+ },
+ {
+  "who": "officerA",
+  "lang": "ta",
+  "url": "/officer",
+  "onlyInIstOrOther": {
+   "America/Los_Angeles": {
+    "url": "/officer",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   },
+   "Pacific/Auckland": {
+    "url": "/officer",
+    "missing": [],
+    "extra": [],
+    "errs": 0
+   }
+  }
+ }
+]

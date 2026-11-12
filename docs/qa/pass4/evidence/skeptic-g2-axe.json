@@ -1,0 +1,4055 @@
+{
+ "when": "2026-11-12T03:42:55.796Z",
+ "runs": [
+  {
+   "label": "root",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "root",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "404",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "404",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "landmark-one-main",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "html"
+     ]
+    },
+    {
+     "id": "region",
+     "impact": "moderate",
+     "nodes": 2,
+     "sample": [
+      "h1",
+      "div:nth-child(2) > div > div"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 12,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-s:nth-child(1) > .oi-sh > .oi-st > .old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-ch"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-ch"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:By severity\n80",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 14,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:By severity\n80",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+      "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(2) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:By severity\n80",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 11,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:By severity\n80",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 59,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:தீவிரம்\n80",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 14,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:தீவிரம்\n80",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+      "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:தீவிரம்\n80",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 11,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officer:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:தீவிரம்\n80",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:My work\n71",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officer:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 73,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-ch"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-type:nth-child(1) > .oi-ch.down"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:By severity\n89",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 14,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 11,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:By severity\n89",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+      "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:By severity\n89",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 11,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:By severity\n89",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 12,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:தீவிரம்\n89",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 13,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 14,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".kpi.settle:nth-child(2) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(2) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:தீவிரம்\n89",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .sev-high.chip",
+      "tr:nth-child(2) > td:nth-child(2) > .sev-high.chip"
+     ]
+    },
+    {
+     "id": "scrollable-region-focusable",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".odrawer-b"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:தீவிரம்\n89",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 11,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(3) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerB:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:தீவிரம்\n89",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:My work\n86",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerB:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 10,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 2,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".old"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".oi-ch"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:By severity\n2",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:By severity\n2",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+      "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 1,
+     "sample": [
+      ".lb"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:By severity\n2",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:By severity\n2",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 9,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:தீவிரம்\n2",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 5,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 6,
+     "sample": [
+      ".daily > span:nth-child(2) > small",
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:தீவிரம்\n2",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(2) > .chip.sev-medium",
+      "tr:nth-child(2) > td:nth-child(2) > .chip.sev-medium"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".lb",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:தீவிரம்\n2",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 4,
+     "sample": [
+      ".lb",
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:overview",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:work",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 8,
+     "sample": [
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-l",
+      ".kpi.settle:nth-child(1) > .kpi-b > .kpi-d.oi-sub"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "officerC:daily",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:weekly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:monthly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:quarterly",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:தீவிரம்\n2",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:My work\n2",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "officerC:detail",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "nodes": 3,
+     "sample": [
+      "tr:nth-child(1) > td:nth-child(4) > .btn.sm",
+      "tr:nth-child(2) > td:nth-child(4) > .btn.sm"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "aside"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      ".top"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "en",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "en",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "en",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "ta",
+   "theme": "light",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 1280,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  },
+  {
+   "label": "collector",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:ask-dialog",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": []
+  },
+  {
+   "label": "collector:confirm-box",
+   "lang": "ta",
+   "theme": "dark",
+   "vp": 360,
+   "sideways": false,
+   "violations": [
+    {
+     "id": "aria-allowed-role",
+     "impact": "minor",
+     "nodes": 1,
+     "sample": [
+      "form"
+     ]
+    },
+    {
+     "id": "landmark-no-duplicate-banner",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    },
+    {
+     "id": "landmark-unique",
+     "impact": "moderate",
+     "nodes": 1,
+     "sample": [
+      "form > header"
+     ]
+    }
+   ]
+  }
+ ],
+ "notes": []
+}

@@ -1,0 +1,1 @@
+{"account":"officerA","login":200,"burstOf20":{"401":20},"nextSingleGuess":429,"body":"{\"error\":\"Too many wrong tries. Wait 15 minutes and try again.\"}"}

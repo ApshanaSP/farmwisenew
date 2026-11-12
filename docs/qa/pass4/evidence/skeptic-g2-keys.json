@@ -1,0 +1,226 @@
+[
+ {
+  "lang": "en",
+  "width": 1280,
+  "box": true,
+  "opener": {
+   "tag": "BUTTON",
+   "name": "Overview"
+  },
+  "errs": [],
+  "rect": {
+   "top": 259,
+   "bottom": 557,
+   "left": 434,
+   "right": 846,
+   "vh": 800,
+   "vw": 1280,
+   "buttons": [
+    {
+     "t": "",
+     "inView": true
+    },
+    {
+     "t": "Cancel",
+     "inView": true
+    },
+    {
+     "t": "Confirm",
+     "inView": true
+    },
+    {
+     "t": "Email me a cod",
+     "inView": true
+    }
+   ]
+  },
+  "text": "Confirm it's you | EXPORT DATA |  | Download the action list as a spreadsheet |  | Your account password | Cancel | Confirm | Email me a code |  | Being signed in is not enough for",
+  "focusAtOpen": {
+   "tag": "input",
+   "id": "cfm-code",
+   "name": "",
+   "inBox": true
+  },
+  "tabEscaped": [
+   "button:Overview",
+   "button:Briefing",
+   "button:Trends",
+   "button:Environment"
+  ],
+  "shiftTabEscaped": 3,
+  "boxGone": true,
+  "focusAfterClose": {
+   "tag": "BUTTON",
+   "isOpener": false
+  },
+  "callerStatus": 428
+ },
+ {
+  "lang": "ta",
+  "width": 1280,
+  "box": true,
+  "opener": {
+   "tag": "BUTTON",
+   "name": "மேலோட்டம்"
+  },
+  "errs": [],
+  "rect": {
+   "top": 259,
+   "bottom": 557,
+   "left": 434,
+   "right": 846,
+   "vh": 800,
+   "vw": 1280,
+   "buttons": [
+    {
+     "t": "",
+     "inView": true
+    },
+    {
+     "t": "ரத்து",
+     "inView": true
+    },
+    {
+     "t": "Confirm",
+     "inView": true
+    },
+    {
+     "t": "Email me a cod",
+     "inView": true
+    }
+   ]
+  },
+  "text": "Confirm it's you | EXPORT DATA |  | Download the action list as a spreadsheet |  | Your account password | ரத்து | Confirm | Email me a code |  | Being signed in is not enough for ",
+  "focusAtOpen": {
+   "tag": "input",
+   "id": "cfm-code",
+   "name": "",
+   "inBox": true
+  },
+  "tabEscaped": [
+   "button:மேலோட்டம்",
+   "button:சுருக்கம்",
+   "button:போக்குகள்",
+   "button:சுற்றுச்சூழல்"
+  ],
+  "shiftTabEscaped": 3,
+  "boxGone": true,
+  "focusAfterClose": {
+   "tag": "BUTTON",
+   "isOpener": false
+  },
+  "callerStatus": 428
+ },
+ {
+  "lang": "en",
+  "width": 360,
+  "box": true,
+  "opener": {
+   "tag": "BUTTON",
+   "name": "Overview"
+  },
+  "errs": [],
+  "rect": {
+   "top": 201,
+   "bottom": 515,
+   "left": 19,
+   "right": 341,
+   "vh": 700,
+   "vw": 360,
+   "buttons": [
+    {
+     "t": "",
+     "inView": true
+    },
+    {
+     "t": "Cancel",
+     "inView": true
+    },
+    {
+     "t": "Confirm",
+     "inView": true
+    },
+    {
+     "t": "Email me a cod",
+     "inView": true
+    }
+   ]
+  },
+  "text": "Confirm it's you | EXPORT DATA |  | Download the action list as a spreadsheet |  | Your account password | Cancel | Confirm | Email me a code |  | Being signed in is not enough for",
+  "focusAtOpen": {
+   "tag": "input",
+   "id": "cfm-code",
+   "name": "",
+   "inBox": true
+  },
+  "tabEscaped": [
+   "button:Overview",
+   "button:Briefing",
+   "button:Trends",
+   "button:Environment"
+  ],
+  "shiftTabEscaped": 3,
+  "boxGone": true,
+  "focusAfterClose": {
+   "tag": "BUTTON",
+   "isOpener": false
+  },
+  "callerStatus": 428
+ },
+ {
+  "lang": "ta",
+  "width": 360,
+  "box": true,
+  "opener": {
+   "tag": "BUTTON",
+   "name": "மேலோட்டம்"
+  },
+  "errs": [],
+  "rect": {
+   "top": 201,
+   "bottom": 515,
+   "left": 19,
+   "right": 341,
+   "vh": 700,
+   "vw": 360,
+   "buttons": [
+    {
+     "t": "",
+     "inView": true
+    },
+    {
+     "t": "ரத்து",
+     "inView": true
+    },
+    {
+     "t": "Confirm",
+     "inView": true
+    },
+    {
+     "t": "Email me a cod",
+     "inView": true
+    }
+   ]
+  },
+  "text": "Confirm it's you | EXPORT DATA |  | Download the action list as a spreadsheet |  | Your account password | ரத்து | Confirm | Email me a code |  | Being signed in is not enough for ",
+  "focusAtOpen": {
+   "tag": "input",
+   "id": "cfm-code",
+   "name": "",
+   "inBox": true
+  },
+  "tabEscaped": [
+   "button:மேலோட்டம்",
+   "button:சுருக்கம்",
+   "button:போக்குகள்",
+   "button:சுற்றுச்சூழல்"
+  ],
+  "shiftTabEscaped": 3,
+  "boxGone": true,
+  "focusAfterClose": {
+   "tag": "BUTTON",
+   "isOpener": false
+  },
+  "callerStatus": 428
+ }
+]
