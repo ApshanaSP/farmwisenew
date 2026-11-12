@@ -105,3 +105,22 @@ describe("hunt2-ops-05: a case the Collector sends back is in the department's q
     expect(await returned("quarterly")).toBe(before.quarterly + 1);
   });
 });
+
+describe("console-sync-03 with work waiting: the CSV keeps to the period and to one row per group", () => {
+  it("a closure updated 60 days ago is not in the daily CSV, and two closures of one group are one row", async () => {
+    const now = await asOf();
+    const sev = await rows(`SELECT incident_id AS id FROM incidents WHERE is_open = 1 AND severity_level = 'Severe' AND citizen_complaints > 0
+      AND incident_id NOT IN (SELECT incident_id FROM \`district_intel_ops\`.\`collector_decisions\`) ORDER BY incident_id LIMIT 3`);
+    expect(sev).toHaveLength(3);
+    const [a, b, c] = sev.map((x) => String(x.id));
+    // the pipeline marks them reported done (awaiting_collector): a and b today, in one group; c 60 days ago
+    await intelPool.query(`UPDATE incidents SET awaiting_collector = 1, last_update_at = ? - INTERVAL 2 HOUR, cluster_id = 'QA7-G' WHERE incident_id IN (?, ?)`, [now, a, b]);
+    await intelPool.query(`UPDATE incidents SET awaiting_collector = 1, last_update_at = ? - INTERVAL 60 DAY WHERE incident_id = ?`, [now, c]);
+    const ov = await overview("daily", null, null);
+    const csv = (await exportRows("daily", null, null)).filter((r) => r.list === "Closed work to check").map((r) => String(r.id));
+    expect(ov.tasks.count).toBeGreaterThanOrEqual(1);
+    expect(csv.length).toBe(ov.tasks.count);
+    expect(csv).not.toContain(c);
+    expect(csv.filter((id) => id === a || id === b)).toHaveLength(1);
+  });
+});

@@ -5,6 +5,10 @@ import { DECISION_EFFECT, DECISION_WORDS } from "./effective";
 
 vi.mock("@/lib/collector/guard", async (orig) => ({ ...(await orig<object>()),
   collectorSession: async () => ({ userId: 990001, email: "qa-p7@example.test", role: "collector", tv: 0 }) }));
+// no database in this unit test: a decision that got past the confirm step must fail here, never reach a local MySQL
+vi.mock("@/lib/collector/db", async (orig) => ({ ...(await orig<object>()),
+  default: { getConnection: async () => { throw new Error("no database in this unit test: the decision was not stopped at the confirm step"); },
+    query: async () => { throw new Error("no database in this unit test"); } } }));
 
 describe("hunt2-ops-02: a decision is confirmed in the words of what it does", () => {
   it("every decision that closes says it closes; none of them says it returns or sends back", () => {
