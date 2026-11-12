@@ -75,13 +75,23 @@ describe("hunt2-ops-07: a closing decision on a closed case leaves its closed ti
     expect(s.resolvedIn(24)).toEqual([]);
   });
 
-  it("closing a lapsed or rejected case today does not count it as resolved today", () => {
+  it("closing a rejected case today keeps April; a lapsed case (no closed time, never resolved) counts once, at the first resolve", () => {
     const s = store();
-    s.decide("LAPSED", "resolve", "2026-11-13 09:00:00");
+    s.decide("LAPSED", "resolve", "2026-11-12 09:00:00");
+    s.decide("LAPSED", "verify", "2026-11-13 09:00:00");
     s.decide("REJ", "resolve", "2026-11-13 09:00:00");
-    expect(s.closedAt("LAPSED")).toBeNull();
+    expect(s.closedAt("LAPSED")).toBe("2026-11-12 09:00:00");
     expect(s.closedAt("REJ")).toBe("2026-04-01 10:00:00");
     expect(s.resolvedIn(24)).toEqual([]);
+    expect(s.resolvedIn(48)).toEqual(["LAPSED"]);
+  });
+
+  it("a resolve made while the case was open survives the pipeline lapsing it later (P7 review X1)", () => {
+    const s = store();
+    s.decide("OPEN", "resolve", "2026-11-10 09:00:00");
+    s.setPipeline("OPEN", 0, "Lapsed", null);
+    expect(s.closedAt("OPEN")).toBe("2026-11-10 09:00:00");
+    expect(s.resolvedIn(168)).toEqual(["OPEN"]);
   });
 
   it("a resolve of an open case still counts at once (RC-27)", () => {

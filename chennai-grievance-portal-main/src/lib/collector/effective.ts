@@ -54,9 +54,11 @@ export function effectiveSql(decisionsTable: string, alias = "i") {
   const reopenedAt = `(SELECT MAX(r.decision_id) FROM ${decisionsTable} r WHERE r.incident_id = ${i}.incident_id AND r.decision = 'reopen')`;
   const firstClosingAfter = (id: string) => `(SELECT c.decided_at FROM ${decisionsTable} c WHERE c.incident_id = ${i}.incident_id
     AND c.decision IN (${closing}) AND c.decision_id > ${id} ORDER BY c.decision_id ASC LIMIT 1)`;
+  // A case the pipeline closed with no time (Lapsed: a news-only item about 14 days old) keeps the first closing decision's time: it was
+  // never counted as resolved, so this counts it once, and a resolve made while it was open is not erased when it lapses later (P7 review X1).
   const closedByDecisions = `(CASE WHEN ${reopenedAt} IS NOT NULL THEN ${firstClosingAfter(reopenedAt)}
     WHEN ${i}.is_open = 1 THEN ${firstClosingAfter("0")}
-    ELSE LEAST(${i}.closed_at, ${firstClosingAfter("0")}) END)`;
+    ELSE COALESCE(LEAST(${i}.closed_at, ${firstClosingAfter("0")}), ${firstClosingAfter("0")}) END)`;
   const cases = (pick: (e: Effect) => string) =>
     Object.entries(DECISION_EFFECT).map(([k, e]) => `WHEN '${k}' THEN ${pick(e)}`).join(" ");
   return {
@@ -67,7 +69,8 @@ export function effectiveSql(decisionsTable: string, alias = "i") {
     status: `(CASE ${latest} ${cases((e) => `'${e.status}'`)} ELSE ${i}.status_std END)`,
     /**
      * when it closed: the first closing decision since it was last open (after the latest reopen; or, never reopened, the first one while
-     * the pipeline has it open, else the earlier of the pipeline's closed_at and that decision); nothing once reopened; else the
+     * the pipeline has it open, else the earlier of the pipeline's closed_at and that decision, or that decision when the pipeline has
+     * no closed time); nothing once reopened; else the
      * pipeline's closed_at. A closing decision on a closed case is a no-op for this time (hunt2-ops-07).
      */
     closedAt: `(CASE WHEN ${latest} IN (${closing}) THEN ${closedByDecisions} WHEN ${latest} = 'reopen' THEN NULL ELSE ${i}.closed_at END)`,
