@@ -249,6 +249,19 @@ describe("a petition approved into a closed case", () => {
   });
 });
 
+// QA pass 5, P5-018: with no mobile and no ward, earlier petitions were fetched by the byte-exact name, so the matcher (which compares names
+// by their letters) never saw "R.Kumar" for "R. Kumar", decomposed Tamil, or a name with a zero-width joiner
+describe("the same person, written a little differently", () => {
+  for (const [label, filedName, nowName] of [["spacing", "R.Kumar", "R. Kumar"], ["NFD Tamil", "க. கோமதி", "க. கோமதி".normalize("NFD")], ["zero-width joiner", "க. கோமதி", "க.‍ கோமதி"]] as const) {
+    it(`is found with no mobile and no ward (${label})`, async () => {
+      const { findRepeats } = await import("./repeat");
+      await filePetition(await uploaded(), fields({ name: filedName, mobile: "" }), "x");
+      const r = await findRepeats({ mobile: null, name: nowName, street: "ஜவஹர் தெரு", ward: null, dept: "CMWSSB", problem: "Sewage still overflowing on the street" });
+      expect(r.headline ?? "(none)").toContain("second petition on this problem");
+    });
+  }
+});
+
 describe("the public tracker", () => {
   it("opens with the slip's key or the mobile's last 4 digits, and shows no personal detail", async () => {
     const r = await filePetition(await uploaded(), fields(), "x");
