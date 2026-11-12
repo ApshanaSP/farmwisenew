@@ -1,0 +1,6011 @@
+{
+ "a": "merged2",
+ "b": "merged3",
+ "compared": {
+  "a": 3272,
+  "b": 3272
+ },
+ "changed": 84,
+ "added": 5,
+ "removed": 5,
+ "context": {
+  "next_build_id": {
+   "a": "RDuLQPpMZxt0M0HX9y8Dj",
+   "b": "88_b9r6ne78zz3dAXcRPV"
+  }
+ },
+ "routes": [
+  {
+   "route": "/api/collector/thunai/agent/round",
+   "requests": 31,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "count": 25
+    },
+    {
+     "path": "$.result.say",
+     "count": 15
+    },
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.blocks[*].points[*].ta",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.title",
+     "count": 4
+    },
+    {
+     "path": "$.result.stage.blocks[*].title",
+     "count": 4
+    },
+    {
+     "path": "$.result.steps[*]",
+     "count": 3
+    },
+    {
+     "path": "$.result.kind",
+     "count": 2
+    },
+    {
+     "path": "$.result.steps.length",
+     "count": 2
+    },
+    {
+     "path": "$.result.stage",
+     "count": 2
+    },
+    {
+     "path": "$.result.note",
+     "count": 2
+    },
+    {
+     "path": "$.trace.length",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/overview",
+   "requests": 12,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [
+    "200 -> 400"
+   ],
+   "top_paths": [
+    {
+     "path": "$.stories.threads[*].incidents[*]",
+     "count": 20
+    },
+    {
+     "path": "$.stories.threads[*].incidents.length",
+     "count": 13
+    },
+    {
+     "path": "$.now",
+     "count": 1
+    },
+    {
+     "path": "$.period",
+     "count": 1
+    },
+    {
+     "path": "$.zone",
+     "count": 1
+    },
+    {
+     "path": "$.dept",
+     "count": 1
+    },
+    {
+     "path": "$.cat",
+     "count": 1
+    },
+    {
+     "path": "$.taluk",
+     "count": 1
+    },
+    {
+     "path": "$.exportedAt",
+     "count": 1
+    },
+    {
+     "path": "$.collection",
+     "count": 1
+    },
+    {
+     "path": "$.kpi",
+     "count": 1
+    },
+    {
+     "path": "$.zoneTable",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/stories",
+   "requests": 10,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [
+    "200 -> 400"
+   ],
+   "top_paths": [
+    {
+     "path": "$.threads[*].incidents[*]",
+     "count": 17
+    },
+    {
+     "path": "$.threads[*].incidents.length",
+     "count": 11
+    },
+    {
+     "path": "$.threads[*].days[*].steps[*].incident",
+     "count": 11
+    },
+    {
+     "path": "$.days",
+     "count": 1
+    },
+    {
+     "path": "$.total",
+     "count": 1
+    },
+    {
+     "path": "$.threads",
+     "count": 1
+    },
+    {
+     "path": "$.ai",
+     "count": 1
+    },
+    {
+     "path": "$.error",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "route": "/api/officer/grievances",
+   "requests": 8,
+   "roles": [
+    "officerA",
+    "officerB"
+   ],
+   "status_changes": [
+    "200 -> 400"
+   ],
+   "top_paths": [
+    {
+     "path": "$.now",
+     "count": 8
+    },
+    {
+     "path": "$.rows",
+     "count": 8
+    },
+    {
+     "path": "$.total",
+     "count": 8
+    },
+    {
+     "path": "$.page",
+     "count": 8
+    },
+    {
+     "path": "$.per",
+     "count": 8
+    },
+    {
+     "path": "$.awaiting",
+     "count": 8
+    },
+    {
+     "path": "$.awaitingNote",
+     "count": 8
+    },
+    {
+     "path": "$.error",
+     "count": 8
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/report",
+   "requests": 8,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.stories.threads[*].incidents[*]",
+     "count": 15
+    },
+    {
+     "path": "$.stories.threads[*].incidents.length",
+     "count": 10
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/export",
+   "requests": 4,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [
+    "428 -> 400"
+   ],
+   "top_paths": [
+    {
+     "path": "$.error",
+     "count": 4
+    },
+    {
+     "path": "$.confirm",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/list",
+   "requests": 4,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [
+    "200 -> 400"
+   ],
+   "top_paths": [
+    {
+     "path": "$.rows",
+     "count": 4
+    },
+    {
+     "path": "$.total",
+     "count": 4
+    },
+    {
+     "path": "$.incidents",
+     "count": 4
+    },
+    {
+     "path": "$.complaints",
+     "count": 4
+    },
+    {
+     "path": "$.error",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "route": "/api/collector/thunai/agent",
+   "requests": 4,
+   "roles": [
+    "collector"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.result.say",
+     "count": 2
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "count": 2
+    },
+    {
+     "path": "$.result.kind",
+     "count": 1
+    },
+    {
+     "path": "$.result.steps.length",
+     "count": 1
+    },
+    {
+     "path": "$.result.steps[*]",
+     "count": 1
+    },
+    {
+     "path": "$.result.stage",
+     "count": 1
+    },
+    {
+     "path": "$.result.note",
+     "count": 1
+    },
+    {
+     "path": "$.result.stage.takeaway.en",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "route": "/api/map/layers/[id]",
+   "requests": 3,
+   "roles": [
+    "collector",
+    "officerA",
+    "officerB"
+   ],
+   "status_changes": [],
+   "top_paths": [
+    {
+     "path": "$.features[*].id",
+     "count": 73
+    },
+    {
+     "path": "$.features[*].name",
+     "count": 70
+    },
+    {
+     "path": "$.features[*].url",
+     "count": 69
+    },
+    {
+     "path": "$.features[*].sub",
+     "count": 67
+    },
+    {
+     "path": "$.features[*].lat",
+     "count": 57
+    },
+    {
+     "path": "$.features[*].lon",
+     "count": 56
+    },
+    {
+     "path": "$.features[*].inc",
+     "count": 55
+    },
+    {
+     "path": "$.features[*].kind",
+     "count": 50
+    },
+    {
+     "path": "$.unplaced",
+     "count": 3
+    },
+    {
+     "path": "$.meta.count",
+     "count": 1
+    },
+    {
+     "path": "$.features.length",
+     "count": 1
+    }
+   ]
+  }
+ ],
+ "added_requests": [
+  {
+   "id": "de45cc72ff2a4a4a",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "832d159ae1fce404",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "a0b07d703a8945f7",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "100dc82274ef52b3",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "483f0b4697d2b369",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  }
+ ],
+ "removed_requests": [
+  {
+   "id": "75892bd131e3b8c5",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "09066d78d91b0b01",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "73f1e47d30159f90",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "e9318f90fbb92c8d",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  },
+  {
+   "id": "c12aeb002d1c0353",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "status": 200
+  }
+ ],
+ "changes": [
+  {
+   "id": "57e1476f339e30dd",
+   "session": "reads",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/map/layers/news",
+   "route": "/api/map/layers/[id]",
+   "fields": {},
+   "bytes": {
+    "a": 5215,
+    "b": 5215
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.unplaced",
+     "a": 8,
+     "b": 5
+    }
+   ]
+  },
+  {
+   "id": "66498f26443c3865",
+   "session": "reads",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/map/layers/news",
+   "route": "/api/map/layers/[id]",
+   "fields": {},
+   "bytes": {
+    "a": 7529,
+    "b": 7529
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.unplaced",
+     "a": 25,
+     "b": 14
+    }
+   ]
+  },
+  {
+   "id": "5b4fcbfe21b143d4",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/export?dept=not+a+dept",
+   "route": "/api/collector/export",
+   "fields": {
+    "status": {
+     "a": 428,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 184,
+    "b": 63
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.error",
+     "a": "Confirm it's you first.",
+     "b": "Department \"not a dept\" is not a department code."
+    },
+    {
+     "path": "$.confirm",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "eeb9cb80075397e4",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/export?period=bogus",
+   "route": "/api/collector/export",
+   "fields": {
+    "status": {
+     "a": 428,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 184,
+    "b": 77
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.error",
+     "a": "Confirm it's you first.",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    },
+    {
+     "path": "$.confirm",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "3151e93e788ed361",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/export?zone=99",
+   "route": "/api/collector/export",
+   "fields": {
+    "status": {
+     "a": 428,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 184,
+    "b": 65
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.error",
+     "a": "Confirm it's you first.",
+     "b": "Zone \"99\" is not one of the 15 GCC zones (1 to 15)."
+    },
+    {
+     "path": "$.confirm",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "27d58823e1a37273",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/export?zone=abc",
+   "route": "/api/collector/export",
+   "fields": {
+    "status": {
+     "a": 428,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 184,
+    "b": 66
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.error",
+     "a": "Confirm it's you first.",
+     "b": "Zone \"abc\" is not one of the 15 GCC zones (1 to 15)."
+    },
+    {
+     "path": "$.confirm",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "64f7392c82bb56d6",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?dept=not+a+dept",
+   "route": "/api/collector/list",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 16484,
+    "b": 63
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.rows",
+     "a": "[array of 12]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 228,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.incidents",
+     "a": 239,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.complaints",
+     "a": 147,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Department \"not a dept\" is not a department code."
+    }
+   ]
+  },
+  {
+   "id": "c9cde797d32f826b",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?period=bogus",
+   "route": "/api/collector/list",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 16484,
+    "b": 77
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.rows",
+     "a": "[array of 12]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 228,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.incidents",
+     "a": 239,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.complaints",
+     "a": 147,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    }
+   ]
+  },
+  {
+   "id": "2c29acd576a08d35",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=99",
+   "route": "/api/collector/list",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 16484,
+    "b": 65
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.rows",
+     "a": "[array of 12]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 228,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.incidents",
+     "a": 239,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.complaints",
+     "a": 147,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"99\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "d70aaf11e5e24e5a",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/list?zone=abc",
+   "route": "/api/collector/list",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    }
+   },
+   "bytes": {
+    "a": 16484,
+    "b": 66
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.rows",
+     "a": "[array of 12]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 228,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.incidents",
+     "a": 239,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.complaints",
+     "a": 147,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"abc\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "39b0e214fde3d0b5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 232574,
+    "b": 232552
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "bf56cac30316263f",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?dept=POL-GCP",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 123237,
+    "b": 123215
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[3].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[3].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[3].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "b98902a6131e2d60",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=daily",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 232574,
+    "b": 232552
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "754287b66e1e2e10",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 410896,
+    "b": 410853
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.stories.threads[37].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[37].incidents[0]",
+     "a": "INC-20261104-6A87C3",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "b2be60661f0640d7",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=monthly",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 554492,
+    "b": 554470
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "b421657684ecf5d9",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=quarterly",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 593427,
+    "b": 593405
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "14b397a270267780",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=bogus",
+   "route": "/api/collector/overview",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "private, no-cache",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 232574,
+    "b": 77
+   },
+   "path_count": 28,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.period",
+     "a": "daily",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.zone",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.dept",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.cat",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.taluk",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.exportedAt",
+     "a": "2026-11-06 18:22:18",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.collection",
+     "a": "{object with 5 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.kpi",
+     "a": "{object with 3 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.zoneTable",
+     "a": "[array of 15]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.zoneUnassigned",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.backlog",
+     "a": "{object with 4 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.map",
+     "a": "{object with 5 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.snapshot",
+     "a": "{object with 9 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.news",
+     "a": "[array of 14]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.tasks",
+     "a": "{object with 3 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.severity",
+     "a": "{object with 2 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.severityMix",
+     "a": "[array of 4]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.stories",
+     "a": "{object with 3 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.added",
+     "a": "{object with 6 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.allNews",
+     "a": "[array of 30]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.allNewsTotal",
+     "a": 30,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.bottom",
+     "a": "{object with 5 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.feeds",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.bell",
+     "a": "[array of 6]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.deptNav",
+     "a": "[array of 13]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.periodInfo",
+     "a": "{object with 6 keys}",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    }
+   ]
+  },
+  {
+   "id": "0498feb041980d20",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly&zone=5",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 179734,
+    "b": 179713
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.stories.threads[3].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[3].incidents[0]",
+     "a": "INC-20261102-FCDE95",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "31959f5180fff1e5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=monthly&zone=13",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 234672,
+    "b": 234629
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.stories.threads[1].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[1].incidents[0]",
+     "a": "INC-20261029-37F3B8",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.stories.threads[7].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[7].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "75351ec64df2030f",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=quarterly&zone=1",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 210613,
+    "b": 210591
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.stories.threads[6].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[6].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "e99a74413b658528",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 197258,
+    "b": 197219
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[8].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "bea1e7f0bd88891d",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?dept=POL-GCP",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 40148,
+    "b": 40109
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.threads[3].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[3].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[3].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[3].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "3661d54ba19f6e08",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=daily",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 197258,
+    "b": 197219
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[8].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "82e36b50644de8a5",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=weekly",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 214867,
+    "b": 214790
+   },
+   "path_count": 7,
+   "paths": [
+    {
+     "path": "$.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[8].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    },
+    {
+     "path": "$.threads[28].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.threads[28].incidents[0]",
+     "a": "INC-20261104-6A87C3",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[28].days[0].steps[2].incident",
+     "a": "INC-20261104-6A87C3",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "183ee1aad782f174",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=monthly",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 207517,
+    "b": 207478
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[8].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "555e8879b7fe7a08",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=quarterly",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 207517,
+    "b": 207478
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[8].days[0].steps[0].incident",
+     "a": "INC-20261105-C69AD2",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "1991d8faf8af9a44",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=bogus",
+   "route": "/api/collector/stories",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "private, no-cache",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 197258,
+    "b": 77
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.days",
+     "a": 14,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 35,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads",
+     "a": "[array of 35]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.ai",
+     "a": false,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    }
+   ]
+  },
+  {
+   "id": "24838e4c01ccd501",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=weekly&zone=5",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 33766,
+    "b": 33728
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.threads[3].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.threads[3].incidents[0]",
+     "a": "INC-20261102-FCDE95",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[3].days[0].steps[1].incident",
+     "a": "INC-20261102-FCDE95",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "7e20b8e17490cdb4",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=monthly&zone=13",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 220273,
+    "b": 220196
+   },
+   "path_count": 6,
+   "paths": [
+    {
+     "path": "$.threads[1].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.threads[1].incidents[0]",
+     "a": "INC-20261029-37F3B8",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[1].days[0].steps[9].incident",
+     "a": "INC-20261029-37F3B8",
+     "b": null
+    },
+    {
+     "path": "$.threads[7].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[7].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[7].days[4].steps[2].incident",
+     "a": "INC-20261020-E859BF",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "bc42aaf91706f16e",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/stories?period=quarterly&zone=1",
+   "route": "/api/collector/stories",
+   "fields": {},
+   "bytes": {
+    "a": 123735,
+    "b": 123696
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.threads[6].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.threads[6].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.threads[6].days[4].steps[2].incident",
+     "a": "INC-20261020-E859BF",
+     "b": null
+    }
+   ]
+  },
+  {
+   "id": "126fc344a39c93c8",
+   "session": "reads",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/map/layers/news",
+   "route": "/api/map/layers/[id]",
+   "fields": {},
+   "bytes": {
+    "a": 121633,
+    "b": 117993
+   },
+   "path_count": 1868,
+   "paths": [
+    {
+     "path": "$.unplaced",
+     "a": 773,
+     "b": 690
+    },
+    {
+     "path": "$.meta.count",
+     "a": 278,
+     "b": 271
+    },
+    {
+     "path": "$.features.length",
+     "a": 278,
+     "b": 271
+    },
+    {
+     "path": "$.features[9].id",
+     "a": "20261106-f2c800e2f78543d7",
+     "b": "20261106-55f478e3688e486d"
+    },
+    {
+     "path": "$.features[9].name",
+     "a": "Chennai Kasimedu fishermen dead after being trapped in storm: Why hasn't Fisheries Minister Srinath met the people yet? - Kanimozhi asks",
+     "b": "Four killed in separate road accidents in Chennai"
+    },
+    {
+     "path": "$.features[9].lat",
+     "a": 13.123,
+     "b": 13.05
+    },
+    {
+     "path": "$.features[9].lon",
+     "a": 80.295,
+     "b": 80.2121
+    },
+    {
+     "path": "$.features[9].url",
+     "a": "https://tamil.samayam.com/tamil-nadu/news/dmk-kanimozhi-asks-fisheries-minister-srinath-why-hasnt-met-chennai-kasimedu-people/articleshow/13... (151 chars)",
+     "b": "https://www.newindianexpress.com/cities/chennai/2026/Nov/06/four-killed-in-separate-road-accidents-in-chennai"
+    },
+    {
+     "path": "$.features[9].sub",
+     "a": "Samayam Tamil · 2026-11-06 · Kasimedu",
+     "b": "The New Indian Express · 2026-11-06 · Vadapalani"
+    },
+    {
+     "path": "$.features[9].inc",
+     "a": "INC-20261106-7D97AB",
+     "b": "INC-20261024-0CF13A"
+    },
+    {
+     "path": "$.features[10].id",
+     "a": "20261106-55f478e3688e486d",
+     "b": "20261106-0aa558c779ea4bf0"
+    },
+    {
+     "path": "$.features[10].name",
+     "a": "Four killed in separate road accidents in Chennai",
+     "b": "Los Angeles’s new mayor Nithya Raman cut her teeth in Chennai streets"
+    },
+    {
+     "path": "$.features[10].lat",
+     "a": 13.05,
+     "b": 12.9863
+    },
+    {
+     "path": "$.features[10].lon",
+     "a": 80.2121,
+     "b": 80.2432
+    },
+    {
+     "path": "$.features[10].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[10].url",
+     "a": "https://www.newindianexpress.com/cities/chennai/2026/Nov/06/four-killed-in-separate-road-accidents-in-chennai",
+     "b": "https://www.newindianexpress.com/states/tamil-nadu/2026/Nov/06/los-angeless-new-mayor-nithya-raman-cut-her-teeth-in-chennai-streets"
+    },
+    {
+     "path": "$.features[10].sub",
+     "a": "The New Indian Express · 2026-11-06 · Vadapalani",
+     "b": "The New Indian Express · 2026-11-06 · Taramani"
+    },
+    {
+     "path": "$.features[10].inc",
+     "a": "INC-20261024-0CF13A",
+     "b": null
+    },
+    {
+     "path": "$.features[11].id",
+     "a": "20261106-0aa558c779ea4bf0",
+     "b": "20261106-de4c3dce053b43ff"
+    },
+    {
+     "path": "$.features[11].name",
+     "a": "Los Angeles’s new mayor Nithya Raman cut her teeth in Chennai streets",
+     "b": "Drunk auto driver mows elderly man to death in Vadapalani"
+    },
+    {
+     "path": "$.features[11].lat",
+     "a": 12.9863,
+     "b": 13.05
+    },
+    {
+     "path": "$.features[11].lon",
+     "a": 80.2432,
+     "b": 80.2121
+    },
+    {
+     "path": "$.features[11].kind",
+     "a": "OTHER",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[11].url",
+     "a": "https://www.newindianexpress.com/states/tamil-nadu/2026/Nov/06/los-angeless-new-mayor-nithya-raman-cut-her-teeth-in-chennai-streets",
+     "b": "https://www.dtnext.in/news/chennai/drunk-auto-driver-mows-elderly-man-to-death-in-vadapalani"
+    },
+    {
+     "path": "$.features[11].sub",
+     "a": "The New Indian Express · 2026-11-06 · Taramani",
+     "b": "DT Next · 2026-11-06 · Vadapalani"
+    },
+    {
+     "path": "$.features[11].inc",
+     "a": null,
+     "b": "INC-20261105-EE9D37"
+    },
+    {
+     "path": "$.features[12].id",
+     "a": "20261106-de4c3dce053b43ff",
+     "b": "20261106-74cd9597576f4845"
+    },
+    {
+     "path": "$.features[12].name",
+     "a": "Drunk auto driver mows elderly man to death in Vadapalani",
+     "b": "4 Kasimedu fishermen killed after getting trapped in Murcha storm in Andhra Pradesh; search intensifies for 5 people"
+    },
+    {
+     "path": "$.features[12].lat",
+     "a": 13.05,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[12].lon",
+     "a": 80.2121,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[12].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[12].url",
+     "a": "https://www.dtnext.in/news/chennai/drunk-auto-driver-mows-elderly-man-to-death-in-vadapalani",
+     "b": "https://www.dinamalar.com/news/latest-tamil-news/4-fishermen-killed-in-cyclone-murasu-in-andhra-pradesh-search-on-for-5/4369240"
+    },
+    {
+     "path": "$.features[12].sub",
+     "a": "DT Next · 2026-11-06 · Vadapalani",
+     "b": "Dinamalar · 2026-11-06 · Kasimedu"
+    },
+    {
+     "path": "$.features[12].inc",
+     "a": "INC-20261105-EE9D37",
+     "b": null
+    },
+    {
+     "path": "$.features[13].id",
+     "a": "20261106-74cd9597576f4845",
+     "b": "20261106-537eafd1c73f4890"
+    },
+    {
+     "path": "$.features[13].name",
+     "a": "4 Kasimedu fishermen killed after getting trapped in Murcha storm in Andhra Pradesh; search intensifies for 5 people",
+     "b": "Burn injury special ward at Kilpauk Hospital"
+    },
+    {
+     "path": "$.features[13].lat",
+     "a": 13.123,
+     "b": 13.082
+    },
+    {
+     "path": "$.features[13].lon",
+     "a": 80.295,
+     "b": 80.242
+    },
+    {
+     "path": "$.features[13].url",
+     "a": "https://www.dinamalar.com/news/latest-tamil-news/4-fishermen-killed-in-cyclone-murasu-in-andhra-pradesh-search-on-for-5/4369240",
+     "b": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/05/specialized-burn-ward-at-kilpauk-hospital"
+    },
+    {
+     "path": "$.features[13].sub",
+     "a": "Dinamalar · 2026-11-06 · Kasimedu",
+     "b": "Dinamani · 2026-11-06 · Kilpauk"
+    },
+    {
+     "path": "$.features[14].id",
+     "a": "20261106-537eafd1c73f4890",
+     "b": "20261105-97eedf907c8040d2"
+    },
+    {
+     "path": "$.features[14].name",
+     "a": "Burn injury special ward at Kilpauk Hospital",
+     "b": "Nine fishermen from Chennai Kasimedu went fishing in the deep sea and did not return to shore; relatives seek help from Kasimedu fishing dep... (147 chars)"
+    },
+    {
+     "path": "$.features[14].lat",
+     "a": 13.082,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[14].lon",
+     "a": 80.242,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[14].kind",
+     "a": "OTHER",
+     "b": "MISSING_PERSON"
+    },
+    {
+     "path": "$.features[14].url",
+     "a": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/05/specialized-burn-ward-at-kilpauk-hospital",
+     "b": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9ET0FQdWhqWHhZYkJVaGNXcEwwbEpWWV9pbTZnWGFuMWZLdXlpTHEzcVM2cWlxaFloQko3UXVkazYzV1ZZQzlhVHB... (173 chars)"
+    },
+    {
+     "path": "$.features[14].sub",
+     "a": "Dinamani · 2026-11-06 · Kilpauk",
+     "b": "Dinamalar · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[14].inc",
+     "a": null,
+     "b": "INC-20261105-4EF6B7"
+    },
+    {
+     "path": "$.features[15].id",
+     "a": "20261105-97eedf907c8040d2",
+     "b": "20261105-8c67638121c745de"
+    },
+    {
+     "path": "$.features[15].name",
+     "a": "Nine fishermen from Chennai Kasimedu went fishing in the deep sea and did not return to shore; relatives seek help from Kasimedu fishing dep... (147 chars)",
+     "b": "Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh"
+    },
+    {
+     "path": "$.features[15].url",
+     "a": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9ET0FQdWhqWHhZYkJVaGNXcEwwbEpWWV9pbTZnWGFuMWZLdXlpTHEzcVM2cWlxaFloQko3UXVkazYzV1ZZQzlhVHB... (173 chars)",
+     "b": "https://timesofindia.indiatimes.com/city/chennai/nine-tn-fishermen-go-missing-in-cyclone-five-bodies-wash-ashore-in-andhra-pradesh/articlesh... (156 chars)"
+    },
+    {
+     "path": "$.features[15].sub",
+     "a": "Dinamalar · 2026-11-05 · Kasimedu",
+     "b": "The Times of India · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[15].inc",
+     "a": "INC-20261105-4EF6B7",
+     "b": "INC-20261105-AB1018"
+    },
+    {
+     "path": "$.features[16].id",
+     "a": "20261105-8c67638121c745de",
+     "b": "20261105-83ddfe6408f24920"
+    },
+    {
+     "path": "$.features[16].name",
+     "a": "Nine TN fishermen go missing in cyclone; five bodies wash ashore in Andhra Pradesh",
+     "b": "Four Kasimedu fishermen lost in the 'Murazu' storm; search for five others intensified; Tamil Nadu team rushed"
+    },
+    {
+     "path": "$.features[16].url",
+     "a": "https://timesofindia.indiatimes.com/city/chennai/nine-tn-fishermen-go-missing-in-cyclone-five-bodies-wash-ashore-in-andhra-pradesh/articlesh... (156 chars)",
+     "b": "https://www.dinamalar.com/news/tamil-nadu-news/cyclone-murasu-kills-4-fishermen-in-andhra-pradesh-s-kasimedu-search-for-5-underway-tamil-nad... (164 chars)"
+    },
+    {
+     "path": "$.features[16].sub",
+     "a": "The Times of India · 2026-11-05 · Kasimedu",
+     "b": "Dinamalar · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[16].inc",
+     "a": "INC-20261105-AB1018",
+     "b": "INC-20261105-DDD4E8"
+    },
+    {
+     "path": "$.features[17].id",
+     "a": "20261105-83ddfe6408f24920",
+     "b": "20261105-340ad169316940e2"
+    },
+    {
+     "path": "$.features[17].name",
+     "a": "Four Kasimedu fishermen lost in the 'Murazu' storm; search for five others intensified; Tamil Nadu team rushed",
+     "b": "Death of Chennai fishermen: CM Vijay announces compensation"
+    },
+    {
+     "path": "$.features[17].url",
+     "a": "https://www.dinamalar.com/news/tamil-nadu-news/cyclone-murasu-kills-4-fishermen-in-andhra-pradesh-s-kasimedu-search-for-5-underway-tamil-nad... (164 chars)",
+     "b": "https://www.thehindu.com/news/national/tamil-nadu/death-of-chennai-fishermen-cm-vijay-announces-compensation/article71670922.ece"
+    },
+    {
+     "path": "$.features[17].sub",
+     "a": "Dinamalar · 2026-11-05 · Kasimedu",
+     "b": "The Hindu · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[17].inc",
+     "a": "INC-20261105-DDD4E8",
+     "b": "INC-20260905-319067"
+    },
+    {
+     "path": "$.features[18].id",
+     "a": "20261105-340ad169316940e2",
+     "b": "20261105-c1dd02fd488d4544"
+    },
+    {
+     "path": "$.features[18].name",
+     "a": "Death of Chennai fishermen: CM Vijay announces compensation",
+     "b": "In Porur, husband killed wife in front of him while stuck in truck wheel"
+    },
+    {
+     "path": "$.features[18].lat",
+     "a": 13.123,
+     "b": 13.0382
+    },
+    {
+     "path": "$.features[18].lon",
+     "a": 80.295,
+     "b": 80.1565
+    },
+    {
+     "path": "$.features[18].kind",
+     "a": "MISSING_PERSON",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[18].url",
+     "a": "https://www.thehindu.com/news/national/tamil-nadu/death-of-chennai-fishermen-cm-vijay-announces-compensation/article71670922.ece",
+     "b": "https://www.dinamalar.com/news/tamil-nadu-district-news-chennai/wife-dies-after-being-hit-by-lorry-in-porur/4368913"
+    },
+    {
+     "path": "$.features[18].sub",
+     "a": "The Hindu · 2026-11-05 · Kasimedu",
+     "b": "Dinamalar · 2026-11-05 · Porur"
+    },
+    {
+     "path": "$.features[18].inc",
+     "a": "INC-20260905-319067",
+     "b": "INC-20261105-E00D42"
+    },
+    {
+     "path": "$.features[19].id",
+     "a": "20261105-c1dd02fd488d4544",
+     "b": "20261105-9be645157e2a4296"
+    },
+    {
+     "path": "$.features[19].name",
+     "a": "In Porur, husband killed wife in front of him while stuck in truck wheel",
+     "b": "9 fishermen missing after going fishing from Kasimedu, Chennai - Family members cry out! #ZeeTamilNews #Fishermen #Kasimedu #Missing #Shorts"
+    },
+    {
+     "path": "$.features[19].lat",
+     "a": 13.0382,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[19].lon",
+     "a": 80.1565,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[19].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "MISSING_PERSON"
+    },
+    {
+     "path": "$.features[19].url",
+     "a": "https://www.dinamalar.com/news/tamil-nadu-district-news-chennai/wife-dies-after-being-hit-by-lorry-in-porur/4368913",
+     "b": "https://news.google.com/rss/articles/CBMi0AdBVV95cUxPdXllLVp2NzJNUXFsLUtiNnVHb21mUnpkVk5HOTJ3VGU1Q1F6VDUzekduWlRNVXFuZzdCcmUxcnF2S3NGUHFQbE9... (1345 chars)"
+    },
+    {
+     "path": "$.features[19].sub",
+     "a": "Dinamalar · 2026-11-05 · Porur",
+     "b": "Facebook · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[19].inc",
+     "a": "INC-20261105-E00D42",
+     "b": "INC-20261105-4EF6B7"
+    },
+    {
+     "path": "$.features[20].id",
+     "a": "20261105-9be645157e2a4296",
+     "b": "20261105-19ab1a683fd34931"
+    },
+    {
+     "path": "$.features[20].name",
+     "a": "9 fishermen missing after going fishing from Kasimedu, Chennai - Family members cry out! #ZeeTamilNews #Fishermen #Kasimedu #Missing #Shorts",
+     "b": "“Will you come only after lives are lost?” - Kasimedu fishermen fire a barrage of questions at Minister Maria Wilson!"
+    },
+    {
+     "path": "$.features[20].url",
+     "a": "https://news.google.com/rss/articles/CBMi0AdBVV95cUxPdXllLVp2NzJNUXFsLUtiNnVHb21mUnpkVk5HOTJ3VGU1Q1F6VDUzekduWlRNVXFuZzdCcmUxcnF2S3NGUHFQbE9... (1345 chars)",
+     "b": "https://tamil.oneindia.com/news/chennai/do-you-come-only-after-lives-are-lost-families-question-minister-over-missing-kasimedu-fishermen-843... (148 chars)"
+    },
+    {
+     "path": "$.features[20].sub",
+     "a": "Facebook · 2026-11-05 · Kasimedu",
+     "b": "Oneindia Tamil · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[21].id",
+     "a": "20261105-19ab1a683fd34931",
+     "b": "20261105-1486f738a25c4afc"
+    },
+    {
+     "path": "$.features[21].name",
+     "a": "“Will you come only after lives are lost?” - Kasimedu fishermen fire a barrage of questions at Minister Maria Wilson!",
+     "b": "Elderly man hit by share auto dies in Vadapalani; drunk driver arrested"
+    },
+    {
+     "path": "$.features[21].lat",
+     "a": 13.123,
+     "b": 13.05
+    },
+    {
+     "path": "$.features[21].lon",
+     "a": 80.295,
+     "b": 80.2121
+    },
+    {
+     "path": "$.features[21].kind",
+     "a": "MISSING_PERSON",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[21].url",
+     "a": "https://tamil.oneindia.com/news/chennai/do-you-come-only-after-lives-are-lost-families-question-minister-over-missing-kasimedu-fishermen-843... (148 chars)",
+     "b": "https://www.thehindu.com/news/cities/chennai/elderly-man-hit-by-share-auto-dies-in-vadapalani-drunk-driver-arrested/article71668772.ece"
+    },
+    {
+     "path": "$.features[21].sub",
+     "a": "Oneindia Tamil · 2026-11-05 · Kasimedu",
+     "b": "The Hindu · 2026-11-05 · Vadapalani"
+    },
+    {
+     "path": "$.features[21].inc",
+     "a": "INC-20261105-4EF6B7",
+     "b": "INC-20261105-EE9D37"
+    },
+    {
+     "path": "$.features[22].id",
+     "a": "20261105-1486f738a25c4afc",
+     "b": "20261105-705b51b219b34870"
+    },
+    {
+     "path": "$.features[22].name",
+     "a": "Elderly man hit by share auto dies in Vadapalani; drunk driver arrested",
+     "b": "Fisherfolk seek transparency over proposed Tamil Nadu Secretariat complex at Pattinapakkam"
+    },
+    {
+     "path": "$.features[22].lat",
+     "a": 13.05,
+     "b": 13.0269
+    },
+    {
+     "path": "$.features[22].lon",
+     "a": 80.2121,
+     "b": 80.2785
+    },
+    {
+     "path": "$.features[22].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[22].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/elderly-man-hit-by-share-auto-dies-in-vadapalani-drunk-driver-arrested/article71668772.ece",
+     "b": "https://www.thehindu.com/news/cities/chennai/fisherfolk-seek-transparency-over-proposed-tamil-nadu-secretariat-complex-at-pattinapakkam/arti... (155 chars)"
+    },
+    {
+     "path": "$.features[22].sub",
+     "a": "The Hindu · 2026-11-05 · Vadapalani",
+     "b": "The Hindu · 2026-11-05 · Pattinapakkam"
+    },
+    {
+     "path": "$.features[22].inc",
+     "a": "INC-20261105-EE9D37",
+     "b": null
+    },
+    {
+     "path": "$.features[23].id",
+     "a": "20261105-705b51b219b34870",
+     "b": "20261105-0347ff9bb10f425e"
+    },
+    {
+     "path": "$.features[23].name",
+     "a": "Fisherfolk seek transparency over proposed Tamil Nadu Secretariat complex at Pattinapakkam",
+     "b": "Issue of missing Kasimedu fishermen: Relatives protest crying bitterly alleging government did not take action!"
+    },
+    {
+     "path": "$.features[23].lat",
+     "a": 13.0269,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[23].lon",
+     "a": 80.2785,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[23].kind",
+     "a": "OTHER",
+     "b": "PUBLIC_ORDER"
+    },
+    {
+     "path": "$.features[23].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/fisherfolk-seek-transparency-over-proposed-tamil-nadu-secretariat-complex-at-pattinapakkam/arti... (155 chars)",
+     "b": "https://www.dinakaran.com/news/kasimedu-fishermen-government-relatives-wailing-weeping-protest/"
+    },
+    {
+     "path": "$.features[23].sub",
+     "a": "The Hindu · 2026-11-05 · Pattinapakkam",
+     "b": "Dinakaran · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[23].inc",
+     "a": null,
+     "b": "INC-20261105-4EF6B7"
+    },
+    {
+     "path": "$.features[24].id",
+     "a": "20261105-0347ff9bb10f425e",
+     "b": "20261105-769861c2fd664fd1"
+    },
+    {
+     "path": "$.features[24].name",
+     "a": "Issue of missing Kasimedu fishermen: Relatives protest crying bitterly alleging government did not take action!",
+     "b": "Wife dies in front of husband's eyes as lorry hits near Porur toll plaza"
+    },
+    {
+     "path": "$.features[24].lat",
+     "a": 13.123,
+     "b": 13.0382
+    },
+    {
+     "path": "$.features[24].lon",
+     "a": 80.295,
+     "b": 80.1565
+    },
+    {
+     "path": "$.features[24].kind",
+     "a": "PUBLIC_ORDER",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[24].url",
+     "a": "https://www.dinakaran.com/news/kasimedu-fishermen-government-relatives-wailing-weeping-protest/",
+     "b": "https://www.maalaimalar.com/news/tamilnadu/lorry-accident-death-police-inquiry-3"
+    },
+    {
+     "path": "$.features[24].sub",
+     "a": "Dinakaran · 2026-11-05 · Kasimedu",
+     "b": "Maalaimalar · 2026-11-05 · Porur"
+    },
+    {
+     "path": "$.features[24].inc",
+     "a": "INC-20261105-4EF6B7",
+     "b": "INC-20261105-E00D42"
+    },
+    {
+     "path": "$.features[25].id",
+     "a": "20261105-769861c2fd664fd1",
+     "b": "20261105-9f6ff188de5147b8"
+    },
+    {
+     "path": "$.features[25].name",
+     "a": "Wife dies in front of husband's eyes as lorry hits near Porur toll plaza",
+     "b": "Chennai’s Nanganallur residents recall working with LA Mayor Nithya Raman on civic issues"
+    },
+    {
+     "path": "$.features[25].lat",
+     "a": 13.0382,
+     "b": 12.9807
+    },
+    {
+     "path": "$.features[25].lon",
+     "a": 80.1565,
+     "b": 80.188
+    },
+    {
+     "path": "$.features[25].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "SANITATION_TOILETS"
+    },
+    {
+     "path": "$.features[25].url",
+     "a": "https://www.maalaimalar.com/news/tamilnadu/lorry-accident-death-police-inquiry-3",
+     "b": "https://timesofindia.indiatimes.com/city/chennai/chennais-nanganallur-residents-recall-working-with-la-mayor-nithya-raman-on-civic-issues/ar... (163 chars)"
+    },
+    {
+     "path": "$.features[25].sub",
+     "a": "Maalaimalar · 2026-11-05 · Porur",
+     "b": "The Times of India · 2026-11-05 · Nanganallur"
+    },
+    {
+     "path": "$.features[25].inc",
+     "a": "INC-20261105-E00D42",
+     "b": "INC-20261105-FF9686"
+    },
+    {
+     "path": "$.features[26].id",
+     "a": "20261105-9f6ff188de5147b8",
+     "b": "20261105-81ec146660314a4f"
+    },
+    {
+     "path": "$.features[26].name",
+     "a": "Chennai’s Nanganallur residents recall working with LA Mayor Nithya Raman on civic issues",
+     "b": "Newborn girl found abandoned in Neelankarai"
+    },
+    {
+     "path": "$.features[26].lat",
+     "a": 12.9807,
+     "b": 12.949
+    },
+    {
+     "path": "$.features[26].lon",
+     "a": 80.188,
+     "b": 80.259
+    },
+    {
+     "path": "$.features[26].kind",
+     "a": "SANITATION_TOILETS",
+     "b": "FLOOD_RELIEF"
+    },
+    {
+     "path": "$.features[26].url",
+     "a": "https://timesofindia.indiatimes.com/city/chennai/chennais-nanganallur-residents-recall-working-with-la-mayor-nithya-raman-on-civic-issues/ar... (163 chars)",
+     "b": "https://timesofindia.indiatimes.com/city/chennai/newborn-girl-found-abandoned-in-neelankarai/articleshow/135562514.cms"
+    },
+    {
+     "path": "$.features[26].sub",
+     "a": "The Times of India · 2026-11-05 · Nanganallur",
+     "b": "The Times of India · 2026-11-05 · Neelankarai"
+    },
+    {
+     "path": "$.features[26].inc",
+     "a": "INC-20261105-FF9686",
+     "b": "INC-20261105-5CE479"
+    },
+    {
+     "path": "$.features[27].id",
+     "a": "20261105-81ec146660314a4f",
+     "b": "20261105-3eb142f065644d89"
+    },
+    {
+     "path": "$.features[27].name",
+     "a": "Newborn girl found abandoned in Neelankarai",
+     "b": "Ennore fire accident – fire in a tsunami‑type residential building near Ennore"
+    },
+    {
+     "path": "$.features[27].lat",
+     "a": 12.949,
+     "b": 13.2146
+    },
+    {
+     "path": "$.features[27].lon",
+     "a": 80.259,
+     "b": 80.3203
+    },
+    {
+     "path": "$.features[27].kind",
+     "a": "FLOOD_RELIEF",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[27].url",
+     "a": "https://timesofindia.indiatimes.com/city/chennai/newborn-girl-found-abandoned-in-neelankarai/articleshow/135562514.cms",
+     "b": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPWHZGWGV3c2dJSG9xZlRQenlraW1SWjc2YVhLSWp3NmpiMHFJR2hQd1pCNjBKUDFxanBUYU0xZUxVX3NkTnpPckx... (245 chars)"
+    },
+    {
+     "path": "$.features[27].sub",
+     "a": "The Times of India · 2026-11-05 · Neelankarai",
+     "b": "News18 · 2026-11-05 · Ennore"
+    },
+    {
+     "path": "$.features[27].inc",
+     "a": "INC-20261105-5CE479",
+     "b": "INC-20261105-4F682A"
+    },
+    {
+     "path": "$.features[28].id",
+     "a": "20261105-3eb142f065644d89",
+     "b": "20261105-44bcf4e16f9b4773"
+    },
+    {
+     "path": "$.features[28].name",
+     "a": "Ennore fire accident – fire in a tsunami‑type residential building near Ennore",
+     "b": "Last update at 3:30 a.m. via wireless – 9 Chennai fishermen missing in Andhra coast area – what happened?"
+    },
+    {
+     "path": "$.features[28].lat",
+     "a": 13.2146,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[28].lon",
+     "a": 80.3203,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[28].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "MISSING_PERSON"
+    },
+    {
+     "path": "$.features[28].url",
+     "a": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPWHZGWGV3c2dJSG9xZlRQenlraW1SWjc2YVhLSWp3NmpiMHFJR2hQd1pCNjBKUDFxanBUYU0xZUxVX3NkTnpPckx... (245 chars)",
+     "b": "https://www.etvbharat.com/ta/state/search-intensified-as-9-chennai-fishermen-go-missing-off-in-the-andhra-coast-tns26110500587"
+    },
+    {
+     "path": "$.features[28].sub",
+     "a": "News18 · 2026-11-05 · Ennore",
+     "b": "ETV Bharat · 2026-11-05 · Kasimedu"
+    },
+    {
+     "path": "$.features[28].inc",
+     "a": "INC-20261105-4F682A",
+     "b": "INC-20261105-4EF6B7"
+    },
+    {
+     "path": "$.features[29].id",
+     "a": "20261105-44bcf4e16f9b4773",
+     "b": "20261105-fca2a469002e4be3"
+    },
+    {
+     "path": "$.features[29].name",
+     "a": "Last update at 3:30 a.m. via wireless – 9 Chennai fishermen missing in Andhra coast area – what happened?",
+     "b": "Two helicopters crashed in Nepal – steps taken to bring back body of person from Chennai to hometown"
+    },
+    {
+     "path": "$.features[29].lat",
+     "a": 13.123,
+     "b": 13.1125
+    },
+    {
+     "path": "$.features[29].lon",
+     "a": 80.295,
+     "b": 80.287
+    },
+    {
+     "path": "$.features[29].kind",
+     "a": "MISSING_PERSON",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[29].url",
+     "a": "https://www.etvbharat.com/ta/state/search-intensified-as-9-chennai-fishermen-go-missing-off-in-the-andhra-coast-tns26110500587",
+     "b": "https://www.etvbharat.com/ta/state/steps-taken-to-repatriate-the-chennai-native-man-body-who-died-in-nepal-helicopters-collide-tns2611050038... (141 chars)"
+    },
+    {
+     "path": "$.features[29].sub",
+     "a": "ETV Bharat · 2026-11-05 · Kasimedu",
+     "b": "ETV Bharat · 2026-11-05 · Washermanpet"
+    },
+    {
+     "path": "$.features[29].inc",
+     "a": "INC-20261105-4EF6B7",
+     "b": "INC-20261103-B255B5"
+    },
+    {
+     "path": "$.features[30].id",
+     "a": "20261105-fca2a469002e4be3",
+     "b": "20261105-1b62519fad4a4aa5"
+    },
+    {
+     "path": "$.features[30].name",
+     "a": "Two helicopters crashed in Nepal – steps taken to bring back body of person from Chennai to hometown",
+     "b": "Special burn ward at Kilpauk Hospital"
+    },
+    {
+     "path": "$.features[30].lat",
+     "a": 13.1125,
+     "b": 13.082
+    },
+    {
+     "path": "$.features[30].lon",
+     "a": 80.287,
+     "b": 80.242
+    },
+    {
+     "path": "$.features[30].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[30].url",
+     "a": "https://www.etvbharat.com/ta/state/steps-taken-to-repatriate-the-chennai-native-man-body-who-died-in-nepal-helicopters-collide-tns2611050038... (141 chars)",
+     "b": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/05/specialized-burn-ward-at-kilpauk-hospital"
+    },
+    {
+     "path": "$.features[30].sub",
+     "a": "ETV Bharat · 2026-11-05 · Washermanpet",
+     "b": "Dinamani · 2026-11-05 · Kilpauk"
+    },
+    {
+     "path": "$.features[30].inc",
+     "a": "INC-20261103-B255B5",
+     "b": null
+    },
+    {
+     "path": "$.features[31].id",
+     "a": "20261105-1b62519fad4a4aa5",
+     "b": "20261105-99482dfd96594da9"
+    },
+    {
+     "path": "$.features[31].name",
+     "a": "Special burn ward at Kilpauk Hospital",
+     "b": "Diwali sales in T. Nagar: Crowd congestion monitored through 'drone'"
+    },
+    {
+     "path": "$.features[31].lat",
+     "a": 13.082,
+     "b": 13.0418
+    },
+    {
+     "path": "$.features[31].lon",
+     "a": 80.242,
+     "b": 80.2341
+    },
+    {
+     "path": "$.features[31].url",
+     "a": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/05/specialized-burn-ward-at-kilpauk-hospital",
+     "b": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/04/chennai-police-deploy-drones-to-monitor-massive-deepavali-shopping... (158 chars)"
+    },
+    {
+     "path": "$.features[31].sub",
+     "a": "Dinamani · 2026-11-05 · Kilpauk",
+     "b": "Dinamani · 2026-11-05 · T. Nagar"
+    },
+    {
+     "path": "$.features[32].id",
+     "a": "20261105-99482dfd96594da9",
+     "b": "20261105-4ea8ae13634d4bdf"
+    },
+    {
+     "path": "$.features[32].name",
+     "a": "Diwali sales in T. Nagar: Crowd congestion monitored through 'drone'",
+     "b": "Man arrested for pelting train with stones near Vyasarpadi station"
+    },
+    {
+     "path": "$.features[32].lat",
+     "a": 13.0418,
+     "b": 13.117
+    },
+    {
+     "path": "$.features[32].lon",
+     "a": 80.2341,
+     "b": 80.256
+    },
+    {
+     "path": "$.features[32].url",
+     "a": "https://www.dinamani.com/all-editions/edition-chennai/chennai/2026/Nov/04/chennai-police-deploy-drones-to-monitor-massive-deepavali-shopping... (158 chars)",
+     "b": "https://www.thehindu.com/news/cities/chennai/youth-arrested-for-pelting-train-with-stones-near-vyasarpadi-station/article71665238.ece"
+    },
+    {
+     "path": "$.features[32].sub",
+     "a": "Dinamani · 2026-11-05 · T. Nagar",
+     "b": "The Hindu · 2026-11-05 · Vyasarpadi"
+    },
+    {
+     "path": "$.features[33].id",
+     "a": "20261105-4ea8ae13634d4bdf",
+     "b": "20261104-c382c0d93d0349d3"
+    },
+    {
+     "path": "$.features[33].name",
+     "a": "Man arrested for pelting train with stones near Vyasarpadi station",
+     "b": "Kites resting in stagnant water on the sandy expanse of Chennai Marina Beach."
+    },
+    {
+     "path": "$.features[33].lat",
+     "a": 13.117,
+     "b": 13.05
+    },
+    {
+     "path": "$.features[33].lon",
+     "a": 80.256,
+     "b": 80.2824
+    },
+    {
+     "path": "$.features[33].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/youth-arrested-for-pelting-train-with-stones-near-vyasarpadi-station/article71665238.ece",
+     "b": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLc3NZUmgwS3UxWDY2RFYzR3FMbk5IZ1MwYVVyOUFMUzB5QkNWejlqMkVwVE5zTzFrTUZlX1MtUXlaaFF6V1kxNzJ... (173 chars)"
+    },
+    {
+     "path": "$.features[33].sub",
+     "a": "The Hindu · 2026-11-05 · Vyasarpadi",
+     "b": "Dinamalar · 2026-11-04 · Marina Beach"
+    },
+    {
+     "path": "$.features[34].id",
+     "a": "20261104-c382c0d93d0349d3",
+     "b": "20261104-9c82dbb5a98b42d9"
+    },
+    {
+     "path": "$.features[34].name",
+     "a": "Kites resting in stagnant water on the sandy expanse of Chennai Marina Beach.",
+     "b": "Assistant loco pilot injured as stones are pelted at train near Vyasarpadi"
+    },
+    {
+     "path": "$.features[34].lat",
+     "a": 13.05,
+     "b": 13.117
+    },
+    {
+     "path": "$.features[34].lon",
+     "a": 80.2824,
+     "b": 80.256
+    },
+    {
+     "path": "$.features[34].url",
+     "a": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLc3NZUmgwS3UxWDY2RFYzR3FMbk5IZ1MwYVVyOUFMUzB5QkNWejlqMkVwVE5zTzFrTUZlX1MtUXlaaFF6V1kxNzJ... (173 chars)",
+     "b": "https://timesofindia.indiatimes.com/city/chennai/assistant-loco-pilot-injured-as-stones-are-pelted-at-train-near-vyasarpadi/articleshow/1355... (149 chars)"
+    },
+    {
+     "path": "$.features[34].sub",
+     "a": "Dinamalar · 2026-11-04 · Marina Beach",
+     "b": "The Times of India · 2026-11-04 · Vyasarpadi"
+    },
+    {
+     "path": "$.features[35].id",
+     "a": "20261104-9c82dbb5a98b42d9",
+     "b": "20261103-0869fa701fed41ed"
+    },
+    {
+     "path": "$.features[35].name",
+     "a": "Assistant loco pilot injured as stones are pelted at train near Vyasarpadi",
+     "b": "Liquor lovers gathered within 30 minutes of opening a TASMAC shop in Chennai..!!"
+    },
+    {
+     "path": "$.features[35].lat",
+     "a": 13.117,
+     "b": 13.063
+    },
+    {
+     "path": "$.features[35].lon",
+     "a": 80.256,
+     "b": 80.28
+    },
+    {
+     "path": "$.features[35].kind",
+     "a": "OTHER",
+     "b": "PUBLIC_ORDER"
+    },
+    {
+     "path": "$.features[35].url",
+     "a": "https://timesofindia.indiatimes.com/city/chennai/assistant-loco-pilot-injured-as-stones-are-pelted-at-train-near-vyasarpadi/articleshow/1355... (149 chars)",
+     "b": "https://www.dinakaran.com/news/chennai-tasmac-shop-liquor-enthusiasts-gathered/"
+    },
+    {
+     "path": "$.features[35].sub",
+     "a": "The Times of India · 2026-11-04 · Vyasarpadi",
+     "b": "Dinakaran · 2026-11-03 · Chepauk"
+    },
+    {
+     "path": "$.features[35].inc",
+     "a": null,
+     "b": "INC-20261103-7BCBDC"
+    },
+    {
+     "path": "$.features[36].id",
+     "a": "20261103-0869fa701fed41ed",
+     "b": "20261103-7cab64bec4814ff1"
+    },
+    {
+     "path": "$.features[37].id",
+     "a": "20261103-7cab64bec4814ff1",
+     "b": "20261103-36635117c24243fb"
+    },
+    {
+     "path": "$.features[37].name",
+     "a": "Liquor lovers gathered within 30 minutes of opening a TASMAC shop in Chennai..!!",
+     "b": "Severe stench emanating due to accumulation of plastic garbage and waste in the Peeliamman temple pond in Taramani, Chennai"
+    },
+    {
+     "path": "$.features[37].lat",
+     "a": 13.063,
+     "b": 12.9863
+    },
+    {
+     "path": "$.features[37].lon",
+     "a": 80.28,
+     "b": 80.2432
+    },
+    {
+     "path": "$.features[37].kind",
+     "a": "PUBLIC_ORDER",
+     "b": "SOLID_WASTE"
+    },
+    {
+     "path": "$.features[37].url",
+     "a": "https://www.dinakaran.com/news/chennai-tasmac-shop-liquor-enthusiasts-gathered/",
+     "b": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE55bXA1VFRNUTkwX3lwVzFwYzdwcFB5NGlIUlpUYk1VRjNkMVRvRGVtRUNSOEJFb21nRzBBcG9jZ2ZYcVc5SnFpWm1... (153 chars)"
+    },
+    {
+     "path": "$.features[37].sub",
+     "a": "Dinakaran · 2026-11-03 · Chepauk",
+     "b": "Dinamalar · 2026-11-03 · Taramani"
+    },
+    {
+     "path": "$.features[37].inc",
+     "a": "INC-20261103-7BCBDC",
+     "b": "INC-20261013-2F511C"
+    },
+    {
+     "path": "$.features[38].id",
+     "a": "20261103-36635117c24243fb",
+     "b": "20261103-c3aee0baab3d44bb"
+    },
+    {
+     "path": "$.features[38].name",
+     "a": "Severe stench emanating due to accumulation of plastic garbage and waste in the Peeliamman temple pond in Taramani, Chennai",
+     "b": "Chennai: TV debate moderator dies of cardiac arrest on GST Road"
+    },
+    {
+     "path": "$.features[38].lat",
+     "a": 12.9863,
+     "b": 12.9807
+    },
+    {
+     "path": "$.features[38].lon",
+     "a": 80.2432,
+     "b": 80.188
+    },
+    {
+     "path": "$.features[38].kind",
+     "a": "SOLID_WASTE",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[38].url",
+     "a": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE55bXA1VFRNUTkwX3lwVzFwYzdwcFB5NGlIUlpUYk1VRjNkMVRvRGVtRUNSOEJFb21nRzBBcG9jZ2ZYcVc5SnFpWm1... (153 chars)",
+     "b": "https://www.dtnext.in/news/chennai/chennai-tv-debate-moderator-dies-of-cardiac-arrest-on-gst-road"
+    },
+    {
+     "path": "$.features[38].sub",
+     "a": "Dinamalar · 2026-11-03 · Taramani",
+     "b": "DT Next · 2026-11-03 · Nanganallur"
+    },
+    {
+     "path": "$.features[38].inc",
+     "a": "INC-20261013-2F511C",
+     "b": null
+    },
+    {
+     "path": "$.features[39].id",
+     "a": "20261103-c3aee0baab3d44bb",
+     "b": "20261103-5464080b9dd64d6e"
+    },
+    {
+     "path": "$.features[39].name",
+     "a": "Chennai: TV debate moderator dies of cardiac arrest on GST Road",
+     "b": "Chennai Citizen Connect: Stench at Vadapalani bus stand makes waiting a painful ordeal"
+    },
+    {
+     "path": "$.features[39].lat",
+     "a": 12.9807,
+     "b": 13.05
+    },
+    {
+     "path": "$.features[39].lon",
+     "a": 80.188,
+     "b": 80.2121
+    },
+    {
+     "path": "$.features[39].url",
+     "a": "https://www.dtnext.in/news/chennai/chennai-tv-debate-moderator-dies-of-cardiac-arrest-on-gst-road",
+     "b": "https://www.dtnext.in/news/chennai/chennai-citizen-connect-stench-at-vadapalani-bus-stand-makes-waiting-a-painful-ordeal"
+    },
+    {
+     "path": "$.features[39].sub",
+     "a": "DT Next · 2026-11-03 · Nanganallur",
+     "b": "DT Next · 2026-11-03 · Vadapalani"
+    },
+    {
+     "path": "$.features[40].id",
+     "a": "20261103-5464080b9dd64d6e",
+     "b": "20261103-8e3e8fb1ba6b4b45"
+    },
+    {
+     "path": "$.features[40].name",
+     "a": "Chennai Citizen Connect: Stench at Vadapalani bus stand makes waiting a painful ordeal",
+     "b": "Rainwater stagnates like a pond in Vyasarpadi railway subway due to rains lashing Chennai."
+    },
+    {
+     "path": "$.features[40].lat",
+     "a": 13.05,
+     "b": 13.117
+    },
+    {
+     "path": "$.features[40].lon",
+     "a": 80.2121,
+     "b": 80.256
+    },
+    {
+     "path": "$.features[40].url",
+     "a": "https://www.dtnext.in/news/chennai/chennai-citizen-connect-stench-at-vadapalani-bus-stand-makes-waiting-a-painful-ordeal",
+     "b": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFAzZEwyeFoxc2pMNXUwNFBQUWJvUC1PRU5NNExfbTNOXzUzVlVtVXd1UTVMWGJiVncwRWc4TkVlcldYc0FvWm4zY0h... (173 chars)"
+    },
+    {
+     "path": "$.features[40].sub",
+     "a": "DT Next · 2026-11-03 · Vadapalani",
+     "b": "Dinamalar · 2026-11-03 · Vyasarpadi"
+    },
+    {
+     "path": "$.features[41].id",
+     "a": "20261103-8e3e8fb1ba6b4b45",
+     "b": "20261103-7d10b4554d0c4ad4"
+    },
+    {
+     "path": "$.features[41].name",
+     "a": "Rainwater stagnates like a pond in Vyasarpadi railway subway due to rains lashing Chennai.",
+     "b": "Gem Granite owner Veeramani’s watchman arrested"
+    },
+    {
+     "path": "$.features[41].lat",
+     "a": 13.117,
+     "b": 13.2146
+    },
+    {
+     "path": "$.features[41].lon",
+     "a": 80.256,
+     "b": 80.3203
+    },
+    {
+     "path": "$.features[41].url",
+     "a": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFAzZEwyeFoxc2pMNXUwNFBQUWJvUC1PRU5NNExfbTNOXzUzVlVtVXd1UTVMWGJiVncwRWc4TkVlcldYc0FvWm4zY0h... (173 chars)",
+     "b": "https://www.thehindu.com/news/national/tamil-nadu/gem-granite-owner-veeramanis-watchman-arrested/article71658273.ece"
+    },
+    {
+     "path": "$.features[41].sub",
+     "a": "Dinamalar · 2026-11-03 · Vyasarpadi",
+     "b": "The Hindu · 2026-11-03 · Ennore"
+    },
+    {
+     "path": "$.features[42].id",
+     "a": "20261103-7d10b4554d0c4ad4",
+     "b": "20261103-4c5da056d2044475"
+    },
+    {
+     "path": "$.features[42].name",
+     "a": "Gem Granite owner Veeramani’s watchman arrested",
+     "b": "Man arrested for bursting firecrackers on road, injuring woman and child in Kodungaiyur"
+    },
+    {
+     "path": "$.features[42].lat",
+     "a": 13.2146,
+     "b": 13.1375
+    },
+    {
+     "path": "$.features[42].lon",
+     "a": 80.3203,
+     "b": 80.2478
+    },
+    {
+     "path": "$.features[42].kind",
+     "a": "OTHER",
+     "b": "CRIME_VIOLENT"
+    },
+    {
+     "path": "$.features[42].url",
+     "a": "https://www.thehindu.com/news/national/tamil-nadu/gem-granite-owner-veeramanis-watchman-arrested/article71658273.ece",
+     "b": "https://www.thehindu.com/news/cities/chennai/man-arrested-for-bursting-firecrackers-on-road-injuring-woman-and-child-in-kodungaiyur/article7... (151 chars)"
+    },
+    {
+     "path": "$.features[42].sub",
+     "a": "The Hindu · 2026-11-03 · Ennore",
+     "b": "The Hindu · 2026-11-02 · Kodungaiyur"
+    },
+    {
+     "path": "$.features[42].inc",
+     "a": null,
+     "b": "INC-20261102-273A6B"
+    },
+    {
+     "path": "$.features[43].id",
+     "a": "20261103-4c5da056d2044475",
+     "b": "20261102-8b266cefb83f40c3"
+    },
+    {
+     "path": "$.features[43].name",
+     "a": "Man arrested for bursting firecrackers on road, injuring woman and child in Kodungaiyur",
+     "b": "Chennai | Transgenders intercepted a woman in the middle of the road in Chennai, snatched Rs 2500 and showed arrogance"
+    },
+    {
+     "path": "$.features[43].lat",
+     "a": 13.1375,
+     "b": 13.117
+    },
+    {
+     "path": "$.features[43].lon",
+     "a": 80.2478,
+     "b": 80.256
+    },
+    {
+     "path": "$.features[43].kind",
+     "a": "CRIME_VIOLENT",
+     "b": "CRIME_PROPERTY"
+    },
+    {
+     "path": "$.features[43].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/man-arrested-for-bursting-firecrackers-on-road-injuring-woman-and-child-in-kodungaiyur/article7... (151 chars)",
+     "b": "https://www.thanthitv.com/சமீபத்திய-செய்திகள்/chennai-transgender-individuals-stop-a-woman-in-the-middle-of-the-road-snatch-rs-2500-from-her... (173 chars)"
+    },
+    {
+     "path": "$.features[43].sub",
+     "a": "The Hindu · 2026-11-02 · Kodungaiyur",
+     "b": "Thanthi TV · 2026-11-02 · Vyasarpadi"
+    },
+    {
+     "path": "$.features[43].inc",
+     "a": "INC-20261102-273A6B",
+     "b": "INC-20261102-95A28A"
+    },
+    {
+     "path": "$.features[44].id",
+     "a": "20261102-8b266cefb83f40c3",
+     "b": "20261102-5ad8d456381144ab"
+    },
+    {
+     "path": "$.features[44].name",
+     "a": "Chennai | Transgenders intercepted a woman in the middle of the road in Chennai, snatched Rs 2500 and showed arrogance",
+     "b": "Cyclone Murasu: Chennai roads damaged as city receives heavy rainfall"
+    },
+    {
+     "path": "$.features[44].lat",
+     "a": 13.117,
+     "b": 13.093
+    },
+    {
+     "path": "$.features[44].lon",
+     "a": 80.256,
+     "b": 80.286
+    },
+    {
+     "path": "$.features[44].kind",
+     "a": "CRIME_PROPERTY",
+     "b": "FLOOD_WATERLOGGING"
+    },
+    {
+     "path": "$.features[44].url",
+     "a": "https://www.thanthitv.com/சமீபத்திய-செய்திகள்/chennai-transgender-individuals-stop-a-woman-in-the-middle-of-the-road-snatch-rs-2500-from-her... (173 chars)",
+     "b": "https://www.thehindu.com/news/cities/chennai/cyclone-murasu-chennai-roads-damaged-as-city-receives-heavy-rainfall/article71655893.ece"
+    },
+    {
+     "path": "$.features[44].sub",
+     "a": "Thanthi TV · 2026-11-02 · Vyasarpadi",
+     "b": "The Hindu · 2026-11-02 · George Town"
+    },
+    {
+     "path": "$.features[44].inc",
+     "a": "INC-20261102-95A28A",
+     "b": "INC-20261102-F01F3B"
+    },
+    {
+     "path": "$.features[45].id",
+     "a": "20261102-5ad8d456381144ab",
+     "b": "20261102-07490402b3d140f9"
+    },
+    {
+     "path": "$.features[45].name",
+     "a": "Cyclone Murasu: Chennai roads damaged as city receives heavy rainfall",
+     "b": "63-yr-old woman killed as tanker rams bike near Pallikaranai"
+    },
+    {
+     "path": "$.features[45].lat",
+     "a": 13.093,
+     "b": 12.9349
+    },
+    {
+     "path": "$.features[45].lon",
+     "a": 80.286,
+     "b": 80.2137
+    },
+    {
+     "path": "$.features[45].kind",
+     "a": "FLOOD_WATERLOGGING",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[45].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/cyclone-murasu-chennai-roads-damaged-as-city-receives-heavy-rainfall/article71655893.ece",
+     "b": "https://www.dtnext.in/news/chennai/63-yr-old-woman-killed-as-tanker-rams-bike-near-pallikaranai-2"
+    },
+    {
+     "path": "$.features[45].sub",
+     "a": "The Hindu · 2026-11-02 · George Town",
+     "b": "DT Next · 2026-11-02 · Pallikaranai"
+    },
+    {
+     "path": "$.features[45].inc",
+     "a": "INC-20261102-F01F3B",
+     "b": "INC-20261101-3200FD"
+    },
+    {
+     "path": "$.features[46].id",
+     "a": "20261102-07490402b3d140f9",
+     "b": "20261102-6870f99f37714dac"
+    },
+    {
+     "path": "$.features[46].name",
+     "a": "63-yr-old woman killed as tanker rams bike near Pallikaranai",
+     "b": "Fridge explosion at home kills woman, injures two in Chennai"
+    },
+    {
+     "path": "$.features[46].lat",
+     "a": 12.9349,
+     "b": 13.11
+    },
+    {
+     "path": "$.features[46].lon",
+     "a": 80.2137,
+     "b": 80.183
+    },
+    {
+     "path": "$.features[46].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "FIRE_EXPLOSION"
+    },
+    {
+     "path": "$.features[46].url",
+     "a": "https://www.dtnext.in/news/chennai/63-yr-old-woman-killed-as-tanker-rams-bike-near-pallikaranai-2",
+     "b": "https://www.newindianexpress.com/cities/chennai/2026/Nov/02/fridge-explosion-at-home-kills-woman-injures-two-in-chennai"
+    },
+    {
+     "path": "$.features[46].sub",
+     "a": "DT Next · 2026-11-02 · Pallikaranai",
+     "b": "The New Indian Express · 2026-11-02 · Korattur"
+    },
+    {
+     "path": "$.features[46].inc",
+     "a": "INC-20261101-3200FD",
+     "b": "INC-20261101-EC06C4-1"
+    },
+    {
+     "path": "$.features[47].id",
+     "a": "20261102-6870f99f37714dac",
+     "b": "20261102-9588871cc735426d"
+    },
+    {
+     "path": "$.features[47].name",
+     "a": "Fridge explosion at home kills woman, injures two in Chennai",
+     "b": "Differently abled woman dead; husband, son injured after fire at apartment in Korattur"
+    },
+    {
+     "path": "$.features[47].kind",
+     "a": "FIRE_EXPLOSION",
+     "b": "STREETLIGHT_ELECTRICAL"
+    },
+    {
+     "path": "$.features[47].url",
+     "a": "https://www.newindianexpress.com/cities/chennai/2026/Nov/02/fridge-explosion-at-home-kills-woman-injures-two-in-chennai",
+     "b": "https://www.dtnext.in/news/chennai/differently-abled-woman-dead-husband-son-injured-after-fire-at-apartment-in-korattur"
+    },
+    {
+     "path": "$.features[47].sub",
+     "a": "The New Indian Express · 2026-11-02 · Korattur",
+     "b": "DT Next · 2026-11-02 · Korattur"
+    },
+    {
+     "path": "$.features[47].inc",
+     "a": "INC-20261101-EC06C4-1",
+     "b": "INC-20261101-EC06C4"
+    },
+    {
+     "path": "$.features[48].id",
+     "a": "20261102-9588871cc735426d",
+     "b": "20261101-b5493bb047e349ac"
+    },
+    {
+     "path": "$.features[48].name",
+     "a": "Differently abled woman dead; husband, son injured after fire at apartment in Korattur",
+     "b": "Chennai Police writes to passport authorities seeking cancellation of Prakash Kannaiah's passport"
+    },
+    {
+     "path": "$.features[48].lat",
+     "a": 13.11,
+     "b": 13.158
+    },
+    {
+     "path": "$.features[48].lon",
+     "a": 80.183,
+     "b": 80.203
+    },
+    {
+     "path": "$.features[48].kind",
+     "a": "STREETLIGHT_ELECTRICAL",
+     "b": "CRIMES_AGAINST_WOMEN"
+    },
+    {
+     "path": "$.features[48].url",
+     "a": "https://www.dtnext.in/news/chennai/differently-abled-woman-dead-husband-son-injured-after-fire-at-apartment-in-korattur",
+     "b": "https://www.dtnext.in/news/tamilnadu/chennai-police-writes-to-passport-authorities-seeking-cancellation-of-prakash-kannaiahs-passport"
+    },
+    {
+     "path": "$.features[48].sub",
+     "a": "DT Next · 2026-11-02 · Korattur",
+     "b": "DT Next · 2026-11-01 · Puzhal"
+    },
+    {
+     "path": "$.features[48].inc",
+     "a": "INC-20261101-EC06C4",
+     "b": "INC-20261101-6E7299"
+    },
+    {
+     "path": "$.features[49].id",
+     "a": "20261101-b5493bb047e349ac",
+     "b": "20261101-270fb677c2b24810"
+    },
+    {
+     "path": "$.features[49].name",
+     "a": "Chennai Police writes to passport authorities seeking cancellation of Prakash Kannaiah's passport",
+     "b": "Special Report | Refrigerator exploded at midnight in Chennai.. Disabled woman burned to death"
+    },
+    {
+     "path": "$.features[49].lat",
+     "a": 13.158,
+     "b": 13.11
+    },
+    {
+     "path": "$.features[49].lon",
+     "a": 80.203,
+     "b": 80.183
+    },
+    {
+     "path": "$.features[49].kind",
+     "a": "CRIMES_AGAINST_WOMEN",
+     "b": "FIRE_EXPLOSION"
+    },
+    {
+     "path": "$.features[49].url",
+     "a": "https://www.dtnext.in/news/tamilnadu/chennai-police-writes-to-passport-authorities-seeking-cancellation-of-prakash-kannaiahs-passport",
+     "b": "https://www.thanthitv.com/சமீபத்திய-செய்திகள்/special-report-refrigerator-explodes-in-the-middle-of-the-night-in-chennai-woman-with-a-disabi... (169 chars)"
+    },
+    {
+     "path": "$.features[49].sub",
+     "a": "DT Next · 2026-11-01 · Puzhal",
+     "b": "Thanthi TV · 2026-11-01 · Korattur"
+    },
+    {
+     "path": "$.features[49].inc",
+     "a": "INC-20261101-6E7299",
+     "b": "INC-20261101-EC06C4"
+    },
+    {
+     "path": "$.features[50].id",
+     "a": "20261101-270fb677c2b24810",
+     "b": "20261101-c2fa4887b93845ec"
+    },
+    {
+     "path": "$.features[50].name",
+     "a": "Special Report | Refrigerator exploded at midnight in Chennai.. Disabled woman burned to death",
+     "b": "Woman with disability dies in midnight fire at Korattur apartment"
+    },
+    {
+     "path": "$.features[50].url",
+     "a": "https://www.thanthitv.com/சமீபத்திய-செய்திகள்/special-report-refrigerator-explodes-in-the-middle-of-the-night-in-chennai-woman-with-a-disabi... (169 chars)",
+     "b": "https://www.thehindu.com/news/national/tamil-nadu/woman-with-disability-dies-in-midnight-fire-at-korattur-apartment/article71652193.ece"
+    },
+    {
+     "path": "$.features[50].sub",
+     "a": "Thanthi TV · 2026-11-01 · Korattur",
+     "b": "The Hindu · 2026-11-01 · Korattur"
+    },
+    {
+     "path": "$.features[51].id",
+     "a": "20261101-c2fa4887b93845ec",
+     "b": "20261101-0a7f5f9b5d104944"
+    },
+    {
+     "path": "$.features[51].name",
+     "a": "Woman with disability dies in midnight fire at Korattur apartment",
+     "b": "Tragedy in early morning in Korattur, Chennai.. Woman dies due to refrigerator explosion"
+    },
+    {
+     "path": "$.features[51].url",
+     "a": "https://www.thehindu.com/news/national/tamil-nadu/woman-with-disability-dies-in-midnight-fire-at-korattur-apartment/article71652193.ece",
+     "b": "https://tamil.oneindia.com/news/chennai/tragedy-in-chennai-korattur-at-dawn-differently-abled-woman-dies-after-refrigerator-explodes-842153.... (144 chars)"
+    },
+    {
+     "path": "$.features[51].sub",
+     "a": "The Hindu · 2026-11-01 · Korattur",
+     "b": "Oneindia Tamil · 2026-11-01 · Korattur"
+    },
+    {
+     "path": "$.features[52].id",
+     "a": "20261101-0a7f5f9b5d104944",
+     "b": "20261102-ac71b17229e34ca6"
+    },
+    {
+     "path": "$.features[52].name",
+     "a": "Tragedy in early morning in Korattur, Chennai.. Woman dies due to refrigerator explosion",
+     "b": "Tragedy at dawn in Korattur, Chennai.. Woman dies as refrigerator explodes"
+    },
+    {
+     "path": "$.features[52].kind",
+     "a": "FIRE_EXPLOSION",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[52].url",
+     "a": "https://tamil.oneindia.com/news/chennai/tragedy-in-chennai-korattur-at-dawn-differently-abled-woman-dies-after-refrigerator-explodes-842153.... (144 chars)",
+     "b": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxPeFdGUEs2b05TSml5TWswM3g1UzhZUmZoRG9qdE1PQjJuWkpYbXZJRTZPS3pXOUtxc1d4OUFKb0tEeDdZMENsMnB... (665 chars)"
+    },
+    {
+     "path": "$.features[52].inc",
+     "a": "INC-20261101-EC06C4",
+     "b": null
+    },
+    {
+     "path": "$.features[53].id",
+     "a": "20261102-ac71b17229e34ca6",
+     "b": "20261101-92edd9da346c4c69"
+    },
+    {
+     "path": "$.features[53].name",
+     "a": "Tragedy at dawn in Korattur, Chennai.. Woman dies as refrigerator explodes",
+     "b": "Differently-abled woman passes away in a fire accident caused by a refrigerator explosion in the early morning in Korattur, Chennai"
+    },
+    {
+     "path": "$.features[53].url",
+     "a": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxPeFdGUEs2b05TSml5TWswM3g1UzhZUmZoRG9qdE1PQjJuWkpYbXZJRTZPS3pXOUtxc1d4OUFKb0tEeDdZMENsMnB... (665 chars)",
+     "b": "https://news.google.com/rss/articles/CBMigwFBVV95cUxOdFBqOGprc0RLazNvZEhoVmRlOVVEVjNtYUkxVjlTSldvdXFGQ1BVU1N6S1RjZFBXeTJ0RGVhSlZxRENaQWMtWDF... (399 chars)"
+    },
+    {
+     "path": "$.features[53].sub",
+     "a": "Oneindia Tamil · 2026-11-01 · Korattur",
+     "b": "Dinakaran · 2026-11-01 · Korattur"
+    },
+    {
+     "path": "$.features[54].id",
+     "a": "20261101-92edd9da346c4c69",
+     "b": "20261101-cd9745d634d14823"
+    },
+    {
+     "path": "$.features[54].url",
+     "a": "https://news.google.com/rss/articles/CBMigwFBVV95cUxOdFBqOGprc0RLazNvZEhoVmRlOVVEVjNtYUkxVjlTSldvdXFGQ1BVU1N6S1RjZFBXeTJ0RGVhSlZxRENaQWMtWDF... (399 chars)",
+     "b": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9KV2lTRllUWlZlZVdRSV9lb1hrOGdWMjdLVHlNNXRITnJucFhzWXptX2s2VmE5RXVTWm1JU0RTNzRCYTRNTEhBdXM... (392 chars)"
+    },
+    {
+     "path": "$.features[55].id",
+     "a": "20261101-cd9745d634d14823",
+     "b": "20261101-0af3713616804596"
+    },
+    {
+     "path": "$.features[55].name",
+     "a": "Differently-abled woman passes away in a fire accident caused by a refrigerator explosion in the early morning in Korattur, Chennai",
+     "b": "Accident in early morning due to short circuit in Korattur, Chennai... Sleeping differently-abled woman passes away!"
+    },
+    {
+     "path": "$.features[55].kind",
+     "a": "OTHER",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[55].url",
+     "a": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9KV2lTRllUWlZlZVdRSV9lb1hrOGdWMjdLVHlNNXRITnJucFhzWXptX2s2VmE5RXVTWm1JU0RTNzRCYTRNTEhBdXM... (392 chars)",
+     "b": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPNThIS0FhM3pmRUpzbHE5MjZHVktCVHc3enU1WlJvTk54SUFBZEpOYUNXTmFyTDRkYWl2aXZSa3dmYWx5SzdVWmJ... (287 chars)"
+    },
+    {
+     "path": "$.features[55].sub",
+     "a": "Dinakaran · 2026-11-01 · Korattur",
+     "b": "News18 · 2026-11-01 · Korattur"
+    },
+    {
+     "path": "$.features[55].inc",
+     "a": null,
+     "b": "INC-20261101-EC06C4"
+    },
+    {
+     "path": "$.features[56].id",
+     "a": "20261101-0af3713616804596",
+     "b": "20261101-173d5f37f97f477c"
+    },
+    {
+     "path": "$.features[56].name",
+     "a": "Accident in early morning due to short circuit in Korattur, Chennai... Sleeping differently-abled woman passes away!",
+     "b": "Youth dies after car hits motorcycle in Kotturpuram"
+    },
+    {
+     "path": "$.features[56].lat",
+     "a": 13.11,
+     "b": 13.054
+    },
+    {
+     "path": "$.features[56].lon",
+     "a": 80.183,
+     "b": 80.264
+    },
+    {
+     "path": "$.features[56].url",
+     "a": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPNThIS0FhM3pmRUpzbHE5MjZHVktCVHc3enU1WlJvTk54SUFBZEpOYUNXTmFyTDRkYWl2aXZSa3dmYWx5SzdVWmJ... (287 chars)",
+     "b": "https://www.thehindu.com/news/cities/chennai/youth-dies-after-car-hits-motorcycle-in-kotturpuram/article71649482.ece"
+    },
+    {
+     "path": "$.features[56].sub",
+     "a": "News18 · 2026-11-01 · Korattur",
+     "b": "The Hindu · 2026-11-01 · Royapettah"
+    },
+    {
+     "path": "$.features[56].inc",
+     "a": "INC-20261101-EC06C4",
+     "b": "INC-20261101-E66F16"
+    },
+    {
+     "path": "$.features[57].id",
+     "a": "20261101-173d5f37f97f477c",
+     "b": "20261101-b8bd2b58563548d2"
+    },
+    {
+     "path": "$.features[57].name",
+     "a": "Youth dies after car hits motorcycle in Kotturpuram",
+     "b": "Engineer held for assaulting traffic cop in row over right turn at junction"
+    },
+    {
+     "path": "$.features[57].lat",
+     "a": 13.054,
+     "b": 13.035
+    },
+    {
+     "path": "$.features[57].lon",
+     "a": 80.264,
+     "b": 80.212
+    },
+    {
+     "path": "$.features[57].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "CRIME_VIOLENT"
+    },
+    {
+     "path": "$.features[57].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/youth-dies-after-car-hits-motorcycle-in-kotturpuram/article71649482.ece",
+     "b": "https://timesofindia.indiatimes.com/city/chennai/engineer-held-for-assaulting-traffic-cop-in-row-over-right-turn-at-junction/articleshow/135... (150 chars)"
+    },
+    {
+     "path": "$.features[57].sub",
+     "a": "The Hindu · 2026-11-01 · Royapettah",
+     "b": "The Times of India · 2026-10-31 · Ashok Nagar"
+    },
+    {
+     "path": "$.features[57].inc",
+     "a": "INC-20261101-E66F16",
+     "b": "INC-20261031-986F2E"
+    },
+    {
+     "path": "$.features[58].id",
+     "a": "20261101-b8bd2b58563548d2",
+     "b": "20261031-dcc88229d7c848be"
+    },
+    {
+     "path": "$.features[58].name",
+     "a": "Engineer held for assaulting traffic cop in row over right turn at junction",
+     "b": "Techie dies after car collides with his bike near Taramani"
+    },
+    {
+     "path": "$.features[58].lat",
+     "a": 13.035,
+     "b": 12.9863
+    },
+    {
+     "path": "$.features[58].lon",
+     "a": 80.212,
+     "b": 80.2432
+    },
+    {
+     "path": "$.features[58].kind",
+     "a": "CRIME_VIOLENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[58].url",
+     "a": "https://timesofindia.indiatimes.com/city/chennai/engineer-held-for-assaulting-traffic-cop-in-row-over-right-turn-at-junction/articleshow/135... (150 chars)",
+     "b": "https://www.dtnext.in/news/chennai/techie-dies-after-car-collides-with-his-bike-near-taramani"
+    },
+    {
+     "path": "$.features[58].sub",
+     "a": "The Times of India · 2026-10-31 · Ashok Nagar",
+     "b": "DT Next · 2026-10-31 · Taramani"
+    },
+    {
+     "path": "$.features[58].inc",
+     "a": "INC-20261031-986F2E",
+     "b": null
+    },
+    {
+     "path": "$.features[59].id",
+     "a": "20261031-dcc88229d7c848be",
+     "b": "20261101-7422f6a344784c11"
+    },
+    {
+     "path": "$.features[59].name",
+     "a": "Techie dies after car collides with his bike near Taramani",
+     "b": "Youth who attacked sub-inspector and head constable in Chennai Ashok Nagar arrested"
+    },
+    {
+     "path": "$.features[59].lat",
+     "a": 12.9863,
+     "b": 13.041
+    },
+    {
+     "path": "$.features[59].lon",
+     "a": 80.2432,
+     "b": 80.199
+    },
+    {
+     "path": "$.features[59].url",
+     "a": "https://www.dtnext.in/news/chennai/techie-dies-after-car-collides-with-his-bike-near-taramani",
+     "b": "https://www.maalaimalar.com/news/tamilnadu/chennai-near-youth-arrest-police-inquiry"
+    },
+    {
+     "path": "$.features[59].sub",
+     "a": "DT Next · 2026-10-31 · Taramani",
+     "b": "Maalaimalar · 2026-10-31 · K.K. Nagar"
+    },
+    {
+     "path": "$.features[60].id",
+     "a": "20261101-7422f6a344784c11",
+     "b": "20261031-885fa828a2c14000"
+    },
+    {
+     "path": "$.features[60].name",
+     "a": "Youth who attacked sub-inspector and head constable in Chennai Ashok Nagar arrested",
+     "b": "Youth arrested for attacking sub-inspector and head constable in Ashok Nagar, Chennai"
+    },
+    {
+     "path": "$.features[61].id",
+     "a": "20261031-885fa828a2c14000",
+     "b": "20261031-1025694c0296424f"
+    },
+    {
+     "path": "$.features[61].name",
+     "a": "Youth arrested for attacking sub-inspector and head constable in Ashok Nagar, Chennai",
+     "b": "Crowds surge in shopping streets with just one week left for Diwali: In Chennai's T. Nagar, Purasawalkam, Washermanpet"
+    },
+    {
+     "path": "$.features[61].lat",
+     "a": 13.041,
+     "b": 13.0418
+    },
+    {
+     "path": "$.features[61].lon",
+     "a": 80.199,
+     "b": 80.2341
+    },
+    {
+     "path": "$.features[61].kind",
+     "a": "OTHER",
+     "b": "ROAD_ACCIDENT"
+    },
+    {
+     "path": "$.features[61].url",
+     "a": "https://www.maalaimalar.com/news/tamilnadu/chennai-near-youth-arrest-police-inquiry",
+     "b": "https://www.dinakaran.com/news/crowds_shopping_streets/"
+    },
+    {
+     "path": "$.features[61].sub",
+     "a": "Maalaimalar · 2026-10-31 · K.K. Nagar",
+     "b": "Dinakaran · 2026-10-31 · T. Nagar"
+    },
+    {
+     "path": "$.features[61].inc",
+     "a": null,
+     "b": "INC-20261031-4953B0"
+    },
+    {
+     "path": "$.features[62].id",
+     "a": "20261031-1025694c0296424f",
+     "b": "20261031-d387c3d4509f453b"
+    },
+    {
+     "path": "$.features[63].id",
+     "a": "20261031-d387c3d4509f453b",
+     "b": "20261031-7676ccead3ae4cb2"
+    },
+    {
+     "path": "$.features[63].name",
+     "a": "Crowds surge in shopping streets with just one week left for Diwali: In Chennai's T. Nagar, Purasawalkam, Washermanpet",
+     "b": "Temporary EB cable causes inconvenience to MKB Nagar residents"
+    },
+    {
+     "path": "$.features[63].lat",
+     "a": 13.0418,
+     "b": 13.125
+    },
+    {
+     "path": "$.features[63].lon",
+     "a": 80.2341,
+     "b": 80.258
+    },
+    {
+     "path": "$.features[63].kind",
+     "a": "ROAD_ACCIDENT",
+     "b": "STREETLIGHT_ELECTRICAL"
+    },
+    {
+     "path": "$.features[63].url",
+     "a": "https://www.dinakaran.com/news/crowds_shopping_streets/",
+     "b": "https://www.dtnext.in/news/chennai/temporary-eb-cable-causes-inconvenience-to-mkb-nagar-residents"
+    },
+    {
+     "path": "$.features[63].sub",
+     "a": "Dinakaran · 2026-10-31 · T. Nagar",
+     "b": "DT Next · 2026-10-31 · M.K.B. Nagar"
+    },
+    {
+     "path": "$.features[63].inc",
+     "a": "INC-20261031-4953B0",
+     "b": "INC-20260712-9475F7"
+    },
+    {
+     "path": "$.features[64].id",
+     "a": "20261031-7676ccead3ae4cb2",
+     "b": "20261031-318ae84c569d4d55"
+    },
+    {
+     "path": "$.features[64].name",
+     "a": "Temporary EB cable causes inconvenience to MKB Nagar residents",
+     "b": "Nesapakkam residents complain of worms in metro water, seek action"
+    },
+    {
+     "path": "$.features[64].lat",
+     "a": 13.125,
+     "b": 13.041
+    },
+    {
+     "path": "$.features[64].lon",
+     "a": 80.258,
+     "b": 80.199
+    },
+    {
+     "path": "$.features[64].kind",
+     "a": "STREETLIGHT_ELECTRICAL",
+     "b": "WATER_SUPPLY"
+    },
+    {
+     "path": "$.features[64].url",
+     "a": "https://www.dtnext.in/news/chennai/temporary-eb-cable-causes-inconvenience-to-mkb-nagar-residents",
+     "b": "https://www.newindianexpress.com/cities/chennai/2026/Oct/31/nesapakkam-residents-complain-of-worms-in-metro-water-seek-action"
+    },
+    {
+     "path": "$.features[64].sub",
+     "a": "DT Next · 2026-10-31 · M.K.B. Nagar",
+     "b": "The New Indian Express · 2026-10-31 · K.K. Nagar"
+    },
+    {
+     "path": "$.features[64].inc",
+     "a": "INC-20260712-9475F7",
+     "b": "INC-20261031-90C4D5"
+    },
+    {
+     "path": "$.features[65].id",
+     "a": "20261031-318ae84c569d4d55",
+     "b": "20261030-0600243dfb304c6c"
+    },
+    {
+     "path": "$.features[65].name",
+     "a": "Nesapakkam residents complain of worms in metro water, seek action",
+     "b": "Pulianthope Civic Issues: Garbage and Road Crisis in Chennai"
+    },
+    {
+     "path": "$.features[65].lat",
+     "a": 13.041,
+     "b": 13.098
+    },
+    {
+     "path": "$.features[65].lon",
+     "a": 80.199,
+     "b": 80.263
+    },
+    {
+     "path": "$.features[65].kind",
+     "a": "WATER_SUPPLY",
+     "b": "SOLID_WASTE"
+    },
+    {
+     "path": "$.features[65].url",
+     "a": "https://www.newindianexpress.com/cities/chennai/2026/Oct/31/nesapakkam-residents-complain-of-worms-in-metro-water-seek-action",
+     "b": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQcTlJYlVxRktqMGFjRjNmV2VVTEJDQ1BaSUFhV1FPVm83X3lremRhSHctTjAwdzN0UWM5U2pvWE9ZTF80bzVHcHh... (268 chars)"
+    },
+    {
+     "path": "$.features[65].sub",
+     "a": "The New Indian Express · 2026-10-31 · K.K. Nagar",
+     "b": "Urban Acres · 2026-10-30 · Pulianthope"
+    },
+    {
+     "path": "$.features[65].inc",
+     "a": "INC-20261031-90C4D5",
+     "b": "INC-20261030-55662D"
+    },
+    {
+     "path": "$.features[66].id",
+     "a": "20261031-99a837655c6947e2",
+     "b": "20261030-309d905c0af446ff"
+    },
+    {
+     "path": "$.features[66].name",
+     "a": "Continuing attacks on mosques in Chennai... What is behind this?",
+     "b": "Chief Minister Vijay pays tribute to Muthuramalinga Thevar statue in Chennai!"
+    },
+    {
+     "path": "$.features[66].lat",
+     "a": 13.041,
+     "b": 13.029
+    },
+    {
+     "path": "$.features[66].lon",
+     "a": 80.199,
+     "b": 80.239
+    },
+    {
+     "path": "$.features[66].kind",
+     "a": "CRIME_VIOLENT",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[66].url",
+     "a": "https://www.vikatan.com/government-and-politics/mosque-attacks-spark-concern-in-chennai",
+     "b": "https://www.dinamani.com/tamilnadu/2026/Oct/30/chief-minister-vijay-pays-tribute-to-the-statue-of-muthuramalinga-thevar-in-chennai"
+    },
+    {
+     "path": "$.features[66].sub",
+     "a": "Vikatan · 2026-10-31 · K.K. Nagar",
+     "b": "Dinamani · 2026-10-30 · Nandanam"
+    },
+    {
+     "path": "$.features[66].inc",
+     "a": "INC-20261031-C2D5A7",
+     "b": null
+    },
+    {
+     "path": "$.features[67].id",
+     "a": "20261030-0600243dfb304c6c",
+     "b": "20261030-aeefad2436e04208"
+    },
+    {
+     "path": "$.features[67].name",
+     "a": "Pulianthope Civic Issues: Garbage and Road Crisis in Chennai",
+     "b": "Fish deaths, untreated sewage expose gaps in Ennore restoration: Report"
+    },
+    {
+     "path": "$.features[67].lat",
+     "a": 13.098,
+     "b": 13.2146
+    },
+    {
+     "path": "$.features[67].lon",
+     "a": 80.263,
+     "b": 80.3203
+    },
+    {
+     "path": "$.features[67].kind",
+     "a": "SOLID_WASTE",
+     "b": "DRAINAGE_SEWAGE"
+    },
+    {
+     "path": "$.features[67].url",
+     "a": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQcTlJYlVxRktqMGFjRjNmV2VVTEJDQ1BaSUFhV1FPVm83X3lremRhSHctTjAwdzN0UWM5U2pvWE9ZTF80bzVHcHh... (268 chars)",
+     "b": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPOTBFeTIzQzVUZ0xaWVl6bTNYSVJldDBXSU1ld25fNkdFQkx1c01IbjVlWVBKbVE3SmdrWk5MYlFGQVNmZjl1SUV... (537 chars)"
+    },
+    {
+     "path": "$.features[67].sub",
+     "a": "Urban Acres · 2026-10-30 · Pulianthope",
+     "b": "DT Next · 2026-10-30 · Ennore"
+    },
+    {
+     "path": "$.features[67].inc",
+     "a": "INC-20261030-55662D",
+     "b": "INC-20261030-D0FA96"
+    },
+    {
+     "path": "$.features[68].id",
+     "a": "20261030-309d905c0af446ff",
+     "b": "20261031-c0921c1699ec4da9"
+    },
+    {
+     "path": "$.features[68].name",
+     "a": "Chief Minister Vijay pays tribute to Muthuramalinga Thevar statue in Chennai!",
+     "b": "Near the entrance of Chennai Kasimedu fishing harbor, the road leading to Jio gate has become potholed with stagnant sewage causing disease"
+    },
+    {
+     "path": "$.features[68].lat",
+     "a": 13.029,
+     "b": 13.123
+    },
+    {
+     "path": "$.features[68].lon",
+     "a": 80.239,
+     "b": 80.295
+    },
+    {
+     "path": "$.features[68].kind",
+     "a": "OTHER",
+     "b": "DRAINAGE_SEWAGE"
+    },
+    {
+     "path": "$.features[68].url",
+     "a": "https://www.dinamani.com/tamilnadu/2026/Oct/30/chief-minister-vijay-pays-tribute-to-the-statue-of-muthuramalinga-thevar-in-chennai",
+     "b": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1GQmV1TnVIQ2JaVEtfUlBOaUVUVXBoMGYzSml6UGNqaHI0MFBNN2oya0RTVEJzUHRacFNJVWJjdUZ2Wnl2OTZtN1B... (153 chars)"
+    },
+    {
+     "path": "$.features[68].sub",
+     "a": "Dinamani · 2026-10-30 · Nandanam",
+     "b": "Dinamalar · 2026-10-30 · Kasimedu"
+    },
+    {
+     "path": "$.features[68].inc",
+     "a": null,
+     "b": "INC-20261030-0F85F8"
+    },
+    {
+     "path": "$.features[69].id",
+     "a": "20261030-aeefad2436e04208",
+     "b": "20261029-9dfa6c8c31e143c0"
+    },
+    {
+     "path": "$.features[69].name",
+     "a": "Fish deaths, untreated sewage expose gaps in Ennore restoration: Report",
+     "b": "Rival Framed With Fake Murder Ad On Chennai Bus Seat"
+    },
+    {
+     "path": "$.features[69].lat",
+     "a": 13.2146,
+     "b": 13.117
+    },
+    {
+     "path": "$.features[69].lon",
+     "a": 80.3203,
+     "b": 80.256
+    },
+    {
+     "path": "$.features[69].kind",
+     "a": "DRAINAGE_SEWAGE",
+     "b": "CRIME_PROPERTY"
+    },
+    {
+     "path": "$.features[69].url",
+     "a": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPOTBFeTIzQzVUZ0xaWVl6bTNYSVJldDBXSU1ld25fNkdFQkx1c01IbjVlWVBKbVE3SmdrWk5MYlFGQVNmZjl1SUV... (537 chars)",
+     "b": "https://www.rediff.com/news/report/history-sheeter-arrested-for-fake-murder-ad-on-chennai-bus/20261029.htm"
+    },
+    {
+     "path": "$.features[69].sub",
+     "a": "DT Next · 2026-10-30 · Ennore",
+     "b": "Rediff · 2026-10-29 · Vyasarpadi"
+    },
+    {
+     "path": "$.features[69].inc",
+     "a": "INC-20261030-D0FA96",
+     "b": "INC-20261029-72C33F"
+    },
+    {
+     "path": "$.features[70].id",
+     "a": "20261031-c0921c1699ec4da9",
+     "b": "20261029-f7043b85e54846a3"
+    },
+    {
+     "path": "$.features[70].name",
+     "a": "Near the entrance of Chennai Kasimedu fishing harbor, the road leading to Jio gate has become potholed with stagnant sewage causing disease",
+     "b": "Man arrested for cheating jewellery trader of 7.3 kg gold"
+    },
+    {
+     "path": "$.features[70].lat",
+     "a": 13.123,
+     "b": 13.0588
+    },
+    {
+     "path": "$.features[70].lon",
+     "a": 80.295,
+     "b": 80.2756
+    },
+    {
+     "path": "$.features[70].kind",
+     "a": "DRAINAGE_SEWAGE",
+     "b": "CRIME_PROPERTY"
+    },
+    {
+     "path": "$.features[70].url",
+     "a": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1GQmV1TnVIQ2JaVEtfUlBOaUVUVXBoMGYzSml6UGNqaHI0MFBNN2oya0RTVEJzUHRacFNJVWJjdUZ2Wnl2OTZtN1B... (153 chars)",
+     "b": "https://www.thehindu.com/news/cities/chennai/man-arrested-for-cheating-jewellery-trader-of-73-kg-gold/article71641125.ece"
+    },
+    {
+     "path": "$.features[70].sub",
+     "a": "Dinamalar · 2026-10-30 · Kasimedu",
+     "b": "The Hindu · 2026-10-29 · Triplicane"
+    },
+    {
+     "path": "$.features[70].inc",
+     "a": "INC-20261030-0F85F8",
+     "b": "INC-20261029-BED632"
+    },
+    {
+     "path": "$.features[71].id",
+     "a": "20261029-9dfa6c8c31e143c0",
+     "b": "20261029-6fb475e2e2324673"
+    },
+    {
+     "path": "$.features[71].name",
+     "a": "Rival Framed With Fake Murder Ad On Chennai Bus Seat",
+     "b": "Breaking | Chennai | Crime | 18-year-old girl brutally kills newborn baby within minutes of birth"
+    },
+    {
+     "path": "$.features[71].lat",
+     "a": 13.117,
+     "b": 13.2146
+    },
+    {
+     "path": "$.features[71].lon",
+     "a": 80.256,
+     "b": 80.3203
+    },
+    {
+     "path": "$.features[71].kind",
+     "a": "CRIME_PROPERTY",
+     "b": "CRIME_VIOLENT"
+    },
+    {
+     "path": "$.features[71].url",
+     "a": "https://www.rediff.com/news/report/history-sheeter-arrested-for-fake-murder-ad-on-chennai-bus/20261029.htm",
+     "b": "https://www.thanthitv.com/news/breaking/18-year-old-woman-brutally-kills-newborn-just-minutes-after-birth"
+    },
+    {
+     "path": "$.features[71].sub",
+     "a": "Rediff · 2026-10-29 · Vyasarpadi",
+     "b": "Thanthi TV · 2026-10-29 · Ennore"
+    },
+    {
+     "path": "$.features[71].inc",
+     "a": "INC-20261029-72C33F",
+     "b": "INC-20261029-4D8BB7"
+    },
+    {
+     "path": "$.features[72].id",
+     "a": "20261029-f7043b85e54846a3",
+     "b": "20261029-98b4013ae54840e4"
+    },
+    {
+     "path": "$.features[72].name",
+     "a": "Man arrested for cheating jewellery trader of 7.3 kg gold",
+     "b": "Woman brutally kills infant by pressing head into toilet commode as it was born out of wedlock: Shocking twist in Ennore incident"
+    },
+    {
+     "path": "$.features[72].lat",
+     "a": 13.0588,
+     "b": 13.2146
+    },
+    {
+     "path": "$.features[72].lon",
+     "a": 80.2756,
+     "b": 80.3203
+    },
+    {
+     "path": "$.features[72].kind",
+     "a": "CRIME_PROPERTY",
+     "b": "CRIME_VIOLENT"
+    },
+    {
+     "path": "$.features[72].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/man-arrested-for-cheating-jewellery-trader-of-73-kg-gold/article71641125.ece",
+     "b": "https://www.dinakaran.com/news/woman_brutally_killed_infant/"
+    },
+    {
+     "path": "$.features[72].sub",
+     "a": "The Hindu · 2026-10-29 · Triplicane",
+     "b": "Dinakaran · 2026-10-29 · Ennore"
+    },
+    {
+     "path": "$.features[72].inc",
+     "a": "INC-20261029-BED632",
+     "b": "INC-20261029-4D8BB7"
+    },
+    {
+     "path": "$.features[73].id",
+     "a": "20261029-6fb475e2e2324673",
+     "b": "20261029-71f2efa2504b4a60"
+    },
+    {
+     "path": "$.features[73].name",
+     "a": "Breaking | Chennai | Crime | 18-year-old girl brutally kills newborn baby within minutes of birth",
+     "b": "Severe foul smell emanating due to plastic garbage and waste stagnation in the Peelimman Temple tank in Taramani, Chennai"
+    },
+    {
+     "path": "$.features[73].lat",
+     "a": 13.2146,
+     "b": 12.9863
+    },
+    {
+     "path": "$.features[73].lon",
+     "a": 80.3203,
+     "b": 80.2432
+    },
+    {
+     "path": "$.features[73].kind",
+     "a": "CRIME_VIOLENT",
+     "b": "SOLID_WASTE"
+    },
+    {
+     "path": "$.features[73].url",
+     "a": "https://www.thanthitv.com/news/breaking/18-year-old-woman-brutally-kills-newborn-just-minutes-after-birth",
+     "b": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE14cGJtMGE4QnhmX2FNTWlqZUhnZFdDMWVsNkZfLWl5SWQ2TEVlR3hvREN4TncxMFY0MDZXUDBPanZoempoSXpkN0t... (173 chars)"
+    },
+    {
+     "path": "$.features[73].sub",
+     "a": "Thanthi TV · 2026-10-29 · Ennore",
+     "b": "Dinamalar · 2026-10-29 · Taramani"
+    },
+    {
+     "path": "$.features[73].inc",
+     "a": "INC-20261029-4D8BB7",
+     "b": "INC-20261029-C570FA"
+    },
+    {
+     "path": "$.features[74].id",
+     "a": "20261029-98b4013ae54840e4",
+     "b": "20261029-4b376c0009e64fd1"
+    },
+    {
+     "path": "$.features[74].name",
+     "a": "Woman brutally kills infant by pressing head into toilet commode as it was born out of wedlock: Shocking twist in Ennore incident",
+     "b": "Water Resources Dept. steps up estuary dredging in Chennai to improve flood water discharge during monsoon"
+    },
+    {
+     "path": "$.features[74].kind",
+     "a": "CRIME_VIOLENT",
+     "b": "DRAINAGE_SEWAGE"
+    },
+    {
+     "path": "$.features[74].url",
+     "a": "https://www.dinakaran.com/news/woman_brutally_killed_infant/",
+     "b": "https://www.thehindu.com/news/cities/chennai/wrd-steps-up-estuary-dredging-to-improve-flood-water-discharge-during-monsoon/article71636578.e... (142 chars)"
+    },
+    {
+     "path": "$.features[74].sub",
+     "a": "Dinakaran · 2026-10-29 · Ennore",
+     "b": "The Hindu · 2026-10-29 · Ennore"
+    },
+    {
+     "path": "$.features[74].inc",
+     "a": "INC-20261029-4D8BB7",
+     "b": "INC-20260508-57FB77"
+    },
+    {
+     "path": "$.features[75].id",
+     "a": "20261029-71f2efa2504b4a60",
+     "b": "20261029-161376c4b7e44af3"
+    },
+    {
+     "path": "$.features[75].name",
+     "a": "Severe foul smell emanating due to plastic garbage and waste stagnation in the Peelimman Temple tank in Taramani, Chennai",
+     "b": "Chennai Power Cut | Railway station suddenly plunged into pitch darkness in Chennai - Passengers face severe hardship"
+    },
+    {
+     "path": "$.features[75].lat",
+     "a": 12.9863,
+     "b": 13.0569
+    },
+    {
+     "path": "$.features[75].lon",
+     "a": 80.2432,
+     "b": 80.2425
+    },
+    {
+     "path": "$.features[75].kind",
+     "a": "SOLID_WASTE",
+     "b": "STREETLIGHT_ELECTRICAL"
+    },
+    {
+     "path": "$.features[75].url",
+     "a": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE14cGJtMGE4QnhmX2FNTWlqZUhnZFdDMWVsNkZfLWl5SWQ2TEVlR3hvREN4TncxMFY0MDZXUDBPanZoempoSXpkN0t... (173 chars)",
+     "b": "https://www.thanthitv.com/news/tamilnadu/chennai-railway-station-suddenly-plunged-into-darkness-passengers-face-severe-hardship"
+    },
+    {
+     "path": "$.features[75].sub",
+     "a": "Dinamalar · 2026-10-29 · Taramani",
+     "b": "Thanthi TV · 2026-10-29 · Nungambakkam"
+    },
+    {
+     "path": "$.features[75].inc",
+     "a": "INC-20261029-C570FA",
+     "b": "INC-20261029-E684F8"
+    },
+    {
+     "path": "$.features[76].id",
+     "a": "20261029-4b376c0009e64fd1",
+     "b": "20261029-5686d4d8cd2d433c"
+    },
+    {
+     "path": "$.features[76].name",
+     "a": "Water Resources Dept. steps up estuary dredging in Chennai to improve flood water discharge during monsoon",
+     "b": "T Nagar water woes: Minister Anand facilitates pipeline installation within a day of residents’ plea"
+    },
+    {
+     "path": "$.features[76].lat",
+     "a": 13.2146,
+     "b": 13.0418
+    },
+    {
+     "path": "$.features[76].lon",
+     "a": 80.3203,
+     "b": 80.2341
+    },
+    {
+     "path": "$.features[76].kind",
+     "a": "DRAINAGE_SEWAGE",
+     "b": "WATER_SUPPLY"
+    },
+    {
+     "path": "$.features[76].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/wrd-steps-up-estuary-dredging-to-improve-flood-water-discharge-during-monsoon/article71636578.e... (142 chars)",
+     "b": "https://www.dtnext.in/news/chennai/t-nagar-water-woes-minister-anand-facilitates-pipeline-installation-within-a-day-of-residents-plea"
+    },
+    {
+     "path": "$.features[76].sub",
+     "a": "The Hindu · 2026-10-29 · Ennore",
+     "b": "DT Next · 2026-10-29 · T. Nagar"
+    },
+    {
+     "path": "$.features[76].inc",
+     "a": "INC-20260508-57FB77",
+     "b": "INC-20261029-C1412E"
+    },
+    {
+     "path": "$.features[77].id",
+     "a": "20261029-161376c4b7e44af3",
+     "b": "20261029-102e06ce95184185"
+    },
+    {
+     "path": "$.features[77].name",
+     "a": "Chennai Power Cut | Railway station suddenly plunged into pitch darkness in Chennai - Passengers face severe hardship",
+     "b": "Elderly man dies after being pushed down by two persons"
+    },
+    {
+     "path": "$.features[77].lat",
+     "a": 13.0569,
+     "b": 13.095
+    },
+    {
+     "path": "$.features[77].lon",
+     "a": 80.2425,
+     "b": 80.25
+    },
+    {
+     "path": "$.features[77].kind",
+     "a": "STREETLIGHT_ELECTRICAL",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[77].url",
+     "a": "https://www.thanthitv.com/news/tamilnadu/chennai-railway-station-suddenly-plunged-into-darkness-passengers-face-severe-hardship",
+     "b": "https://www.thehindu.com/news/cities/chennai/elderly-man-dies-after-being-pushed-down-by-two-persons/article71636066.ece"
+    },
+    {
+     "path": "$.features[77].sub",
+     "a": "Thanthi TV · 2026-10-29 · Nungambakkam",
+     "b": "The Hindu · 2026-10-29 · Otteri"
+    },
+    {
+     "path": "$.features[77].inc",
+     "a": "INC-20261029-E684F8",
+     "b": null
+    },
+    {
+     "path": "$.features[78].id",
+     "a": "20261029-5686d4d8cd2d433c",
+     "b": "20261028-e33b4f9c87c74160"
+    },
+    {
+     "path": "$.features[78].name",
+     "a": "T Nagar water woes: Minister Anand facilitates pipeline installation within a day of residents’ plea",
+     "b": "DMK councillor arrested over controversial remark on Karur stampede"
+    },
+    {
+     "path": "$.features[78].lat",
+     "a": 13.0418,
+     "b": 13.158
+    },
+    {
+     "path": "$.features[78].lon",
+     "a": 80.2341,
+     "b": 80.203
+    },
+    {
+     "path": "$.features[78].kind",
+     "a": "WATER_SUPPLY",
+     "b": "OTHER"
+    },
+    {
+     "path": "$.features[78].url",
+     "a": "https://www.dtnext.in/news/chennai/t-nagar-water-woes-minister-anand-facilitates-pipeline-installation-within-a-day-of-residents-plea",
+     "b": "https://www.thehindu.com/news/national/tamil-nadu/dmk-councillor-arrested-over-controversial-remark-on-karur-stampede/article71635787.ece"
+    },
+    {
+     "path": "$.features[78].sub",
+     "a": "DT Next · 2026-10-29 · T. Nagar",
+     "b": "The Hindu · 2026-10-28 · Puzhal"
+    },
+    {
+     "path": "$.features[78].inc",
+     "a": "INC-20261029-C1412E",
+     "b": null
+    },
+    {
+     "path": "$.features[79].id",
+     "a": "20261029-102e06ce95184185",
+     "b": "20261028-3b42429b459045d9"
+    },
+    {
+     "path": "$.features[79].name",
+     "a": "Elderly man dies after being pushed down by two persons",
+     "b": "Two murdered in Otteri, Avadi"
+    },
+    {
+     "path": "$.features[79].kind",
+     "a": "OTHER",
+     "b": "CRIME_VIOLENT"
+    },
+    {
+     "path": "$.features[79].url",
+     "a": "https://www.thehindu.com/news/cities/chennai/elderly-man-dies-after-being-pushed-down-by-two-persons/article71636066.ece",
+     "b": "https://www.dtnext.in/news/tamilnadu/two-murdered-in-otteri-avadi"
+    },
+    {
+     "path": "$.features[79].sub",
+     "a": "The Hindu · 2026-10-29 · Otteri",
+     "b": "DT Next · 2026-10-28 · Otteri"
+    },
+    {
+     "path": "$.features[79].inc",
+     "a": null,
+     "b": "INC-20261028-2079E6"
+    },
+    {
+     "path": "$.features[80].id",
+     "a": "20261028-e33b4f9c87c74160",
+     "b": "20261028-e78300a8350c4aa6"
+    },
+    {
+     "path": "$.features[80].name",
+     "a": "DMK councillor arrested over controversial remark on Karur stampede",
+     "b": "12-year-old boy dies in Perumbakkam after falling from 4th floor of apartment"
+    },
+    {
+     "path": "$.features[80].lat",
+     "a": 13.158,
+     "b": 12.9406
+    },
+    {
+     "path": "$.features[80].lon",
+     "a": 80.203,
+     "b": 80.238
+    },
+    {
+     "path": "$.features[80].kind",
+     "a": "OTHER",
+     "b": "BUILDING_SAFETY"
+    },
+    {
+     "path": "$.features[80].url",
+     "a": "https://www.thehindu.com/news/national/tamil-nadu/dmk-councillor-arrested-over-controversial-remark-on-karur-stampede/article71635787.ece",
+     "b": "https://www.dtnext.in/news/chennai/12-year-old-boy-dies-in-perumbakkam-after-falling-from-4th-floor-of-apartment"
+    },
+    {
+     "path": "$.features[80].sub",
+     "a": "The Hindu · 2026-10-28 · Puzhal",
+     "b": "DT Next · 2026-10-28 · Thoraipakkam"
+    },
+    {
+     "path": "$.features[80].inc",
+     "a": null,
+     "b": "INC-20261028-096A00"
+    },
+    {
+     "path": "$.features[81].id",
+     "a": "20261028-3b42429b459045d9",
+     "b": "20261028-21c92d68ca674ab1"
+    },
+    {
+     "path": "$.features[81].name",
+     "a": "Two murdered in Otteri, Avadi",
+     "b": "Chennai | Gold Theft | “You should have done better after leaving it at home… the lawyer of Lavatti”"
+    },
+    {
+     "path": "$.features[81].lat",
+     "a": 13.095,
+     "b": 13.1375
+    }
+   ]
+  },
+  {
+   "id": "8cf390975fbb8b52",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 171,
+    "b": 11620
+   },
+   "path_count": 6,
+   "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "none",
+     "b": "do"
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 13 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "23 cases today; here are the 12 that matter most. 2 are past their deadline and need you first: standing water at Saidapet (Adyar River - Sa... (243 chars)"
+    },
+    {
+     "path": "$.result.note",
+     "a": "model",
+     "b": "quick"
+    }
+   ]
+  },
+  {
+   "id": "91a65392a4b15c8f",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 4199,
+    "b": 4202
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "Ambattur had 2× the high of Madhavaram the last 30 days.",
+     "b": "Ambattur had 2× the high of Madhavaram in the last 30 days."
+    }
+   ]
+  },
+  {
+   "id": "b709a6b7afee2afd",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 11797,
+    "b": 11927
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 122 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Durgadevi Nagar 5Th Cross St 2Nd Lane, Du... (317 chars)",
+     "b": "இந்த வாரம் 122 சம்பவங்கள். 35 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Durgadevi Nagar 5Th Cross St 2Nd Lane, Dur... (327 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ea25e31de4431e9c",
+   "session": "reads",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent",
+   "route": "/api/collector/thunai/agent",
+   "fields": {},
+   "bytes": {
+    "a": 11928,
+    "b": 12118
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    }
+   ]
+  },
+  {
+   "id": "907fc49d6c2daa96",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4946,
+    "b": 77
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 16,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    }
+   ]
+  },
+  {
+   "id": "062b1f3ee4c425d3",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4946,
+    "b": 73
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Tab \"bogus\" is not one of new, action, sent, verified, all."
+    }
+   ]
+  },
+  {
+   "id": "c626f7d8036c7b1b",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=99",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4946,
+    "b": 65
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"99\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "e4b13d4dc1e88463",
+   "session": "reads2",
+   "role": "officerA",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=abc",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4946,
+    "b": 66
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"abc\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "6c4da859bec795fb",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?period=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 5119,
+    "b": 77
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 19,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Period \"bogus\" is not one of daily, weekly, monthly, quarterly."
+    }
+   ]
+  },
+  {
+   "id": "a41d387198a2a447",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?tab=bogus",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4791,
+    "b": 73
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Tab \"bogus\" is not one of new, action, sent, verified, all."
+    }
+   ]
+  },
+  {
+   "id": "6697d1d8c97472b5",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=99",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4791,
+    "b": 65
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"99\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "34627a782591adad",
+   "session": "reads2",
+   "role": "officerB",
+   "method": "GET",
+   "url": "/api/officer/grievances?zone=abc",
+   "route": "/api/officer/grievances",
+   "fields": {
+    "status": {
+     "a": 200,
+     "b": 400
+    },
+    "cache": {
+     "a": "no-store, max-age=0",
+     "b": null
+    }
+   },
+   "bytes": {
+    "a": 4791,
+    "b": 66
+   },
+   "path_count": 8,
+   "paths": [
+    {
+     "path": "$.now",
+     "a": "2026-11-06 18:08:00",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.rows",
+     "a": "[array of 8]",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.total",
+     "a": 38,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.page",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.per",
+     "a": 8,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaiting",
+     "a": 0,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.awaitingNote",
+     "a": null,
+     "b": "(absent)"
+    },
+    {
+     "path": "$.error",
+     "a": "(absent)",
+     "b": "Zone \"abc\" is not one of the 15 GCC zones (1 to 15)."
+    }
+   ]
+  },
+  {
+   "id": "095b16e7efdf775f",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 262311,
+    "b": 262289
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "2546b13c9615b885",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=daily",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 262311,
+    "b": 262289
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "3216cc33d4b7fe6e",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=weekly",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 443824,
+    "b": 443781
+   },
+   "path_count": 5,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.stories.threads[37].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[37].incidents[0]",
+     "a": "INC-20261104-6A87C3",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "fda381e1a888253e",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=monthly",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 589432,
+    "b": 589410
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "299c47228fd7dd1a",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=quarterly",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 627586,
+    "b": 627564
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[8].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[8].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[8].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "85c714c0a3849702",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=weekly&zone=5",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 209432,
+    "b": 209411
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.stories.threads[3].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[3].incidents[0]",
+     "a": "INC-20261102-FCDE95",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "e56633d976349cd6",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=monthly&zone=13",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 254953,
+    "b": 254910
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.stories.threads[1].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[1].incidents[0]",
+     "a": "INC-20261029-37F3B8",
+     "b": "(absent)"
+    },
+    {
+     "path": "$.stories.threads[7].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[7].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "9c6d19d842191ae4",
+   "session": "reads2",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/report?period=quarterly&zone=1",
+   "route": "/api/collector/report",
+   "fields": {},
+   "bytes": {
+    "a": 235188,
+    "b": 235166
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.stories.threads[6].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[6].incidents[1]",
+     "a": "INC-20261020-E859BF",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "8213db3c1be53f5d",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 309,
+    "b": 11803
+   },
+   "path_count": 10,
+   "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "none",
+     "b": "do"
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 1
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 13 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "23 cases today; here are the 12 that matter most. 2 are past their deadline and need you first: standing water at Saidapet (Adyar River - Sa... (243 chars)"
+    },
+    {
+     "path": "$.result.note",
+     "a": "no-model",
+     "b": "quick"
+    },
+    {
+     "path": "$.trace.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "Thinking",
+     "b": "Reading the data"
+    },
+    {
+     "path": "$.trace[1]",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    },
+    {
+     "path": "$.lane",
+     "a": "no-model",
+     "b": "quick"
+    }
+   ]
+  },
+  {
+   "id": "eb1562d1e045703b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3439,
+    "b": 3537
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "Royapuram, அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு.",
+     "b": "ராயபுரம், அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு."
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "அதிகம்: Royapuram, 16 incidents. அடுத்து Thiruvottiyur 9, Anna Nagar 7.",
+     "b": "அதிகம்: ராயபுரம், 16 சம்பவங்கள். அடுத்து திருவொற்றியூர் 9, அண்ணா நகர் 7."
+    }
+   ]
+  },
+  {
+   "id": "bc94a14cdfe5ac48",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 7359,
+    "b": 7475
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in ... (312 chars)",
+     "b": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தேன... (312 chars)"
+    }
+   ]
+  },
+  {
+   "id": "3d1d878d45cabe62",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 4385,
+    "b": 4388
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "Ambattur had 2× the high of Madhavaram the last 30 days.",
+     "b": "Ambattur had 2× the high of Madhavaram in the last 30 days."
+    }
+   ]
+  },
+  {
+   "id": "915af0152152346b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 2539,
+    "b": 2742
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "Greater Chennai Police, அனைத்து 23-இன் இடைநிலையை விட 28.9 மடங்கு.",
+     "b": "பெருநகர சென்னை காவல்துறை, அனைத்து 23-இன் இடைநிலையை விட 28.9 மடங்கு."
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "அதிகம்: Greater Chennai Police, 405 incidents. அடுத்து Storm Water Drain 174, PWD Water Resources 105.",
+     "b": "அதிகம்: பெருநகர சென்னை காவல்துறை, 405 சம்பவங்கள். அடுத்து மழைநீர் வடிகால் துறை 174, பொதுப்பணித்துறை நீர்வளம் 105."
+    }
+   ]
+  },
+  {
+   "id": "a00a263949adc0de",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3697,
+    "b": 3723
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "157508256127d2ef",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3924,
+    "b": 3950
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "Manali, Chennai - CPCB: 121 AQI, 4 Nov, 5:00 PM நிலவரப்படி.",
+     "b": "Manali, Chennai - CPCB: 121 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "091763a4e6e28326",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 2558,
+    "b": 2595
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 mm, 6 Nov, 8:30 AM நிலவரப்படி.",
+     "b": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 மி.மீ, 6 நவ., முற்பகல் 8:30 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "1959186f8ccc0a1e",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3252,
+    "b": 3691
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.blocks[1].points[0].ta",
+     "a": "(absent)",
+     "b": "இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை."
+    },
+    {
+     "path": "$.result.stage.blocks[1].points[1].ta",
+     "a": "(absent)",
+     "b": "இங்குள்ள பெரும்பாலான புகார்கள் சோதனைப் பதிவுகள். இது இன்றைய பதிவுகளின்படி."
+    }
+   ]
+  },
+  {
+   "id": "ac136777a4aee429",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 12303,
+    "b": 12469
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (220 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; ... (225 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (220 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; ... (225 chars)"
+    }
+   ]
+  },
+  {
+   "id": "f1e6ac2ad90ac282",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 12201,
+    "b": 12391
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    }
+   ]
+  },
+  {
+   "id": "484c3e63acc4f70c",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 11105,
+    "b": 11437
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.result.stage.title",
+     "a": "சம்பவங்கள் · தேனாம்பேட்டை · Garbage & solid waste · இந்த வாரம்",
+     "b": "சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].title",
+     "a": "சம்பவங்கள் · தேனாம்பேட்டை · Garbage & solid waste · இந்த வாரம்",
+     "b": "சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    }
+   ]
+  },
+  {
+   "id": "0401451bde1ac789",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 5945,
+    "b": 6197
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.result.stage.title",
+     "a": "சம்பவங்கள் · மாதவரம் · Street lights & electrical hazards · இந்த வாரம்",
+     "b": "சம்பவங்கள் · மாதவரம் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Srinivasa Nagar V Cross R... (232 chars)",
+     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].title",
+     "a": "சம்பவங்கள் · மாதவரம் · Street lights & electrical hazards · இந்த வாரம்",
+     "b": "சம்பவங்கள் · மாதவரம் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Srinivasa Nagar V Cross R... (232 chars)",
+     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)"
+    }
+   ]
+  },
+  {
+   "id": "2941e2ef55b91f8b",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3800,
+    "b": 3852
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    },
+    {
+     "path": "$.result.say",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "fa394469d1d31521",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 10891,
+    "b": 11073
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (225 chars)",
+     "b": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), st... (225 chars)",
+     "b": "இந்த வாரம் 91 சம்பவங்கள். 42 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடை... (232 chars)"
+    }
+   ]
+  },
+  {
+   "id": "f09bcf697432c0ab",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 10719,
+    "b": 10951
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    }
+   ]
+  },
+  {
+   "id": "f025856d46a1ca5f",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 5966,
+    "b": 6116
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (240 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Church Road, Padi, Mogapp... (240 chars)",
+     "b": "இந்த வாரம் 3 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Church Road, Padi, Mogappair, ... (235 chars)"
+    }
+   ]
+  },
+  {
+   "id": "9ef6d6c5b729a804",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 3800,
+    "b": 3852
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    },
+    {
+     "path": "$.result.say",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "a3c117ff746b0a57",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "fields": {},
+   "bytes": {
+    "a": 337,
+    "b": 8200
+   },
+   "path_count": 11,
+   "paths": [
+    {
+     "path": "$.result.kind",
+     "a": "none",
+     "b": "do"
+    },
+    {
+     "path": "$.result.steps.length",
+     "a": 0,
+     "b": 2
+    },
+    {
+     "path": "$.result.steps[0]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.steps[1]",
+     "a": "(absent)",
+     "b": "{object with 2 keys}"
+    },
+    {
+     "path": "$.result.stage",
+     "a": null,
+     "b": "{object with 13 keys}"
+    },
+    {
+     "path": "$.result.say",
+     "a": null,
+     "b": "இந்த வாரம் 7 சம்பவங்கள். மிக அவசரமானது: வடிகால் பணியிடத்தில் பாதுகாப்புப் பிரச்சினை, Periyar 5Th Salai, அடையாறு. Storm Water Drain வசம் 7. \"... (185 chars)"
+    },
+    {
+     "path": "$.result.note",
+     "a": "no-model",
+     "b": "quick"
+    },
+    {
+     "path": "$.trace.length",
+     "a": 1,
+     "b": 2
+    },
+    {
+     "path": "$.trace[0].label",
+     "a": "யோசிக்கிறேன்",
+     "b": "தரவைப் படிக்கிறேன்"
+    },
+    {
+     "path": "$.trace[1]",
+     "a": "(absent)",
+     "b": "{object with 3 keys}"
+    },
+    {
+     "path": "$.lane",
+     "a": "no-model",
+     "b": "quick"
+    }
+   ]
+  },
+  {
+   "id": "a88392c79b867872",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 1",
+   "fields": {},
+   "bytes": {
+    "a": 3391,
+    "b": 3489
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "Royapuram, அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு.",
+     "b": "ராயபுரம், அனைத்து 15-இன் இடைநிலையை விட 4 மடங்கு."
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "அதிகம்: Royapuram, 16 incidents. அடுத்து Thiruvottiyur 9, Anna Nagar 7.",
+     "b": "அதிகம்: ராயபுரம், 16 சம்பவங்கள். அடுத்து திருவொற்றியூர் 9, அண்ணா நகர் 7."
+    }
+   ]
+  },
+  {
+   "id": "374abbf925411872",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 2",
+   "fields": {},
+   "bytes": {
+    "a": 7311,
+    "b": 7427
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in ... (312 chars)",
+     "b": "இந்த வாரம் 5 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தேன... (312 chars)"
+    }
+   ]
+  },
+  {
+   "id": "78433e1b88e12ccf",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 3",
+   "fields": {},
+   "bytes": {
+    "a": 4337,
+    "b": 4340
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.en",
+     "a": "Ambattur had 2× the high of Madhavaram the last 30 days.",
+     "b": "Ambattur had 2× the high of Madhavaram in the last 30 days."
+    }
+   ]
+  },
+  {
+   "id": "04eb4463a66d39c9",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 5",
+   "fields": {},
+   "bytes": {
+    "a": 2491,
+    "b": 2694
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.takeaway.ta",
+     "a": "Greater Chennai Police, அனைத்து 23-இன் இடைநிலையை விட 28.9 மடங்கு.",
+     "b": "பெருநகர சென்னை காவல்துறை, அனைத்து 23-இன் இடைநிலையை விட 28.9 மடங்கு."
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "அதிகம்: Greater Chennai Police, 405 incidents. அடுத்து Storm Water Drain 174, PWD Water Resources 105.",
+     "b": "அதிகம்: பெருநகர சென்னை காவல்துறை, 405 சம்பவங்கள். அடுத்து மழைநீர் வடிகால் துறை 174, பொதுப்பணித்துறை நீர்வளம் 105."
+    }
+   ]
+  },
+  {
+   "id": "be3f567754865da5",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 8",
+   "fields": {},
+   "bytes": {
+    "a": 3649,
+    "b": 3675
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 Nov, 6:00 AM நிலவரப்படி.",
+     "b": "6 அளவீடுகள். அதிகம்: Veeranam, 72%, 6 நவ., முற்பகல் 6:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "72847463243eb5f3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 10",
+   "fields": {},
+   "bytes": {
+    "a": 3876,
+    "b": 3902
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "Manali, Chennai - CPCB: 121 AQI, 4 Nov, 5:00 PM நிலவரப்படி.",
+     "b": "Manali, Chennai - CPCB: 121 AQI, 4 நவ., பிற்பகல் 5:00 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "309837203a91a724",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 11",
+   "fields": {},
+   "bytes": {
+    "a": 2510,
+    "b": 2547
+   },
+   "path_count": 1,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 mm, 6 Nov, 8:30 AM நிலவரப்படி.",
+     "b": "4 அளவீடுகள். அதிகம்: Chennai-Madhavaram, 14 மி.மீ, 6 நவ., முற்பகல் 8:30 நிலவரப்படி."
+    }
+   ]
+  },
+  {
+   "id": "555df8086cdb06ba",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 12",
+   "fields": {},
+   "bytes": {
+    "a": 3185,
+    "b": 3624
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.blocks[1].points[0].ta",
+     "a": "(absent)",
+     "b": "இன்று 18 புதிய சம்பவங்கள் வந்தன; 18 இன்னும் நிலுவையில்; கெடு தாண்டியது எதுவும் இல்லை."
+    },
+    {
+     "path": "$.result.stage.blocks[1].points[1].ta",
+     "a": "(absent)",
+     "b": "இங்குள்ள பெரும்பாலான புகார்கள் சோதனைப் பதிவுகள். இது இன்றைய பதிவுகளின்படி."
+    }
+   ]
+  },
+  {
+   "id": "9c314a36131beb96",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 17",
+   "fields": {},
+   "bytes": {
+    "a": 12219,
+    "b": 12385
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (220 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; ... (225 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Saidapet (Adyar River - Saidapet stretch), Road acc... (220 chars)",
+     "b": "இன்று 23 சம்பவங்கள். 2 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Saidapet (Adyar River - Saidapet stretch), அடையாறு; ... (225 chars)"
+    }
+   ]
+  },
+  {
+   "id": "e2bf5af9ffe285e3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 18",
+   "fields": {},
+   "bytes": {
+    "a": 12117,
+    "b": 12307
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: standing water at Pulianthope (Buckingham Canal - Basi... (261 chars)",
+     "b": "இந்த வாரம் 52 கடுமையான சம்பவங்கள். 54 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தண்ணீர் தேக்கம், Pulianthope (Buckingham Canal - Basin... (258 chars)"
+    }
+   ]
+  },
+  {
+   "id": "61ed15dc04e17ba5",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 19",
+   "fields": {},
+   "bytes": {
+    "a": 11021,
+    "b": 11353
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.result.stage.title",
+     "a": "சம்பவங்கள் · தேனாம்பேட்டை · Garbage & solid waste · இந்த வாரம்",
+     "b": "சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].title",
+     "a": "சம்பவங்கள் · தேனாம்பேட்டை · Garbage & solid waste · இந்த வாரம்",
+     "b": "சம்பவங்கள் · தேனாம்பேட்டை · குப்பை மற்றும் திடக்கழிவு · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: uncleared garbage at Rasha Hydhar Street, Anna Salai, Chepauk in... (313 chars)",
+     "b": "இந்த வாரம் 11 சம்பவங்கள். 5 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: அகற்றப்படாத குப்பை, Rasha Hydhar Street, Anna Salai, Chepauk, தே... (313 chars)"
+    }
+   ]
+  },
+  {
+   "id": "f0ed9bee243901b3",
+   "session": "ask",
+   "role": "collector",
+   "method": "POST",
+   "url": "/api/collector/thunai/agent/round",
+   "route": "/api/collector/thunai/agent/round",
+   "note": "direct, sentence 20",
+   "fields": {},
+   "bytes": {
+    "a": 5861,
+    "b": 6113
+   },
+   "path_count": 4,
+   "paths": [
+    {
+     "path": "$.result.stage.title",
+     "a": "சம்பவங்கள் · மாதவரம் · Street lights & electrical hazards · இந்த வாரம்",
+     "b": "சம்பவங்கள் · மாதவரம் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.stage.say.ta",
+     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Srinivasa Nagar V Cross R... (232 chars)",
+     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)"
+    },
+    {
+     "path": "$.result.stage.blocks[1].title",
+     "a": "சம்பவங்கள் · மாதவரம் · Street lights & electrical hazards · இந்த வாரம்",
+     "b": "சம்பவங்கள் · மாதவரம் · தெருவிளக்கு மற்றும் மின் ஆபத்துகள் · இந்த வாரம்"
+    },
+    {
+     "path": "$.result.say",
+     "a": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: a street light or electrical problem at Srinivasa Nagar V Cross R... (232 chars)",
+     "b": "இந்த வாரம் 2 சம்பவங்கள். 1 காலக்கெடு தாண்டியவை, முதலில் கவனிக்க வேண்டியவை: தெருவிளக்கு அல்லது மின் பிரச்சினை, Srinivasa Nagar V Cross Road, ... (222 chars)"
+    }
+   ]
+  },
+  {
+   "id": "ea0ab3f25bc17c26",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 232574,
+    "b": 232552
+   },
+   "path_count": 3,
+   "paths": [
+    {
+     "path": "$.stories.threads[9].incidents.length",
+     "a": 2,
+     "b": 1
+    },
+    {
+     "path": "$.stories.threads[9].incidents[0]",
+     "a": "INC-20261105-C69AD2",
+     "b": "INC-20261106-BAE416"
+    },
+    {
+     "path": "$.stories.threads[9].incidents[1]",
+     "a": "INC-20261106-BAE416",
+     "b": "(absent)"
+    }
+   ]
+  },
+  {
+   "id": "3f54c3ecc14de285",
+   "session": "writes",
+   "role": "collector",
+   "method": "GET",
+   "url": "/api/collector/overview?period=weekly&zone=13",
+   "route": "/api/collector/overview",
+   "fields": {},
+   "bytes": {
+    "a": 140289,
+    "b": 140268
+   },
+   "path_count": 2,
+   "paths": [
+    {
+     "path": "$.stories.threads[1].incidents.length",
+     "a": 1,
+     "b": 0
+    },
+    {
+     "path": "$.stories.threads[1].incidents[0]",
+     "a": "INC-20261029-37F3B8",
+     "b": "(absent)"
+    }
+   ]
+  }
+ ]
+}
