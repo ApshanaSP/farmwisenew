@@ -18,8 +18,62 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("MANU_PADDLE_PORT", "8867"))
 MAX_BYTES = 6_000_000  # the site allows 4.5 MB a page
 MAX_PIXELS = 40_000_000
+READ_DEADLINE_S = 60  # the whole body, not each read: a sender trickling a byte at a time cannot hold the only reader
 
 ocr = None
+
+# JPEG start-of-frame markers (they carry the size); C4, C8 and CC are other segments
+_SOF = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+
+
+def header_size(body):
+    """(width, height) from a PNG or JPEG header, without decoding the picture; None when the header cannot be read.
+
+    The pixel cap must hold before cv2.imdecode: a 3 MB PNG of 30000 x 30000 of one colour decodes to about 2.7 GB (QA pass 5, sms-ocr-11).
+    """
+    if body[:8] == b"\x89PNG\r\n\x1a\n":
+        if len(body) >= 24 and body[12:16] == b"IHDR":
+            return int.from_bytes(body[16:20], "big"), int.from_bytes(body[20:24], "big")
+        return None
+    if body[:3] != b"\xff\xd8\xff":
+        return None
+    i = 2
+    while i + 4 <= len(body):
+        if body[i] != 0xFF:
+            return None
+        marker = body[i + 1]
+        if marker == 0xFF:  # fill byte
+            i += 1
+            continue
+        if marker == 0x01 or 0xD0 <= marker <= 0xD8:  # markers with no length
+            i += 2
+            continue
+        if marker in (0xD9, 0xDA):  # the end, or the picture's data, before any frame header
+            return None
+        length = int.from_bytes(body[i + 2:i + 4], "big")
+        if marker in _SOF:
+            if i + 9 > len(body):
+                return None
+            return int.from_bytes(body[i + 7:i + 9], "big"), int.from_bytes(body[i + 5:i + 7], "big")
+        if length < 2:
+            return None
+        i += 2 + length
+    return None
+
+
+def read_body(rfile, size, deadline_s=READ_DEADLINE_S, clock=time.time):
+    """Exactly `size` bytes, or None when the sender stops or takes longer than `deadline_s` in all (sms-ocr-11)."""
+    deadline = clock() + deadline_s
+    parts, got = [], 0
+    while got < size:
+        if clock() > deadline:
+            return None
+        chunk = rfile.read1(min(65536, size - got))
+        if not chunk:
+            return None
+        parts.append(chunk)
+        got += len(chunk)
+    return b"".join(parts)
 
 
 class Reader(BaseHTTPRequestHandler):
@@ -57,9 +111,17 @@ class Reader(BaseHTTPRequestHandler):
             size = 0
         if size <= 0 or size > MAX_BYTES:
             return self.answer(413, {"error": "too large or empty"})
-        body = self.rfile.read(size)
+        body = read_body(self.rfile, size)
+        if body is None:
+            return self.answer(408, {"error": "the picture did not arrive in time"})
         if not (body[:3] == b"\xff\xd8\xff" or body[:8] == b"\x89PNG\r\n\x1a\n"):
             return self.answer(415, {"error": "only JPEG or PNG"})
+        # the pixel cap from the header, before anything is decoded (sms-ocr-11); the check after decoding stays as a second wall
+        dims = header_size(body)
+        if dims is None:
+            return self.answer(415, {"error": "not a readable picture"})
+        if dims[0] * dims[1] > MAX_PIXELS:
+            return self.answer(413, {"error": "too many pixels"})
         import cv2
         import numpy as np
 
