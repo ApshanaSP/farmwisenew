@@ -213,6 +213,11 @@ export async function POST(req: NextRequest) {
     }
 
     const complaintCode = await generateUniqueComplaintCode();
+    const [deptNameRows] = await pool.query<RowDataPacket[]>(
+      "SELECT name FROM departments WHERE id = ?",
+      [departmentId]
+    );
+    const deptName: string | null = deptNameRows[0]?.name ?? null;
 
     const complaintId = await withTransaction(async (conn) => {
       const [insertResult] = await conn.query<ResultSetHeader>(
@@ -265,8 +270,10 @@ export async function POST(req: NextRequest) {
          VALUES (?, 'Complaint Filed', 'Citizen', ?, ?)`,
         [
           newId,
+          // what happened, not a review nobody does: "Department routing pending officer review" was promised, but no officer sees a
+          // review flag or can send a complaint on (QA pass 6, officer-day-07). The case carries the flag to the Collector (cases.ts).
           needsManualReview
-            ? "Complaint registered. Department routing pending officer review."
+            ? `Complaint registered and sent to ${deptName ?? "a department"}, chosen by the portal because this complaint type has no fixed department.`
             : "Complaint registered by citizen.",
           session.userId
         ]
@@ -280,16 +287,13 @@ export async function POST(req: NextRequest) {
       console.error("[dataset] could not append " + complaintCode + ":", err)
     );
 
-    const [deptNameRows] = await pool.query<RowDataPacket[]>(
-      "SELECT name FROM departments WHERE id = ?",
-      [departmentId]
-    );
-
-    // the officer and Collector consoles read cases: put this complaint in front of them now (a failure is logged, and the next build adds it)
+    // the officer and Collector consoles read cases: put this complaint in front of them now (a failure is logged, and the next build adds it).
+    // Its type and sub-type grade it as the pipeline would (officer-day-02); a department the portal chose is flagged for checking (officer-day-07)
     await addCaseLive(onlineCase({
       complaint_code: complaintCode, created_at: istNow(), title: data.title, description: data.description, ward_number: data.wardNumber,
-      specific_location: data.specificLocation, street_address: data.streetAddress, mobile_number: data.mobileNumber, user_id: session.userId
-    }, deptNameRows[0]?.name ?? null));
+      specific_location: data.specificLocation, street_address: data.streetAddress, mobile_number: data.mobileNumber, user_id: session.userId,
+      needs_manual_review: needsManualReview ? 1 : 0
+    }, deptName, { type: subtype.category_name as string, subtype: subtype.label as string }));
 
     return NextResponse.json({
       message:
@@ -297,7 +301,7 @@ export async function POST(req: NextRequest) {
         "You can check the current status of your complaint using your Complaint Number.",
       complaintCode,
       complaintId,
-      department: deptNameRows[0]?.name ?? null,
+      department: deptName,
       departmentPending: needsManualReview,
       queueNote: needsManualReview ? null : QUEUE_DELAY_NOTE,
       complaintType: subtype.label as string,

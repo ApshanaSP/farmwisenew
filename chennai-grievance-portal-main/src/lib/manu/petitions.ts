@@ -11,7 +11,7 @@ import { audit } from "@/lib/collector/sources";
 import { DEPT_CONFIG } from "@/lib/officer/departments";
 import { oneAtATime } from "@/lib/serial";
 import { addCaseLive, petitionCase } from "./cases";
-import { MOBILE_RE, MOBILE_TYPED_MAX, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
+import { MOBILE_RE, MOBILE_TYPED_MAX, aadhaarShaped, addHours, bestArea, istNow, maskAadhaar, tenDigits } from "./clean";
 import { MANU_DEPTS, manuDeptLabel, type Approved, type ReadStage, type Reading, type Repeats } from "./constants";
 import { mediaTypeOf, readPhoto, removePhoto } from "./files";
 import { readPetition } from "./read";
@@ -22,7 +22,7 @@ type Row = RowDataPacket & Record<string, any>;
 
 const photoUrl = (name: string) => `/api/manu/photos/${name}`;
 const pagesOf = (p: Row): string[] => { try { return JSON.parse(String(p.pages ?? "[]")); } catch { return []; } };
-const readingOf = (p: Row): Reading | null => { try { return p.reading ? (JSON.parse(String(p.reading)) as Reading) : null; } catch { return null; } };
+export const readingOf = (p: Row): Reading | null => { try { return p.reading ? (JSON.parse(String(p.reading)) as Reading) : null; } catch { return null; } };
 const stamp = (v: unknown) => (v == null ? "" : v instanceof Date ? v.toISOString().slice(0, 19).replace("T", " ") : String(v).replace("T", " ").slice(0, 19));
 const DAYS_TO_ACT = () => Math.max(1, Number(process.env.MANU_DAYS_TO_ACT) || 15);
 const URGENT_DAYS = () => Math.max(1, Number(process.env.MANU_URGENT_DAYS) || 2);
@@ -110,8 +110,11 @@ export async function deskList(): Promise<DeskItem[]> {
   // busy grievance day pushed older waiting petitions off the desk and out of the restart below (QA pass 6, hunt2-desk-13). Only the
   // approved ones, kept for a week to show, are capped.
   const [waiting] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status IN ('reading', 'needs_check', 'read_failed') ORDER BY created_at DESC`);
-  const [approved] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status = 'filed' AND updated_at >= ? ORDER BY created_at DESC LIMIT 300`, [since]);
-  const rows = [...waiting, ...approved].sort((a, b) => stamp(b.created_at).localeCompare(stamp(a.created_at)) || Number(b.id) - Number(a.id));
+  // the latest approvals, by when they were approved (an old upload approved now is one of them), read after the waiting ones: a petition
+  // approved between the two reads is in both, and is listed once, as approved (the pass 7 reviewer)
+  const [approved] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status = 'filed' AND updated_at >= ? ORDER BY updated_at DESC, id DESC LIMIT 300`, [since]);
+  const filed = new Set(approved.map((r) => Number(r.id)));
+  const rows = [...waiting.filter((r) => !filed.has(Number(r.id))), ...approved].sort((a, b) => stamp(b.created_at).localeCompare(stamp(a.created_at)) || Number(b.id) - Number(a.id));
   const old = addHours(istNow(), -0.08);
   for (const r of rows)
     if (r.status === "reading" && stamp(r.updated_at) < old && !queue.running.has(r.id)) enqueueRead(r.id);
@@ -165,7 +168,7 @@ export async function petitionDetail(id: number): Promise<Detail | null> {
   if (g && p.status === "needs_check") {
     const s = g.ward ? null : await wardFromArea(g.area_en);
     if (s) suggestedWard = { ...s, zone: await wardName(s.ward) };
-    repeats = await findRepeats({ mobile: g.mobile, name: g.name, street: g.street, ward: g.ward ?? s?.ward ?? null, dept: g.department, problem: g.problem_en, excludeId: id }).catch(() => null);
+    repeats = await findRepeats({ mobile: g.mobile, name: g.name, street: g.street, ward: g.ward ?? s?.ward ?? null, dept: g.department, problem: g.problem_en, category: g.category, excludeId: id }).catch(() => null);
   }
   return {
     id: p.id, status: p.status, pages: pagesOf(p).map(photoUrl), at: stamp(p.created_at), readError: p.read_error ?? null, model: p.read_model ?? null,
@@ -182,7 +185,9 @@ export const fileSchema = z.object({
   name: z.string().trim().min(2, "Enter the petitioner's name.").max(120),
   // read as a number first (+91, 0091 and a leading 0 dropped, any script's digits), then it must be a mobile: 10 digits starting 6 to 9.
   // Ten digits of any kind were accepted, so "0984001234" (a 0-prefixed number cut short) was stored and an SMS would go to it (hunt2-desk-04)
-  mobile: z.string().trim().max(MOBILE_TYPED_MAX).transform(tenDigits)
+  // a number in Aadhaar's 4-4-4 groups is refused here as the reader's check refuses it (cleanReading), not read as a +91 mobile
+  mobile: z.string().trim().max(MOBILE_TYPED_MAX, "That is too long for a mobile number.")
+    .refine((m) => !aadhaarShaped(m), "This looks like an Aadhaar number, not a mobile number.").transform(tenDigits)
     .refine((m) => m === "" || MOBILE_RE.test(m), "A mobile number has 10 digits and starts with 6, 7, 8 or 9 (+91 or a 0 in front is fine)."),
   door: z.string().trim().max(40),
   street: z.string().trim().max(200),
@@ -247,7 +252,7 @@ export async function filePetition(id: number, f: FileFields, by: string): Promi
     });
 
     const filed = (await getPetition(id))!;
-    const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
+    const earlier = (await findRepeats({ mobile, name: f.name, street: f.street, ward: f.ward, dept: f.dept, problem, category, excludeId: id }).catch(() => null))?.matches.filter((m) => m.sameProblem).length ?? 0;
     // the count is kept with the petition, so the next build's case says it too (QA pass 6, P5-031). Best effort: a MySQL copy without
     // migration 017 still approves, and only the next build's count is lost there
     await pool.query(`UPDATE petitions SET recurrence = ? WHERE id = ?`, [earlier, id]).catch(() => undefined);

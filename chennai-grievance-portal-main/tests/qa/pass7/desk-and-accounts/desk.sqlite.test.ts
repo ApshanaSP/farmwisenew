@@ -104,14 +104,23 @@ describe("hunt2-desk-04: a mobile number written with +91 or a 0 is stored as th
     expect(fields({ mobile: "" }).mobile).toBe("");
   });
 
-  it("the desk's box no longer cuts what is typed at 10 characters before it is read", async () => {
-    const { typedMobile, MOBILE_TYPED_MAX } = await import("@/lib/manu/clean");
+  it("the desk's box no longer cuts what is typed or pasted before it is read: no maxLength, and typedMobile keeps the whole number", async () => {
+    const { typedMobile } = await import("@/lib/manu/clean");
     expect(typedMobile("+91 98400 12345")).toBe("+91 98400 12345");
     const desk = fs.readFileSync(path.join(process.cwd(), "src/components/manu/ManuDesk.tsx"), "utf8");
     const box = desk.split("\n").find((l) => /label="Mobile"/.test(l)) ?? "";
     expect(box).toContain("typedMobile(e.target.value)");
-    expect(box).toContain("maxLength={MOBILE_TYPED_MAX}");
-    expect(MOBILE_TYPED_MAX).toBeGreaterThanOrEqual("0091 98400 12345".length);
+    expect(box).not.toMatch(/maxLength/);
+    // pass 7 reviewer: a pasted "Mobile no: +91 98400 12345" (26 characters) was cut by the box's limit of 24 to "...+91 98400 123"
+    expect(fields({ mobile: typedMobile("Mobile no: +91 98400 12345") }).mobile).toBe("9840012345");
+  });
+
+  it("pass 7 reviewer: a +91 number missing digits is refused, not read as ten digits of another number", () => {
+    for (const m of ["+91 98400 123", "+91-98400-1234", "0091 98400 123", "(+91) 98400 1234"]) expect(fileSchema.safeParse(raw({ mobile: m })).success, m).toBe(false);
+  });
+
+  it("pass 7 reviewer: a number in Aadhaar's 4-4-4 groups is refused, as the reader's check refuses it", () => {
+    expect(fileSchema.safeParse(raw({ mobile: "9198 4001 2345" })).success).toBe(false);
   });
 
   it("approved with '+91 98400 12345', the petition holds 9840012345 and the petitioner tracks with the real last 4 digits (2345)", async () => {
@@ -120,6 +129,43 @@ describe("hunt2-desk-04: a mobile number written with +91 or a 0 is stored as th
     expect(one("SELECT mobile FROM petitions WHERE id = ?", id).mobile).toBe("9840012345");
     expect(one("SELECT mobile_number m FROM complaints WHERE complaint_code = ?", r.code).m).toBe("9840012345");
     expect((await trackAs({ code: r.code, last4: "2345" })).status).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------- hunt2-desk-11 --
+
+describe("hunt2-desk-11: an urgent petition joined to a normal case puts its deadline and severity on the case", () => {
+  it("the case is due when the urgent petitioner's /track says, and is High", async () => {
+    const first = await filePetition(await uploaded(), fields(), "x");
+    const before = one("SELECT sla_due_at, severity_level FROM incidents WHERE incident_id = ?", caseIdFor(first.code));
+    expect(before.severity_level).toBe("Medium");
+    const id = await uploaded();
+    const second = await filePetition(id, fields({ urgent: true, name: "S. Devi", attachTo: caseIdFor(first.code), problem: "Live wire hanging from the street light pole, children nearby" }), "x");
+    expect(second.attached).toBe(true);
+    const promised = String(one("SELECT due_at FROM petitions WHERE id = ?", id).due_at);
+    const i = one("SELECT * FROM incidents WHERE incident_id = ?", caseIdFor(first.code));
+    expect(i.sla_due_at).toBe(promised);
+    expect(promised < String(before.sla_due_at)).toBe(true);
+    expect(i.severity_level).toBe("High");
+    expect(i.sla_hours).toBeLessThanOrEqual(49);
+    // what the petitioner reads on /track is what the department's queue carries
+    const { trackKey } = await import("@/lib/manu/track");
+    const t = await (await trackAs({ code: second.code, key: trackKey(second.code) })).json();
+    expect(String(t.dueBy ?? t.view?.dueBy)).toBe(i.sla_due_at);
+  });
+
+  it("a normal petition joined to a case due sooner leaves the sooner deadline and the severity alone", async () => {
+    const first = await filePetition(await uploaded(), fields({ urgent: true }), "x");
+    const before = one("SELECT sla_due_at, severity_level, sla_hours FROM incidents WHERE incident_id = ?", caseIdFor(first.code));
+    await filePetition(await uploaded(), fields({ name: "S. Devi", attachTo: caseIdFor(first.code) }), "x");
+    expect(one("SELECT sla_due_at, severity_level, sla_hours FROM incidents WHERE incident_id = ?", caseIdFor(first.code))).toEqual(before);
+  });
+
+  it("an urgent petition joined to a Severe case leaves it Severe", async () => {
+    const first = await filePetition(await uploaded(), fields(), "x");
+    h.db.prepare("UPDATE incidents SET severity_level = 'Severe', severity_score = 80 WHERE incident_id = ?").run(caseIdFor(first.code));
+    await filePetition(await uploaded(), fields({ urgent: true, name: "S. Devi", attachTo: caseIdFor(first.code) }), "x");
+    expect(one("SELECT severity_level, severity_score FROM incidents WHERE incident_id = ?", caseIdFor(first.code))).toEqual({ severity_level: "Severe", severity_score: 80 });
   });
 });
 

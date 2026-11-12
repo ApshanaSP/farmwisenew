@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
 import { getSessionFromCookies } from "@/lib/auth";
 import { mobileSchema } from "@/lib/validators";
 import { createOtp, devOtpForResponse } from "@/lib/otp";
 import { sendMail, otpEmailHtml } from "@/lib/mailer";
-import { RowDataPacket } from "mysql2";
+import { mobileOtpId, mobileTry, tryAgainIn } from "@/lib/profile-mobile";
 
+/**
+ * A code, by e-mail, to confirm that the account's holder is the one putting this number on the account. It does not prove the phone
+ * (lib/profile-mobile.ts). Nothing here says whether the number is on another account: that answer came at once, for any number, and
+ * told a signed-in citizen who is registered (QA pass 6, hunt2-sec-02).
+ */
 export async function POST(req: NextRequest) {
   const session = await getSessionFromCookies();
   if (!session) {
@@ -19,21 +23,18 @@ export async function POST(req: NextRequest) {
   }
   const mobileNumber = parsed.data;
 
-  const [dupRows] = await pool.query<RowDataPacket[]>(
-    "SELECT id FROM user_profiles WHERE mobile_number = ? AND user_id != ?",
-    [mobileNumber, session.userId]
-  );
-  if (dupRows.length > 0) {
-    return NextResponse.json({ error: "This mobile number is already registered to another account." }, { status: 409 });
+  const limit = mobileTry(session.userId);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: tryAgainIn(limit) }, { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds ?? 3600) } });
   }
 
-  const result = await createOtp(mobileNumber, "mobile_verify", session.userId);
+  const result = await createOtp(mobileOtpId(session.userId, mobileNumber), "mobile_verify", session.userId);
   if (result.cooldownRemaining) {
-    return NextResponse.json({ message: "OTP already sent.", cooldownRemaining: result.cooldownRemaining });
+    return NextResponse.json({ message: "Code already sent.", cooldownRemaining: result.cooldownRemaining });
   }
 
-  await sendMail(session.email, "Verify your mobile number", otpEmailHtml(result.otp, "mobile number verification"));
+  await sendMail(session.email, "Confirm the mobile number on your account", otpEmailHtml(result.otp, `adding the mobile number ${mobileNumber} to your account`));
 
   const devOtp = devOtpForResponse(result.otp, req.headers);
-  return NextResponse.json({ message: "OTP sent.", devOtp });
+  return NextResponse.json({ message: "We have e-mailed you a code. Enter it to save this number.", devOtp });
 }

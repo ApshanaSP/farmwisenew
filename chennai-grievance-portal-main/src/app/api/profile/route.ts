@@ -4,6 +4,7 @@ import { getSessionFromCookies } from "@/lib/auth";
 import { profileUpdateSchema } from "@/lib/validators";
 import { RowDataPacket } from "mysql2";
 import { maskAadhaar } from "@/lib/crypto";
+import { mobileTry, onAnotherAccount } from "@/lib/profile-mobile";
 
 const OPTIONAL_COMPLETENESS_FIELDS = [
   "last_name",
@@ -74,7 +75,9 @@ export async function GET() {
           gender: profile.gender,
           dateOfBirth: profile.date_of_birth,
           mobileNumber: profile.mobile_number,
-          mobileVerified: !!profile.mobile_verified,
+          // no number is shown as verified: every stored TRUE came from the e-mailed code, which never reached the phone (QA pass 6,
+          // hunt2-sec-03; lib/profile-mobile.ts). Read the column again once a code is sent to the phone itself.
+          mobileVerified: false,
           alternateEmail: profile.alternate_email,
           doorNoAndStreet: profile.door_no_and_street,
           area: profile.area,
@@ -123,9 +126,18 @@ export async function PUT(req: NextRequest) {
   }
 
   const [existing] = await pool.query<RowDataPacket[]>(
-    "SELECT id FROM user_profiles WHERE user_id = ?",
+    "SELECT id, mobile_number FROM user_profiles WHERE user_id = ?",
     [session.userId]
   );
+
+  // a mobile number is saved here only when the profile has none (the complaint form remembers the one typed there); changing it is the
+  // mobile tab's, with the e-mailed code. A number on another account is not saved and not reported: a 500 from the unique column, or a
+  // refusal, told any signed-in citizen whether a number is registered (QA pass 6, hunt2-sec-02). Trying one counts on the same per-account
+  // budget as asking for a code (lib/profile-mobile.ts).
+  let mobile: string | null = null;
+  if (data.mobileNumber && !existing[0]?.mobile_number && mobileTry(session.userId).allowed && !(await onAnotherAccount(session.userId, data.mobileNumber))) {
+    mobile = data.mobileNumber;
+  }
 
   const fields = {
     first_name: data.firstName,
@@ -138,17 +150,15 @@ export async function PUT(req: NextRequest) {
     locality: data.locality || null,
     pincode: data.pincode || null,
     zone_id: data.zoneId || null,
-    ward_number: data.wardNumber || null,
-    mobile_number: data.mobileNumber || null
+    ward_number: data.wardNumber || null
   };
 
   if (existing.length === 0) {
     await pool.query(
       `INSERT INTO user_profiles
         (user_id, first_name, last_name, gender, date_of_birth, alternate_email,
-         door_no_and_street, area, locality, pincode, zone_id, ward_number,
-         mobile_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         door_no_and_street, area, locality, pincode, zone_id, ward_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         session.userId,
         fields.first_name,
@@ -161,16 +171,14 @@ export async function PUT(req: NextRequest) {
         fields.locality,
         fields.pincode,
         fields.zone_id,
-        fields.ward_number,
-        fields.mobile_number
+        fields.ward_number
       ]
     );
   } else {
     await pool.query(
       `UPDATE user_profiles SET
         first_name = ?, last_name = ?, gender = ?, date_of_birth = ?, alternate_email = ?,
-        door_no_and_street = ?, area = ?, locality = ?, pincode = ?, zone_id = ?, ward_number = ?,
-        mobile_number = COALESCE(?, mobile_number)
+        door_no_and_street = ?, area = ?, locality = ?, pincode = ?, zone_id = ?, ward_number = ?
        WHERE user_id = ?`,
       [
         fields.first_name,
@@ -184,10 +192,15 @@ export async function PUT(req: NextRequest) {
         fields.pincode,
         fields.zone_id,
         fields.ward_number,
-        fields.mobile_number,
         session.userId
       ]
     );
+  }
+
+  // the number on its own, never verified, and only into an empty slot; another account taking it in between is not an error either
+  if (mobile) {
+    await pool.query("UPDATE user_profiles SET mobile_number = ?, mobile_verified = FALSE WHERE user_id = ? AND mobile_number IS NULL", [mobile, session.userId])
+      .catch((err: { code?: string; message?: string }) => { if (!/ER_DUP_ENTRY|UNIQUE constraint/i.test(`${err?.code ?? ""} ${err?.message ?? ""}`)) throw err; });
   }
 
   // Aadhaar is handled separately below (encrypted at rest) so a blank
